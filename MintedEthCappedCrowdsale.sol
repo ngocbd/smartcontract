@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedEthCappedCrowdsale at 0xa31c56bc8a489ea4e4ec430801e3aab0d6cce7f6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedEthCappedCrowdsale at 0x882da60a19c67e481481bace4c0aa93080cde3d7
 */
 pragma solidity ^0.4.11;
 // Thanks to OpenZeppeline & TokenMarket for the awesome Libraries.
@@ -203,7 +203,7 @@ contract UpgradeableToken is StandardToken {
     // }
 
     // Validate input value.
-    if (value == 0) throw;
+    require(value != 0);
 
     balances[msg.sender] = safeSub(balances[msg.sender],value);
 
@@ -435,12 +435,20 @@ contract MintableToken is StandardToken, Ownable {
 contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
 
   event UpdatedTokenInformation(string newName, string newSymbol);
-
+  event ProfitDelivered(address fetcher, uint profit);
+  event ProfitLoaded(address owner, uint profit);
   string public name;
 
   string public symbol;
 
   uint8 public decimals;
+  uint loadedProfit;
+  bool ditributingProfit;
+  uint profitDistributed;
+  uint loadedProfitAvailable;
+
+  /** Whether an addresses has fetched profit of not*/
+  mapping (address => bool) public hasFetchedProfit;
 
   /**
    * Construct the token.
@@ -507,6 +515,62 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
     name = _name;
     symbol = _symbol;
     UpdatedTokenInformation(name, symbol);
+  }
+
+  /**
+   * Allow load profit on the contract for the payout.
+   *
+   * 
+   */
+  function loadProfit() public payable onlyOwner {
+    require(released);
+    require(!ditributingProfit);
+    require(msg.value != 0);
+    loadedProfit = msg.value;
+    loadedProfitAvailable = loadedProfit;
+    ditributingProfit = true;
+    ProfitLoaded(msg.sender, loadedProfit);
+  }
+
+  /**
+   * Investors can claim profit if loaded.
+   */
+  function fetchProfit() public returns(bool) {
+    require(ditributingProfit);
+    require(!hasFetchedProfit[msg.sender]);
+    uint NBCBalanceOfFetcher = balanceOf(msg.sender);
+    require(NBCBalanceOfFetcher != 0);
+
+    uint weiValue = safeMul(loadedProfit,NBCBalanceOfFetcher)/totalSupply;
+    require(weiValue >= msg.gas);
+
+    loadedProfitAvailable = safeSub(loadedProfitAvailable, weiValue);
+    hasFetchedProfit[msg.sender] = true;
+
+    profitDistributed = safeAdd(profitDistributed, weiValue);
+
+      if(loadedProfitAvailable <= 0) { 
+       ditributingProfit = false;
+        loadedProfit = 0;
+    }
+
+    require(msg.sender.send(weiValue)); 
+    // require(msg.sender.call.value(weiValue) == true);
+    ProfitDelivered(msg.sender, weiValue);
+    
+  }
+
+  /**
+   * Allow owner to unload the loaded profit which could not be claimed.
+   * Owner must be responsible to call it at the right time.
+   * 
+   */
+  function fetchUndistributedProfit() public onlyOwner {
+    require(loadedProfitAvailable != 0);
+    require(msg.sender.send(loadedProfitAvailable));
+    loadedProfitAvailable = 0;
+    ditributingProfit = false;
+    loadedProfit = 0;
   }
 
 }
@@ -753,7 +817,7 @@ contract Crowdsale is Haltable, SafeMathLib {
    * Don't expect to just send in money and get tokens.
    */
   function() payable {
-    throw;
+    require(false);
   }
 
   /**
@@ -780,7 +844,7 @@ contract Crowdsale is Haltable, SafeMathLib {
       // pass
     } else {
       // Unwanted state
-      throw;
+      require(false);
     }
 
     uint weiAmount = msg.value;
@@ -814,7 +878,7 @@ contract Crowdsale is Haltable, SafeMathLib {
     assignTokens(receiver, tokenAmount);
 
     // Pocket the money
-    if(!multisigWallet.send(weiAmount)) throw;
+    require(multisigWallet.send(weiAmount));
 
     // Tell us invest was success
     Invested(receiver, weiAmount, tokenAmount, customerId);
@@ -992,9 +1056,7 @@ contract Crowdsale is Haltable, SafeMathLib {
    */
   function setEndsAt(uint time) onlyOwner {
 
-    if(now > time) {
-      throw; // Don't change past
-    }
+    require(now <= time);
 
     endsAt = time;
     EndsAtChanged(endsAt);
@@ -1025,9 +1087,7 @@ contract Crowdsale is Haltable, SafeMathLib {
   function setMultisig(address addr) public onlyOwner {
 
     // Change
-    if(investorCount > MAX_INVESTMENTS_BEFORE_MULTISIG_CHANGE) {
-      throw;
-    }
+    require(investorCount <= MAX_INVESTMENTS_BEFORE_MULTISIG_CHANGE);
 
     multisigWallet = addr;
   }
@@ -1053,7 +1113,7 @@ contract Crowdsale is Haltable, SafeMathLib {
     investedAmountOf[msg.sender] = 0;
     weiRefunded = safeAdd(weiRefunded,weiValue);
     Refund(msg.sender, weiValue);
-    if (!msg.sender.send(weiValue)) throw;
+    require(msg.sender.send(weiValue));
   }
 
   /**
@@ -1162,6 +1222,7 @@ contract BonusFinalizeAgent is FinalizeAgent, SafeMathLib {
 
   /** Total percent of tokens minted to the team at the end of the sale as base points (0.0001) */
   uint public totalMembers;
+  // Per address % of total token raised to be assigned to the member Ex 1% is passed as 100
   uint public allocatedBonus;
   mapping (address=>uint) bonusOf;
   /** Where we move the tokens at the end of the sale. */
@@ -1216,9 +1277,16 @@ contract BonusFinalizeAgent is FinalizeAgent, SafeMathLib {
     // get the total sold tokens count.
     uint tokensSold = crowdsale.tokensSold();
 
-    for (uint i=0;i<totalMembers;i++){
+    for (uint i=0;i<totalMembers;i++) {
       allocatedBonus = safeMul(tokensSold, bonusOf[teamAddresses[i]]) / 10000;
       // move tokens to the team multisig wallet
+      
+      // Give min bonus to advisor as committed
+      // the last address is the advisor address
+      uint minBonus = 1000000 * 1000000000000000000;
+      if (i == totalMembers-1 && allocatedBonus < minBonus)
+        allocatedBonus = minBonus;
+
       token.mint(teamAddresses[i], allocatedBonus);
     }
 
@@ -1229,6 +1297,7 @@ contract BonusFinalizeAgent is FinalizeAgent, SafeMathLib {
   }
 
 }
+
 
 /**
  * ICO crowdsale contract that is capped by amout of ETH.
@@ -1413,7 +1482,7 @@ contract EthTranchePricing is PricingStrategy, Ownable, SafeMathLib {
   }
 
   function() payable {
-    throw; // No money on this contract
+    require(false); // No money on this contract
   }
 
 }
