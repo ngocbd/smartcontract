@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IronHands at 0x5ef741a65b657a559e2d108957559c68e38a45e1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IronHands at 0xa3bb0578d04d3b8efc6544ad31dd5be136b61db0
 */
 pragma solidity ^0.4.21;
 
@@ -150,7 +150,7 @@ contract IronHands is Owned {
     //What we will be buying
     REV weak_hands;
     // Limitation
-    uint256 public limit = 20 finney; // 1000 = 1eth, 100 = 0,1 eth | 20 finney = 0.02 eth
+    uint256 public limit = 50 finney; // 1000 = 1eth, 100 = 0,1 eth | 50 finney = 0.05 eth
 
     /**
      * Constructor
@@ -158,7 +158,7 @@ contract IronHands is Owned {
      /*  */
     constructor() public {
         address cntrct = 0x05215FCE25902366480696F38C3093e31DBCE69A; // contract address
-        multiplier = 200; // 200 to double
+        multiplier = 125; // 200 to double | 125 = 25% more
         weak_hands = REV(cntrct);
     }
     
