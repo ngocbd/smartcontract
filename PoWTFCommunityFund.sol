@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PoWTFCommunityFund at 0x9af341bac168bf68f345aff39863a2af392821f6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PoWTFCommunityFund at 0xabc6749752e943cee8573485409e0b3d230da763
 */
 pragma solidity 0.4.20;
 
@@ -8,22 +8,22 @@ pragma solidity 0.4.20;
 * https://powtf.com/
 * https://discord.gg/Ne2PTnS
 *
+* /======== A Community Marketing Fund Project for PoWTF ========/
+*
+* -> WTF is this!?
+* In short, this is a contract to accept PoWTF token / ETH donations from community members
+* as a way of gathering funds for regular marketing and contests.
+* [?] Hands of Stainless Steel! This contract never sells, it can't and just simply don't know how to sell!
+* [?] Community Goods: All dividends will be used for promotional fee / contest prizes, when the accumulated dividends reached certain amount, we'll create some campaign.
+* [?] Transparency: How to use the dividends will be regularly updated in website and discord announcement.
+* [?] Security: You need to trust me (@AppX Matthew) not taking the dividends and go away :)
+* 
 * -> Quotes
 * "Real, sustainable community change requires the initiative and engagement of community members." - Helene D. Gayle
 * "Every successful individual knows that his or her achievement depends on a community of persons working together." - Paul Ryan
 * "Empathy is the starting point for creating a community and taking action. It's the impetus for creating change." - Max Carver
 * "WTF Moon!" - AppX Matthew 
 *
-* Finally, a Community Funding Project for PoWTF!
-*
-* -> WTF is this!?
-* In short, this is a contract to accept PoWTF token / ETH donations from community memebers
-* as a way of gathering funds for regular marketing and contests.
-* [?] Hands of Stainless Steel! This tokens never sells, he can't and just simply don't know how to sell!
-* [?] Community Goods: All dividends will be used for promotional fee / contest prices, when the accumulated dividends get to certain amount, we'll create some campaign.
-* [?] Transparency: How to use the dividends will be regularly updated in website and discord announcement.
-* [?] Security: You need to trust me (@AppX Matthew) not to taking the dividends and go away :)
-* 
 * =================================================*
 *                                                  *
 * __________      __      ________________________ *
@@ -76,7 +76,6 @@ contract Ownable {
 
 }
 
-
 /**
  * @title PullPayment
  * @dev Base contract supporting async send for pull payments. Inherit from this
@@ -116,7 +115,6 @@ contract PullPayment {
   }
   
 }
-
 
 /// @dev Interface to the PoWTF contract.
 contract PoWTFInterface {
@@ -247,7 +245,7 @@ contract PoWTFCommunityFund is Ownable, PullPayment {
     
     /// @dev Besides donating PoWTF tokens, you can also donate ETH as well.
     function donateETH() public payable {
-        // When you make an ETH domation, it will use your address as referrer / masternode.
+        // When you make an ETH donation, it will use your address as referrer / masternode.
         poWtfContract.buy.value(msg.value)(msg.sender);
         
         // Emit LogDonateETH event.
@@ -273,6 +271,9 @@ contract PoWTFCommunityFund is Ownable, PullPayment {
         asyncSend(_fundReceiver, _amount);
     }
 
+    /// @dev Fallback function to allow receiving funds from PoWTF contract.
+    function() public payable {}
+
     /*=======================================
     =           SETTER FUNCTIONS            =
     =======================================*/
@@ -283,7 +284,6 @@ contract PoWTFCommunityFund is Ownable, PullPayment {
 
     
 }
-
 
 /**
  * @title SafeMath
