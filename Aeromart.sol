@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Aeromart at 0xdcaf157faa03309653cd0acddd6947f3417e8dd2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Aeromart at 0xfb025f588cd68b9ddd30e4c3919748e87e5c6265
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.22;
 
 contract Owned {
     address owner;
     
-    function Owned() public {
+    function constuctor() public {
         owner = msg.sender;
     }
     
@@ -19,9 +19,8 @@ contract Owned {
 contract Aeromart is Owned {
     
     struct Note {
-        bytes32 productID;        
-        string text;
-		string image;
+        bytes32 productID;
+        string textOrImage;
     }
     
     uint public notesLength;
@@ -29,35 +28,32 @@ contract Aeromart is Owned {
    
     event noteInfo(
         bytes32 productID,
-        string text,
-		string image
+        string textOrImage
     );
     
-    function addNote(bytes32 _productID, string _text, string _image) onlyOwner public returns (uint) {
+    function addNote(bytes32 _productID, string _textOrImage) onlyOwner public returns (uint) {
         Note storage note = notes[notesLength];
         
-        note.productID = _productID;        
-        note.text = _text;
-		note.image = _image;
-        
-        emit noteInfo(_productID, _text, _image);
+        note.productID = _productID;
+        note.textOrImage = _textOrImage;
+		
+        emit noteInfo(_productID, _textOrImage);
         
         notesLength++;
         return notesLength;
     }
     
-    function setNote(uint256 _id, bytes32 _productID, string _text, string _image) onlyOwner public {
+    function setNote(uint256 _id, bytes32 _productID, string _textOrImage) onlyOwner public {
         Note storage note = notes[_id];
         
-        note.productID = _productID;        
-        note.text = _text;
-		note.image = _image;
+        note.productID = _productID;
+        note.textOrImage = _textOrImage;
         
-        emit noteInfo(_productID, _text, _image);
+        emit noteInfo(_productID, _textOrImage);
     }
     
-    function getNote(uint256 _id) view public returns (bytes32, string, string) {
-        return (notes[_id].productID, notes[_id].text, notes[_id].image);
+    function getNote(uint256 _id) view public returns (bytes32, string) {
+        return (notes[_id].productID, notes[_id].textOrImage);
     }
     
     // comments section
