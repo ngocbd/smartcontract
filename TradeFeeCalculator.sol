@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TradeFeeCalculator at 0x272647f664b5ba01b2ef2dab3d9d49e03bf58b0b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TradeFeeCalculator at 0xe7ba75a7a91f3d69ec0917249ccfd8c26875d60e
 */
 pragma solidity ^0.4.18;
 
@@ -112,7 +112,7 @@ contract TradeFeeCalculator is Ownable {
      */
     function calcTradeFee(uint256 _value, uint256 _feeIndex) public view returns (uint256) {
         require(_feeIndex >= 0 && _feeIndex <= 2);
-        require(_value > 0 && _value >=  1* 1 ether);
+        require(_value > 0);
         require(exFees.length == 3 && exFees[_feeIndex] > 0 );
         
         //Calculation Formula TotalFees = (_value * exFees[_feeIndex])/ (1 ether) 
