@@ -1,156 +1,400 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Arascacoin at 0x24698cff8aa12da47e50c57da3f3730452a3e844
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Arascacoin at 0x5e99db60e4eaec5463aaa1ed4e28d634f256bf22
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
 
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
+        }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
+    }
 
-contract Arascacoin {
-    // Public variables of the token
-    string public name;
-    string public symbol;
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
+
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
+}
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization
+ *      control functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+    address public owner;
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the
+     *      sender account.
+     */
+    function Ownable() public {
+        owner = msg.sender;
+    }
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address newOwner) onlyOwner public {
+        require(newOwner != address(0));
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
+}
+
+/**
+ * @title ERC223
+ * @dev ERC223 contract interface with ERC20 functions and events
+ *      Fully backward compatible with ERC20
+ *      Recommended implementation used at https://github.com/Dexaran/ERC223-token-standard/tree/Recommended
+ */
+contract ERC223 {
+    uint public totalSupply;
+
+    // ERC223 and ERC20 functions and events
+    function balanceOf(address who) public view returns (uint);
+    function totalSupply() public view returns (uint256 _supply);
+    function transfer(address to, uint value) public returns (bool ok);
+    function transfer(address to, uint value, bytes data) public returns (bool ok);
+    function transfer(address to, uint value, bytes data, string customFallback) public returns (bool ok);
+    event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
+
+    // ERC223 functions
+    function name() public view returns (string _name);
+    function symbol() public view returns (string _symbol);
+    function decimals() public view returns (uint8 _decimals);
+
+    // ERC20 functions and events
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+    function approve(address _spender, uint256 _value) public returns (bool success);
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint _value);
+}
+
+/**
+ * @title ContractReceiver
+ * @dev Contract that is working with ERC223 tokens
+ */
+ contract ContractReceiver {
+
+    struct TKN {
+        address sender;
+        uint value;
+        bytes data;
+        bytes4 sig;
+    }
+
+    function tokenFallback(address _from, uint _value, bytes _data) public pure {
+        TKN memory tkn;
+        tkn.sender = _from;
+        tkn.value = _value;
+        tkn.data = _data;
+        uint32 u = uint32(_data[3]) + (uint32(_data[2]) << 8) + (uint32(_data[1]) << 16) + (uint32(_data[0]) << 24);
+        tkn.sig = bytes4(u);
+
+        /*
+         * tkn variable is analogue of msg variable of Ether transaction
+         * tkn.sender is person who initiated this token transaction (analogue of msg.sender)
+         * tkn.value the number of tokens that were sent (analogue of msg.value)
+         * tkn.data is data of token transaction (analogue of msg.data)
+         * tkn.sig is 4 bytes signature of function if data of token transaction is a function execution
+         */
+    }
+}
+
+/**
+ * @title Arascacoin
+ * @author Arascacoin project
+ * @dev Arascacoin is an ERC223 Token with ERC20 functions and events
+ *      Fully backward compatible with ERC20
+ */
+contract Arascacoin is ERC223, Ownable {
+    using SafeMath for uint256;
+
+    string public name = "Arascacoin";
+    string public symbol = "ASC";
     uint8 public decimals = 8;
-    // 8 decimals is the strongly suggested default, avoid changing it
-    uint256 public totalSupply;
+    uint256 public totalSupply = 10512e4 * 1e8;
+    bool public mintingFinished = false;
 
-    // This creates an array with all balances
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
+    mapping(address => uint256) public balanceOf;
+    mapping(address => mapping (address => uint256)) public allowance;
+    mapping (address => bool) public frozenAccount;
+    mapping (address => uint256) public unlockUnixTime;
 
-    // This generates a public event on the blockchain that will notify clients
-    event Transfer(address indexed from, address indexed to, uint256 value);
-
-    // This notifies clients about the amount burnt
-    event Burn(address indexed from, uint256 value);
+    event FrozenFunds(address indexed target, bool frozen);
+    event LockedFunds(address indexed target, uint256 locked);
+    event Burn(address indexed from, uint256 amount);
+    event Mint(address indexed to, uint256 amount);
+    event MintFinished();
 
     /**
-     * Constructor function
-     *
-     * Initializes contract with initial supply tokens to the creator of the contract
+     * @dev Constructor is called only once and can not be called again
      */
-    function Arascacoin(
-        uint256 initialSupply,
-        string tokenName,
-        string tokenSymbol
-    ) public {
-        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
-        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = tokenName;                                   // Set the name for display purposes
-        symbol = tokenSymbol;                               // Set the symbol for display purposes
+    function Arascacoin() public {
+        owner = 0xD4e4d1D80D2F828E6df406ed9c67C876FefC2554;
+
+        balanceOf[owner] = totalSupply;
+    }
+
+    function name() public view returns (string _name) {
+        return name;
+    }
+
+    function symbol() public view returns (string _symbol) {
+        return symbol;
+    }
+
+    function decimals() public view returns (uint8 _decimals) {
+        return decimals;
+    }
+
+    function totalSupply() public view returns (uint256 _totalSupply) {
+        return totalSupply;
+    }
+
+    function balanceOf(address _owner) public view returns (uint256 balance) {
+        return balanceOf[_owner];
     }
 
     /**
-     * Internal transfer, only can be called by this contract
+     * @dev Prevent targets from sending or receiving tokens
+     * @param targets Addresses to be frozen
+     * @param isFrozen either to freeze it or not
      */
-    function _transfer(address _from, address _to, uint _value) internal {
-        // Prevent transfer to 0x0 address. Use burn() instead
-        require(_to != 0x0);
-        // Check if the sender has enough
-        require(balanceOf[_from] >= _value);
-        // Check for overflows
-        require(balanceOf[_to] + _value >= balanceOf[_to]);
-        // Save this for an assertion in the future
-        uint previousBalances = balanceOf[_from] + balanceOf[_to];
-        // Subtract from the sender
-        balanceOf[_from] -= _value;
-        // Add the same to the recipient
-        balanceOf[_to] += _value;
-        emit Transfer(_from, _to, _value);
-        // Asserts are used to use static analysis to find bugs in your code. They should never fail
-        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
-    }
+    function freezeAccounts(address[] targets, bool isFrozen) onlyOwner public {
+        require(targets.length > 0);
 
-    /**
-     * Transfer tokens
-     *
-     * Send `_value` tokens to `_to` from your account
-     *
-     * @param _to The address of the recipient
-     * @param _value the amount to send
-     */
-    function transfer(address _to, uint256 _value) public {
-        _transfer(msg.sender, _to, _value);
-    }
-
-    /**
-     * Transfer tokens from other address
-     *
-     * Send `_value` tokens to `_to` on behalf of `_from`
-     *
-     * @param _from The address of the sender
-     * @param _to The address of the recipient
-     * @param _value the amount to send
-     */
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(_value <= allowance[_from][msg.sender]);     // Check allowance
-        allowance[_from][msg.sender] -= _value;
-        _transfer(_from, _to, _value);
-        return true;
-    }
-
-    /**
-     * Set allowance for other address
-     *
-     * Allows `_spender` to spend no more than `_value` tokens on your behalf
-     *
-     * @param _spender The address authorized to spend
-     * @param _value the max amount they can spend
-     */
-    function approve(address _spender, uint256 _value) public
-        returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
-        return true;
-    }
-
-    /**
-     * Set allowance for other address and notify
-     *
-     * Allows `_spender` to spend no more than `_value` tokens on your behalf, and then ping the contract about it
-     *
-     * @param _spender The address authorized to spend
-     * @param _value the max amount they can spend
-     * @param _extraData some extra information to send to the approved contract
-     */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
-        public
-        returns (bool success) {
-        tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
+        for (uint j = 0; j < targets.length; j++) {
+            require(targets[j] != 0x0);
+            frozenAccount[targets[j]] = isFrozen;
+            FrozenFunds(targets[j], isFrozen);
         }
     }
 
     /**
-     * Destroy tokens
-     *
-     * Remove `_value` tokens from the system irreversibly
-     *
-     * @param _value the amount of money to burn
+     * @dev Prevent targets from sending or receiving tokens by setting Unix times
+     * @param targets Addresses to be locked funds
+     * @param unixTimes Unix times when locking up will be finished
      */
-    function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-        balanceOf[msg.sender] -= _value;            // Subtract from the sender
-        totalSupply -= _value;                      // Updates totalSupply
-        emit Burn(msg.sender, _value);
+    function lockupAccounts(address[] targets, uint[] unixTimes) onlyOwner public {
+        require(targets.length > 0
+                && targets.length == unixTimes.length);
+
+        for(uint j = 0; j < targets.length; j++){
+            require(unlockUnixTime[targets[j]] < unixTimes[j]);
+            unlockUnixTime[targets[j]] = unixTimes[j];
+            LockedFunds(targets[j], unixTimes[j]);
+        }
+    }
+
+    /**
+     * @dev Function that is called when a user or another contract wants to transfer funds
+     */
+    function transfer(address _to, uint _value, bytes _data, string _custom_fallback) public returns (bool success) {
+        require(_value > 0
+                && frozenAccount[msg.sender] == false
+                && frozenAccount[_to] == false
+                && now > unlockUnixTime[msg.sender]
+                && now > unlockUnixTime[_to]);
+
+        if (isContract(_to)) {
+            require(balanceOf[msg.sender] >= _value);
+            balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);
+            balanceOf[_to] = balanceOf[_to].add(_value);
+            assert(_to.call.value(0)(bytes4(keccak256(_custom_fallback)), msg.sender, _value, _data));
+            Transfer(msg.sender, _to, _value, _data);
+            Transfer(msg.sender, _to, _value);
+            return true;
+        } else {
+            return transferToAddress(_to, _value, _data);
+        }
+    }
+
+    function transfer(address _to, uint _value, bytes _data) public  returns (bool success) {
+        require(_value > 0
+                && frozenAccount[msg.sender] == false
+                && frozenAccount[_to] == false
+                && now > unlockUnixTime[msg.sender]
+                && now > unlockUnixTime[_to]);
+
+        if (isContract(_to)) {
+            return transferToContract(_to, _value, _data);
+        } else {
+            return transferToAddress(_to, _value, _data);
+        }
+    }
+
+    /**
+     * @dev Standard function transfer similar to ERC20 transfer with no _data
+     *      Added due to backwards compatibility reasons
+     */
+    function transfer(address _to, uint _value) public returns (bool success) {
+        require(_value > 0
+                && frozenAccount[msg.sender] == false
+                && frozenAccount[_to] == false
+                && now > unlockUnixTime[msg.sender]
+                && now > unlockUnixTime[_to]);
+
+        bytes memory empty;
+        if (isContract(_to)) {
+            return transferToContract(_to, _value, empty);
+        } else {
+            return transferToAddress(_to, _value, empty);
+        }
+    }
+
+    // assemble the given address bytecode. If bytecode exists then the _addr is a contract.
+    function isContract(address _addr) private view returns (bool is_contract) {
+        uint length;
+        assembly {
+            //retrieve the size of the code on target address, this needs assembly
+            length := extcodesize(_addr)
+        }
+        return (length > 0);
+    }
+
+    // function that is called when transaction target is an address
+    function transferToAddress(address _to, uint _value, bytes _data) private returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);
+        balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);
+        balanceOf[_to] = balanceOf[_to].add(_value);
+        Transfer(msg.sender, _to, _value, _data);
+        Transfer(msg.sender, _to, _value);
+        return true;
+    }
+
+    // function that is called when transaction target is a contract
+    function transferToContract(address _to, uint _value, bytes _data) private returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);
+        balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);
+        balanceOf[_to] = balanceOf[_to].add(_value);
+        ContractReceiver receiver = ContractReceiver(_to);
+        receiver.tokenFallback(msg.sender, _value, _data);
+        Transfer(msg.sender, _to, _value, _data);
+        Transfer(msg.sender, _to, _value);
         return true;
     }
 
     /**
-     * Destroy tokens from other account
-     *
-     * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
-     *
-     * @param _from the address of the sender
-     * @param _value the amount of money to burn
+     * @dev Transfer tokens from one address to another
+     *      Added due to backwards compatibility with ERC20
+     * @param _from address The address which you want to send tokens from
+     * @param _to address The address which you want to transfer to
+     * @param _value uint256 the amount of tokens to be transferred
      */
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
-        require(_value <= allowance[_from][msg.sender]);    // Check allowance
-        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
-        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
-        totalSupply -= _value;                              // Update totalSupply
-        emit Burn(_from, _value);
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        require(_to != address(0)
+                && _value > 0
+                && balanceOf[_from] >= _value
+                && allowance[_from][msg.sender] >= _value
+                && frozenAccount[_from] == false
+                && frozenAccount[_to] == false
+                && now > unlockUnixTime[_from]
+                && now > unlockUnixTime[_to]);
+
+        balanceOf[_from] = balanceOf[_from].sub(_value);
+        balanceOf[_to] = balanceOf[_to].add(_value);
+        allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(_value);
+        Transfer(_from, _to, _value);
+        return true;
+    }
+
+    /**
+     * @dev Allows _spender to spend no more than _value tokens in your behalf
+     *      Added due to backwards compatibility with ERC20
+     * @param _spender The address authorized to spend
+     * @param _value the max amount they can spend
+     */
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        allowance[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    /**
+     * @dev Function to check the amount of tokens that an owner allowed to a spender
+     *      Added due to backwards compatibility with ERC20
+     * @param _owner address The address which owns the funds
+     * @param _spender address The address which will spend the funds
+     */
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
+        return allowance[_owner][_spender];
+    }
+
+    /**
+     * @dev Burns a specific amount of tokens.
+     * @param _from The address that will burn the tokens.
+     * @param _unitAmount The amount of token to be burned.
+     */
+    function burn(address _from, uint256 _unitAmount) onlyOwner public {
+        require(_unitAmount > 0
+                && balanceOf[_from] >= _unitAmount);
+
+        balanceOf[_from] = balanceOf[_from].sub(_unitAmount);
+        totalSupply = totalSupply.sub(_unitAmount);
+        Burn(_from, _unitAmount);
+    }
+
+
+    modifier canMint() {
+        require(!mintingFinished);
+        _;
+    }
+
+    /**
+     * @dev Function to mint tokens
+     * @param _to The address that will receive the minted tokens.
+     * @param _unitAmount The amount of tokens to mint.
+     */
+    function mint(address _to, uint256 _unitAmount) onlyOwner canMint public returns (bool) {
+        require(_unitAmount > 0);
+        
+        totalSupply = totalSupply.add(_unitAmount);
+        balanceOf[_to] = balanceOf[_to].add(_unitAmount);
+        Mint(_to, _unitAmount);
+        Transfer(address(0), _to, _unitAmount);
+        return true;
+    }
+
+    /**
+     * @dev Function to stop minting new tokens.
+     */
+    function finishMinting() onlyOwner canMint public returns (bool) {
+        mintingFinished = true;
+        MintFinished();
         return true;
     }
 }
