@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QUIZ_GAME at 0x0E35F4F608D4A8Fa560595dB79CfdA02D790777B
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QUIZ_GAME at 0xa48a36d94024f861b453267468b9096e4a3eb8be
 */
-pragma solidity ^0.4.20;
+pragma solidity ^0.4.19;
 
 contract QUIZ_GAME
 {
