@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AidCoin at 0x37e8789bb9996cac9156cd5f5fd32599e6b91289
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AidCoin at 0x90312969783367bee9e3d1da6288be6eb5b4e0ec
 */
 pragma solidity ^0.4.13;
 
@@ -395,8 +395,8 @@ contract TokenTimelock {
 }
 
 contract AidCoin is MintableToken, BurnableToken {
-    string public name = "AidCoin";
-    string public symbol = "AID";
+    string public name = "Pane&Design";
+    string public symbol = "PANE";
     uint256 public decimals = 18;
     uint256 public maxSupply = 100000000 * (10 ** decimals);
 
