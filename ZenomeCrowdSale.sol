@@ -1,190 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZenomeCrowdSale at 0x994e6d73b071bffdd7c07152912bf652fab89533
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZenomeCrowdsale at 0xdcf9374c0f535f9a357eaa7bd9efb18889542121
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.19;
 
-
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public constant returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-
-
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
- */
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
-
-  mapping(address => uint256) balances;
-
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-
-    // SafeMath.sub will throw if there is not enough balance.
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) public constant returns (uint256 balance) {
-    return balances[_owner];
-  }
-
-}
-
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-
-
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
-contract StandardToken is ERC20, BasicToken {
-
-  mapping (address => mapping (address => uint256)) allowed;
-
-
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
-   */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-
-    uint256 _allowance = allowed[_from][msg.sender];
-
-    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-    // require (_value <= _allowance);
-
-    balances[_from] = balances[_from].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  /**
-   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   *
-   * Beware that changing an allowance with this method brings the risk that someone may use both the old
-   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) public returns (bool) {
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifying the amount of tokens still available for the spender.
-   */
-  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
-
-  /**
-   * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   */
-  function increaseApproval (address _spender, uint _addedValue)
-    returns (bool success) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-  function decreaseApproval (address _spender, uint _subtractedValue)
-    returns (bool success) {
-    uint oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue > oldValue) {
-      allowed[msg.sender][_spender] = 0;
-    } else {
-      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-    }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-}
+/*************************************************************************
+ * import "../node_modules/zeppelin-solidity/contracts/ownership/Ownable.sol" : start
+ *************************************************************************/
 
 
 /**
@@ -203,10 +24,9 @@ contract Ownable {
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() {
+  function Ownable() public {
     owner = msg.sender;
   }
-
 
   /**
    * @dev Throws if called by any account other than the owner.
@@ -216,19 +36,274 @@ contract Ownable {
     _;
   }
 
-
   /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) onlyOwner public {
+  function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
+    emit OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
 
 }
+/*************************************************************************
+ * import "../node_modules/zeppelin-solidity/contracts/ownership/Ownable.sol" : end
+ *************************************************************************/
+/*************************************************************************
+ * import "../node_modules/zeppelin-solidity/contracts/math/SafeMath.sol" : start
+ *************************************************************************/
 
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  /**
+  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+/*************************************************************************
+ * import "../node_modules/zeppelin-solidity/contracts/math/SafeMath.sol" : end
+ *************************************************************************/
+/*************************************************************************
+ * import "../node_modules/zeppelin-solidity/contracts/token/ERC20/MintableToken.sol" : start
+ *************************************************************************/
+
+/*************************************************************************
+ * import "./StandardToken.sol" : start
+ *************************************************************************/
+
+/*************************************************************************
+ * import "./BasicToken.sol" : start
+ *************************************************************************/
+
+
+/*************************************************************************
+ * import "./ERC20Basic.sol" : start
+ *************************************************************************/
+
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+/*************************************************************************
+ * import "./ERC20Basic.sol" : end
+ *************************************************************************/
+
+
+
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
+
+  mapping(address => uint256) balances;
+
+  uint256 totalSupply_;
+
+  /**
+  * @dev total number of tokens in existence
+  */
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
+  }
+
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    emit Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public view returns (uint256 balance) {
+    return balances[_owner];
+  }
+
+}
+/*************************************************************************
+ * import "./BasicToken.sol" : end
+ *************************************************************************/
+/*************************************************************************
+ * import "./ERC20.sol" : start
+ *************************************************************************/
+
+
+
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+/*************************************************************************
+ * import "./ERC20.sol" : end
+ *************************************************************************/
+
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) internal allowed;
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    emit Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    emit Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) public view returns (uint256) {
+    return allowed[_owner][_spender];
+  }
+
+  /**
+   * @dev Increase the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _addedValue The amount of tokens to increase the allowance by.
+   */
+  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  /**
+   * @dev Decrease the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To decrement
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _subtractedValue The amount of tokens to decrease the allowance by.
+   */
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+}
+/*************************************************************************
+ * import "./StandardToken.sol" : end
+ *************************************************************************/
 
 
 
@@ -238,7 +313,6 @@ contract Ownable {
  * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
  * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
  */
-
 contract MintableToken is StandardToken, Ownable {
   event Mint(address indexed to, uint256 amount);
   event MintFinished();
@@ -258,10 +332,10 @@ contract MintableToken is StandardToken, Ownable {
    * @return A boolean that indicates if the operation was successful.
    */
   function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
-    totalSupply = totalSupply.add(_amount);
+    totalSupply_ = totalSupply_.add(_amount);
     balances[_to] = balances[_to].add(_amount);
-    Mint(_to, _amount);
-    Transfer(0x0, _to, _amount);
+    emit Mint(_to, _amount);
+    emit Transfer(address(0), _to, _amount);
     return true;
   }
 
@@ -269,12 +343,27 @@ contract MintableToken is StandardToken, Ownable {
    * @dev Function to stop minting new tokens.
    * @return True if the operation was successful.
    */
-  function finishMinting() onlyOwner public returns (bool) {
+  function finishMinting() onlyOwner canMint public returns (bool) {
     mintingFinished = true;
-    MintFinished();
+    emit MintFinished();
     return true;
   }
 }
+/*************************************************************************
+ * import "../node_modules/zeppelin-solidity/contracts/token/ERC20/MintableToken.sol" : end
+ *************************************************************************/
+
+/*************************************************************************
+ * import "../node_modules/zeppelin-solidity/contracts/token/ERC20/PausableToken.sol" : start
+ *************************************************************************/
+
+
+/*************************************************************************
+ * import "../../lifecycle/Pausable.sol" : start
+ *************************************************************************/
+
+
+
 
 
 /**
@@ -309,7 +398,7 @@ contract Pausable is Ownable {
    */
   function pause() onlyOwner whenNotPaused public {
     paused = true;
-    Pause();
+    emit Pause();
   }
 
   /**
@@ -317,251 +406,243 @@ contract Pausable is Ownable {
    */
   function unpause() onlyOwner whenPaused public {
     paused = false;
-    Unpause();
+    emit Unpause();
   }
 }
+/*************************************************************************
+ * import "../../lifecycle/Pausable.sol" : end
+ *************************************************************************/
 
 
 /**
- * @title PreSale ZNA token
- * @dev The minting functionality is reimplemented, as opposed to inherited
- *   from MintableToken, to allow for giving right to mint to arbitery account.
- */
-contract PreSaleZNA is StandardToken, Ownable, Pausable {
+ * @title Pausable token
+ * @dev StandardToken modified with pausable transfers.
+ **/
+contract PausableToken is StandardToken, Pausable {
 
-  // Disable transfer unless explicitly enabled
-  function PreSaleZNA(){ paused = true; }
-
-  // The address of the contract or user that is allowed to mint tokens.
-  address public minter;
-
-  /**
-   * @dev Set the address of the minter
-   * @param _minter address to be set as minter.
-   *
-   * Note: We also need to implement "mint" method.
-   */
-  function setMinter(address _minter) onlyOwner {
-      minter = _minter;
-  }
-
-  /**
-   * @dev Function to mint tokens
-   * @param _to The address that will receive the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
-   */
-  function mint(address _to, uint256 _amount) public returns (bool) {
-    require(msg.sender == minter);
-
-    totalSupply = totalSupply.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-
-    Transfer(0x0, _to, _amount);
-    return true;
-  }
-
-
-  /**
-   * @dev account for paused/unpaused-state.
-   */
-  function transfer(address _to, uint256 _value)
-  public whenNotPaused returns (bool) {
+  function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
     return super.transfer(_to, _value);
   }
 
-  function transferFrom(address _from, address _to, uint256 _value)
-  public whenNotPaused returns (bool) {
+  function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
     return super.transferFrom(_from, _to, _value);
   }
 
+  function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
+    return super.approve(_spender, _value);
+  }
 
-  /**
-   * @dev Token meta-information
-   * @param name of the token as it's shown to user
-   * @param symbol of the token
-   * @param decimals number
-   * Number of indivisible tokens that make up 1 ZNA = 10^{decimals}
-   */
-  string public constant name = "Presale ZNA Token";
-  string public constant symbol = "pZNA";
-  uint8  public constant decimals = 18;
+  function increaseApproval(address _spender, uint _addedValue) public whenNotPaused returns (bool success) {
+    return super.increaseApproval(_spender, _addedValue);
+  }
+
+  function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool success) {
+    return super.decreaseApproval(_spender, _subtractedValue);
+  }
 }
+/*************************************************************************
+ * import "../node_modules/zeppelin-solidity/contracts/token/ERC20/PausableToken.sol" : end
+ *************************************************************************/
+/*************************************************************************
+ * import "../node_modules/zeppelin-solidity/contracts/ownership/CanReclaimToken.sol" : start
+ *************************************************************************/
+
+
+
+/*************************************************************************
+ * import "../token/ERC20/SafeERC20.sol" : start
+ *************************************************************************/
+
+
+
 
 
 /**
- * @title Zenome Crowdsale contract
- * @dev Govern the presale:
- *   1) Taking place in a specific limited period of time.
- *   2) Having HARDCAP value set --- a number of sold tokens to end the pre-sale
- *
- * Owner can change time parameters at any time --- just in case of emergency
- * Owner can change minter at any time --- just in case of emergency
- *
- * !!! There is no way to change the address of the wallet !!!
+ * @title SafeERC20
+ * @dev Wrappers around ERC20 operations that throw on failure.
+ * To use this library you can add a `using SafeERC20 for ERC20;` statement to your contract,
+ * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
  */
-contract ZenomeCrowdSale is Ownable {
+library SafeERC20 {
+  function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
+    assert(token.transfer(to, value));
+  }
 
-    // Use SafeMath library to provide methods for uint256-type vars.
+  function safeTransferFrom(ERC20 token, address from, address to, uint256 value) internal {
+    assert(token.transferFrom(from, to, value));
+  }
+
+  function safeApprove(ERC20 token, address spender, uint256 value) internal {
+    assert(token.approve(spender, value));
+  }
+}
+/*************************************************************************
+ * import "../token/ERC20/SafeERC20.sol" : end
+ *************************************************************************/
+
+
+/**
+ * @title Contracts that should be able to recover tokens
+ * @author SylTi
+ * @dev This allow a contract to recover any ERC20 token received in a contract by transferring the balance to the contract owner.
+ * This will prevent any accidental loss of tokens.
+ */
+contract CanReclaimToken is Ownable {
+  using SafeERC20 for ERC20Basic;
+
+  /**
+   * @dev Reclaim all ERC20Basic compatible tokens
+   * @param token ERC20Basic The address of the token contract
+   */
+  function reclaimToken(ERC20Basic token) external onlyOwner {
+    uint256 balance = token.balanceOf(this);
+    token.safeTransfer(owner, balance);
+  }
+
+}
+/*************************************************************************
+ * import "../node_modules/zeppelin-solidity/contracts/ownership/CanReclaimToken.sol" : end
+ *************************************************************************/
+
+
+contract CanReclaimEther is Ownable {
+  function claim() public onlyOwner {
+    owner.transfer(this.balance);
+  }
+}
+
+
+contract ZNA is StandardToken, Ownable, PausableToken {
+
     using SafeMath for uint256;
 
-    // The hardcoded address of wallet
-    address public wallet;
+    uint256 public MAX_TOTAL;
 
-    // The address of presale token
-    PreSaleZNA public token;// = new PreSaleZNA();
-
-    // The accounting mapping to store information on the amount of
-    // bonus tokens that should be given in case of successful presale.
-    mapping(address => uint256) bonuses;
-
-    /**
-     * @dev Variables
-     *
-     * @public START_TIME uint the time of the start of the sale
-     * @public CLOSE_TIME uint the time of the end of the sale
-     * @public HARDCAP uint256 if @HARDCAP is reached, presale stops
-     * @public the amount of indivisible quantities (=10^18 ZBA) given for 1 wie
-     */
-    uint public START_TIME = 1508256000;
-    uint public CLOSE_TIME = 1508860800;
-    uint256 public HARDCAP = 3200000000000000000000000;
-    uint256 public exchangeRate = 966;
-
-
-    /**
-     * Fallback function
-     * @dev The contracts are prevented from using fallback function.
-     *   That prevents loosing control of tokens that will eventually get
-     *      attributed to the contract, not the user
-     *   To buy tokens from the wallet (that is a contract)
-     *      user has to specify beneficiary of tokens using buyTokens method.
-     */
-    function () payable {
-      require(msg.sender == tx.origin);
-      buyTokens(msg.sender);
+    function ZNA (uint256 maxAmount) public {
+      MAX_TOTAL = maxAmount;
     }
 
-    /**
-     * @dev A function to withdraw all funds.
-     *   Normally, contract should not have ether at all.
-     */
-    function withdraw() onlyOwner {
-      wallet.transfer(this.balance);
-    }
+   /**
+    * @dev Function to mint tokens
+    * @param _to The address that will receive the minted tokens.
+    * @param _amount The amount of tokens to mint.
+    * @return A boolean that indicates if the operation was successful.
+    */
+   function mint(address _to, uint256 _amount)
+   public onlyOwner returns (bool) {
+     totalSupply_ = totalSupply_.add(_amount);
+     require(totalSupply_ <= MAX_TOTAL);
+     balances[_to] = balances[_to].add(_amount);
+     emit Transfer(address(0), _to, _amount);
+     return true;
+   }
 
-    /**
-     * @dev The constructor sets the tokens address
-     * @param _token address
-     */
-    function ZenomeCrowdSale(address _token, address _wallet) {
-      token  = PreSaleZNA(_token);
-      wallet = _wallet;
-    }
-
-
-    /**
-     * event for token purchase logging
-     * @param purchaser who paid for the tokens
-     * @param beneficiary who got the tokens
-     * @param value weis paid for purchase
-     * @param amount amount of tokens purchased
-     */
-    event TokenPurchase(
-      address indexed purchaser,
-      address indexed beneficiary,
-      uint256 value,
-      uint256 amount
-     );
-
-    /**
-     * event for bonus processing logging
-     * @param beneficiary a user to get bonuses
-     * @param amount bonus tokens given
-     */
-    event TokenBonusGiven(
-      address indexed beneficiary,
-      uint256 amount
-     );
+   string public name = "ZNA Token";
+   string public symbol = "ZNA";
+   uint8  public decimals = 18;
+}
 
 
-    /**
-     * @dev Sets the start and end of the sale.
-     * @param _start uint256 start of the sale.
-     * @param _close uint256 end of the sale.
-     */
-    function setTime(uint _start, uint _close) public onlyOwner {
-      require( _start < _close );
-      START_TIME = _start;
-      CLOSE_TIME = _close;
-    }
+contract ZenomeCrowdsale is Ownable, CanReclaimToken, CanReclaimEther {
 
-    /**
-     * @dev Sets exhange rate, ie amount of tokens (10^{-18}ZNA) for 1 wie.
-     * @param _exchangeRate uint256 new exhange rate.
-     */
-    function setExchangeRate(uint256 _exchangeRate) public onlyOwner  {
-      require(now < START_TIME);
-      exchangeRate = _exchangeRate;
-    }
+  using SafeMath for uint256;
 
+  struct TokenPool {
+    address minter;
+    uint256 amount;
+    uint256 safecap;
+    uint256 total;
+  }
 
-    /**
-     * @dev Buy tokens for all sent ether.
-     *      Tokens will be added to beneficiary's account
-     * @param beneficiary address the owner of bought tokens.
-     */
-    function buyTokens(address beneficiary) payable {
+  ZNA public token;
 
-      uint256 total = token.totalSupply();
-      uint256 amount = msg.value;
-      require(amount > 0);
+  TokenPool public for_sale;
+  TokenPool public for_rewards;
+  TokenPool public for_longterm;
+  /* solhint-disable */
+  /* solhint-enable */
 
-      // Check that hardcap not reached, and sale-time.
-      require(total < HARDCAP);
-      require(now >= START_TIME);
-      require(now <  CLOSE_TIME);
+  function ZenomeCrowdsale () public {
+    for_sale.total = 1575*10**22;
+    for_rewards.total = 1050*10**22;
+    for_longterm.total = 875*10**22;
 
-      // Mint tokens bought for all sent ether to beneficiary
-      uint256 tokens = amount.mul(exchangeRate);
-      token.mint(beneficiary, tokens);
-      TokenPurchase(msg.sender, beneficiary,amount, tokens);
+    uint256 MAX_TOTAL = for_sale.total
+      .add(for_rewards.total)
+      .add(for_longterm.total);
 
-      // Calcualate the corresponding bonus tokens,
-      //  that can be given in case of successful pre-sale
-      uint256 _bonus = tokens.div(4);
-      bonuses[beneficiary] = bonuses[beneficiary].add(_bonus);
+    token = new ZNA(MAX_TOTAL);
+  }
 
-      // Finally, sent all the money to wallet
-      wallet.transfer(amount);
-    }
+ /**
+  *  Setting Minter interface
+  */
+  function setSaleMinter (address minter, uint safecap) public onlyOwner { setMinter(for_sale, minter, safecap); }
 
+  function setRewardMinter (address minter, uint safecap) public onlyOwner {
+    require(safecap <= for_sale.amount);
+    setMinter(for_rewards, minter, safecap);
+  }
 
-    /**
-     * @dev Process bonus tokens for beneficiary in case of all tokens sold.
-     * @param beneficiary address the user's address to process.
-     *
-     * Everyone can call this method for any beneficiary:
-     *  1) Method (code) does not depend on msg.sender =>
-     *         => side effects don't depend on the caller
-     *  2) Calling method for beneficiary is either positive or neutral.
-     */
-    function transferBonuses(address beneficiary) {
-      // Checks that sale has successfully ended by having all tokens sold.
-      uint256 total = token.totalSupply();
-      require( total >= HARDCAP );
+  function setLongtermMinter (address minter, uint safecap) public onlyOwner {
+    require(for_sale.amount > 1400*10**22);
+    setMinter(for_longterm, minter, safecap);
+  }
 
-      // Since the number of bonus tokens that are intended for beneficiary
-      //    was pre-calculated beforehand, set variable "tokens" to this value.
-      uint256 tokens = bonuses[beneficiary];
-      // Chech if there are tokens to give as bonuses
-      require( tokens > 0 );
+  function transferTokenOwnership (address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    token.transferOwnership(newOwner);
+  }
 
-      // If so, make changes the accounting mapping. Then mint bonus tokens
-      bonuses[beneficiary] = 0;
-      token.mint(beneficiary, tokens);
+  function pauseToken() public onlyOwner { token.pause(); }
+  function unpauseToken() public onlyOwner { token.unpause(); }
 
-      // After all, log event.
-      TokenBonusGiven(beneficiary, tokens);
-    }
+  /**
+   *  Minter's interface
+   */
+  function mintSoldTokens (address to, uint256 amount) public {
+    mintTokens(for_sale, to, amount);
+  }
+
+  function mintRewardTokens (address to, uint256 amount) public {
+    mintTokens(for_rewards, to, amount);
+  }
+
+  function mintLongTermTokens (address to, uint256 amount) public {
+    mintTokens(for_longterm, to, amount);
+  }
+
+  /**
+   * INTERNAL FUNCTIONS
+
+   "Of course, calls to internal functions use the internal calling convention,
+    which means that all internal types can be passed and memory types will be
+    passed by reference and not copied."
+
+    https://solidity.readthedocs.io/en/develop/contracts.html#libraries
+  */
+  /**
+   *  Set minter and a safe cap in a single call.
+   *  IT MUST NOT BE VIEW!
+   */
+  function setMinter (TokenPool storage pool, address minter, uint256 safecap)
+  internal onlyOwner {
+    require(safecap <= pool.total);
+    pool.minter = minter;
+    pool.safecap = safecap;
+  }
+
+  /**
+   *
+   */
+  function mintTokens (TokenPool storage pool, address to, uint256 amount )
+  internal {
+    require(msg.sender == pool.minter);
+    uint256 new_amount = pool.amount.add(amount);
+    require(new_amount <= pool.safecap);
+
+    pool.amount = new_amount;
+    token.mint(to, amount);
+  }
+
 }
