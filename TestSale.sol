@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestSale at 0xf5a0396836119dbe3c128ea11a93e2e59f9d21bc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestSale at 0xc589acb9da47e14a7131e7a1aa7bf577a7f5d2fd
 */
 pragma solidity ^0.4.18;
 
@@ -297,9 +297,9 @@ contract MintableToken is StandardToken, Ownable {
 
 contract GeniusEther is MintableToken {
     
-    string public constant name = "Genius Ether";
+    string public constant name = "Bar Coin";
     
-    string public constant symbol = "GE";
+    string public constant symbol = "BarCoin";
     
     uint32 public constant decimals = 18;
     
@@ -314,19 +314,23 @@ contract TestSale is GeniusEther {
     GeniusEther public token = new GeniusEther();
 
     uint start;
+    uint stop;
     uint period;
-
     uint hardcap;
+    uint softcap;
+    bool reco;
 
     function TestSale() {
 	multisig = 0x2c9660f30B65dbBfd6540d252f6Fa07B5854a40f;
-	start = 1522598400;
-	period = 2;
-    hardcap = 1 ether;
+	start = 1523181300;
+	stop = 1523182200;
+    hardcap = 0.005 ether;
+    softcap = 0.001 ether; 
+    reco =false;
     }
 
     modifier saleIsOn() {
-    	require(now > start && now < start + period * 1 days);
+    	require(now >= start && now < stop);
     	_;
     }
 	
@@ -337,15 +341,24 @@ contract TestSale is GeniusEther {
 
     function finish() public onlyOwner {
 	uint issuedTokenSupply = token.totalSupply();
-	uint restrictedTokens = issuedTokenSupply.mul(40).div(60);
+	uint restrictedTokens = issuedTokenSupply.mul(30).div(70);
+	if (now >= stop && this.balance>softcap) {
 	    token.mint(multisig, restrictedTokens);
         token.finishMinting();
-        multisig.transfer(this.balance);
-    }
+        multisig.transfer(this.balance); }
+    if (now >= stop && this.balance<=softcap) {
+	    reco=true; }
+	}
+	
+   function Reco() {
+       if (reco=true) {
+        msg.sender.transfer(token.balanceOf(msg.sender));    
+       }
+    }	
 
    function createTokens() isUnderHardCap saleIsOn payable {
        
-       if (msg.value< 0.00001 ether) {
+       if (msg.value< 0.0001 ether) {
         msg.sender.transfer(msg.value);    
        }
        else {
@@ -354,7 +367,7 @@ contract TestSale is GeniusEther {
     }
 
     function() external payable {
-        if (now > start && now < start + period * 1 days) {
+        if (now >= start && now < stop) {
             createTokens(); }
         else {
             msg.sender.transfer(msg.value);    
