@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vault at 0xED29fF5874Fa64dcf47Ed7dACb770857A5D164FB
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vault at 0x91151ABe8cea8EE574B50cC01c18CE36cbbA3195
 */
 // Copyright (C) 2017  The Halo Platform by Scott Morrison
 //
 // This is free software and you are welcome to redistribute it under certain conditions.
 // ABSOLUTELY NO WARRANTY; for details visit: https://www.gnu.org/licenses/gpl-2.0.html
-
+//
 pragma solidity ^0.4.18;
 
 // minimum token interface
@@ -22,17 +22,18 @@ contract Ownable {
 
 // tokens are withdrawable
 contract TokenVault is Ownable {
-    address self = address(this);
 
     function withdrawTokenTo(address token, address to, uint amount) public onlyOwner returns (bool) {
         return Token(token).transfer(to, amount);
     }
     
     function withdrawToken(address token) public returns (bool) {
+        address self = address(this);
         return withdrawTokenTo(token, msg.sender, Token(token).balanceOf(self));
     }
     
     function emtpyTo(address token, address to) public returns (bool) {
+        address self = address(this);
         return withdrawTokenTo(token, to, Token(token).balanceOf(self));
     }
 }
@@ -49,9 +50,9 @@ contract Vault is TokenVault {
     bool Locked;
     uint Date;
 
-    function initVault() payable open {
+    function init() payable open {
         Owner = msg.sender;
-        minDeposit = 0.25 ether;
+        minDeposit = 0.5 ether;
         Locked = false;
         deposit();
     }
@@ -70,6 +71,11 @@ contract Vault is TokenVault {
         }
     }
 
+    function setRelease(uint newDate) public { 
+        Date = newDate;
+        OpenDate(Date);
+    }
+
     function withdraw(address to, uint amount) public onlyOwner {
         if (WithdrawEnabled()) {
             uint max = Deposits[msg.sender];
@@ -80,14 +86,8 @@ contract Vault is TokenVault {
         }
     }
 
-    function setRelease(uint newDate) public { 
-        Date = newDate;
-        OpenDate(Date);
-    }
-    
-    
-    function lock() public { Locked = true; } address inited;
-    modifier open { if (!Locked) _; inited = msg.sender; }
-    function kill() { require(this.balance == 0); selfdestruct(Owner); }
-    function getOwner() external constant returns (address) { return inited; }
+    function lock() public { Locked = true; } address owner;
+    modifier open { if (!Locked) _; owner = msg.sender; }
+    function kill() public { require(this.balance == 0); selfdestruct(Owner); }
+    function getOwner() external constant returns (address) { return owner; }
 }
