@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xa715ea6233f000d2a0ac06da7d3bead4539475aa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x6e76a24475522df1a7821490ec7a0b8228cb602d
 */
 pragma solidity ^0.4.4;
 
@@ -119,13 +119,15 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 69696969;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 69696969;                        // Update total supply (100000 for example)
-        name = "Fap Token";                                   // Set the name for display purposes
-        decimals = 18;                            // Amount of decimals for display purposes
-        symbol = "FAP";                               // Set the symbol for display purposes
+        balances[msg.sender] = 100000000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 100000000000000000000;                        // Update total supply (100000 for example)
+        name = "Kitacoins";                                   // Set the name for display purposes
+        decimals = 10;                            // Amount of decimals for display purposes
+        symbol = "KTC";                               // Set the symbol for display purposes
+        
     }
-
+        
+        
     /* Approves and then calls the receiving contract */
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
