@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LuckyNumberImp at 0x75e494f8a92ad1daa4fd6e78cbac33f84c2f25b9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LuckyNumberImp at 0xb8842b95a9c0cdbd4c0d6e0319b8d46792830677
 */
-pragma solidity ^0.4.15;//MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWNKOkOKWMMMMMM //
+pragma solidity ^0.4.15;
+
 // MMMMWKkk0KNMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWNKOkOKWMMMMMM //
 // MMMMXl.....,cdOXWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWXOo:,.....dNMMMM //
 // MMMWd.        .'cxKWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMW0d:'.        .xMMMM //
@@ -29,17 +30,16 @@ pragma solidity ^0.4.15;//MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMWNKOkOKWMMMMMM //
 // MMWXOkxddoddxxkKWMMMMMMMMMMMMMMMMXo...'dNMMMMMMMMMMMMMMMMN0kxxdodddxk0XMMM //
 // MMMMMMMMMMMMWNKKNMMMMMMMMMMMMMMMMWOc,,c0WMMMMMMMMMMMMMMMMXKKNWMMMMMMMMMMMM //
 // MMMMMMMMWXKKXXNWMMMMMMMMMMWWWWWX0xcclc:cxKNWWWWWMMMMMMMMMMWNXXKKXWMMMMMMMM //
-// MMMWXOxdoooddxkO0NMMMMMMMWKkfoahheitNX0GlikkxxkXMMMMMMMWX0OkxddooddxOXWMMM //
+// MMMWXOxdoooddxkO0NMMMMMMMWKkxxdlloxKNX0dolodxxkXMMMMMMMWX0OkxddooddxOXWMMM //
 // MMMWXKKNNWMMMMMWWWMMMMMMMMMWNXXXNWMMMMMMWXXXXNWMMMMMMMMMWWWMMMMWWNXKKNWMMM //
 // MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM //
 // MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM //
-// MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM Lucky* MMMM> *~+. drohmah <MMMMMMMMMMMMM //
-// MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM Number MMMMMMMMMM> funn <MMMMMMMMMMMMMMM //
-// MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM ------ MMMMMMMMM> drohma *~+. <MMMMMMMMM //
+// MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM Lucky  MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM //
+// MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM Number MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM //
+// MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM ------ MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM //
 // MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM Random MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM //
-// MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM Ledger MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM //
-// MMMMM>***<creator>...<MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM //
-// ~> 0x0563cAC61Ea13a591A9E41087929f80d3076471d <~+~+~+~> VIII*XII*MMXVII <~ //
+// MM Contract design by MMMMMMMMMMM Ledger MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM //
+// => 0x7C601D5DCd97B680dd623ff816D233898e6AD8dC <=MMMMMMM +.+.+. -> MMXVII M //
 // MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM //
 
 
@@ -103,7 +103,7 @@ contract Random is SafeMath {
 // To make a request:
 //   Step 1: Call requestNumber with the `cost` as the value
 //   Step 2: Wait waitTime in blocks past the block which mines transaction for requestNumber
-//   Step 3: Call revealNumber to generate the number, and make it publicly accessable in the UI.
+//   Step 3: Call revealNumber() to generate the number, and make it publicly accessable in the UI.
 //           this is required to create the Events which generate the Ledger. 
 contract LuckyNumber is Owned {
     // cost to generate a random number in Wei.
@@ -125,13 +125,11 @@ contract LuckyNumber is Owned {
         uint8 waitTime;
     }
 
-    // for Number Config :: uint256 cost, uint256 max, uint8 waitTime
-    event EventLuckyNumberUpdated(uint256, uint256, uint8);
+    // for Number Config
+    event EventLuckyNumberUpdated(uint256 cost, uint256 max, uint8 waitTime);
     // for Number Ledger
-    // :: address requestor, uint256 max, uint256 creationBlockNumber, uint8 waitTime
-    event EventLuckyNumberRequested(address, uint256, uint256, uint8);
-    // :: address requestor, uint256 creationBlockNumber, uint256 renderedNumber
-    event EventLuckyNumberRevealed(address, uint256, uint256);
+    event EventLuckyNumberRequested(address requestor, uint256 max, uint256 creationBlockNumber, uint8 waitTime);
+    event EventLuckyNumberRevealed(address requestor, uint256 max, uint256 renderedNumber);
     
     mapping (address => PendingNumber) public pendingNumbers;
     mapping (address => bool) public whiteList;
@@ -152,7 +150,26 @@ contract LuckyNumberImp is LuckyNumber, Mortal, Random {
         waitTime = 3; // 3 blocks
     }
 
-	// Let owner customize defauts.
+    // Allow the owner to set proxy contracts
+    // which can accept tokens
+    // on behalf of this contract
+    function enableProxy(address _proxy)
+    onlyOwner
+    public
+    returns (bool) {
+        // _cost
+        whiteList[_proxy] = true;
+        return whiteList[_proxy];
+    }
+
+    function removeProxy(address _proxy)
+    onlyOwner
+    public
+    returns (bool) {
+        delete whiteList[_proxy];
+        return true;
+    }
+
     // Allow the owner to set max.
     function setMax(uint256 _max)
     onlyOwner
@@ -182,26 +199,7 @@ contract LuckyNumberImp is LuckyNumber, Mortal, Random {
         EventLuckyNumberUpdated(cost, max, waitTime);
         return true;
     }
-
-    // Allow the owner to set proxy contracts,
-    // which can accept tokens on behalf of this contract.
-    function enableProxy(address _proxy)
-    onlyOwner
-    public
-    returns (bool) {
-        // _cost
-        whiteList[_proxy] = true;
-        return whiteList[_proxy];
-    }
-
-    function removeProxy(address _proxy)
-    onlyOwner
-    public
-    returns (bool) {
-        delete whiteList[_proxy];
-        return true;
-    }
-
+    
     // Allow the owner to cash out the holdings of this contract.
     function withdraw(address _recipient, uint256 _balance)
     onlyOwner
@@ -211,15 +209,15 @@ contract LuckyNumberImp is LuckyNumber, Mortal, Random {
         return true;
     }
 
-    // Assume that simple transactions are trying to request a number,
-    // unless it is from the owner.
+    // Assume that simple transactions are trying to request a number, unless it is
+    // from the owner.
     function () payable public {
         if (msg.sender != owner) {
             requestNumber(msg.sender, max, waitTime);
         }
     }
     
-    // Request a Number ... *~>
+    // Request a Number.
     function requestNumber(address _requestor, uint256 _max, uint8 _waitTime)
     payable 
     public {
@@ -254,7 +252,6 @@ contract LuckyNumberImp is LuckyNumber, Mortal, Random {
         EventLuckyNumberRequested(_requestor, pendingNumbers[_requestor].max, pendingNumbers[_requestor].creationBlockNumber, pendingNumbers[_requestor].waitTime);
     }
 
-    // Reveal your number ... *~>
     // Only requestor or proxy can generate the number
     function revealNumber(address _requestor)
     public
@@ -279,8 +276,10 @@ contract LuckyNumberImp is LuckyNumber, Mortal, Random {
         pendingNumbers[_requestor].renderedNumber = luckyNumber;
         // event
         EventLuckyNumberRevealed(_requestor, pendingNumbers[_requestor].creationBlockNumber, pendingNumbers[_requestor].renderedNumber);
-        // zero out wait blocks since this is now inactive(record keeping)
+        // zero out wait blocks since this is now inactive
         pendingNumbers[_requestor].waitTime = 0;
+        // update creation block as one use for number (record keeping)
+        pendingNumbers[_requestor].creationBlockNumber = 0;
     }
 
     function canReveal(address _requestor)
@@ -351,5 +350,5 @@ contract LuckyNumberImp is LuckyNumber, Mortal, Random {
         }
         return false;
     }
-// 0xMMWKkk0KN/>HBBi/MASSa/DANTi/LANTen.MI.MI.MI.M+.+.+.M->MMMWNKOkOKWJ.J.J.M //
+// 0xMMWKkk0KNM>HBBi\MASSa\DANTi\LANTen.MI.MI.MI.M+.+.+.M->MMMWNKOkOKWJ.J.J.M //
 }
