@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0x82ff63a849416045faa56bb58e335a435ce853d7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0x479353eedbe1c8c139fefff24e584677fb94fc2f
 */
 pragma solidity ^0.4.13;
 
@@ -153,16 +153,16 @@ contract StandardToken is ERC20, BasicToken {
  * Created specifically for TokenDone.io
  */
 contract ApprovedTokenDone is StandardToken {
-	string public name = 'BOUNTY';
-	string public symbol = 'BOUNTY';
+	string public name = 'ANARCHY';
+	string public symbol = 'ANARCHY';
 	uint public decimals = 3;
-	uint public initialSupply = 99999999999;
+	uint public initialSupply = 100000000000;
 	string public publishier = 'TokenDone.io';
-	uint public creationTime;
+	uint public CreationTime;
 	
 	function ApprovedTokenDone() {
 		totalSupply = initialSupply;
     	balances[0xe90fFFd34aEcFE44db61a6efD85663296094A09c] = initialSupply;
-		creationTime = now;
+		CreationTime = now;
 	}
 }
