@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthFlip at 0x0aac73a7098578bcb34ed305e63a9bd4e9f9bb07
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthFlip at 0x8877b35cacce0063a280c6448a3c35c2cdf94b58
 */
 // <ORACLIZE_API>
 /*
@@ -1149,8 +1149,8 @@ contract EthFlip is usingOraclize {
     minBet = 100000000000000000;
     maxBet = 500000000000000000;
     houseFee = 29; // 2.9%
-    oraclizeGas = 350000;
-    oraclizeGasPrice = 3010000000;
+    oraclizeGas = 500000;
+    oraclizeGasPrice = 2010000000;
     oraclize_setCustomGasPrice(oraclizeGasPrice);
     oraclize_setProof(proofType_Ledger);
     owner = msg.sender;
@@ -1326,8 +1326,8 @@ contract EthFlip is usingOraclize {
   }
   
   function setOraclizeGasPrice(uint _newPrice) public senderIsOwner gameIsNotActive {
-    oraclizeGasPrice = _newPrice + 10000000;
-    oraclize_setCustomGasPrice(oraclizeGasPrice);
+    oraclizeGasPrice = _newPrice;
+    oraclize_setCustomGasPrice(_newPrice + 10000000);
   }
   
   function setOwner(address _newOwner) public senderIsOwner gameIsNotActive {
