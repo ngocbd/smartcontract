@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MainToken at 0x701e28058b24563b9f718b720f7c48cb6690226e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MainToken at 0x4e8e8eb5a4ed17170b646d33b8ef3e7352585607
 */
 pragma solidity ^0.4.18;
 
@@ -575,12 +575,12 @@ contract usingConsts {
     uint8 constant TOKEN_DECIMALS_UINT8 = 18;
     uint constant TOKEN_DECIMAL_MULTIPLIER = 10 ** TOKEN_DECIMALS;
 
-    string constant TOKEN_NAME = "PharmaToken";
-    string constant TOKEN_SYMBOL = "RxT";
+    string constant TOKEN_NAME = "PandroytyToken";
+    string constant TOKEN_SYMBOL = "PDRY";
     bool constant PAUSED = true;
-    address constant TARGET_USER = 0x03FbdA50876F9b2Be94AA9d2Cdbe5BE84f34E851;
-    uint constant START_TIME = 1521832620;
-    bool constant CONTINUE_MINTING = false;
+    address constant TARGET_USER = 0x8f302c391b2b6fd064ae8257d09a13d9fedde207;
+    uint constant START_TIME = 1520730000;
+    bool constant CONTINUE_MINTING = true;
 }
 
 
