@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YoloToken at 0xa6500bbd003c406cf03a48daf715f244628ccb8f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YoloToken at 0x45ba41dcfa69ea1cc9b7c01ddc16f21e31036e79
 */
 pragma solidity ^0.4.18;
 
@@ -469,7 +469,7 @@ contract PausableToken is StandardToken, Pausable {
 
 contract YoloToken is CappedToken, PausableToken, ERC223 {
 
-  string public constant name     = "Yolo Token";
+  string public constant name     = "Yolo";
   string public constant symbol   = "YOLO";
   uint   public constant decimals = 18;
 
