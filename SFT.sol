@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SFT at 0x0f521be3cd38eb6aa546f8305ee65b62d3018032
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SFT at 0x33a2cced2e87ae47e463eac0fffe08a2b3b7dfdd
 */
 contract SFT {
 
-    string public name = "Smart First Time 4 Way Distributor";
+    string public name = "Smart First Time 4 Way GEE Distributor";
     uint8 public decimals = 18;
-    string public symbol = "SFT4";
+    string public symbol = "SFT";
 
     address public dev = 0xC96CfB18C39DC02FBa229B6EA698b1AD5576DF4c;
     address public foundation = 0x6eBe6E38ba1bDa9131C785f6491B2C8374B968fE;
@@ -18,7 +18,10 @@ contract SFT {
 
     // automatically distribute incoming funds to the 4 addresses equally
     function () payable public {
-        require(msg.value > 0);
+        
+    }
+    
+    function withdrawFees() public {
         uint256 share = (msg.value * 2500) / 10000; // split the incoming 4 ways
         dev.transfer(share);
         foundation.transfer(share);
