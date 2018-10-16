@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PowerToken at 0xe270b271da6766e6e4d6015b67f0b3f33f266a22
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PowerToken at 0x150c6206cb5ae77065f452c36a83daaa1caff087
 */
 pragma solidity ^0.4.18;
 /** ----------------------------------------------------------------------------------------------
@@ -190,13 +190,6 @@ contract TokenERC20 is ERC20, Ownable{
     return true;
   }
 
-    /**
-     * Destroy tokens
-     *
-     * Remove `_value` tokens from the system irreversibly
-     *
-     * @param _value the amount of money to burn
-     */
     function burn(uint256 _value) public returns(bool) {
         require(balances[msg.sender] >= _value);   // Check if the sender has enough
         balances[msg.sender] = balances[msg.sender].sub(_value);            // Subtract from the sender
@@ -205,14 +198,6 @@ contract TokenERC20 is ERC20, Ownable{
         return true;
     }
 
-        /**
-     * Destroy tokens from other account
-     *
-     * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
-     *
-     * @param _from the address of the sender
-     * @param _value the amount of money to burn
-     */
     function burnFrom(address _from, uint256 _value) public returns(bool) {
         require(balances[_from] >= _value);                // Check if the targeted balance is enough
         require(_value <= allowances[_from][msg.sender]);    // Check allowance
@@ -224,12 +209,6 @@ contract TokenERC20 is ERC20, Ownable{
     }
 
 
-    /**
-     * approve should be called when allowances[_spender] == 0. To increment
-     * allowances value is better to use this function to avoid 2 calls (and wait until
-     * the first transaction is mined)
-     * From MonolithDAO Token.sol
-     */
     function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
         // Check for overflows
         require(allowances[msg.sender][_spender].add(_addedValue) > allowances[msg.sender][_spender]);
@@ -256,7 +235,7 @@ contract TokenERC20 is ERC20, Ownable{
 
 contract PowerToken is TokenERC20 {
 
-    function PowerToken() TokenERC20(20000000, "CapricornCoin", "3C", 18) public {
+    function PowerToken() TokenERC20(1000000000, "WangZeCheng Token", "WZC", 18) public {
 
     }
 }
