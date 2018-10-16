@@ -1,59 +1,90 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdropper at 0xffb73ea8ecc96307d99b194051314204a2e38d51
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdropper at 0xdc142e66eae81e1a6e7c60df32b15d736f3dd74a
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.18;
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control 
- * functions, this simplifies the implementation of "user permissions". 
- */
+contract ERC20 {
+    function transfer(address _to, uint256 _value) public returns(bool);
+    function balanceOf(address tokenOwner) public constant returns (uint balance);
+}
+
 contract Ownable {
   address public owner;
 
-  function Ownable() {
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
     owner = msg.sender;
   }
- 
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
   modifier onlyOwner() {
-    if (msg.sender != owner) {
-      revert();
-    }
+    require(msg.sender == owner);
     _;
   }
- 
-  function transferOwnership(address newOwner) onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
-    }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
   }
 
-}
-
-contract ERC20Basic {
-  uint public totalSupply;
-  function balanceOf(address who) constant returns (uint);
-  function transfer(address to, uint value);
-  event Transfer(address indexed from, address indexed to, uint value);
-}
- 
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint);
-  function transferFrom(address from, address to, uint value);
-  function approve(address spender, uint value);
-  event Approval(address indexed owner, address indexed spender, uint value);
 }
 
 contract Airdropper is Ownable {
 
-    function multisend(address _tokenAddr, address[] dests, uint256[] values)
-    onlyOwner
-    returns (uint256) {
+    address public tokenAddr = 0x0;
+    uint256 public numOfTokens;
+    ERC20 public token;
+
+    function Airdropper(address _tokenAddr, uint256 _numOfTokens) public {
+        tokenAddr = _tokenAddr;
+        numOfTokens = _numOfTokens;
+        token = ERC20(_tokenAddr);
+    }
+
+    function multisend(address[] dests) public onlyOwner returns (uint256) {
         uint256 i = 0;
         while (i < dests.length) {
-           ERC20(_tokenAddr).transfer(dests[i], values[i]);
+           require(token.transfer(dests[i], numOfTokens));
            i += 1;
         }
         return(i);
     }
+
+    function getLendTokenBalance() public constant returns (uint256) {
+        return token.balanceOf(this);
+    }
+
+    //Function to get the locked tokens back, in case of any issue
+    //Return the tokens to the owner's address
+    function withdrawRemainingTokens() public onlyOwner  {
+        uint contractTokenBalance = token.balanceOf(this);
+        require(contractTokenBalance > 0);        
+        token.transfer(owner, contractTokenBalance);
+    }
+
+
+    // Method to get any locked ERC20 tokens
+    function withdrawERC20ToOwner(address _erc20) public onlyOwner {
+        ERC20 erc20Token = ERC20(_erc20);
+        uint contractTokenBalance = erc20Token.balanceOf(this);
+        require(contractTokenBalance > 0);
+        erc20Token.transfer(owner, contractTokenBalance);
+    }
+
 }
