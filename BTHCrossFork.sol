@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTHCrossFork at 0x47358f526ee4f461e92a48abb23ece47540a2943
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTHCrossFork at 0x05852E51E7c86333510327C64D8dDDC9D2264D24
 */
 // <ORACLIZE_API>
 /*
@@ -1190,30 +1190,36 @@ contract BTHCrossFork is usingOraclize, BasicUtility, BasicAccessControl, CrossF
     }
 
     struct QueryInfo {
-        bytes32 referCodeHash;
         uint64 requestId;
         address sender;
     }
     mapping(bytes32=>QueryInfo) queries;
-    address public bytetherOVAddress = 0x0;
     string public verifyUrl = "";
-    uint64 public crossForkBlockNumber = 0;
+    uint64 public crossForkBlockNumber = 478558;
+    uint public gasLimit = 200000;
+    uint public gasPrice = 20000000000 wei;
 
     event LogReceiveQuery(bytes32 indexed queryId, uint64 requestId, uint256 amount, QueryResultCode resultCode);
     event LogTriggerQuery(bytes32 indexed btcAddressHash, uint64 requestId, address receiver, QueryResultCode resultCode);
     
-    function BTHCrossFork(address _bytetherOVAddress, string _verifyUrl, uint64 _crossForkBlockNumber) public {
-        bytetherOVAddress = _bytetherOVAddress;
+    function BTHCrossFork(string _verifyUrl, uint64 _crossForkBlockNumber) public {
         verifyUrl = _verifyUrl;
         crossForkBlockNumber = _crossForkBlockNumber;
+        oraclize_setProof(proofType_TLSNotary | proofStorage_IPFS);
     }
 
     function () payable public {}
+
+    function setOraclizeGasPrice(uint _gasPrice) onlyModerators public {
+        gasPrice = _gasPrice;
+        oraclize_setCustomGasPrice(gasPrice);
+    }
+
+    function setOraclizeGasLimit(uint _gasLimit) onlyModerators public {
+        gasLimit = _gasLimit;
+    }
     
     // moderator function
-    function setBytetherOVAddress(address _bytetherOVAddress) onlyModerators public {
-        bytetherOVAddress = _bytetherOVAddress;
-    }
     
     function setVerifyUrl(string _verifyUrl) onlyModerators public {
         verifyUrl = _verifyUrl;
@@ -1223,25 +1229,40 @@ contract BTHCrossFork is usingOraclize, BasicUtility, BasicAccessControl, CrossF
         crossForkBlockNumber = _blockNumber;
     }
     
-    
     // public
     
-    function extractBTHAmount(string result) constant public returns(uint256) {
-        // result format v=xxxx
+    function extractBTHAmount(string result) constant public returns(uint256, bytes32) {
+        // result format v=xxxx&r=0x
         uint256 value = 0;
         bytes memory b = bytes(result);
+        uint referCodeHash = 0;
         // verify correct format
         if (b[0] != 118 || b[1] != 61)
-            return value;
-        for (uint i = 2; i < b.length; i++) { 
-            if (b[i] >= 48 && b[i] <= 57) {
-                value = value * 10 + (uint256(b[i]) - 48); 
+            return (value, bytes32(referCodeHash));
+        uint i = 2;
+        for (i = 2; i < b.length; i++) { 
+            if (b[i] < 48 || b[i] > 57)
+                break;
+            value = value * 10 + (uint256(b[i]) - 48); 
+        }
+        if (i+5>b.length || b[i] != 38 || b[i+1] != 114 || b[i+2] != 61 || b[i+3]!=48 || b[i+4]!=120)
+            return (value, bytes32(referCodeHash));
+        for (i=i+5; i < b.length; i++) {
+            uint c = uint(b[i]);
+            if (c >= 48 && c <= 57) {
+                referCodeHash = referCodeHash * 16 + (c - 48);
+            }
+            if(c >= 65 && c<= 90) {
+                referCodeHash = referCodeHash * 16 + (c - 55);
+            }
+            if(c >= 97 && c<= 122) {
+                referCodeHash = referCodeHash * 16 + (c - 87);
             }
         }
-        return value;
+        return (value, bytes32(referCodeHash));
     }
 
-    function __callback(bytes32 _queryId, string _result) public {
+    function __callback(bytes32 _queryId, string _result, bytes proof) public {
         if (msg.sender != oraclize_cbAddress()) {
             LogReceiveQuery(_queryId, 0, 0, QueryResultCode.INVALID_QUERY);
             return;
@@ -1253,9 +1274,11 @@ contract BTHCrossFork is usingOraclize, BasicUtility, BasicAccessControl, CrossF
             return;
         }
 
-        uint256 amount = extractBTHAmount(_result);
+        uint256 amount = 0;
+        bytes32 referCodeHash = 0;
+        (amount, referCodeHash) = extractBTHAmount(_result);
         CrossForkCallback crossfork = CrossForkCallback(info.sender);
-        crossfork.callbackCrossFork(info.requestId, amount, info.referCodeHash);
+        crossfork.callbackCrossFork(info.requestId, amount, referCodeHash);
         LogReceiveQuery(_queryId, info.requestId, amount, QueryResultCode.SUCCESS);
     }
 
@@ -1265,20 +1288,6 @@ contract BTHCrossFork is usingOraclize, BasicUtility, BasicAccessControl, CrossF
         if (!checkValidBitcoinAddress(_btcAddress)) {
             LogTriggerQuery(btcAddressHash, _requestId, _receiver, QueryResultCode.INVALID_BITCOIN_ADDRESS);
             return;            
-        }
-        if (bytetherOVAddress == 0x0) {
-            LogTriggerQuery(btcAddressHash, _requestId, _receiver, QueryResultCode.INVALID_QUERY);
-            return;
-        }
-
-        BytetherOVI bytetherOV = BytetherOVI(bytetherOVAddress);
-        address verifiedReceiver;
-        bytes32 referCodeHash;
-        (verifiedReceiver, referCodeHash) = bytetherOV.GetOwnership(_btcAddress);
-
-        if (verifiedReceiver != _receiver) {
-            LogTriggerQuery(btcAddressHash, _requestId, _receiver, QueryResultCode.INVALID_OV_VERIFY);
-            return;
         }
 
         // query external api to check bitcoin txn & balance by btcAddress & verifyCode
@@ -1296,10 +1305,10 @@ contract BTHCrossFork is usingOraclize, BasicUtility, BasicAccessControl, CrossF
                 addressToString(_receiver), 
                 '","block_number":"', 
                 uint2str(crossForkBlockNumber), 
-                '"}')
+                '"}'),
+            gasLimit
         );
         QueryInfo storage info = queries[queryId];
-        info.referCodeHash = referCodeHash;
         info.requestId = _requestId;
         info.sender = msg.sender;
         LogTriggerQuery(btcAddressHash, _requestId, _receiver, QueryResultCode.SUCCESS);
