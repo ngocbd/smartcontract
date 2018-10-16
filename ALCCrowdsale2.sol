@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ALCCrowdsale2 at 0xC1E7c74A13608Bcbb13479b59B81991CFeD96632
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ALCCrowdsale2 at 0x8851Db785eD637aB8f6FcDCC396cEdeaE2A204E0
 */
 pragma solidity ^0.4.18;
 
@@ -82,11 +82,11 @@ contract ALCCrowdsale2 is Owned{
     // Tier3  - 23h15
     // End - 23h20
     // ------------------------------------------------------------------------
-    uint public constant START_TIME = 1511614800;
-    uint public constant SECOND_TIER_SALE_START_TIME = 1511615100;
-    uint public constant THIRD_TIER_SALE_START_TIME = 1511615400;
-    uint public constant FOURTH_TIER_SALE_START_TIME = 1511615700;
-    uint public constant END_TIME = 1511616000;
+    uint public constant START_TIME = 1511606100;
+    uint public constant SECOND_TIER_SALE_START_TIME = 1511606400;
+    uint public constant THIRD_TIER_SALE_START_TIME = 1511606700;
+    uint public constant FOURTH_TIER_SALE_START_TIME = 1511607000;
+    uint public constant END_TIME = 1511607300;
 	
 	
     
@@ -103,13 +103,13 @@ contract ALCCrowdsale2 is Owned{
     // Funding Goal
     //    - HARD CAP : 33000 ETH
     // ------------------------------------------------------------------------
-    uint public constant FUNDING_ETH_HARD_CAP = 150000000000000000; //0.15ETH
+    uint public constant FUNDING_ETH_HARD_CAP = 30000000000000000; //0.01ETH
     
     // IQT token decimals
     uint8 public constant ALC_DECIMALS = 8;
     uint public constant ALC_DECIMALSFACTOR = 10**uint(ALC_DECIMALS);
     
-    address public constant ALC_FOUNDATION_ADDRESS = 0x55BeA1A0335A8Ea56572b8E66f17196290Ca6467;
+    address public constant ALC_FUNDATION_ADDRESS = 0x55BeA1A0335A8Ea56572b8E66f17196290Ca6467;
     address public constant ALC_CONTRACT_ADDRESS = 0xB15EF419bA0Dd1f5748c7c60e17Fe88e6e794950;
 
     event GoalReached(address raisingAddress, uint amountRaised);
@@ -125,7 +125,7 @@ contract ALCCrowdsale2 is Owned{
      */
     function ALCCrowdsale2(
     ) public {
-        beneficiary = ALC_FOUNDATION_ADDRESS;
+        beneficiary = ALC_FUNDATION_ADDRESS;
         fundingLimit = FUNDING_ETH_HARD_CAP;  // Funding limit 0.01ETH
 	    deadline = END_TIME;  // 2017-11-25 12:00:00 UTC
         exchangeTokenRate = FOURTH_RATE * ALC_DECIMALSFACTOR;
@@ -280,7 +280,7 @@ contract ALCCrowdsale2 is Owned{
      * distribute token to contributor. 
      */
 	function distributeALCToken() public {
-		if (beneficiary == msg.sender) {  // only ALC_FOUNDATION_ADDRESS can distribute the ALC
+		if (beneficiary == msg.sender) {  // only ALC_FUNDATION_ADDRESS can distribute the ALC
 			address currentParticipantAddress;
 			for (uint index = 0; index < contributorCount; index++){
 				currentParticipantAddress = contributorIndexes[index]; 
@@ -308,7 +308,7 @@ contract ALCCrowdsale2 is Owned{
      * distribute token to contributor. 
      */
 	function distributeALCTokenBatch(uint batchUserCount) public {
-		if (beneficiary == msg.sender) {  // only ALC_FOUNDATION_ADDRESS can distribute the ALC
+		if (beneficiary == msg.sender) {  // only ALC_FUNDATION_ADDRESS can distribute the ALC
 			address currentParticipantAddress;
 			uint transferedUserCount = 0;
 			for (uint index = 0; index < contributorCount && transferedUserCount<batchUserCount; index++){
