@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Faucet at 0xb7da39352aa33cdd6e82ff3138df4bfdfce814cb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Faucet at 0x0f8c94e34de4ccd378ed53d5622039d39f74fded
 */
 pragma solidity ^0.4.19;
 
@@ -117,8 +117,8 @@ contract Faucet {
     
     function () public {
         uint senderBalance = token.balanceOf(msg.sender);
-        require(senderBalance < 10000000000000);
-        uint diff = 10000000000000 - senderBalance;
+        require(senderBalance < 100000);
+        uint diff = 100000 - senderBalance;
         token.transfer(msg.sender, diff);
     }
 }
