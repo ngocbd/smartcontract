@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherGet at 0x52d2e0f9b01101a59b38a3d05c80b7618aeed984
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherGet at 0x05a2f46b2409fe46b8c1f87af2508e7aef5aa8fa
 */
 pragma solidity ^0.4.19;
 contract Token {
