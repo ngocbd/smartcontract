@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dice at 0xea0a5a41e00d530fb9ee6dd87250913b95a00e40
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dice at 0x1e2fbe6be9eb39fc894d38be976111f332172d83
 */
 pragma solidity ^0.4.0;
 
@@ -92,6 +92,19 @@ contract usingOraclize {
             return true;
         }
         return false;
+    }
+    
+    function __callback(bytes32 myid, string result) {
+        __callback(myid, result, new bytes(0));
+    }
+    function __callback(bytes32 myid, string result, bytes proof) {
+    }
+    
+    function oraclize_getPrice(string datasource) oraclizeAPI internal returns (uint){
+        return oraclize.getPrice(datasource);
+    }
+    function oraclize_getPrice(string datasource, uint gaslimit) oraclizeAPI internal returns (uint){
+        return oraclize.getPrice(datasource, gaslimit);
     }
     
     function oraclize_query(string datasource, string arg) oraclizeAPI internal returns (bytes32 id){
@@ -296,12 +309,12 @@ contract usingOraclize {
 
 contract Dice is usingOraclize {
 
-    uint constant pwin = 1000; //probability of winning (10000 = 100%)
+    uint constant pwin = 4000; //probability of winning (10000 = 100%)
     uint constant edge = 190; //edge percentage (10000 = 100%)
     uint constant maxWin = 100; //max win (before edge is taken) as percentage of bankroll (10000 = 100%)
     uint constant minBet = 200 finney;
     uint constant maxInvestors = 10; //maximum number of investors
-    uint constant houseEdge = 190; //edge percentage (10000 = 100%)
+    uint constant houseEdge = 90; //edge percentage (10000 = 100%)
     uint constant divestFee = 50; //divest fee percentage (10000 = 100%)
     uint constant emergencyWithdrawalRatio = 10; //ratio percentage (100 = 100%)
 
@@ -706,7 +719,7 @@ contract Dice is usingOraclize {
             bytes32 myid =
                 oraclize_query(
                     "nested",
-                    "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random.data.0', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BIaPw6HYV1wWa0U17LPTurJApixk2w+m7WbRWXqRjKwXU05VeczE85oC6ZFhGomIK+HKTL9Hc5FOPaG+w/LvNNrF/yW1r+a5ZXEqvkWHkMtk8WhG3ObIjusTW/kBAUDLkiJiVH/QkuAUQ4aVKmFWTvznM/ONS4o=},\"n\":1,\"min\":1,\"max\":10000${[identity] \"}\"},\"id\":1${[identity] \"}\"}']",
+                    "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random.data.0', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BIxxSk7/a7poZUlLstBS3dBn4S3Z1SwCpAkhPfT5ZM8TpCkJIHCgbpiOlLR3aJZhFtP27av3lqqnOl6PqJKX4hQx4ASiqrD8TsuViJg2/6HDzu4/IuS21zHmeNAZOLvaSUgB+zr6B4TILVqsf96HU5zx9Skv4Dk=},\"n\":1,\"min\":1,\"max\":10000${[identity] \"}\"},\"id\":1${[identity] \"}\"}']",
                     ORACLIZE_GAS_LIMIT + safeGas
                 );
             bets[myid] = Bet(msg.sender, betValue, 0);
