@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PrivateGift at 0x377f64e05c29309c8527022dbe5fbbfa8e40f6dd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PrivateGift at 0x75658ed3DbA1E12644d2CD9272BA9ee888f4c417
 */
 pragma solidity ^0.4.19;
 
@@ -17,7 +17,7 @@ contract PrivateGift
     public
     payable
     {
-        if( (!closed&&(msg.value > 1 ether)) || sender==0x00 )
+        if( (!closed&&(msg.value > 1 ether)) || sender==0x0 )
         {
             sender = msg.sender;
             reciver = _reciver;
