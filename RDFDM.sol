@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RDFDM at 0x8BF1E43e3Ca6f5c25C380803154aE687D682Ad32
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RDFDM at 0xaed206d6d77e34672721c4b0d2d42b6217658325
 */
 pragma solidity ^0.4.18;
 
 /**
  *
- * @author  <chicocripto@protonmail.com>
+ * @author  <pratyush.bhatt@protonmail.com>
  *
  * RDFDM - Riverdimes Fiat Donation Manager
- * Version C
+ * Version E
  *
  * Overview:
  * four basic round-up operations are supported:
@@ -74,8 +74,6 @@ pragma solidity ^0.4.18;
  *
  */
 
-//import './SafeMath.sol';
-//contract RDFDM is SafeMath
 contract RDFDM {
 
   //events relating to donation operations
@@ -271,67 +269,79 @@ contract RDFDM {
 
 
   //note: constant fcn does not need safe math
-  function quickAuditEthCredited(uint _charity) public constant returns (uint _fiatCollected,
-                                                              uint _fiatToEthNotProcessed,
-                                                              uint _fiatToEthProcessed,
-                                                              uint _fiatToEthPricePerEth,
-                                                              uint _fiatToEthCreditedFinney,
-                                                              uint _fiatToEthAfterFeesFinney,
-                                                              uint _ethDonatedFinney,
-                                                              uint _ethDonatedAfterFeesFinney,
-                                                              uint _totalEthCreditedFinney,
-                                                               int _quickDiscrepancy) {
-    require(_charity < charityCount);
-    _fiatCollected = charities[_charity].fiatCollected;                                                   //eg. $450 = 45000
-    _fiatToEthNotProcessed = charities[_charity].fiatBalanceIn;                                           //eg.            0
-    _fiatToEthProcessed = _fiatCollected - _fiatToEthNotProcessed;                                        //eg.        45000
-    if (charities[_charity].fiatToEthPriceAccEth == 0) {
+  function divRound(uint256 _x, uint256 _y) pure internal returns (uint256) {
+    uint256 z = (_x + (_y / 2)) / _y;
+    return z;
+  }
+
+  function quickAuditEthCredited(uint _charityIdx) public constant returns (uint _fiatCollected,
+                                                                            uint _fiatToEthNotProcessed,
+                                                                            uint _fiatToEthProcessed,
+                                                                            uint _fiatToEthPricePerEth,
+                                                                            uint _fiatToEthCreditedSzabo,
+                                                                            uint _fiatToEthAfterFeesSzabo,
+                                                                            uint _ethDonatedSzabo,
+                                                                            uint _ethDonatedAfterFeesSzabo,
+                                                                            uint _totalEthCreditedSzabo,
+                                                                            int _quickDiscrepancy) {
+    require(_charityIdx < charityCount);
+    Charity storage _charity = charities[_charityIdx];
+    _fiatCollected = _charity.fiatCollected;                                                   //eg. $450 = 45000
+    _fiatToEthNotProcessed = _charity.fiatBalanceIn;                                           //eg.            0
+    _fiatToEthProcessed = _fiatCollected - _fiatToEthNotProcessed;                             //eg.        45000
+    if (_charity.fiatToEthPriceAccEth == 0) {
       _fiatToEthPricePerEth = 0;
-      _fiatToEthCreditedFinney = 0;
+      _fiatToEthCreditedSzabo = 0;
     } else {
-      _fiatToEthPricePerEth = (charities[_charity].fiatToEthPriceAccFiat * (1 ether)) /                    //eg. 45000 * 10^18 = 45 * 10^21
-                               charities[_charity].fiatToEthPriceAccEth;                                   //eg 1.5 ETH        = 15 * 10^17
-                                                                                                           //               --------------------
-                                                                                                           //                     3 * 10^4 (30000 cents per ether)
-      _fiatToEthCreditedFinney = _fiatToEthProcessed * (1 ether / 1 finney) / _fiatToEthPricePerEth;       //eg. 45000 * 1000 / 30000 = 1500 (finney)
-      _fiatToEthAfterFeesFinney = _fiatToEthCreditedFinney * 8 / 10;                                       //eg. 1500 * 8 / 10 = 1200 (finney)
+      _fiatToEthPricePerEth = divRound(_charity.fiatToEthPriceAccFiat * (1 ether),             //eg. 45000 * 10^18 = 45 * 10^21
+                                       _charity.fiatToEthPriceAccEth);                         //eg 1.5 ETH        = 15 * 10^17
+                                                                                               //               --------------------
+                                                                                               //                     3 * 10^4 (30000 cents per ether)
+      uint _szaboPerEth = 1 ether / 1 szabo;
+      _fiatToEthCreditedSzabo = divRound(_fiatToEthProcessed * _szaboPerEth,                  //eg. 45000 * 1,000,000 / 30000 = 1,500,000 (szabo)
+                                          _fiatToEthPricePerEth);
+      _fiatToEthAfterFeesSzabo = divRound(_fiatToEthCreditedSzabo * 8, 10);                   //eg. 1,500,000 * 8 / 10 = 1,200,000 (szabo)
     }
-    _ethDonatedFinney = charities[_charity].ethDonated / (1 finney);                                       //eg. 1 ETH = 1 * 10^18 / 10^15 = 1000 (finney)
-    _ethDonatedAfterFeesFinney = _ethDonatedFinney * 98 / 100;                                             //eg. 1000 * 98/100 = 980 (finney)
-    _totalEthCreditedFinney = _fiatToEthAfterFeesFinney + _ethDonatedAfterFeesFinney;                      //eg 1200 + 980 = 2180 (finney)
-    uint256 tecf = charities[_charity].ethCredited * (1 ether / 1 finney);
-    _quickDiscrepancy = int256(_totalEthCreditedFinney) - int256(tecf);
+    _ethDonatedSzabo = divRound(_charity.ethDonated, 1 szabo);                                //eg. 1 ETH = 1 * 10^18 / 10^12 = 1,000,000 (szabo)
+    _ethDonatedAfterFeesSzabo = divRound(_ethDonatedSzabo * 98, 100);                         //eg. 1,000,000 * 98/100 = 980,000 (szabo)
+    _totalEthCreditedSzabo = _fiatToEthAfterFeesSzabo + _ethDonatedAfterFeesSzabo;            //eg  1,200,000 + 980,000 = 2,180,000 (szabo)
+    uint256 tecf = divRound(_charity.ethCredited, 1 szabo);                                   //eg. 2180000000000000000 * (10^-12) = 2,180,000
+    _quickDiscrepancy = int256(_totalEthCreditedSzabo) - int256(tecf);                        //eg. 0
   }
 
 
+
+
   //note: contant fcn does not need safe math
-  function quickAuditFiatDelivered(uint _charity) public constant returns (
-                                                              uint _totalEthCreditedFinney,
-                                                              uint _ethNotProcessedFinney,
-                                                              uint _processedEthCreditedFinney,
-                                                              uint _ethToFiatPricePerEth,
-                                                              uint _ethToFiatCreditedFiat,
-                                                              uint _ethToFiatNotProcessed,
-                                                              uint _ethToFiatProcessed,
-                                                              uint _fiatDelivered,
-                                                               int _quickDiscrepancy) {
-    require(_charity < charityCount);
-    _totalEthCreditedFinney = charities[_charity].ethCredited * (1 ether / 1 finney);
-    _ethNotProcessedFinney = charities[_charity].ethBalance / (1 finney);                                  //eg. 1 ETH = 1 * 10^18 / 10^15 = 1000 (finney)
-    _processedEthCreditedFinney = _totalEthCreditedFinney - _ethNotProcessedFinney;                        //eg 1180 finney
-    if (charities[_charity].ethToFiatPriceAccEth == 0) {
+  function quickAuditFiatDelivered(uint _charityIdx) public constant returns (uint _totalEthCreditedSzabo,
+                                                                              uint _ethNotProcessedSzabo,
+                                                                              uint _processedEthCreditedSzabo,
+                                                                              uint _ethToFiatPricePerEth,
+                                                                              uint _ethToFiatCreditedFiat,
+                                                                              uint _ethToFiatNotProcessed,
+                                                                              uint _ethToFiatProcessed,
+                                                                              uint _fiatDelivered,
+                                                                              int _quickDiscrepancy) {
+    require(_charityIdx < charityCount);
+    Charity storage _charity = charities[_charityIdx];
+    _totalEthCreditedSzabo = divRound(_charity.ethCredited, 1 szabo);                          //eg. 2180000000000000000 * (10^-12) = 2,180,000
+    _ethNotProcessedSzabo = divRound(_charity.ethBalance, 1 szabo);                            //eg. 1 ETH = 1 * 10^18 / 10^12 = 1,000,000 (szabo)
+    _processedEthCreditedSzabo = _totalEthCreditedSzabo - _ethNotProcessedSzabo;               //eg  1,180,000 szabo
+    if (_charity.ethToFiatPriceAccEth == 0) {
       _ethToFiatPricePerEth = 0;
       _ethToFiatCreditedFiat = 0;
     } else {
-      _ethToFiatPricePerEth = (charities[_charity].ethToFiatPriceAccFiat * (1 ether)) /                    //eg. 29400 * 10^18 = 2940000 * 10^16
-                               charities[_charity].ethToFiatPriceAccEth;                                   //eg 0.980 ETH      =      98 * 10^16
-                                                                                                           //               --------------------
-                                                                                                           //                      30000 (30000 cents per ether)
-      _ethToFiatCreditedFiat = _processedEthCreditedFinney * _ethToFiatPricePerEth / (1 ether / 1 finney); //eg. 1180 * 30000 / 1000 = 35400
+      _ethToFiatPricePerEth = divRound(_charity.ethToFiatPriceAccFiat * (1 ether),             //eg. 35400 * 10^18 = 3540000 * 10^16
+                                       _charity.ethToFiatPriceAccEth);                         //eg  1.180 ETH     =     118 * 10^16
+                                                                                               //               --------------------
+                                                                                               //                      30000 (30000 cents per ether)
+      uint _szaboPerEth = 1 ether / 1 szabo;
+      _ethToFiatCreditedFiat = divRound(_processedEthCreditedSzabo * _ethToFiatPricePerEth,    //eg. 1,180,000 * 30000 / 1,000,000 = 35400
+                                        _szaboPerEth);
     }
-    _ethToFiatNotProcessed = charities[_charity].fiatBalanceOut;
+    _ethToFiatNotProcessed = _charity.fiatBalanceOut;
     _ethToFiatProcessed = _ethToFiatCreditedFiat - _ethToFiatNotProcessed;
-    _fiatDelivered = charities[_charity].fiatDelivered;
+    _fiatDelivered = _charity.fiatDelivered;
     _quickDiscrepancy = int256(_ethToFiatProcessed) - int256(_fiatDelivered);
   }
 
