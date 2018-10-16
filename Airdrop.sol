@@ -1,57 +1,95 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDrop at 0x2e47ea0860130c14c78304a629e402e0115f714d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDrop at 0xcf3a1ba564180b2e583da7ef03d1a40b539c3b3c
 */
-pragma solidity ^0.4.17;
-
+pragma solidity ^0.4.16;
 
 contract Ownable {
-    
-    address public owner;
 
-    function Ownable() public {
-        owner = 0x53315fa129e1cCcC51d8575105755505750F5A38;
-    }
+  address public owner;
 
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
+  function Ownable() {
+    owner = msg.sender;
+  }
 
-    event OwnershipTransferred(address indexed from, address indexed to);
-    
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
 
-    function transferOwnership(address _newOwner) public onlyOwner {
-        require(_newOwner != 0x0);
-        OwnershipTransferred(owner, _newOwner);
-        owner = _newOwner;
-    }
+  function transferOwnership(address newOwner) onlyOwner {
+    require(newOwner != address(0));
+    owner = newOwner;
+  }
 }
 
-
-contract TokenTransferInterface {
-    function transfer(address _to, uint256 _value) public;
+interface Token {
+  function transfer(address _to, uint256 _value) returns (bool);
+  function balanceOf(address _owner) constant returns (uint256 balance);
 }
-
 
 contract AirDrop is Ownable {
 
-    TokenTransferInterface public constant token = TokenTransferInterface(0x923393Df3D05e53099ce22C9e2991EC3407b0315);
+  Token token;
 
-    function multiValueAirDrop(address[] _addrs, uint256[] _values) public onlyOwner {
-	require(_addrs.length == _values.length && _addrs.length <= 100);
-        for (uint i = 0; i < _addrs.length; i++) {
-            if (_addrs[i] != 0x0 && _values[i] > 0) {
-                token.transfer(_addrs[i], _values[i] * (10 ** 18));  
-            }
-        }
-    }
+  event TransferredToken(address indexed to, uint256 value);
+  event FailedTransfer(address indexed to, uint256 value);
 
-    function singleValueAirDrop(address[] _addrs, uint256 _value) public onlyOwner {
-	require(_addrs.length <= 100 && _value > 0);
-        for (uint i = 0; i < _addrs.length; i++) {
-            if (_addrs[i] != 0x0) {
-                token.transfer(_addrs[i], _value * (10 ** 18));
-            }
-        }
+  modifier whenDropIsActive() {
+    assert(isActive());
+
+    _;
+  }
+
+  function AirDrop () {
+      address _tokenAddr = 0xC77A91BEF771a0b62A81ef776BC5071713025dDe; //here pass address of your token
+      token = Token(_tokenAddr);
+  }
+
+  function isActive() constant returns (bool) {
+    return (
+        tokensAvailable() > 0 // Tokens must be available to send
+    );
+  }
+  //below function can be used when you want to send every recipeint with different number of tokens
+  function sendTokens(address[] dests, uint256[] values) whenDropIsActive onlyOwner external {
+    uint256 i = 0;
+    while (i < dests.length) {
+        uint256 toSend = values[i] * 10**18;
+        sendInternally(dests[i] , toSend, values[i]);
+        i++;
     }
+  }
+
+  // this function can be used when you want to send same number of tokens to all the recipients
+  function sendTokensSingleValue(address[] dests, uint256 value) whenDropIsActive onlyOwner external {
+    uint256 i = 0;
+    uint256 toSend = value * 10**18;
+    while (i < dests.length) {
+        sendInternally(dests[i] , toSend, value);
+        i++;
+    }
+  }  
+
+  function sendInternally(address recipient, uint256 tokensToSend, uint256 valueToPresent) internal {
+    if(recipient == address(0)) return;
+
+    if(tokensAvailable() >= tokensToSend) {
+      token.transfer(recipient, tokensToSend);
+      TransferredToken(recipient, valueToPresent);
+    } else {
+      FailedTransfer(recipient, valueToPresent); 
+    }
+  }   
+
+
+  function tokensAvailable() constant returns (uint256) {
+    return token.balanceOf(this);
+  }
+
+  function destroy() onlyOwner {
+    uint256 balance = tokensAvailable();
+    require (balance > 0);
+    token.transfer(owner, balance);
+    selfdestruct(owner);
+  }
 }
