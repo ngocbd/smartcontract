@@ -1,7 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExpectedRate at 0xe96515328832c2453bcf7499eef54d6ef80dacd2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExpectedRate at 0x572c20ef9c8eca7f8743064adf9cee19317d61c4
 */
 pragma solidity 0.4.18;
+
+interface ERC20 {
+    function totalSupply() public view returns (uint supply);
+    function balanceOf(address _owner) public view returns (uint balance);
+    function transfer(address _to, uint _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint _value) public returns (bool success);
+    function approve(address _spender, uint _value) public returns (bool success);
+    function allowance(address _owner, address _spender) public view returns (uint remaining);
+    function decimals() public view returns(uint digits);
+    event Approval(address indexed _owner, address indexed _spender, uint _value);
+}
 
 interface KyberReserveInterface {
 
@@ -18,25 +29,6 @@ interface KyberReserveInterface {
         returns(bool);
 
     function getConversionRate(ERC20 src, ERC20 dest, uint srcQty, uint blockNumber) public view returns(uint);
-}
-
-interface ERC20 {
-    function totalSupply() public view returns (uint supply);
-    function balanceOf(address _owner) public view returns (uint balance);
-    function transfer(address _to, uint _value) public returns (bool success);
-    function transferFrom(address _from, address _to, uint _value) public returns (bool success);
-    function approve(address _spender, uint _value) public returns (bool success);
-    function allowance(address _owner, address _spender) public view returns (uint remaining);
-    function decimals() public view returns(uint digits);
-    event Approval(address indexed _owner, address indexed _spender, uint _value);
-}
-
-interface FeeBurnerInterface {
-    function handleFees (uint tradeWeiAmount, address reserve, address wallet) public returns(bool);
-}
-
-contract WhiteListInterface {
-    function getUserCapInWei(address user) external view returns (uint userCapWei);
 }
 
 contract Utils {
@@ -96,6 +88,19 @@ contract Utils {
         }
         return (numerator + denominator - 1) / denominator; //avoid rounding down errors
     }
+}
+
+contract WhiteListInterface {
+    function getUserCapInWei(address user) external view returns (uint userCapWei);
+}
+
+interface FeeBurnerInterface {
+    function handleFees (uint tradeWeiAmount, address reserve, address wallet) public returns(bool);
+}
+
+interface ExpectedRateInterface {
+    function getExpectedRate(ERC20 src, ERC20 dest, uint srcQty) public view
+        returns (uint expectedRate, uint slippageRate);
 }
 
 contract PermissionGroups {
@@ -255,7 +260,7 @@ contract KyberNetwork is Withdrawable, Utils {
     FeeBurnerInterface    public feeBurnerContract;
     uint                  public maxGasPrice = 50 * 1000 * 1000 * 1000; // 50 gwei
     bool                  public enabled = false; // network is enabled
-    uint                  public networkState; // this is only a field for UI.
+    mapping(bytes32=>uint) public info; // this is only a UI field for external app.
     mapping(address=>mapping(bytes32=>bool)) public perReserveListedPairs;
 
     function KyberNetwork(address _admin) public {
@@ -397,6 +402,8 @@ contract KyberNetwork is Withdrawable, Utils {
         require(_whiteList != address(0));
         require(_feeBurner != address(0));
         require(_expectedRate != address(0));
+        require(_negligibleRateDiff <= 100 * 100); // at most 100%
+
         whiteListContract = _whiteList;
         expectedRateContract = _expectedRate;
         feeBurnerContract = _feeBurner;
@@ -413,8 +420,8 @@ contract KyberNetwork is Withdrawable, Utils {
         enabled = _enable;
     }
 
-    function setNetworkState(uint _networkState) public onlyOperator {
-        networkState = _networkState;
+    function setInfo(bytes32 field, uint value) public onlyOperator {
+        info[field] = value;
     }
 
     /// @dev returns number of reserves
@@ -634,12 +641,7 @@ contract KyberNetwork is Withdrawable, Utils {
     }
 }
 
-interface ExpectedRateInterface {
-    function getExpectedRate(ERC20 src, ERC20 dest, uint srcQty) public view
-        returns (uint expectedRate, uint slippageRate);
-}
-
-contract ExpectedRate is Withdrawable, ExpectedRateInterface {
+contract ExpectedRate is Withdrawable, ExpectedRateInterface, Utils {
 
     KyberNetwork public kyberNetwork;
     uint public quantityFactor = 2;
@@ -655,6 +657,8 @@ contract ExpectedRate is Withdrawable, ExpectedRateInterface {
     event QuantityFactorSet (uint newFactor, uint oldFactor, address sender);
 
     function setQuantityFactor(uint newFactor) public onlyOperator {
+        require(newFactor <= 100);
+
         QuantityFactorSet(quantityFactor, newFactor, msg.sender);
         quantityFactor = newFactor;
     }
@@ -662,6 +666,8 @@ contract ExpectedRate is Withdrawable, ExpectedRateInterface {
     event MinSlippageFactorSet (uint newMin, uint oldMin, address sender);
 
     function setMinSlippageFactor(uint bps) public onlyOperator {
+        require(minSlippageFactorInBps <= 100 * 100);
+
         MinSlippageFactorSet(bps, minSlippageFactorInBps, msg.sender);
         minSlippageFactorInBps = bps;
     }
@@ -671,12 +677,16 @@ contract ExpectedRate is Withdrawable, ExpectedRateInterface {
         returns (uint expectedRate, uint slippageRate)
     {
         require(quantityFactor != 0);
+        require(srcQty <= MAX_QTY);
+        require(srcQty * quantityFactor <= MAX_QTY);
 
         uint bestReserve;
         uint minSlippage;
 
         (bestReserve, expectedRate) = kyberNetwork.findBestRate(src, dest, srcQty);
         (bestReserve, slippageRate) = kyberNetwork.findBestRate(src, dest, (srcQty * quantityFactor));
+
+        require(expectedRate <= MAX_RATE);
 
         minSlippage = ((10000 - minSlippageFactorInBps) * expectedRate) / 10000;
         if (slippageRate >= minSlippage) {
