@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeikhosBounty at 0xaec7e8c221c3fd24e75c996e32289235fd899ebf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeikhosBounty at 0x2df77094d9196fa777a2b99934dfb5a3628ea845
 */
 contract TeikhosBounty {
 
     // Proof-of-public-key in format 2xbytes32, to support xor operator and ecrecover r, s v format
     bytes32 proof_of_public_key1 = hex"94cd5137c63cf80cdd176a2a6285572cc076f2fbea67c8b36e65065be7bc34ec";
     bytes32 proof_of_public_key2 = hex"9f6463aadf1a8aed68b99aa14538f16d67bf586a4bdecb904d56d5edb2cfb13a";
-    
+                                       
     function authenticate(bytes _publicKey) returns (bool) { // Accepts an array of bytes, for example ["0x00","0xaa", "0xff"]
 
         // Get address from public key
@@ -32,7 +32,4 @@ contract TeikhosBounty {
         if(ecrecover(msgHash, 27, r, s) == signer) return true;
         if(ecrecover(msgHash, 28, r, s) == signer) return true;
     }
-    
-    function() payable {}                            
-
 }
