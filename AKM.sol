@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AKM at 0x33f450ae1eaa2e43e49b9b20b532f5faf44f2d35
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AKM at 0x1dFf419E268Da24005f32a2D53250b260530E173
 */
 pragma solidity ^0.4.11;
 
@@ -73,7 +73,7 @@ contract Ownable {
 contract AKM is BasicToken, Ownable {
   using SafeMath for uint256;
   
-  string public constant name = "AKM Token";
+  string public constant name = "AKM coin";
   string public constant symbol = "AKM";
   uint256 public constant decimals = 8;
   
@@ -159,6 +159,4 @@ contract AKM is BasicToken, Ownable {
     emissionPay(amount);
     owner.transfer(msg.value);
   }
-  
-  
 }
