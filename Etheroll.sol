@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etheroll at 0x358bd9446e79eE20c0FBAa4f3BFf31d794bFe8B9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etheroll at 0xD91E45416bfbBEc6e2D1ae4aC83b788A21Acf583
 */
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.18;
 
 // <ORACLIZE_API>
 /*
@@ -1833,16 +1833,13 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
     uint public maxProfit;   
     uint public maxProfitAsPercentOfHouse;                    
     uint public minBet; 
-    //init discontinued contract data   
-    //todo       
-    int public totalBets = 5671;
+    //init discontinued contract data         
+    int public totalBets = 138472;
     uint public maxPendingPayouts;
-    //init discontinued contract data 
-    //todo         
-    uint public totalWeiWon = 2091633232860934129948;
+    //init discontinued contract data         
+    uint public totalWeiWon = 61779454774685332087870;
     //init discontinued contract data  
-    //todo
-    uint public totalWeiWagered = 10852397031892670514693;    
+    uint public totalWeiWagered = 213696169063866525745355;    
 
     /*
      * player vars
@@ -1908,9 +1905,8 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
         * assign partially encrypted query to oraclize
         * only the apiKey is encrypted 
         * integer query is in plain text
-        */ 
-        //todo update encrypted query       
-        bytes32 rngId = oraclize_query("nested", "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random[\"serialNumber\",\"data\"]', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BP+K1lKZnLQrFNqP8pPqiyIdpVwBwMX1X1/XmJXjZhjQeR+q7Tjbxlkcv4Z3GdbTeX8q4FZBAo0hLZ77BlTfSHhjKcQkD/gpDIzIG7UTQ+BWpzeOBJGAE67R+sM03bsiSdt0VRVe2VnATN3JVMwNrm2E3S09zu4=},\"n\":1,\"min\":1,\"max\":100,\"replacement\":true,\"base\":10${[identity] \"}\"},\"id\":1${[identity] \"}\"}']", gasForOraclize);
+        */               
+        bytes32 rngId = oraclize_query("nested", "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random[\"serialNumber\",\"data\"]', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BK8UxIEHLaY8JEQDl1sjK73+fDZaze2oRyp3OzgI3Q1Xbz7xFGJ7pKtmKXdyiML5e26HYeoxO4fOFoVQ7iHBVd3Olm0gowJ60oIiC+OfrOB+dsoobaztcFmEKMgh7bLXREL9ORAb7rUD4DVlH4NpxQ4mfkgKvtE=},\"n\":1,\"min\":1,\"max\":100,\"replacement\":true,\"base\":10${[identity] \"}\"},\"id\":1${[identity] \"}\"}']", gasForOraclize);
         	    
         /* map bet id to this oraclize query */
 		playerBetId[rngId] = rngId;
