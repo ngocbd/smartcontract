@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ELECTRONICPLATINUM at 0xa4ef5964f146d2526c51fc40caa244e45edce136
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ELECTRONICPLATINUM at 0x3ef07ef86fdad193a381176dd66721dbea76a88a
 */
 pragma solidity ^0.4.19;
  
@@ -80,8 +80,8 @@ contract ELECTRONICPLATINUM is StandardToken {
  
     function ELECTRONICPLATINUM(
         ) {
-        balances[msg.sender] = 2000000000000000;              
-        totalSupply = 2000000000000000;                       
+        balances[msg.sender] = 20000000;              
+        totalSupply = 20000000;                       
         name = "ELECTRONIC PLATINUM";                                   
         decimals = 8;                            
         symbol = "EPL";                               
