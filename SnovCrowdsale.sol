@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SnovCrowdsale at 0x71972877d68acf22114e05578364a307cafe2885
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SnovCrowdsale at 0xa138fdb33b51f8533b5e7a435f263ba9d4100c69
 */
 pragma solidity ^0.4.11;
 
@@ -397,7 +397,7 @@ contract BsCrowdsale is SafeMath, Ownable, Pausable {
     uint256 public totalEthSales = 0;      // Total amount of ETH contributions during this crowdsale.
     uint256 public totalExternalSales = 0; // Total amount of external contributions (USD, BTC, etc.) during this crowdsale.
 
-    uint256 public startTime = 1509364800; // 2017-10-31 12:00:00Z
+    uint256 public startTime = 1509451200; // 2017-10-31 12:00:00Z
     uint256 public endTime   = 1512043200; // 2017-11-30 12:00:00Z
 
     // Use in bonuses:
