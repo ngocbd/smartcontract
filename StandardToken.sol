@@ -1,72 +1,185 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StandardToken at 0x31cfa363713884c5642e7249a47762188d144629
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StandardToken at 0xaf216ec61e3f177611dc9c17a8b4e205deec8862
 */
 pragma solidity ^0.4.11;
-contract ERC20 {
-  uint public totalSupply;
-  function balanceOf(address who) constant returns (uint);
-  function transfer(address to, uint value);
-  function allowance(address owner, address spender) constant returns (uint);
 
-  function transferFrom(address from, address to, uint value);
-  function approve(address spender, uint value);
+contract Owned {
 
-  event Transfer(address indexed from, address indexed to, uint value);
-  event Approval(address indexed owner, address indexed spender, uint value);
+    /// `owner` is the only address that can call a function with this
+    /// modifier
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    address public owner;
+
+    /// @notice The Constructor assigns the message sender to be `owner`
+    function Owned() {
+        owner = msg.sender;
+    }
+
+    address newOwner=0x0;
+
+    event OwnerUpdate(address _prevOwner, address _newOwner);
+
+    ///change the owner
+    function changeOwner(address _newOwner) public onlyOwner {
+        require(_newOwner != owner);
+        newOwner = _newOwner;
+    }
+
+    /// accept the ownership
+    function acceptOwnership() public{
+        require(msg.sender == newOwner);
+        OwnerUpdate(owner, newOwner);
+        owner = newOwner;
+        newOwner = 0x0;
+    }
+}
+contract SafeMath {
+    function SafeMath() {
+    }
+
+    function safeAdd(uint256 _x, uint256 _y) internal returns (uint256) {
+        uint256 z = _x + _y;
+        assert(z >= _x);
+        return z;
+    }
+
+    function safeSub(uint256 _x, uint256 _y) internal returns (uint256) {
+        assert(_x >= _y);
+        return _x - _y;
+    }
+
+    function safeMul(uint256 _x, uint256 _y) internal returns (uint256) {
+        uint256 z = _x * _y;
+        assert(_x == 0 || z / _x == _y);
+        return z;
+    }
+}
+contract ERC20Token {
+
+    function name() public constant returns (string name) { name; }
+    function symbol() public constant returns (string symbol) { symbol; }
+    function decimals() public constant returns (uint8 decimals) { decimals; }
+    function totalSupply() public constant returns (uint256 totalSupply) { totalSupply; }
+    function balanceOf(address _owner) public constant returns (uint256 balance) { _owner; balance; }
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) { _owner; _spender; remaining; }
+
+    function transfer(address _to, uint256 _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+    function approve(address _spender, uint256 _value) public returns (bool success);
+
+}
+contract TokenHolder is Owned {
+    function TokenHolder() {
+    }
+
+    // validates an address - currently only checks that it isn't null
+    modifier validAddress(address _address) {
+        require(_address != 0x0);
+        _;
+    }
+
+    // verifies that the address is different than this contract address
+    modifier notThis(address _address){
+        require(_address != address(this));
+        _;
+    }
+
+}
+contract SmartToken is ERC20Token,TokenHolder{
+    function generateTokens(address _to, uint256 _amount) public;
 }
 
-contract StandardToken is ERC20 {
+contract StandardToken is SmartToken,SafeMath {
+    string public name;
+    uint8 public decimals=18;
+    string public symbol;
+    string public version = 'V0.1';
+    uint256 public totalSupply=0;
 
-  string public constant name = "testcbs";
-  string public constant symbol = "KKL";
-  uint8 public constant decimals = 18; 
+    bool public transferEnabled=false;
+    function StandardToken(string _name, string _symbol) {
+        name = _name;
+        symbol = _symbol;
+    }
+    function transfer(address _to, uint256 _value) transferAllowed returns (bool success) {
+        if (balances[msg.sender] >= _value && _value > 0) {
+            balances[msg.sender] -= _value;
+            balances[_to] += _value;
+            Transfer(msg.sender, _to, _value);
+            return true;
+        } else { return false; }
+    }
 
-  mapping (address => mapping (address => uint)) allowed;
-  mapping (address => uint) balances;
+    function transferFrom(address _from, address _to, uint256 _value) transferAllowed returns (bool success) {
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
+            balances[_to] += _value;
+            balances[_from] -= _value;
+            allowed[_from][msg.sender] -= _value;
+            Transfer(_from, _to, _value);
+            return true;
+        } else { return false; }
+    }
 
-  function transferFrom(address _from, address _to, uint _value) {
-    var _allowance = allowed[_from][msg.sender];
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
+    }
 
-    // Check is not needed because safeSub(_allowance, _value) will already throw if this condition is not met
-    // if (_value > _allowance) throw;
+    function approve(address _spender, uint256 _value) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
 
-    balances[_to] +=_value;
-    balances[_from] -= _value;
-    allowed[_from][msg.sender] -= _value;
-    Transfer(_from, _to, _value);
-  }
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+      return allowed[_owner][_spender];
+    }
 
-  function approve(address _spender, uint _value) {
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-  }
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
 
-  function allowance(address _owner, address _spender) constant returns (uint remaining) {
-    return allowed[_owner][_spender];
-  }
 
-  function transfer(address _to, uint _value) {
-    balances[msg.sender] -= _value;
-    balances[_to] += _value;
-    Transfer(msg.sender, _to, _value);
-  }
+    /**
+        @dev increases the token supply and sends the new tokens to an account
+        can only be called by the contract owner
 
-  function balanceOf(address _owner) constant returns (uint balance) {
-    return balances[_owner];
-  }
-  
-  function StandardToken(){
-  balances[msg.sender] = 1000000;
-}
+        @param _to         account to receive the new amount
+        @param _amount     amount to increase the supply by
+    */
+    function generateTokens(address _to, uint256 _amount)
+        public
+        onlyOwner
+        validAddress(_to)
+        notThis(_to)
+    {
+        totalSupply = safeAdd(totalSupply, _amount);
+        balances[_to] = safeAdd(balances[_to], _amount);
 
-function mint() payable external {
-  if (msg.value == 0) throw;
+        Transfer(this, _to, _amount);
+    }
+    //only owner can destroy the token
+    function destroy(address _from, uint256 _amount)
+        public
+        onlyOwner
+    {
+        balances[_from] = safeSub(balances[_from], _amount);
+        totalSupply = safeSub(totalSupply, _amount);
 
-  var numTokens = msg.value * 1000;
-  totalSupply += numTokens;
+        Transfer(_from, this, _amount);
+        Destroy(_from,_amount);
+    }
+    function enableTransfer(bool _enable) public onlyOwner{
+        transferEnabled=_enable;
+    }
+    modifier transferAllowed {
+        assert(transferEnabled);
+        _;
+    }
 
-  balances[msg.sender] += numTokens;
-
-  Transfer(0, msg.sender, numTokens);
-}
+    event Destroy(address indexed _from,uint256 _amount);
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
