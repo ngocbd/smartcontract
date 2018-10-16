@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WTBNToken at 0xfda6e6bacc3b8fb2cc9fee6d99c029c4e3be8707
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WTBNToken at 0x0682c2b2092c265c9c822d8a71d0a1c713c322a9
 */
 pragma solidity ^0.4.17;
 
@@ -241,7 +241,7 @@ contract WTBNToken is StandardToken {
   string public constant name =  "Whos The Boss Now";
   string public constant symbol = "WTBN";
   uint256 public constant decimals = 18;
-  uint256 public totalSupply = 100000000 * 1 ether;
+  uint256 public totalSupply = 10000000 * 1 ether;
   
 /** Constructor WTBN Token */
   function WTBNToken() {
