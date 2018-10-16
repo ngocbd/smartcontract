@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GamityToken at 0xdaf44abc11eba1a7b0332ce5cce2ba0b2a9f727b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GamityToken at 0x35fa421747c9976554a9b8308cd9d8ef8f2edf8f
 */
 pragma solidity ^0.4.13;
 
@@ -236,26 +236,26 @@ contract Pausable is Ownable {
 
 /**
  * @title Gamity Token
- * @dev ERC20 Gamity Token (GMTY)
+ * @dev ERC20 Gamity Token (GMT)
  *
- * GMTY Tokens are divisible by 1e18 (1000,000,000,000,000,000) base
+ * GMT Tokens are divisible by 1e18 (1000,000,000,000,000,000) base
  * units referred to as 'Grains'.
  *
- * GMTY are displayed using 18 decimal places of precision.
+ * GMT are displayed using 18 decimal places of precision.
  *
- * 1 GMTY is equivalent to:
+ * 1 GMT is equivalent to:
  *   1000000000000000000 == 1 * 10**18 == 1e18
  *
- * All initial GMTY Grains are assigned to the creator of
+ * All initial GMT Grains are assigned to the creator of
  * this contract.
  *
  */
 contract GamityToken is StandardToken, Pausable {
 
   string public constant name = 'Gamity';                       // Set the token name for display
-  string public constant symbol = 'GMTY';                                       // Set the token symbol for display
+  string public constant symbol = 'GMT';                                       // Set the token symbol for display
   uint8 public constant decimals = 18;                                          // Set the number of decimals for display
-  uint256 public constant INITIAL_SUPPLY = 500000 * 10**uint256(decimals); // 500000 GMTY specified in Grains
+  uint256 public constant INITIAL_SUPPLY = 500000 * 10**uint256(decimals); // 500000 GMT specified in Grains
 
   /**
    * @dev GamityToken Constructor
