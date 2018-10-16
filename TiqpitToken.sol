@@ -1,7 +1,95 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TiqpitToken at 0x808a461b5ff65b78e93344785a71d72ccfc68629
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TiqpitToken at 0x73d5eb4c38f9c486c4faaf6d8982991588816316
 */
 pragma solidity ^0.4.18;
+
+// File: zeppelin-solidity/contracts/ownership/Ownable.sol
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+// File: zeppelin-solidity/contracts/lifecycle/Pausable.sol
+
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    Pause();
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    Unpause();
+  }
+}
 
 // File: zeppelin-solidity/contracts/math/SafeMath.sol
 
@@ -222,176 +310,6 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-// File: zeppelin-solidity/contracts/examples/SimpleToken.sol
-
-/**
- * @title SimpleToken
- * @dev Very simple ERC20 Token example, where all tokens are pre-assigned to the creator.
- * Note they can later distribute these tokens as they wish using `transfer` and other
- * `StandardToken` functions.
- */
-contract SimpleToken is StandardToken {
-
-  string public constant name = "SimpleToken"; // solium-disable-line uppercase
-  string public constant symbol = "SIM"; // solium-disable-line uppercase
-  uint8 public constant decimals = 18; // solium-disable-line uppercase
-
-  uint256 public constant INITIAL_SUPPLY = 10000 * (10 ** uint256(decimals));
-
-  /**
-   * @dev Constructor that gives msg.sender all of existing tokens.
-   */
-  function SimpleToken() public {
-    totalSupply_ = INITIAL_SUPPLY;
-    balances[msg.sender] = INITIAL_SUPPLY;
-    Transfer(0x0, msg.sender, INITIAL_SUPPLY);
-  }
-
-}
-
-// File: zeppelin-solidity/contracts/ownership/Ownable.sol
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-// File: contracts/LockedOutTokens.sol
-
-// for unit test purposes only
-
-
-
-contract LockedOutTokens is Ownable {
-
-    address public wallet;
-    uint8 public tranchesCount;
-    uint256 public trancheSize;
-    uint256 public period;
-
-    uint256 public startTimestamp;
-    uint8 public tranchesPayedOut = 0;
-
-    ERC20Basic internal token;
-    
-    function LockedOutTokens(
-        address _wallet,
-        address _tokenAddress,
-        uint256 _startTimestamp,
-        uint8 _tranchesCount,
-        uint256 _trancheSize,
-        uint256 _periodSeconds
-    ) {
-        require(_wallet != address(0));
-        require(_tokenAddress != address(0));
-        require(_startTimestamp > 0);
-        require(_tranchesCount > 0);
-        require(_trancheSize > 0);
-        require(_periodSeconds > 0);
-
-        wallet = _wallet;
-        tranchesCount = _tranchesCount;
-        startTimestamp = _startTimestamp;
-        trancheSize = _trancheSize;
-        period = _periodSeconds;
-
-        token = ERC20Basic(_tokenAddress);
-    }
-
-    function grant()
-        public
-    {
-        require(wallet == msg.sender);
-        require(tranchesPayedOut < tranchesCount);
-        require(startTimestamp > 0);
-        require(now >= startTimestamp + (period * (tranchesPayedOut + 1)));
-
-        tranchesPayedOut = tranchesPayedOut + 1;
-        token.transfer(wallet, trancheSize);
-    }
-}
-
-// File: zeppelin-solidity/contracts/lifecycle/Pausable.sol
-
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
-
-  bool public paused = false;
-
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
-  modifier whenPaused() {
-    require(paused);
-    _;
-  }
-
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused public {
-    paused = true;
-    Pause();
-  }
-
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused public {
-    paused = false;
-    Unpause();
-  }
-}
-
 // File: contracts/TiqpitToken.sol
 
 contract TiqpitToken is StandardToken, Pausable {
@@ -472,495 +390,5 @@ contract TiqpitToken is StandardToken, Pausable {
         balances[_from] = balances[_from].sub(amount);
         totalSupply_ = totalSupply_.sub(amount);
         Transfer(_from, address(0), amount);
-    }
-}
-
-// File: contracts/Whitelist.sol
-
-/**
- * @title Whitelist contract
- * @dev Whitelist for wallets.
-*/
-contract Whitelist is Ownable {
-    mapping(address => bool) whitelist;
-
-    uint256 public whitelistLength = 0;
-
-    address public backendAddress;
-
-    /**
-    * @dev Add wallet to whitelist.
-    * @dev Accept request from the owner only.
-    * @param _wallet The address of wallet to add.
-    */  
-    function addWallet(address _wallet) public onlyPrivilegedAddresses {
-        require(_wallet != address(0));
-        require(!isWhitelisted(_wallet));
-        whitelist[_wallet] = true;
-        whitelistLength++;
-    }
-
-    /**
-    * @dev Remove wallet from whitelist.
-    * @dev Accept request from the owner only.
-    * @param _wallet The address of whitelisted wallet to remove.
-    */  
-    function removeWallet(address _wallet) public onlyOwner {
-        require(_wallet != address(0));
-        require(isWhitelisted(_wallet));
-        whitelist[_wallet] = false;
-        whitelistLength--;
-    }
-
-    /**
-    * @dev Check the specified wallet whether it is in the whitelist.
-    * @param _wallet The address of wallet to check.
-    */ 
-    function isWhitelisted(address _wallet) constant public returns (bool) {
-        return whitelist[_wallet];
-    }
-
-    /**
-    * @dev Sets the backend address for automated operations.
-    * @param _backendAddress The backend address to allow.
-    */
-    function setBackendAddress(address _backendAddress) public onlyOwner {
-        require(_backendAddress != address(0));
-        backendAddress = _backendAddress;
-    }
-
-    /**
-    * @dev Allows the function to be called only by the owner and backend.
-    */
-    modifier onlyPrivilegedAddresses() {
-        require(msg.sender == owner || msg.sender == backendAddress);
-        _;
-    }
-}
-
-// File: contracts/Whitelistable.sol
-
-contract Whitelistable {
-    Whitelist public whitelist;
-
-    modifier whenWhitelisted(address _wallet) {
-        require(whitelist.isWhitelisted(_wallet));
-        _;
-    }
-
-    /**
-    * @dev Constructor for Whitelistable contract.
-    */
-    function Whitelistable() public {
-        whitelist = new Whitelist();
-    }
-}
-
-// File: contracts/TiqpitCrowdsale.sol
-
-contract TiqpitCrowdsale is Pausable, Whitelistable {
-    using SafeMath for uint256;
-
-    uint256 constant private DECIMALS = 18;
-    
-    uint256 constant public RESERVED_TOKENS_BOUNTY = 10e6 * (10 ** DECIMALS);
-    uint256 constant public RESERVED_TOKENS_FOUNDERS = 25e6 * (10 ** DECIMALS);
-    uint256 constant public RESERVED_TOKENS_ADVISORS = 25e5 * (10 ** DECIMALS);
-    uint256 constant public RESERVED_TOKENS_TIQPIT_SOLUTIONS = 625e5 * (10 ** DECIMALS);
-
-    uint256 constant public MIN_INVESTMENT = 200 * (10 ** DECIMALS);
-    
-    uint256 constant public MINCAP_TOKENS_PRE_ICO = 1e6 * (10 ** DECIMALS);
-    uint256 constant public MAXCAP_TOKENS_PRE_ICO = 75e5 * (10 ** DECIMALS);
-    
-    uint256 constant public MINCAP_TOKENS_ICO = 5e6 * (10 ** DECIMALS);    
-    uint256 constant public MAXCAP_TOKENS_ICO = 3925e5 * (10 ** DECIMALS);
-
-    uint256 public tokensRemainingIco = MAXCAP_TOKENS_ICO;
-    uint256 public tokensRemainingPreIco = MAXCAP_TOKENS_PRE_ICO;
-
-    uint256 public soldTokensPreIco = 0;
-    uint256 public soldTokensIco = 0;
-    uint256 public soldTokensTotal = 0;
-
-    uint256 public preIcoRate = 2857;        // 1 PIT = 0.00035 ETH //Base rate for  Pre-ICO stage.
-
-    // ICO rates
-    uint256 public firstRate = 2500;         // 1 PIT = 0.0004 ETH
-    uint256 public secondRate = 2222;        // 1 PIT = 0.00045 ETH
-    uint256 public thirdRate = 2000;         // 1 PIT = 0.0005 ETH
-
-    uint256 public startTimePreIco = 0;
-    uint256 public endTimePreIco = 0;
-
-    uint256 public startTimeIco = 0;
-    uint256 public endTimeIco = 0;
-
-    uint256 public weiRaisedPreIco = 0;
-    uint256 public weiRaisedIco = 0;
-    uint256 public weiRaisedTotal = 0;
-
-    TiqpitToken public token = new TiqpitToken(this);
-
-    // Key - address of wallet, Value - address of  contract.
-    mapping (address => address) private lockedList;
-
-    address private tiqpitSolutionsWallet;
-    address private foundersWallet;
-    address private advisorsWallet;
-    address private bountyWallet;
-
-    address public backendAddress;
-
-    bool private hasPreIcoFailed = false;
-    bool private hasIcoFailed = false;
-
-    bool private isInitialDistributionDone = false;
-
-    struct Purchase {
-        uint256 refundableWei;
-        uint256 burnableTiqs;
-    }
-
-    mapping(address => Purchase) private preIcoPurchases;
-    mapping(address => Purchase) private icoPurchases;
-
-    /**
-    * @dev Constructor for TiqpitCrowdsale contract.
-    * @dev Set the owner who can manage whitelist and token.
-    * @param _startTimePreIco The pre-ICO start time.
-    * @param _endTimePreIco The pre-ICO end time.
-    * @param _foundersWallet The address to which reserved tokens for founders will be transferred.
-    * @param _advisorsWallet The address to which reserved tokens for advisors.
-    * @param _tiqpitSolutionsWallet The address to which reserved tokens for Tiqpit Solutions.
-    */
-    function TiqpitCrowdsale(
-        uint256 _startTimePreIco,
-        uint256 _endTimePreIco,
-        uint256 _startTimeIco,
-        uint256 _endTimeIco,
-        address _foundersWallet,
-        address _advisorsWallet,
-        address _tiqpitSolutionsWallet,
-        address _bountyWallet
-    ) Whitelistable() public
-    {
-        require(_bountyWallet != address(0) && _foundersWallet != address(0) && _tiqpitSolutionsWallet != address(0) && _advisorsWallet != address(0));
-        
-        require(_startTimePreIco >= now && _endTimePreIco > _startTimePreIco);
-        require(_startTimeIco >= _endTimePreIco && _endTimeIco > _startTimeIco);
-
-        startTimePreIco = _startTimePreIco;
-        endTimePreIco = _endTimePreIco;
-
-        startTimeIco = _startTimeIco;
-        endTimeIco = _endTimeIco;
-
-        tiqpitSolutionsWallet = _tiqpitSolutionsWallet;
-        advisorsWallet = _advisorsWallet;
-        foundersWallet = _foundersWallet;
-        bountyWallet = _bountyWallet;
-
-        whitelist.transferOwnership(msg.sender);
-        token.transferOwnership(msg.sender);
-    }
-
-    /**
-    * @dev Fallback function can be used to buy tokens.
-    */
-    function() public payable {
-        sellTokens();
-    }
-
-    /**
-    * @dev Check whether the pre-ICO is active at the moment.
-    */
-    function isPreIco() public view returns (bool) {
-        return now >= startTimePreIco && now <= endTimePreIco;
-    }
-
-    /**
-    * @dev Check whether the ICO is active at the moment.
-    */
-    function isIco() public view returns (bool) {
-        return now >= startTimeIco && now <= endTimeIco;
-    }
-
-    /**
-    * @dev Burn Remaining Tokens.
-    */
-    function burnRemainingTokens() onlyOwner public {
-        require(tokensRemainingIco > 0);
-        require(now > endTimeIco);
-
-        token.burnFromAddress(this);
-
-        tokensRemainingIco = 0;
-    }
-
-    /**
-    * @dev Send tokens to Advisors & Tiqpit Solutions Wallets.
-    * @dev Locked  tokens for Founders wallet.
-    */
-    function initialDistribution() onlyOwner public {
-        require(!isInitialDistributionDone);
-
-        token.transferFromIco(bountyWallet, RESERVED_TOKENS_BOUNTY);
-
-        token.transferFromIco(advisorsWallet, RESERVED_TOKENS_ADVISORS);
-        token.transferFromIco(tiqpitSolutionsWallet, RESERVED_TOKENS_TIQPIT_SOLUTIONS);
-        
-        lockTokens(foundersWallet, RESERVED_TOKENS_FOUNDERS, 1 years);
-
-        isInitialDistributionDone = true;
-    }
-
-    /**
-    * @dev Get Purchase by investor's address.
-    * @param _address The address of a ICO investor.
-    */
-    function getIcoPurchase(address _address) view public returns(uint256 weis, uint256 tokens) {
-        return (icoPurchases[_address].refundableWei, icoPurchases[_address].burnableTiqs);
-    }
-
-    /**
-    * @dev Get Purchase by investor's address.
-    * @param _address The address of a Pre-ICO investor.
-    */
-    function getPreIcoPurchase(address _address) view public returns(uint256 weis, uint256 tokens) {
-        return (preIcoPurchases[_address].refundableWei, preIcoPurchases[_address].burnableTiqs);
-    }
-
-    /**
-    * @dev Refund Ether invested in pre-ICO to the sender if pre-ICO failed.
-    */
-    function refundPreIco() public {
-        require(hasPreIcoFailed);
-
-        require(preIcoPurchases[msg.sender].burnableTiqs > 0 && preIcoPurchases[msg.sender].refundableWei > 0);
-        
-        uint256 amountWei = preIcoPurchases[msg.sender].refundableWei;
-        msg.sender.transfer(amountWei);
-
-        preIcoPurchases[msg.sender].refundableWei = 0;
-        preIcoPurchases[msg.sender].burnableTiqs = 0;
-
-        token.burnFromAddress(msg.sender);
-    }
-
-    /**
-    * @dev Refund Ether invested in ICO to the sender if ICO failed.
-    */
-    function refundIco() public {
-        require(hasIcoFailed);
-
-        require(icoPurchases[msg.sender].burnableTiqs > 0 && icoPurchases[msg.sender].refundableWei > 0);
-        
-        uint256 amountWei = icoPurchases[msg.sender].refundableWei;
-        msg.sender.transfer(amountWei);
-
-        icoPurchases[msg.sender].refundableWei = 0;
-        icoPurchases[msg.sender].burnableTiqs = 0;
-
-        token.burnFromAddress(msg.sender);
-    }
-
-    /**
-    * @dev Manual burn tokens from specified address.
-    * @param _address The address of a investor.
-    */
-    function burnTokens(address _address) onlyOwner public {
-        require(hasIcoFailed);
-
-        require(icoPurchases[_address].burnableTiqs > 0 || preIcoPurchases[_address].burnableTiqs > 0);
-
-        icoPurchases[_address].burnableTiqs = 0;
-        preIcoPurchases[_address].burnableTiqs = 0;
-
-        token.burnFromAddress(_address);
-    }
-
-    /**
-    * @dev Manual send tokens  for  specified address.
-    * @param _address The address of a investor.
-    * @param _tokensAmount Amount of tokens.
-    */
-    function manualSendTokens(address _address, uint256 _tokensAmount) whenWhitelisted(_address) public onlyPrivilegedAddresses {
-        require(_tokensAmount > 0);
-        
-        if (isPreIco() && _tokensAmount <= tokensRemainingPreIco) {
-            token.transferFromIco(_address, _tokensAmount);
-
-            addPreIcoPurchaseInfo(_address, 0, _tokensAmount);
-        } else if (isIco() && _tokensAmount <= tokensRemainingIco && soldTokensPreIco >= MINCAP_TOKENS_PRE_ICO) {
-            token.transferFromIco(_address, _tokensAmount);
-
-            addIcoPurchaseInfo(_address, 0, _tokensAmount);
-        } else {
-            revert();
-        }
-    }
-
-    /**
-    * @dev Get Locked Contract Address.
-    */
-    function getLockedContractAddress(address wallet) public view returns(address) {
-        return lockedList[wallet];
-    }
-
-    /**
-    * @dev Enable refund process.
-    */
-    function triggerFailFlags() onlyOwner public {
-        if (!hasPreIcoFailed && now > endTimePreIco && soldTokensPreIco < MINCAP_TOKENS_PRE_ICO) {
-            hasPreIcoFailed = true;
-        }
-
-        if (!hasIcoFailed && now > endTimeIco && soldTokensIco < MINCAP_TOKENS_ICO) {
-            hasIcoFailed = true;
-        }
-    }
-
-    /**
-    * @dev Calculate rate for ICO phase.
-    */
-    function currentIcoRate() public view returns(uint256) {     
-        if (now > startTimeIco && now <= startTimeIco + 5 days) {
-            return firstRate;
-        }
-
-        if (now > startTimeIco + 5 days && now <= startTimeIco + 10 days) {
-            return secondRate;
-        }
-
-        if (now > startTimeIco + 10 days) {
-            return thirdRate;
-        }
-    }
-
-    /**
-    * @dev Sell tokens during Pre-ICO && ICO stages.
-    * @dev Sell tokens only for whitelisted wallets.
-    */
-    function sellTokens() whenWhitelisted(msg.sender) whenNotPaused public payable {
-        require(msg.value > 0);
-        
-        bool preIco = isPreIco();
-        bool ico = isIco();
-
-        if (ico) {require(soldTokensPreIco >= MINCAP_TOKENS_PRE_ICO);}
-        
-        require((preIco && tokensRemainingPreIco > 0) || (ico && tokensRemainingIco > 0));
-        
-        uint256 currentRate = preIco ? preIcoRate : currentIcoRate();
-        
-        uint256 weiAmount = msg.value;
-        uint256 tokensAmount = weiAmount.mul(currentRate);
-
-        require(tokensAmount >= MIN_INVESTMENT);
-
-        if (ico) {
-            // Move unsold Pre-Ico tokens for current phase.
-            if (tokensRemainingPreIco > 0) {
-                tokensRemainingIco = tokensRemainingIco.add(tokensRemainingPreIco);
-                tokensRemainingPreIco = 0;
-            }
-        }
-       
-        uint256 tokensRemaining = preIco ? tokensRemainingPreIco : tokensRemainingIco;
-        if (tokensAmount > tokensRemaining) {
-            uint256 tokensRemainder = tokensAmount.sub(tokensRemaining);
-            tokensAmount = tokensAmount.sub(tokensRemainder);
-            
-            uint256 overpaidWei = tokensRemainder.div(currentRate);
-            msg.sender.transfer(overpaidWei);
-
-            weiAmount = msg.value.sub(overpaidWei);
-        }
-
-        token.transferFromIco(msg.sender, tokensAmount);
-
-        if (preIco) {
-            addPreIcoPurchaseInfo(msg.sender, weiAmount, tokensAmount);
-
-            if (soldTokensPreIco >= MINCAP_TOKENS_PRE_ICO) {
-                owner.transfer(this.balance);
-            }
-        }
-
-        if (ico) {
-            addIcoPurchaseInfo(msg.sender, weiAmount, tokensAmount);
-
-            if (soldTokensIco >= MINCAP_TOKENS_ICO) {
-                owner.transfer(this.balance);
-            }
-        }
-    }
-
-    /**
-    * @dev Add new investment to the Pre-ICO investments storage.
-    * @param _address The address of a Pre-ICO investor.
-    * @param _amountWei The investment received from a Pre-ICO investor.
-    * @param _amountTokens The tokens that will be sent to Pre-ICO investor.
-    */
-    function addPreIcoPurchaseInfo(address _address, uint256 _amountWei, uint256 _amountTokens) internal {
-        preIcoPurchases[_address].refundableWei = preIcoPurchases[_address].refundableWei.add(_amountWei);
-        preIcoPurchases[_address].burnableTiqs = preIcoPurchases[_address].burnableTiqs.add(_amountTokens);
-
-        soldTokensPreIco = soldTokensPreIco.add(_amountTokens);
-        tokensRemainingPreIco = tokensRemainingPreIco.sub(_amountTokens);
-
-        weiRaisedPreIco = weiRaisedPreIco.add(_amountWei);
-
-        soldTokensTotal = soldTokensTotal.add(_amountTokens);
-        weiRaisedTotal = weiRaisedTotal.add(_amountWei);
-    }
-
-    /**
-    * @dev Add new investment to the ICO investments storage.
-    * @param _address The address of a ICO investor.
-    * @param _amountWei The investment received from a ICO investor.
-    * @param _amountTokens The tokens that will be sent to ICO investor.
-    */
-    function addIcoPurchaseInfo(address _address, uint256 _amountWei, uint256 _amountTokens) internal {
-        icoPurchases[_address].refundableWei = icoPurchases[_address].refundableWei.add(_amountWei);
-        icoPurchases[_address].burnableTiqs = icoPurchases[_address].burnableTiqs.add(_amountTokens);
-
-        soldTokensIco = soldTokensIco.add(_amountTokens);
-        tokensRemainingIco = tokensRemainingIco.sub(_amountTokens);
-
-        weiRaisedIco = weiRaisedIco.add(_amountWei);
-
-        soldTokensTotal = soldTokensTotal.add(_amountTokens);
-        weiRaisedTotal = weiRaisedTotal.add(_amountWei);
-    }
-
-    /**
-    * @dev Locked specified amount  of  tokens for  specified wallet.
-    * @param _wallet The address of wallet.
-    * @param _amount The tokens  for locked.
-    * @param _time The time for locked period.
-    */
-    function lockTokens(address _wallet, uint256 _amount, uint256 _time) internal {
-        LockedOutTokens locked = new LockedOutTokens(_wallet, token, endTimePreIco, 1, _amount, _time);
-        lockedList[_wallet] = locked;
-        token.transferFromIco(locked, _amount);
-    }
-
-    /**
-    * @dev Sets the backend address for automated operations.
-    * @param _backendAddress The backend address to allow.
-    */
-    function setBackendAddress(address _backendAddress) public onlyOwner {
-        require(_backendAddress != address(0));
-        backendAddress = _backendAddress;
-    }
-
-    /**
-    * @dev Allows the function to be called only by the owner and backend.
-    */
-    modifier onlyPrivilegedAddresses() {
-        require(msg.sender == owner || msg.sender == backendAddress);
-        _;
     }
 }
