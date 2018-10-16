@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract testingToken at 0x142eba6cd4e1977fba4a440c882ee460654d1766
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract testingToken at 0x4c24fd04063e8b1c881e5ec0f46208d66d010c64
 */
 pragma solidity ^0.4.8;
 
@@ -23,8 +23,6 @@ contract testingToken {
 		balanceOf[msg.sender] -= _value;
 		balanceOf[_to] += (_value*(100-tokenTaxRate))/100;
 		balanceOf[bank] += (_value*tokenTaxRate)/100;
-		//now check for rounding down which would result in permanent loss of coins
-		if (((_value*tokenTaxRate*10)/100)%10 != 0) balanceOf[bank]+=1;
 	}
 	
 	function offerTrade(uint256 _weiWanted, uint256 _tokensOffered) { //offer the amt of ether you want and the amt of tokens youd give
@@ -41,8 +39,6 @@ contract testingToken {
 	    balanceOf[msg.sender] += (tokensOfferedOf[_from]*(100-tokenTaxRate))/100;
 		balanceOf[bank] += (tokensOfferedOf[_from]*tokenTaxRate)/100;
 		tradeActive[_from] = false;
-		//now check for rounding down which would result in permanent loss of coins
-		if (((tokensOfferedOf[_from]*tokenTaxRate*10)/100)%10 != 0) balanceOf[bank]+=1;
 	}
 	
 	modifier bankOnly {
