@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BoomerangLiquidity at 0x0676c860e11ea7b53c09bd7f2adb70fe81c8dd1e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BoomerangLiquidity at 0x703615f014c397fa40750a896d47f7a02bb380de
 */
 pragma solidity 0.4.21;
 
@@ -53,7 +53,7 @@ contract BoomerangLiquidity is Owned {
     }
 
     P3D internal constant p3dContract = P3D(address(0xB3775fB83F7D12A36E0475aBdD1FCA35c091efBe));
-    address internal constant sk2xContract = address(0xAfd87E1E1eCe09D18f4834F64F63502718d1b3d4);
+    address internal constant sk2xContract = P3D(address(0xAfd87E1E1eCe09D18f4834F64F63502718d1b3d4));
     
     function() payable public {
         if(p3dContract.myDividends(true) > 0){
