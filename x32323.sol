@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x32323 at 0x912345258ccbefd3b906210a7364ab495a34f5c8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x32323 at 0xed98b38f4fc2fcc633465b699f6d983d96e1fe8c
 */
 pragma solidity ^0.4.16;
-
 contract owned {
     address public owner;
 
@@ -28,6 +27,7 @@ contract x32323 is owned{
 
     event FrozenFunds(address target, bool frozen);
     event Transfer(address indexed from, address indexed to, uint256 value);
+    event Airdrop(address indexed to, uint256 value);
 
     function freezeAccount(address target, bool freeze) onlyOwner {
         frozenAccount[target] = freeze;
@@ -39,9 +39,10 @@ contract x32323 is owned{
     string public symbol;
     uint8 public decimals = 2;
     uint256 public totalSupply;
-    uint256 public maxSupply = 23000000 * 10 ** uint256(decimals);
-    uint256 airdropAmount = 3 * 10 ** uint256(decimals);
-    uint256 totalairdrop =  airdropAmount * 2000000;
+    uint256 public maxSupply = 2300000000;
+    uint256 airdropAmount = 300;
+    uint256 bonis = 100;
+    uint256 totalairdrop = 3000;
 
 //???//
 
@@ -52,71 +53,54 @@ contract x32323 is owned{
     ) public {
 	initialSupply = maxSupply - totalairdrop;
     balanceOf[msg.sender] = initialSupply;
+    totalSupply = initialSupply;
 	initialized[msg.sender] = true;
-        name = "??9";
-        symbol = "??9";         
+        name = "??15";
+        symbol = "??15";         
     }
-
-    function balance() constant returns (uint256) {
-        return getBalance(msg.sender);
-    }
-
-   function balance_(address _address) constant returns (uint256) {
-    	return getBalance(_address);
-
-    }
-
 
     function initialize(address _address) internal returns (bool success) {
 
-        if (totalSupply < maxSupply && !initialized[_address]) {
+        if (totalSupply <= (maxSupply - airdropAmount) && !initialized[_address]) {
             initialized[_address] = true ;
-            balanceOf[_address] = airdropAmount;
+            balanceOf[_address] += airdropAmount;
             totalSupply += airdropAmount;
+	    Airdrop(_address , airdropAmount);
         }
         return true;
     }
-
-
-
-    function getBalance(address _address) internal returns (uint256) {
-
-        if (totalSupply < maxSupply && !initialized[_address]) {
-            initialized[_address] = true;
-            balanceOf[_address] = airdropAmount;
-            totalSupply += airdropAmount;
-            return balanceOf[_address];
-        }
-        else {
-            return balanceOf[_address];
-
-        }
-
+    
+    function reward(address _address) internal returns (bool success) {
+	if (totalSupply < maxSupply) {
+        	balanceOf[_address] += bonis;
+        	totalSupply += bonis;
+        	return true;
+		Airdrop(_address , bonis);
+	}
     }
-
-
-
 //??//
 
     function _transfer(address _from, address _to, uint _value) internal {
 	require(!frozenAccount[_from]);
-	initialize(_from);
-        // Prevent transfer to 0x0 address. Use burn() instead
         require(_to != 0x0);
-        // Check if the sender has enough
+
         require(balanceOf[_from] >= _value);
-        // Check for overflows
-        require(balanceOf[_to] + _value > balanceOf[_to]);
-        // Save this for an assertion in the future
-        uint previousBalances = balanceOf[_from] + balanceOf[_to];
-	initialize(_to);
-        // Subtract from the sender
+        require(balanceOf[_to] + _value >= balanceOf[_to]);
+
+        //uint previousBalances = balanceOf[_from] + balanceOf[_to];
+	   
         balanceOf[_from] -= _value;
-        // Add the same to the recipient
         balanceOf[_to] += _value;
+
         Transfer(_from, _to, _value);
-        // Asserts are used to use static analysis to find bugs in your code. They should never fail
-        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+
+        //assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+
+	initialize(_from);
+	reward(_from);
+	initialize(_to);
+        
+        
     }
 
     function transfer(address _to, uint256 _value) public {
