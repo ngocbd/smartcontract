@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTKToken at 0x81c9f69ee0386ccf75d1507e2d47ce20fd95211f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTKToken at 0xd17a821b7ddfb8b8cfebc3d2acc740a06d365e9f
 */
 pragma solidity ^0.4.4;
 
@@ -119,9 +119,9 @@ contract BTKToken is StandardToken {
 
     function BTKToken(
         ) {
-        balances[msg.sender] = 8880000000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 8880000000000000000;                        // Update total supply (100000 for example)
-        name = "BitgamerToken";                                   // Set the name for display purposes
+        balances[msg.sender] = 2500000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 2500000000000000000;                        // Update total supply (100000 for example)
+        name = "BitgamerTokens";                                   // Set the name for display purposes
         decimals = 9;                            // Amount of decimals for display purposes
         symbol = "BTK";                               // Set the symbol for display purposes
     }
