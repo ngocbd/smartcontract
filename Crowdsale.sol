@@ -1,403 +1,340 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x2520e2b81a7424b89b9fbd739f94aa430cb1b267
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdSale at 0xB854728AFAA9f8dAe90794De4b9C19F0C5Eb969a
 */
 pragma solidity ^0.4.18;
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
+/* taking ideas from Zeppelin solidity module */
+contract SafeMath {
 
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
+    // it is recommended to define functions which can neither read the state of blockchain nor write in it as pure instead of constant
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-    
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-  
-}
-library Math {
-  function max(uint a, uint b) pure internal returns (uint) {
-    if (a > b) return a;
-    else return b;
-  }
-  function min(uint a, uint b) pure internal returns (uint) {
-    if (a < b) return a;
-    else return b;
-  }
-}
-
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
- */
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
-
-  mapping(address => uint256) balances;
-
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[msg.sender]);
-
-    // SafeMath.sub will throw if there is not enough balance.
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) public view returns (uint256 balance) {
-    return balances[_owner];
-  }
-
-}
-
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
-contract StandardToken is ERC20, BasicToken {
-
-  mapping (address => mapping (address => uint256)) internal allowed;
-
-
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
-   */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[_from]);
-    require(_value <= allowed[_from][msg.sender]);
-
-    balances[_from] = balances[_from].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  /**
-   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   *
-   * Beware that changing an allowance with this method brings the risk that someone may use both the old
-   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) public returns (bool) {
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifying the amount of tokens still available for the spender.
-   */
-  function allowance(address _owner, address _spender) public view returns (uint256) {
-    return allowed[_owner][_spender];
-  }
-
-  /**
-   * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   */
-  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
-    uint oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue > oldValue) {
-      allowed[msg.sender][_spender] = 0;
-    } else {
-      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-    }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-}
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-/**
- * @title Mintable token
- * @dev Simple ERC20 Token example, with mintable token creation
- * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
- * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
- */
-
-contract MintableToken is StandardToken, Ownable {
-  event Mint(address indexed to, uint256 amount);
-  event MintFinished();
-
-  bool public mintingFinished = false;
-
-
-  modifier canMint() {
-    require(!mintingFinished);
-    _;
-  }
-
-  /**
-   * @dev Function to mint tokens
-   * @param _to The address that will receive the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
-   */
-  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
-    totalSupply = totalSupply.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    Mint(_to, _amount);
-    Transfer(address(0), _to, _amount);
-    return true;
-  }
-
-  /**
-   * @dev Function to stop minting new tokens.
-   * @return True if the operation was successful.
-   */
-  function finishMinting() onlyOwner canMint public returns (bool) {
-    mintingFinished = true;
-    MintFinished();
-    return true;
-  }
-}
-
-//---------------------------------------------------------------------------------
-
-contract BuronCoin is MintableToken {
-    
-    string public constant name = "Buron Coin";
-    
-    string public constant symbol = "BURC";
-    
-    uint32 public constant decimals = 4;
-    
-}
-
-contract Crowdsale is Ownable {
-    
-	struct tier {
-        uint cap;
-        uint rate;
-    }
-	
-    using SafeMath for uint;
-	using Math for uint;
-    
-	BuronCoin public token = new BuronCoin();
-	
-    address multisig; 		
-	uint restrictedAmount; 	
-    address restricted;		
-	uint price;				
-	bool saleOn;		
-	uint public sold;	
-    
-	tier[7] tiers; 
-  
-	function bytesToAddress(bytes source) internal pure returns(address) {
-		uint result;
-		uint mul = 1;
-		for(uint i = 20; i > 0; i--) {
-		  result += uint8(source[i-1])*mul;
-		  mul = mul*256;
-		}
-		return address(result);
-	}
-  
-    function Crowdsale(address _multisig, address _restricted) public {
-        multisig = _multisig;
-        restricted = _restricted;
-		restrictedAmount=231000000000; 		
-        price = 17700000000; 
-		
-		tiers[0]=tier(10000000000,50);
-		tiers[1]=tier(30000000000,30);
-		tiers[2]=tier(60000000000,25);
-		tiers[3]=tier(110000000000,20);
-		tiers[4]=tier(190000000000,15);
-		tiers[5]=tier(320000000000,10);
-		tiers[6]=tier(530000000000,5);
-		
-		sold=0;
-		saleOn=true;
-		
-		token.mint(restricted, restrictedAmount);	
+    function safeAdd(uint256 x, uint256 y) internal pure returns(uint256) {
+        uint256 z = x + y;
+        assert((z >= x));
+        return z;
     }
 
-    modifier saleIsOn() {
-    	require(saleOn && sold<tiers[6].cap);
-    	_;
+    function safeSubtract(uint256 x, uint256 y) internal pure returns(uint256) {
+        assert(x >= y);
+        return x - y;
     }
-	
-    function buyTokens(address to, address referer) public saleIsOn payable {
-		require(msg.value>0);
-	
-		if (to==address(0x0))
-			to=msg.sender;
-	
-        multisig.transfer(msg.value);	
-		
-		
-        uint tokensBase = msg.value.div(price);
-		
-		uint tokensForBonus=tokensBase;
-		uint tmpSold=sold;
-		uint currentTier=0;
-		uint bonusTokens=0;
-		
-		
-		while(tiers[currentTier].cap<tmpSold)
-			currentTier++;
-		
-		uint currentTierTokens=0;
-		while((tokensForBonus>0) && (currentTier<7))
-		{
-			currentTierTokens=Math.min(tiers[currentTier].cap.sub(tmpSold), tokensForBonus); 		
-			bonusTokens=bonusTokens.add(currentTierTokens.mul(tiers[currentTier].rate).div(100));   
-			tmpSold=tmpSold.add(currentTierTokens);									   			
-			
-			tokensForBonus=tokensForBonus.sub(currentTierTokens);					   			
-			currentTier++;
-		}
-		
-		
-		token.mint(to, tokensBase.add(bonusTokens));  						   			
-		sold=sold.add(tokensBase);											   		
-		
-	
-		if (referer != address(0x0))
-		if (referer != msg.sender)	
-		{
-		  uint refererTokens = tokensBase.mul(3).div(100);	
-		  token.mint(referer, refererTokens);				
-		}		
-		
-		if (sold>=tiers[6].cap)													   	  
-		{
-			saleOn=false;
-			token.finishMinting();
-		}
+
+    function safeMult(uint256 x, uint256 y) internal pure returns(uint256) {
+        uint256 z = x * y;
+        assert((x == 0)||(z/x == y));
+        return z;
     }
-	
-    function() external payable {
-		
-		
-		address referer;
-		if(msg.data.length == 20)
-			referer = bytesToAddress(bytes(msg.data));
-		else
-			referer=address(0x0);
-			
-        buyTokens(address(0x0), referer);
+
+    function safeDiv(uint256 x, uint256 y) internal pure returns (uint256) {
+        uint256 z = x / y;
+        return z;
+    }
+
+    // mitigate short address attack
+    // thanks to https://github.com/numerai/contract/blob/c182465f82e50ced8dacb3977ec374a892f5fa8c/contracts/Safe.sol#L30-L34.
+    // TODO: doublecheck implication of >= compared to ==
+    modifier onlyPayloadSize(uint numWords) {
+        assert(msg.data.length >= numWords * 32 + 4);
+        _;
+    }
+
+}
+// The abstract token contract
+
+contract TrakToken {
+    function TrakToken () public {}
+    function transfer (address ,uint) public pure { }
+    function burn (uint256) public pure { }
+    function finalize() public pure { }
+    function changeTokensWallet (address) public pure { }
+}
+
+contract CrowdSale is SafeMath {
+
+    ///metadata
+    enum State { Fundraising,Paused,Successful,Closed }
+    State public state = State.Fundraising; // equal to 0
+    string public version = "1.0";
+
+    //External contracts
+    TrakToken public trakToken;
+    // who created smart contract
+    address public creator;
+    // Address which will receive raised funds
+    address public contractOwner;
+    // adreess vs state mapping (1 for exists , zero default);
+    mapping (address => bool) public whitelistedContributors;
+
+    uint256 public fundingStartBlock; // Dec 15 - Dec 25
+    uint256 public firstChangeBlock;  // December 25 - January 5
+    uint256 public secondChangeBlock; // January 5 -January 15
+    uint256 public thirdChangeBlock;  // January 16
+    uint256 public fundingEndBlock;   // Jan 31
+    // funding maximum duration in hours
+    uint256 public fundingDurationInHours;
+    uint256 constant public fundingMaximumTargetInWei = 66685 ether;
+    // We need to keep track of how much ether (in units of Wei) has been contributed
+    uint256 public totalRaisedInWei;
+    // maximum ether we will accept from one user
+    uint256 constant public maxPriceInWeiFromUser = 1500 ether;
+    uint256 constant public minPriceInWeiForPre = 1 ether;
+    uint256 constant public minPriceInWeiForIco = 0.5 ether;
+    uint8 constant public  decimals = 18;
+    // Number of tokens distributed to investors
+    uint public tokensDistributed = 0;
+    // tokens per tranche
+    uint constant public tokensPerTranche = 11000000 * (uint256(10) ** decimals);
+    uint256 public constant privateExchangeRate = 1420; // 23.8%
+    uint256 public constant firstExchangeRate   = 1289; // 15.25%
+    uint256 public constant secondExchangeRate  = 1193;  //  8.42%
+    uint256 public constant thirdExchangeRate   = 1142;  //  4.31%
+    uint256 public constant fourthExchangeRate  = 1118;  //  2.25%
+    uint256 public constant fifthExchangeRate   = 1105;  // 1.09%
+
+    /// modifiers
+    modifier onlyOwner() {
+        require(msg.sender == contractOwner);
+        _;
+    }
+
+    modifier isIcoOpen() {
+        require(block.number >= fundingStartBlock);
+        require(block.number <= fundingEndBlock);
+        require(totalRaisedInWei <= fundingMaximumTargetInWei);
+        _;
+    }
+
+
+    modifier isMinimumPrice() {
+        if (tokensDistributed < safeMult(3,tokensPerTranche) || block.number < thirdChangeBlock ) {
+           require(msg.value >= minPriceInWeiForPre);
+        }
+        else if (tokensDistributed <= safeMult(6,tokensPerTranche)) {
+           require(msg.value >= minPriceInWeiForIco);
+        }
+
+        require(msg.value <= maxPriceInWeiFromUser);
+
+         _;
+    }
+
+    modifier isIcoFinished() {
+        require(totalRaisedInWei >= fundingMaximumTargetInWei || (block.number > fundingEndBlock) || state == State.Successful );
+        _;
+    }
+
+    modifier inState(State _state) {
+        require(state == _state);
+        _;
+    }
+
+    modifier isCreator() {
+        require(msg.sender == creator);
+        _;
+    }
+
+    // wait 100 block after final contract state before allowing contract destruction
+    modifier atEndOfLifecycle() {
+        require(totalRaisedInWei >= fundingMaximumTargetInWei || (block.number > fundingEndBlock + 40000));
+        _;
+    }
+
+    /// constructor
+    function CrowdSale(
+    address _fundsWallet,
+    uint256 _fundingStartBlock,
+    uint256 _firstInHours,
+    uint256 _secondInHours,
+    uint256 _thirdInHours,
+    uint256 _fundingDurationInHours,
+    TrakToken _tokenAddress
+    ) public {
+
+        require(safeAdd(_fundingStartBlock, safeMult(_fundingDurationInHours , 212)) > _fundingStartBlock);
+
+        creator = msg.sender;
+
+        if (_fundsWallet !=0) {
+            contractOwner = _fundsWallet;
+        }
+        else {
+            contractOwner = msg.sender;
+        }
+
+        fundingStartBlock = _fundingStartBlock;
+        firstChangeBlock =  safeAdd(fundingStartBlock, safeMult(_firstInHours , 212));
+        secondChangeBlock = safeAdd(fundingStartBlock, safeMult(_secondInHours , 212));
+        thirdChangeBlock =  safeAdd(fundingStartBlock, safeMult(_thirdInHours , 212));
+        fundingDurationInHours = _fundingDurationInHours;
+        fundingEndBlock = safeAdd(fundingStartBlock, safeMult(_fundingDurationInHours , 212));
+        trakToken = TrakToken(_tokenAddress);
+    }
+
+
+    // fallback function can be used to buy tokens
+    function () external payable {
+        buyTokens(msg.sender);
+    }
+
+
+    function buyTokens(address beneficiary) inState(State.Fundraising) isIcoOpen isMinimumPrice  public  payable  {
+        require(beneficiary != 0x0);
+        // state 1 is set for
+        require(whitelistedContributors[beneficiary] == true );
+        uint256 tokenAmount;
+        uint256 checkedReceivedWei = safeAdd(totalRaisedInWei, msg.value);
+        // Check that this transaction wouldn't exceed the ETH max cap
+
+        if (checkedReceivedWei > fundingMaximumTargetInWei ) {
+
+            // update totalRaised After Subtracting
+            totalRaisedInWei = safeAdd(totalRaisedInWei,safeSubtract(fundingMaximumTargetInWei,totalRaisedInWei));
+            // Calculate how many tokens (in units of Wei) should be awarded on this transaction
+            var (rate,/*trancheMaxTokensLeft */) = getCurrentTokenPrice();
+            // Calculate how many tokens (in units of Wei) should be awarded on this transaction
+            tokenAmount = safeMult(safeSubtract(fundingMaximumTargetInWei,totalRaisedInWei), rate);
+            // Send change extra ether to user.
+            beneficiary.transfer(safeSubtract(checkedReceivedWei,fundingMaximumTargetInWei));
+        }
+        else {
+            totalRaisedInWei = safeAdd(totalRaisedInWei,msg.value);
+            var (currentRate,trancheMaxTokensLeft) = getCurrentTokenPrice();
+            // Calculate how many tokens (in units of Wei) should be awarded on this transaction
+            tokenAmount = safeMult(msg.value, currentRate);
+            if (tokenAmount > trancheMaxTokensLeft) {
+                // handle round off error by adding .1 token
+                tokensDistributed =  safeAdd(tokensDistributed,safeAdd(trancheMaxTokensLeft,safeDiv(1,10)));
+                //find remaining tokens by getCurrentTokenPrice() function and sell them from remaining ethers left
+                var (nextCurrentRate,nextTrancheMaxTokensLeft) = getCurrentTokenPrice();
+
+                if (nextTrancheMaxTokensLeft <= 0) {
+                    tokenAmount = safeAdd(trancheMaxTokensLeft,safeDiv(1,10));
+                    state =  State.Successful;
+                    // Send change extra ether to user.
+                    beneficiary.transfer(safeDiv(safeSubtract(tokenAmount,trancheMaxTokensLeft),currentRate));
+                } else {
+                    uint256 nextTokenAmount = safeMult(safeSubtract(msg.value,safeMult(trancheMaxTokensLeft,safeDiv(1,currentRate))),nextCurrentRate);
+                    tokensDistributed =  safeAdd(tokensDistributed,nextTokenAmount);
+                    tokenAmount = safeAdd(nextTokenAmount,safeAdd(trancheMaxTokensLeft,safeDiv(1,10)));
+                }
+            }
+            else {
+                tokensDistributed =  safeAdd(tokensDistributed,tokenAmount);
+            }
+        }
+
+        trakToken.transfer(beneficiary,tokenAmount);
+        // immediately transfer ether to fundsWallet
+        forwardFunds();
+    }
+
+    function forwardFunds() internal {
+        contractOwner.transfer(msg.value);
+    }
+
+    /// @dev Returns the current token rate , minimum ether needed and maximum tokens left in currenttranche
+    function getCurrentTokenPrice() private constant returns (uint256 currentRate, uint256 maximumTokensLeft) {
+
+        if (tokensDistributed < safeMult(1,tokensPerTranche) && (block.number < firstChangeBlock)) {
+            //  return ( privateExchangeRate, minPriceInWeiForPre, safeSubtract(tokensPerTranche,tokensDistributed) );
+            return ( privateExchangeRate, safeSubtract(tokensPerTranche,tokensDistributed) );
+        }
+        else if (tokensDistributed < safeMult(2,tokensPerTranche) && (block.number < secondChangeBlock)) {
+            return ( firstExchangeRate, safeSubtract(safeMult(2,tokensPerTranche),tokensDistributed) );
+        }
+        else if (tokensDistributed < safeMult(3,tokensPerTranche) && (block.number < thirdChangeBlock)) {
+            return ( secondExchangeRate, safeSubtract(safeMult(3,tokensPerTranche),tokensDistributed) );
+        }
+        else if (tokensDistributed < safeMult(4,tokensPerTranche) && (block.number < fundingEndBlock)) {
+            return  (thirdExchangeRate,safeSubtract(safeMult(4,tokensPerTranche),tokensDistributed)  );
+        }
+        else if (tokensDistributed < safeMult(5,tokensPerTranche) && (block.number < fundingEndBlock)) {
+            return  (fourthExchangeRate,safeSubtract(safeMult(5,tokensPerTranche),tokensDistributed)  );
+        }
+        else if (tokensDistributed <= safeMult(6,tokensPerTranche)) {
+            return  (fifthExchangeRate,safeSubtract(safeMult(6,tokensPerTranche),tokensDistributed)  );
+        }
+    }
+
+
+    function authorizeKyc(address[] addrs) external onlyOwner returns (bool success) {
+
+        //@TODO  maximum batch size for uploading
+        // @TODO amount of gas for a block of code - and will fail if that is exceeded
+        uint arrayLength = addrs.length;
+
+        for (uint x = 0; x < arrayLength; x++) {
+            whitelistedContributors[addrs[x]] = true;
+        }
+
+        return true;
+    }
+
+
+    function withdrawWei () external onlyOwner {
+        // send the eth to the project multisig wallet
+        contractOwner.transfer(this.balance);
+    }
+
+    function updateFundingEndBlock(uint256 newFundingEndBlock)  external onlyOwner {
+        require(newFundingEndBlock > fundingStartBlock);
+        //require(newFundingEndBlock >= fundingEndBlock);
+        fundingEndBlock = newFundingEndBlock;
+    }
+
+
+    // after ICO only owner can call this
+    function burnRemainingToken(uint256 _value) external  onlyOwner isIcoFinished {
+        //@TODO - check balance of address if no value passed
+        require(_value > 0);
+        trakToken.burn(_value);
+    }
+
+    // after ICO only owner can call this
+    function withdrawRemainingToken(uint256 _value,address trakTokenAdmin)  external onlyOwner isIcoFinished {
+        //@TODO - check balance of address if no value passed
+        require(trakTokenAdmin != 0x0);
+        require(_value > 0);
+        trakToken.transfer(trakTokenAdmin,_value);
+    }
+
+
+    // after ICO only owner can call this
+    function finalize() external  onlyOwner isIcoFinished  {
+        state =  State.Closed;
+        trakToken.finalize();
+    }
+
+    // after ICO only owner can call this
+    function changeTokensWallet(address newAddress) external  onlyOwner  {
+        require(newAddress != address(0));
+        trakToken.changeTokensWallet(newAddress);
+    }
+
+
+    function removeContract ()  external onlyOwner atEndOfLifecycle {
+        // msg.sender will receive all the ethers if this contract has ethers
+        selfdestruct(msg.sender);
+    }
+
+    /// @param newAddress Address of new owner.
+    function changeFundsWallet(address newAddress) external onlyOwner returns (bool)
+    {
+        require(newAddress != address(0));
+        contractOwner = newAddress;
+    }
+
+
+    /// @dev Pauses the contract
+    function pause() external onlyOwner inState(State.Fundraising) {
+        // Move the contract to Paused state
+        state =  State.Paused;
+    }
+
+
+    /// @dev Resume the contract
+    function resume() external onlyOwner {
+        // Move the contract out of the Paused state
+        state =  State.Fundraising;
     }
 }
