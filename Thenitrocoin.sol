@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Thenitrocoin at 0x1108ba7CC4cf9F95637B99A4686E8ea55A1e5757
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Thenitrocoin at 0x921696daaa356a22694d48bf1381926cbf2ebda6
 */
 pragma solidity ^ 0.4 .9;
 library SafeMath {
