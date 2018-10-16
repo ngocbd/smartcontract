@@ -1,7 +1,83 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HUMPresale at 0x0f067ddb0795a7627c18a5792ed0a2199de3a8c2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HUMPresale at 0xed8a2697d1af8f8cad0f6c5b9962d868d4ed2a41
 */
 pragma solidity ^0.4.23;
+
+/**
+ * @title MultiOwnable
+ */
+contract MultiOwnable {
+  address public root;
+  mapping (address => address) public owners; // owner => parent of owner
+  
+  /**
+  * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+  * account.
+  */
+  constructor() public {
+    root = msg.sender;
+    owners[root] = root;
+  }
+  
+  /**
+  * @dev Throws if called by any account other than the owner.
+  */
+  modifier onlyOwner() {
+    require(owners[msg.sender] != 0);
+    _;
+  }
+  
+  /**
+  * @dev Adding new owners
+  */
+  function newOwner(address _owner) onlyOwner external returns (bool) {
+    require(_owner != 0);
+    owners[_owner] = msg.sender;
+    return true;
+  }
+  
+  /**
+    * @dev Deleting owners
+    */
+  function deleteOwner(address _owner) onlyOwner external returns (bool) {
+    require(owners[_owner] == msg.sender || (owners[_owner] != 0 && msg.sender == root));
+    owners[_owner] = 0;
+    return true;
+  }
+}
+
+
+
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+
+
+
+
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+
 
 
 
@@ -55,74 +131,6 @@ library SafeMath {
 
 
 
-/**
- * @title MultiOwnable
- */
-contract MultiOwnable {
-  address public root;
-  mapping (address => address) public owners; // owner => parent of owner
-  
-  /**
-  * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-  * account.
-  */
-  constructor() public {
-    root = msg.sender;
-    owners[root] = root;
-  }
-  
-  /**
-  * @dev Throws if called by any account other than the owner.
-  */
-  modifier onlyOwner() {
-    require(owners[msg.sender] != 0);
-    _;
-  }
-  
-  /**
-  * @dev Adding new owners
-  */
-  function newOwner(address _owner) onlyOwner external returns (bool) {
-    require(_owner != 0);
-    owners[_owner] = msg.sender;
-    return true;
-  }
-  
-  /**
-    * @dev Deleting owners
-    */
-  function deleteOwner(address _owner) onlyOwner external returns (bool) {
-    require(owners[_owner] == msg.sender || (owners[_owner] != 0 && msg.sender == root));
-    owners[_owner] = 0;
-    return true;
-  }
-}
-
-
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
 
 
 /**
@@ -170,35 +178,6 @@ contract BasicToken is ERC20Basic {
 }
 
 
-
-
-/**
- * @title Burnable Token
- * @dev Token that can be irreversibly burned (destroyed).
- */
-contract BurnableToken is BasicToken {
-
-  event Burn(address indexed burner, uint256 value);
-
-  /**
-   * @dev Burns a specific amount of tokens.
-   * @param _value The amount of token to be burned.
-   */
-  function burn(uint256 _value) public {
-    _burn(msg.sender, _value);
-  }
-
-  function _burn(address _who, uint256 _value) internal {
-    require(_value <= balances[_who]);
-    // no need to require value <= totalSupply, since that would imply the
-    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
-
-    balances[_who] = balances[_who].sub(_value);
-    totalSupply_ = totalSupply_.sub(_value);
-    emit Burn(_who, _value);
-    emit Transfer(_who, address(0), _value);
-  }
-}
 
 
 
@@ -302,6 +281,7 @@ contract StandardToken is ERC20, BasicToken {
 
 
 
+
 /**
  * @title Mintable token
  * @dev Simple ERC20 Token example, with mintable token creation
@@ -344,6 +324,41 @@ contract MintableToken is StandardToken, MultiOwnable {
     return true;
   }
 }
+
+
+
+
+
+
+/**
+ * @title Burnable Token
+ * @dev Token that can be irreversibly burned (destroyed).
+ */
+contract BurnableToken is BasicToken {
+
+  event Burn(address indexed burner, uint256 value);
+
+  /**
+   * @dev Burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   */
+  function burn(uint256 _value) public {
+    _burn(msg.sender, _value);
+  }
+
+  function _burn(address _who, uint256 _value) internal {
+    require(_value <= balances[_who]);
+    // no need to require value <= totalSupply, since that would imply the
+    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+    balances[_who] = balances[_who].sub(_value);
+    totalSupply_ = totalSupply_.sub(_value);
+    emit Burn(_who, _value);
+    emit Transfer(_who, address(0), _value);
+  }
+}
+
+
 
 
 
@@ -391,6 +406,9 @@ contract HUMToken is MintableToken, BurnableToken {
   }
 
 }
+
+
+
 
 
 
@@ -554,45 +572,6 @@ contract Crowdsale {
 
 
 
-/**
- * @title CappedCrowdsale
- * @dev Crowdsale with a limit for total contributions.
- */
-contract CappedCrowdsale is Crowdsale {
-  using SafeMath for uint256;
-
-  uint256 public cap;
-
-  /**
-   * @dev Constructor, takes maximum amount of wei accepted in the crowdsale.
-   * @param _cap Max amount of wei to be contributed
-   */
-  constructor(uint256 _cap) public {
-    require(_cap > 0);
-    cap = _cap;
-  }
-
-  /**
-   * @dev Checks whether the cap has been reached. 
-   * @return Whether the cap was reached
-   */
-  function capReached() public view returns (bool) {
-    return weiRaised >= cap;
-  }
-
-  /**
-   * @dev Extend parent behavior requiring purchase to respect the funding cap.
-   * @param _beneficiary Token purchaser
-   * @param _weiAmount Amount of wei contributed
-   */
-  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal {
-    super._preValidatePurchase(_beneficiary, _weiAmount);
-    require(weiRaised.add(_weiAmount) <= cap);
-  }
-
-}
-
-
 
 
 
@@ -648,6 +627,9 @@ contract IndividuallyCappedCrowdsale is Crowdsale {
   }
 
 }
+
+
+
 
 
 
@@ -707,6 +689,8 @@ contract WhitelistedCrowdsale is Crowdsale, MultiOwnable {
 
 
 
+
+
 contract HUMPresale is WhitelistedCrowdsale, IndividuallyCappedCrowdsale {
   
   uint256 public constant minimum = 100000000000000000; // 0.1 ether
@@ -744,7 +728,7 @@ contract HUMPresale is WhitelistedCrowdsale, IndividuallyCappedCrowdsale {
       if (contributions[_beneficiary] == 0) {
         contributors.push(_beneficiary);
       }
-      bonusTokens[_beneficiary] = bonusTokens[_beneficiary].add(_tokenAmount.mul(bonusPercent).div(100));
+      bonusTokens[_beneficiary] = bonusTokens[_beneficiary].add(_tokenAmount.mul(bonusPercent).div(1000));
     }
   }
 
