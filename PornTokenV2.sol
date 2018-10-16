@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PornTokenV2 at 0x5512e1d6a7be424b4323126b4f9e86d023f95764
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PornTokenV2 at 0xc995cc54e563c67bbc95773c96ba96cadd8b07cc
 */
 pragma solidity ^0.4.16;
 
@@ -11,7 +11,7 @@ contract PornTokenV2 {
     string public symbol = "PTWO";
     uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
-    uint256 public totalSupply = 1000000000;
+    uint256 public totalSupply;
 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
