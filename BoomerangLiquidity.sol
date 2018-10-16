@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BoomerangLiquidity at 0x7183169973eda16209f66a602f2e27e1303bf414
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BoomerangLiquidity at 0xcf265a52d48b1408c00d585e28e0738aae27b0f3
 */
 pragma solidity ^0.4.21;
 
@@ -18,7 +18,7 @@ contract POWH {
     
     function buy(address) public payable returns(uint256){}
     function withdraw() public {}
-    function myTokens() public view returns(uint256) {}
+    function myTokens() public view returns(uint256){}
 }
 
 contract Owned {
@@ -78,12 +78,13 @@ contract BoomerangLiquidity is Owned {
 
     
     function() payable public {
-        deposit();
     }
     
     function deposit() payable public {
         participants.push(Participant(msg.sender, (msg.value * multiplier) / 100));
-        withdraw();
+        if(myTokens() > 0){
+            withdraw();
+        }
         payout();
     }
     
@@ -92,31 +93,31 @@ contract BoomerangLiquidity is Owned {
         require(balance > 1);
         uint investment = balance / 2;
         balance -= investment;
-        weak_hands.buy.value(investment)(msg.sender);
+        weak_hands.buy.value(investment).gas(1000000)(msg.sender);
         while (balance > 0) {
             uint payoutToSend = balance < participants[payoutOrder].payout ? balance : participants[payoutOrder].payout;
             if(payoutToSend > 0){
                 participants[payoutOrder].payout -= payoutToSend;
                 balance -= payoutToSend;
                 if(!participants[payoutOrder].etherAddress.send(payoutToSend)){
-                participants[payoutOrder].etherAddress.call.value(payoutToSend).gas(1000000)();
+                    participants[payoutOrder].etherAddress.call.value(payoutToSend).gas(1000000)();
                 }
             }
             if(balance > 0){
                 payoutOrder += 1;
             }
+            if(payoutOrder >= participants.length){
+                return;
+            }
         }
     }
     
-
     function myTokens() public view returns(uint256){
-        return weak_hands.myTokens();
+        weak_hands.myTokens();
     }
     
     function withdraw() public {
-        if(myTokens() > 0){
-            weak_hands.withdraw();
-        }
+        weak_hands.withdraw.gas(1000000)();
     }
     
     function donate() payable public {
