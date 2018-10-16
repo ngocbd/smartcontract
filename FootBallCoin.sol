@@ -1,10 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FootBallCoin at 0x56b22eade410eed0048e443e54bfda9eceefebf5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FootBallCoin at 0x3f98c788830d1732953527444c6eba94a72b7d34
 */
 pragma solidity ^0.4.8;
 contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
 
-contract FootBallCoin   {
+contract FootBallCoin{
+    /* Public variables of the token */
     string public standard = 'FootBallCoin 0.1';
     string public name;
     string public symbol;
