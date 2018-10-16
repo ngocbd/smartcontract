@@ -1,38 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICO at 0x4e9547d1a1154ee0451f063c253ad8dc39d5384c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICO at 0xe67218db143d95b14dee3673dcef37cb55f0cf3e
 */
-pragma solidity ^0.4.11;
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
+pragma solidity ^0.4.18;
 
 /**
  * @title ERC20Basic
@@ -41,14 +10,55 @@ library SafeMath {
  */
 contract ERC20Basic {
   uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
+  function balanceOf(address who) public constant returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
 /**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+/**
  * @title Basic token
- * @dev Basic version of StandardToken, with no allowances. 
+ * @dev Basic version of StandardToken, with no allowances.
  */
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
@@ -60,7 +70,11 @@ contract BasicToken is ERC20Basic {
   * @param _to The address to transfer to.
   * @param _value The amount to be transferred.
   */
-  function transfer(address _to, uint256 _value) returns (bool) {
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+
+    // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
     Transfer(msg.sender, _to, _value);
@@ -69,25 +83,13 @@ contract BasicToken is ERC20Basic {
 
   /**
   * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of. 
+  * @param _owner The address to query the the balance of.
   * @return An uint256 representing the amount owned by the passed address.
   */
-  function balanceOf(address _owner) constant returns (uint256 balance) {
+  function balanceOf(address _owner) public constant returns (uint256 balance) {
     return balances[_owner];
   }
 
-}
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 /**
@@ -99,41 +101,38 @@ contract ERC20 is ERC20Basic {
  */
 contract StandardToken is ERC20, BasicToken {
 
-  mapping (address => mapping (address => uint256)) allowed;
+  mapping (address => mapping (address => uint256)) internal allowed;
 
 
   /**
    * @dev Transfer tokens from one address to another
    * @param _from address The address which you want to send tokens from
    * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amout of tokens to be transfered
+   * @param _value uint256 the amount of tokens to be transferred
    */
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
-    var _allowance = allowed[_from][msg.sender];
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
 
-    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-    // require (_value <= _allowance);
-
-    balances[_to] = balances[_to].add(_value);
     balances[_from] = balances[_from].sub(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
     Transfer(_from, _to, _value);
     return true;
   }
 
   /**
-   * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
    * @param _spender The address which will spend the funds.
    * @param _value The amount of tokens to be spent.
    */
-  function approve(address _spender, uint256 _value) returns (bool) {
-
-    // To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-
+  function approve(address _spender, uint256 _value) public returns (bool) {
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
     return true;
@@ -143,461 +142,491 @@ contract StandardToken is ERC20, BasicToken {
    * @dev Function to check the amount of tokens that an owner allowed to a spender.
    * @param _owner address The address which owns the funds.
    * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifing the amount of tokens still avaible for the spender.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
    */
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
     return allowed[_owner][_spender];
   }
+
+  /**
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   */
+  function increaseApproval (address _spender, uint _addedValue) public returns (bool success) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  function decreaseApproval (address _spender, uint _subtractedValue) public returns (bool success) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  function () public payable {
+    revert();
+  }
+
 }
 
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
 
-// Migration Agent interface
-contract MigrationAgent {
-    function migrateFrom(address _from, uint _value);
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
 }
 
-contract GVToken is StandardToken {
+/**
+ * @title Mintable token
+ * @dev Simple ERC20 Token example, with mintable token creation
+ * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
+ * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
+ */
+contract GoldMineCoin is StandardToken, Ownable {	
     
-    // Constants
-    string public constant name = "Genesis Vision Token";
-    string public constant symbol = "GVT";
-    uint   public constant decimals = 18;
-    uint   constant TOKEN_LIMIT = 44 * 1e6 * 1e18; 
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+  uint public constant INITIAL_SUPPLY = 2500000000000;
+
+  uint public constant BOUNTY_TOKENS_LIMIT = 125000000000;
+
+  string public constant name = "GoldMineCoin";
+   
+  string public constant symbol = "GMC";
     
-    address public ico;
+  uint32 public constant decimals = 6;
 
-    // GVT transfers are blocked until ICO is finished.
-    bool public isFrozen = true;
+  uint public bountyTokensTransferred;
 
-    // Token migration variables
-    address public migrationMaster;
-    address public migrationAgent;
-    uint public totalMigrated;
+  address public saleAgent;
+  
+  bool public isCrowdsaleFinished;
 
-    event Migrate(address indexed _from, address indexed _to, uint _value);
+  uint public remainingLockDate;
+  
+  mapping(address => uint) public locks;
 
-    // Constructor
-    function GVToken(address _ico, address _migrationMaster) {
-        require(_ico != 0);
-        require(_migrationMaster != 0);
-        ico = _ico;
-        migrationMaster = _migrationMaster;
-    }
+  modifier notLocked(address from) {
+    require(isCrowdsaleFinished || (locks[from] !=0 && now >= locks[from]));
+    _;
+  }
 
-    // Create tokens
-    function mint(address holder, uint value) {
-        require(msg.sender == ico);
-        require(value > 0);
-        require(totalSupply + value <= TOKEN_LIMIT);
+  function GoldMineCoin() public {
+    totalSupply = INITIAL_SUPPLY;
+    balances[this] = totalSupply;
+  }
+  
+  function addRestricedAccount(address restricedAccount, uint unlockedDate) public {
+    require(!isCrowdsaleFinished);    
+    require(msg.sender == saleAgent || msg.sender == owner);
+    locks[restricedAccount] = unlockedDate;
+  }
 
-        balances[holder] += value;
-        totalSupply += value;
-        Transfer(0x0, holder, value);
-    }
+  function transferFrom(address _from, address _to, uint256 _value) public notLocked(_from) returns (bool) {
+    super.transferFrom(_from, _to, _value);
+  }
 
-    // Allow token transfer.
-    function unfreeze() {
-        require(msg.sender == ico);
-        isFrozen = false;
-    }
+  function transfer(address _to, uint256 _value) public notLocked(msg.sender) returns (bool) {
+    super.transfer(_to, _value);
+  }
 
-    // ERC20 functions
-    // =========================
+  function crowdsaleTransfer(address to, uint amount) public {
+    require(msg.sender == saleAgent || msg.sender == owner);
+    require(!isCrowdsaleFinished || now >= remainingLockDate);
+    require(amount <= balances[this]);
+    balances[this] = balances[this].sub(amount);
+    balances[to] = balances[to].add(amount);
+    Transfer(this, to, amount);
+  }
 
-    function transfer(address _to, uint _value) public returns (bool) {
-        require(_to != address(0));
-        require(!isFrozen);
-        return super.transfer(_to, _value);
-    }
+  function addBountyTransferredTokens(uint amount) public {
+    require(!isCrowdsaleFinished);
+    require(msg.sender == saleAgent);
+    bountyTokensTransferred = bountyTokensTransferred.add(amount);
+  }
 
-    function transferFrom(address _from, address _to, uint _value) public returns (bool) {
-        require(!isFrozen);
-        return super.transferFrom(_from, _to, _value);
-    }
+  function setSaleAgent(address newSaleAgent) public {
+    require(!isCrowdsaleFinished);
+    require(msg.sender == owner|| msg.sender == saleAgent);
+    require(newSaleAgent != address(0));
+    saleAgent = newSaleAgent;
+  }
+  
+  function setRemainingLockDate(uint newRemainingLockDate) public {
+    require(!isCrowdsaleFinished && msg.sender == saleAgent); 
+    remainingLockDate = newRemainingLockDate;
+  }
 
-    function approve(address _spender, uint _value) public returns (bool) {
-        require(!isFrozen);
-        return super.approve(_spender, _value);
-    }
+  function finishCrowdsale() public {
+    require(msg.sender == saleAgent || msg.sender == owner);
+    isCrowdsaleFinished = true;
+  }
 
-    // Token migration
-    function migrate(uint value) external {
-        require(migrationAgent != 0);
-        require(value > 0);
-        require(value <= balances[msg.sender]);
-
-        balances[msg.sender] -= value;
-        totalSupply -= value;
-        totalMigrated += value;
-        MigrationAgent(migrationAgent).migrateFrom(msg.sender, value);
-        Migrate(msg.sender, migrationAgent, value);
-    }
-
-    // Set address of migration contract
-    function setMigrationAgent(address _agent) external {
-        require(migrationAgent == 0);
-        require(msg.sender == migrationMaster);
-        migrationAgent = _agent;
-    }
-
-    function setMigrationMaster(address _master) external {
-        require(msg.sender == migrationMaster);
-        require(_master != 0);
-        migrationMaster = _master;
-    }
 }
 
-contract GVOptionToken is StandardToken {
+contract CommonCrowdsale is Ownable {
+
+  using SafeMath for uint256;
+
+  uint public price = 75000000;
+
+  uint public constant MIN_INVESTED_ETH = 100000000000000000;
+
+  uint public constant PERCENT_RATE = 100000000;
+                                     
+  uint public constant BOUNTY_PERCENT = 1666667;
+
+  uint public constant REFERER_PERCENT = 500000;
+
+  address public bountyWallet;
+
+  address public wallet;
+
+  uint public start;
+
+  uint public period;
+
+  uint public tokensSold;
+  
+  bool isBountyRestriced;
+
+  GoldMineCoin public token;
+
+  modifier saleIsOn() {
+    require(now >= start && now < end() && msg.value >= MIN_INVESTED_ETH);
+    require(tokensSold < tokensSoldLimit());
+    _;
+  }
+  
+  function tokensSoldLimit() public constant returns(uint);
+
+  function end() public constant returns(uint) {
+    return start + period * 1 days;
+  }
+
+  function setBountyWallet(address newBountyWallet) public onlyOwner {
+    bountyWallet = newBountyWallet;
+  }
+
+  function setPrice(uint newPrice) public onlyOwner {
+    price = newPrice;
+  }
+
+  function setToken(address newToken) public onlyOwner {
+    token = GoldMineCoin(newToken);
+  }
+
+  function setStart(uint newStart) public onlyOwner {
+    start = newStart;
+  }
+
+  function setPeriod(uint newPeriod) public onlyOwner {
+    require(bountyWallet != address(0));
+    period = newPeriod;
+    if(isBountyRestriced) {
+      token.addRestricedAccount(bountyWallet, end());
+    }
+  }
+
+  function setWallet(address newWallet) public onlyOwner {
+    wallet = newWallet;
+  }
+
+  function priceWithBonus() public constant returns(uint);
+  
+  function buyTokens() public payable saleIsOn {
+
+    wallet.transfer(msg.value);
+
+    uint tokens = msg.value.mul(priceWithBonus()).div(1 ether);
     
-    address public optionProgram;
+    token.crowdsaleTransfer(msg.sender, tokens);
+    tokensSold = tokensSold.add(tokens);
 
-    string public name;
-    string public symbol;
-    uint   public constant decimals = 18;
-
-    uint TOKEN_LIMIT;
-
-    // Modifiers
-    modifier optionProgramOnly { require(msg.sender == optionProgram); _; }
-
-    // Constructor
-    function GVOptionToken(
-        address _optionProgram,
-        string _name,
-        string _symbol,
-        uint _TOKEN_LIMIT
-    ) {
-        require(_optionProgram != 0);        
-        optionProgram = _optionProgram;
-        name = _name;
-        symbol = _symbol;
-        TOKEN_LIMIT = _TOKEN_LIMIT;
+    // referer tokens
+    if(msg.data.length == 20) {
+      address referer = bytesToAddres(bytes(msg.data));
+      require(referer != address(token) && referer != msg.sender);
+      uint refererTokens = tokens.mul(REFERER_PERCENT).div(PERCENT_RATE);
+      token.crowdsaleTransfer(referer, refererTokens);
+      tokens.add(refererTokens);
+      tokensSold = tokensSold.add(refererTokens);
     }
 
-    // Create tokens
-    function buyOptions(address buyer, uint value) optionProgramOnly {
-        require(value > 0);
-        require(totalSupply + value <= TOKEN_LIMIT);
-
-        balances[buyer] += value;
-        totalSupply += value;
-        Transfer(0x0, buyer, value);
+    // bounty tokens
+    if(token.bountyTokensTransferred() < token.BOUNTY_TOKENS_LIMIT()) {
+      uint bountyTokens = tokens.mul(BOUNTY_PERCENT).div(PERCENT_RATE);
+      uint diff = token.BOUNTY_TOKENS_LIMIT().sub(token.bountyTokensTransferred());
+      if(bountyTokens > diff) {
+        bountyTokens = diff;
+      }      
+      if(!isBountyRestriced) {
+        token.addRestricedAccount(bountyWallet, end());  
+        isBountyRestriced = true;
+      }
+      token.crowdsaleTransfer(bountyWallet, bountyTokens);
     }
-    
-    function remainingTokensCount() returns(uint) {
-        return TOKEN_LIMIT - totalSupply;
-    }
-    
-    // Burn option tokens after execution during ICO
-    function executeOption(address addr, uint optionsCount) 
-        optionProgramOnly
-        returns (uint) {
-        if (balances[addr] < optionsCount) {
-            optionsCount = balances[addr];
-        }
-        if (optionsCount == 0) {
-            return 0;
-        }
+  }
 
-        balances[addr] -= optionsCount;
-        totalSupply -= optionsCount;
-
-        return optionsCount;
+  function bytesToAddres(bytes source) internal pure returns(address) {
+    uint result;
+    uint mul = 1;
+    for(uint i = 20; i > 0; i--) {
+      result += uint8(source[i-1])*mul;
+      mul = mul*256;
     }
+    return address(result);
+  }
+
+  function retrieveTokens(address anotherToken) public onlyOwner {
+    ERC20 alienToken = ERC20(anotherToken);
+    alienToken.transfer(wallet, token.balanceOf(this));
+  }
+
+  function() external payable {
+    buyTokens();
+  }
+
 }
 
-contract GVOptionProgram {
+contract CrowdsaleWithNextSaleAgent is CommonCrowdsale {
 
-    // Constants
-    uint constant option30perCent = 26 * 1e16; // GVOT30 tokens per usd cent during option purchase 
-    uint constant option20perCent = 24 * 1e16; // GVOT20 tokens per usd cent during option purchase
-    uint constant option10perCent = 22 * 1e16; // GVOT10 tokens per usd cent during option purchase
-    uint constant token30perCent  = 13684210526315800;  // GVT tokens per usd cent during execution of GVOT30
-    uint constant token20perCent  = 12631578947368500;  // GVT tokens per usd cent during execution of GVOT20
-    uint constant token10perCent  = 11578947368421100;  // GVT tokens per usd cent during execution of GVOT10
+  address public nextSaleAgent;
 
-    string public constant option30name = "30% GVOT";
-    string public constant option20name = "20% GVOT";
-    string public constant option10name = "10% GVOT";
+  function setNextSaleAgent(address newNextSaleAgent) public onlyOwner {
+    nextSaleAgent = newNextSaleAgent;
+  }
 
-    string public constant option30symbol = "GVOT30";
-    string public constant option20symbol = "GVOT20";
-    string public constant option10symbol = "GVOT10";
+  function finishCrowdsale() public onlyOwner { 
+    token.setSaleAgent(nextSaleAgent);
+  }
 
-    uint constant option30_TOKEN_LIMIT = 26 * 1e5 * 1e18;
-    uint constant option20_TOKEN_LIMIT = 36 * 1e5 * 1e18;
-    uint constant option10_TOKEN_LIMIT = 55 * 1e5 * 1e18;
-
-    // Events
-    event BuyOptions(address buyer, uint amount, string tx, uint8 optionType);
-    event ExecuteOptions(address buyer, uint amount, string tx, uint8 optionType);
-
-    // State variables
-    address public gvAgent; // payments bot account
-    address public team;    // team account
-    address public ico;     
-
-    GVOptionToken public gvOptionToken30;
-    GVOptionToken public gvOptionToken20;
-    GVOptionToken public gvOptionToken10;
-
-    // Modifiers
-    modifier icoOnly { require(msg.sender == ico); _; }
-    
-    // Constructor
-    function GVOptionProgram(address _ico, address _gvAgent, address _team) {
-        gvOptionToken30 = new GVOptionToken(this, option30name, option30symbol, option30_TOKEN_LIMIT);
-        gvOptionToken20 = new GVOptionToken(this, option20name, option20symbol, option20_TOKEN_LIMIT);
-        gvOptionToken10 = new GVOptionToken(this, option10name, option10symbol, option10_TOKEN_LIMIT);
-        gvAgent = _gvAgent;
-        team = _team;
-        ico = _ico;
-    }
-
-    // Get remaining tokens for all types of option tokens
-    function getBalance() public returns (uint, uint, uint) {
-        return (gvOptionToken30.remainingTokensCount(), gvOptionToken20.remainingTokensCount(), gvOptionToken10.remainingTokensCount());
-    }
-
-    // Execute options during the ICO token purchase. Priority: GVOT30 -> GVOT20 -> GVOT10
-    function executeOptions(address buyer, uint usdCents, string txHash) icoOnly
-        returns (uint executedTokens, uint remainingCents) {
-        require(usdCents > 0);
-
-        (executedTokens, remainingCents) = executeIfAvailable(buyer, usdCents, txHash, gvOptionToken30, 0, token30perCent);
-        if (remainingCents == 0) {
-            return (executedTokens, 0);
-        }
-
-        uint executed20;
-        (executed20, remainingCents) = executeIfAvailable(buyer, remainingCents, txHash, gvOptionToken20, 1, token20perCent);
-        if (remainingCents == 0) {
-            return (executedTokens + executed20, 0);
-        }
-
-        uint executed10;
-        (executed10, remainingCents) = executeIfAvailable(buyer, remainingCents, txHash, gvOptionToken10, 2, token10perCent);
-        
-        return (executedTokens + executed20 + executed10, remainingCents);
-    }
-
-    // Buy option tokens. Priority: GVOT30 -> GVOT20 -> GVOT10
-    function buyOptions(address buyer, uint usdCents, string txHash) icoOnly {
-        require(usdCents > 0);
-
-        var remainUsdCents = buyIfAvailable(buyer, usdCents, txHash, gvOptionToken30, 0, option30perCent);
-        if (remainUsdCents == 0) {
-            return;
-        }
-
-        remainUsdCents = buyIfAvailable(buyer, remainUsdCents, txHash, gvOptionToken20, 1, option20perCent);
-        if (remainUsdCents == 0) {
-            return;
-        }
-
-        remainUsdCents = buyIfAvailable(buyer, remainUsdCents, txHash, gvOptionToken10, 2, option10perCent);
-    }   
-
-    // Private functions
-    
-    function executeIfAvailable(address buyer, uint usdCents, string txHash,
-        GVOptionToken optionToken, uint8 optionType, uint optionPerCent)
-        private returns (uint executedTokens, uint remainingCents) {
-        
-        var optionsAmount = usdCents * optionPerCent;
-        executedTokens = optionToken.executeOption(buyer, optionsAmount);
-        remainingCents = usdCents - (executedTokens / optionPerCent);
-        if (executedTokens > 0) {
-            ExecuteOptions(buyer, executedTokens, txHash, optionType);
-        }
-        return (executedTokens, remainingCents);
-    }
-
-    function buyIfAvailable(address buyer, uint usdCents, string txHash,
-        GVOptionToken optionToken, uint8 optionType, uint optionsPerCent)
-        private returns (uint) {
-        
-        var availableTokens = optionToken.remainingTokensCount(); 
-        if (availableTokens > 0) {
-            var tokens = usdCents * optionsPerCent;
-            if(availableTokens >= tokens) {
-                optionToken.buyOptions(buyer, tokens);
-                BuyOptions(buyer, tokens, txHash, optionType);
-                return 0;
-            }
-            else {
-                optionToken.buyOptions(buyer, availableTokens);
-                BuyOptions(buyer, availableTokens, txHash, optionType);
-                return usdCents - availableTokens / optionsPerCent;
-            }
-        }
-        return usdCents;
-    }
 }
 
-contract Initable {
-    function init(address token);
+contract StaggedCrowdale is CommonCrowdsale {
+
+  uint public constant SALE_STEP = 5000000;
+
+  uint public timeStep = 5 * 1 days;
+
+  function setTimeStep(uint newTimeStep) public onlyOwner {
+    timeStep = newTimeStep * 1 days;
+  }
+
+  function priceWithBonus() public constant returns(uint) {
+    uint saleStage = now.sub(start).div(timeStep);
+    uint saleSub = saleStage.mul(SALE_STEP);
+    uint minSale = getMinPriceSale();
+    uint maxSale = getMaxPriceSale();
+    uint priceSale = maxSale;
+    if(saleSub >= maxSale.sub(minSale)) {
+      priceSale = minSale;
+    } else {
+      priceSale = maxSale.sub(saleSub);
+    }
+    return price.mul(PERCENT_RATE).div(PERCENT_RATE.sub(priceSale));
+  }
+  
+  function getMinPriceSale() public constant returns(uint);
+  
+  function getMaxPriceSale() public constant returns(uint);
+
 }
 
-// Crowdfunding code for Genesis Vision Project
-contract ICO {
+contract Presale is CrowdsaleWithNextSaleAgent {
 
-    // Constants
-    uint public constant TOKENS_FOR_SALE = 33 * 1e6 * 1e18;
+  uint public constant PRICE_SALE = 60000000;
 
-    // Events
-    event StartOptionsSelling();
-    event StartICOForOptionsHolders();
-    event RunIco();
-    event PauseIco();
-    event ResumeIco();
-    event FinishIco();
+  uint public constant TOKENS_SOLD_LIMIT = 125000000000;
 
-    event BuyTokens(address buyer, uint amount, string txHash);
+  function tokensSoldLimit() public constant returns(uint) {
+    return TOKENS_SOLD_LIMIT;
+  }
+  
+  function priceWithBonus() public constant returns(uint) {
+    return price.mul(PERCENT_RATE).div(PERCENT_RATE.sub(PRICE_SALE));
+  }
 
-    address public gvAgent; // payments bot account
-    address public team;    // team account
+}
 
-    GVToken public gvToken;
-    GVOptionProgram public optionProgram;
-    Initable public teamAllocator;
-    address public migrationMaster;
+contract PreICO is StaggedCrowdale, CrowdsaleWithNextSaleAgent {
 
-    // Modifiers
-    modifier teamOnly { require(msg.sender == team); _; }
-    modifier gvAgentOnly { require(msg.sender == gvAgent); _; }
+  uint public constant MAX_PRICE_SALE = 55000000;
 
-    // Current total token supply
-    uint tokensSold = 0;
+  uint public constant MIN_PRICE_SALE = 40000000;
 
-    bool public isPaused = false;
-    enum IcoState { Created, RunningOptionsSelling, RunningForOptionsHolders, Running, Finished }
-    IcoState public icoState = IcoState.Created;
+  uint public constant TOKENS_SOLD_LIMIT = 625000000000;
 
-    // Constructor
-    function ICO(address _team, address _gvAgent, address _migrationMaster, address _teamAllocator) {
-        gvAgent = _gvAgent;
-        team = _team;
-        teamAllocator = Initable(_teamAllocator);
-        migrationMaster = _migrationMaster;
-        gvToken = new GVToken(this, migrationMaster);
+  function tokensSoldLimit() public constant returns(uint) {
+    return TOKENS_SOLD_LIMIT;
+  }
+  
+  function getMinPriceSale() public constant returns(uint) {
+    return MIN_PRICE_SALE;
+  }
+  
+  function getMaxPriceSale() public constant returns(uint) {
+    return MAX_PRICE_SALE;
+  }
+
+}
+
+contract ICO is StaggedCrowdale {
+
+  uint public constant MAX_PRICE_SALE = 40000000;
+
+  uint public constant MIN_PRICE_SALE = 20000000;
+
+  uint public constant ESCROW_TOKENS_PERCENT = 5000000;
+
+  uint public constant FOUNDERS_TOKENS_PERCENT = 10000000;
+
+  uint public lockPeriod = 250;
+
+  address public foundersTokensWallet;
+
+  address public escrowTokensWallet;
+
+  uint public constant TOKENS_SOLD_LIMIT = 1250000000000;
+
+  function tokensSoldLimit() public constant returns(uint) {
+    return TOKENS_SOLD_LIMIT;
+  }
+
+  function setLockPeriod(uint newLockPeriod) public onlyOwner {
+    lockPeriod = newLockPeriod;
+  }
+
+  function setFoundersTokensWallet(address newFoundersTokensWallet) public onlyOwner {
+    foundersTokensWallet = newFoundersTokensWallet;
+  }
+
+  function setEscrowTokensWallet(address newEscrowTokensWallet) public onlyOwner {
+    escrowTokensWallet = newEscrowTokensWallet;
+  }
+
+  function finishCrowdsale() public onlyOwner { 
+    uint totalSupply = token.totalSupply();
+    uint commonPercent = FOUNDERS_TOKENS_PERCENT + ESCROW_TOKENS_PERCENT;
+    uint commonExtraTokens = totalSupply.mul(commonPercent).div(PERCENT_RATE.sub(commonPercent));
+    if(commonExtraTokens > token.balanceOf(token)) {
+      commonExtraTokens = token.balanceOf(token);
     }
+    uint escrowTokens = commonExtraTokens.mul(FOUNDERS_TOKENS_PERCENT).div(PERCENT_RATE);
+    token.crowdsaleTransfer(foundersTokensWallet, foundersTokens);
 
-    // Initialize Option Program contract
-    function initOptionProgram() external teamOnly {
-        if (optionProgram == address(0)) {
-            optionProgram = new GVOptionProgram(this, gvAgent, team);
-        }
-    }
+    uint foundersTokens = commonExtraTokens - escrowTokens;
+    token.crowdsaleTransfer(escrowTokensWallet, escrowTokens);
 
-    // ICO and Option Program state management
-    function startOptionsSelling() external teamOnly {
-        require(icoState == IcoState.Created);
-        // Check if Option Program is initialized
-        require(optionProgram != address(0));    
-        icoState = IcoState.RunningOptionsSelling;
-        StartOptionsSelling();
-    }
+    token.setRemainingLockDate(now + lockPeriod * 1 days);
+    token.finishCrowdsale();
+  }
+  
+  function getMinPriceSale() public constant returns(uint) {
+    return MIN_PRICE_SALE;
+  }
+  
+  function getMaxPriceSale() public constant returns(uint) {
+    return MAX_PRICE_SALE;
+  }
 
-    // Finish options selling and start ICO for the option holders
-    function startIcoForOptionsHolders() external teamOnly {
-        require(icoState == IcoState.RunningOptionsSelling);       
-        icoState = IcoState.RunningForOptionsHolders;
-        StartICOForOptionsHolders();
-    }
+}
 
-    function startIco() external teamOnly {
-        require(icoState == IcoState.RunningForOptionsHolders);
-        icoState = IcoState.Running;
-        RunIco();
-    }
+contract Configurator is Ownable {
 
-    function pauseIco() external teamOnly {
-        require(!isPaused);
-        require(icoState == IcoState.Running || icoState == IcoState.RunningForOptionsHolders || icoState == IcoState.RunningOptionsSelling);
-        isPaused = true;
-        PauseIco();
-    }
+  GoldMineCoin public token;
 
-    function resumeIco() external teamOnly {
-        require(isPaused);
-        require(icoState == IcoState.Running || icoState == IcoState.RunningForOptionsHolders || icoState == IcoState.RunningOptionsSelling);
-        isPaused = false;
-        ResumeIco();
-    }
+  Presale public presale;
+  
+  PreICO public preICO;
+  
+  ICO public ico;
 
-    function finishIco(address _fund, address _bounty) external teamOnly {
-        require(icoState == IcoState.Running);
-        icoState = IcoState.Finished;
+  function deploy() public onlyOwner {
+    token = new GoldMineCoin();
 
-        uint mintedTokens = gvToken.totalSupply();
-        if (mintedTokens > 0) {
-            uint totalAmount = mintedTokens * 4 / 3;              // 75% of total tokens are for sale, get 100%
-            gvToken.mint(teamAllocator, 11 * totalAmount / 100);  // 11% for team to the time-locked wallet
-            gvToken.mint(_fund, totalAmount / 20);                // 5% for Genesis Vision fund
-            gvToken.mint(_bounty, 9 * totalAmount / 100);         // 9% for Advisers, Marketing, Bounty
-            gvToken.unfreeze();
-        }
-        
-        FinishIco();
-    }    
+    presale = new Presale();
+    presale.setToken(token);
+    token.setSaleAgent(presale);
+    
+    // fix
+    presale.setBountyWallet(0x6FB77f2878A33ef21aadde868E84Ba66105a3E9c);
+    presale.setWallet(0x2d664D31f3AF6aD256A62fdb72E704ab0De42619);
+    presale.setStart(1508850000);
+    presale.setPeriod(35);
 
-    // Buy GVT without options
-    function buyTokens(address buyer, uint usdCents, string txHash)
-        external gvAgentOnly returns (uint) {
-        require(icoState == IcoState.Running);
-        require(!isPaused);
-        return buyTokensInternal(buyer, usdCents, txHash);
-    }
+    preICO = new PreICO();
+    preICO.setToken(token);
+    presale.setNextSaleAgent(preICO);
+    
+    // fix
+    preICO.setTimeStep(5);
+    preICO.setBountyWallet(0x4ca3a7788A61590722A7AAb3b79E8b4DfDDf9559);
+    preICO.setWallet(0x2d664D31f3AF6aD256A62fdb72E704ab0De42619);
+    preICO.setStart(1511182800);
+    preICO.setPeriod(24);
+    
+    ico = new ICO();
+    ico.setToken(token);
+    preICO.setNextSaleAgent(ico);
+    
+    // fix
+    ico.setTimeStep(5);
+    ico.setLockPeriod(250);
+    ico.setBountyWallet(0x7cfe25bdd334cdB46Ae0c4996E7D34F95DFFfdD1);
+    ico.setEscrowTokensWallet(0x24D225818a19c75694FCB35297cA2f23E0bd8F82);
+    ico.setFoundersTokensWallet(0x54540fC0e7cCc29d1c93AD7501761d6b232d5b03);
+    ico.setWallet(0x2d664D31f3AF6aD256A62fdb72E704ab0De42619);
+    ico.setStart(1513515600);
+    ico.setPeriod(32);
 
-    // Buy GVT for option holders. At first buy GVT with option execution, then buy GVT in regular way if ICO is running
-    function buyTokensByOptions(address buyer, uint usdCents, string txHash)
-        external gvAgentOnly returns (uint) {
-        require(!isPaused);
-        require(icoState == IcoState.Running || icoState == IcoState.RunningForOptionsHolders);
-        require(usdCents > 0);
+    token.transferOwnership(0xE8910a2C39Ef0405A9960eC4bD8CBA3211e3C796);
+    presale.transferOwnership(0xE8910a2C39Ef0405A9960eC4bD8CBA3211e3C796);
+    preICO.transferOwnership(0xE8910a2C39Ef0405A9960eC4bD8CBA3211e3C796);
+    ico.transferOwnership(0xE8910a2C39Ef0405A9960eC4bD8CBA3211e3C796);
+  }
 
-        uint executedTokens; 
-        uint remainingCents;
-        // Execute options
-        (executedTokens, remainingCents) = optionProgram.executeOptions(buyer, usdCents, txHash);
-
-        if (executedTokens > 0) {
-            require(tokensSold + executedTokens <= TOKENS_FOR_SALE);
-            tokensSold += executedTokens;
-            
-            gvToken.mint(buyer, executedTokens);
-            BuyTokens(buyer, executedTokens, txHash);
-        }
-
-        //Buy GVT for remaining cents without options
-        if (icoState == IcoState.Running) {
-            return buyTokensInternal(buyer, remainingCents, txHash);
-        } else {
-            return remainingCents;
-        }
-    }
-
-    // Buy GVOT during the Option Program
-    function buyOptions(address buyer, uint usdCents, string txHash)
-        external gvAgentOnly {
-        require(!isPaused);
-        require(icoState == IcoState.RunningOptionsSelling);
-        optionProgram.buyOptions(buyer, usdCents, txHash);
-    }
-
-    // Internal buy GVT without options
-    function buyTokensInternal(address buyer, uint usdCents, string txHash)
-    private returns (uint) {
-        //ICO state is checked in external functions, which call this function        
-        require(usdCents > 0);
-        uint tokens = usdCents * 1e16;
-        require(tokensSold + tokens <= TOKENS_FOR_SALE);
-        tokensSold += tokens;
-            
-        gvToken.mint(buyer, tokens);
-        BuyTokens(buyer, tokens, txHash);
-
-        return 0;
-    }
 }
