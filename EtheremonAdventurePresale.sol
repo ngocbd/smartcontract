@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonAdventurePresale at 0xa7c4681c701ac82c8524cfc66e0101ea16e1e00f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonAdventurePresale at 0xd76e916901c278dc445e4a808d87a4b34edaee25
 */
 pragma solidity ^0.4.19;
 
@@ -75,7 +75,7 @@ contract ERC20Interface {
 
 contract EtheremonAdventurePresale is BasicAccessControl {
     uint8 constant NO_ETH_SITE = 52;
-    uint8 constant MAX_BID_PER_SITE = 2;
+    uint8 constant MAX_BID_PER_SITE = 10;
     using AddressUtils for address;
     
     struct BiddingInfo {
