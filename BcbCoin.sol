@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BcbCoin at 0xD30F3BA216d41ECFe8a4bA0A980A5F148A4914E4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BcbCoin at 0x9F138D5D9e24186eC96B35e5B5530C907860A78d
 */
 pragma solidity ^0.4.16;
 
@@ -102,7 +102,7 @@ contract BcbCoin is Ownable, StandardToken {
 
     /// @notice Initializes the contract and allocates all initial tokens to the owner and agreement account
     function BcbCoin() public {
-        totalSupply = 100 * (10**6) * (10**18); 
+        totalSupply = 2000 * (10**6) * (10**18); 
         balances[msg.sender] = totalSupply;
         name = "BCB";
         symbol = "BCB";
