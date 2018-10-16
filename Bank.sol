@@ -1,145 +1,345 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bank at 0xfb950d858dab0594f4cffb77201215ee46d8b304
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bank at 0xaa4250216f77a79fd9983642a987f708f1fe7504
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.20;
 
-//contract by Adam Skrodzki
-//
-contract BankAccount {
-    Bank parent;
-    function() payable public{
-        address mainAdr = parent.GetMainAddress();
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
 
-        mainAdr.transfer(msg.value);
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+
+
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    emit Pause();
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    emit Unpause();
+  }
+}
+
+
+
+/// @author https://BlockChainArchitect.iocontract Bank is CutiePluginBase
+contract PluginInterface
+{
+    /// @dev simply a boolean to indicate this is the contract we expect to be
+    function isPluginInterface() public pure returns (bool);
+
+    function onRemove() public;
+
+    /// @dev Begins new feature.
+    /// @param _cutieId - ID of token to auction, sender must be owner.
+    /// @param _parameter - arbitrary parameter
+    /// @param _seller - Old owner, if not the message sender
+    function run(
+        uint40 _cutieId,
+        uint256 _parameter,
+        address _seller
+    ) 
+    public
+    payable;
+
+    /// @dev Begins new feature, approved and signed by COO.
+    /// @param _cutieId - ID of token to auction, sender must be owner.
+    /// @param _parameter - arbitrary parameter
+    function runSigned(
+        uint40 _cutieId,
+        uint256 _parameter,
+        address _owner
+    )
+    external
+    payable;
+
+    function withdraw() public;
+}
+
+
+
+contract CutieCoreInterface
+{
+    function isCutieCore() pure public returns (bool);
+
+    function transferFrom(address _from, address _to, uint256 _cutieId) external;
+    function transfer(address _to, uint256 _cutieId) external;
+
+    function ownerOf(uint256 _cutieId)
+        external
+        view
+        returns (address owner);
+
+    function getCutie(uint40 _id)
+        external
+        view
+        returns (
+        uint256 genes,
+        uint40 birthTime,
+        uint40 cooldownEndTime,
+        uint40 momId,
+        uint40 dadId,
+        uint16 cooldownIndex,
+        uint16 generation
+    );
+
+     function getGenes(uint40 _id)
+        public
+        view
+        returns (
+        uint256 genes
+    );
+
+
+    function getCooldownEndTime(uint40 _id)
+        public
+        view
+        returns (
+        uint40 cooldownEndTime
+    );
+
+    function getCooldownIndex(uint40 _id)
+        public
+        view
+        returns (
+        uint16 cooldownIndex
+    );
+
+
+    function getGeneration(uint40 _id)
+        public
+        view
+        returns (
+        uint16 generation
+    );
+
+    function getOptional(uint40 _id)
+        public
+        view
+        returns (
+        uint64 optional
+    );
+
+
+    function changeGenes(
+        uint40 _cutieId,
+        uint256 _genes)
+        public;
+
+    function changeCooldownEndTime(
+        uint40 _cutieId,
+        uint40 _cooldownEndTime)
+        public;
+
+    function changeCooldownIndex(
+        uint40 _cutieId,
+        uint16 _cooldownIndex)
+        public;
+
+    function changeOptional(
+        uint40 _cutieId,
+        uint64 _optional)
+        public;
+
+    function changeGeneration(
+        uint40 _cutieId,
+        uint16 _generation)
+        public;
+}
+
+
+/// @author https://BlockChainArchitect.iocontract Bank is CutiePluginBase
+contract CutiePluginBase is PluginInterface, Pausable
+{
+    function isPluginInterface() public pure returns (bool)
+    {
+        return true;
     }
 
-    function BankAccount (address _bankAddress) public {
-        parent = Bank(_bankAddress);
+    // Reference to contract tracking NFT ownership
+    CutieCoreInterface public coreContract;
+
+    // Cut owner takes on each auction, measured in basis points (1/100 of a percent).
+    // Values 0-10,000 map to 0%-100%
+    uint16 public ownerFee;
+
+    // @dev Throws if called by any account other than the owner.
+    modifier onlyCore() {
+        require(msg.sender == address(coreContract));
+        _;
     }
-    
-    function transferTokens(address _tokenAdr) public {
-        address mainAdr = parent.GetMainAddress();
-        Token t = Token(_tokenAdr);
-        t.transfer(mainAdr,t.balanceOf(this));
+
+    /// @dev Constructor creates a reference to the NFT ownership contract
+    ///  and verifies the owner cut is in the valid range.
+    /// @param _coreAddress - address of a deployed contract implementing
+    ///  the Nonfungible Interface.
+    /// @param _fee - percent cut the owner takes on each auction, must be
+    ///  between 0-10,000.
+    function setup(address _coreAddress, uint16 _fee) public {
+        require(_fee <= 10000);
+        require(msg.sender == owner);
+        ownerFee = _fee;
+        
+        CutieCoreInterface candidateContract = CutieCoreInterface(_coreAddress);
+        require(candidateContract.isCutieCore());
+        coreContract = candidateContract;
+    }
+
+    // @dev Set the owner's fee.
+    //  @param fee should be between 0-10,000.
+    function setFee(uint16 _fee) public
+    {
+        require(_fee <= 10000);
+        require(msg.sender == owner);
+
+        ownerFee = _fee;
+    }
+
+    /// @dev Returns true if the claimant owns the token.
+    /// @param _claimant - Address claiming to own the token.
+    /// @param _cutieId - ID of token whose ownership to verify.
+    function _isOwner(address _claimant, uint40 _cutieId) internal view returns (bool) {
+        return (coreContract.ownerOf(_cutieId) == _claimant);
+    }
+
+    /// @dev Escrows the NFT, assigning ownership to this contract.
+    /// Throws if the escrow fails.
+    /// @param _owner - Current owner address of token to escrow.
+    /// @param _cutieId - ID of token whose approval to verify.
+    function _escrow(address _owner, uint40 _cutieId) internal {
+        // it will throw if transfer fails
+        coreContract.transferFrom(_owner, this, _cutieId);
+    }
+
+    /// @dev Transfers an NFT owned by this contract to another address.
+    /// Returns true if the transfer succeeds.
+    /// @param _receiver - Address to transfer NFT to.
+    /// @param _cutieId - ID of token to transfer.
+    function _transfer(address _receiver, uint40 _cutieId) internal {
+        // it will throw if transfer fails
+        coreContract.transfer(_receiver, _cutieId);
+    }
+
+    /// @dev Computes owner's cut of a sale.
+    /// @param _price - Sale price of NFT.
+    function _computeFee(uint128 _price) internal view returns (uint128) {
+        // NOTE: We don't use SafeMath (or similar) in this function because
+        //  all of our entry functions carefully cap the maximum values for
+        //  currency (at 128-bits), and ownerFee <= 10000 (see the require()
+        //  statement in the ClockAuction constructor). The result of this
+        //  function is always guaranteed to be <= _price.
+        return _price * ownerFee / 10000;
+    }
+
+    function withdraw() public
+    {
+        require(
+            msg.sender == owner ||
+            msg.sender == address(coreContract)
+        );
+        if (address(this).balance > 0)
+        {
+            address(coreContract).transfer(address(this).balance);
+        }
+    }
+
+    function onRemove() public onlyCore
+    {
+        withdraw();
     }
 }
 
-contract Token {
-    function balanceOf(address a) constant returns(uint256);
-    function transfer(address to,uint256 value);
-}
 
-contract Bank {
-
-    address private _mainAddress;
-    address public owner ;
-    address private operator ;
-    BankAccount[] private availableAddresses;
-    Token[] private tokens;
-    mapping(uint256 => address) private assignments ;
-
-    uint256 public firstFreeAddressIndex = 0;
-
-
-    function ChangeMainAccount(address mainAddress) public{
-        if(msg.sender==owner){
-            _mainAddress = mainAddress;
-        }
-    }
-    
-    function ChangeOperatorAccount(address addr) public{
-        if(msg.sender==owner){
-            operator = addr;
-        }
-    }
-    
-    function GetNextWithFunds(uint256 startAcc,uint256 startTok) constant returns(uint256,uint256,bool){
-            uint256 i = startAcc;
-            uint256 j = startTok;
-            if(j==0) j=1;
-            uint256 counter =0;
-            for(i;i<availableAddresses.length && counter<100;i++){
-                for(j;j<tokens.length && counter<100;j++){
-                    counter++;
-                    if(tokens[j].balanceOf(availableAddresses[i])>0){
-                        return (i,j,true);
-                    }
-                }
-                j=1;
-            }
-            if(i==availableAddresses.length){
-                return(0,0,false);
-            }
-            else{
-                return(i,j,false);
-            }
-    }
-    function TransferFunds(uint256 addrIdx,uint256 tokIdx) public{
-        if(msg.sender==owner || msg.sender==operator){
-            availableAddresses[addrIdx].transferTokens.gas(250000)(tokens[tokIdx]);
-        }
-        else{
-          revert();   
-        
-        }
-    }
-    function GetMainAddress() public constant returns (address){
-        return(_mainAddress);
-    }
-    function ChangeOwner(address newOwner) public{
-        if(msg.sender==owner){
-            owner = newOwner;
-        }
-        else{
-          revert();   
-        
-        }
-    }
-    function AddToken(address _adr)public {
-        if(msg.sender==owner || msg.sender==operator){
-            tokens.push(Token(_adr));
-        }
-        else{
-          revert();   
-        
-        }
-    }
-    function Bank(address mainAddress) public{
-        tokens.push(Token(0));
-        owner = msg.sender;
-        _mainAddress = mainAddress;
-    }
-    function CreateNewAccount() public{
-        var a = new BankAccount(this);
-        availableAddresses.push(a);
-    }
-    function GetAvailableAddressesCount() private constant returns(uint256){
-        return availableAddresses.length-firstFreeAddressIndex;
+/// @dev Receives payments for payd features from players for Blockchain Cuties
+/// @author https://BlockChainArchitect.io
+contract Bank is CutiePluginBase
+{
+    function run(
+        uint40,
+        uint256,
+        address
+    ) 
+        public
+        payable
+        onlyCore
+    {
+        revert();
     }
 
-    function AssignAddress(uint256 holderId) public{
-        if(msg.sender==owner || msg.sender==operator){
-            if(assignments[holderId]!=0){ // nie mo?na stworzy? 2 adresów dla jednego klienta
-    
-            }
-            else{
-                if(GetAvailableAddressesCount()==0){
-                        CreateNewAccount();
-                }
-                assignments[holderId] = availableAddresses[firstFreeAddressIndex];
-                firstFreeAddressIndex = firstFreeAddressIndex+1;
-            }
-        }
-        else{
-          revert();   
-        
-        }
-
+    function runSigned(uint40, uint256, address)
+        external
+        payable
+        onlyCore
+    {
+        // just accept payments
     }
-
-    function GetAssignedAddress(uint256 holderId) public constant returns(address){
-         return assignments[holderId];
-    }
-
-
 }
