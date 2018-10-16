@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xebc232202836e85fb7ed1232c7468f152c190f53
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x1f5c51139298b224fb2dfe371cc95177aba7d246
 */
 pragma solidity ^0.4.21;
 
@@ -65,8 +65,8 @@ contract TokenERC20 is Ownable {
 	
     using SafeMath for uint256;
     
-    string public constant name       = "DBU";
-    string public constant symbol     = "DBU";
+    string public constant name       = "BasicValueQuest";
+    string public constant symbol     = "BVQ";
     uint32 public constant decimals   = 18;
     uint256 public totalSupply;
 
