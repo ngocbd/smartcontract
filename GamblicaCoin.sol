@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GamblicaCoin at 0xcd95fbb2d73bab7f04893253b13e66f28841ab24
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GamblicaCoin at 0xa981d95546dd9b0eaab33da32b92d1d987b572fe
 */
 pragma solidity ^0.4.15;
 
@@ -48,6 +48,8 @@ contract GamblicaCoin is ERC20, owned
  
 	// Balances for each account
 	mapping(address => uint256) balances;
+
+	mapping(address => uint256) lockedTillTime;
  
 	// Owner of account approves the transfer of an amount to another account
 	mapping(address => mapping (address => uint256)) allowed;
@@ -89,6 +91,15 @@ contract GamblicaCoin is ERC20, owned
 		return balances[_owner];
 	}
 
+	function getUnlockTime(address _owner) public constant returns (uint256 unlockTime) 
+	{
+		return lockedTillTime[_owner];
+	}
+
+	function isUnlocked(address _owner) public constant returns (bool unlocked) 
+	{
+		return lockedTillTime[_owner] < now;
+	}
  
 	// Transfer the balance from owner's account to another account
 	function transfer(address _to, uint256 _amount) public returns (bool success) 
@@ -96,7 +107,7 @@ contract GamblicaCoin is ERC20, owned
 		if (balances[msg.sender] >= _amount 
 			&& _amount > 0
 			&& balances[_to] + _amount > balances[_to]
-			) 
+			&& isUnlocked(msg.sender)) 
 		{
 			balances[msg.sender] -= _amount;
 			balances[_to] += _amount;
@@ -123,7 +134,7 @@ contract GamblicaCoin is ERC20, owned
 			&& allowed[_from][msg.sender] >= _amount
 			&& _amount > 0
 			&& balances[_to] + _amount > balances[_to] 
-			)
+			&& isUnlocked(_from))
 		{
 			balances[_from] -= _amount;
 			allowed[_from][msg.sender] -= _amount;
@@ -150,12 +161,21 @@ contract GamblicaCoin is ERC20, owned
 	}
 
 	function send(address target, uint256 mintedAmount) public onlyOwnerOrCrowdsale 
-	{
+	{   
+
+		uint256 lockTime = 1527811200;
+
 		require(mintedAmount > 0);
 
 		balances[target] = safeAdd(balances[target], mintedAmount);
 		_totalSupply = safeAdd(_totalSupply, mintedAmount);
-		Transfer(msg.sender, target, mintedAmount);
+
+		if (lockedTillTime[target] < lockTime)
+		{
+			lockedTillTime[target] = lockTime;
+		}
+
+	
 	}
 
 	function burn(address target, uint256 burnedAmount) public onlyOwnerOrCrowdsale
