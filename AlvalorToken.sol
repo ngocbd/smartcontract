@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AlvalorToken at 0x5894564df231947152e13a6c1477e2faa078ff26
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AlvalorToken at 0x24cebC1548e698fEFFB5553B8Ac8043b51069Faa
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.18;
 
 
 /**
@@ -305,12 +305,14 @@ contract AlvalorToken is PausableToken {
   // keeps track of how much each address can claim in the airdrop
   mapping(address => uint256) private claims;
 
+  // who is allowed to drop supply during airdrop (for automation)
+  address private dropper;
+
   // events emmitted by the contract
   event Freeze();
   event Drop(address indexed receiver, uint256 value);
   event Mint(address indexed receiver, uint256 value);
   event Claim(address indexed receiver, uint256 value);
-  event Burn(address indexed receiver, uint256 value);
 
   // the not frozen modifier guards functions modifying the supply of the token
   // from being called after the token supply has been frozen
@@ -324,40 +326,54 @@ contract AlvalorToken is PausableToken {
     _;
   }
 
+  // make sure only the dropper can drop claimable supply
+  modifier onlyDropper() {
+    require(msg.sender == dropper);
+    _;
+  }
+
   // AlvalorToken will make sure the owner can claim any unclaimed drop at any
   // point.
   function AlvalorToken() public {
     claims[owner] = dropSupply;
+    dropper = msg.sender;
+  }
+
+  function changeDropper(address _dropper) onlyOwner whenNotFrozen external {
+    dropper = _dropper;
   }
 
   // freeze will irrevocably stop all modifications to the supply of the token,
   // effectively freezing the supply of the token (transfers are still possible)
-  function freeze() external onlyOwner whenNotFrozen {
+  function freeze() onlyOwner whenNotFrozen external {
     frozen = true;
     Freeze();
   }
 
   // mint can be called by the owner to create tokens for a certain receiver
   // it will no longer work once the token supply has been frozen
-  function mint(address _receiver, uint256 _value) onlyOwner whenNotFrozen public returns (bool) {
+  function mint(address _receiver, uint256 _value) onlyOwner whenNotFrozen external returns (bool) {
     require(_value > 0);
     require(_value <= maxSupply.sub(totalSupply).sub(dropSupply));
     totalSupply = totalSupply.add(_value);
     balances[_receiver] = balances[_receiver].add(_value);
     Mint(_receiver, _value);
+    Transfer(address(0), _receiver, _value);
     return true;
   }
 
+  // claimable returns how much a given address can claim from the airdrop
   function claimable(address _receiver) constant public returns (uint256) {
     if (claimedSupply >= dropSupply) {
       return 0;
     }
-    return claims[_receiver];
+    uint value = Math.min256(claims[_receiver], dropSupply.sub(claimedSupply));
+    return value;
   }
 
   // drop will create a new allowance for claimable tokens of the airdrop
   // it will no longer work once the token supply has been frozen
-  function drop(address _receiver, uint256 _value) onlyOwner whenNotFrozen public returns (bool) {
+  function drop(address _receiver, uint256 _value) onlyDropper whenNotFrozen external returns (bool) {
     require(claimedSupply < dropSupply);
     require(_receiver != owner);
     claims[_receiver] = _value;
@@ -367,14 +383,16 @@ contract AlvalorToken is PausableToken {
 
   // claim will allow any sender to retrieve the airdrop tokens assigned to him
   // it will only work until the maximum number of airdrop tokens are redeemed
-  function claim() whenNotPaused whenFrozen public returns (bool) {
+  function claim() whenNotPaused whenFrozen external returns (bool) {
     require(claimedSupply < dropSupply);
-    uint value = Math.min256(claims[msg.sender], dropSupply.sub(claimedSupply));
+    require(claims[msg.sender] > 0);
+    uint value = claimable(msg.sender);
     claims[msg.sender] = claims[msg.sender].sub(value);
     claimedSupply = claimedSupply.add(value);
     totalSupply = totalSupply.add(value);
     balances[msg.sender] = balances[msg.sender].add(value);
     Claim(msg.sender, value);
+    Transfer(address(0), msg.sender, value);
     return true;
   }
 }
