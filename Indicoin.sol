@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Indicoin at 0x0ffAB58EA5A71CC3cA40217706C3C401407fA4a8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Indicoin at 0xe8c09672cfb9cfce6e2edbb01057d9fa569f97c1
 */
 pragma solidity ^0.4.11;
 
@@ -167,6 +167,14 @@ contract StandardToken is ERC20, BasicToken {
 
 /**
  * @title SimpleToken
+ * 
+ * 
+ 
+ 
+ 
+ 
+ 
+ 
  * @dev Very simple ERC20 Token example, where all tokens are pre-assigned to the creator.
  * Note they can later distribute these tokens as they wish using `transfer` and other
  * `StandardToken` functions.
@@ -177,7 +185,7 @@ contract Indicoin is StandardToken {
   string public constant symbol = "INDI";
   uint256 public constant decimals = 18;
 
-  uint256 public constant INITIAL_SUPPLY = 1000000000 * 10**18;
+  uint256 public constant INITIAL_SUPPLY = 550000000 * 10**18;
 
   /**
    * @dev Contructor that gives msg.sender all of existing tokens.
