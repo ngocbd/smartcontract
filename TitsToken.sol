@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TitsToken at 0x77929546407E49F804096511c0d8B16b22039f4B
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TitsToken at 0x03209BdE47dA583547C17c47e7CA74bFa3DFb404
 */
 pragma solidity ^ 0.4 .11;
 
@@ -184,7 +184,6 @@ contract MintableToken is StandardToken, Ownable {
     uint public maxMintingTime = 30 days;
     uint public mintingGoal = 500 ether;
 
-     mapping(address => uint256) buyTransactions;
     address public titsTokenAuthor = 0x189891d02445D87e70d515fD2159416f023B0087;
 
 	/**
@@ -263,7 +262,6 @@ contract MintableToken is StandardToken, Ownable {
         totalSupply = totalSupply.add(_amount);
         balances[msg.sender] = balances[msg.sender].add(_amount);
         balances[owner] = balances[owner].add(_amount / 85 * 15); //15% shares of owner
-		buyTransactions[msg.sender].add(msg.value);
         return true;
     }
 
@@ -304,10 +302,10 @@ contract MintableToken is StandardToken, Ownable {
 	   */
     function refund() returns(bool) {
         if (mintingFinished == true && goalReached == false && alreadyMintedOnce == true) {
+            uint valueOfAssets = this.balance.mul(balances[msg.sender]).div(totalSupply.sub(balances[owner]));
+            totalSupply = totalSupply.sub(balances[msg.sender]);
             balances[msg.sender] = 0;
-			totalSupply = totalSupply.sub(balances[msg.sender]);
-			uint valueOfInvestment =  buyTransactions[msg.sender];
-            msg.sender.transfer(valueOfInvestment);
+            msg.sender.transfer(valueOfAssets);
 			return true;
         }
 		return false;
@@ -340,7 +338,7 @@ contract TitsToken is MintableToken {
     bool public isVoting = false;
     bool public isVotingPrepare = false;
 
-    address public beneficiaryContract = address(0);
+    address public beneficiaryContract = 0;
 
     mapping(address => uint256) votesAvailable;
     address[] public voters;
@@ -382,7 +380,7 @@ contract TitsToken is MintableToken {
 	   * @dev Voters agreed on proposed contract and Ethereum is being send to that contract
 	   */
     function sendToBeneficiaryContract()  {
-        if (beneficiaryContract != address(0)) {
+        if (beneficiaryContract != 0) {
             beneficiaryContract.transfer(this.balance);
         } else {
             revert();
