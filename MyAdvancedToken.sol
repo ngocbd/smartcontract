@@ -1,7 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x6b4732E8384b1D7eA4F96968fdDE37FeE22b6628
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xe3418614cbd19d20a6884042754d7e5ff3648ab5
 */
 pragma solidity ^0.4.16;
+
+// checkers.game token 3 Feb 2018
 
 contract owned {
     address public owner;
@@ -26,7 +28,7 @@ contract TokenERC20 {
     // Public variables of the token
     string public name;
     string public symbol;
-    uint8 public decimals = 18;
+    uint8 public decimals = 0;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
 
@@ -178,8 +180,8 @@ contract TokenERC20 {
 
 contract MyAdvancedToken is owned, TokenERC20 {
 
-    uint256 public sellPrice;
-    uint256 public buyPrice;
+    uint256 public sellPrice =  7770000000000000;
+    uint256 public buyPrice =   7770000000000000;
 
     mapping (address => bool) public frozenAccount;
 
@@ -223,4 +225,25 @@ contract MyAdvancedToken is owned, TokenERC20 {
         FrozenFunds(target, freeze);
     }
 
+    /// @notice Allow users to buy tokens for `newBuyPrice` eth and sell tokens for `newSellPrice` eth
+    /// @param newSellPrice Price the users can sell to the contract
+    /// @param newBuyPrice Price users can buy from the contract
+    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner public {
+        sellPrice = newSellPrice;
+        buyPrice = newBuyPrice;
+    }
+
+    /// @notice Buy tokens from contract by sending ether
+    function buy() payable public {
+        uint amount = msg.value / buyPrice;               // calculates the amount
+        _transfer(this, msg.sender, amount);              // makes the transfers
+    }
+
+    /// @notice Sell `amount` tokens to contract
+    /// @param amount amount of tokens to be sold
+    function sell(uint256 amount) public {
+        require(this.balance >= amount * sellPrice);      // checks if the contract has enough ether to buy
+        _transfer(msg.sender, this, amount);              // makes the transfers
+        msg.sender.transfer(amount * sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
+    }
 }
