@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DemoTokenMintable at 0xe250fcc968b376ca2ad795ff7797149b8c4779f0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DemoTokenMintable at 0x002c74b0cd9354ba5464db519cae76d7cfaa070a
 */
 pragma solidity ^0.4.13;
 
@@ -135,8 +135,8 @@ contract MintableToken is StandardToken, Ownable {
 
 contract DemoTokenMintable is MintableToken {
 
-        string public name = "Kremlin";
-        string public symbol = "KRM";
-        uint256 public decimals = 18;
+        string public name = "Tronic";
+        string public symbol = "TRNC";
+        uint256 public decimals = 7;
 
 }
