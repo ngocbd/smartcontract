@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherMemes at 0x783F552164E5F10a85323C95A2cD602bE114763c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherMemes at 0x9F9a8D8e175f6A56359C2075E530e678ef6F575B
 */
 pragma solidity ^0.4.19;
 
