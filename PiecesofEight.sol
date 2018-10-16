@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PiecesofEight at 0x84684d48F9983Bf959A2b4e88fB9393e90b9166f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PiecesofEight at 0xd1fe2786f8a4e5fd262587cc0680cbf015908f7a
 */
 pragma solidity ^0.4.4;
 
@@ -102,11 +102,11 @@ contract PiecesofEight is StandardToken {
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
     function PiecesofEight() {
-        balances[msg.sender] = 90000000000000000;               
+        balances[msg.sender] = 20000000000000000;               
         totalSupply = 90000000000000000;                        
         name = "Pieces of Eight";                                        
         decimals = 16;                                              
-        symbol = "PSOE";                                             
+        symbol = "POE";                                             
         EthperPoe = 1;                                     
         fundsWallet = msg.sender;                                    
     }
