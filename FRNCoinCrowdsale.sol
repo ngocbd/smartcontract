@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FRNCoinCrowdsale at 0xe3ff511d558d5476eb535a23c92f307a4f98c3fe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FRNCoinCrowdsale at 0x39fe3b1006fa3eac3afd06d7fd406f48d86a0d5e
 */
 pragma solidity ^0.4.11;
 
@@ -296,7 +296,15 @@ contract FRNCoinCrowdsale is Ownable {
 
     // calculate token amount to be created
     uint256 tokens = weiAmount.mul(rate);
-
+    // calculate bonus based on investment amount
+    if (weiAmount >= 20 ether)
+        tokens += (tokens.div(100)).mul(50);
+    else if (weiAmount >= 10 ether)
+        tokens += (tokens.div(100)).mul(30);
+    else if (weiAmount >= 5 ether)
+        tokens += (tokens.div(100)).mul(15);
+    else
+        tokens += (tokens.div(100)).mul(5);
     // update state
     weiRaised = weiRaised.add(weiAmount);
 
@@ -325,5 +333,9 @@ contract FRNCoinCrowdsale is Ownable {
     return now > endTime;
   }
 
+  // @return true if crowdsale event has not ended
+  function isRunning() public constant returns (bool) {
+    return now < endTime;
+  }
 
 }
