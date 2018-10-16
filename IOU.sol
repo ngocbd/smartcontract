@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IOU at 0x44f2f79343ac7244c09e0189df05588524a86515
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IOU at 0x4e61ba9c25d43e802c6be8d160432e4989dea1fc
 */
 pragma solidity ^0.4.11;
 
@@ -13,18 +13,19 @@ pragma solidity ^0.4.11;
   OR until cut-off time defined below is exceeded and as a result ETH
   refunds/withdrawals become enabled.
 
+  The buyer's ETH will ONLY be released to the seller AFTER the buyer
+  manually withdraws their tokens by sending this contract a transaction
+  with 0 ETH.
+
   In other words, the seller must fulfill the IOU token purchases any time
   before the cut-off time defined below, otherwise the buyer gains the
   ability to withdraw their ETH.
-
-  The buyer's ETH will ONLY be released to the seller AFTER the adequate
-  amount of tokens have been deposited for ALL purchases.
 
   Estimated Time of Distribution: 3-5 weeks from ICO according to TenX
   Cut-off Time: ~ August 9, 2017
 
   Greetz: blast, cintix
-  foobarbizarre@gmail.com (Please report any findings or suggestions for a 1 ETH bounty!)
+  Bounty: foobarbizarre@gmail.com (Please report any findings or suggestions!)
 
   Thank you
 */
@@ -42,38 +43,35 @@ contract IOU {
   mapping (address => uint256) public eth_sent;
 
   // Total IOUs available to sell
-  uint256 public total_iou_available = 20000000000000000000;
+  uint256 public total_iou_available = 52500000000000000000000;
 
   // Total IOUs purchased by all buyers
   uint256 public total_iou_purchased;
 
-  // Total IOU withdrawn by all buyers (keep track to protect buyers)
-  uint256 public total_iou_withdrawn;
-
-  // IOU per ETH (price)
-  uint256 public price_per_eth = 8600;
-
   //  PAY token contract address (IOU offering)
-  ERC20 public token = ERC20(0x0D8775F648430679A709E98d2b0Cb6250d2887EF);
+  ERC20 public token = ERC20(0xB97048628DB6B661D4C2aA833e95Dbe1A905B280);
 
   // The seller's address (to receive ETH upon distribution, and for authing safeties)
-  address seller = 0x007937cd579875A1b9e4E485a49Ee8147BC03a37;
+  address seller = 0xB00Ae1e677B27Eee9955d632FF07a8590210B366;
 
   // Halt further purchase ability just in case
   bool public halt_purchases;
 
   /*
-    Safety to withdraw unbought tokens back to seller. Ensures the amount
-    that buyers still need to withdraw remains available
+    Safety to withdraw all tokens back to seller in the event any get stranded.
+    Does not leave buyers susceptible. If anything, not enough tokens in the contract
+    will enable them to withdraw their ETH so long as the specified block.number has been mined
   */
   function withdrawTokens() {
     if(msg.sender != seller) throw;
-    token.transfer(seller, token.balanceOf(address(this)) - (total_iou_purchased - total_iou_withdrawn));
+    token.transfer(seller, token.balanceOf(address(this)));
   }
 
   /*
     Safety to prevent anymore purchases/sales from occurring in the event of
-    unforeseen issue. Buyer withdrawals still remain enabled.
+    unforeseen issue, or if seller wishes to limit this particular sale price
+    and start a new contract with a new price. The contract will of course
+    allow withdrawals to occur still.
   */
   function haltPurchases() {
     if(msg.sender != seller) throw;
@@ -83,46 +81,6 @@ contract IOU {
   function resumePurchases() {
     if(msg.sender != seller) throw;
     halt_purchases = false;
-  }
-
-  /*
-    Update available IOU to purchase
-  */
-  function updateAvailability(uint256 _iou_amount) {
-    if(msg.sender != seller) throw;
-    if(_iou_amount < total_iou_purchased) throw;
-
-    total_iou_available = _iou_amount;
-  }
-
-  /*
-    Update IOU price
-  */
-  function updatePrice(uint256 _price) {
-    if(msg.sender != seller) throw;
-    price_per_eth = _price;
-  }
-
-  /*
-    Release buyer's ETH to seller ONLY if amount of contract's tokens balance
-    is >= to the amount that still needs to be withdrawn. Protects buyer.
-
-    The seller must call this function manually after depositing the adequate
-    amount of tokens for all buyers to collect, as defined by total_iou_purchased
-
-    This effectively ends the sale, but withdrawals remain open indefinitely
-  */
-  function paySeller() {
-    if(msg.sender != seller) throw;
-
-    // not enough tokens in balance to release ETH, protect buyer and abort
-    if(token.balanceOf(address(this)) < (total_iou_purchased - total_iou_withdrawn)) throw;
-
-    // Halt further purchases to prevent accidental over-selling
-    halt_purchases = true;
-
-    // Release buyer's ETH to the seller
-    seller.transfer(this.balance);
   }
 
   function withdraw() payable {
@@ -152,7 +110,7 @@ contract IOU {
       // If the user doesn't have any ETH or tokens to withdraw, get out ASAP
       if(eth_to_refund == 0 || iou_purchased[msg.sender] == 0) throw;
 
-      // Adjust total purchased so others can buy, and so numbers align with total_iou_withdrawn
+      // Adjust total purchased so others can buy
       total_iou_purchased -= iou_purchased[msg.sender];
 
       // Clear record of buyer's ETH and IOU balance before refunding
@@ -170,25 +128,27 @@ contract IOU {
     if(token.balanceOf(address(this)) == 0 || iou_purchased[msg.sender] > token.balanceOf(address(this))) throw;
 
     uint256 iou_to_withdraw = iou_purchased[msg.sender];
+    uint256 eth_to_release = eth_sent[msg.sender];
 
-    // If the user doesn't have any IOUs to withdraw/release, get out ASAP
-    if(iou_to_withdraw == 0) throw;
+    // If the user doesn't have any IOUs or ETH to withdraw/release, get out ASAP
+    if(iou_to_withdraw == 0 || eth_to_release == 0) throw;
 
     // Clear record of buyer's IOU and ETH balance before transferring out
     iou_purchased[msg.sender] = 0;
     eth_sent[msg.sender] = 0;
 
-    total_iou_withdrawn += iou_to_withdraw;
-
     // Distribute tokens to the buyer
     token.transfer(msg.sender, iou_to_withdraw);
+
+    // Release buyer's ETH to the seller
+    seller.transfer(eth_to_release);
   }
 
   function purchase() payable {
     if(halt_purchases) throw;
 
     // Determine amount of tokens user wants to/can buy
-    uint256 iou_to_purchase = price_per_eth * msg.value; // price is 160 per ETH
+    uint256 iou_to_purchase = 160 * msg.value; // price is 160 per ETH
 
     // Check if we have enough IOUs left to sell
     if((total_iou_purchased + iou_to_purchase) > total_iou_available) throw;
