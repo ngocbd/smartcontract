@@ -1,20 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20 at 0x83af51574de213db73e65c5fc67fe5c69305d896
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20 at 0xc7dbe96b060c78358cb5904b6eab55b81ea86b5d
 */
 pragma solidity ^0.4.18;
 
-contract Mobilink {
+contract EtherZaarFactory {
 
-    function Mobilink() public {
+    function EtherZaarFactory() public {
     }
 
-    function createERC20(address _initialOwner, uint256 _initialAmount, 
-string _name, uint8 _decimals, string _symbol)
-        public
+    function createERC20(address _initialOwner, uint256 _initialAmount, string _name, uint8 _decimals, string _symbol) 
+        public 
     returns (address) {
 
-        ERC20 newToken = (new ERC20(_initialOwner, _initialAmount, 
-_name, _decimals, _symbol));
+        ERC20 newToken = (new ERC20(_initialOwner, _initialAmount, _name, _decimals, _symbol));
 
         return address(newToken);
     }
@@ -23,27 +21,20 @@ _name, _decimals, _symbol));
 
 contract ERC20Interface {
 
-    uint256 public totalSupply = 9000000000000000000000000000;
+    uint256 public totalSupply;
 
-    function balanceOf(address _owner) public view returns (uint256 
-balance);
+    function balanceOf(address _owner) public view returns (uint256 balance);
 
-    function transfer(address _to, uint256 _value) public returns (bool 
-success);
+    function transfer(address _to, uint256 _value) public returns (bool success);
 
-    function transferFrom(address _from, address _to, uint256 _value) 
-public returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
 
-    function approve(address _spender, uint256 _value) public returns 
-(bool success);
+    function approve(address _spender, uint256 _value) public returns (bool success);
 
-    function allowance(address _owner, address _spender) public view 
-returns (uint256 remaining);
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
 
-    event Transfer(address indexed _from, address indexed _to, uint256 
-_value);
-    event Approval(address indexed _owner, address indexed _spender, 
-uint256 _value);
+    event Transfer(address indexed _from, address indexed _to, uint256 _value); 
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
 pragma solidity ^0.4.18;
@@ -54,10 +45,10 @@ contract ERC20 is ERC20Interface {
     mapping (address => uint256) public balances;
     mapping (address => mapping (address => uint256)) public allowed;
 
-    string public name ="MobilinkToken";
-    uint8 public decimals = 18;
-    string public symbol = "MOLK";
-
+    string public name;
+    uint8 public decimals;
+    string public symbol;
+    
     function ERC20(
         address _initialOwner,
         uint256 _initialAmount,
@@ -65,16 +56,15 @@ contract ERC20 is ERC20Interface {
         uint8 _decimalUnits,
         string _tokenSymbol
     ) public {
-        balances[_initialOwner] = _initialAmount;
-        totalSupply = _initialAmount;
-        name = _tokenName;
-        decimals = _decimalUnits;
-        symbol = _tokenSymbol;
+        balances[_initialOwner] = _initialAmount;               
+        totalSupply = _initialAmount;                        
+        name = _tokenName;                                   
+        decimals = _decimalUnits;                            
+        symbol = _tokenSymbol;   
         emit Transfer(_initialOwner, _initialOwner, _initialAmount);
     }
 
-    function transfer(address _to, uint256 _value) public returns (bool 
-success) {
+    function transfer(address _to, uint256 _value) public returns (bool success) {
         require(balances[msg.sender] >= _value);
         balances[msg.sender] -= _value;
         balances[_to] += _value;
@@ -82,8 +72,7 @@ success) {
         return true;
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) 
-public returns (bool success) {
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
         uint256 allowance = allowed[_from][msg.sender];
         require(balances[_from] >= _value && allowance >= _value);
         balances[_to] += _value;
@@ -95,20 +84,17 @@ public returns (bool success) {
         return true;
     }
 
-    function balanceOf(address _owner) public view returns (uint256 
-balance) {
+    function balanceOf(address _owner) public view returns (uint256 balance) {
         return balances[_owner];
     }
 
-    function approve(address _spender, uint256 _value) public returns 
-(bool success) {
+    function approve(address _spender, uint256 _value) public returns (bool success) {
         allowed[msg.sender][_spender] = _value;
         emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
-    function allowance(address _owner, address _spender) public view 
-returns (uint256 remaining) {
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
         return allowed[_owner][_spender];
-    }
+    }   
 }
