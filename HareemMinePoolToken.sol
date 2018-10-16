@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HareemMinePoolToken at 0x13cb4f608d697d104ca9be1826f838d07fb3a39c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HareemMinePoolToken at 0xa45d88c06a8643fb53f9c9923162403852bf3592
 */
 pragma solidity ^0.4.11;
 
@@ -116,8 +116,8 @@ contract HareemMinePoolToken is BasicToken, Ownable {
    uint256 public constant decimals = 18;
 
    uint256 constant INITIAL_SUPPLY = 1000 * (10 ** uint256(decimals));
-   uint256 public sellPrice = 2;  
-   uint256 public buyPrice = 1; 
+   uint256 public sellPrice = 0.35 * 10 ** 18;  
+   uint256 public buyPrice = 0.25 * 10 ** 18; 
   
    string public constant COLLATERAL_HELD = "1000 ETH";
    uint payout_worth = 0;
@@ -158,12 +158,12 @@ contract HareemMinePoolToken is BasicToken, Ownable {
     }
 
     function setPrices(uint256 newSellPrice, uint256 newBuyPrice) public onlyOwner {
-        sellPrice = newSellPrice;
-        buyPrice = newBuyPrice;
+        sellPrice = newSellPrice * 10 ** 3;
+        buyPrice = newBuyPrice * 10 ** 3; 
     }
   
     function payoutWorth(address beneficiary) constant public returns (uint amount) {
-        amount = tokenBalances[beneficiary].mul(sellPrice);
+        amount = amountLeftToBePaid[beneficiary];
     }
     
     function tokensLeft() public view returns (uint amount) {
@@ -184,7 +184,8 @@ contract HareemMinePoolToken is BasicToken, Ownable {
       uint soldTokens = totalSupply.sub(tokenBalances[owner]);
       cashBack = cashBack.mul(10**18);
       perTokenPayout =cashBack.div(soldTokens);
-      tokenToTakeBack = perTokenPayout.div(sellPrice);
+      tokenToTakeBack = perTokenPayout.mul(10**18);
+      tokenToTakeBack = tokenToTakeBack.div(sellPrice);
       makePayments();
     }
     
@@ -196,7 +197,9 @@ contract HareemMinePoolToken is BasicToken, Ownable {
             uint payAmt = amountLeftToBePaid[listAddr[i]];
             if (payAmt >0)
             {
-                uint tokensHeld = payAmt.div(sellPrice);
+                uint tokensHeld = payAmt.mul(10**18);
+                tokensHeld = tokensHeld.div(sellPrice); // shouldnt this be buyprice?
+                
                 if (tokensHeld >0)
                 {
                     uint sendMoney = tokensHeld.mul(perTokenPayout);
@@ -210,28 +213,32 @@ contract HareemMinePoolToken is BasicToken, Ownable {
                     tokenBalances[listAddr[i]] = tokenBalances[listAddr[i]].sub(takeBackTokens);
                     tokenBalances[owner] = tokenBalances[owner].add(takeBackTokens);
                     Transfer(listAddr[i],owner, takeBackTokens); 
-                    takeBackTokens = takeBackTokens.div(10**decimals);
                 }
             }
         }
     }
     
     function buy(address beneficiary) payable public returns (uint amount) {
-        require (msg.value >= 10 ** decimals);   //  see this
+        require (msg.value.div(buyPrice) >= 1);   
         uint exchangeAmount;
         uint ethStoreAmt;
         (exchangeAmount,ethStoreAmt) = getExchangeAndEthStoreAmount(msg.value); 
         ethStore.transfer(ethStoreAmt);    
         exchange.transfer(exchangeAmount);
-        uint tempBuyPrice = buyPrice.mul(10**decimals);
-        amount = msg.value.div(tempBuyPrice);                    // calculates the amount
+        //uint tempBuyPrice = buyPrice.mul(10**decimals);
+        amount = msg.value.div(buyPrice);                    // calculates the amount
         amount = amount.mul(10**decimals);
         require(tokenBalances[owner] >= amount);               // checks if it has enough to sell
         tokenBalances[beneficiary] = tokenBalances[beneficiary].add(amount);                  // adds the amount to buyer's balance
         tokenBalances[owner] = tokenBalances[owner].sub(amount);                        // subtracts amount from seller's balance
-        amountLeftToBePaid[beneficiary] = amount.mul(sellPrice);   //input how much has to be paid out to the customer later on
+        
+        uint earlierBalance =  amountLeftToBePaid[beneficiary];
+        uint amountToBePaid = amount.mul(sellPrice);
+        amountToBePaid = amountToBePaid.div(10**18);
+        amountLeftToBePaid[beneficiary] = amountToBePaid.add(earlierBalance);   //input how much has to be paid out to the customer later on
         Transfer(owner, beneficiary, amount);
-        listAddr.push(beneficiary);
+        if (earlierBalance == 0) 
+            listAddr.push(beneficiary);
         return amount;                                    // ends function and returns
     }
    
