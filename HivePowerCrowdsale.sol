@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HivePowerCrowdsale at 0x875c6c366ad49738de6c738127d0510e89e7abbe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HivePowerCrowdsale at 0xe4ddd9583982987b44d979868c81fa364064c3f6
 */
 pragma solidity 0.4.21;
 
@@ -344,47 +344,53 @@ contract HVT is MintableToken, BurnableToken {
   string public symbol = "HVT";
   uint8 public decimals = 18;
 
-  bool public enableTransfers = false;
+  enum State {Blocked,Burnable,Transferable}
+  State public state = State.Blocked;
 
   // functions overrides in order to maintain the token locked during the ICO
   function transfer(address _to, uint256 _value) public returns(bool) {
-    require(enableTransfers);
+    require(state == State.Transferable);
     return super.transfer(_to,_value);
   }
 
   function transferFrom(address _from, address _to, uint256 _value) public returns(bool) {
-      require(enableTransfers);
+      require(state == State.Transferable);
       return super.transferFrom(_from,_to,_value);
   }
 
   function approve(address _spender, uint256 _value) public returns (bool) {
-    require(enableTransfers);
+    require(state == State.Transferable);
     return super.approve(_spender,_value);
   }
 
   function burn(uint256 _value) public {
-    require(enableTransfers);
+    require(state == State.Transferable || state == State.Burnable);
     super.burn(_value);
   }
 
   function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-    require(enableTransfers);
+    require(state == State.Transferable);
     super.increaseApproval(_spender, _addedValue);
   }
 
   function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
-    require(enableTransfers);
+    require(state == State.Transferable);
     super.decreaseApproval(_spender, _subtractedValue);
   }
 
   // enable token transfers
   function enableTokenTransfers() public onlyOwner {
-    enableTransfers = true;
+    state = State.Transferable;
+  }
+
+  // enable token burn
+  function enableTokenBurn() public onlyOwner {
+    state = State.Burnable;
   }
 
   // batch transfer with different amounts for each address
   function batchTransferDiff(address[] _to, uint256[] _amount) public {
-    require(enableTransfers);
+    require(state == State.Transferable);
     require(_to.length == _amount.length);
     uint256 totalAmount = arraySum(_amount);
     require(totalAmount <= balances[msg.sender]);
@@ -397,7 +403,7 @@ contract HVT is MintableToken, BurnableToken {
 
   // batch transfer with same amount for each address
   function batchTransferSame(address[] _to, uint256 _amount) public {
-    require(enableTransfers);
+    require(state == State.Transferable);
     uint256 totalAmount = _amount.mul(_to.length);
     require(totalAmount <= balances[msg.sender]);
     balances[msg.sender] = balances[msg.sender].sub(totalAmount);
@@ -884,6 +890,10 @@ contract HivePowerCrowdsale is Ownable, ICOEngineInterface, KYCBase {
        // run checks again because this is a public function
        require(state == State.Running);
        require(ended());
+       // stop the minting
+       token.finishMinting();
+       // allow to burn tokens
+       token.enableTokenBurn();
        // enable the refunds
        vault.enableRefunds();
        // ICO not successfully finalised
