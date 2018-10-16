@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WIT at 0x4884273db32a4a078e8088a58f34011db7304174
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WIT at 0xfd732b94912a28dd719c3c4c2a5bab0a5eb8a895
 */
 pragma solidity ^0.4.4;
 
@@ -158,7 +158,7 @@ contract WIT is StandardToken {
     string public name = 'WIT';
     string public symbol = 'WIT';
     uint public decimals = 4;
-    uint public INITIAL_SUPPLY = 200000000000;
+    uint public INITIAL_SUPPLY = 2000000000000;
 
     /* This notifies clients about the amount Destroy */
     event Destroy(address indexed from, uint256 value);
