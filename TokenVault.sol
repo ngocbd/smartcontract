@@ -1,142 +1,286 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVault at 0xf56d525ca3af849de951d71d6783e8c8d1e76d07
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVault at 0x21e6290e82a8350fece94631758531d2c1664eb7
 */
-/*
- * ERC20 interface
- * see https://github.com/ethereum/EIPs/issues/20
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
-contract ERC20 {
-  uint public totalSupply;
-  function balanceOf(address who) constant returns (uint);
-  function allowance(address owner, address spender) constant returns (uint);
 
-  function transfer(address to, uint value) returns (bool ok);
-  function transferFrom(address from, address to, uint value) returns (bool ok);
-  function approve(address spender, uint value) returns (bool ok);
-  event Transfer(address indexed from, address indexed to, uint value);
-  event Approval(address indexed owner, address indexed spender, uint value);
+
+
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
+
+
+
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner {
+    require(newOwner != address(0));      
+    owner = newOwner;
+  }
+
 }
 
 
 
 /**
- * Math operations with safety checks
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
  */
-contract SafeMath {
-  function safeMul(uint a, uint b) internal returns (uint) {
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) constant returns (uint256);
+  function transfer(address to, uint256 value) returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+
+contract Recoverable is Ownable {
+
+  /// @dev Empty constructor (for now)
+  function Recoverable() {
+  }
+
+  /// @dev This will be invoked by the owner, when owner wants to rescue tokens
+  /// @param token Token which will we rescue to the owner from the contract
+  function recoverTokens(ERC20Basic token) onlyOwner public {
+    token.transfer(owner, tokensToBeReturned(token));
+  }
+
+  /// @dev Interface function, can be overwritten by the superclass
+  /// @param token Token which balance we will check and return
+  /// @return The amount of tokens (in smallest denominator) the contract owns
+  function tokensToBeReturned(ERC20Basic token) public returns (uint) {
+    return token.balanceOf(this);
+  }
+}
+
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
+
+
+/**
+ * Safe unsigned safe math.
+ *
+ * https://blog.aragon.one/library-driven-development-in-solidity-2bebcaf88736#.750gwtwli
+ *
+ * Originally from https://raw.githubusercontent.com/AragonOne/zeppelin-solidity/master/contracts/SafeMathLib.sol
+ *
+ * Maintained here until merged to mainline zeppelin-solidity.
+ *
+ */
+library SafeMathLib {
+
+  function times(uint a, uint b) returns (uint) {
     uint c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
 
-  function safeDiv(uint a, uint b) internal returns (uint) {
-    assert(b > 0);
-    uint c = a / b;
-    assert(a == b * c + a % b);
-    return c;
-  }
-
-  function safeSub(uint a, uint b) internal returns (uint) {
+  function minus(uint a, uint b) returns (uint) {
     assert(b <= a);
     return a - b;
   }
 
-  function safeAdd(uint a, uint b) internal returns (uint) {
+  function plus(uint a, uint b) returns (uint) {
     uint c = a + b;
-    assert(c>=a && c>=b);
+    assert(c>=a);
     return c;
   }
 
-  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a >= b ? a : b;
+}
+
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
+
+
+
+
+
+
+
+
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
   }
 
-  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a < b ? a : b;
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
   }
 
-  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a >= b ? a : b;
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
   }
 
-  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a < b ? a : b;
-  }
-
-  function assert(bool assertion) internal {
-    if (!assertion) {
-      throw;
-    }
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
   }
 }
 
 
 
 /**
- * Standard ERC20 token with Short Hand Attack and approve() race condition mitigation.
- *
- * Based on code by FirstBlood:
- * https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances. 
  */
-contract StandardToken is ERC20, SafeMath {
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
 
-  mapping(address => uint) balances;
-  mapping (address => mapping (address => uint)) allowed;
-
-  // Interface marker
-  bool public constant isToken = true;
+  mapping(address => uint256) balances;
 
   /**
-   *
-   * Fix for the ERC20 short address attack
-   *
-   * http://vessenes.com/the-erc20-short-address-attack-explained/
-   */
-  modifier onlyPayloadSize(uint size) {
-     if(msg.data.length < size + 4) {
-       throw;
-     }
-     _;
-  }
-
-  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) returns (bool success) {
-    balances[msg.sender] = safeSub(balances[msg.sender], _value);
-    balances[_to] = safeAdd(balances[_to], _value);
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) returns (bool) {
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
     Transfer(msg.sender, _to, _value);
     return true;
   }
 
-  function transferFrom(address _from, address _to, uint _value)  returns (bool success) {
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of. 
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) constant returns (uint256 balance) {
+    return balances[_owner];
+  }
+
+}
+
+
+
+
+
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) returns (bool);
+  function approve(address spender, uint256 value) returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) allowed;
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amout of tokens to be transfered
+   */
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
     var _allowance = allowed[_from][msg.sender];
 
-    // Check is not needed because safeSub(_allowance, _value) will already throw if this condition is not met
-    // if (_value > _allowance) throw;
+    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
+    // require (_value <= _allowance);
 
-    balances[_to] = safeAdd(balances[_to], _value);
-    balances[_from] = safeSub(balances[_from], _value);
-    allowed[_from][msg.sender] = safeSub(_allowance, _value);
+    balances[_to] = balances[_to].add(_value);
+    balances[_from] = balances[_from].sub(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
     Transfer(_from, _to, _value);
     return true;
   }
 
-  function balanceOf(address _owner) constant returns (uint balance) {
-    return balances[_owner];
-  }
-
-  function approve(address _spender, uint _value) returns (bool success) {
+  /**
+   * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) returns (bool) {
 
     // To change the approve amount you first have to reduce the addresses`
     //  allowance to zero by calling `approve(_spender, 0)` if it is not
     //  already 0 to mitigate the race condition described here:
     //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) throw;
+    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
 
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
     return true;
   }
 
-  function allowance(address _owner, address _spender) constant returns (uint remaining) {
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifing the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
     return allowed[_owner][_spender];
   }
 
@@ -144,33 +288,20 @@ contract StandardToken is ERC20, SafeMath {
 
 
 
-/*
- * Ownable
+/**
+ * Standard EIP-20 token with an interface marker.
  *
- * Base contract with an owner.
- * Provides onlyOwner modifier, which prevents function from running if it is called by anyone other than the owner.
+ * @notice Interface marker is used by crowdsale contracts to validate that addresses point a good token contract.
+ *
  */
-contract Ownable {
-  address public owner;
+contract StandardTokenExt is StandardToken {
 
-  function Ownable() {
-    owner = msg.sender;
+  /* Interface declaration */
+  function isToken() public constant returns (bool weAre) {
+    return true;
   }
-
-  modifier onlyOwner() {
-    if (msg.sender != owner) {
-      throw;
-    }
-    _;
-  }
-
-  function transferOwnership(address newOwner) onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
-    }
-  }
-
 }
+
 
 
 /**
@@ -183,13 +314,14 @@ contract Ownable {
  * - Prepare a spreadsheet for token allocation
  * - Deploy this contract, with the sum to tokens to be distributed, from the owner account
  * - Call setInvestor for all investors from the owner account using a local script and CSV input
- * - Move tokensToBeAllocated in this contract usign StandardToken.transfer()
+ * - Move tokensToBeAllocated in this contract using StandardToken.transfer()
  * - Call lock from the owner account
  * - Wait until the freeze period is over
  * - After the freeze time is over investors can call claim() from their address to get their tokens
  *
  */
-contract TokenVault is Ownable {
+contract TokenVault is Ownable, Recoverable {
+  using SafeMathLib for uint;
 
   /** How many investors we have now */
   uint public investorCount;
@@ -216,7 +348,7 @@ contract TokenVault is Ownable {
   uint public lockedAt;
 
   /** We can also define our own token, which will override the ICO one ***/
-  StandardToken public token;
+  StandardTokenExt public token;
 
   /** What is our current state.
    *
@@ -243,7 +375,7 @@ contract TokenVault is Ownable {
    * @param _tokensToBeAllocated Total number of tokens this vault will hold - including decimal multiplcation
    *
    */
-  function TokenVault(address _owner, uint _freezeEndsAt, StandardToken _token, uint _tokensToBeAllocated) {
+  function TokenVault(address _owner, uint _freezeEndsAt, StandardTokenExt _token, uint _tokensToBeAllocated) {
 
     owner = _owner;
 
@@ -264,13 +396,16 @@ contract TokenVault is Ownable {
       throw;
     }
 
+    // Sanity check on _tokensToBeAllocated
+    if(_tokensToBeAllocated == 0) {
+      throw;
+    }
+
     freezeEndsAt = _freezeEndsAt;
     tokensToBeAllocated = _tokensToBeAllocated;
   }
 
-  /**
-   * Add a presale participatin allocation.
-   */
+  /// @dev Add a presale participating allocation
   function setInvestor(address investor, uint amount) public onlyOwner {
 
     if(lockedAt > 0) {
@@ -281,8 +416,7 @@ contract TokenVault is Ownable {
     if(amount == 0) throw; // No empty buys
 
     // Don't allow reset
-    bool existing = balances[investor] > 0;
-    if(existing) {
+    if(balances[investor] > 0) {
       throw;
     }
 
@@ -295,27 +429,23 @@ contract TokenVault is Ownable {
     Allocated(investor, amount);
   }
 
-  /**
-   * Lock the vault.
-   *
-   *
-   * - All balances have been loaded in correctly
-   * - Tokens are transferred on this vault correctly
-   *
-   * Checks are in place to prevent creating a vault that is locked with incorrect token balances.
-   *
-   */
+  /// @dev Lock the vault
+  ///      - All balances have been loaded in correctly
+  ///      - Tokens are transferred on this vault correctly
+  ///      - Checks are in place to prevent creating a vault that is locked with incorrect token balances.
   function lock() onlyOwner {
 
     if(lockedAt > 0) {
       throw; // Already locked
     }
 
-    // Do not lock the vault if the given tokens on this contract
-    // Note that we do not check != so that we can top up little bit extra
-    // due to decimal rounding and having issues with it.
-    // This extras will be lost forever when the vault is locked.
-    if(token.balanceOf(address(this)) < tokensAllocatedTotal) {
+    // Spreadsheet sum does not match to what we have loaded to the investor data
+    if(tokensAllocatedTotal != tokensToBeAllocated) {
+      throw;
+    }
+
+    // Do not lock the vault if the given tokens are not on this contract
+    if(token.balanceOf(address(this)) != tokensAllocatedTotal) {
       throw;
     }
 
@@ -324,9 +454,7 @@ contract TokenVault is Ownable {
     Locked();
   }
 
-  /**
-   * In the case locking failed, then allow the owner to reclaim the tokens on the contract.
-   */
+  /// @dev In the case locking failed, then allow the owner to reclaim the tokens on the contract.
   function recoverFailedLock() onlyOwner {
     if(lockedAt > 0) {
       throw;
@@ -336,17 +464,13 @@ contract TokenVault is Ownable {
     token.transfer(owner, token.balanceOf(address(this)));
   }
 
-  /**
-   * Get the current balance of tokens in the vault.
-   */
+  /// @dev Get the current balance of tokens in the vault
+  /// @return uint How many tokens there are currently in vault
   function getBalance() public constant returns (uint howManyTokensCurrentlyInVault) {
     return token.balanceOf(address(this));
   }
 
-  /**
-   * Claim N bought tokens to the investor as the msg sender.
-   *
-   */
+  /// @dev Claim N bought tokens to the investor as the msg sender
   function claim() {
 
     address investor = msg.sender;
@@ -379,9 +503,16 @@ contract TokenVault is Ownable {
     Distributed(investor, amount);
   }
 
-  /**
-   * Resolve the contract umambigious state.
-   */
+  /// @dev This function is prototyped in Recoverable contract
+  function tokensToBeReturned(ERC20Basic tokenToClaim) public returns (uint) {
+    if (address(tokenToClaim) == address(token)) {
+      return getBalance().minus(tokensAllocatedTotal);
+    } else {
+      return tokenToClaim.balanceOf(this);
+    }
+  }
+
+  /// @dev Resolve the contract umambigious state
   function getState() public constant returns(State) {
     if(lockedAt == 0) {
       return State.Loading;
