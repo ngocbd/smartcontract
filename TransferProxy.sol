@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TransferProxy at 0x5e2e26889c70131327e817b015256dfac888b592
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TransferProxy at 0x82d492935a5293e84217cb2dc4c053d1ee51ab49
 */
 pragma solidity ^0.4.23;
 
@@ -128,16 +128,9 @@ contract TransferProxy is Ownable {
     ERC20 public token;
     address public delegate;
 
-    constructor() public {
-        owner = msg.sender;
-        token = ERC20(0xf8b358b3397a8ea5464f8cc753645d42e14b79EA);
-    }
-    
-    function setDelegateWallet(address wallet) public {
-        require(msg.sender == owner);
-        require(wallet != 0x0);
-        
-        delegate = wallet;
+    constructor(address tokenAddress, address delegateAddress) public {
+        token = ERC20(tokenAddress);
+        delegate = delegateAddress;
     }
 
     function transferToken(address sendTo, uint256 amount) public {
