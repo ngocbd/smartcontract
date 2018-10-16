@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0x159c0318af7ab359d9d92245015580bd7f598f45
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0x2ef689bFe30794dd78D278a6c639CB1F2A4B2e8B
 */
 pragma solidity ^0.4.8;
 contract Token{
@@ -82,13 +82,14 @@ contract HumanStandardToken is StandardToken {
     uint8 public decimals;               //????????How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
     string public symbol;               //token??: eg SBX
     string public version = 'H0.1';    //??
+    string public webpage = 'www.tongzheng.in';    //??
 
-    function HumanStandardToken(uint256 _initialAmount, string _tokenName, uint8 _decimalUnits, string _tokenSymbol) {
-        balances[msg.sender] = _initialAmount; // ??token?????????
-        totalSupply = _initialAmount;         // ??????
-        name = _tokenName;                   // token??
-        decimals = _decimalUnits;           // ????
-        symbol = _tokenSymbol;             // token??
+    function HumanStandardToken() {
+        balances[msg.sender] = 100000000000000000; // ??token?????????
+        totalSupply = 100000000000000000;         // ??????
+        name = "Yes Yes";                   // token??
+        decimals = 8;           // ????
+        symbol = "YY";             // token??
     }
 
     /* Approves and then calls the receiving contract */
