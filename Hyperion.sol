@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hyperion at 0x911ce7a305ed6411191d134af8d835cf7bde22c6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hyperion at 0x5816047dea1872f0dbc037b7223a7ed78ba7f2c1
 */
 pragma solidity ^0.4.17;
 
@@ -27,9 +27,9 @@ contract Hyperion {//is inherently ERC20
     * @storage allowed Holds the allowable balance to be transferable by another address.
     */
 
-    string constant public name = "HYPN";
+    string constant public name = "Hyperion";
 
-    string constant public symbol = "HYPN";
+    string constant public symbol = "HYPR";
 
     uint8 constant public decimals = 8;
 
