@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DECoin at 0x51B5E3291976d4FC7cf7bCB76eFCe6B85AACE9f6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DECoin at 0xD2EA19bE7cb6Ab94F0fcdAa822fD0689E77FA950
 */
 pragma solidity ^0.4.24;
 
@@ -100,7 +100,7 @@ contract StandardToken is Token, SafeMath {
 contract DECoin is StandardToken {
 
   string public name = "?";
-  string public symbol = "?";
+  string public symbol = "DE";
   uint256 public decimals = 18;
   uint256 public INITIAL_SUPPLY = 77760000 * 1 ether;
 
