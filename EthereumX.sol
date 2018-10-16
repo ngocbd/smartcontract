@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumX at 0x1250b6db6eac0d7e67405512d2b18851b2021d84
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumX at 0xc49a91da93be9c0d75a085fb21bd042ec07c64e7
 */
 // Abstract contract for the full ERC 20 Token standard
 // https://github.com/ethereum/EIPs/issues/20
@@ -122,7 +122,7 @@ contract EthereumX is StandardToken {
     string public name;                   //fancy name: eg Simon Bucks
     uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
     string public symbol;                 //An identifier: eg SBX
-    string public version = 'ETX1.0';     //EthereumX 1.0 standard. Just an arbitrary versioning scheme.
+    string public version = 'EthereumX1.0';     //EthereumX 1.0 standard. Just an arbitrary versioning scheme.
 
     function EthereumX(
         uint256 _initialAmount,
