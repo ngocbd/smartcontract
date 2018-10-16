@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlockchainCutiesPresale at 0x2b2a506ebfa319cbf5b25b688c70304170b5bff0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlockchainCutiesPresale at 0xe4889fa16ba797a8a51196ec9389e4764576deae
 */
 pragma solidity ^0.4.20;
 
@@ -94,42 +94,116 @@ contract Pausable is Ownable {
 /// @title BlockchainCuties Presale
 contract BlockchainCutiesPresale is Pausable
 {
-	mapping (uint256 => address) public ownerOf;
-	mapping (uint256 => uint256) public prices;
+    struct Purchase
+    {
+        address owner;
+        uint32 cutieKind;
+        uint128 price;
+    }
+    Purchase[] public purchases;
 
-	event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
+    struct Cutie
+    {
+        uint128 price;
+        uint128 leftCount;
+        uint128 priceMul;
+        uint128 priceAdd;
+    }
 
-	function addCutie(uint40 id, uint256 price) public onlyOwner
-	{
-		require(ownerOf[id] == address(0));
-		prices[id] = price;
-	}
+    mapping (uint32 => Cutie) public cutie;
 
-	function isAvailable(uint40 id) public view returns (bool)
-	{
-		return ownerOf[id] == address(0) && prices[id] > 0;
-	}
+    event Bid(uint256 indexed purchaseId);
 
-	function getPrice(uint40 id) public view returns (uint256 price, bool available)
-	{
-		price = prices[id];
-		available = isAvailable(id);
-	}
+    function addCutie(uint32 id, uint128 price, uint128 count, uint128 priceMul, uint128 priceAdd) public onlyOwner
+    {
+        cutie[id] = Cutie(price, count, priceMul, priceAdd);
+    }
 
-	function bid(uint40 id) public payable
-	{
-		require(isAvailable(id));
-		require(prices[id] <= msg.value);
+    function isAvailable(uint32 cutieKind) public view returns (bool)
+    {
+        return cutie[cutieKind].leftCount > 0;
+    }
 
-		ownerOf[id] = msg.sender;
-		emit Transfer(0, msg.sender, id);
-	}
+    function getPrice(uint32 cutieKind) public view returns (uint256 price, uint256 left)
+    {
+        price = cutie[cutieKind].price;
+        left = cutie[cutieKind].leftCount;
+    }
+
+    function bid(uint32 cutieKind) public payable whenNotPaused
+    {
+        Cutie storage p = cutie[cutieKind];
+        require(isAvailable(cutieKind));
+        require(p.price <= msg.value);
+
+        uint256 length = purchases.push(Purchase(msg.sender, cutieKind, uint128(msg.value)));
+
+        emit Bid(length - 1);
+
+        p.leftCount--;
+        p.price = uint128(uint256(p.price)*p.priceMul / 1000000000000000000 + p.priceAdd);
+    }
+
+    function purchasesCount() public view returns (uint256)
+    {
+        return purchases.length;
+    }
 
     function destroyContract() public onlyOwner {
+        require(address(this).balance == 0);
         selfdestruct(msg.sender);
     }
 
-    function withdraw() public onlyOwner {
-        address(msg.sender).transfer(address(this).balance);
+    address party1address;
+    address party2address;
+    address party3address;
+    address party4address;
+    address party5address;
+
+    /// @dev Setup project owners
+    function setParties(address _party1, address _party2, address _party3, address _party4, address _party5) public onlyOwner
+    {
+        require(_party1 != address(0));
+        require(_party2 != address(0));
+        require(_party3 != address(0));
+        require(_party4 != address(0));
+        require(_party5 != address(0));
+
+        party1address = _party1;
+        party2address = _party2;
+        party3address = _party3;
+        party4address = _party4;
+        party5address = _party5;
     }
+
+    /// @dev Reject all Ether
+    function() external payable {
+        revert();
+    }
+
+    /// @dev The balance transfer to project owners
+    function withdrawEthFromBalance() external
+    {
+        require(
+            msg.sender == party1address ||
+            msg.sender == party2address ||
+            msg.sender == party3address ||
+            msg.sender == party4address ||
+            msg.sender == party5address ||
+            msg.sender == owner);
+
+        require(party1address != 0);
+        require(party2address != 0);
+        require(party3address != 0);
+        require(party4address != 0);
+        require(party5address != 0);
+
+        uint256 total = address(this).balance;
+
+        party1address.transfer(total*105/1000);
+        party2address.transfer(total*105/1000);
+        party3address.transfer(total*140/1000);
+        party4address.transfer(total*140/1000);
+        party5address.transfer(total*510/1000);
+    }    
 }
