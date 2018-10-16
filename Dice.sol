@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dice at 0xe2c122847767effbb3f306724cded7e93a9dd9b9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dice at 0xa4763e354256d5bded779b023be8a88dc33b12ce
 */
 // <ORACLIZE_API>
 /*
@@ -1409,7 +1409,7 @@ contract Dice is usingOraclize {
         }
     }
 
-    function __callback(bytes32 myid, string result)
+    function __callback(bytes32 myid, string result, bytes proof)
         public
         onlyOraclize
         onlyIfBetExist(myid)
