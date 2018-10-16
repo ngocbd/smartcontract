@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BoomerangLiquidity at 0xcf265a52d48b1408c00d585e28e0738aae27b0f3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BoomerangLiquidity at 0x03358425ada4620246dd703dc1f2246b8e148d22
 */
 pragma solidity ^0.4.21;
 
@@ -18,7 +18,6 @@ contract POWH {
     
     function buy(address) public payable returns(uint256){}
     function withdraw() public {}
-    function myTokens() public view returns(uint256){}
 }
 
 contract Owned {
@@ -82,9 +81,6 @@ contract BoomerangLiquidity is Owned {
     
     function deposit() payable public {
         participants.push(Participant(msg.sender, (msg.value * multiplier) / 100));
-        if(myTokens() > 0){
-            withdraw();
-        }
         payout();
     }
     
@@ -112,9 +108,6 @@ contract BoomerangLiquidity is Owned {
         }
     }
     
-    function myTokens() public view returns(uint256){
-        weak_hands.myTokens();
-    }
     
     function withdraw() public {
         weak_hands.withdraw.gas(1000000)();
