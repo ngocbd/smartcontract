@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xe5540268aeead01756ee310cb0bc04e06b720e04
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xea10dbb913be92c378776c596b1d14d2d78a11da
 */
 pragma solidity ^0.4.19;
 
@@ -80,14 +80,14 @@ contract ICOToken is BaseToken {
 
 contract CustomToken is BaseToken, ICOToken {
     function CustomToken() public {
-        totalSupply = 2650000000000000000000000000;
+        totalSupply = 20030510000000000000000000;
         balanceOf[0xf588d792fa8a634162760482a7b61dd1ab99b1f1] = totalSupply;
-        name = 'HyperPay';
-        symbol = 'HPY';
+        name = 'TaoBao';
+        symbol = 'TB';
         decimals = 18;
-        icoRatio = 88888;
-        icoEndtime = 1609149600;
+        icoRatio = 48888;
+        icoEndtime = 1522231200;
         icoSender = 0xf588d792fa8a634162760482a7b61dd1ab99b1f1;
-        icoHolder = 0xf043ae16a61ece2107eb2ba48dcc7ad1c8f9f2dc;
+        icoHolder = 0xf588d792fa8a634162760482a7b61dd1ab99b1f1;
     }
 }
