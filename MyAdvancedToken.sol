@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xe7a6339e39ebcfbe6edb48311492337f0778d598
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x76805fa37C644Addd57bC8Efd41e573815610A0a
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
 
 contract owned {
     address public owner;
@@ -178,6 +178,8 @@ contract TokenERC20 {
 
 contract MyAdvancedToken is owned, TokenERC20 {
 
+    uint256 public sellPrice;
+    uint256 public buyPrice;
 
     mapping (address => bool) public frozenAccount;
 
@@ -195,14 +197,13 @@ contract MyAdvancedToken is owned, TokenERC20 {
     function _transfer(address _from, address _to, uint _value) internal {
         require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
         require (balanceOf[_from] >= _value);               // Check if the sender has enough
-        require (balanceOf[_to] + _value > balanceOf[_to]); // Check for overflows
+        require (balanceOf[_to] + _value >= balanceOf[_to]); // Check for overflows
         require(!frozenAccount[_from]);                     // Check if sender is frozen
         require(!frozenAccount[_to]);                       // Check if recipient is frozen
         balanceOf[_from] -= _value;                         // Subtract from the sender
         balanceOf[_to] += _value;                           // Add the same to the recipient
         Transfer(_from, _to, _value);
     }
-
 
     /// @notice `freeze? Prevent | Allow` `target` from sending & receiving tokens
     /// @param target Address to be frozen
@@ -212,9 +213,10 @@ contract MyAdvancedToken is owned, TokenERC20 {
         FrozenFunds(target, freeze);
     }
     
-        
-    function getBalance(address _addr) view public returns(uint256) {
-        return balanceOf[_addr];
-    }
+    /// Update token Name and symbol
+	function setTokenInformation(string _name, string _symbol) onlyOwner public {
+	    name = _name;
+	    symbol = _symbol;
+  }
 
 }
