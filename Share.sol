@@ -1,25 +1,52 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Share at 0x1db45a09efcdd8955b1c3bb855b5a8d333446bff
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Share at 0xbc9363b59cd73f59102ad6a45494f274d311c0c0
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
+contract Control {
+    address public owner;
+    bool public pause;
+
+    event PAUSED();
+    event STARTED();
+
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+
+    modifier whenPaused {
+        require(pause);
+        _;
+    }
+
+    modifier whenNotPaused {
+        require(!pause);
+        _;
+    }
+
+    function setOwner(address _owner) onlyOwner public {
+        owner = _owner;
+    }
+
+    function setState(bool _pause) onlyOwner public {
+        pause = _pause;
+        if (pause) {
+            emit PAUSED();
+        } else {
+            emit STARTED();
+        }
+    }
+
+}
 /**
  * this contract stands for the holds of WestIndia group
  * all income will be split to holders according to their holds
  * user can buy holds from shareholders at his will
  */
-contract Share {
-
-    bool public pause;
-    /**
-     * owner can pause the contract so that no one can withdrawal
-     * he can't do anything else
-     */
-    address public owner;
-    
-    /**
+contract Share is Control {    /**
      * the holds of every holder
-     * the total holds stick to 10000
+     * the total holds stick to total
      */
     mapping (address => uint) public holds;
 
@@ -43,46 +70,33 @@ contract Share {
      * if set to 0, means not on sell
      */
     mapping (address => uint256) public sellPrice;
-    mapping (address => uint) public toSell;
-
+    mapping (address => uint256) public toSell;
+    mapping (address => mapping(address => uint256)) public allowance;
     uint256 public watermark;
-
-    event PAUSED();
-    event STARTED();
-
-    event SHARE_TRANSFER(address from, address to, uint amount);
+    uint256 public total;
+    uint256 public decimals;
+    
+    string public symbol;
+    string public name;
+    
+    event Transfer(address indexed from, address indexed to, uint256 tokens);
+    event Approval(address indexed tokenOwner, address indexed spender, uint256 tokens);
     event INCOME(uint256);
     event PRICE_SET(address holder, uint shares, uint256 price, uint sell);
     event WITHDRAWAL(address owner, uint256 amount);
     event SELL_HOLDS(address from, address to, uint amount, uint256 price);
     event SEND_HOLDS(address from, address to, uint amount);
 
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-    
-    modifier notPaused() {
-        require(!pause);
-        _;
-    }
-    
-    function setState(bool _pause) onlyOwner public {
-        pause = _pause;
-        
-        if (_pause) {
-            emit PAUSED();
-        } else {
-            emit STARTED();
-        } 
-    }
-
     /**
      * at start the owner has 100% share, which is 10,000 holds
      */
-    function Share() public {        
+    constructor(string _symbol, string _name, uint256 _total) public {        
+        symbol = _symbol;
+        name = _name;
         owner = msg.sender;
-        holds[owner] = 10000;
+        total = _total;
+        holds[owner] = total;
+        decimals = 0;
         pause = false;
     }
 
@@ -91,9 +105,8 @@ contract Share {
      */
     function onIncome() public payable {
         if (msg.value > 0) {
-            watermark += (msg.value / 10000);
-            assert(watermark * 10000 > watermark);
-
+            watermark += (msg.value / total);
+            assert(watermark * total > watermark);
             emit INCOME(msg.value);
         }
     }
@@ -109,7 +122,7 @@ contract Share {
         return (watermark - fullfilled[msg.sender]) * holds[msg.sender];
     }
     
-    function setPrice(uint256 price, uint sell) public notPaused {
+    function setPrice(uint256 price, uint256 sell) public {
         sellPrice[msg.sender] = price;
         toSell[msg.sender] = sell;
         emit PRICE_SET(msg.sender, holds[msg.sender], price, sell);
@@ -118,7 +131,7 @@ contract Share {
     /**
      * withdrawal the bonus
      */
-    function withdrawal() public notPaused {
+    function withdrawal() public whenNotPaused {
         if (holds[msg.sender] == 0) {
             //you don't have any, don't bother
             return;
@@ -136,9 +149,9 @@ contract Share {
      * this will withdrawal the holder bonus of these holds
      * and the to's fullfilled will go up, since total bonus unchanged, but holds goes more
      */
-    function transferHolds(address from, address to, uint amount) internal {
+    function transferHolds(address from, address to, uint256 amount) internal {
         require(holds[from] >= amount);
-        require(amount > 0);
+        require(holds[to] + amount > holds[to]);
 
         uint256 fromBonus = (watermark - fullfilled[from]) * amount;
         uint256 toBonus = (watermark - fullfilled[to]) * holds[to];
@@ -150,7 +163,7 @@ contract Share {
 
         from.transfer(fromBonus);
 
-        emit SHARE_TRANSFER(from, to, amount);
+        emit Transfer(from, to, amount);
         emit WITHDRAWAL(from, fromBonus);
     }
 
@@ -158,7 +171,7 @@ contract Share {
      * one can buy holds from anyone who set up an price,
      * and u can buy @ price higher than he setup
      */
-    function buyFrom(address from) public payable notPaused {
+    function buyFrom(address from) public payable whenNotPaused {
         require(sellPrice[from] > 0);
         uint256 amount = msg.value / sellPrice[from];
 
@@ -174,15 +187,41 @@ contract Share {
 
         toSell[from] -= amount;
         transferHolds(from, msg.sender, amount);
-        from.transfer(msg.value);
         
+        from.transfer(msg.value);
         emit SELL_HOLDS(from, msg.sender, amount, sellPrice[from]);
     }
     
-    function transfer(address to, uint amount) public notPaused {
-        require(holds[msg.sender] >= amount);
+    function balanceOf(address _addr) public view returns (uint256) {
+        return holds[_addr];
+    }
+    
+    function transfer(address to, uint amount) public whenNotPaused returns(bool) {
         transferHolds(msg.sender, to, amount);
+        return true;
+    }
+    
+    function transferFrom(address from, address to, uint256 amount) public whenNotPaused returns (bool) {
+        require(allowance[from][msg.sender] >= amount);
         
-        emit SEND_HOLDS(msg.sender, to, amount);
+        allowance[from][msg.sender] -= amount;
+        transferHolds(from, to, amount);
+        
+        return true;
+    }
+    
+    function approve(address to, uint256 amount) public returns (bool) {
+        allowance[msg.sender][to] = amount;
+        
+        emit Approval(msg.sender, to, amount);
+        return true;
+    }
+    
+    function totalSupply() public view returns (uint256) {
+        return total;
+    }
+    
+    function allowance(address owner, address spender) public view returns (uint256) {
+        return allowance[owner][spender];
     }
 }
