@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract etherEmojis at 0x21c852fb8e7ff1f9e6f8ba43652fd4d7907c38bc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherEmojis at 0xcd16757c08508ccb5d5e3c35e37c93e45a41ae88
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
@@ -26,11 +26,11 @@ contract ERC721 {
   // function tokenMetadata(uint256 _tokenId) public view returns (string infoUrl);
 }
 
-contract etherEmojis is ERC721 {
+contract EtherEmojis is ERC721 {
 
   /*** EVENTS ***/
 
-  /// @dev The Birth event is fired whenever a new emoji comes into existence.
+  /// @dev The Birth event is fired whenever a new Emoji comes into existence.
   event Birth(uint256 tokenId, string name, address owner);
 
   /// @dev The TokenSold event is fired whenever a token is sold.
@@ -43,16 +43,16 @@ contract etherEmojis is ERC721 {
   /*** CONSTANTS ***/
 
   /// @notice Name and symbol of the non fungible token, as defined in ERC721.
-  string public constant NAME = "etherEmojis"; // solhint-disable-line
-  string public constant SYMBOL = "emojiToken"; // solhint-disable-line
+  string public constant NAME = "EtherEmojis"; // solhint-disable-line
+  string public constant SYMBOL = "EmojiToken"; // solhint-disable-line
 
-  uint256 private startingPrice = 0.001 ether;
-  uint256 private firstStepLimit =  0.053613 ether;
-  uint256 private secondStepLimit = 0.564957 ether;
+  uint256 private startingPrice = 0.002 ether;
+  uint256 private firstStepLimit =  0.5 ether;
+  uint256 private secondStepLimit = 5.0 ether;
 
   /*** STORAGE ***/
 
-  /// @dev A mapping from emoji IDs to the address that owns them. All emojis have
+  /// @dev A mapping from emoji IDs to the address that owns them. All emoji have
   ///  some valid owner address.
   mapping (uint256 => address) public emojiIndexToOwner;
 
@@ -60,12 +60,12 @@ contract etherEmojis is ERC721 {
   //  Used internally inside balanceOf() to resolve ownership count.
   mapping (address => uint256) private ownershipTokenCount;
 
-  /// @dev A mapping from emojiIDs to an address that has been approved to call
-  ///  transferFrom(). Each emoji can only have one approved address for transfer
+  /// @dev A mapping from EmojiIDs to an address that has been approved to call
+  ///  transferFrom(). Each Emoji can only have one approved address for transfer
   ///  at any time. A zero value means no approval is outstanding.
   mapping (uint256 => address) public emojiIndexToApproved;
 
-  // @dev A mapping from emojiIDs to the price of the token.
+  // @dev A mapping from EmojiIDs to the price of the token.
   mapping (uint256 => uint256) private emojiIndexToPrice;
 
   // The addresses of the accounts (or contracts) that can execute actions within each roles.
@@ -102,7 +102,7 @@ contract etherEmojis is ERC721 {
   }
 
   /*** CONSTRUCTOR ***/
-  function Etheremojis() public {
+  function EtherEmojis() public {
     ceoAddress = msg.sender;
     cooAddress = msg.sender;
   }
@@ -132,14 +132,14 @@ contract etherEmojis is ERC721 {
     return ownershipTokenCount[_owner];
   }
 
-  /// @dev Creates a new emoji with the given name.
-  function createContractemoji(string _name) public onlyCLevel {
-    _createemoji(_name, address(this), startingPrice);
+  /// @dev Creates a new Emoji with the given name.
+  function createContractEmoji(string _name) public onlyCLevel {
+    _createEmoji(_name, address(this), startingPrice);
   }
 
   /// @notice Returns all the relevant information about a specific emoji.
   /// @param _tokenId The tokenId of the emoji of interest.
-  function getemoji(uint256 _tokenId) public view returns (
+  function getEmoji(uint256 _tokenId) public view returns (
     string emojiName,
     uint256 sellingPrice,
     address owner
@@ -261,7 +261,7 @@ contract etherEmojis is ERC721 {
 
   /// @param _owner The owner whose celebrity tokens we are interested in.
   /// @dev This method MUST NEVER be called by smart contract code. First, it's fairly
-  ///  expensive (it walks the entire emojis array looking for emojis belonging to owner),
+  ///  expensive (it walks the entire Emojis array looking for emojis belonging to owner),
   ///  but it also returns a dynamic array, which is only supported for web3 calls, and
   ///  not contract-to-contract calls.
   function tokensOfOwner(address _owner) public view returns(uint256[] ownerTokens) {
@@ -271,11 +271,11 @@ contract etherEmojis is ERC721 {
       return new uint256[](0);
     } else {
       uint256[] memory result = new uint256[](tokenCount);
-      uint256 totalemojis = totalSupply();
+      uint256 totalEmojis = totalSupply();
       uint256 resultIndex = 0;
 
       uint256 emojiId;
-      for (emojiId = 0; emojiId <= totalemojis; emojiId++) {
+      for (emojiId = 0; emojiId <= totalEmojis; emojiId++) {
         if (emojiIndexToOwner[emojiId] == _owner) {
           result[resultIndex] = emojiId;
           resultIndex++;
@@ -333,24 +333,24 @@ contract etherEmojis is ERC721 {
     return emojiIndexToApproved[_tokenId] == _to;
   }
 
-  /// For creating emojis
-  function _createemoji(string _name, address _owner, uint256 _price) private {
+  /// For creating Emojis
+  function _createEmoji(string _name, address _owner, uint256 _price) private {
     Emoji memory _emoji = Emoji({
       name: _name
     });
-    uint256 newemojiId = emojis.push(_emoji) - 1;
+    uint256 newEmojiId = emojis.push(_emoji) - 1;
 
     // It's probably never going to happen, 4 billion tokens are A LOT, but
     // let's just be 100% sure we never let this happen.
-    require(newemojiId == uint256(uint32(newemojiId)));
+    require(newEmojiId == uint256(uint32(newEmojiId)));
 
-    Birth(newemojiId, _name, _owner);
+    Birth(newEmojiId, _name, _owner);
 
-    emojiIndexToPrice[newemojiId] = _price;
+    emojiIndexToPrice[newEmojiId] = _price;
 
     // This will assign ownership, and also emit the Transfer event as
     // per ERC721 draft
-    _transfer(address(0), _owner, newemojiId);
+    _transfer(address(0), _owner, newEmojiId);
   }
 
   /// Check for token ownership
@@ -367,7 +367,7 @@ contract etherEmojis is ERC721 {
     }
   }
 
-  /// @dev Assigns ownership of a specific emoji to an address.
+  /// @dev Assigns ownership of a specific Emoji to an address.
   function _transfer(address _from, address _to, uint256 _tokenId) private {
     // Since the number of emojis is capped to 2^32 we can't overflow this
     ownershipTokenCount[_to]++;
