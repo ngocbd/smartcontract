@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x238e13d9b0ad0d54d063469c31c9ac757c826bae
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x715030a807664fa06fdda46605445ee5f19ac9d1
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.16;
 
 contract owned {
     address public owner;
@@ -197,7 +197,7 @@ contract MyAdvancedToken is owned, TokenERC20 {
     function _transfer(address _from, address _to, uint _value) internal {
         require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
         require (balanceOf[_from] >= _value);               // Check if the sender has enough
-        require (balanceOf[_to] + _value > balanceOf[_to]); // Check for overflows
+        require (balanceOf[_to] + _value >= balanceOf[_to]); // Check for overflows
         require(!frozenAccount[_from]);                     // Check if sender is frozen
         require(!frozenAccount[_to]);                       // Check if recipient is frozen
         balanceOf[_from] -= _value;                         // Subtract from the sender
@@ -235,13 +235,6 @@ contract MyAdvancedToken is owned, TokenERC20 {
     function buy() payable public {
         uint amount = msg.value / buyPrice;               // calculates the amount
         _transfer(this, msg.sender, amount);              // makes the transfers
-    }
-    uint currentChallenge = 1; // Can you figure out the cubic root of this number?
-
-    function rewardMathGeniuses(uint answerToCurrentReward, uint nextChallenge) {
-        require(answerToCurrentReward**3 == currentChallenge); // If answer is wrong do not continue
-        balanceOf[msg.sender] += 1;         // Reward the player
-        currentChallenge = nextChallenge;   // Set the next challenge
     }
 
     /// @notice Sell `amount` tokens to contract
