@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COSSToken at 0x6b0252f7e2982dbe74d541eb63121a8264873250
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COSSToken at 0x6f750a2cdda6f9d88f5114263c44e80e0cee872d
 */
 pragma solidity ^0.4.16;
 
@@ -53,7 +53,7 @@ contract SafeMath {
         assert(_x == 0 || z / _x == _y);
         return z;
     }
-} 
+}
 
 /*
     ERC20 Standard Token interface
@@ -79,26 +79,26 @@ contract COSSToken is IERC20Token, SafeMath {
     string public standard = 'COSS_DEMO';
     string public name = 'COSS_DEMO';
     string public symbol = 'COSS_DEMO';
-    uint8 public decimals = 8;
+    uint8 public decimals = 18;
     uint256 public totalSupply = 200000;
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
-    
+
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    
+
     mapping (address => uint256) public revenueShareList;
     mapping (address => string) public revenueShareCurrency;
     mapping (address => uint256) public revenueShareDistribution;
-    
+
     address public revenueShareOwnerAddress;
 
     /**
         @dev constructor
     */
     function COSSToken() {
-        balanceOf[msg.sender] = 1600000000;
+        balanceOf[msg.sender] = totalSupply * decimals;
         revenueShareOwnerAddress = msg.sender;
     }
 
@@ -107,18 +107,18 @@ contract COSSToken is IERC20Token, SafeMath {
         require(_address != 0x0);
         _;
     }
-    
+
     function activateRevenueShareReference(uint256 _revenueShareItem) {
         revenueShareList[msg.sender] = _revenueShareItem;
     }
-    
+
     function addRevenueShareCurrency(address _currencyAddress,string _currencyName) {
         if (msg.sender == revenueShareOwnerAddress) {
             revenueShareCurrency[_currencyAddress] = _currencyName;
             revenueShareDistribution[_currencyAddress] = 0;
         }
     }
-    
+
     function saveRevenueShareDistribution(address _currencyAddress, uint256 _value) {
         if (msg.sender == revenueShareOwnerAddress) {
             revenueShareDistribution[_currencyAddress] = safeAdd(revenueShareDistribution[_currencyAddress], _value);
