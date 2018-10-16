@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Scrinium at 0x3eec78485181da25a0b7c47db9a51849481df859
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Scrinium at 0x0723105914f7050151e5f8b941e09f826b11f6b8
 */
 pragma solidity ^0.4.18;
 /**
@@ -81,8 +81,8 @@ contract Scrinium is ERC20, Owned {
     uint256 public totalSupply;
     uint256 public hardcap = 180000000;
 
-    uint256 public constant startTime = 1521590400; //5.12.2017
-    uint256 public constant stopTime = 1514678400; //21.03.2018
+    uint256 public constant startTime = 1514678400;//5.12.2017
+    uint256 public constant stopTime = 1521590400; //21.03.2018
 
     mapping (address => uint256) balance;
     mapping (address => mapping (address => uint256)) allowed;
