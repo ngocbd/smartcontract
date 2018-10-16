@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedTokenCappedCrowdsaleExt at 0xc1259208d9B3025Cd6fb1ca96aBF7E1a62797273
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedTokenCappedCrowdsaleExt at 0x34740EcdEebBAA06F83b8c84C9bC729067fCA47a
 */
 pragma solidity ^0.4.8;
 
