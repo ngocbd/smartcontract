@@ -1,6 +1,23 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVault at 0xfd2eb46ff56d785b64f1567e53083819c7f0168b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVault at 0xcea7e9834f597dc571fce84c2d931d29d094f0a6
 */
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
+
+
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
+
+
+
+
+
 /*
  * ERC20 interface
  * see https://github.com/ethereum/EIPs/issues/20
@@ -186,6 +203,9 @@ contract TokenVault is Ownable {
   /** How many investors we have now */
   uint public investorCount;
 
+  /** Sum from the spreadsheet how much tokens we should get on the contract. If the sum does not match at the time of the lock the vault is faulty and must be recreated.*/
+  uint public tokensToBeAllocated;
+
   /** How many tokens investors have claimed so far */
   uint public totalClaimed;
 
@@ -226,13 +246,15 @@ contract TokenVault is Ownable {
   /**
    * Create presale contract where lock up period is given days
    *
+   * @param _owner Who can load investor data and lock
    * @param _freezeEndsAt UNIX timestamp when the vault unlocks
    * @param _token Token contract address we are distributing
+   * @param _tokensToBeAllocated Total number of tokens this vault will hold - including decimal multiplcation
    *
    */
-  function TokenVault(uint _freezeEndsAt, StandardToken _token) {
+  function TokenVault(address _owner, uint _freezeEndsAt, StandardToken _token, uint _tokensToBeAllocated) {
 
-    owner = msg.sender;
+    owner = _owner;
 
     // Invalid owenr
     if(owner == 0) {
@@ -251,7 +273,13 @@ contract TokenVault is Ownable {
       throw;
     }
 
+    // Sanity check on _tokensToBeAllocated
+    if(_tokensToBeAllocated == 0) {
+      throw;
+    }
+
     freezeEndsAt = _freezeEndsAt;
+    tokensToBeAllocated = _tokensToBeAllocated;
   }
 
   /// @dev Add a presale participating allocation
@@ -279,11 +307,10 @@ contract TokenVault is Ownable {
   }
 
   /// @dev Lock the vault
-  /// @param tokensToBeAllocated Sum from the spreadsheet how much tokens we should get on the contract. If the sum does not match at the time of the lock the vault is faulty and must be recreated.
   ///      - All balances have been loaded in correctly
   ///      - Tokens are transferred on this vault correctly
   ///      - Checks are in place to prevent creating a vault that is locked with incorrect token balances.
-  function lock(uint tokensToBeAllocated) onlyOwner {
+  function lock() onlyOwner {
 
     if(lockedAt > 0) {
       throw; // Already locked
