@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICO at 0xd10996aeea66f21e1018d422d589dabe600f3960
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICO at 0x810ce15985aF9CD9DA99667A8B34AB85D340C07c
 */
-pragma solidity ^0.4.18;
+pragma solidity 0.4.20;
 /**
 * @title ICO CONTRACT
 * @dev ERC-20 Token Standard Compliant
@@ -94,7 +94,7 @@ contract ICO {
         creator = msg.sender;
         campaignUrl = _campaignUrl;
         tokenReward = _addressOfTokenUsedAsReward;
-        rate = 3214;
+        rate = 3000;
         ICOdeadline = startTime.add(64 days); //9 weeks
 
         LogFunderInitialized(
@@ -119,37 +119,37 @@ contract ICO {
         if (state == State.preico){
 
             tokenBought = tokenBought.mul(14);
-            tokenBought = tokenBought.mul(10); //14/10 = 1.4 = 140%
+            tokenBought = tokenBought.div(10); //14/10 = 1.4 = 140%
         
         } else if (state == State.week1){
 
             tokenBought = tokenBought.mul(13);
-            tokenBought = tokenBought.mul(10); //13/10 = 1.3 = 130%
+            tokenBought = tokenBought.div(10); //13/10 = 1.3 = 130%
 
         } else if (state == State.week2){
 
             tokenBought = tokenBought.mul(125);
-            tokenBought = tokenBought.mul(100); //125/100 = 1.25 = 125%
+            tokenBought = tokenBought.div(100); //125/100 = 1.25 = 125%
 
         } else if (state == State.week3){
 
             tokenBought = tokenBought.mul(12);
-            tokenBought = tokenBought.mul(10); //12/10 = 1.2 = 120%
+            tokenBought = tokenBought.div(10); //12/10 = 1.2 = 120%
 
         } else if (state == State.week4){
 
             tokenBought = tokenBought.mul(115);
-            tokenBought = tokenBought.mul(100); //115/100 = 1.15 = 115%
+            tokenBought = tokenBought.div(100); //115/100 = 1.15 = 115%
 
         } else if (state == State.week5){
 
             tokenBought = tokenBought.mul(11);
-            tokenBought = tokenBought.mul(10); //11/10 = 1.10 = 110%
+            tokenBought = tokenBought.div(10); //11/10 = 1.10 = 110%
 
         } else if (state == State.week6){
 
             tokenBought = tokenBought.mul(105);
-            tokenBought = tokenBought.mul(100); //105/100 = 1.05 = 105%
+            tokenBought = tokenBought.div(100); //105/100 = 1.05 = 105%
 
         }
 
@@ -158,6 +158,7 @@ contract ICO {
         require(creator.send(msg.value));
         tokenReward.transfer(msg.sender, tokenBought);
 
+        LogBeneficiaryPaid(creator);
         LogFundingReceived(msg.sender, msg.value, totalRaised);
         LogContributorsPayout(msg.sender, tokenBought);
         
@@ -169,31 +170,31 @@ contract ICO {
     */
     function checkIfFundingCompleteOrExpired() public {
 
-        if(state == State.preico && now > startTime.add(15 days)){
+        if(state == State.preico && now > startTime.add(14 days)){
 
             state = State.week1;
 
-        } else if(state == State.week1 && now > startTime.add(22 days)){
+        } else if(state == State.week1 && now > startTime.add(21 days)){
 
             state = State.week2;
             
-        } else if(state == State.week2 && now > startTime.add(29 days)){
+        } else if(state == State.week2 && now > startTime.add(28 days)){
 
             state = State.week3;
             
-        } else if(state == State.week3 && now > startTime.add(36 days)){
+        } else if(state == State.week3 && now > startTime.add(35 days)){
 
             state = State.week4;
             
-        } else if(state == State.week4 && now > startTime.add(43 days)){
+        } else if(state == State.week4 && now > startTime.add(42 days)){
 
             state = State.week5;
             
-        } else if(state == State.week5 && now > startTime.add(50 days)){
+        } else if(state == State.week5 && now > startTime.add(49 days)){
 
             state = State.week6;
             
-        } else if(state == State.week6 && now > startTime.add(57 days)){
+        } else if(state == State.week6 && now > startTime.add(56 days)){
 
             state = State.week7;
             
@@ -216,8 +217,6 @@ contract ICO {
         uint256 remanent = tokenReward.balanceOf(this);
 
         tokenReward.transfer(creator,remanent);
-
-        LogBeneficiaryPaid(creator);
         LogContributorsPayout(creator, remanent);
 
     }
