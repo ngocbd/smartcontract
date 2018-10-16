@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract presale at 0xbcea0b07d6f79783aeaf35c6ddcd27dbd42ab621
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract presale at 0x6bf09313c859c30b4fd29b56130be3e3e5fb56f8
 */
 pragma solidity ^0.4.10;
 
@@ -265,7 +265,11 @@ contract presale {
     }
     
     function finish() private {
-        if(!finalAddress.send(this.balance)) {
+        if(token.balanceOf(this)>=numberOfTokens){
+            if(!finalAddress.send(this.balance)) {
+                throw;
+            }
+        } else {
             throw;
         }
     }
