@@ -1,79 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GscToken at 0xbe00f2ee3f4cc6d44953fae9139a34322f7c0871
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GSCToken at 0x41e8eedfbd7d8765d18ef82c9d21c07cb27382a6
 */
-pragma solidity ^0.4.17;
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
+pragma solidity ^0.4.18;
+
+/** ----------------------------------------------------------------------------------------------
+ * ENGINE_Token by GSC Limited.
+ * An ERC20 standard
+ *
+ * author: GSC Team
  */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-}
-/**
- * @title GscTokenStandard
- * @dev the interface of GscTokenStandard
- */
-contract GscTokenStandard {
-    uint256 public stakeStartTime;
-    uint256 public stakeMinAge;
-    uint256 public stakeMaxAge;
-    function mint() returns (bool);
-    function coinAge() constant returns (uint256);
-    function annualInterest() constant returns (uint256);
-    event Mint(address indexed _address, uint _reward);
-}
-/**
-    @Dev github.com/HamzaYasin1
-*/
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
+
 /**
  * @title SafeMath
- * @dev Math operations with safety checks that throw on error
+ * @dev Math operations with safety checks that throw on error.
  */
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -84,181 +23,326 @@ library SafeMath {
     assert(c / a == b);
     return c;
   }
+
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
+
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
+
   function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
   }
 }
-contract GscToken is ERC20,GscTokenStandard,Ownable {
-    using SafeMath for uint256;
-    string public name = "Gas Coin";
-    string public symbol = "GSC";
-    uint public decimals = 18;
-    uint public chainStartTime; //chain start time
-    uint public chainStartBlockNumber; //chain start block number
-    uint public stakeStartTime; //stake start time
-    uint public stakeMinAge = 3 days; // minimum age for coin age: 3 Days
-    uint public stakeMaxAge = 90 days; // stake age of full weight: 90 Days
-    uint public maxMintProofOfStake = 10**17; // default 10% annual interest
-    uint public totalSupply;
-    uint public maxTotalSupply;
-    uint public totalInitialSupply;
-    struct transferInStruct {
-    uint128 amount;
-    uint64 time;
+
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 {
+  uint256 public totalSupply;
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+contract GSCToken is ERC20, Ownable {
+  using SafeMath for uint256;
+
+  
+  // the controller of minting and destroying tokens
+  address public engDevAddress = 0x20d3596A9C0986995225770F95CCb4fB30411E33;
+  // the controller of approving of minting and withdraw tokens
+  address public engCommunityAddress = 0x20d3596A9C0986995225770F95CCb4fB30411E33;
+
+  struct TokensWithLock {
+    uint256 value;
+    uint256 blockNumber;
+  }
+  // Balances for each account
+  mapping(address => uint256) balances;
+
+  mapping(address => TokensWithLock) lockTokens;
+  
+  // Owner of account approves the transfer of an amount to another account
+  mapping(address => mapping (address => uint256)) allowed;
+  // Token Cap
+  uint256 public totalSupplyCap = 1e28;
+  // Token Info
+  string public name = "GSC_Token";
+  string public symbol = "GSC";
+  uint8 public decimals = 18;
+
+  // True if transfers are allowed
+  bool public transferable = false;
+  // True if the transferable can be change
+  bool public canSetTransferable = true;
+
+
+  modifier only(address _address) {
+    require(msg.sender == _address);
+    _;
+  }
+
+  modifier nonZeroAddress(address _address) {
+    require(_address != address(0));
+    _;
+  }
+
+  modifier canTransfer() {
+    require(transferable == true);
+    _;
+  }
+
+  /**
+   * @dev Fix for the ERC20 short address attack.
+   */
+  modifier onlyPayloadSize(uint size) {
+    if(msg.data.length < size + 4) {
+       revert();
     }
-    mapping(address => uint256) balances;
-    mapping(address => mapping (address => uint256)) allowed;
-    mapping(address => transferInStruct[]) transferIns;
-    event Burn(address indexed burner, uint256 value);
-    /**
-     * @dev Fix for the ERC20 short address attack.
-     */
-    modifier onlyPayloadSize(uint size) {
-        require(msg.data.length >= size + 4);
-        _;
+    _;
+  }
+
+
+
+  event BurnTokens(address indexed _owner, uint256 _amount);
+  event SetTransferable(address indexed _address, bool _transferable);
+  event SetENGDevAddress(address indexed _old, address indexed _new);
+  event SetENGCommunityAddress(address indexed _old, address indexed _new);
+  event DisableSetTransferable(address indexed _address, bool _canSetTransferable);
+
+ /**
+   * @dev transfer token for a specified address
+   * @param _to The address to transfer to.
+   * @param _value The amount to be transferred.
+   */
+  function transfer(address _to, uint256 _value) canTransfer public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+    require(_value >= 0);
+    require(balances[_to] + _value > balances[_to]);
+
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  /**
+   * @dev Gets the balance of the specified address.
+   * @param _owner The address to query the the balance of.
+   * @return An uint256 representing the amount owned by the passed address.
+   */
+  function balanceOf(address _owner) public view returns (uint256 balance) {
+    return balances[_owner];
+  }
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) canTransfer public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
+    require(_value > 0);
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) canTransfer public returns (bool) {
+    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) public view returns (uint256) {
+    return allowed[_owner][_spender];
+  }
+
+  /**
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   */
+  function increaseApproval(address _spender, uint256 _addedValue) canTransfer public returns (bool) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  function decreaseApproval(address _spender, uint256 _subtractedValue) canTransfer public returns (bool) {
+    uint256 oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
-    modifier canGscMint() {
-        require(totalSupply < maxTotalSupply);
-        _;
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  /**
+   * @dev Enables token holders to transfer their tokens freely if true
+   * @param _transferable True if transfers are allowed
+   */
+  function setTransferable(bool _transferable) only(engDevAddress) public {
+    require(canSetTransferable == true);
+    transferable = _transferable;
+    SetTransferable(msg.sender, _transferable);
+  }
+
+  /**
+   * @dev disable the canSetTransferable
+   */
+  function disableSetTransferable() only(engDevAddress) public {
+    transferable = true;
+    canSetTransferable = false;
+    DisableSetTransferable(msg.sender, false);
+  }
+
+  /**
+   * @dev Set the engAddress
+   * @param _engDevAddress The new engAddress
+   */
+  function setENGDevAddress(address _engDevAddress) only(engDevAddress) nonZeroAddress(_engDevAddress) public {
+    engDevAddress = _engDevAddress;
+    SetENGDevAddress(msg.sender, _engDevAddress);
+  }
+  /**
+   * @dev Set the engCommunityAddress
+   * @param _engCommunityAddress The new engCommunityAddress
+   */
+  function setENGCommunityAddress(address _engCommunityAddress) only(engCommunityAddress) nonZeroAddress(_engCommunityAddress) public {
+    engCommunityAddress = _engCommunityAddress;
+    SetENGCommunityAddress(msg.sender, _engCommunityAddress);
+  }
+
+  /**
+   * @dev Get the quantity of locked tokens
+   * @param _owner The address of locked tokens
+   * @return the quantity and the lock time of locked tokens
+   */
+   function getLockTokens(address _owner) nonZeroAddress(_owner) view public returns (uint256 value, uint256 blockNumber) {
+     return (lockTokens[_owner].value, lockTokens[_owner].blockNumber);
+   }
+
+  /**
+   * @dev Transfer tokens to multiple addresses
+   * @param _addresses The addresses that will receieve tokens
+   * @param _amounts The quantity of tokens that will be transferred
+   * @return True if the tokens are transferred correctly
+   */
+  function transferForMultiAddresses(address[] _addresses, uint256[] _amounts) canTransfer public returns (bool) {
+    for (uint256 i = 0; i < _addresses.length; i++) {
+      require(_addresses[i] != address(0));
+      require(_amounts[i] <= balances[msg.sender]);
+      require(_amounts[i] > 0);
+
+      // SafeMath.sub will throw if there is not enough balance.
+      balances[msg.sender] = balances[msg.sender].sub(_amounts[i]);
+      balances[_addresses[i]] = balances[_addresses[i]].add(_amounts[i]);
+      Transfer(msg.sender, _addresses[i], _amounts[i]);
     }
-    function GscToken() {
-        maxTotalSupply = 250000000 * 1 ether; // 250 Mil.
-        totalInitialSupply = 130000000 * 1 ether; // 130 Mil.
-        chainStartTime = now;
-        chainStartBlockNumber = block.number;
-        balances[msg.sender] = totalInitialSupply;
-        totalSupply = totalInitialSupply;
-    }
-    function transfer(address _to, uint256 _value) onlyPayloadSize(2 * 32) returns (bool) {
-        if(msg.sender == _to) 
-        return mint();
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
-        if(transferIns[msg.sender].length > 0) 
-        delete transferIns[msg.sender];
-        uint64 _now = uint64(now);
-        transferIns[msg.sender].push(transferInStruct(uint128(balances[msg.sender]),_now));
-        transferIns[_to].push(transferInStruct(uint128(_value),_now));
-        return true;
-    }
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
-    }
-    function transferFrom(address _from, address _to, uint256 _value) onlyPayloadSize(3 * 32) returns (bool) {
-        require(_to != address(0));
-        var _allowance = allowed[_from][msg.sender];
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = _allowance.sub(_value);
-        Transfer(_from, _to, _value);
-        if(transferIns[_from].length > 0) 
-        delete transferIns[_from];
-        uint64 _now = uint64(now);
-        transferIns[_from].push(transferInStruct(uint128(balances[_from]),_now));
-        transferIns[_to].push(transferInStruct(uint128(_value),_now));
-        return true;
-    }
-    function approve(address _spender, uint256 _value) returns (bool) {
-        require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
-    function mint() canGscMint returns (bool) {
-        if(balances[msg.sender] <= 0) 
-        return false;
-        if(transferIns[msg.sender].length <= 0) 
-        return false;
-        uint reward = getProofOfStakeReward(msg.sender);
-        if(reward <= 0) 
-        return false;
-        totalSupply = totalSupply.add(reward);
-        balances[msg.sender] = balances[msg.sender].add(reward);
-        delete transferIns[msg.sender];
-        transferIns[msg.sender].push(transferInStruct(uint128(balances[msg.sender]),uint64(now)));
-        Mint(msg.sender, reward);
-        return true;
-    }
-    function getBlockNumber() returns (uint blockNumber) {
-        blockNumber = block.number.sub(chainStartBlockNumber);
-    }
-    function coinAge() constant returns (uint myCoinAge) {
-        myCoinAge = getCoinAge(msg.sender,now);
-    }
-    function annualInterest() constant returns(uint interest) {
-        interest = maxMintProofOfStake;
-    }
-    function getProofOfStakeReward(address _address) internal returns (uint) {
-        require( (now >= stakeStartTime) && (stakeStartTime > 0) );
-        uint _now = now;
-        uint _coinAge = getCoinAge(_address, _now);
-        if(_coinAge <= 0) 
-        return 0;
-        uint interest = maxMintProofOfStake;
-        return (_coinAge * interest).div(365 * (10**decimals)); // 2 = 365
-    }
-    function getCoinAge(address _address, uint _now) internal returns (uint _coinAge) {
-        if(transferIns[_address].length <= 0) 
-        return 0;
-        for (uint i = 0; i < transferIns[_address].length; i++) {
-            if(_now < uint(transferIns[_address][i].time).add(stakeMinAge)) 
-            continue;
-            uint nCoinSeconds = _now.sub(uint(transferIns[_address][i].time));
-            if(nCoinSeconds > stakeMaxAge) {
-            nCoinSeconds = stakeMaxAge;
-            }
-            _coinAge = _coinAge.add(uint(transferIns[_address][i].amount) * nCoinSeconds.div(1 days)); // days
-        }
-    }
-    function ownerSetStakeStartTime(uint timestamp) onlyOwner {
-        require((stakeStartTime <= 0) && (timestamp >= chainStartTime));
-        stakeStartTime = timestamp;
-    }
-    function ownerBurnToken(uint _value) onlyOwner {
-        require(_value > 0);
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        delete transferIns[msg.sender];
-        transferIns[msg.sender].push(transferInStruct(uint128(balances[msg.sender]),uint64(now)));
-        totalSupply = totalSupply.sub(_value);
-        totalInitialSupply = totalInitialSupply.sub(_value);
-        maxTotalSupply = maxTotalSupply.sub(_value*10);
-        Burn(msg.sender, _value);
-    }
-    /* Batch token transfer. Used by contract creator to distribute initial tokens to holders */
-    function batchTransfer(address[] _recipients, uint[] _values) onlyOwner returns (bool) {
-        require( _recipients.length > 0 && _recipients.length == _values.length);
-        uint total = 0;
-        for(uint i = 0; i < _values.length; i++) {
-            total = total.add(_values[i]);
-        }
-        require(total <= balances[msg.sender]);
-        uint64 _now = uint64(now);
-        for(uint j = 0; j < _recipients.length; j++) {
-            balances[_recipients[j]] = balances[_recipients[j]].add(_values[j]);
-            transferIns[_recipients[j]].push(transferInStruct(uint128(_values[j]),_now));
-            Transfer(msg.sender, _recipients[j], _values[j]);
-        }
-        balances[msg.sender] = balances[msg.sender].sub(total);
-        if(transferIns[msg.sender].length > 0) 
-        delete transferIns[msg.sender];
-        if(balances[msg.sender] > 0) 
-        transferIns[msg.sender].push(transferInStruct(uint128(balances[msg.sender]),_now));
-        return true;
-    }
+    return true;
+  }
+
+  /**
+   * @dev Burns `_amount` tokens from `_owner`
+   * @param _amount The quantity of tokens being burned
+   * @return True if the tokens are burned correctly
+   */
+  function burnTokens(uint256 _amount) public returns (bool) {
+    require(_amount > 0);
+    uint256 curTotalSupply = totalSupply;
+    require(curTotalSupply >= _amount);
+    uint256 previousBalanceTo = balanceOf(msg.sender);
+    require(previousBalanceTo >= _amount);
+    totalSupply = curTotalSupply.sub(_amount);
+    balances[msg.sender] = previousBalanceTo.sub(_amount);
+    BurnTokens(msg.sender, _amount);
+    Transfer(msg.sender, 0, _amount);
+    return true;
+  }
 }
