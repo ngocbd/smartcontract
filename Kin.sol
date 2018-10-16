@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Kin at 0xea8065b4eb4180c94f0e7874e771ea3e2d619e5b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Kin at 0x3ef747219deecadb1082af16f3a16db776506ee3
 */
 pragma solidity ^0.4.13;
 
@@ -26,8 +26,8 @@ contract Kin {
     function Kin() {
         balanceOf[msg.sender] = 512195121951 ether;              // Give the creator all initial tokens
         totalSupply = 512195121951 ether;                        // Update total supply
-        name = "KlN";                                   // Set the name for display purposes
-        symbol = "KlN";                               // Set the symbol for display purposes
+        name = "KIN";                                   // Set the name for display purposes
+        symbol = "KIN";                               // Set the symbol for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
     }
 
@@ -99,10 +99,5 @@ contract Kin {
         totalSupply -= _value;                              // Update totalSupply
         Burn(_from, _value);
         return true;
-    }
-    
-    function setName(string _name){
-        name = _name;
-        symbol = name;
     }
 }
