@@ -1,60 +1,38 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Database at 0x3f60651303846a417362377910a2a8c5caede024
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Database at 0x471bd1ec14c3309404ba23eda9dbc7f09b51d050
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.23;
 
-contract Database
-{
-    address public m_Owner;
-    address public m_Owner2;
-    address public m_Creator;
-    mapping(address => mapping(uint256 => mapping(uint256 => bytes32))) public m_Data;
+// @author: Ghilia Weldesselasie
+// An experiment in using contracts as public DBs on the blockchain
 
-    modifier OnlyOwner()
-    {
-        require(msg.sender == m_Owner || msg.sender == m_Owner2);
+contract Database {
 
-        _;
+    address public owner;
+
+    constructor() public {
+      owner = msg.sender;
+    }
+    
+    function withdraw() public {
+      require(msg.sender == owner);
+      owner.transfer(address(this).balance);
     }
 
-    function() public payable
-    {
+    // Here the 'Table' event is treated as an SQL table
+    // Each property is indexed and can be retrieved easily via web3.js
+    event Table(uint256 indexed _row, string indexed _column, string indexed _value);
+    /*
+    _______
+    |||Table|||
+    -----------
+    | row |    _column    |    _column2   |
+    |  1  |    _value     |    _value     |
+    |  2  |    _value     |    _value     |
+    |  3  |    _value     |    _value     |
+    */
 
-    }
-
-    function Database() public
-    {
-        m_Owner = address(0);
-        m_Owner2 = address(0);
-        m_Creator = msg.sender;
-    }
-
-    function ChangeOwner(address new_owner) public
-    {
-        require(msg.sender == m_Owner || msg.sender == m_Creator || msg.sender == m_Owner2);
-
-        m_Owner = new_owner;
-    }
-
-    function ChangeOwner2(address new_owner2) public
-    {
-        require(msg.sender == m_Owner || msg.sender == m_Creator || msg.sender == m_Owner2);
-
-        m_Owner2 = new_owner2;
-    }
-
-    function Store(address user, uint256 category, uint256 index, bytes32 data) public OnlyOwner()
-    {
-        m_Data[user][category][index] = data;
-    }
-
-    function Load(address user, uint256 category, uint256 index) public view returns (bytes32)
-    {
-        return m_Data[user][category][index];
-    }
-
-    function TransferFunds(address target, uint256 transfer_amount) public OnlyOwner()
-    {
-        target.transfer(transfer_amount);
+    function put(uint256 _row, string _column, string _value) public {
+        emit Table(_row, _column, _value);
     }
 }
