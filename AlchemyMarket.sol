@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AlchemyMarket at 0xcdb8a4cf457cf37d03372e9b52921e99679de6e5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AlchemyMarket at 0xac1f05c434f4003de7617fd0e3f01bd5140ec7ff
 */
 pragma solidity ^0.4.18;
 
@@ -632,7 +632,7 @@ contract SkinInterface {
 contract AlchemyMinting is AlchemySynthesize {
 
     // Limit the nubmer of zero order assets the owner can create every day
-    uint256 public zoDailyLimit = 2500; // we can create 4 * 2500 = 10000 0-order asset each day
+    uint256 public zoDailyLimit = 1000; // we can create 4 * 1000  0-order asset each day
     uint256[4] public zoCreated;
     
     // Limit the number each account can buy every day
@@ -640,7 +640,7 @@ contract AlchemyMinting is AlchemySynthesize {
     mapping(address => uint256) public accountsZoLastRefreshTime;
 
     // Price of zero order assets
-    uint256 public zoPrice = 1 finney;
+    uint256 public zoPrice = 2500 szabo;
 
     // Last daily limit refresh time
     uint256 public zoLastRefreshTime = now;
