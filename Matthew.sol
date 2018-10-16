@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Matthew at 0xb56e95AEA830B0242be6A5D0239ED7f71408563b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Matthew at 0x75aa81161e07483f6ca199fef46c13eb13d190be
 */
 pragma solidity ^0.4.6;
 
@@ -9,11 +9,12 @@ pragma solidity ^0.4.6;
 
 contract Matthew {
     address owner;
-    address whale;
-    uint256 blockheight;
+    address public whale;
+    uint256 public blockheight;
+    uint256 public stake;
     uint256 period = 40; //180 blocks ~ 42 min, 300 blocks ~ 1h 10 min;
-    uint constant DELTA = 0.1 ether;
-    uint constant WINNERTAX_PRECENT = 10;
+    uint constant public DELTA = 0.1 ether;
+    uint constant public WINNERTAX_PRECENT = 10;
     bool mustBeDestroyed = false;
     uint newPeriod = period;
     
@@ -26,6 +27,7 @@ contract Matthew {
     }
     
     function setFacts() private {
+        stake = this.balance;
         period = newPeriod;
         blockheight = block.number;
         whale = msg.sender;
@@ -36,19 +38,19 @@ contract Matthew {
     
         if (block.number - period >= blockheight){ // time is over, Matthew won
             bool isSuccess=false; //mutex against recursion attack
-            var nextStake = this.balance * WINNERTAX_PRECENT/100;  // leave some money for the next round
+            var nextStake = stake * WINNERTAX_PRECENT/100;  // leave some money for the next round
             if (isSuccess == false) //check against recursion attack
-                isSuccess = whale.send(this.balance - nextStake); // pay out the stake
-            MatthewWon("Matthew won", whale, this.balance, block.number);
+                isSuccess = whale.send(stake - nextStake); // pay out the stake
+            MatthewWon("Matthew won", whale, stake - nextStake, block.number);
             setFacts();//reset the game
             if (mustBeDestroyed) selfdestruct(whale); 
             return;
             
         }else{ // top the stake
-            if (msg.value < this.balance + DELTA) throw; // you must rise the stake by Delta
-            bool isOtherSuccess = msg.sender.send(this.balance); // give back the old stake
+            if (msg.value < stake + DELTA) throw; // you must rise the stake by Delta
+            bool isOtherSuccess = msg.sender.send(stake); // give back the old stake
             setFacts(); //reset the game
-            StakeIncreased("stake increased", whale, this.balance, blockheight);
+            StakeIncreased("stake increased", whale, stake, blockheight);
         }
     }
     
