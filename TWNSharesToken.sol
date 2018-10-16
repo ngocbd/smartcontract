@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TWNSharesToken at 0xfd31b62550977b11deaedd1b8d359e71a3d4ff1f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TWNSharesToken at 0x456155629affa6c1a7ea0584c37f023c3a2d727a
 */
 pragma solidity ^0.4.18;
 
@@ -258,6 +258,19 @@ contract TWNSharesToken is StandardToken, Ownable {
  
   address public saleAgent;
 
+  modifier notLocked() {
+    require(msg.sender == owner || msg.sender == saleAgent || mintingFinished);
+    _;
+  }
+
+  function transfer(address _to, uint256 _value) public notLocked returns (bool) {
+    return super.transfer(_to, _value);
+  }
+
+  function transferFrom(address from, address to, uint256 value) public notLocked returns (bool) {
+    return super.transferFrom(from, to, value);
+  }
+
   function setSaleAgent(address newSaleAgent) public {
     require(saleAgent == msg.sender || owner == msg.sender);
     saleAgent = newSaleAgent;
@@ -418,7 +431,7 @@ contract CommonCrowdsale is Ownable, LockableChanges {
     uint foundersTokens = summaryTokens.mul(foundersTokensPercent).div(PERCENT_RATE);
     mintAndSendTokens(foundersTokensWallet, foundersTokens);
 
-    uint devTokens = summaryTokens.sub(advisorsTokens).sub(bountyTokens);
+    uint devTokens = summaryTokens.mul(devTokensPercent).div(PERCENT_RATE);
     mintAndSendTokens(devTokensWallet, devTokens);
   }
 
