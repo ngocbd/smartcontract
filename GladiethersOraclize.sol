@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GladiethersOraclize at 0x1a3d8d3009f3c615decb73b03ac0b2180610a3ea
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GladiethersOraclize at 0x68e0348f1fb9d62046e93c4e61451e2a76fb6fcf
 */
 // <ORACLIZE_API>
 /*
@@ -1233,11 +1233,12 @@ contract GladiethersOraclize is usingOraclize
 {
     address public m_Owner;
     
-    AbstractGladiethers m_Gladiethers = AbstractGladiethers(0x64127ab1de00337514f88382cefaddc786deb173);
+    AbstractGladiethers m_Gladiethers = AbstractGladiethers(0xfca7d75cf8cad941a48ab9b5e1af0ae571923378);
     mapping (bytes32 => address) public queryIdToGladiator;
-    uint gasprice = 10000000000;
-    uint eth_price = 500000;
-    uint totalGas = 139185;
+    mapping (bytes32 => bool) public queryIdToIsEthPrice;
+    uint public gasprice = 15000000000;
+    uint public eth_price = 500000;
+    uint public totalGas = 169185;
     
     event random(string random);
     
@@ -1247,20 +1248,22 @@ contract GladiethersOraclize is usingOraclize
         oraclize_setProof(proofType_Ledger); // sets the Ledger authenticity proof in the constructor
     }
     
-    function setGasPrice(uint _gasprice, uint _eth_price, uint _totalGas) public{
-        require(msg.sender == m_Owner);    
-      oraclize_setCustomGasPrice(_gasprice);
-      eth_price = (_eth_price*1000);
-      totalGas = _totalGas;
-    }
-    
     function getOraclizePrice() public constant returns (uint) {
           return (totalGas*gasprice) +(5*1 ether)/eth_price;
     }
     
+
+    function update(uint delay) payable {
+        if (oraclize_getPrice("URL") > this.balance) {
+        } else {
+            bytes32 queryId = oraclize_query(delay, "URL", "json(https://api.kraken.com/0/public/Ticker?pair=ETHUSD).result.XETHZUSD.c.0");
+            queryIdToIsEthPrice[queryId] = true;
+        }
+    }
+    
     function scheduleFight() public payable{
     
-        require(now > 1527551940 && m_Gladiethers.getQueueLenght() > 1 && m_Gladiethers.getGladiatorPower(msg.sender) >= 10 finney); // to be changed with a real date
+        require(now > 1527638340 && m_Gladiethers.getQueueLenght() > 1 && m_Gladiethers.getGladiatorPower(msg.sender) >= 10 finney); // to be changed with a real date
         uint callbackGas = totalGas; // amount of gas we want Oraclize to set for the callback function
         require(msg.value >= getOraclizePrice()); 
         uint N = 7; // number of random bytes we want the datasource to return
@@ -1282,9 +1285,12 @@ contract GladiethersOraclize is usingOraclize
      
       // if we reach this point successfully, it means that the attached authenticity proof has passed!
        if (msg.sender != oraclize_cbAddress()) throw;
-       random(_result);
-       m_Gladiethers.fight(queryIdToGladiator[_queryId],_result);
-      
+       if(queryIdToIsEthPrice[_queryId]){
+           eth_price = parseInt(_result)*1000;
+       }else{
+           m_Gladiethers.fight(queryIdToGladiator[_queryId],_result);
+       }
+       
        
     }
 
