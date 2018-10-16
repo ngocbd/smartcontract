@@ -1,26 +1,25 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Linamyd at 0xea7bd57288545d4da371d7a8ffa13392a8c893ad
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Linamyd at 0x409e1820aba80fd6bc0f7573528f56cd3ccbfafb
 */
 pragma solidity ^0.4.23;
 
 /*
-* Team PooD presents
+* Team PoPnD presents
 
 * ====================================*
 * -> What?
 * The original autonomous pyramid, improved:
 * We left everything the same as the original P3D contract
-* the only things we changed was the price increase, from 
-* string public name = "PowH3D";    "PooD"
-*   string public symbol = "P3D";   "P0D";
-*  uint8 constant public decimals = 18;
-* uint8 constant internal dividendFee_ = 10;  to 15;
-*    uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;   to 0.00001 ether;
-*   uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether; to 0.0000000000001  ether;
 *
-*With this low incremental increase - dumping and pumping is impossible
+*Except we increased the token increment to 0.001 ether which means 
+*a massive price increase which wil lead to lots of Pump and Dumps.
 *
-*Proof of only DIVS!!!
+*Div rate 20% in and out
+*
+*
+*Proof of Crazyness ;)
+*
+* Enjoy the ride
 */
 
 contract Linamyd {
@@ -125,12 +124,12 @@ contract Linamyd {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "PooD";
-    string public symbol = "P0D";
+    string public name = "Proof of Crazyness";
+    string public symbol = "C4T";
     uint8 constant public decimals = 18;
-    uint8 constant internal dividendFee_ = 15;
+    uint8 constant internal dividendFee_ = 20;
     uint256 constant internal tokenPriceInitial_ = 0.0001 ether;
-    uint256 constant internal tokenPriceIncremental_ = 0.0000000000001 ether;
+    uint256 constant internal tokenPriceIncremental_ = 0.001 ether;
     uint256 constant internal magnitude = 2**64;
     
     // proof of stake (defaults at 100 tokens)
