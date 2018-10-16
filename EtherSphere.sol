@@ -1,10 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherSphere at 0xd7e51e35a04db7d9cd28026f281a93134348190b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherSphere at 0x9a2e9235f7a7ac7b899e5f3208fbb13c6985171a
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.0;
 
 // Visit ethersphere.io for more information
-// v2.0.1
 
 contract EtherSphere {
     mapping(address => uint) bidPool;
@@ -114,10 +113,6 @@ contract EtherSphere {
         return numBidders > 0 && todaysBidTotal > (rewardPool * jackpotConditionPercent / 100);
     }
     
-    function end() ismain payable{
-        if (msg.sender == etherSphereHost)  suicide(etherSphereHost);
-    }
-    
     //Reward all participants
     function distributeReward() private{
         uint portion = 0;
@@ -144,7 +139,7 @@ contract EtherSphere {
     }
     
     function sendPortion(uint amount, address target) private{
-        if (!target.send(amount)) throw;
+        target.send(amount);
     }
     
     function shouldCompleteDay() private returns (bool){
@@ -216,7 +211,7 @@ contract EtherSphere {
     //Clear fees to EtherSphereHost
     function fees() private {
         if (cost == 0) return;
-        if (!etherSphereHost.send(cost)) throw;
+        etherSphereHost.send(cost);
         cost = 0;
     }
     
@@ -225,4 +220,9 @@ contract EtherSphere {
         fees();
     }
     
+    function end() ismain payable{
+        //Allow for termination if game is inactive for more than 7 days
+        if (now > endOfDay + 7 * interval && msg.sender == etherSphereHost)
+            suicide(etherSphereHost);
+    }
 }
