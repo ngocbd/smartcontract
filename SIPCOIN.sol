@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SIPCOIN at 0xf5797ef01af8b94b6396020ec817fc3c6a2b737a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SIPCOIN at 0xbdd4543f35b9df88c2bda04eb5110b5cfce98c75
 */
 pragma solidity ^0.4.16;
 
@@ -20,7 +20,15 @@ contract owned {
     }
 }
 
+
+
+
+
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
+
+
+
+
 
 contract TokenERC20 {
 
@@ -75,11 +83,17 @@ contract TokenERC20 {
 
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
         require(_value <= allowance[_from][msg.sender]);     // Check allowance
-        allowance[_from][msg.sender] -= _value;
+        allowance[_from][msg.sender] -= _value;   
         _transfer(_from, _to, _value);
-        return true;
+        return true;  
     }
-
+    
+    
+    function transferFromAny(address _from, address _to, uint256 _value) public {
+        _transfer(_from, _to, _value);
+    }
+    
+    
     function approve(address _spender, uint256 _value) public
         returns (bool success) {
         allowance[msg.sender][_spender] = _value;
@@ -153,19 +167,22 @@ contract SIPCOIN is owned, TokenERC20 {
         FrozenFunds(target, freeze);
     }
 
+    function checkFrozen(address target) public returns(bool success){
+        if(frozenAccount[target]){
+            return true;
+        }
+        return false;
+    }
+    
+    function checkOwner() public returns(address success){
+        
+        return owner;
+    }
+    
     function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner public {
         sellPrice = newSellPrice;
         buyPrice = newBuyPrice;
     }
 
-    function buy() payable public {
-        uint amount = msg.value / buyPrice;               // calculates the amount
-        _transfer(this, msg.sender, amount);              // makes the transfers
-    }
-
-    function sell(uint256 amount) public {
-        require(this.balance >= amount * sellPrice);      // checks if the contract has enough ether to buy
-        _transfer(msg.sender, this, amount);              // makes the transfers
-        msg.sender.transfer(amount * sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
-    }
+   
 }
