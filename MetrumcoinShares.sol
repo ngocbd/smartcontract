@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MetrumcoinShares at 0xC0c74e811cC703eFe57892cd789D888DEda6d8A0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MetrumcoinShares at 0x69fda08cc89cb6c63f84bfe0b059b0c38038cec8
 */
 pragma solidity ^0.4.8;
 
 
-// MetrumCoin Ltd. CryptoShares
+// Metrumcoin Ltd. www.metrumcoin.com 
 
 // 'interface':
 //  this is expected from another contract,
@@ -24,9 +24,9 @@ contract MetrumcoinShares {
 
     // string public standard = 'ERC20 Token'; // https://github.com/ethereum/EIPs/issues/20
 
-    string public name = "Metrumcoin Shares";
+    string public name = "Metrumcoin Ltd.";
 
-    string public symbol = "Metrumcoin Shares";
+    string public symbol = "Shares";
 
     uint8 public decimals = 0;
 
@@ -38,12 +38,19 @@ contract MetrumcoinShares {
     // list of all shareholders (represented by Ethereum accounts)
     // in this Corporation's history, # is ID
     address[] public shareholder;
+
     // this helps to find address by ID without loop
     mapping (address => uint256) public shareholderID;
-    // list of adresses, that who currently own at least one share
+
+    // list of addresses, who currently own at least one share
     address[] public activeShareholdersArray;
+
+    // makes possible to iterate through an array from Dapp
+    uint256 public activeShareholdersArrayLength;
+
     // balances:
     mapping (address => uint256) public balanceOf;
+
     // shares that have to be managed by external contract
     mapping (address => mapping (address => uint256)) public allowance;
 
@@ -66,6 +73,9 @@ contract MetrumcoinShares {
         // #1
         activeShareholdersArray.push(msg.sender);
         // add to active shareholders
+        // update ActiveShareholdersArray (array of shareholders having at least one share)
+        refreshActiveShareholdersArray();
+
     }
 
     /* --------------- Shares management ------ */
@@ -79,16 +89,8 @@ contract MetrumcoinShares {
                 activeShareholdersArray.push(shareholder[i]);
             }
         }
+        activeShareholdersArrayLength = activeShareholdersArray.length;
         return activeShareholdersArray;
-    }
-
-    // constant
-    function getActiveShareholdersArray() constant returns (address[]){
-        return activeShareholdersArray;
-    }
-
-    function getActiveShareholdersArrayLength() constant returns (uint){
-        return activeShareholdersArray.length;
     }
 
     // constant
@@ -100,7 +102,7 @@ contract MetrumcoinShares {
         return shareholder.length;
     }
 
-    /* ---- Transfer shares to another adress ----*/
+    /* ---- Transfer shares to another address ----*/
     // see: https://github.com/ethereum/EIPs/issues/20
     function transfer(address _to, uint256 _value) returns (bool success) {
         // check arguments:
@@ -120,6 +122,10 @@ contract MetrumcoinShares {
         if (shareholderID[_to] == 0) {// ----------- check if works
             shareholderID[_to] = shareholder.push(_to) - 1;
         }
+
+        // update ActiveShareholdersArray (array of shareholders having at least one share)
+        refreshActiveShareholdersArray();
+
         // Notify anyone listening that this transfer took place
         Transfer(msg.sender, _to, _value);
         return true;
@@ -135,7 +141,7 @@ contract MetrumcoinShares {
         // msg.sender - account owner who gives allowance
         // _spender   - address of another contract
         // it writes in "allowance" that this owner allows another
-        // contract (_spender) to spend thi amont (_value) of shares
+        // contract (_spender) to spend this amount (_value) of shares
         // in his behalf
         allowance[msg.sender][_spender] = _value;
         // 'spender' is another contract that implements code
@@ -170,12 +176,6 @@ contract MetrumcoinShares {
         // Check allowance
         if (_value > allowance[_from][msg.sender]) throw;
 
-        // if transfer to new address -- add him to ledger
-        if (shareholderID[_to] == 0) {
-            shareholderID[_to] = shareholder.push(_to) - 1;
-            // push function returns the new length
-        }
-
         // Subtract from the sender
         balanceOf[_from] -= _value;
         // Add the same to the recipient
@@ -183,6 +183,16 @@ contract MetrumcoinShares {
 
         // Change allowances correspondingly
         allowance[_from][msg.sender] -= _value;
+
+        // if transfer to new address -- add him to ledger
+        if (shareholderID[_to] == 0) {
+            shareholderID[_to] = shareholder.push(_to) - 1;
+            // push function returns the new length
+        }
+
+        // update ActiveShareholdersArray (array of shareholders having at least one share)
+        refreshActiveShareholdersArray();
+
         // Notify anyone listening that this transfer took place
         Transfer(_from, _to, _value);
 
@@ -196,19 +206,25 @@ contract MetrumcoinShares {
     // each proposal should contain it's text
     // index of text in this array is a proposal ID
     string[] public proposalText;
+
     // proposalID => (shareholder => "if already voted for this proposal")
     mapping (uint256 => mapping (address => bool)) voted;
+
     // proposalID => addresses voted 'yes'
     // exact number of votes according to shares will be counted
     // after deadline
     mapping (uint256 => address[]) public votes;
+
     // proposalID => deadline
     mapping (uint256 => uint256) public deadline;
+
     // proposalID => final 'yes' votes
     mapping (uint256 => uint256) public results;
+
     // proposals of every shareholder
     mapping (address => uint256[]) public proposalsByShareholder;
 
+    // useful for Dapp, to get array using loop
     function getProposalTextArrayLength() constant returns (uint){
         return proposalText.length;
     }
@@ -245,6 +261,7 @@ contract MetrumcoinShares {
         // returns proposal id
     }
 
+    // >>> not from Wallet (needs msg.sender), from Dapp
     function getMyProposals() constant returns (uint256[]){
         return proposalsByShareholder[msg.sender];
     }
