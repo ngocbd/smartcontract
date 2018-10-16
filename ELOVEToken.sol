@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ELOVEToken at 0x926ec5905d4445701c2d3cc83567b4ffc490e037
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ELOVEToken at 0xa7827a793c236a0123d3553786f160da6905496d
 */
 pragma solidity ^0.4.18;
 
@@ -42,7 +42,7 @@ contract Owned {
     }
     
     // version of this smart contract
-    string public version = "1.9";
+    string public version = "1.10";
     
     address public owner;
     address public newOwner;
@@ -56,6 +56,7 @@ contract Owned {
     mapping(address => bool) public founders;
     
     event OwnershipTransferred(address indexed _from, address indexed _to);
+    event TranferETH(address indexed _to, uint amount);
 
     function Owned() public {
         owner = msg.sender;
@@ -328,6 +329,8 @@ contract ELOVEToken is ERC20Interface, Owned {
             balances[msg.sender] = balances[msg.sender] + tokenCanBeBought;
             roundTokenLeft[round] = roundTokenLeft[round]-tokenCanBeBought;
             
+            Transfer(owner, msg.sender, tokenCanBeBought);
+            
             if (mapInvestors[msg.sender] > 0) {
                 // if investors already existed, add amount to the invested sum
                 investors[mapInvestors[msg.sender]-1].amount += msg.value;
@@ -340,6 +343,8 @@ contract ELOVEToken is ERC20Interface, Owned {
             balances[owner] = balances[owner] - roundTokenLeft[round];
             balances[msg.sender] = balances[msg.sender] + roundTokenLeft[round];
             roundTokenLeft[round] = 0;
+            
+            Transfer(owner, msg.sender, roundTokenLeft[round]);
             
             if (mapInvestors[msg.sender] > 0) {
                 // if investors already existed, add amount to the invested sum
@@ -377,6 +382,7 @@ contract ELOVEToken is ERC20Interface, Owned {
                 // time to send back funds to investors
                 for(uint i = 0; i<investors.length; i++) {
                     investors[i].sender.transfer(investors[i].amount);
+                    TranferETH(investors[i].sender, investors[i].amount);
                 }
             } else {
                 // send un-sold tokens to reward address
@@ -385,11 +391,14 @@ contract ELOVEToken is ERC20Interface, Owned {
                 balances[owner] = balances[owner] - sumToBurn;
                 balances[rewardPoolWallet] += sumToBurn;
                 
+                Transfer(owner, rewardPoolWallet, sumToBurn);
+                
                 roundTokenLeft[0] = roundTokenLeft[1] = roundTokenLeft[2] = roundTokenLeft[3] = 0;
             }
             
             // give back ETH to sender
             msg.sender.transfer(msg.value);
+            TranferETH(msg.sender, msg.value);
             icoEnded = true;
         }
     }
@@ -397,6 +406,7 @@ contract ELOVEToken is ERC20Interface, Owned {
     function withdrawEtherToOwner() onlyOwner public {   
         require(now>roundEnd[3] && this.balance>softcap);
         owner.transfer(this.balance);
+        TranferETH(owner, this.balance);
     }
 
     // ------------------------------------------------------------------------
