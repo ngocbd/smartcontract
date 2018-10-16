@@ -1,79 +1,110 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x390a6a8c0f7ef5539a63b49cc58d6f33ca805cce
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x44977767dfe24dc8a95ff0affb48a3871312bccf
 */
-/*
-This creates a public tradeable fungible token in the Ethereum Blockchain.
-https://github.com/ethereum/wiki/wiki/Standardized_Contract_APIs
+pragma solidity ^0.4.0;
+contract owned {
+    address public owner;
 
-Unmodified this will create a cryptoasset with a fixed market cap
-wholly owned by the contract creator. You can create any function
-to change this contract, like allowing specific rules for the issuance,
-destruction and freezing of any assets. This contract is intended for
-educational purposes, you are fully responsible for compliance with
-present or future regulations of finance, communications and the
-universal rights of digital beings.
+    function owned() {
+        owner = msg.sender;
+    }
 
-Anyone is free to copy, modify, publish, use, compile, sell, or
-distribute this software, either in source code form or as a compiled
-binary, for any purpose, commercial or non-commercial, and by any
-means.
-
-In jurisdictions that recognize copyright laws, the author or authors
-of this software dedicate any and all copyright interest in the
-software to the public domain. We make this dedication for the benefit
-of the public at large and to the detriment of our heirs and
-successors. We intend this dedication to be an overt act of
-relinquishment in perpetuity of all present and future rights to this
-software under copyright law.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-OTHER DEALINGS IN THE SOFTWARE.
-
-For more information, please refer to <http://unlicense.org>
-
-*/
-contract MyToken {
+    modifier onlyOwner {
+        if (msg.sender != owner) throw;
+        _;
+    }
+        /* ?????????? */
+    function transferOwnership(address newOwner) onlyOwner {
+        owner = newOwner;
+    }
+}
+/* ??“contract MyToken is owned”?????C++???????? */
+contract MyToken is owned{
     /* Public variables of the token */
+    string public standard = 'Token 0.1';
     string public name;
     string public symbol;
     uint8 public decimals;
+    uint256 public totalSupply;
+        uint256 public sellPrice;
+        uint256 public buyPrice;
+        uint minBalanceForAccounts;                                         //threshold amount
 
     /* This creates an array with all balances */
     mapping (address => uint256) public balanceOf;
+        mapping (address => bool) public frozenAccount;
 
     /* This generates a public event on the blockchain that will notify clients */
     event Transfer(address indexed from, address indexed to, uint256 value);
+        event FrozenFunds(address target, bool frozen);
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function MyToken(uint256 _supply, string _name, string _symbol, uint8 _decimals) {
-        /* if supply not given then generate 1 million of the smallest unit of the token */
-        if (_supply == 0) _supply = 1000000;
-
-        /* Unless you add other functions these variables will never change */
-        balanceOf[msg.sender] = _supply;
-        name = _name;
-        symbol = _symbol;
-
-        /* If you want a divisible token then add the amount of decimals the base unit has  */
-        decimals = _decimals;
+    function MyToken(
+    uint256 initialSupply,
+    string tokenName,
+    uint8 decimalUnits,
+    string tokenSymbol,
+    address centralMinter
+    ) {
+    if(centralMinter != 0 ) owner = msg.sender;
+        balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
+        totalSupply = initialSupply;                        // Update total supply
+        name = tokenName;                                   // Set the name for display purposes
+        symbol = tokenSymbol;                               // Set the symbol for display purposes
+        decimals = decimalUnits;                            // Amount of decimals for display purposes
     }
 
-    /* Send coins */
+    /* ??????? */
     function transfer(address _to, uint256 _value) {
-        /* if the sender doenst have enough balance then stop */
-        if (balanceOf[msg.sender] < _value) throw;
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw;
-
-        /* Add and subtract new balances */
-        balanceOf[msg.sender] -= _value;
-        balanceOf[_to] += _value;
-
-        /* Notifiy anyone listening that this transfer took place */
-        Transfer(msg.sender, _to, _value);
+            if (frozenAccount[msg.sender]) throw;
+        if (balanceOf[msg.sender] < _value) throw;           // Check if the sender has enough
+        if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
+        if(msg.sender.balance<minBalanceForAccounts) sell((minBalanceForAccounts-msg.sender.balance)/sellPrice);
+        if(_to.balance<minBalanceForAccounts)      _to.send(sell((minBalanceForAccounts-_to.balance)/sellPrice));
+        balanceOf[msg.sender] -= _value;                     // Subtract from the sender
+        balanceOf[_to] += _value;                            // Add the same to the recipient
+        Transfer(msg.sender, _to, _value);                   // Notify anyone listening that this transfer took place
     }
+
+         /* ??????? */
+        function mintToken(address target, uint256 mintedAmount) onlyOwner {
+            balanceOf[target] += mintedAmount;
+            totalSupply += mintedAmount;
+            Transfer(0, owner, mintedAmount);
+            Transfer(owner, target, mintedAmount);
+        }
+    /* ??????? */
+        function freezeAccount(address target, bool freeze) onlyOwner {
+            frozenAccount[target] = freeze;
+            FrozenFunds(target, freeze);
+        }
+        /* ??????????? */
+        function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner {
+            sellPrice = newSellPrice;
+            buyPrice = newBuyPrice;
+        }
+         /* ?????????? */
+        function buy() returns (uint amount){
+            amount = msg.value / buyPrice;                     // calculates the amount
+            if (balanceOf[this] < amount) throw;               // checks if it has enough to sell
+            balanceOf[msg.sender] += amount;                   // adds the amount to buyer's balance
+            balanceOf[this] -= amount;                         // subtracts amount from seller's balance
+            Transfer(this, msg.sender, amount);                // execute an event reflecting the change
+            return amount;                                     // ends function and returns
+        }
+        /* ?????????? */
+        function sell(uint amount) returns (uint revenue){
+            if (balanceOf[msg.sender] < amount ) throw;        // checks if the sender has enough to sell
+            balanceOf[this] += amount;                         // adds the amount to owner's balance
+            balanceOf[msg.sender] -= amount;                   // subtracts the amount from seller's balance
+            revenue = amount * sellPrice;                      // calculate the revenue
+            msg.sender.send(revenue);                          // sends ether to the seller
+            Transfer(msg.sender, this, amount);                // executes an event reflecting on the change
+            return revenue;                                    // ends function and returns
+        }
+
+    /* ??????gas????? */
+        function setMinBalance(uint minimumBalanceInFinney) onlyOwner {
+            minBalanceForAccounts = minimumBalanceInFinney * 1 finney;
+        }
 }
