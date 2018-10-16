@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Starmid at 0x13546361e6b7f65a1495a102f80a8a2e543cf10a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Starmid at 0xac805a5b0ebe11cafa0c16f16931248f99148af5
 */
 pragma solidity 0.4.16;
 
@@ -1209,7 +1209,7 @@ contract Starmid {
 		nodesVars = Nodes(_addr);
 	}
 	
-	function getBalance(address _address) constant public returns(uint _balance) {
+	function balanceOf(address _address) constant public returns(uint _balance) {
 		_balance = sCVars.balanceOf[_address];
 	}
 	
@@ -1234,8 +1234,9 @@ contract Starmid {
 		}
 	}
 	
-	function transfer(address _to, uint256 _value) public {
+	function transfer(address _to, uint256 _value) public returns (bool _result) {
 		_transfer(msg.sender, _to, _value);
+		_result = true;
 	}
 	
 	function mint() public onlyOwner returns(uint _mintedAmount) {
