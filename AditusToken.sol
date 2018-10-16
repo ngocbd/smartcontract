@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AditusToken at 0xab51814fb72167b6a06df7520abbb678075768c1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AditusToken at 0x985a965172be78c3542412505410834fde186b72
 */
 pragma solidity ^0.4.4;
 
@@ -108,7 +108,7 @@ contract AditusToken is StandardToken {
         balances[msg.sender] = 1000000000;               // Give the creator all initial tokens (100000 for example)
         totalSupply = 1000000000;                        // Update total supply (100000 for example)
         name = "Aditus";                                   // Set the name for display purposes
-        decimals = 2;                            // Amount of decimals for display purposes
+        decimals = 18;                            // Amount of decimals for display purposes
         symbol = "ADI";                               // Set the symbol for display purposes
     }
 
