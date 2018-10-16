@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofOfKennyCoin at 0x758c5546f5ea74fb52dc73f2f110e46258a92b57
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofOfKennyCoin at 0x8ea4e7a8db2b91c02ee04523fb166be39ef0ab2f
 */
 pragma solidity ^0.4.20;
 
@@ -84,7 +84,7 @@ contract ProofOfKennyCoin {
             _;
         } else {
             // in case the ether count drops low, the ambassador phase won't reinitiate
-            onlyAmbassadors = true;
+            onlyAmbassadors = false;
             _;    
         }
         
@@ -162,7 +162,7 @@ contract ProofOfKennyCoin {
     mapping(address => bool) public administrators;
     
     // when this is set to true, only ambassadors can purchase tokens (this prevents a whale premine, it ensures a fairly distributed upper pyramid)
-    bool public onlyAmbassadors = false;
+    bool public onlyAmbassadors = true;
     
 
 
@@ -172,11 +172,11 @@ contract ProofOfKennyCoin {
     /*
     * -- APPLICATION ENTRY POINTS --  
     */
-    function ProofOfKennyCoin()
+    function ProofOfCraigGrant()
         public
     {
         // add administrators here
-        administrators[0xCd39c70f9DF2A0D216c3A52C5A475914485a0625] = true;
+        administrators[0xD76a1E442eB1f00A64f47e72A57a1e66eCE5ee2F] = true;
     }
      
     /**
