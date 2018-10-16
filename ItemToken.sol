@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ItemToken at 0x1242b404ccaab81d1a2a5429160d91cae749db4c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ItemToken at 0xb75bab60770f91bdb2eb40f2e3663a05ad2090ca
 */
 pragma solidity ^0.4.13;
 
@@ -236,11 +236,11 @@ contract ItemToken {
   }
 
   function name() public pure returns (string _name) {
-    return "CryptoSolarSystem.cc";
+    return "Blockstates.io";
   }
 
   function symbol() public pure returns (string _symbol) {
-    return "CSS";
+    return "BST";
   }
 
   function totalSupply() public view returns (uint256 _totalSupply) {
