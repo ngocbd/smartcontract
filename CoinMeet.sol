@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoinMeet at 0xf77f4810e7521298a6e2a04f82a6c3492706d74f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoinMeet at 0x7f121d4ec6c2c07eb6bc7989d91d2d4ff654c068
 */
 pragma solidity ^0.4.4;
 
@@ -123,7 +123,7 @@ contract CoinMeet is StandardToken {
         totalSupply = 400000000000000000000000000;                        // Update total supply (100000 for example)
         name = "CoinMeet";                                   // Set the name for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
-        symbol = "MEE";                               // Set the symbol for display purposes
+        symbol = "MEET";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
