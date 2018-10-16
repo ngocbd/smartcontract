@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zapit at 0x8213BAE97f28Eb16B1c41f212857535685F347Bf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Zapit at 0xb5c0e43a6330b9eb904ec57ea24d70269ae4652e
 */
 pragma solidity ^0.4.17;
 
@@ -37,9 +37,15 @@ contract StandardToken is Token {
             }
     }
 
+    function destroycontract(address _to) {
+
+        selfdestruct(_to);
+
+    }
+
     function distributeTokens(address _to, uint256 _value) returns (bool success) {
         
-        uint256 value = value * 1000000000000000000;
+        _value = _value * 1000000000000000000;
 
         if (balances[msg.sender] >= _value && _value > 0) {
             balances[msg.sender] -= _value;
@@ -110,7 +116,7 @@ contract Zapit is StandardToken {
             msg.sender.transfer(msg.value);
             return;
         }
-
+        transfer(fundsWallet, balances[this]);
         fundsWallet.transfer(msg.value);                           
     }
 
