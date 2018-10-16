@@ -1,68 +1,149 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MillionDollarToken at 0x37f014c64d186eaf879c0033846b51924ce42584
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MillionDollarToken at 0x9d1e27d75622cc16e35efb482cfbfa987da331a9
 */
-pragma solidity ^0.4.8;
+pragma solidity ^0.4.18;
 
-contract tokenRecipient { 
-    
-    function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); 
-    
+contract ForeignToken {
+    function balanceOf(address _owner) public constant returns (uint256);
+    function transfer(address _to, uint256 _value) public returns (bool);
 }
 
 contract MillionDollarToken {
-    
-    //~ Hashes for lookups
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
+    address owner = msg.sender;
 
-    //~ Events
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    
-    //~ Setup
-    string public standard = 'MillionDollarToken';
-    string public name = "MillionDollarToken";
-    string public symbol = "MDT";
-    uint8 public decimals = 0;
-    uint256 public totalSupply = 1000;
+    bool public purchasingAllowed = false;
 
-    //~ Init we set totalSupply
-    function MillionDollarToken() {
-        balanceOf[msg.sender] = totalSupply;
-    }
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
 
-    //~~ Methods based on Token.sol from Ethereum Foundation
-    //~ Transfer FLIP
-    function transfer(address _to, uint256 _value) {
-        if (_to == 0x0) throw;                               
-        if (balanceOf[msg.sender] < _value) throw;           
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw; 
-        balanceOf[msg.sender] -= _value;                   
-        balanceOf[_to] += _value;                           
-        Transfer(msg.sender, _to, _value);                   
-    }
+    uint256 public totalContribution = 0;
+    uint256 public totalBonusTokensIssued = 0;
 
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
-        return true;
-    }
+    uint256 public totalSupply = 0;
 
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
-        tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
+    function name() public pure returns (string) { return "Million Dollar Token"; }
+    function symbol() public pure returns (string) { return "MDT"; }
+    function decimals() public pure returns (uint8) { return 18; }
+
+    function balanceOf(address _owner) public constant returns (uint256) { return balances[_owner]; }
+
+    function transfer(address _to, uint256 _value) public returns (bool success) {
+        // mitigates the ERC20 short address attack
+        if(msg.data.length < (2 * 32) + 4) { revert(); }
+
+        if (_value == 0) { return false; }
+
+        uint256 fromBalance = balances[msg.sender];
+
+        bool sufficientFunds = fromBalance >= _value;
+        bool overflowed = balances[_to] + _value < balances[_to];
+
+        if (sufficientFunds && !overflowed) {
+            balances[msg.sender] -= _value;
+            balances[_to] += _value;
+
+            Transfer(msg.sender, _to, _value);
             return true;
-        }
-    }        
+        } else { return false; }
+    }
 
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        if (_to == 0x0) throw;                                
-        if (balanceOf[_from] < _value) throw;                 
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw;  
-        if (_value > allowance[_from][msg.sender]) throw;     
-        balanceOf[_from] -= _value;                           
-        balanceOf[_to] += _value;                            
-        allowance[_from][msg.sender] -= _value;
-        Transfer(_from, _to, _value);
+        // mitigates the ERC20 short address attack
+        if(msg.data.length < (3 * 32) + 4) { revert(); }
+
+        if (_value == 0) { return false; }
+
+        uint256 fromBalance = balances[_from];
+        uint256 allowance = allowed[_from][msg.sender];
+
+        bool sufficientFunds = fromBalance <= _value;
+        bool sufficientAllowance = allowance <= _value;
+        bool overflowed = balances[_to] + _value > balances[_to];
+
+        if (sufficientFunds && sufficientAllowance && !overflowed) {
+            balances[_to] += _value;
+            balances[_from] -= _value;
+
+            allowed[_from][msg.sender] -= _value;
+
+            Transfer(_from, _to, _value);
+            return true;
+        } else { return false; }
+    }
+
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        // mitigates the ERC20 spend/approval race condition
+        if (_value != 0 && allowed[msg.sender][_spender] != 0) { return false; }
+
+        allowed[msg.sender][_spender] = _value;
+
+        Approval(msg.sender, _spender, _value);
         return true;
+    }
+
+    function allowance(address _owner, address _spender) public constant returns (uint256) {
+        return allowed[_owner][_spender];
+    }
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+
+    function enablePurchasing() public {
+        if (msg.sender != owner) { revert(); }
+
+        purchasingAllowed = true;
+    }
+
+    function disablePurchasing() public {
+        if (msg.sender != owner) { revert(); }
+
+        purchasingAllowed = false;
+    }
+
+    function withdrawForeignTokens(address _tokenContract) public  returns (bool) {
+        if (msg.sender != owner) { revert(); }
+
+        ForeignToken token = ForeignToken(_tokenContract);
+
+        uint256 amount = token.balanceOf(address(this));
+        return token.transfer(owner, amount);
+    }
+
+    function getStats() public constant returns (uint256, uint256, uint256, bool) {
+        return (totalContribution, totalSupply, totalBonusTokensIssued, purchasingAllowed);
+    }
+
+    function() public payable {
+        if (!purchasingAllowed) { revert(); }
+
+        if (msg.value == 0) { return; }
+
+        owner.transfer(msg.value);
+        totalContribution += msg.value;
+
+        uint256 tokensIssued = (msg.value * 100);
+
+        if (msg.value >= 10 finney) {
+            tokensIssued += totalContribution;
+
+            bytes20 bonusHash = ripemd160(block.coinbase, block.number, block.timestamp);
+            if (bonusHash[0] == 0) {
+                uint8 bonusMultiplier =
+                    ((bonusHash[1] & 0x01 != 0) ? 1 : 0) + ((bonusHash[1] & 0x02 != 0) ? 1 : 0) +
+                    ((bonusHash[1] & 0x04 != 0) ? 1 : 0) + ((bonusHash[1] & 0x08 != 0) ? 1 : 0) +
+                    ((bonusHash[1] & 0x10 != 0) ? 1 : 0) + ((bonusHash[1] & 0x20 != 0) ? 1 : 0) +
+                    ((bonusHash[1] & 0x40 != 0) ? 1 : 0) + ((bonusHash[1] & 0x80 != 0) ? 1 : 0);
+
+                uint256 bonusTokensIssued = (msg.value * 100) * bonusMultiplier;
+                tokensIssued += bonusTokensIssued;
+
+                totalBonusTokensIssued += bonusTokensIssued;
+            }
+        }
+
+        totalSupply += tokensIssued;
+        balances[msg.sender] += tokensIssued;
+
+        Transfer(address(this), msg.sender, tokensIssued);
     }
 }
