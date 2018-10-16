@@ -1,40 +1,36 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoDime at 0x06e2272f1bb306a92c92d978a4df139578c83c91
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoDime at 0x6287f59eb93c85b02b0d7ce11b5df51823275eb5
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'CryptoDime' token contract
+// CryptoDime Token Contract
 //
-// Deployed to : 0xCd603343D5bdF2e95A0d9b92F8949177AB54E20B
-// Symbol      : FXD
+// Symbol      : CDM
 // Name        : CryptoDime
 // Total supply: 10000000000
 // Decimals    : 0
 //
-// Enjoy.
-//
-// (c) by CryptoDime. All rights reserved.
 // ----------------------------------------------------------------------------
 
 
 // ----------------------------------------------------------------------------
 // Safe maths
 // ----------------------------------------------------------------------------
-contract SafeMath {
-    function safeAdd(uint a, uint b) public pure returns (uint c) {
+library SafeMath {
+    function add(uint a, uint b) internal pure returns (uint c) {
         c = a + b;
         require(c >= a);
     }
-    function safeSub(uint a, uint b) public pure returns (uint c) {
+    function sub(uint a, uint b) internal pure returns (uint c) {
         require(b <= a);
         c = a - b;
     }
-    function safeMul(uint a, uint b) public pure returns (uint c) {
+    function mul(uint a, uint b) internal pure returns (uint c) {
         c = a * b;
         require(a == 0 || c / a == b);
     }
-    function safeDiv(uint a, uint b) public pure returns (uint c) {
+    function div(uint a, uint b) internal pure returns (uint c) {
         require(b > 0);
         c = a / b;
     }
@@ -42,7 +38,7 @@ contract SafeMath {
 
 
 // ----------------------------------------------------------------------------
-// ERC Token Standard Interface
+// ERC Token Standard #20 Interface
 // ----------------------------------------------------------------------------
 contract ERC20Interface {
     function totalSupply() public constant returns (uint);
@@ -96,10 +92,12 @@ contract Owned {
 
 
 // ----------------------------------------------------------------------------
-// ERC20 Token, with the addition of symbol, name and decimals and assisted
-// token transfers
+// ERC20 Token, with the addition of symbol, name and decimals and an
+// initial fixed supply
 // ----------------------------------------------------------------------------
-contract CryptoDime is ERC20Interface, Owned, SafeMath {
+contract CryptoDime is ERC20Interface, Owned {
+    using SafeMath for uint;
+
     string public symbol;
     string public  name;
     uint8 public decimals;
@@ -117,8 +115,8 @@ contract CryptoDime is ERC20Interface, Owned, SafeMath {
         name = "CryptoDime";
         decimals = 0;
         _totalSupply = 10000000000;
-        balances[0xCd603343D5bdF2e95A0d9b92F8949177AB54E20B] = _totalSupply;
-        Transfer(address(0), 0xCd603343D5bdF2e95A0d9b92F8949177AB54E20B, _totalSupply);
+        balances[owner] = _totalSupply;
+        Transfer(address(0), owner, _totalSupply);
     }
 
 
@@ -131,7 +129,7 @@ contract CryptoDime is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Get the token balance for account tokenOwner
+    // Get the token balance for account `tokenOwner`
     // ------------------------------------------------------------------------
     function balanceOf(address tokenOwner) public constant returns (uint balance) {
         return balances[tokenOwner];
@@ -139,21 +137,18 @@ contract CryptoDime is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Transfer the balance from token owner's account to to account
-    // - Owner's account must have sufficient balance to transfer
-    // - 0 value transfers are allowed
+    // Transfer the balance from token owner's account to `to` account
     // ------------------------------------------------------------------------
     function transfer(address to, uint tokens) public returns (bool success) {
-        balances[msg.sender] = safeSub(balances[msg.sender], tokens);
-        balances[to] = safeAdd(balances[to], tokens);
+        balances[msg.sender] = balances[msg.sender].sub(tokens);
+        balances[to] = balances[to].add(tokens);
         Transfer(msg.sender, to, tokens);
         return true;
     }
 
 
     // ------------------------------------------------------------------------
-    // Token owner can approve for spender to transferFrom(...) tokens
-    // from the token owner's account
+    // Token owner can approve for `spender` to transferFrom(...) `tokens`
     // ------------------------------------------------------------------------
     function approve(address spender, uint tokens) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
@@ -163,18 +158,12 @@ contract CryptoDime is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Transfer tokens from the from account to the to account
-    // 
-    // The calling account must already have sufficient tokens approve(...)-d
-    // for spending from the from account and
-    // - From account must have sufficient balance to transfer
-    // - Spender must have sufficient allowance to transfer
-    // - 0 value transfers are allowed
+    // Transfer `tokens` from the `from` account to the `to` account
     // ------------------------------------------------------------------------
     function transferFrom(address from, address to, uint tokens) public returns (bool success) {
-        balances[from] = safeSub(balances[from], tokens);
-        allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
-        balances[to] = safeAdd(balances[to], tokens);
+        balances[from] = balances[from].sub(tokens);
+        allowed[from][msg.sender] = allowed[from][msg.sender].sub(tokens);
+        balances[to] = balances[to].add(tokens);
         Transfer(from, to, tokens);
         return true;
     }
@@ -190,9 +179,9 @@ contract CryptoDime is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Token owner can approve for spender to transferFrom(...) tokens
-    // from the token owner's account. The spender contract function
-    // receiveApproval(...) is then executed
+    // Token owner can approve for `spender` to transferFrom(...) `tokens`
+    // from the token owner's account. The `spender` contract function
+    // `receiveApproval(...)` is then executed
     // ------------------------------------------------------------------------
     function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
