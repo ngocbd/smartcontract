@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DACToken at 0x3f1731521c21be338f61f2fb2aac5b2c21fd8c69
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DACToken at 0xbbdeb234400e04ac508772b8d3f0e22798c0008d
 */
 pragma solidity 0.4.21;
 
@@ -133,9 +133,9 @@ contract DACToken is StandardToken, Ownable
     string public name = "DAC";
     string public symbol = "DAC";
 
-    uint public decimals = 18;
+    uint public decimals = 6;
 
-    uint private constant initialSupply = 10e9 * 10e18; // 10 billions + 18 decimals
+    uint private constant initialSupply = 10e9 * 1e6; // 10 billions + 18 decimals
 
     function DACToken() public
     {
