@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OpenPoWH at 0xc1128d09f0f7c0f01f5417eaf2661d8d4d80b92a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OpenPoWH at 0x6e692023289738afd6ec4a89bf048c5fbe2db884
 */
 pragma solidity ^0.4.18;
 
 /*
--[ Official ]-
+ - Testing -
 
 Proof of Weak Hands  -  New Open Edition!
  _____             _____     _ _ _ _____ 
@@ -18,7 +18,7 @@ Proof of Weak Hands  -  New Open Edition!
 OpenPoWH was made to be a decentralized clone of PoWH with an even start for all. 
 
 It's simple:
-- The first 250 transactions can only buy in for 0.1 ETH max. Anything more gets refunded. 
+- The first 50 transactions can only buy in for 0.1 ETH max. Anything more gets refunded. 
 - The contract address is released roughly 7 days prior to the game starting (based on block number), alowing time for review and preparation.
 -_Any purchases done before the start block are refunded.
 
@@ -41,7 +41,7 @@ contract OpenPoWH {
 	uint256 constant scaleFactor = 0x10000000000000000;  // 2^64
 
 	// Number of first buyers that are limited
-	uint8 constant limitedFirstBuyers = 250;    // Limit 50 buyers to 0.1
+	uint8 constant limitedFirstBuyers = 50;    // Limit 50 buyers to 0.1
 	uint256 constant firstBuyerLimit = 0.1 ether;
 	
 	// CRR = 50%
@@ -86,7 +86,7 @@ contract OpenPoWH {
  	// Game Start Time
  	// Around 7 days @ 15s/block
   	uint public gameStartBlock;
-  	uint constant gameStartBlockOffset = 4 * 60 * 24 * 7; 
+  	uint constant gameStartBlockOffset = 4; 
     
 	function OpenPoWH() public {
     	initialFunds = limitedFirstBuyers;
