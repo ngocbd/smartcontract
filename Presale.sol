@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0xbc6ef6c3ced8838153daa1833e1c1f5a2bc9895a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0xa9c970503955f3faec20d84b60ab2466b57be3f5
 */
 pragma solidity ^0.4.18;
 
@@ -588,7 +588,7 @@ contract Deployer is Ownable {
 
     ico.setHardcap(206000000000000000000000);
     ico.addBonus(7,25);
-    ico.addBonus(7,10);
+    ico.addBonus(14,10);
     ico.setStart(1514163600);
     ico.setEnd(1517356800);
     ico.setWallet(0x65954fb8f45b40c9A60dffF3c8f4F39839Bf3596);
