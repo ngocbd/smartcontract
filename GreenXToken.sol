@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GreenXToken at 0xdb0389274b31202176847a38763b9603260a988a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GreenXToken at 0x004dcfc79b28ae0d52c2c013a328f84b433a1829
 */
 pragma solidity ^0.4.20;
 
@@ -38,9 +38,9 @@ contract GreenXToken is ERC20 {
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
     
-    uint256 public totalSupply = 500000000000000000000000;
+    uint256 public totalSupply = 10000000000000000000000000;
 
-    function name() public constant returns (string) { return "GreenX Token"; }
+    function name() public constant returns (string) { return "GREENx"; }
     function symbol() public constant returns (string) { return "Gx"; }
     function decimals() public constant returns (uint8) { return 18; }
 
@@ -70,10 +70,7 @@ contract GreenXToken is ERC20 {
         owner = newOwner;
     }
 
-    function getEthBalance(address _addr) constant public returns(uint) {
-    return _addr.balance;
-    }
-
+    
     function distributeToken(address[] addresses, uint256 _value) onlyOwner {
      for (uint i = 0; i < addresses.length; i++) {
          balances[owner] -= _value;
