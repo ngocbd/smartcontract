@@ -1,229 +1,372 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0xe1377e465121776d8810007576034c7e0798cd46
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x57829d2213000f0723febc1a175e584462bbe01f
 */
 pragma solidity 0.4.19;
 
 
-contract Ownable {
-    
-    address public owner;
+/// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
+/// @author Stefan George - <stefan.george@consensys.net>
+contract MultiSigWallet {
 
-    /**
-     * The address whcih deploys this contrcat is automatically assgined ownership.
-     * */
-    function Ownable() public {
-        owner = msg.sender;
+    /*
+     *  Events
+     */
+    event Confirmation(address indexed sender, uint indexed transactionId);
+    event Revocation(address indexed sender, uint indexed transactionId);
+    event Submission(uint indexed transactionId);
+    event Execution(uint indexed transactionId);
+    event ExecutionFailure(uint indexed transactionId);
+    event Deposit(address indexed sender, uint value);
+    event OwnerAddition(address indexed owner);
+    event OwnerRemoval(address indexed owner);
+    event RequirementChange(uint required);
+
+    /*
+     *  Constants
+     */
+    uint constant public MAX_OWNER_COUNT = 50;
+
+    /*
+     *  Storage
+     */
+    mapping (uint => Transaction) public transactions;
+    mapping (uint => mapping (address => bool)) public confirmations;
+    mapping (address => bool) public isOwner;
+    address[] public owners;
+    uint public required;
+    uint public transactionCount;
+
+    struct Transaction {
+        address destination;
+        uint value;
+        bytes data;
+        bool executed;
     }
 
-    /**
-     * Functions with this modifier can only be executed by the owner of the contract. 
-     * */
-    modifier onlyOwner {
-        require(msg.sender == owner);
+    /*
+     *  Modifiers
+     */
+    modifier onlyWallet() {
+        require(msg.sender == address(this));
         _;
     }
 
-    event OwnershipTransferred(address indexed from, address indexed to);
-
-    /**
-    * Transfers ownership to new Ethereum address. This function can only be called by the 
-    * owner.
-    * @param _newOwner the address to be granted ownership.
-    **/
-    function transferOwnership(address _newOwner) public onlyOwner {
-        require(_newOwner != 0x0);
-        OwnershipTransferred(owner, _newOwner);
-        owner = _newOwner;
-    }
-}
-
-
-
-
-contract ERC20TransferInterface {
-    function transfer(address to, uint256 value) public returns (bool);
-    function balanceOf(address who) constant public returns (uint256);
-}
-
-
-
-
-contract MultiSigWallet is Ownable {
-
-    event AddressAuthorised(address indexed addr);
-    event AddressUnauthorised(address indexed addr);
-    event TransferOfEtherRequested(address indexed by, address indexed to, uint256 valueInWei);
-    event EthTransactionConfirmed(address indexed by);
-    event EthTransactionRejected(address indexed by);
-    event TransferOfErc20Requested(address indexed by, address indexed to, address indexed token, uint256 value);
-    event Erc20TransactionConfirmed(address indexed by);
-    event Erc20TransactionRejected(address indexed by);
-
-    /**
-    * Struct exists to hold data associated with the requests of ETH transactions. 
-    **/
-    struct EthTransactionRequest {
-        address _from;
-        address _to;
-        uint256 _valueInWei;
-    }
-
-    /**
-    * Struct exists to hold data associated with the requests of ERC20 token transactions. 
-    **/
-    struct Erc20TransactionRequest {
-        address _from;
-        address _to;
-        address _token;
-        uint256 _value;
-    }
-
-    EthTransactionRequest public latestEthTxRequest;
-    Erc20TransactionRequest public latestErc20TxRequest;
-
-    mapping (address => bool) public isAuthorised;
-
-
-    /**
-    * Constructor initializes the isOwner mapping. 
-    **/
-    function MultiSigWallet() public {
- 
-        isAuthorised[0xF748D2322ADfE0E9f9b262Df6A2aD6CBF79A541A] = true; //account 1
-        isAuthorised[0x4BbBbDd42c7aab36BeA6A70a0cB35d6C20Be474E] = true; //account 2
-        isAuthorised[0x2E661Be8C26925DDAFc25EEe3971efb8754E6D90] = true; //account 3
-        isAuthorised[0x1ee9b4b8c9cA6637eF5eeCEE62C9e56072165AAF] = true; //account 4
-
-    }
-
-    modifier onlyAuthorisedAddresses {
-        require(isAuthorised[msg.sender] = true);
+    modifier ownerDoesNotExist(address owner) {
+        require(!isOwner[owner]);
         _;
     }
 
-    modifier validEthConfirmation {
-        require(msg.sender != latestEthTxRequest._from);
+    modifier ownerExists(address owner) {
+        require(isOwner[owner]);
         _;
     }
 
-    modifier validErc20Confirmation {
-        require(msg.sender != latestErc20TxRequest._from);
+    modifier transactionExists(uint transactionId) {
+        require(transactions[transactionId].destination != 0);
         _;
     }
 
-    /**
-    * Fallback function makes it possible for the contract to receive ETH. 
-    **/
-    function() public payable { }
-
-    /**
-    * Allows the owner to authorise an address to approve and request the transfer of ETH and
-    * ERC20 tokens.
-    **/
-    function authoriseAddress(address _addr) public onlyOwner {
-        require(_addr != 0x0 && !isAuthorised[_addr]);
-        isAuthorised[_addr] = true;
-        AddressAuthorised(_addr);
+    modifier confirmed(uint transactionId, address owner) {
+        require(confirmations[transactionId][owner]);
+        _;
     }
 
-    /**
-    * Allows the owner to unauthorise an address from approving or requesting the transfer of ETH
-    * and ERC20 tokens.
-    **/
-    function unauthoriseAddress(address _addr) public onlyOwner {
-        require(isAuthorised[_addr] && _addr != owner);
-        isAuthorised[_addr] = false;
-        AddressUnauthorised(_addr);
+    modifier notConfirmed(uint transactionId, address owner) {
+        require(!confirmations[transactionId][owner]);
+        _;
     }
 
-    /**
-    * Creates an ETH transaction request which will be stored in the contract's state. The transaction
-    * will only go through if it is confirmed by at least one more owner address. If this function is 
-    * called before a previous ETH transaction request has been confirmed, then it will be overridden. This
-    * function can only be called by one of the owner addresses. 
-    * 
-    * @param _to The address of the recipient
-    * @param _valueInWei The amount of ETH to send specified in units of wei
-    **/
-    function requestTransferOfETH(address _to, uint256 _valueInWei) public onlyAuthorisedAddresses {
-        require(_to != 0x0 && _valueInWei > 0);
-        latestEthTxRequest = EthTransactionRequest(msg.sender, _to, _valueInWei);
-        TransferOfEtherRequested(msg.sender, _to, _valueInWei);
+    modifier notExecuted(uint transactionId) {
+        require(!transactions[transactionId].executed);
+        _;
     }
 
-    /**
-    * Creates an ERC20 transaction request which will be stored in the contract's state. The transaction
-    * will only go through if it is confirmed by at least one more owner address. If this function is 
-    * called before a previous ERC20 transaction request has been confirmed, then it will be overridden. This
-    * function can only be called by one of the owner addresses. 
-    * 
-    * @param _token The address of the ERC20 token contract
-    * @param _to The address of the recipient
-    * @param _value The amount of tokens to be sent
-    **/
-    function requestErc20Transfer(address _token, address _to, uint256 _value) public onlyAuthorisedAddresses {
-        ERC20TransferInterface token = ERC20TransferInterface(_token);
-        require(_to != 0x0 && _value > 0 && token.balanceOf(address(this)) >= _value);
-        latestErc20TxRequest = Erc20TransactionRequest(msg.sender, _to, _token, _value);
-        TransferOfErc20Requested(msg.sender, _to, _token, _value);
+    modifier notNull(address _address) {
+        require(_address != 0);
+        _;
     }
 
-    /**
-    * Confirms previously requested ETH transactions. This function can only be called by one of the owner addresses
-    * excluding the address which initially made the request. 
-    **/
-    function confirmEthTransactionRequest() public onlyAuthorisedAddresses validEthConfirmation  {
-        require(isAuthorised[latestEthTxRequest._from] && latestEthTxRequest._to != 0x0 && latestEthTxRequest._valueInWei > 0);
-        latestEthTxRequest._to.transfer(latestEthTxRequest._valueInWei);
-        latestEthTxRequest = EthTransactionRequest(0x0, 0x0, 0);
-        EthTransactionConfirmed(msg.sender);
+    modifier validRequirement(uint ownerCount, uint _required) {
+        require(ownerCount <= MAX_OWNER_COUNT
+            && _required <= ownerCount
+            && _required != 0
+            && ownerCount != 0);
+        _;
     }
 
-    /**
-    * Confirms previously requested ERC20 transactions. This function can only be called by one of the owner addresses
-    * excluding the address which initially made the request. 
-    **/
-    function confirmErc20TransactionRequest() public onlyAuthorisedAddresses validErc20Confirmation {
-        require(isAuthorised[latestErc20TxRequest._from] && latestErc20TxRequest._to != 0x0 && latestErc20TxRequest._value != 0 && latestErc20TxRequest._token != 0x0);
-        ERC20TransferInterface token = ERC20TransferInterface(latestErc20TxRequest._token);
-        token.transfer(latestErc20TxRequest._to,latestErc20TxRequest._value);
-        latestErc20TxRequest = Erc20TransactionRequest(0x0, 0x0, 0x0, 0);
-        Erc20TransactionConfirmed(msg.sender);
+    /// @dev Fallback function allows to deposit ether.
+    function() public payable
+    {
+        if (msg.value > 0)
+            Deposit(msg.sender, msg.value);
     }
 
-    /**
-    * Rejects ETH transaction requests and erases all data associated with the request. This function can only be called
-    * by one of the owner addresses. 
-    **/
-    function rejectEthTransactionRequest() public onlyAuthorisedAddresses {
-        latestEthTxRequest = EthTransactionRequest(0x0, 0x0, 0);
-        EthTransactionRejected(msg.sender);
+    /*
+     * Public functions
+     */
+    /// @dev Contract constructor sets initial owners and required number of confirmations.
+    /// @param _owners List of initial owners.
+    /// @param _required Number of required confirmations.
+    function MultiSigWallet(address[] _owners, uint _required)
+        public
+        validRequirement(_owners.length, _required)
+    {
+        for (uint i=0; i<_owners.length; i++) {
+            require(!isOwner[_owners[i]] && _owners[i] != 0);
+            isOwner[_owners[i]] = true;
+        }
+        owners = _owners;
+        required = _required;
     }
 
-    /**
-    * Rejects ERC20 transaction requests and erases all data associated with the request. This function can only be called
-    * by one of the owner addresses. 
-    **/
-    function rejectErx20TransactionRequest() public onlyAuthorisedAddresses {
-        latestErc20TxRequest = Erc20TransactionRequest(0x0, 0x0, 0x0, 0);
-        Erc20TransactionRejected(msg.sender);
+    /// @dev Allows to add a new owner. Transaction has to be sent by wallet.
+    /// @param owner Address of new owner.
+    function addOwner(address owner)
+        public
+        onlyWallet
+        ownerDoesNotExist(owner)
+        notNull(owner)
+        validRequirement(owners.length + 1, required)
+    {
+        isOwner[owner] = true;
+        owners.push(owner);
+        OwnerAddition(owner);
     }
 
-    /**
-    * Returns the data associated with the latest ETH transaction request in the form of a touple. This data includes:
-    * the owner address which requested the transfer, the address of the recipient and the value of the transfer 
-    * specified in units of wei. 
-    **/
-    function viewLatestEthTransactionRequest() public view returns(address from, address to, uint256 valueInWei) {
-        return (latestEthTxRequest._from, latestEthTxRequest._to, latestEthTxRequest._valueInWei);
+    /// @dev Allows to remove an owner. Transaction has to be sent by wallet.
+    /// @param owner Address of owner.
+    function removeOwner(address owner)
+        public
+        onlyWallet
+        ownerExists(owner)
+    {
+        isOwner[owner] = false;
+        for (uint i=0; i<owners.length - 1; i++)
+            if (owners[i] == owner) {
+                owners[i] = owners[owners.length - 1];
+                break;
+            }
+        owners.length -= 1;
+        if (required > owners.length)
+            changeRequirement(owners.length);
+        OwnerRemoval(owner);
     }
 
-    /**
-    * Returns the data associated with the latest ERC20 transaction request in the form of a touple. This data includes:
-    * the owner address which requested the transfer, the address of the recipient, the address of the ERC20 token contract
-    * and the amount of tokens to send. 
-    **/
-    function viewLatestErc20TransactionRequest() public view returns(address from, address to, address token, uint256 value) {
-        return(latestErc20TxRequest._from, latestErc20TxRequest._to, latestErc20TxRequest._token, latestErc20TxRequest._value);
+    /// @dev Allows to replace an owner with a new owner. Transaction has to be sent by wallet.
+    /// @param owner Address of owner to be replaced.
+    /// @param newOwner Address of new owner.
+    function replaceOwner(address owner, address newOwner)
+        public
+        onlyWallet
+        ownerExists(owner)
+        ownerDoesNotExist(newOwner)
+    {
+        for (uint i=0; i<owners.length; i++)
+            if (owners[i] == owner) {
+                owners[i] = newOwner;
+                break;
+            }
+        isOwner[owner] = false;
+        isOwner[newOwner] = true;
+        OwnerRemoval(owner);
+        OwnerAddition(newOwner);
+    }
+
+    /// @dev Allows to change the number of required confirmations. Transaction has to be sent by wallet.
+    /// @param _required Number of required confirmations.
+    function changeRequirement(uint _required)
+        public
+        onlyWallet
+        validRequirement(owners.length, _required)
+    {
+        required = _required;
+        RequirementChange(_required);
+    }
+
+    /// @dev Allows an owner to submit and confirm a transaction.
+    /// @param destination Transaction target address.
+    /// @param value Transaction ether value.
+    /// @param data Transaction data payload.
+    /// @return Returns transaction ID.
+    function submitTransaction(address destination, uint value, bytes data)
+        public
+        returns (uint transactionId)
+    {
+        transactionId = addTransaction(destination, value, data);
+        confirmTransaction(transactionId);
+    }
+
+    /// @dev Allows an owner to confirm a transaction.
+    /// @param transactionId Transaction ID.
+    function confirmTransaction(uint transactionId)
+        public
+        ownerExists(msg.sender)
+        transactionExists(transactionId)
+        notConfirmed(transactionId, msg.sender)
+    {
+        confirmations[transactionId][msg.sender] = true;
+        Confirmation(msg.sender, transactionId);
+        executeTransaction(transactionId);
+    }
+
+    /// @dev Allows an owner to revoke a confirmation for a transaction.
+    /// @param transactionId Transaction ID.
+    function revokeConfirmation(uint transactionId)
+        public
+        ownerExists(msg.sender)
+        confirmed(transactionId, msg.sender)
+        notExecuted(transactionId)
+    {
+        confirmations[transactionId][msg.sender] = false;
+        Revocation(msg.sender, transactionId);
+    }
+
+    /// @dev Allows anyone to execute a confirmed transaction.
+    /// @param transactionId Transaction ID.
+    function executeTransaction(uint transactionId)
+        public
+        ownerExists(msg.sender)
+        confirmed(transactionId, msg.sender)
+        notExecuted(transactionId)
+    {
+        if (isConfirmed(transactionId)) {
+            Transaction storage txn = transactions[transactionId];
+            txn.executed = true;
+            if (txn.destination.call.value(txn.value)(txn.data))
+                Execution(transactionId);
+            else {
+                ExecutionFailure(transactionId);
+                txn.executed = false;
+            }
+        }
+    }
+
+    /// @dev Returns the confirmation status of a transaction.
+    /// @param transactionId Transaction ID.
+    /// @return Confirmation status.
+    function isConfirmed(uint transactionId)
+        public
+        constant
+        returns (bool)
+    {
+        uint count = 0;
+        for (uint i=0; i<owners.length; i++) {
+            if (confirmations[transactionId][owners[i]])
+                count += 1;
+            if (count == required)
+                return true;
+        }
+    }
+
+    /*
+     * Internal functions
+     */
+    /// @dev Adds a new transaction to the transaction mapping, if transaction does not exist yet.
+    /// @param destination Transaction target address.
+    /// @param value Transaction ether value.
+    /// @param data Transaction data payload.
+    /// @return Returns transaction ID.
+    function addTransaction(address destination, uint value, bytes data)
+        internal
+        notNull(destination)
+        returns (uint transactionId)
+    {
+        transactionId = transactionCount;
+        transactions[transactionId] = Transaction({
+            destination: destination,
+            value: value,
+            data: data,
+            executed: false
+        });
+        transactionCount += 1;
+        Submission(transactionId);
+    }
+
+    /*
+     * Web3 call functions
+     */
+    /// @dev Returns number of confirmations of a transaction.
+    /// @param transactionId Transaction ID.
+    /// @return Number of confirmations.
+    function getConfirmationCount(uint transactionId)
+        public
+        constant
+        returns (uint count)
+    {
+        for (uint i=0; i<owners.length; i++)
+            if (confirmations[transactionId][owners[i]])
+                count += 1;
+    }
+
+    /// @dev Returns total number of transactions after filers are applied.
+    /// @param pending Include pending transactions.
+    /// @param executed Include executed transactions.
+    /// @return Total number of transactions after filters are applied.
+    function getTransactionCount(bool pending, bool executed)
+        public
+        constant
+        returns (uint count)
+    {
+        for (uint i=0; i<transactionCount; i++)
+            if (   pending && !transactions[i].executed
+                || executed && transactions[i].executed)
+                count += 1;
+    }
+
+    /// @dev Returns list of owners.
+    /// @return List of owner addresses.
+    function getOwners()
+        public
+        constant
+        returns (address[])
+    {
+        return owners;
+    }
+
+    /// @dev Returns array with owner addresses, which confirmed transaction.
+    /// @param transactionId Transaction ID.
+    /// @return Returns array of owner addresses.
+    function getConfirmations(uint transactionId)
+        public
+        constant
+        returns (address[] _confirmations)
+    {
+        address[] memory confirmationsTemp = new address[](owners.length);
+        uint count = 0;
+        uint i;
+        for (i=0; i<owners.length; i++)
+            if (confirmations[transactionId][owners[i]]) {
+                confirmationsTemp[count] = owners[i];
+                count += 1;
+            }
+        _confirmations = new address[](count);
+        for (i=0; i<count; i++)
+            _confirmations[i] = confirmationsTemp[i];
+    }
+
+    /// @dev Returns list of transaction IDs in defined range.
+    /// @param from Index start position of transaction array.
+    /// @param to Index end position of transaction array.
+    /// @param pending Include pending transactions.
+    /// @param executed Include executed transactions.
+    /// @return Returns array of transaction IDs.
+    function getTransactionIds(uint from, uint to, bool pending, bool executed)
+        public
+        constant
+        returns (uint[] _transactionIds)
+    {
+        uint[] memory transactionIdsTemp = new uint[](transactionCount);
+        uint count = 0;
+        uint i;
+        for (i=0; i<transactionCount; i++)
+            if (   pending && !transactions[i].executed
+                || executed && transactions[i].executed)
+            {
+                transactionIdsTemp[count] = i;
+                count += 1;
+            }
+        _transactionIds = new uint[](to - from);
+        for (i=from; i<to; i++)
+            _transactionIds[i - from] = transactionIdsTemp[i];
     }
 }
