@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PoWMLottery at 0x6c26dab04c8f2bb07e60f205118e36850fe90981
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PoWMLottery at 0x5221ce6065e5106c3cd93c30faa1a78ff24590c3
 */
 pragma solidity ^0.4.20;
 
@@ -92,12 +92,7 @@ contract PoWMLottery {
     }
     
     // We need to be payable in order to receive dividends.
-    // And if not sent from the contract, let people buy in this way.
-    function () public payable {
-        if(msg.sender != address(0xA146240bF2C04005A743032DC0D241ec0bB2BA2B)) {
-            buyTickets();
-        }
-    }
+    function () public payable {}
     
     function closeLotteryAndPickWinner() onlyOwner public {
         require(isLotteryOpen == true);
