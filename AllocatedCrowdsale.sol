@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AllocatedCrowdsale at 0x9fdabd60fb538469b16bbe12db2e9401116a66e1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AllocatedCrowdsale at 0x20a6df7f5511bff9fd58850b21bbc7d43b4fbbfc
 */
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
