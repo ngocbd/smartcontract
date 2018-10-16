@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReporterToken at 0xb49fa6abb77a978951dfc547dfb76be10c88cbf9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReporterToken at 0x5e21dd5ae3074d36db940bd4e0290fbba6b34cb3
 */
 pragma solidity ^0.4.17;
 
@@ -290,7 +290,7 @@ contract ReporterToken is MintableToken, Pausable{
   }
 
   /**
-   * @dev Allows anyone to transfer the Reporter tokens once trading has started
+   * @dev Allows anyone to transfer the Change tokens once trading has started
    * @param _to the recipient address of the tokens.
    * @param _value number of tokens to be transfered.
    */
@@ -299,7 +299,7 @@ contract ReporterToken is MintableToken, Pausable{
   }
 
   /**
-  * @dev Allows anyone to transfer the Reporter tokens once trading has started
+  * @dev Allows anyone to transfer the Change tokens once trading has started
   * @param _from address The address which you want to send tokens from
   * @param _to address The address which you want to transfer to
   * @param _value uint the amout of tokens to be transfered
@@ -386,7 +386,7 @@ contract ReporterTokenSale is Ownable, Pausable{
   * @dev Calculates the amount of bonus coins the buyer gets
   */
   function setTier(uint newR) internal {
-    // first 9M tokens get extra 42% of tokens, next half get 17%
+    // first 25% tokens get extra 30% of tokens, next half get 15%
     if (tokenRaised <= 9000000 * oneCoin) {
       rate = newR * 142/100;
       //minContribution = 100 ether;
@@ -466,10 +466,10 @@ contract ReporterTokenSale is Ownable, Pausable{
   }
 
    /**
-  * @dev set a newRate if have a big different in ether/dollar rate 
+  * @dev set a new CS representative
   */
   function setRate(uint newRate) onlyCSorOwner public {
-    require( 0 < newRate && newRate < 8000); 
+    require( 0 < newRate && newRate < 3000); 
     r = newRate;
   }
 
