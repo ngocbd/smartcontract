@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PhilipinesJunket at 0x0195526ab127b417cf30b9dc5a92f77d2b91a66f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PhilipinesJunket at 0x5ea2b6e67336b9b32e6f6ee442a1e7a01fa29640
 */
-pragma solidity ^0.4.20;
+pragma solidity ^0.4.24;
 
 library SafeMath {
 
@@ -47,7 +47,7 @@ library SafeERC20 {
  * @dev JunketLockup is a token holder contract that will allow a
  * beneficiary to extract the tokens after a given release time
  */
-contract PhilipinesJunket {
+contract PhilipinesJunket{
   using SafeERC20 for ERC20Basic;
   using SafeMath for uint256;
 
@@ -60,12 +60,15 @@ contract PhilipinesJunket {
   // timestamp when token release is enabled
   uint256 public releaseTime;
 
-  uint256 public previousWithdrawal = 0;
+  uint256 public unlocked = 0;
+  
+  bool public withdrawalsInitiated = false;
   
   uint256 public year = 365 days; // equivalent to one year
 
   constructor() public {
     token = ERC20Basic(0x814F67fA286f7572B041D041b1D99b432c9155Ee);
+    
     beneficiary = address(0x8CBE4C9a921A19d8F074d9722815cD42a450f849);
     
     releaseTime = now + year;
@@ -74,21 +77,25 @@ contract PhilipinesJunket {
   /**
    * @notice Transfers tokens held by timelock to beneficiary.
    */
-  function release() public {
+  function release(uint256 _amount) public {
     
-    uint256 amount = token.balanceOf(address(this));
-    require(amount > 0);
-
-    if(previousWithdrawal == 0){
-        // calculate 50% of existing amount
-        amount = amount.div(2);
-    }else{
-        assert(now >= releaseTime);
+    uint256 balance = token.balanceOf(address(this));
+    require(balance > 0);
+    
+    if(!withdrawalsInitiated){
+        // unlock 50% of existing balance
+        unlocked = balance.div(2);
+        withdrawalsInitiated = true;
     }
     
-    previousWithdrawal = amount;
+    if(now >= releaseTime){
+        unlocked = balance;
+    }
     
-    token.safeTransfer(beneficiary, amount);
+    require(_amount <= unlocked);
+    unlocked = unlocked.sub(_amount);
+    
+    token.safeTransfer(beneficiary, _amount);
     
   }
   
