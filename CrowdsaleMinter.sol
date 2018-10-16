@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleMinter at 0xe86b6cd49bcf43f94e3566cfaf5e0d136e3cf8fd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleMinter at 0x2eCae89ebd1DdE40E39D04f515E1f8E64AB939bd
 */
 pragma solidity ^0.4.11;
 
@@ -127,14 +127,14 @@ contract PresaleBonusVoting {
 
 contract CrowdsaleMinter is Owned {
 
-    string public constant VERSION = "0.2.1-TEST.MAX.3";
+    string public constant VERSION = "0.2.1-TEST.MAX.2";
 
     /* ====== configuration START ====== */
-    uint public constant COMMUNITY_SALE_START = 3972380; /* approx. 04.07.2017 12:00 */
-    uint public constant PRIORITY_SALE_START  = 3972485; /* approx. 04.07.2017 12:30 */
-    uint public constant PUBLIC_SALE_START    = 3972590; /* approx. 04.07.2017 13:00 */
-    uint public constant PUBLIC_SALE_END      = 3972695; /* approx. 04.07.2017 13:30 */
-    uint public constant WITHDRAWAL_END       = 3972800; /* approx. 04.07.2017 14:00 */
+    uint public constant COMMUNITY_SALE_START = 3971950; /* approx. 04.07.2017 10:00 */
+    uint public constant PRIORITY_SALE_START  = 3972150; /* approx. 04.07.2017 11:00 */
+    uint public constant PUBLIC_SALE_START    = 3972250; /* approx. 04.07.2017 11:30 */
+    uint public constant PUBLIC_SALE_END      = 3972350; /* approx. 04.07.2017 12:00 */
+    uint public constant WITHDRAWAL_END       = 3972450; /* approx. 04.07.2017 12:30 */
 
     address public TEAM_GROUP_WALLET           = 0x215aCB37845027cA64a4f29B2FCb7AffA8E9d326;
     address public ADVISERS_AND_FRIENDS_WALLET = 0x41ab8360dEF1e19FdFa32092D83a7a7996C312a4;
