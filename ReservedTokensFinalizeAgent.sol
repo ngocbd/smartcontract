@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReservedTokensFinalizeAgent at 0x7455976e09805fdd1b41879958c9e050289412fb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReservedTokensFinalizeAgent at 0xD7A045C58a1265d63d34d75dAadCFd63610a0278
 */
-// Created using ICO Wizard https://github.com/oraclesorg/ico-wizard by Oracles Network 
+// Official Ethconnect
 pragma solidity ^0.4.11;
 
 
