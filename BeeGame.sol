@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BeeGame at 0xf1E48E34984a4D62716B50316b988Baa17a66DFE
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BeeGame at 0x525Ce184d0fe3e3A6e2e8900A20ea40a2A835A79
 */
 pragma solidity ^0.4.18;
 
 contract owned {
     address public owner;
 
-    function owned() {
+    function owned() public {
         owner = msg.sender;
     }
 
@@ -15,13 +15,15 @@ contract owned {
         _;
     }
 
-    function transferOwnership(address newOwner) onlyOwner {
+    function transferOwnership(address newOwner) public onlyOwner {
         owner = newOwner;
     }
 }
 
 library TiposCompartidos {
     enum TipoPremio {none,free,x2,x3,x5, surprise }
+
+    enum EstadoMensaje{pendiente,aprobado,rechazado}
 
     struct Celda {
         address creador;
@@ -37,6 +39,15 @@ library TiposCompartidos {
         TipoPremio tipo;
         bool premio;
     }
+
+    struct Mensaje {
+        address creador;
+        string apodo;
+        uint256 fechaCreacion;
+        string mensaje;
+        TiposCompartidos.EstadoMensaje estado;
+        string motivo;
+    }
     
 }
 
@@ -45,6 +56,7 @@ contract BeeGame is owned {
     uint256 internal sellPrice;
     uint256 internal buyPrice;
     uint internal numeroCeldas;
+    uint internal numeroMensajes;
     string internal name;
     string internal symbol;
     uint8 internal decimals;
@@ -56,8 +68,10 @@ contract BeeGame is owned {
     address[] indiceUsuarios;
     
     mapping (uint256 => TiposCompartidos.Celda) celdas;
+    mapping (uint256 => TiposCompartidos.Mensaje) mensajes;
     
     uint256[] indiceCeldas;
+    uint256[] indiceMensajes;
 
     event Transfer(address indexed from, address indexed to, uint256 value);
 
@@ -67,7 +81,7 @@ contract BeeGame is owned {
         uint256 initialSupply,
         uint256 newSellPrice,
         uint256 newBuyPrice,
-        uint _fechaTax) {
+        uint _fechaTax) public {
         fechaTax = _fechaTax;
         balanceOf[owner] = initialSupply;
         setPrices(newSellPrice,newBuyPrice);
@@ -91,10 +105,12 @@ contract BeeGame is owned {
         });
         indiceCeldas.push(1509302402021);
         numeroCeldas = numeroCeldas + 1;
+        numeroUsuarios = numeroUsuarios + 1;
+        indiceUsuarios.push(msg.sender);
         celdas[1509302402021] = celda;
     }
 
-    function buy() payable returns (uint amount) {
+    function buy() public payable returns (uint amount) {
         amount = msg.value / buyPrice;         
         require(balanceOf[owner] >= amount); 
         _transfer(owner, msg.sender, amount);
@@ -103,7 +119,7 @@ contract BeeGame is owned {
         return amount;                         
     }
 
-    function incluirUsuario(address usuario){
+    function incluirUsuario(address usuario) public {
         bool encontrado = false;
         for (uint i = 0; i < numeroUsuarios; i++) {
             address usuarioT = indiceUsuarios[i];
@@ -117,7 +133,7 @@ contract BeeGame is owned {
         }
     }
 
-    function cobrarImpuesto(uint _fechaTax) onlyOwner {
+    function cobrarImpuesto(uint _fechaTax) public onlyOwner {
         for (uint i = 0; i < numeroUsuarios; i++) {
             address usuario = indiceUsuarios[i];
             if (balanceOf[usuario] > 0){
@@ -127,7 +143,7 @@ contract BeeGame is owned {
         fechaTax = _fechaTax;
     }
 
-    function crearCelda(uint _polenes, uint256 _fechaCreacion, uint posicion, uint _celdaPadre, uint _celdaAbuelo, TiposCompartidos.TipoPremio tipo) {
+    function crearCelda(uint _polenes, uint256 _fechaCreacion, uint posicion, uint _celdaPadre, uint _celdaAbuelo, TiposCompartidos.TipoPremio tipo) public {
         require(balanceOf[msg.sender]>=3);
         require(_polenes == 3);
         require(_celdaPadre != 0);
@@ -227,7 +243,7 @@ contract BeeGame is owned {
         celdas[celdaPadre.fechaCreacion] = celdaPadre;
     }
 
-    function getCelda(uint index) returns (address creador, uint polenPositivos, uint polenNegativos, uint fechaCreacion, 
+    function getCelda(uint index) public view returns (address creador, uint polenPositivos, uint polenNegativos, uint fechaCreacion, 
                                             uint primeraPosicion, uint segundaPosicion, uint terceraPosicion,
                                             uint cuartaPosicion, uint quintaPosicion, uint sextaPosicion, TiposCompartidos.TipoPremio tipo, bool premio) {
         uint256 indexA = indiceCeldas[index];
@@ -237,27 +253,66 @@ contract BeeGame is owned {
         celda.quintaPosicion, celda.sextaPosicion, celda.tipo, celda.premio);
     }
 
-    function getBalance(address addr) returns(uint) {
+    function getMensaje(uint index) public view returns(address creador,uint fechaCreacion,string _mensaje,string apodo, TiposCompartidos.EstadoMensaje estado, string motivo){
+        uint256 indexA = indiceMensajes[index];
+        TiposCompartidos.Mensaje memory mensaje = mensajes[indexA];
+        return (mensaje.creador,mensaje.fechaCreacion,mensaje.mensaje,mensaje.apodo,mensaje.estado,mensaje.motivo);
+    }
+
+    function insertarMensaje(uint256 _fechaCreacion, string _apodo,string _mensaje) public {
+        bool encontrado = false;
+        for (uint i = 0; i < numeroUsuarios && !encontrado; i++) {
+            address usuarioT = indiceUsuarios[i];
+            if (usuarioT == msg.sender) {
+                encontrado = true;
+            }
+        }
+        require(encontrado);
+        indiceMensajes.push(_fechaCreacion);
+        numeroMensajes = numeroMensajes + 1;
+        TiposCompartidos.Mensaje memory mensaje = TiposCompartidos.Mensaje({
+            creador:msg.sender,
+            apodo:_apodo,
+            fechaCreacion:_fechaCreacion,
+            mensaje:_mensaje,
+            estado:TiposCompartidos.EstadoMensaje.aprobado,
+            motivo:""
+        });
+        mensajes[_fechaCreacion] = mensaje;
+    }
+
+    function aprobarMensaje(uint256 _fechaCreacion,TiposCompartidos.EstadoMensaje _estado,string _motivo) public onlyOwner {
+        TiposCompartidos.Mensaje memory mensaje = mensajes[_fechaCreacion];
+        mensaje.estado = _estado;
+        mensaje.motivo = _motivo;
+        mensajes[_fechaCreacion] = mensaje;
+    }
+
+    function getBalance(address addr) public view returns(uint) {
 		return balanceOf[addr];
 	}
 
-    function getFechaTax() returns(uint) {
+    function getFechaTax() public view returns(uint) {
         return fechaTax;
     }
 
-    function getNumeroCeldas() returns(uint) {
+    function getNumeroCeldas() public view returns(uint) {
         return numeroCeldas;
     }
 
-    function getOwner() returns(address) {
+    function getNumeroMensajes() public view returns(uint) {
+        return numeroMensajes;
+    }
+
+    function getOwner() public view returns(address) {
         return owner;
     }
 
-    function getRevenue(uint amount) onlyOwner {
+    function getRevenue(uint amount) public onlyOwner {
         owner.transfer(amount);
     }
 
-    function sell(uint amount){
+    function sell(uint amount) public {
         require(balanceOf[msg.sender] >= amount);         
         _transfer(msg.sender, owner, amount);
         uint revenue = amount * sellPrice;
@@ -269,16 +324,16 @@ contract BeeGame is owned {
         }                                   
     }
 
-    function setFechaTax(uint _fechaTax) onlyOwner {
+    function setFechaTax(uint _fechaTax) public onlyOwner {
         fechaTax = _fechaTax;
     }
 
-    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner {
+    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) public onlyOwner {
         sellPrice = newSellPrice * 1 finney;
         buyPrice = newBuyPrice * 1 finney;
     }
 
-    function transfer(address _to, uint _value){
+    function transfer(address _to, uint _value) public {
         _transfer(msg.sender, _to, _value);
         incluirUsuario(_to);
     }
