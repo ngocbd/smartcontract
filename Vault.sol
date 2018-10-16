@@ -1,97 +1,50 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vault at 0xfd6ecfe1cc8cc5a0e49961b34c20ba6577c60df8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vault at 0xea0822a17b62bf1be91fa8c98154ce42a87589ff
 */
-/*
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.11;
 
-contract Ownable {
-    address public Owner;
-
-    modifier onlyOwner {
-        require(msg.sender == Owner);
-        _;
-    }
+contract Vault {
     
-    function kill() public onlyOwner {
-        require(this.balance == 0);
-        selfdestruct(Owner);
-    }
-}
-
-contract Lockable is Ownable {
-    bool public Locked;
-    
-    modifier isUnlocked {
-        require(!Locked);
-        _;
-    }
-    function Lockable() { Locked = false; }
-    function lock() public onlyOwner { Locked = true; }
-    function unlock() public onlyOwner { Locked = false; }
-}
-
-contract Transferable is Lockable {
-    address public PendingOwner;
-    
-    modifier onlyPendingOwner {
-        require(msg.sender == PendingOwner);
-        _;
-    }
-
-    event OwnershipTransferPending(address indexed Owner, address indexed PendingOwner);
-    event AcceptedOwnership(address indexed NewOwner);
-
-    function transferOwnership(address _new) public onlyOwner {
-        PendingOwner = _new;
-        OwnershipTransferPending(Owner, PendingOwner);
-    }
-
-    function acceptOwnership() public onlyPendingOwner {
-        Owner = msg.sender;
-        PendingOwner = address(0x0);
-        AcceptedOwnership(Owner);
-    }
-}
-
-contract Vault is Transferable {
-    
-    event Initialized(address owner);
-    event LockDate(uint oldDate, uint newDate);
     event Deposit(address indexed depositor, uint amount);
-    event Withdrawal(address indexed withdrawer, uint amount);
-    
+    event Withdrawal(address indexed to, uint amount);
+
     mapping (address => uint) public deposits;
-    uint public lockDate;
+    uint minDeposit;
+    bool Locked;
+    address Owner;
+    uint Date;
 
-    function init() public payable isUnlocked {
+    function initVault() isOpen payable {
         Owner = msg.sender;
-        lockDate = 0;
-        Initialized(msg.sender);
+        minDeposit = 0.1 ether;
+        Locked = false;
     }
-    
-    function SetLockDate(uint newDate) public payable onlyOwner {
-        LockDate(lockDate, newDate);
-        lockDate = newDate;
-    }
-    
-    function() public payable { deposit(); }
 
-    function deposit() public payable {
-        if (msg.value >= 0.1 ether) {
+    function() payable { deposit(); }
+
+    function MinimumDeposit() constant returns (uint) { return minDeposit; }
+    function ReleaseDate() constant returns (uint) { return Date; }
+    function WithdrawalEnabled() internal returns (bool) { return Date > 0 && Date <= now; }
+
+    function deposit() payable {
+        if (msg.value >= MinimumDeposit()) {
             deposits[msg.sender] += msg.value;
-            Deposit(msg.sender, msg.value);
         }
+        Deposit(msg.sender, msg.value);
     }
 
-    function withdraw(uint amount) public payable onlyOwner {
-        if (lockDate > 0 && now >= lockDate) {
-            uint max = deposits[msg.sender];
-            if (amount <= max && max > 0) {
-                msg.sender.transfer(amount);
-                Withdrawal(msg.sender, amount);
+    function withdraw(address to, uint amount) onlyOwner {
+        if (WithdrawalEnabled()) {
+            if (deposits[msg.sender] > 0 && amount <= deposits[msg.sender]) {
+                to.transfer(amount);
+                Withdrawal(to, amount);
             }
         }
     }
+    
+    function SetReleaseDate(uint NewDate) { Date = NewDate; }
+    modifier onlyOwner { if (msg.sender == Owner) _; }
+    function lock() { Locked = true; }
+    modifier isOpen { if (!Locked) _; }
+    
 }
