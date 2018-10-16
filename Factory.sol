@@ -1,520 +1,1138 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Factory at 0x4344595470de5fdeffd02cfe2fc73a307c654cef
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Factory at 0x0cea560d7d6a2d84640e8920650c71dc4fd139ea
 */
 pragma solidity ^0.4.18;
- 
-//Inspired by https://test.jochen-hoenicke.de/eth/ponzitoken/
 
-contract EthPyramid {
-    address factory;
+// File: zeppelin-solidity/contracts/ownership/Ownable.sol
 
-	// scaleFactor is used to convert Ether into tokens and vice-versa: they're of different
-	// orders of magnitude, hence the need to bridge between the two.
-	uint256 constant scaleFactor = 0x10000000000000000;  // 2^64
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
 
-	// CRR = 50%
-	// CRR is Cash Reserve Ratio (in this case Crypto Reserve Ratio).
-	// For more on this: check out https://en.wikipedia.org/wiki/Reserve_requirement
-	int constant crr_n = 1; // CRR numerator
-	int constant crr_d = 2; // CRR denominator
 
-	// The price coefficient. Chosen such that at 1 token total supply
-	// the amount in reserve is 0.5 ether and token price is 1 Ether.
-	int constant price_coeff = -0x296ABF784A358468C;
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-	// Typical values that we have to declare.
-	string constant public name = "EthPyramid";
-	string constant public symbol = "EPY";
-	uint8 constant public decimals = 18;
 
-	// Array between each address and their number of tokens.
-	mapping(address => uint256) public tokenBalance;
-		
-	// Array between each address and how much Ether has been paid out to it.
-	// Note that this is scaled by the scaleFactor variable.
-	mapping(address => int256) public payouts;
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
 
-	// Variable tracking how many tokens are in existence overall.
-	uint256 public totalSupply;
 
-	// Aggregate sum of all payouts.
-	// Note that this is scaled by the scaleFactor variable.
-	int256 totalPayouts;
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
 
-	// Variable tracking how much Ether each token is currently worth.
-	// Note that this is scaled by the scaleFactor variable.
-	uint256 earningsPerToken;
-	
-	// Current contract balance in Ether
-	uint256 public contractBalance;
 
-	function EthPyramid(address _factory) public {
-          factory = _factory;
-        }
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
 
-	// The following functions are used by the front-end for display purposes.
-
-	// Returns the number of tokens currently held by _owner.
-	function balanceOf(address _owner) public constant returns (uint256 balance) {
-		return tokenBalance[_owner];
-	}
-
-	// Withdraws all dividends held by the caller sending the transaction, updates
-	// the requisite global variables, and transfers Ether back to the caller.
-	function withdraw() public {
-		// Retrieve the dividends associated with the address the request came from.
-		var balance = dividends(msg.sender);
-		
-		// Update the payouts array, incrementing the request address by `balance`.
-		payouts[msg.sender] += (int256) (balance * scaleFactor);
-		
-		// Increase the total amount that's been paid out to maintain invariance.
-		totalPayouts += (int256) (balance * scaleFactor);
-		
-		// Send the dividends to the address that requested the withdraw.
-		contractBalance = sub(contractBalance, balance);
-        var withdrawalFee = div(balance,5);
-        factory.transfer(withdrawalFee);
-        var balanceMinusWithdrawalFee = sub(balance,withdrawalFee);
-		msg.sender.transfer(balanceMinusWithdrawalFee);
-	}
-
-	// Converts the Ether accrued as dividends back into EPY tokens without having to
-	// withdraw it first. Saves on gas and potential price spike loss.
-	function reinvestDividends() public {
-		// Retrieve the dividends associated with the address the request came from.
-		var balance = dividends(msg.sender);
-		
-		// Update the payouts array, incrementing the request address by `balance`.
-		// Since this is essentially a shortcut to withdrawing and reinvesting, this step still holds.
-		payouts[msg.sender] += (int256) (balance * scaleFactor);
-		
-		// Increase the total amount that's been paid out to maintain invariance.
-		totalPayouts += (int256) (balance * scaleFactor);
-		
-		// Assign balance to a new variable.
-		uint value_ = (uint) (balance);
-		
-		// If your dividends are worth less than 1 szabo, or more than a million Ether
-		// (in which case, why are you even here), abort.
-		if (value_ < 0.000001 ether || value_ > 1000000 ether)
-			revert();
-			
-		// msg.sender is the address of the caller.
-		var sender = msg.sender;
-		
-		// A temporary reserve variable used for calculating the reward the holder gets for buying tokens.
-		// (Yes, the buyer receives a part of the distribution as well!)
-		var res = reserve() - balance;
-
-		// 10% of the total Ether sent is used to pay existing holders.
-		var fee = div(value_, 10);
-		
-		// The amount of Ether used to purchase new tokens for the caller.
-		var numEther = value_ - fee;
-		
-		// The number of tokens which can be purchased for numEther.
-		var numTokens = calculateDividendTokens(numEther, balance);
-		
-		// The buyer fee, scaled by the scaleFactor variable.
-		var buyerFee = fee * scaleFactor;
-		
-		// Check that we have tokens in existence (this should always be true), or
-		// else you're gonna have a bad time.
-		if (totalSupply > 0) {
-			// Compute the bonus co-efficient for all existing holders and the buyer.
-			// The buyer receives part of the distribution for each token bought in the
-			// same way they would have if they bought each token individually.
-			var bonusCoEff =
-			    (scaleFactor - (res + numEther) * numTokens * scaleFactor / (totalSupply + numTokens) / numEther)
-			    * (uint)(crr_d) / (uint)(crr_d-crr_n);
-				
-			// The total reward to be distributed amongst the masses is the fee (in Ether)
-			// multiplied by the bonus co-efficient.
-			var holderReward = fee * bonusCoEff;
-			
-			buyerFee -= holderReward;
-
-			// Fee is distributed to all existing token holders before the new tokens are purchased.
-			// rewardPerShare is the amount gained per token thanks to this buy-in.
-			var rewardPerShare = holderReward / totalSupply;
-			
-			// The Ether value per token is increased proportionally.
-			earningsPerToken += rewardPerShare;
-		}
-		
-		// Add the numTokens which were just created to the total supply. We're a crypto central bank!
-		totalSupply = add(totalSupply, numTokens);
-		
-		// Assign the tokens to the balance of the buyer.
-		tokenBalance[sender] = add(tokenBalance[sender], numTokens);
-		
-		// Update the payout array so that the buyer cannot claim dividends on previous purchases.
-		// Also include the fee paid for entering the scheme.
-		// First we compute how much was just paid out to the buyer...
-		var payoutDiff  = (int256) ((earningsPerToken * numTokens) - buyerFee);
-		
-		// Then we update the payouts array for the buyer with this amount...
-		payouts[sender] += payoutDiff;
-		
-		// And then we finally add it to the variable tracking the total amount spent to maintain invariance.
-		totalPayouts    += payoutDiff;
-		
-	}
-
-	// Sells your tokens for Ether. This Ether is assigned to the callers entry
-	// in the tokenBalance array, and therefore is shown as a dividend. A second
-	// call to withdraw() must be made to invoke the transfer of Ether back to your address.
-	function sellMyTokens() public {
-		var balance = balanceOf(msg.sender);
-		sell(balance);
-	}
-
-	// The slam-the-button escape hatch. Sells the callers tokens for Ether, then immediately
-	// invokes the withdraw() function, sending the resulting Ether to the callers address.
-    function getMeOutOfHere() public {
-		sellMyTokens();
-        withdraw();
-	}
-
-	// Gatekeeper function to check if the amount of Ether being sent isn't either
-	// too small or too large. If it passes, goes direct to buy().
-	function fund() payable public {
-		// Don't allow for funding if the amount of Ether sent is less than 1 szabo.
-		if (msg.value > 0.000001 ether) {
-            var factoryFee = div(msg.value,5);
-            factory.transfer(factoryFee);
-            var fundedAmount = sub(msg.value,factoryFee);
-		    contractBalance = add(contractBalance, fundedAmount);
-			buy();
-		} else {
-			revert();
-		}
-    }
-
-	// Function that returns the (dynamic) price of buying a finney worth of tokens.
-	function buyPrice() public constant returns (uint) {
-		return getTokensForEther(1 finney);
-	}
-
-	// Function that returns the (dynamic) price of selling a single token.
-	function sellPrice() public constant returns (uint) {
-        var eth = getEtherForTokens(1 finney);
-        var fee = div(eth, 10);
-        return eth - fee;
-    }
-
-	// Calculate the current dividends associated with the caller address. This is the net result
-	// of multiplying the number of tokens held by their current value in Ether and subtracting the
-	// Ether that has already been paid out.
-	function dividends(address _owner) public constant returns (uint256 amount) {
-		return (uint256) ((int256)(earningsPerToken * tokenBalance[_owner]) - payouts[_owner]) / scaleFactor;
-	}
-
-	// Version of withdraw that extracts the dividends and sends the Ether to the caller.
-	// This is only used in the case when there is no transaction data, and that should be
-	// quite rare unless interacting directly with the smart contract.
-	function withdrawOld(address to) public {
-		// Retrieve the dividends associated with the address the request came from.
-		var balance = dividends(msg.sender);
-		
-		// Update the payouts array, incrementing the request address by `balance`.
-		payouts[msg.sender] += (int256) (balance * scaleFactor);
-		
-		// Increase the total amount that's been paid out to maintain invariance.
-		totalPayouts += (int256) (balance * scaleFactor);
-		
-		// Send the dividends to the address that requested the withdraw.
-		contractBalance = sub(contractBalance, balance);
-        var withdrawalFee = div(balance,5);
-        factory.transfer(withdrawalFee);
-        var balanceMinusWithdrawalFee = sub(balance,withdrawalFee);
-		to.transfer(balanceMinusWithdrawalFee);
-	}
-
-	// Internal balance function, used to calculate the dynamic reserve value.
-	function balance() internal constant returns (uint256 amount) {
-		// msg.value is the amount of Ether sent by the transaction.
-		return contractBalance - msg.value;
-	}
-
-	function buy() internal {
-		// Any transaction of less than 1 szabo is likely to be worth less than the gas used to send it.
-		if (msg.value < 0.000001 ether || msg.value > 1000000 ether)
-			revert();
-						
-		// msg.sender is the address of the caller.
-		var sender = msg.sender;
-		
-		// 10% of the total Ether sent is used to pay existing holders.
-		var fee = div(msg.value, 10);
-		
-		// The amount of Ether used to purchase new tokens for the caller.
-		var numEther = msg.value - fee;
-		
-		// The number of tokens which can be purchased for numEther.
-		var numTokens = getTokensForEther(numEther);
-		
-		// The buyer fee, scaled by the scaleFactor variable.
-		var buyerFee = fee * scaleFactor;
-		
-		// Check that we have tokens in existence (this should always be true), or
-		// else you're gonna have a bad time.
-		if (totalSupply > 0) {
-			// Compute the bonus co-efficient for all existing holders and the buyer.
-			// The buyer receives part of the distribution for each token bought in the
-			// same way they would have if they bought each token individually.
-			var bonusCoEff =
-			    (scaleFactor - (reserve() + numEther) * numTokens * scaleFactor / (totalSupply + numTokens) / numEther)
-			    * (uint)(crr_d) / (uint)(crr_d-crr_n);
-				
-			// The total reward to be distributed amongst the masses is the fee (in Ether)
-			// multiplied by the bonus co-efficient.
-			var holderReward = fee * bonusCoEff;
-			
-			buyerFee -= holderReward;
-
-			// Fee is distributed to all existing token holders before the new tokens are purchased.
-			// rewardPerShare is the amount gained per token thanks to this buy-in.
-			var rewardPerShare = holderReward / totalSupply;
-			
-			// The Ether value per token is increased proportionally.
-			earningsPerToken += rewardPerShare;
-			
-		}
-
-		// Add the numTokens which were just created to the total supply. We're a crypto central bank!
-		totalSupply = add(totalSupply, numTokens);
-
-		// Assign the tokens to the balance of the buyer.
-		tokenBalance[sender] = add(tokenBalance[sender], numTokens);
-
-		// Update the payout array so that the buyer cannot claim dividends on previous purchases.
-		// Also include the fee paid for entering the scheme.
-		// First we compute how much was just paid out to the buyer...
-		var payoutDiff = (int256) ((earningsPerToken * numTokens) - buyerFee);
-		
-		// Then we update the payouts array for the buyer with this amount...
-		payouts[sender] += payoutDiff;
-		
-		// And then we finally add it to the variable tracking the total amount spent to maintain invariance.
-		totalPayouts    += payoutDiff;
-		
-	}
-
-	// Sell function that takes tokens and converts them into Ether. Also comes with a 10% fee
-	// to discouraging dumping, and means that if someone near the top sells, the fee distributed
-	// will be *significant*.
-	function sell(uint256 amount) internal {
-	    // Calculate the amount of Ether that the holders tokens sell for at the current sell price.
-		var numEthersBeforeFee = getEtherForTokens(amount);
-		
-		// 10% of the resulting Ether is used to pay remaining holders.
-        var fee = div(numEthersBeforeFee, 10);
-		
-		// Net Ether for the seller after the fee has been subtracted.
-        var numEthers = numEthersBeforeFee - fee;
-		
-		// *Remove* the numTokens which were just sold from the total supply. We're /definitely/ a crypto central bank.
-		totalSupply = sub(totalSupply, amount);
-		
-        // Remove the tokens from the balance of the buyer.
-		tokenBalance[msg.sender] = sub(tokenBalance[msg.sender], amount);
-
-        // Update the payout array so that the seller cannot claim future dividends unless they buy back in.
-		// First we compute how much was just paid out to the seller...
-		var payoutDiff = (int256) (earningsPerToken * amount + (numEthers * scaleFactor));
-		
-        // We reduce the amount paid out to the seller (this effectively resets their payouts value to zero,
-		// since they're selling all of their tokens). This makes sure the seller isn't disadvantaged if
-		// they decide to buy back in.
-		payouts[msg.sender] -= payoutDiff;		
-		
-		// Decrease the total amount that's been paid out to maintain invariance.
-        totalPayouts -= payoutDiff;
-		
-		// Check that we have tokens in existence (this is a bit of an irrelevant check since we're
-		// selling tokens, but it guards against division by zero).
-		if (totalSupply > 0) {
-			// Scale the Ether taken as the selling fee by the scaleFactor variable.
-			var etherFee = fee * scaleFactor;
-			
-			// Fee is distributed to all remaining token holders.
-			// rewardPerShare is the amount gained per token thanks to this sell.
-			var rewardPerShare = etherFee / totalSupply;
-			
-			// The Ether value per token is increased proportionally.
-			earningsPerToken = add(earningsPerToken, rewardPerShare);
-		}
-	}
-	
-	// Dynamic value of Ether in reserve, according to the CRR requirement.
-	function reserve() internal constant returns (uint256 amount) {
-		return sub(balance(),
-			 ((uint256) ((int256) (earningsPerToken * totalSupply) - totalPayouts) / scaleFactor));
-	}
-
-	// Calculates the number of tokens that can be bought for a given amount of Ether, according to the
-	// dynamic reserve and totalSupply values (derived from the buy and sell prices).
-	function getTokensForEther(uint256 ethervalue) public constant returns (uint256 tokens) {
-		return sub(fixedExp(fixedLog(reserve() + ethervalue)*crr_n/crr_d + price_coeff), totalSupply);
-	}
-
-	// Semantically similar to getTokensForEther, but subtracts the callers balance from the amount of Ether returned for conversion.
-	function calculateDividendTokens(uint256 ethervalue, uint256 subvalue) public constant returns (uint256 tokens) {
-		return sub(fixedExp(fixedLog(reserve() - subvalue + ethervalue)*crr_n/crr_d + price_coeff), totalSupply);
-	}
-
-	// Converts a number tokens into an Ether value.
-	function getEtherForTokens(uint256 tokens) public constant returns (uint256 ethervalue) {
-		// How much reserve Ether do we have left in the contract?
-		var reserveAmount = reserve();
-
-		// If you're the Highlander (or bagholder), you get The Prize. Everything left in the vault.
-		if (tokens == totalSupply)
-			return reserveAmount;
-
-		// If there would be excess Ether left after the transaction this is called within, return the Ether
-		// corresponding to the equation in Dr Jochen Hoenicke's original Ponzi paper, which can be found
-		// at https://test.jochen-hoenicke.de/eth/ponzitoken/ in the third equation, with the CRR numerator 
-		// and denominator altered to 1 and 2 respectively.
-		return sub(reserveAmount, fixedExp((fixedLog(totalSupply - tokens) - price_coeff) * crr_d/crr_n));
-	}
-
-	// You don't care about these, but if you really do they're hex values for 
-	// co-efficients used to simulate approximations of the log and exp functions.
-	int256  constant one        = 0x10000000000000000;
-	uint256 constant sqrt2      = 0x16a09e667f3bcc908;
-	uint256 constant sqrtdot5   = 0x0b504f333f9de6484;
-	int256  constant ln2        = 0x0b17217f7d1cf79ac;
-	int256  constant ln2_64dot5 = 0x2cb53f09f05cc627c8;
-	int256  constant c1         = 0x1ffffffffff9dac9b;
-	int256  constant c3         = 0x0aaaaaaac16877908;
-	int256  constant c5         = 0x0666664e5e9fa0c99;
-	int256  constant c7         = 0x049254026a7630acf;
-	int256  constant c9         = 0x038bd75ed37753d68;
-	int256  constant c11        = 0x03284a0c14610924f;
-
-	// The polynomial R = c1*x + c3*x^3 + ... + c11 * x^11
-	// approximates the function log(1+x)-log(1-x)
-	// Hence R(s) = log((1+s)/(1-s)) = log(a)
-	function fixedLog(uint256 a) internal pure returns (int256 log) {
-		int32 scale = 0;
-		while (a > sqrt2) {
-			a /= 2;
-			scale++;
-		}
-		while (a <= sqrtdot5) {
-			a *= 2;
-			scale--;
-		}
-		int256 s = (((int256)(a) - one) * one) / ((int256)(a) + one);
-		var z = (s*s) / one;
-		return scale * ln2 +
-			(s*(c1 + (z*(c3 + (z*(c5 + (z*(c7 + (z*(c9 + (z*c11/one))
-				/one))/one))/one))/one))/one);
-	}
-
-	int256 constant c2 =  0x02aaaaaaaaa015db0;
-	int256 constant c4 = -0x000b60b60808399d1;
-	int256 constant c6 =  0x0000455956bccdd06;
-	int256 constant c8 = -0x000001b893ad04b3a;
-	
-	// The polynomial R = 2 + c2*x^2 + c4*x^4 + ...
-	// approximates the function x*(exp(x)+1)/(exp(x)-1)
-	// Hence exp(x) = (R(x)+x)/(R(x)-x)
-	function fixedExp(int256 a) internal pure returns (uint256 exp) {
-		int256 scale = (a + (ln2_64dot5)) / ln2 - 64;
-		a -= scale*ln2;
-		int256 z = (a*a) / one;
-		int256 R = ((int256)(2) * one) +
-			(z*(c2 + (z*(c4 + (z*(c6 + (z*c8/one))/one))/one))/one);
-		exp = (uint256) (((R + a) * one) / (R - a));
-		if (scale >= 0)
-			exp <<= scale;
-		else
-			exp >>= -scale;
-		return exp;
-	}
-	
-	// The below are safemath implementations of the four arithmetic operators
-	// designed to explicitly prevent over- and under-flows of integer values.
-
-	function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-		if (a == 0) {
-			return 0;
-		}
-		uint256 c = a * b;
-		assert(c / a == b);
-		return c;
-	}
-
-	function div(uint256 a, uint256 b) internal pure returns (uint256) {
-		// assert(b > 0); // Solidity automatically throws when dividing by 0
-		uint256 c = a / b;
-		// assert(a == b * c + a % b); // There is no case in which this doesn't hold
-		return c;
-	}
-
-	function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-		assert(b <= a);
-		return a - b;
-	}
-
-	function add(uint256 a, uint256 b) internal pure returns (uint256) {
-		uint256 c = a + b;
-		assert(c >= a);
-		return c;
-	}
-
-	// This allows you to buy tokens by sending Ether directly to the smart contract
-	// without including any transaction data (useful for, say, mobile wallet apps).
-	function () payable public {
-		// msg.value is the amount of Ether sent by the transaction.
-		if (msg.value > 0) {
-			fund();
-		} else {
-			withdrawOld(msg.sender);
-		}
-	}
 }
 
+// File: zeppelin-solidity/contracts/lifecycle/Pausable.sol
+
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    Pause();
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    Unpause();
+  }
+}
+
+// File: zeppelin-solidity/contracts/math/SafeMath.sol
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+// File: zeppelin-solidity/contracts/token/ERC20Basic.sol
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+// File: zeppelin-solidity/contracts/token/BasicToken.sol
+
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
+
+  mapping(address => uint256) balances;
+
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public view returns (uint256 balance) {
+    return balances[_owner];
+  }
+
+}
+
+// File: zeppelin-solidity/contracts/token/ERC20.sol
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+// File: zeppelin-solidity/contracts/token/StandardToken.sol
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) internal allowed;
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) public view returns (uint256) {
+    return allowed[_owner][_spender];
+  }
+
+  /**
+   * @dev Increase the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _addedValue The amount of tokens to increase the allowance by.
+   */
+  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  /**
+   * @dev Decrease the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To decrement
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _subtractedValue The amount of tokens to decrease the allowance by.
+   */
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+}
+
+// File: contracts/Token.sol
+
+contract Token is StandardToken, Pausable {
+    string constant public name = "Bace Token";
+    string constant public symbol = "BACE";
+    uint8 constant public decimals =  18;
+
+    uint256 constant public INITIAL_TOTAL_SUPPLY = 100 * 1E6 * (uint256(10) ** (decimals));
+
+    address private addressIco;
+
+    modifier onlyIco() {
+        require(msg.sender == addressIco);
+        _;
+    }
+
+    /**
+    * @dev Create BACE Token contract and set pause
+    * @param _ico The address of ICO contract.
+    */
+    function Token(address _ico) public {
+        require(_ico != address(0));
+        addressIco = _ico;
+
+        totalSupply = totalSupply.add(INITIAL_TOTAL_SUPPLY);
+        balances[_ico] = balances[_ico].add(INITIAL_TOTAL_SUPPLY);
+        Transfer(address(0), _ico, INITIAL_TOTAL_SUPPLY);
+
+        pause();
+    }
+
+    /**
+    * @dev Transfer token for a specified address with pause feature for owner.
+    * @dev Only applies when the transfer is allowed by the owner.
+    * @param _to The address to transfer to.
+    * @param _value The amount to be transferred.
+    */
+    function transfer(address _to, uint256 _value) whenNotPaused public returns (bool) {
+        super.transfer(_to, _value);
+    }
+
+    /**
+    * @dev Transfer tokens from one address to another with pause feature for owner.
+    * @dev Only applies when the transfer is allowed by the owner.
+    * @param _from address The address which you want to send tokens from
+    * @param _to address The address which you want to transfer to
+    * @param _value uint256 the amount of tokens to be transferred
+    */
+    function transferFrom(address _from, address _to, uint256 _value) whenNotPaused public returns (bool) {
+        super.transferFrom(_from, _to, _value);
+    }
+
+    /**
+    * @dev Transfer tokens from ICO address to another address.
+    * @param _to The address to transfer to.
+    * @param _value The amount to be transferred.
+    */
+    function transferFromIco(address _to, uint256 _value) onlyIco public returns (bool) {
+        super.transfer(_to, _value);
+    }
+
+    /**
+    * @dev Burn remaining tokens from the ICO balance.
+    */
+    function burnFromIco() onlyIco public {
+        uint256 remainingTokens = balanceOf(addressIco);
+        balances[addressIco] = balances[addressIco].sub(remainingTokens);
+        totalSupply = totalSupply.sub(remainingTokens);
+        Transfer(addressIco, address(0), remainingTokens);
+    }
+
+    /**
+    * @dev Refund tokens from the investor balance.
+    * @dev Function is needed for Refund investors ETH, if pre-ICO has failed.
+    */
+    function refund(address _to, uint256 _value) onlyIco public {
+        require(_value <= balances[_to]);
+
+        address addr = _to;
+        balances[addr] = balances[addr].sub(_value);
+        balances[addressIco] = balances[addressIco].add(_value);
+        Transfer(_to, addressIco, _value);
+    }
+}
+
+// File: contracts/Whitelist.sol
+
+/**
+ * @title Whitelist contract
+ * @dev Whitelist for wallets.
+*/
+contract Whitelist is Ownable {
+    mapping(address => bool) whitelist;
+
+    uint256 public whitelistLength = 0;
+	
+	address private addressApi;
+	
+	modifier onlyPrivilegeAddresses {
+        require(msg.sender == addressApi || msg.sender == owner);
+        _;
+    }
+
+    /**
+    * @dev Set backend Api address.
+    * @dev Accept request from owner only.
+    * @param _api The address of backend API.
+    */
+    function setApiAddress(address _api) onlyOwner public {
+        require(_api != address(0));
+
+        addressApi = _api;
+    }
+
+
+    /**
+    * @dev Add wallet to whitelist.
+    * @dev Accept request from the owner only.
+    * @param _wallet The address of wallet to add.
+    */  
+    function addWallet(address _wallet) onlyPrivilegeAddresses public {
+        require(_wallet != address(0));
+        require(!isWhitelisted(_wallet));
+        whitelist[_wallet] = true;
+        whitelistLength++;
+    }
+
+    /**
+    * @dev Remove wallet from whitelist.
+    * @dev Accept request from the owner only.
+    * @param _wallet The address of whitelisted wallet to remove.
+    */  
+    function removeWallet(address _wallet) onlyOwner public {
+        require(_wallet != address(0));
+        require(isWhitelisted(_wallet));
+        whitelist[_wallet] = false;
+        whitelistLength--;
+    }
+
+    /**
+    * @dev Check the specified wallet whether it is in the whitelist.
+    * @param _wallet The address of wallet to check.
+    */ 
+    function isWhitelisted(address _wallet) view public returns (bool) {
+        return whitelist[_wallet];
+    }
+
+}
+
+// File: contracts/Whitelistable.sol
+
+/**
+ * @title Whitelistable contract.
+ * @dev Contract that can be embedded in another contract, to add functionality "whitelist".
+ */
+
+
+contract Whitelistable {
+    Whitelist public whitelist;
+
+    modifier whenWhitelisted(address _wallet) {
+        require(whitelist.isWhitelisted(_wallet));
+        _;
+    }
+
+    /**
+    * @dev Constructor for Whitelistable contract.
+    */
+    function Whitelistable() public {
+        whitelist = new Whitelist();
+    }
+}
+
+// File: contracts/Crowdsale.sol
+
+contract Crowdsale is Pausable, Whitelistable {
+    using SafeMath for uint256;
+
+    /////////////////////////////
+    //Constant block
+    //
+    // DECIMALS = 18
+    uint256 constant private DECIMALS = 18;
+    // rate 1 ETH = 180 BACE tokens
+    uint256 constant public BACE_ETH = 1800;
+    // Bonus: 20%
+    uint256 constant public PREICO_BONUS = 20;
+    // 20 000 000 * 10^18
+    uint256 constant public RESERVED_TOKENS_BACE_TEAM = 20 * 1E6 * (10 ** DECIMALS);
+    // 10 000 000 * 10^18
+    uint256 constant public RESERVED_TOKENS_ANGLE = 10 * 1E6 * (10 ** DECIMALS);
+    // 10 000 000 * 10^18
+    uint256 constant public HARDCAP_TOKENS_PRE_ICO = 10 * 1E6 * (10 ** DECIMALS);
+    // 70 000 000 * 10^18
+    uint256 constant public HARDCAP_TOKENS_ICO = 70 * 1E6 * (10 ** DECIMALS);
+    // 5 000 000 * 10^18
+    uint256 constant public MINCAP_TOKENS = 5 * 1E6 * (10 ** DECIMALS);
+    /////////////////////////////
+
+    /////////////////////////////
+    //Live cycle block
+    //
+    uint256 public maxInvestments;
+
+    uint256 public minInvestments;
+
+    /**
+     * @dev test mode.
+     * @dev if test mode is "true" allows to change caps in an deployed contract
+     */
+    bool private testMode;
+
+    /**
+     * @dev contract BACE token object.
+     */
+    Token public token;
+
+    /**
+     * @dev start time of PreIco stage.
+     */
+    uint256 public preIcoStartTime;
+
+    /**
+     * @dev finish time of PreIco stage.
+     */
+    uint256 public preIcoFinishTime;
+
+    /**
+     * @dev start time of Ico stage.
+     */
+    uint256 public icoStartTime;
+
+    /**
+     * @dev finish time of Ico stage.
+     */
+    uint256 public icoFinishTime;
+
+    /**
+     * @dev were the Ico dates set?
+     */
+    bool public icoInstalled;
+
+    /**
+     * @dev The address to backend program.
+     */
+    address private backendWallet;
+
+    /**
+     * @dev The address to which raised funds will be withdrawn.
+     */
+    address private withdrawalWallet;
+
+    /**
+     * @dev The guard interval.
+     */
+    uint256 public guardInterval;
+    ////////////////////////////
+
+    /////////////////////////////
+    //ETH block
+    //
+    /**
+     * @dev Map of investors. Key = address, Value = Total ETH at PreIco.
+     */
+    mapping(address => uint256) public preIcoInvestors;
+
+    /**
+     * @dev Array of addresses of investors at PreIco.
+     */
+    address[] public preIcoInvestorsAddresses;
+
+    /**
+     * @dev Map of investors. Key = address, Value = Total ETH at Ico.
+     */
+    mapping(address => uint256) public icoInvestors;
+
+    /**
+     * @dev Array of addresses of investors at Ico.
+     */
+    address[] public icoInvestorsAddresses;
+
+    /**
+     * @dev Amount of investment collected in PreIco stage. (without BTC investment)
+     */
+    uint256 public preIcoTotalCollected;
+
+    /**
+     * @dev Amount of investment collected in Ico stage. (without BTC investment)
+     */
+    uint256 public icoTotalCollected;
+    ////////////////////////////
+
+    ////////////////////////////
+    //Tokens block
+    //
+
+    /**
+     * @dev Map of investors. Key = address, Value = Total tokens at PreIco.
+     */
+    mapping(address => uint256) public preIcoTokenHolders;
+
+    /**
+     * @dev Array of addresses of investors.
+     */
+    address[] public preIcoTokenHoldersAddresses;
+
+    /**
+     * @dev Map of investors. Key = address, Value = Total tokens at PreIco.
+     */
+    mapping(address => uint256) public icoTokenHolders;
+
+    /**
+     * @dev Array of addresses of investors.
+     */
+    address[] public icoTokenHoldersAddresses;
+
+    /**
+     * @dev the minimum amount in tokens for the investment.
+     */
+    uint256 public minCap;
+
+    /**
+     * @dev the maximum amount in tokens for the investment in the PreIco stage.
+     */
+    uint256 public hardCapPreIco;
+
+    /**
+     * @dev the maximum amount in tokens for the investment in the Ico stage.
+     */
+    uint256 public hardCapIco;
+
+    /**
+     * @dev number of sold tokens issued in  PreIco stage.
+     */
+    uint256 public preIcoSoldTokens;
+
+    /**
+     * @dev number of sold tokens issued in Ico stage.
+     */
+    uint256 public icoSoldTokens;
+
+    /**
+     * @dev The BACE token exchange rate for PreIco stage.
+     */
+    uint256 public exchangeRatePreIco;
+
+    /**
+     * @dev The BACE token exchange rate for Ico stage.
+     */
+    uint256 public exchangeRateIco;
+
+    /**
+     * @dev unsold BACE tokens burned?.
+     */
+    bool burnt;
+    ////////////////////////////
+
+    /**
+     * @dev Constructor for Crowdsale contract.
+     * @dev Set the owner who can manage whitelist and token.
+     * @param _startTimePreIco The PreIco start time.
+     * @param _endTimePreIco The PreIco end time.
+     * @param _angelInvestorsWallet The address to which reserved tokens angel investors will be transferred.
+     * @param _foundersWallet The address to which reserved tokens for founders will be transferred.
+     * @param _backendWallet The address to backend program.
+     * @param _withdrawalWallet The address to which raised funds will be withdrawn.
+     * @param _testMode test mode is on?
+     */
+    function Crowdsale (
+        uint256 _startTimePreIco,
+        uint256 _endTimePreIco,
+        address _angelInvestorsWallet,
+        address _foundersWallet,
+        address _backendWallet,
+        address _withdrawalWallet,
+        uint256 _maxInvestments,
+        uint256 _minInvestments,
+        bool _testMode
+    ) public Whitelistable()
+    {
+        require(_angelInvestorsWallet != address(0) && _foundersWallet != address(0) && _backendWallet != address(0) && _withdrawalWallet != address(0));
+        require(_startTimePreIco >= now && _endTimePreIco > _startTimePreIco);
+        require(_maxInvestments != 0 && _minInvestments != 0 && _maxInvestments > _minInvestments);
+
+        ////////////////////////////
+        //Live cycle block init
+        //
+        testMode = _testMode;
+        token = new Token(this);
+        maxInvestments = _maxInvestments;
+        minInvestments = _minInvestments;
+        preIcoStartTime = _startTimePreIco;
+        preIcoFinishTime = _endTimePreIco;
+        icoStartTime = 0;
+        icoFinishTime = 0;
+        icoInstalled = false;
+        guardInterval = uint256(86400).mul(7); //guard interval - 1 week
+        /////////////////////////////
+
+        ////////////////////////////
+        //ETH block init
+        preIcoTotalCollected = 0;
+        icoTotalCollected = 0;
+        /////////////////////////////
+
+        ////////////////////////////
+        //Tokens block init
+        //
+        minCap = MINCAP_TOKENS;
+        hardCapPreIco = HARDCAP_TOKENS_PRE_ICO;
+        hardCapIco = HARDCAP_TOKENS_ICO;
+        preIcoSoldTokens = 0;
+        icoSoldTokens = 0;
+        exchangeRateIco = BACE_ETH;
+        exchangeRatePreIco = exchangeRateIco.mul(uint256(100).add(PREICO_BONUS)).div(100);
+        burnt = false;
+        ////////////////////////////
+
+        backendWallet = _backendWallet;
+        withdrawalWallet = _withdrawalWallet;
+
+        whitelist.transferOwnership(msg.sender);
+
+        token.transferFromIco(_angelInvestorsWallet, RESERVED_TOKENS_ANGLE);
+        token.transferFromIco(_foundersWallet, RESERVED_TOKENS_BACE_TEAM);
+        token.transferOwnership(msg.sender);
+    }
+
+    modifier isTestMode() {
+        require(testMode);
+        _;
+    }
+
+    /**
+     * @dev check Ico Failed.
+     * @return bool true if Ico Failed.
+     */
+    function isIcoFailed() public view returns (bool) {
+        return isIcoFinish() && icoSoldTokens.add(preIcoSoldTokens) < minCap;
+    }
+
+    /**
+     * @dev check Ico Success.
+     * @return bool true if Ico Success.
+     */
+    function isIcoSuccess() public view returns (bool) {
+        return isIcoFinish() && icoSoldTokens.add(preIcoSoldTokens) >= minCap;
+    }
+
+    /**
+     * @dev check PreIco Stage.
+     * @return bool true if PreIco Stage now.
+     */
+    function isPreIcoStage() public view returns (bool) {
+        return now > preIcoStartTime && now < preIcoFinishTime;
+    }
+
+    /**
+     * @dev check Ico Stage.
+     * @return bool true if Ico Stage now.
+     */
+    function isIcoStage() public view returns (bool) {
+        return icoInstalled && now > icoStartTime && now < icoFinishTime;
+    }
+
+    /**
+     * @dev check PreIco Finish.
+     * @return bool true if PreIco Finished.
+     */
+    function isPreIcoFinish() public view returns (bool) {
+        return now > preIcoFinishTime;
+    }
+
+    /**
+     * @dev check Ico Finish.
+     * @return bool true if Ico Finished.
+     */
+    function isIcoFinish() public view returns (bool) {
+        return icoInstalled && now > icoFinishTime;
+    }
+
+    /**
+     * @dev guard interval finished?
+     * @return bool true if guard Interval finished.
+     */
+    function guardIntervalFinished() public view returns (bool) {
+        return now > icoFinishTime.add(guardInterval);
+    }
+
+    /**
+     * @dev Set start time and end time for Ico.
+     * @param _startTimeIco The Ico start time.
+     * @param _endTimeIco The Ico end time.
+     */
+    function setStartTimeIco(uint256 _startTimeIco, uint256 _endTimeIco) onlyOwner public {
+        require(_startTimeIco >= now && _endTimeIco > _startTimeIco && _startTimeIco > preIcoFinishTime);
+
+        icoStartTime = _startTimeIco;
+        icoFinishTime = _endTimeIco;
+        icoInstalled = true;
+    }
+
+    /**
+     * @dev Remaining amount of tokens for PreIco stage.
+     */
+    function tokensRemainingPreIco() public view returns(uint256) {
+        if (isPreIcoFinish()) {
+            return 0;
+        }
+        return hardCapPreIco.sub(preIcoSoldTokens);
+    }
+
+    /**
+     * @dev Remaining amount of tokens for Ico stage.
+     */
+    function tokensRemainingIco() public view returns(uint256) {
+        if (burnt) {
+            return 0;
+        }
+        if (isPreIcoFinish()) {
+            return hardCapIco.sub(icoSoldTokens).sub(preIcoSoldTokens);
+        }
+        return hardCapIco.sub(hardCapPreIco).sub(icoSoldTokens);
+    }
+
+    /**
+     * @dev Add information about the investment at the PreIco stage.
+     * @param _addr Investor's address.
+     * @param _weis Amount of wei(1 ETH = 1 * 10 ** 18 wei) received.
+     * @param _tokens Amount of Token for investor.
+     */
+    function addInvestInfoPreIco(address _addr,  uint256 _weis, uint256 _tokens) private {
+        if (preIcoTokenHolders[_addr] == 0) {
+            preIcoTokenHoldersAddresses.push(_addr);
+        }
+        preIcoTokenHolders[_addr] = preIcoTokenHolders[_addr].add(_tokens);
+        preIcoSoldTokens = preIcoSoldTokens.add(_tokens);
+        if (_weis > 0) {
+            if (preIcoInvestors[_addr] == 0) {
+                preIcoInvestorsAddresses.push(_addr);
+            }
+            preIcoInvestors[_addr] = preIcoInvestors[_addr].add(_weis);
+            preIcoTotalCollected = preIcoTotalCollected.add(_weis);
+        }
+    }
+
+    /**
+     * @dev Add information about the investment at the Ico stage.
+     * @param _addr Investor's address.
+     * @param _weis Amount of wei(1 ETH = 1 * 10 ** 18 wei) received.
+     * @param _tokens Amount of Token for investor.
+     */
+    function addInvestInfoIco(address _addr,  uint256 _weis, uint256 _tokens) private {
+        if (icoTokenHolders[_addr] == 0) {
+            icoTokenHoldersAddresses.push(_addr);
+        }
+        icoTokenHolders[_addr] = icoTokenHolders[_addr].add(_tokens);
+        icoSoldTokens = icoSoldTokens.add(_tokens);
+        if (_weis > 0) {
+            if (icoInvestors[_addr] == 0) {
+                icoInvestorsAddresses.push(_addr);
+            }
+            icoInvestors[_addr] = icoInvestors[_addr].add(_weis);
+            icoTotalCollected = icoTotalCollected.add(_weis);
+        }
+    }
+
+    /**
+     * @dev Fallback function can be used to buy tokens.
+     */
+    function() public payable {
+        acceptInvestments(msg.sender, msg.value);
+    }
+
+    /**
+     * @dev function can be used to buy tokens by ETH investors.
+     */
+    function sellTokens() public payable {
+        acceptInvestments(msg.sender, msg.value);
+    }
+
+    /**
+     * @dev Function processing new investments.
+     * @param _addr Investor's address.
+     * @param _amount The amount of wei(1 ETH = 1 * 10 ** 18 wei) received.
+     */
+    function acceptInvestments(address _addr, uint256 _amount) private whenWhitelisted(msg.sender) whenNotPaused {
+        require(_addr != address(0) && _amount >= minInvestments);
+
+        bool preIco = isPreIcoStage();
+        bool ico = isIcoStage();
+
+        require(preIco || ico);
+        require((preIco && tokensRemainingPreIco() > 0) || (ico && tokensRemainingIco() > 0));
+
+        uint256 intermediateEthInvestment;
+        uint256 ethSurrender = 0;
+        uint256 currentEth = preIco ? preIcoInvestors[_addr] : icoInvestors[_addr];
+
+        if (currentEth.add(_amount) > maxInvestments) {
+            intermediateEthInvestment = maxInvestments.sub(currentEth);
+            ethSurrender = ethSurrender.add(_amount.sub(intermediateEthInvestment));
+        } else {
+            intermediateEthInvestment = _amount;
+        }
+
+        uint256 currentRate = preIco ? exchangeRatePreIco : exchangeRateIco;
+        uint256 intermediateTokenInvestment = intermediateEthInvestment.mul(currentRate);
+        uint256 tokensRemaining = preIco ? tokensRemainingPreIco() : tokensRemainingIco();
+        uint256 currentTokens = preIco ? preIcoTokenHolders[_addr] : icoTokenHolders[_addr];
+        uint256 weiToAccept;
+        uint256 tokensToSell;
+
+        if (currentTokens.add(intermediateTokenInvestment) > tokensRemaining) {
+            tokensToSell = tokensRemaining;
+            weiToAccept = tokensToSell.div(currentRate);
+            ethSurrender = ethSurrender.add(intermediateEthInvestment.sub(weiToAccept));
+        } else {
+            tokensToSell = intermediateTokenInvestment;
+            weiToAccept = intermediateEthInvestment;
+        }
+
+        if (preIco) {
+            addInvestInfoPreIco(_addr, weiToAccept, tokensToSell);
+        } else {
+            addInvestInfoIco(_addr, weiToAccept, tokensToSell);
+        }
+
+        token.transferFromIco(_addr, tokensToSell);
+
+        if (ethSurrender > 0) {
+            msg.sender.transfer(ethSurrender);
+        }
+    }
+
+    /**
+     * @dev Function can be used to buy tokens by third-party investors.
+     * @dev Only the owner or the backend can call this function.
+     * @param _addr Investor's address.
+     * @param _value Amount of Token for investor.
+     */
+    function thirdPartyInvestments(address _addr, uint256 _value) public  whenWhitelisted(_addr) whenNotPaused {
+        require(msg.sender == backendWallet || msg.sender == owner);
+        require(_addr != address(0) && _value > 0);
+
+        bool preIco = isPreIcoStage();
+        bool ico = isIcoStage();
+
+        require(preIco || ico);
+        require((preIco && tokensRemainingPreIco() > 0) || (ico && tokensRemainingIco() > 0));
+
+        uint256 currentRate = preIco ? exchangeRatePreIco : exchangeRateIco;
+        uint256 currentTokens = preIco ? preIcoTokenHolders[_addr] : icoTokenHolders[_addr];
+
+        require(maxInvestments.mul(currentRate) >= currentTokens.add(_value));
+        require(minInvestments.mul(currentRate) <= _value);
+
+        uint256 tokensRemaining = preIco ? tokensRemainingPreIco() : tokensRemainingIco();
+
+        require(tokensRemaining >= _value);
+
+        if (preIco) {
+            addInvestInfoPreIco(_addr, 0, _value);
+        } else {
+            addInvestInfoIco(_addr, 0, _value);
+        }
+
+        token.transferFromIco(_addr, _value);
+    }
+
+    /**
+     * @dev Send raised funds to the withdrawal wallet.
+     * @param _weiAmount The amount of raised funds to withdraw.
+     */
+    function forwardFunds(uint256 _weiAmount) public onlyOwner {
+        require(isIcoSuccess() || (isIcoFailed() && guardIntervalFinished()));
+        withdrawalWallet.transfer(_weiAmount);
+    }
+
+    /**
+     * @dev Function for refund eth if Ico failed and guard interval has not expired.
+     * @dev Any wallet can call the function.
+     * @dev Function returns ETH for sender if it is a member of Ico or(and) PreIco.
+     */
+    function refund() public {
+        require(isIcoFailed() && !guardIntervalFinished());
+
+        uint256 ethAmountPreIco = preIcoInvestors[msg.sender];
+        uint256 ethAmountIco = icoInvestors[msg.sender];
+        uint256 ethAmount = ethAmountIco.add(ethAmountPreIco);
+
+        uint256 tokensAmountPreIco = preIcoTokenHolders[msg.sender];
+        uint256 tokensAmountIco = icoTokenHolders[msg.sender];
+        uint256 tokensAmount = tokensAmountPreIco.add(tokensAmountIco);
+
+        require(ethAmount > 0 && tokensAmount > 0);
+
+        preIcoInvestors[msg.sender] = 0;
+        icoInvestors[msg.sender] = 0;
+        preIcoTokenHolders[msg.sender] = 0;
+        icoTokenHolders[msg.sender] = 0;
+
+        msg.sender.transfer(ethAmount);
+        token.refund(msg.sender, tokensAmount);
+    }
+
+    /**
+     * @dev Set new withdrawal wallet address.
+     * @param _addr new withdrawal Wallet address.
+     */
+    function setWithdrawalWallet(address _addr) public onlyOwner {
+        require(_addr != address(0));
+
+        withdrawalWallet = _addr;
+    }
+
+    /**
+        * @dev Set new backend wallet address.
+        * @param _addr new backend Wallet address.
+        */
+    function setBackendWallet(address _addr) public onlyOwner {
+        require(_addr != address(0));
+
+        backendWallet = _addr;
+    }
+
+    /**
+    * @dev Burn unsold tokens from the Ico balance.
+    * @dev Only applies when the Ico was ended.
+    */
+    function burnUnsoldTokens() onlyOwner public {
+        require(isIcoFinish());
+        token.burnFromIco();
+        burnt = true;
+    }
+
+    /**
+     * @dev Set new MinCap.
+     * @param _newMinCap new MinCap,
+     */
+    function setMinCap(uint256 _newMinCap) public onlyOwner isTestMode {
+        require(now < preIcoFinishTime);
+        minCap = _newMinCap;
+    }
+
+    /**
+     * @dev Set new PreIco HardCap.
+     * @param _newPreIcoHardCap new PreIco HardCap,
+     */
+    function setPreIcoHardCap(uint256 _newPreIcoHardCap) public onlyOwner isTestMode {
+        require(now < preIcoFinishTime);
+        require(_newPreIcoHardCap <= hardCapIco);
+        hardCapPreIco = _newPreIcoHardCap;
+    }
+
+    /**
+     * @dev Set new Ico HardCap.
+     * @param _newIcoHardCap new Ico HardCap,
+     */
+    function setIcoHardCap(uint256 _newIcoHardCap) public onlyOwner isTestMode {
+        require(now < preIcoFinishTime);
+        require(_newIcoHardCap > hardCapPreIco);
+        hardCapIco = _newIcoHardCap;
+    }
+
+    /**
+     * @dev Count the Ico investors total.
+     */
+    function getIcoTokenHoldersAddressesCount() public view returns(uint256) {
+        return icoTokenHoldersAddresses.length;
+    }
+
+    /**
+     * @dev Count the PreIco investors total.
+     */
+    function getPreIcoTokenHoldersAddressesCount() public view returns(uint256) {
+        return preIcoTokenHoldersAddresses.length;
+    }
+
+    /**
+     * @dev Count the Ico investors total (not including third-party investors).
+     */
+    function getIcoInvestorsAddressesCount() public view returns(uint256) {
+        return icoInvestorsAddresses.length;
+    }
+
+    /**
+     * @dev Count the PreIco investors total (not including third-party investors).
+     */
+    function getPreIcoInvestorsAddressesCount() public view returns(uint256) {
+        return preIcoInvestorsAddresses.length;
+    }
+
+    /**
+     * @dev Get backend wallet address.
+     */
+    function getBackendWallet() public view returns(address) {
+        return backendWallet;
+    }
+
+    /**
+     * @dev Get Withdrawal wallet address.
+     */
+    function getWithdrawalWallet() public view returns(address) {
+        return withdrawalWallet;
+    }
+}
+
+// File: contracts/CrowdsaleFactory.sol
+
 contract Factory {
+    Crowdsale public crowdsale;
 
-  address admin;
+    function createCrowdsale (
+        uint256 _startTimePreIco,
+        uint256 _endTimePreIco,
+        address _angelInvestorsWallet,
+        address _foundersWallet,
+        address _backendWallet,
+        address _withdrawalWallet,
+        uint256 _maxInvestments,
+        uint256 _minInvestments,
+        bool _testMode
+    ) public
+    {
+        crowdsale = new Crowdsale(
+            _startTimePreIco,
+            _endTimePreIco,
+            _angelInvestorsWallet,
+            _foundersWallet,
+            _backendWallet,
+            _withdrawalWallet,
+            _maxInvestments,
+            _minInvestments,
+            _testMode
+        );
 
-  //Maps the pyramid creator's address to his contract's address. One contract per address;
-  mapping (address => address) contractPurchaseRecord;
+        Whitelist whitelist = crowdsale.whitelist();
+        whitelist.transferOwnership(msg.sender);
 
-  //Check if a pyramid was created in this contract
-  mapping (address => bool) contractCheck;
+        Token token = crowdsale.token();
+        token.transferOwnership(msg.sender);
 
-  function Factory() public {
-    admin = msg.sender;      
-  }
-
-  function withdrawETH() external {
-    require(msg.sender == admin);
-    admin.transfer(this.balance);
-  }
-
-  function deployContract() external {
-    require(contractPurchaseRecord[msg.sender] == address(0));
-    EthPyramid pyramid = new EthPyramid(address(this));
-    contractPurchaseRecord[msg.sender] = address(pyramid);      
-  }
-
-  function checkPurchaseRecord(address _contract) external view returns(address) {
-    return contractPurchaseRecord[_contract];
-  }
-  
-  function checkIfContractCreatedHere(address _contract) external view returns(bool) {
-    return contractCheck[_contract];
-  }
-
-  //Money sent to this contract will be considered a donation.
-  function() external payable {
-    this.transfer(msg.value);
-  }
-
+        crowdsale.transferOwnership(msg.sender);
+    }
 }
