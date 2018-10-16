@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HeroNodeToken at 0xa93f0ead4d1daa429938182d04ea70bdc0441927
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HeroNodeToken at 0x491c9a23db85623eed455a8efdd6aba9b911c5df
 */
 pragma solidity ^0.4.18;
 
@@ -24,71 +24,6 @@ contract Ownable {
     owner = newOwner;
   }
 }
-
-
-contract Admin is Ownable {
-  mapping(address => bool) public adminlist;
-
-  event AdminAddressAdded(address addr);
-  event AdminAddressRemoved(address addr);
-
-  function isAdmin() public view returns(bool) {
-    if (owner == msg.sender) {
-      return true;
-    }
-    return adminlist[msg.sender];
-  }
-
-  function isAdminAddress(address addr) view public returns(bool) {
-    return adminlist[addr];
-  }
-
-  function addAddressToAdminlist(address addr) onlyOwner public returns(bool success) {
-    if (!adminlist[addr]) {
-      adminlist[addr] = true;
-      AdminAddressAdded(addr);
-      success = true;
-    }
-  }
-
-  function removeAddressFromAdminlist(address addr) onlyOwner public returns(bool success) {
-    if (adminlist[addr]) {
-      adminlist[addr] = false;
-      AdminAddressRemoved(addr);
-      success = true;
-    }
-  }
-
-}
-
-
-contract Pausable is Ownable, Admin {
-  event Pause();
-  event Unpause();
-
-  bool public paused = true;
-
-  modifier whenNotPaused() {
-    require(!paused || isAdmin());
-    _;
-  }
-
-  modifier whenPaused() {
-    require(paused || isAdmin());
-    _;
-  }
-
-  function pause() onlyOwner whenNotPaused public {
-    paused = true;
-    Pause();
-  }
-
-  function unpause() onlyOwner whenPaused public {
-    paused = false;
-    Unpause();
-  }
-}
-
 
 
 contract ERC20 {
@@ -186,9 +121,9 @@ contract StandardToken is ERC20, SafeMath {
 
 }
 
-contract HeroNodeToken is StandardToken, Pausable {
+contract HeroNodeToken is StandardToken {
   string public constant name = "HeroNodeToken";
-  string public constant symbol = "HNC";
+  string public constant symbol = "HER";
   uint256 public constant decimals = 18;
   string public version = "1.0";
 
@@ -203,15 +138,15 @@ contract HeroNodeToken is StandardToken, Pausable {
     return total;
   }
 
-  function transfer(address _to, uint _value) whenNotPaused public returns (bool) {
+  function transfer(address _to, uint _value) public returns (bool) {
     return super.transfer(_to,_value);
   }
 
-  function approve(address _spender, uint _value) whenNotPaused public returns (bool) {
+  function approve(address _spender, uint _value) public returns (bool) {
     return super.approve(_spender,_value);
   }
 
-  function airdropToAddresses(address[] addrs, uint256 amount) whenNotPaused public {
+  function airdropToAddresses(address[] addrs, uint256 amount) public {
     for (uint256 i = 0; i < addrs.length; i++) {
       transfer(addrs[i], amount);
     }
