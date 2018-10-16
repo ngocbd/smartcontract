@@ -1,16 +1,16 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QUIZ_GAME at 0x129e719c424a7a6fbdeb7ca3d65186892d54ea8c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QUIZ_GAME at 0xaCFC9577583DeD00Ae53AE79A0346cca4655c0bb
 */
 pragma solidity ^0.4.19;
 
 contract QUIZ_GAME
 {
     string public Question;
-	
-	bytes32 responseHash;
-	
-	address questionSender;
-	
+ 
+    address questionSender;
+  
+    bytes32 responseHash;
+ 
     function StartGame(string _question,string _response)
     public
     payable
