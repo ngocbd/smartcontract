@@ -1,13 +1,73 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Deployer at 0x98f7d9405e9b973e51cd4d85a5b2327a9ca55359
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Deployer at 0x082a331ccbc4e024ba133a66a5c9e46f8a60eca9
 */
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.18;
 
-//Slightly modified SafeMath library - includes a min function
+// File: contracts/ReceivingContractCallback.sol
+
+contract ReceivingContractCallback {
+
+  function tokenFallback(address _from, uint _value) public;
+
+}
+
+// File: contracts/ownership/Ownable.sol
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+// File: contracts/math/SafeMath.sol
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
     uint256 c = a * b;
-    assert(a == 0 || c / a == b);
+    assert(c / a == b);
     return c;
   }
 
@@ -28,465 +88,617 @@ library SafeMath {
     assert(c >= a);
     return c;
   }
-
-  function min(uint a, uint b) internal pure returns (uint256) {
-    return a < b ? a : b;
-  }
 }
 
-//ERC20 function interface
-interface ERC20_Interface {
-  function totalSupply() public constant returns (uint total_supply);
-  function balanceOf(address _owner) public constant returns (uint balance);
-  function transfer(address _to, uint _amount) public returns (bool success);
-  function transferFrom(address _from, address _to, uint _amount) public returns (bool success);
-  function approve(address _spender, uint _amount) public returns (bool success);
-  function allowance(address _owner, address _spender) public constant returns (uint amount);
+// File: contracts/token/ERC20Basic.sol
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-//Swap factory functions - descriptions can be found in Factory.sol
-interface Factory_Interface {
-  function createToken(uint _supply, address _party, bool _long, uint _start_date) public returns (address created, uint token_ratio);
-  function payToken(address _party, address _token_add) public;
-  function deployContract(uint _start_date) public payable returns (address created);
-   function getBase() public view returns(address _base1, address base2);
-  function getVariables() public view returns (address oracle_addr, uint swap_duration, uint swap_multiplier, address token_a_addr, address token_b_addr);
-}
+// File: contracts/token/BasicToken.sol
 
-
-//DRCT_Token functions - descriptions can be found in DRCT_Token.sol
-interface DRCT_Token_Interface {
-  function addressCount(address _swap) public constant returns (uint count);
-  function getHolderByIndex(uint _ind, address _swap) public constant returns (address holder);
-  function getBalanceByIndex(uint _ind, address _swap) public constant returns (uint bal);
-  function getIndexByAddress(address _owner, address _swap) public constant returns (uint index);
-  function createToken(uint _supply, address _owner, address _swap) public;
-  function pay(address _party, address _swap) public;
-  function partyCount(address _swap) public constant returns(uint count);
-}
-
-
-//Swap Oracle functions - descriptions can be found in Oracle.sol
-interface Oracle_Interface{
-  function RetrieveData(uint _date) public view returns (uint data);
-}
-
-
-//This contract is the specific DRCT base contract that holds the funds of the contract and redistributes them based upon the change in the underlying values
-contract TokenToTokenSwap {
-
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
 
-  /*Enums*/
-  //Describes various states of the Swap
-  enum SwapState {
-    created,
-    open,
-    started,
-    tokenized,
-    ready,
-    ended
-  }
+  mapping(address => uint256) balances;
 
-  /*Variables*/
-
-  //Address of the person who created this contract through the Factory
-  address creator;
-  //The Oracle address (check for list at www.github.com/DecentralizedDerivatives/Oracles)
-  address oracle_address;
-  Oracle_Interface oracle;
-
-  //Address of the Factory that created this contract
-  address public factory_address;
-  Factory_Interface factory;
-
-  //Addresses of parties going short and long the rate
-  address public long_party;
-  address public short_party;
-
-  //Enum state of the swap
-  SwapState public current_state;
-
-  //Start and end dates of the swaps - format is the same as block.timestamp
-  uint start_date;
-  uint end_date;
-
-  //This is the amount that the change will be calculated on.  10% change in rate on 100 Ether notional is a 10 Ether change
-  uint multiplier;
-
-  //This is the calculated share for the long and short side of the swap (200,000 is a fully capped move)
-  uint share_long;
-  uint share_short;
-
-  // pay_to_x refers to the amount of the base token (a or b) to pay to the long or short side based upon the share_long and share_short
-  uint pay_to_short_a;
-  uint pay_to_long_a;
-  uint pay_to_long_b;
-  uint pay_to_short_b;
-
-  //Address of created long and short DRCT tokens
-  address long_token_address;
-  address short_token_address;
-
-  //Number of DRCT Tokens distributed to both parties
-  uint num_DRCT_longtokens;
-  uint num_DRCT_shorttokens;
-
-  //Addresses of ERC20 tokens used to enter the swap
-  address token_a_address;
-  address token_b_address;
-
-  //Tokens A and B used for the notional
-  ERC20_Interface token_a;
-  ERC20_Interface token_b;
-
-  //The notional that the payment is calculated on from the change in the reference rate
-  uint public token_a_amount;
-  uint public token_b_amount;
-
-  uint public premium;
-
-  //Addresses of the two parties taking part in the swap
-  address token_a_party;
-  address token_b_party;
-
-  //Duration of the swap,pulled from the Factory contract
-  uint duration;
-  //Date by which the contract must be funded
-  uint enterDate;
-  DRCT_Token_Interface token;
-  address userContract;
-
-  /*Events*/
-
-  //Emitted when a Swap is created
-  event SwapCreation(address _token_a, address _token_b, uint _start_date, uint _end_date, address _creating_party);
-  //Emitted when the swap has been paid out
-  event PaidOut(address _long_token, address _short_token);
-
-  /*Modifiers*/
-
-  //Will proceed only if the contract is in the expected state
-  modifier onlyState(SwapState expected_state) {
-    require(expected_state == current_state);
-    _;
-  }
-
-  /*Functions*/
-
-  /*
-  * Constructor - Run by the factory at contract creation
-  *
-  * @param "_factory_address": Address of the factory that created this contract
-  * @param "_creator": Address of the person who created the contract
-  * @param "_userContract": Address of the _userContract that is authorized to interact with this contract
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
   */
-  function TokenToTokenSwap (address _factory_address, address _creator, address _userContract, uint _start_date) public {
-    current_state = SwapState.created;
-    creator =_creator;
-    factory_address = _factory_address;
-    userContract = _userContract;
-    start_date = _start_date;
-  }
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
 
-
-  //A getter function for retriving standardized variables from the factory contract
-  function showPrivateVars() public view returns (address _userContract, uint num_DRCT_long, uint numb_DRCT_short, uint swap_share_long, uint swap_share_short, address long_token_addr, address short_token_addr, address oracle_addr, address token_a_addr, address token_b_addr, uint swap_multiplier, uint swap_duration, uint swap_start_date, uint swap_end_date){
-    return (userContract, num_DRCT_longtokens, num_DRCT_shorttokens,share_long,share_short,long_token_address,short_token_address, oracle_address, token_a_address, token_b_address, multiplier, duration, start_date, end_date);
-  }
-
-  /*
-  * Allows the sender to create the terms for the swap
-  * @param "_amount_a": Amount of Token A that should be deposited for the notional
-  * @param "_amount_b": Amount of Token B that should be deposited for the notional
-  * @param "_sender_is_long": Denotes whether the sender is set as the short or long party
-  * @param "_senderAdd": States the owner of this side of the contract (does not have to be msg.sender)
-  */
-  function CreateSwap(
-    uint _amount_a,
-    uint _amount_b,
-    bool _sender_is_long,
-    address _senderAdd
-    ) payable public onlyState(SwapState.created) {
-
-    require(
-      msg.sender == creator || (msg.sender == userContract && _senderAdd == creator)
-    );
-    factory = Factory_Interface(factory_address);
-    setVars();
-    end_date = start_date.add(duration.mul(86400));
-    token_a_amount = _amount_a;
-    token_b_amount = _amount_b;
-
-    premium = this.balance;
-    token_a = ERC20_Interface(token_a_address);
-    token_a_party = _senderAdd;
-    if (_sender_is_long)
-      long_party = _senderAdd;
-    else
-      short_party = _senderAdd;
-    current_state = SwapState.open;
-  }
-
-  function setVars() internal{
-      (oracle_address,duration,multiplier,token_a_address,token_b_address) = factory.getVariables();
-  }
-
-  /*
-  * This function is for those entering the swap. The details of the swap are re-entered and checked
-  * to ensure the entering party is entering the correct swap. Note that the tokens you are entering with
-  * do not need to be entered as a variable, but you should ensure that the contract is funded.
-  *
-  * @param: all parameters have the same functions as those in the CreateSwap function
-  */
-  function EnterSwap(
-    uint _amount_a,
-    uint _amount_b,
-    bool _sender_is_long,
-    address _senderAdd
-    ) public onlyState(SwapState.open) {
-
-    //Require that all of the information of the swap was entered correctly by the entering party.  Prevents partyA from exiting and changing details
-    require(
-      token_a_amount == _amount_a &&
-      token_b_amount == _amount_b &&
-      token_a_party != _senderAdd
-    );
-
-    token_b = ERC20_Interface(token_b_address);
-    token_b_party = _senderAdd;
-
-    //Set the entering party as the short or long party
-    if (_sender_is_long) {
-      require(long_party == 0);
-      long_party = _senderAdd;
-    } else {
-      require(short_party == 0);
-      short_party = _senderAdd;
-    }
-
-    SwapCreation(token_a_address, token_b_address, start_date, end_date, token_b_party);
-    enterDate = now;
-    current_state = SwapState.started;
-  }
-
-  /*
-  * This function creates the DRCT tokens for the short and long parties, and ensures the short and long parties
-  * have funded the contract with the correct amount of the ERC20 tokens A and B
-  *
-  */
-  function createTokens() public onlyState(SwapState.started){
-
-    //Ensure the contract has been funded by tokens a and b within 1 day
-    require(
-      now < (enterDate + 86400) &&
-      token_a.balanceOf(address(this)) >= token_a_amount &&
-      token_b.balanceOf(address(this)) >= token_b_amount
-    );
-
-    uint tokenratio = 1;
-    (long_token_address,tokenratio) = factory.createToken(token_a_amount, long_party,true,start_date);
-    num_DRCT_longtokens = token_a_amount.div(tokenratio);
-    (short_token_address,tokenratio) = factory.createToken(token_b_amount, short_party,false,start_date);
-    num_DRCT_shorttokens = token_b_amount.div(tokenratio);
-    current_state = SwapState.tokenized;
-    if (premium > 0){
-      if (creator == long_party){
-      short_party.transfer(premium);
-      }
-      else {
-        long_party.transfer(premium);
-      }
-    }
-  }
-
-  /*
-  * This function calculates the payout of the swap. It can be called after the Swap has been tokenized.
-  * The value of the underlying cannot reach zero, but rather can only get within 0.001 * the precision
-  * of the Oracle.
-  */
-  function Calculate() internal {
-    require(now >= end_date + 86400);
-    //Comment out above for testing purposes
-    oracle = Oracle_Interface(oracle_address);
-    uint start_value = oracle.RetrieveData(start_date);
-    uint end_value = oracle.RetrieveData(end_date);
-
-    uint ratio;
-    if (start_value > 0 && end_value > 0)
-      ratio = (end_value).mul(100000).div(start_value);
-    else if (end_value > 0)
-      ratio = 10e10;
-    else if (start_value > 0)
-      ratio = 0;
-    else
-      ratio = 100000;
-    if (ratio == 100000) {
-      share_long = share_short = ratio;
-    } else if (ratio > 100000) {
-      share_long = ((ratio).sub(100000)).mul(multiplier).add(100000);
-      if (share_long >= 200000)
-        share_short = 0;
-      else
-        share_short = 200000-share_long;
-    } else {
-      share_short = SafeMath.sub(100000,ratio).mul(multiplier).add(100000);
-       if (share_short >= 200000)
-        share_long = 0;
-      else
-        share_long = 200000- share_short;
-    }
-
-    //Calculate the payouts to long and short parties based on the short and long shares
-    calculatePayout();
-
-    current_state = SwapState.ready;
-  }
-
-  /*
-  * Calculates the amount paid to the short and long parties per token
-  */
-  function calculatePayout() internal {
-    uint ratio;
-    token_a_amount = token_a_amount.mul(995).div(1000);
-    token_b_amount = token_b_amount.mul(995).div(1000);
-    //If ratio is flat just swap tokens, otherwise pay the winner the entire other token and only pay the other side a portion of the opposite token
-    if (share_long == 100000) {
-      pay_to_short_a = (token_a_amount).div(num_DRCT_longtokens);
-      pay_to_long_b = (token_b_amount).div(num_DRCT_shorttokens);
-      pay_to_short_b = 0;
-      pay_to_long_a = 0;
-    } else if (share_long > 100000) {
-      ratio = SafeMath.min(100000, (share_long).sub(100000));
-      pay_to_long_b = (token_b_amount).div(num_DRCT_shorttokens);
-      pay_to_short_a = (SafeMath.sub(100000,ratio)).mul(token_a_amount).div(num_DRCT_longtokens).div(100000);
-      pay_to_long_a = ratio.mul(token_a_amount).div(num_DRCT_longtokens).div(100000);
-      pay_to_short_b = 0;
-    } else {
-      ratio = SafeMath.min(100000, (share_short).sub(100000));
-      pay_to_short_a = (token_a_amount).div(num_DRCT_longtokens);
-      pay_to_long_b = (SafeMath.sub(100000,ratio)).mul(token_b_amount).div(num_DRCT_shorttokens).div(100000);
-      pay_to_short_b = ratio.mul(token_b_amount).div(num_DRCT_shorttokens).div(100000);
-      pay_to_long_a = 0;
-    }
-  }
-
-  /*
-  * This function can be called after the swap is tokenized or after the Calculate function is called.
-  * If the Calculate function has not yet been called, this function will call it.
-  * The function then pays every token holder of both the long and short DRCT tokens
-  */
-  function forcePay(uint _begin, uint _end) public returns (bool) {
-    //Calls the Calculate function first to calculate short and long shares
-    if(current_state == SwapState.tokenized /*&& now > end_date + 86400*/){
-      Calculate();
-    }
-
-    //The state at this point should always be SwapState.ready
-    require(current_state == SwapState.ready);
-
-    //Loop through the owners of long and short DRCT tokens and pay them
-
-    token = DRCT_Token_Interface(long_token_address);
-    uint count = token.addressCount(address(this));
-    uint loop_count = count < _end ? count : _end;
-    //Indexing begins at 1 for DRCT_Token balances
-    for(uint i = loop_count-1; i >= _begin ; i--) {
-      address long_owner = token.getHolderByIndex(i, address(this));
-      uint to_pay_long = token.getBalanceByIndex(i, address(this));
-      paySwap(long_owner, to_pay_long, true);
-    }
-
-    token = DRCT_Token_Interface(short_token_address);
-    count = token.addressCount(address(this));
-    loop_count = count < _end ? count : _end;
-    for(uint j = loop_count-1; j >= _begin ; j--) {
-      address short_owner = token.getHolderByIndex(j, address(this));
-      uint to_pay_short = token.getBalanceByIndex(j, address(this));
-      paySwap(short_owner, to_pay_short, false);
-    }
-
-    if (loop_count == count){
-        token_a.transfer(factory_address, token_a.balanceOf(address(this)));
-        token_b.transfer(factory_address, token_b.balanceOf(address(this)));
-        PaidOut(long_token_address, short_token_address);
-        current_state = SwapState.ended;
-      }
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
     return true;
   }
 
-  /*
-  * This function pays the receiver an amount determined by the Calculate function
-  *
-  * @param "_receiver": The recipient of the payout
-  * @param "_amount": The amount of token the recipient holds
-  * @param "_is_long": Whether or not the reciever holds a long or short token
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
   */
-  function paySwap(address _receiver, uint _amount, bool _is_long) internal {
-    if (_is_long) {
-      if (pay_to_long_a > 0)
-        token_a.transfer(_receiver, _amount.mul(pay_to_long_a));
-      if (pay_to_long_b > 0){
-        token_b.transfer(_receiver, _amount.mul(pay_to_long_b));
-      }
-        factory.payToken(_receiver,long_token_address);
-    } else {
-
-      if (pay_to_short_a > 0)
-        token_a.transfer(_receiver, _amount.mul(pay_to_short_a));
-      if (pay_to_short_b > 0){
-        token_b.transfer(_receiver, _amount.mul(pay_to_short_b));
-      }
-       factory.payToken(_receiver,short_token_address);
-    }
+  function balanceOf(address _owner) public view returns (uint256 balance) {
+    return balances[_owner];
   }
 
-
-  /*
-  * This function allows both parties to exit. If only the creator has entered the swap, then the swap can be cancelled and the details modified
-  * Once two parties enter the swap, the contract is null after cancelled. Once tokenized however, the contract cannot be ended.
-  */
-  function Exit() public {
-   if (current_state == SwapState.open && msg.sender == token_a_party) {
-      token_a.transfer(token_a_party, token_a_amount);
-      if (premium>0){
-        msg.sender.transfer(premium);
-      }
-      delete token_a_amount;
-      delete token_b_amount;
-      delete premium;
-      current_state = SwapState.created;
-    } else if (current_state == SwapState.started && (msg.sender == token_a_party || msg.sender == token_b_party)) {
-      if (msg.sender == token_a_party || msg.sender == token_b_party) {
-        token_b.transfer(token_b_party, token_b.balanceOf(address(this)));
-        token_a.transfer(token_a_party, token_a.balanceOf(address(this)));
-        current_state = SwapState.ended;
-        if (premium > 0) { creator.transfer(premium);}
-      }
-    }
-  }
 }
 
+// File: contracts/token/ERC20.sol
 
-//Swap Deployer Contract-- purpose is to save gas for deployment of Factory contract
-contract Deployer {
-  address owner;
-  address factory;
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
-  function Deployer(address _factory) public {
-    factory = _factory;
-    owner = msg.sender;
+// File: contracts/token/StandardToken.sol
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) internal allowed;
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
   }
 
-  function newContract(address _party, address user_contract, uint _start_date) public returns (address created) {
-    require(msg.sender == factory);
-    address new_contract = new TokenToTokenSwap(factory, _party, user_contract, _start_date);
-    return new_contract;
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
   }
 
-   function setVars(address _factory, address _owner) public {
-    require (msg.sender == owner);
-    factory = _factory;
-    owner = _owner;
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) public view returns (uint256) {
+    return allowed[_owner][_spender];
   }
+
+  /**
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   */
+  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+}
+
+// File: contracts/LightcashCryptoToken.sol
+
+contract LightcashCryptoToken is StandardToken, Ownable {
+
+  event Mint(address indexed to, uint256 amount);
+
+  event MintFinished();
+
+  string public constant name = 'Lightcash crypto';
+
+  string public constant symbol = 'LCCT';
+
+  uint32 public constant decimals = 18;
+
+  bool public mintingFinished = false;
+
+  address public saleAgent;
+
+  mapping(address => bool) public authorized;
+
+  mapping(address => bool)  public registeredCallbacks;
+
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    return processCallback(super.transfer(_to, _value), msg.sender, _to, _value);
+  }
+
+  function transferFrom(address from, address to, uint256 value) public returns (bool) {
+    return processCallback(super.transferFrom(from, to, value), from, to, value);
+  }
+
+  function setSaleAgent(address newSaleAgent) public {
+    require(saleAgent == msg.sender || owner == msg.sender);
+    saleAgent = newSaleAgent;
+  }
+
+  function mint(address _to, uint256 _amount) public returns (bool) {
+    require(!mintingFinished);
+    require(msg.sender == saleAgent);
+    totalSupply = totalSupply.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    Mint(address(0), _amount);
+    Transfer(address(0), _to, _amount);
+    return true;
+  }
+
+  function finishMinting() public returns (bool) {
+    require(!mintingFinished);
+    require(msg.sender == owner || msg.sender == saleAgent);
+    mintingFinished = true;
+    MintFinished();
+    return true;
+  }
+
+  function registerCallback(address callback) public onlyOwner {
+    registeredCallbacks[callback] = true;
+  }
+
+  function deregisterCallback(address callback) public onlyOwner {
+    registeredCallbacks[callback] = false;
+  }
+
+  function processCallback(bool result, address from, address to, uint value) internal returns(bool) {
+    if (result && registeredCallbacks[to]) {
+      ReceivingContractCallback targetCallback = ReceivingContractCallback(to);
+      targetCallback.tokenFallback(from, value);
+    }
+    return result;
+  }
+
+}
+
+// File: contracts/CommonTokenEvent.sol
+
+contract CommonTokenEvent is Ownable {
+
+  using SafeMath for uint;
+
+  uint public constant PERCENT_RATE = 100;
+
+  uint public price;
+
+  uint public start;
+
+  uint public period;
+
+  uint public minPurchaseLimit;
+
+  uint public minted;
+
+  uint public hardcap;
+
+  uint public invested;
+
+  uint public referrerPercent;
+
+  uint public maxReferrerTokens;
+
+  address public directMintAgent;
+
+  address public wallet;
+
+  LightcashCryptoToken public token;
+
+  modifier canMint() {
+    require(now >= start && now < lastSaleDate() && msg.value >= minPurchaseLimit && minted < hardcap);
+    _;
+  }
+
+  modifier onlyDirectMintAgentOrOwner() {
+    require(directMintAgent == msg.sender || owner == msg.sender);
+    _;
+  }
+
+  function sendReferrerTokens(uint tokens) internal {
+    if (msg.data.length == 20) {
+      address referrer = bytesToAddres(bytes(msg.data));
+      require(referrer != address(token) && referrer != msg.sender);
+      uint referrerTokens = tokens.mul(referrerPercent).div(PERCENT_RATE);
+      if(referrerTokens > maxReferrerTokens) {
+        referrerTokens = maxReferrerTokens;
+      }
+      mintAndSendTokens(referrer, referrerTokens);
+    }
+  }
+
+  function bytesToAddres(bytes source) internal pure returns(address) {
+    uint result;
+    uint mul = 1;
+    for (uint i = 20; i > 0; i--) {
+      result += uint8(source[i-1])*mul;
+      mul = mul*256;
+    }
+    return address(result);
+  }
+
+  function setMaxReferrerTokens(uint newMaxReferrerTokens) public onlyOwner {
+    maxReferrerTokens = newMaxReferrerTokens;
+  }
+
+  function setHardcap(uint newHardcap) public onlyOwner {
+    hardcap = newHardcap;
+  }
+
+  function setToken(address newToken) public onlyOwner {
+    token = LightcashCryptoToken(newToken);
+  }
+
+  function setReferrerPercent(uint newReferrerPercent) public onlyOwner {
+    referrerPercent = newReferrerPercent;
+  }
+
+  function setStart(uint newStart) public onlyOwner {
+    start = newStart;
+  }
+
+  function setPrice(uint newPrice) public onlyOwner {
+    price = newPrice;
+  }
+
+  function lastSaleDate() public view returns(uint) {
+    return start + period * 1 days;
+  }
+
+  function setMinPurchaseLimit(uint newMinPurchaseLimit) public onlyOwner {
+    minPurchaseLimit = newMinPurchaseLimit;
+  }
+
+  function setWallet(address newWallet) public onlyOwner {
+    wallet = newWallet;
+  }
+
+  function setDirectMintAgent(address newDirectMintAgent) public onlyOwner {
+    directMintAgent = newDirectMintAgent;
+  }
+
+  function directMint(address to, uint investedWei) public onlyDirectMintAgentOrOwner {
+    calculateAndTransferTokens(to, investedWei);
+  }
+
+  function directMintTokens(address to, uint count) public onlyDirectMintAgentOrOwner {
+    mintAndSendTokens(to, count);
+  }
+
+  function mintAndSendTokens(address to, uint amount) internal {
+    token.mint(to, amount);
+    minted = minted.add(amount);
+  }
+
+  function calculateAndTransferTokens(address to, uint investedInWei) internal returns(uint) {
+    uint tokens = calculateTokens(investedInWei);
+    mintAndSendTokens(to, tokens);
+    invested = invested.add(investedInWei);
+    return tokens;
+  }
+
+  function calculateAndTransferTokensWithReferrer(address to, uint investedInWei) internal {
+    uint tokens = calculateAndTransferTokens(to, investedInWei);
+    sendReferrerTokens(tokens);
+  }
+
+  function calculateTokens(uint investedInWei) public view returns(uint);
+
+  function createTokens() public payable;
+
+  function() external payable {
+    createTokens();
+  }
+
+  function retrieveTokens(address to, address anotherToken) public onlyOwner {
+    ERC20 alienToken = ERC20(anotherToken);
+    alienToken.transfer(to, alienToken.balanceOf(this));
+  }
+
+}
+
+// File: contracts/PreTGE.sol
+
+contract PreTGE is CommonTokenEvent {
+
+  uint public softcap;
+
+  bool public refundOn;
+
+  bool public softcapAchieved;
+
+  address public nextSaleAgent;
+
+  mapping (address => uint) public balances;
+
+  event RefundsEnabled();
+
+  event SoftcapReached();
+
+  event Refunded(address indexed beneficiary, uint256 weiAmount);
+
+  function setPeriod(uint newPeriod) public onlyOwner {
+    period = newPeriod;
+  }
+
+  function calculateTokens(uint investedInWei) public view returns(uint) {
+    return investedInWei.mul(price).div(1 ether);
+  }
+
+  function setNextSaleAgent(address newNextSaleAgent) public onlyOwner {
+    nextSaleAgent = newNextSaleAgent;
+  }
+
+  function setSoftcap(uint newSoftcap) public onlyOwner {
+    softcap = newSoftcap;
+  }
+
+  function refund() public {
+    require(now > start && refundOn && balances[msg.sender] > 0);
+    uint value = balances[msg.sender];
+    balances[msg.sender] = 0;
+    msg.sender.transfer(value);
+    Refunded(msg.sender, value);
+  }
+
+  function widthraw() public {
+    require(softcapAchieved);
+    wallet.transfer(this.balance);
+  }
+
+  function createTokens() public payable canMint {
+    balances[msg.sender] = balances[msg.sender].add(msg.value);
+    super.calculateAndTransferTokensWithReferrer(msg.sender, msg.value);
+    if (!softcapAchieved && minted >= softcap) {
+      softcapAchieved = true;
+      SoftcapReached();
+    }
+  }
+
+  function finish() public onlyOwner {
+    if (!softcapAchieved) {
+      refundOn = true;
+      RefundsEnabled();
+    } else {
+      widthraw();
+      token.setSaleAgent(nextSaleAgent);
+    }
+  }
+
+}
+
+// File: contracts/StagedTokenEvent.sol
+
+contract StagedTokenEvent is CommonTokenEvent {
+
+  using SafeMath for uint;
+
+  struct Stage {
+    uint period;
+    uint discount;
+  }
+
+  uint public constant STAGES_PERCENT_RATE = 100;
+
+  Stage[] public stages;
+
+  function stagesCount() public constant returns(uint) {
+    return stages.length;
+  }
+
+  function addStage(uint stagePeriod, uint discount) public onlyOwner {
+    require(stagePeriod > 0);
+    stages.push(Stage(stagePeriod, discount));
+    period = period.add(stagePeriod);
+  }
+
+  function removeStage(uint8 number) public onlyOwner {
+    require(number >= 0 && number < stages.length);
+
+    Stage storage stage = stages[number];
+    period = period.sub(stage.period);
+
+    delete stages[number];
+
+    for (uint i = number; i < stages.length - 1; i++) {
+      stages[i] = stages[i+1];
+    }
+
+    stages.length--;
+  }
+
+  function changeStage(uint8 number, uint stagePeriod, uint discount) public onlyOwner {
+    require(number >= 0 && number < stages.length);
+
+    Stage storage stage = stages[number];
+
+    period = period.sub(stage.period);
+
+    stage.period = stagePeriod;
+    stage.discount = discount;
+
+    period = period.add(stagePeriod);
+  }
+
+  function insertStage(uint8 numberAfter, uint stagePeriod, uint discount) public onlyOwner {
+    require(numberAfter < stages.length);
+
+
+    period = period.add(stagePeriod);
+
+    stages.length++;
+
+    for (uint i = stages.length - 2; i > numberAfter; i--) {
+      stages[i + 1] = stages[i];
+    }
+
+    stages[numberAfter + 1] = Stage(period, discount);
+  }
+
+  function clearStages() public onlyOwner {
+    for (uint i = 0; i < stages.length; i++) {
+      delete stages[i];
+    }
+    stages.length -= stages.length;
+    period = 0;
+  }
+
+  function getDiscount() public constant returns(uint) {
+    uint prevTimeLimit = start;
+    for (uint i = 0; i < stages.length; i++) {
+      Stage storage stage = stages[i];
+      prevTimeLimit += stage.period * 1 days;
+      if (now < prevTimeLimit)
+        return stage.discount;
+    }
+    revert();
+  }
+
+}
+
+// File: contracts/TGE.sol
+
+contract TGE is StagedTokenEvent {
+
+  address public extraTokensWallet;
+
+  uint public extraTokensPercent;
+
+  bool public finished = false;
+
+  function setExtraTokensWallet(address newExtraTokensWallet) public onlyOwner {
+    extraTokensWallet = newExtraTokensWallet;
+  }
+
+  function setExtraTokensPercent(uint newExtraTokensPercent) public onlyOwner {
+    extraTokensPercent = newExtraTokensPercent;
+  }
+
+  function calculateTokens(uint investedInWei) public view returns(uint) {
+    return investedInWei.mul(price).mul(STAGES_PERCENT_RATE).div(STAGES_PERCENT_RATE.sub(getDiscount())).div(1 ether);
+  }
+
+  function finish() public onlyOwner {
+    require(!finished);
+    finished = true;
+    uint256 totalSupply = token.totalSupply();
+    uint allTokens = totalSupply.mul(PERCENT_RATE).div(PERCENT_RATE.sub(extraTokensPercent));
+    uint extraTokens = allTokens.mul(extraTokensPercent).div(PERCENT_RATE);
+    mintAndSendTokens(extraTokensWallet, extraTokens);
+  }
+
+  function createTokens() public payable canMint {
+    require(!finished);
+    wallet.transfer(msg.value);
+    calculateAndTransferTokensWithReferrer(msg.sender, msg.value);
+  }
+
+}
+
+// File: contracts/Deployer.sol
+
+contract Deployer is Ownable {
+
+  LightcashCryptoToken public token;
+
+  PreTGE public preTGE;
+
+  TGE public tge;
+
+  function deploy() public onlyOwner {
+    token = new LightcashCryptoToken();
+
+    preTGE = new PreTGE();
+    preTGE.setPrice(7143000000000000000000); // 1 ETH = 7143 LCCT
+    preTGE.setMinPurchaseLimit(100000000000000000); // 0.1 ETH
+    preTGE.setSoftcap(7000000000000000000000000); // 7 000 000 LCCT
+    preTGE.setHardcap(52500000000000000000000000); // 52 000 000 LCCT
+    preTGE.setStart(1519995600); // Fri Mar 02 2018 16:00:00 GMT+0300
+    preTGE.setPeriod(11);
+    preTGE.setWallet(0xDFDCAc0c9Eb45C63Bcff91220A48684882F1DAd0);
+    preTGE.setMaxReferrerTokens(10000000000000000000000); // 10 000 LCCT
+    preTGE.setReferrerPercent(10);
+
+    tge = new TGE();
+    tge.setPrice(5000000000000000000000); // 5 000 LCCT
+    tge.setMinPurchaseLimit(10000000000000000); // 0.01 ETH
+    tge.setHardcap(126000000000000000000000000); // 126 000 000 LCCT
+    tge.setStart(1520859600); // Mar 12 2018 16:00:00 GMT+0300
+    tge.setWallet(0x3aC45b49A4D3CB35022fd8122Fd865cd1B47932f);
+    tge.setExtraTokensWallet(0xF0e830148F3d1C4656770DAa282Fda6FAAA0Fe0B);
+    tge.setExtraTokensPercent(15);
+    tge.addStage(7, 20);
+    tge.addStage(7, 15);
+    tge.addStage(7, 10);
+    tge.addStage(1000, 5);
+    tge.setMaxReferrerTokens(10000000000000000000000); // 10 000 LCCT
+    tge.setReferrerPercent(10);
+
+    preTGE.setToken(token);
+    tge.setToken(token);
+    preTGE.setNextSaleAgent(tge);
+    token.setSaleAgent(preTGE);
+
+    address newOnwer = 0xF51E0a3a17990D41C5f1Ff1d0D772b26E4D6B6d0;
+    token.transferOwnership(newOnwer);
+    preTGE.transferOwnership(newOnwer);
+    tge.transferOwnership(newOnwer);
+  }
+
 }
