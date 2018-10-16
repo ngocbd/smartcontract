@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ItemToken at 0x92cB5F1FbabbcbDd891B9Cbd8E9a056c8c1eEbEF
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ItemToken at 0xdae049562763d6a4236af188a05f4f29603b41cc
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.19;
 
 library SafeMath {
 
@@ -194,8 +194,8 @@ contract ItemToken {
   }
 
   /*
-     Buy a country directly from the contract for the calculated price
-     which ensures that the owner gets a profit.  All countries that
+     Buy a city directly from the contract for the calculated price
+     which ensures that the owner gets a profit.  All cities that
      have been listed can be bought by this method. User funds are sent
      directly to the previous owner and are never stored in the contract.
   */
@@ -236,11 +236,11 @@ contract ItemToken {
   }
 
   function name() public pure returns (string _name) {
-    return "CryptoCountries.io Countries";
+    return "CryptoMayor.io City";
   }
 
   function symbol() public pure returns (string _symbol) {
-    return "CCC";
+    return "CMC";
   }
 
   function totalSupply() public view returns (uint256 _totalSupply) {
@@ -301,7 +301,7 @@ contract ItemToken {
     }
   }
 
-  /* Transferring a country to another owner will entitle the new owner the profits from `buy` */
+  /* Transferring a city to another owner will entitle the new owner the profits from `buy` */
   function transfer(address _to, uint256 _itemId) onlyERC721() public {
     require(msg.sender == ownerOf(_itemId));
     _transfer(msg.sender, _to, _itemId);
