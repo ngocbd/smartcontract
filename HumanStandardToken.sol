@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0x607122d68925c9d5deddde4b284fdef81ad27af6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0xD6Bc8D98fcC3A09eB56D149eeEc72CFC639040BC
 */
 contract Token {
 
@@ -128,12 +128,16 @@ contract HumanStandardToken is StandardToken {
     string public version = 'H0.1';       //human 0.1 standard. Just an arbitrary versioning scheme.
 
     function HumanStandardToken(
+        uint256 _initialAmount,
+        string _tokenName,
+        uint8 _decimalUnits,
+        string _tokenSymbol
         ) {
-        balances[msg.sender] = 100000000000;               // Give the creator all initial tokens
-        totalSupply = 100000000000;                        // Update total supply
-        name = "EXRP Network Original";                                   // Set the name for display purposes
-        decimals = 0;                            // Amount of decimals for display purposes
-        symbol = "EXRN";                               // Set the symbol for display purposes
+        balances[msg.sender] = _initialAmount;               // Give the creator all initial tokens
+        totalSupply = _initialAmount;                        // Update total supply
+        name = _tokenName;                                   // Set the name for display purposes
+        decimals = _decimalUnits;                            // Amount of decimals for display purposes
+        symbol = _tokenSymbol;                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
