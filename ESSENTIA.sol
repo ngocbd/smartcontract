@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ESSENTIA at 0x3e9B722A24d05f330fb1Ef8582937cBaBEFd7bA1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ESSENTIA at 0x1fc3db544c4d4dd09f7a0524f3c64c9d0ac2abac
 */
 pragma solidity ^0.4.24;
 
@@ -83,7 +83,7 @@ contract Ownable {
 //                                                          //
 //                 ESSENTIA erc20 & Genesis                 //
 //                   https://essentia.one                   //
-//                                                          //
+//.                                                        .//
 //////////////////////////////////////////////////////////////
 
 
@@ -100,11 +100,11 @@ contract ESSENTIA_ERC20 is Ownable {
 
 
 
-    /* Public variables for the ERC20 token */
+    // Public variables for the ESSENTIA ERC20 ESS Token Contract and Genesis
     string public constant standard = "ESSENTIA erc20 and Genesis";
-    uint8 public constant decimals = 18; // hardcoded to be a constant
+    uint256 public constant decimals = 18;   // hardcoded to be a constant
     string public name = "ESSENTIA";
-    string public symbol = "ESS";
+    string public symbol = "BOB";
     uint256 public totalSupply;
 
     event Transfer(address indexed from, address indexed to, uint256 value);
@@ -191,6 +191,11 @@ interface tokenRecipient {
 }
 
 
+//
+// This creates and adds two genesis pools of ESS tokens to the balance of the A and B ETH addresses.
+// The A/B ESS Genesis pools are 35/65 of the A+B total ESS Token supply. Integer rounded.
+//
+
 
 contract ESSENTIA is ESSENTIA_ERC20 {
 
@@ -203,8 +208,8 @@ contract ESSENTIA is ESSENTIA_ERC20 {
 
         ) public {
 
-        A = 0x564a1D21886ADF1F46FF9D867CE8827C5Ec1B388;
-        B = 0x58b087a9FdF12fEd53E8AC7643727Bb5001Fd183;
+        A = 0x43436beFDbB139f0E78DDd1bCF4f4cB75e215346;
+        B = 0xB33532656433f4Eca3782F6B20298d1424d1F2CF;
 
 
         balances[A]=balances[A].add(614359681*(uint256(10)**decimals));
