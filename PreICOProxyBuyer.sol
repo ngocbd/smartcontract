@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreICOProxyBuyer at 0x2d85707324dd03251ef928d5d8325f28c686ecc9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreICOProxyBuyer at 0x3918249900ecad5ee86f84c2c498303fc52614a6
 */
 /**
  * Math operations with safety checks
@@ -1088,9 +1088,6 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
     if(balances[investor] == 0) throw;
     uint amount = balances[investor];
     delete balances[investor];
-    // This was originally "send()" but was replaced with call.value()() to
-    // forward gas, if there happens to be a complicated multisig implementation
-    // which would need more gas than the gas stipend:
     if(!(investor.call.value(amount)())) throw;
     Refunded(investor, amount);
   }
