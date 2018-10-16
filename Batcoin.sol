@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Batcoin at 0x335079fdb35430ad37ac6c3dbaa7f5d9b18809b6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Batcoin at 0xbc053e4bc868f40beea7d571c808f01ade8dae12
 */
 contract Batcoin {
     /* Public variables of the token */
@@ -17,9 +17,9 @@ contract Batcoin {
   
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function Batcoin() {
-        initialSupply = 100000000;
+        initialSupply = 1000000;
         name ="batcoin";
-        decimals = 2;
+        decimals = 4;
         symbol = "BATC";
         
         balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
