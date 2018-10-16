@@ -1,36 +1,22 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PiggyBank at 0xF7A1a5eeD7DaB1a7bCdA127B43DfAa1FF1800888
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PiggyBank at 0x30e0d995a998bbf967cd80c921db7b6afe953900
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.18;
 
-contract PiggyBank
-{
-    address creator;
-    uint deposits;
+contract PiggyBank {
+    event Gift(address indexed donor, uint indexed amount);
+    event Lambo(uint indexed amount);
 
-    /* Constructor */
-    function PiggyBank() public
-    {
-        creator = msg.sender;
-        deposits = 0;
+    uint constant lamboTime = 2058739200; // my niece turns 18
+    address niece = 0x1FC7b94f00C54C89336FEB4BaF617010a6867B40; //address of my niece wallet
+
+    function() payable {
+        Gift(msg.sender, msg.value);
     }
-
-    function deposit() payable returns (uint)
-    {
-        if( msg.value > 0 )
-            deposits = deposits + 1;
-
-        return getNumberOfDeposits();
-    }
-
-    function getNumberOfDeposits() constant returns (uint)
-    {
-        return deposits;
-    }
-
-    function kill()
-    {
-        if( msg.sender == creator )
-            selfdestruct(creator);
+    
+    function buyLambo() {
+        require (block.timestamp > lamboTime && msg.sender == niece);
+        Lambo(this.balance);
+        msg.sender.transfer(this.balance);
     }
 }
