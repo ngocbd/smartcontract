@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tbaol at 0x829b7fa656d18fd541b7e87291227dc03827646d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tbaol at 0xd53908999f20e52fc888236e75da1406a593f1b7
 */
 pragma solidity ^0.4.21;
 
@@ -275,10 +275,10 @@ contract StandardToken is ERC20, BasicToken {
 
 contract Tbaol is StandardToken, Ownable {
     // Constants
-    string  public constant name = "Tbaol";
-    string  public constant symbol = "TBAOL";
-    uint8   public constant decimals = 5;
-    uint256 public constant INITIAL_SUPPLY      =  21000000000 * (10 ** uint256(decimals));
+    string  public constant name = "tbo";
+    string  public constant symbol = "TBO";
+    uint8   public constant decimals = 8;
+    uint256 public constant INITIAL_SUPPLY      =  210000000 * (10 ** uint256(decimals));
    
     
     mapping(address => bool) touched;
