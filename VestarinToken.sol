@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VestarinToken at 0x1908ec0d3e5ae7917a0999375c725b08f705dd7e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VestarinToken at 0xad04792a111ecd71c48087059d09d83553e5f878
 */
 pragma solidity ^0.4.18;
 
@@ -219,13 +219,6 @@ contract Ownable {
 
 }
 
-/**
- * @title Mintable token
- * @dev Simple ERC20 Token example, with mintable token creation
- * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
- * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
- */
-
 contract MintableToken is StandardToken, Ownable {
     
   event Mint(address indexed to, uint256 amount);
@@ -235,6 +228,11 @@ contract MintableToken is StandardToken, Ownable {
   bool public mintingFinished = false;
 
   address public saleAgent;
+
+  modifier notLocked() {
+    require(msg.sender == owner || msg.sender == saleAgent || mintingFinished);
+    _;
+  }
 
   function setSaleAgent(address newSaleAgnet) public {
     require(msg.sender == saleAgent || msg.sender == owner);
@@ -260,6 +258,13 @@ contract MintableToken is StandardToken, Ownable {
     return true;
   }
 
+  function transfer(address _to, uint256 _value) public notLocked returns (bool) {
+    return super.transfer(_to, _value);
+  }
+
+  function transferFrom(address from, address to, uint256 value) public notLocked returns (bool) {
+    return super.transferFrom(from, to, value);
+  }
   
 }
 
@@ -528,7 +533,6 @@ contract CommonSale is StagedCrowdsale {
     ERC20 alienToken = ERC20(anotherToken);
     alienToken.transfer(to, alienToken.balanceOf(this));
   }
-
 
 }
 
