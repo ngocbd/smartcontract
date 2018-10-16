@@ -1,100 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SetToken at 0x58222dd0a3d6de911b067b52c45f974d03163a4a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SetToken at 0x48ccc6937c62609f20376901535e00980e3bbd0f
 */
-// File: zeppelin-solidity/contracts/math/SafeMath.sol
+pragma solidity 0.4.23;
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
+//////////////////////////////
+///// ERC20Basic
+//////////////////////////////
 
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-/**
- * @title SafeMathUint256
- * @dev Uint256 math operations with safety checks that throw on error
- */
-library SafeMathUint256 {
-    using SafeMath for uint256;
-
-    function min(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a <= b) {
-            return a;
-        } else {
-            return b;
-        }
-    }
-
-    function max(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a >= b) {
-            return a;
-        } else {
-            return b;
-        }
-    }
-
-    function getUint256Min() internal pure returns (uint256) {
-        return 0;
-    }
-
-    function getUint256Max() internal pure returns (uint256) {
-        return 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
-    }
-
-    function isMultipleOf(uint256 a, uint256 b) internal pure returns (bool) {
-        return a % b == 0;
-    }
-
-    // Float [fixed point] Operations
-    function fxpMul(uint256 a, uint256 b, uint256 base) internal pure returns (uint256) {
-        return a.mul(b).div(base);
-    }
-
-    function fxpDiv(uint256 a, uint256 b, uint256 base) internal pure returns (uint256) {
-        return a.mul(base).div(b);
-    }
-}
-
-// File: zeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
 
 /**
  * @title ERC20Basic
@@ -108,7 +20,11 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-// File: zeppelin-solidity/contracts/token/ERC20/ERC20.sol
+
+
+//////////////////////////////
+///// ERC20 Interface
+//////////////////////////////
 
 /**
  * @title ERC20 interface
@@ -121,7 +37,9 @@ contract ERC20 is ERC20Basic {
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-// File: zeppelin-solidity/contracts/token/ERC20/BasicToken.sol
+//////////////////////////////
+///// ERC20 Basic
+//////////////////////////////
 
 /**
  * @title Basic token
@@ -168,7 +86,28 @@ contract BasicToken is ERC20Basic {
 
 }
 
-// File: zeppelin-solidity/contracts/token/ERC20/StandardToken.sol
+
+
+//////////////////////////////
+///// DetailedERC20
+//////////////////////////////
+
+contract DetailedERC20 is ERC20 {
+  string public name;
+  string public symbol;
+  uint8 public decimals;
+
+  function DetailedERC20(string _name, string _symbol, uint8 _decimals) public {
+    name = _name;
+    symbol = _symbol;
+    decimals = _decimals;
+  }
+}
+
+//////////////////////////////
+///// Standard Token
+//////////////////////////////
+
 
 /**
  * @title Standard ERC20 token
@@ -265,35 +204,124 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-contract DetailedERC20 is ERC20 {
-  string public name;
-  string public symbol;
-  uint8 public decimals;
 
-  function DetailedERC20(string _name, string _symbol, uint8 _decimals) public {
-    name = _name;
-    symbol = _symbol;
-    decimals = _decimals;
+
+//////////////////////////////
+///// SafeMath
+//////////////////////////////
+
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
   }
 }
+
+
+//////////////////////////////
+///// AddressArrayUtil
+//////////////////////////////
+
+/**
+ * @title AddressArrayUtil
+ */
+library AddressArrayUtils {
+  function hasValue(address[] addresses, address value) internal returns (bool) {
+    for (uint i = 0; i < addresses.length; i++) {
+      if (addresses[i] == value) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  function removeByIndex(address[] storage a, uint256 index) internal returns (uint256) {
+    a[index] = a[a.length - 1];
+    a.length -= 1;
+  }
+}
+
+
+//////////////////////////////
+///// Set Interface
+//////////////////////////////
 
 /**
  * @title Set interface
  */
-contract Set {
-  function issue(uint quantity) public returns (bool success);
-  function redeem(uint quantity) public returns (bool success);
+contract SetInterface {
+
+  /**
+   * @dev Function to convert component into {Set} Tokens
+   *
+   * Please note that the user's ERC20 component must be approved by
+   * their ERC20 contract to transfer their components to this contract.
+   *
+   * @param _quantity uint The quantity of Sets desired to issue in Wei as a multiple of naturalUnit
+   */
+  function issue(uint _quantity) public returns (bool success);
+  
+  /**
+   * @dev Function to convert {Set} Tokens into underlying components
+   *
+   * The ERC20 components do not need to be approved to call this function
+   *
+   * @param _quantity uint The quantity of Sets desired to redeem in Wei as a multiple of naturalUnit
+   */
+  function redeem(uint _quantity) public returns (bool success);
 
   event LogIssuance(
     address indexed _sender,
-    uint indexed _quantity
+    uint _quantity
   );
 
   event LogRedemption(
     address indexed _sender,
-    uint indexed _quantity
+    uint _quantity
   );
 }
+
 
 
 /**
@@ -301,8 +329,9 @@ contract Set {
  * @author Felix Feng
  * @dev Implementation of the basic {Set} token.
  */
-contract SetToken is StandardToken, DetailedERC20("Decentralized Exchange", "DEX", 18), Set {
-  using SafeMathUint256 for uint256;
+contract SetToken is StandardToken, DetailedERC20("EthereumX May 2018 Set", "ETHX-5-18", 18), SetInterface {
+  using SafeMath for uint256;
+  using AddressArrayUtils for address[];
 
   ///////////////////////////////////////////////////////////
   /// Data Structures
@@ -312,19 +341,16 @@ contract SetToken is StandardToken, DetailedERC20("Decentralized Exchange", "DEX
     uint unit_;
   }
 
-  struct UnredeemedComponent {
-    uint balance;
-    bool isRedeemed;
-  }
-
   ///////////////////////////////////////////////////////////
   /// States
   ///////////////////////////////////////////////////////////
   uint public naturalUnit;
   Component[] public components;
-  mapping(address => bool) internal isComponent;
-  // Mapping of token address -> user address -> UnredeemedComponent
-  mapping(address => mapping(address => UnredeemedComponent)) public unredeemedComponents;
+
+  // Mapping of componentHash to isComponent
+  mapping(bytes32 => bool) internal isComponent;
+  // Mapping of index of component -> user address -> balance
+  mapping(uint => mapping(address => uint)) internal unredeemedBalances;
 
 
   ///////////////////////////////////////////////////////////
@@ -332,13 +358,13 @@ contract SetToken is StandardToken, DetailedERC20("Decentralized Exchange", "DEX
   ///////////////////////////////////////////////////////////
   event LogPartialRedemption(
     address indexed _sender,
-    uint indexed _quantity,
-    address[] _excludedComponents
+    uint _quantity,
+    bytes32 _excludedComponents
   );
 
   event LogRedeemExcluded(
     address indexed _sender,
-    address[] _components
+    bytes32 _components
   );
 
   ///////////////////////////////////////////////////////////
@@ -373,7 +399,9 @@ contract SetToken is StandardToken, DetailedERC20("Decentralized Exchange", "DEX
    * @param _components address[] A list of component address which you want to include
    * @param _units uint[] A list of quantities in gWei of each component (corresponds to the {Set} of _components)
    */
-  constructor(address[] _components, uint[] _units, uint _naturalUnit) public {
+  constructor(address[] _components, uint[] _units, uint _naturalUnit)
+    isNonZero(_naturalUnit)
+    public {
     // There must be component present
     require(_components.length > 0, "Component length needs to be great than 0");
 
@@ -383,7 +411,6 @@ contract SetToken is StandardToken, DetailedERC20("Decentralized Exchange", "DEX
     // The number of components must equal the number of units
     require(_components.length == _units.length, "Component and unit lengths must be the same");
 
-    require(_naturalUnit > 0);
     naturalUnit = _naturalUnit;
 
     // As looping operations are expensive, checking for duplicates will be
@@ -391,7 +418,7 @@ contract SetToken is StandardToken, DetailedERC20("Decentralized Exchange", "DEX
 
     // NOTE: It will be the onus of developers to check whether the addressExists
     // are in fact ERC20 addresses
-    for (uint i = 0; i < _units.length; i++) {
+    for (uint16 i = 0; i < _units.length; i++) {
       // Check that all units are non-zero. Negative numbers will underflow
       uint currentUnits = _units[i];
       require(currentUnits > 0, "Unit declarations must be non-zero");
@@ -400,19 +427,17 @@ contract SetToken is StandardToken, DetailedERC20("Decentralized Exchange", "DEX
       address currentComponent = _components[i];
       require(currentComponent != address(0), "Components must have non-zero address");
 
+      // Check the component has not already been added
+      require(!tokenIsComponent(currentComponent));
+
       // add component to isComponent mapping
-      isComponent[currentComponent] = true;
+      isComponent[keccak256(currentComponent)] = true;
 
       components.push(Component({
         address_: currentComponent,
         unit_: currentUnits
       }));
     }
-  }
-
-  // Prevent Ether from being sent to the contract
-  function () payable {
-    revert();
   }
 
   ///////////////////////////////////////////////////////////
@@ -425,27 +450,32 @@ contract SetToken is StandardToken, DetailedERC20("Decentralized Exchange", "DEX
    * Please note that the user's ERC20 component must be approved by
    * their ERC20 contract to transfer their components to this contract.
    *
-   * @param quantity uint The quantity of component desired to convert in Wei
+   * @param _quantity uint The quantity of Sets desired to issue in Wei as a multiple of naturalUnit
    */
-  function issue(uint quantity)
-    isMultipleOfNaturalUnit(quantity)
-    isNonZero(quantity)
+  function issue(uint _quantity)
+    isMultipleOfNaturalUnit(_quantity)
+    isNonZero(_quantity)
     public returns (bool success) {
     // Transfers the sender's components to the contract
     // Since the component length is defined ahead of time, this is not
     // an unbounded loop
-    for (uint i = 0; i < components.length; i++) {
+    for (uint16 i = 0; i < components.length; i++) {
       address currentComponent = components[i].address_;
       uint currentUnits = components[i].unit_;
 
-      uint transferValue = calculateTransferValue(currentUnits, quantity);
+      uint preTransferBalance = ERC20(currentComponent).balanceOf(this);
 
-      assert(ERC20(currentComponent).transferFrom(msg.sender, this, transferValue));
+      uint transferValue = calculateTransferValue(currentUnits, _quantity);
+      require(ERC20(currentComponent).transferFrom(msg.sender, this, transferValue));
+
+      // Check that preTransferBalance + transfer value is the same as postTransferBalance
+      uint postTransferBalance = ERC20(currentComponent).balanceOf(this);
+      assert(preTransferBalance.add(transferValue) == postTransferBalance);
     }
 
-    mint(quantity);
+    mint(_quantity);
 
-    emit LogIssuance(msg.sender, quantity);
+    emit LogIssuance(msg.sender, _quantity);
 
     return true;
   }
@@ -455,28 +485,32 @@ contract SetToken is StandardToken, DetailedERC20("Decentralized Exchange", "DEX
    *
    * The ERC20 components do not need to be approved to call this function
    *
-   * @param quantity uint The quantity of Sets desired to redeem in Wei
+   * @param _quantity uint The quantity of Sets desired to redeem in Wei as a multiple of naturalUnit
    */
-  function redeem(uint quantity)
+  function redeem(uint _quantity)
     public
-    isMultipleOfNaturalUnit(quantity)
-    hasSufficientBalance(quantity)
-    isNonZero(quantity)
+    isMultipleOfNaturalUnit(_quantity)
+    hasSufficientBalance(_quantity)
+    isNonZero(_quantity)
     returns (bool success)
   {
-    burn(quantity);
+    burn(_quantity);
 
-    for (uint i = 0; i < components.length; i++) {
+    for (uint16 i = 0; i < components.length; i++) {
       address currentComponent = components[i].address_;
       uint currentUnits = components[i].unit_;
 
-      uint transferValue = calculateTransferValue(currentUnits, quantity);
+      uint preTransferBalance = ERC20(currentComponent).balanceOf(this);
 
-      // The transaction will fail if any of the components fail to transfer
-      assert(ERC20(currentComponent).transfer(msg.sender, transferValue));
+      uint transferValue = calculateTransferValue(currentUnits, _quantity);
+      require(ERC20(currentComponent).transfer(msg.sender, transferValue));
+
+      // Check that preTransferBalance + transfer value is the same as postTransferBalance
+      uint postTransferBalance = ERC20(currentComponent).balanceOf(this);
+      assert(preTransferBalance.sub(transferValue) == postTransferBalance);
     }
 
-    emit LogRedemption(msg.sender, quantity);
+    emit LogRedemption(msg.sender, _quantity);
 
     return true;
   }
@@ -486,106 +520,80 @@ contract SetToken is StandardToken, DetailedERC20("Decentralized Exchange", "DEX
    *
    * This function should be used in the event that a component token has been
    * paused for transfer temporarily or permanently. This allows users a
-   * method to withdraw tokens in the event that one token has been frozen
+   * method to withdraw tokens in the event that one token has been frozen.
    *
-   * @param quantity uint The quantity of Sets desired to redeem in Wei
-   * @param excludedComponents address[] The list of tokens to exclude
+   * The mask can be computed by summing the powers of 2 of indexes of components to exclude.
+   * For example, to exclude the 0th, 1st, and 3rd components, we pass in the hex of
+   * 1 + 2 + 8 = 11, padded to length 32 i.e. 0x000000000000000000000000000000000000000000000000000000000000000b
+   *
+   * @param _quantity uint The quantity of Sets desired to redeem in Wei
+   * @param _componentsToExclude bytes32 Hex of bitmask of components to exclude
    */
-  function partialRedeem(uint quantity, address[] excludedComponents)
+  function partialRedeem(uint _quantity, bytes32 _componentsToExclude)
     public
-    isMultipleOfNaturalUnit(quantity)
-    isNonZero(quantity)
-    hasSufficientBalance(quantity)
+    isMultipleOfNaturalUnit(_quantity)
+    isNonZero(_quantity)
+    hasSufficientBalance(_quantity)
     returns (bool success)
   {
     // Excluded tokens should be less than the number of components
     // Otherwise, use the normal redeem function
-    require(
-      excludedComponents.length < components.length,
-      "Excluded component length must be less than component length"
-    );
-    require(excludedComponents.length > 0, "Excluded components must be non-zero");
+    require(_componentsToExclude > 0, "Excluded components must be non-zero");
 
-    burn(quantity);
+    burn(_quantity);
 
-    for (uint i = 0; i < components.length; i++) {
-      bool isExcluded = false;
+    for (uint16 i = 0; i < components.length; i++) {
+      uint transferValue = calculateTransferValue(components[i].unit_, _quantity);
 
-      uint transferValue = calculateTransferValue(components[i].unit_, quantity);
+      // Exclude tokens if 2 raised to the power of their indexes in the components
+      // array results in a non zero value following a bitwise AND
+      if (_componentsToExclude & bytes32(2 ** i) > 0) {
+        unredeemedBalances[i][msg.sender] += transferValue;
+      } else {
+        uint preTransferBalance = ERC20(components[i].address_).balanceOf(this);
 
-      // This is unideal to do a doubly nested loop, but the number of excludedComponents
-      // should generally be a small number
-      for (uint j = 0; j < excludedComponents.length; j++) {
-        address currentExcluded = excludedComponents[j];
+        require(ERC20(components[i].address_).transfer(msg.sender, transferValue));
 
-        // Check that excluded token is indeed a component in this contract
-        assert(isComponent[currentExcluded]);
-
-        // If the token is excluded, add to the user's unredeemed component value
-        if (components[i].address_ == currentExcluded) {
-          // Check whether component is already redeemed; Ensures duplicate excludedComponents
-          // has not been inputted.
-          bool currentIsRedeemed = unredeemedComponents[components[i].address_][msg.sender].isRedeemed;
-          assert(currentIsRedeemed == false);
-
-          unredeemedComponents[components[i].address_][msg.sender].balance += transferValue;
-
-          // Mark redeemed to ensure no duplicates
-          unredeemedComponents[components[i].address_][msg.sender].isRedeemed = true;
-
-          isExcluded = true;
-        }
-      }
-
-      if (!isExcluded) {
-        assert(ERC20(components[i].address_).transfer(msg.sender, transferValue));
+        // Check that preTransferBalance + transfer value is the same as postTransferBalance
+        uint postTransferBalance = ERC20(components[i].address_).balanceOf(this);
+        assert(preTransferBalance.sub(transferValue) == postTransferBalance);
       }
     }
 
-    // Mark all excluded components not redeemed
-    for (uint k = 0; k < excludedComponents.length; k++) {
-      address currentExcludedToUnredeem = excludedComponents[k];
-      unredeemedComponents[currentExcludedToUnredeem][msg.sender].isRedeemed = false;
-    }
-
-    emit LogPartialRedemption(msg.sender, quantity, excludedComponents);
+    emit LogPartialRedemption(msg.sender, _quantity, _componentsToExclude);
 
     return true;
   }
 
   /**
    * @dev Function to withdraw tokens that have previously been excluded when calling
-   * the redeemExcluded method
+   * the partialRedeem method
+
+   * The mask can be computed by summing the powers of 2 of indexes of components to redeem.
+   * For example, to redeem the 0th, 1st, and 3rd components, we pass in the hex of
+   * 1 + 2 + 8 = 11, padded to length 32 i.e. 0x000000000000000000000000000000000000000000000000000000000000000b
    *
-   * This function should be used to retrieve tokens that have previously excluded
-   * when calling the redeemExcluded function.
-   *
-   * @param componentsToRedeem address[] The list of tokens to redeem
-   * @param quantities uint[] The quantity of Sets desired to redeem in Wei
+   * @param _componentsToRedeem bytes32 Hex of bitmask of components to redeem
    */
-  function redeemExcluded(address[] componentsToRedeem, uint[] quantities)
+  function redeemExcluded(bytes32 _componentsToRedeem)
     public
     returns (bool success)
   {
-    require(quantities.length > 0, "Quantities must be non-zero");
-    require(componentsToRedeem.length > 0, "Components redeemed must be non-zero");
-    require(quantities.length == componentsToRedeem.length, "Lengths must be the same");
+    require(_componentsToRedeem > 0, "Components to redeem must be non-zero");
 
-    for (uint i = 0; i < quantities.length; i++) {
-      address currentComponent = componentsToRedeem[i];
-      uint currentQuantity = quantities[i];
+    for (uint16 i = 0; i < components.length; i++) {
+      if (_componentsToRedeem & bytes32(2 ** i) > 0) {
+        address currentComponent = components[i].address_;
+        uint remainingBalance = unredeemedBalances[i][msg.sender];
 
-      // Check there is enough balance
-      uint remainingBalance = unredeemedComponents[currentComponent][msg.sender].balance;
-      require(remainingBalance >= currentQuantity);
+        // To prevent re-entrancy attacks, decrement the user's Set balance
+        unredeemedBalances[i][msg.sender] = 0;
 
-      // To prevent re-entrancy attacks, decrement the user's Set balance
-      unredeemedComponents[currentComponent][msg.sender].balance = remainingBalance.sub(currentQuantity);
-
-      assert(ERC20(currentComponent).transfer(msg.sender, currentQuantity));
+        require(ERC20(currentComponent).transfer(msg.sender, remainingBalance));
+      }
     }
 
-    emit LogRedeemExcluded(msg.sender, componentsToRedeem);
+    emit LogRedeemExcluded(msg.sender, _componentsToRedeem);
 
     return true;
   }
@@ -593,14 +601,9 @@ contract SetToken is StandardToken, DetailedERC20("Decentralized Exchange", "DEX
   ///////////////////////////////////////////////////////////
   /// Getters
   ///////////////////////////////////////////////////////////
-
-  function componentCount() public view returns(uint componentsLength) {
-    return components.length;
-  }
-
   function getComponents() public view returns(address[]) {
     address[] memory componentAddresses = new address[](components.length);
-    for (uint i = 0; i < components.length; i++) {
+    for (uint16 i = 0; i < components.length; i++) {
         componentAddresses[i] = components[i].address_;
     }
     return componentAddresses;
@@ -608,10 +611,24 @@ contract SetToken is StandardToken, DetailedERC20("Decentralized Exchange", "DEX
 
   function getUnits() public view returns(uint[]) {
     uint[] memory units = new uint[](components.length);
-    for (uint i = 0; i < components.length; i++) {
+    for (uint16 i = 0; i < components.length; i++) {
         units[i] = components[i].unit_;
     }
     return units;
+  }
+
+  function getUnredeemedBalance(address _componentAddress, address _userAddress) public view returns (uint256) {
+    require(tokenIsComponent(_componentAddress));
+
+    uint componentIndex;
+
+    for (uint i = 0; i < components.length; i++) {
+      if (components[i].address_ == _componentAddress) {
+        componentIndex = i;
+      }
+    }
+
+    return unredeemedBalances[componentIndex][_userAddress];
   }
 
   ///////////////////////////////////////////////////////////
@@ -629,20 +646,23 @@ contract SetToken is StandardToken, DetailedERC20("Decentralized Exchange", "DEX
   /// Private Function
   ///////////////////////////////////////////////////////////
 
-  function calculateTransferValue(uint componentUnits, uint quantity) internal returns(uint) {
+  function tokenIsComponent(address _tokenAddress) view internal returns (bool) {
+    return isComponent[keccak256(_tokenAddress)];
+  }
+
+  function calculateTransferValue(uint componentUnits, uint quantity) view internal returns(uint) {
     return quantity.div(naturalUnit).mul(componentUnits);
   }
 
   function mint(uint quantity) internal {
-    // If successful, increment the balance of the user’s {Set} token
     balances[msg.sender] = balances[msg.sender].add(quantity);
-
-    // Increment the total token supply
     totalSupply_ = totalSupply_.add(quantity);
+    emit Transfer(address(0), msg.sender, quantity);
   }
 
   function burn(uint quantity) internal {
     balances[msg.sender] = balances[msg.sender].sub(quantity);
     totalSupply_ = totalSupply_.sub(quantity);
+    emit Transfer(msg.sender, address(0), quantity);
   }
 }
