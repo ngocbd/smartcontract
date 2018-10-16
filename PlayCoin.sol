@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayCoin at 0xD2680e5287Dfa67cb3eb279ed5752Ed593153Fea
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlayCoin at 0x4Df68a54CB7B1a93BEDd4353921a5cccE2F9F396
 */
 pragma solidity ^0.4.10;
 
@@ -27,7 +27,7 @@ contract PlayCoin{
         balanceOf[msg.sender] = 1280000000000; // Give the creator all initial tokens
         totalSupply = 1280000000000;                        // Update total supply
         name = "Play Coin";                                   // Set the name for display purposes
-        symbol = "PLAYC";                               // Set the symbol for display purposes
+        symbol = "play";                               // Set the symbol for display purposes
         decimals = 4;                            // Amount of decimals for display purposes
     }
 
