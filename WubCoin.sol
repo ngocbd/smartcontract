@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WubCoin at 0x2a47794f5abd0073fdb499a56321013e027153eb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WubCoin at 0x1e886ce6d18bf524373a546300dfe97674f5c6d2
 */
 pragma solidity ^0.4.11;
 
@@ -11,7 +11,7 @@ pragma solidity ^0.4.11;
  *
  * Copyright by Stefan K.K https://stefan.co.jp
  */
- 
+
 
 /**
  * @title Contract that will work with ERC223 tokens.
@@ -166,11 +166,8 @@ contract ERC223Interface {
 }
 
 
-
-
-
 /**
- * @title Reference implementation of the ERC223 standard token.
+ * @title Based on the reference implementation of the ERC223 standard token.
  */
 contract WubCoin is ERC223Interface, ERC20CompatibleToken {
     using SafeMath for uint;
@@ -183,6 +180,13 @@ contract WubCoin is ERC223Interface, ERC20CompatibleToken {
 
     function WubCoin() {
         owner = msg.sender;
+    }
+
+    /**
+     * We don't accept payments to the token contract directly.
+     */
+    function() payable {
+        revert();
     }
 
     function mint(uint256 _amount, address _to) {
