@@ -1,335 +1,658 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MindToken at 0xcf350f59d3a5fe1a3f7f0f62f9c38650a80a915f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MINDToken at 0x222728c202e7164dfbd127181d46409338c4328e
 */
-pragma solidity ^0.4.9;
-
-contract ERC223 {
-  uint public totalSupply;
-  function balanceOf(address who) constant returns (uint);
-  
-  function name() constant returns (string _name);
-  function symbol() constant returns (string _symbol);
-  function decimals() constant returns (uint8 _decimals);
-  function totalSupply() constant returns (uint256 _supply);
-
-  function transfer(address to, uint value) returns (bool ok);
-  function transfer(address to, uint value, bytes data) returns (bool ok);
-  event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
-  event Transfer(address indexed from, address indexed to, uint value);
-}
-
-contract ContractReceiver {
-     
-    struct TKN {
-        address sender;
-        uint value;
-        bytes data;
-        bytes4 sig;
-    }
-    
-    
-    function tokenFallback(address _from, uint _value, bytes _data){
-      TKN memory tkn;
-      tkn.sender = _from;
-      tkn.value = _value;
-      tkn.data = _data;
-      uint32 u = uint32(_data[3]) + (uint32(_data[2]) << 8) + (uint32(_data[1]) << 16) + (uint32(_data[0]) << 24);
-      tkn.sig = bytes4(u);
-      
-      /* tkn variable is analogue of msg variable of Ether transaction
-      *  tkn.sender is person who initiated this token transaction   (analogue of msg.sender)
-      *  tkn.value the number of tokens that were sent   (analogue of msg.value)
-      *  tkn.data is data of token transaction   (analogue of msg.data)
-      *  tkn.sig is 4 bytes signature of function
-      *  if data of token transaction is a function execution
-      */
-    }
-}
- /**
- * ERC23 token by Dexaran
- *
- * https://github.com/Dexaran/ERC23-tokens
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
  */
- 
- 
- /* https://github.com/LykkeCity/EthereumApiDotNetCore/blob/master/src/ContractBuilder/contracts/token/SafeMath.sol */
-contract SafeMath {
-    uint256 constant public MAX_UINT256 =
-    0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
-    function safeAdd(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        assert(x <= MAX_UINT256 - y);
-        return x + y;
-    }
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
 
-    function safeSub(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        assert(x >= y);
-        return x - y;
-    }
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
 
-    function safeMul(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        if (y == 0) return 0;
-        assert(x <= MAX_UINT256 / y);
-        return x * y;
-    }
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
- 
-/*
- * Ownable
- *
- * Base contract with an owner.
- * Provides onlyOwner modifier, which prevents function from running if it is called by anyone other than the owner.
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
  */
 contract Ownable {
   address public owner;
 
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
   function Ownable() {
     owner = msg.sender;
   }
 
-  modifier onlyOwner() {
-    assert(msg.sender == owner);
-    _;
-  }
-
-  function transferOwnership(address newOwner) onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
-    }
-  }
-
-}
-
-contract Haltable is Ownable {
-  bool public halted;
-
-  modifier stopInEmergency {
-    assert(!halted);
-    _;
-  }
-
-  modifier onlyInEmergency {
-    assert(halted);
-    _;
-  }
-
-  // called by the owner on emergency, triggers stopped state
-  function halt() external onlyOwner {
-    halted = true;
-  }
-
-  // called by the owner on end of emergency, returns to normal state
-  function unhalt() external onlyOwner onlyInEmergency {
-    halted = false;
-  }
-
-}
-
-contract ERC223Token is ERC223, SafeMath, Haltable {
-
-  mapping(address => uint) balances;
-  
-  string public name;
-  string public symbol;
-  uint8 public decimals;
-  uint256 public totalSupply;
-  
-  
-  // Function to access name of token .
-  function name() constant returns (string _name) {
-      return name;
-  }
-  // Function to access symbol of token .
-  function symbol() constant returns (string _symbol) {
-      return symbol;
-  }
-  // Function to access decimals of token .
-  function decimals() constant returns (uint8 _decimals) {
-      return decimals;
-  }
-  // Function to access total supply of tokens .
-  function totalSupply() constant returns (uint256 _totalSupply) {
-      return totalSupply;
-  }
-  
-  
-
-  // Function that is called when a user or another contract wants to transfer funds .
-  function transfer(address _to, uint _value, bytes _data) returns (bool success) {
-      
-    if(isContract(_to)) {
-        return transferToContract(_to, _value, _data);
-    }
-    else {
-        return transferToAddress(_to, _value, _data);
-    }
-}
-  
-  // Standard function transfer similar to ERC20 transfer with no _data .
-  // Added due to backwards compatibility reasons .
-  function transfer(address _to, uint _value) returns (bool success) {
-      
-    //standard function transfer similar to ERC20 transfer with no _data
-    //added due to backwards compatibility reasons
-    bytes memory empty;
-    if(isContract(_to)) {
-        return transferToContract(_to, _value, empty);
-    }
-    else {
-        return transferToAddress(_to, _value, empty);
-    }
-}
-
-//assemble the given address bytecode. If bytecode exists then the _addr is a contract.
-  function isContract(address _addr) private returns (bool is_contract) {
-      uint length;
-      assembly {
-            //retrieve the size of the code on target address, this needs assembly
-            length := extcodesize(_addr)
-        }
-        if(length>0) {
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
-
-  //function that is called when transaction target is an address
-  function transferToAddress(address _to, uint _value, bytes _data) private returns (bool success) {
-    assert(balanceOf(msg.sender) >= _value);
-    balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
-    balances[_to] = safeAdd(balanceOf(_to), _value);
-    Transfer(msg.sender, _to, _value, _data);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-  
-  //function that is called when transaction target is a contract
-  function transferToContract(address _to, uint _value, bytes _data) private returns (bool success) {
-    assert(balanceOf(msg.sender) >= _value);
-    balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
-    balances[_to] = safeAdd(balanceOf(_to), _value);
-    ContractReceiver reciever = ContractReceiver(_to);
-    reciever.tokenFallback(msg.sender, _value, _data);
-    Transfer(msg.sender, _to, _value, _data);
-    Transfer(msg.sender, _to, _value);
-    return true;
-}
-
-
-  function balanceOf(address _owner) constant returns (uint balance) {
-    return balances[_owner];
-  }
-  
-  
-}
-
-contract MindToken is ERC223Token {
-
-    address public beneficiary;
-    event Buy(address indexed participant, uint tokens, uint eth);
-    event GoalReached(uint amountRaised);
-
-    uint public cap = 20000000000000;
-    uint public price;
-    uint public collectedTokens;
-    uint public collectedEthers;
-
-    uint public tokensSold = 0;
-    uint public weiRaised = 0;
-    uint public investorCount = 0;
-
-    uint public startTime;
-    uint public endTime;
-
-    bool public capReached = false;
-    bool public presaleFinished = false;
 
   /**
-   * @dev Contructor that gives msg.sender all of existing tokens. 
+   * @dev Throws if called by any account other than the owner.
    */
-    function MindToken() {
-            
-        name = "Mind10 Token";
-        symbol = "Mind10";
-        decimals = 8;
-        totalSupply = 500000000000000;
-    
-        address _beneficiary = 0x0980eaD74d176025F2962f8b5535346c77ffd2f5;
-        //uint _price = 0.00001;
-        uint _price = 150;
-        uint _startTime = 1502704800;
-        uint _duration = 15;
-            
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public constant returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
+
+  mapping(address => uint256) balances;
+
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public constant returns (uint256 balance) {
+    return balances[_owner];
+  }
+
+}
+
+
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) allowed;
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+
+    uint256 _allowance = allowed[_from][msg.sender];
+
+    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
+    // require (_value <= _allowance);
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+    return allowed[_owner][_spender];
+  }
+
+  /**
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   */
+  function increaseApproval (address _spender, uint _addedValue)
+    returns (bool success) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  function decreaseApproval (address _spender, uint _subtractedValue)
+    returns (bool success) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+}
+
+/**
+ * @title The MINDToken contract
+ * @dev The MINDToken Token contract
+ * @dev inherite from StandardToken and Ownable by Zeppelin
+ * @author Request.network
+ */
+contract MINDToken is StandardToken, Ownable {
+    string  public  constant name = "MIND Token";
+    string  public  constant symbol = "MIND";
+    uint8    public  constant decimals = 18;
+
+    uint    public  transferableStartTime;
+
+    address public  tokenSaleContract;
+    address public  fullTokenWallet;
+
+    function gettransferableStartTime() constant returns (uint){return now - transferableStartTime;}
+
+    modifier onlyWhenTransferEnabled() 
+    {
+        if ( now < transferableStartTime ) {
+            require(msg.sender == tokenSaleContract || msg.sender == fullTokenWallet || msg.sender == owner);
+        }
+        _;
+    }
+
+    modifier validDestination(address to) 
+    {
+        require(to != address(this));
+        _;
+    }
+
+    modifier onlySaleContract()
+    {
+        require(msg.sender == tokenSaleContract);
+        _;
+    }
+
+    function MINDToken(
+        uint tokenTotalAmount, 
+        uint _transferableStartTime, 
+        address _admin, 
+        address _fullTokenWallet) 
+    {
+        
+        // Mint all tokens. Then disable minting forever.
+        totalSupply = tokenTotalAmount * (10 ** uint256(decimals));
+
         balances[msg.sender] = totalSupply;
-        
-        beneficiary = _beneficiary;
-        price = _price;
+        Transfer(address(0x0), msg.sender, totalSupply);
 
-        startTime = _startTime;
-        endTime = _startTime + _duration * 1 minutes;
-        
-    }
-    
-    modifier onlyAfter(uint time) {
-        assert(now >= time);
-        _;
-    }
+        transferableStartTime = _transferableStartTime;
+        tokenSaleContract = msg.sender;
+        fullTokenWallet = _fullTokenWallet;
 
-    modifier onlyBefore(uint time) {
-        assert(now <= time);
-        _;
-    }
-    
-    function () payable stopInEmergency {
-        assert(msg.value >= 0.01 * 1 ether);
-        doPurchase();
-        
-        //if (msg.value < 0.01 * 1 ether) throw;
-        
-    }
-    
-    function doPurchase() private onlyAfter(startTime) onlyBefore(endTime) {
-
-        assert(!presaleFinished);
-        
-        uint tokens = msg.value * price / 10000000000;
-
-        if (balanceOf(msg.sender) == 0) investorCount++;
-        
-        balances[owner] -= tokens;
-        balances[msg.sender] += tokens;
-        
-        collectedTokens = safeAdd(collectedTokens, tokens);
-        collectedEthers = safeAdd(collectedEthers, msg.value);
-        
-        //assert(collectedTokens <= cap);
-        
-        weiRaised = safeAdd(weiRaised, msg.value);
-        tokensSold = safeAdd(tokensSold, tokens);
-        
-        bytes memory empty;
-        Transfer(owner, msg.sender, tokens, empty);
-        Transfer(owner, msg.sender, tokens);
-        
-        Buy(msg.sender, tokens, msg.value);
-        
-        if (collectedTokens == cap) {
-            GoalReached(cap);
-        }
+        transferOwnership(_admin); // admin could drain tokens and eth that were sent here by mistake
 
     }
-    
-    function withdraw() onlyOwner onlyAfter(endTime) returns (bool) {
-        //assert(capReached);
-        if (!beneficiary.send(collectedEthers)) {
-            return false;
-        }
-        //token.transfer(beneficiary, token.balanceOf(this));
-        presaleFinished = true;
+
+    /**
+     * @dev override transfer token for a specified address to add onlyWhenTransferEnabled and validDestination
+     * @param _to The address to transfer to.
+     * @param _value The amount to be transferred.
+     */
+    function transfer(address _to, uint _value)
+        public
+        validDestination(_to)
+        onlyWhenTransferEnabled
+        returns (bool) 
+    {
+        return super.transfer(_to, _value);
+    }
+
+    /**
+     * @dev override transferFrom token for a specified address to add onlyWhenTransferEnabled and validDestination
+     * @param _from The address to transfer from.
+     * @param _to The address to transfer to.
+     * @param _value The amount to be transferred.
+     */
+    function transferFrom(address _from, address _to, uint _value)
+        public
+        validDestination(_to)
+        onlyWhenTransferEnabled
+        returns (bool) 
+    {
+        return super.transferFrom(_from, _to, _value);
+    }
+
+    event Burn(address indexed _burner, uint _value);
+
+    /**
+     * @dev burn tokens
+     * @param _value The amount to be burned.
+     * @return always true (necessary in case of override)
+     */
+    function burn(uint _value) 
+        public
+        onlyWhenTransferEnabled
+        onlyOwner
+        returns (bool)
+    {
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        Burn(msg.sender, _value);
+        Transfer(msg.sender, address(0x0), _value);
         return true;
     }
-    
-    
+
+    /**
+     * @dev burn tokens in the behalf of someone
+     * @param _from The address of the owner of the token.
+     * @param _value The amount to be burned.
+     * @return always true (necessary in case of override)
+     */
+    function burnFrom(address _from, uint256 _value) 
+        public
+        onlyWhenTransferEnabled
+        onlyOwner
+        returns(bool) 
+    {
+        assert(transferFrom(_from, msg.sender, _value));
+        return burn(_value);
+    }
+
+    /** 
+    * enable transfer earlier (only presale contract can enable the sale earlier)
+    */
+    function enableTransferEarlier ()
+        public
+        onlySaleContract
+    {
+        transferableStartTime = now + 3 days;
+    }
+
+
+    /**
+     * @dev transfer to owner any tokens send by mistake on this contracts
+     * @param token The address of the token to transfer.
+     * @param amount The amount to be transfered.
+     */
+    function emergencyERC20Drain(ERC20 token, uint amount )
+        public
+        onlyOwner 
+    {
+        token.transfer(owner, amount);
+    }
+
+}
+
+
+/**
+ * @title StandardCrowdsale 
+ * @dev StandardCrowdsale is a base contract for managing a token crowdsale.
+ * Crowdsales have a start and end timestamps, where investors can make
+ * token purchases and the crowdsale will assign them tokens based
+ * on a token per ETH rate. Funds collected are forwarded to a wallet
+ * as they arrive.
+ * @dev from Crowdsale by Zepellin with small changes. Changes are commented with "Request Modification"
+ */
+contract StandardCrowdsale {
+    using SafeMath for uint256;
+
+    // The token being sold
+    StandardToken public token; // Request Modification : change to not mintable
+
+    // start and end timestamps where investments are allowed (both inclusive)
+    uint256 public startTime;
+    uint256 public endTime;
+
+    // address where funds are collected
+    address public wallet;
+
+    // how many token units a buyer gets per wei
+    uint256 public rate;
+
+    // amount of raised money in wei
+    uint256 public weiRaised;
+
+    /**
+     * event for token purchase logging
+     * @param purchaser who paid for the tokens
+     * @param value weis paid for purchase
+     * @param amount amount of tokens purchased
+     */
+    event TokenPurchase(address indexed purchaser, uint256 value, uint256 amount);
+
+    function StandardCrowdsale(
+        uint256 _startTime, 
+        uint256 _endTime, 
+        uint256 _rate, 
+        address _wallet) 
+    {
+        
+        require(_startTime >= now);
+        require(_endTime >= _startTime);
+        require(_rate > 0);
+        require(_wallet != 0x0);
+
+        startTime = _startTime;
+        endTime = _endTime;
+        rate = _rate;
+        wallet = _wallet;
+        
+        token = createTokenContract(); // Request Modification : change to StandardToken + position
+    }
+
+    // creates the token to be sold.
+    // Request Modification : change to StandardToken
+    // override this method to have crowdsale of a specific mintable token.
+    function createTokenContract() 
+        internal 
+        returns(StandardToken) 
+    {
+        return new StandardToken();
+    }
+
+    // fallback function can be used to buy tokens
+    function () 
+       payable 
+    {
+        buyTokens();
+    }
+
+    // low level token purchase function
+    // Request Modification : change to not mint but transfer from this contract
+    function buyTokens() 
+       public 
+       payable 
+    {
+        require(validPurchase());
+
+        uint256 weiAmount = msg.value;
+
+        // calculate token amount to be created
+        uint256 tokens = weiAmount.mul(rate);
+        tokens += getBonus(tokens);
+
+        // update state
+        weiRaised = weiRaised.add(weiAmount);
+
+        require(token.transfer(msg.sender, tokens)); // Request Modification : changed here - tranfer instead of mintable
+        TokenPurchase(msg.sender, weiAmount, tokens);
+
+        forwardFunds();
+
+        postBuyTokens();
+    }
+
+    // Action after buying tokens
+    function postBuyTokens ()
+        internal
+    {
+    }
+
+    // send ether to the fund collection wallet
+    // override to create custom fund forwarding mechanisms
+    function forwardFunds() 
+       internal 
+    {
+        wallet.transfer(msg.value);
+    }
+
+    // @return true if the transaction can buy tokens
+    function validPurchase() 
+        internal 
+        returns(bool) 
+    {
+        bool withinPeriod = now >= startTime && now <= endTime;
+        bool nonZeroPurchase = msg.value != 0;
+        return withinPeriod && nonZeroPurchase;
+    }
+
+    // @return true if crowdsale event has ended
+    function hasEnded() 
+        public 
+        constant 
+        returns(bool) 
+    {
+        return now > endTime;
+    }
+
+    modifier onlyBeforeSale() {
+        require(now < startTime);
+        _;
+    }
+
+    // Request Modification : Add check 24hours before token sale
+    modifier only24HBeforeSale() {
+        require(now < startTime.sub(1 days));
+        _;
+    }
+
+    function getBonus(uint256 _tokens) constant returns (uint256 bonus) {
+        return 0;
+    }
+}
+
+/**
+ * @title CappedCrowdsale
+ * @dev Extension of Crowdsale with a max amount of funds raised
+ */
+contract CappedCrowdsale is StandardCrowdsale {
+  using SafeMath for uint256;
+
+  uint256 public cap;
+
+  function CappedCrowdsale(uint256 _cap) {
+    require(_cap > 0);
+    cap = _cap;
+  }
+
+  // overriding Crowdsale#validPurchase to add extra cap logic
+  // @return true if investors can buy at the moment
+  // Request Modification : delete constant because needed in son contract
+  function validPurchase() internal returns (bool) {
+    bool withinCap = weiRaised.add(msg.value) <= cap;
+    return super.validPurchase() && withinCap;
+  }
+
+  // overriding Crowdsale#hasEnded to add cap logic
+  // @return true if crowdsale event has ended
+  function hasEnded() public constant returns (bool) {
+    bool capReached = weiRaised >= cap;
+    return super.hasEnded() || capReached;
+  }
+
+}
+
+/**
+ * @title MINDTokenPreSale
+ * @dev 
+ * We add new features to a base crowdsale using multiple inheritance.
+ * We are using the following extensions:
+ * CappedCrowdsale - sets a max boundary for raised funds
+ *
+ * The code is based on the contracts of Open Zeppelin and we add our contracts : MINDTokenPreSale and the Request Token
+ *
+ * @author Request.network
+ */
+contract MINDTokenPreSale is Ownable, CappedCrowdsale {
+    // hard cap of the token pre-sale in ether
+    uint private constant HARD_CAP_IN_WEI = 10000 ether;
+
+    // Total of MIND Token supply
+    uint public constant TOTAL_MIND_TOKEN_SUPPLY = 50000000;
+
+    // Token sale rate from ETH to MIND
+    uint private constant RATE_ETH_MIND = 1000;
+
+    // Token initialy distributed for the team (15%)
+    address public constant TEAM_VESTING_WALLET = 0xb3F3D774C3575aB01bce9d9a9Fe92Aa41926a92e;
+    uint public constant TEAM_VESTING_AMOUNT = 7500000e18;
+
+    // Token initialy distributed for the full token sale (20%)
+    address public constant FULL_TOKEN_WALLET = 0x8759A03B3BEB1aa1A7bA765792cF83CaAe4f28E9;
+    uint public constant FULL_TOKEN_AMOUNT = 20000000e18;
+
+    // Token initialy distributed for the early foundation (15%)
+    // wallet use also to gather the ether of the token sale
+    address private constant MIND_FOUNDATION_WALLET = 0xDfD5e09bB845d39bd05be4664271e471FA8dA4E6;
+    uint public constant MIND_FOUNDATION_AMOUNT = 7500000e18;
+
+    // PERIOD WHEN TOKEN IS NOT TRANSFERABLE AFTER THE SALE
+    uint public constant PERIOD_AFTERSALE_NOT_TRANSFERABLE_IN_SEC = 3 days;
+
+    event PreSaleTokenSoldout();
+
+    function MINDTokenPreSale(uint256 _startTime, uint256 _endTime)
+      CappedCrowdsale(HARD_CAP_IN_WEI)
+      StandardCrowdsale(_startTime, _endTime, RATE_ETH_MIND, MIND_FOUNDATION_WALLET)
+    {
+        
+        token.transfer(TEAM_VESTING_WALLET, TEAM_VESTING_AMOUNT);
+
+        token.transfer(FULL_TOKEN_WALLET, FULL_TOKEN_AMOUNT);
+
+        token.transfer(MIND_FOUNDATION_WALLET, MIND_FOUNDATION_AMOUNT);
+        
+    }
+
+    /**
+     * @dev Create the MIND token (override createTokenContract of StandardCrowdsale)
+     * @return the StandardToken created
+     */
+    function createTokenContract () 
+      internal 
+      returns(StandardToken) 
+    {
+        return new MINDToken(TOTAL_MIND_TOKEN_SUPPLY, endTime.add(PERIOD_AFTERSALE_NOT_TRANSFERABLE_IN_SEC), MIND_FOUNDATION_WALLET, FULL_TOKEN_WALLET);
+    }
+
+    /**
+      * @dev Get the bonus based on the buy time (override getBonus of StandardCrowdsale)
+      * @return the number of bonus token
+    */
+    function getBonus(uint256 _tokens) constant returns (uint256 bonus) {
+        require(_tokens != 0);
+        if (startTime <= now && now < startTime + 1 days) {
+            return _tokens.div(2);
+        } else if (startTime + 1 days <= now && now < startTime + 2 days ) {
+            return _tokens.div(4);
+        } else if (startTime + 2 days <= now && now < startTime + 3 days ) {
+            return _tokens.div(10);
+        }
+
+        return 0;
+    }
+
+    /**
+     * @dev Transfer the unsold tokens to the MIND Foundation multisign wallet 
+     * @dev Only for owner
+     * @return the StandardToken created
+     */
+    function drainRemainingToken () 
+      public
+      onlyOwner
+    {
+        require(hasEnded());
+        token.transfer(MIND_FOUNDATION_WALLET, token.balanceOf(this));
+    }
+
+
+    /**
+      * @dev Action after buying tokens: check if all sold out and enable transfer immediately
+      */
+    function postBuyTokens ()
+        internal
+    {
+        if ( weiRaised >= HARD_CAP_IN_WEI ) 
+        {
+            MINDToken mindToken = MINDToken (token);
+            mindToken.enableTransferEarlier();
+            PreSaleTokenSoldout();
+        }
+    }
 }
