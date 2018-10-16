@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RC at 0x5a50c7d96fc68ea2f0bee06d86cd971c31f85604
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RC at 0x6ab1453ae2cdfb7524decfc71bc9105bf2a58d5a
 */
 pragma solidity ^0.4.19;
 
