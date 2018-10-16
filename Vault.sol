@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vault at 0x866b1c78ce40d5fa1201283ad8df3baf31b141e7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vault at 0xf163484a4b2c32e68b991bc45d7e7fa8c6c596c5
 */
 pragma solidity ^0.4.19;
 
@@ -12,7 +12,7 @@ contract Vault {
     Token constant public token = Token(0xa645264C5603E96c3b0B078cdab68733794B0A71);
     address constant public recipient = 0x002AE208AD6064F75Fa78e7bbeF9B12DB850f559;
     // UNIX timestamp
-    uint constant public unlockedAt = 1564704000;
+    uint constant public unlockedAt = 1528397739;
     
     function unlock() public {
         require(now > unlockedAt);
