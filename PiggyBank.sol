@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PiggyBank at 0x08573698b2b0aAF07F16395bE3D3530598c0d972
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PiggyBank at 0x0b4ABe9E916E9c00CC80C4c473386D1116d5Bd8E
 */
 pragma solidity ^0.4.11;
 
@@ -14,7 +14,7 @@ contract PiggyBank
     {
         creator = msg.sender;
         deposits = 0;
-        unlockTime = now + 10 minutes;
+        unlockTime = now + 5 minutes;
     }
 
     function() payable
