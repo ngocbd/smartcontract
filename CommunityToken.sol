@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CommunityToken at 0xdbe36b52ae46a1e843d33aa3215851f4c11a6a6c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Communitytoken at 0xf44b800999bf10844e10530587b4878c94f0e73c
 */
 pragma solidity ^ 0.4.18;
 library SafeMath {
@@ -25,7 +25,7 @@ library SafeMath {
         return c;
     }
 }
-contract CommunityToken {
+contract Communitytoken {
     using SafeMath
     for uint256;
     mapping(address => mapping(address => uint256)) allowed;
