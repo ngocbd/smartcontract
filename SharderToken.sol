@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SharderToken at 0xb15fe5a123e647ba594cea7a1e648646f95eb4aa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SharderToken at 0x3a92b0fa21043e14a021821ba9371a8ed01ec5dc
 */
 /*
   Copyright 2017 Sharder Foundation.
@@ -132,7 +132,9 @@ contract SharderToken {
 
     uint256 internal constant MAX_PROMOTION_SS = 0;
     uint internal constant NUM_OF_PHASE = 2;
-    uint internal constant BLOCKS_PER_PHASE = 86400;
+    /// Each phase contains exactly 78776 Ethereum blocks, which is roughly 15 days,
+    /// See https://www.ethereum.org/crowdsale#scheduling-a-call
+    uint internal constant BLOCKS_PER_PHASE = 78776;
 
     /// Crowdsale start block number.
     uint public saleStartAtBlock = 0;
