@@ -1,138 +1,95 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Escrow at 0x117e8065b28af271012dbfef73e16f99935cea71
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Escrow at 0x1962b5A02870BDBB676Dca19e91B2D74dcC44C27
 */
-pragma solidity ^0.4.18;
+pragma solidity 0.4.16;
 
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-    address public owner;
+contract Escrow{
     
-    
-    /**
-    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-    * account.
-    */
-    function Ownable() public {
+    function Escrow() {
         owner = msg.sender;
     }
+
+    mapping (address => mapping (bytes32 => uint128)) public balances;
+    mapping (bytes16 => Lock) public lockedMoney;
+    address public owner;
     
+    struct Lock {
+        uint128 amount;
+        bytes32 currencyAndBank;
+        address from;
+        address executingBond;
+    }
     
-    /**
-    * @dev Throws if called by any account other than the owner.
-    */
+    event TxExecuted(uint32 indexed event_id);
+    
     modifier onlyOwner() {
-        require(msg.sender == owner);
+        if(msg.sender == owner)
         _;
     }
     
-    
-    /**
-    * @dev Allows the current owner to transfer control of the contract to a newOwner.
-    * @param newOwner The address to transfer ownership to.
-    */
-    function transferOwnership(address newOwner) public onlyOwner {
-        if (newOwner != address(0)) {
-            owner = newOwner;
-        }
-    }
-
-}
-
-contract Escrow is Ownable {
-    
-    enum DealState { Empty, Created, InProgress, InTrial, Finished }
-    enum Answer { NotDefined, Yes, No }
-    
-    struct Deal {
-        address customer;
-        address beneficiary;
-        address agent;
-        
-        uint256 value;
-        uint256 commission;
-        
-        uint256 endtime;
-        
-        bool customerAns;
-        bool beneficiaryAns;
-        
-        DealState state;
+    function checkBalance(address acc, string currencyAndBank) constant returns (uint128 balance) {
+        bytes32 cab = sha3(currencyAndBank);
+        return balances[acc][cab];
     }
     
-    mapping (uint256 => Deal) public deals;
-    uint256 lastDealId;
-    
-    function createNew(address _customer, address _beneficiary, address _agent,
-                        uint256 _value, uint256 _commision, uint256 _endtime) public onlyOwner returns (uint256) {
-        uint256 dealId = lastDealId + 1;
-        deals[dealId] = Deal(_customer, _beneficiary, _agent, _value, _commision, _endtime, false, false, DealState.Created);
-        lastDealId++;
-        return dealId;
+    function getLocked(bytes16 lockID) returns (uint) {
+        return lockedMoney[lockID].amount;
     }
     
-    function pledge(uint256 _dealId) public payable {
-        require(msg.value == (deals[_dealId].value + deals[_dealId].commission));
-        deals[_dealId].state = DealState.InProgress;
+    function deposit(address to, uint128 amount, string currencyAndBank, uint32 event_id) 
+        onlyOwner returns(bool success) {
+            bytes32 cab = sha3(currencyAndBank);
+            balances[to][cab] += amount;
+            TxExecuted(event_id);
+            return true;
+    } 
+    
+    function withdraw(uint128 amount, string currencyAndBank, uint32 event_id) 
+        returns(bool success) {
+            bytes32 cab = sha3(currencyAndBank);
+            require(balances[msg.sender][cab] >= amount);
+            balances[msg.sender][cab] -= amount;
+            TxExecuted(event_id);
+            return true;
     }
     
-    modifier onlyAgent(uint256 _dealId) {
-        require(msg.sender == deals[_dealId].agent);
-        _;
+    function lock(uint128 amount, string currencyAndBank, address executingBond, bytes16 lockID, uint32 event_id) 
+        returns(bool success) {   
+            bytes32 cab = sha3(currencyAndBank);
+            require(balances[msg.sender][cab] >= amount);
+            balances[msg.sender][cab] -= amount;
+            lockedMoney[lockID].currencyAndBank = cab;
+            lockedMoney[lockID].amount += amount;
+            lockedMoney[lockID].from = msg.sender;
+            lockedMoney[lockID].executingBond = executingBond;
+            TxExecuted(event_id);
+            return true; 
     }
     
-    /**
-     * @dev ?onfirm that the customer conditions are met
-     */
-    function confirmCustomer(uint256 _dealId) public {
-        require(msg.sender == deals[_dealId].customer);
-        deals[_dealId].customerAns = true;
+    function executeLock(bytes16 lockID, address issuer) returns(bool success) {
+        if(msg.sender == lockedMoney[lockID].executingBond){
+	        balances[issuer][lockedMoney[lockID].currencyAndBank] += lockedMoney[lockID].amount;            
+	        delete lockedMoney[lockID];
+	        return true;
+		}else
+		    return false;
     }
     
-    /**
-     * @dev ?onfirm that the beneficiary conditions are met
-     */
-    function confirmBeneficiary(uint256 _dealId) public {
-        require(msg.sender == deals[_dealId].beneficiary);
-        deals[_dealId].beneficiaryAns = true;
+    function unlock(bytes16 lockID, uint32 event_id) onlyOwner returns (bool success) {
+        balances[lockedMoney[lockID].from][lockedMoney[lockID].currencyAndBank] +=
+            lockedMoney[lockID].amount;
+        delete lockedMoney[lockID];
+        TxExecuted(event_id);
+        return true;
     }
     
-    /**
-     * @dev Check participants answers and change deal state
-     */
-    function finishDeal(uint256 _dealId) public onlyOwner {
-        require(deals[_dealId].state == DealState.InProgress);
-        if (deals[_dealId].customerAns && deals[_dealId].beneficiaryAns) {
-            deals[_dealId].beneficiary.transfer(deals[_dealId].value);
-            deals[_dealId].agent.transfer(deals[_dealId].commission);
-            deals[_dealId].state = DealState.Finished;
-        } else {
-            require(now >= deals[_dealId].endtime);
-            deals[_dealId].state = DealState.InTrial;
-        }
-    }
-    
-    /**
-     * @dev Return money to customer
-     */
-    function dealRevert(uint256 _dealId) public onlyAgent(_dealId) {
-        require(deals[_dealId].state == DealState.InTrial);
-        deals[_dealId].customer.transfer(deals[_dealId].value);
-        deals[_dealId].agent.transfer(deals[_dealId].commission);
-        deals[_dealId].state = DealState.Finished;
-    }
-    
-    /**
-     * @dev Confirm deal completed and transfer money to beneficiary
-     */
-    function dealConfirm(uint256 _dealId) public onlyAgent(_dealId) {
-        require(deals[_dealId].state == DealState.InTrial);
-        deals[_dealId].beneficiary.transfer(deals[_dealId].value);
-        deals[_dealId].agent.transfer(deals[_dealId].commission);
-        deals[_dealId].state = DealState.Finished;
+    function pay(address to, uint128 amount, string currencyAndBank, uint32 event_id) 
+        returns (bool success){
+            bytes32 cab = sha3(currencyAndBank);
+            require(balances[msg.sender][cab] >= amount);
+            balances[msg.sender][cab] -= amount;
+            balances[to][cab] += amount;
+            TxExecuted(event_id);
+            return true;
     }
 }
