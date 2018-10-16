@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RKCToken at 0xeb90dca0adfabfe9571012bc1f6cecd663098962
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RKCToken at 0x6ccb56947ea1d6efdc81acfbacd8263ddfa9b202
 */
 // Royal Kingdom Coin Token
 // www.royalkingdomcoin.com
@@ -8,6 +8,8 @@
 // The official website is https://www.royalkingdomcoin.com/
 //
 // The uints are all in wei and atto tokens (*10^-18)
+
+// The contract code itself, as usual, is at the end, after all the connected libraries
 
 pragma solidity ^0.4.11;
 
