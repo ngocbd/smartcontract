@@ -1,194 +1,117 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xbfffaa3d861832a2347864b247fcb94c245ec0b6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x0565043602218b8bcc3b1470a33de427561d9f79
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.18;
 
-contract owned 
-{
+contract Owned {
 	address public owner;
 
-	function owned() public
-	{
+	function Owned() public {
 		owner = msg.sender;
 	}
 
-	function changeOwner(address newOwner) public onlyOwner 
-	{
-		owner = newOwner;
-	}
-
-	modifier onlyOwner 
-	{
+	modifier onlyOwner() {
 		require(msg.sender == owner);
 		_;
 	}
+
+	function setOwner(address _owner) onlyOwner public {
+		owner = _owner;
+	}
 }
 
-contract ERC20 {
-	function totalSupply() public constant returns (uint totalTokenCount);
-	function balanceOf(address _owner) public constant returns (uint balance);
-	function transfer(address _to, uint _value) public returns (bool success);
-	function transferFrom(address _from, address _to, uint _value) public returns (bool success);
-	function approve(address _spender, uint _value) public returns (bool success);
-	function allowance(address _owner, address _spender) public constant returns (uint remaining);
-	event Transfer(address indexed _from, address indexed _to, uint _value);
-	event Approval(address indexed _owner, address indexed _spender, uint _value);
-}
-
-
-
-contract Token is ERC20, owned 
-{
-	string public constant symbol = "GMBC";
-	string public constant name = "GMBC";
-	uint8 public constant decimals = 18;
-
-	uint256 _totalSupply = 0;
-	
-	event Burned(address backer, uint _value);
- 
-	// Balances for each account
-	mapping(address => uint256) balances;
-
-	mapping(address => uint256) lockedTillTime;
- 
-	// Owner of account approves the transfer of an amount to another account
-	mapping(address => mapping (address => uint256)) allowed;
-
-	address public crowdsale;
-
-	function changeCrowdsale(address newCrowdsale) public onlyOwner 
-	{
-		crowdsale = newCrowdsale;
+contract SafeMath {
+	function add(uint256 _a, uint256 _b) internal pure returns (uint256) {
+		uint256 c = _a + _b;
+		assert(c >= _a);
+		return c;
 	}
 
-	modifier onlyOwnerOrCrowdsale 
-	{
-		require(msg.sender == owner || msg.sender == crowdsale);
+	function sub(uint256 _a, uint256 _b) internal pure returns (uint256) {
+		assert(_a >= _b);
+		return _a - _b;
+	}
+
+	function mul(uint256 _a, uint256 _b) internal pure returns (uint256) {
+		uint256 c = _a * _b;
+		assert(_a == 0 || c / _a == _b);
+		return c;
+	}
+}
+
+contract IToken {
+	function name() public pure returns (string _name) { _name; }
+	function symbol() public pure returns (string _symbol) { _symbol; }
+	function decimals() public pure returns (uint8 _decimals) { _decimals; }
+	function totalSupply() public pure returns (uint256 _totalSupply) { _totalSupply; }
+
+	function balanceOf(address _owner) public pure returns (uint256 balance) { _owner; balance; }
+
+	function allowance(address _owner, address _spender) public pure returns (uint256 remaining) { _owner; _spender; remaining; }
+
+	function transfer(address _to, uint256 _value) public returns (bool success);
+	function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+	function approve(address _spender, uint256 _value) public returns (bool success);
+}
+
+contract Token is IToken, SafeMath, Owned {
+	string public constant standard = '0.1';
+	string public name = '';
+	string public symbol = '';
+	uint8 public decimals = 0;
+	uint256 public totalSupply = 0;
+	mapping (address => uint256) public balanceOf;
+	mapping (address => mapping (address => uint256)) public allowance;
+
+	event Transfer(address indexed _from, address indexed _to, uint256 _value);
+	event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+
+	function Token(string _name, string _symbol, uint8 _decimals, uint256 _totalSupply) public {
+		require(bytes(_name).length > 0 && bytes(_symbol).length > 0);
+
+		name = _name;
+		symbol = _symbol;
+		decimals = _decimals;
+		totalSupply = _totalSupply;
+
+		balanceOf[msg.sender] = _totalSupply;
+	}
+
+	modifier validAddress(address _address) {
+		require(_address != 0x0);
 		_;
 	}
 
-	function safeAdd(uint256 _x, uint256 _y) internal pure returns (uint256) 
-	{
-		uint256 z = _x + _y;
-		assert(z >= _x);
-		return z;
-	}
-
-	function safeSub(uint256 _x, uint256 _y) internal pure returns (uint256) 
-	{
-		assert(_x >= _y);
-		return _x - _y;
-	}
-	
-	function totalSupply() public constant returns (uint256 totalTokenCount) 
-	{
-		return _totalSupply;
-	}
- 
-	// What is the balance of a particular account?
-	function balanceOf(address _owner) public constant returns (uint256 balance) 
-	{
-		return balances[_owner];
-	}
-
-	function getUnlockTime(address _owner) public constant returns (uint256 unlockTime) 
-	{
-		return lockedTillTime[_owner];
-	}
-
-	function isUnlocked(address _owner) public constant returns (bool unlocked) 
-	{
-		return lockedTillTime[_owner] < now;
-	}
- 
-	// Transfer the balance from owner's account to another account
-	function transfer(address _to, uint256 _amount) public returns (bool success) 
-	{
-		if (balances[msg.sender] >= _amount 
-			&& _amount > 0
-			&& balances[_to] + _amount > balances[_to]
-			&& isUnlocked(msg.sender)) 
-		{
-			balances[msg.sender] -= _amount;
-			balances[_to] += _amount;
-			Transfer(msg.sender, _to, _amount);
+	function transfer(address _to, uint256 _value) public validAddress(_to) returns (bool success) {
+		if (balanceOf[msg.sender] >= _value && _value > 0) {
+			balanceOf[msg.sender] = sub(balanceOf[msg.sender], _value);
+			balanceOf[_to] = add(balanceOf[_to], _value);
+			Transfer(msg.sender, _to, _value);
 			return true;
-		} else {
-			revert();
+		}
+		else {
+			return false;
 		}
 	}
- 
-	// Send _value amount of tokens from address _from to address _to
-	// The transferFrom method is used for a withdraw workflow, allowing contracts to send
-	// tokens on your behalf, for example to "deposit" to a contract address and/or to charge
-	// fees in sub-currencies; the command should fail unless the _from account has
-	// deliberately authorized the sender of the message via some mechanism; we propose
-	// these standardized APIs for approval:
-	function transferFrom(
-		address _from,
-		address _to,
-		uint256 _amount
-	) public returns (bool success) 
-	{
-		if (balances[_from] >= _amount
-			&& allowed[_from][msg.sender] >= _amount
-			&& _amount > 0
-			&& balances[_to] + _amount > balances[_to] 
-			&& isUnlocked(_from))
-		{
-			balances[_from] -= _amount;
-			allowed[_from][msg.sender] -= _amount;
-			balances[_to] += _amount;
-			Transfer(_from, _to, _amount);
+
+	function transferFrom(address _from, address _to, uint256 _value) public validAddress(_from) validAddress(_to) returns (bool success) {
+		if (balanceOf[_from] >= _value && _value > 0) {
+			allowance[_from][msg.sender] = sub(allowance[_from][msg.sender], _value);
+			balanceOf[_from] = sub(balanceOf[_from], _value);
+			balanceOf[_to] = add(balanceOf[_to], _value);
+			Transfer(_from, _to, _value);
 			return true;
-		} else {
-			revert();
+		}
+		else {
+			return false;
 		}
 	}
- 
-	// Allow _spender to withdraw from your account, multiple times, up to the _value amount.
-	// If this function is called again it overwrites the current allowance with _value.
-	function approve(address _spender, uint256 _amount) public returns (bool success) 
-	{
-		allowed[msg.sender][_spender] = _amount;
-		Approval(msg.sender, _spender, _amount);
+
+	function approve(address _spender, uint256 _value) public validAddress(_spender) returns (bool success) {
+		require(_value == 0 || allowance[msg.sender][_spender] == 0);
+
+		allowance[msg.sender][_spender] = _value;
+		Approval(msg.sender, _spender, _value);
 		return true;
-	}
- 
-	function allowance(address _owner, address _spender) public constant returns (uint256 remaining) 
-	{
-		return allowed[_owner][_spender];
-	}
-
-	function mint(address target, uint256 mintedAmount, uint256 lockTime) public onlyOwnerOrCrowdsale 
-	{
-		require(mintedAmount > 0);
-
-		balances[target] = safeAdd(balances[target], mintedAmount);
-		_totalSupply = safeAdd(_totalSupply, mintedAmount);
-
-		if (lockedTillTime[target] < lockTime)
-		{
-			lockedTillTime[target] = lockTime;
-		}
-	}
-
-	function burn(address target, uint256 burnedAmount) public onlyOwnerOrCrowdsale
-	{
-		require(burnedAmount > 0);
-
-		if (balances[target] >= burnedAmount)
-		{
-			balances[target] -= burnedAmount;
-		}
-		else
-		{
-			burnedAmount = balances[target];
-			balances[target] = 0;
-		}
-
-		_totalSupply = safeSub(_totalSupply, burnedAmount);
-		Burned(target, burnedAmount);
 	}
 }
