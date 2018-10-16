@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x73a09f1c47eb18629662f876aba0e4ea529d43b8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x6cd317914b1147529ed2968bca639097fd5e567a
 */
 pragma solidity ^ 0.4.17;
 
@@ -83,7 +83,7 @@ contract Token is ERC20, SafeMath, Ownable {
 
     // Lock transfer for contributors during the ICO 
     modifier onlyUnlocked() {
-        if (msg.sender != preSaleAddress && locked) 
+        if (locked) 
             revert();
         _;
     }
