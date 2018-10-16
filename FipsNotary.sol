@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FipsNotary at 0x8c0a599d3ff4d3344cb93ae49247c11b645c5e44
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FipsNotary at 0xa8fa462e08282f48756a672a03d0e10e154ed2af
 */
 pragma solidity ^0.4.1;
 
@@ -39,25 +39,26 @@ contract FipsNotary {
     }
 
     function fipsPublishData(bytes20 fips, bytes data) {
-        if ((msg.sender == admin) || (msg.sender == ledger[fips])) {
-            FipsData(fips, msg.sender, data);
+        if ((msg.sender != admin) && (msg.sender != ledger[fips])) {
+            throw;
         }
+        FipsData(fips, msg.sender, data);
     }
 
-    function fipsPublishDataMulti(bytes20[] fips, bytes data) {
-        for (uint i = 0; i < fips.length; i++) {
-            fipsPublishData(fips[i], data);
+    function fipsAddToLedger(bytes20 fips, address owner) internal {
+        if (fipsIsRegistered(fips)) {
+            throw;
         }
+        ledger[fips] = owner;
+        FipsRegistration(fips, owner);
     }
 
-    function fipsAddToLedger(bytes20 fips, address owner, bytes data) internal {
+    function fipsChangeOwner(bytes20 fips, address old_owner, address new_owner) internal {
         if (!fipsIsRegistered(fips)) {
-            ledger[fips] = owner;
-            FipsRegistration(fips, owner);
-            if (data.length > 0) {
-                FipsData(fips, owner, data);
-            }
+            throw;
         }
+        ledger[fips] = new_owner;
+        FipsTransfer(fips, old_owner, new_owner);
     }
 
     function fipsGenerate() internal returns (bytes20 fips) {
@@ -68,47 +69,37 @@ contract FipsNotary {
         return fips;
     }
 
-    function fipsLegacyRegister(bytes20 fips, address owner, bytes data) {
-        if (registrants[msg.sender] == true) {
-            fipsAddToLedger(fips, owner, data);
+    function fipsLegacyRegister(bytes20[] fips, address owner) {
+        if (registrants[msg.sender] != true) {
+            throw;
+        }
+        for (uint i = 0; i < fips.length; i++) {
+            fipsAddToLedger(fips[i], owner);
         }
     }
 
-    function fipsLegacyRegisterMulti(bytes20[] fips, address owner, bytes data) {
-        if (registrants[msg.sender] == true) {
-            for (uint i = 0; i < fips.length; i++) {
-                fipsAddToLedger(fips[i], owner, data);
-            }
+    function fipsRegister(uint count, address owner, bytes data) {
+        if (registrants[msg.sender] != true) {
+            throw;
         }
-    }
-
-    function fipsRegister(address owner, bytes data) {
-        if (registrants[msg.sender] == true) {
-            fipsAddToLedger(fipsGenerate(), owner, data);
+        if ((count < 1) || (count > 100)) {
+            throw;
         }
-    }
-
-    function fipsRegisterMulti(uint count, address owner, bytes data) {
-        if (registrants[msg.sender] == true) {
-            if ((count > 0) && (count <= 100)) {
-                for (uint i = 0; i < count; i++) {
-                    fipsAddToLedger(fipsGenerate(), owner, data);
-                }
+        bytes20 fips;
+        for (uint i = 1; i <= count; i++) {
+            fips = fipsGenerate();
+            fipsAddToLedger(fips, owner);
+            if (data.length > 0) {
+                FipsData(fips, owner, data);
             }
         }
     }
 
     function fipsTransfer(bytes20 fips, address new_owner) {
-        if (fipsOwner(fips) == msg.sender) {
-            ledger[fips] = new_owner;
-            FipsTransfer(fips, msg.sender, new_owner);
+        if (msg.sender != ledger[fips]) {
+            throw;
         }
-    }
-
-    function fipsTransferMulti(bytes20[] fips, address new_owner) {
-        for (uint i = 0; i < fips.length; i++) {
-            fipsTransfer(fips[i], new_owner);
-        }
+        fipsChangeOwner(fips, msg.sender, new_owner);
     }
 
     function registrantApprove(address registrant) onlyAdmin {
