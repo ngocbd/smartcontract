@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xc385ef4a44de4e31fc83e0a31579df681b64ba8e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x7f4fe0059129442fd6e46785ba12938de51c5a25
 */
 pragma solidity ^0.4.18;
-
 
 contract Owned {
     address public owner;
@@ -22,7 +21,6 @@ contract Owned {
 
 
 interface tokenRecipient { function receiveApproval(address _from, uint _value, address _token, bytes _extraData) public; }
-
 
 contract TokenBase is Owned {
     string public name;
@@ -104,15 +102,17 @@ contract WorkProff is TokenBase {
         require(timeSinceLastProof >= 5 seconds);
         
         uint reward = 0;
+        uint difficuty = 0;
         if (now - foundingTime < minerPreTime) {
             reward = timeSinceLastProof * minerPreSupply / minerPreTime;
+            difficuty = 0;
         } else {
             reward = timeSinceLastProof * (minerTotalSupply - minerPreSupply) / minerTotalTime;
+            difficuty = minerDifficulty;
         }
 
         balanceOf[msg.sender] += reward;
         totalSupply += reward;
-        minerTotalReward += reward;
         minerDifficulty = minerDifficulty * 10 minutes / timeSinceLastProof + 1;
         minerTimeOfLastProof = now;
         minerCurrentChallenge = sha3(nonce, minerCurrentChallenge, block.blockhash(block.number - 1));
