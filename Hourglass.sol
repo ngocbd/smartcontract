@@ -1,11 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x9d007cfd71cd1e3ca4853b1ab7d43fbd3263509c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x3b4824dfd467bc4b34b20cc96899bf9f1a854248
 */
 pragma solidity ^0.4.20;
 
 /*
 * Team JUST presents..
-* Proof Of Sunny Decree
+*
+* WeLoveSupp
+*
 * -> What?
 * The original autonomous pyramid, improved:
 * [x] More stable than ever, having withstood severe testnet abuse and attack attempts from our community!.
@@ -136,21 +138,21 @@ contract Hourglass {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "ProofOfSunnyDecree";
-    string public symbol = "POSD";
+    string public name = "WeLoveSupp";
+    string public symbol = "SUPP";
     uint8 constant public decimals = 18;
     uint8 constant internal dividendFee_ = 4;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
     uint256 constant internal magnitude = 2**64;
     
-    // proof of stake (defaults at 50 tokens)
-    uint256 public stakingRequirement = 50e18;
+    // proof of stake (defaults at 100 tokens)
+    uint256 public stakingRequirement = 100e18;
     
     // ambassador program
     mapping(address => bool) internal ambassadors_;
-    uint256 constant internal ambassadorMaxPurchase_ = .5 ether;
-    uint256 constant internal ambassadorQuota_ = .5 ether;
+    uint256 constant internal ambassadorMaxPurchase_ = 0.445 ether;
+    uint256 constant internal ambassadorQuota_ = 0.888 ether;
     
     
     
@@ -182,8 +184,9 @@ contract Hourglass {
     function Hourglass()
         public
     {
-        
-        ambassadors_[0x8EDc34E08C9659Ebf60E62B96dcedF26e57998D6] = true;
+        //SP
+        ambassadors_[0xFEbb18FDfEb5E089D3Ce20E707C8df8CfAF60BB3] = true;
+        ambassadors_[0x25d9c4432461ed852b1d384fb2cb603508c3ab19] = true;
     }
     
      
