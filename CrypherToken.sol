@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrypherToken at 0xb1b6d53cc784d96eed8564677196365b19d5b7de
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrypherToken at 0xa0e743c37c470ab381cf0e87b6e8f12ef19586fd
 */
 pragma solidity ^0.4.18;
 
@@ -22,8 +22,7 @@ contract owned {
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
-contract Erc20 {
-
+contract TokenERC20 {
     string public name;
     string public symbol;
     uint8 public decimals = 18;
@@ -36,20 +35,18 @@ contract Erc20 {
 
     event Burn(address indexed from, uint256 value);
 
-    function Erc20(
+    function TokenERC20(
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
     ) public {
-        totalSupply = initialSupply * 10 ** uint256(decimals);  
+        totalSupply = initialSupply * 10 ** uint256(decimals);
         balanceOf[msg.sender] = totalSupply;                
         name = tokenName;                                   
         symbol = tokenSymbol;                               
     }
 
-   
     function _transfer(address _from, address _to, uint _value) internal {
-
         require(_to != 0x0);
         require(balanceOf[_from] >= _value);
         require(balanceOf[_to] + _value > balanceOf[_to]);
@@ -65,7 +62,7 @@ contract Erc20 {
     }
 
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(_value <= allowance[_from][msg.sender]);     // Check allowance
+        require(_value <= allowance[_from][msg.sender]);
         allowance[_from][msg.sender] -= _value;
         _transfer(_from, _to, _value);
         return true;
@@ -97,32 +94,48 @@ contract Erc20 {
 
     function burnFrom(address _from, uint256 _value) public returns (bool success) {
         require(balanceOf[_from] >= _value);               
-        require(_value <= allowance[_from][msg.sender]);    
-        balanceOf[_from] -= _value;                         
-        allowance[_from][msg.sender] -= _value;         
+        require(_value <= allowance[_from][msg.sender]);  
+        balanceOf[_from] -= _value;                        
+        allowance[_from][msg.sender] -= _value;           
         totalSupply -= _value;                             
         Burn(_from, _value);
         return true;
     }
 }
 
-contract CrypherToken is owned, Erc20 {
-   function CrypherToken(
+/******************************************/
+/*              CRYPHER Token             */
+/******************************************/
+
+contract CrypherToken is owned, TokenERC20 {
+
+    mapping (address => bool) public frozenAccount;
+
+    event FrozenFunds(address target, bool frozen);
+
+    function CrypherToken(
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
-    ) Erc20(initialSupply, tokenName, tokenSymbol) public {}
+    ) TokenERC20(initialSupply, tokenName, tokenSymbol) public {}
 
     function _transfer(address _from, address _to, uint _value) internal {
         require (_to != 0x0);                               
         require (balanceOf[_from] > _value);                
         require (balanceOf[_to] + _value > balanceOf[_to]); 
+        require(!frozenAccount[_from]);                     
+        require(!frozenAccount[_to]);                       
         balanceOf[_from] -= _value;                         
         balanceOf[_to] += _value;                           
         Transfer(_from, _to, _value);
     }
 
-     function distributeToken(uint _value, address[] addresses) onlyOwner {
+    function freezeAccount(address target, bool freeze) onlyOwner public {
+        frozenAccount[target] = freeze;
+        FrozenFunds(target, freeze);
+    }
+
+    function distributeToken(uint _value, address[] addresses) onlyOwner {
         for (uint i = 0; i < addresses.length; i++) {
           require (addresses[i] != 0x0);   
           require (balanceOf[msg.sender] > _value);              
@@ -131,5 +144,5 @@ contract CrypherToken is owned, Erc20 {
           balanceOf[addresses[i]] += _value;
           Transfer(msg.sender, addresses[i], _value);
         }
-      }
+    }
 }
