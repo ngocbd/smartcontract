@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Eyecoin at 0x5d1ea88a139af4f0d6dbb14e8e06b6008c2f9ca3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Eyecoin at 0x6f9b3624ea5fe375769b17a25ead143e4eb907ea
 */
 pragma solidity ^ 0.4.2;
 
 contract Eyecoin {
     /* Public variables of the token */
-    string public standard = 'Token 0.1';
+    string public standard;
     string public name;
     string public symbol;
     uint8 public decimals;
@@ -19,10 +19,10 @@ contract Eyecoin {
   
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function Eyecoin() {
-
-         initialSupply = 5000000;
+        
+         initialSupply = 500000000;
          name ="Eyecoin";
-        decimals = 18;
+        decimals =2 ;
          symbol = "EYC";
         
         balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
@@ -42,7 +42,6 @@ contract Eyecoin {
    
 
     
-
    
 
     /* This unnamed function is called whenever someone tries to send ether to it */
