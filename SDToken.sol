@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SDToken at 0xfac71410c457b8c918a62a85b2ea2ed026139b43
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SDToken at 0x59f93c60bc3fd5ee7f0e508c888c48084da975ee
 */
 pragma solidity 0.4.16;
 
@@ -63,7 +63,7 @@ contract SDToken is StandardToken {
     string constant public name = "SixDomainToken";
     string constant public symbol = "SDT";
 
-    function SDToken() {
+    function SDTToken() {
         balances[msg.sender] = totalSupply;
     }
 }
