@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BinaryOptionV2 at 0x109f913c33f3b15023b36714caa2be6c0daded01
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BinaryOptionV2 at 0x15d92e219cfe22b7515dd6d1cf5a6a65a4e2acf1
 */
 pragma solidity ^0.4.21;
 /**
@@ -1260,7 +1260,7 @@ contract BinaryOptionV2 {
     uint public timeInvestInMinute = 15;
     uint public timeOneSession = 20;
     uint public sessionId = 1;
-    uint public rateWin = 200;
+    uint public rateWin = 100;
     uint public rateLoss = 0;
     uint public rateFee = 5;
     uint public constant MAX_INVESTOR = 20;
@@ -1506,8 +1506,7 @@ contract BinaryOptionV2 {
         public
         onlyEscrow
     {
-        NamiCrowdSale namiToken = NamiCrowdSale(NamiAddr);
-        require(namiToken.balanceOf(address(this)) > 0);
+        require(totalNacInPool > 0);
         require(session.isReset && !session.isOpen);
         session.isReset = false;
         // open invest
@@ -1602,6 +1601,10 @@ contract BinaryOptionV2 {
         
         // check nac receive
         require(nacReceive > 0);
+        // cann't sell all fci in pool if session open
+        if(totalNacInPool == nacReceive) {
+            require(session.isOpen == false);
+        }
         fci[msg.sender] = fci[msg.sender].sub(_amount);
         totalFci = totalFci.sub(_amount);
         namiToken.transfer(msg.sender, nacReceive);
@@ -1636,20 +1639,22 @@ contract BinaryOptionV2 {
         uint result = (_priceClose>session.priceOpen)?1:0;
         NamiCrowdSale namiToken = NamiCrowdSale(NamiAddr);
         uint nacReturn;
+        uint rate;
         // uint price = namiToken.getPrice();
         // require(price != 0);
         for (uint i = 0; i < session.investorCount; i++) {
             if (session.win[i]==result) {
-                // etherToBuy = (session.amountInvest[i] - session.amountInvest[i] * rateFee / 100) * rateWin / 100;
-                // uint etherReturn = session.amountInvest[i] - session.amountInvest[i] * rateFee / 100;
-                // (session.investor[i]).transfer(etherReturn);
-                nacReturn = (session.amountInvest[i] - session.amountInvest[i] * rateFee / 100) * rateWin / 100;
+                rate = (rateWin.mul(rateFee)).div(100);
+                require(rate <= 100);
+                nacReturn = session.amountInvest[i].add( session.amountInvest[i].mul(100 - rate)  / 100);
                 require(namiToken.balanceOf(address(this)) >= nacReturn);
                 namiToken.transfer(session.investor[i], nacReturn);
                 totalNacInPool = totalNacInPool.sub(nacReturn.sub(session.amountInvest[i]));
             } else {
                 if(rateLoss > 0) {
-                    nacReturn = (session.amountInvest[i] - session.amountInvest[i] * rateFee / 100) * rateLoss / 100;
+                    rate = (rateLoss.mul(rateFee)).div(100);
+                    require(rate <= 100);
+                    nacReturn = session.amountInvest[i].add( session.amountInvest[i].mul(100 - rate)  / 100);
                     require(namiToken.balanceOf(address(this)) >= nacReturn);
                     namiToken.transfer(session.investor[i], nacReturn);
                     totalNacInPool = totalNacInPool.add(session.amountInvest[i].sub(nacReturn));
