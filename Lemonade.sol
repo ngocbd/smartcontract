@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lemonade at 0x822b3442e88718cc83312dc92e10083720f77081
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lemonade at 0x9713b3bf42b0f39c688999185c53db425d864a8a
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
@@ -10,7 +10,7 @@ contract Lemonade {
     string public name ="Lemonade";
     string public symbol ="LMND";
     uint8 public decimals = 18;
-    uint256 public totalSupply = 10000000000000000000000000000;
+    uint256 public totalSupply = 1000000000000000000000000;
 
 
     mapping (address => uint256) public balanceOf;
@@ -25,10 +25,10 @@ contract Lemonade {
 
     function Lemonade(
     ) public {
-        totalSupply = 10000000000000000000000000000 * 10 ** uint256(0);  // Update total supply with the decimal amount
-        balanceOf[msg.sender] = 10000000000000000000000000000;                // Give the creator all initial tokens
-        name = "Lemonade";                                   // Set the name for display purposes
-        symbol = "LMND";                               // Set the symbol for display purposes
+        totalSupply = 1000000000000000000000000 * 10 ** uint256(0);
+        balanceOf[msg.sender] = 1000000000000000000000000;
+        name = "Lemonade";
+        symbol = "LMND";
     }
 
 
