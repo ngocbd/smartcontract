@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SISA at 0x244619438e491f95bbbf68253f2339b21e10a54a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SISA at 0xa0aa85b54f8a7b09c845f13a09172b08925f3d54
 */
 contract Math {
   function mul(uint a, uint b) internal returns (uint) {
@@ -32,10 +32,6 @@ contract Math {
     }
   }
 }
-// Abstract contract for the full ERC 20 Token standard
-// https://github.com/ethereum/EIPs/issues/20
-
-
 contract Token {
     /* This is a slight change to the ERC20 base standard.
     function totalSupply() constant returns (uint256 supply);
@@ -57,19 +53,6 @@ contract Token {
     function voteBalance(address _owner) constant returns (uint256 balance);
 
     function voteCount(address _proposal) constant returns (uint256 count);
-
-    // /// @notice send `_value` token to `_to` from `msg.sender`
-    // /// @param _to The address of the recipient
-    // /// @param _value The amount of token to be transferred
-    // /// @return Whether the transfer was successful or not
-    // function transfer(address _to, uint256 _value) returns (bool success);
-
-    // /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    // /// @param _from The address of the sender
-    // /// @param _to The address of the recipient
-    // /// @param _value The amount of token to be transferred
-    // /// @return Whether the transfer was successful or not
-    // function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
 
     /// @notice `msg.sender` approves `_spender` to spend `_value` tokens
     /// @param _spender The address of the account able to transfer the tokens
@@ -95,14 +78,6 @@ contract Token {
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
 }
-/*
-You should inherit from StandardToken or, for a token like you would want to
-deploy in something like Mist, see HumanStandardToken.sol.
-(This implements ONLY the standard functions and NOTHING else.
-If you deploy this, you won't have anything useful.)
-
-Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20
-.*/
 
 contract StandardToken is Token {
 
@@ -164,6 +139,7 @@ contract StandardToken is Token {
 
     function transfer(address _to, uint256 _value) 
     updateAccount(msg.sender)
+    updateAccount(_to)
     voteUpdater(_to, msg.sender)
     returns (bool success) 
     {
@@ -180,7 +156,8 @@ contract StandardToken is Token {
     }
 
     function transferFrom(address _from, address _to, uint256 _value)
-    updateAccount(msg.sender) 
+    updateAccount(_from)
+    updateAccount(_to)  
     voteUpdater(_to, _from)
     returns (bool success) 
     {
@@ -199,8 +176,6 @@ contract StandardToken is Token {
     mapping (address => Account) accounts;
     mapping (address => uint ) votes;
 }
-
-// Created By: Strategic Investments in Strategic Areas Group
 
 contract SISA is StandardToken, Math {
 
@@ -251,25 +226,6 @@ contract SISA is StandardToken, Math {
     }
 
 
-    // modifier hasNotVoted() {
-    // 	if (voted[msg.sender]){
-    // 		throw;
-    // 	}
-    // 	_;
-    // }
-    // function voteCount(address _proposal) 
-    //     public
-    //     returns (uint256) 
-    // {
-    //     return votes[_proposal];
-    // }
-    // function voteBalance(address _owner) 
-    //     public
-    //     constant returns (uint256)
-    // {
-    //     return accounts[_owner].votes;
-
-    // }
     function castVote(address proposal) 
     	public
     {
@@ -337,8 +293,8 @@ contract SISA is StandardToken, Math {
 		team_funds = _team;
 		totalSupply = 50000000 * 1 ether;
 		balances[preICO_tokens] = 5000000 * 1 ether;
-		balances[bounty_funds] = 3000000 * 1 ether;
-		balances[team_funds] = 7000000 * 1 ether;
+		balances[bounty_funds] += 3000000 * 1 ether;
+		balances[team_funds] += 7000000 * 1 ether;
 		balances[ico_tokens] = 32500000 * 1 ether;
 
 
