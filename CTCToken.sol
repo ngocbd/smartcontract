@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CTCToken at 0xa16f4beee48c7090e99bd6fe7476a017f58e391f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CTCToken at 0x074d894cc81539853b77ed0f5cb5058a740010c3
 */
 pragma solidity ^0.4.11;
 
@@ -51,14 +51,6 @@ contract Ownable {
     }
     _;
  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to. 
-   */
-  function transferOwnership(address newOwner) onlyOwner {
-      owner = newOwner;
-  }
  
 }
   
@@ -102,6 +94,9 @@ contract CTCToken is Ownable, ERC20 {
     // start and end timestamps where investments are allowed (both inclusive)
     uint256 public startTime = 1507334400; 
     uint256 public endTime = 1514764799; 
+
+    // Owner of Token
+    address public owner;
 
     // Wallet Address of Token
     address public multisig;
@@ -170,10 +165,10 @@ contract CTCToken is Ownable, ERC20 {
     function () external payable {
         
         if (!validPurchase()){
-            refundFunds(msg.sender);
-        }
-        
-        tokensale(msg.sender);
+			refundFunds(msg.sender);
+		}
+		
+		tokensale(msg.sender);
     }
 
     // @notice tokensale
@@ -181,7 +176,7 @@ contract CTCToken is Ownable, ERC20 {
     // @return the transaction address and send the event as Transfer
         function tokensale(address recipient) canMint isActive saleIsOpen payable {
         require(recipient != 0x0);
-        
+		
         uint256 weiAmount = msg.value;
         uint256 nbTokens = weiAmount.mul(RATE).div(1 ether);
         
@@ -250,6 +245,11 @@ contract CTCToken is Ownable, ERC20 {
     // Change ETH/Token exchange rate
     function changeTokenRate(uint _tokenPrice) onlyOwner isActive {
         RATE = _tokenPrice;
+    }
+
+    // Change Token contract owner
+    function changeOwner(address _newOwner) onlyOwner isActive {
+        owner = _newOwner;
     }
 
     // Set Finish Minting.
@@ -330,8 +330,8 @@ contract CTCToken is Ownable, ERC20 {
          require(holder != 0x0); 
          balances[multisig] = balances[multisig].sub(bonusToken);
          balances[holder] = balances[holder].add(bonusToken);
-         totalNumberTokenSold=totalNumberTokenSold.add(bonusToken);
-         _icoSupply = _icoSupply.sub(bonusToken);
+		 totalNumberTokenSold=totalNumberTokenSold.add(bonusToken);
+		 _icoSupply = _icoSupply.sub(bonusToken);
     }
 
     
@@ -341,8 +341,8 @@ contract CTCToken is Ownable, ERC20 {
                 require(listAddresses[i] != 0x0); 
                 balances[listAddresses[i]] = balances[listAddresses[i]].add(bonus[i]);
                 balances[multisig] = balances[multisig].sub(bonus[i]);
-                totalNumberTokenSold=totalNumberTokenSold.add(bonus[i]);
-                _icoSupply = _icoSupply.sub(bonus[i]);
+				totalNumberTokenSold=totalNumberTokenSold.add(bonus[i]);
+				_icoSupply = _icoSupply.sub(bonus[i]);
          }
     }
     
