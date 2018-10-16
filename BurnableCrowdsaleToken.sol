@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnableCrowdsaleToken at 0xd2e559d39935110df3ac7e77727dc8cd88416b34
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnableCrowdsaleToken at 0xdfce5b8e880357753297882686c6c4940222ac4d
 */
 /*
  * ERC20 interface
