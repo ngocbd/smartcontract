@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WeduToken at 0x5a086708501251d2c948d767a88379f0b8d8c300
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WeduToken at 0xd339b7d955199253c7973fe9fdb2946a523e15a7
 */
 pragma solidity ^0.4.24;
 
@@ -69,6 +69,7 @@ contract WeduToken is ERC20Interface {
 
         owner = msg.sender;
         balanceValue[owner].unlocked = totalSupplyValue;
+        emit Transfer(this, owner, totalSupplyValue);
     }
 
     /**
@@ -192,7 +193,7 @@ contract WeduToken is ERC20Interface {
         // Check the input parameters
         require(_tos.length == _nums, "Number of users who receives the token is not match");
         require(_submitBalance < 100000000 * WEDU_UNIT, "Too high submit balance");
-        require(_nums < 256, "Two high number of users");
+        require(_nums < 100, "Two high number of users");
         require(_nums*_submitBalance <= balanceValue[owner].unlocked, "Unsufficient balance");
 
         balanceValue[owner].unlocked -= (_nums*_submitBalance);
