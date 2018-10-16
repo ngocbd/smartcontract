@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IronHands at 0xa3bb0578d04d3b8efc6544ad31dd5be136b61db0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IronHands at 0xa5629861c9c345f50221996ef852fd9665eb1c05
 */
 pragma solidity ^0.4.21;
 
@@ -198,8 +198,8 @@ contract IronHands is Owned {
     }
     
     /**
-     * Take 50% of the money and spend it on tokens, which will pay dividends later.
-     * Take the other 50%, and use it to pay off depositors.
+     * Take 25% of the money and spend it on tokens, which will pay dividends later.
+     * Take the other 75%, and use it to pay off depositors.
      */
     function payout() public {
         //Take everything in the pool
@@ -208,9 +208,9 @@ contract IronHands is Owned {
         require(balance > 1);
         //Increase our total throughput
         throughput += balance;
-        //Split it into two parts
-        uint investment = balance / 2;
-        //Take away the amount we are investing from the amount to send
+        //calculate 25% of investment
+        uint256 investment = balance / 4;
+        //Take away the amount we are investing(25%) from the amount to send(75%)
         balance -= investment;
         //Invest it in more tokens.
         uint256 tokens = weak_hands.buy.value(investment).gas(1000000)(msg.sender);
