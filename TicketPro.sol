@@ -1,27 +1,39 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TicketPro at 0x7f2a6fb65bcb31c56872d6e9bf48016292d7e198
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TicketPro at 0xb80463f354b54b958e88b4d5385693bb554cbd8e
 */
-//params (fee set to 0 so it's free):
-//  [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], "MJ comeback", 1603152000, "21/10/2020", "MGM grand", "MJC", 1000
+//params: 100,"MJ comeback", 1603152000, 0, "21/10/2020", "MGM grand", "MJC", 100000000, 10
 // "0x000000000000000000000000000000000000000000000000016a6075a7170002", 27, "0xE26D930533CF5E36051C576E1988D096727F28A4AB638DBE7729BCC067BD06C8", "0x76EBAA64A541D1DE054F4B63B586E7FEB485C1B3E85EA463F873CA69307EEEAA"
-
 pragma solidity ^0.4.17;
-contract TicketPro
+
+contract ERC20
 {
+     function totalSupply() public constant returns (uint);
+     function balanceOf(address tokenOwner) public constant returns (uint balance);
+     //function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+     function transfer(address to, uint tokens) public returns (bool success);
+     //function approve(address spender, uint tokens) public returns (bool success);
+     function transferFrom(address from, address to, uint tokens) public returns (bool success);
+     event Transfer(address indexed from, address indexed to, uint tokens);
+     event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
+ }
+
+contract TicketPro is ERC20
+{
+    //erc20 wiki: https://theethereum.wiki/w/index.php/ERC20_Token_Standard
+    //maybe allow tickets to be purchased through contract??
     uint totalTickets;
-    mapping(address => uint16[]) inventory;
-    mapping(address => uint) spent;
-    uint16 ticketIndex = 0; //to track mapping in tickets
+    mapping(address => uint) balances;
     uint expiryTimeStamp;
-    address organiser;
+    address admin;
     uint transferFee;
     uint numOfTransfers = 0;
     string public name;
     string public symbol;
     string public date;
     string public venue;
+    bytes32[] orderHashes;
     uint startPrice;
-    uint ticketLimit;
+    uint limitOfStartTickets;
     uint8 public constant decimals = 0; //no decimals as tickets cannot be split
 
     event Transfer(address indexed _from, address indexed _to, uint _value);
@@ -37,33 +49,47 @@ contract TicketPro
         else _;
     }
 
-    modifier organiserOnly()
+    modifier adminOnly()
     {
-        if(msg.sender != organiser) revert();
+        if(msg.sender != admin) revert();
         else _;
     }
 
     function() public { revert(); } //should not send any ether directly
 
-    function TicketPro(
-        uint16[] numberOfTickets,
-        string evName,
-        uint expiry,
-        string evDate,
-        string evVenue,
-        string eventSymbol,
-        uint startTicketLimit) public
+    function TicketPro(uint numberOfTickets, string evName, uint expiry,
+            uint fee, string evDate, string evVenue, string eventSymbol,
+             uint price, uint startTicketLimit) public
     {
-        totalTickets = numberOfTickets.length;
-        //assign some tickets to event organiser
-        inventory[msg.sender] = numberOfTickets;
+        totalTickets = numberOfTickets;
+        //event organizer has all the tickets in the beginning
+        balances[msg.sender] = totalTickets;
         expiryTimeStamp = expiry;
-        organiser = msg.sender;
+        admin = msg.sender;
+        //100 fee = 1 ether
+        transferFee = (1 ether * fee) / 100;
         symbol = eventSymbol;
         name = evName;
         date = evDate;
         venue = evVenue;
-        ticketLimit = startTicketLimit;
+        startPrice = price;
+        limitOfStartTickets= startTicketLimit;
+    }
+
+    //note that tickets cannot be split, it has to be a whole number
+    function buyATicketFromContract(uint numberOfTickets) public payable returns (bool)
+    {
+        //no decimal points allowed in a token
+        if(msg.value != startPrice * numberOfTickets
+            || numberOfTickets % 1 != 0) revert();
+        admin.transfer(msg.value);
+        balances[msg.sender] += 1;
+        return true;
+    }
+
+    function getTicketStartPrice() public view returns(uint)
+    {
+        return startPrice;
     }
 
     function getDecimals() public pure returns(uint)
@@ -73,48 +99,57 @@ contract TicketPro
 
     function getNumberOfAvailableStartTickets() public view returns (uint)
     {
-        return ticketLimit;
+        return limitOfStartTickets;
     }
 
-    function uintArrayToString (uint[] data) public pure returns (string)
+    //buyer pays all the fees, seller doesn't even need to have ether to do trade
+    function deliveryVSpayment(bytes32 offer, uint8 v, bytes32 r,
+        bytes32 s) public payable returns(bool)
     {
-        bytes memory bytesString = new bytes(data.length * 32);
-        uint urlLength;
-        for (uint i=0; i<data.length; i++) {
-            for (uint j=0; j<32; j++) {
-                byte char = byte((data[i] * 2 ** (8 * j)));
-                if (char != 0) {
-                    bytesString[urlLength] = char;
-                    urlLength += 1;
-                }
-            }
-        }
-        bytes memory bytesStringTrimmed = new bytes(urlLength);
-        for (i=0; i<urlLength; i++) {
-            bytesStringTrimmed[i] = bytesString[i];
-        }
-        return string(bytesStringTrimmed);
-    }
-
-    function trade(uint[] ticketIndices,
-                   uint priceOfAllTickets,
-                   uint8 v,
-                   bytes32 r,
-                   bytes32 s,
-                   bytes memory prefix) public payable
-    {
-        string memory message = uintArrayToString(ticketIndices);
-        bytes32 digest = keccak256(prefix, message);
-        address seller = ecrecover(digest, v, r, s);
-        require(msg.value == priceOfAllTickets);
-        for(uint i = 0; i < ticketIndices.length; i++)
-            require(inventory[seller][i] != 0); //should revert if arrayOutOfBounds
-        for(uint j = 0; j < ticketIndices.length; j++)
+	    var (seller, quantity, price, agreementIsValid) = recover(offer, v, r, s);
+        //if the agreement hash matches then the trade can take place
+        uint cost = price * quantity;
+        if(agreementIsValid && msg.value == cost)
         {
-            inventory[msg.sender].push(inventory[seller][j]);
-            inventory[seller][j] = 0;
-            spent[seller] += 1;
+            //send over ether and tokens
+            balances[msg.sender] += uint(quantity);
+            balances[seller] -= uint(quantity);
+            uint commission = (msg.value / 100) * transferFee;
+            uint sellerAmt = msg.value - commission;
+            seller.transfer(sellerAmt);
+            admin.transfer(commission);
+            numOfTransfers++;
+            return true;
         }
+        else revert();
+    }
+
+    // to test: suppose the offer is to sell 2 tickets at 0.102ETH
+    // which is 0x16A6075A7170000 WEI
+    // the parameters are:
+    // "0x000000000000000000000000000000000000000000000000016a6075a7170002", 27, "0x0071d8bc2f3c9b8102bc03660d525ab872070eb036cd75f0c503bdba8a9406d8","0xb1649086e9df334e9831dc7d57cb61808f7c07d1422ef150a43f9df92c48665c"
+    // I generated the test parameter with this:
+/*
+#!/usr/bin/python3
+
+import ecdsa, binascii
+
+secexp = 0xc64031ec35f5fc700264f6bb2d6342f63e020673f79ed70dbbd56fb8d46351ed
+sk = ecdsa.SigningKey.from_secret_exponent(secexp, curve=ecdsa.SECP256k1)
+# 1 tickets at the price of 2 wei
+offer = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x6A\x60\x75\xA7\x17\x00\x02'
+r, s = sk.sign_digest(offer, sigencode=ecdsa.util.sigencode_strings)
+## 27 can be any of 27, 28, 29, 30. Use proper algorithm in production
+print('"0x{}", {}, "0x{}","0x{}"'.format(
+    binascii.hexlify(offer).decode("ascii"), 27,
+    binascii.hexlify(r).decode("ascii"), binascii.hexlify(s).decode("ascii")))
+*/
+    function recover(bytes32 offer, uint8 v, bytes32 r, bytes32 s) public view
+        returns (address seller, uint16 quantity, uint256 price, bool agreementIsValid) {
+        quantity = uint16(offer & 0xffff);
+        price = uint256(offer >> 16 << 16);
+        seller = ecrecover(offer, v, r, s);
+        agreementIsValid = balances[seller] >= quantity;
     }
 
     function totalSupply() public constant returns(uint)
@@ -122,14 +157,9 @@ contract TicketPro
         return totalTickets;
     }
 
-    function name() public view returns(string)
+    function eventName() public constant returns(string)
     {
         return name;
-    }
-
-    function symbol() public view returns(string)
-    {
-        return symbol;
     }
 
     function eventVenue() public constant returns(string)
@@ -156,43 +186,33 @@ contract TicketPro
         else return false;
     }
 
-    function balanceOf(address _owner) public view returns (uint16[])
+    function balanceOf(address _owner) public constant returns (uint)
     {
-        return inventory[_owner];
+        return balances[_owner];
     }
 
-    function transfer(address _to, uint16[] ticketIndices) public
+    //transfers can be free but at the users own risk
+    function transfer(address _to, uint _value) public returns(bool)
     {
-        //one array element equals one ticket
-        require(inventory[msg.sender].length -
-            spent[msg.sender] < ticketIndices.length);
-        for(uint i = 0; i < ticketIndices.length; i++)
+        if(balances[msg.sender] < _value) revert();
+        balances[_to] += _value;
+        balances[msg.sender] -= _value;
+        numOfTransfers++;
+        return true;
+    }
+
+    //good for revoking tickets, for refunds etc.
+    function transferFrom(address _from, address _to, uint _value)
+        adminOnly public returns (bool)
+    {
+        if(balances[_from] >= _value)
         {
-            require(inventory[msg.sender][i] != 0);
-            //pushes each element with ordering
-            inventory[_to].push(inventory[msg.sender][ticketIndices[i]]);
-            inventory[msg.sender][ticketIndices[i]] = 0;
+            balances[_from] -= _value;
+            balances[_to] += _value;
+            TransferFrom(_from,_to, _value);
             numOfTransfers++;
+            return true;
         }
-        spent[msg.sender] += ticketIndices.length;
+        else return false;
     }
-
-    function transferFrom(address _from, address _to, uint16[] ticketIndices)
-        organiserOnly public
-    {
-        bool isOrganiser = msg.sender == organiser;
-        //one array element equals one ticket
-        require(inventory[_from].length -
-            spent[_from] < ticketIndices.length || isOrganiser);
-        for(uint i = 0; i < ticketIndices.length; i++)
-        {
-            require(inventory[msg.sender][i] != 0 || isOrganiser);
-            //pushes each element with ordering
-            inventory[_to].push(inventory[msg.sender][ticketIndices[i]]);
-            inventory[msg.sender][ticketIndices[i]] = 0;
-            numOfTransfers++;
-        }
-        spent[_from] += ticketIndices.length;
-    }
-
 }
