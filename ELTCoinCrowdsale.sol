@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ELTCoinCrowdsale at 0xd3759eb6394dc1a2fe30d81c86631a0ecd1368e9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ELTCoinCrowdsale at 0xbb7c05467c0b7ff78a1753163fd687de1721b663
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.15;
 
 contract ELTCoinToken {
   function transfer(address to, uint256 value) public returns (bool);
@@ -86,6 +86,8 @@ contract Ownable {
 contract Crowdsale {
   using SafeMath for uint256;
 
+  uint256 public constant RATE_CHANGE_THRESHOLD = 30000000000000;
+
   // The token being sold
   ELTCoinToken public token;
 
@@ -96,13 +98,22 @@ contract Crowdsale {
   address public wallet;
 
   // how many wei for a token unit
-  uint256 public rate;
+  uint256 public startRate;
+
+  // current rate
+  uint256 public currentRate;
+
+  // maximum rate
+  uint256 public maxRate;
 
   // the minimum transaction threshold in wei
   uint256 public minThreshold;
 
   // amount of raised money in wei
   uint256 public weiRaised;
+
+  // amount of tokens sold
+  uint256 public tokensSold;
 
   /**
    * event for token purchase logging
@@ -113,14 +124,18 @@ contract Crowdsale {
    */
   event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
 
+  event WeiTransfer(address indexed receiver, uint256 amount);
+
   function Crowdsale(
-    address _contractAddress, uint256 _endTime, uint256 _rate, uint256 _minThreshold, address _wallet) {
-    require(_endTime >= now);
+    address _contractAddress, uint256 _endTime, uint256 _startRate, uint256 _minThreshold, address _wallet) {
+    // require(_endTime >= now);
     require(_wallet != 0x0);
 
     token = ELTCoinToken(_contractAddress);
     endTime = _endTime;
-    rate = _rate;
+    startRate = _startRate;
+    currentRate = _startRate;
+    maxRate = startRate.mul(10);
     wallet = _wallet;
     minThreshold = _minThreshold;
   }
@@ -139,27 +154,42 @@ contract Crowdsale {
 
     require(weiAmount >= minThreshold);
 
-    uint256 weiAmountBack = weiAmount % rate;
+    uint256 weiToAllocate = weiAmount;
 
-    weiAmount -= weiAmountBack;
+    uint256 tokensTotal = 0;
 
-    // calculate token amount to be created
-    uint256 tokens = weiAmount.div(rate);
+    while (weiToAllocate > 0) {
+      currentRate = tokensSold.div(RATE_CHANGE_THRESHOLD).mul(startRate).add(startRate);
 
-    // update state
+      if (currentRate > maxRate) {
+        currentRate = maxRate;
+      }
+
+      // Round to an integer number of tokens
+      weiToAllocate = weiToAllocate.sub(weiToAllocate % currentRate);
+
+      uint256 remainingTokens = RATE_CHANGE_THRESHOLD.sub(tokensSold % RATE_CHANGE_THRESHOLD);
+
+      uint256 tokens = weiToAllocate.div(currentRate) > remainingTokens ? remainingTokens : weiToAllocate.div(currentRate);
+
+      tokensTotal = tokensTotal.add(tokens);
+      tokensSold = tokensSold.add(tokens);
+
+      weiToAllocate = weiToAllocate.sub(tokens.mul(currentRate));
+    }
+
     weiRaised = weiRaised.add(weiAmount);
 
-    require(token.transfer(beneficiary, tokens));
+    require(token.transfer(beneficiary, tokensTotal));
 
-    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+    TokenPurchase(msg.sender, beneficiary, weiAmount, tokensTotal);
 
     forwardFunds(weiAmount);
   }
 
-  // send ether to the fund collection wallet
-  // override to create custom fund forwarding mechanisms
   function forwardFunds(uint256 amount) internal {
     wallet.transfer(amount);
+    WeiTransfer(wallet, amount);
   }
 
   // @return true if the transaction can buy tokens
@@ -227,56 +257,9 @@ contract CappedCrowdsale is Crowdsale {
   }
 }
 
-/**
- * @title WhitelistedCrowdsale
- * @dev This is an extension to add whitelist to a crowdsale
- */
-contract WhitelistedCrowdsale is Crowdsale, Ownable {
-
-    mapping(address=>bool) public registered;
-
-    event RegistrationStatusChanged(address indexed target, bool isRegistered);
-
-    /**
-     * @dev Changes registration status of an address for participation.
-     * @param target Address that will be registered/deregistered.
-     * @param isRegistered New registration status of address.
-     */
-    function changeRegistrationStatus(address target, bool isRegistered)
-        public
-        onlyOwner
-    {
-        registered[target] = isRegistered;
-        RegistrationStatusChanged(target, isRegistered);
-    }
-
-    /**
-     * @dev Changes registration statuses of addresses for participation.
-     * @param targets Addresses that will be registered/deregistered.
-     * @param isRegistered New registration status of addresses.
-     */
-    function changeRegistrationStatuses(address[] targets, bool isRegistered)
-        public
-        onlyOwner
-    {
-        for (uint i = 0; i < targets.length; i++) {
-            changeRegistrationStatus(targets[i], isRegistered);
-        }
-    }
-
-    /**
-     * @dev overriding Crowdsale#validPurchase to add whilelist
-     * @return true if investors can buy at the moment, false otherwise
-     */
-    function validPurchase() internal returns (bool) {
-        return super.validPurchase() && registered[msg.sender];
-    }
-}
-
-contract ELTCoinCrowdsale is Ownable, CappedCrowdsale, WhitelistedCrowdsale, IndividualCappedCrowdsale {
+contract ELTCoinCrowdsale is Ownable, CappedCrowdsale, IndividualCappedCrowdsale {
   function ELTCoinCrowdsale(address _coinAddress, uint256 _endTime, uint256 _rate, uint256 _cap, uint256 _minThreshold, uint256 _capPerAddress, address _wallet)
     IndividualCappedCrowdsale(_capPerAddress)
-    WhitelistedCrowdsale()
     CappedCrowdsale(_cap)
     Crowdsale(_coinAddress, _endTime, _rate, _minThreshold, _wallet)
   {
@@ -293,5 +276,9 @@ contract ELTCoinCrowdsale is Ownable, CappedCrowdsale, WhitelistedCrowdsale, Ind
   {
       require(hasEnded());
       token.transfer(owner, token.balanceOf(this));
+  }
+
+  function setMaxRate(uint256 _maxRate) public onlyOwner {
+    maxRate = _maxRate;
   }
 }
