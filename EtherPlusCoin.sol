@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherPlusCoin at 0x636991bf69febcdd9eb1a58e11021d33d40c5660
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherPlusCoin at 0xc22eefe202998ff8129bcf49f0956e1f167386de
 */
 pragma solidity ^0.4.19;
 
@@ -95,7 +95,7 @@ contract EtherPlusCoin is ERC20 {
         _;
     }
     
-    function EtherPlusCoin () public {
+    function EtherPluscoin () public {
         owner = msg.sender;
         value = 4000e8;
         distr(owner, totalDistributed);
