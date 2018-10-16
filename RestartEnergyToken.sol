@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RestartEnergyToken at 0x041bb86a5064169fb4667dba63779d5630565c43
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RestartEnergyToken at 0x6425c6BE902d692AE2db752B3c268AFAdb099D3b
 */
 pragma solidity ^0.4.18;
 
