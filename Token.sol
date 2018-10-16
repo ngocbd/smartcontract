@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xa7D81c86F9934b56Dd00FA826C319330D628d31F
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x3dc4BE2B39E929f086aDa8bf956F24c848fbde45
 */
 pragma solidity ^0.4.18;
 
@@ -206,9 +206,9 @@ contract Token is TokenI {
         uint256 amount;
     }
     //Key1: step(????); Key2: user sequence(????)
-    mapping (uint8 => mapping (uint32 => FreezeInfo)) public freezeOf; //?????key ????????????????
-    mapping (uint8 => uint32) public lastFreezeSeq; //??? freezeOf ???key: step; value: sequence
-    mapping (uint8 => uint) internal unlockTime;
+    mapping (uint8 => mapping (uint8 => FreezeInfo)) public freezeOf; //?????key ????????????????
+    mapping (uint8 => uint8) public lastFreezeSeq; //??? freezeOf ???key: step; value: sequence
+    mapping (uint8 => uint8) internal unlockTime;
 
     bool public transfersEnabled;
 
@@ -298,10 +298,7 @@ contract Token is TokenI {
 
     /* Send coins */
     function transfer(address _to, uint256 _value) realUser(_to) moreThanZero(_value) transable public returns (bool) {
-        //infoAddr('msg.sender', msg.sender);
-        //infoBool('typeOf msg.sender', isContract(msg.sender));
         require(balanceOf[msg.sender] >= _value);          // Check if the sender has enough
-        //require(balanceOf[_to] + _value > balanceOf[_to]); // Check for overflows
         balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);
         balanceOf[_to] = balanceOf[_to].add(_value);
         Transfer(msg.sender, _to, _value);                   // Notify anyone listening that this transfer took place
@@ -369,7 +366,6 @@ contract Token is TokenI {
     
     //?????? owner ??????
     function freeze(address _user, uint256 _value, uint8 _step) moreThanZero(_value) onlyController public returns (bool success) {
-        //info256("balanceOf[_user]", balanceOf[_user]);
         require(balanceOf[_user] >= _value);
         balanceOf[_user] = balanceOf[_user] - _value;
         freezeOf[_step][lastFreezeSeq[_step]] = FreezeInfo({user:_user, amount:_value});
@@ -380,17 +376,17 @@ contract Token is TokenI {
 
     event infoBool(string name, bool value);
     event infoAddr(string name, address addr);
-    event info(string name, uint32 value);
+    event info(string name, uint8 value);
     event info256(string name, uint256 value);
     
     //?????????
     function unFreeze(uint8 _step) onlyOwner public returns (bool unlockOver) {
         //_end = length of freezeOf[_step]
-        uint32 _end = lastFreezeSeq[_step];
+        uint8 _end = lastFreezeSeq[_step];
         require(_end > 0);
         //info("_end", _end);
         unlockOver = (_end <= 99);
-        uint32 _start = (_end > 99) ? _end-100 : 0;
+        uint8 _start = (_end > 99) ? _end-100 : 0;
         //info("_start", _start);
         for(; _end>_start; _end--){
             FreezeInfo storage fInfo = freezeOf[_step][_end-1];
