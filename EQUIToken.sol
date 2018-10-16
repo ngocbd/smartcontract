@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EQUIToken at 0x1b0cd7c0dc07418296585313a816e0cb953dea96
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EQUIToken at 0x6bab873688c784818fb74274b85a7312d35f1238
 */
-pragma solidity ^0.4.22;
+pragma solidity ^0.4.24;
 
 /**
  * @title SafeMath
@@ -212,10 +212,38 @@ contract StandardToken is ERC20, BasicToken {
 }
 
 /**
+ * @title Burnable Token
+ * @dev Token that can be irreversibly burned (destroyed).
+ */
+contract BurnableToken is BasicToken {
+
+  event Burn(address indexed burner, uint256 value);
+
+  /**
+   * @dev Burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   */
+  function burn(uint256 _value) public {
+    _burn(msg.sender, _value);
+  }
+
+  function _burn(address _who, uint256 _value) internal {
+    require(_value <= balances[_who]);
+    // no need to require value <= totalSupply, since that would imply the
+    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+    balances[_who] = balances[_who].sub(_value);
+    totalSupply_ = totalSupply_.sub(_value);
+    emit Burn(_who, _value);
+    emit Transfer(_who, address(0), _value);
+  }
+}
+
+/**
  * @title EQUIToken
  * @dev A standard ERC20 Token contract, where all tokens are pre-assigned to the creator.
  */ 
-contract EQUIToken is StandardToken {
+contract EQUIToken is StandardToken, BurnableToken {
 
   string public constant name = "EQUI Token"; // solium-disable-line uppercase
   string public constant symbol = "EQUI"; // solium-disable-line uppercase
@@ -227,8 +255,8 @@ contract EQUIToken is StandardToken {
    * @dev Constructor that gives msg.sender all of existing tokens.
    */
   constructor() public {
-    totalSupply_ = INITIAL_SUPPLY;
-    balances[0xccB84A750f386bf5A4FC8C29611ad59057968605] = INITIAL_SUPPLY;
-    emit Transfer(0x0,0xccB84A750f386bf5A4FC8C29611ad59057968605, INITIAL_SUPPLY);
+      totalSupply_ = INITIAL_SUPPLY;
+      balances[0x4AA48F9cF25eB7d2c425780653c321cfaC458FA4] = INITIAL_SUPPLY;
+      emit Transfer(0x0,0x4AA48F9cF25eB7d2c425780653c321cfaC458FA4, INITIAL_SUPPLY);
   }
 }
