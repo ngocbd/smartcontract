@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleToken at 0x96c480758F58454D50cf15D13a29DE76Ee7C8EeD
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleToken at 0x39b05C0C94AD5c6231086FA5Dfd30F14aA02a4FB
 */
 pragma solidity ^0.4.11;
 
@@ -161,8 +161,8 @@ contract SimpleToken is StandardToken {
 
   string public constant name = "RealBoostCoin";
   string public constant symbol = "RBC";
-  uint256 public constant decimals = 18;
-  uint256 public constant initial_supply = 21000000 * 1000000000000000000;
+  uint256 public constant decimals = 8;
+  uint256 public constant initial_supply = 2100000000000000;
 
   /**
    * @dev Contructor that gives msg.sender all of existing tokens.
