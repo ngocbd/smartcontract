@@ -1,29 +1,29 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SLCAdvancedToken at 0x80dd64a74479d71edb3f8a5f55e000bf24f4f83a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SLCAdvancedToken at 0xcf1c5b13631cd64786f33b071bf632704d4397d4
 */
 pragma solidity ^0.4.16;
 
 contract owned {
-    //????????????
+    //???????
     address public owner;
 
     function owned() public {
         owner = msg.sender;
     }
 
-    //???????????????
+    //??????????
     modifier onlyOwner {
         require(msg.sender == owner);
         _;
     }
 
-    //?????????????
+    //????????
     function transferOwnership(address newOwner) onlyOwner public {
         owner = newOwner;
     }
 }
 
-//????
+//???
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
 contract TokenERC20 {
