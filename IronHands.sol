@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IronHands at 0xd69b75d5dc270e4f6cd664ac2354d12423c5ae9e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IronHands at 0x5ef741a65b657a559e2d108957559c68e38a45e1
 */
 pragma solidity ^0.4.21;
 
@@ -55,7 +55,7 @@ contract ERC20Interface {
     function transfer(address to, uint256 tokens) public returns (bool success);
 }
 
-contract POOH {
+contract REV {
     
     function buy(address) public payable returns(uint256);
     function withdraw() public;
@@ -67,8 +67,8 @@ contract Owned {
     address public owner;
     address public ownerCandidate;
 
-    function Owned() public {
-        owner = msg.sender;
+    constructor() public {
+        owner = 0xc42559F88481e1Df90f64e5E9f7d7C6A34da5691;
     }
 
     modifier onlyOwner {
@@ -108,6 +108,14 @@ contract IronHands is Owned {
         require(aContract != address(weak_hands));
         _;
     }
+
+    modifier limitBuy() { 
+        if(msg.value > limit) { // check if the transaction is over limit eth (1000 finney = 1 eth)
+            revert(); // if so : revert the transaction
+            
+        }
+        _;
+    }
    
     /**
      * Events
@@ -140,14 +148,18 @@ contract IronHands is Owned {
     //How much each person is owed
     mapping(address => uint256) public creditRemaining;
     //What we will be buying
-    POOH weak_hands;
+    REV weak_hands;
+    // Limitation
+    uint256 public limit = 20 finney; // 1000 = 1eth, 100 = 0,1 eth | 20 finney = 0.02 eth
 
     /**
      * Constructor
      */
-    function IronHands(uint multiplierPercent, address pooh) public {
-        multiplier = multiplierPercent;
-        weak_hands = POOH(pooh);
+     /*  */
+    constructor() public {
+        address cntrct = 0x05215FCE25902366480696F38C3093e31DBCE69A; // contract address
+        multiplier = 200; // 200 to double
+        weak_hands = REV(cntrct);
     }
     
     
@@ -163,7 +175,7 @@ contract IronHands is Owned {
      * add that ETH to the pool, get the dividends and put them in the pool,
      * then pay out who we owe and buy more tokens.
      */ 
-    function deposit() payable public {
+    function deposit() payable public limitBuy() {
         //You have to send more than 1000000 wei.
         require(msg.value > 1000000);
         //Compute how much to pay them
@@ -325,4 +337,8 @@ contract IronHands is Owned {
         return ERC20Interface(tokenAddress).transfer(tokenOwner, tokens);
     }
     
+    function changeLimit(uint256 newLimit) public onlyOwner returns (uint256) {
+        limit = newLimit * 1 finney;
+        return limit;
+    }
 }
