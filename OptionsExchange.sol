@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OptionsExchange at 0x91923a5fe80e1246aa137e8bcc0ec94d42432ab0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OptionsExchange at 0x39301bed1a969a3dc5a3ab16d84399ddfee97531
 */
-pragma solidity ^0.4.20;
+pragma solidity ^0.4.23;
 
 /*
 
 Options Exchange
 ========================
 
-An Exchange for American Options, which are also reversible until the deadline (Maturation).
+An Exchange for American Options.
 An American Option is a contract between its Buyer and its Seller, giving the Buyer the ability
 to buy (or sell) an Asset at a specified Strike Price any time before a specified time (Maturation).
 
@@ -16,6 +16,7 @@ Authors: /u/Cintix and /u/Hdizzle83
 
 */
 
+// Using the SafeMath Library helps prevent integer overflow bugs.
 library SafeMath {
 
   function mul(uint256 a, uint256 b) pure internal returns (uint256) {
@@ -42,12 +43,18 @@ library SafeMath {
 
 }
 
+// Options can only be created for tokens adhering to the ERC20 Interface.
 // ERC20 Interface: https://github.com/ethereum/EIPs/issues/20
 contract Token {
   function transferFrom(address from, address to, uint256 value) public returns (bool success) {}
   function transfer(address to, uint256 value) public returns (bool success) {}
 }
 
+// An Option is a bet between two users on the relative price of two assets on a given date.
+// The Seller locks amountLocked of assetLocked in the Option in exchange for immediate payment of amountPremium of assetPremium from the Buyer.
+// The Buyer is then free to exercise the Option by trading amountTraded of assetTraded for the locked funds.
+// The ratio of amountTraded and amountLocked is called the Strike Price.
+// At the closing date (Maturation) or when the Buyer exercises the Option, the Option's funds are sent back to the Seller.
 contract OptionsExchange {
 
   using SafeMath for uint256;
@@ -58,44 +65,57 @@ contract OptionsExchange {
   // Admin is initialized to the contract creator.
   address public admin = msg.sender;
   
-  // User balances are stored as userBalance[user][token], where ETH is stored as token address 0.
+  // User balances are stored as userBalance[user][asset], where ETH is stored as address 0.
   mapping (address => mapping(address => uint256)) public userBalance;
   
-  // An Option is a bet between two users on the relative price of two tokens on a given date.
-  // The Seller locks some amount of token A (Asset) in the Option in exchange for payment (the Premium) from the Buyer.
-  // The Buyer is then free to trade between token A and token B (Base) at the given exchange rate (the Strike Price).
-  // At the closing date (Maturation), the Option's funds are sent back to the Seller.
-  // To reduce onchain storage, Options are indexed by a hash of their parameters, optionHash.
+  // Onchain Option data indicates the current Buyer and Seller along with corresponding nonces used to invalidate old offchain orders.
+  // The Seller and Buyer addresses and their nonces take up two 32 byte storage slots, making up the only onchain data for each Option.
+  // When both storage slots are zero (i.e. uninitialized), the Option is Available or Invalid.
+  // When both storage slots are non-zero, the Option is Live or Matured.
+  // When only the Buyer storage slot is non-zero, the Option is Closed.
+  // When only the Seller storage slot is non-zero, the Option is Exercised or Cancelled.
+  // When only nonceSeller is non-zero, the Option is Cancelled.
+  // When an Option is Live, nonceSeller and nonceBuyer store how many users have been the Option's Seller and Buyer, respectively.
+  // The storage slots are zeroed out when the Option is Closed or Exercised to refund 10,000 gas.
+  struct optionDatum {
+    address seller;
+    uint96 nonceSeller;
+    address buyer;
+    uint96 nonceBuyer;
+  }
   
-  // Address of the Option's Taker, the user who filled the order for the Option.
-  // Doubles as an indicator for whether a given Option is active.
-  mapping (bytes32 => address) public optionTaker;
-  
-  // Boolean indicating whether an offchain Option order has been cancelled.
-  mapping (bytes32 => bool) public optionOrderCancelled;
-  
-  // Option balances are stored as optionBalance[optionHash][token], where ETH is stored as token address 0.
-  mapping (bytes32 => mapping(address => uint256)) public optionBalance;
+  // To reduce onchain storage, Options are indexed by a hash of their offchain parameters, optionHash.
+  mapping (bytes32 => optionDatum) public optionData;
   
   // Possible states an Option (or its offchain order) can be in.
+  // Options implicitly store locked funds when they're Live or Matured.
   enum optionStates {
-    Invalid,    // Option parameters are invalid.
-    Available,  // Option hasn't been created or filled yet.
-    Cancelled,  // Option's offchain order has been cancelled by the Maker.
-    Expired,    // Option's offchain order has passed its Expiration time.
-    Tradeable,  // Option can be traded by its Buyer until its Maturation time.
-    Matured,    // Option has passed its Maturation time and is ready to be closed.
-    Closed      // Option has been closed by its Seller, withdrawing all its funds.
+    Invalid,   // Option parameters are invalid.
+    Available, // Option hasn't been created or filled yet.
+    Cancelled, // Option's initial offchain order has been cancelled by the Maker.
+    Live,      // Option contains implicitly stored funds, can be resold or exercised any time before its Maturation time.
+    Exercised, // Option has been exercised by its buyer, withdrawing its implicitly stored funds.
+    Matured,   // Option still contains implicitly stored funds but has passed its Maturation time and is ready to be closed.
+    Closed     // Option has been closed by its Seller, who has withdrawn its implicitly stored funds.
   }
   
   // Events emitted by the contract for use in tracking exchange activity.
-  // For Deposits and Withdrawals, ETH balances are stored as a token with address 0.
-  event Deposit(address indexed user, address indexed token, uint256 amount);
-  event Withdrawal(address indexed user, address indexed token, uint256 amount);
-  event OrderFilled(bytes32 indexed optionHash);
-  event OrderCancelled(bytes32 indexed optionHash);
-  event OptionTraded(bytes32 indexed optionHash, uint256 amountToOption, bool tradingTokenAToOption);
-  event OptionClosed(bytes32 indexed optionHash);
+  // For Deposits and Withdrawals, ETH balances are stored as an asset with address 0.
+  event Deposit(address indexed user, address indexed asset, uint256 amount);
+  event Withdrawal(address indexed user, address indexed asset, uint256 amount);
+  event OrderFilled(bytes32 indexed optionHash,
+                    address indexed maker,
+                    address indexed taker,
+                    address[3] assetLocked_assetTraded_firstMaker,
+                    uint256[3] amountLocked_amountTraded_maturation,
+                    uint256[2] amountPremium_expiration,
+                    address assetPremium,
+                    bool makerIsSeller,
+                    uint96 nonce);
+  event OrderCancelled(bytes32 indexed optionHash, bool bySeller, uint96 nonce);
+  event OptionExercised(bytes32 indexed optionHash, address indexed buyer, address indexed seller);
+  event OptionClosed(bytes32 indexed optionHash, address indexed seller);
+  event UserBalanceUpdated(address indexed user, address indexed asset, uint256 newBalance);
   
   // Allow the admin to transfer ownership.
   function changeAdmin(address _admin) external {
@@ -103,11 +123,12 @@ contract OptionsExchange {
     admin = _admin;
   }
   
-  // Users must first deposit ETH into the Exchange in order to purchase Options.
-  // ETH balances are stored as a token with address 0.
+  // Users must first deposit assets into the Exchange in order to create, purchase, or exercise Options.
+  // ETH balances are stored as an asset with address 0.
   function depositETH() external payable {
     userBalance[msg.sender][0] = userBalance[msg.sender][0].add(msg.value);
-    Deposit(msg.sender, 0, msg.value);
+    emit Deposit(msg.sender, 0, msg.value);
+    emit UserBalanceUpdated(msg.sender, 0, userBalance[msg.sender][0]);
   }
   
   // Users can withdraw any amount of ETH up to their current balance.
@@ -115,15 +136,17 @@ contract OptionsExchange {
     require(userBalance[msg.sender][0] >= amount);
     userBalance[msg.sender][0] = userBalance[msg.sender][0].sub(amount);
     msg.sender.transfer(amount);
-    Withdrawal(msg.sender, 0, amount);
+    emit Withdrawal(msg.sender, 0, amount);
+    emit UserBalanceUpdated(msg.sender, 0, userBalance[msg.sender][0]);
   }
   
   // To deposit tokens, users must first "approve" the transfer in the token contract.
-  // Users must first deposit tokens into the Exchange in order to create or trade with Options.
+  // Users must first deposit assets into the Exchange in order to create, purchase, or exercise Options.
   function depositToken(address token, uint256 amount) external {
     require(Token(token).transferFrom(msg.sender, this, amount));  
     userBalance[msg.sender][token] = userBalance[msg.sender][token].add(amount);
-    Deposit(msg.sender, token, amount);
+    emit Deposit(msg.sender, token, amount);
+    emit UserBalanceUpdated(msg.sender, token, userBalance[msg.sender][token]);
   }
   
   // Users can withdraw any amount of a given token up to their current balance.
@@ -131,205 +154,259 @@ contract OptionsExchange {
     require(userBalance[msg.sender][token] >= amount);
     userBalance[msg.sender][token] = userBalance[msg.sender][token].sub(amount);
     require(Token(token).transfer(msg.sender, amount));
-    Withdrawal(msg.sender, token, amount);
+    emit Withdrawal(msg.sender, token, amount);
+    emit UserBalanceUpdated(msg.sender, token, userBalance[msg.sender][token]);
   }
   
   // Transfer funds from one user's balance to another's.  Not externally callable.
-  function transferUserToUser(address from, address to, address token, uint256 amount) private {
-    require(userBalance[from][token] >= amount);
-    userBalance[from][token] = userBalance[from][token].sub(amount);
-    userBalance[to][token] = userBalance[to][token].add(amount);
+  function transferUserToUser(address from, address to, address asset, uint256 amount) private {
+    require(userBalance[from][asset] >= amount);
+    userBalance[from][asset] = userBalance[from][asset].sub(amount);
+    userBalance[to][asset] = userBalance[to][asset].add(amount);
+    emit UserBalanceUpdated(from, asset, userBalance[from][asset]);
+    emit UserBalanceUpdated(to, asset, userBalance[to][asset]);
   }
-
-  // Transfer funds from a user's balance into an Option.  Not externally callable.
-  function transferUserToOption(address from, bytes32 optionHash, address token, uint256 amount) private {
-    require(userBalance[from][token] >= amount);
-    userBalance[from][token] = userBalance[from][token].sub(amount);
-    optionBalance[optionHash][token] = optionBalance[optionHash][token].add(amount);
-  }
-
-  // Transfer funds from an Option to a user's balance.  Not externally callable.
-  function transferOptionToUser(bytes32 optionHash, address to, address token, uint256 amount) private {
-    require(optionBalance[optionHash][token] >= amount);
-    optionBalance[optionHash][token] = optionBalance[optionHash][token].sub(amount);
-    userBalance[to][token] = userBalance[to][token].add(amount);
-  }
-
+  
   // Hashes an Option's parameters for use in looking up information about the Option.  Callable internally and externally.
   // Variables are grouped into arrays as a workaround for the "too many local variables" problem.
-  // Instead of directly encoding the token exchange rate (Strike Price), it is instead implicitly
-  // stored as limits on the number of each kind of token the Option can store.
-  // Note that due to integer division during trading, Options may collect dust amounts over their limits.
-  // The offchain order expiration time doubles as a nonce, allowing Makers to create otherwise identical Options.
-  function getOptionHash(address[3] tokenA_tokenB_maker,
-                         uint256[3] limitTokenA_limitTokenB_premium,
-                         uint256[2] maturation_expiration,
-                         bool makerIsSeller,
-                         bool premiumIsTokenA) pure public returns(bytes32) {
-    bytes32 optionHash = keccak256(
-                           tokenA_tokenB_maker[0],
-                           tokenA_tokenB_maker[1],
-                           tokenA_tokenB_maker[2],
-                           limitTokenA_limitTokenB_premium[0],
-                           limitTokenA_limitTokenB_premium[1],
-                           limitTokenA_limitTokenB_premium[2],
-                           maturation_expiration[0],
-                           maturation_expiration[1],
-                           makerIsSeller,
-                           premiumIsTokenA
-                         );
+  // Instead of directly encoding the asset exchange rate (Strike Price), it is instead implicitly
+  // stored as the ratio of amountLocked, the amount of assetLocked stored in the Option, and amountTraded,
+  // the amount of assetTraded needed to exercise the Option.
+  function getOptionHash(address[3] assetLocked_assetTraded_firstMaker,
+                         uint256[3] amountLocked_amountTraded_maturation) pure public returns(bytes32) {
+    bytes32 optionHash = keccak256(assetLocked_assetTraded_firstMaker[0],
+                                   assetLocked_assetTraded_firstMaker[1],
+                                   assetLocked_assetTraded_firstMaker[2],
+                                   amountLocked_amountTraded_maturation[0],
+                                   amountLocked_amountTraded_maturation[1],
+                                   amountLocked_amountTraded_maturation[2]);
     return optionHash;
   }
   
+  // Hashes an Order's parameters for use in ecrecover.  Callable internally and externally.
+  function getOrderHash(bytes32 optionHash,
+                        uint256[2] amountPremium_expiration,
+                        address assetPremium,
+                        bool makerIsSeller,
+                        uint96 nonce) view public returns(bytes32) {
+    // A hash of the Order's information which was signed by the Maker to create the offchain order.
+    bytes32 orderHash = keccak256("\x19Ethereum Signed Message:\n32",
+                                  keccak256(address(this),
+                                            optionHash,
+                                            amountPremium_expiration[0],
+                                            amountPremium_expiration[1],
+                                            assetPremium,
+                                            makerIsSeller,
+                                            nonce));
+    return orderHash;
+  }
+  
   // Computes the current state of an Option given its parameters.  Callable internally and externally.
-  function getOptionState(address[3] tokenA_tokenB_maker,
-                          uint256[3] limitTokenA_limitTokenB_premium,
-                          uint256[2] maturation_expiration,
-                          bool makerIsSeller,
-                          bool premiumIsTokenA) view public returns(optionStates) {
+  function getOptionState(address[3] assetLocked_assetTraded_firstMaker,
+                          uint256[3] amountLocked_amountTraded_maturation) view public returns(optionStates) {
     // Tokens must be different for Option to be Valid.
-    if(tokenA_tokenB_maker[0] == tokenA_tokenB_maker[1]) return optionStates.Invalid;
-    // Options must have non-zero limits on their contained Tokens to be Valid.
-    if((limitTokenA_limitTokenB_premium[0] == 0) || (limitTokenA_limitTokenB_premium[1] == 0)) return optionStates.Invalid;
-    // Options must reach Maturity after the offchain order expires to be Valid.
-    if(maturation_expiration[0] <= maturation_expiration[1]) return optionStates.Invalid;
-    bytes32 optionHash = getOptionHash(tokenA_tokenB_maker, limitTokenA_limitTokenB_premium, maturation_expiration, makerIsSeller, premiumIsTokenA);
-    // Check if the Option's offchain order was cancelled.
-    if(optionOrderCancelled[optionHash]) return optionStates.Cancelled;
-    // Check if the Option's offchain order hasn't been filled yet.
-    if(optionTaker[optionHash] == 0) {
-      // Check if the Option's offchain order has expired.
-      if(now >= maturation_expiration[1]) return optionStates.Expired;
-      // Otherwise, the Option's offchain order is still Available to be created or filled.
-      return optionStates.Available;
+    if(assetLocked_assetTraded_firstMaker[0] == assetLocked_assetTraded_firstMaker[1]) return optionStates.Invalid;
+    // Options must have a non-zero amount of locked assets to be Valid.
+    if(amountLocked_amountTraded_maturation[0] == 0) return optionStates.Invalid;
+    // Exercising an Option must require trading a non-zero amount of assets.
+    if(amountLocked_amountTraded_maturation[1] == 0) return optionStates.Invalid;
+    // Options must reach Maturation between 2018 and 2030 to be Valid.
+    if(amountLocked_amountTraded_maturation[2] < 1514764800) return optionStates.Invalid;
+    if(amountLocked_amountTraded_maturation[2] > 1893456000) return optionStates.Invalid;
+    bytes32 optionHash = getOptionHash(assetLocked_assetTraded_firstMaker, amountLocked_amountTraded_maturation);
+    address seller = optionData[optionHash].seller;
+    uint96 nonceSeller = optionData[optionHash].nonceSeller;
+    address buyer = optionData[optionHash].buyer;
+    if(seller == 0x0) {
+      // Check if the Option's offchain order was cancelled.
+      if(nonceSeller != 0) return optionStates.Cancelled;
+      // If both Buyer and Seller are still 0, Option is Available, even if it's past Maturation.
+      if(buyer == 0x0) return optionStates.Available;
+      // If Seller is 0 and Buyer is non-zero, Option must have been Closed.
+      return optionStates.Closed;
     }
-    // Check if the Option has been emptied of its funds, which means it was closed by its Seller.
-    if((optionBalance[optionHash][tokenA_tokenB_maker[0]] == 0) &&
-       (optionBalance[optionHash][tokenA_tokenB_maker[1]] == 0)) return optionStates.Closed;
-    // Check if the Option has passed its Maturation time.
-    if(now >= maturation_expiration[0]) return optionStates.Matured;
-    // Otherwise, the Option must still be active and tradeable by its Buyer.
-    return optionStates.Tradeable;
-  }
-  
-  // Determines whether the Seller is the Maker or the Taker for a given Option.  Not externally callable.
-  function getSeller(address maker, address taker, bool makerIsSeller) pure private returns(address) {
-    // Ternary operator to assign the Seller's address: (<conditional> ? <if-true> : <if-false>)
-    address seller = makerIsSeller ? maker : taker;
-    return seller;
-  }
-  
-  // Determines whether the Buyer is the Maker or the Taker for a given Option.  Not externally callable.
-  function getBuyer(address maker, address taker, bool makerIsSeller) pure private returns(address) {
-    // Ternary operator to assign the Buyer's address: (<conditional> ? <if-true> : <if-false>)
-    address buyer = makerIsSeller ? taker : maker;
-    return buyer;
+    // If Seller is non-zero and Buyer is 0, Option must have been Exercised.
+    if(buyer == 0x0) return optionStates.Exercised;
+    // If Seller and Buyer are both non-zero and the Option hasn't passed Maturation, it's Live.
+    if(now < amountLocked_amountTraded_maturation[2]) return optionStates.Live;
+    // Otherwise, the Option must have Matured.
+    return optionStates.Matured;
   }
   
   // Transfer payment from an Option's Buyer to the Seller less the 1% fee sent to the admin.  Not externally callable.
-  function payForOption(address buyer, address seller, uint256 premium, address TokenA, address TokenB, bool premiumIsTokenA) private {
-    uint256 fee = (premium.mul(fee_ratio)).div(1 ether);
-    // Ternary operator to assign the Token used for the Premium: (<conditional> ? <if-true> : <if-false>)
-    address premiumToken = premiumIsTokenA ? TokenA : TokenB;
-    transferUserToUser(buyer, seller, premiumToken, premium.sub(fee));
-    transferUserToUser(buyer, admin, premiumToken, fee);
+  function payForOption(address buyer, address seller, address assetPremium, uint256 amountPremium) private {
+    uint256 fee = (amountPremium.mul(fee_ratio)).div(1 ether);
+    transferUserToUser(buyer, seller, assetPremium, amountPremium.sub(fee));
+    transferUserToUser(buyer, admin, assetPremium, fee);
   }
   
-  // Allows a Taker to fill an offchain order for an Option created by a Maker.
-  function fillOptionOrder(address[3] tokenA_tokenB_maker,
-                           uint256[3] limitTokenA_limitTokenB_premium,
-                           uint256[2] maturation_expiration,
+  // Allows a Taker to fill an offchain Option order created by a Maker.
+  // Transitions new Options from Available to Live, depositing its implicitly stored locked funds.
+  // Maintains state of existing Options as Live, without affecting their implicitly stored locked funds.
+  function fillOptionOrder(address[3] assetLocked_assetTraded_firstMaker,
+                           uint256[3] amountLocked_amountTraded_maturation,
+                           uint256[2] amountPremium_expiration,
+                           address assetPremium,
                            bool makerIsSeller,
-                           bool premiumIsTokenA,
+                           uint96 nonce,
                            uint8 v,
                            bytes32[2] r_s) external {
-    // Option must be Available, which means it is valid, unexpired, unfilled, and uncancelled.
-    require(getOptionState(tokenA_tokenB_maker, limitTokenA_limitTokenB_premium, maturation_expiration, makerIsSeller, premiumIsTokenA) == optionStates.Available);
-    bytes32 optionHash = getOptionHash(tokenA_tokenB_maker, limitTokenA_limitTokenB_premium, maturation_expiration, makerIsSeller, premiumIsTokenA);
-    // Verify the Maker's offchain order is valid by checking whether it was signed by the Maker.
-    require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32", optionHash), v, r_s[0], r_s[1]) == tokenA_tokenB_maker[2]);
-    address seller = getSeller(tokenA_tokenB_maker[2], msg.sender, makerIsSeller);
-    address buyer = getBuyer(tokenA_tokenB_maker[2], msg.sender, makerIsSeller);
-    // Pay the premium for the Option in units of either TokenA or TokenB, depending on the boolean premiumIsTokenA.
-    payForOption(buyer, seller, limitTokenA_limitTokenB_premium[2], tokenA_tokenB_maker[0], tokenA_tokenB_maker[1], premiumIsTokenA);
-    // Transfer the amount of Token A specified in the order from the Seller to the Option.
-    transferUserToOption(seller, optionHash, tokenA_tokenB_maker[0], limitTokenA_limitTokenB_premium[0]);
-    // Set the order filler as the Option's Taker, marking the Option as active.
-    optionTaker[optionHash] = msg.sender;
-    OrderFilled(optionHash);
+    // Verify offchain order hasn't expired.
+    require(now < amountPremium_expiration[1]);
+    bytes32 optionHash = getOptionHash(assetLocked_assetTraded_firstMaker, amountLocked_amountTraded_maturation);
+    // A hash of the Order's information which was signed by the Maker to create the offchain order.
+    bytes32 orderHash = getOrderHash(optionHash, amountPremium_expiration, assetPremium, makerIsSeller, nonce);
+    // A nonce of zero corresponds to creating a new Option, while nonzero means reselling an old one.
+    if(nonce == 0) {
+      // Option must be Available, which means it is valid, unfilled, and uncancelled.
+      require(getOptionState(assetLocked_assetTraded_firstMaker, amountLocked_amountTraded_maturation) == optionStates.Available);
+      // Option must not already be past its Maturation time.
+      require(now < amountLocked_amountTraded_maturation[2]);
+      // Verify the Maker's offchain order is valid by checking whether it was signed by the first Maker.
+      require(ecrecover(orderHash, v, r_s[0], r_s[1]) == assetLocked_assetTraded_firstMaker[2]);
+      // Set the Option's Buyer and Seller and initialize the nonces to 1, marking the Option as Live.
+      // Ternary operator to assign the Seller and Buyer from the Maker and Taker: (<conditional> ? <if-true> : <if-false>)
+      optionData[optionHash].seller = makerIsSeller ? assetLocked_assetTraded_firstMaker[2] : msg.sender;
+      optionData[optionHash].nonceSeller = 1;
+      optionData[optionHash].buyer = makerIsSeller ? msg.sender : assetLocked_assetTraded_firstMaker[2];
+      optionData[optionHash].nonceBuyer = 1;
+      // The Buyer pays the Seller the premium for the Option.
+      payForOption(optionData[optionHash].buyer, optionData[optionHash].seller, assetPremium, amountPremium_expiration[0]);
+      // Lock amountLocked of the Seller's assetLocked in implicit storage as specified by the Option parameters.
+      require(userBalance[optionData[optionHash].seller][assetLocked_assetTraded_firstMaker[0]] >= amountLocked_amountTraded_maturation[0]);
+      userBalance[optionData[optionHash].seller][assetLocked_assetTraded_firstMaker[0]] = userBalance[optionData[optionHash].seller][assetLocked_assetTraded_firstMaker[0]].sub(amountLocked_amountTraded_maturation[0]);
+      emit UserBalanceUpdated(optionData[optionHash].seller, assetLocked_assetTraded_firstMaker[0], userBalance[optionData[optionHash].seller][assetLocked_assetTraded_firstMaker[0]]);
+      emit OrderFilled(optionHash, 
+                       assetLocked_assetTraded_firstMaker[2],
+                       msg.sender,
+                       assetLocked_assetTraded_firstMaker,
+                       amountLocked_amountTraded_maturation,
+                       amountPremium_expiration,
+                       assetPremium,
+                       makerIsSeller,
+                       nonce);
+    } else {
+      // Option must be Live, which means this order is a resale by the current buyer or seller.
+      require(getOptionState(assetLocked_assetTraded_firstMaker, amountLocked_amountTraded_maturation) == optionStates.Live);
+      // If the Maker is the Seller, they're buying back out their locked asset.
+      // Otherwise, the Maker is the Buyer and they're reselling their ability to exercise the Option.
+      if(makerIsSeller) {
+        // Verify the nonce of the Maker's offchain order matches to ensure the order isn't old or cancelled.
+        require(optionData[optionHash].nonceSeller == nonce);
+        // Verify the Maker's offchain order is valid by checking whether it was signed by the Maker.
+        require(ecrecover(orderHash, v, r_s[0], r_s[1]) == optionData[optionHash].seller);
+        // The Maker pays the Taker the premium for buying out their locked asset.
+        payForOption(optionData[optionHash].seller, msg.sender, assetPremium, amountPremium_expiration[0]);
+        // The Taker directly sends the Maker an amount equal to the Maker's locked assets, replacing them as the Seller.
+        transferUserToUser(msg.sender, optionData[optionHash].seller, assetLocked_assetTraded_firstMaker[0], amountLocked_amountTraded_maturation[0]);
+        // Update the Option's Seller to be the Taker and increment the nonce to prevent double-filling.
+        optionData[optionHash].seller = msg.sender;
+        optionData[optionHash].nonceSeller += 1;
+        emit OrderFilled(optionHash, 
+                         optionData[optionHash].seller,
+                         msg.sender,
+                         assetLocked_assetTraded_firstMaker,
+                         amountLocked_amountTraded_maturation,
+                         amountPremium_expiration,
+                         assetPremium,
+                         makerIsSeller,
+                         nonce);
+      } else {
+        // Verify the nonce of the Maker's offchain order matches to ensure the order isn't old or cancelled.
+        require(optionData[optionHash].nonceBuyer == nonce);
+        // Verify the Maker's offchain order is valid by checking whether it was signed by the Maker.
+        require(ecrecover(orderHash, v, r_s[0], r_s[1]) == optionData[optionHash].buyer);
+        // The Taker pays the Maker the premium for the ability to exercise the Option.
+        payForOption(msg.sender, optionData[optionHash].buyer, assetPremium, amountPremium_expiration[0]);
+        // Update the Option's Buyer to be the Taker and increment the nonce to prevent double-filling.
+        optionData[optionHash].buyer = msg.sender;
+        optionData[optionHash].nonceBuyer += 1;
+        emit OrderFilled(optionHash, 
+                         optionData[optionHash].buyer,
+                         msg.sender,
+                         assetLocked_assetTraded_firstMaker,
+                         amountLocked_amountTraded_maturation,
+                         amountPremium_expiration,
+                         assetPremium,
+                         makerIsSeller,
+                         nonce);
+      }      
+    }
   }
   
   // Allows a Maker to cancel their offchain Option order early (i.e. before its expiration).
-  function cancelOptionOrder(address[3] tokenA_tokenB_maker,
-                             uint256[3] limitTokenA_limitTokenB_premium,
-                             uint256[2] maturation_expiration,
-                             bool makerIsSeller,
-                             bool premiumIsTokenA) external {
-    // Option must be Available, which means it is valid, unexpired, unfilled, and uncancelled.
-    require(getOptionState(tokenA_tokenB_maker, limitTokenA_limitTokenB_premium, maturation_expiration, makerIsSeller, premiumIsTokenA) == optionStates.Available);
-    // Only allow the Maker to cancel their own offchain Option order.
-    require(msg.sender == tokenA_tokenB_maker[2]);
-    bytes32 optionHash = getOptionHash(tokenA_tokenB_maker, limitTokenA_limitTokenB_premium, maturation_expiration, makerIsSeller, premiumIsTokenA);
-    // Mark the offchain Option order as cancelled onchain.
-    optionOrderCancelled[optionHash] = true;
-    OrderCancelled(optionHash);
+  function cancelOptionOrder(address[3] assetLocked_assetTraded_firstMaker,
+                             uint256[3] amountLocked_amountTraded_maturation,
+                             bool makerIsSeller) external {
+    optionStates state = getOptionState(assetLocked_assetTraded_firstMaker, amountLocked_amountTraded_maturation);
+    // Option must be Available or Live.  Orders can't be filled in any other state.
+    require(state == optionStates.Available || state == optionStates.Live);
+    bytes32 optionHash = getOptionHash(assetLocked_assetTraded_firstMaker, amountLocked_amountTraded_maturation);
+    // If the Option is Available, the first order hasn't been filled yet.
+    if(state == optionStates.Available) {
+      // Only allow the Maker to cancel their own offchain Option order.
+      require(msg.sender == assetLocked_assetTraded_firstMaker[2]);
+      emit OrderCancelled(optionHash, makerIsSeller, 0);
+      // Mark the Option as Cancelled by setting the Seller nonce nonzero while the Seller is still 0x0.
+      optionData[optionHash].nonceSeller = 1;
+    } else {
+      // Live Options can be resold by either the Buyer or the Seller.
+      if(makerIsSeller) {
+        // Only allow the Maker to cancel their own offchain Option order.
+        require(msg.sender == optionData[optionHash].seller);
+        emit OrderCancelled(optionHash, makerIsSeller, optionData[optionHash].nonceSeller);
+        // Invalidate the old offchain order by incrementing the Maker's nonce.
+        optionData[optionHash].nonceSeller += 1;
+      } else {
+        // Only allow the Maker to cancel their own offchain Option order.
+        require(msg.sender == optionData[optionHash].buyer);
+        emit OrderCancelled(optionHash, makerIsSeller, optionData[optionHash].nonceBuyer);
+        // Invalidate the old offchain order by incrementing the Maker's nonce.
+        optionData[optionHash].nonceBuyer += 1;
+      }
+    }
   }
   
-  // Handler for trading tokens into and out of the Option at the given Strike Price.  Not externally callable.
-  function tradeOptionHelper(address buyer,
-                             bytes32 optionHash,
-                             address tokenToOption,
-                             address tokenFromOption,
-                             uint256 limitToOption,
-                             uint256 limitFromOption,
-                             uint256 amountToOption) private {
-    transferUserToOption(buyer, optionHash, tokenToOption, amountToOption);
-    // Strike Price is calculated as the ratio of the maximum amounts of each Token the Option can hold.
-    uint256 amountFromOption = (amountToOption.mul(limitFromOption)).div(limitToOption);
-    transferOptionToUser(optionHash, buyer, tokenFromOption, amountFromOption);
-  }
-
-  // Allow an Option's Buyer to trade tokens into and out of the Option at the Strike Price until the Option's Maturation.
-  // The boolean tradingTokenAToOption is True when Token A is being traded to the Option, and False when Token B is.
-  // Trade limits aren't explicitly checked, but are enforced by Option balances not being drainable below zero.
-  // Note that due to integer division during trading, Options may collect dust amounts over their limits.
-  function tradeOption(address[3] tokenA_tokenB_maker,
-                       uint256[3] limitTokenA_limitTokenB_premium,
-                       uint256[2] maturation_expiration,
-                       bool makerIsSeller,
-                       bool premiumIsTokenA,
-                       uint256 amountToOption,
-                       bool tradingTokenAToOption) external {
-    // Option must be Tradeable, which means it's been filled and hasn't passed its trading deadline (Maturation).
-    require(getOptionState(tokenA_tokenB_maker, limitTokenA_limitTokenB_premium, maturation_expiration, makerIsSeller, premiumIsTokenA) == optionStates.Tradeable);
-    bytes32 optionHash = getOptionHash(tokenA_tokenB_maker, limitTokenA_limitTokenB_premium, maturation_expiration, makerIsSeller, premiumIsTokenA);
-    address buyer = getBuyer(tokenA_tokenB_maker[2], optionTaker[optionHash], makerIsSeller);
-    // Only allow the Buyer to trade with the Option.
+  // Allow an Option's Buyer to exercise the Option, trading amountTraded of assetTraded to the Option for amountLocked of assetLocked.
+  // The traded funds are sent directly to the Seller so they don't need to close it afterwards.
+  // Transitions an Option from Live to Exercised, withdrawing its implicitly stored locked funds.
+  function exerciseOption(address[3] assetLocked_assetTraded_firstMaker,
+                          uint256[3] amountLocked_amountTraded_maturation) external {
+    // Option must be Live, which means it's been filled and hasn't passed its trading deadline (Maturation).
+    require(getOptionState(assetLocked_assetTraded_firstMaker, amountLocked_amountTraded_maturation) == optionStates.Live);
+    bytes32 optionHash = getOptionHash(assetLocked_assetTraded_firstMaker, amountLocked_amountTraded_maturation);
+    address buyer = optionData[optionHash].buyer;
+    address seller = optionData[optionHash].seller;
+    // Only allow the current Buyer to exercise the Option.
     require(msg.sender == buyer);
-    if(tradingTokenAToOption) {
-      tradeOptionHelper(buyer, optionHash, tokenA_tokenB_maker[0], tokenA_tokenB_maker[1], limitTokenA_limitTokenB_premium[0], limitTokenA_limitTokenB_premium[1], amountToOption);
-    } else {
-      tradeOptionHelper(buyer, optionHash, tokenA_tokenB_maker[1], tokenA_tokenB_maker[0], limitTokenA_limitTokenB_premium[1], limitTokenA_limitTokenB_premium[0], amountToOption);
-    }
-    OptionTraded(optionHash, amountToOption, tradingTokenAToOption);
+    // The Buyer sends the Seller the traded assets as specified by the Option parameters.
+    transferUserToUser(buyer, seller, assetLocked_assetTraded_firstMaker[1], amountLocked_amountTraded_maturation[1]);
+    // Mark the Option as Exercised by zeroing out the Buyer and the corresponding nonce.
+    delete optionData[optionHash].buyer;
+    delete optionData[optionHash].nonceBuyer;
+    // The Buyer receives the implicitly stored locked assets as specified by the Option parameters.
+    userBalance[buyer][assetLocked_assetTraded_firstMaker[0]] = userBalance[buyer][assetLocked_assetTraded_firstMaker[0]].add(amountLocked_amountTraded_maturation[0]);
+    emit UserBalanceUpdated(buyer, assetLocked_assetTraded_firstMaker[0], userBalance[buyer][assetLocked_assetTraded_firstMaker[0]]);
+    emit OptionExercised(optionHash, buyer, seller);
   }
   
   // Allows an Option's Seller to withdraw their funds after the Option's Maturation.
-  function closeOption(address[3] tokenA_tokenB_maker,
-                       uint256[3] limitTokenA_limitTokenB_premium,
-                       uint256[2] maturation_expiration,
-                       bool makerIsSeller,
-                       bool premiumIsTokenA) external {
-    // Option must have Matured, which means it's filled, has passed its Maturation time, and is unclosed.
-    require(getOptionState(tokenA_tokenB_maker, limitTokenA_limitTokenB_premium, maturation_expiration, makerIsSeller, premiumIsTokenA) == optionStates.Matured);
-    bytes32 optionHash = getOptionHash(tokenA_tokenB_maker, limitTokenA_limitTokenB_premium, maturation_expiration, makerIsSeller, premiumIsTokenA);
-    address seller = getSeller(tokenA_tokenB_maker[2], optionTaker[optionHash], makerIsSeller);
+  // Transitions an Option from Matured to Closed, withdrawing its implicitly stored locked funds.
+  function closeOption(address[3] assetLocked_assetTraded_firstMaker,
+                       uint256[3] amountLocked_amountTraded_maturation) external {
+    // Option must have Matured, which means it's filled, unexercised, and has passed its Maturation time.
+    require(getOptionState(assetLocked_assetTraded_firstMaker, amountLocked_amountTraded_maturation) == optionStates.Matured);
+    bytes32 optionHash = getOptionHash(assetLocked_assetTraded_firstMaker, amountLocked_amountTraded_maturation);
+    address seller = optionData[optionHash].seller;
     // Only allow the Seller to close their own Option.
     require(msg.sender == seller);
-    // Transfer the Option's entire balance of each token back to the Seller, closing the Option.
-    transferOptionToUser(optionHash, seller, tokenA_tokenB_maker[0], optionBalance[optionHash][tokenA_tokenB_maker[0]]);
-    transferOptionToUser(optionHash, seller, tokenA_tokenB_maker[1], optionBalance[optionHash][tokenA_tokenB_maker[1]]);
-    OptionClosed(optionHash);
+    // Mark the Option as Closed by zeroing out the Seller and the corresponding nonce.
+    delete optionData[optionHash].seller;
+    delete optionData[optionHash].nonceSeller;
+    // Transfer the Option's implicitly stored locked funds back to the Seller.
+    userBalance[seller][assetLocked_assetTraded_firstMaker[0]] = userBalance[seller][assetLocked_assetTraded_firstMaker[0]].add(amountLocked_amountTraded_maturation[0]);
+    emit UserBalanceUpdated(seller, assetLocked_assetTraded_firstMaker[0], userBalance[seller][assetLocked_assetTraded_firstMaker[0]]);
+    emit OptionClosed(optionHash, seller);
   }
   
   function() payable external {
