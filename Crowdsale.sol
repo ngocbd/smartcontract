@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x69897a202dcf8c0a64cbb6ae7a160bd28cfd96f2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xc87047093dfce5d004cd95de88527f6e37857ccd
 */
 pragma solidity ^0.4.21;
 
@@ -352,7 +352,7 @@ contract Crowdsale is Ownable {
     maxTokens = 500000000; 
     maxEther = 10000 * 1 ether;
     rate = 13062;
-    startICO =1523864288; // 04/16/2018 @ 7:38am (UTC)
+    startICO =1527062400; //Wed, 23 May 2018 08:00:00 +0000
     wallet = 0xb382C19879d39E38B4fa77fE047FAdadE002fdAB;
     token = createTokenContract();
   }
