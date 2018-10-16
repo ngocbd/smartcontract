@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SolomexCrowdSale at 0xa3a07912e74acf57f3362d8b4cda85ce652fc887
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SolomexCrowdSale at 0xeb4844a87937c9ee3ae6c89268806c0ab5bd5dff
 */
 pragma solidity ^ 0.4.8;
+
 // <ORACLIZE_API>
 /*
 Copyright (c) 2015-2016 Oraclize SRL
@@ -1047,7 +1048,7 @@ contract SolomexCrowdSale is ERC20, usingOraclize
     address[] public addresses;
 
     // Name of the token
-    string public constant name = "Solomon Exchange";
+    string public constant name = "Solomex";
 
     // Symbol of token
     string public constant symbol = "SMNX";
