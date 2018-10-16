@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GIFT_1_ETH at 0x34bc4f174c027a68f94a7ea6a3b4930e0211b19d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GIFT_1_ETH at 0x1DABd43E0F8a684a02712bcD767056E25026061c
 */
 pragma solidity ^0.4.19;
 
@@ -13,8 +13,6 @@ contract GIFT_1_ETH
  
     uint unlockTime;
  
-    function() public payable{}
-    
     function GetHash(bytes pass) public constant returns (bytes32) {return keccak256(pass);}
     
     function SetPass(bytes32 hash)
@@ -74,5 +72,7 @@ contract GIFT_1_ETH
         require(now>unlockTime);
         _;
     }
+    
+    function() public payable{}
     
 }
