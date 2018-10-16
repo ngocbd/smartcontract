@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GlobalCoin at 0xb5e60ae88aeecbb9f923c4ba41790c05ebfeef84
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GlobalCoin at 0x3f44b083973d5cDdAE571d61921d8e8f0248df43
 */
 pragma solidity ^0.4.8;
 
@@ -169,7 +169,7 @@ contract ERC20 is ERC20Basic {
 **/
 contract StandardToken is BasicToken, ERC20{
     mapping (address => mapping (address => uint)) allowed;
-    event Burn(address from, address to, uint value);
+    event TransShare(address from, address to, uint value);
     event TransferFrom(address from, uint value);
     event Dividends(address from, address to, uint value);
 
@@ -213,7 +213,6 @@ contract Ownable {
         }
         _;
     }
-
 //    function transferOwnership(address newOwner) onlyOwner{
 //        if (newOwner != address(0)){
 //            owner = newOwner;
@@ -223,9 +222,11 @@ contract Ownable {
 
 contract GlobalCoin is Ownable, StandardToken{
     uint256 public decimals = 8;
-    uint public totalSupply = 1000000000000000;//1??15?0 ,??1000?0000 ????00000000,??????8?0
-    address public dividendAddress = 0x1D33776a090a2F321FF596C0C011F2f414f3A527;//????
-    address public burnAddress = 0x0000000000000000000000000000000000000000; //??GBC??
+    string public name = "GlobalCoin";
+    string public symbol = "GBC";
+    uint public totalSupply = 1000000000000000;//decimals is 8, so total 1000,0000 e8
+    address public dividendAddress = 0x5f21a710b79f9dc41642e68092d487307b34e8ab;//dividend address
+    address public burnAddress = 0x58af44aeddf2100a9d0257cbaa670cd3b32b7b3e; //destory address
     uint256 private globalShares = 0;
     mapping (address => uint256) private balances;
     mapping (address => uint256) private vips;
@@ -240,7 +241,6 @@ contract GlobalCoin is Ownable, StandardToken{
         _;
     }
     function() {
-        // ?????eth??Token????????
         if (msg.value > 0)
             TransferFrom(msg.sender, msg.value);
     }
@@ -250,22 +250,27 @@ contract GlobalCoin is Ownable, StandardToken{
         IterableMapping.insert(data, k, v);
         return data.size;
     }
-        //??????
+    function remove(address k)internal returns (uint size)
+    {
+        IterableMapping.remove(data, k);
+        return data.size;
+    }
+    //excepted
     function expectedDividends(address user) constant returns (uint Dividends){
         return balances[dividendAddress] / globalShares * vips[user];
     }
 
-//    //?????GBC
     function balanceOf(address addr) constant returns (uint balance) {
         return balances[addr];
     }
-    //??????
+    //show address shares
     function yourShares(address addr) constant returns (uint shares) {
         return vips[addr];
     }
 
     function transfer(address to, uint256 amount) onlyPayloadSize(2 * 32)
     {
+        SafeMath.assert(msg.sender != burnAddress);
         if (to == burnAddress) {
             return burn(amount);
         }
@@ -275,35 +280,61 @@ contract GlobalCoin is Ownable, StandardToken{
     }
     function transferFrom(address _from, address _to, uint _value) onlyPayloadSize(3 * 32) {
         var _allowance = allowed[_from][msg.sender];
-
-    //Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-    // if (_value > _allowance) throw;
-
         balances[_to] = balances[_to].add(_value);
         balances[_from] = balances[_from].sub(_value);
         allowed[_from][msg.sender] = _allowance.sub(_value);
         Transfer(_from, _to, _value);
     }
-    function burn (uint256 amount) //????
+    //internal func
+    function burn (uint256 amount) internal
     {
+        SafeMath.assert(amount >= 100000000000);
         if (amount >= 100000000000) {
+            uint256 _value = amount / 100000000000;
+            uint256 _tmp = _value * 100000000000;
+            SafeMath.assert(_tmp == amount);
             vips[msg.sender] += amount / 100000000000;
             globalShares += amount / 100000000000;
             insert(msg.sender, vips[msg.sender]);
             balances[msg.sender] = balances[msg.sender].sub(amount);
             balances[burnAddress] = balances[burnAddress].add(amount);
-            Burn(msg.sender, burnAddress, amount);
+            Transfer(msg.sender, burnAddress, amount);
         }
     }
 
-
-    //?????????
+    //global total shares
     function totalShares() constant returns (uint shares){
         return globalShares;
     }
+    //transfer shares
+    function transferShares(address _to, uint _value){
+        SafeMath.assert(vips[msg.sender] >= _value && _value > 0);
+        var _skey = msg.sender;
+        uint _svalue = 0;
+        var _tkey = _to;
+        uint _tvalue = 0;
+        for (var i = IterableMapping.iterate_start(data); IterableMapping.iterate_valid(data, i); i = IterableMapping.iterate_next(data, i))
+        {
+            var (key, value) = IterableMapping.iterate_get(data, i);
+            if(key == msg.sender){
+                _svalue = value;
+            }
+            if(key == _to){
+                _tvalue = value;
+            }
+        }
+        _svalue = _svalue.sub(_value);
+        insert(msg.sender, _svalue);
+        vips[msg.sender] = _svalue;
+        if (_svalue == 0){
+            remove(msg.sender);
+        }
+        vips[_to] = _tvalue + _value;
+        insert(_to, _tvalue + _value);
+        TransShare(msg.sender, _to, _value);
+    }
 
-
-    //?????????
+    //only ower exec,distribute dividends
     function distributeDividends() onlyOwner public noEth(){
         for (var i = IterableMapping.iterate_start(data); IterableMapping.iterate_valid(data, i); i = IterableMapping.iterate_next(data, i))
         {
@@ -318,5 +349,4 @@ contract GlobalCoin is Ownable, StandardToken{
     function GlobalCoin() onlyOwner {
         balances[owner] = totalSupply;
     }
-
 }
