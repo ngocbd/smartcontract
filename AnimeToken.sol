@@ -1,449 +1,539 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AnimeToken at 0x6b697082bdda19c7fb9af9a265d8308993d670f9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ANIMETOKEN at 0xd214cfa712be84cf01ebde493c4c00129ce67842
 */
-pragma solidity ^0.4.18; // solhint-disable-line
-
-/// @title Interface for contracts conforming to ERC-721: Non-Fungible Tokens
-/// @author Dieter Shirley <dete@axiomzen.co> (https://github.com/dete)
-contract ERC721 {
-  // Required methods
-  function approve(address _to, uint256 _tokenId) public;
-  function balanceOf(address _owner) public view returns (uint256 balance);
-  function implementsERC721() public pure returns (bool);
-  function ownerOf(uint256 _tokenId) public view returns (address addr);
-  function takeOwnership(uint256 _tokenId) public;
-  function totalSupply() public view returns (uint256 total);
-  function transferFrom(address _from, address _to, uint256 _tokenId) public;
-  function transfer(address _to, uint256 _tokenId) public;
-
-  event Transfer(address indexed from, address indexed to, uint256 tokenId);
-  event Approval(address indexed owner, address indexed approved, uint256 tokenId);
-
-  // Optional
-  // function name() public view returns (string name);
-  // function symbol() public view returns (string symbol);
-  // function tokenOfOwnerByIndex(address _owner, uint256 _index) external view returns (uint256 tokenId);
-  // function tokenMetadata(uint256 _tokenId) public view returns (string infoUrl);
-}
-
-
-contract AnimeToken is ERC721 {
-
-  /*** EVENTS ***/
-
-  /// @dev The Birth event is fired whenever a new person comes into existence.
-  event Birth(uint256 tokenId, string name, address owner);
-
-  /// @dev The TokenSold event is fired whenever a token is sold.
-  event TokenSold(uint256 tokenId, uint256 oldPrice, uint256 newPrice, address prevOwner, address winner, string name);
-
-  /// @dev Transfer event as defined in current draft of ERC721. 
-  ///  ownership is assigned, including births.
-  event Transfer(address from, address to, uint256 tokenId);
-
-  /*** CONSTANTS ***/
-
-  /// @notice Name and symbol of the non fungible token, as defined in ERC721.
-  string public constant NAME = "Animethers"; // solhint-disable-line
-  string public constant SYMBOL = "AnimeToken"; // solhint-disable-line
-
-  uint256 private startingPrice = 0.001 ether;
-  uint256 private constant PROMO_CREATION_LIMIT = 5000;
-  uint256 private firstStepLimit =  0.053613 ether;
-  uint256 private secondStepLimit = 0.564957 ether;
-
-  /*** STORAGE ***/
-
-  /// @dev A mapping from person IDs to the address that owns them. All persons have
-  ///  some valid owner address.
-  mapping (uint256 => address) public personIndexToOwner;
-
-  // @dev A mapping from owner address to count of tokens that address owns.
-  //  Used internally inside balanceOf() to resolve ownership count.
-  mapping (address => uint256) private ownershipTokenCount;
-
-  /// @dev A mapping from PersonIDs to an address that has been approved to call
-  ///  transferFrom(). Each Person can only have one approved address for transfer
-  ///  at any time. A zero value means no approval is outstanding.
-  mapping (uint256 => address) public personIndexToApproved;
-
-  // @dev A mapping from PersonIDs to the price of the token.
-  mapping (uint256 => uint256) private personIndexToPrice;
-
-  // The addresses of the accounts (or contracts) that can execute actions within each roles.
-  address public ceoAddress;
-  address public cooAddress;
-
-  uint256 public promoCreatedCount;
-
-  /*** DATATYPES ***/
-  struct Person {
-    string name;
-  }
-
-  Person[] private persons;
-
-  /*** ACCESS MODIFIERS ***/
-  /// @dev Access modifier for CEO-only functionality
-  modifier onlyCEO() {
-    require(msg.sender == ceoAddress);
-    _;
-  }
-
-  /// @dev Access modifier for COO-only functionality
-  modifier onlyCOO() {
-    require(msg.sender == cooAddress);
-    _;
-  }
-
-  /// Access modifier for contract owner only functionality
-  modifier onlyCLevel() {
-    require(
-      msg.sender == ceoAddress ||
-      msg.sender == cooAddress
-    );
-    _;
-  }
-
-  /*** CONSTRUCTOR ***/
-  function AnimeToken() public {
-    ceoAddress = msg.sender;
-    cooAddress = msg.sender;
-  }
-
-  /*** PUBLIC FUNCTIONS ***/
-  /// @notice Grant another address the right to transfer token via takeOwnership() and transferFrom().
-  /// @param _to The address to be granted transfer approval. Pass address(0) to
-  ///  clear all approvals.
-  /// @param _tokenId The ID of the Token that can be transferred if this call succeeds.
-  /// @dev Required for ERC-721 compliance.
-  function approve(
-    address _to,
-    uint256 _tokenId
-  ) public {
-    // Caller must own token.
-    require(_owns(msg.sender, _tokenId));
-
-    personIndexToApproved[_tokenId] = _to;
-
-    Approval(msg.sender, _to, _tokenId);
-  }
-
-  /// For querying balance of a particular account
-  /// @param _owner The address for balance query
-  /// @dev Required for ERC-721 compliance.
-  function balanceOf(address _owner) public view returns (uint256 balance) {
-    return ownershipTokenCount[_owner];
-  }
-
-  /// @dev Creates a new promo Person with the given name, with given _price and assignes it to an address.
-  function createPromoPerson(address _owner, string _name, uint256 _price) public onlyCOO {
-    require(promoCreatedCount < PROMO_CREATION_LIMIT);
-
-    address animeOwner = _owner;
-    if (animeOwner == address(0)) {
-      animeOwner = cooAddress;
-    }
-
-    if (_price <= 0) {
-      _price = startingPrice;
-    }
-
-    promoCreatedCount++;
-    _createPerson(_name, animeOwner, _price);
-  }
-
-  /// @dev Creates a new Person with the given name.
-  function createContractPerson(string _name) public onlyCOO {
-    _createPerson(_name, address(this), startingPrice);
-  }
-
-  /// @notice Returns all the relevant information about a specific person.
-  /// @param _tokenId The tokenId of the person of interest.
-  function getAnime(uint256 _tokenId) public view returns (
-    string animeName,
-    uint256 sellingPrice,
-    address owner
-  ) {
-    Person storage person = persons[_tokenId];
-    animeName = person.name;
-    sellingPrice = personIndexToPrice[_tokenId];
-    owner = personIndexToOwner[_tokenId];
-  }
-
-  function implementsERC721() public pure returns (bool) {
-    return true;
-  }
-
-  /// @dev Required for ERC-721 compliance.
-  function name() public pure returns (string) {
-    return NAME;
-  }
-
-  /// For querying owner of token
-  /// @param _tokenId The tokenID for owner inquiry
-  /// @dev Required for ERC-721 compliance.
-  function ownerOf(uint256 _tokenId)
-    public
-    view
-    returns (address owner)
-  {
-    owner = personIndexToOwner[_tokenId];
-    require(owner != address(0));
-  }
-
-  function payout(address _to) public onlyCLevel {
-    _payout(_to);
-  }
-
-  // Allows someone to send ether and obtain the token
-  function purchase(uint256 _tokenId) public payable {
-    address oldOwner = personIndexToOwner[_tokenId];
-    address newOwner = msg.sender;
-
-    uint256 sellingPrice = personIndexToPrice[_tokenId];
-
-    // Making sure token owner is not sending to self
-    require(oldOwner != newOwner);
-
-    // Safety check to prevent against an unexpected 0x0 default.
-    require(_addressNotNull(newOwner));
-
-    // Making sure sent amount is greater than or equal to the sellingPrice
-    require(msg.value >= sellingPrice);
-
-    uint256 payment = uint256(SafeMath.div(SafeMath.mul(sellingPrice, 94), 100));
-    uint256 purchaseExcess = SafeMath.sub(msg.value, sellingPrice);
-
-    // Update prices
-    if (sellingPrice < firstStepLimit) {
-      // first stage
-      personIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 200), 94);
-    } else if (sellingPrice < secondStepLimit) {
-      // second stage
-      personIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 120), 94);
-    } else {
-      // third stage
-      personIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 115), 94);
-    }
-
-    _transfer(oldOwner, newOwner, _tokenId);
-
-    // Pay previous tokenOwner if owner is not contract
-    if (oldOwner != address(this)) {
-      oldOwner.transfer(payment); //(1-0.06)
-    }
-
-    TokenSold(_tokenId, sellingPrice, personIndexToPrice[_tokenId], oldOwner, newOwner, persons[_tokenId].name);
-
-    msg.sender.transfer(purchaseExcess);
-  }
-
-  function priceOf(uint256 _tokenId) public view returns (uint256 price) {
-    return personIndexToPrice[_tokenId];
-  }
-
-  /// @dev Assigns a new address to act as the CEO. Only available to the current CEO.
-  /// @param _newCEO The address of the new CEO
-  function setCEO(address _newCEO) public onlyCEO {
-    require(_newCEO != address(0));
-
-    ceoAddress = _newCEO;
-  }
-
-  /// @dev Assigns a new address to act as the COO. Only available to the current COO.
-  /// @param _newCOO The address of the new COO
-  function setCOO(address _newCOO) public onlyCEO {
-    require(_newCOO != address(0));
-
-    cooAddress = _newCOO;
-  }
-
-  /// @dev Required for ERC-721 compliance.
-  function symbol() public pure returns (string) {
-    return SYMBOL;
-  }
-
-  /// @notice Allow pre-approved user to take ownership of a token
-  /// @param _tokenId The ID of the Token that can be transferred if this call succeeds.
-  /// @dev Required for ERC-721 compliance.
-  function takeOwnership(uint256 _tokenId) public {
-    address newOwner = msg.sender;
-    address oldOwner = personIndexToOwner[_tokenId];
-
-    // Safety check to prevent against an unexpected 0x0 default.
-    require(_addressNotNull(newOwner));
-
-    // Making sure transfer is approved
-    require(_approved(newOwner, _tokenId));
-
-    _transfer(oldOwner, newOwner, _tokenId);
-  }
-
-  /// @param _owner The owner whose celebrity tokens we are interested in.
-  /// @dev This method MUST NEVER be called by smart contract code. First, it's fairly
-  ///  expensive (it walks the entire Persons array looking for persons belonging to owner),
-  ///  but it also returns a dynamic array, which is only supported for web3 calls, and
-  ///  not contract-to-contract calls.
-  function tokensOfOwner(address _owner) public view returns(uint256[] ownerTokens) {
-    uint256 tokenCount = balanceOf(_owner);
-    if (tokenCount == 0) {
-        // Return an empty array
-      return new uint256[](0);
-    } else {
-      uint256[] memory result = new uint256[](tokenCount);
-      uint256 totalPersons = totalSupply();
-      uint256 resultIndex = 0;
-
-      uint256 personId;
-      for (personId = 0; personId <= totalPersons; personId++) {
-        if (personIndexToOwner[personId] == _owner) {
-          result[resultIndex] = personId;
-          resultIndex++;
-        }
-      }
-      return result;
-    }
-  }
-
-  /// For querying totalSupply of token
-  /// @dev Required for ERC-721 compliance.
-  function totalSupply() public view returns (uint256 total) {
-    return persons.length;
-  }
-
-  /// Owner initates the transfer of the token to another account
-  /// @param _to The address for the token to be transferred to.
-  /// @param _tokenId The ID of the Token that can be transferred if this call succeeds.
-  /// @dev Required for ERC-721 compliance.
-  function transfer(
-    address _to,
-    uint256 _tokenId
-  ) public {
-    require(_owns(msg.sender, _tokenId));
-    require(_addressNotNull(_to));
-
-    _transfer(msg.sender, _to, _tokenId);
-  }
-
-  /// Third-party initiates transfer of token from address _from to address _to
-  /// @param _from The address for the token to be transferred from.
-  /// @param _to The address for the token to be transferred to.
-  /// @param _tokenId The ID of the Token that can be transferred if this call succeeds.
-  /// @dev Required for ERC-721 compliance.
-  function transferFrom(
-    address _from,
-    address _to,
-    uint256 _tokenId
-  ) public {
-    require(_owns(_from, _tokenId));
-    require(_approved(_to, _tokenId));
-    require(_addressNotNull(_to));
-
-    _transfer(_from, _to, _tokenId);
-  }
-
-  /*** PRIVATE FUNCTIONS ***/
-  /// Safety check on _to address to prevent against an unexpected 0x0 default.
-  function _addressNotNull(address _to) private pure returns (bool) {
-    return _to != address(0);
-  }
-
-  /// For checking approval of transfer for address _to
-  function _approved(address _to, uint256 _tokenId) private view returns (bool) {
-    return personIndexToApproved[_tokenId] == _to;
-  }
-
-  /// For creating Person
-  function _createPerson(string _name, address _owner, uint256 _price) private {
-    Person memory _person = Person({
-      name: _name
-    });
-    uint256 newPersonId = persons.push(_person) - 1;
-
-    // It's probably never going to happen, 4 billion tokens are A LOT, but
-    // let's just be 100% sure we never let this happen.
-    require(newPersonId == uint256(uint32(newPersonId)));
-
-    Birth(newPersonId, _name, _owner);
-
-    personIndexToPrice[newPersonId] = _price;
-
-    // This will assign ownership, and also emit the Transfer event as
-    // per ERC721 draft
-    _transfer(address(0), _owner, newPersonId);
-  }
-
-  /// Check for token ownership
-  function _owns(address claimant, uint256 _tokenId) private view returns (bool) {
-    return claimant == personIndexToOwner[_tokenId];
-  }
-
-  /// For paying out balance on contract
-  function _payout(address _to) private {
-    if (_to == address(0)) {
-      ceoAddress.transfer(this.balance);
-    } else {
-      _to.transfer(this.balance);
-    }
-  }
-
-  /// @dev Assigns ownership of a specific Person to an address.
-  function _transfer(address _from, address _to, uint256 _tokenId) private {
-    // Since the number of persons is capped to 2^32 we can't overflow this
-    ownershipTokenCount[_to]++;
-    //transfer ownership
-    personIndexToOwner[_tokenId] = _to;
-
-    // When creating new persons _from is 0x0, but we can't account that address.
-    if (_from != address(0)) {
-      ownershipTokenCount[_from]--;
-      // clear any previously approved ownership exchange
-      delete personIndexToApproved[_tokenId];
-    }
-
-    // Emit the transfer event.
-    Transfer(_from, _to, _tokenId);
-  }
-}
+pragma solidity ^0.4.18;
+
+// math library
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
+        }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
     }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
 
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
 
-  /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
 
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
+}
+
+
+// ownership
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization
+ *      control functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+    address public owner;
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the
+     *      sender account.
+     */
+    function Ownable() public {
+        owner = msg.sender;
+    }
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address newOwner) onlyOwner public {
+        require(newOwner != address(0));
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
+}
+
+
+// ERC223
+/**
+ * @title ERC223
+ * @dev ERC223 contract interface with ERC20 functions and events
+ *      Fully backward compatible with ERC20
+ *      Recommended implementation used at https://github.com/Dexaran/ERC223-token-standard/tree/Recommended
+ */
+contract ERC223 {
+    uint public totalSupply;
+
+    // ERC223 and ERC20 functions and events
+    function balanceOf(address who) public view returns (uint);
+    function totalSupply() public view returns (uint256 _supply);
+    function transfer(address to, uint value) public returns (bool ok);
+    function transfer(address to, uint value, bytes data) public returns (bool ok);
+    function transfer(address to, uint value, bytes data, string customFallback) public returns (bool ok);
+    event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
+
+    // ERC223 functions
+    function name() public view returns (string _name);
+    function symbol() public view returns (string _symbol);
+    function decimals() public view returns (uint8 _decimals);
+
+    // ERC20 functions and events
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+    function approve(address _spender, uint256 _value) public returns (bool success);
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint _value);
+}
+
+
+// contractReceiver
+/**
+ * @title ContractReceiver
+ * @dev Contract that is working with ERC223 tokens
+ */
+ contract ContractReceiver {
+
+    struct TKN {
+        address sender;
+        uint value;
+        bytes data;
+        bytes4 sig;
+    }
+
+    function tokenFallback(address _from, uint _value, bytes _data) public pure {
+        TKN memory tkn;
+        tkn.sender = _from;
+        tkn.value = _value;
+        tkn.data = _data;
+        uint32 u = uint32(_data[3]) + (uint32(_data[2]) << 8) + (uint32(_data[1]) << 16) + (uint32(_data[0]) << 24);
+        tkn.sig = bytes4(u);
+        
+        /*
+         * tkn variable is analogue of msg variable of Ether transaction
+         * tkn.sender is person who initiated this token transaction   (analogue of msg.sender)
+         * tkn.value the number of tokens that were sent   (analogue of msg.value)
+         * tkn.data is data of token transaction   (analogue of msg.data)
+         * tkn.sig is 4 bytes signature of function if data of token transaction is a function execution
+         */
+    }
+}
+
+// about animetoken
+/**
+ * @title ANIMETOKEN
+ * @author ANIMETOKEN Project
+ * @dev ANIMETOKEN is an ERC223 Token with ERC20 functions and events
+ *      Fully backward compatible with ERC20
+ */
+contract ANIMETOKEN is ERC223, Ownable {
+    using SafeMath for uint256;
+
+    string public name = "ANIMETOKEN";
+    string public symbol = "ANIME";
+    uint8 public decimals = 8;
+    uint256 public totalSupply = 50e9 * 1e8;
+    uint256 public distributeAmount = 0;
+    bool public mintingFinished = false;
+    
+    address public founder = 0xA0Ed4122f9624f60C77E13b3fD54906F803f9c0F;
+    address public development = 0xf97E3932C848EfFF4241FEdC3640F5b6913D4176;
+    address public marketing = 0xA71917ac766F0B64CCAF1575b5502311681e85Dd;
+    address public lockup = 0x76642f857aF9eFD19FA06eA307d2a61281c06FdF;
+
+    mapping(address => uint256) public balanceOf;
+    mapping(address => mapping (address => uint256)) public allowance;
+    mapping (address => bool) public frozenAccount;
+    mapping (address => uint256) public unlockUnixTime;
+    
+    event FrozenFunds(address indexed target, bool frozen);
+    event LockedFunds(address indexed target, uint256 locked);
+    event Burn(address indexed from, uint256 amount);
+    event Mint(address indexed to, uint256 amount);
+    event MintFinished();
+
+
+    // constructor
+    /** 
+     * @dev Constructor is called only once and can not be called again
+     */
+    function ANIMETOKEN() public {
+        owner = founder;
+        
+        balanceOf[founder] = totalSupply.mul(50).div(100);
+        balanceOf[development] = totalSupply.mul(20).div(100);
+        balanceOf[marketing] = totalSupply.mul(20).div(100);
+        balanceOf[lockup] = totalSupply.mul(10).div(100);
+    }
+
+
+    function name() public view returns (string _name) {
+        return name;
+    }
+
+    function symbol() public view returns (string _symbol) {
+        return symbol;
+    }
+
+    function decimals() public view returns (uint8 _decimals) {
+        return decimals;
+    }
+
+    function totalSupply() public view returns (uint256 _totalSupply) {
+        return totalSupply;
+    }
+
+    function balanceOf(address _owner) public view returns (uint256 balance) {
+        return balanceOf[_owner];
+    }
+
+
+    // suspend
+    /**
+     * @dev Prevent targets from sending or receiving tokens
+     * @param targets Addresses to be frozen
+     * @param isFrozen either to freeze it or not
+     */
+    function freezeAccounts(address[] targets, bool isFrozen) onlyOwner public {
+        require(targets.length > 0);
+
+        for (uint j = 0; j < targets.length; j++) {
+            require(targets[j] != 0x0);
+            frozenAccount[targets[j]] = isFrozen;
+            FrozenFunds(targets[j], isFrozen);
+        }
+    }
+
+    // lockup
+    /**
+     * @dev Prevent targets from sending or receiving tokens by setting Unix times
+     * @param targets Addresses to be locked funds
+     * @param unixTimes Unix times when locking up will be finished
+     */
+    function lockupAccounts(address[] targets, uint[] unixTimes) onlyOwner public {
+        require(targets.length > 0
+                && targets.length == unixTimes.length);
+                
+        for(uint j = 0; j < targets.length; j++){
+            require(unlockUnixTime[targets[j]] < unixTimes[j]);
+            unlockUnixTime[targets[j]] = unixTimes[j];
+            LockedFunds(targets[j], unixTimes[j]);
+        }
+    }
+
+
+    // transfer
+    /**
+     * @dev Function that is called when a user or another contract wants to transfer funds
+     */
+    function transfer(address _to, uint _value, bytes _data, string _custom_fallback) public returns (bool success) {
+        require(_value > 0
+                && frozenAccount[msg.sender] == false 
+                && frozenAccount[_to] == false
+                && now > unlockUnixTime[msg.sender] 
+                && now > unlockUnixTime[_to]);
+
+        if (isContract(_to)) {
+            require(balanceOf[msg.sender] >= _value);
+            balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);
+            balanceOf[_to] = balanceOf[_to].add(_value);
+            assert(_to.call.value(0)(bytes4(keccak256(_custom_fallback)), msg.sender, _value, _data));
+            Transfer(msg.sender, _to, _value, _data);
+            Transfer(msg.sender, _to, _value);
+            return true;
+        } else {
+            return transferToAddress(_to, _value, _data);
+        }
+    }
+
+    function transfer(address _to, uint _value, bytes _data) public  returns (bool success) {
+        require(_value > 0
+                && frozenAccount[msg.sender] == false 
+                && frozenAccount[_to] == false
+                && now > unlockUnixTime[msg.sender] 
+                && now > unlockUnixTime[_to]);
+
+        if (isContract(_to)) {
+            return transferToContract(_to, _value, _data);
+        } else {
+            return transferToAddress(_to, _value, _data);
+        }
+    }
+
+    /**
+     * @dev Standard function transfer similar to ERC20 transfer with no _data
+     *      Added due to backwards compatibility reasons
+     */
+    function transfer(address _to, uint _value) public returns (bool success) {
+        require(_value > 0
+                && frozenAccount[msg.sender] == false 
+                && frozenAccount[_to] == false
+                && now > unlockUnixTime[msg.sender] 
+                && now > unlockUnixTime[_to]);
+
+        bytes memory empty;
+        if (isContract(_to)) {
+            return transferToContract(_to, _value, empty);
+        } else {
+            return transferToAddress(_to, _value, empty);
+        }
+    }
+
+    // assemble the given address bytecode. If bytecode exists then the _addr is a contract.
+    function isContract(address _addr) private view returns (bool is_contract) {
+        uint length;
+        assembly {
+            //retrieve the size of the code on target address, this needs assembly
+            length := extcodesize(_addr)
+        }
+        return (length > 0);
+    }
+
+    // function that is called when transaction target is an address
+    function transferToAddress(address _to, uint _value, bytes _data) private returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);
+        balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);
+        balanceOf[_to] = balanceOf[_to].add(_value);
+        Transfer(msg.sender, _to, _value, _data);
+        Transfer(msg.sender, _to, _value);
+        return true;
+    }
+
+    // function that is called when transaction target is a contract
+    function transferToContract(address _to, uint _value, bytes _data) private returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);
+        balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);
+        balanceOf[_to] = balanceOf[_to].add(_value);
+        ContractReceiver receiver = ContractReceiver(_to);
+        receiver.tokenFallback(msg.sender, _value, _data);
+        Transfer(msg.sender, _to, _value, _data);
+        Transfer(msg.sender, _to, _value);
+        return true;
+    }
+
+
+
+    /**
+     * @dev Transfer tokens from one address to another
+     *      Added due to backwards compatibility with ERC20
+     * @param _from address The address which you want to send tokens from
+     * @param _to address The address which you want to transfer to
+     * @param _value uint256 the amount of tokens to be transferred
+     */
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        require(_to != address(0)
+                && _value > 0
+                && balanceOf[_from] >= _value
+                && allowance[_from][msg.sender] >= _value
+                && frozenAccount[_from] == false 
+                && frozenAccount[_to] == false
+                && now > unlockUnixTime[_from] 
+                && now > unlockUnixTime[_to]);
+
+        balanceOf[_from] = balanceOf[_from].sub(_value);
+        balanceOf[_to] = balanceOf[_to].add(_value);
+        allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(_value);
+        Transfer(_from, _to, _value);
+        return true;
+    }
+
+    /**
+     * @dev Allows _spender to spend no more than _value tokens in your behalf
+     *      Added due to backwards compatibility with ERC20
+     * @param _spender The address authorized to spend
+     * @param _value the max amount they can spend
+     */
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        allowance[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    /**
+     * @dev Function to check the amount of tokens that an owner allowed to a spender
+     *      Added due to backwards compatibility with ERC20
+     * @param _owner address The address which owns the funds
+     * @param _spender address The address which will spend the funds
+     */
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
+        return allowance[_owner][_spender];
+    }
+
+
+    // burn
+    /**
+     * @dev Burns a specific amount of tokens.
+     * @param _from The address that will burn the tokens.
+     * @param _unitAmount The amount of token to be burned.
+     */
+    function burn(address _from, uint256 _unitAmount) onlyOwner public {
+        require(_unitAmount > 0
+                && balanceOf[_from] >= _unitAmount);
+
+        balanceOf[_from] = balanceOf[_from].sub(_unitAmount);
+        totalSupply = totalSupply.sub(_unitAmount);
+        Burn(_from, _unitAmount);
+    }
+
+
+    modifier canMint() {
+        require(!mintingFinished);
+        _;
+    }
+    
+    
+    // mint
+    /**
+     * @dev Function to mint tokens
+     * @param _to The address that will receive the minted tokens.
+     * @param _unitAmount The amount of tokens to mint.
+     */
+    function mint(address _to, uint256 _unitAmount) onlyOwner canMint public returns (bool) {
+        require(_unitAmount > 0);
+        
+        totalSupply = totalSupply.add(_unitAmount);
+        balanceOf[_to] = balanceOf[_to].add(_unitAmount);
+        Mint(_to, _unitAmount);
+        Transfer(address(0), _to, _unitAmount);
+        return true;
+    }
+
+    /**
+     * @dev Function to stop minting new tokens.
+     */
+    function finishMinting() onlyOwner canMint public returns (bool) {
+        mintingFinished = true;
+        MintFinished();
+        return true;
+    }
+
+
+    // multisend
+    /**
+     * @dev Function to distribute tokens to the list of addresses by the provided amount
+     */
+    function distributeAirdrop(address[] addresses, uint256 amount) public returns (bool) {
+        require(amount > 0 
+                && addresses.length > 0
+                && frozenAccount[msg.sender] == false
+                && now > unlockUnixTime[msg.sender]);
+
+        amount = amount.mul(1e8);
+        uint256 totalAmount = amount.mul(addresses.length);
+        require(balanceOf[msg.sender] >= totalAmount);
+        
+        for (uint j = 0; j < addresses.length; j++) {
+            require(addresses[j] != 0x0
+                    && frozenAccount[addresses[j]] == false
+                    && now > unlockUnixTime[addresses[j]]);
+
+            balanceOf[addresses[j]] = balanceOf[addresses[j]].add(amount);
+            Transfer(msg.sender, addresses[j], amount);
+        }
+        balanceOf[msg.sender] = balanceOf[msg.sender].sub(totalAmount);
+        return true;
+    }
+
+    function distributeAirdrop(address[] addresses, uint[] amounts) public returns (bool) {
+        require(addresses.length > 0
+                && addresses.length == amounts.length
+                && frozenAccount[msg.sender] == false
+                && now > unlockUnixTime[msg.sender]);
+                
+        uint256 totalAmount = 0;
+        
+        for(uint j = 0; j < addresses.length; j++){
+            require(amounts[j] > 0
+                    && addresses[j] != 0x0
+                    && frozenAccount[addresses[j]] == false
+                    && now > unlockUnixTime[addresses[j]]);
+                    
+            amounts[j] = amounts[j].mul(1e8);
+            totalAmount = totalAmount.add(amounts[j]);
+        }
+        require(balanceOf[msg.sender] >= totalAmount);
+        
+        for (j = 0; j < addresses.length; j++) {
+            balanceOf[addresses[j]] = balanceOf[addresses[j]].add(amounts[j]);
+            Transfer(msg.sender, addresses[j], amounts[j]);
+        }
+        balanceOf[msg.sender] = balanceOf[msg.sender].sub(totalAmount);
+        return true;
+    }
+
+    /**
+     * @dev Function to collect tokens from the list of addresses
+     */
+    function collectTokens(address[] addresses, uint[] amounts) onlyOwner public returns (bool) {
+        require(addresses.length > 0
+                && addresses.length == amounts.length);
+
+        uint256 totalAmount = 0;
+        
+        for (uint j = 0; j < addresses.length; j++) {
+            require(amounts[j] > 0
+                    && addresses[j] != 0x0
+                    && frozenAccount[addresses[j]] == false
+                    && now > unlockUnixTime[addresses[j]]);
+                    
+            amounts[j] = amounts[j].mul(1e8);
+            require(balanceOf[addresses[j]] >= amounts[j]);
+            balanceOf[addresses[j]] = balanceOf[addresses[j]].sub(amounts[j]);
+            totalAmount = totalAmount.add(amounts[j]);
+            Transfer(addresses[j], msg.sender, amounts[j]);
+        }
+        balanceOf[msg.sender] = balanceOf[msg.sender].add(totalAmount);
+        return true;
+    }
+
+
+    function setDistributeAmount(uint256 _unitAmount) onlyOwner public {
+        distributeAmount = _unitAmount;
+    }
+    
+    /**
+     * @dev Function to distribute tokens to the msg.sender automatically
+     *      If distributeAmount is 0, this function doesn't work
+     */
+    function autoDistribute() payable public {
+        require(distributeAmount > 0
+                && balanceOf[founder] >= distributeAmount
+                && frozenAccount[msg.sender] == false
+                && now > unlockUnixTime[msg.sender]);
+        if(msg.value > 0) founder.transfer(msg.value);
+        
+        balanceOf[founder] = balanceOf[founder].sub(distributeAmount);
+        balanceOf[msg.sender] = balanceOf[msg.sender].add(distributeAmount);
+        Transfer(founder, msg.sender, distributeAmount);
+    }
+
+    /**
+     * @dev fallback function
+     */
+    function() payable public {
+        autoDistribute();
+     }
+
 }
