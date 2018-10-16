@@ -1,101 +1,68 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ballot at 0xb377dc0593ebce801cdfff2e0c8f786983f7d2e7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ballot at 0x85b846d361f861c9363f769e65f76b83dc80b531
 */
-contract  Ballot{
-    struct Voter{
+pragma solidity ^0.4.2;
+contract Ballot {
+
+    struct Voter {
         uint weight;
         bool voted;
+        uint8 vote;
         address delegate;
-        uint vote;
     }
-    
-    struct Proposal{
-        bytes32 name;
+    struct Proposal {
         uint voteCount;
     }
-    
-    address public chairperson  ;
-    
-    mapping(address=>Voter) voters;
-    
-    Proposal[] public proposals;
-    
-    function Ballot(bytes32[] proposalNames) {
-        chairperson = msg.sender; 
+
+    address chairperson;
+    mapping(address => Voter) voters;
+    Proposal[] proposals;
+
+    /// Create a new ballot with $(_numProposals) different proposals.
+    function Ballot(uint8 _numProposals) {
+        chairperson = msg.sender;
         voters[chairperson].weight = 1;
-        
-        for(uint i = 0; i < proposalNames.length; i++) {
-            proposals.push(Proposal({
-                name: proposalNames[i],
-                voteCount:0
-            }));
-        }
-        
+        proposals.length = _numProposals;
     }
-    
+
+    /// Give $(voter) the right to vote on this ballot.
+    /// May only be called by $(chairperson).
     function giveRightToVote(address voter) {
-        
-        if(msg.sender != chairperson || voters[voter].voted){
-            throw;
-        }
-        
+        if (msg.sender != chairperson || voters[voter].voted) return;
         voters[voter].weight = 1;
-        
     }
-    
-    function delegate(address to){
-        
-        Voter sender = voters[msg.sender];
-        if (sender.voted)
-            throw;
-            
-        while ( 
-            voters[to].delegate != address(0)&&
-            voters[to].delegate != msg.sender
-        ){
+
+    /// Delegate your vote to the voter $(to).
+    function delegate(address to) {
+        Voter sender = voters[msg.sender]; // assigns reference
+        if (sender.voted) return;
+        while (voters[to].delegate != address(0) && voters[to].delegate != msg.sender)
             to = voters[to].delegate;
-        }
-        
-        if (to == msg.sender)
-            throw;
-            
+        if (to == msg.sender) return;
         sender.voted = true;
         sender.delegate = to;
         Voter delegate = voters[to];
-        if  (delegate.voted) {
+        if (delegate.voted)
             proposals[delegate.vote].voteCount += sender.weight;
-        }else {
+        else
             delegate.weight += sender.weight;
-        }
-        
     }
-    
-    
-    function vote(uint proposal) {
+
+    /// Give a single vote to proposal $(proposal).
+    function vote(uint8 proposal) {
         Voter sender = voters[msg.sender];
-        if (sender.voted)
-            throw;
-        
-        sender.voted=true;
-        sender.vote=proposal;
+        if (sender.voted || proposal >= proposals.length) return;
+        sender.voted = true;
+        sender.vote = proposal;
         proposals[proposal].voteCount += sender.weight;
-        
     }
-    
-    function winningProtocal() returns (uint proposal) 
-    {
-        proposal = 0;
-        uint maxCount = 0;
-        for (uint i = 0 ; i < proposals.length ; i++) {
-            if (proposals[i].voteCount > maxCount) {
-                proposal = i;
-                maxCount = proposals[i].voteCount;
+
+    function winningProposal() constant returns (uint8 winningProposal) {
+        uint256 winningVoteCount = 0;
+        for (uint8 proposal = 0; proposal < proposals.length; proposal++)
+            if (proposals[proposal].voteCount > winningVoteCount) {
+                winningVoteCount = proposals[proposal].voteCount;
+                winningProposal = proposal;
             }
-        }
-        
-        //return proposal;
     }
-    
-    
-    
 }
