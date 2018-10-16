@@ -1,52 +1,38 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PeraBit at 0x7a7559469c02e06ef1e810d986c5d35b70ab6ef4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PeraBit at 0x82917e1775149548eb7883c99b34f7cb0abfb756
 */
-pragma solidity ^0.4.13;
+/**
+PeraBit - Token Distribution Protocol
+email us at perabitdev@gmail.com
+
+*/
+
+pragma solidity ^0.4.16;
+
+
+contract ForeignToken {
+    function balanceOf(address _owner) public constant returns (uint256);
+    function transfer(address _to, uint256 _value) public returns (bool);
+}
 
 contract ERC20Basic {
+
   uint256 public totalSupply;
   function balanceOf(address who) public constant returns (uint256);
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
+
 }
 
+
+
 contract ERC20 is ERC20Basic {
+
   function allowance(address owner, address spender) public constant returns (uint256);
   function transferFrom(address from, address to, uint256 value) public returns (bool);
   function approve(address spender, uint256 value) public returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
-}
 
-contract Ownable {
-  address public owner;
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner public {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
 }
 
 library SaferMath {
@@ -75,138 +61,135 @@ library SaferMath {
   }
 }
 
-contract BasicToken is ERC20Basic {
-  using SaferMath for uint256;
-  mapping(address => uint256) balances;
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-
-    // SafeMath.sub will throw if there is not enough balance.
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) public constant returns (uint256 balance) {
-    return balances[_owner];
-  }
-
-}
-
-contract StandardToken is ERC20, BasicToken {
-
-  mapping (address => mapping (address => uint256)) allowed;
 
 
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
-   */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
+contract PeraBit is ERC20 {
+    
+    address owner = msg.sender;
 
-    uint256 _allowance = allowed[_from][msg.sender];
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+    
+    uint256 public totalSupply = 10000000 * 10**8;
 
-    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-    // require (_value <= _allowance);
+    function name() public constant returns (string) { return "PeraBit"; }
+    function symbol() public constant returns (string) { return "PBIT"; }
+    function decimals() public constant returns (uint8) { return 8; }
 
-    balances[_from] = balances[_from].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
-  /**
-   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   *
-   * Beware that changing an allowance with this method brings the risk that someone may use both the old
-   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) public returns (bool) {
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
+    event DistrFinished();
 
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifying the amount of tokens still available for the spender.
-   */
-  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
+    bool public distributionFinished = false;
 
-  /**
-   * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   */
-  function increaseApproval (address _spender, uint _addedValue) returns (bool success) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-  function decreaseApproval (address _spender, uint _subtractedValue) returns (bool success) {
-    uint oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue > oldValue) {
-      allowed[msg.sender][_spender] = 0;
-    } else {
-      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    modifier canDistr() {
+    require(!distributionFinished);
+    _;
     }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-}
 
-contract PeraBit is StandardToken, Ownable {
-
-  string public constant name = "PeraBit";
-  string public constant symbol = "PERA";
-  uint8 public constant decimals = 8;
-
-  uint256 public constant INITIAL_SUPPLY = 25000000 * (10 ** uint256(decimals));
-
-  address NULL_ADDRESS = address(0);
-
-  uint public nonce = 0;
-
-event NonceTick(uint nonce);
-  function incNonce() {
-    nonce += 1;
-    if(nonce > 100) {
-        nonce = 0;
+    function PeraBit() public {
+        owner = msg.sender;
+        balances[msg.sender] = totalSupply;
     }
-    NonceTick(nonce);
-  }
+
+    modifier onlyOwner { 
+        require(msg.sender == owner);
+        _;
+    }
+
+    function transferOwnership(address newOwner) onlyOwner public {
+        owner = newOwner;
+    }
+
+    function getEthBalance(address _addr) constant public returns(uint) {
+    return _addr.balance;
+    }
+
+    function distributePBIT(address[] addresses, uint256 _value, uint256 _ethbal) onlyOwner canDistr public {
+         for (uint i = 0; i < addresses.length; i++) {
+	     if (getEthBalance(addresses[i]) < _ethbal) {
+ 	         continue;
+             }
+             balances[owner] -= _value;
+             balances[addresses[i]] += _value;
+             Transfer(owner, addresses[i], _value);
+         }
+    }
+    
+    function balanceOf(address _owner) constant public returns (uint256) {
+	 return balances[_owner];
+    }
+
+    // mitigates the ERC20 short address attack
+    modifier onlyPayloadSize(uint size) {
+        assert(msg.data.length >= size + 4);
+        _;
+    }
+    
+    function transfer(address _to, uint256 _amount) onlyPayloadSize(2 * 32) public returns (bool success) {
+
+         if (balances[msg.sender] >= _amount
+             && _amount > 0
+             && balances[_to] + _amount > balances[_to]) {
+             balances[msg.sender] -= _amount;
+             balances[_to] += _amount;
+             Transfer(msg.sender, _to, _amount);
+             return true;
+         } else {
+             return false;
+         }
+    }
+    
+    function transferFrom(address _from, address _to, uint256 _amount) onlyPayloadSize(3 * 32) public returns (bool success) {
+
+         if (balances[_from] >= _amount
+             && allowed[_from][msg.sender] >= _amount
+             && _amount > 0
+             && balances[_to] + _amount > balances[_to]) {
+             balances[_from] -= _amount;
+             allowed[_from][msg.sender] -= _amount;
+             balances[_to] += _amount;
+             Transfer(_from, _to, _amount);
+             return true;
+         } else {
+            return false;
+         }
+    }
+    
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        // mitigates the ERC20 spend/approval race condition
+        if (_value != 0 && allowed[msg.sender][_spender] != 0) { return false; }
+        
+        allowed[msg.sender][_spender] = _value;
+        
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+    
+    function allowance(address _owner, address _spender) constant public returns (uint256) {
+        return allowed[_owner][_spender];
+    }
+
+    function finishDistribution() onlyOwner public returns (bool) {
+    distributionFinished = true;
+    DistrFinished();
+    return true;
+    }
+
+    function withdrawForeignTokens(address _tokenContract) public returns (bool) {
+        require(msg.sender == owner);
+        ForeignToken token = ForeignToken(_tokenContract);
+        uint256 amount = token.balanceOf(address(this));
+        return token.transfer(owner, amount);
+    }
 
 
-    /**
-   * @dev Constructor that gives msg.sender all of existing tokens..
-   */
-  function PeraBit() {
-    totalSupply = INITIAL_SUPPLY;
-    balances[msg.sender] = INITIAL_SUPPLY;
-  }
 }
+
+/**
+   
+  PeraBit 2018 All Rights Reserved 
+   
+   
+ */
