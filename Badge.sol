@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Badge at 0x79f782858e4fa9ada67db285d048d7c3a372f8e8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Badge at 0x923641c6b80d8fc913ff883a5c523f47081bad92
 */
 pragma solidity ^0.4.11;
 contract ConfigInterface {
