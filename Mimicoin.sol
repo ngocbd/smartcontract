@@ -1,39 +1,26 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Mimicoin at 0x76841b1bfc8e25e25f58608b7003fded220cbd42
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Mimicoin at 0xb39214b18d9ffb6ddc9a4d5f6063db136cf3a94e
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.16;
 
-contract CalledA {
+contract owned {
+    address public owner;
 
-    address[] public callers;
-
-    function CalledA() public {
-        callers.push(msg.sender);
+    function owned() public {
+        owner = msg.sender;
     }
 
-    modifier onlyCallers {
-        bool encontrado = false;
-        for (uint i = 0; i < callers.length && !encontrado; i++) {
-            if (callers[i] == msg.sender) {
-                encontrado = true;
-            }
-        }
-        require(encontrado);
+    modifier onlyOwner {
+        require(msg.sender == owner);
         _;
     }
 
-    function transferCallership(address newCaller,uint index) public onlyCallers {
-        callers[index] = newCaller;
-    }
-
-    function deleteCaller(uint index) public onlyCallers {
-        delete callers[index];
-    }
-
-    function addCaller(address caller) public onlyCallers {
-        callers.push(caller);
+    function transferOwnership(address newOwner) onlyOwner public {
+        owner = newOwner;
     }
 }
+
+interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
 contract TokenERC20 {
     // Public variables of the token
@@ -87,48 +74,7 @@ contract TokenERC20 {
         balanceOf[_to] += _value;
         Transfer(_from, _to, _value);
         // Asserts are used to use static analysis to find bugs in your code. They should never fail
-        assert(balanceOf[_from] + balanceOf[_to] == previousBalances); 
-    }
-
-    
-
-    
-}
-
-/******************************************/
-/*       ADVANCED TOKEN STARTS HERE       */
-/******************************************/
-
-contract Mimicoin is CalledA, TokenERC20 {
-
-    uint256 public sellPrice;
-    uint256 public buyPrice;
-
-    mapping (address => bool) public frozenAccount;
-
-    /* This generates a public event on the blockchain that will notify clients */
-    event FrozenFunds(address target, bool frozen);
-
-    /* Initializes contract with initial supply tokens to the creator of the contract */
-    function Mimicoin(
-        uint256 initialSupply,
-        string tokenName,
-        string tokenSymbol
-    ) TokenERC20(initialSupply, tokenName, tokenSymbol) public {
-        sellPrice = 1161.7235 * 1 szabo;
-        buyPrice = 929.378 * 1 szabo;
-    }
-
-    function () payable public onlyCallers {
-
-    }
-
-    function getBalance(address addr) public view returns(uint) {
-		return balanceOf[addr];
-	}
-
-    function getRevenue(uint amount) public onlyCallers {
-        callers[0].transfer(amount);
+        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
 
     /**
@@ -153,9 +99,99 @@ contract Mimicoin is CalledA, TokenERC20 {
      * @param _value the amount to send
      */
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        require(_value <= allowance[_from][msg.sender]);     // Check allowance
+        allowance[_from][msg.sender] -= _value;
         _transfer(_from, _to, _value);
         return true;
     }
+
+    /**
+     * Set allowance for other address
+     *
+     * Allows `_spender` to spend no more than `_value` tokens in your behalf
+     *
+     * @param _spender The address authorized to spend
+     * @param _value the max amount they can spend
+     */
+    function approve(address _spender, uint256 _value) public
+        returns (bool success) {
+        allowance[msg.sender][_spender] = _value;
+        return true;
+    }
+
+    /**
+     * Set allowance for other address and notify
+     *
+     * Allows `_spender` to spend no more than `_value` tokens in your behalf, and then ping the contract about it
+     *
+     * @param _spender The address authorized to spend
+     * @param _value the max amount they can spend
+     * @param _extraData some extra information to send to the approved contract
+     */
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
+        public
+        returns (bool success) {
+        tokenRecipient spender = tokenRecipient(_spender);
+        if (approve(_spender, _value)) {
+            spender.receiveApproval(msg.sender, _value, this, _extraData);
+            return true;
+        }
+    }
+
+    /**
+     * Destroy tokens
+     *
+     * Remove `_value` tokens from the system irreversibly
+     *
+     * @param _value the amount of money to burn
+     */
+    function burn(uint256 _value) public returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
+        balanceOf[msg.sender] -= _value;            // Subtract from the sender
+        totalSupply -= _value;                      // Updates totalSupply
+        Burn(msg.sender, _value);
+        return true;
+    }
+
+    /**
+     * Destroy tokens from other account
+     *
+     * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
+     *
+     * @param _from the address of the sender
+     * @param _value the amount of money to burn
+     */
+    function burnFrom(address _from, uint256 _value) public returns (bool success) {
+        require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
+        require(_value <= allowance[_from][msg.sender]);    // Check allowance
+        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
+        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
+        totalSupply -= _value;                              // Update totalSupply
+        Burn(_from, _value);
+        return true;
+    }
+}
+
+/******************************************/
+/*       ADVANCED TOKEN STARTS HERE       */
+/******************************************/
+
+contract Mimicoin is owned, TokenERC20 {
+
+    uint256 public sellPrice;
+    uint256 public buyPrice;
+
+    mapping (address => bool) public frozenAccount;
+
+    /* This generates a public event on the blockchain that will notify clients */
+    event FrozenFunds(address target, bool frozen);
+
+    /* Initializes contract with initial supply tokens to the creator of the contract */
+    function Mimicoin(
+        uint256 initialSupply,
+        string tokenName,
+        string tokenSymbol
+    ) TokenERC20(initialSupply, tokenName, tokenSymbol) public {}
 
     /* Internal transfer, only can be called by this contract */
     function _transfer(address _from, address _to, uint _value) internal {
@@ -164,17 +200,17 @@ contract Mimicoin is CalledA, TokenERC20 {
         require (balanceOf[_to] + _value > balanceOf[_to]); // Check for overflows
         require(!frozenAccount[_from]);                     // Check if sender is frozen
         require(!frozenAccount[_to]);                       // Check if recipient is frozen
-        balanceOf[_from] = safeSub(_value,balanceOf[_from]);                         // Subtract from the sender
-        balanceOf[_to] = safeAdd(_value,balanceOf[_to]);                           // Add the same to the recipient
+        balanceOf[_from] -= _value;                         // Subtract from the sender
+        balanceOf[_to] += _value;                           // Add the same to the recipient
         Transfer(_from, _to, _value);
     }
 
     /// @notice Create `mintedAmount` tokens and send it to `target`
     /// @param target Address to receive the tokens
     /// @param mintedAmount the amount of tokens it will receive
-    function mintToken(address target, uint256 mintedAmount) onlyCallers public {
+    function mintToken(address target, uint256 mintedAmount) onlyOwner public {
         balanceOf[target] += mintedAmount;
-        totalSupply = safeAdd(mintedAmount,totalSupply);
+        totalSupply += mintedAmount;
         Transfer(0, this, mintedAmount);
         Transfer(this, target, mintedAmount);
     }
@@ -182,7 +218,7 @@ contract Mimicoin is CalledA, TokenERC20 {
     /// @notice `freeze? Prevent | Allow` `target` from sending & receiving tokens
     /// @param target Address to be frozen
     /// @param freeze either to freeze it or not
-    function freezeAccount(address target, bool freeze) onlyCallers public {
+    function freezeAccount(address target, bool freeze) onlyOwner public {
         frozenAccount[target] = freeze;
         FrozenFunds(target, freeze);
     }
@@ -190,7 +226,7 @@ contract Mimicoin is CalledA, TokenERC20 {
     /// @notice Allow users to buy tokens for `newBuyPrice` eth and sell tokens for `newSellPrice` eth
     /// @param newSellPrice Price the users can sell to the contract
     /// @param newBuyPrice Price users can buy from the contract
-    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyCallers public {
+    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner public {
         sellPrice = newSellPrice * 1 szabo;
         buyPrice = newBuyPrice * 1 szabo;
     }
@@ -198,32 +234,14 @@ contract Mimicoin is CalledA, TokenERC20 {
     /// @notice Buy tokens from contract by sending ether
     function buy() payable public {
         uint amount = msg.value / buyPrice;               // calculates the amount
-        _transfer(callers[0], msg.sender, amount);    
+        _transfer(this, msg.sender, amount);              // makes the transfers
     }
 
     /// @notice Sell `amount` tokens to contract
     /// @param amount amount of tokens to be sold
     function sell(uint256 amount) public {
-       require(balanceOf[msg.sender] >= amount);         
-        uint revenue = safeMul(amount,sellPrice);
-        msg.sender.transfer (revenue);
-        _transfer(msg.sender, callers[0], amount);
-    }
-    
-    function safeMul(uint a, uint b) internal pure returns (uint) {
-        uint c = a * b;
-        assert(a == 0 || c / a == b);
-        return c;
-    }
-
-    function safeSub(uint a, uint b) internal pure returns (uint) {
-        assert(b <= a);
-        return a - b;
-    }
-
-    function safeAdd(uint a, uint b) internal pure returns (uint) {
-        uint c = a + b;
-        assert(c>=a && c>=b);
-        return c;
+        require(this.balance >= amount * sellPrice);      // checks if the contract has enough ether to buy
+        _transfer(msg.sender, this, amount);              // makes the transfers
+        msg.sender.transfer(amount * sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
     }
 }
