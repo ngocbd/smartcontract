@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PChannel at 0x0b141d8d4c0eca92d75d509c25516d518fe7d338
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PChannel at 0x056776fae124d8b671421d4072572dee87f891ae
 */
 pragma solidity ^0.4.19;
 
@@ -702,10 +702,10 @@ contract PChannel is Ownable {
     Referral private refProgram;
 
     // fixed deposit amount in USD cents
-    uint private depositAmount = 5000;
+    uint private depositAmount = 25000;
 
     // max deposit amount in USD cents
-    uint private maxDepositAmount = 6250;
+    uint private maxDepositAmount = 31250;
 
     // investor => number of deposits
     mapping (address => uint8) private deposits; 
