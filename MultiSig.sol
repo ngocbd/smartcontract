@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSig at 0x177b63c7caf85a360074bcb095952aa8e929ae03
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSig at 0xdadf84e3adfc746e005d55ab427c1a8b1cc9cba5
 */
 /**
  *  MultiSig.sol v1.1.0
@@ -128,7 +128,7 @@ contract MultiSig is ReentrancyGuard{
   event EventUpdateWasReset();
   
   
-  function MultiSig() public {
+  function PreICO() public {
 
     administrators[0x8E0c5A1b55d4E71B7891010EF504b11f19F4c466] = true;
     administrators[0x5e77156CD35574A1dAC125992B73b3C5a973a4eb] = true;
