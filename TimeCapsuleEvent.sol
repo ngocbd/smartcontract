@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TimeCapsuleEvent at 0x1767856bc75cf070de5e6ba3d0c718440f008c66
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TimeCapsuleEvent at 0x68563d2a5fc58f88db8140a981170989f001b746
 */
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.16;
 
 contract Ownable {
     address public Owner;
@@ -9,8 +9,9 @@ contract Ownable {
     function Ownable() { Owner = msg.sender; }
 
     modifier onlyOwner() {
-        if( Owner == msg.sender )
+        if( Owner == msg.sender ) {
             _;
+        }
     }
     
     function transferOwner(address _owner) onlyOwner {
@@ -26,26 +27,24 @@ contract TimeCapsuleEvent is Ownable {
     uint public openDate;
     
     event Initialized(address indexed owner, uint openOn);
-    
     function initCapsule(uint open) {
         Owner = msg.sender;
         openDate = open;
         Initialized(Owner, openDate);
     }
 
-    event Deposit(address indexed depositor, uint amount);
-    event Withdrawal(address indexed withdrawer, uint amount);
-
     function() payable { deposit(); }
-    
+
+    event Deposit(address indexed depositor, uint amount);
     function deposit() payable {
-        if( msg.value >= 0.25 ether ) {
+        if( msg.value >= 0.5 ether ) {
             deposits[msg.sender] += msg.value;
             Deposit(msg.sender, msg.value);
         } else throw;
     }
-    
-    function withdraw(uint amount) onlyOwner {
+
+    event Withdrawal(address indexed withdrawer, uint amount);
+    function withdraw(uint amount) payable onlyOwner {
         if( now >= openDate ) {
             uint max = deposits[msg.sender];
             if( amount <= max && max > 0 ) {
