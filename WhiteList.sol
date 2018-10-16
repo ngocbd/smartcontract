@@ -1,33 +1,16 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Whitelist at 0x1a0987a5c068ec6ce645bb897d8de4c82281deae
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Whitelist at 0xdd5cec9019ec8449a5d01d0d8175e6519530d276
 */
 pragma solidity ^0.4.15;
 
-contract Owned {
-
-    // The address of the account that is the current owner 
-    address internal owner;
-
-
-    /**
-     * The publisher is the inital owner
-     */
-    function Owned() {
-        owner = msg.sender;
-    }
-
-
-    /**
-     * Access is restricted to the current owner
-     */
-    modifier only_owner() {
-        require(msg.sender == owner);
-
-        _;
-    }
-}
-
-
+/**
+ * @title Ownership interface
+ *
+ * Perminent ownership
+ *
+ * #created 01/10/2017
+ * #author Frank Bonnet
+ */
 contract IOwnership {
 
     /**
@@ -47,7 +30,35 @@ contract IOwnership {
 }
 
 
-contract Ownership is IOwnership, Owned {
+/**
+ * @title Ownership
+ *
+ * Perminent ownership
+ *
+ * #created 01/10/2017
+ * #author Frank Bonnet
+ */
+contract Ownership is IOwnership {
+
+    // Owner
+    address internal owner;
+
+
+    /**
+     * The publisher is the inital owner
+     */
+    function Ownership() {
+        owner = msg.sender;
+    }
+
+
+    /**
+     * Access is restricted to the current owner
+     */
+    modifier only_owner() {
+        require(msg.sender == owner);
+        _;
+    }
 
 
     /**
@@ -71,7 +82,17 @@ contract Ownership is IOwnership, Owned {
 }
 
 
+/**
+ * @title Transferable ownership interface
+ *
+ * Enhances ownership by allowing the current owner to 
+ * transfer ownership to a new owner
+ *
+ * #created 01/10/2017
+ * #author Frank Bonnet
+ */
 contract ITransferableOwnership {
+    
 
     /**
      * Transfer ownership to `_newOwner`
@@ -82,6 +103,15 @@ contract ITransferableOwnership {
 }
 
 
+/**
+ * @title Transferable ownership
+ *
+ * Enhances ownership by allowing the current owner to 
+ * transfer ownership to a new owner
+ *
+ * #created 01/10/2017
+ * #author Frank Bonnet
+ */
 contract TransferableOwnership is ITransferableOwnership, Ownership {
 
 
@@ -97,6 +127,29 @@ contract TransferableOwnership is ITransferableOwnership, Ownership {
 
 
 /**
+ * @title IAuthenticator 
+ *
+ * Authenticator interface
+ *
+ * #created 15/10/2017
+ * #author Frank Bonnet
+ */
+contract IAuthenticator {
+    
+
+    /**
+     * Authenticate 
+     *
+     * Returns whether `_account` is authenticated or not
+     *
+     * @param _account The account to authenticate
+     * @return whether `_account` is successfully authenticated
+     */
+    function authenticate(address _account) constant returns (bool);
+}
+
+
+/**
  * @title IWhitelist 
  *
  * Whitelist authentication interface
@@ -104,18 +157,38 @@ contract TransferableOwnership is ITransferableOwnership, Ownership {
  * #created 04/10/2017
  * #author Frank Bonnet
  */
-contract IWhitelist {
+contract IWhitelist is IAuthenticator {
     
 
     /**
-     * Authenticate 
+     * Returns whether an entry exists for `_account`
      *
-     * Returns whether `_account` is on the whitelist
-     *
-     * @param _account The account to authenticate
-     * @return whether `_account` is successfully authenticated
+     * @param _account The account to check
+     * @return whether `_account` is has an entry in the whitelist
      */
-    function authenticate(address _account) constant returns (bool);
+    function hasEntry(address _account) constant returns (bool);
+
+
+    /**
+     * Add `_account` to the whitelist
+     *
+     * If an account is currently disabled, the account is reenabled, otherwise 
+     * a new entry is created
+     *
+     * @param _account The account to add
+     */
+    function add(address _account);
+
+
+    /**
+     * Remove `_account` from the whitelist
+     *
+     * Will not actually remove the entry but disable it by updating
+     * the accepted record
+     *
+     * @param _account The account to remove
+     */
+    function remove(address _account);
 }
 
 
@@ -153,7 +226,7 @@ contract Whitelist is IWhitelist, TransferableOwnership {
     /**
      * Add `_account` to the whitelist
      *
-     * If an account is currently disabled, the account is reenabled. Otherwise 
+     * If an account is currently disabled, the account is reenabled, otherwise 
      * a new entry is created
      *
      * @param _account The account to add
@@ -175,7 +248,7 @@ contract Whitelist is IWhitelist, TransferableOwnership {
     /**
      * Remove `_account` from the whitelist
      *
-     * Will not actually remove the entry but disable it by updating
+     * Will not acctually remove the entry but disable it by updating
      * the accepted record
      *
      * @param _account The account to remove
