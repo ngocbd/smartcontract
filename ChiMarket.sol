@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChiMarket at 0x5fc516dadc9f55cf40a415bab5ae56202ed68396
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChiMarket at 0x23ff342055B7c27BDC9e20dD416530e650082Cf3
 */
 pragma solidity ^0.4.21;
 
@@ -73,7 +73,6 @@ contract ChiMarket {
     // already, so we need to subtract it through _offset_eth. Otherwise _offset_eth
     // should be set to 0.
     function calcBUYoffer(uint256 _chi_amount, uint256 _offset_eth) public view returns(uint256){
-        require(address(this).balance > _offset_eth); // no overflow
         uint256 eth_balance = address(this).balance - _offset_eth;
         uint256 chi_balance = ChiToken.balanceOf(this);
         uint256 eth_amount;
