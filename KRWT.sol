@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KRWT at 0xca6bb5df1437ba15f8307e3b753c017fd32c3551
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KRWT at 0x1e61529215ebeeb967f6d799058382cdddb148b1
 */
 pragma solidity ^0.4.21;
 
@@ -418,6 +418,8 @@ contract KRWT is  StandardToken, MintableToken, BurnableToken, PausableToken, ER
     string constant public symbol = "KRWT";
     uint8 constant public decimals = 8;
     uint public totalSupply = 100000000000 * 10**uint(decimals);
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
 
     /* This generates a public event on the blockchain that will notify clients */
     event Transfer(address indexed from, address indexed to, uint256 value);
