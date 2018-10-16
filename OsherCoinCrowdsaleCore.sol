@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OsherCoinCrowdsaleCore at 0xbe507d1f1bb5a21c8063b7b76b771bee447cd268
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OsherCoinCrowdsaleCore at 0xe6dc152b7cb97c8ec7dd58ccaecd2ad976368d24
 */
 pragma solidity ^0.4.18;
 
@@ -167,7 +167,8 @@ contract OsherCoinPricing is Ownable {
         OsherCrowdsale oshercrowdsale =  OsherCrowdsale ( oshercrowdsaleaddress ); 
         uint spotprice;
         uint dayspassed = now - oshercrowdsale.crowdSaleStartTime();
-        uint todays = dayspassed/86400;
+        //uint todays = dayspassed/86400;
+        uint todays = dayspassed/60; // delete
         
         if ( todays > 20 ) todays = 20;
         
