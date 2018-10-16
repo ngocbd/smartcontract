@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MainToken at 0x60ff4f781c7fabeca2ffae6c103c61ae79ccddc2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MainToken at 0xcc97ef3fc83fff905a30ea67a551534123551c79
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.20;
 
 
 /**
@@ -230,27 +230,6 @@ contract Ownable {
 }
 
 
-/**
- * @title SafeERC20
- * @dev Wrappers around ERC20 operations that throw on failure.
- * To use this library you can add a `using SafeERC20 for ERC20;` statement to your contract,
- * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
- */
-library SafeERC20 {
-  function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
-    assert(token.transfer(to, value));
-  }
-
-  function safeTransferFrom(ERC20 token, address from, address to, uint256 value) internal {
-    assert(token.transferFrom(from, to, value));
-  }
-
-  function safeApprove(ERC20 token, address spender, uint256 value) internal {
-    assert(token.approve(spender, value));
-  }
-}
-
-
 
 /**
  * @title Mintable token
@@ -299,28 +278,49 @@ contract MintableToken is StandardToken, Ownable {
 
 
 contract FreezableToken is StandardToken {
-    mapping (address => uint64) internal roots;
-
+    // freezing chains
     mapping (bytes32 => uint64) internal chains;
+    // freezing amounts for each chain
+    mapping (bytes32 => uint) internal freezings;
+    // total freezing balance per address
+    mapping (address => uint) internal freezingBalance;
 
     event Freezed(address indexed to, uint64 release, uint amount);
     event Released(address indexed owner, uint amount);
 
+
     /**
-     * @dev gets summary information about all freeze tokens for the specified address.
+     * @dev Gets the balance of the specified address include freezing tokens.
+     * @param _owner The address to query the the balance of.
+     * @return An uint256 representing the amount owned by the passed address.
+     */
+    function balanceOf(address _owner) public view returns (uint256 balance) {
+        return super.balanceOf(_owner) + freezingBalance[_owner];
+    }
+
+    /**
+     * @dev Gets the balance of the specified address without freezing tokens.
+     * @param _owner The address to query the the balance of.
+     * @return An uint256 representing the amount owned by the passed address.
+     */
+    function actualBalanceOf(address _owner) public view returns (uint256 balance) {
+        return super.balanceOf(_owner);
+    }
+
+    function freezingBalanceOf(address _owner) public view returns (uint256 balance) {
+        return freezingBalance[_owner];
+    }
+
+    /**
+     * @dev gets freezing count
      * @param _addr Address of freeze tokens owner.
      */
-    function getFreezingSummaryOf(address _addr) public constant returns (uint tokenAmount, uint freezingCount) {
-        uint count;
-        uint total;
-        uint64 release = roots[_addr];
+    function freezingCount(address _addr) public view returns (uint count) {
+        uint64 release = chains[toKey(_addr, 0)];
         while (release != 0) {
             count ++;
-            total += balanceOf(address(keccak256(toKey(_addr, release))));
             release = chains[toKey(_addr, release)];
         }
-
-        return (total, count);
     }
 
     /**
@@ -328,12 +328,14 @@ contract FreezableToken is StandardToken {
      * @param _addr Address of freeze tokens owner.
      * @param _index Freezing portion index. It ordered by release date descending.
      */
-    function getFreezing(address _addr, uint _index) public constant returns (uint64 _release, uint _balance) {
-        uint64 release = roots[_addr];
-        for (uint i = 0; i < _index; i ++) {
-            release = chains[toKey(_addr, release)];
+    function getFreezing(address _addr, uint _index) public view returns (uint64 _release, uint _balance) {
+        for (uint i = 0; i < _index + 1; i ++) {
+            _release = chains[toKey(_addr, _release)];
+            if (_release == 0) {
+                return;
+            }
         }
-        return (release, balanceOf(address(keccak256(toKey(_addr, release)))));
+        _balance = freezings[toKey(_addr, _release)];
     }
 
     /**
@@ -345,8 +347,14 @@ contract FreezableToken is StandardToken {
      * @param _until Release date, must be in future.
      */
     function freezeTo(address _to, uint _amount, uint64 _until) public {
+        require(_to != address(0));
+        require(_amount <= balances[msg.sender]);
+
+        balances[msg.sender] = balances[msg.sender].sub(_amount);
+
         bytes32 currentKey = toKey(_to, _until);
-        transfer(address(keccak256(currentKey)), _amount);
+        freezings[currentKey] = freezings[currentKey].add(_amount);
+        freezingBalance[_to] = freezingBalance[_to].add(_amount);
 
         freeze(_to, _until);
         Freezed(_to, _until, _amount);
@@ -356,24 +364,26 @@ contract FreezableToken is StandardToken {
      * @dev release first available freezing tokens.
      */
     function releaseOnce() public {
-        uint64 head = roots[msg.sender];
+        bytes32 headKey = toKey(msg.sender, 0);
+        uint64 head = chains[headKey];
         require(head != 0);
         require(uint64(block.timestamp) > head);
         bytes32 currentKey = toKey(msg.sender, head);
 
         uint64 next = chains[currentKey];
 
-        address currentAddress = address(keccak256(currentKey));
-        uint amount = balances[currentAddress];
-        delete balances[currentAddress];
+        uint amount = freezings[currentKey];
+        delete freezings[currentKey];
 
-        balances[msg.sender] += amount;
+        balances[msg.sender] = balances[msg.sender].add(amount);
+        freezingBalance[msg.sender] = freezingBalance[msg.sender].sub(amount);
 
         if (next == 0) {
-            delete roots[msg.sender];
+            delete chains[headKey];
         }
         else {
-            roots[msg.sender] = next;
+            chains[headKey] = next;
+            delete chains[currentKey];
         }
         Released(msg.sender, amount);
     }
@@ -393,7 +403,7 @@ contract FreezableToken is StandardToken {
         }
     }
 
-    function toKey(address _addr, uint _release) internal constant returns (bytes32 result) {
+    function toKey(address _addr, uint _release) internal pure returns (bytes32 result) {
         // WISH masc to increase entropy
         result = 0x5749534800000000000000000000000000000000000000000000000000000000;
         assembly {
@@ -404,40 +414,74 @@ contract FreezableToken is StandardToken {
 
     function freeze(address _to, uint64 _until) internal {
         require(_until > block.timestamp);
-        uint64 head = roots[_to];
+        bytes32 key = toKey(_to, _until);
+        bytes32 parentKey = toKey(_to, uint64(0));
+        uint64 next = chains[parentKey];
 
-        if (head == 0) {
-            roots[_to] = _until;
-            return;
-        }
-
-        bytes32 headKey = toKey(_to, head);
-        uint parent;
-        bytes32 parentKey;
-
-        while (head != 0 && _until > head) {
-            parent = head;
-            parentKey = headKey;
-
-            head = chains[headKey];
-            headKey = toKey(_to, head);
-        }
-
-        if (_until == head) {
-            return;
-        }
-
-        if (head != 0) {
-            chains[toKey(_to, _until)] = head;
-        }
-
-        if (parent == 0) {
-            roots[_to] = _until;
-        }
-        else {
+        if (next == 0) {
             chains[parentKey] = _until;
+            return;
         }
+
+        bytes32 nextKey = toKey(_to, next);
+        uint parent;
+
+        while (next != 0 && _until > next) {
+            parent = next;
+            parentKey = nextKey;
+
+            next = chains[nextKey];
+            nextKey = toKey(_to, next);
+        }
+
+        if (_until == next) {
+            return;
+        }
+
+        if (next != 0) {
+            chains[key] = next;
+        }
+
+        chains[parentKey] = _until;
     }
+}
+
+/**
+* @title Contract that will work with ERC223 tokens.
+*/
+
+contract ERC223Receiver {
+    /**
+     * @dev Standard ERC223 function that will handle incoming token transfers.
+     *
+     * @param _from  Token sender address.
+     * @param _value Amount of tokens.
+     * @param _data  Transaction metadata.
+     */
+    function tokenFallback(address _from, uint _value, bytes _data) public;
+}
+
+contract ERC223Basic is ERC20Basic {
+    function transfer(address to, uint value, bytes data) public returns (bool);
+    event Transfer(address indexed from, address indexed to, uint value, bytes data);
+}
+
+
+contract SuccessfulERC223Receiver is ERC223Receiver {
+    event Invoked(address from, uint value, bytes data);
+
+    function tokenFallback(address _from, uint _value, bytes _data) public {
+        Invoked(_from, _value, _data);
+    }
+}
+
+contract FailingERC223Receiver is ERC223Receiver {
+    function tokenFallback(address, uint, bytes) public {
+        revert();
+    }
+}
+
+contract ERC223ReceiverWithoutTokenFallback {
 }
 
 /**
@@ -513,45 +557,6 @@ contract Pausable is Ownable {
 
 
 
-/**
- * @title TokenTimelock
- * @dev TokenTimelock is a token holder contract that will allow a
- * beneficiary to extract the tokens after a given release time
- */
-contract TokenTimelock {
-  using SafeERC20 for ERC20Basic;
-
-  // ERC20 basic token contract being held
-  ERC20Basic public token;
-
-  // beneficiary of tokens after they are released
-  address public beneficiary;
-
-  // timestamp when token release is enabled
-  uint64 public releaseTime;
-
-  function TokenTimelock(ERC20Basic _token, address _beneficiary, uint64 _releaseTime) public {
-    require(_releaseTime > now);
-    token = _token;
-    beneficiary = _beneficiary;
-    releaseTime = _releaseTime;
-  }
-
-  /**
-   * @notice Transfers tokens held by timelock to beneficiary.
-   */
-  function release() public {
-    require(now >= releaseTime);
-
-    uint256 amount = token.balanceOf(this);
-    require(amount > 0);
-
-    token.safeTransfer(beneficiary, amount);
-  }
-}
-
-
-
 contract FreezableMintableToken is FreezableToken, MintableToken {
     /**
      * @dev Mint the specified amount of token to the specified address and freeze it until the specified date.
@@ -560,53 +565,116 @@ contract FreezableMintableToken is FreezableToken, MintableToken {
      * @param _to Address to which token will be freeze.
      * @param _amount Amount of token to mint and freeze.
      * @param _until Release date, must be in future.
+     * @return A boolean that indicates if the operation was successful.
      */
-    function mintAndFreeze(address _to, uint _amount, uint64 _until) public onlyOwner {
+    function mintAndFreeze(address _to, uint _amount, uint64 _until) onlyOwner canMint public returns (bool) {
+        totalSupply = totalSupply.add(_amount);
+
         bytes32 currentKey = toKey(_to, _until);
-        mint(address(keccak256(currentKey)), _amount);
+        freezings[currentKey] = freezings[currentKey].add(_amount);
+        freezingBalance[_to] = freezingBalance[_to].add(_amount);
 
         freeze(_to, _until);
+        Mint(_to, _amount);
         Freezed(_to, _until, _amount);
+        return true;
     }
 }
 
-contract usingConsts {
-    uint constant TOKEN_DECIMALS = 8;
-    uint8 constant TOKEN_DECIMALS_UINT8 = 8;
+contract Consts {
+    uint constant TOKEN_DECIMALS = 18;
+    uint8 constant TOKEN_DECIMALS_UINT8 = 18;
     uint constant TOKEN_DECIMAL_MULTIPLIER = 10 ** TOKEN_DECIMALS;
 
-    string constant TOKEN_NAME = "Bionic";
-    string constant TOKEN_SYMBOL = "BNC";
-    bool constant PAUSED = true;
-    address constant TARGET_USER = 0xaf85B35ee044C049e2FCfb61dE7fe434a8050B3e;
-    uint constant START_TIME = 1521676848;
-    bool constant CONTINUE_MINTING = true;
+    string constant TOKEN_NAME = "CoinFastShares";
+    string constant TOKEN_SYMBOL = "CFSS";
+    bool constant PAUSED = false;
+    address constant TARGET_USER = 0xf4e50aF1555c2e86867561a8115f354eFCB7A4c5;
+    
+    uint constant START_TIME = 1522530000;
+    
+    bool constant CONTINUE_MINTING = false;
 }
 
 
 
-contract MainToken is usingConsts, FreezableMintableToken, BurnableToken, Pausable {
-    function MainToken() {
+
+/**
+ * @title Reference implementation of the ERC223 standard token.
+ */
+contract ERC223Token is ERC223Basic, BasicToken, FailingERC223Receiver {
+    using SafeMath for uint;
+
+    /**
+     * @dev Transfer the specified amount of tokens to the specified address.
+     *      Invokes the `tokenFallback` function if the recipient is a contract.
+     *      The token transfer fails if the recipient is a contract
+     *      but does not implement the `tokenFallback` function
+     *      or the fallback function to receive funds.
+     *
+     * @param _to    Receiver address.
+     * @param _value Amount of tokens that will be transferred.
+     * @param _data  Transaction metadata.
+     */
+    function transfer(address _to, uint _value, bytes _data) public returns (bool) {
+        // Standard function transfer similar to ERC20 transfer with no _data .
+        // Added due to backwards compatibility reasons .
+        uint codeLength;
+
+        assembly {
+            // Retrieve the size of the code on target address, this needs assembly.
+            codeLength := extcodesize(_to)
+        }
+
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        if(codeLength > 0) {
+            ERC223Receiver receiver = ERC223Receiver(_to);
+            receiver.tokenFallback(msg.sender, _value, _data);
+        }
+        Transfer(msg.sender, _to, _value, _data);
+        return true;
     }
 
-    function name() constant public returns (string _name) {
+    /**
+     * @dev Transfer the specified amount of tokens to the specified address.
+     *      This function works the same with the previous one
+     *      but doesn't contain `_data` param.
+     *      Added due to backwards compatibility reasons.
+     *
+     * @param _to    Receiver address.
+     * @param _value Amount of tokens that will be transferred.
+     */
+    function transfer(address _to, uint256 _value) public returns (bool) {
+        bytes memory empty;
+        return transfer(_to, _value, empty);
+    }
+}
+
+
+contract MainToken is Consts, FreezableMintableToken, BurnableToken, Pausable
+    
+{
+    
+
+    function name() pure public returns (string _name) {
         return TOKEN_NAME;
     }
 
-    function symbol() constant public returns (string _symbol) {
+    function symbol() pure public returns (string _symbol) {
         return TOKEN_SYMBOL;
     }
 
-    function decimals() constant public returns (uint8 _decimals) {
+    function decimals() pure public returns (uint8 _decimals) {
         return TOKEN_DECIMALS_UINT8;
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool _success) {
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool _success) {
         require(!paused);
         return super.transferFrom(_from, _to, _value);
     }
 
-    function transfer(address _to, uint256 _value) returns (bool _success) {
+    function transfer(address _to, uint256 _value) public returns (bool _success) {
         require(!paused);
         return super.transfer(_to, _value);
     }
