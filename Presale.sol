@@ -1,143 +1,172 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0xe4e28bfd45969218a2af311ee10e80846f7b2fdc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreSale at 0xa5558aaf862b986d8918a01be710e88c00e9df21
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.15;
 
-interface TrimpoToken {
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
-  function presaleAddr() constant returns (address);
-  function transferPresale(address _to, uint _value) public;
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
 
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-contract Admins {
-  address public admin1;
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
 
-  address public admin2;
+  address public owner;
 
-  address public admin3;
-
-  function Admins(address a1, address a2, address a3) public {
-    admin1 = a1;
-    admin2 = a2;
-    admin3 = a3;
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() {
+    owner = msg.sender;
   }
 
-  modifier onlyAdmins {
-    require(msg.sender == admin1 || msg.sender == admin2 || msg.sender == admin3);
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
     _;
   }
 
-  function setAdmin(address _adminAddress) onlyAdmins public {
-
-    require(_adminAddress != admin1);
-    require(_adminAddress != admin2);
-    require(_adminAddress != admin3);
-
-    if (admin1 == msg.sender) {
-      admin1 = _adminAddress;
-    }
-    else
-    if (admin2 == msg.sender) {
-      admin2 = _adminAddress;
-    }
-    else
-    if (admin3 == msg.sender) {
-      admin3 = _adminAddress;
-    }
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner {
+    require(newOwner != address(0));
+    owner = newOwner;
   }
-
 }
 
+/**
+ * @title Token
+ * @dev API interface for interacting with the Ethereum Pink Token contract
+ */
+interface Token {
+  function transfer(address _to, uint256 _value) returns (bool);
+  function balanceOf(address _owner) constant returns (uint256 balance);
+}
 
-contract Presale is Admins {
+contract PreSale is Ownable {
 
+  using SafeMath for uint256;
 
-  uint public duration;
+  Token token;
 
-  uint public hardCap;
+  uint256 public constant RATE = 3900; // Number of tokens per Ether
+  uint256 public constant CAP = 2000; // Cap in Ether
+  uint256 public constant START = 1528934400; // Thursday, June 14 2018 12:00:00 AM GMT
+  uint256 public constant DAYS = 32; // 32 Day
 
-  uint public raised;
+  uint256 public constant initialTokens = 7800000 * 10**18; // Initial number of tokens available
+  bool public initialized = false;
+  uint256 public raisedAmount = 0;
 
-  uint public bonus;
+  event BoughtTokens(address indexed to, uint256 value);
 
-  address public benefit;
+  modifier whenSaleIsActive() {
+    // Check if sale is active
+    assert(isActive());
 
-  uint public start;
-
-  TrimpoToken token;
-
-  address public tokenAddress;
-
-  uint public tokensPerEther;
-
-  mapping (address => uint) public balanceOf;
-
-  modifier goodDate {
-    require(start > 0);
-    require(start <= now);
-    require((start+duration) > now);
     _;
   }
 
-  modifier belowHardCap {
-    require(raised < hardCap);
-    _;
+  function PreSale(address _tokenAddr) {
+      require(_tokenAddr != 0);
+      token = Token(_tokenAddr);
   }
 
-  event Investing(address investor, uint investedFunds, uint tokensWithoutBonus, uint tokens);
-  event Raise(address to, uint funds);
-
-
-  function Presale(
-  address _tokenAddress,
-  address a1,
-  address a2,
-  address a3
-  ) Admins(a1, a2, a3) public {
-
-    hardCap = 1000 ether;
-
-    bonus = 50; //percents bonus
-
-    duration = 61 days;
-
-    tokensPerEther = 400; //base price without bonus
-
-    tokenAddress = _tokenAddress;
-
-    token = TrimpoToken(_tokenAddress);
-
-    start = 1526342400; //15 May
-
+  function initialize() onlyOwner {
+      require(initialized == false); // Can only be initialized once
+      require(tokensAvailable() == initialTokens); // Must have enough tokens allocated
+      initialized = true;
   }
 
-  function() payable public goodDate belowHardCap {
-
-    uint tokenAmountWithoutBonus = msg.value * tokensPerEther;
-
-    uint tokenAmount = tokenAmountWithoutBonus + (tokenAmountWithoutBonus * bonus/100);
-
-    token.transferPresale(msg.sender, tokenAmount);
-
-    raised+=msg.value;
-
-    balanceOf[msg.sender]+= msg.value;
-
-    Investing(msg.sender, msg.value, tokenAmountWithoutBonus, tokenAmount);
-
+  function isActive() constant returns (bool) {
+    return (
+        initialized == true &&
+        now >= START && // Must be after the START date
+        now <= START.add(DAYS * 1 days) && // Must be before the end date
+        goalReached() == false // Goal must not already be reached
+    );
   }
 
-  function setBenefit(address _benefit) public onlyAdmins {
-    benefit = _benefit;
+  function goalReached() constant returns (bool) {
+    return (raisedAmount >= CAP * 1 ether);
   }
 
-  function getFunds(uint amount) public onlyAdmins {
-    require(benefit != 0x0);
-    require(amount <= this.balance);
-    Raise(benefit, amount);
-    benefit.send(amount);
+  function () payable {
+    buyTokens();
   }
 
+  /**
+  * @dev function that sells available tokens
+  */
+  function buyTokens() payable whenSaleIsActive {
+    // Calculate tokens to sell
+    uint256 weiAmount = msg.value;
+    uint256 tokens = weiAmount.mul(RATE);
+
+    BoughtTokens(msg.sender, tokens);
+
+    // Increment raised amount
+    raisedAmount = raisedAmount.add(msg.value);
+
+    // Send tokens to buyer
+    token.transfer(msg.sender, tokens);
+
+    // Send money to owner
+    owner.transfer(msg.value);
+  }
+
+  /**
+   * @dev returns the number of tokens allocated to this contract
+   */
+  function tokensAvailable() constant returns (uint256) {
+    return token.balanceOf(this);
+  }
+
+  /**
+   * @notice Terminate contract and refund to owner
+   */
+  function destroy() onlyOwner {
+    // Transfer tokens back to owner
+    uint256 balance = token.balanceOf(this);
+    assert(balance > 0);
+    token.transfer(owner, balance);
+
+    // There should be no ether in the contract but just in case
+    selfdestruct(owner);
+  }
 
 }
