@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WrapConversionRate at 0x139a0cb132568e0bcef616f1c23b4e3eb86e93fe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WrapConversionRate at 0x97b82e42a0c04bad5e61e7cfb4806317d608d809
 */
 pragma solidity 0.4.18;
 
-// File: contracts/ERC20Interface.sol
+// File: ../../wrapConvRate/smart-contracts/contracts/ERC20Interface.sol
 
 // https://github.com/ethereum/EIPs/issues/20
 interface ERC20 {
@@ -17,7 +17,7 @@ interface ERC20 {
     event Approval(address indexed _owner, address indexed _spender, uint _value);
 }
 
-// File: contracts/ConversionRatesInterface.sol
+// File: ../../wrapConvRate/smart-contracts/contracts/ConversionRatesInterface.sol
 
 interface ConversionRatesInterface {
 
@@ -30,23 +30,9 @@ interface ConversionRatesInterface {
         public;
 
     function getRate(ERC20 token, uint currentBlockNumber, bool buy, uint qty) public view returns(uint);
-    function setQtyStepFunction(ERC20 token, int[] xBuy, int[] yBuy, int[] xSell, int[] ySell) public;
-    function setImbalanceStepFunction(ERC20 token, int[] xBuy, int[] yBuy, int[] xSell, int[] ySell) public;
-    function claimAdmin() public;
-    function addOperator(address newOperator) public;
-    function transferAdmin(address newAdmin) public;
-    function addToken(ERC20 token) public;
-    function setTokenControlInfo(
-        ERC20 token,
-        uint minimalRecordResolution,
-        uint maxPerBlockImbalance,
-        uint maxTotalImbalance
-    ) public;
-    function enableTokenTrade(ERC20 token) public;
-    function getTokenControlInfo(ERC20 token) public view returns(uint, uint, uint);
 }
 
-// File: contracts/Utils.sol
+// File: ../../wrapConvRate/smart-contracts/contracts/Utils.sol
 
 /// @title Kyber constants contract
 contract Utils {
@@ -108,7 +94,7 @@ contract Utils {
     }
 }
 
-// File: contracts/PermissionGroups.sol
+// File: ../../wrapConvRate/smart-contracts/contracts/PermissionGroups.sol
 
 contract PermissionGroups {
 
@@ -233,7 +219,7 @@ contract PermissionGroups {
     }
 }
 
-// File: contracts/Withdrawable.sol
+// File: ../../wrapConvRate/smart-contracts/contracts/Withdrawable.sol
 
 /**
  * @title Contracts that should be able to recover tokens or ethers
@@ -265,7 +251,7 @@ contract Withdrawable is PermissionGroups {
     }
 }
 
-// File: contracts/VolumeImbalanceRecorder.sol
+// File: ../../wrapConvRate/smart-contracts/contracts/VolumeImbalanceRecorder.sol
 
 contract VolumeImbalanceRecorder is Withdrawable {
 
@@ -471,7 +457,7 @@ contract VolumeImbalanceRecorder is Withdrawable {
     }
 }
 
-// File: contracts/ConversionRates.sol
+// File: ../../wrapConvRate/smart-contracts/contracts/ConversionRates.sol
 
 contract ConversionRates is ConversionRatesInterface, VolumeImbalanceRecorder, Utils {
 
@@ -840,11 +826,11 @@ contract ConversionRates is ConversionRatesInterface, VolumeImbalanceRecorder, U
     }
 }
 
-// File: contracts/wrapperContracts/WrapperBase.sol
+// File: ../../wrapConvRate/smart-contracts/contracts/wrapperContracts/WrapperBase.sol
 
 contract WrapperBase is Withdrawable {
 
-    PermissionGroups wrappedContract;
+    PermissionGroups public wrappedContract;
 
     struct DataTracker {
         address [] approveSignatureArray;
@@ -899,124 +885,109 @@ contract WrapperBase is Withdrawable {
         }
     }
 
-    function getWrappedContract() public view returns (PermissionGroups _wrappedContract) {
-        return(wrappedContract);
-    }
-
     function getDataTrackingParameters(uint index) internal view returns (address[], uint) {
         require(index < dataInstances.length);
         return(dataInstances[index].approveSignatureArray, dataInstances[index].lastSetNonce);
     }
 }
 
-// File: contracts/wrapperContracts/WrapConversionRate.sol
+// File: ../../wrapConvRate/smart-contracts/contracts/wrapperContracts/WrapConversionRate.sol
 
 contract WrapConversionRate is WrapperBase {
 
-    ConversionRates conversionRates;
+    ConversionRates internal conversionRates;
 
     //add token parameters
-    ERC20     addTokenToken;
-    uint      addTokenMinimalResolution; // can be roughly 1 cent
-    uint      addTokenMaxPerBlockImbalance; // in twei resolution
-    uint      addTokenMaxTotalImbalance;
+    struct AddTokenData {
+        ERC20     token;
+        uint      minimalResolution; // can be roughly 1 cent
+        uint      maxPerBlockImbalance; // in twei resolution
+        uint      maxTotalImbalance;
+    }
+
+    AddTokenData internal addTokenData;
 
     //set token control info parameters.
-    ERC20[]     tokenInfoTokenList;
-    uint[]      tokenInfoPerBlockImbalance; // in twei resolution
-    uint[]      tokenInfoMaxTotalImbalance;
+    struct TokenControlInfoData {
+        ERC20[] tokens;
+        uint[] perBlockImbalance; // in twei resolution
+        uint[] maxTotalImbalance;
+    }
+
+    TokenControlInfoData internal tokenControlInfoData;
 
     //valid duration
-    uint pendingValidDurationBlocks;
+    struct ValidDurationData {
+        uint durationInBlocks;
+    }
+
+    ValidDurationData internal validDurationData;
 
     //data indexes
-    uint constant addTokenDataIndex = 0;
-    uint constant tokenInfoDataIndex = 1;
-    uint constant validDurationIndex = 2;
-    uint constant numDataInstances = 3;
+    uint constant internal ADD_TOKEN_DATA_INDEX = 0;
+    uint constant internal TOKEN_INFO_DATA_INDEX = 1;
+    uint constant internal VALID_DURATION_DATA_INDEX = 2;
+    uint constant internal NUM_DATA_INDEX = 3;
 
     //general functions
     function WrapConversionRate(ConversionRates _conversionRates, address _admin) public
-        WrapperBase(PermissionGroups(address(_conversionRates)), _admin, numDataInstances)
+        WrapperBase(PermissionGroups(address(_conversionRates)), _admin, NUM_DATA_INDEX)
     {
-        require (_conversionRates != address(0));
+        require(_conversionRates != address(0));
         conversionRates = _conversionRates;
     }
 
     // add token functions
     //////////////////////
-    function setAddTokenData(ERC20 token, uint minimalRecordResolution, uint maxPerBlockImbalance, uint maxTotalImbalance) public onlyOperator {
-        require(minimalRecordResolution != 0);
+    function setAddTokenData(
+        ERC20 token,
+        uint minRecordResolution,
+        uint maxPerBlockImbalance,
+        uint maxTotalImbalance
+        ) public onlyOperator
+    {
+        require(token != address(0));
+        require(minRecordResolution != 0);
         require(maxPerBlockImbalance != 0);
         require(maxTotalImbalance != 0);
 
         //update data tracking
-        setNewData(addTokenDataIndex);
+        setNewData(ADD_TOKEN_DATA_INDEX);
 
-        addTokenToken = token;
-        addTokenMinimalResolution = minimalRecordResolution; // can be roughly 1 cent
-        addTokenMaxPerBlockImbalance = maxPerBlockImbalance; // in twei resolution
-        addTokenMaxTotalImbalance = maxTotalImbalance;
+        addTokenData.token = token;
+        addTokenData.minimalResolution = minRecordResolution; // can be roughly 1 cent
+        addTokenData.maxPerBlockImbalance = maxPerBlockImbalance; // in twei resolution
+        addTokenData.maxTotalImbalance = maxTotalImbalance;
     }
 
     function approveAddTokenData(uint nonce) public onlyOperator {
-        if(addSignature(addTokenDataIndex, nonce, msg.sender)) {
+        if (addSignature(ADD_TOKEN_DATA_INDEX, nonce, msg.sender)) {
             // can perform operation.
             performAddToken();
         }
     }
 
-    function performAddToken() internal {
-        conversionRates.addToken(addTokenToken);
-
-        conversionRates.addOperator(this);
-
-        //token control info
-        conversionRates.setTokenControlInfo(
-            addTokenToken,
-            addTokenMinimalResolution,
-            addTokenMaxPerBlockImbalance,
-            addTokenMaxTotalImbalance
-        );
-
-        //step functions
-        int[] memory zeroArr = new int[](1);
-        zeroArr[0] = 0;
-
-        conversionRates.setQtyStepFunction(addTokenToken, zeroArr, zeroArr, zeroArr, zeroArr);
-        conversionRates.setImbalanceStepFunction(addTokenToken, zeroArr, zeroArr, zeroArr, zeroArr);
-
-        conversionRates.enableTokenTrade(addTokenToken);
-
-        conversionRates.removeOperator(this);
-    }
-
-    function getAddTokenParameters() public view
-        returns(uint nonce, ERC20 token, uint minimalRecordResolution, uint maxPerBlockImbalance, uint maxTotalImbalance)
+    function getAddTokenData() public view
+        returns(uint nonce, ERC20 token, uint minRecordResolution, uint maxPerBlockImbalance, uint maxTotalImbalance)
     {
-        (, nonce) = getDataTrackingParameters(addTokenDataIndex);
-        token = addTokenToken;
-        minimalRecordResolution = addTokenMinimalResolution;
-        maxPerBlockImbalance = addTokenMaxPerBlockImbalance; // in twei resolution
-        maxTotalImbalance = addTokenMaxTotalImbalance;
-        return(nonce, token, minimalRecordResolution, maxPerBlockImbalance, maxTotalImbalance);
-    }
-
-    function getAddTokenSignatures() public view returns (address[] signatures) {
-        uint nonce;
-        (signatures, nonce) = getDataTrackingParameters(addTokenDataIndex);
-        return(signatures);
-    }
-
-    function getAddTokenNonce() public view returns (uint nonce) {
         address[] memory signatures;
-        (signatures, nonce) = getDataTrackingParameters(addTokenDataIndex);
-        return(nonce);
+        (signatures, nonce) = getDataTrackingParameters(ADD_TOKEN_DATA_INDEX);
+        token = addTokenData.token;
+        minRecordResolution = addTokenData.minimalResolution;
+        maxPerBlockImbalance = addTokenData.maxPerBlockImbalance; // in twei resolution
+        maxTotalImbalance = addTokenData.maxTotalImbalance;
+        return(nonce, token, minRecordResolution, maxPerBlockImbalance, maxTotalImbalance);
+    }
+
+    function getAddTokenSignatures() public view returns (address[] memory signatures) {
+        uint nonce;
+        (signatures, nonce) = getDataTrackingParameters(ADD_TOKEN_DATA_INDEX);
+        return(signatures);
     }
 
     //set token control info
     ////////////////////////
-    function setTokenInfoData(ERC20 [] tokens, uint[] maxPerBlockImbalanceValues, uint[] maxTotalImbalanceValues)
+    function setTokenInfoData(ERC20[] tokens, uint[] maxPerBlockImbalanceValues, uint[] maxTotalImbalanceValues)
         public
         onlyOperator
     {
@@ -1024,62 +995,64 @@ contract WrapConversionRate is WrapperBase {
         require(maxTotalImbalanceValues.length == tokens.length);
 
         //update data tracking
-        setNewData(tokenInfoDataIndex);
+        setNewData(TOKEN_INFO_DATA_INDEX);
 
-        tokenInfoTokenList = tokens;
-        tokenInfoPerBlockImbalance = maxPerBlockImbalanceValues;
-        tokenInfoMaxTotalImbalance = maxTotalImbalanceValues;
+        tokenControlInfoData.tokens = tokens;
+        tokenControlInfoData.perBlockImbalance = maxPerBlockImbalanceValues;
+        tokenControlInfoData.maxTotalImbalance = maxTotalImbalanceValues;
     }
 
     function approveTokenControlInfo(uint nonce) public onlyOperator {
-        if(addSignature(tokenInfoDataIndex, nonce, msg.sender)) {
+        if (addSignature(TOKEN_INFO_DATA_INDEX, nonce, msg.sender)) {
             // can perform operation.
             performSetTokenControlInfo();
         }
     }
 
-    function performSetTokenControlInfo() internal {
-        require(tokenInfoTokenList.length == tokenInfoPerBlockImbalance.length);
-        require(tokenInfoTokenList.length == tokenInfoMaxTotalImbalance.length);
+    function getControlInfoPerToken (uint index) public view
+        returns(ERC20 token, uint _maxPerBlockImbalance, uint _maxTotalImbalance, uint nonce)
+    {
+        require(tokenControlInfoData.tokens.length > index);
+        require(tokenControlInfoData.perBlockImbalance.length > index);
+        require(tokenControlInfoData.maxTotalImbalance.length > index);
+        address[] memory signatures;
+        (signatures, nonce) = getDataTrackingParameters(TOKEN_INFO_DATA_INDEX);
 
-        uint minimalRecordResolution;
-
-        for (uint i = 0; i < tokenInfoTokenList.length; i++) {
-            (minimalRecordResolution, , ) =
-                conversionRates.getTokenControlInfo(tokenInfoTokenList[i]);
-            require(minimalRecordResolution != 0);
-
-            conversionRates.setTokenControlInfo(tokenInfoTokenList[i],
-                                                minimalRecordResolution,
-                                                tokenInfoPerBlockImbalance[i],
-                                                tokenInfoMaxTotalImbalance[i]);
-        }
+        return(
+            tokenControlInfoData.tokens[index],
+            tokenControlInfoData.perBlockImbalance[index],
+            tokenControlInfoData.maxTotalImbalance[index],
+            nonce
+        );
     }
 
-    function getControlInfoPerToken (uint index) public view returns(ERC20 token, uint _maxPerBlockImbalance, uint _maxTotalImbalance) {
-        require (tokenInfoTokenList.length > index);
-        require (tokenInfoPerBlockImbalance.length > index);
-        require (tokenInfoMaxTotalImbalance.length > index);
-
-        return(tokenInfoTokenList[index], tokenInfoPerBlockImbalance[index], tokenInfoMaxTotalImbalance[index]);
+    function getTokenInfoNumToknes() public view returns(uint numSetTokens) {
+        return tokenControlInfoData.tokens.length;
     }
 
+    function getTokenInfoData() public view
+        returns(uint nonce, uint numSetTokens, ERC20[] tokenAddress, uint[] maxPerBlock, uint[] maxTotal)
+    {
+        address[] memory signatures;
+        (signatures, nonce) = getDataTrackingParameters(TOKEN_INFO_DATA_INDEX);
 
-
-    function getTokenInfoData() public view returns(uint nonce, uint numSetTokens, ERC20[] tokenAddress, uint[] maxPerBlock, uint[] maxTotal) {
-        (, nonce) = getDataTrackingParameters(tokenInfoDataIndex);
-        return(nonce, tokenInfoTokenList.length, tokenInfoTokenList, tokenInfoPerBlockImbalance, tokenInfoMaxTotalImbalance);
+        return(
+            nonce,
+            tokenControlInfoData.tokens.length,
+            tokenControlInfoData.tokens,
+            tokenControlInfoData.perBlockImbalance,
+            tokenControlInfoData.maxTotalImbalance);
     }
 
-    function getTokenInfoSignatures() public view returns (address[] signatures) {
+    function getTokenInfoSignatures() public view returns (address[] memory signatures) {
         uint nonce;
-        (signatures, nonce) = getDataTrackingParameters(tokenInfoDataIndex);
+        (signatures, nonce) = getDataTrackingParameters(TOKEN_INFO_DATA_INDEX);
         return(signatures);
     }
 
     function getTokenInfoNonce() public view returns(uint nonce) {
         address[] memory signatures;
-        (signatures, nonce) = getDataTrackingParameters(tokenInfoDataIndex);
+        (signatures, nonce) = getDataTrackingParameters(TOKEN_INFO_DATA_INDEX);
         return nonce;
     }
 
@@ -1089,32 +1062,72 @@ contract WrapConversionRate is WrapperBase {
         require(validDurationBlocks > 5);
 
         //update data tracking
-        setNewData(validDurationIndex);
+        setNewData(VALID_DURATION_DATA_INDEX);
 
-        pendingValidDurationBlocks = validDurationBlocks;
+        validDurationData.durationInBlocks = validDurationBlocks;
     }
 
     function approveValidDurationData(uint nonce) public onlyOperator {
-        if(addSignature(validDurationIndex, nonce, msg.sender)) {
+        if (addSignature(VALID_DURATION_DATA_INDEX, nonce, msg.sender)) {
             // can perform operation.
-            conversionRates.setValidRateDurationInBlocks(pendingValidDurationBlocks);
+            conversionRates.setValidRateDurationInBlocks(validDurationData.durationInBlocks);
         }
     }
 
     function getValidDurationBlocksData() public view returns(uint validDuration, uint nonce) {
-        (, nonce) = getDataTrackingParameters(validDurationIndex);
-        return(nonce, pendingValidDurationBlocks);
+        address[] memory signatures;
+        (signatures, nonce) = getDataTrackingParameters(VALID_DURATION_DATA_INDEX);
+        return(nonce, validDurationData.durationInBlocks);
     }
 
-    function getValidDurationSignatures() public view returns (address[] signatures) {
+    function getValidDurationSignatures() public view returns (address[] memory signatures) {
         uint nonce;
-        (signatures, nonce) = getDataTrackingParameters(validDurationIndex);
+        (signatures, nonce) = getDataTrackingParameters(VALID_DURATION_DATA_INDEX);
         return(signatures);
     }
 
-    function getValidDurationNonce() public view returns (uint nonce) {
-        address[] memory signatures;
-        (signatures, nonce) = getDataTrackingParameters(validDurationIndex);
-        return(nonce);
+    function performAddToken() internal {
+        conversionRates.addToken(addTokenData.token);
+
+        conversionRates.addOperator(this);
+
+        //token control info
+        conversionRates.setTokenControlInfo(
+            addTokenData.token,
+            addTokenData.minimalResolution,
+            addTokenData.maxPerBlockImbalance,
+            addTokenData.maxTotalImbalance
+        );
+
+        //step functions
+        int[] memory zeroArr = new int[](1);
+        zeroArr[0] = 0;
+
+        conversionRates.setQtyStepFunction(addTokenData.token, zeroArr, zeroArr, zeroArr, zeroArr);
+        conversionRates.setImbalanceStepFunction(addTokenData.token, zeroArr, zeroArr, zeroArr, zeroArr);
+
+        conversionRates.enableTokenTrade(addTokenData.token);
+
+        conversionRates.removeOperator(this);
+    }
+
+    function performSetTokenControlInfo() internal {
+        require(tokenControlInfoData.tokens.length == tokenControlInfoData.perBlockImbalance.length);
+        require(tokenControlInfoData.tokens.length == tokenControlInfoData.maxTotalImbalance.length);
+
+        uint minRecordResolution;
+
+        for (uint i = 0; i < tokenControlInfoData.tokens.length; i++) {
+            uint maxPerBlock;
+            uint maxTotal;
+            (minRecordResolution, maxPerBlock, maxTotal) =
+                conversionRates.getTokenControlInfo(tokenControlInfoData.tokens[i]);
+            require(minRecordResolution != 0);
+
+            conversionRates.setTokenControlInfo(tokenControlInfoData.tokens[i],
+                minRecordResolution,
+                tokenControlInfoData.perBlockImbalance[i],
+                tokenControlInfoData.maxTotalImbalance[i]);
+        }
     }
 }
