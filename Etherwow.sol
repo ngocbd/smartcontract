@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etherwow at 0x4df6de08d11f11ebad5d9e136b768849426fb8a7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etherwow at 0x2d05359a51ca13c4ac5f4437585afaf5bf2050f9
 */
 pragma solidity ^0.4.18;
 
@@ -1762,7 +1762,11 @@ contract SafeMath {
     }
 }
 
-
+/**
+ * @title token
+ * @dev token function singnature
+ */
+contract token { function transfer(address receiver, uint amount){ receiver; amount; } }
 
 /**
  * @title Etherwow
@@ -1811,6 +1815,16 @@ contract Etherwow is usingOraclize, SafeMath {
          require((msg.sender == owner || msg.sender == operator.addr) && msg.sender != 0x0);
          _;
     }
+    
+    /*
+     * token vars
+    */
+    token public jackpotToken;
+    uint public jackpotTokenEthRate;
+    uint public jackpotTokenWinRewardRate;
+    uint public jackpotTokenLoseRewardRate;
+    uint constant rewardRateDivisor = 1000;
+    uint jackpotTokenReward;
 
     /*
      * game vars
@@ -1871,7 +1885,7 @@ contract Etherwow is usingOraclize, SafeMath {
     /* log bets + output to web3 for precise 'payout on win' field in UI */
     event LogBet(bytes32 indexed BetID, address indexed UserAddress, uint indexed RewardValue, uint ProfitValue, uint BetValue, uint UserNumber, uint RandomQueryID);      
     /* output to web3 UI on bet result*/
-    event LogResult(bytes32 indexed BetID, address indexed UserAddress, uint UserNumber, uint DiceResult, uint Value, uint8 Status, uint RandomGenerateMethod, bytes Proof, uint indexed SerialNumberOfResult);   
+    event LogResult(bytes32 indexed BetID, address indexed UserAddress, uint UserNumber, uint DiceResult, uint Value, uint tokenReward, uint8 Status, uint RandomGenerateMethod, bytes Proof, uint indexed SerialNumberOfResult);   
     /* log manual refunds */
     event LogRefund(bytes32 indexed BetID, address indexed UserAddress, uint indexed RefundValue);
     /* log owner transfers */
@@ -1892,7 +1906,7 @@ contract Etherwow is usingOraclize, SafeMath {
         /* init min bet (0.1 ether) */
         ownerSetMinBet(100000000000000000);        
         /* init gas for oraclize */        
-        gasForOraclize = 250000;  
+        gasForOraclize = 300000;  
         /* init gas price for callback (default 20 gwei)*/
         oraclize_setCustomGasPrice(20000000000 wei);
         /* defult random num generation method 0-random.org */
@@ -1926,15 +1940,14 @@ contract Etherwow is usingOraclize, SafeMath {
                 return oraclize_query("nested", queryString1_2_3, gasForOraclize);               
         }
 
-        /* random num solution from oraclize(by default), prove fair paper: http://www.oraclize.it/papers/random_datasource-rev1.pdf */
-        if (randomGenerateMethod == 1){
-                randomQueryID += 1;
-                uint N = 8; /* number of random bytes we want the datasource to return */
-                uint delay = 0; /* number of seconds to wait before the execution takes place */
-                oraclize_setProof(proofType_Ledger);
-                return oraclize_newRandomDSQuery(delay, N, gasForOraclize); /* this function internally generates the correct oraclize_query and returns its queryId */
-                
-        }
+        // /* random num solution from oraclize(by default), prove fair paper: http://www.oraclize.it/papers/random_datasource-rev1.pdf */
+        // if (randomGenerateMethod == 1){
+        //         randomQueryID += 1;
+        //         uint N = 8; /* number of random bytes we want the datasource to return */
+        //         uint delay = 0; /* number of seconds to wait before the execution takes place */
+        //         oraclize_setProof(proofType_Ledger);
+        //         return oraclize_newRandomDSQuery(delay, N, gasForOraclize); /* this function internally generates the correct oraclize_query and returns its queryId */
+        // }
         
 
     }
@@ -1996,11 +2009,11 @@ contract Etherwow is usingOraclize, SafeMath {
                 userDieResult[myid] = parseInt(sl_result.beyond("[".toSlice()).until("]".toSlice()).toString());                 
         } 
 
-        /* random num solution from oraclize */        
-        if (randomGenerateMethod == 1){
-                uint maxRange = 100; /* this is the highest uint we want to get. It should never be greater than 2^(8*N), where N is the number of random bytes we had asked the datasource to return */
-                userDieResult[myid] = uint(sha3(result)) % maxRange + 1; /* this is an efficient way to get the uint out in the [0, maxRange] range */
-        }
+        // /* random num solution from oraclize */        
+        // if (randomGenerateMethod == 1){
+        //         uint maxRange = 100; this is the highest uint we want to get. It should never be greater than 2^(8*N), where N is the number of random bytes we had asked the datasource to return
+        //         userDieResult[myid] = uint(sha3(result)) % maxRange + 1; /* this is an efficient way to get the uint out in the [0, maxRange] range */
+        // }
       
         /* get the userAddress for this query id */
         userTempAddress[myid] = userAddress[myid];
@@ -2031,7 +2044,7 @@ contract Etherwow is usingOraclize, SafeMath {
         * if result is 0 result is empty or no proof refund original bet value
         * if refund fails save refund value to userPendingWithdrawals
         */
-        if(userDieResult[myid] == 0 || bytes(result).length == 0 || bytes(proof).length == 0){                                                     
+        if(userDieResult[myid] == 0 || bytes(result).length == 0 || bytes(proof).length == 0){ 
              /* Status: 0=lose, 1=win, 2=win + failed send, 3=refund, 4=refund + failed send*/ 
              /* 3 = refund */
              betStatus[myid] = 3;
@@ -2046,7 +2059,8 @@ contract Etherwow is usingOraclize, SafeMath {
                 /* if send failed let user withdraw via userWithdrawPendingTransactions */
                 userPendingWithdrawals[userTempAddress[myid]] = safeAdd(userPendingWithdrawals[userTempAddress[myid]], userTempBetValue[myid]);                        
             }
-            emit LogResult(userBetId[myid], userTempAddress[myid], userNumber[myid], userDieResult[myid], userTempBetValue[myid], betStatus[myid], randomGenerateMethod, proof, serialNumberOfResult);
+            jackpotTokenReward = 0;
+            emit LogResult(userBetId[myid], userTempAddress[myid], userNumber[myid], userDieResult[myid], userTempBetValue[myid], jackpotTokenReward, betStatus[myid], randomGenerateMethod, proof, serialNumberOfResult);
             return;
         }
 
@@ -2072,7 +2086,15 @@ contract Etherwow is usingOraclize, SafeMath {
 
             /* update maximum profit */
             setMaxProfit();
+
+            if (jackpotTokenWinRewardRate > 0) {
+                /* calculate win token return */
+                jackpotTokenReward = userTempBetValue[myid]*jackpotTokenEthRate*jackpotTokenWinRewardRate/rewardRateDivisor;
             
+                /* transfer token to user */
+                jackpotToken.transfer(userTempAddress[myid], jackpotTokenReward);                  
+            }
+
             /*
             * send win - external call to an untrusted contract
             * if send fails map reward value to userPendingWithdrawals[address]
@@ -2085,7 +2107,7 @@ contract Etherwow is usingOraclize, SafeMath {
                 userPendingWithdrawals[userTempAddress[myid]] = safeAdd(userPendingWithdrawals[userTempAddress[myid]], userTempReward[myid]);                               
             }
             
-            emit LogResult(userBetId[myid], userTempAddress[myid], userNumber[myid], userDieResult[myid], userTempBetValue[myid], betStatus[myid], randomGenerateMethod, proof, serialNumberOfResult);
+            emit LogResult(userBetId[myid], userTempAddress[myid], userNumber[myid], userDieResult[myid], userTempBetValue[myid], jackpotTokenReward, betStatus[myid], randomGenerateMethod, proof, serialNumberOfResult);
             return;
 
         }
@@ -2098,8 +2120,7 @@ contract Etherwow is usingOraclize, SafeMath {
         if(userDieResult[myid] >= userNumber[myid]){
 
             /* 0 = lose */
-            betStatus[myid] = 0;
-            emit LogResult(userBetId[myid], userTempAddress[myid], userNumber[myid], userDieResult[myid], userTempBetValue[myid], betStatus[myid], randomGenerateMethod, proof, serialNumberOfResult);                                
+            betStatus[myid] = 0;                          
 
             /*  
             *  safe adjust contractBalance
@@ -2110,6 +2131,14 @@ contract Etherwow is usingOraclize, SafeMath {
 
             /* update maximum profit */
             setMaxProfit(); 
+ 
+            if (jackpotTokenLoseRewardRate > 0){
+                /* calculate token reward */
+                jackpotTokenReward = userTempBetValue[myid]*jackpotTokenEthRate*safeSub(100,userNumber[myid])*jackpotTokenLoseRewardRate/(rewardRateDivisor*100);
+
+                /* transfer token to user */
+                jackpotToken.transfer(userTempAddress[myid], jackpotTokenReward);                
+            }
 
             /*
             * send 1 wei - external call to an untrusted contract                  
@@ -2118,7 +2147,8 @@ contract Etherwow is usingOraclize, SafeMath {
                 /* if send failed let user withdraw via userWithdrawPendingTransactions */                
                userPendingWithdrawals[userTempAddress[myid]] = safeAdd(userPendingWithdrawals[userTempAddress[myid]], 1);                                
             }                                   
-
+            
+            emit LogResult(userBetId[myid], userTempAddress[myid], userNumber[myid], userDieResult[myid], userTempBetValue[myid], jackpotTokenReward, betStatus[myid], randomGenerateMethod, proof, serialNumberOfResult);  
             return;
 
         }
@@ -2270,11 +2300,12 @@ contract Etherwow is usingOraclize, SafeMath {
      * only onlyOwnerOrOperator address can do manual refund
      * used only if bet placed but not execute payout method after stock market close
      * filter LogBet by address and/or userBetId, do manual refund only when meet below conditions:
-     * 1. record should in logBet;
-     * 2. record should not in logResult;
-     * 3. record should not in logRefund;
+     * 1. bet status should be 5-pending;
+     * 2. record should in logBet;
+     * 3. record should not in logResult;
+     * 4. record should not in logRefund;
      * if LogResult exists user should use the withdraw pattern userWithdrawPendingTransactions
-     * if LogRefund exists means manual refund has been done before!
+     * if LogRefund exists means manual refund has been done before
      * @param betId
      * @param address sendTo
      * @param original user profit
@@ -2283,7 +2314,10 @@ contract Etherwow is usingOraclize, SafeMath {
     function ownerRefundUser(bytes32 originalUserBetId, address sendTo, uint originalUserProfit, uint originalUserBetValue) public 
         onlyOwnerOrOperator
     {        
+        /* check operator permission */
         require(msg.sender == owner || (msg.sender == operator.addr && operator.refundPermission == true && safeToSubtract(operator.refundAmtApprove, originalUserBetValue)));
+        /* status should be 5-pending */
+        require(betStatus[originalUserBetId] == 5);
         /* safely reduce pendingPayouts by userProfit[rngId] */
         maxPendingPayouts = safeSub(maxPendingPayouts, originalUserProfit);
         /* send refund */
@@ -2338,7 +2372,30 @@ contract Etherwow is usingOraclize, SafeMath {
     {
         randomGenerateMethod = newRandomGenerateMethod;
     } 
-    
+
+    /*
+     * @dev onlyOwnerOrOperator can set jackpotToken
+     * @param jackpotToken address
+     * @param ether to token rate
+     * @param win reward rate, defult 10(divisor 1000)
+     * @param lose reward rate, defult 1000(divisor 1000)
+     */  
+    function ownerSetJackpotToken(address newTokenAddr, uint newTokenEthRate, uint newWinRewardRate, uint newLoseRewardRate) public onlyOwnerOrOperator{
+        jackpotToken = token(newTokenAddr);
+        jackpotTokenEthRate = newTokenEthRate;
+        jackpotTokenWinRewardRate = newWinRewardRate;
+        jackpotTokenLoseRewardRate = newLoseRewardRate;
+    }
+
+    /*
+     * @dev transfer token
+     * @param to address
+     * @param token amount
+     */  
+    function ownerTransferJackpotToken(address toAddress, uint amount ) public onlyOwner{
+        jackpotToken.transfer(toAddress, amount); 
+    }
+
     /*
      * @dev owner selfdestruct contract ***BE CAREFUL! EMERGENCY ONLY / CONTRACT UPGRADE***
      */ 
