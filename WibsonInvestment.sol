@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WibsonInvestment at 0xff3212bdda5e2a00d4015599654169e4643b96a8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WibsonInvestment at 0xd10e893b4d75f266407c23ffdd1c12482cc84d09
 */
 pragma solidity ^0.4.19;
 
@@ -56,7 +56,7 @@ interface EIP20Token {
 contract WibsonInvestment is Ownable {
 
   // Address of the target contract
-  address public investment_address = 0x62Ef732Ec9BAB90070f4ac4e065Ce1CC090D909f;
+  address public investment_address = 0xBe25379a36948DfC1a98CdB1Ec7eF155A8D3Fd81;
   // Major partner address
   address public major_partner_address = 0x8f0592bDCeE38774d93bC1fd2c97ee6540385356;
   // Minor partner address
@@ -98,6 +98,12 @@ contract WibsonInvestment is Ownable {
   // We can use this function to move unwanted tokens in the contract
   function approve_unwanted_tokens(EIP20Token token, address dest, uint value) public onlyOwner {
     token.approve(dest, value);
+  }
+
+  // This contract is designed to have no balance.
+  // However, we include this function to avoid stuck value by some unknown mishap.
+  function emergency_withdraw() public onlyOwner {
+    require(msg.sender.call.gas(gas).value(this.balance)());
   }
 
 }
