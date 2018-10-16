@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PornTokenV2 at 0xc995cc54e563c67bbc95773c96ba96cadd8b07cc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PornTokenV2 at 0xee284b58871645ce2656e309e238c5e2eace771a
 */
 pragma solidity ^0.4.16;
 
