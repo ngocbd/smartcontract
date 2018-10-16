@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KayoToken at 0xc6a495e670972323f93f468bbf91eed563f9fb3f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KayoToken at 0x2eb1a3b71bee2bc135af75436ed5cd8cceac3e96
 */
 pragma solidity ^0.4.18;
 
@@ -59,12 +59,14 @@ pragma solidity ^0.4.18;
         bool public IsPreSaleEnabled = false;
 
         bool public IsSaleEnabled = false;
+
+        bool public IsAirDropEnabled = false;
         
         address public owner;
 
-        address public rewardManager;
+        address public airDropManager;
         
-        uint public allowedRewardTokens;
+        uint public allowedAirDropTokens;
 
         mapping (address => bool) public frozenAccount;
         event FrozenFunds(address target, bool frozen);
@@ -76,8 +78,8 @@ pragma solidity ^0.4.18;
                 revert();
         }
 
-        modifier onlyRewardManager { 
-            require(msg.sender == rewardManager || owner == msg.sender); _; 
+        modifier onlyairDropManager { 
+            require(msg.sender == airDropManager); _; 
         }
 
         function KayoToken(
@@ -118,17 +120,32 @@ pragma solidity ^0.4.18;
             IsSaleEnabled = _value;
         }
 
-        function setRewardManger (address _address) onlyOwner public{
-            rewardManager = _address;
+        function setAirDrop (bool _value) onlyOwner public {
+            IsAirDropEnabled = _value;
         }
 
-        function setRewardManagerLimit(uint _amount) onlyOwner public returns (bool success){
-            allowedRewardTokens = _amount;
-            approve(rewardManager, _amount);
+        function setAirDropManager (address _address) onlyOwner public{
+            airDropManager = _address;
+        }
+
+        function setairDropManagerLimit(uint _amount) onlyOwner public returns (bool success){
+            allowedAirDropTokens = _amount;
+            approve(airDropManager, _amount);
             return true;
         }
 
-        function invest(address _to, uint256 _amount) canReleaseToken onlyRewardManager public returns (bool success) {
+        function airDrop(address _to, uint256 _amount) onlyairDropManager public returns (bool success){
+            
+            require((_to != 0) && (_to != address(this)));
+            require(IsAirDropEnabled);
+            
+            require(allowed[owner][msg.sender] >= _amount);
+            allowed[owner][msg.sender] -= _amount;
+            Transfer(owner, _to, _amount);
+            return true;
+        }
+
+        function invest(address _to, uint256 _amount) canReleaseToken onlyOwner public returns (bool success) {
             
             require((_to != 0) && (_to != address(this)));
 
@@ -138,8 +155,6 @@ pragma solidity ^0.4.18;
                 require(preSaleTokenBalances >= _amount);
                 IsTransferAllowed = true;
                 preSaleTokenBalances = preSaleTokenBalances - _amount;
-
-                return true;
             }
             else if(IsSaleEnabled){
                 IsTransferAllowed = true;
@@ -157,12 +172,8 @@ pragma solidity ^0.4.18;
             require(previousBalanceTo + _amount >= previousBalanceTo);
             updateValueAtNow(balances[_to], previousBalanceTo + _amount);
 
-            if(msg.sender == rewardManager){
-                transferFrom(owner, _to, _amount);      //Reward manager sending tokens 
-            }
-            else{
-                transferFrom(msg.sender, _to, _amount); //Owner sending tokens
-            }
+            transferFrom(msg.sender, _to, _amount); //Owner sending tokens
+            return true;
         }
 
         function transferFrom(address _from, address _to, uint _amount) public returns (bool success) {
@@ -190,7 +201,6 @@ pragma solidity ^0.4.18;
 
         function approve(address _spender, uint256 _amount) public returns (bool success) {
 
-            require(transfersEnabled);
             require((_amount == 0) || (allowed[msg.sender][_spender] == 0));
 
             if (isValidAddress(owner)) {
@@ -281,7 +291,6 @@ pragma solidity ^0.4.18;
         function enableTransfers(bool _transfersEnabled) public onlyOwner {
             transfersEnabled = _transfersEnabled;
         }
-
 
         function getValueAt(Checkpoint[] storage checkpoints, uint _block) constant internal returns (uint) {
             
