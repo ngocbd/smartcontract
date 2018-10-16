@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FRNCoin at 0x1e89b045e633c80d2bd1e0dd6bb69a5e7fdfb21a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FRNCoin at 0x4a65fe2a50882e2411c6d177583f8a00eee2c95a
 */
 /**
  * This smart contract is modified 2017 by 4new.co.uk to assemble code for creation of FRNCoin with
