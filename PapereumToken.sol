@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PapereumToken at 0xc2fe97b7a622bbe1a87dad327135e066d311be71
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PapereumToken at 0xee3968e2234079fbf3a2f0491851b7d57a19d03c
 */
 pragma solidity 0.4.20;
 
@@ -13,7 +13,7 @@ contract PapereumToken {
 
     string public name = "Papereum";
     string public symbol = "PPRM";
-    uint256 public decimals = 0; // Papereum tokens are not divisible
+    uint8 public decimals = 0; // Papereum tokens are not divisible
     uint256 public totalSupply = 100000; // Only 100 000 Non-divisable pieces of Art
 
     mapping (address => uint256) public balanceOf;
@@ -127,9 +127,9 @@ contract PapereumCrowdsale {
     address public constant MEDIA_SUPPORT_WALLET = 0x8E6618e41879d8BE1F7a0E658294E8A1359e4383;
 
     uint256 public constant ICO_TOKENS = 93000;
-    uint32 public constant ICO_TOKENS_PERCENT = 93;
-    uint32 public constant TEAM_TOKENS_PERCENT = 2;
-    uint32 public constant MEDIA_SUPPORT_PERCENT = 5;
+    uint8 public constant ICO_TOKENS_PERCENT = 93;
+    uint8 public constant TEAM_TOKENS_PERCENT = 2;
+    uint8 public constant MEDIA_SUPPORT_PERCENT = 5;
     uint256 public constant START_TIME = 1518998400; // 2018/02/19 00:00 UTC +0
     uint256 public constant END_TIME = 1525046400; // 2018/04/30 00:00 UTC +0
     uint256 public constant RATE = 1e16; // 100 tokens costs 1 ether
