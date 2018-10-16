@@ -1,32 +1,45 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WyvernExchange at 0xb5aa1fb7027290d6d5cbbe3b1aecd5317fa582ec
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WyvernExchange at 0x6c5e18b3f0c243fc345095960fdb0e7aa61cd02b
 */
 pragma solidity ^0.4.13;
 
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
     if (a == 0) {
       return 0;
     }
-    uint256 c = a * b;
+    c = a * b;
     assert(c / a == b);
     return c;
   }
 
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
+    // uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
+    return a / b;
   }
 
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
     assert(c >= a);
     return c;
   }
@@ -36,17 +49,20 @@ contract Ownable {
   address public owner;
 
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  event OwnershipRenounced(address indexed previousOwner);
+  event OwnershipTransferred(
+    address indexed previousOwner,
+    address indexed newOwner
+  );
 
 
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() public {
+  constructor() public {
     owner = msg.sender;
   }
-
 
   /**
    * @dev Throws if called by any account other than the owner.
@@ -56,63 +72,101 @@ contract Ownable {
     _;
   }
 
-
   /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param newOwner The address to transfer ownership to.
    */
   function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
+    emit OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
 
+  /**
+   * @dev Allows the current owner to relinquish control of the contract.
+   */
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
+  }
 }
 
 contract ERC20Basic {
-  uint256 public totalSupply;
+  function totalSupply() public view returns (uint256);
   function balanceOf(address who) public view returns (uint256);
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
 contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function allowance(address owner, address spender)
+    public view returns (uint256);
+
+  function transferFrom(address from, address to, uint256 value)
+    public returns (bool);
+
   function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
+  event Approval(
+    address indexed owner,
+    address indexed spender,
+    uint256 value
+  );
 }
 
 library ArrayUtils {
 
     /**
-     * Replace bytes in an array with bytes in another array, guarded by a "bytemask"
+     * Replace bytes in an array with bytes in another array, guarded by a bitmask
+     * Efficiency of this function is a bit unpredictable because of the EVM's word-specific model (arrays under 32 bytes will be slower)
      * 
-     * @dev Mask must be 1/8th the size of the byte array. A 1-bit means the byte array can be changed.
+     * @dev Mask must be the size of the byte array. A nonzero byte means the byte array can be changed.
      * @param array The original array
      * @param desired The target array
-     * @param mask The mask specifying which bytes can be changed
+     * @param mask The mask specifying which bits can be changed
      * @return The updated byte array (the parameter will be modified inplace)
      */
     function guardedArrayReplace(bytes memory array, bytes memory desired, bytes memory mask)
-        pure
         internal
+        pure
     {
-        byte[8] memory bitmasks = [byte(2 ** 7), byte(2 ** 6), byte(2 ** 5), byte(2 ** 4), byte(2 ** 3), byte(2 ** 2), byte(2 ** 1), byte(2 ** 0)];
         require(array.length == desired.length);
-        require(mask.length >= array.length / 8);
-        bool masked;
-        for (uint i = 0; i < array.length; i++ ) {
-            /* 1-bit means value can be changed. */
-            masked = (mask[i / 8] & bitmasks[i % 8]) == 0;
-            if (!masked) {
-                array[i] = desired[i];
+        require(array.length == mask.length);
+
+        uint words = array.length / 0x20;
+        uint index = words * 0x20;
+        assert(index / 0x20 == words);
+        uint i;
+
+        for (i = 0; i < words; i++) {
+            /* Conceptually: array[i] = (!mask[i] && array[i]) || (mask[i] && desired[i]), bitwise in word chunks. */
+            assembly {
+                let commonIndex := mul(0x20, add(1, i))
+                let maskValue := mload(add(mask, commonIndex))
+                mstore(add(array, commonIndex), or(and(not(maskValue), mload(add(array, commonIndex))), and(maskValue, mload(add(mask, commonIndex)))))
+            }
+        }
+
+        /* Deal with the last section of the byte array. */
+        if (words > 0) {
+            /* This overlaps with bytes already set but is still more efficient than iterating through each of the remaining bytes individually. */
+            i = array.length - 0x20;
+            assembly {
+                let commonIndex := mul(0x20, add(1, i))
+                let maskValue := mload(add(mask, commonIndex))
+                mstore(add(array, commonIndex), or(and(not(maskValue), mload(add(array, commonIndex))), and(maskValue, mload(add(mask, commonIndex)))))
+            }
+        } else {
+            /* If the byte array is shorter than a word, we must unfortunately do the whole thing bytewise.
+               (bounds checks could still probably be optimized away in assembly, but this is a rare case) */
+            for (i = index; i < array.length; i++) {
+                array[i] = ((mask[i] ^ 0xff) & array[i]) | (mask[i] & desired[i]);
             }
         }
     }
 
     /**
      * Test if two arrays are equal
+     * Source: https://github.com/GNSPS/solidity-bytes-utils/blob/master/contracts/BytesLib.sol
      * 
      * @dev Arrays must be of equal length, otherwise will return false
      * @param a First array
@@ -120,19 +174,138 @@ library ArrayUtils {
      * @return Whether or not all bytes in the arrays are equal
      */
     function arrayEq(bytes memory a, bytes memory b)
-        pure
         internal
+        pure
         returns (bool)
     {
-        if (a.length != b.length) {
-            return false;
-        }
-        for (uint i = 0; i < a.length; i++) {
-            if (a[i] != b[i]) {
-                return false;
+        bool success = true;
+
+        assembly {
+            let length := mload(a)
+
+            // if lengths don't match the arrays are not equal
+            switch eq(length, mload(b))
+            case 1 {
+                // cb is a circuit breaker in the for loop since there's
+                //  no said feature for inline assembly loops
+                // cb = 1 - don't breaker
+                // cb = 0 - break
+                let cb := 1
+
+                let mc := add(a, 0x20)
+                let end := add(mc, length)
+
+                for {
+                    let cc := add(b, 0x20)
+                // the next line is the loop condition:
+                // while(uint(mc < end) + cb == 2)
+                } eq(add(lt(mc, end), cb), 2) {
+                    mc := add(mc, 0x20)
+                    cc := add(cc, 0x20)
+                } {
+                    // if any of these checks fails then arrays are not equal
+                    if iszero(eq(mload(mc), mload(cc))) {
+                        // unsuccess:
+                        success := 0
+                        cb := 0
+                    }
+                }
+            }
+            default {
+                // unsuccess:
+                success := 0
             }
         }
-        return true;
+
+        return success;
+    }
+
+    /**
+     * Unsafe write byte array into a memory location
+     *
+     * @param index Memory location
+     * @param source Byte array to write
+     * @return End memory index
+     */
+    function unsafeWriteBytes(uint index, bytes source)
+        internal
+        pure
+        returns (uint)
+    {
+        if (source.length > 0) {
+            assembly {
+                let length := mload(source)
+                let end := add(source, add(0x20, length))
+                let arrIndex := add(source, 0x20)
+                let tempIndex := index
+                for { } eq(lt(arrIndex, end), 1) {
+                    arrIndex := add(arrIndex, 0x20)
+                    tempIndex := add(tempIndex, 0x20)
+                } {
+                    mstore(tempIndex, mload(arrIndex))
+                }
+                index := add(index, length)
+            }
+        }
+        return index;
+    }
+
+    /**
+     * Unsafe write address into a memory location
+     *
+     * @param index Memory location
+     * @param source Address to write
+     * @return End memory index
+     */
+    function unsafeWriteAddress(uint index, address source)
+        internal
+        pure
+        returns (uint)
+    {
+        uint conv = uint(source) << 0x60;
+        assembly {
+            mstore(index, conv)
+            index := add(index, 0x14)
+        }
+        return index;
+    }
+
+    /**
+     * Unsafe write uint into a memory location
+     *
+     * @param index Memory location
+     * @param source uint to write
+     * @return End memory index
+     */
+    function unsafeWriteUint(uint index, uint source)
+        internal
+        pure
+        returns (uint)
+    {
+        assembly {
+            mstore(index, source)
+            index := add(index, 0x20)
+        }
+        return index;
+    }
+
+    /**
+     * Unsafe write uint8 into a memory location
+     *
+     * @param index Memory location
+     * @param source uint8 to write
+     * @return End memory index
+     */
+    function unsafeWriteUint8(uint index, uint8 source)
+        internal
+        pure
+        returns (uint)
+    {
+        assembly {
+            mstore8(index, source)
+            index := add(index, 0x1)
+        }
+        return index;
     }
 
 }
@@ -167,14 +340,14 @@ contract TokenRecipient {
     function receiveApproval(address from, uint256 value, address token, bytes extraData) public {
         ERC20 t = ERC20(token);
         require(t.transferFrom(from, this, value));
-        ReceivedTokens(from, value, token, extraData);
+        emit ReceivedTokens(from, value, token, extraData);
     }
 
     /**
      * @dev Receive Ether and generate a log event
      */
     function () payable public {
-        ReceivedEther(msg.sender, msg.value);
+        emit ReceivedEther(msg.sender, msg.value);
     }
 }
 
@@ -257,7 +430,7 @@ contract ExchangeCore is ReentrancyGuarded, Ownable {
         /* Static call extra data. */
         bytes staticExtradata;
         /* Token used to pay for the order, or the zero-address as a sentinel value for Ether. */
-        ERC20 paymentToken;
+        address paymentToken;
         /* Base price of the order (in paymentTokens). */
         uint basePrice;
         /* Auction extra parameter - minimum bid increment for English auctions, starting/ending price difference. */
@@ -271,7 +444,7 @@ contract ExchangeCore is ReentrancyGuarded, Ownable {
     }
     
     event OrderApprovedPartOne    (bytes32 indexed hash, address exchange, address indexed maker, address taker, uint makerRelayerFee, uint takerRelayerFee, uint makerProtocolFee, uint takerProtocolFee, address indexed feeRecipient, FeeMethod feeMethod, SaleKindInterface.Side side, SaleKindInterface.SaleKind saleKind, address target);
-    event OrderApprovedPartTwo    (bytes32 indexed hash, AuthenticatedProxy.HowToCall howToCall, bytes calldata, bytes replacementPattern, address staticTarget, bytes staticExtradata, ERC20 paymentToken, uint basePrice, uint extra, uint listingTime, uint expirationTime, uint salt, bool orderbookInclusionDesired);
+    event OrderApprovedPartTwo    (bytes32 indexed hash, AuthenticatedProxy.HowToCall howToCall, bytes calldata, bytes replacementPattern, address staticTarget, bytes staticExtradata, address paymentToken, uint basePrice, uint extra, uint listingTime, uint expirationTime, uint salt, bool orderbookInclusionDesired);
     event OrderCancelled          (bytes32 indexed hash);
     event OrdersMatched           (bytes32 buyHash, bytes32 sellHash, address indexed maker, address indexed taker, uint price, bytes32 indexed metadata);
 
@@ -347,13 +520,13 @@ contract ExchangeCore is ReentrancyGuarded, Ownable {
         view
         returns (bool result)
     {
-        bytes memory combined = new bytes(SafeMath.add(calldata.length, extradata.length));
-        for (uint i = 0; i < extradata.length; i++) {
-            combined[i] = extradata[i];
+        bytes memory combined = new bytes(calldata.length + extradata.length);
+        uint index;
+        assembly {
+            index := add(combined, 0x20)
         }
-        for (uint j = 0; j < calldata.length; j++) {
-            combined[j + extradata.length] = calldata[j];
-        }
+        index = ArrayUtils.unsafeWriteBytes(index, extradata);
+        ArrayUtils.unsafeWriteBytes(index, calldata);
         assembly {
             result := staticcall(gas, target, add(combined, 0x20), mload(combined), mload(0x40), 0)
         }
@@ -361,44 +534,76 @@ contract ExchangeCore is ReentrancyGuarded, Ownable {
     }
 
     /**
-     * @dev Keccak256 order hash, part one
-     * @param order Order to hash
-     * @return Part one of the order hash 
+     * Calculate size of an order struct when tightly packed
+     *
+     * @param order Order to calculate size of
+     * @return Size in bytes
      */
-    function hashOrderPartOne(Order memory order)
+    function sizeOf(Order memory order)
         internal
         pure
-        returns (bytes32)
+        returns (uint)
     {
-        return keccak256(order.exchange, order.maker, order.taker, order.makerRelayerFee, order.takerRelayerFee, order.makerProtocolFee, order.takerProtocolFee, order.feeRecipient, order.feeMethod, order.side, order.saleKind, order.target, order.howToCall);
+        return ((0x14 * 7) + (0x20 * 9) + 4 + order.calldata.length + order.replacementPattern.length + order.staticExtradata.length);
     }
 
     /**
-     * @dev Keccak256 order hash, part two
+     * @dev Hash an order, returning the canonical order hash, without the message prefix
      * @param order Order to hash
-     * @return Part two of the order hash
+     * @return Hash of order
      */
-    function hashOrderPartTwo(Order memory order)
+    function hashOrder(Order memory order)
         internal
         pure
-        returns (bytes32)
+        returns (bytes32 hash)
     {
-        return keccak256(order.calldata, order.replacementPattern, order.staticTarget, order.staticExtradata, order.paymentToken, order.basePrice, order.extra, order.listingTime, order.expirationTime, order.salt);
+        /* Unfortunately abi.encodePacked doesn't work here, stack size constraints. */
+        uint size = sizeOf(order);
+        bytes memory array = new bytes(size);
+        uint index;
+        assembly {
+            index := add(array, 0x20)
+        }
+        index = ArrayUtils.unsafeWriteAddress(index, order.exchange);
+        index = ArrayUtils.unsafeWriteAddress(index, order.maker);
+        index = ArrayUtils.unsafeWriteAddress(index, order.taker);
+        index = ArrayUtils.unsafeWriteUint(index, order.makerRelayerFee);
+        index = ArrayUtils.unsafeWriteUint(index, order.takerRelayerFee);
+        index = ArrayUtils.unsafeWriteUint(index, order.makerProtocolFee);
+        index = ArrayUtils.unsafeWriteUint(index, order.takerProtocolFee);
+        index = ArrayUtils.unsafeWriteAddress(index, order.feeRecipient);
+        index = ArrayUtils.unsafeWriteUint8(index, uint8(order.feeMethod));
+        index = ArrayUtils.unsafeWriteUint8(index, uint8(order.side));
+        index = ArrayUtils.unsafeWriteUint8(index, uint8(order.saleKind));
+        index = ArrayUtils.unsafeWriteAddress(index, order.target);
+        index = ArrayUtils.unsafeWriteUint8(index, uint8(order.howToCall));
+        index = ArrayUtils.unsafeWriteBytes(index, order.calldata);
+        index = ArrayUtils.unsafeWriteBytes(index, order.replacementPattern);
+        index = ArrayUtils.unsafeWriteAddress(index, order.staticTarget);
+        index = ArrayUtils.unsafeWriteBytes(index, order.staticExtradata);
+        index = ArrayUtils.unsafeWriteAddress(index, order.paymentToken);
+        index = ArrayUtils.unsafeWriteUint(index, order.basePrice);
+        index = ArrayUtils.unsafeWriteUint(index, order.extra);
+        index = ArrayUtils.unsafeWriteUint(index, order.listingTime);
+        index = ArrayUtils.unsafeWriteUint(index, order.expirationTime);
+        index = ArrayUtils.unsafeWriteUint(index, order.salt);
+        assembly {
+            hash := keccak256(add(array, 0x20), size)
+        }
+        return hash;
     }
 
     /**
      * @dev Hash an order, returning the hash that a client must sign, including the standard message prefix
      * @param order Order to hash
-     * @return Hash of message prefix, order hash part one, and order hash part two concatenated
+     * @return Hash of message prefix and order hash per Ethereum format
      */
     function hashToSign(Order memory order)
         internal
         pure
         returns (bytes32)
     {
-        bytes memory prefix = "\x19Ethereum Signed Message:\n32";
-        bytes32 hash = keccak256(prefix, hashOrderPartOne(order), hashOrderPartTwo(order));
-        return hash;
+        return keccak256("\x19Ethereum Signed Message:\n32", hashOrder(order));
     }
 
     /**
@@ -506,10 +711,10 @@ contract ExchangeCore is ReentrancyGuarded, Ownable {
   
         /* Log approval event. Must be split in two due to Solidity stack size limitations. */
         {
-            OrderApprovedPartOne(hash, order.exchange, order.maker, order.taker, order.makerRelayerFee, order.takerRelayerFee, order.makerProtocolFee, order.takerProtocolFee, order.feeRecipient, order.feeMethod, order.side, order.saleKind, order.target);
+            emit OrderApprovedPartOne(hash, order.exchange, order.maker, order.taker, order.makerRelayerFee, order.takerRelayerFee, order.makerProtocolFee, order.takerProtocolFee, order.feeRecipient, order.feeMethod, order.side, order.saleKind, order.target);
         }
         {   
-            OrderApprovedPartTwo(hash, order.howToCall, order.calldata, order.replacementPattern, order.staticTarget, order.staticExtradata, order.paymentToken, order.basePrice, order.extra, order.listingTime, order.expirationTime, order.salt, orderbookInclusionDesired);
+            emit OrderApprovedPartTwo(hash, order.howToCall, order.calldata, order.replacementPattern, order.staticTarget, order.staticExtradata, order.paymentToken, order.basePrice, order.extra, order.listingTime, order.expirationTime, order.salt, orderbookInclusionDesired);
         }
     }
 
@@ -535,7 +740,7 @@ contract ExchangeCore is ReentrancyGuarded, Ownable {
         cancelledOrFinalized[hash] = true;
 
         /* Log cancel event. */
-        OrderCancelled(hash);
+        emit OrderCancelled(hash);
     }
 
     /**
@@ -841,7 +1046,7 @@ contract ExchangeCore is ReentrancyGuarded, Ownable {
         }
 
         /* Log match event. */
-        OrdersMatched(buyHash, sellHash, sell.feeRecipient != address(0) ? sell.maker : buy.maker, sell.feeRecipient != address(0) ? buy.maker : sell.maker, price, metadata);
+        emit OrdersMatched(buyHash, sellHash, sell.feeRecipient != address(0) ? sell.maker : buy.maker, sell.feeRecipient != address(0) ? buy.maker : sell.maker, price, metadata);
     }
 
 }
@@ -861,6 +1066,46 @@ contract Exchange is ExchangeCore {
     }
 
     /**
+     * Test copy byte array
+     *
+     * @param arrToCopy Array to copy
+     * @return byte array
+     */
+    function testCopy(bytes arrToCopy)
+        public
+        pure
+        returns (bytes)
+    {
+        bytes memory arr = new bytes(arrToCopy.length);
+        uint index;
+        assembly {
+            index := add(arr, 0x20)
+        }
+        ArrayUtils.unsafeWriteBytes(index, arrToCopy);
+        return arr;
+    }
+
+    /**
+     * Test write address to bytes
+     *
+     * @param addr Address to write
+     * @return byte array
+     */
+    function testCopyAddress(address addr)
+        public
+        pure
+        returns (bytes)
+    {
+        bytes memory arr = new bytes(0x14);
+        uint index;
+        assembly {
+            index := add(arr, 0x20)
+        }
+        ArrayUtils.unsafeWriteAddress(index, addr);
+        return arr;
+    }
+
+    /**
      * @dev Call calculateFinalPrice - library function exposed for testing.
      */
     function calculateFinalPrice(SaleKindInterface.Side side, SaleKindInterface.SaleKind saleKind, uint basePrice, uint extra, uint listingTime, uint expirationTime)
@@ -875,6 +1120,28 @@ contract Exchange is ExchangeCore {
      * @dev Call hashOrder - Solidity ABI encoding limitation workaround, hopefully temporary.
      */
     function hashOrder_(
+        address[7] addrs,
+        uint[9] uints,
+        FeeMethod feeMethod,
+        SaleKindInterface.Side side,
+        SaleKindInterface.SaleKind saleKind,
+        AuthenticatedProxy.HowToCall howToCall,
+        bytes calldata,
+        bytes replacementPattern,
+        bytes staticExtradata)
+        public
+        pure
+        returns (bytes32)
+    {
+        return hashOrder(
+          Order(addrs[0], addrs[1], addrs[2], uints[0], uints[1], uints[2], uints[3], addrs[3], feeMethod, side, saleKind, addrs[4], howToCall, calldata, replacementPattern, addrs[5], staticExtradata, ERC20(addrs[6]), uints[4], uints[5], uints[6], uints[7], uints[8])
+        );
+    }
+
+    /**
+     * @dev Call hashToSign - Solidity ABI encoding limitation workaround, hopefully temporary.
+     */
+    function hashToSign_(
         address[7] addrs,
         uint[9] uints,
         FeeMethod feeMethod,
@@ -1126,7 +1393,7 @@ contract WyvernExchange is Exchange {
      * @param registryAddress Address of the registry instance which this Exchange instance will use
      * @param tokenAddress Address of the token used for protocol fees
      */
-    function WyvernExchange (ProxyRegistry registryAddress, TokenTransferProxy tokenTransferProxyAddress, ERC20 tokenAddress, address protocolFeeAddress) public {
+    constructor (ProxyRegistry registryAddress, TokenTransferProxy tokenTransferProxyAddress, ERC20 tokenAddress, address protocolFeeAddress) public {
         registry = registryAddress;
         tokenTransferProxy = tokenTransferProxyAddress;
         exchangeToken = tokenAddress;
@@ -1233,7 +1500,7 @@ contract AuthenticatedProxy is TokenRecipient {
      * @param addrUser Address of user on whose behalf this proxy will act
      * @param addrRegistry Address of ProxyRegistry contract which will manage this proxy
      */
-    function AuthenticatedProxy(address addrUser, ProxyRegistry addrRegistry) public {
+    constructor (address addrUser, ProxyRegistry addrRegistry) public {
         user = addrUser;
         registry = addrRegistry;
     }
@@ -1249,7 +1516,7 @@ contract AuthenticatedProxy is TokenRecipient {
     {
         require(msg.sender == user);
         revoked = revoke;
-        Revoked(revoke);
+        emit Revoked(revoke);
     }
 
     /**
