@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherDelta at 0x6b58cd5fa36ce03ec007ddb102c1480e1217832d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherDelta at 0xf728da36340b61cdea55bc4ea5cbb7762b413893
 */
 pragma solidity ^0.4.9;
 
