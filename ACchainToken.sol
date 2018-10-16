@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ACchainToken at 0xdd039c88effc4ccc1477e7c10ab5e23f6871d1cf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ACchainToken at 0xd6bfc7a22c6bc67d4ec5f5f6b7a3fb74a4f9a527
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'acchaintoken' CROWDSALE token contract
+// 'ACchainToken' token contract
 //
-// Deployed to : 0x00D1B2487D4Eab17D9171f9f3dFaE92427BdB5EC
+// Deployed to : 0xB80FA602f00073dCcc0ab05c8301cb3721b04067
 // Symbol      : ACCT
 // Name        : ACchainToken
 // Total supply: 1000000000
@@ -14,7 +14,7 @@ pragma solidity ^0.4.18;
 //
 // Enjoy.
 //
-// (c) by Moritz Neto & Daniel Bar with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
+// (c) by Moritz Neto with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
 // ----------------------------------------------------------------------------
 
 
@@ -22,19 +22,19 @@ pragma solidity ^0.4.18;
 // Safe maths
 // ----------------------------------------------------------------------------
 contract SafeMath {
-    function safeAdd(uint a, uint b) internal pure returns (uint c) {
+    function safeAdd(uint a, uint b) public pure returns (uint c) {
         c = a + b;
         require(c >= a);
     }
-    function safeSub(uint a, uint b) internal pure returns (uint c) {
+    function safeSub(uint a, uint b) public pure returns (uint c) {
         require(b <= a);
         c = a - b;
     }
-    function safeMul(uint a, uint b) internal pure returns (uint c) {
+    function safeMul(uint a, uint b) public pure returns (uint c) {
         c = a * b;
         require(a == 0 || c / a == b);
     }
-    function safeDiv(uint a, uint b) internal pure returns (uint c) {
+    function safeDiv(uint a, uint b) public pure returns (uint c) {
         require(b > 0);
         c = a / b;
     }
@@ -107,9 +107,6 @@ contract ACchainToken is ERC20Interface, Owned, SafeMath {
     string public  name;
     uint8 public decimals;
     uint public _totalSupply;
-    uint public startDate;
-    uint public bonusEnds;
-    uint public endDate;
 
     mapping(address => uint) balances;
     mapping(address => mapping(address => uint)) allowed;
@@ -122,9 +119,9 @@ contract ACchainToken is ERC20Interface, Owned, SafeMath {
         symbol = "ACCT";
         name = "ACchainToken";
         decimals = 18;
-        bonusEnds = now + 4 weeks;
-        endDate = now + 7 weeks;
-
+        _totalSupply = 100000000000000000000000000;
+        balances[0xB80FA602f00073dCcc0ab05c8301cb3721b04067] = _totalSupply;
+        Transfer(address(0), 0xB80FA602f00073dCcc0ab05c8301cb3721b04067, _totalSupply);
     }
 
 
@@ -137,7 +134,7 @@ contract ACchainToken is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Get the token balance for account `tokenOwner`
+    // Get the token balance for account tokenOwner
     // ------------------------------------------------------------------------
     function balanceOf(address tokenOwner) public constant returns (uint balance) {
         return balances[tokenOwner];
@@ -145,7 +142,7 @@ contract ACchainToken is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Transfer the balance from token owner's account to `to` account
+    // Transfer the balance from token owner's account to to account
     // - Owner's account must have sufficient balance to transfer
     // - 0 value transfers are allowed
     // ------------------------------------------------------------------------
@@ -158,12 +155,12 @@ contract ACchainToken is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Token owner can approve for `spender` to transferFrom(...) `tokens`
+    // Token owner can approve for spender to transferFrom(...) tokens
     // from the token owner's account
     //
     // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
     // recommends that there are no checks for the approval double-spend attack
-    // as this should be implemented in user interfaces
+    // as this should be implemented in user interfaces 
     // ------------------------------------------------------------------------
     function approve(address spender, uint tokens) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
@@ -173,10 +170,10 @@ contract ACchainToken is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Transfer `tokens` from the `from` account to the `to` account
-    //
+    // Transfer tokens from the from account to the to account
+    // 
     // The calling account must already have sufficient tokens approve(...)-d
-    // for spending from the `from` account and
+    // for spending from the from account and
     // - From account must have sufficient balance to transfer
     // - Spender must have sufficient allowance to transfer
     // - 0 value transfers are allowed
@@ -200,9 +197,9 @@ contract ACchainToken is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Token owner can approve for `spender` to transferFrom(...) `tokens`
-    // from the token owner's account. The `spender` contract function
-    // `receiveApproval(...)` is then executed
+    // Token owner can approve for spender to transferFrom(...) tokens
+    // from the token owner's account. The spender contract function
+    // receiveApproval(...) is then executed
     // ------------------------------------------------------------------------
     function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
@@ -211,23 +208,13 @@ contract ACchainToken is ERC20Interface, Owned, SafeMath {
         return true;
     }
 
+
     // ------------------------------------------------------------------------
-    // 20,000 ACCT Tokens per 1 ETH
+    // Don't accept ETH
     // ------------------------------------------------------------------------
     function () public payable {
-        require(now >= startDate && now <= endDate);
-        uint tokens;
-        if (now <= bonusEnds) {
-            tokens = msg.value * 25000;
-        } else {
-            tokens = msg.value * 20000;
-        }
-        balances[msg.sender] = safeAdd(balances[msg.sender], tokens);
-        _totalSupply = safeAdd(_totalSupply, tokens);
-        Transfer(address(0), msg.sender, tokens);
-        owner.transfer(msg.value);
+        revert();
     }
-
 
 
     // ------------------------------------------------------------------------
