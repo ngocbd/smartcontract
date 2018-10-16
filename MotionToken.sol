@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MotionToken at 0x7588C48b40a767198F6aBC18bC393B719E784230
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MotionToken at 0xB7B46129c580D8bb4F643ec29130a99E0593A696
 */
 pragma solidity ^0.4.11;
 
