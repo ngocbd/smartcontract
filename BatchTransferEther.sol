@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BatchTransferEther at 0xa1c2d5a6da467245166c7e96af21e34191932d51
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BatchTransferEther at 0x93fa343e69fb343ee15fa27f47b14392bf7d22b3
 */
 pragma solidity ^0.4.23;
 
@@ -90,12 +90,13 @@ contract Ownable {
 
 
 contract BatchTransferEther is Ownable {
+    using SafeMath for uint256;
     
     event LogTransfer(address indexed sender, address indexed receiver, uint256 amount);
     
-    function batchTransferEther(address[] _addresses, uint _amoumt) public payable onlyOwner {
+    function batchTransferEtherWithSameAmount(address[] _addresses, uint _amoumt) public payable onlyOwner {
         require(_addresses.length != 0 && _amoumt != 0);
-        uint checkAmount = msg.value / _addresses.length;
+        uint checkAmount = msg.value.div(_addresses.length);
         require(_amoumt == checkAmount);
         
         for (uint i = 0; i < _addresses.length; i++) {
@@ -104,4 +105,24 @@ contract BatchTransferEther is Ownable {
             emit LogTransfer(msg.sender, _addresses[i], _amoumt);
         }
     }
+    
+    function batchTransferEther(address[] _addresses, uint[] _amoumts) public payable onlyOwner {
+        require(_addresses.length == _amoumts.length || _addresses.length != 0);
+        uint total = sumAmounts(_amoumts);
+        require(total == msg.value);
+        
+        for (uint i = 0; i < _addresses.length; i++) {
+            require(_addresses[i] != 0x0);
+            _addresses[i].transfer(_amoumts[i]);
+            emit LogTransfer(msg.sender, _addresses[i], _amoumts[i]);
+        }
+    }
+    
+    function sumAmounts(uint[] _amoumts) private pure returns (uint sumResult) {
+        for (uint i = 0; i < _amoumts.length; i++) {
+            require(_amoumts[i] > 0);
+            sumResult = sumResult.add(_amoumts[i]);
+        }
+    }
+
 }
