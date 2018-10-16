@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MOIRAICO at 0x9442384d4ed3dd45d468b7f09d29627eed7c2b6d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MOIRAICO at 0x0f5ee401de162cd163b6ff46318eef2727dbb9fc
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.11;
 /*
 Moira ICO Contract
 
@@ -35,10 +35,12 @@ contract token { //Token functions definition
 
     function balanceOf(address _owner) public constant returns (uint256 balance);
     function transfer(address _to, uint256 _value) public returns (bool success);
-
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+    function approve(address _spender, uint256 _value) public returns (bool success);
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
     }
 contract MOIRAICO {
-    //This ico have 3 stages
+    //This ico have 4 stages for 4 weeks and the Successful stage when finished
     enum State {
         Preico,
         Ico,
@@ -48,12 +50,11 @@ contract MOIRAICO {
     State public state = State.Preico; //Set initial stage
     uint startTime = now; //block-time when it was deployed
 
-    //We use an aproximation of 1 eth = 290$ for this price calculation
     //List of prices for each stage, as both, eth and moi have 18 decimal, its a direct factor
-    uint[9] tablePrices = [
-    63800,70180,76560, //+10%,+20%,+30%
-    58000,63800,70180, //+0%,+10%,+20%
-    32200,35420,38640  //+0%,+10%,+20%
+    uint[4] tablePrices = [
+    58000,
+    63800,
+    32200
     ];
 
     mapping (address => uint) balances; //balances mapping
@@ -114,41 +115,15 @@ contract MOIRAICO {
         uint tokenBought;
         totalRaised =SafeMath.add(totalRaised, msg.value);
         currentBalance = totalRaised;
-        /**
-         * Here price logic is made
-         */
-        if(state == State.Preico && now < (startTime + 1 days)){ //if we are on preico first day
-            if(msg.value < 10 ether){ //if the amount is less than 10 ether
-                tokenBought = SafeMath.mul(msg.value,tablePrices[0]);
-            }
-            else if(msg.value < 20 ether){//if the amount is more than 10 ether and less than 20
-                tokenBought = SafeMath.mul(msg.value,tablePrices[1]);
-            }
-            else{//if the amount is more than 20 ether
-                tokenBought = SafeMath.mul(msg.value,tablePrices[2]);
-            }
+
+        if(state == State.Preico){
+            tokenBought = SafeMath.mul(msg.value,tablePrices[0]);
         }
-        else if(state == State.Preico) {//if we are on preico normal days
-            if(msg.value < 10 ether){ //if the amount is less than 10 ether
-                tokenBought = SafeMath.mul(msg.value,tablePrices[3]);
-            }
-            else if(msg.value < 20 ether){//if the amount is more than 10 ether and less than 20
-                tokenBought = SafeMath.mul(msg.value,tablePrices[4]);
-            }
-            else{//if the amount is more than 20 ether
-                tokenBought = SafeMath.mul(msg.value,tablePrices[5]);
-            }
+        else if(state == State.Preico && now < (startTime + 1 days)) {
+            tokenBought = SafeMath.mul(msg.value,tablePrices[1]);
         }
-        else{//if we are on ico
-            if(msg.value < 10 ether){ //if the amount is less than 10 ether
-                tokenBought = SafeMath.mul(msg.value,tablePrices[6]);
-            }
-            else if(msg.value < 20 ether){//if the amount is more than 10 ether and less than 20
-                tokenBought = SafeMath.mul(msg.value,tablePrices[7]);
-            }
-            else{//if the amount is more than 20 ether
-                tokenBought = SafeMath.mul(msg.value,tablePrices[8]);
-            }
+        else{
+            tokenBought = SafeMath.mul(msg.value,tablePrices[2]);
         }
 
         tokenReward.transfer(msg.sender, tokenBought);
@@ -173,13 +148,6 @@ contract MOIRAICO {
             finished();  
         }
     }
-
-    function payOut() public {
-        require(msg.sender == beneficiary);
-        require(beneficiary.send(this.balance));
-        LogBeneficiaryPaid(beneficiary);
-    }
-
 
     function finished() public { //When finished eth and remaining tokens are transfered to beneficiary
         uint remanent;
