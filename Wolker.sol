@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Wolker at 0x84f5fb60fccd73f06867d800445b3fd8b01a2dd4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Wolker at 0x558aac46e98bccd0362301e24fd8d18433444fab
 */
 pragma solidity 0.4.11;
 
@@ -129,7 +129,7 @@ contract Wolker {
   uint256 public reservedTokens; 
 
   //address public owner = msg.sender;
-  address public owner = 0xC28dA4d42866758d0Fc49a5A3948A1f43de491e9; // Urmi
+  address public owner = 0xC28dA4d42866758d0Fc49a5A3948A1f43de491e9; // michael - main
   address public multisig_owner = 0x6968a9b90245cB9bD2506B9460e3D13ED4B2FD1e; // new multi-sig
 
   bool public isFinalized = false;          // after token sale success, this is true
@@ -156,13 +156,13 @@ contract Wolker {
   //**** Constructor:
   function Wolk() 
   {
-    if ( msg.sender != owner ) throw;
+
     // Actual crowdsale
-    start_block = 3835853;
-    end_block = 3836353;
+    start_block = 3831300;
+    end_block = 3831900;
 
     // wolkFund is 100
-    balances[owner] = wolkFund;
+    balances[msg.sender] = wolkFund;
 
     // Wolk Inc has 25MM Wolk, 5MM of which is allocated for Wolk Inc Founding staff, who vest at "unlockedAt" time
     reservedTokens = 25 * 10**decimals;
@@ -172,7 +172,8 @@ contract Wolker {
     allocations[0x5fcf700654B8062B709a41527FAfCda367daE7b1] = 1;  // Michael - Main
     allocations[0xC28dA4d42866758d0Fc49a5A3948A1f43de491e9] = 1;  // Urmi
     
-    CreateWolk(owner, wolkFund); 
+    
+    CreateWolk(msg.sender, wolkFund); 
   }
 
   // ****** VESTING SUPPORT
@@ -245,6 +246,7 @@ contract Wolker {
     
   // ****** Platform Settlement
   function settleFrom(address _from, address _to, uint256 _value) isOperational() external returns (bool success) {
+    if ( msg.sender != owner ) throw;
     var _allowance = allowed[_from][msg.sender];
     if (balances[_from] >= _value && (allowed[_from][msg.sender] >= _value || authorized[_from][msg.sender] == true ) && _value > 0) {
       balances[_to] = safeAdd(balances[_to], _value);
