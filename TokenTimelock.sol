@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTimelock at 0x8be0a3cc6b57bc486d5f247fa8417fa1621579d2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTimelock at 0x823702d05c025a2d6bfe0daaccf664c8f5b1d576
 */
-pragma solidity 0.4.21;
+pragma solidity ^0.4.18;
 
 /**
  * @title ERC20Basic
@@ -9,10 +9,10 @@ pragma solidity 0.4.21;
  * @dev see https://github.com/ethereum/EIPs/issues/179
  */
 contract ERC20Basic {
-    uint256 public totalSupply;
-    function balanceOf(address who) public view returns (uint256);
-    function transfer(address to, uint256 value) public returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 value);
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
 /**
@@ -20,10 +20,31 @@ contract ERC20Basic {
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
 contract ERC20 is ERC20Basic {
-    function allowance(address owner, address spender) public view returns (uint256);
-    function transferFrom(address from, address to, uint256 value) public returns (bool);
-    function approve(address spender, uint256 value) public returns (bool);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+/**
+ * @title SafeERC20
+ * @dev Wrappers around ERC20 operations that throw on failure.
+ * To use this library you can add a `using SafeERC20 for ERC20;` statement to your contract,
+ * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
+ */
+
+library SafeERC20 {
+  function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
+    assert(token.transfer(to, value));
+  }
+
+  function safeTransferFrom(ERC20 token, address from, address to, uint256 value) internal {
+    assert(token.transferFrom(from, to, value));
+  }
+
+  function safeApprove(ERC20 token, address spender, uint256 value) internal {
+    assert(token.approve(spender, value));
+  }
 }
 
 /**
@@ -32,9 +53,10 @@ contract ERC20 is ERC20Basic {
  * beneficiary to extract the tokens after a given release time
  */
 contract TokenTimelock {
-  
+  using SafeERC20 for ERC20Basic;
+
   // ERC20 basic token contract being held
-  ERC20 public token;
+  ERC20Basic public token;
 
   // beneficiary of tokens after they are released
   address public beneficiary;
@@ -42,7 +64,7 @@ contract TokenTimelock {
   // timestamp when token release is enabled
   uint256 public releaseTime;
 
-  function TokenTimelock(ERC20 _token, address _beneficiary, uint256 _releaseTime) public {
+  function TokenTimelock(ERC20Basic _token, address _beneficiary, uint256 _releaseTime) public {
     require(_releaseTime > now);
     token = _token;
     beneficiary = _beneficiary;
@@ -54,8 +76,10 @@ contract TokenTimelock {
    */
   function release() public {
     require(now >= releaseTime);
+
     uint256 amount = token.balanceOf(this);
     require(amount > 0);
-    token.transfer(beneficiary, amount);
+
+    token.safeTransfer(beneficiary, amount);
   }
 }
