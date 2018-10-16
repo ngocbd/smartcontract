@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SchmeckleToken at 0xD7a1BF3Cc676Fc7111cAD65972C8499c9B98Fb6f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SchmeckleToken at 0x0bB664f7b6FC928B2d1e5aA32182Ae07023Ed4aA
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.13;
 
 contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
 
