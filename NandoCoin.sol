@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NandoCoin at 0x28bd55152293595c65652f175c1e8fa95d10be93
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NandoCoin at 0xc74bbc1ce792f706ec2d75529c31ab2a27764969
 */
 pragma solidity ^0.4.16;
 
@@ -7,8 +7,8 @@ interface tokenRecipient { function receiveApproval(address _from, uint256 _valu
 
 contract NandoCoin {
     // Public variables of the token
-    string public name = "nando2";
-    string public symbol = "NAN2";
+    string public name = "nando";
+    string public symbol = "NAN";
     uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
@@ -32,7 +32,7 @@ contract NandoCoin {
         string tokenName,
         string tokenSymbol
     ) public {
-        totalSupply = 200000000 * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        totalSupply = 200000000; //* 10 ** uint256(decimals);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
         name = tokenName;                                   // Set the name for display purposes
         symbol = tokenSymbol;                               // Set the symbol for display purposes
