@@ -1,19 +1,19 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract E4Lava at 0xce5c603c78d047ef43032e96b5b785324f753a4f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract E4Lava at 0x86ca189a5e189513b52c2018ca9e4918cffeb54b
 */
-pragma solidity ^0.4.11;                                                                                                           
-                                                                                                                                   
-// VERSION LAVA(J)                                                                                                                 
-                                                                                                                                   
-                                                                                                                                   
-// --------------------------                                                                                                      
-// here's how this works:                                                                                                          
-// the current amount of dividends due to each token-holder's  is:                                                                 
-//   previous_due + [ p(x) * t(x)/N ] + [ p(x+1) * t(x+1)/N ] + ...                                                                
-//   where p(x) is the x'th payment received by the contract                                                                       
-//         t(x) is the number of tokens held by the token-holder at the time of p(x)                                               
-//         N    is the total number of tokens, which never changes                                                                 
-//                                                                                                                                 
+pragma solidity ^0.4.11;
+
+// VERSION LAVA(I)
+
+
+// --------------------------
+// here's how this works:
+// the current amount of dividends due to each token-holder's  is:
+//   previous_due + [ p(x) * t(x)/N ] + [ p(x+1) * t(x+1)/N ] + ...
+//   where p(x) is the x'th payment received by the contract
+//         t(x) is the number of tokens held by the token-holder at the time of p(x)
+//         N    is the total number of tokens, which never changes
+//
 // assume that t(x) takes on 3 values, t(a), t(b) and t(c), during periods a, b, and c. then:
 // factoring:
 //   current_due = { (t(a) * [p(x) + p(x+1)] ...) +
@@ -227,8 +227,6 @@ contract E4Lava is Token, E4LavaRewards, E4LavaOptIn {
                 }
 
                 numToksSwitchedOver = 0;
-                holdoverBalance = 0;
-                TotalFeesReceived = 0;
 
                 if (this.balance > 0) {
                         if (!owner.call.gas(rwGas).value(this.balance)())
