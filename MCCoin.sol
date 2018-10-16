@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MCCoin at 0xdf21709ef015de7f72e9e532a22694ac0572194d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MCCoin at 0xfbccf254b9df010fa30345cebac35ff0c5571331
 */
 pragma solidity ^0.4.16;
  
@@ -217,7 +217,7 @@ contract MCCoin is BurnableToken {
     
   uint32 public constant decimals = 0;
  
-  uint256 public INITIAL_SUPPLY = 10000000;
+  uint256 public INITIAL_SUPPLY = 100000000;
  
   function MCCoin() public {
     totalSupply = INITIAL_SUPPLY;
@@ -249,7 +249,7 @@ contract Crowdsale is Ownable, MCCoin {
     restricted = 0x2B87f568B9C1A0f0344A4119c81BA6c2B131f7Df;
     restrictedPercent = 40;
     rate = 40000;
-    start = 1517924700;
+    start = 1516989600;
     period = 365;
   }
  
@@ -260,7 +260,7 @@ contract Crowdsale is Ownable, MCCoin {
  
   function createTokens() public saleIsOn payable {
     multisig.transfer(msg.value);
-    uint tokens = rate.mul(msg.value).div(1000000000000000000);
+    uint tokens = rate.mul(msg.value);
     uint bonusTokens = 0;
     if(now < start + (period * 1 days).div(24)) {
       bonusTokens = tokens.div(5);
