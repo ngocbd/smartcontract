@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x1f2f65e5fbc46812b058d1979a90abce9734fe24
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x248cee44ef56f4072efb546d63aa615cac9bad7d
 */
 pragma solidity ^0.4.18;
 
@@ -210,6 +210,36 @@ contract Crowdsale is Ownable {
     }
   }
 
+/*   function buyPreICO() public payable {
+    address beneficiary = msg.sender;
+    uint256 weiAmount = msg.value;
+
+    _preValidatePreICOPurchase(beneficiary, weiAmount);
+
+    uint256 tokens = weiAmount.mul(rate.add(rate.mul(30).div(100)));
+    preICOWeiRaised = preICOWeiRaised.add(weiAmount);
+    wallet.transfer(weiAmount);
+    investors[beneficiary] = weiAmount;
+    _deliverTokens(beneficiary, tokens);
+
+    TokenPurchase(beneficiary, weiAmount, tokens);
+  }
+
+  function buyICO() public payable {
+    address beneficiary = msg.sender;
+    uint256 weiAmount = msg.value;
+
+    _preValidateICOPurchase(beneficiary, weiAmount);
+
+    uint256 tokens = _getTokenAmountWithBonus(weiAmount);
+    ICOWeiRaised = ICOWeiRaised.add(weiAmount);
+
+    investors[beneficiary] = weiAmount;
+    _deliverTokens(beneficiary, tokens);
+
+    TokenPurchase(beneficiary, weiAmount, tokens);
+  } */
+
     // ??????? ??????? ? ??????????? ???????
   function buyTokensWithReferal(address _referal) public onlyWhileICOOpen payable {
     address beneficiary = msg.sender;    
@@ -291,12 +321,12 @@ contract Crowdsale is Ownable {
 
   function _preValidatePreICOPurchase(address _beneficiary, uint256 _weiAmount) internal view {
     require(_weiAmount != 0);
+    require(whitelist[_beneficiary]);
     require(now >= preICOStartDate && now <= preICOEndDate);
   }
 
   function _preValidateICOPurchase(address _beneficiary, uint256 _weiAmount) internal view {
     require(_weiAmount != 0);
-    require(whitelist[_beneficiary]);
     require((preICOWeiRaised + ICOWeiRaised + _weiAmount).mul(ETHUSD).div(10**18) <= hardcap);
     require(now >= ICOStartDate && now <= ICOEndDate);
   }
