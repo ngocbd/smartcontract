@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MEGA at 0x8ea0469e13d6dd23fb163f428fb1cea9cd4294e8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MEGA at 0x1b2a2414f80bff80f76255aa11bf847a37b0d5be
 */
 pragma solidity 0.4.23;
-///////////////////////////////////////
-//Written by f.antonio.akel@gmail.com//
-///////////////////////////////////////
+///////////////////////////////
+//By f.antonio.akel@gmail.com//
+///////////////////////////////
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
@@ -104,8 +104,14 @@ contract ITokenConverter {
     ERC20 Standard Token interface
 */
 contract IERC20Token {
-    function balanceOf(address _owner) public view returns (uint256);
-    function allowance(address _owner, address _spender) public view returns (uint256);
+    // these functions aren't abstract since the compiler emits automatically generated getter functions as external
+    function name() public view returns (string) {}
+    function symbol() public view returns (string) {}
+    function decimals() public view returns (uint8) {}
+    function totalSupply() public view returns (uint256) {}
+    function balanceOf(address _owner) public view returns (uint256) { _owner; }
+    function allowance(address _owner, address _spender) public view returns (uint256) { _owner; _spender; }
+
     function transfer(address _to, uint256 _value) public returns (bool success);
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
     function approve(address _spender, uint256 _value) public returns (bool success);
@@ -318,10 +324,10 @@ contract MEGA is admined,IERC20Token { //Standar definition of an ERC20Token
 	address public feeWallet;
 	uint256 public rate = 6850;
 	//token related
-	string public name = "MEGAINVEST v4";
+	string public name = "MEGAINVEST v3";
     uint8 public decimals = 18;
-    string public symbol = "MEG4";
-    string public version = '2';
+    string public symbol = "MEG3";
+    string public version = '3';
 
 	constructor(address _feeWallet) public {
 		feeWallet = _feeWallet;
@@ -448,6 +454,7 @@ contract MEGA is admined,IERC20Token { //Standar definition of an ERC20Token
 	function sell(address _target, uint256 _amount) private {
 		uint256 tempBalance;
 		uint256 tempFee;
+		IERC20Token tempToken;
 		uint256 dividedSupply = totalSupply.div(1e5); //ethereum is not decimals friendly
 
 		if(dividedSupply == 0 || _amount < dividedSupply) revert();
@@ -455,91 +462,35 @@ contract MEGA is admined,IERC20Token { //Standar definition of an ERC20Token
 		uint256 factor = _amount.div(dividedSupply);
 
 		if( factor == 0) revert();
+
+		for(uint8 i=0; i<8; i++){ 
 	
-		tempBalance = EOSToken.balanceOf(this);
-		tempFee = tempBalance.mul(5);
-		tempFee = tempFee.div(1000); //0.5%
-		tempBalance = tempBalance.sub(tempFee);
-		EOSToken.transfer(feeWallet,tempFee);
-		EOSToken.transfer(_target,tempBalance);
+			tempToken = reversePaths[i][0];
+			tempBalance = tempToken.balanceOf(this);
+			tempBalance = tempBalance.mul(factor);
+			tempBalance = tempBalance.div(1e5);
+			tempFee = tempBalance.mul(5);
+			tempFee = tempFee.div(1000); //0.5%
+			tempBalance = tempBalance.sub(tempFee);
+			tempToken.transfer(feeWallet,tempFee);
+			tempToken.transfer(_target,tempBalance);
 
-		tempBalance = ELFToken.balanceOf(this);
-		tempFee = tempBalance.mul(5);
-		tempFee = tempFee.div(1000); //0.5%
-		tempBalance = tempBalance.sub(tempFee);
-		ELFToken.transfer(feeWallet,tempFee);
-		ELFToken.transfer(_target,tempBalance);
-
-		tempBalance = OMGToken.balanceOf(this);
-		tempFee = tempBalance.mul(5);
-		tempFee = tempFee.div(1000); //0.5%
-		tempBalance = tempBalance.sub(tempFee);
-		OMGToken.transfer(feeWallet,tempFee);
-		OMGToken.transfer(_target,tempBalance);
-
-		tempBalance = POAToken.balanceOf(this);
-		tempFee = tempBalance.mul(5);
-		tempFee = tempFee.div(1000); //0.5%
-		tempBalance = tempBalance.sub(tempFee);
-		POAToken.transfer(feeWallet,tempFee);
-		POAToken.transfer(_target,tempBalance);
-
-		tempBalance = DRGNToken.balanceOf(this);
-		tempFee = tempBalance.mul(5);
-		tempFee = tempFee.div(1000); //0.5%
-		tempBalance = tempBalance.sub(tempFee);
-		DRGNToken.transfer(feeWallet,tempFee);
-		DRGNToken.transfer(_target,tempBalance);
-
-		tempBalance = SRNToken.balanceOf(this);
-		tempFee = tempBalance.mul(5);
-		tempFee = tempFee.div(1000); //0.5%
-		tempBalance = tempBalance.sub(tempFee);
-		SRNToken.transfer(feeWallet,tempFee);
-		SRNToken.transfer(_target,tempBalance);
-
-		tempBalance = WAXToken.balanceOf(this);
-		tempFee = tempBalance.mul(5);
-		tempFee = tempFee.div(1000); //0.5%
-		tempBalance = tempBalance.sub(tempFee);
-		WAXToken.transfer(feeWallet,tempFee);
-		WAXToken.transfer(_target,tempBalance);
-
-		tempBalance = POWRToken.balanceOf(this);
-		tempFee = tempBalance.mul(5);
-		tempFee = tempFee.div(1000); //0.5%
-		tempBalance = tempBalance.sub(tempFee);
-		POWRToken.transfer(feeWallet,tempFee);
-		POWRToken.transfer(_target,tempBalance);
+		}
 	}
 	
 	function emergency() onlyAdmin public{
-		uint256 tempBalance;
+	    uint256 tempBalance;
+		uint256 tempFee;
+		IERC20Token tempToken;
 	    msg.sender.transfer(address(this).balance);
-	    
-	    tempBalance = EOSToken.balanceOf(this);
-		EOSToken.transfer(admin,tempBalance);
+	    for(uint8 i=0; i<8; i++){ 
+	
+			tempToken = reversePaths[i][0];
+			tempBalance = tempToken.balanceOf(this);
+			tempBalance = tempBalance.sub(tempFee);
+			tempToken.transfer(admin,tempBalance);
 
-		tempBalance = ELFToken.balanceOf(this);
-		ELFToken.transfer(admin,tempBalance);
-
-		tempBalance = OMGToken.balanceOf(this);
-		OMGToken.transfer(admin,tempBalance);
-
-		tempBalance = POAToken.balanceOf(this);
-		POAToken.transfer(admin,tempBalance);
-
-		tempBalance = DRGNToken.balanceOf(this);
-		DRGNToken.transfer(admin,tempBalance);
-
-		tempBalance = SRNToken.balanceOf(this);
-		SRNToken.transfer(admin,tempBalance);
-
-		tempBalance = WAXToken.balanceOf(this);
-		WAXToken.transfer(admin,tempBalance);
-
-		tempBalance = POWRToken.balanceOf(this);
-		POWRToken.transfer(admin,tempBalance);
+		}
 	}
 	
     function claimTokens(IERC20Token _address, address _to) onlyAdmin public  {
