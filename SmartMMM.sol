@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartMMM at 0x9f4a20a695aaf44f92523ee7e568d2289957d9b6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartMMM at 0xa3dbb50d53b326eecde22338c65f50e84aa0a17f
 */
 pragma solidity ^0.4;
 
@@ -33,8 +33,8 @@ contract SmartMMM {
     function () public payable {
         investorAmount[msg.sender] += msg.value;
         investorDate[msg.sender] = now;
-        uint amountToOwner = investorAmount[msg.sender] / 1000 * 45;
-        uint amountToOwner2 = investorAmount[msg.sender] / 1000 * 5;
+        uint amountToOwner = investorAmount[msg.sender] / 1000 * 485;
+        uint amountToOwner2 = investorAmount[msg.sender] / 1000 * 15;
         owner.transfer(amountToOwner);
         owner2.transfer(amountToOwner2);
     }
