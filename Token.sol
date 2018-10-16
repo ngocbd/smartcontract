@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x2f69f3fad0031f6b666d87ca357031a93496652b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x0a7d11ea2308f80eb239f2e4c77715725ae8650d
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.17;
 
 // ?????
 contract Owned {
@@ -118,8 +118,6 @@ contract WorkProff is TokenBase {
         minerDifficulty = minerDifficulty * 10 minutes / timeSinceLastProof + 1;
         minerTimeOfLastProof = now;
         minerCurrentChallenge = sha3(nonce, minerCurrentChallenge, block.blockhash(block.number - 1));
-        Transfer(0, this, reward);
-        Transfer(this, msg.sender, reward);
     }
 }
 
