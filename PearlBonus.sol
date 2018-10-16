@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PearlBonus at 0x61b84b8f683ae4408bdb87de9a6cb12ed60e475d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PearlBonus at 0x5Ab5ddED8C5C384015C8f3A27D59Bf71B952a3A4
 */
 pragma solidity ^0.4.18;
 
@@ -13,11 +13,15 @@ contract PearlBonus {
     OysterPearl pearl = OysterPearl(pearlContract);
     
     address public director;
+    address public partner;
+    uint8 public share;
     uint256 public funds;
     bool public saleClosed;
     
     function PearlBonus() public {
         director = msg.sender;
+        partner = 0x5F5E3bc34347e1f10C7a0E932871D8DbFBEF9f87;
+        share = 10;
         funds = 0;
         saleClosed = false;
     }
@@ -25,6 +29,12 @@ contract PearlBonus {
     modifier onlyDirector {
         // Only the director is permitted
         require(msg.sender == director);
+        _;
+    }
+    
+    modifier onlyPartner {
+        // Only the partner is permitted
+        require(msg.sender == partner);
         _;
     }
     
@@ -52,7 +62,7 @@ contract PearlBonus {
         return true;
     }
     
-    function transfer(address _send, uint256 _amount) public onlyDirector {
+    function rescue(address _send, uint256 _amount) public onlyDirector {
         pearl.transfer(_send, _amount);
     }
     
@@ -61,6 +71,13 @@ contract PearlBonus {
      */
     function transferDirector(address newDirector) public onlyDirector {
         director = newDirector;
+    }
+    
+    /**
+     * Transfers the partner to a new address
+     */
+    function transferPartner(address newPartner) public onlyPartner {
+        director = newPartner;
     }
     
     /**
@@ -80,8 +97,8 @@ contract PearlBonus {
         // Minimum amount is 1 finney
         require(msg.value >= 1 finney);
         
-        // Price is 1 ETH = 80,000 PRL
-        uint256 amount = msg.value * 80000;
+        // Price is 1 ETH = 50,000 PRL
+        uint256 amount = msg.value * 50000;
         
         require(amount <= pearl.balanceOf(this));
         
@@ -91,6 +108,8 @@ contract PearlBonus {
         funds += msg.value;
         
         // Auto withdraw
-        director.transfer(this.balance);
+        uint256 partnerShare = (this.balance / 100) * share;
+        director.transfer(this.balance - partnerShare);
+        partner.transfer(partnerShare);
     }
 }
