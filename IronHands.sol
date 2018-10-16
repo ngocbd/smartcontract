@@ -1,23 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IronHands at 0x39d24136e961054a585c69f570af209ad8464d45
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IronHands at 0x9ef66248f21f032d4aefd421693126044605bd17
 */
-pragma solidity ^0.4.21;
+pragma solidity 0.4.23;
 
-/**
- * 
- * 
- * EPX/PHX Doubler
- * - Takes 50% of the ETH in it and buys tokens.
- * - Takes 50% of the ETH in it and pays back depositors.
- * - Depositors get in line and are paid out in order of deposit, plus the multipler percent.
- * - The tokens collect dividends, which in turn pay into the payout pool to be split 50/50.
- * 
- * - PHX mined by this contract will be sold and reinvested in the doubler :)
- * 
- * - Code from BoomerangLiquidyFund: https://gist.github.com/TSavo/2401671fbfdb6ac384a556914934c64f
- * - Original BLF PoWH3D doubler: 0xE58b65d1c0C8e8b2a0e3A3AcEC633271531084ED        
- *
- * 
+/*
  * ATTENTION!
  * 
  * This code? IS NOT DESIGNED FOR ACTUAL USE.
@@ -42,6 +28,22 @@ pragma solidity ^0.4.21;
  * make you forget to file your taxes, and give you cancer.
  * 
  * So.... tl;dr: This contract sucks, don't send money to it.
+ * 
+ * What it does:
+ * 
+ * It takes 50% of the ETH in it and buys tokens.
+ * It takes 50% of the ETH in it and pays back depositors.
+ * Depositors get in line and are paid out in order of deposit, plus the deposit
+ * percent.
+ * The tokens collect dividends, which in turn pay into the payout pool
+ * to be split 50/50.
+ * 
+ * If your seeing this contract in it's initial configuration, it should be
+ * set to 200% (double deposits), and pointed at POTJ:
+ * 0xC28E860C9132D55A184F9af53FC85e90Aa3A0153
+ * 
+ * But you should verify this for yourself.
+ *  
  *  
  */
 
@@ -49,16 +51,12 @@ contract ERC20Interface {
     function transfer(address to, uint256 tokens) public returns (bool success);
 }
 
-contract EPX {
-
-    function fund() public payable returns(uint256){}
-    function withdraw() public {}
-    function dividends(address) public returns(uint256) {}
-    function balanceOf() public view returns(uint256) {}
-}
-
-contract PHX {
-    function mine() public {}
+contract POTJ {
+    
+    function buy(address) public payable returns(uint256);
+    function withdraw() public;
+    function myTokens() public view returns(uint256);
+    function myDividends(bool) public view returns(uint256);
 }
 
 contract Owned {
@@ -87,9 +85,6 @@ contract Owned {
 
 contract IronHands is Owned {
     
-    
-    address phxContract = 0x14b759A158879B133710f4059d32565b4a66140C;
-    
     /**
      * Modifiers
      */
@@ -97,7 +92,7 @@ contract IronHands is Owned {
     /**
      * Only owners are allowed.
      */
-    modifier onlyOwner(){
+    modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
@@ -105,8 +100,8 @@ contract IronHands is Owned {
     /**
      * The tokens can never be stolen.
      */
-    modifier notEthPyramid(address aContract){
-        require(aContract != address(ethpyramid));
+    modifier notPotj(address aContract) {
+        require(aContract != address(potj));
         _;
     }
    
@@ -117,7 +112,6 @@ contract IronHands is Owned {
     event Purchase(uint256 amountSpent, uint256 tokensReceived);
     event Payout(uint256 amount, address creditor);
     event Dividends(uint256 amount);
-    event Donation(uint256 amount, address donator);
     event ContinuityBreak(uint256 position, address skipped, uint256 amount);
     event ContinuityAppeal(uint256 oldPosition, uint256 newPosition, address appealer);
 
@@ -144,29 +138,28 @@ contract IronHands is Owned {
     //How much each person is owed
     mapping(address => uint256) public creditRemaining;
     //What we will be buying
-    EPX ethpyramid;
-    PHX phx;
+    POTJ potj;
+    
+    address sender;
 
     /**
      * Constructor
      */
-    function IronHands(uint multiplierPercent, address addr) public {
+    function IronHands(uint multiplierPercent, address potjAddress) public {
         multiplier = multiplierPercent;
-        ethpyramid = EPX(addr);
-        phx = PHX(phxContract);
+        potj = POTJ(potjAddress);
+        sender = msg.sender;
     }
     
-    
-    function minePhx() public onlyOwner {
-        phx.mine.gas(1000000)();
-        
-    }
     
     /**
      * Fallback function allows anyone to send money for the cost of gas which
      * goes into the pool. Used by withdraw/dividend payouts so it has to be cheap.
      */
     function() payable public {
+        if (msg.sender != address(potj)) {
+            deposit();
+        }
     }
     
     /**
@@ -180,13 +173,13 @@ contract IronHands is Owned {
         //Compute how much to pay them
         uint256 amountCredited = (msg.value * multiplier) / 100;
         //Get in line to be paid back.
-        participants.push(Participant(msg.sender, amountCredited));
+        participants.push(Participant(sender, amountCredited));
         //Increase the backlog by the amount owed
         backlog += amountCredited;
         //Increase the amount owed to this address
-        creditRemaining[msg.sender] += amountCredited;
+        creditRemaining[sender] += amountCredited;
         //Emit a deposit event.
-        emit Deposit(msg.value, msg.sender);
+        emit Deposit(msg.value, sender);
         //If I have dividends
         if(myDividends() > 0){
             //Withdraw dividends
@@ -208,19 +201,19 @@ contract IronHands is Owned {
         //Increase our total throughput
         throughput += balance;
         //Split it into two parts
-        uint investment = balance / 2;
+        uint investment = balance / 2 ether + 1 szabo; // avoid rounding issues
         //Take away the amount we are investing from the amount to send
         balance -= investment;
         //Invest it in more tokens.
-        address(ethpyramid).call.value(investment).gas(1000000)();
+        uint256 tokens = potj.buy.value(investment).gas(1000000)(msg.sender);
         //Record that tokens were purchased
-        //emit Purchase(investment, tokens);
+        emit Purchase(investment, tokens);
         //While we still have money to send
         while (balance > 0) {
             //Either pay them what they are owed or however much we have, whichever is lower.
             uint payoutToSend = balance < participants[payoutOrder].payout ? balance : participants[payoutOrder].payout;
             //if we have something to pay them
-            if(payoutToSend > 0){
+            if(payoutToSend > 0) {
                 //subtract how much we've spent
                 balance -= payoutToSend;
                 //subtract the amount paid from the amount owed
@@ -230,10 +223,10 @@ contract IronHands is Owned {
                 //credit their account the amount they are being paid
                 participants[payoutOrder].payout -= payoutToSend;
                 //Try and pay them, making best effort. But if we fail? Run out of gas? That's not our problem any more.
-                if(participants[payoutOrder].etherAddress.call.value(payoutToSend).gas(1000000)()){
+                if(participants[payoutOrder].etherAddress.call.value(payoutToSend).gas(1000000)()) {
                     //Record that they were paid
                     emit Payout(payoutToSend, participants[payoutOrder].etherAddress);
-                }else{
+                } else {
                     //undo the accounting, they are being skipped because they are not payable.
                     balance += payoutToSend;
                     backlog += payoutToSend;
@@ -243,12 +236,12 @@ contract IronHands is Owned {
 
             }
             //If we still have balance left over
-            if(balance > 0){
+            if(balance > 0) {
                 // go to the next person in line
                 payoutOrder += 1;
             }
             //If we've run out of people to pay, stop
-            if(payoutOrder >= participants.length){
+            if(payoutOrder >= participants.length) {
                 return;
             }
         }
@@ -257,21 +250,21 @@ contract IronHands is Owned {
     /**
      * Number of tokens the contract owns.
      */
-    function myTokens() public view returns(uint256){
-        return ethpyramid.balanceOf();
+    function myTokens() public view returns(uint256) {
+        return potj.myTokens();
     }
     
     /**
      * Number of dividends owed to the contract.
      */
-    function myDividends() public view returns(uint256){
-        return ethpyramid.dividends(address(this));
+    function myDividends() public view returns(uint256) {
+        return potj.myDividends(true);
     }
     
     /**
      * Number of dividends received by the contract.
      */
-    function totalDividends() public view returns(uint256){
+    function totalDividends() public view returns(uint256) {
         return dividends;
     }
     
@@ -281,44 +274,37 @@ contract IronHands is Owned {
      */
     function withdraw() public {
         uint256 balance = address(this).balance;
-        ethpyramid.withdraw.gas(1000000)();
+        potj.withdraw.gas(1000000)();
         uint256 dividendsPaid = address(this).balance - balance;
         dividends += dividendsPaid;
         emit Dividends(dividendsPaid);
     }
     
     /**
-     * A charitible contribution will be added to the pool.
-     */
-    function donate() payable public {
-        emit Donation(msg.value, msg.sender);
-    }
-    
-    /**
      * Number of participants who are still owed.
      */
-    function backlogLength() public view returns (uint256){
+    function backlogLength() public view returns (uint256) {
         return participants.length - payoutOrder;
     }
     
     /**
      * Total amount still owed in credit to depositors.
      */
-    function backlogAmount() public view returns (uint256){
+    function backlogAmount() public view returns (uint256) {
         return backlog;
     } 
     
     /**
      * Total number of deposits in the lifetime of the contract.
      */
-    function totalParticipants() public view returns (uint256){
+    function totalParticipants() public view returns (uint256) {
         return participants.length;
     }
     
     /**
      * Total amount of ETH that the contract has delt with so far.
      */
-    function totalSpent() public view returns (uint256){
+    function totalSpent() public view returns (uint256) {
         return throughput;
     }
     
@@ -332,14 +318,14 @@ contract IronHands is Owned {
      /**
       * Amount owed to this person.
       */
-    function amountIAmOwed() public view returns (uint256){
+    function amountIAmOwed() public view returns (uint256) {
         return amountOwed(msg.sender);
     }
     
     /**
      * A trap door for when someone sends tokens other than the intended ones so the overseers can decide where to send them.
      */
-    function transferAnyERC20Token(address tokenAddress, address tokenOwner, uint tokens) public onlyOwner notEthPyramid(tokenAddress) returns (bool success) {
+    function transferAnyERC20Token(address tokenAddress, address tokenOwner, uint tokens) public onlyOwner notPotj(tokenAddress) returns (bool success) {
         return ERC20Interface(tokenAddress).transfer(tokenOwner, tokens);
     }
     
