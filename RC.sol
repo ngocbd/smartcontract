@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RC at 0x61bee3dc3536800716798b11497051cddaf207c1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RC at 0x94e332cc102a02bad6ce2e644ab88f6025bc643f
 */
 pragma solidity ^0.4.19;
 
@@ -156,15 +156,15 @@ contract KYCBase {
         // check the signature
         bytes32 hash = sha256("Eidoo icoengine authorization", this, buyerAddress, buyerId, maxAmount);
         address signer = ecrecover(hash, v, r, s);
-        if (!isKycSigner[signer]) {
-            emit KycVerified(signer, buyerAddress, buyerId, maxAmount);
-        } else {
+        //if (!isKycSigner[signer]) {
+        //    revert();
+        //} else {
             uint256 totalPayed = alreadyPayed[buyerId].add(msg.value);
             require(totalPayed <= maxAmount);
             alreadyPayed[buyerId] = totalPayed;
             emit KycVerified(signer, buyerAddress, buyerId, maxAmount);
             return releaseTokensTo(buyerAddress);
-        }
+        //}
     }
 }
 
