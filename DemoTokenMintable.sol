@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DemoTokenMintable at 0x4d71c17e1423f990b653b88bb264c28d682e0fc6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DemoTokenMintable at 0x65c39f0bfa2a25734969767cd35e883a82cbe351
 */
 pragma solidity ^0.4.13;
 
@@ -135,8 +135,8 @@ contract MintableToken is StandardToken, Ownable {
 
 contract DemoTokenMintable is MintableToken {
 
-        string public name = "KimJongCoin";
-        string public symbol = "KJC";
+        string public name = "BiCode";
+        string public symbol = "CODE";
         uint256 public decimals = 8;
 
 }
