@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CDPerFactory at 0x2acb4ebae0891efb5041822a5d79e49c4e6016fa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CDPerFactory at 0xe413cbb9a3b64ffe1f7b08898d91ccacf6c457a7
 */
 pragma solidity^0.4.21;
 
@@ -583,25 +583,24 @@ contract WETH is ERC20 {
 contract CDPer is DSStop, DSMath {
 
     ///Main Net\\\
-    uint public slippage = WAD / 50;//2%
-    TubInterface public tub = TubInterface(0x448a5065aeBB8E423F0896E6c5D525C040f59af3);
-    DSToken public dai = DSToken(0x89d24A6b4CcB1B6fAA2625fE562bDD9a23260359);  // Stablecoin
-    DSToken public skr = DSToken(0xf53AD2c6851052A81B42133467480961B2321C09);  // Abstracted collateral - PETH
-    WETH public gem = WETH(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);  // Underlying collateral - WETH
-    DSToken public gov = DSToken(0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2);  // MKR Token
-    DSValue public feed = DSValue(0x729D19f657BD0614b4985Cf1D82531c67569197B);  // Price feed
-    OtcInterface public otc = OtcInterface(0x14FBCA95be7e99C15Cc2996c6C9d841e54B79425);
+    // uint public slippage = WAD / 50;//2%
+    // TubInterface public tub = TubInterface(0x448a5065aebb8e423f0896e6c5d525c040f59af3);
+    // DSToken public dai = DSToken(0x89d24A6b4CcB1B6fAA2625fE562bDD9a23260359);  // Stablecoin
+    // DSToken public skr = DSToken(0xf53AD2c6851052A81B42133467480961B2321C09);  // Abstracted collateral - PETH
+    // WETH public gem = WETH(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);  // Underlying collateral - WETH
+    // DSValue public feed = DSValue(0x729D19f657BD0614b4985Cf1D82531c67569197B);  // Price feed
+    // OtcInterface public otc = OtcInterface(0x14FBCA95be7e99C15Cc2996c6C9d841e54B79425);
 
     ///Kovan test net\\\
     ///This is the acceptable price difference when exchanging at the otc. 0.01 * 10^18 == 1% acceptable slippage 
-    // uint public slippage = 99*10**16;//99%
-    // TubInterface public tub = TubInterface(0xa71937147b55Deb8a530C7229C442Fd3F31b7db2);
-    // DSToken public dai = DSToken(0xC4375B7De8af5a38a93548eb8453a498222C4fF2);  // Stablecoin
-    // DSToken public skr = DSToken(0xf4d791139cE033Ad35DB2B2201435fAd668B1b64);  // Abstracted collateral - PETH
-    // DSToken public gov = DSToken(0xAaF64BFCC32d0F15873a02163e7E500671a4ffcD);  // MKR Token
-    // WETH public gem = WETH(0xd0A1E359811322d97991E03f863a0C30C2cF029C);  // Underlying collateral - WETH
-    // DSValue public feed = DSValue(0xA944bd4b25C9F186A846fd5668941AA3d3B8425F);  // Price feed
-    // OtcInterface public otc = OtcInterface(0x8cf1Cab422A0b6b554077A361f8419cDf122a9F9);
+    uint public slippage = 99*10**16;//99%
+    TubInterface public tub = TubInterface(0xa71937147b55Deb8a530C7229C442Fd3F31b7db2);
+    DSToken public dai = DSToken(0xC4375B7De8af5a38a93548eb8453a498222C4fF2);  // Stablecoin
+    DSToken public skr = DSToken(0xf4d791139cE033Ad35DB2B2201435fAd668B1b64);  // Abstracted collateral - PETH
+    DSToken public gov = DSToken(0xAaF64BFCC32d0F15873a02163e7E500671a4ffcD);  // MKR Token
+    WETH public gem = WETH(0xd0A1E359811322d97991E03f863a0C30C2cF029C);  // Underlying collateral - WETH
+    DSValue public feed = DSValue(0xA944bd4b25C9F186A846fd5668941AA3d3B8425F);  // Price feed
+    OtcInterface public otc = OtcInterface(0x8cf1Cab422A0b6b554077A361f8419cDf122a9F9);
 
     ///You won't be able to create a CDP or trade less than these values
     uint public minETH = WAD / 20; //0.05 ETH
