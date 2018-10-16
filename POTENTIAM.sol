@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POTENTIAM at 0x7c32DB0645A259FaE61353c1f891151A2e7f8c1e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POTENTIAM at 0x53926a4b6331128d77c6d73f4a7e5466af63baa6
 */
 pragma solidity ^0.4.18;
 
@@ -337,7 +337,7 @@ contract POTENTIAM is StandardToken, Destructible {
        balances[msg.sender] += 75000000 * (10 **decimals);
        balances[companyReserve]  += 25000000 * (10**decimals);
        firstWeekPreICOBonusEstimate = now + 7 days;
-       deployTime = now;
+       deployTime = firstWeekPreICOBonusEstimate;
        secondWeekPreICOBonusEstimate = firstWeekPreICOBonusEstimate + 7 days;
        firstWeekMainICOBonusEstimate = firstWeekPreICOBonusEstimate + 14 days;
        secondWeekMainICOBonusEstimate = firstWeekPreICOBonusEstimate + 21 days;
@@ -356,9 +356,9 @@ contract POTENTIAM is StandardToken, Destructible {
         require(now<=forthWeekMainICOBonusEstimate);
         require(tokenSales < (60000000 * (10 **decimals)));
         uint256 bonus = 0;
-        if(now<=firstWeekPreICOBonusEstimate && totalWeiRaised < 3000 ether){
+        if(now<=firstWeekPreICOBonusEstimate && totalWeiRaised < 5000 ether){
             bonus = firstWeekPreICOBonusRate;
-        }else if(now <=secondWeekPreICOBonusEstimate && totalWeiRaised < 5000 ether){
+        }else if(now <=secondWeekPreICOBonusEstimate && totalWeiRaised < 6000 ether){
             bonus = secondWeekPreICOBonusRate;
         }else if(now<=firstWeekMainICOBonusEstimate && totalWeiRaised < 9000 ether){
             bonus = firstWeekMainICOBonusRate;
