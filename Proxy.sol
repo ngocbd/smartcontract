@@ -1,96 +1,84 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Proxy at 0x5982f9decc836248b2c72cf23af1ec2a64173fcc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Proxy at 0x7f0a51cbebc0aef083b9f54ae5fb789de71b23b8
 */
-pragma solidity 0.4.23;
+contract Delegatable {
+  address empty1; // unknown slot
+  address empty2; // unknown slot
+  address empty3;  // unknown slot
+  address public owner;  // matches owner slot in controller
+  address public delegation; // matches thisAddr slot in controller
 
-/*
- * Ownable
- *
- * Base contract with an owner.
- * Provides onlyOwner modifier, which prevents function from running if it is called by anyone other than the owner.
- */
-contract Ownable {
-  address public owner;
-
-  function Ownable() public {
-    owner = msg.sender;
-  }
+  event DelegationTransferred(address indexed previousDelegate, address indexed newDelegation);
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
   modifier onlyOwner() {
     require(msg.sender == owner);
-
     _;
   }
 
-  function transferOwnership(address newOwner) onlyOwner public {
-    if (newOwner != address(0)) {
-      owner = newOwner;
-    }
+  /**
+   * @dev Allows owner to transfer delegation of the contract to a newDelegation.
+   * @param newDelegation The address to transfer delegation to.
+   */
+  function transferDelegation(address newDelegation) public onlyOwner {
+    require(newDelegation != address(0));
+    emit DelegationTransferred(delegation, newDelegation);
+    delegation = newDelegation;
   }
 
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
 }
 
-contract Proxied is Ownable {
-    address public target;
-    mapping (address => bool) public initialized;
+contract DelegateProxy {
 
-    event EventUpgrade(address indexed newTarget, address indexed oldTarget, address indexed admin);
-    event EventInitialized(address indexed target);
-
-    function upgradeTo(address _target) public;
-}
-
-contract Proxy is Proxied {
-    /*
-     * @notice Constructor sets the target and emmits an event with the first target
-     * @param _target - The target Upgradeable contracts address
-     */
-    constructor(address _target) public {
-        upgradeTo(_target);
-    }
-
-    /*
-     * @notice Upgrades the contract to a different target that has a changed logic. Can only be called by owner
-     * @dev See https://github.com/jackandtheblockstalk/upgradeable-proxy for what can and cannot be done in Upgradeable
-     * contracts
-     * @param _target - The target Upgradeable contracts address
-     */
-    function upgradeTo(address _target) public onlyOwner {
-        assert(target != _target);
-
-        address oldTarget = target;
-        target = _target;
-
-        emit EventUpgrade(_target, oldTarget, msg.sender);
-    }
-
-    /*
-     * @notice Performs an upgrade and then executes a transaction. Intended use to upgrade and initialize atomically
-     */
-    function upgradeTo(address _target, bytes _data) public onlyOwner {
-        upgradeTo(_target);
-        assert(target.delegatecall(_data));
-    }
-
-    /*
-     * @notice Fallback function that will execute code from the target contract to process a function call.
-     * @dev Will use the delegatecall opcode to retain the current state of the Proxy contract and use the logic
-     * from the target contract to process it.
-     */
-    function () payable public {
-        bytes memory data = msg.data;
-        address impl = target;
-
+    /**
+    * @dev Performs a delegatecall and returns whatever the delegatecall returned (entire context execution will return!)
+    * @param _dst Destination address to perform the delegatecall
+    * @param _calldata Calldata for the delegatecall
+    */
+    function delegatedFwd(address _dst, bytes _calldata) internal {
         assembly {
-            let result := delegatecall(gas, impl, add(data, 0x20), mload(data), 0, 0)
+            let result := delegatecall(sub(gas, 10000), _dst, add(_calldata, 0x20), mload(_calldata), 0, 0)
             let size := returndatasize
 
             let ptr := mload(0x40)
             returndatacopy(ptr, 0, size)
 
-            switch result
-            case 0 { revert(ptr, size) }
+            // revert instead of invalid() bc if the underlying call failed with invalid() it already wasted gas.
+            // if the call returned error data, forward it
+            switch result case 0 { revert(ptr, size) }
             default { return(ptr, size) }
         }
     }
+}
+
+contract Proxy is Delegatable, DelegateProxy {
+
+  /**
+   * @dev Function to invoke all function that are implemented in controler
+   */
+  function () public {
+    delegatedFwd(delegation, msg.data);
+  }
+
+  /**
+   * @dev Function to initialize storage of proxy
+   * @param _controller The address of the controller to load the code from
+   * @param _cap Max amount of tokens that should be mintable
+   */
+  function initialize(address _controller, uint256 _cap) public {
+    require(owner == 0);
+    owner = msg.sender;
+    delegation = _controller;
+    delegatedFwd(_controller, msg.data);
+  }
+
 }
