@@ -1,15 +1,57 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWalletWithDailyLimit at 0xaa0ae3459f9f3472d1237015cafc1aafc6f03c63
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWalletWithDailyLimit at 0xe439d6db9d81b04d6e0c0604b8121e85f3cfa66b
 */
-pragma solidity 0.4.18;
+pragma solidity ^0.4.15;
 
+
+contract Factory {
+
+    /*
+     *  Events
+     */
+    event ContractInstantiation(address sender, address instantiation);
+
+    /*
+     *  Storage
+     */
+    mapping(address => bool) public isInstantiation;
+    mapping(address => address[]) public instantiations;
+
+    /*
+     * Public functions
+     */
+    /// @dev Returns number of instantiations by creator.
+    /// @param creator Contract creator.
+    /// @return Returns number of instantiations by creator.
+    function getInstantiationCount(address creator)
+        public
+        constant
+        returns (uint)
+    {
+        return instantiations[creator].length;
+    }
+
+    /*
+     * Internal functions
+     */
+    /// @dev Registers contract in factory registry.
+    /// @param instantiation Address of contract instantiation.
+    function register(address instantiation)
+        internal
+    {
+        isInstantiation[instantiation] = true;
+        instantiations[msg.sender].push(instantiation);
+        ContractInstantiation(msg.sender, instantiation);
+    }
+}
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
 /// @author Stefan George - <stefan.george@consensys.net>
 contract MultiSigWallet {
 
-    uint constant public MAX_OWNER_COUNT = 50;
-
+    /*
+     *  Events
+     */
     event Confirmation(address indexed sender, uint indexed transactionId);
     event Revocation(address indexed sender, uint indexed transactionId);
     event Submission(uint indexed transactionId);
@@ -20,6 +62,14 @@ contract MultiSigWallet {
     event OwnerRemoval(address indexed owner);
     event RequirementChange(uint required);
 
+    /*
+     *  Constants
+     */
+    uint constant public MAX_OWNER_COUNT = 50;
+
+    /*
+     *  Storage
+     */
     mapping (uint => Transaction) public transactions;
     mapping (uint => mapping (address => bool)) public confirmations;
     mapping (address => bool) public isOwner;
@@ -34,51 +84,54 @@ contract MultiSigWallet {
         bool executed;
     }
 
+    /*
+     *  Modifiers
+     */
     modifier onlyWallet() {
-        require (msg.sender == address(this));
+        require(msg.sender == address(this));
         _;
     }
 
     modifier ownerDoesNotExist(address owner) {
-        require (!isOwner[owner]);
+        require(!isOwner[owner]);
         _;
     }
 
     modifier ownerExists(address owner) {
-        require (isOwner[owner]);
+        require(isOwner[owner]);
         _;
     }
 
     modifier transactionExists(uint transactionId) {
-        require (transactions[transactionId].destination != 0);
+        require(transactions[transactionId].destination != 0);
         _;
     }
 
     modifier confirmed(uint transactionId, address owner) {
-        require (confirmations[transactionId][owner]);
+        require(confirmations[transactionId][owner]);
         _;
     }
 
     modifier notConfirmed(uint transactionId, address owner) {
-        require (!confirmations[transactionId][owner]);
+        require(!confirmations[transactionId][owner]);
         _;
     }
 
     modifier notExecuted(uint transactionId) {
-        require (!transactions[transactionId].executed);
+        require(!transactions[transactionId].executed);
         _;
     }
 
     modifier notNull(address _address) {
-        require (_address != 0);
+        require(_address != 0);
         _;
     }
 
     modifier validRequirement(uint ownerCount, uint _required) {
-        require (ownerCount <= MAX_OWNER_COUNT);
-        require (_required <= ownerCount);
-        require (_required != 0);
-        require (ownerCount != 0);
+        require(ownerCount <= MAX_OWNER_COUNT
+            && _required <= ownerCount
+            && _required != 0
+            && ownerCount != 0);
         _;
     }
 
@@ -101,8 +154,7 @@ contract MultiSigWallet {
         validRequirement(_owners.length, _required)
     {
         for (uint i=0; i<_owners.length; i++) {
-            require ( !isOwner[_owners[i]]);
-            require (_owners[i] != 0);
+            require(!isOwner[_owners[i]] && _owners[i] != 0);
             isOwner[_owners[i]] = true;
         }
         owners = _owners;
@@ -144,7 +196,7 @@ contract MultiSigWallet {
 
     /// @dev Allows to replace an owner with a new owner. Transaction has to be sent by wallet.
     /// @param owner Address of owner to be replaced.
-    /// @param owner Address of new owner.
+    /// @param newOwner Address of new owner.
     function replaceOwner(address owner, address newOwner)
         public
         onlyWallet
@@ -215,18 +267,42 @@ contract MultiSigWallet {
     /// @param transactionId Transaction ID.
     function executeTransaction(uint transactionId)
         public
+        ownerExists(msg.sender)
+        confirmed(transactionId, msg.sender)
         notExecuted(transactionId)
     {
         if (isConfirmed(transactionId)) {
             Transaction storage txn = transactions[transactionId];
             txn.executed = true;
-            if (txn.destination.call.value(txn.value)(txn.data))
+            if (external_call(txn.destination, txn.value, txn.data.length, txn.data))
                 Execution(transactionId);
             else {
                 ExecutionFailure(transactionId);
                 txn.executed = false;
             }
         }
+    }
+
+    // call has been separated into its own function in order to take advantage
+    // of the Solidity's code generator to produce a loop that copies tx.data into memory.
+    function external_call(address destination, uint value, uint dataLength, bytes data) private returns (bool) {
+        bool result;
+        assembly {
+            let x := mload(0x40)   // "Allocate" memory for output (0x40 is where "free memory" pointer is stored by convention)
+            let d := add(data, 32) // First 32 bytes are the padded length of data, so exclude that
+            result := call(
+                sub(gas, 34710),   // 34710 is the value that solidity is currently emitting
+                                   // It includes callGas (700) + callVeryLow (3, to pay for SUB) + callValueTransferGas (9000) +
+                                   // callNewAccountGas (25000, in case the destination address does not exist and needs creating)
+                destination,
+                value,
+                d,
+                dataLength,        // Size of the input (in bytes) - this is what fixes the padding problem
+                x,
+                0                  // Output is ignored, therefore the output size is zero
+            )
+        }
+        return result;
     }
 
     /// @dev Returns the confirmation status of a transaction.
@@ -363,8 +439,14 @@ contract MultiSigWallet {
 /// @author Stefan George - <stefan.george@consensys.net>
 contract MultiSigWalletWithDailyLimit is MultiSigWallet {
 
+    /*
+     *  Events
+     */
     event DailyLimitChange(uint dailyLimit);
 
+    /*
+     *  Storage
+     */
     uint public dailyLimit;
     uint public lastDay;
     uint public spentToday;
@@ -397,20 +479,22 @@ contract MultiSigWalletWithDailyLimit is MultiSigWallet {
     /// @param transactionId Transaction ID.
     function executeTransaction(uint transactionId)
         public
+        ownerExists(msg.sender)
+        confirmed(transactionId, msg.sender)
         notExecuted(transactionId)
     {
         Transaction storage txn = transactions[transactionId];
-        bool confirmed = isConfirmed(transactionId);
-        if (confirmed || txn.data.length == 0 && isUnderLimit(txn.value)) {
+        bool _confirmed = isConfirmed(transactionId);
+        if (_confirmed || txn.data.length == 0 && isUnderLimit(txn.value)) {
             txn.executed = true;
-            if (!confirmed)
+            if (!_confirmed)
                 spentToday += txn.value;
             if (txn.destination.call.value(txn.value)(txn.data))
                 Execution(transactionId);
             else {
                 ExecutionFailure(transactionId);
                 txn.executed = false;
-                if (!confirmed)
+                if (!_confirmed)
                     spentToday -= txn.value;
             }
         }
