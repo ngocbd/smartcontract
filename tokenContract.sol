@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenContract at 0x60061C1779fBd2c1dd859Ee6b5E8Db8F70015a1d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenContract at 0x88ae2901d6e98dad8f3c2f22f3dcc25b0397065a
 */
 pragma solidity ^0.4.18;
 
@@ -43,7 +43,7 @@ contract Ownable {
   }
   function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
+    emit OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
 
@@ -56,7 +56,7 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-contract ERC20 is ERC20Basic {
+contract ERC20 {
   function allowance(address owner, address spender) public view returns (uint256);
   function transferFrom(address from, address to, uint256 value) public returns (bool);
   function approve(address spender, uint256 value) public returns (bool);
@@ -75,7 +75,7 @@ contract BasicToken is ERC20Basic {
     // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
+    emit Transfer(msg.sender, _to, _value);
     return true;
   }
 
@@ -97,13 +97,13 @@ contract StandardToken is ERC20, BasicToken {
     balances[_from] = balances[_from].sub(_value);
     balances[_to] = balances[_to].add(_value);
     allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
+    emit Transfer(_from, _to, _value);
     return true;
   }
 
   function approve(address _spender, uint256 _value) public returns (bool) {
     allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
+    emit Approval(msg.sender, _spender, _value);
     return true;
   }
 
@@ -113,7 +113,7 @@ contract StandardToken is ERC20, BasicToken {
 
   function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
@@ -124,87 +124,55 @@ contract StandardToken is ERC20, BasicToken {
     } else {
       allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
 }
 
-
-// EDIT HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 contract TokenContract is Ownable, StandardToken {
-    string public constant name = "CarVDB";
-    string public constant symbol = "CAR";
+    string public constant name = "MTE Token";
+    string public constant symbol = "MTE";
     uint8 public constant decimals = 18;
+    uint256 public constant INITIAL_SUPPLY = 80000000 * (10 ** uint256(decimals));
 
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-
-// 100 million tokens supply
-    uint256 public constant INITIAL_SUPPLY = 100000000 * (10 ** uint256(decimals));
-
-// pausable to prevent transfers during ICO
-    bool public paused = false;
-
-// address of the ICO contract to let it transfer when token is paused
-    address public icoContract;
-
-    modifier canTransfer {
-        require(!paused || msg.sender==icoContract);
-        _;
-    }
-
-    function TokenContract() public {
+    function TokenContract(address _mainWallet) public {
+    address mainWallet = _mainWallet;
+    uint256 tokensForWallet = 18400000 * (10 ** uint256(decimals));
+    uint256 tokensForICO = INITIAL_SUPPLY - tokensForWallet;
     totalSupply = INITIAL_SUPPLY;
-
-// all the balance sent to the owner    
-    balances[msg.sender] = INITIAL_SUPPLY;
-
-    // emit the event +++++++++++++++++++++++
-    Transfer(0x0, msg.sender, INITIAL_SUPPLY);
+    balances[mainWallet] = tokensForWallet;
+    balances[msg.sender] = tokensForICO;
+    emit Transfer(0x0, mainWallet, tokensForWallet);
+    emit Transfer(0x0, msg.sender, tokensForICO);
   }
 
-// function to change the ICO contract address, to allow transfers and if you want to change the ICO
-// in case of emergency
-    function setIcoContract(address _icoContract) onlyOwner public {
-        require(_icoContract != address(0));
-        icoContract = _icoContract;
-    }
-
-    function pauseToken() public onlyOwner {
-      paused = true;
-      TokenIsPaused(paused);
-    }
-
-    function unpauseToken() public onlyOwner {
-      paused = false;
-      TokenIsPaused(paused);
-    }
-
-    function transfer(address _to, uint256 _value) public canTransfer returns (bool) {
+    function transfer(address _to, uint256 _value) public returns (bool) {
         return super.transfer(_to, _value);
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) public canTransfer returns (bool) {
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
         return super.transferFrom(_from, _to, _value);
     }
 
-    function approve(address _spender, uint256 _value) public canTransfer returns (bool) {
+    function approve(address _spender, uint256 _value) public returns (bool) {
         return super.approve(_spender, _value);
     }
 
-    function increaseApproval(address _spender, uint _addedValue) public canTransfer returns (bool success) {
+    function increaseApproval(address _spender, uint _addedValue) public returns (bool success) {
         return super.increaseApproval(_spender, _addedValue);
     }
 
-    function decreaseApproval(address _spender, uint _subtractedValue) public canTransfer returns (bool success) {
+    function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool success) {
         return super.decreaseApproval(_spender, _subtractedValue);
     }
 
-  // add event +++++++++++++++++++++++++++++
-    event TokenIsPaused(bool _paused);
+    function burn(uint256 _amount) public {
+        require(balances[msg.sender] >= _amount);
+        balances[msg.sender] = balances[msg.sender].sub(_amount);
+        totalSupply = totalSupply.sub(_amount);
+        emit Burn(msg.sender, _amount);
+    }
 
+    event Burn(address indexed from, uint256 amount);
 }
