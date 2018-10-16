@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cat at 0xe945bfb9cee4103b0026565eaa179d3bebb53c4d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cat at 0x12ce820dd8224c2a5911bc7196ec7a46a09cf0a4
 */
 pragma solidity ^0.4.16;
 
@@ -249,13 +249,14 @@ contract Token is ERC20 {
     }
 }
 
+
 /**
  * @title Cat's Token, miaow!!!
  *
  * @dev Defines token with name "Cat's Token", symbol "CTS"
  * and 3 digits after the point
  */
-contract Cat is Token("Test's Token", "TTS", 3), Owned {
+contract Cat is Token("Cat's Token", "CTS", 3), Owned {
 
     /**
      * @dev Emits specified number of tokens. Only owner can emit.
