@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HOTCASH at 0x8c2916ff8b7aafe08a62ed9e0e9d58f4e753ebe0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HOTCASH at 0x9de550274af9c3d4d3e9713f828bd58bd5686b5a
 */
 pragma solidity ^0.4.11;
 
@@ -185,9 +185,9 @@ contract StandardToken is BasicToken, ERC20 {
 contract HOTCASH is StandardToken {
 
     string public name = "HOTCASH";
-    string public symbol = "HCT";
+    string public symbol = "HCH";
     uint public decimals = 2;
-    uint public INITIAL_SUPPLY = 1000000000000; // Initial supply is 10,000,000,000 HCH
+    uint public INITIAL_SUPPLY = 1000000000000000000; // Initial supply is 10,000,000,000 HCH
 
     function HOTCASH() {
         totalSupply = INITIAL_SUPPLY;
