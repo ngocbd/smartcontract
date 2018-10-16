@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Items at 0x37830cc959da69b8cd9f7a15b6c0270df11b9c55
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Items at 0x76531ec44dd24903fd5f2742f71ca96e95ea7d30
 */
 pragma solidity ^0.4.21;
 
@@ -47,59 +47,40 @@ contract Items{
       
       
       // SETUP their data 
-      Market[0].Owner = 0xC84c18A88789dBa5B0cA9C13973435BbcE7e961d;
-      Market[0].Price = 32000000000000000;
-      Market[1].Owner = 0x86b0b5Bb83D18FfdAE6B6E377971Fadf4F9aE6c0;
-      Market[1].Price = 16000000000000000;
-      Market[2].Owner = 0xFEA0904ACc8Df0F3288b6583f60B86c36Ea52AcD;
-      Market[2].Price = 16000000000000000;
-      Market[3].Owner = 0xC84c18A88789dBa5B0cA9C13973435BbcE7e961d;
-      Market[3].Price = 16000000000000000;
-      Market[4].Owner = 0xC84c18A88789dBa5B0cA9C13973435BbcE7e961d;
-      Market[4].Price = 32000000000000000;
-      Market[5].Owner = 0x1Eb695D7575EDa1F2c8a0aA6eDf871B5FC73eA6d;
-      Market[5].Price = 16000000000000000;
-      Market[6].Owner = 0xC84c18A88789dBa5B0cA9C13973435BbcE7e961d;
-      Market[6].Price = 32000000000000000;
-      Market[7].Owner = 0x183feBd8828a9ac6c70C0e27FbF441b93004fC05;
-      Market[7].Price = 16000000000000000;
-      Market[8].Owner = 0x74e5a4cbA4E44E2200844670297a0D5D0abe281F;
-      Market[8].Price = 16000000000000000;
-      Market[9].Owner = 0xC84c18A88789dBa5B0cA9C13973435BbcE7e961d;
-      Market[9].Price = 13320000000000000;
-      Market[10].Owner = 0xc34434842b9dC9CAB4E4727298A166be765B4F32;
+      Market[0].Owner = 0x874c6f81c14f01c0cb9006a98213803cd7af745f;
+      Market[0].Price = 53280000000000000;
+      Market[1].Owner = 0x874c6f81c14f01c0cb9006a98213803cd7af745f;
+      Market[1].Price = 26640000000000000;
+      Market[2].Owner = 0xb080b202b921d0d1fd804d0071615eb09e326aac;
+      Market[2].Price = 854280000000000000;
+      Market[3].Owner = 0x874c6f81c14f01c0cb9006a98213803cd7af745f;
+      Market[3].Price = 26640000000000000;
+      Market[4].Owner = 0xb080b202b921d0d1fd804d0071615eb09e326aac;
+      Market[4].Price = 213120000000000000;
+      Market[5].Owner = 0x874c6f81c14f01c0cb9006a98213803cd7af745f;
+      Market[5].Price = 13320000000000000;
+      Market[6].Owner = 0xd33614943bcaadb857a58ff7c36157f21643df36;
+      Market[6].Price = 26640000000000000;
+      Market[7].Owner = 0x874c6f81c14f01c0cb9006a98213803cd7af745f;
+      Market[7].Price = 53280000000000000;
+      Market[8].Owner = 0xd33614943bcaadb857a58ff7c36157f21643df36;
+      Market[8].Price = 26640000000000000;
+      Market[9].Owner = 0x874c6f81c14f01c0cb9006a98213803cd7af745f;
+      Market[9].Price = 53280000000000000;
+      Market[10].Owner = 0x0960069855bd812717e5a8f63c302b4e43bad89f;
       Market[10].Price = 13320000000000000;
-      Market[11].Owner = 0xDE7002143bFABc4c5b214b00C782608b19312831;
+      Market[11].Owner = 0xd3dead0690e4df17e4de54be642ca967ccf082b8;
       Market[11].Price = 13320000000000000;
-      Market[12].Owner = 0xd33614943bCaaDb857a58fF7c36157F21643dF36;
+      Market[12].Owner = 0xc34434842b9dc9cab4e4727298a166be765b4f32;
       Market[12].Price = 13320000000000000;
-      Market[13].Owner = 0xc34434842b9dC9CAB4E4727298A166be765B4F32;
+      Market[13].Owner = 0xc34434842b9dc9cab4e4727298a166be765b4f32;
       Market[13].Price = 13320000000000000;
-      Market[14].Owner = 0xb03bEF1D9659363a9357aB29a05941491AcCb4eC;
-      Market[14].Price = 26640000000000000;
-      Market[15].Owner = 0x36E058332aE39efaD2315776B9c844E30d07388B;
+      Market[14].Owner = 0x874c6f81c14f01c0cb9006a98213803cd7af745f;
+      Market[14].Price = 53280000000000000;
+      Market[15].Owner = 0xd33614943bcaadb857a58ff7c36157f21643df36;
       Market[15].Price = 26640000000000000;
-      Market[16].Owner = 0xd33614943bCaaDb857a58fF7c36157F21643dF36;
+      Market[16].Owner = 0x3130259deedb3052e24fad9d5e1f490cb8cccaa0;
       Market[16].Price = 13320000000000000;
-      Market[17].Owner = 0x976b7B7E25e70C569915738d58450092bFAD5AF7;
-      Market[17].Price = 26640000000000000;
-      Market[18].Owner = 0xB7619660956C55A974Cb02208D7B723217193528;
-      Market[18].Price = 13320000000000000;
-      Market[19].Owner = 0x36E058332aE39efaD2315776B9c844E30d07388B;
-      Market[19].Price = 26640000000000000;
-      Market[20].Owner = 0x221D8F6B44Da3572Ffa498F0fFC6bD0bc3A84d94;
-      Market[20].Price = 26640000000000000;
-      Market[21].Owner = 0xB7619660956C55A974Cb02208D7B723217193528;
-      Market[21].Price = 13320000000000000;
-      Market[22].Owner = 0x0960069855Bd812717E5A8f63C302B4e43bAD89F;
-      Market[22].Price = 26640000000000000;
-      Market[23].Owner = 0x45F8262F7Ec0D5433c7541309a6729FE96e1d482;
-      Market[23].Price = 13320000000000000;
-      Market[24].Owner = 0xB7619660956C55A974Cb02208D7B723217193528;
-      Market[24].Price = 53280000000000000;
-      Market[25].Owner = 0x36E058332aE39efaD2315776B9c844E30d07388B;
-      Market[25].Price = 53280000000000000;
-      
       // Uncomment to add MORE ITEMS
      // AddMultipleItems(0.006666 ether, 17);
     }
