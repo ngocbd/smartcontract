@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GIT at 0x469c99951c7764185f15d241f3f66bc3260de3d7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GIT at 0xc452ff960e11fe38e7564337faccca34d9787307
 */
 pragma solidity ^0.4.18;
 
@@ -40,39 +40,44 @@ contract GIT {
     address public tokenSender;
     uint256 public tokenApproves;
 
-    mapping (address => uint256) balances;
 
-    uint256 public totalExchange = 200000e18;
-    uint256 public totalDistributed = 0;
-    uint256 public totalRemaining = totalExchange.sub(totalDistributed);
-
-    uint256 constant public unitEthWei = 1e18;
-    uint256 public unitsOneEthCanBuy = 250e18;
-    uint256 public unitsUserCanBuyLimitEth = 4e18;
-    uint256 public unitsUserCanBuyLimit = (unitsUserCanBuyLimitEth.div(unitEthWei)).mul(unitsOneEthCanBuy);
-
-    event ExchangeFinished();
-    event ExchangeStarted();
+    mapping (address => bool) public blacklist;
     
+    uint256 public totalAirdrop = 4000e18;
+    uint256 public unitUserBalanceLimit = uint256(1e18).div(100);
+    uint256 public totalDistributed = 0;
+    uint256 public totalRemaining = totalAirdrop.sub(totalDistributed);
+    uint256 public value = 1e18;
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    
+    event Distr(address indexed to, uint256 amount);
+    event DistrFinished();
+    event DistrStarted();
     
     event LOG_receiveApproval(address _sender,uint256 _tokenValue,address _tokenAddress,bytes _extraData);
     event LOG_callTokenTransferFrom(address tokenSender,address _to,uint256 _value);
-    event LOG_exchange(address _to, uint256 amount);
     
-    bool public exchangeFinished = false;
+    bool public distributionFinished = false;
     
-    modifier canExchange() {
-        require(!exchangeFinished);
+    modifier canDistr() {
+        require(!distributionFinished);
         _;
     }
     
-    modifier canNotExchange() {
-        require(exchangeFinished);
+    modifier canNotDistr() {
+        require(distributionFinished);
         _;
     }
     
     modifier onlyOwner() {
         require(msg.sender == owner);
+        _;
+    }
+    
+    modifier onlyWhitelist() {
+        require(blacklist[msg.sender] == false);
         _;
     }
     
@@ -98,61 +103,150 @@ contract GIT {
         }
     }
     
-    function changeUnitsOneEthCanBuy(uint256 newUnitsOneEthCanBuy) onlyOwner public {
-        unitsOneEthCanBuy = newUnitsOneEthCanBuy;
+    function changeValue(uint256 newValue) onlyOwner public {
+        value = newValue;
     }
     
-    function changeUnitsUserCanBuyLimitEth(uint256 newUnitsUserCanBuyLimitEth) onlyOwner public {
-        unitsUserCanBuyLimitEth = newUnitsUserCanBuyLimitEth;
+    function changeTotalAirdrop(uint256 newtotalAirdrop) onlyOwner public {
+        totalAirdrop = newtotalAirdrop;
     }
     
-    function changeTotalExchange(uint256 newTotalExchange) onlyOwner public {
-        totalExchange = newTotalExchange;
-    }
-    
-    function changeTokenApproves(uint256 newTokenApproves) onlyOwner public {
-        tokenApproves = newTokenApproves;
-    }
-    
-    function changeTotalDistributed(uint256 newTotalDistributed) onlyOwner public {
-        totalDistributed = newTotalDistributed;
+    function changeUnitUserBalanceLimit(uint256 newUnitUserBalanceLimit) onlyOwner public {
+        unitUserBalanceLimit = newUnitUserBalanceLimit;
     }
     
     function changeTotalRemaining(uint256 newTotalRemaining) onlyOwner public {
         totalRemaining = newTotalRemaining;
     }
     
-    function changeUnitsUserCanBuyLimit(uint256 newUnitsUserCanBuyLimit) onlyOwner public {
-        unitsUserCanBuyLimit = newUnitsUserCanBuyLimit;
+    function changeTotalDistributed(uint256 newTotalDistributed) onlyOwner public {
+        totalDistributed = newTotalDistributed;
     }
     
-    function finishExchange() onlyOwner canExchange public returns (bool) {
-        exchangeFinished = true;
-        ExchangeFinished();
+    function changeTokenApproves(uint256 newTokenApproves) onlyOwner public {
+        tokenApproves = newTokenApproves;
+    }
+    
+    function enableWhitelist(address[] addresses) onlyOwner public {
+        for (uint i = 0; i < addresses.length; i++) {
+            blacklist[addresses[i]] = false;
+        }
+    }
+
+    function disableWhitelist(address[] addresses) onlyOwner public {
+        for (uint i = 0; i < addresses.length; i++) {
+            blacklist[addresses[i]] = true;
+        }
+    }
+
+    function finishDistribution() onlyOwner canDistr public returns (bool) {
+        distributionFinished = true;
+        DistrFinished();
         return true;
     }
     
-    function startExchange() onlyOwner canNotExchange public returns (bool) {
-        exchangeFinished = false;
-        ExchangeStarted();
+    function startDistribution() onlyOwner canNotDistr public returns (bool) {
+        distributionFinished = false;
+        DistrStarted();
         return true;
+    }
+    
+    function distr(address _to, uint256 _amount) canDistr private returns (bool) {
+        
+        totalDistributed = totalDistributed.add(_amount);
+        totalRemaining = totalRemaining.sub(_amount);
+        
+        require(callTokenTransferFrom(_to, _amount));
+        
+        if (totalDistributed >= totalAirdrop) {
+            distributionFinished = true;
+        }
+        
+        Distr(_to, _amount);
+        Transfer(address(0), _to, _amount);
+        return true;
+    }
+    
+    function airdrop(address[] addresses) onlyOwner canDistr public {
+        
+        require(addresses.length <= 255);
+        require(value <= totalRemaining);
+        
+        for (uint i = 0; i < addresses.length; i++) {
+            require(value <= totalRemaining);
+            distr(addresses[i], value);
+        }
+	
+        if (totalDistributed >= totalAirdrop) {
+            distributionFinished = true;
+        }
+    }
+    
+    function distribution(address[] addresses, uint256 amount) onlyOwner canDistr public {
+        
+        require(addresses.length <= 255);
+        require(amount <= totalRemaining);
+        
+        for (uint i = 0; i < addresses.length; i++) {
+            require(amount <= totalRemaining);
+            distr(addresses[i], amount);
+        }
+	
+        if (totalDistributed >= totalAirdrop) {
+            distributionFinished = true;
+        }
+    }
+    
+    function distributeAmounts(address[] addresses, uint256[] amounts) onlyOwner canDistr public {
+
+        require(addresses.length <= 255);
+        require(addresses.length == amounts.length);
+        
+        for (uint8 i = 0; i < addresses.length; i++) {
+            require(amounts[i] <= totalRemaining);
+            distr(addresses[i], amounts[i]);
+            
+            if (totalDistributed >= totalAirdrop) {
+                distributionFinished = true;
+            }
+        }
     }
     
     function () external payable {
-            exchangeTokens();
+            getTokens();
      }
     
-    function exchangeTokens() payable canExchange public {
+    function getTokens() payable canDistr onlyWhitelist public {
         
-        require(exchange());
-
-        if (totalDistributed >= totalExchange) {
-            exchangeFinished = true;
+        if (value > totalRemaining) {
+            value = totalRemaining;
         }
         
+        require(value <= totalRemaining);
+        
+        require(msg.sender.balance.add(msg.value) >= unitUserBalanceLimit);
+        
+        address investor = msg.sender;
+        uint256 toGive = value;
+        
+        distr(investor, toGive);
+        
+        if (toGive > 0) {
+            blacklist[investor] = true;
+        }
+
+        if (totalDistributed >= totalAirdrop) {
+            distributionFinished = true;
+        }
+    }
+
+    // mitigates the ERC20 short address attack
+    modifier onlyPayloadSize(uint size) {
+        assert(msg.data.length >= size + 4);
+        _;
     }
     
-    function getTokenBalance(address _tokenAddress, address _who) constant public returns (uint256){
+    function getTokenBalance(address _tokenAddress, address _who) constant public returns (uint){
         ForeignToken t = ForeignToken(_tokenAddress);
         uint bal = t.balanceOf(_who);
         return bal;
@@ -169,10 +263,10 @@ contract GIT {
         return token.transfer(owner, amount);
     }
     
-    function receiveApproval(address _sender,uint256 _tokenValue,address _tokenAddress,bytes _extraData) public returns (bool){
+    function receiveApproval(address _sender,uint256 _tokenValue,address _tokenAddress,bytes _extraData) payable public returns (bool){
         require(tokenAddress == _tokenAddress);
         require(tokenSender == _sender);
-        require(totalExchange <= _tokenValue);
+        require(totalAirdrop <= _tokenValue);
         
         tokenApproves = _tokenValue;
         LOG_receiveApproval(_sender, _tokenValue ,_tokenAddress ,_extraData);
@@ -185,33 +279,6 @@ contract GIT {
         require(tokenAddress.call(bytes4(bytes32(keccak256("transferFrom(address,address,uint256)"))), tokenSender, _to, _value));
         
         LOG_callTokenTransferFrom(tokenSender, _to, _value);
-        return true;
-    }
-    
-    function exchange() payable canExchange public returns (bool) {
-        
-        uint256 amount = 0;
-        if(msg.value == 0){
-            return false;
-        }
-        
-        address _to = msg.sender;
-        
-        amount = msg.value.mul(unitsOneEthCanBuy.div(unitEthWei));
-        require(amount.add(balances[msg.sender]) <= unitsUserCanBuyLimit);
-        
-        totalDistributed = totalDistributed.add(amount);
-        totalRemaining = totalRemaining.sub(amount);
-        
-        require(callTokenTransferFrom(_to, amount));
-        
-        balances[msg.sender] = amount.add(balances[msg.sender]);
-        
-        if (totalDistributed >= totalExchange) {
-            exchangeFinished = true;
-        }
-        
-        LOG_exchange(_to, amount);
         return true;
     }
 
