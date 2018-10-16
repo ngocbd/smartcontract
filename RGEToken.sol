@@ -1,8 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RGEToken at 0x72a2384d0920b6c46f97ebe4c23c092acce485ac
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RGEToken at 0x96cd136f1afb1f8934e6cb6495eaf24140f70325
 */
-pragma solidity ^0.4.21;
-
 contract EIP20Interface {
     /* This is a slight change to the ERC20 base standard.
     function totalSupply() constant returns (uint256 supply);
@@ -49,18 +47,28 @@ contract EIP20Interface {
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
+
 contract EIP20 is EIP20Interface {
 
     uint256 constant private MAX_UINT256 = 2**256 - 1;
     mapping (address => uint256) public balances;
     mapping (address => mapping (address => uint256)) public allowed;
-    
-    
-    string public name;                   
-    uint8 public decimals;                
-    string public symbol;                 
+    /*
+    NOTE:
+    The following variables are OPTIONAL vanities. One does not have to include them.
+    They allow one to customise the token contract & in no way influences the core functionality.
+    Some wallets/interfaces might not even bother to look at this information.
+    */
+    string public name;                   //fancy name: eg Simon Bucks
+    uint8 public decimals;                //How many decimals to show.
+    string public symbol;                 //An identifier: eg SBX
 
-    function EIP20(uint256 _initialAmount, string _tokenName, uint8 _decimalUnits, string _tokenSymbol) public {
+    function EIP20(
+        uint256 _initialAmount,
+        string _tokenName,
+        uint8 _decimalUnits,
+        string _tokenSymbol
+    ) public {
         balances[msg.sender] = _initialAmount;               // Give the creator all initial tokens
         totalSupply = _initialAmount;                        // Update total supply
         name = _tokenName;                                   // Set the name for display purposes
@@ -107,32 +115,37 @@ contract RGEToken is EIP20 {
     /* ERC20 */
     string public name = 'Rouge';
     string public symbol = 'RGE';
-    uint8 public decimals = 8;
+    uint8 public decimals = 6;
     
     /* RGEToken */
     address owner; 
     address public crowdsale;
     uint public endTGE;
-    string public version = 'v0.2';
+    string public version = 'v1';
     uint256 public totalSupply = 1000000000 * 10**uint(decimals);
     uint256 public   reserveY1 =  300000000 * 10**uint(decimals);
     uint256 public   reserveY2 =  200000000 * 10**uint(decimals);
 
-    modifier onlyBy(address _account) {
-        require(msg.sender == _account);
+    modifier onlyBy(address _address) {
+        require(msg.sender == _address);
         _;
     }
     
-    constructor() EIP20 (totalSupply, name, decimals, symbol) public {
+    constructor(uint _endTGE) EIP20 (totalSupply, name, decimals, symbol) public {
         owner = msg.sender;
+        endTGE = _endTGE;
         crowdsale = address(0);
+        balances[owner] = 0;
+        balances[crowdsale] = totalSupply;
     }
     
     function startCrowdsaleY0(address _crowdsale) onlyBy(owner) public {
         require(_crowdsale != address(0));
         require(crowdsale == address(0));
+        require(now < endTGE);
         crowdsale = _crowdsale;
         balances[crowdsale] = totalSupply - reserveY1 - reserveY2;
+        balances[address(0)] -= balances[crowdsale];
         emit Transfer(address(0), crowdsale, balances[crowdsale]);
     }
 
@@ -140,8 +153,10 @@ contract RGEToken is EIP20 {
         require(_crowdsale != address(0));
         require(crowdsale == address(0));
         require(reserveY1 > 0);
+        require(now >= endTGE + 31536000); /* Y+1 crowdsale can only start after a year */
         crowdsale = _crowdsale;
         balances[crowdsale] = reserveY1;
+        balances[address(0)] -= reserveY1;
         emit Transfer(address(0), crowdsale, reserveY1);
         reserveY1 = 0;
     }
@@ -150,8 +165,10 @@ contract RGEToken is EIP20 {
         require(_crowdsale != address(0));
         require(crowdsale == address(0));
         require(reserveY2 > 0);
+        require(now >= endTGE + 63072000); /* Y+2 crowdsale can only start after 2 years */
         crowdsale = _crowdsale;
         balances[crowdsale] = reserveY2;
+        balances[address(0)] -= reserveY2;
         emit Transfer(address(0), crowdsale, reserveY2);
         reserveY2 = 0;
     }
@@ -162,8 +179,22 @@ contract RGEToken is EIP20 {
         require(now > endTGE);
         reserveY2 += balances[crowdsale];
         emit Transfer(crowdsale, address(0), balances[crowdsale]);
+        balances[address(0)] += balances[crowdsale];
         balances[crowdsale] = 0;
         crowdsale = address(0);
+    }
+
+    /* coupon campaign factory */
+
+    address public factory;
+
+    function setFactory(address _factory) onlyBy(owner) public {
+        factory = _factory;
+    }
+
+    function newCampaign(uint32 _issuance, uint256 _value) public {
+        transfer(factory,_value);
+        require(factory.call(bytes4(keccak256("createCampaign(address,uint32,uint256)")),msg.sender,_issuance,_value));
     }
 
     event Burn(address indexed burner, uint256 value);
