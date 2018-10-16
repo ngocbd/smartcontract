@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PonderAirdropToken at 0x97a64e9e7a2d4a2c3e810c41d8842d673d32537e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PonderAirdropToken at 0x88e7029a16443ef0491c5f46042d34d0c56e691f
 */
 pragma solidity ^0.4.21;
 /*
@@ -307,12 +307,7 @@ contract PonderAirdropToken is AbstractToken {
    * Address of the owner of this smart contract.
    */
   mapping (address => bool) private owners;
-  
-  /**
-   * Address of the account which holds the supply
-   */
-  address private supplyOwner;
-  
+
   /**
    * True if tokens transfers are currently frozen, false otherwise.
    */
@@ -324,11 +319,10 @@ contract PonderAirdropToken is AbstractToken {
    * contract.
    */
   function PonderAirdropToken () public {
-    supplyOwner = msg.sender;
-    owners[supplyOwner] = true;
-    accounts [supplyOwner] = totalSupply();
-    hasAccount [supplyOwner] = true;
-    accountList.push(supplyOwner);
+    owners[msg.sender] = true;
+    accounts [msg.sender] = totalSupply();
+    hasAccount [msg.sender] = true;
+    accountList.push(msg.sender);
   }
 
   /**
@@ -447,15 +441,15 @@ contract PonderAirdropToken is AbstractToken {
           }else{
             amountToSub = safeSub(accounts[_to[i]], _value[i]);
           }
-          accounts [supplyOwner] = safeAdd (accounts [supplyOwner], amountToSub);
-          accounts [supplyOwner] = safeSub (accounts [supplyOwner], amountToAdd);
+          accounts [msg.sender] = safeAdd (accounts [msg.sender], amountToSub);
+          accounts [msg.sender] = safeSub (accounts [msg.sender], amountToAdd);
           if (!hasAccount[_to[i]]) {
               hasAccount[_to[i]] = true;
               accountList.push(_to[i]);
           }
           accounts [_to[i]] = _value[i];
           if (amountToAdd > 0){
-            emit Transfer (supplyOwner, _to[i], amountToAdd);
+            emit Transfer (msg.sender, _to[i], amountToAdd);
           }
       }
   }
