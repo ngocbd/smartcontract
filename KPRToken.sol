@@ -1,50 +1,97 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KPRToken at 0xb5c33f965c8899d255c34cdd2a3efa8abcbb3dea
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KPRToken at 0xbfba5d637ccb3015ee97cbb27128dc4bebe2bd46
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.23;
 
-contract ERC20Basic
-{
-    uint256 public totalSupply;
-    function balanceOf(address who) public constant returns(uint256);
-    function transfer(address to,uint256 value) public returns(bool);
-    event Transfer(address indexedfrom,address indexedto,uint256 value);
+contract ERC223 {
+  uint public totalSupply;
+  function balanceOf(address who) public view returns (uint);
+
+  function transfer(address to, uint value) public returns (bool ok);
+  function transfer(address to, uint value, bytes data) public returns (bool ok);
+  function transfer(address to, uint value, bytes data, string custom_fallback) public returns (bool ok);
+
+  // event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
+  event Transfer(address indexed from, address indexed to, uint value);
 }
-contract IERC20 is ERC20Basic
-{
-    function allowance(address owner,address spender) public constant returns(uint256);
-    function transferFrom(address from,address to,uint256 value) public returns(bool);
-    function approve(address spender,uint256 value) public returns(bool);
-    event Approval(address indexedowner,address indexedspender,uint256 value);
+contract ContractReceiver {
+ 
+    struct TKN {
+        address sender;
+        uint value;
+        bytes data;
+        bytes4 sig;
+    }
+
+
+    function tokenFallback(address _from, uint _value, bytes _data) public pure {
+      TKN memory tkn;
+      tkn.sender = _from;
+      tkn.value = _value;
+      tkn.data = _data;
+      uint32 u = uint32(_data[3]) + (uint32(_data[2]) << 8) + (uint32(_data[1]) << 16) + (uint32(_data[0]) << 24);
+      tkn.sig = bytes4(u);
+      
+      /* tkn variable is analogue of msg variable of Ether transaction
+      *  tkn.sender is person who initiated this token transaction   (analogue of msg.sender)
+      *  tkn.value the number of tokens that were sent   (analogue of msg.value)
+      *  tkn.data is data of token transaction   (analogue of msg.data)
+      *  tkn.sig is 4 bytes signature of function
+      *  if data of token transaction is a function execution
+      */
+    }
 }
+
 
 library SafeMath {
-    function mul(uint256 a, uint256 b) internal constant returns (uint256){
-        uint256 c=a*b;
-        assert(a==0||c/a==b);
-        return c;
+  function mul(uint a, uint b) internal returns (uint) {
+    uint c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint a, uint b) internal returns (uint) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint a, uint b) internal returns (uint) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint a, uint b) internal returns (uint) {
+    uint c = a + b;
+    assert(c >= a);
+    return c;
+  }
+
+  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a >= b ? a : b;
+  }
+
+  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a < b ? a : b;
+  }
+
+  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a >= b ? a : b;
+  }
+
+  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a < b ? a : b;
+  }
+
+  function assert(bool assertion) internal {
+    if (!assertion) {
+      throw;
     }
-    function div(uint256 a,uint256 b) internal constant returns(uint256)
-    {
-        //assert(b>0);//Solidityautomaticallythrowswhendividingby0
-        uint256 c=a/b;
-        //assert(a==b*c+a%b);//Thereisnocaseinwhichthisdoesn'thold
-        return c;
-    }
-    function sub(uint256 a,uint256 b) internal constant returns(uint256)
-    {
-        assert(b<=a);
-        return a-b;
-    }
-    function add(uint256 a,uint256 b) internal constant returns(uint256)
-    {
-        uint256 c=a+b;
-        assert(c>=a);
-        return c;
-    }
+  }
 }
 
-contract KPRToken is IERC20 {
+contract KPRToken is ERC223 {
     
     using SafeMath for uint256;
     
@@ -56,12 +103,12 @@ contract KPRToken is IERC20 {
     uint8 public constant decimals=18;
 
     //1 ETH = 2,500 KPR
-    uint56 public  RATE = 2500;
+    uint256 public  buyPrice = 2500;
 
     //totalsupplyoftoken 
     uint public totalSupply = 100000000 * 10 ** uint(decimals);
     
-    uint public buyabletoken = 90000000 * 10 ** uint(decimals);
+    uint public buyabletoken = 70000000 * 10 ** uint(decimals);
     //where the ETH goes 
     address public owner;
     
@@ -69,61 +116,59 @@ contract KPRToken is IERC20 {
     mapping(address => uint256) balances;
     mapping(address => mapping(address => uint256)) allowed;
     // 1514764800 : Jan 1 2018
-    uint phase1starttime = 1517443200; // Phase 1 Start Date Feb 1 2018
-    uint phase1endtime = 1519257600;  // Phase 1 End Date Feb 22 2018
-    uint phase2starttime = 1519862400;  // Phase 2 Start Date March 1 2018
-    uint phase2endtime = 1521676800; // Phase 2 End Date March 22 2018
-    uint phase3starttime = 1522540800;  // Phase 3 Start Date May 1 2018
-    uint phase3endtime = 1524355200; // Phase 3 End Date May 22 2018
+    uint256 phase1starttime = 1525132800; // Phase 1 Start Date May 1 2018
+    uint256 phase1endtime = 1527033540;  // Phase 1 End Date May 22 2018
+    uint256 phase2starttime = 1527811200;  // Phase 2 Start Date June 1 2018
+    uint256 phase2endtime = 1529711940; // Phase 2 End Date June 22 2018
     
-  
     //create token function = check
 
-    function() payable {
-        buyTokens();
+    function() payable{
+        require(msg.value > 0);
+        require(buyabletoken > 0);
+        require(now >= phase1starttime && now <= phase2endtime);
+        
+        if (now > phase1starttime && now < phase1endtime){
+            buyPrice = 3000;
+        } else if(now > phase2starttime && now < phase2endtime){
+            buyPrice = 2000;
+        }
+        
+        uint256 amount = msg.value.mul(buyPrice); 
+        
+        balances[msg.sender] = balances[msg.sender].add(amount);
+        
+        balances[owner] = balances[owner].sub(amount);
+        
+        buyabletoken = buyabletoken.sub(amount);
+        owner.transfer(msg.value);
     }
 
     function KPRToken() {
         owner = msg.sender;
         balances[owner] = totalSupply;
     }
+    
+      event Burn(address indexed burner, uint256 value);
 
-    function buyTokens() payable {
-        
-        require(msg.value > 0);
-        require(now > phase1starttime && now < phase3endtime);
-        uint256 tokens;
+      /**
+       * @dev Burns a specific amount of tokens.
+       * @param _value The amount of token to be burned.
+       */
+      function burn(uint256 _value) public {
+        _burn(msg.sender, _value);
+      }
+
+      function _burn(address _who, uint256 _value) internal {
+        require(_value <= balances[_who]);
+        // no need to require value <= totalSupply, since that would imply the
+        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
     
-        if (now > phase1starttime && now < phase1endtime){
-            
-            RATE = 3000;
-            setPrice(msg.sender, msg.value);
-        } else if(now > phase2starttime && now < phase2endtime){
-            RATE = 2000;
-            setPrice(msg.sender, msg.value);
-            // tokens = msg.value.mul(RATE);
-            // require(tokens < buyabletoken);
-            // balances[msg.sender]=balances[msg.sender].add(tokens);
-            // balances[owner] = balances[owner].sub(tokens);
-            // buyabletoken = buyabletoken.sub(tokens);
-            // owner.transfer(msg.value);
-            
-        } else if(now > phase3starttime && now < phase3endtime){
-            
-            RATE = 1000;
-            setPrice(msg.sender, msg.value);
-        }
-    }
-    
-    function setPrice(address receipt, uint256 value){
-        uint256 tokens;
-        tokens = value.mul(RATE);
-        require(tokens < buyabletoken);
-        balances[receipt]=balances[receipt].add(tokens);
-        balances[owner] = balances[owner].sub(tokens);
-        buyabletoken = buyabletoken.sub(tokens);
-        owner.transfer(value);
-    }
+        balances[_who] = balances[_who].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        emit Burn(_who, _value);
+        emit Transfer(_who, address(0), _value);
+      }
 
     function balanceOf(address _owner) constant returns(uint256 balance) {
         
@@ -131,43 +176,77 @@ contract KPRToken is IERC20 {
         
     }
 
-    function transfer(address _to, uint256 _value) returns(bool success) {
+
+    // Function that is called when a user or another contract wants to transfer funds .
+    function transfer(address _to, uint _value, bytes _data, string _custom_fallback) public returns (bool success) {
         
-        //require is the same as an if statement = checks 
-        require(balances[msg.sender] >= _value && _value > 0 );
+        if (isContract(_to)) {
+            if (balanceOf(msg.sender) < _value)
+                revert();
+            balances[msg.sender] = balanceOf(msg.sender).sub(_value);
+            balances[_to] = balanceOf(_to).add(_value);
+            assert(_to.call.value(0)(bytes4(keccak256(_custom_fallback)), msg.sender, _value, _data));
+            Transfer(msg.sender, _to, _value);
+            return true;
+        } else {
+            return transferToAddress(_to, _value, _data);
+        }
+    }
+    
+    // Function that is called when a user or another contract wants to transfer funds .
+    function transfer(address _to, uint _value, bytes _data) public returns (bool success) {
         
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
+        if (isContract(_to)) {
+            return transferToContract(_to, _value, _data);
+        } else {
+            return transferToAddress(_to, _value, _data);
+        }
+    }
+    
+    // Standard function transfer similar to ERC20 transfer with no _data .
+    // Added due to backwards compatibility reasons .
+    function transfer(address _to, uint _value) public returns (bool success) {
         
+        //standard function transfer similar to ERC20 transfer with no _data
+        //added due to backwards compatibility reasons
+        bytes memory empty;
+        if (isContract(_to)) {
+            return transferToContract(_to, _value, empty);
+        } else {
+            return transferToAddress(_to, _value, empty);
+        }
+    }
+
+    //assemble the given address bytecode. If bytecode exists then the _addr is a contract.
+    function isContract(address _addr) private view returns (bool is_contract) {
+        uint length;
+        assembly {
+                //retrieve the size of the code on target address, this needs assembly
+                length := extcodesize(_addr)
+        }
+        return (length>0);
+    }
+
+    //function that is called when transaction target is an address
+    function transferToAddress(address _to, uint _value, bytes _data) private returns (bool success) {
+        if (balanceOf(msg.sender) < _value)
+            revert();
+        balances[msg.sender] = balanceOf(msg.sender).sub(_value);
+        balances[_to] = balanceOf(_to).add(_value);
         Transfer(msg.sender, _to, _value);
         return true;
     }
-
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        
-        //checking if the spender has permission to spend and how much 
-        require( allowed[_from][msg.sender] >= _value && balances[_from] >= _value && _value > 0);
-        
-        //updating the spenders balance 
-        balances[_from] = balances[_from].sub(_value); 
-        balances[_to] = balances[_to].add(_value); 
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value); 
-        Transfer(_from, _to, _value); 
+    
+    //function that is called when transaction target is a contract
+    function transferToContract(address _to, uint _value, bytes _data) private returns (bool success) {
+        if (balanceOf(msg.sender) < _value)
+            revert();
+        balances[msg.sender] = balanceOf(msg.sender).sub(_value);
+        balances[_to] = balanceOf(_to).add(_value);
+        ContractReceiver receiver = ContractReceiver(_to);
+        receiver.tokenFallback(msg.sender, _value, _data);
+        Transfer(msg.sender, _to, _value);
         return true;
-    }
-
-    function approve(address _spender, uint256 _value) returns(bool success) {
-        
-        //if above require is true,approve the spending 
-        allowed[msg.sender][_spender] = _value; 
-        Approval(msg.sender, _spender, _value); 
-        return true;
-    }
-
-    function allowance(address _owner, address _spender) constant returns(uint256 remaining) {
-        
-        return allowed[_owner][_spender];
-        
     }
     
     event Transfer(address indexed_from, address indexed_to, uint256 _value);
