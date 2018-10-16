@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ArnaToken at 0x05d3f719b45866da98059436a4baa33596bf2ad0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ArnaToken at 0xb621ec91c7ca5dcfc34448c4e1728c4a06876a38
 */
 pragma solidity ^0.4.18;
 
@@ -66,7 +66,7 @@ contract ArnaCrowdsale is Ownable {
 
     function priceWithBonus() public constant returns (uint256);
 
-    function sendTokens(address beneficiary, uint256 amount) public ;
+    function sendTokens(address beneficiary, uint256 amount) public;
 
     function tokensToSale() public view returns (uint256);
 
@@ -221,12 +221,10 @@ contract ArnaToken is BurnableToken {
 
     uint256 public constant INITIAL_SUPPLY = 1000000000 * (10 ** uint256(decimals));
 
-
-    function ArnaToken() public {
+    function init() public onlyOwner {
+        assert(totalSupply == 0);
         totalSupply = INITIAL_SUPPLY;
         balances[msg.sender] = INITIAL_SUPPLY;
     }
-
-
 
 }
