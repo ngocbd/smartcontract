@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ELTToken at 0x9da47a2b34f9707bc931fa31f0003a149f4aa92e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ELTToken at 0x45d0bdfdfbfd62e14b64b0ea67dc6eac75f95d4d
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.22;
 
 // ----------------------------------------------------------------------------
 // ERC Token Standard #20 Interface
@@ -9,12 +9,11 @@ pragma solidity ^0.4.21;
 // ----------------------------------------------------------------------------
 contract ERC20Interface {
     function balanceOf(address tokenOwner) public constant returns (uint balance);
-    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+    function allowance(address _owner, address _spender) public constant returns (uint remaining);
     function transfer(address to, uint tokens) public returns (bool success);
     function approve(address spender, uint tokens) public returns (bool success);
     function transferFrom(address from, address to, uint256 _value) public returns (bool);
 
-    event Transfer(address indexed from, address indexed to, uint tokens);
     event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
 }
 // ----------------------------------------------------------------------------
@@ -23,25 +22,29 @@ contract ERC20Interface {
 // ----------------------------------------------------------------------------
 contract ERC223Interface {
     uint public totalSupply;
-    function balanceOf(address who) constant public returns (uint);
     function transfer(address to, uint value, bytes data) public returns (bool success);
     event Transfer(address indexed from, address indexed to, uint value, bytes data);
 }
-contract ELTTokenType {
-    uint public decimals;
-    uint public totalSupply;
+/**
+ * @title Owned
+ * @dev To verify ownership
+ */
+contract owned {
+    address public owner;
 
-    mapping(address => uint) balances;
+    function  owned() public {
+        owner = msg.sender;
+    }
 
-    mapping(address => uint) timevault;
-    mapping(address => mapping(address => uint)) allowed;
-    
-    // Token release switch
-    bool public released;
-    
-    // The date before the release must be finalized or upgrade path will be forced
-    uint public releaseFinalizationDate;
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+
 }
+/**
+ * As part of the ERC223 standard we need to call the fallback of the token
+ */
 contract ContractReceiver {
     struct TKN {
         address sender;
@@ -65,26 +68,6 @@ contract ContractReceiver {
         *  tkn.sig is 4 bytes signature of function
         *  if data of token transaction is a function execution
         */
-    }
-}
-/**
- * @title Owned
- * @dev To verify ownership
- */
-contract owned {
-    address public owner;
-
-    function owned() public {
-        owner = msg.sender;
-    }
-
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
-
-    function transferOwnership(address newOwner) onlyOwner public {
-        owner = newOwner;
     }
 }
 /**
@@ -117,6 +100,32 @@ library SafeMath {
         return c;
     }
 }
+contract TimeVaultInterface is ERC20Interface, ERC223Interface {
+    function timeVault(address who) public constant returns (uint);
+    function getNow() public constant returns (uint);
+    function transferByOwner(address to, uint _value, uint timevault) public returns (bool);
+}
+/**
+ * All meta information for the Token must be defined here so that it can be accessed from both sides of proxy
+ */
+contract ELTTokenType {
+    uint public decimals;
+    uint public totalSupply;
+
+    mapping(address => uint) balances;
+
+    mapping(address => uint) timevault;
+    mapping(address => mapping(address => uint)) allowed;
+
+    // Token release switch
+    bool public released;
+
+    // The date before the release must be finalized (a unix timestamp)
+    uint public globalTimeVault;
+
+    event Transfer(address indexed from, address indexed to, uint tokens);
+}
+
 contract ERC20Token is ERC20Interface, ERC223Interface, ELTTokenType {
     using SafeMath for uint;
 
@@ -135,7 +144,7 @@ contract ERC20Token is ERC20Interface, ERC223Interface, ELTTokenType {
             return transferToAddress(_to, _value, _data, false);
         }
     }
-    
+
     /**
      * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
      *
@@ -156,7 +165,6 @@ contract ERC20Token is ERC20Interface, ERC223Interface, ELTTokenType {
         return allowed[_owner][_spender];
     }
 
-
     /**
     * @dev Gets the balance of the specified address.
     * @param _owner The address to query the the balance of.
@@ -175,7 +183,7 @@ contract ERC20Token is ERC20Interface, ERC223Interface, ELTTokenType {
         }
         return (length > 0);
     }
-    
+
 
     //function that is called when transaction target is an address
     function transferToAddress(address _to, uint _value, bytes _data, bool withAllowance) private returns (bool success) {
@@ -183,7 +191,7 @@ contract ERC20Token is ERC20Interface, ERC223Interface, ELTTokenType {
         emit Transfer(msg.sender, _to, _value, _data);
         return true;
     }
-    
+
     //function that is called when transaction target is a contract
     function transferToContract(address _to, uint _value, bytes _data, bool withAllowance) private returns (bool success) {
         transferIfRequirementsMet(msg.sender, _to, _value, withAllowance);
@@ -193,19 +201,24 @@ contract ERC20Token is ERC20Interface, ERC223Interface, ELTTokenType {
         return true;
     }
 
-    function checkTransferRequirements(address _from, address _to, uint _value) private view {
+    // Function to verify that all the requirements to transfer are satisfied
+    // The destination is not the null address
+    // The tokens have been released for sale
+    // The sender's tokens are not locked in a timevault
+    function checkTransferRequirements(address _to, uint _value) private view {
         require(_to != address(0));
         require(released == true);
-        require(now > releaseFinalizationDate);
+        require(now > globalTimeVault);
         if (timevault[msg.sender] != 0)
         {
             require(now > timevault[msg.sender]);
         }
-        if (balanceOf(_from) < _value) revert();
+        require(balanceOf(msg.sender) >= _value);
     }
 
+    // Do the transfer if the requirements are met
     function transferIfRequirementsMet(address _from, address _to, uint _value, bool withAllowances) private {
-        checkTransferRequirements(_from, _to, _value);
+        checkTransferRequirements(_to, _value);
         if ( withAllowances)
         {
             require (_value <= allowed[_from][msg.sender]);
@@ -213,7 +226,8 @@ contract ERC20Token is ERC20Interface, ERC223Interface, ELTTokenType {
         balances[_from] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
     }
-    
+
+    // Transfer from one address to another taking into account ERC223 condition to verify that the to address is a contract or not
     function transferFrom(address from, address to, uint value) public returns (bool) {
         bytes memory empty;
         if (isContract(to)) {
@@ -224,14 +238,10 @@ contract ERC20Token is ERC20Interface, ERC223Interface, ELTTokenType {
         }
         allowed[from][msg.sender] = allowed[from][msg.sender].sub(value);
         return true;
-      }
+    }
 }
-contract TimeVaultInterface is ERC20Interface, ERC223Interface {
-    function timeVault(address who) public constant returns (uint);
-    function getNow() public constant returns (uint);
-    function transferByOwner(address to, uint _value, uint timevault) public returns (bool);
-}
-contract TimeVaultToken is owned, ERC20Token, TimeVaultInterface {
+contract TimeVaultToken is  owned, TimeVaultInterface, ERC20Token {
+
     function transferByOwner(address to, uint value, uint earliestReTransferTime) onlyOwner public returns (bool) {
         transfer(to, value);
         timevault[to] = earliestReTransferTime;
@@ -273,23 +283,63 @@ contract StandardToken is TimeVaultToken {
 
 }
 contract StandardTokenExt is StandardToken {
-    
+
     /* Interface declaration */
     function isToken() public pure returns (bool weAre) {
         return true;
     }
 }
+contract OwnershipTransferrable is TimeVaultToken {
+
+    event OwnershipTransferred(address indexed _from, address indexed _to);
+
+
+    function transferOwnership(address newOwner) onlyOwner public {
+        transferByOwner(newOwner, balanceOf(newOwner), 0);
+        owner = newOwner;
+        emit OwnershipTransferred(msg.sender, newOwner);
+    }
+
+}
 contract VersionedToken is owned {
     address public upgradableContractAddress;
 
-    function VersionedToken(address initialVersion) public {
-        upgradableContractAddress = initialVersion;
+    /**
+     * Constructor:
+     *  initialVersion - the address of the initial version of the implementation for the contract
+     *
+     * Note that this implementation must be visible to the relay contact even though it will not be a subclass
+     * do this by importing the main contract that implements it.  If the code is not visible it will not
+     * always be accessible through the delegatecall() function.  And even if it is, it will take an unlimited amount
+     * of gas to process the call.
+     *
+     * In our case this it is ELTTokenImpl.sol
+     * e.g.
+     *    import "ELTToken.sol"
+     *
+     * Please note: IMPORTANT
+     * do not implement any function called "update()" otherwise it will break the Versioning system
+     */
+    function VersionedToken(address initialImplementation) public {
+        upgradableContractAddress = initialImplementation;
     }
 
-    function update(address newVersion) onlyOwner public {
-        upgradableContractAddress = newVersion;
+    /**
+     * update
+     * Call to upgrade the implementation version of this constract
+     *  newVersion: this is the address of the new implementation for the contract
+     */
+
+    function upgradeToken(address newImplementation) onlyOwner public {
+        upgradableContractAddress = newImplementation;
     }
 
+    /**
+     * This is the fallback function that is called whenever a contract is called but can't find the called function.
+     * In this case we delegate the call to the implementing contract ELTTokenImpl
+     *
+     * Instead of using delegatecall() in Solidity we use the assembly because it allows us to return values to the caller
+     */
     function() public {
         address upgradableContractMem = upgradableContractAddress;
         bytes memory functionCall = msg.data;
@@ -323,18 +373,18 @@ contract VersionedToken is owned {
 contract ELTToken is VersionedToken, ELTTokenType {
     string public name;
     string public symbol;
-    
-    function ELTToken(address _owner, string _name, string _symbol, uint _totalSupply, uint _decimals, uint _releaseFinalizationDate, address _initialVersion) VersionedToken(_initialVersion) public {
-        name = _name;
-        symbol = _symbol;
-        totalSupply = _totalSupply;
+
+    function ELTToken(address _tokenOwner, string _tokenName, string _tokenSymbol, uint _totalSupply, uint _decimals, uint _globalTimeVaultOpeningTime, address _initialImplementation) VersionedToken(_initialImplementation)  public {
+        name = _tokenName;
+        symbol = _tokenSymbol;
         decimals = _decimals;
-
+        totalSupply = _totalSupply * 10 ** uint(decimals);
         // Allocate initial balance to the owner
-        balances[_owner] = _totalSupply;
-
-        releaseFinalizationDate = _releaseFinalizationDate;
+        balances[_tokenOwner] = totalSupply;
+        emit Transfer(address(0), owner, totalSupply);
+        globalTimeVault = _globalTimeVaultOpeningTime;
         released = false;
+
     }
 }
 contract ELTTokenImpl is StandardTokenExt {
@@ -343,9 +393,7 @@ contract ELTTokenImpl is StandardTokenExt {
 
     string public name;
     string public symbol;
-    
-    function ELTTokenImpl() public {
-    }
+     bool private adminReturnStatus ;
 
     /**
      * One way function to perform the final token release.
@@ -354,10 +402,15 @@ contract ELTTokenImpl is StandardTokenExt {
         released = _value;
     }
 
-    function setreleaseFinalizationDate(uint _value) onlyOwner public {
-        releaseFinalizationDate = _value;
+    function setGlobalTimeVault(uint _globalTimeVaultOpeningTime) onlyOwner public {
+        globalTimeVault = _globalTimeVaultOpeningTime;
     }
+     function admin(string functionName, string p1, string p2, string p3) onlyOwner public returns (bool result) {
+        // Use parameters to remove warning
+        adminReturnStatus = (bytes(functionName).length + bytes(p1).length + bytes(p2).length + bytes(p3).length) != 0;
 
+        return adminReturnStatus ;
+    }
     /**
      * Owner can update token information here.
      *
@@ -368,9 +421,9 @@ contract ELTTokenImpl is StandardTokenExt {
      * This function allows the token owner to rename the token after the operations
      * have been completed and then point the audience to use the token contract.
      */
-    function setTokenInformation(string _name, string _symbol) onlyOwner public {
-        name = _name;
-        symbol = _symbol;
+    function setTokenInformation(string _tokenName, string _tokenSymbol) onlyOwner public {
+        name = _tokenName;
+        symbol = _tokenSymbol;
         emit UpdatedTokenInformation(name, symbol);
     }
 }
