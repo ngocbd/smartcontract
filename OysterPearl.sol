@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OysterPearl at 0x46DDa57B152AeaDA30A0DEC5A31e5Ba600A0Bd51
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OysterPearl at 0x45125B61f06b2e9b8fC8A2Ea688c35e27086d2ae
 */
 pragma solidity ^0.4.18;
 
@@ -21,7 +21,7 @@ contract OysterPearl {
     uint256 public epoch;
     uint256 public retentionMax;
 
-    // Array definitions
+    // This creates an array with all balances
     mapping (address => uint256) public balances;
     mapping (address => mapping (address => uint256)) public allowance;
     mapping (address => bool) public buried;
@@ -34,13 +34,13 @@ contract OysterPearl {
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
     // This notifies clients about the amount burnt
-    event Burn(address indexed _from, uint256 _value);
+    event Burn(address indexed from, uint256 value);
     
-    // This notifies clients about an address getting buried
-    event Bury(address indexed _target, uint256 _value);
+    // This notifies clients about the an address getting buried
+    event Bury(address indexed target, uint256 value);
     
     // This notifies clients about a claim being made on a buried address
-    event Claim(address indexed _target, address indexed _payout, address indexed _fee);
+    event Claim(address indexed target, address indexed payout, address indexed fee);
 
     /**
      * Constructor function
@@ -50,7 +50,7 @@ contract OysterPearl {
     function OysterPearl() public {
         director = msg.sender;
         name = "Oyster Pearl";
-        symbol = "PRL";
+        symbol = "TSPRL";
         decimals = 18;
         funds = 0;
         totalSupply = 0;
@@ -63,90 +63,87 @@ contract OysterPearl {
         // Devfund share (15%)
         totalSupply += 75000000 * 10 ** uint256(decimals);
         
-        // Allocation to match PREPRL supply and reservation for discretionary use
-        totalSupply += 8000000 * 10 ** uint256(decimals);
+        // Allocation to match PREPRL supply
+        totalSupply += 1000000 * 10 ** uint256(decimals);
         
-        // Assign reserved PRL supply to the director
+        // Assign reserved PRL supply to contract owner
         balances[director] = totalSupply;
         
-        // Define default values for Oyster functions
+        //define default values for Oyster functions
         claimAmount = 5 * 10 ** (uint256(decimals) - 1);
         payAmount = 4 * 10 ** (uint256(decimals) - 1);
         feeAmount = 1 * 10 ** (uint256(decimals) - 1);
         
-        // Seconds in a year
-        epoch = 31536000;
+        //seconds in a year
+        epoch = 31536001;
         
-        // Maximum time for a sector to remain stored
+        //Maximum time for a sector to remain stored
         retentionMax = 40 * 10 ** uint256(decimals);
     }
     
     /**
-     * ERC20 balance function
+     * ERC20 function
      */
     function balanceOf(address _owner) public constant returns (uint256 balance) {
         return balances[_owner];
     }
     
     modifier onlyDirector {
-        // Director can lock themselves out to complete decentralization of Oyster network
-        // An alternative is that another smart contract could become the decentralized director
+        // Owner can lock themselves out to complete decentralization of Oyster network
         require(!directorLock);
         
-        // Only the director is permitted
+        // Lockout will occur eventually, guaranteeing Oyster decentralization
+        require(block.number < 8000000);
+        
+        // Only the contract owner is permitted
         require(msg.sender == director);
         _;
     }
     
     modifier onlyDirectorForce {
-        // Only the director is permitted
+        // Only the contract owner is permitted
         require(msg.sender == director);
         _;
     }
     
     /**
-     * Transfers the director to a new address
+     * Transfers the contract owner to a new address
      */
     function transferDirector(address newDirector) public onlyDirectorForce {
         director = newDirector;
     }
     
     /**
-     * Withdraw funds from the contract
+     * Withdraw funds from the crowdsale
      */
     function withdrawFunds() public onlyDirectorForce {
         director.transfer(this.balance);
     }
     
     /**
-     * Permanently lock out the director to decentralize Oyster
-     * Invocation is discretionary because Oyster might be better suited to
-     * transition to an artificially intelligent smart contract director
+     * Permanently lock out the contract owner to decentralize Oyster
      */
-    function selfLock() public payable onlyDirector {
-        // The sale must be closed before the director gets locked out
+    function selfLock() public onlyDirector {
+        // The sale must be closed before the owner gets locked out
         require(saleClosed);
         
-        // Prevents accidental lockout
-        require(msg.value == 10 ether);
-        
-        // Permanently lock out the director
+        // Permanently lock out the contract owner
         directorLock = true;
     }
     
     /**
-     * Director can alter the storage-peg and broker fees
+     * Contract owner can alter the storage-peg and broker fees
      */
-    function amendClaim(uint8 claimAmountSet, uint8 payAmountSet, uint8 feeAmountSet, uint8 accuracy) public onlyDirector {
+    function amendClaim(uint8 claimAmountSet, uint8 payAmountSet, uint8 feeAmountSet) public onlyDirector {
         require(claimAmountSet == (payAmountSet + feeAmountSet));
         
-        claimAmount = claimAmountSet * 10 ** (uint256(decimals) - accuracy);
-        payAmount = payAmountSet * 10 ** (uint256(decimals) - accuracy);
-        feeAmount = feeAmountSet * 10 ** (uint256(decimals) - accuracy);
+        claimAmount = claimAmountSet * 10 ** (uint256(decimals) - 1);
+        payAmount = payAmountSet * 10 ** (uint256(decimals) - 1);
+        feeAmount = feeAmountSet * 10 ** (uint256(decimals) - 1);
     }
     
     /**
-     * Director can alter the epoch time
+     * Contract owner can alter the epoch time
      */
     function amendEpoch(uint256 epochSet) public onlyDirector {
         // Set the epoch
@@ -154,11 +151,11 @@ contract OysterPearl {
     }
     
     /**
-     * Director can alter the maximum time of storage retention
+     * Contract owner can alter the maximum storage retention
      */
-    function amendRetention(uint8 retentionSet, uint8 accuracy) public onlyDirector {
-        // Set retentionMax
-        retentionMax = retentionSet * 10 ** (uint256(decimals) - accuracy);
+    function amendRetention(uint8 retentionSet) public onlyDirector {
+        // Set RetentionMax
+        retentionMax = retentionSet * 10 ** uint256(decimals);
     }
     
     /**
@@ -190,13 +187,14 @@ contract OysterPearl {
      * Bury an address
      *
      * When an address is buried; only claimAmount can be withdrawn once per epoch
+     *
      */
-    function bury() public returns (bool success) {
+    function bury() public {
         // The address must be previously unburied
         require(!buried[msg.sender]);
         
-        // An address must have at least claimAmount to be buried
-        require(balances[msg.sender] >= claimAmount);
+        // An address must have atleast claimAmount to be buried
+        require(balances[msg.sender] > claimAmount);
         
         // Prevent addresses with large balances from getting buried
         require(balances[msg.sender] <= retentionMax);
@@ -209,7 +207,6 @@ contract OysterPearl {
         
         // Execute an event reflecting the change
         Bury(msg.sender, balances[msg.sender]);
-        return true;
     }
     
     /**
@@ -218,12 +215,12 @@ contract OysterPearl {
      * 
      * Claim PRL from a buried address
      *
-     * If a prior claim wasn't made during the current epoch, then claimAmount can be withdrawn
+     * If a prior claim wasn't made during the current epoch
      *
-     * @param _payout the address of the website owner
-     * @param _fee the address of the broker node
+     * @param _payout The address of the recipient
+     * @param _fee the amount to send
      */
-    function claim(address _payout, address _fee) public returns (bool success) {
+    function claim(address _payout, address _fee) public {
         // The claimed address must have already been buried
         require(buried[msg.sender]);
         
@@ -251,26 +248,25 @@ contract OysterPearl {
         // Remove claimAmount from the buried address
         balances[msg.sender] -= claimAmount;
         
-        // Pay the website owner that invoked the web node that found the PRL seed key
+        // Pay the website owner that invoked the webnode that found the PRL seed key
         balances[_payout] += payAmount;
         
         // Pay the broker node that unlocked the PRL
         balances[_fee] += feeAmount;
         
         // Execute events to reflect the changes
-        Claim(msg.sender, _payout, _fee);
         Transfer(msg.sender, _payout, payAmount);
         Transfer(msg.sender, _fee, feeAmount);
+        Claim(msg.sender, _payout, _fee);
         
-        // Failsafe logic that should never be false
+        // Asserts are used to use static analysis to find bugs in your code, they should never fail
         assert(balances[msg.sender] + balances[_payout] + balances[_fee] == previousBalances);
-        return true;
     }
     
     /**
      * Crowdsale function
      */
-    function () public payable {
+    function () payable public {
         // Check if crowdsale is still active
         require(!saleClosed);
         
@@ -286,7 +282,7 @@ contract OysterPearl {
         // Increases the total supply
         totalSupply += amount;
         
-        // Adds the amount to the balance
+        // Adds the amount to buyer's balance
         balances[msg.sender] += amount;
         
         // Track ETH amount raised
@@ -297,18 +293,18 @@ contract OysterPearl {
     }
 
     /**
-     * Internal transfer, can be called by this contract only
+     * Internal transfer, only can be called by this contract
      */
     function _transfer(address _from, address _to, uint _value) internal {
         // Sending addresses cannot be buried
         require(!buried[_from]);
         
-        // If the receiving address is buried, it cannot exceed retentionMax
+        // If the receiving addresse is buried, it cannot exceed retentionMax
         if (buried[_to]) {
             require(balances[_to] + _value <= retentionMax);
         }
         
-        // Prevent transfer to 0x0 address, use burn() instead
+        // Prevent transfer to 0x0 address. Use burn() instead
         require(_to != 0x0);
         
         // Check if the sender has enough
@@ -327,7 +323,7 @@ contract OysterPearl {
         balances[_to] += _value;
         Transfer(_from, _to, _value);
         
-        // Failsafe logic that should never be false
+        // Asserts are used to use static analysis to find bugs in your code, they should never fail
         assert(balances[_from] + balances[_to] == previousBalances);
     }
 
@@ -336,7 +332,7 @@ contract OysterPearl {
      *
      * Send `_value` tokens to `_to` from your account
      *
-     * @param _to the address of the recipient
+     * @param _to The address of the recipient
      * @param _value the amount to send
      */
     function transfer(address _to, uint256 _value) public {
@@ -348,8 +344,8 @@ contract OysterPearl {
      *
      * Send `_value` tokens to `_to` in behalf of `_from`
      *
-     * @param _from the address of the sender
-     * @param _to the address of the recipient
+     * @param _from The address of the sender
+     * @param _to The address of the recipient
      * @param _value the amount to send
      */
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
@@ -363,16 +359,18 @@ contract OysterPearl {
     /**
      * Set allowance for other address
      *
-     * Allows `_spender` to spend no more than `_value` tokens on your behalf
+     * Allows `_spender` to spend no more than `_value` tokens in your behalf
      *
-     * @param _spender the address authorized to spend
+     * @param _spender The address authorized to spend
      * @param _value the max amount they can spend
      */
     function approve(address _spender, uint256 _value) public
         returns (bool success) {
         // Buried addresses cannot be approved
         require(!buried[_spender]);
+        
         allowance[msg.sender][_spender] = _value;
+        
         Approval(msg.sender, _spender, _value);
         return true;
     }
@@ -380,9 +378,9 @@ contract OysterPearl {
     /**
      * Set allowance for other address and notify
      *
-     * Allows `_spender` to spend no more than `_value` tokens on your behalf, and then ping the contract about it
+     * Allows `_spender` to spend no more than `_value` tokens in your behalf, and then ping the contract about it
      *
-     * @param _spender the address authorized to spend
+     * @param _spender The address authorized to spend
      * @param _value the max amount they can spend
      * @param _extraData some extra information to send to the approved contract
      */
