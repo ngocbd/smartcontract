@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BezantToken at 0x293135bbc68c019ca59526f85087528030a34e58
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BezantToken at 0xe1aee98495365fc179699c1bb3e761fa716bee62
 */
 pragma solidity >=0.4.17;
 
@@ -17,7 +17,7 @@ contract Migrations {
     function transferOwnership(address _new) onlyOwner public {
         address oldaddr = owner;
         owner = _new;
-        TransferOwnership(oldaddr, owner);
+        emit TransferOwnership(oldaddr, owner);
     }
 }
 
@@ -107,7 +107,8 @@ contract BezantERC20Base {
      */
     function BezantERC20Base(string tokenName) public {
         uint256 initialSupply = 1000000000;
-        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        //totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        totalSupply = initialSupply.mul(1 ether);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                    // Give the creator all initial tokens
         name = tokenName;                                       // Set the name for display purposes
         symbol = 'BZNT';                                   // Set the symbol for display purposes
@@ -116,22 +117,22 @@ contract BezantERC20Base {
     /**
      * Internal transfer, only can be called by this contract
      */
-    function _transfer(address _from, address _to, uint _value) internal {
+    function _transfer(address _from, address _to, uint256 _value) internal {
         // Prevent transfer to 0x0 address. Use burn() instead
         require(_to != 0x0);
         // Check if the sender has enough
         require(balanceOf[_from] >= _value);
         // Check for overflows
-        require(balanceOf[_to] + _value > balanceOf[_to]);
+        require(balanceOf[_to].add(_value) > balanceOf[_to]);
         // Save this for an assertion in the future
-        uint previousBalances = balanceOf[_from] + balanceOf[_to];
+        uint256 previousBalances = balanceOf[_from].add(balanceOf[_to]);
         // Subtract from the sender
-        balanceOf[_from] -= _value;
+        balanceOf[_from] = balanceOf[_from].sub(_value);
         // Add the same to the recipient
-        balanceOf[_to] += _value;
-        Transfer(_from, _to, _value);
+        balanceOf[_to] = balanceOf[_to].add(_value);
+        emit Transfer(_from, _to, _value);
         // Asserts are used to use static analysis to find bugs in your code. They should never fail
-        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+        assert(balanceOf[_from].add(balanceOf[_to]) == previousBalances);
     }
 
     /**
@@ -157,7 +158,7 @@ contract BezantERC20Base {
      */
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
         require(_value <= allowance[_from][msg.sender]);     // Check allowance
-        allowance[_from][msg.sender] -= _value;
+        allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(_value);
         _transfer(_from, _to, _value);
         return true;
     }
@@ -170,8 +171,7 @@ contract BezantERC20Base {
      * @param _spender The address authorized to spend
      * @param _value the max amount they can spend
      */
-    function approve(address _spender, uint256 _value) public
-    returns (bool success) {
+    function approve(address _spender, uint256 _value) public returns (bool success) {
         allowance[msg.sender][_spender] = _value;
         return true;
     }
@@ -202,9 +202,9 @@ contract BezantERC20Base {
      */
     function burn(uint256 _value) public returns (bool success) {
         require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-        balanceOf[msg.sender] -= _value;            // Subtract from the sender
-        totalSupply -= _value;                      // Updates totalSupply
-        Burn(msg.sender, _value);
+        balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);            // Subtract from the sender
+        totalSupply = totalSupply.sub(_value);                      // Updates totalSupply
+        emit Burn(msg.sender, _value);
         return true;
     }
 
@@ -219,15 +219,19 @@ contract BezantERC20Base {
     function burnFrom(address _from, uint256 _value) public returns (bool success) {
         require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
         require(_value <= allowance[_from][msg.sender]);    // Check allowance
-        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
-        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
-        totalSupply -= _value;                              // Update totalSupply
-        Burn(_from, _value);
+        balanceOf[_from] = balanceOf[_from].sub(_value);                         // Subtract from the targeted balance
+        allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(_value);             // Subtract from the sender's allowance
+        totalSupply = totalSupply.sub(_value);                              // Update totalSupply
+        emit Burn(_from, _value);
         return true;
     }
 }
 
 contract BezantToken is Migrations, BezantERC20Base {
+
+    bool public isUseContractFreeze;
+
+    address public managementContractAddress;
 
     mapping (address => bool) public frozenAccount;
 
@@ -235,24 +239,31 @@ contract BezantToken is Migrations, BezantERC20Base {
 
     function BezantToken(string tokenName) BezantERC20Base(tokenName) onlyOwner public {}
 
-    function _transfer(address _from, address _to, uint _value) internal {
-        require (_to != 0x0);
-        require (balanceOf[_from] >= _value);
-        require (balanceOf[_to] + _value > balanceOf[_to]);
+    function _transfer(address _from, address _to, uint256 _value) internal {
+        require(_to != 0x0);
+        require(balanceOf[_from] >= _value);
+        require(balanceOf[_to].add(_value) > balanceOf[_to]);
         require(!frozenAccount[_from]);
         require(!frozenAccount[_to]);
-        balanceOf[_from] -= _value;
-        balanceOf[_to] += _value;
-        Transfer(_from, _to, _value);
+        balanceOf[_from] = balanceOf[_from].sub(_value);
+        balanceOf[_to] = balanceOf[_to].add(_value);
+        emit Transfer(_from, _to, _value);
     }
 
-    function freezeAccount(address _runner, address target, bool freeze) public {
-        require(_runner == owner);
+    function freezeAccountForOwner(address target, bool freeze) onlyOwner public {
         frozenAccount[target] = freeze;
-        FrozenFunds(target, freeze);
+        emit FrozenFunds(target, freeze);
     }
 
-    function getBalance(address _address) public onlyOwner constant returns(uint _availableToken)  {
-        _availableToken = balanceOf[_address];
+    function setManagementContractAddress(bool _isUse, address _from) onlyOwner public {
+        isUseContractFreeze = _isUse;
+        managementContractAddress = _from;
+    }
+
+    function freezeAccountForContract(address target, bool freeze) public {
+        require(isUseContractFreeze);
+        require(managementContractAddress == msg.sender);
+        frozenAccount[target] = freeze;
+        emit FrozenFunds(target, freeze);
     }
 }
