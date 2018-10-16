@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract alejandroceo at 0x848924de9ba6f334eb24135ff98e624faac19162
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract alejandroceo at 0x4b36093313b660ac68a1a57a46cba7c3725a3a12
 */
 pragma solidity ^0.4.15;
 
@@ -120,11 +120,11 @@ contract alejandroceo is StandardToken {
 
     function alejandroceo(
         ) {
-        balances[msg.sender] = 100000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 100000;                        // Update total supply (100000 for example)
-        name = "Kripton";                                   // Set the name for display purposes
+        balances[msg.sender] = 1000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 1000;                        // Update total supply (100000 for example)
+        name = "Oxygen";                                   // Set the name for display purposes
         decimals = 0;                            // Amount of decimals for display purposes
-        symbol = "KRP";                               // Set the symbol for display purposes
+        symbol = "OXYS";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
