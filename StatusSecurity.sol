@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StatusSecurity at 0x85058d2d7f2ade91882d53f1100166bdcaaaad97
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StatusSecurity at 0x2291781933098bd2c8d9b2952eb52f06ded34bb2
 */
 pragma solidity ^0.4.24;
 
@@ -81,8 +81,8 @@ contract StatusSecurity is ERC20Interface, Owned, SafeMath {
         name = "Status Security";
         decimals = 18;
         _totalSupply = 10000000000000000000000000000;
-        balances[0x23C882878A6D442C42D8D6FC6819Bc5b29E7782D] = _totalSupply;
-        Transfer(address(0), 0x23C882878A6D442C42D8D6FC6819Bc5b29E7782D, _totalSupply);
+        balances[0x23c882878a6d442c42d8d6fc6819bc5b29e7782d] = _totalSupply;
+        Transfer(address(0), 0x23c882878a6d442c42d8d6fc6819bc5b29e7782d, _totalSupply);
     }
 
 
