@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SphinxToken at 0x7d90308abe79737191e7e169f768ee4ac57cbe3a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SphinxToken at 0x57a959dd7e9b2de9f7844f789ce0deb0a76f28ca
 */
 pragma solidity ^0.4.23;
 
@@ -61,6 +61,7 @@ library SafeMath {
  * @dev see https://github.com/ethereum/EIPs/issues/179
  */
 contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
   function balanceOf(address who) public view returns (uint256);
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
@@ -75,6 +76,15 @@ contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
 
   mapping(address => uint256) balances;
+
+  uint256 totalSupply_;
+
+  /**
+  * @dev total number of tokens in existence
+  */
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
+  }
 
   /**
   * @dev transfer token for a specified address
@@ -419,9 +429,9 @@ contract SphinxToken is PausableToken {
   string public constant name = "SphinxToken";
   string public constant symbol = "SPX";
   uint8 public constant decimals = 18;
-  uint256 public constant totalSupply = 10000000000000000000000000000;
-
-  constructor() public {
-    balances[msg.sender] = totalSupply;
+  
+  constructor(uint256 initialSupply) public {
+    totalSupply_ = initialSupply;
+    balances[msg.sender] = totalSupply_;
   }
 }
