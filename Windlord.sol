@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Windlord at 0xcb0c47a39f73fc4f6a93448861791902800a88d1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Windlord at 0x5b3d43dd348606c9d61059882b00f6e435d07390
 */
 pragma solidity ^0.4.13;
 
@@ -104,7 +104,7 @@ contract StandardToken is ERC20, BasicToken {
    * @dev Transfer tokens from one address to another
    * @param _from address The address which you want to send tokens from
    * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amout of tokens to be transfered
+   * @param _value uint256 the amount of tokens to be transferred
    */
   function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
     var _allowance = allowed[_from][msg.sender];
@@ -120,7 +120,7 @@ contract StandardToken is ERC20, BasicToken {
   }
 
   /**
-   * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
    * @param _spender The address which will spend the funds.
    * @param _value The amount of tokens to be spent.
    */
@@ -253,7 +253,6 @@ contract Pausable is Ownable {
 contract Windlord is StandardToken, Pausable {
 
   string public constant name = 'Windlord';                       // Set the token name for display
-  string public constant symbol = 'WIND';                                       // Set the token symbol for display
   uint8 public constant decimals = 18;                                          // Set the number of decimals for display
   uint256 public constant INITIAL_SUPPLY = 21000000000000000000000000; // 
 
@@ -288,7 +287,7 @@ contract Windlord is StandardToken, Pausable {
   }
 
   /**
-   * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender when not paused.
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender when not paused.
    * @param _spender The address which will spend the funds.
    * @param _value The amount of tokens to be spent.
    */
@@ -297,5 +296,4 @@ contract Windlord is StandardToken, Pausable {
   }
 
 }
-
-	// In commemoration of an early “revolutionary” high-performance hang glider named the “Windlord IV” developed by a very talented US Navy fighter pilot, in San Diego, California in the mid 1970’s.
+	// In commemoration of an early “revolutionary” high-performance hang glider named the “Windlord IV” developed by a US Navy fighter pilot, in San Diego, California in the mid 1970’s.
