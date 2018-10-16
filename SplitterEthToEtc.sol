@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SplitterEthToEtc at 0x9ab2b9bd7c70ba12757eadcda5a9626ac247fadf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SplitterEthToEtc at 0x98a31890002355fbe5231c60db4b1b6c28f45e90
 */
 contract AmIOnTheFork {
     function forked() constant returns(bool);
@@ -7,20 +7,11 @@ contract AmIOnTheFork {
 
 contract SplitterEthToEtc {
 
-    event OnReceive(uint64);
-
-    struct Received {
-        address from;
-        uint256 value;
-    }
-
     address intermediate;
     address owner;
-    mapping (uint64 => Received) public received;
-    uint64 public seq = 1;
 
     // there is a limit accepted by exchange
-    uint256 public upLimit = 50 ether;
+    uint256 public upLimit = 100 ether;
     // and exchange costs, ignore small transactions
     uint256 public lowLimit = 0.1 ether;
 
@@ -32,34 +23,27 @@ contract SplitterEthToEtc {
 
     function() {
         //stop too small transactions
-        if (msg.value < lowLimit) throw;
+        if (msg.value < lowLimit)
+            throw;
 
-        // process with exchange on the FORK chain
         if (amIOnTheFork.forked()) {
-            // check that received less or equal to conversion up limit
+            // process with exchange on the FORK chain
             if (msg.value <= upLimit) {
-                if (!intermediate.send(msg.value)) throw;
-                uint64 id = seq++;
-                received[id] = Received(msg.sender, msg.value);
-                OnReceive(id);
+                // can exchange, send to intermediate
+                if (!intermediate.send(msg.value))
+                    throw;
             } else {
-                // send only acceptable value, return rest
-                if (!intermediate.send(upLimit)) throw;
-                if (!msg.sender.send(msg.value - upLimit)) throw;
-                uint64 idp = seq++;
-                received[id] = Received(msg.sender, upLimit);
-                OnReceive(id);
+                // too much, send only acceptable value, return rest
+                if (!intermediate.send(upLimit))
+                    throw;
+                if (!msg.sender.send(msg.value - upLimit))
+                    throw;
             }
-
-        // always return value from CLASSIC chain
         } else {
-            if (!msg.sender.send(msg.value)) throw;
+            // always return value from CLASSIC chain
+            if (!msg.sender.send(msg.value))
+                throw;
         }
-    }
-
-    function processed(uint64 _id) {
-        if (msg.sender != owner) throw;
-        delete received[_id];
     }
 
     function setIntermediate(address _intermediate) {
