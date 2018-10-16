@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YankeesOrioles48 at 0x39f79a95a6f69ff772971413041931b9fc4e9bdb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YankeesOrioles48 at 0xb4fdd675f2502c6bde3adf8b53912a6c760d14fc
 */
 pragma solidity ^0.4.11;
 
@@ -1035,7 +1035,7 @@ contract YankeesOrioles48 is usingOraclize {
   uint public constant MIN_BET = 0.01 ether;
 
   uint public EXPECTED_START = 1523207100; // When the bet's event is expected to start
-  uint public EXPECTED_END = 1523219700; // When the bet's event is expected to end
+  uint public EXPECTED_END = 1523237146; // When the bet's event is expected to end
 
   uint public constant BETTING_OPENS = 1523132564;
   uint public BETTING_CLOSES = EXPECTED_START - 60; // Betting closes a minute before the bet event starts
@@ -1184,7 +1184,7 @@ contract YankeesOrioles48 is usingOraclize {
     // Oraclize uses the Dockerfile to deploy this script.
     // Look over the Oraclize documentation to verify this
     // for yourself.
-    nextScheduledQuery = makeOraclizeQuery(timeOrDelay, "nested", "[computation] ['QmUSbN6LdTkyMp3NiCYikRgiUKubroB4rsgk89FpWTsqih', '7bdfb762-7b53-4da1-9508-fce27313a90f', '${[decrypt] BKuoTqnOU8LLOVkkd8574GQwdLIc6OJTN52Ww+Y7ytrcI1B0un7untQIdovQzdH5jVKfC31FxFIeEDJBgSIAxdf6w7eEy6Xmsmn++qcBDUNsSON7nbzg8xlah+feE34Wg6FfTwyw/HEG}']", gas);
+    nextScheduledQuery = makeOraclizeQuery(timeOrDelay, "nested", "[computation] ['QmUSbN6LdTkyMp3NiCYikRgiUKubroB4rsgk89FpWTsqih', '7bdfb762-7b53-4da1-9508-fce27313a90f', '${[decrypt] BDqaImWUPbuh4CfLxWlm9AeL81COzTfOcRdXBE1KcViZhCiSAGajs6vR63scOBh6UZdq7rXtG3niT4u2yFnyMyiZGc6hOGRlouiN5hqyh5dS9QkrVccgYlCn9qvvvw8eMurmRL3mbdTG}']", gas);
   }
 
   function makeOraclizeQuery(uint timeOrDelay, string datasource, string query, uint gas) private returns(bytes32) {
@@ -1305,8 +1305,10 @@ contract YankeesOrioles48 is usingOraclize {
     if (COMMISSION == 0) {
       ownersPayed = true;
       ownerPayout = 0;
-      collectionFees = ((oraclizeFees != 0) ? (oraclizeFees / numberOfBets[winningOption] + 1) : 0); // We add 1 wei to act as a ceil for the integer div -- important because the contract cannot afford to lose that spare change, as it will gaurantee that the final payout collection will fail.
-
+      if (numberOfBets[winningOption] > 0) {
+        collectionFees = ((oraclizeFees != 0) ? (oraclizeFees / numberOfBets[winningOption] + 1) : 0); // We add 1 wei to act as a ceil for the integer div -- important because the contract cannot afford to lose that spare change, as it will gaurantee that the final payout collection will fail.
+      }
+      
       return;
     }
 
@@ -1314,9 +1316,10 @@ contract YankeesOrioles48 is usingOraclize {
     // betted for the two outcomes.    
     uint losingChunk = totalAmountsBet[1 - winningOption];
     ownerPayout = (losingChunk - oraclizeFees) / COMMISSION; // Payout to the owner; commission of losing pot, minus the same % of the fees
-
-    collectionFees = ((oraclizeFees != 0) ? ((oraclizeFees - oraclizeFees / COMMISSION) / numberOfBets[winningOption] + 1) : 0); // The fees to be distributed to the collectors, after owner payout. See reasoning above for adding the 1 wei.
-
+    if (numberOfBets[winningOption] > 0) {
+        collectionFees = ((oraclizeFees != 0) ? ((oraclizeFees - oraclizeFees / COMMISSION) / numberOfBets[winningOption] + 1) : 0); // The fees to be distributed to the collectors, after owner payout. See reasoning above for adding the 1 wei.
+    }
+    
     // Equal weight payout to the owners
     OWNERS.transfer(ownerPayout);
     ownersPayed = true;
