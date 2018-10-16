@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cajutel at 0x2F50AB197F950e0c2184CF5d804f4141502Cd987
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cajutel at 0x96d0b9AA47356Dc088B50D4e4ce72af31C8ae9B5
 */
 pragma solidity ^0.4.13;
-
 
 /**
  * @title Ownable
@@ -133,7 +132,7 @@ contract LoggedERC20 is Ownable {
     }
 
     function transferInternal(address _from, address _to, uint256 value) internal returns (bool success) {
-        uint256 balanceFrom = valueAt(loggedBalances[_from], block.number);
+        uint256 balanceFrom = valueAt(loggedBalances[msg.sender], block.number);
         uint256 balanceTo = valueAt(loggedBalances[_to], block.number);
 
         if(value == 0) {
@@ -195,10 +194,6 @@ contract LoggedERC20 is Ownable {
     /* A contract attempts to get the coins */
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
         if(locked) {
-            return false;
-        }
-
-        if(allowance[_from][msg.sender] < _value) {
             return false;
         }
 
