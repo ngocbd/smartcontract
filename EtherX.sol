@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherX at 0x6d6db51e3e4838369676508ce25db64f4ca7e5e4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherX at 0xf2855df7f963531f689a8a3d2eb7bf4e0f532c01
 */
 pragma solidity ^0.4.20;
 
 /* Welcome to ETHERX
 * This is the Game to End All Games
-* Backed by a solid community, we will grow with you!
-* 
+* Backed by a solid community, we will grow with you! 
+* Join our Discord!
 *
 */
 
@@ -115,9 +115,9 @@ contract EtherX {
     string public name = "EtherX";
     string public symbol = "ETX";
     uint8 constant public decimals = 18;
-    uint8 constant internal dividendFee_ = 4; // Look, strong Math
-    uint256 constant internal tokenPriceInitial_ = 0.000000001 ether;
-    uint256 constant internal tokenPriceIncremental_ = 0.0000000001 ether;
+    uint8 constant internal dividendFee_ = 5; // Look, strong Math
+    uint256 constant internal tokenPriceInitial_ = 0.00000001 ether;
+    uint256 constant internal tokenPriceIncremental_ = 0.000000001 ether;
     uint256 constant internal magnitude = 2**64;
     
     // proof of stake (defaults at 100 tokens)
@@ -125,8 +125,8 @@ contract EtherX {
     
     // ambassador program
     mapping(address => bool) internal ambassadors_;
-    uint256 constant internal ambassadorMaxPurchase_ = 1 ether;
-    uint256 constant internal ambassadorQuota_ = 5 ether;
+    uint256 constant internal ambassadorMaxPurchase_ = 0.2 ether;
+    uint256 constant internal ambassadorQuota_ = 2 ether;
     
     
     
@@ -159,20 +159,34 @@ contract EtherX {
         public
     {
         // add administrators here
-        administrators[0xB3A5BdF73B031D315C6fa6DeC3f20C33446cB272] = true;
+        administrators[0x59Cf7938D82EC6474E74f4031f970d90949e68Fc] = true;
         
          // add the ambassadors here.
-        ambassadors_[0xB265c871e2DB1c57c94F97b4945Af018664e9FeC] = true;
+        ambassadors_[0x1809485a48FAABBef9D26Bc1dC9CC9551bDECDed] = true;
         
         // add the ambassadors here.
-        ambassadors_[0xc4b2F02034B76283D575c5D175890541f76D9cBC] = true;
+        ambassadors_[0x008ca4F1bA79D1A265617c6206d7884ee8108a78] = true;
         
         // add the ambassadors here.
-        ambassadors_[0x7071d79008Cc03E5a0aECeADc51B644e8CDdA677] = true;
+        ambassadors_[0x77863fFbeCb826bC93d9bD150F77E77Bd46757C4] = true;
         
         // add the ambassadors here.
-        ambassadors_[0xF2D98e321E9C0823d7C01668dBCbD2eC1E04589e] = true;
+        ambassadors_[0x4EE712f84772D5887be33B37b4b7E1B1B58eDE4a] = true;
         
+        // add the ambassadors here.
+        ambassadors_[0x470fe40D37b030F611E54D33eE3Ed4588A66646B] = true;
+        
+        // add the ambassadors here.
+        ambassadors_[0xa683C1b815997a7Fa38f6178c84675FC4c79AC2B] = true;
+        
+        // add the ambassadors here.
+        ambassadors_[0xf0f0DA16E817f0BfCbdA118E82Cf0ED78A1AE6ab] = true;
+        
+        // add the ambassadors here.
+        ambassadors_[0x9a4971Bb7869EC40588370246079Aa13b770f0C3] = true;
+        
+        // add the ambassadors here.
+        ambassadors_[0x59Cf7938D82EC6474E74f4031f970d90949e68Fc] = true;
     }
      
     /**
