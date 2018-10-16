@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTransferDelegate at 0xaf7ef25C997A5121459122308a84A032D4A16868
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTransferDelegate at 0x450d10a0c61f2b007384128b626f28b757a75e49
 */
 /*
   Copyright 2017 Loopring Project Ltd (Loopring Foundation).
@@ -212,13 +212,17 @@ contract TokenTransferDelegate is Claimable {
     ////////////////////////////////////////////////////////////////////////////
     /// Public Functions                                                     ///
     ////////////////////////////////////////////////////////////////////////////
+    /// @dev Disable default function.
+    function () payable public {
+        revert();
+    }
     /// @dev Add a Loopring protocol address.
     /// @param addr A loopring protocol address.
     function authorizeAddress(address addr)
         onlyOwner
         external
     {
-        var addrInfo = addressInfos[addr];
+        AddressInfo storage addrInfo = addressInfos[addr];
         if (addrInfo.index != 0) { // existing
             if (addrInfo.authorized == false) { // re-authorize
                 addrInfo.authorized = true;
@@ -303,14 +307,13 @@ contract TokenTransferDelegate is Claimable {
     {
         uint len = batch.length;
         require(len % 6 == 0);
-        var lrc = ERC20(lrcTokenAddress);
+        ERC20 lrc = ERC20(lrcTokenAddress);
         for (uint i = 0; i < len; i += 6) {
             address owner = address(batch[i]);
             address prevOwner = address(batch[(i + len - 6) % len]);
-            
             // Pay token to previous order, or to miner as previous order's
             // margin split or/and this order's margin split.
-            var token = ERC20(address(batch[i + 1]));
+            ERC20 token = ERC20(address(batch[i + 1]));
             // Here batch[i+2] has been checked not to be 0.
             if (owner != prevOwner) {
                 require(
@@ -323,7 +326,7 @@ contract TokenTransferDelegate is Claimable {
                     require(
                         token.transferFrom(owner, feeRecipient, uint(item))
                     );
-                } 
+                }
                 item = batch[i + 4];
                 if (item != 0) {
                     require(
