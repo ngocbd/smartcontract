@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Switch at 0x7bF4BA18cdfBD4286dC7e93497BFA62B3d6Ec739
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Switch at 0xb609e144464e105d717088ea183834bc477bed91
 */
 pragma solidity ^0.4.8;
 contract Switch 
