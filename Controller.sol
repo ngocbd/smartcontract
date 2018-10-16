@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Controller at 0xEdcE883162179D4eD5Eb9BB2e7dccF494d75B3a0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Controller at 0x8E9dD6C58165aC8e2AA6E7dA3D39743e60003c57
 */
 pragma solidity ^0.4.4;
 
@@ -40,9 +40,7 @@ contract DefaultSweeper is AbstractSweeper {
     returns (bool) {
         Token token = Token(_token);
         uint amount = _amount;
-        if (amount > token.balanceOf(this)) {
-            return false;
-        }
+        if (amount > token.balanceOf(this)) amount = token.balanceOf(this);
 
         address destination = controller.destination();
 
@@ -51,7 +49,9 @@ contract DefaultSweeper is AbstractSweeper {
         bool success = token.transfer(destination, amount); 
         if (success) { 
             controller.logSweep(this, _token, _amount);
-        } 
+        } else { 
+	    controller.logFailedSweep(msg.sender, _token, _amount);
+	}
         return success;
     }
 }
@@ -82,8 +82,9 @@ contract Controller is AbstractSweeperList {
 
     bool public halted;
 
-    event LogNewWallet(address receiver);
+    event LogNewWallet(uint _customer, address receiver);
     event LogSweep(address from, address token, uint amount);
+    event LogFailedSweep(address from, address token, uint amount);
     
     modifier onlyOwner() {
         if (msg.sender != owner) throw; 
@@ -119,9 +120,9 @@ contract Controller is AbstractSweeperList {
         owner = _owner;
     }
 
-    function makeWallet() onlyAdmins returns (address wallet)  {
+    function makeWallet(uint _customer) onlyAdmins returns (address wallet)  {
         wallet = address(new UserWallet(this));
-        LogNewWallet(wallet);
+        LogNewWallet(_customer, wallet);
     }
 
     //assuming halt because caller is compromised
@@ -153,5 +154,8 @@ contract Controller is AbstractSweeperList {
 
     function logSweep(address from, address token, uint amount) {
         LogSweep(from, token, amount);
+    }
+    function logFailedSweep(address from, address token, uint amount) {
+        LogFailedSweep(from, token, amount);
     }
 }
