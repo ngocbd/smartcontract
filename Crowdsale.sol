@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x35e76716af84a34785b5b2925ac917449df4d83e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xe0101f0dc01aca0865769032eb077b262bc855aa
 */
 pragma solidity ^0.4.21;
 
@@ -237,11 +237,6 @@ contract Token is EIP20Interface, Ownable, SafeMath, Mintable, Lockable, FeeCalc
 
     function withdrawFees(address to) onlyOwner public returns (bool success) {
         return transfer(this, to, balances[this]);
-    }
-
-    function setBurnPolicy(bool _isBurnable, bool _canAnyoneBurn) public {
-        isBurnable = _isBurnable;
-        canAnyoneBurn = _canAnyoneBurn;
     }
 
     function burn(uint256 value) public returns (bool success) {
