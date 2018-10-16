@@ -1,17 +1,40 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xf354b2e5ea679a726d0348a974971cb4697bf508
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xA9902d1Eace8ad794f5EB3E89c86610D3C361Df2
 */
 pragma solidity ^0.4.16;
+
+contract owned {
+    address public owner;
+
+    function owned() public {
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function transferOwnership(address newOwner) onlyOwner public {
+        owner = newOwner;
+    }
+}
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
 contract TokenERC20 {
     // Public variables of the token
-    string public name = "Encrypt Electron Identity Token";
-    string public symbol = "EID";
-    uint256 public decimals = 18;
+    string public name;
+    string public symbol;
+    uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
-    uint256 public totalSupply = 1000*1000*1000*10**decimals;
+    uint256 public totalSupply;
+    uint256 public MaxICOSellSupply;
+    uint256 public CoinsRemainAfterICO;
+    uint256 public totalEthInWei;         // WEI is the smallest unit of ETH (the equivalent of cent in USD or satoshi in BTC). We'll store the total ETH raised via our ICO here.
+    uint256 public unitsOneEthCanBuy;     // How many units of your coin can be bought by 1 ETH?
+    address public fundsWallet;           // Where should the raised ETH go?
+    uint public deadline;
 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
@@ -20,17 +43,24 @@ contract TokenERC20 {
     // This generates a public event on the blockchain that will notify clients
     event Transfer(address indexed from, address indexed to, uint256 value);
 
-    // This notifies clients about the amount burnt
-    event Burn(address indexed from, uint256 value);
 
     /**
      * Constrctor function
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function TokenERC20(
-    ) public {
-        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
+    function TokenERC20() public {
+
+        totalSupply = 10000000 * 1 ether;                        // Update total supply (1000 for example) (CHANGE THIS)
+        MaxICOSellSupply = 9000000 * 1 ether;
+        CoinsRemainAfterICO = totalSupply - MaxICOSellSupply;
+        balanceOf[msg.sender] = totalSupply;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
+        name = "Reference Line Coin";                                   // Set the name for display purposes (CHANGE THIS)
+        decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
+        symbol = "RECO";                                             // Set the symbol for display purposes (CHANGE THIS)
+        unitsOneEthCanBuy = 10000;                                      // Set the price of your token for the ICO (CHANGE THIS)
+        fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
+        deadline = now + 90000 * 1 minutes;  //ca 2 Monate ICO Periode
     }
 
     /**
@@ -115,36 +145,21 @@ contract TokenERC20 {
         }
     }
 
-    /**
-     * Destroy tokens
-     *
-     * Remove `_value` tokens from the system irreversibly
-     *
-     * @param _value the amount of money to burn
-     */
-    function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-        balanceOf[msg.sender] -= _value;            // Subtract from the sender
-        totalSupply -= _value;                      // Updates totalSupply
-        Burn(msg.sender, _value);
-        return true;
+    function() payable public{
+        uint256 amount = msg.value * unitsOneEthCanBuy;
+        require(now < deadline);
+        require(balanceOf[fundsWallet] > amount);
+        require(balanceOf[fundsWallet]-amount > CoinsRemainAfterICO ); //Change CAD-KAS: do not sell CoinsRemainAfterICO tokens at the ICO
+
+        totalEthInWei = totalEthInWei + msg.value;
+
+        balanceOf[fundsWallet] = balanceOf[fundsWallet] - amount;
+        balanceOf[msg.sender] = balanceOf[msg.sender] + amount;
+
+        Transfer(fundsWallet, msg.sender, amount); // Broadcast a message to the blockchain
+
+        //Transfer ether to fundsWallet
+        fundsWallet.transfer(msg.value);
     }
 
-    /**
-     * Destroy tokens from other account
-     *
-     * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
-     *
-     * @param _from the address of the sender
-     * @param _value the amount of money to burn
-     */
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
-        require(_value <= allowance[_from][msg.sender]);    // Check allowance
-        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
-        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
-        totalSupply -= _value;                              // Update totalSupply
-        Burn(_from, _value);
-        return true;
-    }
 }
