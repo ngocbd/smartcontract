@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreAdsMobileToken at 0x28f0d7d6e1562838f7fd1ca02d2f38cc9dcf8895
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreAdsMobileToken at 0x992871e527d32983e803e1013dc2b152167fa35e
 */
 // Abstract contract for the full ERC 20 Token standard
 // https://github.com/ethereum/EIPs/issues/20
@@ -154,12 +154,12 @@ contract PreAdsMobileToken is StandardToken, SafeMath {
     uint256 public checkNumber;
     uint256 public totalSupplyWithOutBonus;
     uint256 public constant tokenExchangeRate               = 400; // 400 AdsMobile tokens per 1 ETH
-    uint256 public constant tokenCreationCapWithOutBonus    = 400 * 10**18;
-    uint256 public constant tokenNeedForBonusLevel0         = 2 * 10**17; // 0.2
+    uint256 public constant tokenCreationCapWithOutBonus    = 3 * (10**6) * 10**18;
+    uint256 public constant tokenNeedForBonusLevel0         = 100 * (10**3) * 10**18;
     uint256 public constant bonusLevel0PercentModifier      = 300;
-    uint256 public constant tokenNeedForBonusLevel1         = 1 * 10**17; // 0.1
+    uint256 public constant tokenNeedForBonusLevel1         = 50 * (10**3) * 10**18;
     uint256 public constant bonusLevel1PercentModifier      = 200;
-    uint256 public constant tokenCreationMinPayment         = 1 * 10**17; // 0.1
+    uint256 public constant tokenCreationMinPayment         = 50 * (10**3) * 10**18;
 
     // events
     event CreateAds(address indexed _to, uint256 _value);
