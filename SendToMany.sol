@@ -1,23 +1,36 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SendToMany at 0x937a7486f5eb354c4a77882542333c4e8919203a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SendToMany at 0x70e531091d82e183f7246012d1566c3fe1315625
 */
 pragma solidity ^0.4.18;
 
 contract SendToMany
 {
+    address owner;
+    
     address[] public recipients;
     
-    function SendToMany(address[] _recipients) public
+    function SendToMany() public
     {
-        recipients = _recipients;
+        owner = msg.sender;
     }
     
-    function() payable public
+    function setRecipients(address[] newRecipientsList) public
     {
-        uint256 amountOfRecipients = recipients.length;
-        for (uint256 i=0; i<amountOfRecipients; i++)
+        require(msg.sender == owner);
+        
+        recipients = newRecipientsList;
+    }
+    
+    function addRecipient(address newRecipient) public
+    {
+        recipients.push(newRecipient);
+    }
+    
+    function sendToAll(uint256 amountPerRecipient) payable public
+    {
+        for (uint256 i=0; i<recipients.length; i++)
         {
-            recipients[i].transfer(msg.value / amountOfRecipients);
+            recipients[i].transfer(amountPerRecipient);
         }
     }
 }
