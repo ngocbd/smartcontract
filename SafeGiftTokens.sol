@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeGiftTokens at 0xbb6e403c7280b525b52596d868ff14951769bad5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeGiftTokens at 0xd8c91afa243a3e40b0a3d2d80d81bec4f1e7fe2c
 */
 /*                   -:////:-.                    
               `:ohmMMMMMMMMMMMMmho:`              
