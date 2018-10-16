@@ -1,216 +1,78 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdFunding at 0xaf8112eba4743aa1884ea9275d6123b8003a2a03
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdFunding at 0x87bba2d7797e831e5193598b2f6eb3f8a61eff07
 */
-pragma solidity ^0.4.18;
-
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-
-
-
-/**
- * @title Claimable
- * @dev Extension for the Ownable contract, where the ownership needs to be claimed.
- * This allows the new owner to accept the transfer.
- */
-contract Claimable is Ownable {
-    address public pendingOwner;
-
-    /**
-     * @dev Modifier throws if called by any account other than the pendingOwner.
-     */
-    modifier onlyPendingOwner() {
-        require(msg.sender == pendingOwner);
-        _;
+pragma solidity ^0.4.4;
+contract CrowdFunding {
+    // data structure to hold information about campaign contributors
+    struct Funder {
+        address addr;
+        uint amount;
     }
-
-    /**
-     * @dev Allows the current owner to set the pendingOwner address.
-     * @param newOwner The address to transfer ownership to.
-     */
-    function transferOwnership(address newOwner) onlyOwner public {
-        pendingOwner = newOwner;
+    // Campaign data structure
+    struct Campaign {
+        address beneficiary;
+        uint fundingGoal;
+        uint numFunders;
+        uint amount;
+        uint deadline;
+        mapping (uint => Funder) funders;
+        mapping (address => uint) balances;
     }
-
-    /**
-     * @dev Allows the pendingOwner address to finalize the transfer.
-     */
-    function claimOwnership() onlyPendingOwner public {
-        OwnershipTransferred(owner, pendingOwner);
-        owner = pendingOwner;
-        pendingOwner = address(0);
+    //Declares a state variable 'numCampaigns'
+    uint numCampaigns;
+    //Creates a mapping of Campaign datatypes
+    mapping (uint => Campaign) campaigns;
+    //first function sets up a new campaign
+    function newCampaign(address beneficiary, uint goal, uint deadline) returns (uint campaignID) {
+        campaignID = numCampaigns++; // campaignID is return variable
+        Campaign c = campaigns[campaignID]; // assigns reference
+        c.beneficiary = beneficiary;
+        c.fundingGoal = goal;
+        c.deadline = block.number + deadline;
     }
-}
-
-
-
-contract CrowdFunding is Claimable {
-    using SafeMath for uint256;
-
-    // =================================================================================================================
-    //                                      Members
-    // =================================================================================================================
-
-    // the wallet of the beneficiary
-    address public walletBeneficiary;
-
-    // amount of raised money in wei
-    uint256 public weiRaised;
-
-    // indicate if the crowd funding is ended
-    bool public isFinalized = false;
-
-    // =================================================================================================================
-    //                                      Modifiers
-    // =================================================================================================================
-
-    modifier isNotFinalized() {
-        require(!isFinalized);
-        _;
+    //function to contributes to the campaign
+    function contribute(uint campaignID) {
+        Campaign c = campaigns[campaignID];
+        Funder f = c.funders[c.numFunders++];
+        f.addr = msg.sender;
+        f.amount = msg.value;
+        c.amount += f.amount;
     }
-
-    // =================================================================================================================
-    //                                      Events
-    // =================================================================================================================
-
-    event DonateAdded(address indexed _from, address indexed _to,uint256 _amount);
-
-    event Finalized();
-
-    event ClaimBalance(address indexed _grantee, uint256 _amount);
-
-    // =================================================================================================================
-    //                                      Constructors
-    // =================================================================================================================
-
-    function CrowdFunding(address _walletBeneficiary) public {
-        require(_walletBeneficiary != address(0));
-        walletBeneficiary = _walletBeneficiary;
-    }
-
-    // =================================================================================================================
-    //                                      Public Methods
-    // =================================================================================================================
-
-    function deposit() onlyOwner isNotFinalized external payable {
-    }
-
-    function() external payable {
-        donate();
-    }
-
-    function donate() public payable {
-        require(!isFinalized);
-
-        uint256 weiAmount = msg.value;
-        
-        // transfering the donator funds to the beneficiary
-        weiRaised = weiRaised.add(weiAmount);
-        walletBeneficiary.transfer(weiAmount);
-        DonateAdded(msg.sender, walletBeneficiary, weiAmount);
-
-        // transfering the owner funds to the beneficiary with the same amount of the donator
-        if(this.balance >= weiAmount) {
-            weiRaised = weiRaised.add(weiAmount);
-            walletBeneficiary.transfer(weiAmount);
-            DonateAdded(address(this), walletBeneficiary, weiAmount);
-        } else {
-
-            weiRaised = weiRaised.add(this.balance);
-            // if not enough funds in the owner contract - transfer the remaining balance
-            walletBeneficiary.transfer(this.balance);
-            DonateAdded(address(this), walletBeneficiary, this.balance);
+    // checks if the goal or time limit has been reached and ends the campaign
+    function checkGoalReached(uint campaignID) returns (bool reached) {
+        Campaign c = campaigns[campaignID];
+        if (c.amount >= c.fundingGoal){
+            uint i = 0;
+            uint f = c.numFunders;
+            c.beneficiary.send(c.amount);
+            c.amount = 0;
+            c.beneficiary = 0;
+            c.fundingGoal = 0;
+            c.deadline = 0;
+            c.numFunders = 0;
+            while (i <= f){
+                c.funders[i].addr = 0;
+                c.funders[i].amount = 0;
+                i++;
+            }
+        return true;
         }
-    }
-
-    // allow the owner to claim his the contract balance at any time
-    function claimBalanceByOwner(address beneficiary) onlyOwner isNotFinalized public {
-        require(beneficiary != address(0));
-
-        uint256 weiAmount = this.balance;
-        beneficiary.transfer(weiAmount);
-
-        ClaimBalance(beneficiary, weiAmount);
-    }
-
-    function finalizeDonation(address beneficiary) onlyOwner isNotFinalized public {
-        require(beneficiary != address(0));
-
-        claimBalanceByOwner(beneficiary);
-        isFinalized = true;
-
-        Finalized();
+        if (c.deadline <= block.number){
+            uint j = 0;
+            uint n = c.numFunders;
+            c.beneficiary = 0;
+            c.fundingGoal = 0;
+            c.numFunders = 0;
+            c.deadline = 0;
+            c.amount = 0;
+            while (j <= n){
+                c.funders[j].addr.send(c.funders[j].amount);
+                c.funders[j].addr = 0;
+                c.funders[j].amount = 0;
+                j++;
+            }
+            return true;
+        }
+        return false;
     }
 }
