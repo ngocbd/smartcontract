@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OurRoulette at 0xc5c5aa3f03523c3e5442cd6bc41076cb194e4d11
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OurRoulette at 0x30b0d22416075184b8111c0e033fe6f33e6b7996
 */
 pragma solidity ^0.4.19;
 
@@ -35,25 +35,6 @@ contract OurRoulette{
         bytes betdata;
     }
     mapping (address => Bet) bets;
-    
-    // These functions will be removed in the real thing, they are only here for testing purposes
-    address owner = msg.sender;
-    function Kill() public { if(owner==msg.sender)selfdestruct(owner); }
-    
-    function AddDiv() public payable {
-        require(msg.sender==owner);
-        contractBalance+=msg.value;
-        AddToDividends(msg.value);
-    }
-    
-    function SubDiv(uint256 value) public {
-        require(msg.sender==owner);
-        contractBalance-=value;
-        SubFromDividends(value);
-        msg.sender.transfer(value);
-    }
-    
-    // ---- end of testing functions
     
     //helper function used when calculating win amounts
     function GroupMultiplier(uint number,uint groupID) public pure returns(uint){
@@ -112,7 +93,7 @@ contract OurRoulette{
                 //   - this shouldnt ever happen, only in a very specific scenario where
                 //     most of the people pull out at the same time.
                 
-                if(contractBalance>=tmp.value){
+                if(realReserve()>=tmp.value){
                     bets[msg.sender].height=0; //set bet height to 0 so it can't be claimed again
                     contractBalance-=tmp.value;
                     SubFromDividends(tmp.value);
@@ -185,7 +166,7 @@ contract OurRoulette{
                 //   - this shouldnt ever happen, only in a very specific scenario where
                 //     most of the people pull out at the same time.
                 
-                if(contractBalance>=tmp.value){
+                if(realReserve()>=tmp.value){
                     bets[msg.sender].height=0; //set bet height to 0 so it can't be claimed again
                     contractBalance-=tmp.value;
                     SubFromDividends(tmp.value);
@@ -565,6 +546,18 @@ contract OurRoulette{
 			// The Ether value per token is increased proportionally.
 			earningsPerToken += (int256)(rewardPerShare);
 		}else payouts[msg.sender]+=(int256)(penalty); //if he is the last holder, give him his penalty too, so there is no leftover ETH in the contract
+		
+		int256 afterdiv=realDividends(msg.sender); //get his dividends - after this sale
+		if(afterdiv<0){
+		     //if he was so deeply in debt, that even after selling his share, he still doesn't break even,
+		     //then we have to spread his debt between other users to maintain invariance
+		     SubFromDividends((uint256)(afterdiv*-1));
+		     totalPayouts -= payouts[msg.sender];
+		     payouts[msg.sender]=0;
+		     //again, this shouldnt ever happen. It is not possible to win in the Roulette so much,
+		     //that this scenario will happen. I have only managed to reach it by using the testing functions,
+		     //SubDiv() - removed on mainnet contract
+		}
 	}
 	
 	//returns value of all dividends currently held by all shareholders
@@ -580,11 +573,16 @@ contract OurRoulette{
 	    return balance()-(uint256)(divs);
 	}
 	
-	// Dynamic value of Ether in reserve, according to the CRR requirement. Returns reserve without negative dividends
+	// Dynamic value of Ether in reserve, according to the CRR requirement. Returns reserve including negative dividends
 	function realReserve() public view returns (uint256 amount) {
 	    int256 divs=totalDiv();
 	    
-	    if(divs<0)return balance();
+	    if(divs<0){
+	        uint256 udivs=(uint256)(divs*-1);
+	        uint256 b=balance();
+	        if(b<udivs)return 0;
+	        return b-udivs;
+	    }
 	    return balance()-(uint256)(divs);
 	}
 
