@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DaoCasinoToken at 0x8aa33a7899fcc8ea5fbe6a608a109c3893a1b8b2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DaoCasinoToken at 0x31fdf78bd3b46925e185c814ed73c53295b42081
 */
 pragma solidity ^0.4.11;
 
@@ -190,8 +190,8 @@ contract DaoCasinoToken is ERC20Token, Owned {
     // ------------------------------------------------------------------------
     // Token information
     // ------------------------------------------------------------------------
-    string public constant name = "Dao.Casino";
     string public constant symbol = "BET";
+    string public constant name = "Dao.Casino";
     uint8 public constant decimals = 18;
 
     function DaoCasinoToken() {
