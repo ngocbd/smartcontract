@@ -1,17 +1,16 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleStorage at 0x954De93D9f1Cd1e2e3AE5964F614CDcc821Fac64
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleStorage at 0x9295ede03f6eab5c8f215d3ddcf7dca3a26ca087
 */
+pragma solidity ^0.4.0;
+
 contract SimpleStorage {
-    event valueChanged(string oldValue, string newValue);
+    uint storedData;
 
-    string _value;
-
-    function setValue(string value) {
-        valueChanged(_value, value);
-        _value = value;
+    function set(uint x) {
+        storedData = x;
     }
 
-    function getValue() constant returns (string) {
-        return _value;
+    function get() constant returns (uint storedData) {
+        return storedData;
     }
 }
