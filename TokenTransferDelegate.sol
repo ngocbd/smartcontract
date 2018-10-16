@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTransferDelegate at 0xc787ae8d6560fb77b82f42ced8ed39f94961e304
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTransferDelegate at 0x7b126ab811f278f288bf1d62d47334351da20d1d
 */
 /*
   Copyright 2017 Loopring Project Ltd (Loopring Foundation).
@@ -292,46 +292,61 @@ contract TokenTransferDelegate is Claimable {
     }
     function batchTransferToken(
         address lrcTokenAddress,
-        address feeRecipient,
+        address minerFeeRecipient,
+        uint8 walletSplitPercentage,
         bytes32[] batch)
         onlyAuthorized
         external
     {
         uint len = batch.length;
-        require(len % 6 == 0);
+        require(len % 7 == 0);
+        require(walletSplitPercentage > 0 && walletSplitPercentage < 100);
         ERC20 lrc = ERC20(lrcTokenAddress);
-        for (uint i = 0; i < len; i += 6) {
+        for (uint i = 0; i < len; i += 7) {
             address owner = address(batch[i]);
-            address prevOwner = address(batch[(i + len - 6) % len]);
+            address prevOwner = address(batch[(i + len - 7) % len]);
             // Pay token to previous order, or to miner as previous order's
             // margin split or/and this order's margin split.
             ERC20 token = ERC20(address(batch[i + 1]));
-            // Here batch[i+2] has been checked not to be 0.
+            // Here batch[i + 2] has been checked not to be 0.
             if (owner != prevOwner) {
                 require(
-                    token.transferFrom(owner, prevOwner, uint(batch[i + 2]))
+                    token.transferFrom(
+                        owner,
+                        prevOwner,
+                        uint(batch[i + 2])
+                    )
                 );
             }
-            if (feeRecipient != 0x0 && owner != feeRecipient) {
-                bytes32 item = batch[i + 3];
-                if (item != 0) {
-                    require(
-                        token.transferFrom(owner, feeRecipient, uint(item))
-                    );
-                }
-                item = batch[i + 4];
-                if (item != 0) {
-                    require(
-                        lrc.transferFrom(feeRecipient, owner, uint(item))
-                    );
-                }
-                item = batch[i + 5];
-                if (item != 0) {
-                    require(
-                        lrc.transferFrom(owner, feeRecipient, uint(item))
-                    );
-                }
+            // Miner pays LRx fee to order owner
+            uint lrcReward = uint(batch[i + 4]);
+            if (lrcReward != 0 && minerFeeRecipient != owner) {
+                require(
+                    lrc.transferFrom(
+                        minerFeeRecipient,
+                        owner,
+                        lrcReward
+                    )
+                );
             }
+            // Split margin-split income between miner and wallet
+            splitPayFee(
+                token,
+                uint(batch[i + 3]),
+                owner,
+                minerFeeRecipient,
+                address(batch[i + 6]),
+                walletSplitPercentage
+            );
+            // Split LRx fee income between miner and wallet
+            splitPayFee(
+                lrc,
+                uint(batch[i + 5]),
+                owner,
+                minerFeeRecipient,
+                address(batch[i + 6]),
+                walletSplitPercentage
+            );
         }
     }
     function isAddressAuthorized(address addr)
@@ -340,5 +355,39 @@ contract TokenTransferDelegate is Claimable {
         returns (bool)
     {
         return addressInfos[addr].authorized;
+    }
+    function splitPayFee(
+        ERC20   token,
+        uint    fee,
+        address owner,
+        address minerFeeRecipient,
+        address walletFeeRecipient,
+        uint    walletSplitPercentage
+        )
+        internal
+    {
+        if (fee == 0) {
+            return;
+        }
+        uint walletFee = (walletFeeRecipient == 0x0) ? 0 : fee.mul(walletSplitPercentage) / 100;
+        uint minerFee = fee - walletFee;
+        if (walletFee > 0 && walletFeeRecipient != owner) {
+            require(
+                token.transferFrom(
+                    owner,
+                    walletFeeRecipient,
+                    walletFee
+                )
+            );
+        }
+        if (minerFee > 0 && minerFeeRecipient != 0x0 && minerFeeRecipient != owner) {
+            require(
+                token.transferFrom(
+                    owner,
+                    minerFeeRecipient,
+                    minerFee
+                )
+            );
+        }
     }
 }
