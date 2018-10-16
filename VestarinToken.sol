@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VestarinToken at 0x935ee7a4889867106762a7745aa39c80ca51c5ec
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VestarinToken at 0x552ed8253f341fb770e8badff5a0e0ee2fd57b43
 */
 pragma solidity ^0.4.18;
 
@@ -219,21 +219,20 @@ contract Ownable {
 
 }
 
-/**
- * @title Mintable token
- * @dev Simple ERC20 Token example, with mintable token creation
- * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
- * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
- */
 contract MintableToken is StandardToken, Ownable {
-
+    
   event Mint(address indexed to, uint256 amount);
-
+  
   event MintFinished();
 
   bool public mintingFinished = false;
 
   address public saleAgent;
+
+  modifier notLocked() {
+    require(msg.sender == owner || msg.sender == saleAgent || mintingFinished);
+    _;
+  }
 
   function setSaleAgent(address newSaleAgnet) public {
     require(msg.sender == saleAgent || msg.sender == owner);
@@ -259,7 +258,14 @@ contract MintableToken is StandardToken, Ownable {
     return true;
   }
 
+  function transfer(address _to, uint256 _value) public notLocked returns (bool) {
+    return super.transfer(_to, _value);
+  }
 
+  function transferFrom(address from, address to, uint256 value) public notLocked returns (bool) {
+    return super.transferFrom(from, to, value);
+  }
+  
 }
 
 /**
@@ -584,8 +590,7 @@ contract Mainsale is CommonSale {
   function finishMinting() public whenNotPaused onlyOwner {
     uint summaryTokensPercent = bountyTokensPercent + foundersTokensPercent;
     uint mintedTokens = token.totalSupply();
-    uint summaryFoundersTokens = mintedTokens.mul(summaryTokensPercent).div(percentRate.sub(summaryTokensPercent));
-    uint totalSupply = summaryFoundersTokens + mintedTokens;
+    uint totalSupply = mintedTokens.mul(percentRate).div(percentRate.sub(summaryTokensPercent));
     uint foundersTokens = totalSupply.mul(foundersTokensPercent).div(percentRate);
     uint bountyTokens = totalSupply.mul(bountyTokensPercent).div(percentRate);
     token.mint(this, foundersTokens);
@@ -595,57 +600,6 @@ contract Mainsale is CommonSale {
     token.transfer(bountyTokensWallet, bountyTokens);
     totalTokensMinted = totalTokensMinted.add(foundersTokens).add(bountyTokens);
     token.finishMinting();
-  }
-
-}
-
-contract TestConfigurator is Ownable {
-
-  VestarinToken public token; 
-
-  Presale public presale;
-
-  Mainsale public mainsale;
-
-  function deploy() public onlyOwner {
-    owner = 0x445c94f566abF8E28739c474c572D356d03Ad999;
-
-    token = new VestarinToken();
-
-    presale = new Presale();
-
-    presale.setToken(token);
-    presale.addStage(5,300);
-    presale.setMasterWallet(0x055fa3f2DAc0b9Db661A4745965DDD65490d56A8);
-    presale.setSlaveWallet(0x055fa3f2DAc0b9Db661A4745965DDD65490d56A8);
-    presale.setSlaveWalletPercent(30);
-    presale.setStart(1510704000);
-    presale.setPeriod(1);
-    presale.setMinPrice(100000000000000000);
-    token.setSaleAgent(presale);	
-
-    mainsale = new Mainsale();
-
-    mainsale.setToken(token);
-    mainsale.addStage(1,200);
-    mainsale.addStage(2,100);
-    mainsale.setMasterWallet(0x4d9014eF9C3CE5790A326775Bd9F609969d1BF4f);
-    mainsale.setSlaveWallet(0x4d9014eF9C3CE5790A326775Bd9F609969d1BF4f);
-    mainsale.setSlaveWalletPercent(30);
-    mainsale.setFoundersTokensWallet(0x59b398bBED1CC6c82b337B3Bd0ad7e4dCB7d4de3);
-    mainsale.setBountyTokensWallet(0x555635F2ea026ab65d7B44526539E0aB3874Ab24);
-    mainsale.setStart(1510790400);
-    mainsale.setPeriod(2);
-    mainsale.setLockPeriod(1);
-    mainsale.setMinPrice(100000000000000000);
-    mainsale.setFoundersTokensPercent(13);
-    mainsale.setBountyTokensPercent(5);
-
-    presale.setMainsale(mainsale);
-
-    token.transferOwnership(owner);
-    presale.transferOwnership(owner);
-    mainsale.transferOwnership(owner);
   }
 
 }
@@ -666,7 +620,7 @@ contract Configurator is Ownable {
     presale = new Presale();
 
     presale.setToken(token);
-    presale.addStage(5000,300);
+    presale.addStage(5000,3000);
     presale.setMasterWallet(0x95EA6A4ec9F80436854702e5F05d238f27166A03);
     presale.setSlaveWallet(0x070EcC35a3212D76ad443d529216a452eAA35E3D);
     presale.setSlaveWalletPercent(30);
@@ -678,12 +632,12 @@ contract Configurator is Ownable {
     mainsale = new Mainsale();
 
     mainsale.setToken(token);
-    mainsale.addStage(5000,200);
-    mainsale.addStage(5000,180);
-    mainsale.addStage(10000,170);
-    mainsale.addStage(20000,160);
-    mainsale.addStage(20000,150);
-    mainsale.addStage(40000,130);
+    mainsale.addStage(5000,2000);
+    mainsale.addStage(5000,1800);
+    mainsale.addStage(10000,1700);
+    mainsale.addStage(20000,1600);
+    mainsale.addStage(20000,1500);
+    mainsale.addStage(40000,1300);
     mainsale.setMasterWallet(0x95EA6A4ec9F80436854702e5F05d238f27166A03);
     mainsale.setSlaveWallet(0x070EcC35a3212D76ad443d529216a452eAA35E3D);
     mainsale.setSlaveWalletPercent(30);
