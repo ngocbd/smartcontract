@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UVDICO at 0x2dbfafd20f56213b75cf5c32a922b12d60de68ca
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UVDICO at 0xfa649bffcd1a16a68e0b16755537fe6842cab119
 */
 pragma solidity ^0.4.15;
 
@@ -71,12 +71,12 @@ contract UVDICO is Ownable {
 
   Token token;
 
-  uint256 public constant RATE = 192000; // Number of tokens per Ether with 20% bonus
-  uint256 public constant CAP = 9375; // Cap in Ether
-  uint256 public constant BONUS = 20; // 20% bonus 
-  uint256 public constant START = 1525719600; // start date in epoch timestamp 7 may 2018 19:00:00 utc
-  uint256 public constant DAYS = 21; // 21 days for round 1 with 20% bonus
-  uint256 public constant initialTokens =  1800000000 * 10**18; // Initial number of tokens available
+  uint256 public constant RATE = 176000; // Number of tokens per Ether with 10% bonus
+  uint256 public constant CAP = 14772; // Cap in Ether
+  uint256 public constant BONUS = 10; // 10% bonus 
+  uint256 public constant START = 1527508800; // start date in epoch timestamp 28 may 2018 12:00:00 utc
+  uint256 public constant DAYS = 18; // 18 days for round 2 with 10% bonus
+  uint256 public constant initialTokens =  2600000000 * 10**18; // Initial number of tokens available
   bool public initialized = false;
   uint256 public raisedAmount = 0;
   
