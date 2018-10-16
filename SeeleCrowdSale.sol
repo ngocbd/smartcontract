@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SeeleCrowdSale at 0x4db4fd6137ee3add0fbced73f1ea1d522cbc9d33
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SeeleCrowdSale at 0x38e03c0750dae1671f69067e8565de2d1009ae0a
 */
 pragma solidity ^0.4.18;
 
@@ -386,6 +386,7 @@ contract SeeleToken is PausableToken {
         minter = _minter;
         totalSupply = _maxTotalSupply;
         claimedFlag = false;
+        paused = true;
         transferOwnership(_admin);
     }
 
@@ -428,13 +429,27 @@ contract SeeleToken is PausableToken {
 
     /// @dev Locking period has passed - Locked tokens have turned into tradeable
     function claimTokens(address[] receipents)
-        public
+        external
+        onlyOwner
         canClaimed
     {        
         for (uint i = 0; i < receipents.length; i++) {
             address receipent = receipents[i];
             balances[receipent] = balances[receipent].add(lockedBalances[receipent]);
             lockedBalances[receipent] = 0;
+        }
+    }
+
+    function airdrop(address[] receipents, uint[] tokens)
+        external
+    {        
+        for (uint i = 0; i < receipents.length; i++) {
+            address receipent = receipents[i];
+            uint token = tokens[i];
+            if(balances[msg.sender] >= token ){
+                balances[msg.sender] = balances[msg.sender].sub(token);
+                balances[receipent] = balances[receipent].add(token);
+            }
         }
     }
 }
@@ -493,8 +508,12 @@ contract SeeleCrowdSale is Pausable {
     /// ERC20 compilant seele token contact instance
     SeeleToken public seeleToken; 
 
+    SeeleToken public oldSeeleToken;
+
     /// tags show address can join in open sale
     mapping (address => bool) public fullWhiteList;
+
+    mapping (address => bool) public vistFlagList;
 
     mapping (address => uint) public firstStageFund;
     mapping (address => uint) public secondStageFund;
@@ -553,6 +572,13 @@ contract SeeleCrowdSale is Pausable {
         seeleToken.mint(otherAddress, OTHER_STAKE * STAKE_MULTIPLIER, false);
     }
 
+    function setOldSeelToken(address addr)
+        public
+        onlyOwner
+    {
+        oldSeeleToken = SeeleToken(addr);
+    }
+
     function setExchangeRate(uint256 rate)
         public
         onlyOwner
@@ -578,7 +604,17 @@ contract SeeleCrowdSale is Pausable {
     {
         require(saleNotEnd());
         for (uint i = 0; i < users.length; i++) {
-            fullWhiteList[users[i]] = openTag;
+            address receipient = users[i];
+            bool visitFlag = vistFlagList[receipient];
+            if( openTag == true && visitFlag == false){
+                uint token = oldSeeleToken.lockedBalances(receipient);
+                if( token > 0){
+                    seeleToken.mint(receipient, token,true);
+                    openSoldTokens = openSoldTokens.add(token);
+                }
+                vistFlagList[receipient] = true;
+            }
+            fullWhiteList[receipient] = openTag;
         }
     }
 
