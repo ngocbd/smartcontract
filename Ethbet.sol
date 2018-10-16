@@ -1,10 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethbet at 0x8b5b525e2d4b279c603408726231c39c63f15d0b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethbet at 0xe512b6fb8f1e6a25d6202ac3631e75abbeb07e5a
 */
 pragma solidity ^0.4.19;
 
-
-
+/**
+ * This is the official Ethbet Token smart contract (EBET) - https://ethbet.io/
+ */
 
 /**
  * @title SafeMath
@@ -213,7 +214,10 @@ contract EthbetToken is StandardToken {
 
 // SafeMath Library https://github.com/OpenZeppelin/zeppelin-solidity/blob/49b42e86963df7192e7024e0e5bd30fa9d7ccbef/contracts/math/SafeMath.sol
 
-
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath2 {
 
   /**
@@ -421,11 +425,14 @@ contract Ethbet {
    * @param _amount amount
    */
   function executeBet(address _maker, address _caller, bool _makerWon, uint _amount) isRelay public {
-    //The caller must have enough balance
-    require(balances[_caller] >= _amount);
+    //The caller must have enough locked balance
+    require(lockedBalances[_caller] >= _amount);
 
     //The maker must have enough locked balance
     require(lockedBalances[_maker] >= _amount);
+
+    // unlock maker balance
+    unlockBalance(_caller, _amount);
 
     // unlock maker balance
     unlockBalance(_maker, _amount);
