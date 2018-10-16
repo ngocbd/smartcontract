@@ -1,6 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etheroll at 0x22CdaA7B4460A046F0Cc9878A4f79fDC2f187316
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etheroll at 0x2a7E1F7932240A1e0609B4b993933649163D8755
 */
+//just updated the encrypted api key
+//updated contractBalance -= 57245901639344;
+
 pragma solidity ^0.4.2;
 
 // <ORACLIZE_API>
@@ -1328,6 +1331,7 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
     uint public minBet;       
     int public totalBets;
     uint public maxPendingPayouts;
+    uint public costToCallOraclizeInWei;
     uint public totalWeiWon;
     uint public totalWeiWagered;    
 
@@ -1394,23 +1398,25 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
         betIsValid(msg.value, rollUnder)
 	{        
         
-
         /* safely update contract balance to account for cost to call oraclize*/
-        contractBalance = safeSub(contractBalance, oraclize_getPrice("URL", gasForOraclize));
+        //todo - update in live contract
+        contractBalance = safeSub(contractBalance, oraclize_getPrice("URL", 235000));
 
         /* total number of bets */
+        //todo - update in live contract
         totalBets += 1;
 
         /* total wagered */
-        totalWeiWagered += msg.value; 
+        //todo - update in live contract
+        totalWeiWagered += msg.value;        
 
         /*
         * assign partially encrypted query to oraclize
         * only the apiKey is encrypted 
         * integer query is in plain text
         */
-        bytes32 rngId = oraclize_query("nested", "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random[\"serialNumber\",\"data\"]', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BA10o4HCAPD3shKquwluhv4IKJcv0dHzKrnTxN9KHbJngxWwJeNBIcbGbo8tZesUkNRPQMaez8A7S18YHXzmV2sh5sJeCf7BGddEUfEPF+SfCWXLMsV4xsGoUjt7w+d/NJdRT28rHS/NhdNoANm8jVK5D7cC5o0=},\"n\":1,\"min\":1,\"max\":100,\"replacement\":true,\"base\":10${[identity] \"}\"},\"id\":1${[identity] \"}\"}']", gasForOraclize);
-        	    
+        bytes32 rngId = oraclize_query("nested", "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random[\"serialNumber\",\"data\"]', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BG0h2Eq52kQGHpizBkhqFa5eOiyQYblrxW86+7PvZ+aoyZAnNn10qTPEdl0859NmNCR4T156AnmbNiQVzgek+5hBod7JK1JBDxyWbWQzBlZnRsOMJbVPWvwpy92sc3z62xepI8Dp/pHnYOR/aER+Z21A9C+vxAE=},\"n\":1,\"min\":1,\"max\":100,\"replacement\":true,\"base\":10${[identity] \"}\"},\"id\":1${[identity] \"}\"}']", gasForOraclize);
+        	        
         /* map bet id to this oraclize query */
 		playerBetId[rngId] = rngId;
         /* map player lucky number to this oraclize query */
@@ -1442,6 +1448,14 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
 
         /* player address mapped to query id does not exist */
         if (playerAddress[myid]==0x0) throw;
+
+        /* total number of bets */
+        //todo - update in live contract
+        //totalBets += 1;
+
+        /* total wagered */
+        //todo - update in live contract
+        //totalWeiWagered += playerBetValue[myid];    
         
         /* keep oraclize honest by retrieving the serialNumber from random.org result */
         var sl_result = result.toSlice();
@@ -1626,7 +1640,7 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
 		onlyOwner
     {        
        contractBalance = newContractBalanceInWei;
-    }    
+    }     
 
     /* only owner address can set houseEdge */
     function ownerSetHouseEdge(uint newHouseEdge) public 
@@ -1716,7 +1730,8 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
 		onlyOwner
 	{
 		suicide(owner);
-	}    
+	}  
+      
 
 
 }
