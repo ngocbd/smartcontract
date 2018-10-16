@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VENSale at 0xAAA22Ea7aE573b7176C5D731565FB18732F640FE
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VENSale at 0xaaab2ec23dd5dd9602e631b8399fa94c9d134b3a
 */
 pragma solidity ^0.4.11;
 
@@ -20,26 +20,6 @@ contract Owned {
         owner = _newOwner;
     }
 }
-
-
-/**
- * @title Prealloc
- * @dev Pre-alloc storage vars, to flatten gas usage in future operations.
- */
-library Prealloc {
-    struct UINT256 {
-        uint256 value_;
-    }
-
-    function set(UINT256 storage i, uint256 value) internal {
-        i.value_ = ~value;
-    }
-
-    function get(UINT256 storage i) internal constant returns (uint256) {
-        return ~i.value_;
-    }
-}
-
 
 /**
  * @title SafeMath
@@ -69,8 +49,22 @@ library SafeMath {
     assert(c >= a);
     return c;
   }
-}
 
+  function toUINT112(uint256 a) internal constant returns(uint112) {
+    assert(uint112(a) == a);
+    return uint112(a);
+  }
+
+  function toUINT120(uint256 a) internal constant returns(uint120) {
+    assert(uint120(a) == a);
+    return uint120(a);
+  }
+
+  function toUINT128(uint256 a) internal constant returns(uint128) {
+    assert(uint128(a) == a);
+    return uint128(a);
+  }
+}
 
 
 // Abstract contract for the full ERC 20 Token standard
@@ -87,7 +81,8 @@ contract Token {
     function by the compiler.
     */
     /// total amount of tokens
-    uint256 public totalSupply;
+    //uint256 public totalSupply;
+    function totalSupply() constant returns (uint256 supply);
 
     /// @param _owner The address from which the balance will be retrieved
     /// @return The balance
@@ -122,7 +117,6 @@ contract Token {
 }
 
 
-
 /// VEN token, ERC20 compliant
 contract VEN is Token, Owned {
     using SafeMath for uint256;
@@ -131,10 +125,27 @@ contract VEN is Token, Owned {
     uint8 public constant decimals = 18;               //Number of decimals of the smallest unit
     string public constant symbol  = "VEN";            //An identifier    
 
+    // packed to 256bit to save gas usage.
+    struct Supplies {
+        // uint128's max value is about 3e38.
+        // it's enough to present amount of tokens
+        uint128 total;
+        uint128 rawTokens;
+    }
+
+    Supplies supplies;
+
+    // Packed to 256bit to save gas usage.    
     struct Account {
-        uint256 balance;
-        // raw token can be transformed into balance with bonus
-        uint256 rawTokens;
+        // uint112's max value is about 5e33.
+        // it's enough to present amount of tokens
+        uint112 balance;
+
+        // raw token can be transformed into balance with bonus        
+        uint112 rawTokens;
+
+        // safe to store timestamp
+        uint32 lastMintedTimestamp;
     }
 
     // Balances for each account
@@ -143,17 +154,15 @@ contract VEN is Token, Owned {
     // Owner of account approves the transfer of an amount to another account
     mapping(address => mapping(address => uint256)) allowed;
 
-    // every buying will update this var. 
-    // pre-alloc to make first buying cost no much more gas than subsequent
-    using Prealloc for Prealloc.UINT256;
-    Prealloc.UINT256 rawTokensSupplied;
-
     // bonus that can be shared by raw tokens
     uint256 bonusOffered;
 
     // Constructor
     function VEN() {
-        rawTokensSupplied.set(0);
+    }
+
+    function totalSupply() constant returns (uint256 supply){
+        return supplies.total;
     }
 
     // Send back ether sent to me
@@ -166,12 +175,24 @@ contract VEN is Token, Owned {
         return owner == 0;
     }
 
+    function lastMintedTimestamp(address _owner) constant returns(uint32) {
+        return accounts[_owner].lastMintedTimestamp;
+    }
+
     // Claim bonus by raw tokens
     function claimBonus(address _owner) internal{      
         require(isSealed());
         if (accounts[_owner].rawTokens != 0) {
-            accounts[_owner].balance = balanceOf(_owner);
+            uint256 realBalance = balanceOf(_owner);
+            uint256 bonus = realBalance
+                .sub(accounts[_owner].balance)
+                .sub(accounts[_owner].rawTokens);
+
+            accounts[_owner].balance = realBalance.toUINT112();
             accounts[_owner].rawTokens = 0;
+            if(bonus > 0){
+                Transfer(this, _owner, bonus);
+            }
         }
     }
 
@@ -180,18 +201,17 @@ contract VEN is Token, Owned {
         if (accounts[_owner].rawTokens == 0)
             return accounts[_owner].balance;
 
-        if (isSealed()) {
-            uint256 bonus = 
-                 accounts[_owner].rawTokens
-                .mul(bonusOffered)
-                .div(rawTokensSupplied.get());
+        if (bonusOffered > 0) {
+            uint256 bonus = bonusOffered
+                 .mul(accounts[_owner].rawTokens)
+                 .div(supplies.rawTokens);
 
-            return accounts[_owner].balance
-                    .add(accounts[_owner].rawTokens)
-                    .add(bonus);
+            return bonus.add(accounts[_owner].balance)
+                    .add(accounts[_owner].rawTokens);
         }
         
-        return accounts[_owner].balance.add(accounts[_owner].rawTokens);
+        return uint256(accounts[_owner].balance)
+            .add(accounts[_owner].rawTokens);
     }
 
     // Transfer the balance from owner's account to another account
@@ -202,11 +222,11 @@ contract VEN is Token, Owned {
         claimBonus(msg.sender);
         claimBonus(_to);
 
+        // according to VEN's total supply, never overflow here
         if (accounts[msg.sender].balance >= _amount
-            && _amount > 0
-            && accounts[_to].balance + _amount > accounts[_to].balance) {
-            accounts[msg.sender].balance -= _amount;
-            accounts[_to].balance += _amount;
+            && _amount > 0) {            
+            accounts[msg.sender].balance -= uint112(_amount);
+            accounts[_to].balance = _amount.add(accounts[_to].balance).toUINT112();
             Transfer(msg.sender, _to, _amount);
             return true;
         } else {
@@ -231,13 +251,13 @@ contract VEN is Token, Owned {
         claimBonus(_from);
         claimBonus(_to);
 
+        // according to VEN's total supply, never overflow here
         if (accounts[_from].balance >= _amount
             && allowed[_from][msg.sender] >= _amount
-            && _amount > 0
-            && accounts[_to].balance + _amount > accounts[_to].balance) {
-            accounts[_from].balance -= _amount;
+            && _amount > 0) {
+            accounts[_from].balance -= uint112(_amount);
             allowed[_from][msg.sender] -= _amount;
-            accounts[_to].balance += _amount;
+            accounts[_to].balance = _amount.add(accounts[_to].balance).toUINT112();
             Transfer(_from, _to, _amount);
             return true;
         } else {
@@ -271,29 +291,30 @@ contract VEN is Token, Owned {
     }
 
     // Mint tokens and assign to some one
-    function mint(address _owner, uint256 _amount, bool _isRaw) onlyOwner{
+    function mint(address _owner, uint256 _amount, bool _isRaw, uint32 timestamp) onlyOwner{
         if (_isRaw) {
-            accounts[_owner].rawTokens = accounts[_owner].rawTokens.add(_amount);
-            rawTokensSupplied.set(rawTokensSupplied.get().add(_amount));
+            accounts[_owner].rawTokens = _amount.add(accounts[_owner].rawTokens).toUINT112();
+            supplies.rawTokens = _amount.add(supplies.rawTokens).toUINT128();
         } else {
-            accounts[_owner].balance = accounts[_owner].balance.add(_amount);
+            accounts[_owner].balance = _amount.add(accounts[_owner].balance).toUINT112();
         }
 
-        totalSupply = totalSupply.add(_amount);
+        accounts[_owner].lastMintedTimestamp = timestamp;
+
+        supplies.total = _amount.add(supplies.total).toUINT128();
         Transfer(0, _owner, _amount);
     }
     
     // Offer bonus to raw tokens holder
-    function offerBonus(uint256 _bonus) onlyOwner {
+    function offerBonus(uint256 _bonus) onlyOwner { 
         bonusOffered = bonusOffered.add(_bonus);
+        supplies.total = _bonus.add(supplies.total).toUINT128();
+        Transfer(0, this, _bonus);
     }
 
     // Set owner to zero address, to disable mint, and enable token transfer
     function seal() onlyOwner {
         setOwner(0);
-
-        totalSupply = totalSupply.add(bonusOffered);
-        Transfer(0, address(-1), bonusOffered);
     }
 }
 
@@ -335,31 +356,43 @@ contract VENSale is Owned{
     // 41%
     uint256 public constant publicSupply = totalSupply - nonPublicSupply;
 
-    uint256 public officialLimit;
-    uint256 public channelsLimit;
 
-    using Prealloc for Prealloc.UINT256;
-    Prealloc.UINT256 officialSold_; // amount of tokens officially sold out
+    uint256 public constant officialLimit = 64371825 * (10 ** 18);
+    uint256 public constant channelsLimit = publicSupply - officialLimit;
 
-    uint256 public channelsSold;    // amount of tokens sold out via channels
+    // packed to 256bit
+    struct SoldOut {
+        uint16 placeholder; // placeholder to make struct pre-alloced
+
+        // amount of tokens officially sold out.
+        // max value of 120bit is about 1e36, it's enough for token amount
+        uint120 official; 
+
+        uint120 channels; // amount of tokens sold out via channels
+    }
+
+    SoldOut soldOut;
     
     uint256 constant venPerEth = 3500;  // normal exchange rate
     uint256 constant venPerEthEarlyStage = venPerEth + venPerEth * 15 / 100;  // early stage has 15% reward
+
+    uint constant minBuyInterval = 30 minutes; // each account can buy once in 30 minutes
+    uint constant maxBuyEthAmount = 30 ether;
    
     VEN ven; // VEN token contract follows ERC20 standard
 
     address ethVault; // the account to keep received ether
     address venVault; // the account to keep non-public offered VEN tokens
 
-    uint public startTime; // time to start sale
-    uint public endTime;   // tiem to close sale
-    uint public earlyStageLasts; // early bird stage lasts in seconds
+    uint public constant startTime = 1503057600; // time to start sale
+    uint public constant endTime = 1504180800;   // tiem to close sale
+    uint public constant earlyStageLasts = 3 days; // early bird stage lasts in seconds
 
     bool initialized;
     bool finalized;
 
     function VENSale() {
-        officialSold_.set(0);
+        soldOut.placeholder = 1;
     }    
 
     /// @notice calculte exchange rate according to current stage
@@ -375,8 +408,8 @@ contract VENSale is Owned{
     }
 
     /// @notice for test purpose
-    function blockTime() constant returns (uint) {
-        return block.timestamp;
+    function blockTime() constant returns (uint32) {
+        return uint32(block.timestamp);
     }
 
     /// @notice estimate stage
@@ -396,7 +429,7 @@ contract VENSale is Owned{
             return Stage.Initialized;
         }
 
-        if (officialSold_.get().add(channelsSold) >= publicSupply) {
+        if (uint256(soldOut.official).add(soldOut.channels) >= publicSupply) {
             // all sold out
             return Stage.Closed;
         }
@@ -415,6 +448,15 @@ contract VENSale is Owned{
         return Stage.Closed;
     }
 
+    function isContract(address _addr) constant internal returns(bool) {
+        uint size;
+        if (_addr == 0) return false;
+        assembly {
+            size := extcodesize(_addr)
+        }
+        return size > 0;
+    }
+
     /// @notice entry to buy tokens
     function () payable {        
         buy();
@@ -422,14 +464,25 @@ contract VENSale is Owned{
 
     /// @notice entry to buy tokens
     function buy() payable {
+        // reject contract buyer to avoid breaking interval limit
+        require(!isContract(msg.sender));
         require(msg.value >= 0.01 ether);
 
         uint256 rate = exchangeRate();
         // here don't need to check stage. rate is only valid when in sale
         require(rate > 0);
+        // each account is allowed once in minBuyInterval
+        require(blockTime() >= ven.lastMintedTimestamp(msg.sender) + minBuyInterval);
 
-        uint256 remained = officialLimit.sub(officialSold_.get());
-        uint256 requested = msg.value.mul(rate);
+        uint256 requested;
+        // and limited to maxBuyEthAmount
+        if (msg.value > maxBuyEthAmount) {
+            requested = maxBuyEthAmount.mul(rate);
+        } else {
+            requested = msg.value.mul(rate);
+        }
+
+        uint256 remained = officialLimit.sub(soldOut.official);
         if (requested > remained) {
             //exceed remained
             requested = remained;
@@ -437,11 +490,11 @@ contract VENSale is Owned{
 
         uint256 ethCost = requested.div(rate);
         if (requested > 0) {
-            ven.mint(msg.sender, requested, true);
+            ven.mint(msg.sender, requested, true, blockTime());
             // transfer ETH to vault
             ethVault.transfer(ethCost);
 
-            officialSold_.set(officialSold_.get().add(requested));
+            soldOut.official = requested.add(soldOut.official).toUINT120();
             onSold(msg.sender, requested, ethCost);        
         }
 
@@ -452,80 +505,70 @@ contract VENSale is Owned{
         }        
     }
 
-    /// @notice calculate tokens sold officially
+    /// @notice returns tokens sold officially
     function officialSold() constant returns (uint256) {
-        return officialSold_.get();
+        return soldOut.official;
     }
 
-    /// @notice manually offer tokens to channels
-    function offerToChannels(uint256 _venAmount) onlyOwner {
+    /// @notice returns tokens sold via channels
+    function channelsSold() constant returns (uint256) {
+        return soldOut.channels;
+    } 
+
+    /// @notice manually offer tokens to channel
+    function offerToChannel(address _channelAccount, uint256 _venAmount) onlyOwner {
         Stage stg = stage();
         // since the settlement may be delayed, so it's allowed in closed stage
         require(stg == Stage.Early || stg == Stage.Normal || stg == Stage.Closed);
 
-        channelsSold = channelsSold.add(_venAmount);
+        soldOut.channels = _venAmount.add(soldOut.channels).toUINT120();
 
         //should not exceed limit
-        require(channelsSold <= channelsLimit);
+        require(soldOut.channels <= channelsLimit);
 
         ven.mint(
-            venVault,
+            _channelAccount,
             _venAmount,
-            true  // unsold tokens can be claimed by channels portion
+            true,  // unsold tokens can be claimed by channels portion
+            blockTime()
             );
 
-        onSold(venVault, _venAmount, 0);
+        onSold(_channelAccount, _venAmount, 0);
     }
 
     /// @notice initialize to prepare for sale
     /// @param _ven The address VEN token contract following ERC20 standard
     /// @param _ethVault The place to store received ETH
     /// @param _venVault The place to store non-publicly supplied VEN tokens
-    /// @param _channelsLimit The hard limit for channels sale
-    /// @param _startTime The time when sale starts
-    /// @param _endTime The time when sale ends
-    /// @param _earlyStageLasts duration of early stage
     function initialize(
         VEN _ven,
         address _ethVault,
-        address _venVault,
-        uint256 _channelsLimit,
-        uint _startTime,
-        uint _endTime,
-        uint _earlyStageLasts) onlyOwner {
+        address _venVault) onlyOwner {
         require(stage() == Stage.Created);
 
         // ownership of token contract should already be this
         require(_ven.owner() == address(this));
 
         require(address(_ethVault) != 0);
-        require(address(_venVault) != 0);
-
-        require(_startTime > blockTime());
-        require(_startTime.add(_earlyStageLasts) < _endTime);        
+        require(address(_venVault) != 0);      
 
         ven = _ven;
         
         ethVault = _ethVault;
-        venVault = _venVault;
-
-        channelsLimit = _channelsLimit;
-        officialLimit = publicSupply.sub(_channelsLimit);
-
-        startTime = _startTime;
-        endTime = _endTime;
-        earlyStageLasts = _earlyStageLasts;        
+        venVault = _venVault;    
         
         ven.mint(
             venVault,
             reservedForTeam.add(reservedForOperations),
-            false // team and operations reserved portion can't share unsold tokens
+            false, // team and operations reserved portion can't share unsold tokens
+            blockTime()
         );
 
         ven.mint(
             venVault,
             privateSupply.add(commercialPlan),
-            true // private ICO and commercial plan can share unsold tokens
+            true, // private ICO and commercial plan can share unsold tokens
+            blockTime()
         );
 
         initialized = true;
@@ -537,7 +580,7 @@ contract VENSale is Owned{
         // only after closed stage
         require(stage() == Stage.Closed);       
 
-        uint256 unsold = publicSupply.sub(officialSold_.get()).sub(channelsSold);
+        uint256 unsold = publicSupply.sub(soldOut.official).sub(soldOut.channels);
 
         if (unsold > 0) {
             // unsold VEN as bonus
