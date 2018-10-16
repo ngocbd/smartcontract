@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorConverter at 0x6427b5cbf065777f4b62a0f9a4d2d23f27df5f28
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorConverter at 0xdd9494fd5de2186f2f2c4728ebdadc62fbd4f871
 */
 pragma solidity ^0.4.21;
 
@@ -95,12 +95,25 @@ contract IBancorConverter {
 contract IBancorNetwork {
     function convert(IERC20Token[] _path, uint256 _amount, uint256 _minReturn) public payable returns (uint256);
     function convertFor(IERC20Token[] _path, uint256 _amount, uint256 _minReturn, address _for) public payable returns (uint256);
+    function convertForPrioritized2(
+        IERC20Token[] _path,
+        uint256 _amount,
+        uint256 _minReturn,
+        address _for,
+        uint256 _block,
+        uint8 _v,
+        bytes32 _r,
+        bytes32 _s)
+        public payable returns (uint256);
+
+    // deprecated, backward compatibility
     function convertForPrioritized(
         IERC20Token[] _path,
         uint256 _amount,
         uint256 _minReturn,
         address _for,
         uint256 _block,
+        uint256 _nonce,
         uint8 _v,
         bytes32 _r,
         bytes32 _s)
@@ -1073,7 +1086,7 @@ contract BancorConverter is IBancorConverter, SmartTokenController, Managed, Con
         }
 
         // execute the conversion and pass on the ETH with the call
-        return bancorNetwork.convertForPrioritized.value(msg.value)(_path, _amount, _minReturn, msg.sender, _block, _v, _r, _s);
+        return bancorNetwork.convertForPrioritized2.value(msg.value)(_path, _amount, _minReturn, msg.sender, _block, _v, _r, _s);
     }
 
     // deprecated, backward compatibility
