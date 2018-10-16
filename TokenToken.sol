@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenToken at 0x8f3c45d637a9c2103d06f917aeeaff25eb7224c7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenToken at 0x49b84450a9a56081ce570920aa578c35e0b2461f
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.4;
 
 // ------------------------------------------------------------------------
 // TokenTraderFactory
@@ -606,7 +606,7 @@ contract TokenToken is FixedSupplyToken{
       return true;
   }
 
-  function buyPrice() constant returns (uint256 totalPrice) {
+  function buyPrice() returns (uint totalPrice) {
     totalPrice = 0;
     for (uint i = 0; i < tokenExchanges.length; ++i) {
       totalPrice += tokenExchanges[i].buyPrice() * tokenRatios[i] / 1e18;
@@ -614,7 +614,7 @@ contract TokenToken is FixedSupplyToken{
     return totalPrice;
   }
 
-  function sellPrice() constant returns (uint256 totalPrice) {
+  function sellPrice() returns (uint totalPrice) {
     totalPrice = 0;
     for (uint i = 0; i < tokenExchanges.length; ++i) {
       totalPrice += tokenExchanges[i].sellPrice() * tokenRatios[i] / 1e18;
@@ -625,7 +625,7 @@ contract TokenToken is FixedSupplyToken{
   function () { // Sending ether to it buys coins automatically
     buy();
   }
-  function buy() payable returns (uint256 amount){        // Buy in ETH
+  function buy() payable returns (uint amount){        // Buy in ETH
 
     amount = msg.value / buyPrice();
     for (uint i = 0; i < tokenExchanges.length; ++i) {
@@ -639,7 +639,7 @@ contract TokenToken is FixedSupplyToken{
     return amount;                                     // ends function and returns
   }
 
-  function sell(uint amount) returns (uint256 revenue){   // Sell in tokens
+  function sell(uint amount) returns (uint revenue){   // Sell in tokens
     if (balances[msg.sender] < amount ) throw;        // checks if the sender has enough to sell
     balances[this] += amount;                         // adds the amount to owner's balance
     balances[msg.sender] -= amount;                   // subtracts the amount from seller's balance
@@ -661,7 +661,7 @@ contract TokenToken is FixedSupplyToken{
     return revenue;                                // ends function and returns
   }
 
-  function breakdown(uint256 amount) {   // Breakdown in tokens
+  function breakdown(uint amount) {   // Breakdown in tokens
     if (balances[msg.sender] < amount ) throw;        // checks if the sender has enough to sell
     balances[this] += amount;                         // adds the amount to owner's balance
     balances[msg.sender] -= amount;                   // subtracts the amount from seller's balance
