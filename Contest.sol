@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Contest at 0xdf748e0b0ae2dcbc23ae035d74fc39fb0d065b98
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Contest at 0x11b2582f5ae35bf2b0fd8bbe2b40abd9f7f35457
 */
-/** 
+/**
 * The contract defining the contest, allowing participation and voting.
 * Participation is only possible before the participation deadline.
 * Voting is only allowed after the participation deadline was met and before the voting deadline expires.
 * As soon as voting is over, the contest may be closed, resultig in the distribution od the prizes.
-* The referee may disable certain participants, if their content is inappropiate. 
+* The referee may disable certain participants, if their content is inappropiate.
 *
 * Copyright (c) 2016 Jam Data, Julia Altenried
 * */
@@ -64,11 +64,11 @@ c4c = 0x87b0de512502f3e86fd22654b72a640c8e0f59cc;
 c4cfee = 1000;
 owner = msg.sender;
 
-deadlineParticipation=1493662140;
-deadlineVoting=1494870000;
+deadlineParticipation=1501454100;
+deadlineVoting=1501972500;
 participationFee=10000000000000000;
-votingFee=0000000000000000;
-prizeOwner=500;
+votingFee=5000000000000000;
+prizeOwner=955;
 prizeReferee=0;
 prizeWinners.push(6045);
 nLuckyVoters=3;
@@ -78,7 +78,7 @@ uint16 sumPrizes = prizeOwner;
 for(uint i = 0; i < prizeWinners.length; i++) {
 sumPrizes += prizeWinners[i];
 }
-if(sumPrizes>10000) 
+if(sumPrizes>10000)
 throw;
 else if(sumPrizes < 10000 && nLuckyVoters == 0)//make sure everything is paid out
 throw;
@@ -90,7 +90,7 @@ throw;
 function participate() payable {
 if(msg.value < participationFee)
 throw;
-else if (now >= deadlineParticipation) 
+else if (now >= deadlineParticipation)
 throw;
 else if (participated[msg.sender])
 throw;
@@ -101,14 +101,14 @@ participants.push(msg.sender);
 participated[msg.sender]=true;
 //if the winners list is smaller than the prize list, push the candidate
 if(winners.length < prizeWinners.length) winners.push(msg.sender);
-} 
+}
 }
 
 /**
 * adds msg.sender to the voter list and updates vote related mappings if msg.value is enough, the vote is done between the deadlines and the voter didn't vote already
 */
 function vote(address candidate) payable{
-if(msg.value < votingFee) 
+if(msg.value < votingFee)
 throw;
 else if(now < deadlineParticipation || now >=deadlineVoting)
 throw;
@@ -129,7 +129,7 @@ if(numVotes[candidate]>numVotes[winners[i]]){//candidate is better
 //else, usually winners[i+1]==candidate, because usually a candidate just improves by one ranking
 //however, if there are multiple candidates with the same amount of votes, it might be otherwise
 for(var j = getCandidatePosition(candidate, i+1); j>i; j--){
-winners[j]=winners[j-1]; 
+winners[j]=winners[j-1];
 }
 winners[i]=candidate;
 break;
