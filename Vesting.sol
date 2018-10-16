@@ -1,287 +1,197 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vesting at 0xafa07cc44e4b1d347f78915fb39cfc705f10c4a1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vesting at 0x761e06b68b859b0c58cccc176e2aed5ca3486ac5
 */
-pragma solidity ^0.4.20;
+pragma solidity ^0.4.13;
 
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a * b;
+library safeMath {
+  function mul(uint a, uint b) internal returns (uint) {
+    uint c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal  pure returns (uint256) {
-    uint256 c = a / b;
+  function div(uint a, uint b) internal returns (uint) {
+    uint c = a / b;
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal  pure returns (uint256) {
+  function sub(uint a, uint b) internal returns (uint) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal pure  returns (uint256) {
-    uint256 c = a + b;
+  function add(uint a, uint b) internal returns (uint) {
+    uint c = a + b;
     assert(c >= a);
     return c;
   }
+
+  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a >= b ? a : b;
+  }
+
+  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a < b ? a : b;
+  }
+
+  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a >= b ? a : b;
+  }
+
+  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a < b ? a : b;
+  }
 }
 
-contract Owned {
+contract DBC {
 
-    address public owner;
-    address newOwner;
+    // MODIFIERS
 
-    modifier only(address _allowed) {
-        require(msg.sender == _allowed);
+    modifier pre_cond(bool condition) {
+        require(condition);
         _;
     }
 
-    function Owned() public {
-        owner = msg.sender;
+    modifier post_cond(bool condition) {
+        _;
+        assert(condition);
     }
 
-    function transferOwnership(address _newOwner) only(owner) public {
-        newOwner = _newOwner;
+    modifier invariant(bool condition) {
+        require(condition);
+        _;
+        assert(condition);
     }
-
-    function acceptOwnership() only(newOwner) public {
-        emit OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-    }
-
-    event OwnershipTransferred(address indexed _from, address indexed _to);
-
 }
 
-contract ERC20 is Owned {
-    using SafeMath for uint;
+contract ERC20Interface {
 
-    uint public totalSupply;
-    bool public isStarted = false;
-    mapping (address => uint) balances;
-    mapping (address => mapping (address => uint)) allowed;
+    // EVENTS
 
-    modifier isStartedOnly() {
-        require(isStarted);
-        _;
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+
+    // CONSTANT METHODS
+
+    function totalSupply() constant returns (uint256 totalSupply) {}
+    function balanceOf(address _owner) constant returns (uint256 balance) {}
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
+
+    // NON-CONSTANT METHODS
+
+    function transfer(address _to, uint256 _value) returns (bool success) {}
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
+    function approve(address _spender, uint256 _value) returns (bool success) {}
+}
+
+contract ERC20 is ERC20Interface {
+
+    function transfer(address _to, uint256 _value) returns (bool success) {
+        if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+            balances[msg.sender] -= _value;
+            balances[_to] += _value;
+            Transfer(msg.sender, _to, _value);
+            return true;
+        } else { throw; }
     }
 
-    modifier isNotStartedOnly() {
-        require(!isStarted);
-        _;
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+            balances[_to] += _value;
+            balances[_from] -= _value;
+            allowed[_from][msg.sender] -= _value;
+            Transfer(_from, _to, _value);
+            return true;
+        } else { throw; }
     }
 
-    event Transfer(address indexed _from, address indexed _to, uint _value);
-    event Approval(address indexed _owner, address indexed _spender, uint _value);
-
-    function transfer(address _to, uint _value) isStartedOnly public returns (bool success) {
-        require(_to != address(0));
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        emit Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    function transferFrom(address _from, address _to, uint _value) isStartedOnly public returns (bool success) {
-        require(_to != address(0));
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        emit Transfer(_from, _to, _value);
-        return true;
-    }
-
-    function balanceOf(address _owner) public view returns (uint balance) {
+    function balanceOf(address _owner) constant returns (uint256 balance) {
         return balances[_owner];
     }
 
-    function approve_fixed(address _spender, uint _currentValue, uint _value) isStartedOnly public returns (bool success) {
-        if(allowed[msg.sender][_spender] == _currentValue){
-            allowed[msg.sender][_spender] = _value;
-            emit Approval(msg.sender, _spender, _value);
-            return true;
-        } else {
-            return false;
+    function approve(address _spender, uint256 _value) returns (bool success) {
+        // See: https://github.com/ethereum/EIPs/issues/20#issuecomment-263555598
+        if (_value > 0) {
+            require(allowed[msg.sender][_spender] == 0);
         }
-    }
-
-    function approve(address _spender, uint _value) isStartedOnly public returns (bool success) {
         allowed[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
+        Approval(msg.sender, _spender, _value);
         return true;
     }
 
-    function allowance(address _owner, address _spender) public view returns (uint remaining) {
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
         return allowed[_owner][_spender];
     }
 
+    mapping (address => uint256) balances;
+
+    mapping (address => mapping (address => uint256)) allowed;
+
+    uint256 public totalSupply;
+
 }
 
-contract Token is ERC20 {
-    using SafeMath for uint;
+contract Vesting is DBC {
+    using safeMath for uint;
 
-    string public name;
-    string public symbol;
-    uint8 public decimals;
+    // FIELDS
 
-    function Token(string _name, string _symbol, uint8 _decimals) public {
-        name = _name;
-        symbol = _symbol;
-        decimals = _decimals;
-    }
+    // Constructor fields
+    ERC20 public MELON_CONTRACT; // Melon as ERC20 contract
+    // Methods fields
+    uint public totalVestedAmount; // Quantity of vested Melon in total
+    uint public vestingStartTime; // Timestamp when vesting is set
+    uint public vestingPeriod; // Total vesting period in seconds
+    address public beneficiary; // Address of the beneficiary
+    uint public withdrawn; // Quantity of Melon withdrawn so far
 
-    function start() public only(owner) isNotStartedOnly {
-        isStarted = true;
-    }
+    // CONSTANT METHODS
 
-    //================= Crowdsale Only =================
-    function mint(address _to, uint _amount) public only(owner) isNotStartedOnly returns(bool) {
-        totalSupply = totalSupply.add(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        emit Transfer(msg.sender, _to, _amount);
-        return true;
-    }
+    function isBeneficiary() constant returns (bool) { return msg.sender == beneficiary; }
+    function isVestingStarted() constant returns (bool) { return vestingStartTime != 0; }
 
-    function multimint(address[] dests, uint[] values) public only(owner) isNotStartedOnly returns (uint) {
-        uint i = 0;
-        while (i < dests.length) {
-           mint(dests[i], values[i]);
-           i += 1;
-        }
-        return(i);
-    }
-}
+    /// @notice Calculates the quantity of Melon asset that's currently withdrawable
+    /// @return withdrawable Quantity of withdrawable Melon asset
+    function calculateWithdrawable() constant returns (uint withdrawable) {
+        uint timePassed = now.sub(vestingStartTime);
 
-contract TokenWithoutStart is Owned {
-    using SafeMath for uint;
-
-    mapping (address => uint) balances;
-    mapping (address => mapping (address => uint)) allowed;
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-    uint public totalSupply;
-
-    event Transfer(address indexed _from, address indexed _to, uint _value);
-    event Approval(address indexed _owner, address indexed _spender, uint _value);
-
-    function TokenWithoutStart(string _name, string _symbol, uint8 _decimals) public {
-        name = _name;
-        symbol = _symbol;
-        decimals = _decimals;
-    }
-
-    function transfer(address _to, uint _value) public returns (bool success) {
-        require(_to != address(0));
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        emit Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    function transferFrom(address _from, address _to, uint _value) public returns (bool success) {
-        require(_to != address(0));
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        emit Transfer(_from, _to, _value);
-        return true;
-    }
-
-    function balanceOf(address _owner) public view returns (uint balance) {
-        return balances[_owner];
-    }
-
-    function approve_fixed(address _spender, uint _currentValue, uint _value) public returns (bool success) {
-        if(allowed[msg.sender][_spender] == _currentValue){
-            allowed[msg.sender][_spender] = _value;
-            emit Approval(msg.sender, _spender, _value);
-            return true;
+        if (timePassed < vestingPeriod) {
+            uint vested = totalVestedAmount.mul(timePassed).div(vestingPeriod);
+            withdrawable = vested.sub(withdrawn);
         } else {
-            return false;
+            withdrawable = totalVestedAmount.sub(withdrawn);
         }
     }
 
-    function approve(address _spender, uint _value) public returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
-        return true;
+    // NON-CONSTANT METHODS
+
+    /// @param ofMelonAsset Address of Melon asset
+    function Vesting(address ofMelonAsset) {
+        MELON_CONTRACT = ERC20(ofMelonAsset);
     }
 
-    function allowance(address _owner, address _spender) public view returns (uint remaining) {
-        return allowed[_owner][_spender];
+    /// @param ofBeneficiary Address of beneficiary
+    /// @param ofMelonQuantity Address of Melon asset
+    /// @param ofVestingPeriod Vesting period in seconds from vestingStartTime
+    function setVesting(address ofBeneficiary, uint ofMelonQuantity, uint ofVestingPeriod)
+        pre_cond(!isVestingStarted())
+        pre_cond(ofMelonQuantity > 0)
+    {
+        require(MELON_CONTRACT.transferFrom(msg.sender, this, ofMelonQuantity));
+        vestingStartTime = now;
+        totalVestedAmount = ofMelonQuantity;
+        vestingPeriod = ofVestingPeriod;
+        beneficiary = ofBeneficiary;
     }
 
-    function mint(address _to, uint _amount) public only(owner) returns(bool) {
-        totalSupply = totalSupply.add(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        emit Transfer(msg.sender, _to, _amount);
-        return true;
+    /// @notice Withdraw
+    function withdraw()
+        pre_cond(isBeneficiary())
+        pre_cond(isVestingStarted())
+    {
+        uint withdrawable = calculateWithdrawable();
+        withdrawn = withdrawn.add(withdrawable);
+        require(MELON_CONTRACT.transfer(beneficiary, withdrawable));
     }
-
-    function multimint(address[] dests, uint[] values) public only(owner) returns (uint) {
-        uint i = 0;
-        while (i < dests.length) {
-           mint(dests[i], values[i]);
-           i += 1;
-        }
-        return(i);
-    }
-
-}
-
-
-
-//This contract is used to distribute tokens reserved for Jury.Online team the terms of distirbution are following:
-//after the end of ICO tokens are frozen for 6 months and afterwards each months 10% of tokens is unfrozen
-
-contract Vesting {
-
-    //1. Alexander Shevtsov            0x4C67EB86d70354731f11981aeE91d969e3823c39
-    //2. Anastasia Bormotova           0x450Eb50Cc83B155cdeA8b6d47Be77970Cf524368
-    //3. Artemiy Pirozhkov             0x9CFf3408a1eB46FE1F9de91f932FDCfEC34A568f
-    //4. Konstantin Kudryavtsev        0xA14d9fa5B1b46206026eA51A98CeEd182A91a190
-    //5. Marina Kobyakova              0x0465f2fA674bF20Fe9484dB70D8570617495b352
-    //6. Nikita Alekseev               0x07F8a6Fb0Ad63abBe21e8ef33523D8368618cd10
-    //7. Nikolay Prudnikov             0xF29fE8e258b084d40D9cF1dCF02E5CB29837b6D5
-    //8. Valeriy Strechen              0x64B557EaED227B841DcEd9f70918cd8f5ca2Bdab
-    //9. Igor Lavrenov                 0x05d1e624eaDF70bb7F8A2B11D39A8a5635e5D007
-    
-    uint public constant interval = 30 days;
-    uint public constant distributionStart = 1540994400; //1st of November
-    uint public currentStage;
-    uint public stageAmount;
-    uint public toSendLeft;
-
-    address[] public team;
-    Token public token;
-
-    constructor(address[] _team, address _token) {
-        token = Token(_token);
-        for(uint i=0; i<_team.length; i++) {
-            team.push(_team[i]);
-        }
-    }
-
-    function makePayouts() {
-        require(toSendLeft != 0);
-        if (now > interval*currentStage + distributionStart) {
-			uint balance = stageAmount/team.length;
-            for(uint i=0; i<team.length; i++) {
-                toSendLeft -= balance;
-                require(token.transfer(team[i], balance));
-            }
-        currentStage+=1;
-        }
-    }
-
-    function setToSendLeft() {
-        require(toSendLeft == 0);
-        toSendLeft = token.balanceOf(address(this));
-        stageAmount = toSendLeft/10;
-    }
-
-
 
 }
