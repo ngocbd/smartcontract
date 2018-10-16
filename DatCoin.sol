@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DatCoin at 0xc6dad66305545ae3111ba7000289ab3426cf02a2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DatCoin at 0x971875780d712a1bad69163a2dac290c07b882ac
 */
 pragma solidity ^0.4.11;
 
 contract ERC20Interface {
     // Get the total token supply
     function totalSupply() constant returns (uint256);
- 
+    
     // Get the account balance of another account with address _owner
     function balanceOf(address _owner) constant returns (uint256 balance);
  
@@ -41,6 +41,7 @@ contract DatCoin is ERC20Interface {
     uint public _minimumBuyAmount = 10 ** 17;
     uint public _thresholdOne = 9 * (10 ** 13);
     uint public _thresholdTwo = 85 * (10 ** 12);
+    
    
     // Owner of this contract
     address public owner;
@@ -131,8 +132,8 @@ contract DatCoin is ERC20Interface {
     function allowance(address _owner, address _spender) constant returns (uint256) {
         return allowed[_owner][_spender];
     }
-    
-    // Buy DatCoin by sending Ether
+	
+	// Buy RoseCoin by sending Ether
     function buy() payable thresholdTwo returns (uint256 amount) {
         uint value = msg.value;
         amount = value / _originalBuyPrice;
@@ -156,8 +157,8 @@ contract DatCoin is ERC20Interface {
         Transfer(owner, msg.sender, amount);
         return amount;
     }
-    
-    // Owner withdraws Ether in contract
+	
+	// Owner withdraws Ether in contract
     function withdraw() onlyOwner returns (bool) {
         return owner.send(this.balance);
     }
