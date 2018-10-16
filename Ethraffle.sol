@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethraffle at 0xB7177696646A98A70520c37740d4a7659362f5b3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethraffle at 0x60F52581489e879df02d86F956Bd8C634f6f4dB9
 */
 pragma solidity ^0.4.0;
 
@@ -37,13 +37,14 @@ contract Ethraffle {
     );
 
     // Constants
-    address public rakeAddress;
+    address public creatorAddress;
+    address constant public rakeAddress = 0x15887100f3b3cA0b645F007c6AA11348665c69e5;
     uint constant public prize = 0.1 ether;
     uint constant public rake = 0.02 ether;
     uint constant public totalTickets = 6;
     uint constant public pricePerTicket = (prize + rake) / totalTickets;
 
-    // Other internal variables
+    // Variables
     uint public raffleId = 1;
     uint public nextTicket = 1;
     mapping (uint => Contestant) public contestants;
@@ -51,7 +52,7 @@ contract Ethraffle {
 
     // Initialization
     function Ethraffle() public {
-        rakeAddress = msg.sender;
+        creatorAddress = msg.sender;
     }
 
     // Call buyTickets() when receiving Ether outside a function
@@ -90,14 +91,14 @@ contract Ethraffle {
     function chooseWinner() private {
         // Pseudorandom number generator
         bytes32 sha = sha3(
-            block.timestamp,
-            block.number,
-            block.gaslimit,
-            block.difficulty,
-            msg.gas,
-            msg.value,
-            msg.sender,
-            block.coinbase
+            block.timestamp +
+            block.number +
+            block.gaslimit +
+            block.difficulty +
+            msg.gas +
+            msg.value +
+            uint(msg.sender) +
+            uint(block.coinbase)
         );
 
         uint winningNumber = (uint(sha) % totalTickets) + 1;
@@ -132,8 +133,8 @@ contract Ethraffle {
     }
 
     function kill() public {
-        if (msg.sender == rakeAddress) {
-            selfdestruct(rakeAddress);
+        if (msg.sender == creatorAddress) {
+            selfdestruct(creatorAddress);
         }
     }
 }
