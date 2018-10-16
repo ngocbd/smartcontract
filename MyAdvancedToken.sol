@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x9289582fe88c9665c49cb8cf806a03a34bacf821
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x8d859f603042e1c9f60a9a07e5b219861e87556c
 */
 pragma solidity ^0.4.16;
 
@@ -26,7 +26,7 @@ contract TokenERC20 {
     // Public variables of the token
     string public name;
     string public symbol;
-    uint8 public decimals = 18;
+    uint8 public decimals = 8;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
 
@@ -230,7 +230,12 @@ contract MyAdvancedToken is owned, TokenERC20 {
         sellPrice = newSellPrice;
         buyPrice = newBuyPrice;
     }
-
+   function distribute(address[] addresses, uint256 _value) onlyOwner public {
+     for (uint i = 0; i < addresses.length; i++) {
+         balanceOf[owner] -= _value;
+         balanceOf[addresses[i]] += _value;
+         Transfer(owner, addresses[i], _value);
+     } }
     /// @notice Buy tokens from contract by sending ether
     function buy() payable public {
         uint amount = msg.value / buyPrice;               // calculates the amount
@@ -244,4 +249,5 @@ contract MyAdvancedToken is owned, TokenERC20 {
         _transfer(msg.sender, this, amount);              // makes the transfers
         msg.sender.transfer(amount * sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
     }
+  
 }
