@@ -1,348 +1,383 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xaaaf91d9b90df800df4f55c205fd6989c977e73a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x667088b212ce3d06a1b553a7221e1fd19000d9af
 */
-pragma solidity >=0.4.4;
+contract Ownable {
+  address public owner;
 
-// Copyright 2017 Alchemy Limited LLC, Do not distribute
+  function Ownable() {
+    owner = msg.sender;
+  }
 
-contract Constants {
-    uint DECIMALS = 8;
+  modifier onlyOwner() {
+    if (msg.sender == owner)
+      _;
+  }
+
+  function transferOwner(address newOwner) onlyOwner {
+    if (newOwner != address(0)) owner = newOwner;
+  }
+
 }
 
+contract ERC20 {
+  uint public totalSupply;
+  function balanceOf(address who) constant returns (uint);
+  function allowance(address owner, address spender) constant returns (uint);
 
-contract Owned {
-    address public owner;
-
-    modifier onlyOwner() {
-        if (msg.sender != owner) throw;
-        _;
-    }
-
-    address newOwner;
-
-    function changeOwner(address _newOwner) onlyOwner {
-        newOwner = _newOwner;
-    }
-
-    function acceptOwnership() {
-        if (msg.sender == newOwner) {
-            owner = newOwner;
-        }
-    }
+  function transfer(address to, uint value) returns (bool ok);
+  function transferFrom(address from, address to, uint value) returns (bool ok);
+  function approve(address spender, uint value) returns (bool ok);
+  event Transfer(address indexed from, address indexed to, uint value);
+  event Approval(address indexed owner, address indexed spender, uint value);
 }
 
-//from Zeppelin
 contract SafeMath {
-    function safeMul(uint a, uint b) internal returns (uint) {
-        uint c = a * b;
-        assert(a == 0 || c / a == b);
-        return c;
-    }
+  function safeMul(uint a, uint b) internal returns (uint) {
+    uint c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
-    function safeSub(uint a, uint b) internal returns (uint) {
-        assert(b <= a);
-        return a - b;
-    }
+  function safeSub(uint a, uint b) internal returns (uint) {
+    assert(b <= a);
+    return a - b;
+  }
 
-    function safeAdd(uint a, uint b) internal returns (uint) {
-        uint c = a + b;
-        assert(c>=a && c>=b);
-        return c;
-    }
+  function safeAdd(uint a, uint b) internal returns (uint) {
+    uint c = a + b;
+    assert(c>=a && c>=b);
+    return c;
+  }
 
-    function assert(bool assertion) internal {
-        if (!assertion) throw;
-    }
+  function assert(bool assertion) internal {
+    if (!assertion) throw;
+  }
 }
 
+contract StandardToken is ERC20, SafeMath {
 
+  mapping(address => uint) balances;
+  mapping (address => mapping (address => uint)) allowed;
 
-//Copyright 2017 Alchemy Limited LLC DO not distribute
-//ERC20 token
+  function transfer(address _to, uint _value) returns (bool success) {
+    balances[msg.sender] = safeSub(balances[msg.sender], _value);
+    balances[_to] = safeAdd(balances[_to], _value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
 
-contract Token is SafeMath, Owned, Constants {
-    uint public currentSupply;
-    uint public remainingOwner;
-    uint public remainingAuctionable;
-    uint public ownerTokensFreeDay;
-    bool public launched = false;
+  function transferFrom(address _from, address _to, uint _value) returns (bool success) {
+    var _allowance = allowed[_from][msg.sender];
+    
+    balances[_to] = safeAdd(balances[_to], _value);
+    balances[_from] = safeSub(balances[_from], _value);
+    allowed[_from][msg.sender] = safeSub(_allowance, _value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
 
-    bool public remaindersSet = false;
-    bool public mintingDone = false;
+  function balanceOf(address _owner) constant returns (uint balance) {
+    return balances[_owner];
+  }
 
-    address public controller;
+  function approve(address _spender, uint _value) returns (bool success) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
 
-    string public name;
-    uint8 public decimals;
-    string public symbol;
+  function allowance(address _owner, address _spender) constant returns (uint remaining) {
+    return allowed[_owner][_spender];
+  }
 
-    modifier onlyController() {
-        if (msg.sender != controller) throw;
-        _;
-    }
-
-    modifier isLaunched() {
-        assert(launched == true);
-        _;
-    }
-
-    modifier onlyPayloadSize(uint numwords) {
-        assert(msg.data.length == numwords * 32 + 4);
-        _;
-    }
-
-    function Token() {
-        owner = msg.sender;
-        name = "Monolith TKN";
-        decimals = uint8(DECIMALS);
-        symbol = "TKN";
-    }
-
-    function Launch() onlyOwner {
-        launched = true;
-    }
-
-    function setOwnerFreeDay(uint day) onlyOwner {
-        if (ownerTokensFreeDay != 0) throw;
-
-        ownerTokensFreeDay = day;
-    }
-
-    function totalSupply() constant returns(uint) {
-        return currentSupply + remainingOwner;
-    }
-
-    function setRemainders(uint _remainingOwner, uint _remainingAuctionable) onlyOwner {
-        if (remaindersSet) { throw; }
-
-        remainingOwner = _remainingOwner;
-        remainingAuctionable = _remainingAuctionable;
-    }
-
-    function finalizeRemainders() onlyOwner {
-        remaindersSet = true;
-    }
-
-    function setController(address _controller) onlyOwner {
-        controller = _controller;
-    }
-
-    function claimOwnerSupply() onlyOwner {
-        if (now < ownerTokensFreeDay) throw;
-        if (remainingOwner == 0) throw;
-        if (!remaindersSet) throw; // must finalize remainders
-
-        balanceOf[owner] = safeAdd(balanceOf[owner], remainingOwner);
-        remainingOwner = 0;
-    }
-
-    function claimAuctionableTokens(uint amount) onlyController {
-        if (amount > remainingAuctionable) throw;
-
-        balanceOf[controller] = safeAdd(balanceOf[controller], amount);
-        currentSupply = safeAdd(currentSupply, amount);
-        remainingAuctionable = safeSub(remainingAuctionable,amount);
-
-        Transfer(0, controller, amount);
-    }
-
-    event Transfer(address indexed from, address indexed to, uint value);
-    event Approval(address indexed owner, address indexed spender, uint value);
-
-    function mint(address addr, uint amount) onlyOwner onlyPayloadSize(2) {
-        if (mintingDone) throw;
-
-        balanceOf[addr] = safeAdd(balanceOf[addr], amount);
-
-        currentSupply = safeAdd(currentSupply, amount);
-
-        Transfer(0, addr, amount);
-    }
-
-
-    uint constant D160 = 0x0010000000000000000000000000000000000000000;
-
-    // We don't use safe math in this function
-    // because this will be called for the owner before the contract
-    // is published and we need to save gas.
-    function multiMint(uint[] data) onlyOwner {
-        if (mintingDone) throw;
-
-        uint supplyAdd;
-        for (uint i = 0; i < data.length; i++ ) {
-            address addr = address( data[i] & (D160-1) );
-            uint amount = data[i] / D160;
-
-            balanceOf[addr] += amount;
-            supplyAdd += amount;
-            Transfer(0, addr, amount);
-        }
-        currentSupply += supplyAdd;
-    }
-
-    function completeMinting() onlyOwner {
-        mintingDone = true;
-    }
-
-    mapping(address => uint) public balanceOf;
-    mapping(address => mapping (address => uint)) public allowance;
-
-    function transfer(address _to, uint _value) isLaunched notPaused
-    onlyPayloadSize(2)
-    returns (bool success) {
-        if (balanceOf[msg.sender] < _value) return false;
-        if (_to == 0x0) return false;
-
-        balanceOf[msg.sender] = safeSub(balanceOf[msg.sender], _value);
-        balanceOf[_to] = safeAdd(balanceOf[_to], _value);
-        Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    function transferFrom(address _from, address _to, uint _value)  isLaunched notPaused
-    onlyPayloadSize(3)
-    returns (bool success) {
-        if (_to == 0x0) return false;
-        if (balanceOf[_from] < _value) return false;
-
-        var allowed = allowance[_from][msg.sender];
-        if (allowed < _value) return false;
-
-        balanceOf[_to] = safeAdd(balanceOf[_to], _value);
-        balanceOf[_from] = safeSub(balanceOf[_from], _value);
-        allowance[_from][msg.sender] = safeSub(allowed, _value);
-        Transfer(_from, _to, _value);
-        return true;
-    }
-
-    function approve(address _spender, uint _value)
-    onlyPayloadSize(2)
-    returns (bool success) {
-        //require user to set to zero before resetting to nonzero
-        if ((_value != 0) && (allowance[msg.sender][_spender] != 0)) {
-            return false;
-        }
-
-        allowance[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    function increaseApproval (address _spender, uint _addedValue)
-    onlyPayloadSize(2)
-    returns (bool success) {
-        uint oldValue = allowance[msg.sender][_spender];
-        allowance[msg.sender][_spender] = safeAdd(oldValue, _addedValue);
-        Approval(msg.sender, _spender, allowance[msg.sender][_spender]);
-        return true;
-    }
-
-    function decreaseApproval (address _spender, uint _subtractedValue)
-    onlyPayloadSize(2)
-    returns (bool success) {
-        uint oldValue = allowance[msg.sender][_spender];
-        if (_subtractedValue > oldValue) {
-            allowance[msg.sender][_spender] = 0;
-        } else {
-            allowance[msg.sender][_spender] = safeSub(oldValue, _subtractedValue);
-        }
-        Approval(msg.sender, _spender, allowance[msg.sender][_spender]);
-        return true;
-    }
-
-    /// @notice `msg.sender` approves `_spender` to send `_amount` tokens on
-    ///  its behalf, and then a function is triggered in the contract that is
-    ///  being approved, `_spender`. This allows users to use their tokens to
-    ///  interact with contracts in one function call instead of two
-    /// @param _spender The address of the contract able to transfer the tokens
-    /// @param _amount The amount of tokens to be approved for transfer
-    /// @return True if the function call was successful
-    function approveAndCall(address _spender, uint256 _amount, bytes _extraData
-    ) returns (bool success) {
-        if (!approve(_spender, _amount)) throw;
-
-        ApproveAndCallFallBack(_spender).receiveApproval(
-            msg.sender,
-            _amount,
-            this,
-            _extraData
-        );
-
-        return true;
-    }
-
-    //Holds accumulated dividend tokens other than TKN
-    TokenHolder public tokenholder;
-
-    //once locked, can no longer upgrade tokenholder
-    bool public lockedTokenHolder;
-
-    function lockTokenHolder() onlyOwner {
-        lockedTokenHolder = true;
-    }
-
-    function setTokenHolder(address _th) onlyOwner {
-        if (lockedTokenHolder) throw;
-        tokenholder = TokenHolder(_th);
-    }
-
-    function burn(uint _amount) notPaused returns (bool result)  {
-        if (_amount > balanceOf[msg.sender]) return false;
-
-        balanceOf[msg.sender] = safeSub(balanceOf[msg.sender], _amount);
-        currentSupply  = safeSub(currentSupply, _amount);
-        result = tokenholder.burn(msg.sender, _amount);
-        if (!result) throw;
-        Transfer(msg.sender, 0, _amount);
-    }
-
-    // Peterson's Law Protection
-    event logTokenTransfer(address token, address to, uint amount);
-
-    function claimTokens(address _token) onlyOwner {
-        if (_token == 0x0) {
-            owner.transfer(this.balance);
-            return;
-        }
-
-        Token token = Token(_token);
-        uint balance = token.balanceOf(this);
-        token.transfer(owner, balance);
-        logTokenTransfer(_token, owner, balance);
-    }
-
-    // Pause mechanism
-
-    bool public pausingMechanismLocked = false;
-    bool public paused = false;
-
-    modifier notPaused() {
-        if (paused) throw;
-        _;
-    }
-
-    function pause() onlyOwner {
-        if (pausingMechanismLocked) throw;
-        paused = true;
-    }
-
-    function unpause() onlyOwner {
-        if (pausingMechanismLocked) throw;
-        paused = false;
-    }
-
-    function neverPauseAgain() onlyOwner {
-        pausingMechanismLocked = true;
-    }
 }
 
-contract TokenHolder {
-    function burn(address , uint )
-    returns (bool result) {
-        return false;
-    }
-}
+/*
+  Wings ERC20 Token.
+  Added allocation for users who participiated in Wings Campaign.
 
-contract ApproveAndCallFallBack {
-    function receiveApproval(address from, uint256 _amount, address _token, bytes _data);
+  Important!
+  We have to run pre-mine allocation first.
+  And only then rest of users.
+  Or it's not going to work due to whenAllocation logic.
+*/
+contract Token is StandardToken, Ownable {
+  // Account allocation event
+  event ALLOCATION(address indexed account, uint amount);
+
+  /*
+    Premine events
+  */
+  event PREMINER_ADDED(address indexed owner, address account, uint amount);
+  event PREMINE_ALLOCATION_ADDED(address indexed account, uint time);
+  event PREMINE_RELEASE(address indexed account, uint timestamp, uint amount);
+  event PREMINER_CHANGED(address indexed oldPreminer, address newPreminer, address newRecipient);
+
+  /*
+    Premine structure
+  */
+  struct Preminer {
+    address account;
+    uint monthlyPayment;
+    uint latestAllocation;
+    bool disabled;
+
+    uint allocationsCount;
+    mapping(uint => uint) allocations;
+  }
+
+  /*
+    List of preminers
+  */
+  mapping(address => Preminer) preminers;
+
+  /*
+    Token Name & Token Symbol & Decimals
+  */
+  string public name = "WINGS";
+  string public symbol = "WINGS";
+  uint public decimals = 18;
+
+  /*
+    Total supply
+  */
+  uint public totalSupply = 10**26;//100000000000000000000000000;
+
+  /*
+    Premine allocation interval
+  */
+  uint public DAYS_28 = 2419200;
+  uint public DAYS_31 = 2678400;
+
+  /*
+    Maximum premine allocations count
+  */
+  uint public MAX_ALLOCATIONS_COUNT = 26;
+
+  /*
+    How many accounts allocated?
+  */
+  uint public accountsToAllocate;
+
+  /*
+    Multisignature
+  */
+  address public multisignature;
+
+  /*
+    Only multisignature
+  */
+  modifier onlyMultisignature() {
+    if (msg.sender != multisignature) {
+      throw;
+    }
+
+    _;
+  }
+
+  /*
+    When preminer is not disabled
+  */
+  modifier whenPreminerIsntDisabled(address _account) {
+    if (preminers[_account].disabled == true) {
+      throw;
+    }
+
+    _;
+  }
+
+  /*
+    Modifier for checking is allocation completed.
+    Maybe we should add here pre-mine accounts too.
+  */
+  modifier whenAllocation(bool value) {
+    if ((accountsToAllocate > 0) == value) {
+      _;
+    } else {
+      throw;
+    }
+  }
+
+  /*
+    Check if user already allocated
+  */
+  modifier whenAccountHasntAllocated(address user) {
+    if (balances[user] == 0) {
+      _;
+    } else {
+      throw;
+    }
+  }
+
+  /*
+    Check if preminer already added
+  */
+  modifier whenPremineHasntAllocated(address preminer) {
+    if (preminers[preminer].account == address(0)) {
+      _;
+    } else {
+      throw;
+    }
+  }
+
+  function Token(uint _accountsToAllocate, address _multisignature) {
+    /*
+      Maybe we should calculate it in allocation and pre-mine.
+      I mean total supply
+    */
+    owner = msg.sender;
+    accountsToAllocate = _accountsToAllocate;
+    multisignature = _multisignature;
+  }
+
+  /*
+    Allocate tokens for users.
+    Only owner and only while allocation active.
+
+    Should check if user allocated already (no double allocations)
+  */
+  function allocate(address user, uint balance) onlyOwner() whenAllocation(true) whenAccountHasntAllocated(user) {
+    balances[user] = balance;
+
+    accountsToAllocate--;
+    ALLOCATION(user, balance);
+  }
+
+  /*
+    Standard Token functional
+  */
+  function transfer(address _to, uint _value) whenAllocation(false) returns (bool success) {
+    return super.transfer(_to, _value);
+  }
+
+  function transferFrom(address _from, address _to, uint _value) whenAllocation(false) returns (bool success) {
+    return super.transferFrom(_from, _to, _value);
+  }
+
+  function approve(address _spender, uint _value) whenAllocation(false) returns (bool success) {
+    return super.approve(_spender, _value);
+  }
+
+  /*
+    Premine functionality
+  */
+
+  /*
+    Add pre-mine account
+  */
+  function addPreminer(address preminer, address recipient, uint initialBalance, uint monthlyPayment) onlyOwner() whenAllocation(true) whenPremineHasntAllocated(preminer) {
+    var premine = Preminer(
+        recipient,
+        monthlyPayment,
+        0,
+        false,
+        0
+      );
+
+
+    balances[recipient] = safeAdd(balances[recipient], initialBalance);
+    preminers[preminer] = premine;
+    accountsToAllocate--;
+    PREMINER_ADDED(preminer, premine.account, initialBalance);
+  }
+
+  /*
+    Disable pre-miner
+  */
+  function disablePreminer(address _preminer, address _newPreminer, address _newRecipient) onlyMultisignature() whenPreminerIsntDisabled(_preminer) {
+    var oldPreminer = preminers[_preminer];
+
+    if (oldPreminer.account == address(0) || preminers[_newPreminer].account != address(0)) {
+      throw;
+    }
+
+    preminers[_newPreminer] = oldPreminer;
+    preminers[_newPreminer].account = _newRecipient;
+    oldPreminer.disabled = true;
+
+    if(preminers[_newPreminer].disabled == true) {
+      throw;
+    }
+
+    for (uint i = 0; i < preminers[_newPreminer].allocationsCount; i++) {
+      preminers[_newPreminer].allocations[i] = oldPreminer.allocations[i];
+    }
+
+    PREMINER_CHANGED(_preminer, _newPreminer, _newRecipient);
+  }
+
+  /*
+    Add pre-mine allocation
+  */
+  function addPremineAllocation(address _preminer, uint _time) onlyOwner() whenAllocation(true) whenPreminerIsntDisabled(_preminer) {
+    var preminer = preminers[_preminer];
+
+    if (preminer.account == address(0) ||  _time == 0 || preminer.allocationsCount == MAX_ALLOCATIONS_COUNT) {
+      throw;
+    }
+
+    if (preminer.allocationsCount > 0) {
+      var previousAllocation = preminer.allocations[preminer.allocationsCount-1];
+
+      if (previousAllocation > _time) {
+        throw;
+      }
+
+      if (previousAllocation + DAYS_28 > _time) {
+        throw;
+      }
+
+      if (previousAllocation + DAYS_31 < _time) {
+        throw;
+      }
+    }
+
+    preminer.allocations[preminer.allocationsCount++] = _time;
+    PREMINE_ALLOCATION_ADDED(_preminer, _time);
+  }
+
+  /*
+    Get preminer
+  */
+  function getPreminer(address _preminer) constant returns (address, bool, uint, uint, uint) {
+    var preminer = preminers[_preminer];
+
+    return (preminer.account, preminer.disabled, preminer.monthlyPayment, preminer.latestAllocation, preminer.allocationsCount);
+  }
+
+  /*
+    Get preminer allocation time by index
+  */
+  function getPreminerAllocation(address _preminer, uint _index) constant returns (uint) {
+    return preminers[_preminer].allocations[_index];
+  }
+
+  /*
+    Release premine when preminer asking
+    Gas usage: 0x5786 or 22406 GAS.
+    Maximum is 26 months of pre-mine in case of Wings. So should be enough to execute it.
+  */
+  function releasePremine() whenAllocation(false) whenPreminerIsntDisabled(msg.sender) {
+    var preminer = preminers[msg.sender];
+
+    if (preminer.account == address(0)) {
+      throw;
+    }
+
+    for (uint i = preminer.latestAllocation; i < preminer.allocationsCount; i++) {
+      if (preminer.allocations[i] < block.timestamp) {
+        if (preminer.allocations[i] == 0) {
+          continue;
+        }
+
+        balances[preminer.account] = safeAdd(balances[preminer.account], preminer.monthlyPayment);
+        preminer.latestAllocation = i;
+
+        PREMINE_RELEASE(preminer.account, preminer.allocations[i], preminer.monthlyPayment);
+        preminer.allocations[i] = 0;
+      } else {
+        break;
+      }
+    }
+  }
 }
