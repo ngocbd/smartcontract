@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GlobalCoin at 0x4E4019c632579fB81E8c26503140aa2C9b55c065
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GlobalCoin at 0xb5e60ae88aeecbb9f923c4ba41790c05ebfeef84
 */
 pragma solidity ^0.4.8;
 
@@ -223,8 +223,6 @@ contract Ownable {
 
 contract GlobalCoin is Ownable, StandardToken{
     uint256 public decimals = 8;
-    string public name = "GBCToken";
-    string public symbol = "GBC";
     uint public totalSupply = 1000000000000000;//1??15?0 ,??1000?0000 ????00000000,??????8?0
     address public dividendAddress = 0x1D33776a090a2F321FF596C0C011F2f414f3A527;//????
     address public burnAddress = 0x0000000000000000000000000000000000000000; //??GBC??
