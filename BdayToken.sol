@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BdayToken at 0xb719193e97914798e33a1cfce36fb19e5c7a36d1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BdayToken at 0x444670773dd6a84bca3d25f70c02936fb55be31a
 */
 pragma solidity ^0.4.11;
 
@@ -187,7 +187,7 @@ contract StandardToken is ERC20, BasicToken {
 contract BdayToken is StandardToken {
   string public name = 'Happy Birthday Token';
   string public symbol = 'BDAY';
-  uint public decimals = 0;
+  uint public decimals = 18;
   uint public INITIAL_SUPPLY = 100000000;
 
   function BdayToken() {
