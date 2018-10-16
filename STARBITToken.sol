@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract STARBITToken at 0xcc6dc0205126aa840723f22cc266415920e21c5c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract STARBITToken at 0x9a243e99b8b4740fbf70e0b0d7c872950ca88ab7
 */
-pragma  solidity ^0.4.23;
+pragma solidity ^0.4.18;
 
 /**
  * @title SafeMath
