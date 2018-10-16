@@ -1,15 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MoyTokenStorage at 0x27c60fa0fc81fddd5be37c62cfaf88c0af7143ff
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MoyTokenStorage at 0x2ea1ea9419a126673d1bbfdfe82524ea9e6f848b
 */
 pragma solidity ^0.4.18;
 // **-----------------------------------------------
-// POWToken Storage.
+// MOYToken Storage.
 // Contract in address PowerLineUpStorage.eth
 // Storage for 30,000,000 in-platform MOYTokens. 
 // Tokens only available through mining, stacking and tournaments in-platform through smart contracts.
 // Proyect must have enough funds provided by PowerLineUp and partners to realease tokens. 
 // This Contract stores the token and keeps record of own funding by PowerLineUp and partners. 
-// For Open Distribution refer to contract at powcrowdsale.eth (will be launched only if own funding (PreSale) of proyect succeeds.)
+// For Open Distribution refer to contract at powcrowdsale.eth (will be launched only if own funding of proyect succeeds first.)
 // All operations can be monitored at etherscan.io
 
 // **-----------------------------------------------
@@ -71,7 +71,7 @@ contract StandardToken is owned, safeMath {
 contract MoyTokenStorage is owned, safeMath {
   // owner/admin & token reward
   address        public admin = owner;   //admin address
-  StandardToken  public tokenContract;     // address of MoibeTV MOY ERC20 Standard Token.
+  StandardToken  public tokenReward;     // address of MoibeTV MOY ERC20 Standard Token.
 
   // loop control and limiters for funding proyect and mineable tokens through presale.
 
@@ -80,9 +80,7 @@ contract MoyTokenStorage is owned, safeMath {
   uint256 public fundingEndBlock;                             // preSale end block#
   uint256 public successAtBlock;                              // the private funding succeed at this block. All in-platform tokens backed.
   uint256 public amountRaisedInUsd;                           //amount raised in USD for tokens backing. 
-  uint256 public tokensPerEthAtRegularPrice; 
-  bool public successfulPreSale; 
-         
+  uint256 public tokensPerEthAtRegularPrice;       
   
 
   event Transfer(address indexed from, address indexed to, uint256 value); 
@@ -103,8 +101,8 @@ contract MoyTokenStorage is owned, safeMath {
       
       if (msg.sender == admin)
       {
-          tokenContract = StandardToken(0x2ea1EA9419A126673D1bBFdfE82524ea9E6F848B);  //MOYtoken Smart Contract.
-          tokensPerEthAtRegularPrice = 1000;                                         //Regular Price 1 ETH = 1000 MOY in-platform.Value to calculate proyect funding.
+          tokenReward = StandardToken(0x2a47E3c69DeAAe8dbDc5ee272d1a3C0f9853DcBD);  //MOYtoken Smart Contract.
+          tokensPerEthAtRegularPrice = 1000;                                        //Regular Price 1 ETH = 1000 MOY in-platform.Value to calculate proyect funding.
           amountRaisedInUsd = 0;
 
           fundingStartBlock = _fundingStartBlock;
@@ -129,14 +127,13 @@ contract MoyTokenStorage is owned, safeMath {
           // Funding is the capital invested by PowerLineUp and partners to back the whole proyect and the tokens released.
           amountRaisedInUsd = _amountRaisedInUsd; //amount raised includes development, human resources, infraestructure, design and marketing achieved by the proyect founders and partners.
           successAtBlock = _successAtBlock;       //Block when goal reached.
-          successfulPreSale = true;       
+                 
           CurrentStatus = "Funding Successful, in-platform tokens ready to use.";
-
           
           return "All in-platform tokens backed.";
       } else if (msg.sender != admin) {
           return "Not Authorized";
-      } else {
+      } else  {
           return "Setup cannot be changed.";
       }
     }
