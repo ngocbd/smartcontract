@@ -1,27 +1,69 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EGAS at 0x8bbf4dd0f11b3a535660fd7fcb7158daebd3a17e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EGAS at 0xb53a96bcbdd9cf78dff20bab6c2be7baec8f00f8
 */
 /**
- * @First Smart Airdrop eGAS
+ * @First Smart Airdrop eGAS Token
+ * @First Smart Airdrop as Service SAaS Project
  * @http://ethgas.stream
- * @egas@ethgas.stream
+ * @email: egas@ethgas.stream
  */
 
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
 
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public constant returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
- library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+contract Owned {
+  address public owner;
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+  /**
+   * @dev The Owned constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Owned() {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+}
+
+library SaferMath {
+  function mulX(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+  function divX(uint256 a, uint256 b) internal constant returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
@@ -40,195 +82,158 @@ pragma solidity ^0.4.16;
   }
 }
 
-contract Owned {
-    // The address of the account of the current owner
-    address public owner;
+contract BasicToken is ERC20Basic {
+  using SaferMath for uint256;
+  mapping(address => uint256) balances;
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
 
-    // The publiser is the inital owner
-    function Owned() public {
-        owner = msg.sender;
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public constant returns (uint256 balance) {
+    return balances[_owner];
+  }
+
+}
+
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) allowed;
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+
+    uint256 _allowance = allowed[_from][msg.sender];
+
+    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
+    // require (_value <= _allowance);
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+    return allowed[_owner][_spender];
+  }
+
+  /**
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   */
+  function increaseApproval (address _spender, uint _addedValue) returns (bool success) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  function decreaseApproval (address _spender, uint _subtractedValue) returns (bool success) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+   // revert on eth transfers to this contract
+    function() public payable {revert();}
+}
+
+/**
+ * @title Burnable Token
+ * @dev Token that can be irreversibly burned (destroyed).
+ */
+contract BurnableToken is StandardToken {
+
+    event Burn(address indexed burner, uint256 value);
 
     /**
-     * Access is restricted to the current owner
+     * @dev Burns a specific amount of tokens.
+     * @param _value The amount of token to be burned.
      */
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
+    function burn(uint256 _value) public {
+        require(_value > 0);
+        require(_value <= balances[msg.sender]);
+        // no need to require value <= totalSupply, since that would imply the
+        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
 
-    /**
-     * Transfer ownership to `_newOwner`
-     *
-     * @param _newOwner The address of the account that will become the new owner
-     */
-    function transferOwnership(address _newOwner) public onlyOwner {
-        owner = _newOwner;
+        address burner = msg.sender;
+        balances[burner] = balances[burner].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        Burn(burner, _value);
     }
 }
 
-contract EGAS is Owned {
-    using SafeMath for uint256;
-    string public symbol = "EGAS";
-    string public name = "ETHGAS";
-    uint8 public constant decimals = 8;
-    uint256 _initialSupply = 100000000000000;
-    uint256 _totalSupply = 0;
-	uint256 _maxTotalSupply = 1279200000000000;
-	uint256 _dropReward = 26000000000; //260 eGAS - per entry with 30% bonus to start
-	uint256 _maxDropReward = 1300000000000; //13000 eGAS - per block 10min with 30% bonus to start - 50 entry max
-	uint256 _rewardBonusTimePeriod = 86400; //1 day each bonus stage
-	uint256 _nextRewardBonus = now + _rewardBonusTimePeriod;
-	uint256 _rewardTimePeriod = 600; //10 minutes
-	uint256 _rewardStart = now;
-	uint256 _rewardEnd = now + _rewardTimePeriod;
-	uint256 _currentAirdropped = 0;
+contract EGAS is BurnableToken, Owned {
+
+  string public constant name = "ETHGAS";
+  string public constant symbol = "eGAS";
+  uint8 public constant decimals = 8;
+
+  uint256 public constant totalSupply = 13792050 * (10 ** uint256(decimals));
+  
+  function NewEgasDrop(address[] _toAddresses, uint256[] _toAmounts) public onlyOwner {
     
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
- 
-    mapping(address => uint256) balances;
- 
-    mapping(address => mapping (address => uint256)) allowed;
-    
-    function OwnerReward() public {
-    balances[owner] = _initialSupply;
-    transfer(owner, balances[owner]);
+    /* Ensures _toAddresses array is less than or equal to 255 */
+    assert(_toAddresses.length <= 255);
+    assert(_toAddresses.length == _toAmounts.length);
+    for (uint i = 0; i < _toAddresses.length; i++) 
+        transfer(_toAddresses[i], _toAmounts[i]);  
     }
- 
-    function withdraw() public onlyOwner {
-        owner.transfer(this.balance);
-    }
- 
-    function totalSupply() constant returns (uint256) {        
-		return _totalSupply + _initialSupply;
-    }
-    
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
-    }
- 
-    function transfer(address _to, uint256 _amount) returns (bool success) {
-        if (balances[msg.sender] >= _amount 
-            && _amount > 0
-            && balances[_to] + _amount > balances[_to]) {
-            balances[msg.sender] -= _amount;
-            balances[_to] += _amount;
-            Transfer(msg.sender, _to, _amount);
-            return true;
-        } else {
-            return false;
-        }
-    }
- 
-    function transferFrom(
-        address _from,
-        address _to,
-        uint256 _amount
-    ) returns (bool success) {
-        if (balances[_from] >= _amount
-            && allowed[_from][msg.sender] >= _amount
-            && _amount > 0
-            && balances[_to] + _amount > balances[_to]) {
-            balances[_from] -= _amount;
-            allowed[_from][msg.sender] -= _amount;
-            balances[_to] += _amount;
-            Transfer(_from, _to, _amount);
-            return true;
-        } else {
-            return false;
-        }
-    }
- 
-    function approve(address _spender, uint256 _amount) returns (bool success) {
-        allowed[msg.sender][_spender] = _amount;
-        Approval(msg.sender, _spender, _amount);
-        return true;
-    }
- 
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
-	
-	function SmartAirdrop() payable returns (bool success)
-	{
-		if (now < _rewardEnd && _currentAirdropped >= _maxDropReward)
-			revert();
-		else if (now >= _rewardEnd)
-		{
-			_rewardStart = now;
-			_rewardEnd = now + _rewardTimePeriod;
-			_currentAirdropped = 0;
-		}
-	
-		if (now >= _nextRewardBonus)
-		{
-			_nextRewardBonus = now + _rewardBonusTimePeriod;
-			_dropReward = _dropReward - 1000000000;
-			_maxDropReward = _maxDropReward - 50000000000;
-			_currentAirdropped = 0;
-			_rewardStart = now;
-			_rewardEnd = now + _rewardTimePeriod;
-		}	
-		
-		if ((_currentAirdropped < _maxDropReward) && (_totalSupply < _maxTotalSupply))
-		{
-			balances[msg.sender] += _dropReward;
-			_currentAirdropped += _dropReward;
-			_totalSupply += _dropReward;
-			Transfer(this, msg.sender, _dropReward);
-			return true;
-		}				
-		return false;
-	}
-	
-	function MaxTotalSupply() constant returns(uint256)
-	{
-		return _maxTotalSupply;
-	}
-	
-	function DropReward() constant returns(uint256)
-	{
-		return _dropReward;
-	}
-	
-	function MaxDropReward() constant returns(uint256)
-	{
-		return _maxDropReward;
-	}
-	
-	function RewardBonusTimePeriod() constant returns(uint256)
-	{
-		return _rewardBonusTimePeriod;
-	}
-	
-	function NextRewardBonus() constant returns(uint256)
-	{
-		return _nextRewardBonus;
-	}
-	
-	function RewardTimePeriod() constant returns(uint256)
-	{
-		return _rewardTimePeriod;
-	}
-	
-	function RewardStart() constant returns(uint256)
-	{
-		return _rewardStart;
-	}
-	
-	function RewardEnd() constant returns(uint256)
-	{
-		return _rewardEnd;
-	}
-	
-	function CurrentAirdropped() constant returns(uint256)
-	{
-		return _currentAirdropped;
-	}
-	
-	function TimeNow() constant returns(uint256)
-	{
-		return now;
-	}
+  
+  /**
+   * @dev Constructor that gives msg.sender all of existing tokens
+   */
+  function EGAS() {
+    balances[msg.sender] = totalSupply;
+  }
 }
