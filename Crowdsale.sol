@@ -1,24 +1,19 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xade45fd0e602543b76cfabbc0c8515f3a91b25b9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x6ccfea80e327dd8179c745348d2af31ce0b39fc5
 */
 pragma solidity ^0.4.16;
 
 interface token {
-    function transfer(address receiver, uint amount) external;
+    function transfer(address receiver, uint amount) public;
 }
 
 contract Crowdsale {
     address public beneficiary;
-    uint public fundingGoal;
-    uint public amountRaised;
-    uint public deadline;
     uint public price;
+    bool crowdsaleClosed = false;
     token public tokenReward;
     mapping(address => uint256) public balanceOf;
-    bool fundingGoalReached = false;
-    bool crowdsaleClosed = false;
 
-    event GoalReached(address recipient, uint totalAmountRaised);
     event FundTransfer(address backer, uint amount, bool isContribution);
 
     /**
@@ -26,18 +21,10 @@ contract Crowdsale {
      *
      * Setup the owner
      */
-    function Crowdsale(
-        address ifSuccessfulSendTo,
-        uint fundingGoalInEthers,
-        uint durationInMinutes,
-        uint etherCostOfEachToken,
-        address addressOfTokenUsedAsReward
-    ) public {
-        beneficiary = ifSuccessfulSendTo;
-        fundingGoal = fundingGoalInEthers * 1 ether;
-        deadline = now + durationInMinutes * 1 minutes;
-        price = etherCostOfEachToken * 1 ether / 10000000000000000;
-        tokenReward = token(addressOfTokenUsedAsReward);
+    function Crowdsale () public {
+        beneficiary = 0x1e19E36928bA65184669d8A7e7A37d8B061B9022;
+        price = 0.00058 * 1 ether;
+        tokenReward = token(0xe8EF8d9d9Ff515720A62d2E2f14f3b5b677C6670);
     }
 
     /**
@@ -45,58 +32,44 @@ contract Crowdsale {
      *
      * The function without name is the default function that is called whenever anyone sends funds to a contract
      */
-    function () payable public {
+    function () public payable {
         require(!crowdsaleClosed);
         uint amount = msg.value;
         balanceOf[msg.sender] += amount;
-        amountRaised += amount;
-        tokenReward.transfer(msg.sender, amount / price);
-        emit FundTransfer(msg.sender, amount, true);
+        tokenReward.transfer(msg.sender, (amount  * 1 ether) / price);
+        FundTransfer(msg.sender, amount, true);
+    }
+    
+    function changePrice(uint newprice) public {
+         if (beneficiary == msg.sender) {
+             price = newprice;
+         }
     }
 
-    modifier afterDeadline() { if (now >= deadline) _; }
+    function safeWithdrawal(uint amount) public {
 
-    /**
-     * Check if goal was reached
-     *
-     * Checks if the goal or time limit has been reached and ends the campaign
-     */
-    function checkGoalReached() afterDeadline public {
-        if (amountRaised >= fundingGoal){
-            fundingGoalReached = true;
-            emit GoalReached(beneficiary, amountRaised);
+        if (beneficiary == msg.sender) {
+            if (beneficiary.send(amount)) {
+                FundTransfer(beneficiary, amount, false);
+            }
         }
-        crowdsaleClosed = true;
     }
-
-
-    /**
-     * Withdraw the funds
-     *
-     * Checks to see if goal or time limit has been reached, and if so, and the funding goal was reached,
-     * sends the entire amount to the beneficiary. If goal was not reached, each contributor can withdraw
-     * the amount they contributed.
-     */
-    function safeWithdrawal() afterDeadline public {
-        if (!fundingGoalReached) {
-            uint amount = balanceOf[msg.sender];
-            balanceOf[msg.sender] = 0;
-            if (amount > 0) {
-                if (msg.sender.send(amount)) {
-                    emit FundTransfer(msg.sender, amount, false);
-                } else {
-                    balanceOf[msg.sender] = amount;
-                }
-            }
+    
+    function safeTokenWithdrawal(uint amount) public {
+         if (beneficiary == msg.sender) {
+             tokenReward.transfer(msg.sender, amount);
         }
-
-        if (fundingGoalReached && beneficiary == msg.sender) {
-            if (beneficiary.send(amountRaised)) {
-                emit FundTransfer(beneficiary, amountRaised, false);
-            } else {
-                //If we fail to send the funds to beneficiary, unlock funders balance
-                fundingGoalReached = false;
-            }
+    }
+    
+     function crowdsaleStop() public {
+         if (beneficiary == msg.sender) {
+            crowdsaleClosed = true;
+        }
+    }
+    
+    function crowdsaleStart() public {
+         if (beneficiary == msg.sender) {
+            crowdsaleClosed = false;
         }
     }
 }
