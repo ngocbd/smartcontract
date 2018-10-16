@@ -1,13 +1,24 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartzToken at 0x67b11cab20cc25c2fa673afaa5b2c8ba0afb1a81
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartzToken at 0x40ae4acd08e65714b093bf2495fd7941aedfa231
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.18;
 
-contract MintableToken {
-    event Mint(address indexed to, uint256 amount);
+interface IApprovalRecipient {
+    /**
+     * @notice Signals that token holder approved spending of tokens and some action should be taken.
+     *
+     * @param _sender token holder which approved spending of his tokens
+     * @param _value amount of tokens approved to be spent
+     * @param _extraData any extra data token holder provided to the call
+     *
+     * @dev warning: implementors should validate sender of this message (it should be the token) and make no further
+     *      assumptions unless validated them via ERC20 methods.
+     */
+    function receiveApproval(address _sender, uint256 _value, bytes _extraData) public;
+}
 
-    /// @dev mints new tokens
-    function mint(address _to, uint256 _amount) public;
+interface IKYCProvider {
+    function isKYCPassed(address _address) public view returns (bool);
 }
 
 library SafeMath {
@@ -39,18 +50,19 @@ library SafeMath {
   }
 }
 
-interface IApprovalRecipient {
-    /**
-     * @notice Signals that token holder approved spending of tokens and some action should be taken.
-     *
-     * @param _sender token holder which approved spending of his tokens
-     * @param _value amount of tokens approved to be spent
-     * @param _extraData any extra data token holder provided to the call
-     *
-     * @dev warning: implementors should validate sender of this message (it should be the token) and make no further
-     *      assumptions unless validated them via ERC20 methods.
-     */
-    function receiveApproval(address _sender, uint256 _value, bytes _extraData) public;
+contract ArgumentsChecker {
+
+    /// @dev check which prevents short address attack
+    modifier payloadSizeIs(uint size) {
+       require(msg.data.length == size + 4 /* function selector */);
+       _;
+    }
+
+    /// @dev check that address is valid
+    modifier validAddress(address addr) {
+        require(addr != address(0));
+        _;
+    }
 }
 
 contract multiowned {
@@ -443,6 +455,13 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
 
@@ -475,66 +494,33 @@ contract BasicToken is ERC20Basic {
 
 }
 
-contract MultiownedControlled is multiowned {
+contract BurnableToken is BasicToken {
 
-    event ControllerSet(address controller);
-    event ControllerRetired(address was);
-    event ControllerRetiredForever(address was);
+    event Burn(address indexed from, uint256 amount);
 
-
-    modifier onlyController {
-        require(msg.sender == m_controller);
-        _;
-    }
-
-
-    // PUBLIC interface
-
-    function MultiownedControlled(address[] _owners, uint _signaturesRequired, address _controller)
+    /**
+     * Function to burn msg.sender's tokens.
+     *
+     * @param _amount amount of tokens to burn
+     *
+     * @return boolean that indicates if the operation was successful
+     */
+    function burn(uint256 _amount)
         public
-        multiowned(_owners, _signaturesRequired)
+        returns (bool)
     {
-        m_controller = _controller;
-        ControllerSet(m_controller);
+        address from = msg.sender;
+
+        require(_amount > 0);
+        require(_amount <= balances[from]);
+
+        totalSupply = totalSupply.sub(_amount);
+        balances[from] = balances[from].sub(_amount);
+        Burn(from, _amount);
+        Transfer(from, address(0), _amount);
+
+        return true;
     }
-
-    /// @dev sets the controller
-    function setController(address _controller) external onlymanyowners(keccak256(msg.data)) {
-        require(m_attaching_enabled);
-        m_controller = _controller;
-        ControllerSet(m_controller);
-    }
-
-    /// @dev ability for controller to step down
-    function detachController() external onlyController {
-        address was = m_controller;
-        m_controller = address(0);
-        ControllerRetired(was);
-    }
-
-    /// @dev ability for controller to step down and make this contract completely automatic (without third-party control)
-    function detachControllerForever() external onlyController {
-        assert(m_attaching_enabled);
-        address was = m_controller;
-        m_controller = address(0);
-        m_attaching_enabled = false;
-        ControllerRetiredForever(was);
-    }
-
-
-    // FIELDS
-
-    /// @notice address of entity entitled to mint new tokens
-    address public m_controller;
-
-    bool public m_attaching_enabled = true;
-}
-
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 contract StandardToken is ERC20, BasicToken {
@@ -611,131 +597,7 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-contract MintableMultiownedToken is MintableToken, MultiownedControlled, StandardToken {
-
-    // PUBLIC interface
-
-    function MintableMultiownedToken(address[] _owners, uint _signaturesRequired, address _minter)
-        public
-        MultiownedControlled(_owners, _signaturesRequired, _minter)
-    {
-    }
-
-
-    /// @dev mints new tokens
-    function mint(address _to, uint256 _amount) public onlyController {
-        require(m_externalMintingEnabled);
-        mintInternal(_to, _amount);
-    }
-
-    /// @dev disables mint(), irreversible!
-    function disableMinting() public onlyController {
-        require(m_externalMintingEnabled);
-        m_externalMintingEnabled = false;
-    }
-
-
-    // INTERNAL functions
-
-    function mintInternal(address _to, uint256 _amount) internal {
-        totalSupply = totalSupply.add(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        Transfer(address(0), _to, _amount);
-        Mint(_to, _amount);
-    }
-
-
-    // FIELDS
-
-    /// @notice if this true then token is still externally mintable
-    bool public m_externalMintingEnabled = true;
-}
-
-contract CirculatingToken is StandardToken {
-
-    event CirculationEnabled();
-
-    modifier requiresCirculation {
-        require(m_isCirculating);
-        _;
-    }
-
-
-    // PUBLIC interface
-
-    function transfer(address _to, uint256 _value) public requiresCirculation returns (bool) {
-        return super.transfer(_to, _value);
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) public requiresCirculation returns (bool) {
-        return super.transferFrom(_from, _to, _value);
-    }
-
-    function approve(address _spender, uint256 _value) public requiresCirculation returns (bool) {
-        return super.approve(_spender, _value);
-    }
-
-
-    // INTERNAL functions
-
-    function enableCirculation() internal returns (bool) {
-        if (m_isCirculating)
-            return false;
-
-        m_isCirculating = true;
-        CirculationEnabled();
-        return true;
-    }
-
-
-    // FIELDS
-
-    /// @notice are the circulation started?
-    bool public m_isCirculating;
-}
-
-contract SmartzToken is CirculatingToken, MintableMultiownedToken {
-
-    event Burn(address indexed from, uint256 amount);
-
-
-    // PUBLIC FUNCTIONS
-
-    /**
-     * @notice Constructs token.
-     *
-     * @param _initialOwners initial multi-signatures, see comment below
-     * @param _signaturesRequired quorum of multi-signatures
-     *
-     * Initial owners have power over the token contract only during bootstrap phase (early investments and token
-     * sales). After final token sale any control over the token removed by issuing detachControllerForever call.
-     * For lifecycle example please see test/SmartzTokenTest.js, 'test full lifecycle'.
-     */
-    function SmartzToken(address[] _initialOwners, uint _signaturesRequired)
-        public
-        MintableMultiownedToken(_initialOwners, _signaturesRequired, address(0))
-    {
-    }
-
-    /**
-     * Function to burn msg.sender's tokens.
-     *
-     * @param _amount The amount of tokens to burn
-     *
-     * @return A boolean that indicates if the operation was successful.
-     */
-    function burn(uint256 _amount) public returns (bool) {
-        address from = msg.sender;
-        require(_amount > 0);
-        require(_amount <= balances[from]);
-
-        totalSupply = totalSupply.sub(_amount);
-        balances[from] = balances[from].sub(_amount);
-        Burn(from, _amount);
-        Transfer(from, address(0), _amount);
-
-        return true;
-    }
+contract TokenWithApproveAndCallMethod is StandardToken {
 
     /**
      * @notice Approves spending tokens and immediately triggers token recipient logic.
@@ -753,18 +615,453 @@ contract SmartzToken is CirculatingToken, MintableMultiownedToken {
         require(approve(_spender, _value));
         IApprovalRecipient(_spender).receiveApproval(msg.sender, _value, _extraData);
     }
+}
+
+contract SmartzToken is ArgumentsChecker, multiowned, BurnableToken, StandardToken, TokenWithApproveAndCallMethod {
+
+    /// @title Unit of frozen tokens - tokens which can't be spent until certain conditions is met.
+    struct FrozenCell {
+        /// @notice amount of frozen tokens
+        uint amount;
+
+        /// @notice until this unix time the cell is considered frozen
+        uint128 thawTS;
+
+        /// @notice is KYC required for a token holder to spend this cell?
+        uint128 isKYCRequired;
+    }
+
+
+    // MODIFIERS
+
+    modifier onlySale(address account) {
+        require(isSale(account));
+        _;
+    }
+
+    modifier validUnixTS(uint ts) {
+        require(ts >= 1522046326 && ts <= 1800000000);
+        _;
+    }
+
+    modifier checkTransferInvariant(address from, address to) {
+        uint initial = balanceOf(from).add(balanceOf(to));
+        _;
+        assert(balanceOf(from).add(balanceOf(to)) == initial);
+    }
+
+    modifier privilegedAllowed {
+        require(m_allowPrivileged);
+        _;
+    }
+
+
+    // PUBLIC FUNCTIONS
+
+    /**
+     * @notice Constructs token.
+     *
+     * Initial owners have power over the token contract only during bootstrap phase (early investments and token
+     * sales). To be precise, the owners can set KYC provider and sales (which can freeze transfered tokens) during
+     * bootstrap phase. After final token sale any control over the token removed by issuing disablePrivileged call.
+     */
+    function SmartzToken()
+        public
+        payable
+        multiowned(getInitialOwners(), 2)
+    {
+        if (0 != 150000000000000000000000000) {
+            totalSupply = 150000000000000000000000000;
+            balances[msg.sender] = totalSupply;
+            Transfer(address(0), msg.sender, totalSupply);
+        }
+
+
+totalSupply = totalSupply.add(0);
+
+        address(0xaacf78f8e1fbdcf7d941e80ff8b817be1f054af4).transfer(300000000000000000 wei);
+    }
+
+    function getInitialOwners() private pure returns (address[]) {
+        address[] memory result = new address[](3);
+result[0] = address(0x4ff9A68a832398c6b013633BB5682595ebb7B92E);
+result[1] = address(0xE4074bB7bD4828bAeD9d2beCe1e386408428dfB7);
+result[2] = address(0xAACf78F8e1fbDcf7d941E80Ff8B817BE1F054Af4);
+        return result;
+    }
+
+    /**
+     * @notice Version of balanceOf() which includes all frozen tokens.
+     *
+     * @param _owner the address to query the balance of
+     *
+     * @return an uint256 representing the amount owned by the passed address
+     */
+    function balanceOf(address _owner) public view returns (uint256) {
+        uint256 balance = balances[_owner];
+
+        for (uint cellIndex = 0; cellIndex < frozenBalances[_owner].length; ++cellIndex) {
+            balance = balance.add(frozenBalances[_owner][cellIndex].amount);
+        }
+
+        return balance;
+    }
+
+    /**
+     * @notice Version of balanceOf() which includes only currently spendable tokens.
+     *
+     * @param _owner the address to query the balance of
+     *
+     * @return an uint256 representing the amount spendable by the passed address
+     */
+    function availableBalanceOf(address _owner) public view returns (uint256) {
+        uint256 balance = balances[_owner];
+
+        for (uint cellIndex = 0; cellIndex < frozenBalances[_owner].length; ++cellIndex) {
+            if (isSpendableFrozenCell(_owner, cellIndex))
+                balance = balance.add(frozenBalances[_owner][cellIndex].amount);
+        }
+
+        return balance;
+    }
+
+    /**
+     * @notice Standard transfer() overridden to have a chance to thaw sender's tokens.
+     *
+     * @param _to the address to transfer to
+     * @param _value the amount to be transferred
+     *
+     * @return true iff operation was successfully completed
+     */
+    function transfer(address _to, uint256 _value)
+        public
+        payloadSizeIs(2 * 32)
+        returns (bool)
+    {
+        thawSomeTokens(msg.sender, _value);
+        return super.transfer(_to, _value);
+    }
+
+    /**
+     * @notice Standard transferFrom overridden to have a chance to thaw sender's tokens.
+     *
+     * @param _from address the address which you want to send tokens from
+     * @param _to address the address which you want to transfer to
+     * @param _value uint256 the amount of tokens to be transferred
+     *
+     * @return true iff operation was successfully completed
+     */
+    function transferFrom(address _from, address _to, uint256 _value)
+        public
+        payloadSizeIs(3 * 32)
+        returns (bool)
+    {
+        thawSomeTokens(_from, _value);
+        return super.transferFrom(_from, _to, _value);
+    }
+
+
+    /**
+     * Function to burn msg.sender's tokens. Overridden to have a chance to thaw sender's tokens.
+     *
+     * @param _amount amount of tokens to burn
+     *
+     * @return boolean that indicates if the operation was successful
+     */
+    function burn(uint256 _amount)
+        public
+        payloadSizeIs(1 * 32)
+        returns (bool)
+    {
+        thawSomeTokens(msg.sender, _amount);
+        return super.burn(_amount);
+    }
+
+
+    // INFORMATIONAL FUNCTIONS (VIEWS)
+
+    /**
+     * @notice Number of frozen cells of an account.
+     *
+     * @param owner account address
+     *
+     * @return number of frozen cells
+     */
+    function frozenCellCount(address owner) public view returns (uint) {
+        return frozenBalances[owner].length;
+    }
+
+    /**
+     * @notice Retrieves information about account frozen tokens.
+     *
+     * @param owner account address
+     * @param index index of so-called frozen cell from 0 (inclusive) up to frozenCellCount(owner) exclusive
+     *
+     * @return amount amount of tokens frozen in this cell
+     * @return thawTS unix timestamp at which tokens'll become available
+     * @return isKYCRequired it's required to pass KYC to spend tokens iff isKYCRequired is true
+     */
+    function frozenCell(address owner, uint index) public view returns (uint amount, uint thawTS, bool isKYCRequired) {
+        require(index < frozenCellCount(owner));
+
+        amount = frozenBalances[owner][index].amount;
+        thawTS = uint(frozenBalances[owner][index].thawTS);
+        isKYCRequired = decodeKYCFlag(frozenBalances[owner][index].isKYCRequired);
+    }
 
 
     // ADMINISTRATIVE FUNCTIONS
 
-    function startCirculation() external onlyController returns (bool) {
-        return enableCirculation();
+    /**
+     * @notice Sets current KYC provider of the token.
+     *
+     * @param KYCProvider address of the IKYCProvider-compatible contract
+     *
+     * Function is used only during token sale phase, before disablePrivileged() is called.
+     */
+    function setKYCProvider(address KYCProvider)
+        external
+        validAddress(KYCProvider)
+        privilegedAllowed
+        onlymanyowners(keccak256(msg.data))
+    {
+        m_KYCProvider = IKYCProvider(KYCProvider);
     }
+
+    /**
+     * @notice Sets sale status of an account.
+     *
+     * @param account account address
+     * @param isSale is this account has access to frozen* functions
+     *
+     * Function is used only during token sale phase, before disablePrivileged() is called.
+     */
+    function setSale(address account, bool isSale)
+        external
+        validAddress(account)
+        privilegedAllowed
+        onlymanyowners(keccak256(msg.data))
+    {
+        m_sales[account] = isSale;
+    }
+
+
+    /**
+     * @notice Transfers tokens to a recipient and freezes it.
+     *
+     * @param _to account to which tokens are sent
+     * @param _value amount of tokens to send
+     * @param thawTS unix timestamp at which tokens'll become available
+     * @param isKYCRequired it's required to pass KYC to spend tokens iff isKYCRequired is true
+     *
+     * Function is used only during token sale phase and available only to sale accounts.
+     */
+    function frozenTransfer(address _to, uint256 _value, uint thawTS, bool isKYCRequired)
+        external
+        validAddress(_to)
+        validUnixTS(thawTS)
+        payloadSizeIs(4 * 32)
+        privilegedAllowed
+        onlySale(msg.sender)
+        checkTransferInvariant(msg.sender, _to)
+        returns (bool)
+    {
+        require(_value <= balances[msg.sender]);
+
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        addFrozen(_to, _value, thawTS, isKYCRequired);
+        Transfer(msg.sender, _to, _value);
+
+        return true;
+    }
+
+    /**
+     * @notice Transfers frozen tokens back.
+     *
+     * @param _from account to send tokens from
+     * @param _to account to which tokens are sent
+     * @param _value amount of tokens to send
+     * @param thawTS unix timestamp at which tokens'll become available
+     * @param isKYCRequired it's required to pass KYC to spend tokens iff isKYCRequired is true
+     *
+     * Function is used only during token sale phase to make a refunds and available only to sale accounts.
+     * _from account has to explicitly approve spending with the approve() call.
+     * thawTS and isKYCRequired parameters are required to withdraw exact "same" tokens (to not affect availability of
+     * other tokens of the account).
+     */
+    function frozenTransferFrom(address _from, address _to, uint256 _value, uint thawTS, bool isKYCRequired)
+        external
+        validAddress(_to)
+        validUnixTS(thawTS)
+        payloadSizeIs(5 * 32)
+        privilegedAllowed
+        //onlySale(msg.sender) too many local variables - compiler fails
+        //onlySale(_to)
+        checkTransferInvariant(_from, _to)
+        returns (bool)
+    {
+        require(isSale(msg.sender) && isSale(_to));
+        require(_value <= allowed[_from][msg.sender]);
+
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        subFrozen(_from, _value, thawTS, isKYCRequired);
+        balances[_to] = balances[_to].add(_value);
+        Transfer(_from, _to, _value);
+
+        return true;
+    }
+
+    /// @notice Disables further use of any privileged functions like freezing tokens.
+    function disablePrivileged()
+        external
+        privilegedAllowed
+        onlymanyowners(keccak256(msg.data))
+    {
+        m_allowPrivileged = false;
+    }
+
+
+    // INTERNAL FUNCTIONS
+
+    function isSale(address account) private view returns (bool) {
+        return m_sales[account];
+    }
+
+    /**
+     * @dev Tries to find existent FrozenCell that matches (thawTS, isKYCRequired).
+     *
+     * @return index in frozenBalances[_owner] which equals to frozenBalances[_owner].length in case cell is not found
+     *
+     * Because frozen* functions are only for token sales and token sale number is limited, expecting cellIndex
+     * to be ~ 1-5 and the following loop to be O(1).
+     */
+    function findFrozenCell(address owner, uint128 thawTSEncoded, uint128 isKYCRequiredEncoded)
+        private
+        view
+        returns (uint cellIndex)
+    {
+        for (cellIndex = 0; cellIndex < frozenBalances[owner].length; ++cellIndex) {
+            FrozenCell storage checkedCell = frozenBalances[owner][cellIndex];
+            if (checkedCell.thawTS == thawTSEncoded && checkedCell.isKYCRequired == isKYCRequiredEncoded)
+                break;
+        }
+
+        assert(cellIndex <= frozenBalances[owner].length);
+    }
+
+    /// @dev Says if the given cell could be spent now
+    function isSpendableFrozenCell(address owner, uint cellIndex)
+        private
+        view
+        returns (bool)
+    {
+        FrozenCell storage cell = frozenBalances[owner][cellIndex];
+        if (uint(cell.thawTS) > getTime())
+            return false;
+
+        if (0 == cell.amount)   // already spent
+            return false;
+
+        if (decodeKYCFlag(cell.isKYCRequired) && !m_KYCProvider.isKYCPassed(owner))
+            return false;
+
+        return true;
+    }
+
+    /// @dev Internal function to increment or create frozen cell.
+    function addFrozen(address _to, uint256 _value, uint thawTS, bool isKYCRequired)
+        private
+        validAddress(_to)
+        validUnixTS(thawTS)
+    {
+        uint128 thawTSEncoded = uint128(thawTS);
+        uint128 isKYCRequiredEncoded = encodeKYCFlag(isKYCRequired);
+
+        uint cellIndex = findFrozenCell(_to, thawTSEncoded, isKYCRequiredEncoded);
+
+        // In case cell is not found - creating new.
+        if (cellIndex == frozenBalances[_to].length) {
+            frozenBalances[_to].length++;
+            targetCell = frozenBalances[_to][cellIndex];
+            assert(0 == targetCell.amount);
+
+            targetCell.thawTS = thawTSEncoded;
+            targetCell.isKYCRequired = isKYCRequiredEncoded;
+        }
+
+        FrozenCell storage targetCell = frozenBalances[_to][cellIndex];
+        assert(targetCell.thawTS == thawTSEncoded && targetCell.isKYCRequired == isKYCRequiredEncoded);
+
+        targetCell.amount = targetCell.amount.add(_value);
+    }
+
+    /// @dev Internal function to decrement frozen cell.
+    function subFrozen(address _from, uint256 _value, uint thawTS, bool isKYCRequired)
+        private
+        validUnixTS(thawTS)
+    {
+        uint cellIndex = findFrozenCell(_from, uint128(thawTS), encodeKYCFlag(isKYCRequired));
+        require(cellIndex != frozenBalances[_from].length);   // has to be found
+
+        FrozenCell storage cell = frozenBalances[_from][cellIndex];
+        require(cell.amount >= _value);
+
+        cell.amount = cell.amount.sub(_value);
+    }
+
+    /// @dev Thaws tokens of owner until enough tokens could be spent or no more such tokens found.
+    function thawSomeTokens(address owner, uint requiredAmount)
+        private
+    {
+        if (balances[owner] >= requiredAmount)
+            return;     // fast path
+
+        // Checking that our goal is reachable before issuing expensive storage modifications.
+        require(availableBalanceOf(owner) >= requiredAmount);
+
+        for (uint cellIndex = 0; cellIndex < frozenBalances[owner].length; ++cellIndex) {
+            if (isSpendableFrozenCell(owner, cellIndex)) {
+                uint amount = frozenBalances[owner][cellIndex].amount;
+                frozenBalances[owner][cellIndex].amount = 0;
+                balances[owner] = balances[owner].add(amount);
+            }
+        }
+
+        assert(balances[owner] >= requiredAmount);
+    }
+
+    /// @dev to be overridden in tests
+    function getTime() internal view returns (uint) {
+        return now;
+    }
+
+    function encodeKYCFlag(bool isKYCRequired) private pure returns (uint128) {
+        return isKYCRequired ? uint128(1) : uint128(0);
+    }
+
+    function decodeKYCFlag(uint128 isKYCRequired) private pure returns (bool) {
+        return isKYCRequired != uint128(0);
+    }
+
+
+    // FIELDS
+
+    /// @notice current KYC provider of the token
+    IKYCProvider public m_KYCProvider;
+
+    /// @notice set of sale accounts which can freeze tokens
+    mapping (address => bool) public m_sales;
+
+    /// @notice frozen tokens
+    mapping (address => FrozenCell[]) public frozenBalances;
+
+    /// @notice allows privileged functions (token sale phase)
+    bool public m_allowPrivileged = true;
 
 
     // CONSTANTS
 
-    string public constant name = "Smartz token";
-    string public constant symbol = "SMR";
+    string public constant name = 'Smartz token';
+    string public constant symbol = 'SMR';
     uint8 public constant decimals = 18;
 }
