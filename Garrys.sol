@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Garrys at 0x0486506702b47fd838f3b8ead7fc9509f012f4a7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Garrys at 0x8c20d8d54771df6ed6728ca7413ae95e2e5f14ee
 */
 pragma solidity ^0.4.19;
 
@@ -26,9 +26,6 @@ contract ERC20Interface {
 
     event Transfer(address indexed from, address indexed to, uint tokens);
     event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
-    
-    // custom events
-    event WeiSent(address indexed to, uint _wei);
 }
 
 
@@ -89,7 +86,9 @@ contract Garrys is ERC20Interface, Owned {
 
     mapping(address => uint) balances;
     mapping(address => mapping(address => uint)) allowed;
-
+    
+    address GameContract;
+    
     // ------------------------------------------------------------------------
     // Launched once when contract starts
     // ------------------------------------------------------------------------
@@ -101,7 +100,7 @@ contract Garrys is ERC20Interface, Owned {
         _totalSupply = 1 * 10**uint(decimals);      
         // set ratio, get 100 Garrys for 1 Ether
         _ratio = 100;
-        // there can never be more than 5000 Garrys in existence, doubt the world can handle 2 :D
+        // there can never be more than 10000 Garrys in existence, doubt the world can handle 2 :D
         _maxSupply = 10000 * 10**uint(decimals);    
         balances[owner] = _totalSupply;
         // transfer inital coin to Garry, which is 1
@@ -139,7 +138,7 @@ contract Garrys is ERC20Interface, Owned {
         Transfer(msg.sender, to, tokens);
         return true;
     }
-
+    
 
     // ------------------------------------------------------------------------
     // Token owner can approve for `spender` to transferFrom(...) `tokens`
@@ -166,7 +165,9 @@ contract Garrys is ERC20Interface, Owned {
     // - 0 value transfers are allowed
     // ------------------------------------------------------------------------
     function transferFrom(address from, address to, uint tokens) public returns (bool success) {
-        require (balances[from] > tokens);
+        require (allowed[from][msg.sender] >= tokens);
+        require (balances[from] >= tokens);
+        
         balances[from] -= tokens;
         allowed[from][msg.sender] -= tokens;
         balances[to] += tokens;
@@ -237,6 +238,5 @@ contract Garrys is ERC20Interface, Owned {
     function weiToOwner(address _address, uint amount) public onlyOwner {
         require(amount <= this.balance);
         _address.transfer(amount);
-        WeiSent(_address, amount);
     }
 }
