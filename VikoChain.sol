@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VikoChain at 0xa4ab569cc924f0103c712c135d3e1e68776c64cb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VikoChain at 0xa8e6ac0f78b87574a3129141de06678768a226b2
 */
 pragma solidity ^0.4.20;
 
