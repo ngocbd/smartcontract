@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xeec396f875d0d56cddf4d33b30d7cd59c8e1bbcd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x372bffb8d0a03ecfd680f4c4dab7af2ac22aaf71
 */
 pragma solidity ^0.4.19;
 
@@ -47,11 +47,11 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 100000000000000000000000000;
-        name = 'YDLGENES';
-        symbol = 'YDLG';
+        totalSupply = 10000000000000000000000000000;
+        name = 'SportsLotteryChain';
+        symbol = 'SLC';
         decimals = 18;
-        balanceOf[0xa5791f4e7bf0ec01620317cf9f135325a5b47404] = totalSupply;
-        Transfer(address(0), 0xa5791f4e7bf0ec01620317cf9f135325a5b47404, totalSupply);
+        balanceOf[0x88c3101f0d6c2025e2ecbe0bb4d758a0eae64199] = totalSupply;
+        Transfer(address(0), 0x88c3101f0d6c2025e2ecbe0bb4d758a0eae64199, totalSupply);
     }
 }
