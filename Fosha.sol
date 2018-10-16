@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fosha at 0x92c83ee2b6fb9a2361c6adc2edca52f56ab1c2e7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fosha at 0x61a541c78afd142f8e185142e2c4eb22639b310e
 */
 pragma solidity ^0.4.21;
 
@@ -27,50 +27,83 @@ library SafeMath {
     }
 }
 
-contract Fosha {
-    
-    using SafeMath for uint256; 
+contract Ownable {
+    address public owner;
 
-    string constant public standard = "ERC20";
+    function Ownable() {
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function transferOwnership(address newOwner) onlyOwner {
+        require(newOwner != address(0));
+        owner = newOwner;
+    }
+}
+
+contract ERC20Basic {
+    uint256 public totalSupply;
+    function balanceOf(address who) constant returns (uint256);
+    function transfer(address to, uint256 value) returns (bool);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+contract ERC20 is ERC20Basic {
+    function allowance(address owner, address spender) constant returns (uint256);
+    function transferFrom(address from, address to, uint256 value) returns (bool);
+    function approve(address spender, uint256 value) returns (bool);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+contract Fosha is ERC20, Ownable {
+   
+    using SafeMath for uint256;
+	
     string constant public symbol = "FOSHA";
     string constant public name = "Fosha";
     uint8 constant public decimals = 18;
 
-    uint256 constant public initialSupply = 78000000 * 1 ether;
-    uint256 constant public tokensForIco = 62400000 * 1 ether;
-
-    uint256 public startTransferTime;
-    uint256 public tokensSold;
-
-    mapping(address => uint256) public balanceOf;
-    mapping(address => mapping(address => uint256)) public allowance;
-    
-    uint256 constant public start = 1524391200;
-    uint256 constant public end = 1525132799;
-    uint256 constant public tokenExchangeRate = 3000;
-    uint256 public amountRaised;
+	uint public totalSupply;
+	uint public tokensForIco;
+	uint256 public startTransferTime;
+	uint256 public tokensSold;
+	uint256 public start;
+	uint256 public end;
+	uint256 public tokenExchangeRate;
+	uint256 public amountRaised;
     bool public crowdsaleClosed = false;
+	
     address public fundWallet;
     address ethFundWallet;
+	
+	mapping(address => uint256) balances;
+    mapping(address => mapping (address => uint256)) allowed;
+	
+	event FundTransfer(address backer, uint amount, bool isContribution, uint _amountRaised);
 
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed _owner, address indexed spender, uint256 value);
-    event FundTransfer(address backer, uint amount, bool isContribution, uint _amountRaised);
-
-    function Fosha(address _ethFundWallet) {
-		ethFundWallet = _ethFundWallet;
+	function Fosha(uint256 _total, uint256 _icototal, uint256 _start, uint256 _end, uint256 _exchange) {
+		totalSupply = _total * 1 ether;
+		tokensForIco = _icototal * 1 ether;
+		start = _start;
+		end = _end;
+		tokenExchangeRate = _exchange;
+		ethFundWallet = msg.sender;
 		fundWallet = msg.sender;
-		balanceOf[fundWallet] = initialSupply;
+		balances[fundWallet] = totalSupply;
 		startTransferTime = end;
     }
 
     function() payable {
 		uint256 amount = msg.value;
 		uint256 numTokens = amount.mul(tokenExchangeRate); 
-		require(!crowdsaleClosed && now >= start && now <= end && tokensSold.add(numTokens) <= tokensForIco && amount <= 5);
+		require(!crowdsaleClosed && now >= start && now <= end && tokensSold.add(numTokens) <= tokensForIco && amount <= 5 ether);
 		ethFundWallet.transfer(amount);
-		balanceOf[fundWallet] = balanceOf[fundWallet].sub(numTokens); 
-		balanceOf[msg.sender] = balanceOf[msg.sender].add(numTokens);
+		balances[fundWallet] = balances[fundWallet].sub(numTokens); 
+		balances[msg.sender] = balances[msg.sender].add(numTokens);
 		Transfer(fundWallet, msg.sender, numTokens);
 		amountRaised = amountRaised.add(amount);
 		tokensSold += numTokens;
@@ -79,28 +112,36 @@ contract Fosha {
 
     function transfer(address _to, uint256 _value) returns(bool success) {
 		require(now >= startTransferTime); 
-		balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value); 
-		balanceOf[_to] = balanceOf[_to].add(_value); 
+		balances[msg.sender] = balances[msg.sender].sub(_value); 
+		balances[_to] = balances[_to].add(_value); 
 		Transfer(msg.sender, _to, _value); 
 		return true;
     }
-
+	
+	function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
+    }
+	
     function approve(address _spender, uint256 _value) returns(bool success) {
-		require((_value == 0) || (allowance[msg.sender][_spender] == 0));
-		allowance[msg.sender][_spender] = _value;
+		require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+		allowed[msg.sender][_spender] = _value;
 		Approval(msg.sender, _spender, _value);
 		return true;
     }
 
+	function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+        return allowed[_owner][_spender];
+    }
+	
     function transferFrom(address _from, address _to, uint256 _value) returns(bool success) {
 		if (now < startTransferTime) {
 		    require(_from == fundWallet);
 		}
-		var _allowance = allowance[_from][msg.sender];
+		var _allowance = allowed[_from][msg.sender];
 		require(_value <= _allowance);
-		balanceOf[_from] = balanceOf[_from].sub(_value); 
-		balanceOf[_to] = balanceOf[_to].add(_value); 
-		allowance[_from][msg.sender] = _allowance.sub(_value);
+		balances[_from] = balances[_from].sub(_value); 
+		balances[_to] = balances[_to].add(_value); 
+		allowed[_from][msg.sender] = _allowance.sub(_value);
 		Transfer(_from, _to, _value);
 		return true;
     }
