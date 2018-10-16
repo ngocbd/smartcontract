@@ -1,109 +1,167 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xe6ab84ae7091cc00dd324b7fe9cbc1c92223004e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdSale at 0x0E915b35cC269b2DfC8BbD8E4A88Ed4884a53EfC
 */
-pragma solidity ^0.4.16;
-contract Ownable {
-    address owner;
-    
-    function Ownable() public {
-        owner = msg.sender;
+pragma solidity ^0.4.18;
+
+interface token {
+    function transferFrom(address _from, address _to, uint256 _value) public;
+}
+
+contract CrowdSale {
+    address public beneficiary;
+    uint public fundingGoal;
+    uint public amountRaised;
+    uint public startTime;
+    uint public deadline;
+    uint public price;
+    token public tokenReward;
+    mapping(address => uint256) public balanceOf;
+    bool fundingGoalReached = false;
+    bool public crowdsaleClosed = false ;
+
+    event GoalReached(address recipient, uint totalAmountRaised);
+    event FundTransfer(address backer, uint amount, bool isContribution);
+    event CrowdsaleClose(uint totalAmountRaised, bool fundingGoalReached);
+
+    /**
+     * Constrctor function
+     *
+     * Setup the owner
+     */
+    function CrowdSale(
+        address ifSuccessfulSendTo,
+        uint fundingGoalInEthers,
+        uint startTimeInSeconds,
+        uint durationInMinutes,
+        uint szaboCostOfEachToken,
+        address addressOfTokenUsedAsReward
+    ) public {
+        beneficiary = ifSuccessfulSendTo;
+        fundingGoal = fundingGoalInEthers * 1 ether;
+        startTime = startTimeInSeconds;
+        deadline = startTimeInSeconds + durationInMinutes * 1 minutes;
+        price = szaboCostOfEachToken * 1 finney;
+        tokenReward = token(addressOfTokenUsedAsReward);
     }
 
-    modifier onlyOwner() {
-        require(msg.sender == owner);
+    /**
+     * Do purchase process
+     *
+     */
+    function purchase() internal {
+        uint amount = msg.value;
+        balanceOf[msg.sender] += amount;
+        amountRaised += amount;
+        tokenReward.transferFrom(beneficiary, msg.sender, (amount * price) / 1 ether);
+        checkGoalReached();
+        FundTransfer(msg.sender, amount, true);
+    }
+
+    /**
+     * Fallback function
+     *
+     * The function without name is the default function that is called whenever anyone sends funds to a contract
+     */
+    function()
+    payable
+    isOpen
+    afterStart
+    public {
+        purchase();
+    }
+
+    /**
+     * The function called only from shiftsale
+     *
+     */
+    function shiftSalePurchase() payable public returns(bool success) {
+        purchase();
+        return true;
+    }
+
+    modifier afterStart() {
+        require(now >= startTime);
         _;
     }
 
-    function transferOwnership(address newOwner) onlyOwner public {
-        owner = newOwner;
-    }
-    
-}
-
-contract SimpleTokenCoin is Ownable {
-    
-    string public constant name = "ZakharN Eternal Token";
-    
-    string public constant symbol = "ZNET";
-    
-    uint32 public constant decimals = 18;
-    
-    uint public totalSupply;
-    mapping (address => uint) balances;
-    mapping (address => mapping (address => uint256)) internal allowed;
-
-    
-    function balanceOf(address _owner) constant public returns (uint balance) {
-        return balances[_owner];
+    modifier afterDeadline() {
+        require(now >= deadline);
+        _;
     }
 
-    function transfer(address _to, uint _value) public returns (bool success) {
-        require(balances[msg.sender]>=_value);
-        balances[msg.sender] -= _value;
-        balances[_to] += _value;
-        assert(balances[_to]>=_value);
-        Transfer(msg.sender, _to, _value);
-        return true;
-    }
-    
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-        require(_value <= balances[_from]);
-        require(_value <= allowed[_from][msg.sender]);
-        balances[_from] -= _value;
-        balances[_to] += _value;
-        assert(balances[_to]>=_value);
-        allowed[_from][msg.sender] -= _value;
-        Transfer(_from, _to, _value);
-        return true;
-    }
-    
-    function approve(address _spender, uint _value) public returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender,_spender,_value);
-        return false;
-    }
-    
-    function allowance(address _owner, address _spender) constant public returns (uint remaining) {
-        return allowed[_owner][_spender];
-    }
-    
-    event Transfer(address indexed _from, address indexed _to, uint _value);
-    
-    event Approval(address indexed _owner, address indexed _spender, uint _value);
-    
-}
-
-contract Crowdsale is Ownable, SimpleTokenCoin{
-
-    function mint(address _to, uint _value) public onlyOwner returns (bool){
-        require(balances[_to] + _value >= balances[_to]);
-        balances[_to] +=_value;
-        totalSupply += _value;
-        Mint(_to, _value);
-    }    
-    
-    //payable
-    function() external payable {
-        uint _summa = msg.value; //ether
-        createTokens(msg.sender, _summa);
+    modifier previousDeadline() {
+        require(now <= deadline);
+        _;
     }
 
-    function createTokens(address _to, uint _value) public{
-        require(balances[_to] + _value >= balances[_to]);
-        balances[_to] +=_value;
-        totalSupply += _value;
-        Mint(_to, _value);
+    modifier isOwner() {
+        require (msg.sender == beneficiary);
+        _;
     }
-    
-    //refund
-    function refund() public {
+
+    modifier isClosed() {
+        require(crowdsaleClosed);
+        _;
     }
-    
-    function giveMeCoins(uint256 _value) public onlyOwner returns(uint){
-        require(this.balance>=_value);
-        owner.transfer(_value);
-        return this.balance;
+
+    modifier isOpen() {
+        require(!crowdsaleClosed);
+        _;
     }
-    event Mint (address, uint);
+
+    /**
+     * Check if goal was reached
+     *
+     */
+    function checkGoalReached() internal {
+        if (amountRaised >= fundingGoal && !fundingGoalReached) {
+            fundingGoalReached = true;
+            GoalReached(beneficiary, amountRaised);
+        }
+    }
+
+    /**
+     * Close the crowdsale
+     *
+     */
+    function closeCrowdsale()
+    isOwner
+    public {
+        crowdsaleClosed = true;
+        CrowdsaleClose(amountRaised, fundingGoalReached);
+    }
+
+
+    /**
+     * Withdraw the funds
+     *
+     * Checks to see if goal or time limit has been reached, and if so, and the funding goal was reached,
+     * sends the entire amount to the beneficiary. If goal was not reached, each contributor can withdraw
+     * the amount they contributed.
+     */
+    function safeWithdrawal()
+    afterDeadline
+    isClosed
+    public {
+        if (!fundingGoalReached) {
+            uint amount = balanceOf[msg.sender];
+            balanceOf[msg.sender] = 0;
+            if (amount > 0) {
+                if (msg.sender.send(amount)) {
+                    FundTransfer(msg.sender, amount, false);
+                } else {
+                    balanceOf[msg.sender] = amount;
+                }
+            }
+        }
+
+        if (fundingGoalReached && beneficiary == msg.sender) {
+            if (beneficiary.send(amountRaised)) {
+                FundTransfer(beneficiary, amountRaised, false);
+            } else {
+                //If we fail to send the funds to beneficiary, unlock funders balance
+                fundingGoalReached = false;
+            }
+        }
+    }
 }
