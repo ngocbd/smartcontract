@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Grid at 0x9d6cde970c30e45311cff3d1f3f9a8dd24ff70f1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Grid at 0x224a1fd635ec602316decb793370a45509543ce6
 */
 pragma solidity ^0.4.11;
 
@@ -7,6 +7,9 @@ contract Grid {
   // The account address with admin privilege to this contract
   // This is also the default owner of all unowned pixels
   address admin;
+
+  // The size in number of pixels of the square grid on each side
+  uint16 public size;
 
   // The default price of unowned pixels
   uint public defaultPrice;
@@ -36,8 +39,7 @@ contract Grid {
   }
 
   // The state of the pixel grid
-  /*mapping(uint32 => Pixel) pixels;*/
-  Pixel[1000][1000] pixels;
+  mapping(uint32 => Pixel) pixels;
 
   // The state of all users who have transacted with this contract
   mapping(address => uint) pendingWithdrawals;
@@ -59,12 +61,14 @@ contract Grid {
   //============================================================================
 
   function Grid(
+    uint16 _size,
     uint _defaultPrice,
     uint _feeRatio,
     uint _incrementRate) {
     admin = msg.sender;
     defaultPrice = _defaultPrice;
     feeRatio = _feeRatio;
+    size = _size;
     incrementRate = _incrementRate;
   }
 
@@ -78,9 +82,9 @@ contract Grid {
     _;
   }
 
-  modifier validPixel(uint16 row, uint16 col) {
-    require(row < 1000 && col < 1000);
-    _;
+  function getKey(uint16 row, uint16 col) constant returns (uint32) {
+    require(row < size && col < size);
+    return uint32(SafeMath.add(SafeMath.mul(row, size), col));
   }
 
   function() payable {}
@@ -105,25 +109,25 @@ contract Grid {
   // Public Querying API
   //============================================================================
 
-  function getPixelColor(uint16 row, uint16 col) constant
-    validPixel(row, col) returns (uint24) {
-    return pixels[row][col].color;
+  function getPixelColor(uint16 row, uint16 col) constant returns (uint24) {
+    uint32 key = getKey(row, col);
+    return pixels[key].color;
   }
 
-  function getPixelOwner(uint16 row, uint16 col) constant
-    validPixel(row, col) returns (address) {
-    if (pixels[row][col].owner == 0) {
+  function getPixelOwner(uint16 row, uint16 col) constant returns (address) {
+    uint32 key = getKey(row, col);
+    if (pixels[key].owner == 0) {
       return admin;
     }
-    return pixels[row][col].owner;
+    return pixels[key].owner;
   }
 
-  function getPixelPrice(uint16 row, uint16 col) constant
-    validPixel(row,col) returns (uint) {
-    if (pixels[row][col].owner == 0) {
+  function getPixelPrice(uint16 row, uint16 col) constant returns (uint) {
+    uint32 key = getKey(row, col);
+    if (pixels[key].owner == 0) {
       return defaultPrice;
     }
-    return pixels[row][col].price;
+    return pixels[key].price;
   }
 
   function getUserMessage(address user) constant returns (string) {
@@ -150,11 +154,12 @@ contract Grid {
     uint balance = pendingWithdrawals[msg.sender];
     // Return instead of letting getKey throw here to correctly refund the
     // transaction by updating the user balance in user.pendingWithdrawal
-    if (row >= 1000 || col >= 1000) {
+    if (row >= size || col >= size) {
       pendingWithdrawals[msg.sender] = SafeMath.add(balance, msg.value);
       return;
     }
 
+    uint32 key = getKey(row, col);
     uint price = getPixelPrice(row, col);
     address owner = getPixelOwner(row, col);
 
@@ -176,8 +181,8 @@ contract Grid {
 
     // Increase the price automatically based on the global incrementRate
     uint increase = SafeMath.div(SafeMath.mul(price, incrementRate), 100);
-    pixels[row][col].price = SafeMath.add(price, increase);
-    pixels[row][col].owner = msg.sender;
+    pixels[key].price = SafeMath.add(price, increase);
+    pixels[key].owner = msg.sender;
 
     PixelTransfer(row, col, price, owner, msg.sender);
     setPixelColor(row, col, newColor);
@@ -187,22 +192,22 @@ contract Grid {
   // Owner Management API
   //============================================================================
 
-  function setPixelColor(uint16 row, uint16 col, uint24 color)
-    validPixel(row, col) onlyOwner(row, col) {
-    if (pixels[row][col].color != color) {
-      pixels[row][col].color = color;
-      PixelColor(row, col, pixels[row][col].owner, color);
+  function setPixelColor(uint16 row, uint16 col, uint24 color) onlyOwner(row, col) {
+    uint32 key = getKey(row, col);
+    if (pixels[key].color != color) {
+      pixels[key].color = color;
+      PixelColor(row, col, pixels[key].owner, color);
     }
   }
 
-  function setPixelPrice(uint16 row, uint16 col, uint newPrice)
-    validPixel(row, col) onlyOwner(row, col) {
+  function setPixelPrice(uint16 row, uint16 col, uint newPrice) onlyOwner(row, col) {
+    uint32 key = getKey(row, col);
     // The owner can only lower the price. Price increases are determined by
     // the global incrementRate
-    require(pixels[row][col].price > newPrice);
+    require(pixels[key].price > newPrice);
 
-    pixels[row][col].price = newPrice;
-    PixelPrice(row, col, pixels[row][col].owner, newPrice);
+    pixels[key].price = newPrice;
+    PixelPrice(row, col, pixels[key].owner, newPrice);
   }
 
   //============================================================================
