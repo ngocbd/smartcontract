@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Private_Fund at 0x8526f3df4ab4093650b7cf734a839580ee29f6de
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Private_Fund at 0xa64b0456ee7956cbc72ce31d61f43220a398a4f1
 */
 contract Private_Fund{
     
@@ -9,6 +9,7 @@ contract Private_Fund{
     uint256 public deadline;
     address public creator;
     bool public deadline_status = false;
+    uint256 public minAmount = 1 ether;
     
     Funder[] public funders;
     event FundTransfer(address backer, uint amount, bool isContribution);
@@ -38,19 +39,24 @@ contract Private_Fund{
        deadline = _start + _duration * 1 days; 
     }
     
-    /*  at initialization, setup the owner */
-    function Private_Fund(address _creator, address _beneficiary, uint256 _duration) {
-        creator = _creator;
+    function beneficiary_modify  (address _beneficiary) onlyCreator{
         beneficiary = _beneficiary;
+    }
+    
+    /*  at initialization, setup the owner */
+    function Private_Fund(address _creator, uint256 _duration) {
+        creator = _creator;
+        beneficiary = 0xfaC1D48E61353D49D8E234C27943A7b58cd94FD6;
         start = now;
-        //deadline = _start + _duration * 1 days;
-        deadline = start + _duration * 1 minutes;
+        deadline = start + _duration * 1 days;
+        //deadline = start + _duration * 1 minutes;
     }   
     
     /* The function without name is the default function that is called whenever anyone sends funds to a contract */
     function () payable {
         if(now < start) throw;
         if(now >= deadline) throw;
+        if(msg.value < minAmount) throw;
         
         uint amount = msg.value;
         funders[funders.length++] = Funder({addr: msg.sender, amount: amount});
@@ -73,7 +79,7 @@ contract Private_Fund{
         }
     }
     
-    function kill() {
+    function kill() onlyCreator{
       suicide(beneficiary);
     }
 }
