@@ -1,48 +1,29 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ESCCrowdsale at 0x8aa32161c71fbaa6f71b65615f3d58dba883ba6f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ESCCrowdsale at 0xc79d47d548f9ae461234de7d0f44ca9e46c25e22
 */
 pragma solidity ^0.4.11;
 
 /**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
  */
-contract Ownable {
-  address public owner;
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) constant returns (uint256);
+  function transfer(address to, uint256 value) returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner public {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) returns (bool);
+  function approve(address spender, uint256 value) returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 /**
@@ -73,29 +54,6 @@ library SafeMath {
     return c;
   }
   
-}
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 /**
@@ -192,6 +150,33 @@ contract StandardToken is ERC20, BasicToken {
 }
 
 /**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+    
+  address public owner;
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+}
+
+/**
  * @title Mintable token
  * @dev Simple ERC20 Token example, with mintable token creation
  * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
@@ -244,15 +229,6 @@ contract EstateCoin is MintableToken {
     
     uint32 public constant decimals = 2;
     
-    uint256 public maxTokens = 12100000000000000000000000;
-
-  function mint(address _to, uint256 _amount) onlyOwner canMint returns (bool) {
-    if (totalSupply.add(_amount) > maxTokens) {
-        throw;
-    }
-
-    return super.mint(_to, _amount);
-  }
 }
 
 /**
@@ -362,13 +338,27 @@ contract ESCCrowdsale is Ownable {
   RefundVault public vault;
 
   function ESCCrowdsale() {
-    startTime = 1507204800;//1507204800 //5rd October 2017 12:00:00 GMT
-    endTime = 1507982400; //14th October 2017 12:00:00 GMT
-    rate = 250; //250ESC = 1ETH
+    startTime = 1506118400;//1506118400
+    endTime = 1507896000;
+    rate = 250;
     wallet = msg.sender;
     cap = 42550000000000000000000;
     vault = new RefundVault(wallet);
-    goal = 2950000000000000000000; // Minimal goal is 2950ETH = 4400ETH - 1450ETH(funding on Waves Platform)
+    goal = 2950000000000000000000;
+
+    //startTime = 1506118400; //4rd October 2017 12:00:00 GMT //1507118400
+    //endTime = 1507896000; //13th October 2017 12:00:00 GMT
+    //rate = 250; //250ESC = 1ETH
+    //wallet = msg.sender;
+    //uint256 _cap = 42550000000000000000000;
+    //uint256 _goal = 2950000000000000000000; // Minimal goal is 2950ETH = 4400ETH - 1450ETH(funding on Waves Platform)
+
+    require(startTime <= now);
+    require(endTime >= startTime);
+    require(rate > 0);
+    require(wallet != 0x0);
+    require(cap > 0);
+    require(goal > 0);
 
     token = createTokenContract();
   }
@@ -376,7 +366,8 @@ contract ESCCrowdsale is Ownable {
   // creates the token to be sold.
   // override this method to have crowdsale of a specific mintable token.
   function createTokenContract() internal returns (MintableToken) {
-    return EstateCoin(0xAb519Ef511ee029adC74a469d1ed44955E9d5Cdf);
+    return EstateCoin(0xE554056146fad6f2A7B5D5dbBb6f6763d58926c5);
+    //return new EstateCoin();
   }
 
   // fallback function can be used to buy tokens
@@ -389,70 +380,57 @@ contract ESCCrowdsale is Ownable {
     require(beneficiary != 0x0);
     require(validPurchase());
 
-    if (weiRaised.add(msg.value) > cap) {
-        throw;
-    }
-
     uint256 weiAmount = msg.value;
 
     // calculate token amount to be created
     uint256 tokens = weiAmount.mul(rate);
-    
-    if (token.mint(beneficiary, tokens)) {
-        // update state
-        weiRaised = weiRaised.add(weiAmount);
 
-        TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
-    
-        forwardFunds();
-    
-        tokenSold = tokenSold.add(tokens);
-        uint256 bonus = 0;
-        if (now < 1507291200) {
-            bonus = tokens.div(20); //5%
-        } else if (now < 1507377600) {
-            bonus = tokens.div(25); //4%
-        } else if (now < 1507464000) {
-            bonus = tokens.div(33); //3%
-        } else if (now < 1507550400) {
-            bonus = tokens.div(50); //2%
-        } else if (now < 1507636800) {
-            bonus = tokens.div(100); //1%
-        }
-        
-        if (bonus > 0) {
-            token.mint(beneficiary, bonus);
-            TokenBonus(msg.sender, beneficiary, bonus);
-        }
+    // update state
+    weiRaised = weiRaised.add(weiAmount);
+
+    token.mint(beneficiary, tokens);
+    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+
+    forwardFunds();
+
+    tokenSold += msg.value.mul(rate);
+    uint256 bonus = 0;
+    if (now < 1507204800) {
+        bonus = tokenSold.div(20); //5%
+    } else if (now < 1507291200) {
+        bonus = tokenSold.div(25); //4%
+    } else if (now < 1507377600) {
+        bonus = tokenSold.div(33); //3%
+    } else if (now < 1507464000) {
+        bonus = tokenSold.div(50); //2%
+    } else if (now < 1507550400) {
+        bonus = tokenSold.div(100); //1%
     }
-  }
     
-  //manually transfer tokens
-  function transferTokens(address _to, uint256 _amount) onlyOwner public returns (bool) {
-    require(!isFinalized);
-    require(!hasEnded());
-    require(_to != 0x0);
-    require(_amount > 0);
-    
-    token.mint(_to, _amount);
-    tokenSold += _amount;
-    
-    return true;
+    if (bonus > 0) {
+        token.mint(beneficiary, bonus);
+        TokenBonus(msg.sender, beneficiary, bonus);
+    }
   }
 
   // send ether to the fund collection wallet
+  // override to create custom fund forwarding mechanisms...
+  // We're overriding the fund forwarding from Crowdsale.
   // In addition to sending the funds, we want to call
   // the RefundVault deposit function
   function forwardFunds() internal {
+    //wallet.transfer(msg.value);
     vault.deposit.value(msg.value)(msg.sender);
   }
 
   // @return true if the transaction can buy tokens
+  // overriding Crowdsale#validPurchase to add extra cap logic
   // @return true if investors can buy at the moment
   function validPurchase() internal constant returns (bool) {
     bool withinPeriod = now >= startTime && now <= endTime;
     bool nonZeroPurchase = msg.value != 0;
-    return withinPeriod && nonZeroPurchase;
+    bool withinCap = weiRaised.add(msg.value) <= cap;
+    return withinPeriod && nonZeroPurchase && withinCap;
   }
 
   // @return true if crowdsale event has ended
