@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTraderFactory at 0xa9f801f160fe6a866dd3404599350abbcaa95274
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTraderFactory at 0x3cd9b53eab1f941ac39b7a5689d9f516d82f28a9
 */
 pragma solidity ^0.4.4;
 
@@ -18,12 +18,6 @@ pragma solidity ^0.4.4;
 //                     makerTransferEther(...)
 //   Feb 05 2017 - BPB Bug fix in the change calculation for the Unicorn
 //                     token with natural number 1
-//   Feb 08 2017 - BPB/JL Renamed etherValueOfTokensToSell to
-//                     amountOfTokensToSell in takerSellAsset(...) to
-//                     better describe the parameter
-//                     Added check in createTradeContract(...) to prevent
-//                     GNTs from being used with this contract. The asset
-//                     token will need to have an allowance(...) function.
 //
 // Enjoy. (c) JonnyLatte & BokkyPooBah 2017. The MIT licence.
 // ------------------------------------------------------------------------
@@ -418,17 +412,17 @@ contract TokenTraderFactory is Owned {
     ) returns (address trader) {
         // Cannot have invalid asset
         if (asset == 0x0) throw;
-        // Check for ERC20 allowance function
-        // This will throw an error if the allowance function
-        // is undefined to prevent GNTs from being used
-        // with this factory
-        uint256 allowance = ERC20(asset).allowance(msg.sender, this);
         // Cannot set zero or negative price
         if (buyPrice <= 0 || sellPrice <= 0) throw;
         // Must make profit on spread
         if (buyPrice >= sellPrice) throw;
         // Cannot buy or sell zero or negative units
         if (units <= 0) throw;
+        // Check for ERC20 allowance function
+        // This will throw an error if the allowance function
+        // is undefined to prevent GNTs from being used
+        // with this factory
+        uint256 allowance = ERC20(asset).allowance(msg.sender, this);
 
         trader = new TokenTrader(
             asset,
