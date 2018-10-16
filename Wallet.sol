@@ -1,7 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Wallet at 0x34912f042fb126fb9ea2a72ed1116a8d33d12487
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Wallet at 0x369587824c77812c8292029fc2860e56b586ced9
 */
-//sol Wallet
+/**
+ * This is a multisig wallet based on Gav's original implementation, daily withdraw limits removed.
+ *
+ *
+ * For other multisig wallet implementations, see https://blog.gnosis.pm/release-of-new-multisig-wallet-59b6811f7edc
+ */
+
 // Multi-sig, daily-limited account proxy/wallet.
 // @authors:
 // Gav Wood <g@ethdev.com>
@@ -11,11 +17,9 @@
 // use modifiers onlyowner (just own owned) or onlymanyowners(hash), whereby the same hash must be provided by
 // some number (specified in constructor) of the set of owners (specified in the constructor, modifiable) before the
 // interior is executed.
-pragma solidity ^0.4.6;
-
 contract multiowned {
 
-    // TYPES
+	// TYPES
 
     // struct for the status of a pending operation.
     struct PendingState {
@@ -24,7 +28,7 @@ contract multiowned {
         uint index;
     }
 
-    // EVENTS
+	// EVENTS
 
     // this contract only has six types of events: it can accept a confirmation, in which case
     // we record owner and operation (hash) alongside it.
@@ -37,7 +41,7 @@ contract multiowned {
     // the last one is emitted if the required signatures change
     event RequirementChanged(uint newRequirement);
 
-    // MODIFIERS
+	// MODIFIERS
 
     // simple single-sig function modifier.
     modifier onlyowner {
@@ -52,7 +56,7 @@ contract multiowned {
             _;
     }
 
-    // METHODS
+	// METHODS
 
     // constructor is given number of sigs required to do protected "onlymanyowners" transactions
     // as well as the selection of addresses capable of confirming them.
@@ -211,7 +215,7 @@ contract multiowned {
         delete m_pendingIndex;
     }
 
-    // FIELDS
+   	// FIELDS
 
     // the number of owners that must confirm the same operation before it is run.
     uint public m_required;
@@ -233,7 +237,7 @@ contract multiowned {
 // uses is specified in the modifier.
 contract daylimit is multiowned {
 
-    // MODIFIERS
+	// MODIFIERS
 
     // simple modifier for daily limit.
     modifier limitedDaily(uint _value) {
@@ -241,7 +245,7 @@ contract daylimit is multiowned {
             _;
     }
 
-    // METHODS
+	// METHODS
 
     // constructor - stores initial daily limit and records the present day's index.
     function daylimit(uint _limit) {
@@ -263,7 +267,7 @@ contract daylimit is multiowned {
     // returns true. otherwise just returns false.
     function underLimit(uint _value) internal onlyowner returns (bool) {
         // reset the spend limit if we're on a different day to last time.
-        if (today() > m_lastDay) {
+        /*if (today() > m_lastDay) {
             m_spentToday = 0;
             m_lastDay = today();
         }
@@ -273,12 +277,13 @@ contract daylimit is multiowned {
             m_spentToday += _value;
             return true;
         }
+        return false;*/
         return false;
     }
     // determines today's index.
     function today() private constant returns (uint) { return now / 1 days; }
 
-    // FIELDS
+	// FIELDS
 
     uint public m_dailyLimit;
     uint public m_spentToday;
@@ -288,7 +293,7 @@ contract daylimit is multiowned {
 // interface contract for multisig proxy contracts; see below for docs.
 contract multisig {
 
-    // EVENTS
+	// EVENTS
 
     // logged events:
     // Funds has arrived into the wallet (record how much).
@@ -309,11 +314,11 @@ contract multisig {
 }
 
 // usage:
-// bytes32 h = Wallet(w).from(oneOwner).execute(to, value, data);
+// bytes32 h = Wallet(w).from(oneOwner).transact(to, value, data);
 // Wallet(w).from(anotherOwner).confirm(h);
 contract Wallet is multisig, multiowned, daylimit {
 
-    // TYPES
+	// TYPES
 
     // Transaction structure to remember details of transaction lest it need be saved for a later call.
     struct Transaction {
@@ -384,7 +389,7 @@ contract Wallet is multisig, multiowned, daylimit {
         super.clearPending();
     }
 
-    // FIELDS
+	// FIELDS
 
     // pending transactions we have at present.
     mapping (bytes32 => Transaction) m_txs;
