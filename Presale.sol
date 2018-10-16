@@ -1,13 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0x5fdca7a3d3ec979dd5b2bfec2ecc6ad0fb0a87bb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0x0961375ed779fe16435d5d430da00a5bac527e46
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.13;
 
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
 library SafeMath {
   function mul(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a * b;
@@ -34,12 +29,6 @@ library SafeMath {
   }
 }
 
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
 contract Ownable {
   address public owner;
 
@@ -74,404 +63,258 @@ contract Ownable {
 
 }
 
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) constant returns (uint256);
+  function transfer(address to, uint256 value) returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
 
-  bool public paused = false;
-
-
-  /**
-   * @dev modifier to allow actions only when the contract IS paused
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
+  mapping(address => uint256) balances;
 
   /**
-   * @dev modifier to allow actions only when the contract IS NOT paused
-   */
-  modifier whenPaused {
-    require(paused);
-    _;
-  }
-
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused returns (bool) {
-    paused = true;
-    Pause();
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) returns (bool) {
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
     return true;
   }
 
   /**
-   * @dev called by the owner to unpause, returns to normal state
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of. 
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) constant returns (uint256 balance) {
+    return balances[_owner];
+  }
+
+}
+
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) returns (bool);
+  function approve(address spender, uint256 value) returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) allowed;
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amout of tokens to be transfered
    */
-  function unpause() onlyOwner whenPaused returns (bool) {
-    paused = false;
-    Unpause();
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
+    var _allowance = allowed[_from][msg.sender];
+
+    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
+    // require (_value <= _allowance);
+
+    balances[_to] = balances[_to].add(_value);
+    balances[_from] = balances[_from].sub(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) returns (bool) {
+
+    // To change the approve amount you first have to reduce the addresses`
+    //  allowance to zero by calling `approve(_spender, 0)` if it is not
+    //  already 0 to mitigate the race condition described here:
+    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifing the amount of tokens still avaible for the spender.
+   */
+  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+    return allowed[_owner][_spender];
+  }
+
+}
+
+contract MintableToken is StandardToken, Ownable {
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
+
+  bool public mintingFinished = false;
+
+
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
+
+  /**
+   * @dev Function to mint tokens
+   * @param _to The address that will recieve the minted tokens.
+   * @param _amount The amount of tokens to mint.
+   * @return A boolean that indicates if the operation was successful.
+   */
+  function mint(address _to, uint256 _amount) onlyOwner canMint returns (bool) {
+    totalSupply = totalSupply.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    Mint(_to, _amount);
+    return true;
+  }
+
+  /**
+   * @dev Function to stop minting new tokens.
+   * @return True if the operation was successful.
+   */
+  function finishMinting() onlyOwner returns (bool) {
+    mintingFinished = true;
+    MintFinished();
     return true;
   }
 }
 
-contract IMintableToken {
-    function mint(address _to, uint256 _amount) returns (bool);
-    function finishMinting() returns (bool);
-}
+contract Presale {
+    using SafeMath for uint256;
 
-contract PricingStrategy {
+    // Miniml possible cap
+    uint256 public minimalCap;
 
-    using SafeMath for uint;
+    // Maximum possible cap
+    uint256 public maximumCap;
 
-    uint public rate0;
-    uint public rate1;
-    uint public rate2;
+    // Presale token
+    Token public token;
 
-    uint public threshold1;
-    uint public threshold2;
+    // Early bird ether
+    uint256 public early_bird_minimal;
 
-    uint public minimumWeiAmount;
+    // Withdraw wallet
+    address public wallet;
 
-    function PricingStrategy(
-        uint _rate0,
-        uint _rate1,
-        uint _rate2,
-        uint _minimumWeiAmount,
-        uint _threshold1,
-        uint _threshold2
-    ) {
-        require(_rate0 > 0);
-        require(_rate1 > 0);
-        require(_rate2 > 0);
-        require(_minimumWeiAmount > 0);
-        require(_threshold1 > 0);
-        require(_threshold2 > 0);
+    // Minimal token buy
+    uint256 public minimal_token_sell;
 
-        rate0 = _rate0;
-        rate1 = _rate1;
-        rate2 = _rate2;
-        minimumWeiAmount = _minimumWeiAmount;
-        threshold1 = _threshold1;
-        threshold2 = _threshold2;
+    // Token per ether
+    uint256 public wei_per_token;
+
+    // start and end timestamp where investments are allowed (both inclusive)
+    uint256 public startTime;
+    uint256 public endTime;
+
+
+    event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    function Presale(uint256 _startTime, address _wallet) {
+        require(_startTime >=  now);
+        require(_wallet != 0x0);
+
+        token = new Token();
+        wallet = _wallet;
+        startTime = _startTime;
+        minimal_token_sell = 1e10;
+        endTime = _startTime + 86400 * 7;
+        wei_per_token = 62500000;  // 1e10 / 160
+        early_bird_minimal = 30e18;
+        maximumCap = 1875e18 / wei_per_token;
+        minimalCap = 350e18 / wei_per_token;
     }
 
-    /** Interface declaration. */
-    function isPricingStrategy() public constant returns (bool) {
-        return true;
-    }
-
-    /** Calculate the current price for buy in amount. */
-    function calculateTokenAmount(uint weiAmount) public constant returns (uint tokenAmount) {
-        uint bonusRate = 0;
-
-        if (weiAmount >= minimumWeiAmount) {
-            bonusRate = rate0;
-        }
-
-        if (weiAmount >= threshold1) {
-            bonusRate = rate1;
-        }
-
-        if (weiAmount >= threshold2) {
-            bonusRate = rate2;
-        }
-
-        return weiAmount.mul(bonusRate);
-    }
-}
-
-contract Presale is Pausable {
-
-    using SafeMath for uint;
-
-    /* Max investment count when we are still allowed to change the multisig address */
-    uint public MAX_INVESTMENTS_BEFORE_MULTISIG_CHANGE = 500;
-
-    /* The token we are selling */
-    IMintableToken public token;
-
-    /* How we are going to price our offering */
-    PricingStrategy public pricingStrategy;
-
-    /* tokens will be transfered from this address */
-    address public multisigWallet;
-
-    /* if the funding goal is not reached, investors may withdraw their funds */
-    uint public minimumFundingGoal;
-
-    /* the UNIX timestamp start date of the presale */
-    uint public startsAt;
-
-    /* the UNIX timestamp end date of the presale */
-    uint public endsAt;
-
-    /* Maximum amount of tokens this presale can sell. */
-    uint public tokensHardCap;
-
-    /* the number of tokens already sold through this contract*/
-    uint public tokensSold = 0;
-
-    /* How many wei of funding we have raised */
-    uint public weiRaised = 0;
-
-    /* How many distinct addresses have invested */
-    uint public investorCount = 0;
-
-    /* How much wei we have returned back to the contract after a failed crowdfund. */
-    uint public loadedRefund = 0;
-
-    /* How much wei we have given back to investors.*/
-    uint public weiRefunded = 0;
-
-    /** How much ETH each address has invested to this presale */
-    mapping (address => uint256) public investedAmountOf;
-
-    /** How much tokens this presale has credited for each investor address */
-    mapping (address => uint256) public tokenAmountOf;
-
-    /** Addresses that are allowed to invest even before ICO offical opens. Only for testing purpuses. */
-    mapping (address => bool) public earlyParticipantWhitelist;
-
-    /** State machine
-    *
-    * - Preparing: All contract initialization calls and variables have not been set yet
-    * - Prefunding: We have not passed start time yet
-    * - Funding: Active presale
-    * - Success: Minimum funding goal reached
-    * - Failure: Minimum funding goal not reached before ending time
-    * - Refunding: Refunds are loaded on the contract for reclaim.
-    */
-    enum State{Unknown, Preparing, PreFunding, Funding, Success, Failure, Refunding}
-
-    // A new investment was made
-    event Invested(address investor, uint weiAmount, uint tokenAmount);
-
-    // Refund was processed for a contributor
-    event Refund(address investor, uint weiAmount);
-
-    // Address early participation whitelist status changed
-    event Whitelisted(address addr, bool status);
-
-    // Presale end time has been changed
-    event EndsAtChanged(uint endsAt);
-
-    function Presale(
-        address _token, 
-        address _pricingStrategy, 
-        address _multisigWallet, 
-        uint _start, 
-        uint _end, 
-        uint _tokensHardCap,
-        uint _minimumFundingGoal
-    ) {
-        require(_token != 0);
-        require(_pricingStrategy != 0);
-        require(_multisigWallet != 0);
-        require(_start != 0);
-        require(_end != 0);
-        require(_start < _end);
-        require(_tokensHardCap != 0);
-
-        token = IMintableToken(_token);
-        setPricingStrategy(_pricingStrategy);
-        multisigWallet = _multisigWallet;
-        startsAt = _start;
-        endsAt = _end;
-        tokensHardCap = _tokensHardCap;
-        minimumFundingGoal = _minimumFundingGoal;
-    }
-
-    /**
-    * Buy tokens
-    */
+    /*
+     * @dev fallback for processing ether
+     */
     function() payable {
-        invest(msg.sender);
+        return buyTokens(msg.sender);
     }
 
-    /**
-    * Make an investment.
-    *
-    * Presale must be running for one to invest.
-    * We must have not pressed the emergency brake.
-    *
-    * @param receiver The Ethereum address who receives the tokens
-    */
-    function invest(address receiver) whenNotPaused payable {
-
-        // Determine if it's a good time to accept investment from this participant
-        if (getState() == State.PreFunding) {
-            // Are we whitelisted for early deposit
-            require(earlyParticipantWhitelist[receiver]);
-        } else {
-            require(getState() == State.Funding);
+    /*
+     * @dev calculate amount
+     * @return token amount that we should send to our dear investor
+     */
+    function calcAmount() internal returns (uint256) {
+        if (now < startTime && msg.value >= early_bird_minimal) {
+            return (msg.value / wei_per_token / 60) * 70;   
         }
-
-        uint weiAmount = msg.value;
-
-        // Account presale sales separately, so that they do not count against pricing tranches
-        uint tokenAmount = pricingStrategy.calculateTokenAmount(weiAmount);
-
-        // Dust transaction
-        require(tokenAmount > 0);
-
-        if (investedAmountOf[receiver] == 0) {
-            // A new investor
-            investorCount++;
-        }
-
-        // Update investor
-        investedAmountOf[receiver] = investedAmountOf[receiver].add(weiAmount);
-        tokenAmountOf[receiver] = tokenAmountOf[receiver].add(tokenAmount);
-
-        // Update totals
-        weiRaised = weiRaised.add(weiAmount);
-        tokensSold = tokensSold.add(tokenAmount);
-
-        // Check that we did not bust the cap
-        require(!isBreakingCap(tokensSold));
-
-        token.mint(receiver, tokenAmount);
-
-        // Pocket the money
-        multisigWallet.transfer(weiAmount);
-
-        // Tell us invest was success
-        Invested(receiver, weiAmount, tokenAmount);
+        return msg.value / wei_per_token;
     }
 
-    /**
-    * Allow addresses to do early participation.
-    *
-    */
-    function setEarlyParicipantWhitelist(address addr, bool status) onlyOwner {
-        earlyParticipantWhitelist[addr] = status;
-        Whitelisted(addr, status);
+    /*
+     * @dev sell token and send to contributor address
+     * @param contributor address
+     */
+    function buyTokens(address contributor) payable {
+        uint256 amount = calcAmount();
+
+        require(contributor != 0x0) ;
+        require(minimal_token_sell < amount);
+        require((token.totalSupply() + amount) <= maximumCap);
+        require(validPurchase());
+
+        token.mint(contributor, amount);
+        TokenPurchase(0x0, contributor, msg.value, amount);
+        Transfer(0x0, contributor, amount);
+        wallet.transfer(msg.value);
     }
 
-    /**
-    * Allow presale owner to close early or extend the presale.
-    *
-    * This is useful e.g. for a manual soft cap implementation:
-    * - after X amount is reached determine manual closing
-    *
-    * This may put the presale to an invalid state,
-    * but we trust owners know what they are doing.
-    *
-    */
-    function setEndsAt(uint time) onlyOwner {
-
-        require(now <= time);
-
-        endsAt = time;
-        EndsAtChanged(endsAt);
+    // @return user balance
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return token.balanceOf(_owner);
     }
 
-    /**
-    * Allow to (re)set pricing strategy.
-    *
-    * Design choice: no state restrictions on the set, so that we can fix fat finger mistakes.
-    */
-    function setPricingStrategy(address _pricingStrategy) onlyOwner {
-        pricingStrategy = PricingStrategy(_pricingStrategy);
+    // @return true if the transaction can buy tokens
+    function validPurchase() internal constant returns (bool) {
+        bool withinPeriod = ((now >= startTime  || msg.value >= early_bird_minimal) && now <= endTime);
+        bool nonZeroPurchase = msg.value != 0;
 
-        // Don't allow setting bad agent
-        require(pricingStrategy.isPricingStrategy());
+        return withinPeriod && nonZeroPurchase;
     }
 
-    /**
-    * Allow to change the team multisig address in the case of emergency.
-    *
-    * This allows to save a deployed presale wallet in the case the presale has not yet begun
-    * (we have done only few test transactions). After the presale is going
-    * then multisig address stays locked for the safety reasons.
-    */
-    function setMultisig(address addr) public onlyOwner {
-
-        require(investorCount <= MAX_INVESTMENTS_BEFORE_MULTISIG_CHANGE);
-
-        multisigWallet = addr;
+    // @return true if crowdsale event has ended
+    function hasStarted() public constant returns (bool) {
+        return now >= startTime;
     }
 
-    /**
-    * Allow load refunds back on the contract for the refunding.
-    *
-    * The team can transfer the funds back on the smart contract in the case the minimum goal was not reached..
-    */
-    function loadRefund() public payable inState(State.Failure) {
-        require(msg.value > 0);
-
-        loadedRefund = loadedRefund.add(msg.value);
+    // @return true if crowdsale event has ended
+    function hasEnded() public constant returns (bool) {
+        return now > endTime || token.totalSupply() == maximumCap;
     }
 
-    /**
-    * Investors can claim refund.
-    *
-    * Note that any refunds from proxy buyers should be handled separately,
-    * and not through this contract.
-    */
-    function refund() public inState(State.Refunding) {
-        uint256 weiValue = investedAmountOf[msg.sender];
-        require(weiValue > 0);
+}
 
-        investedAmountOf[msg.sender] = 0;
-        weiRefunded = weiRefunded.add(weiValue);
-        Refund(msg.sender, weiValue);
-        
-        msg.sender.transfer(weiValue);
+contract Token is MintableToken {
+
+    string public constant name = 'Privatix Presale';
+    string public constant symbol = 'PRIXY';
+    uint256 public constant decimals = 8;
+
+    function transferFrom(address from, address to, uint256 value) returns (bool) {
+        revert();
     }
 
-    /**
-    * Crowdfund state machine management.
-    *
-    * We make it a function and do not assign the result to a variable, so there is no chance of the variable being stale.
-    */
-    function getState() public constant returns (State) {
-        if (address(pricingStrategy) == 0)
-            return State.Preparing;
-        else if (block.timestamp < startsAt)
-            return State.PreFunding;
-        else if (block.timestamp <= endsAt && !isPresaleFull())
-            return State.Funding;
-        else if (isMinimumGoalReached())
-            return State.Success;
-        else if (!isMinimumGoalReached() && weiRaised > 0 && loadedRefund >= weiRaised)
-            return State.Refunding;
-        else
-            return State.Failure;
+    function transfer(address _to, uint256 _value) returns (bool) {
+        revert();
     }
 
-    /**
-    * @return true if the presale has raised enough money to be a successful.
-    */
-    function isMinimumGoalReached() public constant returns (bool reached) {
-        return weiRaised >= minimumFundingGoal;
-    }
-
-    /**
-    * Called from invest() to confirm if the curret investment does not break our cap rule.
-    */
-    function isBreakingCap(uint tokensSoldTotal) constant returns (bool) {
-        return tokensSoldTotal > tokensHardCap;
-    }
-
-    function isPresaleFull() public constant returns (bool) {
-        return tokensSold >= tokensHardCap;
-    }
-
-    //
-    // Modifiers
-    //
-
-    /** Modified allowing execution only if the presale is currently running.  */
-    modifier inState(State state) {
-        require(getState() == state);
-        _;
-    }
 }
