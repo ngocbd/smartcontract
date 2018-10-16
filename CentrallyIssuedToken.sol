@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CentrallyIssuedToken at 0x41e5560054824ea6b0732e656e3ad64e20e94e45
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CentrallyIssuedToken at 0xc324a2f6b05880503444451b8b27e6f9e63287cb
 */
 /*
  * ERC20 interface
@@ -316,14 +316,21 @@ contract UpgradeableToken is StandardToken {
  */
 contract CentrallyIssuedToken is UpgradeableToken {
 
+  // Token meta information
   string public name;
   string public symbol;
   uint public decimals;
 
+  // Token release switch
+  bool public released = false;
+
+  // The date before the release must be finalized or upgrade path will be forced
+  uint public releaseFinalizationDate;
+
   /** Name and symbol were updated. */
   event UpdatedTokenInformation(string newName, string newSymbol);
 
-  function CentrallyIssuedToken(address _owner, string _name, string _symbol, uint _totalSupply, uint _decimals)  UpgradeableToken(_owner) {
+  function CentrallyIssuedToken(address _owner, string _name, string _symbol, uint _totalSupply, uint _decimals, uint _releaseFinalizationDate)  UpgradeableToken(_owner) {
     name = _name;
     symbol = _symbol;
     totalSupply = _totalSupply;
@@ -331,6 +338,8 @@ contract CentrallyIssuedToken is UpgradeableToken {
 
     // Allocate initial balance to the owner
     balances[_owner] = _totalSupply;
+
+    releaseFinalizationDate = _releaseFinalizationDate;
   }
 
   /**
@@ -360,4 +369,30 @@ contract CentrallyIssuedToken is UpgradeableToken {
     UpdatedTokenInformation(name, symbol);
   }
 
+
+  /**
+   * Kill switch for the token in the case of distribution issue.
+   *
+   */
+  function transfer(address _to, uint _value) returns (bool success) {
+
+    if(now > releaseFinalizationDate) {
+      if(!released) {
+        throw;
+      }
+    }
+
+    return super.transfer(_to, _value);
+  }
+
+  /**
+   * One way function to perform the final token release.
+   */
+  function releaseTokenTransfer() {
+    if(msg.sender != upgradeMaster) {
+      throw;
+    }
+
+    released = true;
+  }
 }
