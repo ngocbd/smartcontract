@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FirstContract at 0xa88146aed78cba4a98eb7f6c25158587a9e49544
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FirstContract at 0x68c7147205a8beb9d99fd19908b93462cdffc60d
 */
 pragma solidity ^0.4.0;
 // <ORACLIZE_API>
@@ -273,7 +273,6 @@ contract usingOraclize {
         if (_b > 0) mint *= 10**_b;
         return mint;
     }
-    
 
 }
 // </ORACLIZE_API>
@@ -283,17 +282,12 @@ contract FirstContract is usingOraclize {
     address owner;
     uint constant ORACLIZE_GAS_LIMIT = 125000;
     uint public counter  = 0;
-    uint public errCounter = 0;
     uint safeGas = 25000;
 
     /// Create a new ballot with $(_numProposals) different proposals.
     function FirstContract() {
         oraclize_setProof(proofType_TLSNotary | proofStorage_IPFS);
         owner = msg.sender;
-    }
-
-    function() {
-        errCounter++;
     }
     
     modifier onlyOraclize {
@@ -311,14 +305,14 @@ contract FirstContract is usingOraclize {
     }
 
     
-    function count() payable onlyOwner {
+    function count() onlyOwner {
         oraclize_query("URL", "BIoSOf8fDqu8dpiZeHp/yIFHxhtNDuUCdPLx8Q+vutqVkk7mSYfkmH1dLrVX+XFLfBK3AVVejEgeZ36vFAb9c6+ED+KsYnknlnODL+oIdRna7jiNuhjVHRRsZ+1iqEp1bMttUzrYZk75wCL8gm7g095OVpjFWur1", ORACLIZE_GAS_LIMIT + safeGas);
     }
    
-   function invest() payable {
+   function invest() {
    }
    
-   function __callback (bytes32 myid, string result, bytes proof) payable onlyOraclize {
+   function __callback (bytes32 myid, string result, bytes proof) onlyOraclize {
          counter = parseInt(result);
     }
   
@@ -332,11 +326,11 @@ contract FirstContract is usingOraclize {
         }
     }   
     
-   function divest(uint amount) payable onlyOwner {
+   function divest(uint amount) onlyOwner {
        safeSend(owner, amount);
    }
    
-   function destruct() payable onlyOwner {
+   function destruct() onlyOwner {
        selfdestruct(owner);
    }
 }
