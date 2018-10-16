@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PiggyBank at 0xdcb13FA157eeBF22dDC8C9aA1d6E394810De6FA3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PiggyBank at 0xbE181DA06D93867af0A3ffaDcEbe345Ec35daE4e
 */
 contract PiggyBank {
 
@@ -45,7 +45,7 @@ contract PiggyBank {
     
     // collect fees and update contract balance
  
-      fees += amount / 33;             // 3% Fee
+      fees = amount / 33;             // 3% Fee
       balance += amount;               // balance update
 
 
