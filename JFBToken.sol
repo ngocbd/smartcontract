@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JFBToken at 0x39d28c20f684c479a3f62676ee5a649e3c8d3be8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JFBToken at 0xb4fa81c43653d35c9a1013fecefea31f2718c893
 */
 pragma solidity ^0.4.16;
 
@@ -250,7 +250,7 @@ contract Pausable is Ownable {
  **/
 
 contract PausableToken is StandardToken, Pausable {
-
+    
   using SafeMath for uint256;
 
   function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
@@ -278,8 +278,8 @@ contract JFBToken is PausableToken {
     * They allow one to customise the token contract & in no way influences the core functionality.
     * Some wallets/interfaces might not even bother to look at this information.
     */
-    string public name = "JiFenBao Coin";
-    string public symbol = "JFBCoin";
+    string public name = "JiFenBaoCoin";
+    string public symbol = "JFB";
     string public version = '1.0.0';
     uint8 public decimals = 18;
 
