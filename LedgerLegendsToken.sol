@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LedgerLegendsToken at 0xde083e40fe84835cbbd6c69f6595cae1e85551dc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LedgerLegendsToken at 0xf554e9ba1ef7d16fd5b9ca87c1ede40253849f91
 */
 pragma solidity ^0.4.11;
 
@@ -31,10 +31,6 @@ contract LedgerLegendsToken {
   modifier onlyMinters() {
     require(minters[msg.sender]);
     _;
-  }
-  
-  function setOwner(address _owner) onlyOwner() public {
-    owner = _owner;
   }
 
   function addMinter(address _minter) onlyOwner() public {
