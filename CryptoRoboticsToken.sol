@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoRoboticsToken at 0x39d1b71ab8af1a3900fe03bcb2e55711a7584e9e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoRoboticsToken at 0xe990f83d0a309fe847c018430cc79bc3b3c6d616
 */
 pragma solidity 0.4.21;
 
