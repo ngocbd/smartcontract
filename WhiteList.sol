@@ -1,45 +1,26 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WhiteList at 0xf9d4f02060C4E12fa2de5433B5eb5cA035cb3e50
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Whitelist at 0xd284b7c80ed6cf8430536646066e032a558d48bd
 */
-pragma solidity ^0.4.11;
-contract WhiteList {
-    string public constant VERSION = "0.1.1";
+contract Whitelist {
+    address public owner;
+    address public sale;
 
-    mapping(address=>bool) public contains;
-    uint public chunkNr = 0;
-    uint public recordNr=0;
-    uint public controlSum = 0;
-    bool public isSetupMode = true;
-    address admin = msg.sender;
+    mapping (address => uint) public accepted;
 
-    //adds next address package to the internal white list.
-    //call valid only in setup mode.
-    function addPack(address[] addrs, uint16 _chunkNr)
-    setupOnly
-    adminOnly
-    external {
-        require ( chunkNr++ == _chunkNr);
-        for(uint16 i=0; i<addrs.length; ++i){
-            contains[addrs[i]] = true;
-            controlSum += uint160(addrs[i]);
-        }
-        recordNr += addrs.length;
+    function Whitelist() {
+        owner = msg.sender;
     }
 
-    //disable setup mode
-    function start()
-    adminOnly
-    public {
-        isSetupMode = false;
+    // Amount in WEI i.e. amount = 1 means 1 WEI
+    function accept(address a, uint amount) {
+        assert (msg.sender == owner || msg.sender == sale);
+
+        accepted[a] = amount;
     }
 
-    modifier setupOnly {
-        if (!isSetupMode) throw;
-        _;
-    }
+    function setSale(address sale_) {
+        assert (msg.sender == owner);
 
-    modifier adminOnly {
-        if (msg.sender != admin) throw;
-        _;
-    }
+        sale = sale_;
+    } 
 }
