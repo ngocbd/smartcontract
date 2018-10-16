@@ -1,9 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Treethereum at 0xe652459d2802bae508b81698f0906b0bdcd4347f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Treethereum at 0x3f96c0e80b82458c1a96a3b7d7d2297f55df4965
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.20;
 
 contract Treethereum {  
+    uint timeout; // PAY WHAT YOU WANT PROMO ENDS Saturday, March 10, 2018 7:01:29 AM, 0.2 ETH after
     mapping (address => address) inviter;
     
     function bytesToAddr (bytes b) constant returns (address)  {
@@ -16,12 +17,6 @@ contract Treethereum {
         return address(result);
     }
     
-    function withdraw(uint amount) {
-        if (this.balance >= amount) {
-            msg.sender.transfer(amount);
-        }
-    }
-    
     function addrecruit(address _recaddress, address _invaddress) private {
         if (inviter[_recaddress] != 0x0) {
                 revert();
@@ -30,6 +25,7 @@ contract Treethereum {
     }
 
     function () external payable { // Fallback Function
+        timeout = 1520665289;
         address recaddress = msg.sender;
         invaddress = bytesToAddr(msg.data);
         if (invaddress == 0x0 || invaddress == recaddress) {
@@ -38,7 +34,7 @@ contract Treethereum {
         addrecruit(recaddress, invaddress);
         uint i=0;
         uint amount = msg.value;
-        if (amount < 0.2 ether) {
+        if (amount < 0.2 ether && now > timeout) {
             msg.sender.transfer(msg.value);
             revert();
         }
