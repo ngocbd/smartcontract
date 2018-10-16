@@ -1,8 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HydroCoin at 0x6ff1333a6b8faa3f7550305386c5675b9834fda0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hydrocoin at 0xe1828d988fb7dac6701d258da89872c55d95e7aa
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.18;
 
+// File: zeppelin-solidity/contracts/ownership/Ownable.sol
 
 /**
  * @title Ownable
@@ -13,11 +14,14 @@ contract Ownable {
   address public owner;
 
 
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() {
+  function Ownable() public {
     owner = msg.sender;
   }
 
@@ -35,91 +39,82 @@ contract Ownable {
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+// File: contracts/MultipleOwners.sol
+
+contract MultipleOwners is Ownable {
+    struct Owner {
+        bool isOwner;
+        uint256 index;
     }
-  }
+    mapping(address => Owner) public owners;
+    address[] public ownersLUT;
 
+    modifier onlyOwner() {
+        require(msg.sender == owner || owners[msg.sender].isOwner);
+        _;
+    }
+
+    function addOwner(address newOwner) public onlyOwner {
+        require(!owners[msg.sender].isOwner);
+        owners[newOwner] = Owner(true, ownersLUT.length);
+        ownersLUT.push(newOwner);
+    }
+
+    function removeOwner(address _owner) public onlyOwner {
+        uint256 index = owners[_owner].index;
+        // order does not matter so move last element to the deleted index
+        ownersLUT[index] = ownersLUT[ownersLUT.length - 1];
+        // remove last element
+        ownersLUT.length--;
+        // remove Owner from mapping
+        delete owners[_owner];
+    }
 }
 
-
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
-
-  bool public paused = false;
-
-
-  /**
-   * @dev modifier to allow actions only when the contract IS paused
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
-
-  /**
-   * @dev modifier to allow actions only when the contract IS NOT paused
-   */
-  modifier whenPaused {
-    require(paused);
-    _;
-  }
-
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused returns (bool) {
-    paused = true;
-    Pause();
-    return true;
-  }
-
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused returns (bool) {
-    paused = false;
-    Unpause();
-    return true;
-  }
-}
+// File: zeppelin-solidity/contracts/math/SafeMath.sol
 
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
     uint256 c = a * b;
-    assert(a == 0 || c / a == b);
+    assert(c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
   }
 }
 
+// File: zeppelin-solidity/contracts/token/ERC20Basic.sol
 
 /**
  * @title ERC20Basic
@@ -128,24 +123,12 @@ library SafeMath {
  */
 contract ERC20Basic {
   uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-
-
+// File: zeppelin-solidity/contracts/token/BasicToken.sol
 
 /**
  * @title Basic token
@@ -161,7 +144,11 @@ contract BasicToken is ERC20Basic {
   * @param _to The address to transfer to.
   * @param _value The amount to be transferred.
   */
-  function transfer(address _to, uint256 _value) returns (bool) {
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+
+    // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
     Transfer(msg.sender, _to, _value);
@@ -173,12 +160,26 @@ contract BasicToken is ERC20Basic {
   * @param _owner The address to query the the balance of.
   * @return An uint256 representing the amount owned by the passed address.
   */
-  function balanceOf(address _owner) constant returns (uint256 balance) {
+  function balanceOf(address _owner) public view returns (uint256 balance) {
     return balances[_owner];
   }
 
 }
 
+// File: zeppelin-solidity/contracts/token/ERC20.sol
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+// File: zeppelin-solidity/contracts/token/StandardToken.sol
 
 /**
  * @title Standard ERC20 token
@@ -189,41 +190,38 @@ contract BasicToken is ERC20Basic {
  */
 contract StandardToken is ERC20, BasicToken {
 
-  mapping (address => mapping (address => uint256)) allowed;
+  mapping (address => mapping (address => uint256)) internal allowed;
 
 
   /**
    * @dev Transfer tokens from one address to another
    * @param _from address The address which you want to send tokens from
    * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amout of tokens to be transfered
+   * @param _value uint256 the amount of tokens to be transferred
    */
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
-    var _allowance = allowed[_from][msg.sender];
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
 
-    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-    // require (_value <= _allowance);
-
-    balances[_to] = balances[_to].add(_value);
     balances[_from] = balances[_from].sub(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
     Transfer(_from, _to, _value);
     return true;
   }
 
   /**
-   * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
    * @param _spender The address which will spend the funds.
    * @param _value The amount of tokens to be spent.
    */
-  function approve(address _spender, uint256 _value) returns (bool) {
-
-    // To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-
+  function approve(address _spender, uint256 _value) public returns (bool) {
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
     return true;
@@ -233,14 +231,38 @@ contract StandardToken is ERC20, BasicToken {
    * @dev Function to check the amount of tokens that an owner allowed to a spender.
    * @param _owner address The address which owns the funds.
    * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifing the amount of tokens still avaible for the spender.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
    */
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+  function allowance(address _owner, address _spender) public view returns (uint256) {
     return allowed[_owner][_spender];
+  }
+
+  /**
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   */
+  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
   }
 
 }
 
+// File: zeppelin-solidity/contracts/token/MintableToken.sol
 
 /**
  * @title Mintable token
@@ -263,14 +285,15 @@ contract MintableToken is StandardToken, Ownable {
 
   /**
    * @dev Function to mint tokens
-   * @param _to The address that will recieve the minted tokens.
+   * @param _to The address that will receive the minted tokens.
    * @param _amount The amount of tokens to mint.
    * @return A boolean that indicates if the operation was successful.
    */
-  function mint(address _to, uint256 _amount) onlyOwner canMint returns (bool) {
+  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
     totalSupply = totalSupply.add(_amount);
     balances[_to] = balances[_to].add(_amount);
-    Transfer(0X0, _to, _amount);
+    Mint(_to, _amount);
+    Transfer(address(0), _to, _amount);
     return true;
   }
 
@@ -278,282 +301,56 @@ contract MintableToken is StandardToken, Ownable {
    * @dev Function to stop minting new tokens.
    * @return True if the operation was successful.
    */
-  function finishMinting() onlyOwner returns (bool) {
+  function finishMinting() onlyOwner canMint public returns (bool) {
     mintingFinished = true;
     MintFinished();
     return true;
   }
 }
 
+// File: contracts/Hydrocoin.sol
 
+contract Hydrocoin is MintableToken, MultipleOwners {
+    string public name = "HydroCoin";
+    string public symbol = "HYC";
+    uint8 public decimals = 18;
 
-contract HydroCoin is MintableToken, Pausable {
-  string public name = "H2O Token";
-  string public symbol = "H2O";
-  uint256 public decimals = 18;
+    // current total supply
+    uint256 public totalSupply = 500100000 ether;
+    // maximum supply
+    uint256 public hardCap = 1000000000 ether;
 
-  //----- splitter functions
+    // transfer freeze for team token until September 30th, 2019
+    uint256 public teamTransferFreeze;
+    address public founders;
 
+    function Hydrocoin(address _paymentContract, uint256 _teamTransferFreeze, address _founders)
+        public
+    {
+        teamTransferFreeze = _teamTransferFreeze;
+        founders = _founders;
+        // fundation address, gas station reserve,team
+        balances[founders] = balances[founders].add(500000000 ether);
+        Transfer(0x0, founders, 500000000 ether);
 
-    event Ev(string message, address whom, uint256 val);
-
-    struct XRec {
-        bool inList;
-        address next;
-        address prev;
-        uint256 val;
+        // payment contract
+        balances[_paymentContract] = balances[_paymentContract].add(100000 ether);
+        Transfer(0x0, _paymentContract, 100000 ether);
     }
 
-    struct QueueRecord {
-        address whom;
-        uint256 val;
+    modifier canMint() {
+        require(!mintingFinished);
+        _;
+        assert(totalSupply <= hardCap);
     }
 
-    address public first = 0x0;
-    address public last = 0x0;
-    bool    public queueMode;
-    uint256 public pos;
-
-    mapping (address => XRec) public theList;
-
-    QueueRecord[]  theQueue;
-
-    function startQueueing() onlyOwner {
-        queueMode = true;
-        pos = 0;
+    modifier validateTrasfer() {
+        _;
+        assert(balances[founders] >= 100000000 ether || teamTransferFreeze < now);
     }
 
-    function stopQueueing(uint256 num) onlyOwner {
-        queueMode = false;
-        for (uint256 i = 0; i < num; i++) {
-            if (pos >= theQueue.length) {
-                delete theQueue;
-                return;
-            }
-            update(theQueue[pos].whom,theQueue[pos].val);
-            pos++;
-        }
-        queueMode = true;
-    } 
-
-   function queueLength() constant returns (uint256) {
-        return theQueue.length;
+    function transfer(address _to, uint256 _value) public validateTrasfer returns (bool) {
+        super.transfer(_to, _value);
     }
-
-    function addRecToQueue(address whom, uint256 val) internal {
-        theQueue.push(QueueRecord(whom,val));
-    }
-
-    // add a record to the END of the list
-    function add(address whom, uint256 value) internal {
-        theList[whom] = XRec(true,0x0,last,value);
-        if (last != 0x0) {
-            theList[last].next = whom;
-        } else {
-            first = whom;
-        }
-        last = whom;
-        Ev("add",whom,value);
-    }
-
-    function remove(address whom) internal {
-        if (first == whom) {
-            first = theList[whom].next;
-            theList[whom] = XRec(false,0x0,0x0,0);
-            return;
-        }
-        address next = theList[whom].next;
-        address prev = theList[whom].prev;
-        if (prev != 0x0) {
-            theList[prev].next = next;
-        }
-        if (next != 0x0) {
-            theList[next].prev = prev;
-        }
-        theList[whom] =XRec(false,0x0,0x0,0);
-        Ev("remove",whom,0);
-    }
-
-    function update(address whom, uint256 value) internal {
-        if (queueMode) {
-            addRecToQueue(whom,value);
-            return;
-        }
-        if (value != 0) {
-            if (!theList[whom].inList) {
-                add(whom,value);
-            } else {
-                theList[whom].val = value;
-                Ev("update",whom,value);
-            }
-            return;
-        }
-        if (theList[whom].inList) {
-                remove(whom);
-        }
-    }
-
-
-
-
-// ----- H20 stuff -----
-
-
-  /**
-   * @dev Allows anyone to transfer the H20 tokens once trading has started
-   * @param _to the recipient address of the tokens.
-   * @param _value number of tokens to be transfered.
-   */
-  function transfer(address _to, uint _value) whenNotPaused returns (bool) {
-      bool result = super.transfer(_to, _value);
-      update(msg.sender,balances[msg.sender]);
-      update(_to,balances[_to]);
-      return result;
-  }
-
-  /**
-   * @dev Allows anyone to transfer the H20 tokens once trading has started
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint the amout of tokens to be transfered
-   */
-  function transferFrom(address _from, address _to, uint _value) whenNotPaused returns (bool) {
-      bool result = super.transferFrom(_from, _to, _value);
-      update(_from,balances[_from]);
-      update(_to,balances[_to]);
-      return result;
-  }
-
- /**
-   * @dev Function to mint tokens
-   * @param _to The address that will recieve the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
-   */
- 
-  function mint(address _to, uint256 _amount) onlyOwner canMint returns (bool) {
-      bool result = super.mint(_to,_amount);
-      update(_to,balances[_to]);
-      return result;
-  }
-
-  function emergencyERC20Drain( ERC20 token, uint amount ) {
-      token.transfer(owner, amount);
-  }
- 
-}
-
-
-contract HydroCoinPresale is Ownable,Pausable {
-  using SafeMath for uint256;
-
-  // The token being sold
-  HydroCoin public token;
-
-  // start and end block where investments are allowed (both inclusive)
-  uint256 public startTimestamp; 
-  uint256 public endTimestamp;
-
-  // address where funds are collected
-  address public hardwareWallet = 0xa6128CA2eD94FB697d7058dC3Fd22740F82FF06A;
-
-  mapping (address => uint256) public deposits;
-
-  // how many token units a buyer gets per wei
-  uint256 public rate = 125;
-
-  // amount of raised money in wei
-  uint256 public weiRaised;
-
-  // minimum contributio to participate in tokensale
-  uint256 public minContribution  = 50 ether;
-
-  // maximum amount of ether being raised
-  uint256 public hardcap  = 1500 ether; 
-
-  // amount to allocate to vendors
-  uint256 public vendorAllocation  = 1000000 * 10 ** 18; // H20
-
-  // number of participants in presale
-  uint256 public numberOfPurchasers = 0;
-
-  address public companyTokens = 0xF1D5007d3884B8Ec6C2f89088b2bA28C5291C70f;
-
-  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
-  event PreSaleClosed();
-
-  function setWallet(address _wallet) onlyOwner {
-    hardwareWallet = _wallet;
-  }
-
-  function HydroCoinPresale() {
-    startTimestamp = 1506333600;
-    endTimestamp = startTimestamp + 1 weeks;
-
-    token = new HydroCoin();
-
-    require(startTimestamp >= now);
-    require(endTimestamp >= startTimestamp);
-
-    token.mint(companyTokens, vendorAllocation);
-  }
-
-  // check if valid purchase
-  modifier validPurchase {
-    require(now >= startTimestamp);
-    require(now <= endTimestamp);
-    require(msg.value >= minContribution);
-    require(weiRaised.add(msg.value) <= hardcap);
-    _;
-  }
-
-  // @return true if crowdsale event has ended
-  function hasEnded() public constant returns (bool) {
-    if (now > endTimestamp)
-        return true;
-    if (weiRaised >= hardcap)
-        return true;
-    return false;
-  }
-
-  // low level token purchase function
-  function buyTokens(address beneficiary) payable validPurchase {
-    require(beneficiary != 0x0);
-
-    uint256 weiAmount = msg.value;
-
-    if (deposits[msg.sender] == 0) {
-        numberOfPurchasers++;
-    }
-    deposits[msg.sender] = weiAmount.add(deposits[msg.sender]);
-    
-
-    // calculate token amount to be created
-    uint256 tokens = weiAmount.mul(rate);
-
-    // update state
-    weiRaised = weiRaised.add(weiAmount);
-
-    token.mint(beneficiary, tokens);
-    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
-    hardwareWallet.transfer(msg.value);
-  }
-
-  // transfer ownership of the token to the owner of the presale contract
-  function finishPresale() public onlyOwner {
-    require(hasEnded());
-    token.transferOwnership(owner);
-    PreSaleClosed();
-  }
-
-  // fallback function can be used to buy tokens
-  function () payable {
-    buyTokens(msg.sender);
-  }
-
-    function emergencyERC20Drain( ERC20 theToken, uint amount ) {
-        theToken.transfer(owner, amount);
-    }
-
 
 }
