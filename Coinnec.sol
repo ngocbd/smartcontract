@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Coinnec at 0x4a4f15e5372e2bf4a21ea88f5b264dd1914b730f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Coinnec at 0x5f8ce34daf79f32930af4b16433f325f03104961
 */
 pragma solidity ^0.4.4;
 
@@ -112,7 +112,7 @@ contract Coinnec is StandardToken { // CHANGE THIS. Update the contract name.
         totalSupply = 1000000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
         name = "Coinnec";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
-        symbol = "COI";                                             // Set the symbol for display purposes (CHANGE THIS)
+        symbol = "NEC";                                             // Set the symbol for display purposes (CHANGE THIS)
         unitsOneEthCanBuy = 1000;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
     }
