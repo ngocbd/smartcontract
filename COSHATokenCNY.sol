@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COSHATokenCNY at 0x44d2ff4a96ba416554951f28d239cad0abd2800d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COSHATokenCNY at 0xfb0357df5d18f95a0560a8cf10a33b0eca025a8d
 */
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
@@ -34,7 +34,7 @@ contract COSHATokenCNY {
         initialSupply = totalSupply;
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
         name = "COSHATokenCNY";                                   // Set the name for display purposes
-        symbol = "CCNY";                               // Set the symbol for display purposes
+        symbol = "C-CNY";                               // Set the symbol for display purposes
         tokenName = name;
         tokenSymbol = symbol;
         
