@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RichToken at 0x42095468d0af5976caa589ad6db91a1b8913be4e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RichToken at 0xa2fd77767c598c7e93fa7234fcfe1976cf7e3216
 */
 pragma solidity ^0.4.18;
 
@@ -40,7 +40,7 @@ contract RichToken is ERC721 {
   string public constant NAME = "RichToken";
   string public constant SYMBOL = "RT";
 
-  uint256 private startingPrice = 1 ether;
+  uint256 private startingPrice = 10 ether;
 
   /*** STORAGE ***/
 
