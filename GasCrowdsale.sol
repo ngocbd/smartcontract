@@ -1,10 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GasCrowdsale at 0xa54a1b3a6203cef877b759b64c6d205421e9f86c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GasCrowdsale at 0xbdbadbdae043513f839681bd89ccf5ca821ff8f5
 */
 pragma solidity ^0.4.19;
 
-interface token {
+contract token {
     function transfer(address receiver, uint256 amount);
+    function balanceOf(address _owner) constant returns (uint256 balance);
 }
 
 library SafeMath {
@@ -60,8 +61,8 @@ contract GasCrowdsale {
     function GasCrowdsale() {
         beneficiary = 0x007FB3e94dCd7C441CAA5b87621F275d199Dff81;
         fundingGoal = 8000 ether;
-        startdate = 1518134400;
-        deadline = startdate + 29 days;
+        startdate = now;
+        deadline = 1520640000;
         price = 0.0003 ether;
         tokenReward = token(0x75c79b88facE8892E7043797570c390bc2Db52A7);
     }
@@ -79,23 +80,9 @@ contract GasCrowdsale {
         amountRaised = amountRaised.add(amount);
         
         //add bounus for funders
-        if(now >= startdate && now <= startdate + 24 hours ){
-            amount =  amount.div(price);
-            bonus = amount.mul(30).div(100);
-            amount = amount.add(bonus);
-        }
-        else if(now > startdate + 24 hours && now <= startdate + 24 hours + 1 weeks ){
-            amount =  amount.div(price);
-            bonus = amount.mul(20).div(100);
-            amount = amount.add(bonus);
-        }
-        else if(now > startdate + 24 hours + 1 weeks && now <= startdate + 24 hours + 3 weeks ){
-            amount =  amount.div(price);
-            bonus = amount.mul(10).div(100);
-            amount = amount.add(bonus);
-        } else {
-            amount =  amount.div(price);
-        }
+        amount =  amount.div(price);
+        bonus = amount.mul(35).div(100);
+        amount = amount.add(bonus);
         
         amount = amount.mul(100000000);
         tokenReward.transfer(msg.sender, amount);
@@ -111,7 +98,13 @@ contract GasCrowdsale {
     function endCrowdsale() afterDeadline {
         crowdsaleClosed = true;
     }
-
+    
+    function getTokensBack() {
+        uint256 remaining = tokenReward.balanceOf(this);
+        if(msg.sender == beneficiary){
+           tokenReward.transfer(beneficiary, remaining); 
+        }
+    }
 
     /**
      * Withdraw the funds
