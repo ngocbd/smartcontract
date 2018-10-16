@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BRFCrowdsale at 0x7f395379174ab6245239c0c4badc6ea7652a9f01
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BRFCrowdsale at 0x4d5e7c27b559f6f7be72dc28a2c16b0f342449aa
 */
 pragma solidity ^0.4.18;
 
@@ -503,10 +503,6 @@ contract RefundableCrowdsale is FinalizableCrowdsale {
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
 
-pragma solidity ^0.4.18;
-
-
-
 
 
 /**
@@ -589,7 +585,7 @@ contract ReleasableToken is ERC20, Ownable {
 // File: contracts/BRFToken/BRFToken.sol
 
 contract BRFToken is StandardToken, ReleasableToken {
-  string public constant name = "BRF Token";
+  string public constant name = "Bitrace Token";
   string public constant symbol = "BRF";
   uint8 public constant decimals = 18;
 
@@ -672,10 +668,10 @@ contract BRFCrowdsale is RefundableCrowdsale {
   }
 
   // For Allocating PreSold and Reserved Tokens
-  function allocateTokens(address beneficiary, uint256 tokensToAllocate, uint256 stage, uint256 weiPrice) public onlyOwner {
+  function allocateTokens(address beneficiary, uint256 tokensToAllocate, uint256 stage, uint256 rate) public onlyOwner {
     require(stage <= 5);
     uint256 tokensWithDecimals = toBRFWEI(tokensToAllocate);
-    uint256 weiAmount = weiPrice * tokensWithDecimals;
+    uint256 weiAmount = rate == 0 ? 0 : tokensWithDecimals.div(rate);
     weiRaised = weiRaised.add(weiAmount);
     if (weiAmount > 0) {
       totalTokensByStage[stage] = totalTokensByStage[stage].add(tokensWithDecimals);
@@ -759,7 +755,10 @@ contract BRFCrowdsale is RefundableCrowdsale {
   function allocateUnsold() internal {
     require(hasEnded());
     BRFToken brfToken = BRFToken(token);
-    token.transfer(owner, brfToken.balanceOf(address(this)));
+    uint256 leftOverTokens = brfToken.balanceOf(address(this));
+    if (leftOverTokens > 0) {
+      token.transfer(owner, leftOverTokens);
+    }
   }
 
   function toBRFWEI(uint256 value) internal view returns (uint256) {
