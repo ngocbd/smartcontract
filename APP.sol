@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract APP at 0xc139824910B6bf2678b2D15EbBC8D35E899Ad80f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract APP at 0x45a353132143f475b355620ad9d7413d0222ea04
 */
 pragma solidity ^0.4.13; 
 contract owned { 
@@ -24,8 +24,8 @@ contract tokenRecipient { function receiveApproval(address from, uint256 value, 
 
 contract token { 
     // Public variables of the token / 
-    string public name = 'APP'; 
-    string public symbol; 
+    string public name = 'Application'; 
+    string public symbol;
     uint8 public decimals; 
     uint256 public totalSupply;
 
