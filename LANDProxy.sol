@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LANDProxy at 0x36fc2821c1dba31ed04682b2277c89f33fd885b7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LANDProxy at 0xf87e31492faf9a91b02ee0deaad50d51d56d5d4d
 */
 pragma solidity ^0.4.18;
 
@@ -13,9 +13,34 @@ contract LANDStorage {
   uint256 constant clearHigh = 0x00000000000000000000000000000000ffffffffffffffffffffffffffffffff;
   uint256 constant factor = 0x100000000000000000000000000000000;
 
+  mapping (address => bool) authorizedDeploy;
+
 }
 
-// File: contracts/registry/AssetRegistryStorage.sol
+// File: contracts/upgradable/OwnableStorage.sol
+
+contract OwnableStorage {
+
+  address public owner;
+
+  function OwnableStorage() internal {
+    owner = msg.sender;
+  }
+
+}
+
+// File: contracts/upgradable/ProxyStorage.sol
+
+contract ProxyStorage {
+
+  /**
+   * Current contract to which we are proxing
+   */
+  address public currentContract;
+  address public proxyOwner;
+}
+
+// File: erc821/contracts/AssetRegistryStorage.sol
 
 contract AssetRegistryStorage {
 
@@ -60,29 +85,6 @@ contract AssetRegistryStorage {
   bool internal _reentrancy;
 }
 
-// File: contracts/upgradable/OwnableStorage.sol
-
-contract OwnableStorage {
-
-  address public owner;
-
-  function OwnableStorage() internal {
-    owner = msg.sender;
-  }
-
-}
-
-// File: contracts/upgradable/ProxyStorage.sol
-
-contract ProxyStorage {
-
-  /**
-   * Current contract to which we are proxing
-   */
-  address currentContract;
-
-}
-
 // File: contracts/Storage.sol
 
 contract Storage is ProxyStorage, OwnableStorage, AssetRegistryStorage, LANDStorage {
@@ -125,15 +127,63 @@ contract IApplication {
   function initialize(bytes data) public;
 }
 
+// File: contracts/upgradable/Ownable.sol
+
+contract Ownable is Storage {
+
+  event OwnerUpdate(address _prevOwner, address _newOwner);
+
+  function bytesToAddress (bytes b) pure public returns (address) {
+    uint result = 0;
+    for (uint i = b.length-1; i+1 > 0; i--) {
+      uint c = uint(b[i]);
+      uint to_inc = c * ( 16 ** ((b.length - i-1) * 2));
+      result += to_inc;
+    }
+    return address(result);
+  }
+
+  modifier onlyOwner {
+    assert(msg.sender == owner);
+    _;
+  }
+
+  function initialize(bytes data) public {
+    owner = bytesToAddress(data);
+  }
+
+  function transferOwnership(address _newOwner) public onlyOwner {
+    require(_newOwner != owner);
+    owner = _newOwner;
+  }
+}
+
 // File: contracts/upgradable/Proxy.sol
 
-contract Proxy is ProxyStorage, DelegateProxy {
+contract Proxy is Storage, DelegateProxy {
 
   event Upgrade(address indexed newContract, bytes initializedWith);
+  event OwnerUpdate(address _prevOwner, address _newOwner);
 
-  function upgrade(IApplication newContract, bytes data) public {
+  function Proxy() public {
+    proxyOwner = msg.sender;
+  }
+
+  modifier onlyProxyOwner() {
+    require(msg.sender == proxyOwner);
+    _;
+  }
+
+  function transferOwnership(address _newOwner) public onlyProxyOwner {
+    require(_newOwner != proxyOwner);
+
+    OwnerUpdate(proxyOwner, _newOwner);
+    proxyOwner = _newOwner;
+  }
+
+  function upgrade(IApplication newContract, bytes data) public onlyProxyOwner {
     currentContract = newContract;
-    newContract.initialize(data);
+    IApplication(this).initialize(data);
 
     Upgrade(newContract, data);
   }
