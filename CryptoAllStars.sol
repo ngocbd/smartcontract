@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoAllStars at 0xa3fa17c51a77a79808f3c21948de3ea70391ce6a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoAllStars at 0x7d152fe26431e6585dbff9ef37e375e49b862739
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
@@ -27,7 +27,7 @@ contract CryptoAllStars is ERC721 {
 
   /*** EVENTS ***/
 
-  /// @dev The Birth event is fired whenever a new person comes into existence.
+  /// @dev The Birth event is fired whenever a new all stars comes into existence.
   event Birth(uint256 tokenId, string name, address owner);
 
   /// @dev The TokenSold event is fired whenever a token is sold.
@@ -44,39 +44,41 @@ contract CryptoAllStars is ERC721 {
   string public constant SYMBOL = "AllStarToken"; // solhint-disable-line
 
   uint256 private startingPrice = 0.001 ether;
-  uint256 private constant PROMO_CREATION_LIMIT = 5000;
+  uint256 private constant PROMO_CREATION_LIMIT = 10000;
   uint256 private firstStepLimit =  0.053613 ether;
-  uint256 private secondStepLimit = 0.564957 ether;
+  uint public currentGen = 0;
 
   /*** STORAGE ***/
 
-  /// @dev A mapping from person IDs to the address that owns them. All persons have
+  /// @dev A mapping from all stars IDs to the address that owns them. All all stars have
   ///  some valid owner address.
-  mapping (uint256 => address) public personIndexToOwner;
+  mapping (uint256 => address) public allStarIndexToOwner;
 
   // @dev A mapping from owner address to count of tokens that address owns.
   //  Used internally inside balanceOf() to resolve ownership count.
   mapping (address => uint256) private ownershipTokenCount;
 
-  /// @dev A mapping from PersonIDs to an address that has been approved to call
-  ///  transferFrom(). Each Person can only have one approved address for transfer
+  /// @dev A mapping from allStarIDs to an address that has been approved to call
+  ///  transferFrom(). Each All Star can only have one approved address for transfer
   ///  at any time. A zero value means no approval is outstanding.
-  mapping (uint256 => address) public personIndexToApproved;
+  mapping (uint256 => address) public allStarIndexToApproved;
 
-  // @dev A mapping from PersonIDs to the price of the token.
-  mapping (uint256 => uint256) private personIndexToPrice;
+  // @dev A mapping from AllStarIDs to the price of the token.
+  mapping (uint256 => uint256) private allStarIndexToPrice;
 
   // The addresses of the accounts (or contracts) that can execute actions within each roles.
   address public ceo = 0x047F606fD5b2BaA5f5C6c4aB8958E45CB6B054B7;
+  address public cfo = 0xed8eFE0C11E7f13Be0B9d2CD5A675095739664d6;
 
   uint256 public promoCreatedCount;
 
   /*** DATATYPES ***/
-  struct Person {
+  struct AllStar {
     string name;
+    uint gen;
   }
 
-  Person[] private persons;
+  AllStar[] private allStars;
 
   /*** ACCESS MODIFIERS ***/
   /// @dev Access modifier for owner only functionality
@@ -85,6 +87,15 @@ contract CryptoAllStars is ERC721 {
     _;
   }
 
+  modifier onlyManagement() {
+    require(msg.sender == ceo || msg.sender == cfo);
+    _;
+  }
+
+  //changes the current gen of all stars by importance
+  function evolveGeneration(uint _newGen) public onlyManagement {
+    currentGen = _newGen;
+  }
  
   /*** CONSTRUCTOR ***/
   // function CryptoAllStars() public {
@@ -104,7 +115,7 @@ contract CryptoAllStars is ERC721 {
     // Caller must own token.
     require(_owns(msg.sender, _tokenId));
 
-    personIndexToApproved[_tokenId] = _to;
+    allStarIndexToApproved[_tokenId] = _to;
 
     Approval(msg.sender, _to, _tokenId);
   }
@@ -116,13 +127,13 @@ contract CryptoAllStars is ERC721 {
     return ownershipTokenCount[_owner];
   }
 
-  /// @dev Creates a new promo Person with the given name, with given _price and assignes it to an address.
-  function createPromoPerson(address _owner, string _name, uint256 _price) public onlyCeo {
+  /// @dev Creates a new promo AllStar with the given name, with given _price and assignes it to an address.
+  function createPromoAllStar(address _owner, string _name, uint256 _price) public onlyCeo {
     require(promoCreatedCount < PROMO_CREATION_LIMIT);
 
-    address personOwner = _owner;
-    if (personOwner == address(0)) {
-      personOwner = ceo;
+    address allStarOwner = _owner;
+    if (allStarOwner == address(0)) {
+      allStarOwner = ceo;
     }
 
     if (_price <= 0) {
@@ -130,25 +141,27 @@ contract CryptoAllStars is ERC721 {
     }
 
     promoCreatedCount++;
-    _createPerson(_name, personOwner, _price);
+    _createAllStar(_name, allStarOwner, _price);
   }
 
-  /// @dev Creates a new Person with the given name.
-  function createContractPerson(string _name) public onlyCeo {
-    _createPerson(_name, address(this), startingPrice);
+  /// @dev Creates a new AllStar with the given name.
+  function createContractAllStar(string _name) public onlyCeo {
+    _createAllStar(_name, msg.sender, startingPrice );
   }
 
-  /// @notice Returns all the relevant information about a specific person.
-  /// @param _tokenId The tokenId of the person of interest.
-  function getPerson(uint256 _tokenId) public view returns (
-    string personName,
+  /// @notice Returns all the relevant information about a specific AllStar.
+  /// @param _tokenId The tokenId of the All Star of interest.
+  function getAllStar(uint256 _tokenId) public view returns (
+    string allStarName,
+    uint allStarGen,
     uint256 sellingPrice,
     address owner
   ) {
-    Person storage person = persons[_tokenId];
-    personName = person.name;
-    sellingPrice = personIndexToPrice[_tokenId];
-    owner = personIndexToOwner[_tokenId];
+    AllStar storage allStar = allStars[_tokenId];
+    allStarName = allStar.name;
+    allStarGen = allStar.gen;
+    sellingPrice = allStarIndexToPrice[_tokenId];
+    owner = allStarIndexToOwner[_tokenId];
   }
 
   function implementsERC721() public pure returns (bool) {
@@ -168,20 +181,20 @@ contract CryptoAllStars is ERC721 {
     view
     returns (address owner)
   {
-    owner = personIndexToOwner[_tokenId];
+    owner = allStarIndexToOwner[_tokenId];
     require(owner != address(0));
   }
 
-  function payout(address _to) public onlyCeo {
-    _payout(_to);
+  function payout() public onlyManagement {
+    _payout();
   }
 
   // Allows someone to send ether and obtain the token
   function purchase(uint256 _tokenId) public payable {
-    address oldOwner = personIndexToOwner[_tokenId];
+    address oldOwner = allStarIndexToOwner[_tokenId];
     address newOwner = msg.sender;
 
-    uint256 sellingPrice = personIndexToPrice[_tokenId];
+    uint256 sellingPrice = allStarIndexToPrice[_tokenId];
 
     // Making sure token owner is not sending to self
     require(oldOwner != newOwner);
@@ -192,19 +205,16 @@ contract CryptoAllStars is ERC721 {
     // Making sure sent amount is greater than or equal to the sellingPrice
     require(msg.value >= sellingPrice);
 
-    uint256 payment = uint256(SafeMath.div(SafeMath.mul(sellingPrice, 94), 100));
+    uint256 payment = uint256(SafeMath.div(SafeMath.mul(sellingPrice, 92), 100));
     uint256 purchaseExcess = SafeMath.sub(msg.value, sellingPrice);
 
     // Update prices
     if (sellingPrice < firstStepLimit) {
       // first stage
-      personIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 200), 94);
-    } else if (sellingPrice < secondStepLimit) {
-      // second stage
-      personIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 120), 94);
-    } else {
-      // third stage
-      personIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 115), 94);
+      allStarIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 200), 94);
+   } else {
+      // second and last stage
+      allStarIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 125), 94);
     }
 
     _transfer(oldOwner, newOwner, _tokenId);
@@ -214,13 +224,13 @@ contract CryptoAllStars is ERC721 {
       oldOwner.transfer(payment); //(1-0.06)
     }
 
-    TokenSold(_tokenId, sellingPrice, personIndexToPrice[_tokenId], oldOwner, newOwner, persons[_tokenId].name);
+    TokenSold(_tokenId, sellingPrice, allStarIndexToPrice[_tokenId], oldOwner, newOwner, allStars[_tokenId].name);
 
     msg.sender.transfer(purchaseExcess);
   }
 
   function priceOf(uint256 _tokenId) public view returns (uint256 price) {
-    return personIndexToPrice[_tokenId];
+    return allStarIndexToPrice[_tokenId];
   }
 
   /// @dev Assigns a new address to act as the owner. Only available to the current owner.
@@ -229,6 +239,12 @@ contract CryptoAllStars is ERC721 {
     require(_newOwner != address(0));
 
     ceo = _newOwner;
+  }
+
+   function setCFO(address _newCFO) public onlyCeo {
+    require(_newCFO != address(0));
+
+    cfo = _newCFO;
   }
 
 
@@ -242,7 +258,7 @@ contract CryptoAllStars is ERC721 {
   /// @dev Required for ERC-721 compliance.
   function takeOwnership(uint256 _tokenId) public {
     address newOwner = msg.sender;
-    address oldOwner = personIndexToOwner[_tokenId];
+    address oldOwner = allStarIndexToOwner[_tokenId];
 
     // Safety check to prevent against an unexpected 0x0 default.
     require(_addressNotNull(newOwner));
@@ -261,13 +277,13 @@ contract CryptoAllStars is ERC721 {
       return new uint256[](0);
     } else {
       uint256[] memory result = new uint256[](tokenCount);
-      uint256 totalPersons = totalSupply();
+      uint256 totalAllStars = totalSupply();
       uint256 resultIndex = 0;
 
-      uint256 personId;
-      for (personId = 0; personId <= totalPersons; personId++) {
-        if (personIndexToOwner[personId] == _owner) {
-          result[resultIndex] = personId;
+      uint256 allStarId;
+      for (allStarId = 0; allStarId <= totalAllStars; allStarId++) {
+        if (allStarIndexToOwner[allStarId] == _owner) {
+          result[resultIndex] = allStarId;
           resultIndex++;
         }
       }
@@ -278,7 +294,7 @@ contract CryptoAllStars is ERC721 {
   /// For querying totalSupply of token
   /// @dev Required for ERC-721 compliance.
   function totalSupply() public view returns (uint256 total) {
-    return persons.length;
+    return allStars.length;
   }
 
   /// Owner initates the transfer of the token to another account
@@ -320,55 +336,55 @@ contract CryptoAllStars is ERC721 {
 
   /// For checking approval of transfer for address _to
   function _approved(address _to, uint256 _tokenId) private view returns (bool) {
-    return personIndexToApproved[_tokenId] == _to;
+    return allStarIndexToApproved[_tokenId] == _to;
   }
 
-  /// For creating Person
-  function _createPerson(string _name, address _owner, uint256 _price) private {
-    Person memory _person = Person({
-      name: _name
+  /// For creating All Stars
+  function _createAllStar(string _name, address _owner, uint256 _price) private {
+    AllStar memory _allStar = AllStar({
+      name: _name,
+      gen: currentGen
     });
-    uint256 newPersonId = persons.push(_person) - 1;
+    uint256 newAllStarId = allStars.push(_allStar) - 1;
 
     // It's probably never going to happen, 4 billion tokens are A LOT, but
     // let's just be 100% sure we never let this happen.
-    require(newPersonId == uint256(uint32(newPersonId)));
+    require(newAllStarId == uint256(uint32(newAllStarId)));
 
-    Birth(newPersonId, _name, _owner);
+    Birth(newAllStarId, _name, _owner);
 
-    personIndexToPrice[newPersonId] = _price;
+    allStarIndexToPrice[newAllStarId] = _price;
 
     // This will assign ownership, and also emit the Transfer event as
     // per ERC721 draft
-    _transfer(address(0), _owner, newPersonId);
+    _transfer(address(0), _owner, newAllStarId);
   }
 
   /// Check for token ownership
   function _owns(address claimant, uint256 _tokenId) private view returns (bool) {
-    return claimant == personIndexToOwner[_tokenId];
+    return claimant == allStarIndexToOwner[_tokenId];
   }
 
   /// For paying out balance on contract
-  function _payout(address _to) private {
-    if (_to == address(0)) {
-      ceo.transfer(this.balance);
-    } else {
-      _to.transfer(this.balance);
-    }
+  function _payout() private {
+      uint blnc = this.balance;
+      ceo.transfer(SafeMath.div(SafeMath.mul(blnc, 75), 100));
+      cfo.transfer(SafeMath.div(SafeMath.mul(blnc, 25), 100));
+    
   }
 
-  /// @dev Assigns ownership of a specific Person to an address.
+  /// @dev Assigns ownership of a specific All Star to an address.
   function _transfer(address _from, address _to, uint256 _tokenId) private {
-    // Since the number of persons is capped to 2^32 we can't overflow this
+    // Since the number of all stars is capped to 2^32 we can't overflow this
     ownershipTokenCount[_to]++;
     //transfer ownership
-    personIndexToOwner[_tokenId] = _to;
+    allStarIndexToOwner[_tokenId] = _to;
 
-    // When creating new persons _from is 0x0, but we can't account that address.
+    // When creating new all stars _from is 0x0, but we can't account that address.
     if (_from != address(0)) {
       ownershipTokenCount[_from]--;
       // clear any previously approved ownership exchange
-      delete personIndexToApproved[_tokenId];
+      delete allStarIndexToApproved[_tokenId];
     }
 
     // Emit the transfer event.
