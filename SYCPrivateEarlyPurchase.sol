@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SYCPrivateEarlyPurchase at 0xca3c1f193284d65777be83274b65181210419e41
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SYCPrivateEarlyPurchase at 0xabe0e980c807489712700941a1bd7110961581d6
 */
 pragma solidity ^0.4.7;
 
@@ -15,7 +15,7 @@ contract SYCPrivateEarlyPurchase {
      *  Properties
      */
     string public constant PURCHASE_AMOUNT_UNIT = 'ETH';    // Ether
-    uint public constant WEI_MINIMUM_PURCHASE = 10 * 10 ** 18;
+    uint public constant WEI_MINIMUM_PURCHASE = 20 * 10 ** 18;
     uint public constant WEI_MAXIMUM_EARLYPURCHASE = 7000 * 10 ** 18;
     uint public constant STARTING_TIME = 1504008000;
     uint public constant ENDING_TIME = 1504785599;
