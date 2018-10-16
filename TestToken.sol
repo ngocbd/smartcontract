@@ -1,107 +1,121 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestToken at 0xb84005872b407999a4a97f91d5ef40baaf1b9dc2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestToken at 0xd6f6b91d29c2f3f48b72ae1c9b962094f37c0f93
 */
-pragma solidity ^0.4.4;
+pragma solidity ^0.4.2;
 
+contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
 
 contract TestToken {
 
-    string public constant name = "Test Network Token";
-    string public constant symbol = "TNT";
-    uint8 public constant decimals = 18;  // 18 decimal places, the same as ETH.
+  event Transfer(address indexed _from, address indexed _to, uint256 _value);
+  event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+  event BlockLockSet(uint256 _value);
+  event NewOwner(address _newOwner);
 
-    uint256 public constant tokenCreationRate = 1000;
-
-    // The current total token supply.
-    uint256 totalTokens;
-    
-    address owner;
-    uint256 public startMark;
-    uint256 public endMark;
-
-    mapping (address => uint256) balances;
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Refund(address indexed _from, uint256 _value);
-        
-    function TestToken(address _owner, uint256 _startMark, uint256 _endMark) {
-        owner = _owner;
-        startMark = _startMark;
-        endMark = _endMark;
+  modifier onlyOwner {
+    if (msg.sender == owner) {
+      _;
     }
+  }
 
-    // Transfer tokens from sender's account to provided account address.
-    function transfer(address _to, uint256 _value) returns (bool) {
-        var senderBalance = balances[msg.sender];
-        if (senderBalance >= _value && _value > 0) {
-            senderBalance -= _value;
-            balances[msg.sender] = senderBalance;
-            balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
-            return true;
-        }
-
-        return false;
+  modifier blockLock(address _sender) {
+    if (!isLocked() || _sender == owner) {
+      _;
     }
+  }
 
-    // Transfer tokens from sender's account to provided account address.
-    function privilegedTransfer(address _from, address _to, uint256 _value) returns (bool) {
-        if (msg.sender != owner) throw;
-    
-        var srcBalance = balances[_from];
-        
-        if (srcBalance >= _value && _value > 0) {
-            srcBalance -= _value;
-            balances[_from] = srcBalance;
-            balances[_to] += _value;
-            Transfer(_from, _to, _value);
-            
-            return true;
-        }
-
-        return false;
-        
+  modifier checkIfToContract(address _to) {
+    if(_to != address(this))  {
+      _;
     }
+  }
 
-    function totalSupply() external constant returns (uint256) {
-        return totalTokens;
+  uint256 public totalSupply;
+  string public name;
+  uint8 public decimals;
+  string public symbol;
+  string public version = '0.0.1';
+  address public owner;
+  uint256 public lockedUntilBlock;
+
+  function TestToken(
+    uint256 _initialAmount,
+    string _tokenName,
+    uint8 _decimalUnits,
+    string _tokenSymbol,
+    uint256 _lockedUntilBlock
+    ) {
+
+    balances[msg.sender] = _initialAmount;
+    totalSupply = _initialAmount;
+    name = _tokenName;
+    decimals = _decimalUnits;
+    symbol = _tokenSymbol;
+    lockedUntilBlock = _lockedUntilBlock;
+    owner = msg.sender;
+  }
+
+  function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
+    tokenRecipient spender = tokenRecipient(_spender);
+    if (approve(_spender, _value)) {
+      spender.receiveApproval(msg.sender, _value, this, _extraData);
+      return true;
     }
+  }
 
-    function balanceOf(address _owner) external constant returns (uint256) {
-        return balances[_owner];
+  function transfer(address _to, uint256 _value) blockLock(msg.sender) checkIfToContract(_to) returns (bool success) {
+    if (balances[msg.sender] >= _value && _value > 0) {
+      balances[msg.sender] -= _value;
+      balances[_to] += _value;
+      Transfer(msg.sender, _to, _value);
+      return true;
+    } else {
+      return false;
     }
+  }
 
-    function fund() payable external {
-        // Do not allow creating 0 tokens.
-        if (msg.value == 0) throw;
-
-        var numTokens = msg.value * tokenCreationRate;
-
-        totalTokens += numTokens;
-
-        // Assign new tokens to the sender
-        balances[msg.sender] += numTokens;
-
-        // Log token creation event
-        Transfer(0x0, msg.sender, numTokens);
+  function transferFrom(address _from, address _to, uint256 _value) blockLock(_from) checkIfToContract(_to) returns (bool success) {
+    if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
+      balances[_to] += _value;
+      balances[_from] -= _value;
+      allowed[_from][msg.sender] -= _value;
+      Transfer(_from, _to, _value);
+      return true;
+    } else {
+      return false;
     }
+  }
 
-    // Test redfunding
-    function refund() external {
-        var tokenValue = balances[msg.sender];
-        if (tokenValue == 0) throw;
-        balances[msg.sender] = 0;
-        totalTokens -= tokenValue;
+  function balanceOf(address _owner) constant returns (uint256 balance) {
+    return balances[_owner];
+  }
 
-        var ethValue = tokenValue / tokenCreationRate;
-        Refund(msg.sender, ethValue);
+  function approve(address _spender, uint256 _value) returns (bool success) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
 
-        if (!msg.sender.send(ethValue)) throw;
-    }
-    
-    function kill() {
-        if(msg.sender != owner) throw;
-        
-        selfdestruct(msg.sender);
-    }
+  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+    return allowed[_owner][_spender];
+  }
+
+  function setBlockLock(uint256 _lockedUntilBlock) onlyOwner returns (bool success) {
+    lockedUntilBlock = _lockedUntilBlock;
+    BlockLockSet(_lockedUntilBlock);
+    return true;
+  }
+
+  function isLocked() constant returns (bool success) {
+    return lockedUntilBlock > block.number;
+  }
+
+  function replaceOwner(address _newOwner) onlyOwner returns (bool success) {
+    owner = _newOwner;
+    NewOwner(_newOwner);
+    return true;
+  }
+
+  mapping (address => uint256) balances;
+  mapping (address => mapping (address => uint256)) allowed;
 }
