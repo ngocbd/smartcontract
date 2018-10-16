@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SingularDTVLaunch at 0xc19d40a3659520c11fba9d37599cd945eb6f9fad
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SingularDTVLaunch at 0x609eee76d7ddd7880ff8349736f1329bffdcecc7
 */
 pragma solidity ^0.4.15;
 
