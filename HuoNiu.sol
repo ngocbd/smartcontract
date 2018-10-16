@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HuoNiu at 0x1053f1241cab133f18fd43ed3b8dbcb3306ac10c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HuoNiu at 0xf7b3062e4c2a0f6041bb988898a477ea260ab59f
 */
 pragma solidity ^0.4.8;
 
@@ -17,13 +17,13 @@ contract ERC20Interface {
 }
 
 contract HuoNiu is ERC20Interface {
-    string public constant symbol = "HUN";
+    string public constant symbol = "HUNU";
     string public constant name = "HuoNiu";
     uint8 public constant decimals = 4;
 
     uint256 _totalSupply = 0;
-    uint256 _airdropAmount = 69998989;
-    uint256 _cutoff = _airdropAmount * 142700;
+    uint256 _airdropAmount = 61988669;
+    uint256 _cutoff = _airdropAmount * 161139;
 
     mapping(address => uint256) balances;
     mapping(address => bool) initialized;
@@ -33,7 +33,7 @@ contract HuoNiu is ERC20Interface {
 
     function HuoNiu() {
         initialized[msg.sender] = true;
-        balances[msg.sender] = _airdropAmount * 128557;
+        balances[msg.sender] = _airdropAmount * 15970;
         _totalSupply = balances[msg.sender];
     }
 
