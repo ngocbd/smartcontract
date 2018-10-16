@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthPyramid at 0xc908a34165d2720d12ffcfb6b99b47161b1c9946
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthPyramid at 0xb34aa41593deabb2b17e7507e3e413c58f6e0c71
 */
 pragma solidity ^0.4.18;
 
@@ -78,9 +78,6 @@ contract EthPyramid {
 	// Variable tracking how much Ether each token is currently worth.
 	// Note that this is scaled by the scaleFactor variable.
 	uint256 earningsPerToken;
-	
-	// Current contract balance in Ether
-	uint256 public contractBalance;
 
 	function EthPyramid() public {}
 
@@ -104,7 +101,6 @@ contract EthPyramid {
 		totalPayouts += (int256) (balance * scaleFactor);
 		
 		// Send the dividends to the address that requested the withdraw.
-		contractBalance = sub(contractBalance, balance);
 		msg.sender.transfer(balance);
 	}
 
@@ -211,7 +207,6 @@ contract EthPyramid {
 	function fund() payable public {
 		// Don't allow for funding if the amount of Ether sent is less than 1 szabo.
 		if (msg.value > 0.000001 ether) {
-		    contractBalance = add(contractBalance, msg.value);
 			buy();
 		} else {
 			revert();
@@ -251,21 +246,20 @@ contract EthPyramid {
 		totalPayouts += (int256) (balance * scaleFactor);
 		
 		// Send the dividends to the address that requested the withdraw.
-		contractBalance = sub(contractBalance, balance);
-		to.transfer(balance);		
+		to.transfer(balance);
 	}
 
 	// Internal balance function, used to calculate the dynamic reserve value.
 	function balance() internal constant returns (uint256 amount) {
 		// msg.value is the amount of Ether sent by the transaction.
-		return contractBalance - msg.value;
+		return this.balance - msg.value;
 	}
 
 	function buy() internal {
 		// Any transaction of less than 1 szabo is likely to be worth less than the gas used to send it.
 		if (msg.value < 0.000001 ether || msg.value > 1000000 ether)
 			revert();
-						
+			
 		// msg.sender is the address of the caller.
 		var sender = msg.sender;
 		
