@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SpaceRegistry at 0x8cacdb7a4418cb6a21190d7b3a5060ed86d8b307
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SpaceRegistry at 0x7a2301086478efc25a51a8f2c7490d6a2dca3fb2
 */
 pragma solidity ^0.4.15;
 
@@ -22,7 +22,6 @@ contract Ownable {
   function Ownable() {
     owner = msg.sender;
   }
-
 
   /**
    * @dev Throws if called by any account other than the owner.
@@ -82,50 +81,144 @@ contract Stoppable is Ownable {
 contract SpaceRegistry is Stoppable {
     
     event Add();
-    mapping(uint => uint) spaces;
+    uint constant START_INDEX = 1;
+    Space[] spaces;
+    mapping(uint => uint) spaceMap;
+    mapping(uint => uint[]) userSpaceLookup;
+    
+    struct Space {
+        uint id;
+        uint userId;
+        bytes userHash;
+        uint bottomLeft;
+        uint topLeft;
+        uint topRight;
+        uint bottomRight;
+        string txType;
+        string txId;
+        uint txTime;
+        uint created;
+    }
 
-    function addSpace(uint spaceId, uint userHash, bytes orderData) 
+    function SpaceRegistry() {
+        spaces.length = START_INDEX;
+    }
+
+    function addSpace(
+        uint id, uint userId, bytes userHash, uint bottomLeft, uint topLeft, 
+        uint topRight, uint bottomRight, string txType, string txId, uint txTime) 
         onlyOwner whenNotStopped {
 
-        require(spaceId > 0);
-        require(userHash > 0);
-        require(orderData.length > 0);
-        require(spaces[spaceId] == 0);
-        spaces[spaceId] = userHash;
+        require(id > 0);
+        require(spaceMap[id] == 0);
+        require(userId > 0);
+        require(userHash.length > 0);
+        require(bottomLeft > 0);
+        require(topLeft > 0);
+        require(topRight > 0);
+        require(bottomRight > 0);
+        require(bytes(txType).length > 0);
+        require(bytes(txId).length > 0);
+        require(txTime > 0);
+        
+        var space = Space({
+            id: id,
+            userId: userId,
+            userHash: userHash,
+            bottomLeft: bottomLeft,
+            topLeft: topLeft,
+            topRight: topRight,
+            bottomRight: bottomRight,
+            txType: txType,
+            txId: txId,
+            txTime: txTime,
+            created: block.timestamp
+        });
+
+        var _index = spaces.push(space) - 1;
+        assert(_index >= START_INDEX);
+        spaceMap[id] = _index;
+        userSpaceLookup[userId].push(id);
         Add();
     }
 
-    function addSpaces(uint[] spaceIds, uint[] userHashes, bytes orderData)
-        onlyOwner whenNotStopped {
+    function getSpaceByIndex(uint index) external constant returns(
+        uint id,
+        uint userId,
+        bytes userHash,
+        uint bottomLeft,
+        uint topLeft,
+        uint topRight, 
+        uint bottomRight,
+        string txType,
+        string txId, 
+        uint txTime,
+        uint created) {
 
-        var count = spaceIds.length;
-        require(count > 0);
-        require(userHashes.length == count);
-        require(orderData.length > 0);
+        var _index = index + START_INDEX;
+        require(spaces.length > _index);
+        var space = spaces[_index];
+        id = space.id;
+        userId = space.userId;
+        userHash = space.userHash;
+        bottomLeft = space.bottomLeft;
+        topLeft = space.topLeft;
+        topRight = space.topRight;
+        bottomRight = space.bottomRight;
+        txType = space.txType;
+        txId = space.txId;
+        txTime = space.txTime;
+        created = space.created;
+    }    
 
-        for (uint i = 0; i < count; i++) {
-            var spaceId = spaceIds[i];
-            var userHash = userHashes[i];
-            require(spaceId > 0);
-            require(userHash > 0);
-            require(spaces[spaceId] == 0);
-            spaces[spaceId] = userHash;
-        }
+    function getSpaceById(uint _id) external constant returns(
+        uint id,
+        uint userId,
+        bytes userHash,
+        uint bottomLeft,
+        uint topLeft,
+        uint topRight, 
+        uint bottomRight,
+        string txType,
+        string txId,
+        uint txTime,
+        uint created) {
 
-        Add();
+        require(_id > 0);
+        id = _id;
+        var index = spaceMap[id];
+        var space = spaces[index];
+        userId = space.userId;
+        userHash = space.userHash;
+        bottomLeft = space.bottomLeft;
+        topLeft = space.topLeft;
+        topRight = space.topRight;
+        bottomRight = space.bottomRight;
+        txType = space.txType;
+        txId = space.txId;
+        txTime = space.txTime;
+        created = space.created;
     }
 
-    function getSpaceById(uint spaceId) 
-        external constant returns (uint userHash) {
-
-        require(spaceId > 0);
-        return spaces[spaceId];
+    function getUserSpaceIds(uint userId) external constant returns(uint[]) {
+        require(userId > 0);
+        return userSpaceLookup[userId]; 
     }
 
-    function isSpaceExist(uint spaceId) 
-        external constant returns (bool) {
-            
-        require(spaceId > 0);
-        return spaces[spaceId] > 0;
+    function getUserId(uint id) external constant returns(uint) {
+        require(id > 0);
+        var index = spaceMap[id];
+        require(index > 0);
+        var space = spaces[index];
+        return space.userId; 
     }
+
+    function exists(uint id) external constant returns(bool) {
+        require(id > 0);
+        return spaceMap[id] != 0;
+    }
+    
+    function spaceCount() constant returns (uint) {
+        return spaces.length - START_INDEX;
+    }   
 }
