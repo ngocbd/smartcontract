@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IBTCToken at 0x0784dbabb6c6834bddfb7cfee116ba049e5dafab
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IBTCToken at 0x46e1d5807b35100b130688b93bc720a2808ff7f4
 */
 pragma solidity ^0.4.11;
 
@@ -76,7 +76,7 @@ contract IBTCToken is IERC20 {
     // @notice IBTCToken Contract
     // @return the transaction address
     function IBTCToken() public payable {
-        owner = "0x9FD6977e609AA945C6b6e40537dCF0A791775279";
+        owner = "0x26Dce88a69a0619b92894eEfADBcA25B1b53Fc6d";
 
         balances[owner] = _totalSupply; 
     }
