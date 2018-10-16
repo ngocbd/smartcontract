@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract blockoptions at 0x7f1e2c7d6a69bf34824d72c53b4550e895c0d8c2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract blockoptions at 0xb1d9f149e833510a3af3ab54dc1568ad11244bf7
 */
 pragma solidity ^ 0.4 .8;
 
@@ -36,7 +36,7 @@ contract blockoptions is ERC20
       string public symbol = "BOP";
     
       //To store decimal places for token
-      uint public decimals = 8;    
+      uint8 public decimals = 8;    
     
       //To store current supply of BOP
       uint public _totalSupply=20000000 * 10**decimals;
@@ -152,11 +152,11 @@ contract blockoptions is ERC20
         {
             return false;
         }
-        else if (msg.sender == owner && check < 80000000000000 && now < ico_start + 360 days)
+        else if (msg.sender == owner && check < 97500000000000 && now < ico_start + 360 days)
         {
             return false;
         }
-        else if (msg.sender == owner && check < 30000000000000 && now < ico_start + 540 days)
+        else if (msg.sender == owner && check < 43000000000000 && now < ico_start + 540 days)
         {
             return false;
         }
