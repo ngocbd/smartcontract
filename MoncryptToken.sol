@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MoncryptToken at 0xf4846244b1bec4ccbe0c9e6ad45e0c6c80daf135
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MoncryptToken at 0x2066474d0ee2749cbc80eb68321ad1e4b9aba9c4
 */
 contract ERC20Basic {
   uint256 public totalSupply;
@@ -7,14 +7,12 @@ contract ERC20Basic {
   function transfer(address to, uint256 value) returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
-
 contract ERC20 is ERC20Basic {
   function allowance(address owner, address spender) constant returns (uint256);
   function transferFrom(address from, address to, uint256 value) returns (bool);
   function approve(address spender, uint256 value) returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
-
 library SafeMath {
   function mul(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a * b;
@@ -38,7 +36,6 @@ library SafeMath {
     return c;
   }
 }
-
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
 
@@ -58,7 +55,6 @@ contract BasicToken is ERC20Basic {
     return balances[_owner];
   }
 }
-
 contract Ownable {
     
   address public owner;
@@ -77,7 +73,6 @@ contract Ownable {
     owner = newOwner;
   }
 }
-
 contract StandardToken is ERC20, BasicToken {
 
   mapping (address => mapping (address => uint256)) allowed;
@@ -123,7 +118,6 @@ contract StandardToken is ERC20, BasicToken {
     return true;
   }
 }
-
 contract MoncryptToken is StandardToken, Ownable {
     
     string public constant name = "MONCRYPT Token";
