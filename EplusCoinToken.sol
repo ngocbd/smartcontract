@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EplusCoinToken at 0xcae45b23b39e100a220a224ec196483e7469522d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EplusCoinToken at 0x2cffe1067d38e9d2282d8da6a67d80d4f1b6aef5
 */
 pragma solidity ^0.4.8;
 
@@ -115,7 +115,7 @@ contract EplusCoinToken is StandardToken {
     uint256 public totalSupply = 168000000 ether;  // total supply of 168 Million Tokens
 
     /// @notice Initializes the contract and allocates all initial tokens to the owner
-    function EplusCoinToken() {
+    function VeritaseumToken() {
         balances[msg.sender] = totalSupply;
     }
 }
