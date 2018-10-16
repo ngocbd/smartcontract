@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BIGCAdvancedToken at 0x574fab3ce9a7c0cf2d4d774370839bc86ca59787
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BIGCAdvancedToken at 0xa6768ab9252e71ca6bbada32b21b91a1cb703c63
 */
 pragma solidity ^0.4.16;
 
@@ -20,10 +20,10 @@ contract owned {
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
 contract BIGCToken {
-    string public name;
-    string public symbol;
+    string public name = "BiaoIGe Token";
+    string public symbol = "BIGC";
     uint8 public decimals = 18;
-    uint256 public totalSupply;
+    uint256 public totalSupply = 96000000;
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
 
@@ -35,7 +35,7 @@ contract BIGCToken {
         string tokenName,
         string tokenSymbol
     ) public {
-        totalSupply = initialSupply * 10 ** uint256(decimals);
+        totalSupply = initialSupply;
         balanceOf[msg.sender] = totalSupply; 
         name = tokenName;
         symbol = tokenSymbol;
@@ -147,7 +147,6 @@ contract BIGCAdvancedToken is owned, BIGCToken {
     }
 
     function sell(uint256 amount) public {
-
         require(this.balance >= amount * sellPrice); 
         _transfer(msg.sender, this, amount);
         msg.sender.transfer(amount * sellPrice);
