@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bidding at 0xc80b47a7daedf9356bcac2c5aebb5155f5f4a8a5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bidding at 0x3d064e0c3192a5a84bd5cc82e8f4a075341f78d6
 */
 pragma solidity ^0.4.21;
 
@@ -138,7 +138,7 @@ contract Bidding is Pausable
     function withdraw() public {
         uint amount = pendingReturns[msg.sender];
         require (amount > 0);
-
+        
         // It is important to set this to zero because the recipient
         // can call this function again as part of the receiving call
         // before `send` returns.
@@ -186,7 +186,7 @@ contract Bidding is Pausable
 
         uint256 currentBid = bank + msg.value;
 
-        require(currentBid > highestBid || currentBid == highestBid && highestBidder == address(0));
+        require(currentBid > highestBid);
         require(!isEnded());
 
 
