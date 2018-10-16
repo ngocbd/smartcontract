@@ -1,7 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlatPricingExt at 0xC6E36b93FC34Ff4eF6Aecc72771E88e57Ff8C4aa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlatPricingExt at 0x1AB33bb51DE19700E413172cd900A20B0986A37a
 */
-// Created using ICO Wizard https://github.com/oraclesorg/ico-wizard by Oracles Network 
 pragma solidity ^0.4.11;
 /**
  * @title ERC20Basic
@@ -227,6 +226,8 @@ contract CrowdsaleExt is Haltable {
   address[] public joinedCrowdsales;
   uint public joinedCrowdsalesLen = 0;
   address public lastCrowdsale;
+  /// Event created on money deposit.
+  event Deposit (address recipient, uint value);
   /**
     * Do we verify that contributor has been cleared on the server side (accredited investors only).
     * This method was first used in FirstBlood crowdsale to ensure all contributors have accepted terms on sale (on the web).
@@ -355,10 +356,6 @@ contract CrowdsaleExt is Haltable {
         throw;
       }
     }
-    // Check that we did not bust the cap
-    if(isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold)) {
-      throw;
-    }
     if(investedAmountOf[receiver] == 0) {
        // A new investor
        investorCount++;
@@ -371,6 +368,10 @@ contract CrowdsaleExt is Haltable {
     tokensSold = tokensSold.plus(tokenAmount);
     if(pricingStrategy.isPresalePurchase(receiver)) {
         presaleWeiRaised = presaleWeiRaised.plus(weiAmount);
+    }
+    // Check that we did not bust the cap
+    if(isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold)) {
+      throw;
     }
     assignTokens(receiver, tokenAmount);
     // Pocket the money
@@ -390,6 +391,7 @@ contract CrowdsaleExt is Haltable {
     }
     // Tell us invest was success
     Invested(receiver, weiAmount, tokenAmount, customerId);
+    Deposit(receiver, tokenAmount);
   }
   /**
    * Preallocate tokens for the early investors.
