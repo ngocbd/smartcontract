@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VeritasToken at 0x2D358778da80081cd7F5865c5b7c49f45ebAa7cB
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VeritasToken at 0xEAcc5AC1faF321506580A5e2c1E32b67a8709720
 */
 pragma solidity 0.4.13;
 
@@ -204,7 +204,7 @@ contract VeritasToken is StandardToken, Ownable
     bool public allowBuying = true;
     bool public allowSelling = true;
 
-    uint private INITIAL_SUPPLY = 120*10**6; // 120 Millions
+    uint private INITIAL_SUPPLY = 120*10**14;
     
     function () payable 
     {
@@ -263,7 +263,7 @@ contract VeritasToken is StandardToken, Ownable
         balances[beneficiary] = balances[beneficiary].add(tokens);
         balances[owner] = balances[owner].sub(tokens);
 
-        TokenPurchase(msg.sender, beneficiary, etherAmount, tokens, buyRate);
+        TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
     }
 
     function SellTokens(uint amount)
@@ -281,7 +281,7 @@ contract VeritasToken is StandardToken, Ownable
         if (!msg.sender.send(checkAmount))
             revert();
         else
-            TokenSold(msg.sender, checkAmount, sellRate);
+            TokenSold(msg.sender, amount);
     }
 
     function RetrieveFunds()
@@ -329,12 +329,11 @@ contract VeritasToken is StandardToken, Ownable
     event BuyRateChanged(uint oldRate, uint newRate);
     event SellRateChanged(uint oldRate, uint newRate);
 
-    event TokenSold(address indexed seller, uint amountInEther, uint sellRate);
+    event TokenSold(address indexed seller, uint amount);
 
     event TokenPurchase(
     address indexed purchaser, 
     address indexed beneficiary, 
-    uint256 amountInEther, 
-    uint256 tokens,
-    uint buyRate);
+    uint256 value, 
+    uint256 amount);
 }
