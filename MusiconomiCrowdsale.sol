@@ -1,53 +1,20 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MusiconomiCrowdsale at 0xB9e0FC2a1C9d567Af555E07E72f27E686f2c6872
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MusiconomiCrowdsale at 0x68223dF196B3c46b7eb30a154DC79AA0A9d7907A
 */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
+pragma solidity ^0.4.13;
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+contract ReentrnacyHandlingContract{
 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+    bool locked;
 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+    modifier noReentrancy() {
+        require(!locked);
+        locked = true;
+        _;
+        locked = false;
+    }
 }
 
-contract IERC20Token {
-  function totalSupply() constant returns (uint256 totalSupply);
-  function balanceOf(address _owner) constant returns (uint256 balance) {}
-  function transfer(address _to, uint256 _value) returns (bool success) {}
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
-  function approve(address _spender, uint256 _value) returns (bool success) {}
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
-
-  event Transfer(address indexed _from, address indexed _to, uint256 _value);
-  event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-}
-contract ItokenRecipient {
-  function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData);
-}
-contract IToken {
-  function totalSupply() constant returns (uint256 totalSupply);
-  function mintTokens(address _to, uint256 _amount) {}
-}
-contract IMintableToken {
-  function mintTokens(address _to, uint256 _amount){}
-}
 contract Owned {
     address public owner;
     address public newOwner;
@@ -75,52 +42,23 @@ contract Owned {
 
     event OwnerUpdate(address _prevOwner, address _newOwner);
 }
-contract Lockable is Owned{
 
-  uint256 public lockedUntilBlock;
-
-  event ContractLocked(uint256 _untilBlock, string _reason);
-
-  modifier lockAffected {
-      require(block.number > lockedUntilBlock);
-      _;
-  }
-
-  function lockFromSelf(uint256 _untilBlock, string _reason) internal {
-    lockedUntilBlock = _untilBlock;
-    ContractLocked(_untilBlock, _reason);
-  }
-
-
-  function lockUntil(uint256 _untilBlock, string _reason) onlyOwner {
-    lockedUntilBlock = _untilBlock;
-    ContractLocked(_untilBlock, _reason);
-  }
-}
-contract ReentrnacyHandlingContract{
-
-    bool locked;
-
-    modifier noReentrancy() {
-        require(!locked);
-        locked = true;
-        _;
-        locked = false;
-    }
+contract IToken {
+  function totalSupply() constant returns (uint256 totalSupply);
+  function mintTokens(address _to, uint256 _amount) {}
 }
 
+contract IERC20Token {
+  function totalSupply() constant returns (uint256 totalSupply);
+  function balanceOf(address _owner) constant returns (uint256 balance) {}
+  function transfer(address _to, uint256 _value) returns (bool success) {}
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
+  function approve(address _spender, uint256 _value) returns (bool success) {}
+  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
 
-
-
-
-
-
-
-
-
-
-
-
+  event Transfer(address indexed _from, address indexed _to, uint256 _value);
+  event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+}
 
 contract MusiconomiCrowdsale is ReentrnacyHandlingContract, Owned{
 
@@ -139,10 +77,10 @@ contract MusiconomiCrowdsale is ReentrnacyHandlingContract, Owned{
   state public crowdsaleState = state.pendingStart;
   enum state { pendingStart, priorityPass, openedPriorityPass, crowdsale, crowdsaleEnded }
 
-  uint public presaleStartBlock = 4217240;
-  uint public presaleUnlimitedStartBlock = 4220630;
-  uint public crowdsaleStartBlock = 4224030;
-  uint public crowdsaleEndedBlock = 4319130;
+  uint public presaleStartBlock = 4216670;
+  uint public presaleUnlimitedStartBlock = 4220000;
+  uint public crowdsaleStartBlock = 4223470;
+  uint public crowdsaleEndedBlock = 4318560;
 
   event PresaleStarted(uint blockNumber);
   event PresaleUnlimitedStarted(uint blockNumber);
@@ -303,7 +241,7 @@ contract MusiconomiCrowdsale is ReentrnacyHandlingContract, Owned{
   // Push contributor data to the contract before the crowdsale so that they are eligible for priorit pass
   //
   function editContributors(address[] _contributorAddresses, uint[] _contributorPPAllowances, uint[] _contributorCommunityAllowance) onlyOwner{
-    //require(crowdsaleState == state.pendingStart);                                                        // Check if crowdsale has started
+    require(crowdsaleState == state.pendingStart);                                                        // Check if crowdsale has started
     require(_contributorAddresses.length == _contributorPPAllowances.length && _contributorAddresses.length == _contributorCommunityAllowance.length); // Check if input data is correct
 
     for(uint cnt = 0; cnt < _contributorAddresses.length; cnt++){
