@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QYYFansToken at 0xd6a964d09005c2ff12241f6f8883fcf56888523f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QYYFansToken at 0x2135f7b247f7b9480990a0b7ec6cc3b98f2bb2dd
 */
 pragma solidity ^0.4.18;
 
@@ -62,9 +62,9 @@ contract QYYFansToken  is Ownable{
     string public constant name       = "QingYiYu";
     string public constant symbol     = "QYY";
     uint32 public constant decimals   = 18;
-    uint256 public totalSupply        = 7777777 ;
+    uint256 public totalSupply        = 7777777 * 10**18 ;
     uint256 public currentTotalSupply = 0;
-    uint256 startBalance              = 7777 ;
+    uint256 startBalance              = 7777 * 10**18 ;
     
     mapping(address => bool) touched;
     mapping(address => uint256) balances;
