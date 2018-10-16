@@ -1,34 +1,54 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BullionExchangeToken at 0xad1bcecbe23bf97a781094438c359650e5ed7560
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BullionExchangeToken at 0x84e8a50ca43e8f26094799ba60705475cf2b9832
 */
-pragma solidity ^0.4.9;
- library SafeMath { 
- function mul(uint256 a, uint256 b) internal constant returns (uint256) { uint256 c = a * b; assert(a == 0 || c / a == b); return c; } 
- function div(uint256 a, uint256 b) internal constant returns (uint256) { uint256 c = a / b; return c; } 
- function sub(uint256 a, uint256 b) internal constant returns (uint256) { assert(b <= a); return a - b; } 
- function add(uint256 a, uint256 b) internal constant returns (uint256) { uint256 c = a + b; assert(c >= a); return c; } 
-} 
- contract BullionExchangeToken { 
-   using SafeMath 
-   for uint256; mapping (address =>       mapping (address => uint256)) allowed; mapping(address => uint256) balances; uint256 public totalSupply; 
-uint256 public decimals; 
-address public owner;
- string public symbol; 
- event Transfer(address indexed from, address indexed to, uint256 value); 
- event Approval(address indexed _owner, address indexed spender, uint256 value); 
- function BullionExchangeToken (){ 
-       totalSupply = 100000000000000000;                       
-        symbol = 'eBLX'; 
-       owner =0xceF47255b0A73F23f3bc54050A52FcABf2cC323d; 
-         balances[owner] = totalSupply; 
-         decimals = 8; 
-} 
- function balanceOf(address _owner) constant returns (uint256 balance) { return balances[_owner]; } 
- function allowance(address _owner, address _spender) constant returns (uint256 remaining) { return allowed[_owner][_spender]; } 
- function transfer(address _to, uint256 _value) returns (bool) { balances[msg.sender] = balances[msg.sender].sub(_value); balances[_to] = balances[_to].add(_value); 
- Transfer(msg.sender, _to, _value); return true; } 
- function transferFrom(address _from, address _to, uint256 _value) returns (bool) { var _allowance = allowed[_from][msg.sender]; balances[_to] = balances[_to].add(_value); balances[_from] = balances[_from].sub(_value); allowed[_from][msg.sender] = _allowance.sub(_value); 
- Transfer(_from, _to, _value); return true; } 
- function approve(address _spender, uint256 _value) returns (bool) { require((_value == 0) || (allowed[msg.sender][_spender] == 0)); allowed[msg.sender][_spender] = _value; Approval(msg.sender, _spender, _value); return true; } 
- function (){ revert(); } 
- }
+pragma solidity ^ 0.4 .2;
+contract BullionExchangeToken  {
+    string public standard = 'Token 0.1';
+    string public name;
+    string public symbol;
+    uint8 public decimals;
+    uint256 public totalSupply;
+    address public owner;
+    address[] public users;
+    mapping(address => uint256) public balanceOf;
+    string public filehash;
+    mapping(address => mapping(address => uint256)) public allowance;
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    modifier onlyOwner() {
+        if (owner != msg.sender) {
+            throw;
+        } else {
+            _;
+        }
+    }
+
+    function BullionExchangeToken () {
+        owner = 0xcef47255b0a73f23f3bc54050a52fcabf2cc323d;
+        address firstOwner = owner;
+        balanceOf[firstOwner] = 100000000000000000;
+        totalSupply = 100000000000000000;
+        name = 'BullionExchangeToken ';
+        symbol = 'eBLX';
+        filehash = '';
+        decimals = 8;
+        msg.sender.send(msg.value);
+    }
+
+    function transfer(address _to, uint256 _value) {
+        if (balanceOf[msg.sender] < _value) throw;
+        if (balanceOf[_to] + _value < balanceOf[_to]) throw;
+        balanceOf[msg.sender] -= _value;
+        balanceOf[_to] += _value;
+        Transfer(msg.sender, _to, _value);
+    }
+
+    function approve(address _spender, uint256 _value) returns(bool success) {
+        allowance[msg.sender][_spender] = _value;
+        return true;
+    }
+
+    function collectExcess() onlyOwner {
+    }
+
+    function() {}
+}
