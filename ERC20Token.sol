@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xf5b464dbd43887c3c2f2be7c12db3427d3a57ba7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x07be17b2695881fa100e92815edcff0b042b4a8c
 */
 pragma solidity ^0.4.4;
 
@@ -119,11 +119,11 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 750000000;               
-        totalSupply = 750000000;                        
-        name = "JIZZ";                                   
-        decimals = 0;                            
-        symbol = "JIZZ";                               
+        balances[msg.sender] = 21000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 21000000000000000;                        // Update total supply (100000 for example)
+        name = "smamet";                                   // Set the name for display purposes
+        decimals = 6;                            // Amount of decimals for display purposes
+        symbol = "SMA";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
@@ -136,5 +136,5 @@ contract ERC20Token is StandardToken {
         //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
         if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
         return true;
-              }
+    }
 }
