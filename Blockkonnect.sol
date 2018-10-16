@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Blockkonnect at 0x8912ec366e379d6dbb72d2b50a3297adb7b7f171
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Blockkonnect at 0xee1c3b79b5fdcee36b842804d381a875b5fb7594
 */
 pragma solidity ^0.4.12;
 
@@ -499,7 +499,7 @@ contract Blockkonnect is BurnableToken, Ownable {
 
     uint public constant decimals = 18;
 
-    uint256 public constant initialSupply = 200000000 * (10 ** uint256(decimals));
+    uint256 public constant initialSupply = 100000000 * (10 ** uint256(decimals));
 
 
 
