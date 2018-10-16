@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x3079a6e12b813D5156Cde41c5dA7489d7139af68
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x66803a2fc3bf02ad16809637756a68586276be16
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.8;
 contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
 
 contract MyToken {
@@ -37,13 +37,14 @@ contract MyToken {
     }
 
     /* Send coins */
-    function transfer(address _to, uint256 _value) {
+    function transfer(address _to, uint256 _value) returns (bool success) {
         if (_to == 0x0) throw;                               // Prevent transfer to 0x0 address. Use burn() instead
         if (balanceOf[msg.sender] < _value) throw;           // Check if the sender has enough
         if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
         balanceOf[msg.sender] -= _value;                     // Subtract from the sender
         balanceOf[_to] += _value;                            // Add the same to the recipient
         Transfer(msg.sender, _to, _value);                   // Notify anyone listening that this transfer took place
+		return true;
     }
 
     /* Allow another contract to spend some tokens in your behalf */
