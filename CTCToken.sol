@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CTCToken at 0x4f1d24f8d60b1f8872abbd409e6bfaa54d7a9f40
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CTCToken at 0x1a018ff6042863614e0e88cd615412588fd0a2da
 */
 pragma solidity ^0.4.21;
 
@@ -295,52 +295,66 @@ contract Pausable is Ownable {
     }
 }
 
+contract CheckTokenAssign is Ownable
+{
+    event InitAssignTokenOK();
+    bool public IsInitAssign = false;
+    
+    modifier checkInitAssignState() {
+        require(IsInitAssign == false);
+        _;
+    }
+    
+    function InitAssignOK() onlyOwner public {
+        IsInitAssign = true;
+        emit InitAssignTokenOK();
+    }
+}
+
 //CTCToken
-contract CTCToken is StandardToken, Ownable, Pausable, Destructible
+contract CTCToken is StandardToken, Ownable, Pausable, Destructible, CheckTokenAssign
 {
     using SafeMath for uint;
-    string public constant name = "Culture Travel Coin";
+    string public constant name = "New Culture Travel";
     string public constant symbol = "CTC";
     uint public constant decimals = 18;
     uint constant million = 1000000e18;
     uint constant totalToken = 10000*million; 
     
     //Token Amount
-    uint constant nThirdPartyPlatform = 1000*million;
-    uint constant nPlatformAutonomy = 5100*million;
-    uint constant nResearchGroup = 500*million;
-    uint constant nMarketing = 1000*million;
-    uint constant nInvEnterprise = 1000*million;
-    uint constant nAngelInvestment = 900*million;
-    uint constant nCultureTravelFoundation = 500*million;
+    uint constant nThirdPartyPlatform       = 1000*million;
+    uint constant nPlatformAutonomy         = 5100*million;
+    uint constant nResearchGroup            = 500*million;
+    uint constant nMarketing                = 1000*million;
+    uint constant nInvEnterprise            = 1000*million;
+    uint constant nAngelInvestment          = 900*million;
+    uint constant nCultureTravelFoundation  = 500*million;
     
     //Token address
-    address public ThirdPartyPlatformAddr;
-    address public PlatformAutonomyAddr;
-    address public ResearchGroupAddr;
-    address public MarketingAddr;
-    address public InvEnterpriseAddr;
-    address public AngelInvestmentAddr;
-    address public CultureTravelFoundationAddr;
+    address  public constant ThirdPartyPlatformAddr      = 0x211064a12ceeecb88fe2e757234e8c88795ed5cd;
+    address  public constant PlatformAutonomyAddr        = 0xe2db2aDE7F9dB41bfcd01364b0adD9445F343d74;
+    address  public constant ResearchGroupAddr           = 0xe4b74b0b84d4b5e7a15401c0b5c8acdd9ecb9df6;
+    address  public constant MarketingAddr               = 0xE8052a396d66B2c1D619b235076128dA9c4C114f;
+    address  public constant InvEnterpriseAddr           = 0x11d774dc8bba7ee455c02ed455f96af693a8d7a8;
+    address  public constant AngelInvestmentAddr         = 0xfBee428Ea0da7c5b3A85468bd98E42e9af0D4623;
+    address  public constant CultureTravelFoundationAddr = 0x17e552663cd183408ec5132b0ba8f75b87e11f5e;
     
-    function CTCToken() public
+    function CTCToken() public 
     {
-      totalSupply = totalToken;
-      ThirdPartyPlatformAddr      = 0x211064a12ceeecb88fe2e757234e8c88795ed5cd;
-      PlatformAutonomyAddr        = 0xe2db2aDE7F9dB41bfcd01364b0adD9445F343d74;
-      ResearchGroupAddr           = 0xe4b74b0b84d4b5e7a15401c0b5c8acdd9ecb9df6;
-      MarketingAddr               = 0xE8052a396d66B2c1D619b235076128dA9c4C114f;
-      InvEnterpriseAddr           = 0x11d774dc8bba7ee455c02ed455f96af693a8d7a8;
-      AngelInvestmentAddr         = 0xfBee428Ea0da7c5b3A85468bd98E42e9af0D4623;
-      CultureTravelFoundationAddr = 0x17e552663cd183408ec5132b0ba8f75b87e11f5e;
-      
-      balances[msg.sender] = 0;
-      balances[ThirdPartyPlatformAddr]      = nThirdPartyPlatform;
-      balances[PlatformAutonomyAddr]        = nPlatformAutonomy;
-      balances[ResearchGroupAddr]           = nResearchGroup;
-      balances[MarketingAddr]               = nMarketing;
-      balances[InvEnterpriseAddr]           = nInvEnterprise;
-      balances[AngelInvestmentAddr]         = nAngelInvestment;
-      balances[CultureTravelFoundationAddr] = nCultureTravelFoundation;
+        totalSupply = totalToken;
+        balances[msg.sender] = 0;
+        IsInitAssign = false;
+    }
+    
+    function InitAssignCTC() onlyOwner checkInitAssignState public 
+    {
+        balances[ThirdPartyPlatformAddr]      = nThirdPartyPlatform;
+        balances[PlatformAutonomyAddr]        = nPlatformAutonomy;
+        balances[ResearchGroupAddr]           = nResearchGroup;
+        balances[MarketingAddr]               = nMarketing;
+        balances[InvEnterpriseAddr]           = nInvEnterprise;
+        balances[AngelInvestmentAddr]         = nAngelInvestment;
+        balances[CultureTravelFoundationAddr] = nCultureTravelFoundation;
+        InitAssignOK();
     }
 }
