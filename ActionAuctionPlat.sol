@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ActionAuctionPlat at 0x841c87a11832d1d2386ffab3bfd0e999c6a7a338
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ActionAuctionPlat at 0x07f98e3eb47e6873fa7b85b5b8f088bb2b2e94a3
 */
 /* ==================================================================== */
 /* Copyright (c) 2018 The ether.online Project.  All rights reserved.
@@ -39,6 +39,21 @@ contract ERC721 is ERC165 {
 interface ERC721TokenReceiver {
 	function onERC721Received(address _from, uint256 _tokenId, bytes data) external returns(bytes4);
 }
+
+/// @title ERC-721 Non-Fungible Token Standard, optional metadata extension
+interface ERC721Metadata /* is ERC721 */ {
+    function name() external pure returns (string _name);
+    function symbol() external pure returns (string _symbol);
+    function tokenURI(uint256 _tokenId) external view returns (string);
+}
+
+/// @title ERC-721 Non-Fungible Token Standard, optional enumeration extension
+interface ERC721Enumerable /* is ERC721 */ {
+    function totalSupply() external view returns (uint256);
+    function tokenByIndex(uint256 _index) external view returns (uint256);
+    function tokenOfOwnerByIndex(address _owner, uint256 _index) external view returns (uint256);
+}
+
 
 contract AccessAdmin {
     bool public isPaused = false;
@@ -81,6 +96,7 @@ contract AccessAdmin {
     }
 }
 
+
 contract AccessService is AccessAdmin {
     address public addrService;
     address public addrFinance;
@@ -119,77 +135,6 @@ contract AccessService is AccessAdmin {
         } else {
             receiver.transfer(this.balance);
         }      
-    }
-}
-
-interface IDataMining {
-    function getRecommender(address _target) external view returns(address);
-    function subFreeMineral(address _target) external returns(bool);
-}
-
-
-interface IDataEquip {
-    function isEquiped(address _target, uint256 _tokenId) external view returns(bool);
-    function isEquipedAny2(address _target, uint256 _tokenId1, uint256 _tokenId2) external view returns(bool);
-    function isEquipedAny3(address _target, uint256 _tokenId1, uint256 _tokenId2, uint256 _tokenId3) external view returns(bool);
-}
-
-interface IDataAuction {
-    function isOnSale(uint256 _tokenId) external view returns(bool);
-    function isOnSaleAny2(uint256 _tokenId1, uint256 _tokenId2) external view returns(bool);
-    function isOnSaleAny3(uint256 _tokenId1, uint256 _tokenId2, uint256 _tokenId3) external view returns(bool);
-}
-
-interface IBitGuildToken {
-    function transfer(address _to, uint256 _value) external;
-    function transferFrom(address _from, address _to, uint256 _value) external returns (bool);
-    function approve(address _spender, uint256 _value) external; 
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) external returns (bool);
-    function balanceOf(address _from) external view returns(uint256);
-}
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-    /**
-    * @dev Multiplies two numbers, throws on overflow.
-    */
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        assert(c / a == b);
-        return c;
-    }
-
-    /**
-    * @dev Integer division of two numbers, truncating the quotient.
-    */
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
-
-    /**
-    * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-    */
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-
-    /**
-    * @dev Adds two numbers, throws on overflow.
-    */
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
     }
 }
 
@@ -659,6 +604,76 @@ contract WarToken is ERC721, AccessAdmin {
     }
 }
 
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+    /**
+    * @dev Multiplies two numbers, throws on overflow.
+    */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
+        }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
+    }
+
+    /**
+    * @dev Integer division of two numbers, truncating the quotient.
+    */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
+
+    /**
+    * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    */
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    /**
+    * @dev Adds two numbers, throws on overflow.
+    */
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
+}
+
+interface IDataMining {
+    function getRecommender(address _target) external view returns(address);
+    function subFreeMineral(address _target) external returns(bool);
+}
+
+interface IDataEquip {
+    function isEquiped(address _target, uint256 _tokenId) external view returns(bool);
+    function isEquipedAny2(address _target, uint256 _tokenId1, uint256 _tokenId2) external view returns(bool);
+    function isEquipedAny3(address _target, uint256 _tokenId1, uint256 _tokenId2, uint256 _tokenId3) external view returns(bool);
+}
+
+interface IDataAuction {
+    function isOnSale(uint256 _tokenId) external view returns(bool);
+    function isOnSaleAny2(uint256 _tokenId1, uint256 _tokenId2) external view returns(bool);
+    function isOnSaleAny3(uint256 _tokenId1, uint256 _tokenId2, uint256 _tokenId3) external view returns(bool);
+}
+
+interface IBitGuildToken {
+    function transfer(address _to, uint256 _value) external;
+    function transferFrom(address _from, address _to, uint256 _value) external returns (bool);
+    function approve(address _spender, uint256 _value) external; 
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) external returns (bool);
+    function balanceOf(address _from) external view returns(uint256);
+}
+
 contract ActionAuctionPlat is AccessService {
     using SafeMath for uint256; 
 
@@ -896,6 +911,17 @@ contract ActionAuctionPlat is AccessService {
             return realIdArray;
         }
     } 
+
+    function getPlatBalance() external view returns(uint256) {
+        return bitGuildContract.balanceOf(this);
+    }
+
+    function withdrawPlat() external {
+        require(msg.sender == addrFinance || msg.sender == addrAdmin);
+        uint256 balance = bitGuildContract.balanceOf(this);
+        require(balance > 0);
+        bitGuildContract.transfer(addrFinance, balance);
+    }
 
     function getAuctionIdArray(uint64 _startIndex, uint64 _count) external view returns(uint64[]) {
         return _getAuctionIdArray(_startIndex, _count);
