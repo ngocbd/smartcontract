@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NebulaCrowdsale at 0x1f44a7c20bf67f2948736ac4de65e1093e3091c2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NebulaCrowdsale at 0x83c451371ef470d206cf011405d89f6ccb0e915e
 */
 pragma solidity 0.4.19;
 contract Ownable {
@@ -805,7 +805,7 @@ contract NebulaCrowdsale is CappedCrowdsale, FinalizableCrowdsale, IndividuallyC
      */
     function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal {
         super._preValidatePurchase(_beneficiary, _weiAmount);
-        require(msg.value>=0.5 ether && msg.value <= 50 ether);
+        require(msg.value>=0.1 ether && msg.value <= 50 ether);
     }
 
     //@dev Overrides delivery by minting tokens upon purchase and store in the time locked contract.
