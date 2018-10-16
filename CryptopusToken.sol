@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptopusToken at 0x27887a512107d43b4ebbf66df1c29bac7eba1f1a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptopusToken at 0xf4fff780f5b0e8c855563564339a22674de8aa1b
 */
 pragma solidity ^0.4.19;
 
@@ -272,6 +272,14 @@ contract CryptopusToken is ERC20Interface, Owned {
     return true;
   }
 
+  function withdraw()
+    public
+    onlyOwner
+    returns(bool) {
+    owner.transfer(address(this).balance);
+    return true;
+  }
+
   function exchangeTokens()
     public
     returns(bool) {
@@ -305,7 +313,7 @@ contract CryptopusToken is ERC20Interface, Owned {
       revert();
     }
     require(msg.value >= tokenPrice);
-    uint tokenAmount = msg.value / tokenPrice;
+    uint tokenAmount = (msg.value / tokenPrice) * 10 ** uint(decimals);
     require(saleOngoing && alreadySold.add(tokenAmount) <= saleLimit);
     balances[owner] = balances[owner].sub(tokenAmount);
     balances[msg.sender] = balances[msg.sender].add(tokenAmount);
