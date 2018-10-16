@@ -1,6 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Martcoin at 0x8e446571ae749312757567d9a781e427bf992746
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Martcoin at 0xfdcc07Ab60660de533b5Ad26e1457b565a9D59Bd
 */
+/*
+    Created by MART SOLUTION LIMITED
+    Website https://martcoin.io/
+*/
+
 pragma solidity ^0.4.18;
 
 contract owned {
@@ -110,9 +115,6 @@ contract Martcoin is owned, TokenERC20 {
     uint public decimals = 18;
     uint public INITIAL_SUPPLY = 29000000;
 
-    uint256 public sellPrice;
-    uint256 public buyPrice;
-
     mapping (address => bool) public frozenAccount;
 
     event FrozenFunds(address target, bool frozen);
@@ -144,21 +146,5 @@ contract Martcoin is owned, TokenERC20 {
     function freezeAccount(address target, bool freeze) onlyOwner public {
         frozenAccount[target] = freeze;
         FrozenFunds(target, freeze);
-    }
-
-    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner public {
-        sellPrice = newSellPrice;
-        buyPrice = newBuyPrice;
-    }
-
-    function buy() payable public {
-        uint amount = msg.value / buyPrice;
-        _transfer(this, msg.sender, amount);
-    }
-
-    function sell(uint256 amount) public {
-        require(this.balance >= amount * sellPrice);
-        _transfer(msg.sender, this, amount);
-        msg.sender.transfer(amount * sellPrice);
     }
 }
