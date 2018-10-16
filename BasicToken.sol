@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BasicToken at 0x76998acaf3055d5da165a90ffab376e0bf69f89f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BasicToken at 0x3132c839bc5fd2e67ddeb78975dec8d3b139d979
 */
 pragma solidity ^0.4.19;
 
@@ -9,7 +9,9 @@ pragma solidity ^0.4.19;
  */
 library SafeMath {
 
- 
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     if (a == 0) {
       return 0;
@@ -19,7 +21,9 @@ library SafeMath {
     return c;
   }
 
-  
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
@@ -27,12 +31,17 @@ library SafeMath {
     return c;
   }
 
-  
+  /**
+  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
   function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
@@ -57,7 +66,7 @@ contract Ownable {
    * account.
    */
   function Ownable() public {
-    owner = 0x482149F62258F6202D13e5219C92A6f9611Bf82d;
+    owner = msg.sender;
   }
 
   /**
@@ -200,9 +209,10 @@ contract StandardToken is ERC20, BasicToken {
     return allowed[_owner][_spender];
   }
   
+ 
   
   /**
-   * @dev Function to prevent eth transfers to this contract
+   * @dev Function to revert eth transfers to this contract
     */
     function() public payable {
 	    revert();
@@ -215,7 +225,6 @@ contract StandardToken is ERC20, BasicToken {
  function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
         return BasicToken(tokenAddress).transfer(owner, tokens);
     }
-
 	
   /**
     * @dev Transfer the specified amounts of tokens to the specified addresses.
@@ -256,20 +265,47 @@ contract StandardToken is ERC20, BasicToken {
 	
 }
 
+	
+ /**
+ * @title Burnable Token
+ * @dev Token that can be irreversibly burned (destroyed).
+ */
+contract BurnableToken is BasicToken {
+
+  event Burn(address indexed burner, uint256 value);
+
  
-contract DCETToken is StandardToken {
+   /**
+   * @dev Burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   */
+  function burn(uint256 _value) public onlyOwner {
+    require(_value <= balances[msg.sender]);
+    // no need to require value <= totalSupply, since that would imply the
+    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
 
-  string public constant name = "Decentralized Faucet";
-  string public constant symbol = "DCET";
-  uint8 public constant decimals = 0; 
+    address burner = msg.sender;
+    balances[burner] = balances[burner].sub(_value);
+    totalSupply_ = totalSupply_.sub(_value);
+    Burn(burner, _value);
+    Transfer(burner, address(0), _value);
+  }
+  }
 
-  uint256 public constant INITIAL_SUPPLY = 2000000000 * (10 ** uint256(decimals));
+ 
+contract WinancesToken is StandardToken, BurnableToken {
+
+  string public constant name = "Winances";
+  string public constant symbol = "AWS";
+  uint8 public constant decimals = 18; 
+
+  uint256 public constant INITIAL_SUPPLY = 250000000 * (10 ** uint256(decimals));
 
   
-  function DCETToken() public {
+  function WinancesToken() public {
     totalSupply_ = INITIAL_SUPPLY;
-    balances[0x482149F62258F6202D13e5219C92A6f9611Bf82d] = INITIAL_SUPPLY;
-    Transfer(0x0, 0x482149F62258F6202D13e5219C92A6f9611Bf82d, INITIAL_SUPPLY);
+    balances[msg.sender] = INITIAL_SUPPLY;
+    Transfer(0x0, msg.sender, INITIAL_SUPPLY);
   }
 
 }
