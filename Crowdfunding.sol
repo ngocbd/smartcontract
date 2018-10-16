@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdfunding at 0xd1973ac619b2ba8ee4f9581aa588aee259cb304a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdfunding at 0x34a3deb32b4705018f1e543a5867cf01aff3f15b
 */
 /**
  *  Crowdfunding.sol v1.0.0
@@ -211,7 +211,7 @@ contract Crowdfunding is Pausable, ReentrancyGuard {
         require(token.isTokenContract());
     
         startsAt = now + 2 minutes;
-        endsAt = now + 31 minutes;
+        endsAt = now + 31 days;
         rate = 2730;
       }
     
