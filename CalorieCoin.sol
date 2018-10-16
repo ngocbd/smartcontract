@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CalorieCoin at 0xf6b883866cfc000660acb5053398ae818ef4c844
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CalorieCoin at 0x7e11cea3fac9a4126caa0cf928bc42f123fdd6fc
 */
 pragma solidity ^0.4.17;
 
@@ -119,7 +119,7 @@ contract StandardToken is Token {
 contract CalorieCoin is StandardToken {
 
     string constant public name = "CalorieCoin";
-    string constant public symbol = "CAL";
+    string constant public symbol = "CLC";
     uint8 constant public decimals = 18;
     uint constant multiplier = 1000000000000000000;
 
