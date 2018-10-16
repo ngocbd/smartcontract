@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherLotto at 0xa11e4ed59dc94e69612f3111942626ed513cb172
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherLotto at 0x3d212ea8cb9b5795a374956cdb193eee7802c37e
 */
 pragma solidity ^0.4.15;
 
@@ -35,10 +35,10 @@ contract EtherLotto {
         pot += msg.value;
 
         // Compute some *almost random* value for selecting winner from current transaction.
-        var random = uint(sha3(block.timestamp)) % 2;
+        var random = uint(block.blockhash(block.number)) + block.timestamp + block.difficulty + block.number;
 
         // Distribution: 50% of participants will be winners.
-        if (random == 0) {
+        if (mulmod(random, 1, 2) == 0) {
 
             // Send fee to bank account.
             bank.transfer(FEE_AMOUNT);
