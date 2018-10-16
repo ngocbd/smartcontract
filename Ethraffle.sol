@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethraffle at 0x9A3dA065e1100a5613dc15b594f0F6193B419E96
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethraffle at 0x9FADbDaC1B57b08381E74A3591b84a138102Dc23
 */
 pragma solidity ^0.4.0;
 
@@ -13,9 +13,14 @@ contract Ethraffle {
         uint indexed raffleId,
         uint winningNumber,
         address winningAddress,
+        uint blockTimestamp,
+        uint blockNumber,
+        uint gasLimit,
+        uint difficulty,
+        uint gas,
+        uint value,
+        address msgSender,
         address blockCoinbase,
-        address txOrigin,
-        uint remainingGas,
         bytes32 sha
     );
 
@@ -90,23 +95,23 @@ contract Ethraffle {
 
     function chooseWinner() private {
         // Pseudorandom number generator
-        uint remainingGas = msg.gas;
         bytes32 sha = sha3(
-            block.coinbase,
-            tx.origin,
-            remainingGas
+            block.timestamp,
+            block.number,
+            block.gaslimit,
+            block.difficulty,
+            msg.gas,
+            msg.value,
+            msg.sender,
+            block.coinbase
         );
 
         uint winningNumber = (uint(sha) % totalTickets) + 1;
         address winningAddress = contestants[winningNumber].addr;
         RaffleResult(
-            raffleId,
-            winningNumber,
-            winningAddress,
-            block.coinbase,
-            tx.origin,
-            remainingGas,
-            sha
+            raffleId, winningNumber, winningAddress, block.timestamp,
+            block.number, block.gaslimit, block.difficulty, msg.gas,
+            msg.value, msg.sender, block.coinbase, sha
         );
 
         // Start next raffle and distribute prize
@@ -145,7 +150,7 @@ contract Ethraffle {
                 }
             }
 
-            RaffleResult(raffleId, 0, address(0), address(0), address(0), 0, 0);
+            RaffleResult(raffleId, 0, address(0), 0, 0, 0, 0, 0, 0, address(0), address(0), 0);
             raffleId++;
             nextTicket = 1;
             gaps.length = 0;
