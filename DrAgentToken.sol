@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DrAgentToken at 0xcbfcefdac8a4469094118b375020dc77fad102f2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DrAgentToken at 0xde08bee9240f2a57eab416302e3a6271fbd3f9de
 */
 pragma solidity ^0.4.19;
 
@@ -226,7 +226,7 @@ contract DrAgentToken is StandardToken, Owned {
     string public name = 'Dr.Agent';
     string public symbol = 'DRA';
     uint8 public decimals = 18;
-    uint public INITIAL_SUPPLY = 10**27;
+    uint public INITIAL_SUPPLY = 10**28;
     mapping (address => bool) public frozenAccount;
 
     /* This generates a public event on the blockchain that will notify clients */
