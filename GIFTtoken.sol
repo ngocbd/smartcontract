@@ -1,195 +1,228 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GIFTtoken at 0x2997ab37017123cbda1529adcdc591ed81d58255
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GIFTToken at 0xe389b6db10b3d5c67234cdac2bb08870a3174a05
 */
-pragma solidity ^0.4.18;
- 
-/* 
-  © foxex.io
-  FOXEX Token
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
- 
+pragma solidity ^0.4.12;
+
 /*
-   ERC20 interface
-  see https://github.com/ethereum/EIPs/issues/20
+ * ERC20 interface
+ * see https://github.com/ethereum/EIPs/issues/20
  */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
+contract ERC20 {
+  uint public totalSupply;
+  function balanceOf(address who) constant returns (uint);
+  function allowance(address owner, address spender) constant returns (uint);
+
+  function transfer(address to, uint value) returns (bool ok);
+  function transferFrom(address from, address to, uint value) returns (bool ok);
+  function approve(address spender, uint value) returns (bool ok);
+  event Transfer(address indexed from, address indexed to, uint value);
+  event Approval(address indexed owner, address indexed spender, uint value);
 }
- 
-/*  SafeMath - the lowest gas library
-  Math operations with safety checks that throw on error
+
+
+/**
+ * Math operations with safety checks
  */
-library SafeMath {
-    
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
+contract SafeMath {
+  function safeMul(uint a, uint b) internal returns (uint) {
+    uint c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
- 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+
+  function safeDiv(uint a, uint b) internal returns (uint) {
+    assert(b > 0);
+    uint c = a / b;
+    assert(a == b * c + a % b);
     return c;
   }
- 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+
+  function safeSub(uint a, uint b) internal returns (uint) {
     assert(b <= a);
     return a - b;
   }
- 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
+
+  function safeAdd(uint a, uint b) internal returns (uint) {
+    uint c = a + b;
+    assert(c>=a && c>=b);
     return c;
   }
-  
+
+  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a >= b ? a : b;
+  }
+
+  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a < b ? a : b;
+  }
+
+  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a >= b ? a : b;
+  }
+
+  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a < b ? a : b;
+  }
+
+ 
 }
- 
-/*
-Basic token
- Basic version of StandardToken, with no allowances. 
+
+
+
+/**
+ * Standard ERC20 token with Short Hand Attack and approve() race condition mitigation.
+ *
+ * Based on code by FirstBlood:
+ * https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
-contract BasicToken is ERC20Basic {
-    
-  using SafeMath for uint256;
- 
-  mapping(address => uint256) balances;
- 
- function transfer(address _to, uint256 _value) returns (bool) {
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
+contract StandardToken is ERC20, SafeMath {
+
+  /* Token supply got increased and a new owner received these tokens */
+  event Minted(address receiver, uint amount);
+
+  /* Actual balances of token holders */
+  mapping(address => uint) balances;
+
+  /* approve() allowances */
+  mapping (address => mapping (address => uint)) allowed;
+
+  /**
+   *
+   * Fix for the ERC20 short address attack
+   *
+   * http://vessenes.com/the-erc20-short-address-attack-explained/
+   */
+  modifier onlyPayloadSize(uint size) {
+     require(msg.data.length == size + 4);
+     _;
+  }
+
+  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) returns (bool success) {
+    balances[msg.sender] = safeSub(balances[msg.sender], _value);
+    balances[_to] = safeAdd(balances[_to], _value);
     Transfer(msg.sender, _to, _value);
     return true;
   }
- 
-  /*
-  Gets the balance of the specified address.
-   param _owner The address to query the the balance of. 
-   return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) constant returns (uint256 balance) {
-    return balances[_owner];
-  }
- 
-}
- 
-/* Implementation of the basic standard token.
-  https://github.com/ethereum/EIPs/issues/20
- */
-contract StandardToken is ERC20, BasicToken {
- 
-  mapping (address => mapping (address => uint256)) allowed;
- 
-  /*
-    Transfer tokens from one address to another
-    param _from address The address which you want to send tokens from
-    param _to address The address which you want to transfer to
-    param _value uint256 the amout of tokens to be transfered
-   */
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
-    var _allowance = allowed[_from][msg.sender];
- 
-    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-    // require (_value <= _allowance);
- 
-    balances[_to] = balances[_to].add(_value);
-    balances[_from] = balances[_from].sub(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
+
+  function transferFrom(address _from, address _to, uint _value) returns (bool success) {
+    uint _allowance = allowed[_from][msg.sender];
+
+    // Check is not needed because safeSub(_allowance, _value) will already throw if this condition is not met
+    // if (_value > _allowance) throw;
+
+    balances[_to] = safeAdd(balances[_to], _value);
+    balances[_from] = safeSub(balances[_from], _value);
+    allowed[_from][msg.sender] = safeSub(_allowance, _value);
     Transfer(_from, _to, _value);
     return true;
   }
- 
-  /*
-  Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   param _spender The address which will spend the funds.
-   param _value The amount of Roman Lanskoj's tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) returns (bool) {
- 
+
+  function balanceOf(address _owner) constant returns (uint balance) {
+    return balances[_owner];
+  }
+
+  function approve(address _spender, uint _value) returns (bool success) {
+
     // To change the approve amount you first have to reduce the addresses`
     //  allowance to zero by calling `approve(_spender, 0)` if it is not
     //  already 0 to mitigate the race condition described here:
     //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
- 
+    require(!((_value != 0) && (allowed[msg.sender][_spender] != 0)));
+
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
     return true;
   }
- 
-  /*
-  Function to check the amount of tokens that an owner allowed to a spender.
-  param _owner address The address which owns the funds.
-  param _spender address The address which will spend the funds.
-  return A uint256 specifing the amount of tokens still available for the spender.
-   */
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+
+  function allowance(address _owner, address _spender) constant returns (uint remaining) {
     return allowed[_owner][_spender];
-}
-}
- 
-/*
-The Ownable contract has an owner address, and provides basic authorization control
- functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-    
-  address public owner;
- 
- 
-  function Ownable() {
-    owner = 0x2B58ff794923166197d42E4d79E4Fa7c5746EFbF;
   }
- 
-  /*
-  Throws if called by any account other than the owner.
+
+  /**
+   * Atomic increment of approved spending
+   *
+   * Works around https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   *
    */
-  modifier onlyOwner() {
-    require(0x2B58ff794923166197d42E4d79E4Fa7c5746EFbF == owner);
-    _;
+  function addApproval(address _spender, uint _addedValue)
+  onlyPayloadSize(2 * 32)
+  returns (bool success) {
+      uint oldValue = allowed[msg.sender][_spender];
+      allowed[msg.sender][_spender] = safeAdd(oldValue, _addedValue);
+      Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+      return true;
   }
- 
-  /*
-  Allows the current owner to transfer control of the contract to a newOwner.
-  param newOwner The address to transfer ownership to.
+
+  /**
+   * Atomic decrement of approved spending.
+   *
+   * Works around https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
    */
-  function transferOwnership(address newOwner) onlyOwner {
-    require(newOwner != address(0));      
-    owner = newOwner;
+  function subApproval(address _spender, uint _subtractedValue)
+  onlyPayloadSize(2 * 32)
+  returns (bool success) {
+
+      uint oldVal = allowed[msg.sender][_spender];
+
+      if (_subtractedValue > oldVal) {
+          allowed[msg.sender][_spender] = 0;
+      } else {
+          allowed[msg.sender][_spender] = safeSub(oldVal, _subtractedValue);
+      }
+      Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+      return true;
   }
+
 }
 
-    
-contract GIFTtoken is StandardToken, Ownable {
-  string public constant name = "GIFT coin";
-  string public constant symbol = "GIFT";
-  uint public constant decimals = 11;
-  uint256 public initialSupply;
-    
-  function GIFTtoken () { 
-     totalSupply = 100000000 * 10 ** decimals;
-      balances[0x2B58ff794923166197d42E4d79E4Fa7c5746EFbF] = totalSupply;
-      initialSupply = totalSupply; 
-        Transfer(0, this, totalSupply);
-        Transfer(this, 0x2B58ff794923166197d42E4d79E4Fa7c5746EFbF, totalSupply);
+contract GIFTToken is StandardToken {
+
+  string public name;
+  string public symbol;
+  uint public decimals;
+  address public owner;
+
+  mapping(address => uint) previligedBalances;
+
+  function GIFTToken(address _owner, string _name, string _symbol, uint _totalSupply, uint _decimals) {
+    name = _name;
+    symbol = _symbol;
+    totalSupply = _totalSupply;
+    decimals = _decimals;
+
+    // Allocate initial balance to the owner
+    balances[_owner] = _totalSupply;
+
+    // save the owner
+    owner = _owner;
   }
- function distribute55M(address[] addresses) onlyOwner {
-    // 6986.7886 * (10**11)
-    for (uint i = 0; i < addresses.length; i++) {
-      balances[owner] -= 698678861788617;
-      balances[addresses[i]] += 698678861788617;
-      Transfer(owner, addresses[i], 698678861788617);
-    }
+
+
+  // privileged transfer
+  function transferPrivileged(address _to, uint _value) onlyPayloadSize(2 * 32) returns (bool success) {
+    require(msg.sender == owner);
+    balances[msg.sender] = safeSub(balances[msg.sender], _value);
+    balances[_to] = safeAdd(balances[_to], _value);
+    previligedBalances[_to] = safeAdd(previligedBalances[_to], _value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  // get priveleged balance
+  function getPrivilegedBalance(address _owner) constant returns (uint balance) {
+    return previligedBalances[_owner];
+  }
+
+  // admin only can transfer from the privileged accounts
+  function transferFromPrivileged(address _from, address _to, uint _value) returns (bool success) {
+    require(msg.sender == owner);
+
+    uint availablePrevilegedBalance = previligedBalances[_from];
+
+    balances[_from] = safeSub(balances[_from], _value);
+    balances[_to] = safeAdd(balances[_to], _value);
+    previligedBalances[_from] = safeSub(availablePrevilegedBalance, _value);
+    Transfer(_from, _to, _value);
+    return true;
   }
 }
