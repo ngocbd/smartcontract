@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExceedIOToken at 0x1eae15d9f4fa16f5278d02d2f8bda8b0dcd31f71
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExceedIOToken at 0x0739748058907bb90505891e2f0cd63D2C9a084c
 */
 pragma solidity ^0.4.16;
 
@@ -33,7 +33,7 @@ contract ExceedIOToken {
         string tokenSymbol
     ) public {
         totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
-        balanceOf[msg.sender] = 1200000000000000000;                // Give the creator all initial tokens
+        balanceOf[msg.sender] = 12000000000;                // Give the creator all initial tokens
         name = tokenName;                                   // Set the name for display purposes
         symbol = tokenSymbol;                               // Set the symbol for display purposes
     }
