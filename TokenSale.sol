@@ -1,24 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0xafdd6fec9be6e31ad9dd7e28631625ac8e38f9c3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0x29c0342edaccebe519803cc2b1aabe016b222bba
 */
-pragma solidity ^0.4.21;
-
-contract EIP20Interface {
-    uint256 public totalSupply;
-
-    function balanceOf(address _owner) public view returns (uint256 balance);
-    function transfer(address _to, uint256 _value) public returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-    function approve(address _spender, uint256 _value) public returns (bool success);
-    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value); 
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    event Burn(address indexed burner, uint256 value);
-}
+pragma solidity 0.4.23;
 
 /**
- * Math operations with safety checks
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -44,210 +31,195 @@ library SafeMath {
     assert(c >= a);
     return c;
   }
-
 }
 
 /**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
+ *  @title TokenSale
+ *  @dev Martin Halford, CTO, BlockGrain (AgriChain Pty Ltd) - April 2018
  */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public constant returns (uint256);
-  function transfer(address to, uint256 value) public;
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
+contract TokenSale {
+  using SafeMath for uint256;
 
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public;
-  function approve(address spender, uint256 value) public;
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-/*
- * Ownable
- *
- * Base contract with an owner.
- * Provides onlyOwner modifier, which prevents function from running if it is
- * called by anyone other than the owner.
- */
-contract Ownable {
+  // Address of owner
   address public owner;
 
-  function Owanble() public{
-    owner = msg.sender;
-  }
+  // Address where funds are collected
+  address public wallet;
 
-  // Modifier onlyOwner prevents function from running
-  // if it is called by anyone other than the owner
+  // Amount of raised (in Wei)
+  uint256 public amountRaised;
 
+  // Upper limit of the amount to be collected
+  uint256 public saleLimit = 25000 ether;
+
+  // Minimum contribution permitted
+  uint256 public minContribution = 0.5 ether;
+
+  // Maximum contribution permitted
+  uint256 public maxContribution = 500 ether;
+
+  // Flag to accept or reject payments
+  bool public isAcceptingPayments;
+
+  // List of admins who can edit the whitelist
+  mapping (address => bool) public tokenSaleAdmins;
+
+  // List of addresses that are whitelisted for private sale
+  mapping (address => bool) public whitelist;
+
+  // List of addresses that have made payments (in Wei)
+  mapping (address => uint256) public amountPaid;
+
+  // modifier to check owner
   modifier onlyOwner() {
     require(msg.sender == owner);
     _;
   }
 
-  // Function transferOwnership allows owner to change ownership.
-  // Before the appying changes it checks if the owner
-  // called this function and if the address is not 0x0.
-
-  function transferOwnership(address newOwner) public onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
-    }
-  }
-
-}
-
-/*
- * Haltable
- *
- * Abstract contract that allows children to implement an
- * emergency stop mechanism. Differs from Pausable by causing a throw when in halt mode.
- *
- *
- * Originally envisioned in FirstBlood ICO contract.
- */
-contract Haltable is Ownable {
-  bool public halted = false;
-
-  modifier stopInEmergency {
-    require(!halted);
+  // modifier to check whitelist admin status
+  modifier onlyAdmin() {
+    require(tokenSaleAdmins[msg.sender]);
     _;
   }
 
-  modifier onlyInEmergency {
-    require(halted);
+  // modifier to check if whitelisted address
+  modifier isWhitelisted() {
+    require(whitelist[msg.sender]);
     _;
   }
 
-  // called by the owner on emergency, triggers stopped state
-  function halt() external onlyOwner {
-    halted = true;
+  // modifier to check if payments being accepted
+  modifier acceptingPayments() {
+    require(isAcceptingPayments);
+    _;
   }
 
-  // called by the owner on end of emergency, returns to normal state
-  function unhalt() external onlyOwner onlyInEmergency {
-    halted = false;
+  /**
+   * Constructor
+   * @param _wallet Address where collected funds will be forwarded to
+   */
+  constructor(address _wallet) public {
+    require(_wallet != address(0));
+    owner = msg.sender;
+    wallet = _wallet;
+    tokenSaleAdmins[msg.sender] = true;
   }
 
-}
+  /**
+   * @dev fallback function
+   */
+  function () isWhitelisted acceptingPayments payable public {
+    uint256 _contribution = msg.value;
+    require(_contribution >= minContribution);
+    require(_contribution <= maxContribution);
+    require(msg.sender != address(0));
 
-contract TokenSale is Haltable {
-    using SafeMath for uint;
+    // add to sender's amountPaid record
+    amountPaid[msg.sender] += _contribution;
 
-    string public name = "TokenSale Contract";
+    // add to amount raised
+    amountRaised = amountRaised.add(_contribution);
 
-    // Constants
-    EIP20Interface public token;
-    address public beneficiary;
-    address public reserve;
-    uint public price = 0; // in wei
-
-    // Counters
-    uint public tokensSoldTotal = 0; // in wei
-    uint public weiRaisedTotal = 0; // in wei
-    uint public investorCount = 0;
-
-    event NewContribution(
-        address indexed holder,
-        uint256 tokenAmount,
-        uint256 etherAmount);
-
-    function TokenSale(
-        ) public {
-            
-        // Grant owner rights to deployer of a contract
-        owner = msg.sender;
-        
-        // Set token address and initialize constructor
-        token = EIP20Interface(address(0x2F7823AaF1ad1dF0D5716E8F18e1764579F4ABe6));
-        
-        // Set beneficiary address to receive ETH
-        beneficiary = address(0xf2b9DA535e8B8eF8aab29956823df7237f1863A3);
-        
-        // Set reserve address to receive ETH
-        reserve = address(0x966c0FD16a4f4292E6E0372e04fbB5c7013AD02e);
-        
-        // Set price of 1 token
-        price = 0.00379 ether;
+    // handle edge case where amountRaised exceeds saleLimit
+    if (amountRaised > saleLimit) {
+      uint256 _refundAmount = amountRaised.sub(saleLimit);
+      msg.sender.transfer(_refundAmount);
+      _contribution = _contribution.sub(_refundAmount);
+      _refundAmount = 0;
+      amountRaised = saleLimit;
+      isAcceptingPayments = false;
     }
 
-    function changeBeneficiary(address _beneficiary) public onlyOwner stopInEmergency {
-        beneficiary = _beneficiary;
-    }
-    
-    function changeReserve(address _reserve) public onlyOwner stopInEmergency {
-        reserve = _reserve;
-    }
-    
-    function changePrice(uint _price) public onlyOwner stopInEmergency {
-        price = _price;
-    }
+    // transfer funds to external wallet
+    wallet.transfer(_contribution);
+  }
 
-    function () public payable stopInEmergency {
-        
-        // require min limit of contribution
-        require(msg.value >= price);
-        
-        // calculate token amount
-        uint tokens = msg.value / price;
-        
-        // throw if you trying to buy over the token exists
-        require(token.balanceOf(this) >= tokens);
-        
-        // recalculate counters
-        tokensSoldTotal = tokensSoldTotal.add(tokens);
-        if (token.balanceOf(msg.sender) == 0) investorCount++;
-        weiRaisedTotal = weiRaisedTotal.add(msg.value);
-        
-        // transfer bought tokens to the contributor 
-        token.transfer(msg.sender, tokens);
+  /**
+   * @dev Start accepting payments
+   */
+  function acceptPayments() onlyAdmin public  {
+    isAcceptingPayments = true;
+  }
 
-        // 100% / 10 = 10%
-        uint reservePie = msg.value.div(10);
-        
-        // 100% - 10% = 90%
-        uint beneficiaryPie = msg.value.sub(reservePie);
+  /**
+   * @dev Stop accepting payments
+   */
+  function rejectPayments() onlyAdmin public  {
+    isAcceptingPayments = false;
+  }
 
-        // transfer funds to the reserve address
-        reserve.transfer(reservePie);
+  /**
+   *  @dev Add a user to the whitelist admins
+   */
+  function addAdmin(address _admin) onlyOwner public {
+    tokenSaleAdmins[_admin] = true;
+  }
 
-        // transfer funds to the beneficiary address
-        beneficiary.transfer(beneficiaryPie);
+  /**
+   *  @dev Remove a user from the whitelist admins
+   */
+  function removeAdmin(address _admin) onlyOwner public {
+    tokenSaleAdmins[_admin] = false;
+  }
 
-        emit NewContribution(msg.sender, tokens, msg.value);
+  /**
+   * @dev Add an address to the whitelist
+   * @param _contributor The address of the contributor
+   */
+  function whitelistAddress(address _contributor) onlyAdmin public  {
+    whitelist[_contributor] = true;
+  }
+
+  /**
+   * @dev Add multiple addresses to the whitelist
+   * @param _contributors The addresses of the contributor
+   */
+  function whitelistAddresses(address[] _contributors) onlyAdmin public {
+    for (uint256 i = 0; i < _contributors.length; i++) {
+      whitelist[_contributors[i]] = true;
     }
-    
-    
-    // Withdraw any accidently sent to the contract ERC20 tokens.
-    // Can be performed only by the owner.
-    function withdrawERC20Token(address _token) public onlyOwner stopInEmergency {
-        ERC20 foreignToken = ERC20(_token);
-        foreignToken.transfer(msg.sender, foreignToken.balanceOf(this));
+  }
+
+  /**
+   * @dev Remove an addresses from the whitelist
+   * @param _contributor The addresses of the contributor
+   */
+  function unWhitelistAddress(address _contributor) onlyAdmin public  {
+    whitelist[_contributor] = false;
+  }
+
+  /**
+   * @dev Remove multiple addresses from the whitelist
+   * @param _contributors The addresses of the contributor
+   */
+  function unWhitelistAddresses(address[] _contributors) onlyAdmin public {
+    for (uint256 i = 0; i < _contributors.length; i++) {
+      whitelist[_contributors[i]] = false;
     }
-    
-    // Withdraw any accidently sent to the contract EIP20 tokens.
-    // Can be performed only by the owner.
-    function withdrawEIP20Token(address _token) public onlyOwner stopInEmergency {
-        EIP20Interface foreignToken = EIP20Interface(_token);
-        foreignToken.transfer(msg.sender, foreignToken.balanceOf(this));
-    }
-    
-    // Withdraw all not sold tokens.
-    // Can be performed only by the owner.
-    function withdrawToken() public onlyOwner stopInEmergency {
-        token.transfer(msg.sender, token.balanceOf(this));
-    }
-    
-    // Get the contract token balance
-    function tokensRemaining() public constant returns (uint256) {
-        return token.balanceOf(this);
-    }
-    
+  }
+
+  /**
+   * @dev Update the sale limit
+   * @param _saleLimit The updated sale limit value
+   */
+  function updateSaleLimit(uint256 _saleLimit) onlyAdmin public {
+    saleLimit = _saleLimit;
+  }
+
+  /**
+    * @dev Update the minimum contribution
+    * @param _minContribution The updated minimum contribution value
+    */
+  function updateMinContribution(uint256 _minContribution) onlyAdmin public {
+    minContribution = _minContribution;
+  }
+
+  /**
+    * @dev Update the maximum contribution
+    * @param _maxContribution The updated maximum contribution value
+    */
+  function updateMaxContribution(uint256 _maxContribution) onlyAdmin public {
+    maxContribution = _maxContribution;
+  }
+
 }
