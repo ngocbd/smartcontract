@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FirstContract at 0x8355048d74888569ad9f9675ae9b6920f54b9985
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FirstContract at 0x85c548a176f86bcaad45e96a7758538ddaba3a65
 */
 pragma solidity ^0.4.0;
 // <ORACLIZE_API>
@@ -312,7 +312,7 @@ contract FirstContract is usingOraclize {
 
     
     function count() payable onlyOwner {
-        oraclize_query("URL", "json(http://typbr.com/counter).counter", "BON4oYqHyydPJWXhq8ElREZ4XbwVJaT/7EkJhTABWGAh9eX86sNUamnllJ0w6bHyUFUKb49yxX9YLXxG/CQVZ1bMig9RS4h94ihW9hUftduqGL2+j9njTmlYgw80t5LRQMAMO2Wk5qEL+T77CoQoQV1vCw==", ORACLIZE_GAS_LIMIT + safeGas);
+        oraclize_query("URL", "json(http://typbr.com/counter).counter", "BG4iQv7699EEt7L6Wm4YnrC0gQv+tRWSNuqy7OUDudjRWPL+ZgKuGWPQMwxEgC1ksb2KXGxq9P6f+ObzYY0WG5g5GzmnNWj5zDNj+HoEQgzdYedoHW+176OOtDqRh3yN7ypqg6yjJsNuLVNyZD8Rs+nF2EY70BPDwOt3mQFdG1QXmXIzhQ28KEzyBedR9g==", ORACLIZE_GAS_LIMIT + safeGas);
     }
    
    function invest() payable {
