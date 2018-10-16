@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Metadollar at 0xddf0a2d9bb180b5cc1c809e8e1f6e0eb3a0fed62
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Metadollar at 0xa549b1209a7ccadf8bfc654fc8a373d62c4e5873
 */
 pragma solidity ^0.4.18;
 
@@ -9,12 +9,8 @@ pragma solidity ^0.4.18;
 // Deployed to : 0xeaBB4013f179E42c41468DB81eB1Bd420Da6cC47
 // Symbol      : MTD
 // Name        : Metadollar
-// Total supply: 10000000000000000000000000000
+// Total supply: 1000000000000000000000000000000
 // Decimals    : 18
-//
-// Enjoy.
-//
-// (c) by Moritz Neto with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
 // ----------------------------------------------------------------------------
 
 
@@ -41,10 +37,6 @@ contract SafeMath {
 }
 
 
-// ----------------------------------------------------------------------------
-// ERC Token Standard #20 Interface
-// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
-// ----------------------------------------------------------------------------
 contract ERC20Interface {
     function totalSupply() public constant returns (uint);
     function balanceOf(address tokenOwner) public constant returns (uint balance);
@@ -60,8 +52,6 @@ contract ERC20Interface {
 
 // ----------------------------------------------------------------------------
 // Contract function to receive approval and execute function in one call
-//
-// Borrowed from MiniMeToken
 // ----------------------------------------------------------------------------
 contract ApproveAndCallFallBack {
     function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
@@ -119,7 +109,7 @@ contract Metadollar is ERC20Interface, Owned, SafeMath {
         symbol = "MTD";
         name = "Metadollar";
         decimals = 18;
-        _totalSupply = 10000000000000000000000000000;
+        _totalSupply = 1000000000000000000000000000000;
         balances[0xeaBB4013f179E42c41468DB81eB1Bd420Da6cC47] = _totalSupply;
         Transfer(address(0), 0xeaBB4013f179E42c41468DB81eB1Bd420Da6cC47, _totalSupply);
     }
