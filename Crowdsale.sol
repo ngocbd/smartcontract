@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xd9c82dddfb27c31f1acbbcf8c23ea4afc8a39789
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x13eee73a10679af072055af1566d0a6903b42b67
 */
 pragma solidity ^0.4.19;
 
@@ -64,8 +64,8 @@ contract Crowdsale {
     uint256 public amountRaised; /* TOTAL ETH CONTRIBUTIONS*/
     uint256 public amountRaisedPhase; /* ETH CONTRIBUTIONS SINCE LAST WITHDRAWAL EVENT */
     uint256 public tokensSold; /* TOTAL TOKENS SOLD */
-    uint256 public softCap; /* NUMBER OF TOKENS AVAILABLE DURING THE SOFT CAP PERIOD */
-    uint256 public softCapLimit; /* MAXIMUM AMOUNT OF ETH TO BE RAISED DURING SOFT CAP PERIOD */
+    uint256 private softCap; /* NUMBER OF TOKENS AVAILABLE DURING THE SOFT CAP PERIOD */
+    uint256 private softCapLimit; /* MAXIMUM AMOUNT OF ETH TO BE RAISED DURING SOFT CAP PERIOD */
     uint256 public discountPrice; /* SOFT CAP PERIOD TOKEN PRICE */
     uint256 public fullPrice; /* STANDARD TOKEN PRICE */
     uint256 public startTime; /* CROWDSALE START TIME */
@@ -84,14 +84,15 @@ contract Crowdsale {
         address ownerAddress,
         address operationsAddress,
         address indexAddress,
-        address rewardTokenAddress
+        address rewardTokenAddress,
+        uint256 totalDiscountTokens
 
     ) public {
         startTime = saleStartTime; /* SETS START TIME */
         owner = ownerAddress; /* SETS OWNER */
         operations = operationsAddress; /* SETS OPERATIONS MULTISIG WALLET */
         index = indexAddress; /* SETS IGNITE INDEX WALLET */
-        softCap = 750000000000000000000000; /* SETS NUMBER OF TOKENS AVAILABLE AT DISCOUNT PRICE DURING SOFT CAP PERIOD */
+        softCap = totalDiscountTokens; /* SETS NUMBER OF TOKENS AVAILABLE AT DISCOUNT PRICE DURING SOFT CAP PERIOD */
         softCapLimit = 4500 ether; /* SETS FUNDING TARGET FOR SOFT CAP PERIOD */
         discountPrice = 0.006 ether; /* SETS DISCOUNTED SOFT CAP TOKEN PRICE */
         fullPrice = 0.00667 ether; /* SETS STANDARD TOKEN PRICE */
