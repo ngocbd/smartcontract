@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract F2UPay at 0x0488859a9bc1068747e4308fa038fe4f6448664c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract F2UPAY at 0x2bcf0e99077d5ec28bbb2763e2c7eaa6ec6d72b4
 */
 pragma solidity ^0.4.11;
 
@@ -7,6 +7,8 @@ pragma solidity ^0.4.11;
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
+ * created for ICO 
+ * website www.f2upay.com created to facilitate ico 
  */
 library SafeMath {
   function mul(uint256 a, uint256 b) internal constant returns (uint256) {
@@ -165,18 +167,18 @@ contract StandardToken is ERC20, BasicToken {
 }
 
 
-contract F2UPay is StandardToken {
+contract F2UPAY is StandardToken {
 
-  string public constant name = "F2UPay$";
-  string public constant symbol = "F2UPay$";
+  string public constant name = "F2UPAY";
+  string public constant symbol = "F2UPAY$";
   uint8 public constant decimals = 9;
 
-  uint256 public constant INITIAL_SUPPLY = 66600000000;
+  uint256 public constant INITIAL_SUPPLY = 9000000000000000000;
 
   /**
    * @dev Contructor that gives msg.sender all of existing tokens.
    */
-  function F2UPay() {
+  function F2UPAY() {
     totalSupply = INITIAL_SUPPLY;
     balances[msg.sender] = INITIAL_SUPPLY;
   }
