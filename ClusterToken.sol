@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ClusterToken at 0x08fd34559f2ed8585d3810b4d96ab8a05c9f97c5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ClusterToken at 0x320344d8c18b6971b3fcdbf0b12ed73578a8a622
 */
 pragma solidity ^0.4.11;
 
@@ -267,8 +267,6 @@ contract ClusterToken is StandardToken, PullPayment, Ownable, Pausable {
     function ClusterToken() {
     totalSupply = 750000000000000000000;
     balances[msg.sender] = totalSupply;
-    
-    initialBlockCount = 4086356;
 
     contributors = 0;
     }
