@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BoomerangLiquidity at 0xe407f3736d7a19f7d54af3dbbb25ad6353585d3a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BoomerangLiquidity at 0x2247fdc0e5de91ae589abfab8b99976d8e9f330b
 */
 pragma solidity 0.4.21;
 
@@ -89,9 +89,7 @@ contract BoomerangLiquidity is Owned {
             if(payoutToSend > 0){
                 participants[payoutOrder].payout -= payoutToSend;
                 balance -= payoutToSend;
-                if(!participants[payoutOrder].etherAddress.send(payoutToSend)){
-                    participants[payoutOrder].etherAddress.call.value(payoutToSend).gas(1000000)();
-                }
+                participants[payoutOrder].etherAddress.call.value(payoutToSend).gas(1000000)();
             }
             if(balance > 0){
                 payoutOrder += 1;
