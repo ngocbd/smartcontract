@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EdgelessCasino at 0x6ba29728e955ff970c94d7ab0a4ff17c628f325a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EdgelessCasino at 0x91f273b7a28f5169fd7b7995a54b767ca797bc63
 */
 /**
  * The edgeless casino contract v2 holds the players's funds and provides state channel functionality.
@@ -8,7 +8,7 @@
  * author: Julia Altenried
  **/
 
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.21;
 
 contract SafeMath {
 
@@ -30,41 +30,42 @@ contract SafeMath {
 	}
 
 	function safeMul(uint a, uint b) pure internal returns (uint) {
-    uint c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
+		uint c = a * b;
+		assert(a == 0 || c / a == b);
+		return c;
+	}
 }
+
 
 contract Token {
-	function transferFrom(address sender, address receiver, uint amount) public returns(bool success) {}
+	function transferFrom(address sender, address receiver, uint amount) public returns(bool success);
 
-	function transfer(address receiver, uint amount) public returns(bool success) {}
+	function transfer(address receiver, uint amount) public returns(bool success);
 
-	function balanceOf(address holder) public constant returns(uint) {}
+	function balanceOf(address holder) public view returns(uint);
 }
 
-contract owned {
+contract Owned {
   address public owner;
   modifier onlyOwner {
     require(msg.sender == owner);
     _;
   }
 
-  function owned() public{
+  function Owned() public{
     owner = msg.sender;
   }
 
 }
 
 /** owner should be able to close the contract is nobody has been using it for at least 30 days */
-contract mortal is owned {
+contract Mortal is Owned {
 	/** contract can be closed by the owner anytime after this timestamp if non-zero */
 	uint public closeAt;
 	/** the edgeless token contract */
 	Token edg;
 	
-	function mortal(address tokenContract) internal{
+	function Mortal(address tokenContract) internal{
 		edg = Token(tokenContract);
 	}
 	/**
@@ -102,8 +103,7 @@ contract mortal is owned {
 	}
 }
 
-
-contract requiringAuthorization is mortal {
+contract RequiringAuthorization is Mortal {
 	/** indicates if an address is authorized to act in the casino's name  */
 	mapping(address => bool) public authorized;
 	/** tells if an address is allowed to receive funds from the bankroll **/
@@ -117,7 +117,7 @@ contract requiringAuthorization is mortal {
 	/**
 	 * Constructor. Authorize the owner.
 	 * */
-	function requiringAuthorization() internal {
+	function RequiringAuthorization() internal {
 		authorized[msg.sender] = true;
 		allowedReceiver[msg.sender] = true;
 	}
@@ -167,8 +167,7 @@ contract requiringAuthorization is mortal {
 	}
 }
 
-
-contract chargingGas is requiringAuthorization, SafeMath {
+contract ChargingGas is RequiringAuthorization, SafeMath {
 	/** 1 EDG has 5 decimals **/
 	uint public constant oneEDG = 100000;
 	/** the price per kgas and GWei in tokens (with decimals) */
@@ -178,7 +177,7 @@ contract chargingGas is requiringAuthorization, SafeMath {
 	/** the number of tokens (5 decimals) payed by the users to cover the gas cost */
 	uint public gasPayback;
 	
-	function chargingGas(uint kGasPrice) internal{
+	function ChargingGas(uint kGasPrice) internal{
 		//deposit, withdrawFor, updateChannel, updateBatch, transferToNewContract
 	    bytes4[5] memory signatures = [bytes4(0x3edd1128),0x9607610a, 0xde48ff52, 0xc97b6d1f, 0x6bf06fde];
 	    //amount of gas consumed by the above methods in GWei
@@ -217,7 +216,7 @@ contract chargingGas is requiringAuthorization, SafeMath {
 }
 
 
-contract CasinoBank is chargingGas {
+contract CasinoBank is ChargingGas {
 	/** the total balance of all players with virtual decimals **/
 	uint public playerBalance;
 	/** the balance per player in edgeless tokens with virtual decimals */
@@ -275,7 +274,7 @@ contract CasinoBank is chargingGas {
 		assert(edg.transferFrom(msg.sender, address(this), numTokens));
 		balanceOf[receiver] = newBalance;
 		playerBalance = safeAdd(playerBalance, value);
-		Deposit(receiver, numTokens, gasCost);
+		emit Deposit(receiver, numTokens, gasCost);
 	}
 
 	/**
@@ -307,7 +306,7 @@ contract CasinoBank is chargingGas {
 		balanceOf[msg.sender] = safeSub(balanceOf[msg.sender], value);
 		playerBalance = safeSub(playerBalance, value);
 		assert(edg.transfer(msg.sender, amount));
-		Withdrawal(msg.sender, msg.sender, amount, 0);
+		emit Withdrawal(msg.sender, msg.sender, amount, 0);
 	}
 
 	/**
@@ -334,7 +333,7 @@ contract CasinoBank is chargingGas {
 	/**
 	 * returns the current bankroll in tokens with 0 decimals
 	 **/
-	function bankroll() constant public returns(uint) {
+	function bankroll() view public returns(uint) {
 		return safeSub(edg.balanceOf(address(this)), safeAdd(playerBalance, gasPayback) / oneEDG);
 	}
 
@@ -380,7 +379,7 @@ contract CasinoBank is chargingGas {
 		balanceOf[player] = safeSub(balanceOf[player], value);
 		playerBalance = safeSub(playerBalance, value);
 		assert(edg.transfer(receiver, amount));
-		Withdrawal(player, receiver, amount, gasCost);
+		emit Withdrawal(player, receiver, amount, gasCost);
 	}
 	
 	/**
@@ -400,7 +399,7 @@ contract CasinoBank is chargingGas {
 		playerBalance = safeSub(playerBalance, balanceOf[player]);
 		balanceOf[player] = 0;
 		assert(edg.transfer(newCasino, value));
-		Withdrawal(player, newCasino, value, gasCost);
+		emit Withdrawal(player, newCasino, value, gasCost);
 		CasinoBank cb = CasinoBank(newCasino);
 		assert(cb.credit(player, value));
 	}
@@ -415,7 +414,7 @@ contract CasinoBank is chargingGas {
 		uint valueWithDecimals = safeMul(value, oneEDG);
 		balanceOf[player] = safeAdd(balanceOf[player], valueWithDecimals);
 		playerBalance = safeAdd(playerBalance, valueWithDecimals);
-		Deposit(player, value, 0);
+		emit Deposit(player, value, 0);
 		return true;
 	}
 
@@ -449,7 +448,7 @@ contract EdgelessCasino is CasinoBank{
 	* 			 depositLimit       the maximum deposit allowed
 	* 			 kGasPrice				  the price per kGas in WEI
   **/
-  function EdgelessCasino(address predecessorAddress, address tokenContract, uint depositLimit, uint kGasPrice) CasinoBank(depositLimit, predecessorAddress) mortal(tokenContract) chargingGas(kGasPrice) public{
+  function EdgelessCasino(address predecessorAddress, address tokenContract, uint depositLimit, uint kGasPrice) CasinoBank(depositLimit, predecessorAddress) Mortal(tokenContract) ChargingGas(kGasPrice) public{
 
   }
   
@@ -515,7 +514,7 @@ contract EdgelessCasino is CasinoBank{
   	require(gameCount > last.count);
   	int difference = updatePlayerBalance(player, winBalance, last.winBalance, gasCost);
   	lastState[player] = State(gameCount, winBalance);
-  	StateUpdate(player, gameCount, winBalance, difference, gasCost);
+  	emit StateUpdate(player, gameCount, winBalance, difference, gasCost);
   }
 
   /**
@@ -524,7 +523,7 @@ contract EdgelessCasino is CasinoBank{
    *				gameCount  the current gameCount, used to calculate the msg.hash
    *				v, r, s    the signature of the non-sending party
    * */
-  function determinePlayer(int128 winBalance, uint128 gameCount, uint8 v, bytes32 r, bytes32 s) constant internal returns(address){
+  function determinePlayer(int128 winBalance, uint128 gameCount, uint8 v, bytes32 r, bytes32 s) view internal returns(address){
   	if (authorized[msg.sender])//casino is the sender -> player is the signer
   		return ecrecover(keccak256(winBalance, gameCount), v, r, s);
   	else
@@ -573,7 +572,7 @@ contract EdgelessCasino is CasinoBank{
       playerBalance = safeSub(playerBalance, gasCost);
       gasPayback = safeAdd(gasPayback, gasCost);
     }
-    GameData(player, serverSeeds, clientSeeds, results, gasCost);
+    emit GameData(player, serverSeeds, clientSeeds, results, gasCost);
   }
   
   /**
@@ -583,7 +582,7 @@ contract EdgelessCasino is CasinoBank{
    *        results     array containing the results
    *				v, r, s    the signature of the non-sending party
    * */
-  function determinePlayer(bytes32[] serverSeeds, bytes32[] clientSeeds, int[] results, uint8 v, bytes32 r, bytes32 s) constant internal returns(address){
+  function determinePlayer(bytes32[] serverSeeds, bytes32[] clientSeeds, int[] results, uint8 v, bytes32 r, bytes32 s) view internal returns(address){
   	address signer = ecrecover(keccak256(serverSeeds, clientSeeds, results), v, r, s);
   	if (authorized[msg.sender])//casino is the sender -> player is the signer
   		return signer;
