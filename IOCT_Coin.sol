@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IOCT_Coin at 0x6012ad64342641d261d032758087e21e5737c68e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IOCT_Coin at 0xb0bef286a13457b963c710fa7765961d09a27c63
 */
 pragma solidity ^0.4.19;
 contract tokenRecipient { function receiveApproval(address from, uint256 value, address token, bytes extraData) public; }
@@ -35,16 +35,16 @@ contract IOCT_Coin
      /* Initializes contract with initial supply tokens to the creator of the contract */
     function IOCT_Coin() public
     {
-      totalSupply = 15000000000000000000000000;                                 // as the decimals are 18, we add 18 zero after total supply, as all values are stored in wei
+      totalSupply = 20000000000000000000000000;                                 // as the decimals are 18, we add 18 zero after total supply, as all values are stored in wei
       owner =  msg.sender;                                                      // Set owner of contract
       balanceOf[owner] = totalSupply;                                           // Give the creator all initial tokens
-      name = "IOTA Coin";                                                       // Set the name for display purposes
-      symbol = "IOTAC";                                                         // Set the symbol for display purposes
+      name = "IotaConnect Token";                                               // Set the name for display purposes
+      symbol = "IOCT";                                                          // Set the symbol for display purposes
       decimals = 18;                                                            // Amount of decimals for display purposes
       remaining = totalSupply;                                                  // How many tokens are left
-      ethRate = 450;                                                            // default token price
+      ethRate = 718;                                                            // default token price
       icoStatus = 1;                                                            // default ico status
-      icoTokenPrice = 75;                                                       // values are in cents
+      icoTokenPrice = 40;                                                       // values are in cents
       benAddress = 0xDB19E35e04D3Ab319b3391755e7978cb6D967DDc;                  // funds withdraw address
       bkaddress  = 0x3706eeF0148D9408d89A0E86e09137f8dFEE02E8;                   
       allowTransferToken = 0;                                                   // default set to disable, it will be enable after ICO is over
