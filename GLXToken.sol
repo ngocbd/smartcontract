@@ -1,238 +1,249 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GLXToken at 0xfb38005627b5b4d3034dcf6d9651877d34830f29
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GLXToken at 0xaa8e917479cd071ea0d628b37a9091e02c657f9c
 */
-pragma solidity 0.4.18;
-/*
-Author:     www.inncretech.com
-Email:      aasim AT inncretech.com  vishal AT inncretech.com
+pragma solidity ^0.4.23;
+// ----------------------------------------------------------------------------
+// 'GLX' token contract
+//
+// Deployed to : 0x1d5B6586dD08fF8E15E45431E3dfe51493c83B5C
+// Symbol      : GLXT
+// Name        : GLXToken
+// Total supply: 1274240097
+// Decimals    : 18
+//
+// Enjoy.
+//
+// ----------------------------------------------------------------------------
 
-GLXCoin  Token public sale contract
-For details, please visit: https://ico.glx.com/
 
-*/
-// Math contract to avoid overflow and underflow of variables
+// ----------------------------------------------------------------------------
+// Safe maths
+// ----------------------------------------------------------------------------
 contract SafeMath {
-
-    function safeAdd(uint256 x, uint256 y) internal returns(uint256) {
-      uint256 z = x + y;
-      assert((z >= x) && (z >= y));
-      return z;
+    function safeAdd(uint a, uint b) public pure returns (uint c) {
+        c = a + b;
+        require(c >= a);
     }
-
-    function safeSubtract(uint256 x, uint256 y) internal returns(uint256) {
-      assert(x >= y);
-      uint256 z = x - y;
-      return z;
+    function safeSub(uint a, uint b) public pure returns (uint c) {
+        require(b <= a);
+        c = a - b;
     }
-
-    function safeMult(uint256 x, uint256 y) internal returns(uint256) {
-      uint256 z = x * y;
-      assert((x == 0)||(z/x == y));
-      return z;
+    function safeMul(uint a, uint b) public pure returns (uint c) {
+        c = a * b;
+        require(a == 0 || c / a == b);
     }
-
-}
-// Abstracct of ERC20 Token
-contract Token {
-    uint256 public totalSupply;
-    function balanceOf(address _owner) constant returns (uint256 balance);
-    function transfer(address _to, uint256 _value) returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
-    function approve(address _spender, uint256 _value) returns (bool success);
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    function safeDiv(uint a, uint b) public pure returns (uint c) {
+        require(b > 0);
+        c = a / b;
+    }
 }
 
 
-/*  Implementation of ERC20 token standard functions */
-contract StandardToken is Token {
+// ----------------------------------------------------------------------------
+// ERC Token Standard #20 Interface
+// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+// ----------------------------------------------------------------------------
+contract ERC20Interface {
+    function totalSupply() public constant returns (uint ret_total_supply);
+    function balanceOf(address tokenOwner) public constant returns (uint balance);
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+    function transfer(address to, uint tokens) public returns (bool success);
+    function approve(address spender, uint tokens) public returns (bool success);
+    function transferFrom(address from, address to, uint tokens) public returns (bool success);
+    function name() public returns (string ret_name);
+    function symbol() public returns (string ret_symbol);
+    function decimals() public returns (uint8 ret_decimals);
 
-    function transfer(address _to, uint256 _value) returns (bool success) {
-      if (balances[msg.sender] >= _value && _value > 0) {
-        balances[msg.sender] -= _value;
-        balances[_to] += _value;
-        Transfer(msg.sender, _to, _value);
-        return true;
-      } else {
-        return false;
-      }
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-      if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-        balances[_to] += _value;
-        balances[_from] -= _value;
-        allowed[_from][msg.sender] -= _value;
-        Transfer(_from, _to, _value);
-        return true;
-      } else {
-        return false;
-      }
-    }
-
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
-    }
-
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
-    }
-
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-}
-
-contract Ownable {
-  address public owner;
-
-/**
-* @dev The Ownable constructor sets the original `owner` of the contract to the sender
-* account.
-*/
-function Ownable() {
-  owner = msg.sender;
-}
-/**
-* @dev Throws if called by any account other than the owner.
-*/
-modifier onlyOwner() {
-  require(msg.sender == owner);
-_;
-}
-/**
-* @dev Allows the current owner to transfer control of the contract to a newOwner.
-* @param newOwner The address to transfer ownership to.
-*/
-function transferOwnership(address newOwner) onlyOwner {
-  if (newOwner != address(0)) {
-      owner = newOwner;
-  }
-}
-
+    event Transfer(address indexed from, address indexed to, uint tokens);
+    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
 }
 
 
-contract GLXToken is StandardToken,Ownable, SafeMath {
-
-    // crowdsale parameters
-    string  public constant name = "GLXCoin";
-    string  public constant symbol = "GLXC";
-    uint256 public constant decimals = 18;
-    string  public version = "1.0";
-    address public constant ethFundDeposit= 0xeE9b66740EcF1a3e583e61B66C5b8563882b5d12;                         // Deposit address for ETH
-    bool public emergencyFlag;                                      //  Switched to true in  crownsale end  state
-    uint256 public fundingStartBlock;                              //   Starting blocknumber
-    uint256 public fundingEndBlock;                               //    Ending blocknumber
-    uint256 public constant minTokenPurchaseAmount= .008 ether;  //     Minimum purchase
-    uint256 public constant tokenPreSaleRate=875;    // GLXCoin per 1 ETH during presale
-    uint256 public constant tokenCrowdsaleRate=700; //  GLXCoin per 1 ETH during crowdsale
-    uint256 public constant tokenCreationPreSaleCap =  10 * (10**6) * 10**decimals;// 10 million token cap for presale
-    uint256 public constant tokenCreationCap =  50 * (10**6) * 10**decimals;      //  50 million token generated
-    uint256 public constant preSaleBlockNumber = 169457;
-    uint256 public finalBlockNumber =360711;
+// ----------------------------------------------------------------------------
+// Contract function to receive approval and execute function in one call
+//
+// Borrowed from MiniMeToken
+// ----------------------------------------------------------------------------
+contract ApproveAndCallFallBack {
+    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
+}
 
 
-    // events
-    event CreateGLX(address indexed _to, uint256 _value);// Return address of buyer and purchase token
-    event Mint(address indexed _to,uint256 _value);     //  Reutn address to which we send the mint token and token assigned.
+// ----------------------------------------------------------------------------
+// Owned contract
+// ----------------------------------------------------------------------------
+contract Owned {
+    address public owner;
+    address public newOwner;
+
+    event OwnershipTransferred(address indexed _from, address indexed _to);
+
+    constructor() public {
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function transferOwnership(address _newOwner) public onlyOwner {
+        newOwner = _newOwner;
+    }
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
+    }
+}
+
+
+// ----------------------------------------------------------------------------
+// ERC20 Token, with the addition of symbol, name and decimals and assisted
+// token transfers
+// ----------------------------------------------------------------------------
+contract GLXToken is ERC20Interface, Owned, SafeMath {
+    string public symbol = "GLXT";
+    string public name = "GLXToken";
+    uint8 public decimals = 18;
+    uint public _totalSupply;
+    bool internal deployed = false;
+
+    mapping(address => uint) balances;
+    mapping(address => mapping(address => uint)) allowed;
+
+
+    // ------------------------------------------------------------------------
     // Constructor
-    function GLXToken(){
-      emergencyFlag = false;                             // False at initialization will be false during ICO
-      fundingStartBlock = block.number;                 //  Current deploying block number is the starting block number for ICO
-      fundingEndBlock=safeAdd(fundingStartBlock,finalBlockNumber);  //   Ending time depending upon the block number
+    // ------------------------------------------------------------------------
+    constructor() public {
+        deployGLX();
+    }
+    
+    // ------------------------------------------------------------------------
+    // Deploy initializes this contract if the constructor was not called
+    // ------------------------------------------------------------------------
+    function deployGLX() public onlyOwner {
+        if(deployed) revert();
+        _totalSupply = 1274240097000000000000000000;
+        balances[0x1d5B6586dD08fF8E15E45431E3dfe51493c83B5C] = _totalSupply;
+        emit Transfer(address(0), 0x1d5B6586dD08fF8E15E45431E3dfe51493c83B5C, _totalSupply);
+        deployed = true;
     }
 
-    /**
-    * @dev creates new GLX tokens
-    *      It is a internal function it will be called by fallback function or buyToken functions.
-    */
-    function createTokens() internal  {
-      if (emergencyFlag) revert();                     //  Revert when the sale is over before time and emergencyFlag is true.
-      if (block.number > fundingEndBlock) revert();   //   If the blocknumber exceed the ending block it will revert
-      if (msg.value<minTokenPurchaseAmount)revert();  //    If someone send 0.08 ether it will fail
-      uint256 tokenExchangeRate=tokenRate();        //     It will get value depending upon block number and presale cap
-      uint256 tokens = safeMult(msg.value, tokenExchangeRate);//  Calculating number of token for sender
-      totalSupply = safeAdd(totalSupply, tokens);            //   Add token to total supply
-      if(totalSupply>tokenCreationCap)revert();             //    Check the total supply if it is more then hardcap it will throw
-      balances[msg.sender] += tokens;                      //     Adding token to sender account
-      CreateGLX(msg.sender, tokens);                      //      Logs sender address and  token creation
+    // ------------------------------------------------------------------------
+    // Name, Symbol and Decimals functions
+    // ------------------------------------------------------------------------
+    function name() public returns (string ret_name) {
+        return name;
     }
-
-    /**
-    * @dev people can access contract and choose buyToken function to get token
-    *It is used by using myetherwallet
-    *It is a payable function it will be called by sender.
-    */
-    function buyToken() payable external{
-      createTokens();   // This will call the internal createToken function to get token
+    
+    function symbol() public returns (string ret_symbol) {
+        return symbol;
     }
-
-    /**
-    * @dev      it is a internal function called by create function to get the amount according to the blocknumber.
-    * @return   It will return the token price at a particular time.
-    */
-    function tokenRate() internal returns (uint256 _tokenPrice){
-      // It is a presale it will return price for presale
-      if(block.number<safeAdd(fundingStartBlock,preSaleBlockNumber)&&(totalSupply<tokenCreationPreSaleCap)){
-          return tokenPreSaleRate;
-        }else
-            return tokenCrowdsaleRate;
-    }
-
-    /**
-    * @dev     it will  assign token to a particular address by owner only
-    * @param   _to the address whom you want to send token to
-    * @param   _amount the amount you want to send
-    * @return  It will return true if success.
-    */
-    function mint(address _to, uint256 _amount) external onlyOwner returns (bool) {
-      if (emergencyFlag) revert();
-      totalSupply = safeAdd(totalSupply,_amount);// Add the minted token to total suppy
-      if(totalSupply>tokenCreationCap)revert();
-      balances[_to] +=_amount;                 //   Adding token to the input address
-      Mint(_to, _amount);                     //    Log the mint with address and token given to particular address
-      return true;
-    }
-
-    /**
-    * @dev     it will change the ending date of ico and access by owner only
-    * @param   _newBlock enter the future blocknumber
-    * @return  It will return the blocknumber
-    */
-    function changeEndBlock(uint256 _newBlock) external onlyOwner returns (uint256 _endblock )
-    {   // we are expecting that owner will input number greater than current block.
-        require(_newBlock > fundingStartBlock);
-        fundingEndBlock = _newBlock;         // New block is assigned to extend the Crowd Sale time
-        return fundingEndBlock;
-    }
-
-    /**
-    * @dev   it will let Owner withdrawn ether at any time during the ICO
-    **/
-    function drain() external onlyOwner {
-        if (!ethFundDeposit.send(this.balance)) revert();// It will revert if transfer fails.
-    }
-
-    /**
-    * @dev  it will let Owner Stop the crowdsale and mint function to work.
-    *
-    */
-    function emergencyToggle() external onlyOwner{
-      emergencyFlag = !emergencyFlag;
-    }
-
-    // Fallback function let user send ether without calling the buy function.
-    function() payable {
-      createTokens();
-
+    
+    function decimals() public returns (uint8 ret_decimals) {
+        return decimals;
     }
 
 
+    // ------------------------------------------------------------------------
+    // Total supply
+    // ------------------------------------------------------------------------
+    function totalSupply() public constant returns (uint ret_total_supply) {
+        return _totalSupply  - balances[address(0)];
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Get the token balance for account tokenOwner
+    // ------------------------------------------------------------------------
+    function balanceOf(address tokenOwner) public constant returns (uint balance) {
+        return balances[tokenOwner];
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Transfer the balance from token owner's account to to account
+    // - Owner's account must have sufficient balance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transfer(address to, uint tokens) public returns (bool success) {
+        balances[msg.sender] = safeSub(balances[msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
+        emit Transfer(msg.sender, to, tokens);
+        return true;
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Token owner can approve for spender to transferFrom(...) tokens
+    // from the token owner's account
+    //
+    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+    // recommends that there are no checks for the approval double-spend attack
+    // as this should be implemented in user interfaces
+    // ------------------------------------------------------------------------
+    function approve(address spender, uint tokens) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        emit Approval(msg.sender, spender, tokens);
+        return true;
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Transfer tokens from the from account to the to account
+    //
+    // The calling account must already have sufficient tokens approve(...)-d
+    // for spending from the from account and
+    // - From account must have sufficient balance to transfer
+    // - Spender must have sufficient allowance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transferFrom(address from, address to, uint tokens) public returns (bool success) {
+        balances[from] = safeSub(balances[from], tokens);
+        allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
+        emit Transfer(from, to, tokens);
+        return true;
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Returns the amount of tokens approved by the owner that can be
+    // transferred to the spender's account
+    // ------------------------------------------------------------------------
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
+        return allowed[tokenOwner][spender];
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Token owner can approve for spender to transferFrom(...) tokens
+    // from the token owner's account. The spender contract function
+    // receiveApproval(...) is then executed
+    // ------------------------------------------------------------------------
+    function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        emit Approval(msg.sender, spender, tokens);
+        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
+        return true;
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Don't accept ETH
+    // ------------------------------------------------------------------------
+    function () public payable {
+        revert();
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Owner can transfer out any accidentally sent ERC20 tokens
+    // ------------------------------------------------------------------------
+    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
+        return ERC20Interface(tokenAddress).transfer(owner, tokens);
+    }
 }
