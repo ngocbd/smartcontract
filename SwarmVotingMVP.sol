@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SwarmVotingMVP at 0x2bb10945e9f0c9483022dc473ab4951bc2a77d0f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SwarmVotingMVP at 0x6b649662da40f10361f008b481143029296a69d6
 */
 pragma solidity ^0.4.17;
 
@@ -47,6 +47,7 @@ contract SwarmVotingMVP {
     // Private key to be set after ballot conclusion - curve25519
     bytes32 public ballotEncryptionSeckey;
     bool seckeyRevealed = false;
+    bool allowSeckeyBeforeEndTime = false;
 
     // Timestamps for start and end of ballot (UTC)
     uint256 public startTime;
@@ -54,15 +55,15 @@ contract SwarmVotingMVP {
 
     // Banned addresses - necessary to ban Swarm Fund from voting in their own ballot
     mapping(address => bool) public bannedAddresses;
-    // TODO: Is this the right address?
     address public swarmFundAddress = 0x8Bf7b2D536D286B9c5Ad9d99F608e9E214DE63f0;
 
+    bytes32[5] public optionHashes;
 
     //// ** Events
-    event CreatedBallot(address creator, uint256 start, uint256 end, bytes32 encPubkey);
-    event FailedVote(address voter, string reason);
+    event CreatedBallot(address creator, uint256 start, uint256 end, bytes32 encPubkey, string o1, string o2, string o3, string o4, string o5);
     event SuccessfulVote(address voter, bytes32 ballot, bytes32 pubkey);
     event SeckeyRevealed(bytes32 secretKey);
+    event AllowEarlySeckey(bool allowEarlySeckey);
     event TestingEnabled();
     event Error(string error);
 
@@ -86,7 +87,7 @@ contract SwarmVotingMVP {
     }
 
     modifier ballotOpen {
-        if (block.timestamp > startTime && block.timestamp < endTime) {
+        if (block.timestamp >= startTime && block.timestamp < endTime) {
             _;
         } else {
             Error("Ballot not open");
@@ -104,7 +105,7 @@ contract SwarmVotingMVP {
     //// ** Functions
 
     // Constructor function - init core params on deploy
-    function SwarmVotingMVP(uint256 _startTime, uint256 _endTime, bytes32 _encPK, bool enableTesting) public {
+    function SwarmVotingMVP(uint256 _startTime, uint256 _endTime, bytes32 _encPK, bool enableTesting, bool _allowSeckeyBeforeEndTime, string opt1, string opt2, string opt3, string opt4, string opt5) public {
         owner = msg.sender;
 
         startTime = _startTime;
@@ -113,10 +114,17 @@ contract SwarmVotingMVP {
 
         bannedAddresses[swarmFundAddress] = true;
 
+        optionHashes = [keccak256(opt1), keccak256(opt2), keccak256(opt3), keccak256(opt4), keccak256(opt5)];
+
+        allowSeckeyBeforeEndTime = _allowSeckeyBeforeEndTime;
+        AllowEarlySeckey(_allowSeckeyBeforeEndTime);
+
         if (enableTesting) {
             testMode = true;
             TestingEnabled();
         }
+
+        CreatedBallot(msg.sender, _startTime, _endTime, _encPK, opt1, opt2, opt3, opt4, opt5);
     }
 
     // Ballot submission
@@ -137,7 +145,9 @@ contract SwarmVotingMVP {
 
     // Allow the owner to reveal the secret key after ballot conclusion
     function revealSeckey(bytes32 _secKey) onlyOwner public {
-        require(block.timestamp > endTime);
+        if (allowSeckeyBeforeEndTime == false) {
+            require(block.timestamp > endTime);
+        }
 
         ballotEncryptionSeckey = _secKey;
         seckeyRevealed = true;  // this flag allows the contract to be locked
@@ -153,20 +163,13 @@ contract SwarmVotingMVP {
         return ballotEncryptionSeckey;
     }
 
-    function getBallotOptions() public pure returns (uint8[2][4]) {
-        // NOTE: storing a 4x2 array in storage nearly doubled the gas cost
-        // of deployment - compromise is to create a constant function
-        return [
-            [8, 42],
-            [42, 8],
-            [16, 42],
-            [4, 84]
-        ];
+    function getBallotOptions() public constant returns (bytes32[5]) {
+        return optionHashes;
     }
-    
+
     // ballot params - allows the frontend to do some checking
     function getBallotOptNumber() public pure returns (uint256) {
-        return 4;
+        return 5;
     }
 
     // Test functions
