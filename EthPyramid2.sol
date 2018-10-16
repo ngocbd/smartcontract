@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthPyramid2 at 0x410cac201ffc0e0e4c179d926076d25bf8bc5b92
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthPyramid2 at 0xce128ededa2c39d4cf569e38e7e5dd3c6a9f99e2
 */
 pragma solidity ^0.4.18;
 
 /*
-          ,/`.
+          ,/2.
         ,'/ __`.
       ,'_/_  _ _`.
     ,'__/_ ___ _  `.
@@ -12,32 +12,9 @@ pragma solidity ^0.4.18;
  '-.._/___...-"-.-..__`.
   B
 
- EthPyramid v2.0 A no-bullshit, transparent, self-sustaining pyramid scheme.
- - https://ethpyramid2.com/
+ EthPyramid 2. A no-bullshit, transparent, self-sustaining pyramid scheme.
  
  Inspired by https://test.jochen-hoenicke.de/eth/ponzitoken/
-
- Developers:
-	Arc
-	Divine
-	Norsefire
-	ToCsIcK
-	
- Front-End:
-	Cardioth
-	tenmei
-	Trendium
-	
- Moral Support:
-	DeadCow.Rat
-	Dots
-	FatKreamy
-	Kaseylol
-	QuantumDeath666
-	Quentin
- 
- Shit-Tier:
-	HentaiChrist
  
 */
 
@@ -58,7 +35,7 @@ contract EthPyramid2 {
 	int constant price_coeff = -0x296ABF784A358468C;
 
 	// Typical values that we have to declare.
-	string constant public name = "EthPyramid2";
+	string constant public name = "EthPyramid 2";
 	string constant public symbol = "EPY";
 	uint8 constant public decimals = 18;
 
