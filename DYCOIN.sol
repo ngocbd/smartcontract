@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DYCOIN at 0xc5d275df1b6176d732aeb4a234e905c002424ec7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DYCOIN at 0x2b27bf565593da4c3689207175e91b1c15e4792a
 */
 pragma solidity ^0.4.11;
 contract DYCOIN {
     
-    uint public constant _totalSupply = 500000000;
+    uint public constant _totalSupply = 500000000000000;
     
     string public constant symbol = "DYC";
     string public constant name = "DYCOIN";
