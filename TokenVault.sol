@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVault at 0xe32ee8eddd2ea56dde0f08d0ea3d11ea219e15de
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVault at 0x9c76d1daea99da03f8c5ba5d59bbcd2106e53d53
 */
 /*
  * ERC20 interface
@@ -94,20 +94,7 @@ contract StandardToken is ERC20, SafeMath {
     return true;
   }
 
-  /**
-   *
-   * Fix for the ERC20 short address attack
-   *
-   * http://vessenes.com/the-erc20-short-address-attack-explained/
-   */
-  modifier onlyPayloadSize(uint size) {
-     if(msg.data.length < size + 4) {
-       throw;
-     }
-     _;
-  }
-
-  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) returns (bool success) {
+  function transfer(address _to, uint _value) returns (bool success) {
     balances[msg.sender] = safeSub(balances[msg.sender], _value);
     balances[_to] = safeAdd(balances[_to], _value);
     Transfer(msg.sender, _to, _value);
@@ -242,15 +229,14 @@ contract TokenVault is Ownable {
   /**
    * Create presale contract where lock up period is given days
    *
-   * @param _owner Who can load investor data and lock
    * @param _freezeEndsAt UNIX timestamp when the vault unlocks
    * @param _token Token contract address we are distributing
    * @param _tokensToBeAllocated Total number of tokens this vault will hold - including decimal multiplcation
    *
    */
-  function TokenVault(address _owner, uint _freezeEndsAt, StandardToken _token, uint _tokensToBeAllocated) {
+  function TokenVault(uint _freezeEndsAt, StandardToken _token, uint _tokensToBeAllocated) {
 
-    owner = _owner;
+    owner = msg.sender;
 
     // Invalid owenr
     if(owner == 0) {
