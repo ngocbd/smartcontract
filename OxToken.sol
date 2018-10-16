@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OxToken at 0x7a93f0d9f302c0818022f8dca6ee1eb0f1b50308
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OxToken at 0x0aac84ef458e67758a2991a769d979981cd41fc4
 */
 pragma solidity ^0.4.11;
 
@@ -200,11 +200,20 @@ contract Ownable {
 
 }
 
-contract OxToken is StandardToken, LimitedTransferToken, Ownable {
+/*
+ * Destructible
+ * Base contract that can be destroyed by owner. All funds in contract will be sent to the owner.
+ */
+contract Destructible is Ownable {
+  function destroy() onlyOwner {
+    selfdestruct(owner);
+  }
+}
+
+contract OxToken is StandardToken, LimitedTransferToken, Ownable, Destructible {
   using SafeMath for uint;
 
   event OxTokenInitialized(address _owner);
-  event InitialTokensAllocated(uint _amount);
   event OwnerTokensAllocated(uint _amount);
   event SaleStarted(uint _saleEndTime);
 
@@ -238,7 +247,6 @@ contract OxToken is StandardToken, LimitedTransferToken, Ownable {
     totalSupply = CORPORATE_SUPPLY;
     balancesInitialized = true;
     Transfer(0x0, msg.sender, CORPORATE_SUPPLY);
-    InitialTokensAllocated(CORPORATE_SUPPLY);
   }
 
   function canBuyTokens() constant public returns (bool) {
@@ -267,6 +275,10 @@ contract OxToken is StandardToken, LimitedTransferToken, Ownable {
   function startSale() onlyOwner {
     //Can only start once
     if (saleStartTime != 0) {
+      throw;
+    }
+    //Can't start unless balances have been initialized
+    if (!balancesInitialized) {
       throw;
     }
     saleStartTime = getNow();
