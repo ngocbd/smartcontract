@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Controller at 0x39c7e3385a4bf9fef821111367a9dca35f301297
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Controller at 0x1f24dbc4140d74eec3d15644f5e28da66960dab9
 */
 contract ERC20Basic {
   function totalSupply() public view returns (uint256);
@@ -423,8 +423,8 @@ contract PausableToken is StandardToken, Pausable {
 contract Controller is ERC827Token, MintableToken, PausableToken {
   address public thisAddr; // matches delegation slot in proxy
   uint256 public cap;      // the max cap of this token
-  string public constant name = "COIN"; // solium-disable-line uppercase
-  string public constant symbol = "COIN"; // solium-disable-line uppercase
+  string public constant name = "LifeTask"; // solium-disable-line uppercase
+  string public constant symbol = "LTS"; // solium-disable-line uppercase
   uint8 public constant decimals = 18; // solium-disable-line uppercase
 
   /**
