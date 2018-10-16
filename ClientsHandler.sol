@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ClientsHandler at 0x1ffdbcecea31ea4f8a659f6ba0dc314983db872d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ClientsHandler at 0x181a81338bd9ebf423624b0e9994c658817ebd38
 */
 pragma solidity ^0.4.21;
 
@@ -29,6 +29,7 @@ contract Ownable {
     }
 }
 
+/** @dev contract extended Ownable */
 contract ManageableContract is Ownable {
 
     mapping (address => bool) internal pf_manager; // SP maganer, Artificial Intelligence AI in the fuature
@@ -50,7 +51,7 @@ contract ManageableContract is Ownable {
     }
 
     modifier is_no_cli() {
-        require(clients[msg.sender] == true);
+        require(clients[msg.sender] != true);
         _;
     }
 
@@ -68,7 +69,7 @@ contract ManageableContract is Ownable {
         require(pf_manager[msg.sender] == true);
         _;
     }
-    
+
     modifier is_cli_trust() {
         require(
             owner == msg.sender            ||
@@ -87,7 +88,7 @@ contract ManageableContract is Ownable {
             );
         _;
     }
-    
+
     modifier is_trust() {
         require(
             owner == msg.sender            ||
@@ -105,7 +106,7 @@ contract ManageableContract is Ownable {
         pf_m_count.push(1);
         return (true, _manager);
     }
-    
+
     function setPerformer(address _to) public onlyOwner
         returns (bool, address)
     {
@@ -138,13 +139,14 @@ contract ManageableContract is Ownable {
     }
 
     /** get client task length */
-    function countCliTasks() public view returns (uint256) {
+    function countClients() public view returns (uint256) {
         return cli_count.length;
     }
 }
 
+/** @dev contact types transform */
 contract Converter {
-    
+
         function bytes32ToBytes(bytes32 data) internal pure returns (bytes) {
         uint i = 0;
         while (i < 32 && uint(data[i]) != 0) {
@@ -158,7 +160,7 @@ contract Converter {
         }
         return result;
     }
-    
+
     /** @dev concat bytes array */
     function bytes32ArrayToString(bytes32[] data) internal pure returns (string) {
         bytes memory bytesString = new bytes(data.length * 32);
@@ -178,7 +180,7 @@ contract Converter {
         }
         return string(bytesStringTrimmed);
     }
-    
+
 
     function uintToBytes(uint v) internal pure returns (bytes32 ret) {
         if (v == 0) {
@@ -193,7 +195,7 @@ contract Converter {
         }
         return ret;
     }
-    
+
     function addressToBytes(address a) internal pure returns (bytes32 b){
        assembly {
             let m := mload(0x40)
@@ -202,16 +204,16 @@ contract Converter {
             b := m
        }
     }
-    
+
     function bytesToBytes32(bytes b, uint offset) internal pure returns (bytes32) {
       bytes32 out;
-    
+
       for (uint i = 0; i < 32; i++) {
         out |= bytes32(b[offset + i] & 0xFF) >> (i * 8);
       }
       return out;
     }
-    
+
     function bytes32ToString(bytes32 x) internal pure returns (string) {
         bytes memory bytesString = new bytes(32);
         uint charCount = 0;
@@ -230,10 +232,9 @@ contract Converter {
     }
 }
 
-//?????? ????? ? ????? ?????/?????? ? ?????? ??????????? ??????? ? ????? ????????
-/** warning add divide rule beatween accepted tasks and wiev rules for */
+/** contract for deploy */
 contract ClientsHandler is ManageableContract, Converter {
-    
+
     function ClientsHandler() public {
         setPFManager(owner);
         setCRManager(owner);
@@ -241,14 +242,14 @@ contract ClientsHandler is ManageableContract, Converter {
 
     string name = "Clients Handler";
     string descibe = "Clients data storage, contain methods for their obtaining and auditing";
-    string version = "0.28";
-    
+    string version = "0.29";
+
     // @dev defaul validtor values
     uint256 dml = 3;
     uint256 dmxl = 100;
     uint256 tml = 3;
     uint256 tmxl = 1000;
-    
+
     struct DreamStructData {
         string  hashId;
         string  dream;
@@ -256,60 +257,60 @@ contract ClientsHandler is ManageableContract, Converter {
         bool    isDream;
         bool    hasPerformer;
         address performer;
-        
+
     }
-    
+
     struct DreamStruct {
         bool      isClient;
         uint256[] key;
 
     }
-    
+
     mapping(address => mapping(uint256 => DreamStructData)) internal DSData;
     mapping(address => DreamStruct) internal DStructs;
     address[] public clientsList; //count users
-    
+
     struct DreamStructDataP {
         bool    isValid;
         address client;
         uint256 client_id;
     }
-    
+
     struct DreamStructP {
         bool      isPerformer;
         uint256[] key;
     }
-    
+
     mapping(address => mapping(uint256 => DreamStructDataP)) internal DSDataP;
     mapping(address => DreamStructP) internal DStructsP;
     address[] public performerList; //count users
-    
+
     function watchPreferersTasks(address entityAddress, uint256 _id) public view {
         DSDataP[entityAddress][_id];
     }
-    
+
     /** @dev return data of client's dream by id */
-    function getDStructData(address _who, uint256 _dream_id) 
-        public 
-        view 
-        is_cli_or_trust 
-        returns(string, string) 
+    function getDStructData(address _who, uint256 _dream_id)
+        public
+        view
+        is_cli_or_trust
+        returns(string, string)
     {
         require(DSData[_who][_dream_id].isDream == true);
         return (
-            DSData[_who][_dream_id].dream, 
+            DSData[_who][_dream_id].dream,
             DSData[_who][_dream_id].target
         );
     }
-    
+
     function isClient(address entityAddress) public constant returns(bool isIndeed) {
         return DStructs[entityAddress].isClient;
     }
-     
+
     function countClients() public constant returns(uint256 cCount) {
         return clientsList.length;
     }
-    
+
     function countAllCliDrm() public constant returns(uint256 acdCount) {
         uint256 l = countClients();
         uint256 r = 0;
@@ -318,31 +319,31 @@ contract ClientsHandler is ManageableContract, Converter {
         }
         return r;
     }
-    
+
     function countCliDreams(address _addr) public view returns(uint256 cdCount) {
         return DStructs[_addr].key.length;
     }
-    
+
     function countPerfClients(address _addr) public view returns(uint256 cdpCount) {
         return DStructsP[_addr].key.length;
     }
-    
-    function findAllCliWithPendingTask(address _addr) public returns(address[] noPerform) {
-        
+
+    function findAllCliWithPendingTask() public returns(address[] noPerform) {
+
         uint256 l = countClients();
         address[] storage r;
         for(uint256 i=0; i<l; i++) {
             uint256 ll = countCliDreams(clientsList[i]);
             for(uint256 ii=0; ii<ll; ii++) {
                 uint256 li = ii + 1;
-                if(DSData[_addr][li].hasPerformer == false) {
-                    r.push(_addr);
+                if(DSData[clientsList[i]][li].hasPerformer == false) {
+                    r.push(clientsList[i]);
                 }
             }
         }
         return r;
     }
-    
+
     /** @dev by the address of client set performer for pending task */
     function findCliPendTAndSetPrfm(address _addr, address _performer) public returns(uint256) {
 
@@ -352,7 +353,7 @@ contract ClientsHandler is ManageableContract, Converter {
             if(DSData[_addr][li].hasPerformer == false) {
                 DSData[_addr][li].hasPerformer = true;
                 DSData[_addr][li].performer = _performer;
-                
+
                 uint256 pLen = countPerfClients(_performer);
                 uint256 iLen = pLen + 1;
                 DSDataP[_performer][iLen].client = _addr;
@@ -362,7 +363,7 @@ contract ClientsHandler is ManageableContract, Converter {
             }
         }
     }
-    
+
     /** @dev change perferfer for uncomplited task if he is fail */
     function changePrefererForTask(address _addr, uint256 _id, address _performer) public is_pf_mng returns(bool) {
         require(performers[_performer] == true);
@@ -372,24 +373,24 @@ contract ClientsHandler is ManageableContract, Converter {
             return true;
         }
     }
-    
+
     function setValidatorForND(
-        uint256 dream_min_len, 
+        uint256 dream_min_len,
         uint256 target_min_len,
-        uint256 dream_max_len, 
+        uint256 dream_max_len,
         uint256 target_max_len
-    )   
-        public 
-        onlyOwner 
-        returns (bool) 
+    )
+        public
+        onlyOwner
+        returns (bool)
     {
         dml  = dream_min_len;
         dmxl = dream_max_len;
         tml  = target_min_len;
-        tmxl = target_max_len; 
+        tmxl = target_max_len;
         return true;
     }
-    
+
     modifier validatorD(string dream, string target) {
         require(
             (bytes(dream).length  >  dml)  &&
@@ -399,12 +400,12 @@ contract ClientsHandler is ManageableContract, Converter {
         );
         _;
     }
-    
+
     /** @dev allow for all who want stand client */
-    function newDream(address entityAddress, string dream, string target) 
-        public 
-        validatorD(dream, target) 
-        returns (uint256 rowNumber) 
+    function newDream(address entityAddress, string dream, string target)
+        public
+        validatorD(dream, target)
+        returns (uint256 rowNumber)
     {
         clients[entityAddress] = true;
         DStructs[entityAddress].key.push(1);
@@ -416,13 +417,13 @@ contract ClientsHandler is ManageableContract, Converter {
         DSData[entityAddress][incLen].isDream = true;
         return clientsList.push(entityAddress);
     }
-    
+
     /** @dev allow for all who want stand client */
-    function updateDream(address entityAddress, string dream, string target) 
-        public 
-        is_cli_trust 
-        validatorD(dream, target) 
-        returns (bool success) 
+    function updateDream(address entityAddress, string dream, string target)
+        public
+        is_cli_trust
+        validatorD(dream, target)
+        returns (bool success)
     {
         //DStructs[entityAddress].key.push(1);
         uint256 cliLen = countCliDreams(entityAddress);
@@ -432,21 +433,4 @@ contract ClientsHandler is ManageableContract, Converter {
         DSData[entityAddress][incLen].isDream = true;
         return true;
     }
-        
-/*    function makeUnicTaskHashId(address who) internal view returns (bytes32) {
-        
-        string memory d = bytes32ToString(uintToBytes(block.difficulty));
-        string memory bh = bytes32ToString(block.blockhash(block.number));
-        string memory t = bytes32ToString(uintToBytes(block.timestamp));
-        string memory w = bytes32ToString(addressToBytes(who));
-        
-        string memory s1 = " ".toSlice().concat(d.toSlice());  
-        string memory sb1 = string(bh.toSlice().concat(s1.toSlice()));
-        string memory s2 = " ".toSlice().concat(sb1.toSlice());
-        string memory sb2 = string(t.toSlice().concat(s2.toSlice()));
-        string memory s3 = " ".toSlice().concat(sb2.toSlice());
-        string memory sb3 = string(w.toSlice().concat(s3.toSlice()));
-        
-        return keccak256(sb3);
-    }*/
 }
