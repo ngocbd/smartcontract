@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Slotthereum at 0x510467f65a600926af2ed565419ad98cf1f706ed
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Slotthereum at 0xda8fe472e1beae12973fa48e9a1d9595f752fce0
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.16;
+
 
 contract Owned {
     address owner;
@@ -29,14 +30,14 @@ contract Mortal is Owned {
 
 contract Slotthereum is Mortal {
 
-    mapping (address => Game[]) private games;      // games per address
-
-    uint private minBetAmount = 10000000000000000;  // minimum amount per bet
+    Game[] public games;                              // games
+    uint public numberOfGames = 0;                    // number of games
+    uint private minBetAmount = 100000000000000;      // minimum amount per bet
     uint private maxBetAmount = 5000000000000000000;  // maximum amount per bet
-    uint private pointer = 1;                       // block pointer
-    uint private numberOfPlayers = 0;               // number of players
+    uint8 private pointer = 1;                        // block pointer
 
     struct Game {
+        address player;
         uint id;
         uint amount;
         uint8 start;
@@ -49,6 +50,15 @@ contract Slotthereum is Mortal {
 
     event MinBetAmountChanged(uint amount);
     event MaxBetAmountChanged(uint amount);
+    event PointerChanged(uint8 value);
+
+    event GameRoll(
+        address indexed player,
+        uint indexed gameId,
+        uint8 start,
+        uint8 end,
+        uint amount
+    );
 
     event GameWin(
         address indexed player,
@@ -105,7 +115,8 @@ contract Slotthereum is Mortal {
     }
 
     function getNumber(bytes32 _a) internal constant returns (uint8) {
-        uint8 mint = 0; // pointer?
+        // uint8 mint = pointer;
+        uint8 mint = 0;
         for (uint i = 31; i >= 1; i--) {
             if ((uint8(_a[i]) >= 48) && (uint8(_a[i]) <= 57)) {
                 return uint8(_a[i]) - 48;
@@ -133,35 +144,41 @@ contract Slotthereum is Mortal {
             return false;
         }
 
-        uint gameId = games[msg.sender].length;
-        games[msg.sender].length += 1;
-        games[msg.sender][gameId].id = gameId;
-        games[msg.sender][gameId].amount = msg.value;
-        games[msg.sender][gameId].start = start;
-        games[msg.sender][gameId].end = end;
-        games[msg.sender][gameId].hash = getBlockHash(pointer);
-        games[msg.sender][gameId].number = getNumber(games[msg.sender][gameId].hash);
-        // set pointer to number ?
+        uint gameId = games.length;
+        games.length++;
+        numberOfGames++;
 
-        games[msg.sender][gameId].prize = 1;
-        if ((games[msg.sender][gameId].number >= start) && (games[msg.sender][gameId].number <= end)) {
-            games[msg.sender][gameId].win = true;
+        GameRoll(msg.sender, gameId, start, end, msg.value);
+
+        games[gameId].id = gameId;
+        games[gameId].player = msg.sender;
+        games[gameId].amount = msg.value;
+        games[gameId].start = start;
+        games[gameId].end = end;
+        games[gameId].hash = getBlockHash(pointer);
+        games[gameId].number = getNumber(games[gameId].hash);
+        // pointer = games[gameId].number;
+
+        if ((games[gameId].number >= start) && (games[gameId].number <= end)) {
+            games[gameId].win = true;
             uint dec = msg.value / 10;
             uint parts = 10 - counter;
-            games[msg.sender][gameId].prize = msg.value + dec * parts;
+            games[gameId].prize = msg.value + dec * parts;
+        } else {
+            games[gameId].prize = 1;
         }
 
-        msg.sender.transfer(games[msg.sender][gameId].prize);
+        msg.sender.transfer(games[gameId].prize);
 
         notify(
             msg.sender,
             gameId,
             start,
             end,
-            games[msg.sender][gameId].number,
+            games[gameId].number,
             msg.value,
-            games[msg.sender][gameId].prize,
-            games[msg.sender][gameId].win
+            games[gameId].prize,
+            games[gameId].win
         );
 
         return true;
@@ -179,39 +196,50 @@ contract Slotthereum is Mortal {
         return maxBetAmount;
     }
 
-    function getGameIds(address player) constant returns(uint[] memory ids) {
-        ids = new uint[](games[player].length);
-        for (uint i = 0; i < games[player].length; i++) {
-            ids[i] = games[player][i].id;
+    function setPointer(uint8 _pointer) onlyowner returns (uint) {
+        pointer = _pointer;
+        PointerChanged(pointer);
+        return pointer;
+    }
+
+    function getGameIds() constant returns(uint[]) {
+        uint[] memory ids = new uint[](games.length);
+        for (uint i = 0; i < games.length; i++) {
+            ids[i] = games[i].id;
         }
+        return ids;
     }
 
-    function getGameAmount(address player, uint gameId) constant returns(uint) {
-        return games[player][gameId].amount;
+    function getGamePlayer(uint gameId) constant returns(address) {
+        return games[gameId].player;
     }
 
-    function getGameStart(address player, uint gameId) constant returns(uint8) {
-        return games[player][gameId].start;
+    function getGameAmount(uint gameId) constant returns(uint) {
+        return games[gameId].amount;
     }
 
-    function getGameEnd(address player, uint gameId) constant returns(uint8) {
-        return games[player][gameId].end;
+    function getGameStart(uint gameId) constant returns(uint8) {
+        return games[gameId].start;
     }
 
-    function getGameHash(address player, uint gameId) constant returns(bytes32) {
-        return games[player][gameId].hash;
+    function getGameEnd(uint gameId) constant returns(uint8) {
+        return games[gameId].end;
     }
 
-    function getGameNumber(address player, uint gameId) constant returns(uint8) {
-        return games[player][gameId].number;
+    function getGameHash(uint gameId) constant returns(bytes32) {
+        return games[gameId].hash;
     }
 
-    function getGameWin(address player, uint gameId) constant returns(bool) {
-        return games[player][gameId].win;
+    function getGameNumber(uint gameId) constant returns(uint8) {
+        return games[gameId].number;
     }
 
-    function getGamePrize(address player, uint gameId) constant returns(uint) {
-        return games[player][gameId].prize;
+    function getGameWin(uint gameId) constant returns(bool) {
+        return games[gameId].win;
+    }
+
+    function getGamePrize(uint gameId) constant returns(uint) {
+        return games[gameId].prize;
     }
 
     function getMinBetAmount() constant returns(uint) {
