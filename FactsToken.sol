@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FactsToken at 0xd8e6a6a27f31cb4ee8d7584b7a67e624e17a038a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FactsToken at 0x09cb097356fd053f8544abfa2c8a9d4fb2200d62
 */
 pragma solidity ^0.4.21;
+
 
 /**
  * Math operations with safety checks
@@ -77,9 +78,6 @@ contract BasicToken is ERC20Basic {
    */
   modifier onlyPayloadSize(uint size) {
      assert(msg.data.length >= size + 4);
-     //if(msg.data.length < size + 4) {
-     //  throw;
-     //}
      _;
   }
 
@@ -140,13 +138,11 @@ contract StandardToken is BasicToken, ERC20 {
     uint _allowance;
     _allowance = allowed[_from][msg.sender];
 
-    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-    // if (_value > _allowance) throw;
     require(_allowance >= _value);
 
-    allowed[_from][msg.sender] = _allowance.sub(_value);
     balances[_from] = balances[_from].sub(_value);
     balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
     emit Transfer(_from, _to, _value);
   }
 
@@ -161,7 +157,6 @@ contract StandardToken is BasicToken, ERC20 {
     //  allowance to zero by calling `approve(_spender, 0)` if it is not
     //  already 0 to mitigate the race condition described here:
     //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    // if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) throw;
     require((_value == 0) || (allowed[msg.sender][_spender] == 0));
 
     allowed[msg.sender][_spender] = _value;
@@ -235,9 +230,7 @@ contract MintableToken is StandardToken, Ownable {
   bool public mintingFinished = false;
   uint public totalSupply = 0;
 
-
   modifier canMint() {
-    // if(mintingFinished) throw;
     require(!mintingFinished);
     _;
   }
@@ -291,7 +284,6 @@ contract Pausable is Ownable {
    * @dev modifier to allow actions only when the contract IS NOT paused
    */
   modifier whenPaused {
-    // if (!paused) throw;
     require(paused);
     _;
   }
@@ -379,8 +371,8 @@ contract TokenTimelock {
 contract FactsToken is PausableToken, MintableToken {
   using SafeMath for uint256;
 
-  string public name = "F4Token";
-  string public symbol = "FFFF";
+  string public name = "FACTS Token";
+  string public symbol = "FACTS";
   uint public decimals = 18;
 
   /**
@@ -405,4 +397,7 @@ contract FactsToken is PausableToken, MintableToken {
       keys[msg.sender] = key;
       emit LogRegister(msg.sender, key);
     }
+
+  // If the user transfers ETH to contract, it will revert
+  function () public payable{ revert(); }
 }
