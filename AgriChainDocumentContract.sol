@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AgriChainDocumentContract at 0x6d44f3135f3708e5d9512b6f7d4c009b0e8d60ab
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AgriChainDocumentContract at 0xf68426d1410028947b2a0f59f74d2a5038dc0ce0
 */
-pragma solidity ^0.4.9; 
-//v.1609rev17 Ezlab 2016 all-rights reseved support@ezlab.it
+pragma solidity ^0.4.10; 
+//Ezlab 2016 all-rights reserved support@ezlab.it
 //special purpose contract for CantinaVolpone further info https://agrichain.it/d/0x160564d346f6e9fb3d93c034f207ecf9791b7739
-
+//v.1609rev17042701 some optimization for costreduction
 //common base contract
 contract BaseAgriChainContract {
     address creator; 
@@ -39,13 +39,112 @@ contract BaseAgriChainContract {
 }
 
 
-
-
-
-
-
-// production 
+//ChainedContract
 contract AgriChainContract   is BaseAgriChainContract    
+{     string public AgriChainType;
+      address public  AgriChainNextData;
+      address public  AgriChainPrevData;
+      address public  AgriChainRootData;
+    
+    function   AgriChainDataContract() public
+    {
+        AgriChainNextData=address(this);
+        AgriChainPrevData=address(this);
+        AgriChainRootData=address(this);
+    }
+    
+     
+      
+      
+      
+    function setChain(string _Type,address _Next,address _Prev, address _Root)  onlyBy(creator)  
+    {
+         AgriChainType=_Type;
+         AgriChainNextData=_Next;
+         AgriChainPrevData=_Prev;
+         AgriChainRootData=_Root;
+         EventChanged(this,'Chain');
+    }
+    
+     function setChainNext(address _Next)  onlyBy(creator)  
+    {
+         AgriChainNextData=_Next;
+         EventChangedAddress(this,'ChainNext',_Next);
+    }
+   
+
+    function setChainPrev(address _Prev)  onlyBy(creator)  
+    {
+         AgriChainPrevData=_Prev;
+         EventChangedAddress(this,'ChainNext',_Prev);
+    }
+    
+   
+   function setChainRoot(address _Root)  onlyBy(creator)  
+    {
+         AgriChainRootData=_Root;
+         EventChangedAddress(this,'ChainRoot',_Root);
+    }
+    
+     function setChainType(string _Type)  onlyBy(creator)  
+    {
+         AgriChainType=_Type;
+         EventChangedString(this,'ChainType',_Type);
+    }
+      
+}
+
+
+// Master activities 
+contract AgriChainMasterContract   is AgriChainContract    
+{  
+    address public  AgriChainContext;  //Context Data Chain
+    address public  AgriChainCultivation;  //Cultivation Data Chain
+    address public  AgriChainProduction;   //Production Data Chain
+    address public  AgriChainDistribution; //Distribution Data Chain
+    address public  AgriChainDocuments; //Distribution Data Chain
+
+    function   AgriChainMasterContract() public
+    { 
+       AgriChainContext=address(this);
+       AgriChainCultivation=address(this);
+       AgriChainProduction=address(this);
+       AgriChainDistribution=address(this);
+       
+    }
+    function setAgriChainProduction(address _AgriChain)  onlyBy(creator) onlyIfNotSealed()
+    {
+         AgriChainProduction = _AgriChain;
+         EventChangedAddress(this,'AgriChainProduction',_AgriChain);
+    }
+    function setAgriChainCultivation(address _AgriChain)  onlyBy(creator) onlyIfNotSealed()
+    {
+         AgriChainCultivation = _AgriChain;
+         EventChangedAddress(this,'AgriChainCultivation',_AgriChain);
+    }
+    function setAgriChainDistribution(address _AgriChain)  onlyBy(creator) onlyIfNotSealed()
+    {
+         AgriChainDistribution = _AgriChain;
+         EventChangedAddress(this,'AgriChainDistribution',_AgriChain);
+    }
+    
+    function setAgriChainDocuments(address _AgriChain)  onlyBy(creator) onlyIfNotSealed()
+    {
+         AgriChainDocuments = _AgriChain;
+         EventChangedAddress(this,'AgriChainDocuments',_AgriChain);
+    }
+    function setAgriChainContext(address _AgriChain)  onlyBy(creator) onlyIfNotSealed()
+    {
+         AgriChainContext = _AgriChain;
+         EventChangedAddress(this,'AgriChainContext',_AgriChain);
+    }
+    
+}
+
+
+
+// legacy production contract 
+contract AgriChainProductionContract   is BaseAgriChainContract    
 {  
     string  public  Organization;      //Production Organization
     string  public  Product ;          //Product
@@ -101,38 +200,20 @@ contract AgriChainContract   is BaseAgriChainContract
 }
 
 
-//InnerData
-contract AgriChainDataContract   is BaseAgriChainContract    
+
+//LoggedData
+contract AgriChainDataContract   is AgriChainContract    
 {  
-    function   AgriChainDataContract() public
-    {
-        AgriChainNextData=address(this);
-        AgriChainPrevData=address(this);
-        AgriChainRootData=address(this);
-    }
-    
-      address public  AgriChainNextData;
-      address public  AgriChainPrevData;
-      address public  AgriChainRootData;
-      
-      string public AgriChainType;
       string public AgriChainLabel;
       string public AgriChainLabelInt;
       string public AgriChainDescription;
       string public AgriChainDescriptionInt;
       
-    function setChain(address _Next,address _Prev, address _Root)  onlyBy(creator)  
-    {
-         AgriChainNextData=_Next;
-         AgriChainPrevData=_Prev;
-         AgriChainRootData=_Root;
-         EventChanged(this,'Chain');
-    }
     
     //main language data  
-    function setData(string _Type,string _Label,string _Description)  onlyBy(creator) onlyIfNotSealed()
+    function setData(string _Label,string _Description)  onlyBy(creator) onlyIfNotSealed()
     {
-          AgriChainType=_Type;
+         
           AgriChainLabel=_Label;
           AgriChainDescription=_Description;
           EventChanged(this,'Data');
@@ -150,15 +231,15 @@ contract AgriChainDataContract   is BaseAgriChainContract
       
 }
 
-//DocumentData
+//External DocumentData
+//the extenal document is hashed  and chained as described by this contract
 contract AgriChainDocumentContract   is AgriChainDataContract    
 {  
      
     string  public  Emitter;      //Organization
+
     string  public  Name;         //Name
-    string  public  Description ; //Description
     string  public  NameInt;         //Name International
-    string  public  DescriptionInt ; //Description International
 
     string  public  FileName;     //FileName
     string  public  FileHash;     //FileHash
@@ -169,30 +250,28 @@ contract AgriChainDocumentContract   is AgriChainDataContract
     string  public  FileDataInt;  //FileData International
 
     string  public  Notes ;
-    address public  Revision; 
+    address public  CurrentRevision; 
     
     function   AgriChainDocumentContract() public
     {
-        Revision=address(this);
+        CurrentRevision=address(this);
     }
     
-    function setData(string _Emitter,string _Name,string _Description, string _FileName,string _FileHash,string _FileData)  onlyBy(creator) onlyIfNotSealed()
+    function setDocumentData(string _Emitter,string _Name, string _FileName,string _FileHash,string _FileData)  onlyBy(creator) onlyIfNotSealed()
     {
           Emitter=_Emitter;
           Name=_Name;
-          Description=_Description;
           FileName=_FileName;
           FileHash=_FileHash;
           FileData=_FileData;          
-          EventChanged(this,'Data');
+          EventChanged(this,'setDocumentData');
        
     } 
     
-     
-    
-    function setRevision(address _Revision)  onlyBy(creator) onlyIfNotSealed()
+    function setCurrentRevision(address _Revision)  onlyBy(creator)  
     {
-          Revision = _Revision;
+          CurrentRevision = _Revision;
+          EventChangedAddress(this,'CurrentRevision',_Revision);
         
     } 
      
@@ -205,7 +284,8 @@ contract AgriChainDocumentContract   is AgriChainDataContract
 }
 
 
-//
+//Production Quntity counter contract
+//the spedified production si accounted by this contract
 contract AgriChainProductionLotContract   is AgriChainDataContract    
 {  
     
