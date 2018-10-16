@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract tokenHodl at 0x8839aebac610f88522db2e17d9b867ee4b571bb2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract tokenHodl at 0x9b250383f532479085b3d24f50fa60103ee8e244
 */
 pragma solidity ^0.4.13;
 
@@ -13,7 +13,7 @@ contract tokenHodl {
     event Hodl(address indexed hodler, uint indexed amount);
     event Party(address indexed hodler, uint indexed amount);
     mapping (address => uint) public hodlers;
-    uint constant partyTime = 1522542236; // April 1
+    uint constant partyTime = 1514402746; // 20 minutes from now
     function() payable {
         hodlers[msg.sender] += msg.value;
         Hodl(msg.sender, msg.value);
