@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ViewTokenMintage at 0x463979a2dc1a19005b6143681244b8a3af115571
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ViewTokenMintage at 0xf665069a0ee102ceadbd80690814473dbdd56ac8
 */
 /// math.sol -- mixin for inline numerical wizardry
 
@@ -422,7 +422,7 @@ pragma solidity ^0.4.18;
 contract ViewTokenMintage is DSAuth, DSMath {
 
     enum CategoryId {
-        Founders,
+        Team,
         Supporters,
         Creators,
         Bounties,
@@ -448,7 +448,7 @@ contract ViewTokenMintage is DSAuth, DSMath {
         viewToken = viewToken_;
 
         uint MILLION = 1000000 ether;
-        categories[uint8(CategoryId.Founders)]   = Category(18 * MILLION, 0 ether);
+        categories[uint8(CategoryId.Team)]       = Category(18 * MILLION, 0 ether);
         categories[uint8(CategoryId.Supporters)] = Category(9 * MILLION, 0 ether);
         categories[uint8(CategoryId.Creators)]   = Category(20 * MILLION, 0 ether);
         categories[uint8(CategoryId.Bounties)]   = Category(3 * MILLION, 113528 ether);
@@ -465,7 +465,8 @@ contract ViewTokenMintage is DSAuth, DSMath {
         require(add(tokens, category.amountMinted) <= category.mintLimit);
 
         categories[uint8(categoryId)].amountMinted += tokens;
-        viewToken.mint(recipient, tokens);
+        viewToken.mint(this, tokens);
+        viewToken.transferFrom(this, recipient, tokens);
         TokensMinted(recipient, tokens, categoryId);
     }
 
