@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x39e339da9435a7cb34bc53c645f49b007b9e9730
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x2b22808ebfa784578bbbfc71e6488693a0c8da19
 */
 pragma solidity ^0.4.19;
 
@@ -47,11 +47,11 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 10000000000000000;
-        name = 'GXS';
-        symbol = 'GXS';
-        decimals = 8;
-        balanceOf[0x72a6cf112bc33a3df6ed8d9373ef624c9bc03836] = totalSupply;
-        Transfer(address(0), 0x72a6cf112bc33a3df6ed8d9373ef624c9bc03836, totalSupply);
+        totalSupply = 600000000000000000000000000;
+        name = 'DeCaiCoin';
+        symbol = 'DCC';
+        decimals = 18;
+        balanceOf[0x23fdad4428a6aff269b9f267da90a06310666e6b] = totalSupply;
+        Transfer(address(0), 0x23fdad4428a6aff269b9f267da90a06310666e6b, totalSupply);
     }
 }
