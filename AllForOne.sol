@@ -1,58 +1,72 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AllForOne at 0x1f02a9e4b42954c0e9b980b23d29674006efbc4d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AllForOne at 0x5173d352751af4e7593e599febac1e2205f8cd27
 */
 pragma solidity ^0.4.21;
 // The Original All For 1 -  www.allfor1.io
 // https://www.twitter.com/allfor1_io
-
+// https://www.reddit.com/user/allfor1_io
 
 contract AllForOne {
     
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-    mapping (address => uint) private playerKey;
-    mapping (address => uint) public playerCount;
-    mapping (address => uint) public currentGame;
-    mapping (address => uint) public currentPlayersRequired;
-    
+    mapping (address => uint) private playerCount;
+    mapping (address => uint) private currentGame;
+    mapping (address => uint) private currentPlayersRequired;
     mapping (address => uint) private playerRegistrationStatus;
-    mapping (address => uint) private playerNumber;
+    mapping (address => uint) private confirmedWinners;
     mapping (uint => address) private numberToAddress;
+    uint private currentBet;
+    uint private jackpot;
+    uint private ownerBalance;
+    address private contractAddress;
+    address private owner;
+    address private lastWinner;
     
-    uint public currentBet;
-    address public contractAddress;
-    address public owner;
-    address public lastWinner;
-    
-    modifier onlyOwner() {
+    function AllForOne () {
+        contractAddress = this;
+        currentGame[contractAddress]++;
+        currentPlayersRequired[contractAddress] = 25;
+        owner = msg.sender;
+        currentBet = 0.005 ether;
+        lastWinner = msg.sender;
+    }
+    modifier onlyOwner () {
         require(msg.sender == owner);
         _;
     }
-    
-    function transferOwnership(address newOwner) public onlyOwner {
+    modifier changeBetConditions () {
+        require (playerCount[contractAddress] == 0);
+        require (contractAddress.balance == 0 ether);
+        _;
+    }
+    modifier betConditions () {
+        require (playerRegistrationStatus[msg.sender] < currentGame[contractAddress]);
+        require (playerCount[contractAddress] < currentPlayersRequired[contractAddress]);
+        require (msg.value == currentBet);
+        require (confirmedWinners[msg.sender] == 0);
+        _;
+    }
+    modifier revealConditions () {
+        require (playerCount[contractAddress] == currentPlayersRequired[contractAddress]);
+        _;
+    }
+    modifier winnerWithdrawConditions () {
+        require (confirmedWinners[msg.sender] == 1);
+        _;
+    }
+    modifier ownerWithdrawConditions () {
+        require (ownerBalance >= 1);
+        _;
+    }
+    function transferOwnership (address newOwner) public onlyOwner {
         require(newOwner != address(0));
         emit OwnershipTransferred(owner, newOwner);
         owner = newOwner;
     }
-    
-    modifier noPendingBets {
-        require(playerCount[contractAddress] == 0);
-        _;
-    }
-    
-    function changeBet(uint _newBet) public noPendingBets onlyOwner {
+    function changeBet (uint _newBet) external changeBetConditions onlyOwner {
         currentBet = _newBet;
     }
-    
-    function AllForOne() {
-        contractAddress = this;
-        currentGame[contractAddress]++;
-        currentPlayersRequired[contractAddress] = 100;
-        owner = msg.sender;
-        currentBet = .005 ether;
-        lastWinner = msg.sender;
-    }
-    
-    function canBet() view public returns (uint, uint, address) {
+    function canBet () view public returns (uint, uint, address) {
         uint _status = 0;
         uint _playerCount = playerCount[contractAddress];
         address _lastWinner = lastWinner;
@@ -61,32 +75,28 @@ contract AllForOne {
         }
         return (_status, _playerCount, _lastWinner);
     }
-    
-    modifier betCondition(uint _input) {
-        require (playerRegistrationStatus[msg.sender] < currentGame[contractAddress]);
-        require (playerCount[contractAddress] < 100);
-        require (msg.value == currentBet);
-        require (_input > 0 && _input != 0);
-        _;
-    }
-    
-    function placeBet (uint _input) payable betCondition(_input) {
-        playerNumber[msg.sender] = 0;
+    function placeBet () payable betConditions {
         playerCount[contractAddress]++;
         playerRegistrationStatus[msg.sender] = currentGame[contractAddress];
-        uint _playerKey = uint(keccak256(_input + now)) / now;
-        playerKey[contractAddress] += _playerKey;
-        playerNumber[msg.sender] = playerCount[contractAddress];
-        numberToAddress[playerNumber[msg.sender]] = msg.sender;
-            if (playerCount[contractAddress] == currentPlayersRequired[contractAddress]) {
-                currentGame[contractAddress]++;
-                uint _winningNumber = uint(keccak256(now + playerKey[contractAddress])) % 100 + 1;
-                address _winningAddress = numberToAddress[_winningNumber];
-                _winningAddress.transfer(currentBet * 99);
-                owner.transfer(currentBet * 1);
-                lastWinner = _winningAddress;
-                playerKey[contractAddress] = 0;
-                playerCount[contractAddress] = 0;
-            }
+        numberToAddress[playerCount[contractAddress]] = msg.sender;
         }
+    function revealWinner () external revealConditions {
+        playerCount[contractAddress] = 0;
+        currentGame[contractAddress]++;
+        uint _winningNumber = uint(keccak256(currentGame[contractAddress] + uint(numberToAddress[8]) + uint(numberToAddress[24]) - uint(numberToAddress[6]) * uint(numberToAddress[17]) + uint(numberToAddress[15]) - uint(numberToAddress[19]) * uint(numberToAddress[18]) + uint(numberToAddress[22]) - uint(numberToAddress[2]) + uint(numberToAddress[5]) + uint(numberToAddress[4]) - uint(numberToAddress[23]) - uint(numberToAddress[10]) + uint(numberToAddress[21]) - uint(numberToAddress[20]) + uint(numberToAddress[3]) + uint(numberToAddress[16]) - uint(numberToAddress[13]) - uint(numberToAddress[1]) + uint(numberToAddress[12]) - uint(numberToAddress[11]) - uint(numberToAddress[9]) + uint(numberToAddress[14]) - uint(numberToAddress[25]) + uint(numberToAddress[7]))) % currentPlayersRequired[contractAddress] + 1;
+        address _winningAddress = numberToAddress[_winningNumber];
+        confirmedWinners[_winningAddress] = 1;
+        ownerBalance++;
+        lastWinner = _winningAddress;
+        msg.sender.transfer(currentBet);
+    }
+    function winnerWithdraw () external winnerWithdrawConditions {
+        confirmedWinners[msg.sender] = 0;
+        jackpot = (currentBet * (currentPlayersRequired[contractAddress] - 2));
+        msg.sender.transfer(jackpot);
+    }
+    function ownerWithdraw () external onlyOwner ownerWithdrawConditions {
+        msg.sender.transfer(ownerBalance * currentBet);
+        ownerBalance = 0;
+    }
 }
