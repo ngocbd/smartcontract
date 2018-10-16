@@ -1,98 +1,84 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BasicToken at 0xde7fa34501f5e48befa61acaa9da237d417984aa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BasicToken at 0x9cf0f1e78922e8eaeb0b91d3b4dcd7b8a103c1d9
 */
-pragma solidity ^0.4.15;
-
-library SafeMath {
-    function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-      uint256 c = a * b;
-      assert(a == 0 || c / a == b);
-      return c;
-    }
-
-    function div(uint256 a, uint256 b) internal constant returns (uint256) {
-      uint256 c = a / b;
-      return c;
-    }
-
-    function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-      assert(b <= a);
-      return a - b;
-    }
-
-    function add(uint256 a, uint256 b) internal constant returns (uint256) {
-      uint256 c = a + b;
-      assert(c >= a);
-      return c;
-    }
-}
-
-
-
-contract BasicToken {
-
-  using SafeMath for uint256;
-
-  mapping (address => mapping (address => uint256)) allowed;
-  mapping(address => uint256) balances;
-
+pragma solidity ^0.4.16;
+ 
+/* 
+    Fcoin
+ */
+contract ERC20Basic {
   uint256 public totalSupply;
-  uint256 public decimals;
-  address public owner;
-  bytes32 public symbol;
-  bytes32 public name;
-
+  function balanceOf(address who) constant returns (uint256);
+  function transfer(address to, uint256 value) returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
-  event Approval(address indexed _owner, address indexed spender, uint256 value);
-
-  /* Edit these variables to set token initial issue */
-  /* Change the function BasicToken() name to <Your Preferred Name> to change name*/
-
-  function BasicToken(){
-    name = "TaiToken";
-    totalSupply = 5000000000000;
-    symbol = "TKT";
-    owner = msg.sender;
-    balances[msg.sender] = totalSupply;
-    decimals = 0;
+}
+ 
+/*
+   ERC20 interface
+  see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) returns (bool);
+  function approve(address spender, uint256 value) returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+ 
+/*  SafeMath - the lowest gas library
+  Math operations with safety checks that throw on error
+ */
+library SafeMath {
+    
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
   }
-
-
-  function balanceOf(address _owner) constant returns (uint256 balance) {
-    return balances[_owner];
+ 
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
   }
-
-
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
+ 
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
   }
-
-
-  function transfer(address _to, uint256 _value) returns (bool) {
+ 
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+  
+}
+ 
+/*
+Basic token
+ Basic version of StandardToken, with no allowances. 
+ */
+contract BasicToken is ERC20Basic {
+    
+  using SafeMath for uint256;
+ 
+  mapping(address => uint256) balances;
+ 
+ function transfer(address _to, uint256 _value) returns (bool) {
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
     Transfer(msg.sender, _to, _value);
     return true;
   }
-
-
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
-    var _allowance = allowed[_from][msg.sender];
-
-    balances[_to] = balances[_to].add(_value);
-    balances[_from] = balances[_from].sub(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
+ 
+  /*
+  Gets the balance of the specified address.
+   param _owner The address to query the the balance of. 
+   return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) constant returns (uint256 balance) {
+    return balances[_owner];
   }
-
-
-  function approve(address _spender, uint256 _value) returns (bool) {
-
-    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
+ 
 }
