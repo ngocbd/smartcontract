@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CashTron at 0xa368d06722474f9e0b4ec505a2e647e4df86b821
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CashTron at 0xcae9d65a9a618604671686adb01d9f00d2a2e51c
 */
 //--------------------------------------------------------------------------------
-     // CashTron Currency Token "VNDCC" (Is Not Bank Legal Money)
-     // USDC/EURC/AUDC/CADC/NZDC/RUBC/CNYC/SGDC/PHPC/IDRC/MYRC/THBC/#VNDC/BDTC
+     // CashTron Currency Token "SGDC" (Is Not Bank Legal Money)
+     // USDC/EURC/AUDC/CADC/NZDC/RUBC/CNYC/#SGDC/PHPC/IDRC/MYRC/THBC/WNDC/BDTC
      // CashTron @ 2018 CashTron.io  CashTron.co
      //--------------------------------------------------------------------------------
 
@@ -232,7 +232,7 @@ contract CashTron is BurnableToken {
     using SafeMath for uint256;
 
     string public constant name = "CashTron";
-    string public constant symbol = "VNDC";
+    string public constant symbol = "SGDC";
     uint8 public constant decimals = 8;
     uint256 public constant INITIAL_SUPPLY = 500000000;
 
