@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dice at 0xc3b643bb85318b6a0e1b46c30365adacdf9469c2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dice at 0xfdfd8a46146bcc7b12bcee778c4562937849181f
 */
 pragma solidity ^0.4.0;
 
@@ -296,12 +296,12 @@ contract usingOraclize {
 
 contract Dice is usingOraclize {
 
-    uint constant pwin = 1000; //probability of winning (10000 = 100%)
+    uint constant pwin = 9000; //probability of winning (10000 = 100%)
     uint constant edge = 190; //edge percentage (10000 = 100%)
     uint constant maxWin = 100; //max win (before edge is taken) as percentage of bankroll (10000 = 100%)
     uint constant minBet = 200 finney;
     uint constant maxInvestors = 10; //maximum number of investors
-    uint constant houseEdge = 25; //edge percentage (10000 = 100%)
+    uint constant houseEdge = 190; //edge percentage (10000 = 100%)
     uint constant divestFee = 50; //divest fee percentage (10000 = 100%)
     uint constant emergencyWithdrawalRatio = 10; //ratio percentage (100 = 100%)
 
@@ -706,7 +706,7 @@ contract Dice is usingOraclize {
             bytes32 myid =
                 oraclize_query(
                     "nested",
-                    "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random.data.0', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BLY3bF2NWtUYMqKj+13fIJ+rR4IzmlNAP9UM1nmbCiivwFXmm3lU86zjsIldadlHwkH9H8ephiQ/FNgEraMknyVhlceoT1WgJv3h1iP87fRK34yqARHV8p/qKoYG1RE1lJ6IKI1oUvDqCfllxkf+u9vvWN188fs=},\"n\":1,\"min\":1,\"max\":10000${[identity] \"}\"},\"id\":1${[identity] \"}\"}']",
+                    "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random.data.0', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BJA0SE2e6Z358/qbF5jVzI7vYmPdafKfYPwDWywjBxEoxnnJGnBl15CMqt1Wktc8i7Vmvf21dFxM9ECGWXfk+mY8CX7bOf3L7ewbvKNFfpQzV0R+VFaxk/cepdSZVI/v6wq5ahxIrRMgws/IHtHDLIOF3mKCa/4=},\"n\":1,\"min\":1,\"max\":10000${[identity] \"}\"},\"id\":1${[identity] \"}\"}']",
                     ORACLIZE_GAS_LIMIT + safeGas
                 );
             bets[myid] = Bet(msg.sender, betValue, 0);
