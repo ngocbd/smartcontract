@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract preSale3 at 0x72636c350431895fc6ee718b92bcc5b4fbd70304
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract preSale3 at 0x3eeeb54cdee54079c6fb01d52b7643c8e50ff4c2
 */
 pragma solidity ^0.4.18;
  
@@ -261,8 +261,7 @@ contract AgroTechFarmToken is MintableToken {
 contract preSale3 is Ownable {    
     using SafeMath for uint;        
     AgroTechFarmToken public token;
-    bool public preSale3Finished = false;
-    string public constant name = "ATF Token";
+    bool public preSale3Finished = false;          
     address public multisig;
     address public preSale = 0x02Dcc61022771015b1408323D29C790066CBe2e4;
     address public preSale1 = 0xfafbb19945fc2d79828e4c5813a619d5683074ba;
