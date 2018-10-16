@@ -1,23 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OrganizeFunds at 0xEb4245C88C660Ae4eE23c76954e5490ccd7bbd82
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OrganizeFunds at 0xe137da0a88e299d5086f1ebf3c224386d82a0b16
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.18;
 
 /**
  *
- * @author  David Rosen <kaandoit@mcon.org>
- *
- * Version A
+ * Version: B
+ * @author  <newtwist@protonmail.com>
  *
  * Overview:
- * This divides all incoming funds among various `activity` accounts. The division cannot be changed
+ * Divides all incoming funds among various `activity` accounts. The division cannot be changed
  * after the contract is locked.
  */
 
-
-// --------------------------
-//  R Split Contract
-// --------------------------
 contract OrganizeFunds {
 
   struct ActivityAccount {
@@ -25,6 +20,7 @@ contract OrganizeFunds {
     uint balance;    // current balance = credited - amount withdrawn
     uint pctx10;     // percent allocation times ten
     address addr;    // payout addr of this acct
+    string name;
   }
 
   uint constant TENHUNDWEI = 1000;                     // need gt. 1000 wei to distribute
@@ -35,6 +31,7 @@ contract OrganizeFunds {
 
 
   bool public isLocked;
+  string public name;
   address public owner;                                // deployer executor
   mapping (uint => ActivityAccount) activityAccounts;  // accounts by index
   uint public activityCount;                           // how many activity accounts
@@ -42,7 +39,6 @@ contract OrganizeFunds {
   uint public totalFundsDistributed;                   // amount distributed since begin of time
   uint public totalFundsWithdrawn;                     // amount withdrawn since begin of time
   uint public withdrawGas = 100000;                    // gas for withdrawals
-
 
   modifier ownerOnly {
     require(msg.sender == owner);
@@ -59,7 +55,7 @@ contract OrganizeFunds {
   //
   // constructor
   //
-  function OrganizeFunds() {
+  function OrganizeFunds() public {
     owner = msg.sender;
   }
 
@@ -67,10 +63,13 @@ contract OrganizeFunds {
     isLocked = true;
   }
 
+  function setName(string _name) public ownerOnly {
+    name = _name;
+  }
 
   //
   // reset
-  // reset all accounts
+  // reset all activity accounts
   // in case we have any funds that have not been withdrawn, they become  newly received and undistributed.
   //
   function reset() public ownerOnly unlockedOnly {
@@ -93,9 +92,9 @@ contract OrganizeFunds {
 
 
   //
-  // add a new account
+  // add a new activity account
   //
-  function addAccount(address _addr, uint256 _pctx10) public ownerOnly unlockedOnly {
+  function addActivityAccount(address _addr, uint256 _pctx10, string _name) public ownerOnly unlockedOnly {
     if (activityCount >= MAX_ACCOUNTS) {
       MessageEvent("err: max accounts");
       return;
@@ -104,6 +103,7 @@ contract OrganizeFunds {
     activityAccounts[activityCount].pctx10 = _pctx10;
     activityAccounts[activityCount].credited = 0;
     activityAccounts[activityCount].balance = 0;
+    activityAccounts[activityCount].name = _name;
     ++activityCount;
     MessageEvent("ok: acct added");
   }
@@ -112,12 +112,13 @@ contract OrganizeFunds {
   // ----------------------------
   // get acct info
   // ----------------------------
-  function getAccountInfo(address _addr) public constant returns(uint _idx, uint _pctx10, uint _credited, uint _balance) {
+  function getActivityAccountInfo(address _addr) public constant returns(uint _idx, uint _pctx10, string _name, uint _credited, uint _balance) {
     for (uint i = 0; i < activityCount; i++ ) {
       address addr = activityAccounts[i].addr;
       if (addr == _addr) {
         _idx = i;
         _pctx10 = activityAccounts[i].pctx10;
+        _name = activityAccounts[i].name;
         _credited = activityAccounts[i].credited;
         _balance = activityAccounts[i].balance;
         return;
@@ -141,7 +142,7 @@ contract OrganizeFunds {
   // default payable function.
   // call us with plenty of gas, or catastrophe will ensue
   //
-  function () payable {
+  function () public payable {
     totalFundsReceived += msg.value;
     MessageEventI("ok: received", msg.value);
   }
