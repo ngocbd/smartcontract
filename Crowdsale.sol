@@ -1,28 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xb34999a2b3cb0c4707e55a14bbdb2ccd0097495c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x78c127e6f112811a048b6768fcee7debe8137184
 */
-/*! Smartcontract Token | (c) 2018 BelovITLab LLC | License: MIT */
-//
-//                                     _
-//                                _.-~~.)              SMARTCONTRACT.RU
-//          _.--~~~~~---....__  .' . .,'          
-//        ,'. . . . . . . . . .~- ._ (                 Development smart-contracts
-//       ( .. .g. . . . . . . . . . .~-._              Investor's office for ICO
-//    .~__.-~    ~`. . . . . . . . . . . -.
-//    `----..._      ~-=~~-. . . . . . . . ~-.         Telegram: https://goo.gl/FRP4nz    
-//              ~-._   `-._ ~=_~~--. . . . . .~.
-//               | .~-.._  ~--._-.    ~-. . . . ~-.
-//                \ .(   ~~--.._~'       `. . . . .~-.                ,
-//                 `._\         ~~--.._    `. . . . . ~-.    .- .   ,'/
-// _  . _ . -~\        _ ..  _          ~~--.`_. . . . . ~-_     ,-','`  .
-//              ` ._           ~                ~--. . . . .~=.-'. /. `
-//        - . -~            -. _ . - ~ - _   - ~     ~--..__~ _,. /   \  - ~
-//               . __ ..                   ~-               ~~_. (  `
-// )`. _ _               `-       ..  - .    . - ~ ~ .    \    ~-` ` `  `. _
-//                                                     - .  `  .   \  \ `.
+/*! eft.sol | (c) 2018 Develop by BelovITLab LLC (smartcontract.ru), author @stupidlovejoy | License: MIT */
 
-
-pragma solidity 0.4.18;
+pragma solidity 0.4.21;
 
 library SafeMath {
     function mul(uint256 a, uint256 b) internal pure returns(uint256) {
@@ -270,7 +251,6 @@ contract MintableToken is StandardToken, Ownable {
     bool public mintingFinished = false;
 
     modifier canMint() { require(!mintingFinished); _; }
-    modifier notMint() { require(mintingFinished); _; }
 
     function mint(address _to, uint256 _amount) onlyOwner canMint public returns(bool) {
         totalSupply = totalSupply.add(_amount);
@@ -321,46 +301,56 @@ contract BurnableToken is StandardToken {
     }
 }
 
-/* This is your discount for development smartcontract 5% */
-/* For order smart-contract please contact at Telegram: https://t.me/joinchat/Bft2vxACXWjuxw8jH15G6w */
+/*
+    Exit Factory Token
+*/
+contract Token is CappedToken, BurnableToken, Withdrawable {
+    uint public mintingFinishedTime;
 
-/* We develop inverstor's office for ICO, operator's dashboard for ICO, Token Air Drop  */
-/* info@smartcontract.ru */
-
-contract Token is CappedToken, BurnableToken {
-
-    string public URL = "http://smartcontract.ru";
-
-    function Token() CappedToken(100000000 * 1 ether) StandardToken("SMARTCONTRACT.RU", "SMART", 18) public {
+    function Token() CappedToken(2000000000 ether) StandardToken("Exit Factory Token", "EXIT", 18) public {
         
     }
-    
+
     function transfer(address _to, uint256 _value) public returns(bool) {
+        require(mintingFinishedTime > 0 && now + 2 weeks >= mintingFinishedTime);
         return super.transfer(_to, _value);
-    }
-    
-    function multiTransfer(address[] _to, uint256[] _value) public returns(bool) {
-        return super.multiTransfer(_to, _value);
     }
 
     function transferFrom(address _from, address _to, uint256 _value) public returns(bool) {
+        require(mintingFinishedTime > 0 && now + 2 weeks >= mintingFinishedTime);
         return super.transferFrom(_from, _to, _value);
     }
-}
 
+    function finishMinting() onlyOwner canMint public returns(bool) {
+        mintingFinishedTime = now;
+        return super.finishMinting();
+    }
+}
 
 contract Crowdsale is Manageable, Withdrawable, Pausable {
     using SafeMath for uint;
 
     Token public token;
+    uint public timeEnd;
     bool public crowdsaleClosed = false;
+
+    uint public commandTookAway;
 
     event ExternalPurchase(address indexed holder, string tx, string currency, uint256 currencyAmount, uint256 rateToEther, uint256 tokenAmount);
     event CrowdsaleClose();
    
     function Crowdsale() public {
-        token = Token(0x5DD98e580f8a12C4048C26d4f489dcf2C5Cfc936);
-        addManager(0x3c64B86cEE4E60EDdA517521b46Ac74134442058);
+        token = new Token();
+
+        token.mint(0x8871147bbF3f664e086F6F9f49F493Fcead5a8a9, 240000000 ether);     // Reserve Fund
+        token.mint(0x1e2aD7B66914bf432F66295604A66a3279DDEB1D, 200000000 ether);     // Founders
+        token.mint(0x235112Ca8A7c6c143b0E0902564f992955894BB1, 20000000 ether);      // Bounty
+        token.mint(0x9246714faF8781c5D896eBBC0D09F93B6Ca6807e, 20000000 ether);      // IT Security
+        token.mint(0xBB197831f6A2EA90cEff94Cf94A23aA16fdB77a4, 20000000 ether);      // Legal Compliance
+
+        token.mint(this, 300000000 ether);                                           // Team, Advisors, Affiliate program
+
+        addManager(0x3915029Dc964F32b7dE52cefd859Eb66A5f80c96);
     }
 
     function externalPurchase(address _to, string _tx, string _currency, uint _value, uint256 _rate, uint256 _tokens) whenNotPaused onlyManager public {
@@ -371,9 +361,37 @@ contract Crowdsale is Manageable, Withdrawable, Pausable {
     function closeCrowdsale(address _to) onlyOwner public {
         require(!crowdsaleClosed);
 
+        token.finishMinting();
         token.transferOwnership(_to);
+
         crowdsaleClosed = true;
+        timeEnd = now;
 
         CrowdsaleClose();
+    }
+    
+    function getCommandTokens() onlyOwner public {
+        require(crowdsaleClosed);
+
+        uint months = now.sub(timeEnd).div(30 days);
+
+        require(months > 0);
+
+        uint right = months.mul(12500000 ether);
+        uint send = right.sub(commandTookAway);
+
+        require(send > 0);
+        
+        commandTookAway = commandTookAway.add(send);
+
+        token.transfer(0x7Ba026aBb24c55fFFfaE612E498efb1a22c12438, send.div(3));                    // Advisors
+        token.transfer(0x1763D74a1B3c3C8844336Be3DC302ff77012aC81, send.div(3));                    // Team
+        token.transfer(0xe1de68015AD6dCB0f79c34a6CaD58Dc097C76023, send.sub(send.div(3).mul(2)));   // Affiliate program
+    }
+    
+    function withdrawTokens(ERC20 _token, address _to, uint _value) onlyOwner public returns(bool) {
+        require(_token != token || commandTookAway >= 300000000 ether);
+        
+        return super.withdrawTokens(_token, _to, _value);
     }
 }
