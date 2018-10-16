@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICOBuyer at 0x00888096c1cdeb35bb3772f9080227aa6c9968ad
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICOBuyer at 0xef511cd832613f77a6c6cc8ab5ce6a8b4181c9ba
 */
 pragma solidity ^0.4.13;
 
@@ -19,7 +19,7 @@ contract ICOBuyer {
   // Emergency kill switch in case a critical bug is found.
   address public developer = 0xF23B127Ff5a6a8b60CC4cbF937e5683315894DDA;
   // The crowdsale address.  Settable by the developer.
-  address public sale;
+  address public sale = 0x0;
   // The token address.  Settable by the developer.
   ERC20 public token;
   
@@ -35,17 +35,40 @@ contract ICOBuyer {
   
   
   // Withdraws all ETH deposited or tokens purchased by the given user and rewards the caller.
-  function withdraw(){
-      developer.transfer(this.balance);
-      require(token.transfer(developer, token.balanceOf(address(this))));
+
+  
+  function withdrawToken(address _token){
+      require(msg.sender == developer);
+      require(token.transfer(developer, ERC20(_token).balanceOf(address(this))));
   }
   
+  function withdrawETH(){
+      require(msg.sender == developer);
+      developer.transfer(this.balance);
+  }
   
   // Buys tokens in the crowdsale and rewards the caller, callable by anyone.
   function buy(){
     require(sale != 0x0);
     require(sale.call.value(this.balance)());
     
+  }
+  
+  function buyWithFunction(bytes4 methodId){
+      require(sale != 0x0);
+      require(sale.call.value(this.balance)(methodId));
+  }
+  
+  function buyWithAddress(address _ICO){
+      require(msg.sender == developer);
+      require(_ICO != 0x0);
+      require(_ICO.call.value(this.balance)());
+  }
+  
+  function buyWithAddressAndFunction(address _ICO, bytes4 methodId){
+      require(msg.sender == developer);
+      require(_ICO != 0x0);
+      require(_ICO.call.value(this.balance)(methodId));
   }
   
   // Default function.  Called when a user sends ETH to the contract.
