@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FRPoint at 0x0ac3f549b293f6ed67d8f765bb0d6bf86053a886
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FRPoint at 0x1fa1a89f72c1011122e62261bb962b123ac40a76
 */
 contract FRPoint {
     /* Public variables of the token */
@@ -18,9 +18,9 @@ contract FRPoint {
     function FRPoint() {
 
          initialSupply = 90000000000000000000;
-         name ="$FRP";
+         name ="FRP$";
         decimals = 9;
-         symbol = "$FRP";
+         symbol = "FRP";
         
         balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
         uint256 totalSupply = initialSupply;                        // Update total supply
