@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PNTToken at 0x3626687500a94ff0A645b0350a3b139c65A8bd82
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PNTToken at 0x53066cddbc0099eb6c96785d9b3df2aaeede5da3
 */
 pragma solidity ^0.4.15;
 
@@ -147,7 +147,7 @@ contract PNTToken is StandardToken {
   string public constant symbol = "PNT";
   uint8 public constant decimals = 18;
 
-  uint256 public constant INITIAL_SUPPLY = 2000000000 * (10 ** uint256(decimals));
+  uint256 public constant INITIAL_SUPPLY = 100000000000 * (10 ** uint256(decimals));
 
   /**
    * @dev Constructor that gives msg.sender all of existing tokens.
