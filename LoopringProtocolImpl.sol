@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LoopringProtocolImpl at 0x4019440bbe5882915db9f2cae972a518db346c62
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LoopringProtocolImpl at 0xb1170de31c7f72ab62535862c97f5209e356991b
 */
 /*
   Copyright 2017 Loopring Project Ltd (Loopring Foundation).
@@ -14,52 +14,50 @@
   limitations under the License.
 */
 pragma solidity 0.4.21;
-/// @title Utility Functions for uint8
-/// @author Kongliang Zhong - <kongliang@loopring.org>,
-/// @author Daniel Wang - <daniel@loopring.org>.
-library MathUint8 {
-    function xorReduce(
-        uint8[] arr,
-        uint    len
-        )
-        internal
-        pure
-        returns (uint8 res)
-    {
-        res = arr[0];
-        for (uint i = 1; i < len; i++) {
-            res ^= arr[i];
-        }
-    }
-}
-/*
-  Copyright 2017 Loopring Project Ltd (Loopring Foundation).
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-  http://www.apache.org/licenses/LICENSE-2.0
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-*/
 /// @title Utility Functions for uint
 /// @author Daniel Wang - <daniel@loopring.org>
 library MathUint {
-    function mul(uint a, uint b) internal pure returns (uint c) {
+    function mul(
+        uint a,
+        uint b
+        )
+        internal
+        pure
+        returns (uint c)
+    {
         c = a * b;
         require(a == 0 || c / a == b);
     }
-    function sub(uint a, uint b) internal pure returns (uint) {
+    function sub(
+        uint a,
+        uint b
+        )
+        internal
+        pure
+        returns (uint)
+    {
         require(b <= a);
         return a - b;
     }
-    function add(uint a, uint b) internal pure returns (uint c) {
+    function add(
+        uint a,
+        uint b
+        )
+        internal
+        pure
+        returns (uint c)
+    {
         c = a + b;
         require(c >= a);
     }
-    function tolerantSub(uint a, uint b) internal pure returns (uint c) {
+    function tolerantSub(
+        uint a,
+        uint b
+        )
+        internal
+        pure
+        returns (uint c)
+    {
         return (a >= b) ? a - b : 0;
     }
     /// @dev calculate the square of Coefficient of Variation (CV)
@@ -106,40 +104,12 @@ library MathUint {
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-/// @title Utility Functions for byte32
-/// @author Kongliang Zhong - <kongliang@loopring.org>,
-/// @author Daniel Wang - <daniel@loopring.org>.
-library MathBytes32 {
-    function xorReduce(
-        bytes32[]   arr,
-        uint        len
-        )
-        internal
-        pure
-        returns (bytes32 res)
-    {
-        res = arr[0];
-        for (uint i = 1; i < len; i++) {
-            res ^= arr[i];
-        }
-    }
-}
-/*
-  Copyright 2017 Loopring Project Ltd (Loopring Foundation).
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-  http://www.apache.org/licenses/LICENSE-2.0
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-*/
 /// @title Utility Functions for address
 /// @author Daniel Wang - <daniel@loopring.org>
 library AddressUtil {
-    function isContract(address addr)
+    function isContract(
+        address addr
+        )
         internal
         view
         returns (bool)
@@ -181,11 +151,38 @@ library AddressUtil {
 /// @dev see https://github.com/ethereum/EIPs/issues/20
 /// @author Daniel Wang - <daniel@loopring.org>
 contract ERC20 {
-    function balanceOf(address who) view public returns (uint256);
-    function allowance(address owner, address spender) view public returns (uint256);
-    function transfer(address to, uint256 value) public returns (bool);
-    function transferFrom(address from, address to, uint256 value) public returns (bool);
-    function approve(address spender, uint256 value) public returns (bool);
+    function balanceOf(
+        address who
+        )
+        view
+        public
+        returns (uint256);
+    function allowance(
+        address owner,
+        address spender
+        )
+        view
+        public
+        returns (uint256);
+    function transfer(
+        address to,
+        uint256 value
+        )
+        public
+        returns (bool);
+    function transferFrom(
+        address from,
+        address to,
+        uint256 value
+        )
+        public
+        returns (bool);
+    function approve(
+        address spender,
+        uint256 value
+        )
+        public
+        returns (bool);
 }
 /*
   Copyright 2017 Loopring Project Ltd (Loopring Foundation).
@@ -203,20 +200,13 @@ contract ERC20 {
 /// @author Daniel Wang - <daniel@loopring.org>
 /// @author Kongliang Zhong - <kongliang@loopring.org>
 contract LoopringProtocol {
-    ////////////////////////////////////////////////////////////////////////////
-    /// Constants                                                            ///
-    ////////////////////////////////////////////////////////////////////////////
     uint8   public constant MARGIN_SPLIT_PERCENTAGE_BASE = 100;
-    ////////////////////////////////////////////////////////////////////////////
-    /// Events                                                               ///
-    ////////////////////////////////////////////////////////////////////////////
     /// @dev Event to emit if a ring is successfully mined.
     /// _amountsList is an array of:
     /// [_amountS, _amountB, _lrcReward, _lrcFee, splitS, splitB].
     event RingMined(
         uint                _ringIndex,
         bytes32     indexed _ringHash,
-        address             _miner,
         address             _feeRecipient,
         bytes32[]           _orderHashList,
         uint[6][]           _amountsList
@@ -235,15 +225,11 @@ contract LoopringProtocol {
         address             _token2,
         uint                _cutoff
     );
-    ////////////////////////////////////////////////////////////////////////////
-    /// Functions                                                            ///
-    ////////////////////////////////////////////////////////////////////////////
     /// @dev Cancel a order. cancel amount(amountS or amountB) can be specified
     ///      in orderValues.
-    /// @param addresses          owner, tokenS, tokenB, authAddr
+    /// @param addresses          owner, tokenS, tokenB, wallet, authAddr
     /// @param orderValues        amountS, amountB, validSince (second),
-    ///                           validUntil (second), lrcFee, walletId, and
-    ///                           cancelAmount.
+    ///                           validUntil (second), lrcFee, and cancelAmount.
     /// @param buyNoMoreThanAmountB -
     ///                           This indicates when a order should be considered
     ///                           as 'completely filled'.
@@ -253,14 +239,15 @@ contract LoopringProtocol {
     /// @param r                  Order ECDSA signature parameters r.
     /// @param s                  Order ECDSA signature parameters s.
     function cancelOrder(
-        address[4] addresses,
-        uint[7]    orderValues,
+        address[5] addresses,
+        uint[6]    orderValues,
         bool       buyNoMoreThanAmountB,
         uint8      marginSplitPercentage,
         uint8      v,
         bytes32    r,
         bytes32    s
-        ) external;
+        )
+        external;
     /// @dev   Set a cutoff timestamp to invalidate all orders whose timestamp
     ///        is smaller than or equal to the new value of the address's cutoff
     ///        timestamp, for a specific trading pair.
@@ -270,20 +257,24 @@ contract LoopringProtocol {
         address token1,
         address token2,
         uint cutoff
-        ) external;
+        )
+        external;
     /// @dev   Set a cutoff timestamp to invalidate all orders whose timestamp
     ///        is smaller than or equal to the new value of the address's cutoff
     ///        timestamp.
     /// @param cutoff The cutoff timestamp, will default to `block.timestamp`
     ///        if it is 0.
-    function cancelAllOrders(uint cutoff) external;
+    function cancelAllOrders(
+        uint cutoff
+        )
+        external;
     /// @dev Submit a order-ring for validation and settlement.
-    /// @param addressList  List of each order's owner, tokenS, and authAddr.
+    /// @param addressList  List of each order's owner, tokenS, wallet, authAddr.
     ///                     Note that next order's `tokenS` equals this order's
     ///                     `tokenB`.
     /// @param uintArgsList List of uint-type arguments in this order:
     ///                     amountS, amountB, validSince (second),
-    ///                     validUntil (second), lrcFee, rateAmountS, and walletId.
+    ///                     validUntil (second), lrcFee, and rateAmountS.
     /// @param uint8ArgsList -
     ///                     List of unit8-type arguments, in this order:
     ///                     marginSplitPercentageList.
@@ -298,251 +289,22 @@ contract LoopringProtocol {
     /// @param sList        List of s for each order. This list is 1-larger than
     ///                     the previous lists, with the last element being the
     ///                     s value of the ring signature.
-    /// @param minerId      The address pair that miner registered in NameRegistry.
-    ///                     The address pair contains a signer address and a fee
-    ///                     recipient address.
-    ///                     The signer address is used for sign this tx.
-    ///                     The Recipient address for fee collection. If this is
-    ///                     '0x0', all fees will be paid to the address who had
-    ///                     signed this transaction, not `msg.sender`. Noted if
-    ///                     LRC need to be paid back to order owner as the result
-    ///                     of fee selection model, LRC will also be sent from
-    ///                     this address.
+    /// @param miner        Miner address.
     /// @param feeSelections -
     ///                     Bits to indicate fee selections. `1` represents margin
     ///                     split and `0` represents LRC as fee.
     function submitRing(
-        address[3][]    addressList,
-        uint[7][]       uintArgsList,
+        address[4][]    addressList,
+        uint[6][]       uintArgsList,
         uint8[1][]      uint8ArgsList,
         bool[]          buyNoMoreThanAmountBList,
         uint8[]         vList,
         bytes32[]       rList,
         bytes32[]       sList,
-        uint            minerId,
+        address         miner,
         uint16          feeSelections
-        ) public;
-}
-/*
-  Copyright 2017 Loopring Project Ltd (Loopring Foundation).
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-  http://www.apache.org/licenses/LICENSE-2.0
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-*/
-/// @title Ethereum Address Register Contract
-/// @dev This contract maintains a name service for addresses and miner.
-/// @author Kongliang Zhong - <kongliang@loopring.org>,
-/// @author Daniel Wang - <daniel@loopring.org>,
-contract NameRegistry {
-    uint public nextId = 0;
-    mapping (uint    => Participant) public participantMap;
-    mapping (address => NameInfo)    public nameInfoMap;
-    mapping (bytes12 => address)     public ownerMap;
-    mapping (address => string)      public nameMap;
-    struct NameInfo {
-        bytes12  name;
-        uint[]   participantIds;
-    }
-    struct Participant {
-        address feeRecipient;
-        address signer;
-        bytes12 name;
-        address owner;
-    }
-    event NameRegistered (
-        string            name,
-        address   indexed owner
-    );
-    event NameUnregistered (
-        string             name,
-        address    indexed owner
-    );
-    event OwnershipTransfered (
-        bytes12            name,
-        address            oldOwner,
-        address            newOwner
-    );
-    event ParticipantRegistered (
-        bytes12           name,
-        address   indexed owner,
-        uint      indexed participantId,
-        address           singer,
-        address           feeRecipient
-    );
-    event ParticipantUnregistered (
-        uint    participantId,
-        address owner
-    );
-    function registerName(string name)
-        external
-    {
-        require(isNameValid(name));
-        bytes12 nameBytes = stringToBytes12(name);
-        require(ownerMap[nameBytes] == 0x0);
-        require(stringToBytes12(nameMap[msg.sender]) == bytes12(0x0));
-        nameInfoMap[msg.sender] = NameInfo(nameBytes, new uint[](0));
-        ownerMap[nameBytes] = msg.sender;
-        nameMap[msg.sender] = name;
-        emit NameRegistered(name, msg.sender);
-    }
-    function unregisterName(string name)
-        external
-    {
-        NameInfo storage nameInfo = nameInfoMap[msg.sender];
-        uint[] storage participantIds = nameInfo.participantIds;
-        bytes12 nameBytes = stringToBytes12(name);
-        require(nameInfo.name == nameBytes);
-        for (uint i = 0; i < participantIds.length; i++) {
-            delete participantMap[participantIds[i]];
-        }
-        delete nameInfoMap[msg.sender];
-        delete nameMap[msg.sender];
-        delete ownerMap[nameBytes];
-        emit NameUnregistered(name, msg.sender);
-    }
-    function transferOwnership(address newOwner)
-        external
-    {
-        require(newOwner != 0x0);
-        require(nameInfoMap[newOwner].name.length == 0);
-        NameInfo storage nameInfo = nameInfoMap[msg.sender];
-        string storage name = nameMap[msg.sender];
-        uint[] memory participantIds = nameInfo.participantIds;
-        for (uint i = 0; i < participantIds.length; i ++) {
-            Participant storage p = participantMap[participantIds[i]];
-            p.owner = newOwner;
-        }
-        delete nameInfoMap[msg.sender];
-        delete nameMap[msg.sender];
-        nameInfoMap[newOwner] = nameInfo;
-        nameMap[newOwner] = name;
-        emit OwnershipTransfered(nameInfo.name, msg.sender, newOwner);
-    }
-    /* function addParticipant(address feeRecipient) */
-    /*     external */
-    /*     returns (uint) */
-    /* { */
-    /*     return addParticipant(feeRecipient, feeRecipient); */
-    /* } */
-    function addParticipant(
-        address feeRecipient,
-        address singer
         )
-        external
-        returns (uint)
-    {
-        require(feeRecipient != 0x0 && singer != 0x0);
-        NameInfo storage nameInfo = nameInfoMap[msg.sender];
-        bytes12 name = nameInfo.name;
-        require(name.length > 0);
-        Participant memory participant = Participant(
-            feeRecipient,
-            singer,
-            name,
-            msg.sender
-        );
-        uint participantId = ++nextId;
-        participantMap[participantId] = participant;
-        nameInfo.participantIds.push(participantId);
-        emit ParticipantRegistered(
-            name,
-            msg.sender,
-            participantId,
-            singer,
-            feeRecipient
-        );
-        return participantId;
-    }
-    function removeParticipant(uint participantId)
-        external
-    {
-        require(msg.sender == participantMap[participantId].owner);
-        NameInfo storage nameInfo = nameInfoMap[msg.sender];
-        uint[] storage participantIds = nameInfo.participantIds;
-        delete participantMap[participantId];
-        uint len = participantIds.length;
-        for (uint i = 0; i < len; i ++) {
-            if (participantId == participantIds[i]) {
-                participantIds[i] = participantIds[len - 1];
-                participantIds.length -= 1;
-            }
-        }
-        emit ParticipantUnregistered(participantId, msg.sender);
-    }
-    function getParticipantById(uint id)
-        external
-        view
-        returns (address feeRecipient, address signer)
-    {
-        Participant storage addressSet = participantMap[id];
-        feeRecipient = addressSet.feeRecipient;
-        signer = addressSet.signer;
-    }
-    function getFeeRecipientById(uint id)
-        external
-        view
-        returns (address feeRecipient)
-    {
-        Participant storage addressSet = participantMap[id];
-        feeRecipient = addressSet.feeRecipient;
-    }
-    function getParticipantIds(string name, uint start, uint count)
-        external
-        view
-        returns (uint[] idList)
-    {
-        bytes12 nameBytes = stringToBytes12(name);
-        address owner = ownerMap[nameBytes];
-        require(owner != 0x0);
-        NameInfo storage nameInfo = nameInfoMap[owner];
-        uint[] storage pIds = nameInfo.participantIds;
-        uint len = pIds.length;
-        if (start >= len) {
-            return;
-        }
-        uint end = start + count;
-        if (end > len) {
-            end = len;
-        }
-        if (start == end) {
-            return;
-        }
-        idList = new uint[](end - start);
-        for (uint i = start; i < end; i ++) {
-            idList[i - start] = pIds[i];
-        }
-    }
-    function getOwner(string name)
-        external
-        view
-        returns (address)
-    {
-        bytes12 nameBytes = stringToBytes12(name);
-        return ownerMap[nameBytes];
-    }
-    function isNameValid(string name)
-        internal
-        pure
-        returns (bool)
-    {
-        bytes memory temp = bytes(name);
-        return temp.length >= 6 && temp.length <= 12;
-    }
-    function stringToBytes12(string str)
-        internal
-        pure
-        returns (bytes12 result)
-    {
-        assembly {
-            result := mload(add(str, 32))
-        }
-    }
+        public;
 }
 /*
   Copyright 2017 Loopring Project Ltd (Loopring Foundation).
@@ -556,232 +318,59 @@ contract NameRegistry {
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-/*
-  Copyright 2017 Loopring Project Ltd (Loopring Foundation).
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-  http://www.apache.org/licenses/LICENSE-2.0
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-*/
-/*
-  Copyright 2017 Loopring Project Ltd (Loopring Foundation).
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-  http://www.apache.org/licenses/LICENSE-2.0
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-*/
-/// @title Ownable
-/// @dev The Ownable contract has an owner address, and provides basic
-///      authorization control functions, this simplifies the implementation of
-///      "user permissions".
-contract Ownable {
-    address public owner;
-    event OwnershipTransferred(
-        address indexed previousOwner,
-        address indexed newOwner
-    );
-    /// @dev The Ownable constructor sets the original `owner` of the contract
-    ///      to the sender.
-    function Ownable() public {
-        owner = msg.sender;
-    }
-    /// @dev Throws if called by any account other than the owner.
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-    /// @dev Allows the current owner to transfer control of the contract to a
-    ///      newOwner.
-    /// @param newOwner The address to transfer ownership to.
-    function transferOwnership(address newOwner) onlyOwner public {
-        require(newOwner != 0x0);
-        emit OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-    }
-}
-/// @title Claimable
-/// @dev Extension for the Ownable contract, where the ownership needs
-///      to be claimed. This allows the new owner to accept the transfer.
-contract Claimable is Ownable {
-    address public pendingOwner;
-    /// @dev Modifier throws if called by any account other than the pendingOwner.
-    modifier onlyPendingOwner() {
-        require(msg.sender == pendingOwner);
-        _;
-    }
-    /// @dev Allows the current owner to set the pendingOwner address.
-    /// @param newOwner The address to transfer ownership to.
-    function transferOwnership(address newOwner) onlyOwner public {
-        require(newOwner != 0x0 && newOwner != owner);
-        pendingOwner = newOwner;
-    }
-    /// @dev Allows the pendingOwner address to finalize the transfer.
-    function claimOwnership() onlyPendingOwner public {
-        emit OwnershipTransferred(owner, pendingOwner);
-        owner = pendingOwner;
-        pendingOwner = 0x0;
-    }
-}
 /// @title Token Register Contract
 /// @dev This contract maintains a list of tokens the Protocol supports.
 /// @author Kongliang Zhong - <kongliang@loopring.org>,
 /// @author Daniel Wang - <daniel@loopring.org>.
-contract TokenRegistry is Claimable {
-    using AddressUtil for address;
-    address tokenMintAddr;
-    address[] public addresses;
-    mapping (address => TokenInfo) addressMap;
-    mapping (string => address) symbolMap;
-    ////////////////////////////////////////////////////////////////////////////
-    /// Structs                                                              ///
-    ////////////////////////////////////////////////////////////////////////////
-    struct TokenInfo {
-        uint   pos;      // 0 mens unregistered; if > 0, pos + 1 is the
-                         // token's position in `addresses`.
-        string symbol;   // Symbol of the token
-    }
-    ////////////////////////////////////////////////////////////////////////////
-    /// Events                                                               ///
-    ////////////////////////////////////////////////////////////////////////////
+contract TokenRegistry {
     event TokenRegistered(address addr, string symbol);
     event TokenUnregistered(address addr, string symbol);
-    ////////////////////////////////////////////////////////////////////////////
-    /// Public Functions                                                     ///
-    ////////////////////////////////////////////////////////////////////////////
-    /// @dev Disable default function.
-    function () payable public {
-        revert();
-    }
-    function TokenRegistry(address _tokenMintAddr) public
-    {
-        require(_tokenMintAddr.isContract());
-        tokenMintAddr = _tokenMintAddr;
-    }
     function registerToken(
         address addr,
         string  symbol
         )
-        external
-        onlyOwner
-    {
-        registerTokenInternal(addr, symbol);
-    }
+        external;
     function registerMintedToken(
         address addr,
         string  symbol
         )
-        external
-    {
-        require(msg.sender == tokenMintAddr);
-        registerTokenInternal(addr, symbol);
-    }
+        external;
     function unregisterToken(
         address addr,
         string  symbol
         )
-        external
-        onlyOwner
-    {
-        require(addr != 0x0);
-        require(symbolMap[symbol] == addr);
-        delete symbolMap[symbol];
-        uint pos = addressMap[addr].pos;
-        require(pos != 0);
-        delete addressMap[addr];
-        // We will replace the token we need to unregister with the last token
-        // Only the pos of the last token will need to be updated
-        address lastToken = addresses[addresses.length - 1];
-        // Don't do anything if the last token is the one we want to delete
-        if (addr != lastToken) {
-            // Swap with the last token and update the pos
-            addresses[pos - 1] = lastToken;
-            addressMap[lastToken].pos = pos;
-        }
-        addresses.length--;
-        emit TokenUnregistered(addr, symbol);
-    }
-    function areAllTokensRegistered(address[] addressList)
+        external;
+    function areAllTokensRegistered(
+        address[] addressList
+        )
         external
         view
-        returns (bool)
-    {
-        for (uint i = 0; i < addressList.length; i++) {
-            if (addressMap[addressList[i]].pos == 0) {
-                return false;
-            }
-        }
-        return true;
-    }
-    function getAddressBySymbol(string symbol)
+        returns (bool);
+    function getAddressBySymbol(
+        string symbol
+        )
         external
         view
-        returns (address)
-    {
-        return symbolMap[symbol];
-    }
-    function isTokenRegisteredBySymbol(string symbol)
+        returns (address);
+    function isTokenRegisteredBySymbol(
+        string symbol
+        )
         public
         view
-        returns (bool)
-    {
-        return symbolMap[symbol] != 0x0;
-    }
-    function isTokenRegistered(address addr)
+        returns (bool);
+    function isTokenRegistered(
+        address addr
+        )
         public
         view
-        returns (bool)
-    {
-        return addressMap[addr].pos != 0;
-    }
+        returns (bool);
     function getTokens(
         uint start,
         uint count
         )
         public
         view
-        returns (address[] addressList)
-    {
-        uint num = addresses.length;
-        if (start >= num) {
-            return;
-        }
-        uint end = start + count;
-        if (end > num) {
-            end = num;
-        }
-        if (start == num) {
-            return;
-        }
-        addressList = new address[](end - start);
-        for (uint i = start; i < end; i++) {
-            addressList[i - start] = addresses[i];
-        }
-    }
-    function registerTokenInternal(
-        address addr,
-        string  symbol
-        )
-        internal
-    {
-        require(0x0 != addr);
-        require(bytes(symbol).length > 0);
-        require(0x0 == symbolMap[symbol]);
-        require(0 == addressMap[addr].pos);
-        addresses.push(addr);
-        symbolMap[symbol] = addr;
-        addressMap[addr] = TokenInfo(addresses.length, symbol);
-        emit TokenRegistered(addr, symbol);
-    }
+        returns (address[] addressList);
 }
 /*
   Copyright 2017 Loopring Project Ltd (Loopring Foundation).
@@ -799,96 +388,36 @@ contract TokenRegistry is Claimable {
 /// @dev Acts as a middle man to transfer ERC20 tokens on behalf of different
 /// versions of Loopring protocol to avoid ERC20 re-authorization.
 /// @author Daniel Wang - <daniel@loopring.org>.
-contract TokenTransferDelegate is Claimable {
-    using MathUint for uint;
-    ////////////////////////////////////////////////////////////////////////////
-    /// Variables                                                            ///
-    ////////////////////////////////////////////////////////////////////////////
-    mapping(address => AddressInfo) private addressInfos;
-    address public latestAddress;
-    ////////////////////////////////////////////////////////////////////////////
-    /// Structs                                                              ///
-    ////////////////////////////////////////////////////////////////////////////
-    struct AddressInfo {
-        address previous;
-        uint32  index;
-        bool    authorized;
-    }
-    ////////////////////////////////////////////////////////////////////////////
-    /// Modifiers                                                            ///
-    ////////////////////////////////////////////////////////////////////////////
-    modifier onlyAuthorized() {
-        require(addressInfos[msg.sender].authorized);
-        _;
-    }
-    ////////////////////////////////////////////////////////////////////////////
-    /// Events                                                               ///
-    ////////////////////////////////////////////////////////////////////////////
+contract TokenTransferDelegate {
     event AddressAuthorized(address indexed addr, uint32 number);
     event AddressDeauthorized(address indexed addr, uint32 number);
-    ////////////////////////////////////////////////////////////////////////////
-    /// Public Functions                                                     ///
-    ////////////////////////////////////////////////////////////////////////////
-    /// @dev Disable default function.
-    function () payable public {
-        revert();
-    }
+    // The following map is used to keep trace of order fill and cancellation
+    // history.
+    mapping (bytes32 => uint) public cancelledOrFilled;
+    // This map is used to keep trace of order's cancellation history.
+    mapping (bytes32 => uint) public cancelled;
+    // A map from address to its cutoff timestamp.
+    mapping (address => uint) public cutoffs;
+    // A map from address to its trading-pair cutoff timestamp.
+    mapping (address => mapping (bytes20 => uint)) public tradingPairCutoffs;
     /// @dev Add a Loopring protocol address.
     /// @param addr A loopring protocol address.
-    function authorizeAddress(address addr)
-        onlyOwner
-        external
-    {
-        AddressInfo storage addrInfo = addressInfos[addr];
-        if (addrInfo.index != 0) { // existing
-            if (addrInfo.authorized == false) { // re-authorize
-                addrInfo.authorized = true;
-                emit AddressAuthorized(addr, addrInfo.index);
-            }
-        } else {
-            address prev = latestAddress;
-            if (prev == 0x0) {
-                addrInfo.index = 1;
-                addrInfo.authorized = true;
-            } else {
-                addrInfo.previous = prev;
-                addrInfo.index = addressInfos[prev].index + 1;
-            }
-            addrInfo.authorized = true;
-            latestAddress = addr;
-            emit AddressAuthorized(addr, addrInfo.index);
-        }
-    }
+    function authorizeAddress(
+        address addr
+        )
+        external;
     /// @dev Remove a Loopring protocol address.
     /// @param addr A loopring protocol address.
-    function deauthorizeAddress(address addr)
-        onlyOwner
-        external
-    {
-        uint32 index = addressInfos[addr].index;
-        if (index != 0) {
-            addressInfos[addr].authorized = false;
-            emit AddressDeauthorized(addr, index);
-        }
-    }
-    function getLatestAuthorizedAddresses(uint max)
+    function deauthorizeAddress(
+        address addr
+        )
+        external;
+    function getLatestAuthorizedAddresses(
+        uint max
+        )
         external
         view
-        returns (address[] addresses)
-    {
-        addresses = new address[](max);
-        address addr = latestAddress;
-        AddressInfo memory addrInfo;
-        uint count = 0;
-        while (addr != 0x0 && count < max) {
-            addrInfo = addressInfos[addr];
-            if (addrInfo.index == 0) {
-                break;
-            }
-            addresses[count++] = addr;
-            addr = addrInfo.previous;
-        }
-    }
+        returns (address[] addresses);
     /// @dev Invoke ERC20 transferFrom method.
     /// @param token Address of token to transfer.
     /// @param from Address to transfer token from.
@@ -898,118 +427,35 @@ contract TokenTransferDelegate is Claimable {
         address token,
         address from,
         address to,
-        uint    value)
-        onlyAuthorized
-        external
-    {
-        if (value > 0 && from != to && to != 0x0) {
-            require(
-                ERC20(token).transferFrom(from, to, value)
-            );
-        }
-    }
+        uint    value
+        )
+        external;
     function batchTransferToken(
         address lrcTokenAddress,
         address minerFeeRecipient,
         uint8 walletSplitPercentage,
-        bytes32[] batch)
-        onlyAuthorized
-        external
-    {
-        uint len = batch.length;
-        require(len % 7 == 0);
-        require(walletSplitPercentage > 0 && walletSplitPercentage < 100);
-        ERC20 lrc = ERC20(lrcTokenAddress);
-        for (uint i = 0; i < len; i += 7) {
-            address owner = address(batch[i]);
-            address prevOwner = address(batch[(i + len - 7) % len]);
-            // Pay token to previous order, or to miner as previous order's
-            // margin split or/and this order's margin split.
-            ERC20 token = ERC20(address(batch[i + 1]));
-            // Here batch[i + 2] has been checked not to be 0.
-            if (owner != prevOwner) {
-                require(
-                    token.transferFrom(
-                        owner,
-                        prevOwner,
-                        uint(batch[i + 2])
-                    )
-                );
-            }
-            // Miner pays LRx fee to order owner
-            uint lrcReward = uint(batch[i + 4]);
-            if (lrcReward != 0 && minerFeeRecipient != owner) {
-                require(
-                    lrc.transferFrom(
-                        minerFeeRecipient,
-                        owner,
-                        lrcReward
-                    )
-                );
-            }
-            // Split margin-split income between miner and wallet
-            splitPayFee(
-                token,
-                uint(batch[i + 3]),
-                owner,
-                minerFeeRecipient,
-                address(batch[i + 6]),
-                walletSplitPercentage
-            );
-            // Split LRx fee income between miner and wallet
-            splitPayFee(
-                lrc,
-                uint(batch[i + 5]),
-                owner,
-                minerFeeRecipient,
-                address(batch[i + 6]),
-                walletSplitPercentage
-            );
-        }
-    }
-    function isAddressAuthorized(address addr)
+        bytes32[] batch
+        )
+        external;
+    function isAddressAuthorized(
+        address addr
+        )
         public
         view
-        returns (bool)
-    {
-        return addressInfos[addr].authorized;
-    }
-    function splitPayFee(
-        ERC20   token,
-        uint    fee,
-        address owner,
-        address minerFeeRecipient,
-        address walletFeeRecipient,
-        uint    walletSplitPercentage
-        )
-        internal
-    {
-        if (fee == 0) {
-            return;
-        }
-        uint walletFee = (walletFeeRecipient == 0x0) ? 0 : fee.mul(walletSplitPercentage) / 100;
-        uint minerFee = fee - walletFee;
-        if (walletFee > 0 && walletFeeRecipient != owner) {
-            require(
-                token.transferFrom(
-                    owner,
-                    walletFeeRecipient,
-                    walletFee
-                )
-            );
-        }
-        if (minerFee > 0 && minerFeeRecipient != 0x0 && minerFeeRecipient != owner) {
-            require(
-                token.transferFrom(
-                    owner,
-                    minerFeeRecipient,
-                    minerFee
-                )
-            );
-        }
-    }
+        returns (bool);
+    function addCancelled(bytes32 orderHash, uint cancelAmount)
+        external;
+    function addCancelledOrFilled(bytes32 orderHash, uint cancelOrFillAmount)
+        external;
+    function setCutoffs(uint t)
+        external;
+    function setTradingPairCutoffs(bytes20 tokenPair, uint t)
+        external;
+    function checkCutoffsBatch(address[] owners, bytes20[] tradingPairs, uint[] validSince)
+        external
+        view;
 }
-/// @title Loopring Token Exchange Protocol Implementation Contract
+/// @title An Implementation of LoopringProtocol.
 /// @author Daniel Wang - <daniel@loopring.org>,
 /// @author Kongliang Zhong - <kongliang@loopring.org>
 ///
@@ -1018,18 +464,13 @@ contract TokenTransferDelegate is Claimable {
 ///     https://github.com/rainydio
 ///     https://github.com/BenjaminPrice
 ///     https://github.com/jonasshen
+///     https://github.com/Hephyrius
 contract LoopringProtocolImpl is LoopringProtocol {
     using AddressUtil   for address;
-    using MathBytes32   for bytes32[];
     using MathUint      for uint;
-    using MathUint8     for uint8[];
-    ////////////////////////////////////////////////////////////////////////////
-    /// Variables                                                            ///
-    ////////////////////////////////////////////////////////////////////////////
-    address public  lrcTokenAddress             = 0xEF68e7C694F40c8202821eDF525dE3782458639f;
-    address public  tokenRegistryAddress        = 0xaD3407deDc56A1F69389Edc191b770F0c935Ea37;
-    address public  delegateAddress             = 0x7b126ab811f278f288bf1d62d47334351dA20d1d;
-    address public  nameRegistryAddress         = 0xC897816C1A6DB4A2923b7D75d9B812e2f62cF504;
+    address public constant  lrcTokenAddress             = 0xEF68e7C694F40c8202821eDF525dE3782458639f;
+    address public constant  tokenRegistryAddress        = 0x004DeF62C71992615CF22786d0b7Efb22850Df4a;
+    address public constant  delegateAddress             = 0x5567ee920f7E62274284985D793344351A00142B;
     uint64  public  ringIndex                   = 0;
     uint8   public  walletSplitPercentage       = 20;
     // Exchange rate (rate) is the amount to sell or sold divided by the amount
@@ -1041,52 +482,27 @@ contract LoopringProtocolImpl is LoopringProtocol {
     // To require all orders' rate ratios to have coefficient ofvariation (CV)
     // smaller than 2.5%, for an example , rateRatioCVSThreshold should be:
     //     `(0.025 * RATE_RATIO_SCALE)^2` or 62500.
-    uint    public constant rateRatioCVSThreshold        = 62500;
-
-    uint    public constant MAX_RING_SIZE       = 16;
+    uint    public rateRatioCVSThreshold        = 62500;
+    uint    public constant MAX_RING_SIZE       = 8;
     uint    public constant RATE_RATIO_SCALE    = 10000;
-    uint64  public constant ENTERED_MASK        = 1 << 63;
-    // The following map is used to keep trace of order fill and cancellation
-    // history.
-    mapping (bytes32 => uint) public cancelledOrFilled;
-    // This map is used to keep trace of order's cancellation history.
-    mapping (bytes32 => uint) public cancelled;
-    // A map from address to its cutoff timestamp.
-    mapping (address => uint) public cutoffs;
-    // A map from address to its trading-pair cutoff timestamp.
-    mapping (address => mapping (bytes20 => uint)) public tradingPairCutoffs;
-    ////////////////////////////////////////////////////////////////////////////
-    /// Structs                                                              ///
-    ////////////////////////////////////////////////////////////////////////////
-    struct Rate {
-        uint amountS;
-        uint amountB;
-    }
-    /// @param tokenS       Token to sell.
-    /// @param tokenB       Token to buy.
-    /// @param amountS      Maximum amount of tokenS to sell.
-    /// @param amountB      Minimum amount of tokenB to buy if all amountS sold.
-    /// @param authAddr     An address to verify miner has access to the order's
-    ///                     auth private-key.
-    /// @param validSince   Indicating when this order should be treated as
-    ///                     valid for trading, in second.
-    /// @param validUntil   Indicating when this order should be treated as
-    ///                     expired, in second.
-    /// @param lrcFee       Max amount of LRC to pay for miner. The real amount
-    ///                     to pay is proportional to fill amount.
-    /// @param buyNoMoreThanAmountB -
-    ///                     If true, this order does not accept buying more
-    ///                     than `amountB`.
-    /// @param walletId     The id of the wallet that generated this order.
-    /// @param marginSplitPercentage -
-    ///                     The percentage of margin paid to miner.
-    /// @param v            ECDSA signature parameter v.
-    /// @param r            ECDSA signature parameters r.
-    /// @param s            ECDSA signature parameters s.
-    struct Order {
+    /// @param orderHash    The order's hash
+    /// @param feeSelection -
+    ///                     A miner-supplied value indicating if LRC (value = 0)
+    ///                     or margin split is choosen by the miner (value = 1).
+    ///                     We may support more fee model in the future.
+    /// @param rateS        Sell Exchange rate provided by miner.
+    /// @param rateB        Buy Exchange rate provided by miner.
+    /// @param fillAmountS  Amount of tokenS to sell, calculated by protocol.
+    /// @param lrcReward    The amount of LRC paid by miner to order owner in
+    ///                     exchange for margin split.
+    /// @param lrcFeeState  The amount of LR paid by order owner to miner.
+    /// @param splitS      TokenS paid to miner.
+    /// @param splitB      TokenB paid to miner.
+    struct OrderState {
         address owner;
         address tokenS;
         address tokenB;
+        address wallet;
         address authAddr;
         uint    validSince;
         uint    validUntil;
@@ -1094,64 +510,38 @@ contract LoopringProtocolImpl is LoopringProtocol {
         uint    amountB;
         uint    lrcFee;
         bool    buyNoMoreThanAmountB;
-        uint    walletId;
-        uint8   marginSplitPercentage;
-    }
-    /// @param order        The original order
-    /// @param orderHash    The order's hash
-    /// @param feeSelection -
-    ///                     A miner-supplied value indicating if LRC (value = 0)
-    ///                     or margin split is choosen by the miner (value = 1).
-    ///                     We may support more fee model in the future.
-    /// @param rate         Exchange rate provided by miner.
-    /// @param fillAmountS  Amount of tokenS to sell, calculated by protocol.
-    /// @param lrcReward    The amount of LRC paid by miner to order owner in
-    ///                     exchange for margin split.
-    /// @param lrcFee       The amount of LR paid by order owner to miner.
-    /// @param splitS      TokenS paid to miner.
-    /// @param splitB      TokenB paid to miner.
-    struct OrderState {
-        Order   order;
-        bytes32 orderHash;
         bool    marginSplitAsFee;
-        Rate    rate;
+        bytes32 orderHash;
+        uint8   marginSplitPercentage;
+        uint    rateS;
+        uint    rateB;
         uint    fillAmountS;
         uint    lrcReward;
-        uint    lrcFee;
+        uint    lrcFeeState;
         uint    splitS;
         uint    splitB;
     }
     /// @dev A struct to capture parameters passed to submitRing method and
     ///      various of other variables used across the submitRing core logics.
     struct RingParams {
-        address[3][]  addressList;
-        uint[7][]     uintArgsList;
-        uint8[1][]    uint8ArgsList;
-        bool[]        buyNoMoreThanAmountBList;
         uint8[]       vList;
         bytes32[]     rList;
         bytes32[]     sList;
-        uint          minerId;
-        uint          ringSize;         // computed
+        address       miner;
         uint16        feeSelections;
-        address       ringMiner;        // queried
-        address       feeRecipient;     // queried
+        uint          ringSize;         // computed
         bytes32       ringHash;         // computed
     }
-    ////////////////////////////////////////////////////////////////////////////
-    /// Constructor                                                          ///
-    ////////////////////////////////////////////////////////////////////////////
-
-    ////////////////////////////////////////////////////////////////////////////
-    /// Public Functions                                                     ///
-    ////////////////////////////////////////////////////////////////////////////
     /// @dev Disable default function.
-    function () payable public {
+    function ()
+        payable
+        public
+    {
         revert();
     }
     function cancelOrder(
-        address[4] addresses,
-        uint[7]    orderValues,
+        address[5] addresses,
+        uint[6]    orderValues,
         bool       buyNoMoreThanAmountB,
         uint8      marginSplitPercentage,
         uint8      v,
@@ -1160,21 +550,30 @@ contract LoopringProtocolImpl is LoopringProtocol {
         )
         external
     {
-        uint cancelAmount = orderValues[6];
+        uint cancelAmount = orderValues[5];
         require(cancelAmount > 0); // "amount to cancel is zero");
-        Order memory order = Order(
+        OrderState memory order = OrderState(
             addresses[0],
             addresses[1],
             addresses[2],
             addresses[3],
+            addresses[4],
             orderValues[2],
             orderValues[3],
             orderValues[0],
             orderValues[1],
             orderValues[4],
             buyNoMoreThanAmountB,
-            orderValues[5],
-            marginSplitPercentage
+            false,
+            0x0,
+            marginSplitPercentage,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
         );
         require(msg.sender == order.owner); // "cancelOrder not submitted by order owner");
         bytes32 orderHash = calculateOrderHash(order);
@@ -1185,8 +584,9 @@ contract LoopringProtocolImpl is LoopringProtocol {
             r,
             s
         );
-        cancelled[orderHash] = cancelled[orderHash].add(cancelAmount);
-        cancelledOrFilled[orderHash] = cancelledOrFilled[orderHash].add(cancelAmount);
+        TokenTransferDelegate delegate = TokenTransferDelegate(delegateAddress);
+        delegate.addCancelled(orderHash, cancelAmount);
+        delegate.addCancelledOrFilled(orderHash, cancelAmount);
         emit OrderCancelled(orderHash, cancelAmount);
     }
     function cancelAllOrdersByTradingPair(
@@ -1198,8 +598,10 @@ contract LoopringProtocolImpl is LoopringProtocol {
     {
         uint t = (cutoff == 0 || cutoff >= block.timestamp) ? block.timestamp : cutoff;
         bytes20 tokenPair = bytes20(token1) ^ bytes20(token2);
-        require(tradingPairCutoffs[msg.sender][tokenPair] < t); // "attempted to set cutoff to a smaller value"
-        tradingPairCutoffs[msg.sender][tokenPair] = t;
+        TokenTransferDelegate delegate = TokenTransferDelegate(delegateAddress);
+        require(delegate.tradingPairCutoffs(msg.sender, tokenPair) < t);
+        // "attempted to set cutoff to a smaller value"
+        delegate.setTradingPairCutoffs(tokenPair, t);
         emit OrdersCancelled(
             msg.sender,
             token1,
@@ -1207,60 +609,68 @@ contract LoopringProtocolImpl is LoopringProtocol {
             t
         );
     }
-    function cancelAllOrders(uint cutoff)
+    function cancelAllOrders(
+        uint cutoff
+        )
         external
     {
         uint t = (cutoff == 0 || cutoff >= block.timestamp) ? block.timestamp : cutoff;
-        require(cutoffs[msg.sender] < t); // "attempted to set cutoff to a smaller value"
-        cutoffs[msg.sender] = t;
+        TokenTransferDelegate delegate = TokenTransferDelegate(delegateAddress);
+        require(delegate.cutoffs(msg.sender) < t); // "attempted to set cutoff to a smaller value"
+        delegate.setCutoffs(t);
         emit AllOrdersCancelled(msg.sender, t);
     }
     function submitRing(
-        address[3][]  addressList,
-        uint[7][]     uintArgsList,
+        address[4][]  addressList,
+        uint[6][]     uintArgsList,
         uint8[1][]    uint8ArgsList,
         bool[]        buyNoMoreThanAmountBList,
         uint8[]       vList,
         bytes32[]     rList,
         bytes32[]     sList,
-        uint          minerId,
+        address       miner,
         uint16        feeSelections
         )
         public
     {
         // Check if the highest bit of ringIndex is '1'.
-        require(ringIndex & ENTERED_MASK != ENTERED_MASK); // "attempted to re-ent submitRing function");
+        require((ringIndex >> 63) == 0); // "attempted to re-ent submitRing function");
         // Set the highest bit of ringIndex to '1'.
-        ringIndex |= ENTERED_MASK;
+        uint64 _ringIndex = ringIndex;
+        ringIndex |= (1 << 63);
         RingParams memory params = RingParams(
-            addressList,
-            uintArgsList,
-            uint8ArgsList,
-            buyNoMoreThanAmountBList,
             vList,
             rList,
             sList,
-            minerId,
-            addressList.length,
+            miner,
             feeSelections,
-            0x0,        // ringMiner
-            0x0,        // feeRecipient
-            0x0         // ringHash
+            addressList.length,
+            0x0 // ringHash
         );
-        verifyInputDataIntegrity(params);
-        updateFeeRecipient(params);
+        verifyInputDataIntegrity(
+            params,
+            addressList,
+            uintArgsList,
+            uint8ArgsList,
+            buyNoMoreThanAmountBList
+        );
         // Assemble input data into structs so we can pass them to other functions.
         // This method also calculates ringHash, therefore it must be called before
         // calling `verifyRingSignatures`.
-        OrderState[] memory orders = assembleOrders(params);
-        verifyRingSignatures(params);
-        verifyTokensRegistered(params);
-        handleRing(params, orders);
-        ringIndex = (ringIndex ^ ENTERED_MASK) + 1;
+        TokenTransferDelegate delegate = TokenTransferDelegate(delegateAddress);
+        OrderState[] memory orders = assembleOrders(
+            params,
+            delegate,
+            addressList,
+            uintArgsList,
+            uint8ArgsList,
+            buyNoMoreThanAmountBList
+        );
+        verifyRingSignatures(params, orders);
+        verifyTokensRegistered(params, orders);
+        handleRing(_ringIndex, params, orders, delegate);
+        ringIndex = _ringIndex + 1;
     }
-    ////////////////////////////////////////////////////////////////////////////
-    /// Internal & Private Functions                                         ///
-    ////////////////////////////////////////////////////////////////////////////
     /// @dev Validate a ring.
     function verifyRingHasNoSubRing(
         uint          ringSize,
@@ -1271,15 +681,18 @@ contract LoopringProtocolImpl is LoopringProtocol {
     {
         // Check the ring has no sub-ring.
         for (uint i = 0; i < ringSize - 1; i++) {
-            address tokenS = orders[i].order.tokenS;
+            address tokenS = orders[i].tokenS;
             for (uint j = i + 1; j < ringSize; j++) {
-                require(tokenS != orders[j].order.tokenS); // "found sub-ring");
+                require(tokenS != orders[j].tokenS); // "found sub-ring");
             }
         }
     }
     /// @dev Verify the ringHash has been signed with each order's auth private
     ///      keys as well as the miner's private key.
-    function verifyRingSignatures(RingParams params)
+    function verifyRingSignatures(
+        RingParams params,
+        OrderState[] orders
+        )
         private
         pure
     {
@@ -1287,17 +700,7 @@ contract LoopringProtocolImpl is LoopringProtocol {
         for (uint i = 0; i < params.ringSize; i++) {
             j = i + params.ringSize;
             verifySignature(
-                params.addressList[i][2],  // authAddr
-                params.ringHash,
-                params.vList[j],
-                params.rList[j],
-                params.sList[j]
-            );
-        }
-        if (params.ringMiner != 0x0) {
-            j++;
-            verifySignature(
-                params.ringMiner,
+                orders[i].authAddr,
                 params.ringHash,
                 params.vList[j],
                 params.rList[j],
@@ -1305,53 +708,32 @@ contract LoopringProtocolImpl is LoopringProtocol {
             );
         }
     }
-    function verifyTokensRegistered(RingParams params)
+    function verifyTokensRegistered(
+        RingParams params,
+        OrderState[] orders
+        )
         private
         view
     {
         // Extract the token addresses
         address[] memory tokens = new address[](params.ringSize);
         for (uint i = 0; i < params.ringSize; i++) {
-            tokens[i] = params.addressList[i][1];
+            tokens[i] = orders[i].tokenS;
         }
         // Test all token addresses at once
         require(
             TokenRegistry(tokenRegistryAddress).areAllTokensRegistered(tokens)
         ); // "token not registered");
     }
-    function updateFeeRecipient(RingParams params)
-        private
-        view
-    {
-        if (params.minerId == 0) {
-            params.feeRecipient = msg.sender;
-        } else {
-            (params.feeRecipient, params.ringMiner) = NameRegistry(
-                nameRegistryAddress
-            ).getParticipantById(
-                params.minerId
-            );
-            if (params.feeRecipient == 0x0) {
-                params.feeRecipient = msg.sender;
-            }
-        }
-        uint sigSize = params.ringSize * 2;
-        if (params.ringMiner != 0x0) {
-            sigSize += 1;
-        }
-        require(sigSize == params.vList.length); // "ring data is inconsistent - vList");
-        require(sigSize == params.rList.length); // "ring data is inconsistent - rList");
-        require(sigSize == params.sList.length); // "ring data is inconsistent - sList");
-    }
     function handleRing(
-        RingParams    params,
-        OrderState[]  orders
+        uint64       _ringIndex,
+        RingParams   params,
+        OrderState[] orders,
+        TokenTransferDelegate delegate
         )
         private
     {
-        uint64 _ringIndex = ringIndex ^ ENTERED_MASK;
         address _lrcTokenAddress = lrcTokenAddress;
-        TokenTransferDelegate delegate = TokenTransferDelegate(delegateAddress);
         // Do the hard work.
         verifyRingHasNoSubRing(params.ringSize, orders);
         // Exchange rates calculation are performed by ring-miners as solidity
@@ -1374,7 +756,7 @@ contract LoopringProtocolImpl is LoopringProtocol {
             delegate,
             params.ringSize,
             orders,
-            params.feeRecipient,
+            params.miner,
             _lrcTokenAddress
         );
         /// Make transfers.
@@ -1384,14 +766,13 @@ contract LoopringProtocolImpl is LoopringProtocol {
             delegate,
             params.ringSize,
             orders,
-            params.feeRecipient,
+            params.miner,
             _lrcTokenAddress
         );
         emit RingMined(
             _ringIndex,
             params.ringHash,
-            params.ringMiner,
-            params.feeRecipient,
+            params.miner,
             orderHashList,
             amountsList
         );
@@ -1400,7 +781,7 @@ contract LoopringProtocolImpl is LoopringProtocol {
         TokenTransferDelegate delegate,
         uint          ringSize,
         OrderState[]  orders,
-        address       feeRecipient,
+        address       miner,
         address       _lrcTokenAddress
         )
         private
@@ -1408,55 +789,50 @@ contract LoopringProtocolImpl is LoopringProtocol {
         bytes32[] memory orderHashList,
         uint[6][] memory amountsList)
     {
-        bytes32[] memory batch = new bytes32[](ringSize * 7); // ringSize * (owner + tokenS + 4 amounts + walletAddrress)
+        bytes32[] memory batch = new bytes32[](ringSize * 7); // ringSize * (owner + tokenS + 4 amounts + wallet)
         orderHashList = new bytes32[](ringSize);
         amountsList = new uint[6][](ringSize);
         uint p = 0;
         for (uint i = 0; i < ringSize; i++) {
             OrderState memory state = orders[i];
-            Order memory order = state.order;
             uint prevSplitB = orders[(i + ringSize - 1) % ringSize].splitB;
             uint nextFillAmountS = orders[(i + 1) % ringSize].fillAmountS;
             // Store owner and tokenS of every order
-            batch[p] = bytes32(order.owner);
-            batch[p + 1] = bytes32(order.tokenS);
+            batch[p] = bytes32(state.owner);
+            batch[p + 1] = bytes32(state.tokenS);
             // Store all amounts
             batch[p + 2] = bytes32(state.fillAmountS - prevSplitB);
             batch[p + 3] = bytes32(prevSplitB + state.splitS);
             batch[p + 4] = bytes32(state.lrcReward);
-            batch[p + 5] = bytes32(state.lrcFee);
-            if (order.walletId != 0) {
-                batch[p + 6] = bytes32(NameRegistry(nameRegistryAddress).getFeeRecipientById(order.walletId));
-            } else {
-                batch[p + 6] = bytes32(0x0);
-            }
+            batch[p + 5] = bytes32(state.lrcFeeState);
+            batch[p + 6] = bytes32(state.wallet);
             p += 7;
             // Update fill records
-            if (order.buyNoMoreThanAmountB) {
-                cancelledOrFilled[state.orderHash] += nextFillAmountS;
+            if (state.buyNoMoreThanAmountB) {
+                delegate.addCancelledOrFilled(state.orderHash, nextFillAmountS);
             } else {
-                cancelledOrFilled[state.orderHash] += state.fillAmountS;
+                delegate.addCancelledOrFilled(state.orderHash, state.fillAmountS);
             }
             orderHashList[i] = state.orderHash;
             amountsList[i][0] = state.fillAmountS + state.splitS;
             amountsList[i][1] = nextFillAmountS - state.splitB;
             amountsList[i][2] = state.lrcReward;
-            amountsList[i][3] = state.lrcFee;
+            amountsList[i][3] = state.lrcFeeState;
             amountsList[i][4] = state.splitS;
             amountsList[i][5] = state.splitB;
         }
         // Do all transactions
         delegate.batchTransferToken(
             _lrcTokenAddress,
-            feeRecipient,
+            miner,
             walletSplitPercentage,
             batch
         );
     }
     /// @dev Verify miner has calculte the rates correctly.
     function verifyMinerSuppliedFillRates(
-        uint          ringSize,
-        OrderState[]  orders
+        uint         ringSize,
+        OrderState[] orders
         )
         private
         view
@@ -1464,20 +840,21 @@ contract LoopringProtocolImpl is LoopringProtocol {
         uint[] memory rateRatios = new uint[](ringSize);
         uint _rateRatioScale = RATE_RATIO_SCALE;
         for (uint i = 0; i < ringSize; i++) {
-            uint s1b0 = orders[i].rate.amountS.mul(orders[i].order.amountB);
-            uint s0b1 = orders[i].order.amountS.mul(orders[i].rate.amountB);
+            uint s1b0 = orders[i].rateS.mul(orders[i].amountB);
+            uint s0b1 = orders[i].amountS.mul(orders[i].rateB);
             require(s1b0 <= s0b1); // "miner supplied exchange rate provides invalid discount");
             rateRatios[i] = _rateRatioScale.mul(s1b0) / s0b1;
         }
         uint cvs = MathUint.cvsquare(rateRatios, _rateRatioScale);
-        require(cvs <= rateRatioCVSThreshold); // "miner supplied exchange rate is not evenly discounted");
+        require(cvs <= rateRatioCVSThreshold);
+        // "miner supplied exchange rate is not evenly discounted");
     }
     /// @dev Calculate each order's fee or LRC reward.
     function calculateRingFees(
         TokenTransferDelegate delegate,
         uint            ringSize,
         OrderState[]    orders,
-        address         feeRecipient,
+        address         miner,
         address         _lrcTokenAddress
         )
         private
@@ -1490,77 +867,77 @@ contract LoopringProtocolImpl is LoopringProtocol {
         for (uint i = 0; i < ringSize; i++) {
             OrderState memory state = orders[i];
             uint lrcReceiable = 0;
-            if (state.lrcFee == 0) {
+            if (state.lrcFeeState == 0) {
                 // When an order's LRC fee is 0 or smaller than the specified fee,
                 // we help miner automatically select margin-split.
                 state.marginSplitAsFee = true;
-                state.order.marginSplitPercentage = _marginSplitPercentageBase;
+                state.marginSplitPercentage = _marginSplitPercentageBase;
             } else {
                 uint lrcSpendable = getSpendable(
                     delegate,
                     _lrcTokenAddress,
-                    state.order.owner
+                    state.owner
                 );
                 // If the order is selling LRC, we need to calculate how much LRC
                 // is left that can be used as fee.
-                if (state.order.tokenS == _lrcTokenAddress) {
+                if (state.tokenS == _lrcTokenAddress) {
                     lrcSpendable -= state.fillAmountS;
                 }
                 // If the order is buyign LRC, it will has more to pay as fee.
-                if (state.order.tokenB == _lrcTokenAddress) {
+                if (state.tokenB == _lrcTokenAddress) {
                     nextFillAmountS = orders[(i + 1) % ringSize].fillAmountS;
                     lrcReceiable = nextFillAmountS;
                 }
                 uint lrcTotal = lrcSpendable + lrcReceiable;
                 // If order doesn't have enough LRC, set margin split to 100%.
-                if (lrcTotal < state.lrcFee) {
-                    state.lrcFee = lrcTotal;
-                    state.order.marginSplitPercentage = _marginSplitPercentageBase;
+                if (lrcTotal < state.lrcFeeState) {
+                    state.lrcFeeState = lrcTotal;
+                    state.marginSplitPercentage = _marginSplitPercentageBase;
                 }
-                if (state.lrcFee == 0) {
+                if (state.lrcFeeState == 0) {
                     state.marginSplitAsFee = true;
                 }
             }
             if (!state.marginSplitAsFee) {
                 if (lrcReceiable > 0) {
-                    if (lrcReceiable >= state.lrcFee) {
-                        state.splitB = state.lrcFee;
-                        state.lrcFee = 0;
+                    if (lrcReceiable >= state.lrcFeeState) {
+                        state.splitB = state.lrcFeeState;
+                        state.lrcFeeState = 0;
                     } else {
                         state.splitB = lrcReceiable;
-                        state.lrcFee -= lrcReceiable;
+                        state.lrcFeeState -= lrcReceiable;
                     }
                 }
             } else {
                 // Only check the available miner balance when absolutely needed
-                if (!checkedMinerLrcSpendable && minerLrcSpendable < state.lrcFee) {
+                if (!checkedMinerLrcSpendable && minerLrcSpendable < state.lrcFeeState) {
                     checkedMinerLrcSpendable = true;
-                    minerLrcSpendable = getSpendable(delegate, _lrcTokenAddress, feeRecipient);
+                    minerLrcSpendable = getSpendable(delegate, _lrcTokenAddress, miner);
                 }
                 // Only calculate split when miner has enough LRC;
                 // otherwise all splits are 0.
-                if (minerLrcSpendable >= state.lrcFee) {
+                if (minerLrcSpendable >= state.lrcFeeState) {
                     nextFillAmountS = orders[(i + 1) % ringSize].fillAmountS;
                     uint split;
-                    if (state.order.buyNoMoreThanAmountB) {
+                    if (state.buyNoMoreThanAmountB) {
                         split = (nextFillAmountS.mul(
-                            state.order.amountS
-                        ) / state.order.amountB).sub(
+                            state.amountS
+                        ) / state.amountB).sub(
                             state.fillAmountS
                         );
                     } else {
                         split = nextFillAmountS.sub(
                             state.fillAmountS.mul(
-                                state.order.amountB
-                            ) / state.order.amountS
+                                state.amountB
+                            ) / state.amountS
                         );
                     }
-                    if (state.order.marginSplitPercentage != _marginSplitPercentageBase) {
+                    if (state.marginSplitPercentage != _marginSplitPercentageBase) {
                         split = split.mul(
-                            state.order.marginSplitPercentage
+                            state.marginSplitPercentage
                         ) / _marginSplitPercentageBase;
                     }
-                    if (state.order.buyNoMoreThanAmountB) {
+                    if (state.buyNoMoreThanAmountB) {
                         state.splitS = split;
                     } else {
                         state.splitB = split;
@@ -1569,11 +946,11 @@ contract LoopringProtocolImpl is LoopringProtocol {
                     // be paid LRC reward first, so the orders in the ring does
                     // mater.
                     if (split > 0) {
-                        minerLrcSpendable -= state.lrcFee;
-                        state.lrcReward = state.lrcFee;
+                        minerLrcSpendable -= state.lrcFeeState;
+                        state.lrcReward = state.lrcFeeState;
                     }
                 }
-                state.lrcFee = 0;
+                state.lrcFeeState = 0;
             }
         }
     }
@@ -1610,11 +987,11 @@ contract LoopringProtocolImpl is LoopringProtocol {
     }
     /// @return The smallest order's index.
     function calculateOrderFillAmount(
-        OrderState        state,
-        OrderState        next,
-        uint              i,
-        uint              j,
-        uint              smallestIdx
+        OrderState state,
+        OrderState next,
+        uint       i,
+        uint       j,
+        uint       smallestIdx
         )
         private
         pure
@@ -1623,23 +1000,23 @@ contract LoopringProtocolImpl is LoopringProtocol {
         // Default to the same smallest index
         newSmallestIdx = smallestIdx;
         uint fillAmountB = state.fillAmountS.mul(
-            state.rate.amountB
-        ) / state.rate.amountS;
-        if (state.order.buyNoMoreThanAmountB) {
-            if (fillAmountB > state.order.amountB) {
-                fillAmountB = state.order.amountB;
+            state.rateB
+        ) / state.rateS;
+        if (state.buyNoMoreThanAmountB) {
+            if (fillAmountB > state.amountB) {
+                fillAmountB = state.amountB;
                 state.fillAmountS = fillAmountB.mul(
-                    state.rate.amountS
-                ) / state.rate.amountB;
+                    state.rateS
+                ) / state.rateB;
                 newSmallestIdx = i;
             }
-            state.lrcFee = state.order.lrcFee.mul(
+            state.lrcFeeState = state.lrcFee.mul(
                 fillAmountB
-            ) / state.order.amountB;
+            ) / state.amountB;
         } else {
-            state.lrcFee = state.order.lrcFee.mul(
+            state.lrcFeeState = state.lrcFee.mul(
                 state.fillAmountS
-            ) / state.order.amountS;
+            ) / state.amountS;
         }
         if (fillAmountB <= next.fillAmountS) {
             next.fillAmountS = fillAmountB;
@@ -1659,30 +1036,29 @@ contract LoopringProtocolImpl is LoopringProtocol {
     {
         for (uint i = 0; i < ringSize; i++) {
             OrderState memory state = orders[i];
-            Order memory order = state.order;
             uint amount;
-            if (order.buyNoMoreThanAmountB) {
-                amount = order.amountB.tolerantSub(
-                    cancelledOrFilled[state.orderHash]
+            if (state.buyNoMoreThanAmountB) {
+                amount = state.amountB.tolerantSub(
+                    delegate.cancelledOrFilled(state.orderHash)
                 );
-                order.amountS = amount.mul(order.amountS) / order.amountB;
-                order.lrcFee = amount.mul(order.lrcFee) / order.amountB;
-                order.amountB = amount;
+                state.amountS = amount.mul(state.amountS) / state.amountB;
+                state.lrcFee = amount.mul(state.lrcFee) / state.amountB;
+                state.amountB = amount;
             } else {
-                amount = order.amountS.tolerantSub(
-                    cancelledOrFilled[state.orderHash]
+                amount = state.amountS.tolerantSub(
+                    delegate.cancelledOrFilled(state.orderHash)
                 );
-                order.amountB = amount.mul(order.amountB) / order.amountS;
-                order.lrcFee = amount.mul(order.lrcFee) / order.amountS;
-                order.amountS = amount;
+                state.amountB = amount.mul(state.amountB) / state.amountS;
+                state.lrcFee = amount.mul(state.lrcFee) / state.amountS;
+                state.amountS = amount;
             }
-            require(order.amountS > 0); // "amountS is zero");
-            require(order.amountB > 0); // "amountB is zero");
-            uint availableAmountS = getSpendable(delegate, order.tokenS, order.owner);
+            require(state.amountS > 0); // "amountS is zero");
+            require(state.amountB > 0); // "amountB is zero");
+            uint availableAmountS = getSpendable(delegate, state.tokenS, state.owner);
             require(availableAmountS > 0); // "order spendable amountS is zero");
             state.fillAmountS = (
-                order.amountS < availableAmountS ?
-                order.amountS : availableAmountS
+                state.amountS < availableAmountS ?
+                state.amountS : availableAmountS
             );
         }
     }
@@ -1705,75 +1081,95 @@ contract LoopringProtocolImpl is LoopringProtocol {
         return (allowance < balance ? allowance : balance);
     }
     /// @dev verify input data's basic integrity.
-    function verifyInputDataIntegrity(RingParams params)
+    function verifyInputDataIntegrity(
+        RingParams params,
+        address[4][]  addressList,
+        uint[6][]     uintArgsList,
+        uint8[1][]    uint8ArgsList,
+        bool[]        buyNoMoreThanAmountBList
+        )
         private
         pure
     {
-        require(params.ringSize == params.addressList.length); // "ring data is inconsistent - addressList");
-        require(params.ringSize == params.uintArgsList.length); // "ring data is inconsistent - uintArgsList");
-        require(params.ringSize == params.uint8ArgsList.length); // "ring data is inconsistent - uint8ArgsList");
-        require(params.ringSize == params.buyNoMoreThanAmountBList.length); // "ring data is inconsistent - buyNoMoreThanAmountBList");
+        require(params.miner != 0x0);
+        require(params.ringSize == addressList.length);
+        require(params.ringSize == uintArgsList.length);
+        require(params.ringSize == uint8ArgsList.length);
+        require(params.ringSize == buyNoMoreThanAmountBList.length);
         // Validate ring-mining related arguments.
         for (uint i = 0; i < params.ringSize; i++) {
-            require(params.uintArgsList[i][5] > 0); // "order rateAmountS is zero");
+            require(uintArgsList[i][5] > 0); // "order rateAmountS is zero");
         }
         //Check ring size
         require(params.ringSize > 1 && params.ringSize <= MAX_RING_SIZE); // "invalid ring size");
+        uint sigSize = params.ringSize << 1;
+        require(sigSize == params.vList.length);
+        require(sigSize == params.rList.length);
+        require(sigSize == params.sList.length);
     }
     /// @dev        assmble order parameters into Order struct.
     /// @return     A list of orders.
-    function assembleOrders(RingParams params)
+    function assembleOrders(
+        RingParams params,
+        TokenTransferDelegate delegate,
+        address[4][]  addressList,
+        uint[6][]     uintArgsList,
+        uint8[1][]    uint8ArgsList,
+        bool[]        buyNoMoreThanAmountBList
+        )
         private
         view
         returns (OrderState[] memory orders)
     {
         orders = new OrderState[](params.ringSize);
         for (uint i = 0; i < params.ringSize; i++) {
-            Order memory order = Order(
-                params.addressList[i][0],
-                params.addressList[i][1],
-                params.addressList[(i + 1) % params.ringSize][1],
-                params.addressList[i][2],
-                params.uintArgsList[i][2],
-                params.uintArgsList[i][3],
-                params.uintArgsList[i][0],
-                params.uintArgsList[i][1],
-                params.uintArgsList[i][4],
-                params.buyNoMoreThanAmountBList[i],
-                params.uintArgsList[i][6],
-                params.uint8ArgsList[i][0]
-            );
-            validateOrder(order);
-            bytes32 orderHash = calculateOrderHash(order);
-            verifySignature(
-                order.owner,
-                orderHash,
-                params.vList[i],
-                params.rList[i],
-                params.sList[i]
-            );
             bool marginSplitAsFee = (params.feeSelections & (uint16(1) << i)) > 0;
             orders[i] = OrderState(
-                order,
-                orderHash,
+                addressList[i][0],
+                addressList[i][1],
+                addressList[(i + 1) % params.ringSize][1],
+                addressList[i][2],
+                addressList[i][3],
+                uintArgsList[i][2],
+                uintArgsList[i][3],
+                uintArgsList[i][0],
+                uintArgsList[i][1],
+                uintArgsList[i][4],
+                buyNoMoreThanAmountBList[i],
                 marginSplitAsFee,
-                Rate(params.uintArgsList[i][5], order.amountB),
+                bytes32(0),
+                uint8ArgsList[i][0],
+                uintArgsList[i][5],
+                uintArgsList[i][1],
                 0,   // fillAmountS
                 0,   // lrcReward
                 0,   // lrcFee
                 0,   // splitS
                 0    // splitB
             );
+            validateOrder(orders[i]);
+            bytes32 orderHash = calculateOrderHash(orders[i]);
+            orders[i].orderHash = orderHash;
+            verifySignature(
+                orders[i].owner,
+                orderHash,
+                params.vList[i],
+                params.rList[i],
+                params.sList[i]
+            );
             params.ringHash ^= orderHash;
         }
+        validateOrdersCutoffs(orders, delegate);
         params.ringHash = keccak256(
             params.ringHash,
-            params.minerId,
+            params.miner,
             params.feeSelections
         );
     }
     /// @dev validate order's parameters are OK.
-    function validateOrder(Order order)
+    function validateOrder(
+        OrderState order
+        )
         private
         view
     {
@@ -1782,24 +1178,39 @@ contract LoopringProtocolImpl is LoopringProtocol {
         require(order.tokenB != 0x0); // invalid order tokenB
         require(order.amountS != 0); // invalid order amountS
         require(order.amountB != 0); // invalid order amountB
-        require(order.marginSplitPercentage <= MARGIN_SPLIT_PERCENTAGE_BASE); // invalid order marginSplitPercentage
+        require(order.marginSplitPercentage <= MARGIN_SPLIT_PERCENTAGE_BASE);
+        // invalid order marginSplitPercentage
         require(order.validSince <= block.timestamp); // order is too early to match
         require(order.validUntil > block.timestamp); // order is expired
-        bytes20 tradingPair = bytes20(order.tokenS) ^ bytes20(order.tokenB);
-        require(order.validSince > tradingPairCutoffs[order.owner][tradingPair]); // order trading pair is cut off
-        require(order.validSince > cutoffs[order.owner]); // order is cut off
     }
-    /// @dev Get the Keccak-256 hash of order with specified parameters.
-    function calculateOrderHash(Order order)
+    function validateOrdersCutoffs(OrderState[] orders, TokenTransferDelegate delegate)
         private
         view
+    {
+        address[] memory owners = new address[](orders.length);
+        bytes20[] memory tradingPairs = new bytes20[](orders.length);
+        uint[] memory validSinceTimes = new uint[](orders.length);
+        for (uint i = 0; i < orders.length; i++) {
+            owners[i] = orders[i].owner;
+            tradingPairs[i] = bytes20(orders[i].tokenS) ^ bytes20(orders[i].tokenB);
+            validSinceTimes[i] = orders[i].validSince;
+        }
+        delegate.checkCutoffsBatch(owners, tradingPairs, validSinceTimes);
+    }
+    /// @dev Get the Keccak-256 hash of order with specified parameters.
+    function calculateOrderHash(
+        OrderState order
+        )
+        private
+        pure
         returns (bytes32)
     {
         return keccak256(
-            address(this),
+            delegateAddress,
             order.owner,
             order.tokenS,
             order.tokenB,
+            order.wallet,
             order.authAddr,
             order.amountS,
             order.amountB,
@@ -1807,7 +1218,6 @@ contract LoopringProtocolImpl is LoopringProtocol {
             order.validUntil,
             order.lrcFee,
             order.buyNoMoreThanAmountB,
-            order.walletId,
             order.marginSplitPercentage
         );
     }
@@ -1831,12 +1241,17 @@ contract LoopringProtocolImpl is LoopringProtocol {
             )
         ); // "invalid signature");
     }
-    function getTradingPairCutoffs(address orderOwner, address token1, address token2)
+    function getTradingPairCutoffs(
+        address orderOwner,
+        address token1,
+        address token2
+        )
         public
         view
         returns (uint)
     {
         bytes20 tokenPair = bytes20(token1) ^ bytes20(token2);
-        return tradingPairCutoffs[orderOwner][tokenPair];
+        TokenTransferDelegate delegate = TokenTransferDelegate(delegateAddress);
+        return delegate.tradingPairCutoffs(orderOwner, tokenPair);
     }
 }
