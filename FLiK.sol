@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FLiK at 0x17fD666fa0784885fa1AFEc8AC624d9b7e72B752
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FLiK at 0x36EFEE477f68C136139ABeb219Be6C2254711d0a
 */
 pragma solidity ^0.4.13;
 
@@ -83,28 +83,10 @@ contract FLiK is owned {
         Transfer(msg.sender, _to, _value);                   // Notify anyone listening that this transfer took place
     }
 
-    /* Allow another contract to spend some tokens in your behalf */
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
-
-        return true;
-    }
-
-    /* Approve and then communicate the approved contract in a single tx */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
-        tokenRecipient spender = tokenRecipient(_spender);
-
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
-        }
-    }
-
     /* A contract attempts to get the coins */
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
         require(locked == false);                            // Check if smart contract is locked
-        require(_value > 0);
-        require(balanceOf[_from] >= _value);                  // Check if the sender has enough
+        require(balanceOf[_from] >= _value);                 // Check if the sender has enough
         require(balanceOf[_to] + _value > balanceOf[_to]);   // Check for overflows
         require(_value <= allowance[_from][msg.sender]);     // Check allowance
 
