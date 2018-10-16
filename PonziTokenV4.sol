@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PonziTokenV4 at 0xe923dD860176d3ef69D7852257cC773900807f7C
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PonziTokenV4 at 0x765EDA6a8Dfb0f70E54e096DaF7c81156CC7A0Dd
 */
 pragma solidity ^0.4.18;
 
