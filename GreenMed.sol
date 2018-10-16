@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GreenMed at 0xb444208cB0516C150178fCf9a52604BC04A1aCEa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GreenMed at 0x425b371f624f3520c152d6b19e487d7a093a6a9a
 */
 pragma solidity ^0.4.18;
-
 
 contract owned {
     address public owner;
@@ -29,7 +28,6 @@ contract owned {
     }
 }
 
-
 library SafeMath {
     function sub(uint256 a, uint256 b) pure internal returns (uint256) {
         assert(a >= b);
@@ -43,21 +41,20 @@ library SafeMath {
     }
 }
 
-
 contract ERC20 {
     uint256 public totalSupply;
-    function balanceOf(address who) public constant returns (uint256 value);
-    function allowance(address owner, address spender) public constant returns (uint256 _allowance);
-    function transfer(address to, uint256 value) public returns (bool success);
-    function transferFrom(address from, address to, uint256 value) public returns (bool success);
-    function approve(address spender, uint256 value) public returns (bool success);
+    function balanceOf( address who ) public constant returns (uint256 value);
+    function allowance( address owner, address spender ) public constant returns (uint256 _allowance);
 
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
+    function transfer( address to, uint256 value) public returns (bool success);
+    function transferFrom( address from, address to, uint256 value) public returns (bool success);
+    function approve( address spender, uint256 value ) public returns (bool success);
+
+    event Transfer( address indexed from, address indexed to, uint256 value);
+    event Approval( address indexed owner, address indexed spender, uint256 value);
 }
 
-
-contract GreenMed is ERC20, owned {
+contract GreenMed  is ERC20, owned {
     using SafeMath for uint256;
     string public name = "GreenMed";
     string public symbol = "GRMD";
@@ -85,31 +82,31 @@ contract GreenMed is ERC20, owned {
         Transfer(0, msg.sender, totalSupply);
     }
 
-    function transfer(address _to, uint256 _value) public returns (bool success) {
+    function _transfer(address _from, address _to, uint256 _value) internal {
         require(_to != address(0));
-        require(balances[msg.sender] >= _value);
-        require(!frozenAccount[msg.sender] && !frozenAccount[_to]);
-        balances[msg.sender] = balances[msg.sender].sub(_value);
+        require(_value <= balances[_from]);
+        require(!frozenAccount[_from] && !frozenAccount[_to]);
+        balances[_from] = balances[_from].sub(_value);
         balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
+        Transfer(_from, _to, _value);
+    }
+
+    function transfer(address _to, uint256 _value) public returns (bool success) {
+        _transfer(msg.sender, _to, _value);
         return true;
     }
 
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(_to != address(0));
         require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
-        require(!frozenAccount[_from] && !frozenAccount[_to]);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        balances[_from] = balances[_from].sub(_value);
         balances[_to] = balances[_to].add(_value);
+        balances[_from] = balances[_from].sub(_value);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
         Transfer(_from, _to, _value);
         return true;
     }
 
     function approve(address _spender, uint256 _value) public returns (bool success) {
-        require(_spender != address(0));
         require(balances[msg.sender] >= _value);
-        require(!frozenAccount[_spender] && !frozenAccount[msg.sender]);
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
