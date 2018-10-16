@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CloneWars at 0x02e582682aa7b4dcc3f7574c468ef61b29545404
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CloneWars at 0xe34c0b3d0b0a039912c145986fffc1f1ac4fbb4c
 */
 pragma solidity ^0.4.24;
 
@@ -52,7 +52,7 @@ contract CloneWars {
     constructor () public {
         initialized      = false;
         norsefirePrice   = 0.1 ether;
-        currentNorsefire = 0x1337a4aEfd5ec486E6e97b1d0aE055FAC8D879dE;
+        currentNorsefire = 0x4d63d933BFd882cB0A9D73f7bA4318DDF3e244B0;
     }
     
     function becomeNorsefire() public payable {
@@ -116,7 +116,7 @@ contract CloneWars {
         uint256 ideaValue       = calculateIdeaSell(hasIdeas);
         uint256 fee             = devFee(ideaValue);
         // Destroy a quarter the owner's clones when selling ideas thanks to market saturation.
-        arrayOfClones[_caller]  = (arrayOfClones[msg.sender].div(4)).mul(3);
+        arrayOfClones[_caller]  = arrayOfClones[msg.sender].div(4);
         claimedIdeas[_caller]   = 0;
         lastDeploy[_caller]     = now;
         marketIdeas             = marketIdeas.add(hasIdeas);
