@@ -1,7 +1,132 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorNetwork at 0x568e7cfebb39e2b2695e6f90d1d33c3cf03e5e07
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorNetwork at 0xf20b9e713a33f61fa38792d2afaf1cd30339126a
 */
 pragma solidity ^0.4.21;
+
+/*
+    Owned contract interface
+*/
+contract IOwned {
+    // this function isn't abstract since the compiler emits automatically generated getter functions as external
+    function owner() public view returns (address) {}
+
+    function transferOwnership(address _newOwner) public;
+    function acceptOwnership() public;
+}
+
+/*
+    ERC20 Standard Token interface
+*/
+contract IERC20Token {
+    // these functions aren't abstract since the compiler emits automatically generated getter functions as external
+    function name() public view returns (string) {}
+    function symbol() public view returns (string) {}
+    function decimals() public view returns (uint8) {}
+    function totalSupply() public view returns (uint256) {}
+    function balanceOf(address _owner) public view returns (uint256) { _owner; }
+    function allowance(address _owner, address _spender) public view returns (uint256) { _owner; _spender; }
+
+    function transfer(address _to, uint256 _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+    function approve(address _spender, uint256 _value) public returns (bool success);
+}
+
+/*
+    Contract Registry interface
+*/
+contract IContractRegistry {
+    function getAddress(bytes32 _contractName) public view returns (address);
+}
+
+/*
+    Contract Features interface
+*/
+contract IContractFeatures {
+    function isSupported(address _contract, uint256 _features) public view returns (bool);
+    function enableFeatures(uint256 _features, bool _enable) public;
+}
+
+/*
+    Whitelist interface
+*/
+contract IWhitelist {
+    function isWhitelisted(address _address) public view returns (bool);
+}
+
+/*
+    Token Holder interface
+*/
+contract ITokenHolder is IOwned {
+    function withdrawTokens(IERC20Token _token, address _to, uint256 _amount) public;
+}
+
+/*
+    Ether Token interface
+*/
+contract IEtherToken is ITokenHolder, IERC20Token {
+    function deposit() public payable;
+    function withdraw(uint256 _amount) public;
+    function withdrawTo(address _to, uint256 _amount) public;
+}
+
+/*
+    Smart Token interface
+*/
+contract ISmartToken is IOwned, IERC20Token {
+    function disableTransfers(bool _disable) public;
+    function issue(address _to, uint256 _amount) public;
+    function destroy(address _from, uint256 _amount) public;
+}
+
+/*
+    Bancor Gas Price Limit interface
+*/
+contract IBancorGasPriceLimit {
+    function gasPrice() public view returns (uint256) {}
+    function validateGasPrice(uint256) public view;
+}
+
+/*
+    Bancor Converter interface
+*/
+contract IBancorConverter {
+    function getReturn(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount) public view returns (uint256);
+    function convert(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256);
+    function conversionWhitelist() public view returns (IWhitelist) {}
+    // deprecated, backward compatibility
+    function change(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256);
+}
+
+/*
+    Bancor Network interface
+*/
+contract IBancorNetwork {
+    function convert(IERC20Token[] _path, uint256 _amount, uint256 _minReturn) public payable returns (uint256);
+    function convertFor(IERC20Token[] _path, uint256 _amount, uint256 _minReturn, address _for) public payable returns (uint256);
+    function convertForPrioritized2(
+        IERC20Token[] _path,
+        uint256 _amount,
+        uint256 _minReturn,
+        address _for,
+        uint256 _block,
+        uint8 _v,
+        bytes32 _r,
+        bytes32 _s)
+        public payable returns (uint256);
+
+    // deprecated, backward compatibility
+    function convertForPrioritized(
+        IERC20Token[] _path,
+        uint256 _amount,
+        uint256 _minReturn,
+        address _for,
+        uint256 _block,
+        uint256 _nonce,
+        uint8 _v,
+        bytes32 _r,
+        bytes32 _s)
+        public payable returns (uint256);
+}
 
 /*
     Utilities & Common Modifiers
@@ -76,17 +201,6 @@ contract Utils {
 }
 
 /*
-    Owned contract interface
-*/
-contract IOwned {
-    // this function isn't abstract since the compiler emits automatically generated getter functions as external
-    function owner() public view returns (address) {}
-
-    function transferOwnership(address _newOwner) public;
-    function acceptOwnership() public;
-}
-
-/*
     Provides support and utilities for contract ownership
 */
 contract Owned is IOwned {
@@ -131,62 +245,6 @@ contract Owned is IOwned {
     }
 }
 
-/*
-    ERC20 Standard Token interface
-*/
-contract IERC20Token {
-    // these functions aren't abstract since the compiler emits automatically generated getter functions as external
-    function name() public view returns (string) {}
-    function symbol() public view returns (string) {}
-    function decimals() public view returns (uint8) {}
-    function totalSupply() public view returns (uint256) {}
-    function balanceOf(address _owner) public view returns (uint256) { _owner; }
-    function allowance(address _owner, address _spender) public view returns (uint256) { _owner; _spender; }
-
-    function transfer(address _to, uint256 _value) public returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-    function approve(address _spender, uint256 _value) public returns (bool success);
-}
-
-/*
-    Smart Token interface
-*/
-contract ISmartToken is IOwned, IERC20Token {
-    function disableTransfers(bool _disable) public;
-    function issue(address _to, uint256 _amount) public;
-    function destroy(address _from, uint256 _amount) public;
-}
-
-/*
-    Contract Registry interface
-*/
-contract IContractRegistry {
-    function getAddress(bytes32 _contractName) public view returns (address);
-}
-
-/*
-    Contract Features interface
-*/
-contract IContractFeatures {
-    function isSupported(address _contract, uint256 _features) public view returns (bool);
-    function enableFeatures(uint256 _features, bool _enable) public;
-}
-
-/*
-    Bancor Gas Price Limit interface
-*/
-contract IBancorGasPriceLimit {
-    function gasPrice() public view returns (uint256) {}
-    function validateGasPrice(uint256) public view;
-}
-
-/*
-    Whitelist interface
-*/
-contract IWhitelist {
-    function isWhitelisted(address _address) public view returns (bool);
-}
-
 /**
     Id definitions for bancor contracts
 
@@ -206,13 +264,6 @@ contract ContractIds {
 contract FeatureIds {
     // converter features
     uint256 public constant CONVERTER_CONVERSION_WHITELIST = 1 << 0;
-}
-
-/*
-    Token Holder interface
-*/
-contract ITokenHolder is IOwned {
-    function withdrawTokens(IERC20Token _token, address _to, uint256 _amount) public;
 }
 
 /*
@@ -246,44 +297,6 @@ contract TokenHolder is ITokenHolder, Owned, Utils {
     {
         assert(_token.transfer(_to, _amount));
     }
-}
-
-/*
-    Ether Token interface
-*/
-contract IEtherToken is ITokenHolder, IERC20Token {
-    function deposit() public payable;
-    function withdraw(uint256 _amount) public;
-    function withdrawTo(address _to, uint256 _amount) public;
-}
-
-/*
-    Bancor Converter interface
-*/
-contract IBancorConverter {
-    function getReturn(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount) public view returns (uint256);
-    function convert(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256);
-    function conversionWhitelist() public view returns (IWhitelist) {}
-    // deprecated, backward compatibility
-    function change(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256);
-}
-
-/*
-    Bancor Network interface
-*/
-contract IBancorNetwork {
-    function convert(IERC20Token[] _path, uint256 _amount, uint256 _minReturn) public payable returns (uint256);
-    function convertFor(IERC20Token[] _path, uint256 _amount, uint256 _minReturn, address _for) public payable returns (uint256);
-    function convertForPrioritized(
-        IERC20Token[] _path,
-        uint256 _amount,
-        uint256 _minReturn,
-        address _for,
-        uint256 _block,
-        uint8 _v,
-        bytes32 _r,
-        bytes32 _s)
-        public payable returns (uint256);
 }
 
 /*
@@ -426,7 +439,7 @@ contract BancorNetwork is IBancorNetwork, TokenHolder, ContractIds, FeatureIds {
         @return tokens issued in return
     */
     function convertFor(IERC20Token[] _path, uint256 _amount, uint256 _minReturn, address _for) public payable returns (uint256) {
-        return convertForPrioritized(_path, _amount, _minReturn, _for, 0x0, 0x0, 0x0, 0x0);
+        return convertForPrioritized2(_path, _amount, _minReturn, _for, 0x0, 0x0, 0x0, 0x0);
     }
 
     /**
@@ -444,7 +457,7 @@ contract BancorNetwork is IBancorNetwork, TokenHolder, ContractIds, FeatureIds {
 
         @return tokens issued in return
     */
-    function convertForPrioritized(IERC20Token[] _path, uint256 _amount, uint256 _minReturn, address _for, uint256 _block, uint8 _v, bytes32 _r, bytes32 _s)
+    function convertForPrioritized2(IERC20Token[] _path, uint256 _amount, uint256 _minReturn, address _for, uint256 _block, uint8 _v, bytes32 _r, bytes32 _s)
         public
         payable
         validConversionPath(_path)
@@ -709,5 +722,21 @@ contract BancorNetwork is IBancorNetwork, TokenHolder, ContractIds, FeatureIds {
 
         // approve the new allowance
         assert(_token.approve(_spender, _value));
+    }
+
+    // deprecated, backward compatibility
+    function convertForPrioritized(
+        IERC20Token[] _path,
+        uint256 _amount,
+        uint256 _minReturn,
+        address _for,
+        uint256 _block,
+        uint256 _nonce,
+        uint8 _v,
+        bytes32 _r,
+        bytes32 _s)
+        public payable returns (uint256)
+    {
+        convertForPrioritized2(_path, _amount, _minReturn, _for, _block, _v, _r, _s);
     }
 }
