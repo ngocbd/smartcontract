@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x361c56a9a6f008107281c45fbca91af9e23e888e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x03a7b9266b98904a7807ee3f5d03b272d614e064
 */
 pragma solidity ^0.4.4;
 
@@ -112,18 +112,18 @@ contract ERC20Token is StandardToken {
     string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
 
 //
-// CHANGE THESE VALUES FOR YOUR TOKEN
+// LAMBO COIN
 //
 
 //make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 300000000;               // Give the creator all initial tokens (30000000 for example)
-        totalSupply = 300000000;                        // Update total supply (30000000 for example)
-        name = "MallortCoin";                                   // Set the name for display purposes
+        balances[msg.sender] = 40000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 40000;                        // Update total supply (100000 for example)
+        name = "LAMBO COIN";                                   // Set the name for display purposes
         decimals = 0;                            // Amount of decimals for display purposes
-        symbol = "MLRT";                               // Set the symbol for display purposes
+        symbol = "LAMBO";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
