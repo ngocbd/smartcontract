@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BmarktToken at 0x98e2750d38b1d24ba6c503e9853db69e7cf78fe4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BmarktToken at 0x91c2283d4680ed100e9474a3ced0310ae4168d6c
 */
 pragma solidity ^0.4.16;
 contract BmarktToken {
@@ -23,7 +23,7 @@ contract BmarktToken {
         totalSupply = 90000000 * 10 ** uint256(decimals);
         balanceOf[msg.sender] = totalSupply;
         name = "Bmarkt";
-        symbol = "BMK";
+        symbol = "BMT";
     }
 
     function _transfer(address _from, address _to, uint _value) internal {
