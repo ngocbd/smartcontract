@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StarbaseCrowdsale at 0x5a00d3dd61b7ca41d60113de51d2304c9162adcb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StarbaseCrowdsale at 0x748b44e8abc840e60a2b86bbd138862a713328ca
 */
 pragma solidity ^0.4.13;
 
@@ -549,6 +549,15 @@ contract StarbaseEarlyPurchaseAmendment {
     }
 }
 
+contract Certifier {
+	event Confirmed(address indexed who);
+	event Revoked(address indexed who);
+	function certified(address) public constant returns (bool);
+	function get(address, string) public constant returns (bytes32);
+	function getAddress(address, string) public constant returns (address);
+	function getUint(address, string) public constant returns (uint);
+}
+
 /**
  * @title Crowdsale contract - Starbase crowdsale to create STAR.
  * @author Starbase PTE. LTD. - <info@starbase.co>
@@ -569,6 +578,7 @@ contract StarbaseCrowdsale is Ownable {
      */
     AbstractStarbaseToken public starbaseToken;
     StarbaseEarlyPurchaseAmendment public starbaseEpAmendment;
+    Certifier public picopsCertifier;
 
     /**
      *  Constants
@@ -690,6 +700,11 @@ contract StarbaseCrowdsale is Ownable {
         _;
     }
 
+    modifier onlyQualifiedPartnerORPicopsCertified() {
+        assert(qualifiedPartners[msg.sender].bonaFide || picopsCertifier.certified(msg.sender));
+        _;
+    }
+
     /**
      * Contract functions
      */
@@ -697,11 +712,14 @@ contract StarbaseCrowdsale is Ownable {
      * @dev Contract constructor function sets owner address and
      *      address of StarbaseEarlyPurchaseAmendment contract.
      * @param starbaseEpAddr The address that holds the early purchasers Star tokens
+     * @param picopsCertifierAddr The address of the PICOPS certifier.
+     *                            See also https://picops.parity.io/#/details
      */
-    function StarbaseCrowdsale(address starbaseEpAddr) {
-        require(starbaseEpAddr != 0);
+    function StarbaseCrowdsale(address starbaseEpAddr, address picopsCertifierAddr) {
+        require(starbaseEpAddr != 0 && picopsCertifierAddr != 0);
         owner = msg.sender;
         starbaseEpAmendment = StarbaseEarlyPurchaseAmendment(starbaseEpAddr);
+        picopsCertifier = Certifier(picopsCertifierAddr);
     }
 
     /**
@@ -1035,7 +1053,7 @@ contract StarbaseCrowdsale is Ownable {
         minInvestment
         whenNotEnded
         rateIsSet(cnyEthRate)
-        onlyQualifiedPartner
+        onlyQualifiedPartnerORPicopsCertified
         returns (bool)
     {
         require(purchaseStartBlock > 0 && block.number >= purchaseStartBlock);
