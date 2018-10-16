@@ -1,10 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HashToken at 0xe5544a2a5fa9b175da60d8eec67add5582bb31b0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HashToken at 0xcb7281e00cc38bf96e6d0bec68ea9b5524efbb8e
 */
-// Most of the code taken from
-// https://github.com/ConsenSys/Tokens/blob/master/Token_Contracts/contracts/StandardToken.sol
+pragma solidity ^0.4.4;
 
-contract TokenInterface {
+contract Token {
 
     /// @return total amount of tokens
     function totalSupply() constant returns (uint256 supply) {}
@@ -39,33 +38,17 @@ contract TokenInterface {
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    
 }
 
-contract HashToken is TokenInterface {
-
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-    uint256 public totalSupply;
-
-    bytes32 public prev_hash;
-    uint public max_value;
-
-    // Meta info
-    string public name;
-    uint8 public decimals;
-    string public symbol;
-    
-    function HashToken() {
-        prev_hash = sha3(block.blockhash(block.number));
-        max_value = 2 ** 255;
-        // Meta info
-        name = 'HashToken';
-        decimals = 16;
-        symbol = 'HTK';
-    }
+contract StandardToken is Token {
 
     function transfer(address _to, uint256 _value) returns (bool success) {
-        if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        //Default assumes totalSupply can't be over max (2^256 - 1).
+        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
+        //Replace the if with this one instead.
+        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        if (balances[msg.sender] >= _value && _value > 0) {
             balances[msg.sender] -= _value;
             balances[_to] += _value;
             Transfer(msg.sender, _to, _value);
@@ -74,7 +57,9 @@ contract HashToken is TokenInterface {
     }
 
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        //same as above. Replace this line with the following if you want to protect against wrapping uints.
+        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
             balances[_to] += _value;
             balances[_from] -= _value;
             allowed[_from][msg.sender] -= _value;
@@ -97,16 +82,60 @@ contract HashToken is TokenInterface {
       return allowed[_owner][_spender];
     }
 
-    event Mint(address indexed minter);
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+    uint256 public totalSupply;
+}
 
-    function mint(bytes32 value) {
-        if (uint(sha3(value, prev_hash)) > max_value) {
-            throw;
-        }
-        balances[msg.sender] += 10 ** 16;
-        prev_hash = sha3(block.blockhash(block.number), prev_hash);
-        // increase the difficulty
-        max_value -=  max_value / 100;
-        Mint(msg.sender);
+
+//name this contract whatever you'd like -- Change DoggieDo to something else
+contract HashToken is StandardToken {
+
+    function () {
+        //if ether is sent to this address, send it back.
+        throw;
+    }
+
+    /* Public variables of the token */
+
+    /*
+    NOTE:
+    The following variables are OPTIONAL vanities. One does not have to include them.
+    They allow one to customise the token contract & in no way influences the core functionality.
+    Some wallets/interfaces might not even bother to look at this information.
+    */
+    string public name;                   //fancy name: eg Simon Bucks
+    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
+    string public symbol;                 //An identifier: eg SBX
+    string public version = 'V69';       //Just an arbitrary versioning scheme.
+
+//
+// CHANGE THESE VALUES FOR YOUR TOKEN
+//
+
+//make sure this function name matches the contract name above. 
+//So if you're token is called TutorialToken, make sure the 
+//contract name above is also TutorialToken instead of ERC20Token
+
+    function HashToken(
+        ) { 
+        totalSupply = 69000000 * 10**18 ;    			// Don't mess with the 10**18 portion.  In this case 10**4 = 10*10*10*10 = 10,000.  Alternatively, you can put 10000
+													// If you want 100 million with 18 decimals, then use this code: 10**8 * 10**18
+		balances[msg.sender] =  totalSupply;        // Give the creator all initial tokens (100000 for example)
+        name = "THE HASH TOKEN";            		// Set the name for display purposes
+        decimals = 18;                               // Amount of decimals for display purposes
+        symbol = "ONON";                            // Set the symbol for display purposes
+    }
+
+    /* Approves and then calls the receiving contract */
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+
+        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
+        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
+        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
+        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
+        return true;
     }
 }
