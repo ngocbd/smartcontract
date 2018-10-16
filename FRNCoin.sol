@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FRNCoin at 0x1d6f351406c50fdf5c45a53ae17f9de092a32f19
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FRNCoin at 0x451db3c289c802d7365afe92a8ed5ba4a0c17577
 */
 /**
  * This smart contract is modified 2017 by 4new.co.uk to assemble code for creation of FRNCoin with
@@ -339,24 +339,18 @@ contract FRNCoin is ReleasableToken, BurnableToken {
 
   /**
    * Construct the token.
-   *
-   * @param _name Token name
-   * @param _symbol Token symbol
-   * @param _initialSupply How many tokens we start with
-   * @param _decimals Number of decimal places
    */
-  function FRNCoin(string _name, string _symbol, uint _initialSupply, uint _decimals) {
+  function FRNCoin() {
     // Cannot create a token without supply
-    require(_initialSupply != 0);
 
     owner = msg.sender;
 
-    name = _name;
-    symbol = _symbol;
+    name = "KWATT COIN";
+    symbol = "KWATT";
 
-    totalSupply = _initialSupply;
+    totalSupply = 300000000000000000000000000;
 
-    decimals = _decimals;
+    decimals = 18;
 
     // Create initially all balance on owner
     balances[owner] = totalSupply;
