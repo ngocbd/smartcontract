@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MtnCrowdsale at 0x21a3fdbc4e9201e85ddd58b7b320ea5aa581fcd6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MtnCrowdsale at 0xd023E93E919a1a0ef7D2323eDC72A134e6b635A2
 */
 //File: node_modules/zeppelin-solidity/contracts/token/ERC20Basic.sol
 pragma solidity ^0.4.18;
@@ -667,7 +667,7 @@ pragma solidity ^0.4.18;
 
 
 contract MtnToken is MintableToken, PausableToken {
-    string public constant name = "MedToken";
+    string public constant name = "Med Token";
     string public constant symbol = "MTN";
     uint8 public constant decimals = 18;
 
