@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POWM at 0x963617e1ad931f48c6efe423b616c0e0e8cb60b0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POWM at 0x6e5db36f85492b20153eb8165e19dea1387345df
 */
 pragma solidity ^0.4.20;
 
@@ -34,13 +34,13 @@ contract POWM {
     }
     
     modifier buy_timestamp(){
-        require((block.timestamp % (1800)) <= 900);
+        require((block.timestamp % (3600)) >= 1800);
         //require((block.timestamp % (120)) < 60);
         _;
     }
     
     modifier sell_timestamp(){
-        require((block.timestamp % (1800)) > 900);
+        require((block.timestamp % (3600)) < 1800);
         //require((block.timestamp % (120)) >= 60);
         _;
     }
@@ -567,7 +567,6 @@ contract POWM {
     ==========================================*/
     function purchaseTokens(uint256 _incomingEthereum, address _referredBy)
         antiEarlyWhale(_incomingEthereum)
-        buy_timestamp()
         internal
         returns(uint256)
     {
