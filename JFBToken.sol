@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JFBToken at 0xbeae195f9dd6a8f717b16682a98569151b8be6e2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JFBToken at 0x39d28c20f684c479a3f62676ee5a649e3c8d3be8
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.16;
 
 /**
  * @title SafeMath
@@ -250,7 +250,7 @@ contract Pausable is Ownable {
  **/
 
 contract PausableToken is StandardToken, Pausable {
-    
+
   using SafeMath for uint256;
 
   function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
@@ -267,9 +267,9 @@ contract PausableToken is StandardToken, Pausable {
 }
 
 /**
- * @title Bec Token
+ * @title JFB Token
  *
- * @dev Implementation of Bec Token based on the basic standard token.
+ * @dev Implementation of JFB Token based on the basic standard token.
  */
 contract JFBToken is PausableToken {
     /**
@@ -278,13 +278,13 @@ contract JFBToken is PausableToken {
     * They allow one to customise the token contract & in no way influences the core functionality.
     * Some wallets/interfaces might not even bother to look at this information.
     */
-    string public name = "JiFenBao";
-    string public symbol = "JFB-1";
+    string public name = "JiFenBao Coin";
+    string public symbol = "JFBCoin";
     string public version = '1.0.0';
     uint8 public decimals = 18;
 
     /**
-     * @dev Function to check the amount of tokens that an owner allowed to a spender.
+     * @dev constructor function
      */
     function JFBToken() {
       totalSupply = 300000000*10**(uint256(decimals));
