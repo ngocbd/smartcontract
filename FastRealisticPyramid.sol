@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FastRealisticPyramid at 0xfE3672Eff595CfD36eD05aaf4622d1Aec3B5E852
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FastRealisticPyramid at 0x19a6067538c90973eF5dC31Ded5Fa567f3d09059
 */
 contract FastRealisticPyramid {
 
@@ -31,6 +31,11 @@ contract FastRealisticPyramid {
         }
 
         function enter() {
+                if (msg.value < 1/100 ether || msg.value > 50) {
+                        msg.sender.send(msg.value);
+                        return;
+                }
+
 
                 uint idx = person.length;
                 person.length += 1;
@@ -39,13 +44,11 @@ contract FastRealisticPyramid {
 
 
                 if (idx != 0) {
-                        collectedFees = msg.value / 10;
-						owner.send(collectedFees);
-						collectedFees = 0;
-                        balance = balance + (msg.value * 9/10);
+                        collectedFees += msg.value / 10;
+                        balance += msg.value;
                 } else {
 
-                        balance = msg.value;
+                        collectedFees += msg.value;
                 }
 
 
@@ -58,6 +61,12 @@ contract FastRealisticPyramid {
                 }
         }
 
+        function collectFees() onlyowner {
+                if (collectedFees == 0) return;
+
+                owner.send(collectedFees);
+                collectedFees = 0;
+        }
 
         function setOwner(address _owner) onlyowner {
                 owner = _owner;
