@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Controller at 0x6f444af44be5c398f57a2016d191e01ffd8f6931
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Controller at 0x267808e5246d14ac39720aa62da5b33651b680ce
 */
 pragma solidity >=0.4.4;
 
@@ -98,6 +98,11 @@ contract Token is Finalizable, TokenReceivable, SafeMath, EventDefinitions {
     Controller controller;
     address owner;
 
+    modifier onlyController() {
+        assert(msg.sender == address(controller));
+        _;
+    }
+
     function setController(address _c) onlyOwner notFinalized {
         controller = Controller(_c);
     }
@@ -165,7 +170,7 @@ contract Token is Finalizable, TokenReceivable, SafeMath, EventDefinitions {
     }
 
     modifier onlyPayloadSize(uint numwords) {
-    assert(msg.data.length == numwords * 32 + 4);
+        assert(msg.data.length >= numwords * 32 + 4);
         _;
     }
 
@@ -173,14 +178,77 @@ contract Token is Finalizable, TokenReceivable, SafeMath, EventDefinitions {
         controller.burn(msg.sender, _amount);
         Transfer(msg.sender, 0x0, _amount);
     }
+
+    function controllerTransfer(address _from, address _to, uint _value)
+    onlyController {
+        Transfer(_from, _to, _value);
+    }
+
+    function controllerApprove(address _owner, address _spender, uint _value)
+    onlyController {
+        Approval(_owner, _spender, _value);
+    }
+
+    //multi-approve, multi-transfer
+
+    bool public multilocked;
+
+    modifier notMultilocked {
+        assert(!multilocked);
+        _;
+    }
+
+    //do we want lock permanent? I think so.
+    function lockMultis() onlyOwner {
+        multilocked = true;
+    }
+
+    //multi functions just issue events, to fix initial event history
+
+    function multiTransfer(uint[] bits) onlyOwner notMultilocked {
+        if (bits.length % 3 != 0) throw;
+        for (uint i=0; i<bits.length; i += 3) {
+            address from = address(bits[i]);
+            address to = address(bits[i+1]);
+            uint amount = bits[i+2];
+            Transfer(from, to, amount);
+        }
+    }
+
+    function multiApprove(uint[] bits) onlyOwner notMultilocked {
+        if (bits.length % 3 != 0) throw;
+        for (uint i=0; i<bits.length; i += 3) {
+            address owner = address(bits[i]);
+            address spender = address(bits[i+1]);
+            uint amount = bits[i+2];
+            Approval(owner, spender, amount);
+        }
+    }
+
+    string public motd;
+    event Motd(string message);
+    function setMotd(string _m) onlyOwner {
+        motd = _m;
+        Motd(_m);
+    }
 }
 
 contract Controller is Owned, Finalizable {
     Ledger public ledger;
-    address public token;
+    Token public token;
+    address public oldToken;
+    address public EtherDelta;
+
+    function setEtherDelta(address _addr) onlyOwner {
+        EtherDelta = _addr;
+    }
+
+    function setOldToken(address _token) onlyOwner {
+        oldToken = _token;
+    }
 
     function setToken(address _token) onlyOwner {
-        token = _token;
+        token = Token(_token);
     }
 
     function setLedger(address _ledger) onlyOwner {
@@ -188,8 +256,13 @@ contract Controller is Owned, Finalizable {
     }
 
     modifier onlyToken() {
-        if (msg.sender != token) throw;
+        if (msg.sender != address(token) && msg.sender != oldToken) throw;
         _;
+    }
+
+    modifier onlyNewToken() {
+        if (msg.sender != address(token)) throw;
+	_;
     }
 
     function totalSupply() constant returns (uint) {
@@ -208,35 +281,42 @@ contract Controller is Owned, Finalizable {
     function transfer(address _from, address _to, uint _value)
     onlyToken
     returns (bool success) {
-        return ledger.transfer(_from, _to, _value);
+        assert(msg.sender != oldToken || _from == EtherDelta);
+        bool ok = ledger.transfer(_from, _to, _value);
+	if (ok && msg.sender == oldToken)
+	    token.controllerTransfer(_from, _to, _value);
+	return ok;
     }
 
     function transferFrom(address _spender, address _from, address _to, uint _value)
     onlyToken
     returns (bool success) {
-        return ledger.transferFrom(_spender, _from, _to, _value);
+        assert(msg.sender != oldToken || _from == EtherDelta);
+        bool ok = ledger.transferFrom(_spender, _from, _to, _value);
+	if (ok && msg.sender == oldToken)
+	    token.controllerTransfer(_from, _to, _value);
+	return ok;
     }
 
     function approve(address _owner, address _spender, uint _value)
-    onlyToken
+    onlyNewToken
     returns (bool success) {
         return ledger.approve(_owner, _spender, _value);
     }
 
     function increaseApproval (address _owner, address _spender, uint _addedValue)
-    onlyToken
+    onlyNewToken
     returns (bool success) {
         return ledger.increaseApproval(_owner, _spender, _addedValue);
     }
 
     function decreaseApproval (address _owner, address _spender, uint _subtractedValue)
-    onlyToken
+    onlyNewToken
     returns (bool success) {
         return ledger.decreaseApproval(_owner, _spender, _subtractedValue);
     }
 
-
-    function burn(address _owner, uint _amount) onlyToken {
+    function burn(address _owner, uint _amount) onlyNewToken {
         ledger.burn(_owner, _amount);
     }
 }
@@ -321,6 +401,7 @@ contract Ledger is Owned, SafeMath, Finalizable {
         LogMint(_a, _amount);
     }
 
+    /*
     function multiMint(uint[] bits) onlyOwner mintingActive {
         for (uint i=0; i<bits.length; i++) {
 	    address a = address(bits[i]>>96);
@@ -328,6 +409,7 @@ contract Ledger is Owned, SafeMath, Finalizable {
 	    mint(a, amount);
         }
     }
+    */
 
     bool public mintingStopped;
 
