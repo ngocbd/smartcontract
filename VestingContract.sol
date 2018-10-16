@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VestingContract at 0x12eb08e27eec735a16db29b660070cf10808de63
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VestingContract at 0x4026f73f99427c6b70c9b101321895cee6b72659
 */
 pragma solidity ^0.4.15;
 
@@ -57,9 +57,9 @@ contract VestingContract is Owned {
     
     function VestingContract() {
         
-        lastBlockClaimed = 4315256;
-        blockDelay = 5082;
-        reward = 5000000000000000000000;
+        lastBlockClaimed = 4216530;
+        blockDelay = 152470;
+        reward = 1333333000000000000000000;
         
         tokenAddress = 0x2C974B2d0BA1716E644c1FC59982a89DDD2fF724;
     }
