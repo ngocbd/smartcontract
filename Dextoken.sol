@@ -1,123 +1,189 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dextoken at 0xf206dfa89deb5e58dc9403bb32c87ea46fe4b2b7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DEXToken at 0x3cd7047117dbfd0dcb470514172ace9f394c31e8
 */
 pragma solidity ^0.4.16;
 
-contract Token {
 
-    /// The total amount of tokens
-    uint256 public totalSupply;
+contract ForeignToken {
+    function balanceOf(address _owner) public constant returns (uint256);
+    function transfer(address _to, uint256 _value) public returns (bool);
+}
 
-    /// @param _owner The address from which the balance will be retrieved
-    /// @return The balance
-    function balanceOf(address _owner) constant returns (uint256 balance) {}
+contract ERC20Basic {
 
-    /// @notice send `_value` token to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _value) returns (bool success) {}
+  uint256 public totalSupply;
+  function balanceOf(address who) public constant returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
+}
 
-    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of wei to be approved for transfer
-    /// @return Whether the approval was successful or not
-    function approve(address _spender, uint256 _value) returns (bool success) {}
 
-    /// @param _owner The address of the account owning tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
+
+contract ERC20 is ERC20Basic {
+
+  function allowance(address owner, address spender) public constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+
+}
+
+library SaferMath {
+  function mulX(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function divX(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+
+
+contract DEXToken is ERC20 {
+    
+    address owner = msg.sender;
+
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+    
+    uint256 public totalSupply = 100000000 * 10**8;
+
+    function name() public constant returns (string) { return "DEX Token"; }
+    function symbol() public constant returns (string) { return "DEXT"; }
+    function decimals() public constant returns (uint8) { return 8; }
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-}
 
-contract StandardToken is Token {
+    event DistrFinished();
 
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        require(_to != 0x0);
+    bool public distributionFinished = false;
 
-        require(balances[msg.sender] >= _value);
-        require(balances[_to] + _value > balances[_to]);
-
-        balances[msg.sender] -= _value;
-        balances[_to] += _value;
-
-        Transfer(msg.sender, _to, _value);
+    modifier canDistr() {
+    require(!distributionFinished);
+    _;
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        require(_to != 0x0);
-
-        require(balances[_from] >= _value);
-        require(balances[_to] + _value > balances[_to]);    
-        require(allowed[_from][msg.sender] >= _value);
-
-        allowed[_from][msg.sender] -= _value;
-        balances[_from] -= _value;
-        balances[_to] += _value;    
-
-        Transfer(_from, _to, _value);
+    function DEXToken() public {
+        owner = msg.sender;
+        balances[msg.sender] = totalSupply;
     }
 
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
+    modifier onlyOwner { 
+        require(msg.sender == owner);
+        _;
     }
 
-    function approve(address _spender, uint256 _value) public
-        returns (bool success) {
+    function transferOwnership(address newOwner) onlyOwner public {
+        owner = newOwner;
+    }
+
+    function getEthBalance(address _addr) constant public returns(uint) {
+    return _addr.balance;
+    }
+
+    function distributeDEXT(address[] addresses, uint256 _value, uint256 _ethbal) onlyOwner canDistr public {
+         for (uint i = 0; i < addresses.length; i++) {
+	     if (getEthBalance(addresses[i]) < _ethbal) {
+ 	         continue;
+             }
+             balances[owner] -= _value;
+             balances[addresses[i]] += _value;
+             Transfer(owner, addresses[i], _value);
+         }
+    }
+    
+    function balanceOf(address _owner) constant public returns (uint256) {
+	 return balances[_owner];
+    }
+
+    // mitigates the ERC20 short address attack
+    modifier onlyPayloadSize(uint size) {
+        assert(msg.data.length >= size + 4);
+        _;
+    }
+    
+    function transfer(address _to, uint256 _amount) onlyPayloadSize(2 * 32) public returns (bool success) {
+
+         if (balances[msg.sender] >= _amount
+             && _amount > 0
+             && balances[_to] + _amount > balances[_to]) {
+             balances[msg.sender] -= _amount;
+             balances[_to] += _amount;
+             Transfer(msg.sender, _to, _amount);
+             return true;
+         } else {
+             return false;
+         }
+    }
+    
+    function transferFrom(address _from, address _to, uint256 _amount) onlyPayloadSize(3 * 32) public returns (bool success) {
+
+         if (balances[_from] >= _amount
+             && allowed[_from][msg.sender] >= _amount
+             && _amount > 0
+             && balances[_to] + _amount > balances[_to]) {
+             balances[_from] -= _amount;
+             allowed[_from][msg.sender] -= _amount;
+             balances[_to] += _amount;
+             Transfer(_from, _to, _amount);
+             return true;
+         } else {
+            return false;
+         }
+    }
+    
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        // mitigates the ERC20 spend/approval race condition
+        if (_value != 0 && allowed[msg.sender][_spender] != 0) { return false; }
+        
         allowed[msg.sender][_spender] = _value;
+        
         Approval(msg.sender, _spender, _value);
         return true;
     }
-
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
+    
+    function allowance(address _owner, address _spender) constant public returns (uint256) {
+        return allowed[_owner][_spender];
     }
 
-    mapping (address => uint256) public balances;
-    mapping (address => mapping (address => uint256)) public allowed;
+    function finishDistribution() onlyOwner public returns (bool) {
+    distributionFinished = true;
+    DistrFinished();
+    return true;
+    }
+
+    function withdrawForeignTokens(address _tokenContract) public returns (bool) {
+        require(msg.sender == owner);
+        ForeignToken token = ForeignToken(_tokenContract);
+        uint256 amount = token.balanceOf(address(this));
+        return token.transfer(owner, amount);
+    }
+
+
 }
 
-
-//name this contract whatever you'd like
-contract Dextoken is StandardToken {
-
-    function () {
-        //if ether is sent to this address, send it back.
-        throw;
-    }
-
-    /* Public variables of the token */
-    string public name = "DEX Token";
-    string public symbol = "DEX";    
-    uint8 public decimals = 18;
-    string public version = "1.0";
-
-    function Dextoken(
-        uint256 _initialAmount
-    ) public {
-        totalSupply = _initialAmount;
-        balances[msg.sender] = totalSupply;          // Give the creator all initial tokens
-    }
-
-    /* Approves and then calls the receiving contract */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-
-        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
-        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
-        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
-        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
-        return true;
-    }
-}
+/**
+  
+   DEX Token 2018
+   
+  
+   */
