@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdPotato at 0xbeb9e1f975b00ba7069fcf6658ff66f5f78307e3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdPotato at 0x28b37fb0ba50e7de6f5d8e9dbae557cc4903cedb
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
-contract ShrimpFarmer{
+contract GPUMining{
     function buyEggs() public payable;
 }
 contract AdPotato{
     address ceoAddress;
-    ShrimpFarmer fundsTarget;
+    GPUMining fundsTarget;
     Advertisement[] ads;
     uint256 NUM_ADS=10;
     uint256 BASE_PRICE=0.005 ether;
@@ -25,7 +25,7 @@ contract AdPotato{
     /***CONSTRUCTOR***/
     function AdPotato() public{
         ceoAddress=msg.sender;
-        initialize(0x39dD0AC05016B2D4f82fdb3b70d011239abffA8B);
+        initialize(0xa965Fb4db32D8600edcd5CC102a43E798BC3F08f);
     }
     /*** DATATYPES ***/
     struct Advertisement{
@@ -38,7 +38,7 @@ contract AdPotato{
     }
     /*** PUBLIC FUNCTIONS ***/
     function initialize(address fund) public onlyCLevel{
-        fundsTarget=ShrimpFarmer(fund);
+        fundsTarget=GPUMining(fund);
         for(uint i=0;i<NUM_ADS;i++){
             ads.push(Advertisement({text:"Your Text Here",url:"",owner:ceoAddress,startingLevel:0,startingTime:now,halfLife:12 hours}));
         }
