@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GlobalBusinessSystem at 0x0b5cba1bc5ec084e82fadc4e2c3a43a94660b6c4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GlobalBusinessSystem at 0xeca8d4cb072af5d3e59b0460e072e60cd922ff7e
 */
 pragma solidity ^0.4.11;
 
@@ -385,8 +385,6 @@ contract Crowdsale {
 
   // amount of raised money in wei
   uint256 public weiRaised;
-  
-  uint bonusPeriod = 7;
 
   /**
    * event for token purchase logging
@@ -432,11 +430,6 @@ contract Crowdsale {
 
     // calculate token amount to be created
     uint256 tokens = weiAmount.mul(rate);
-    uint256 bonusTokens = 0;
-    if(now < (startTime + bonusPeriod * 1 days)) {
-      bonusTokens = tokens.div(5); //20%
-    }
-    tokens += bonusTokens;
 
     // update state
     weiRaised = weiRaised.add(weiAmount);
