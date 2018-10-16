@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MasterDeposit at 0x3845f2534e6db61d3c093a84fa6b3672c895c91b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MasterDeposit at 0xc2ee4954ea6e5164fa4ab8af4d326f6398c23299
 */
 pragma solidity ^0.4.21;
 
@@ -284,7 +284,7 @@ contract MasterDeposit is MasterDepositInterface, Claimable, ReentrancyGuard {
     * @dev responsible for creating deposits (in this way the owner isn't exposed to a api/server security breach)
     * @dev by loosing the depositCreator key an attacker can only create deposits that will not be a real threat and another depositCreator can be allocated
     */
-    address public depositCreator;
+    mapping (address => bool) public depositCreators;
 
     /**
     * @dev Fired at create time
@@ -332,11 +332,19 @@ contract MasterDeposit is MasterDepositInterface, Claimable, ReentrancyGuard {
     }
 
     /**
-    * @dev setter for the address that is responsible for creating deposits 
+    * @dev add an address that is responsible for creating deposits 
     */
-    function setDepositCreator(address _depositCreator) public onlyOwner {
+    function addDepositCreator(address _depositCreator) public onlyOwner {
         require(_depositCreator != address(0));
-        depositCreator = _depositCreator;
+        depositCreators [_depositCreator] = true;
+    }
+
+    /**
+    * @dev add an address that is responsible for creating deposits 
+    */
+    function removeDepositCreator(address _depositCreator) public onlyOwner {
+        require(_depositCreator != address(0));
+        depositCreators [_depositCreator] = false;
     }
 
     /**
@@ -371,13 +379,13 @@ contract MasterDeposit is MasterDepositInterface, Claimable, ReentrancyGuard {
     }
 
     /**
-    * @dev function that can be called only by owner due to security reasons and will withdraw the amount of ERC20 tokens
+    * @dev function that can be called only by deposit creator due to security reasons and will withdraw the amount of ERC20 tokens
     * @dev from the deposit contract list to the cold wallets 
     * @dev transfers only the ERC20 tokens, ETH should be transferred automatically
     * @param _deposits batch list with all deposit contracts that might hold ERC20 tokens
     * @param _tokenContractAddress specifies what token to be transfered form each deposit from the batch to the cold wallets
     */
-    function transferTokens(address[] _deposits, address _tokenContractAddress) public onlyOwner nonReentrant {
+    function transferTokens(address[] _deposits, address _tokenContractAddress) public onlyDepositCreatorOrMaster nonReentrant {
         for (uint i = 0; i < _deposits.length; i++) {
             address deposit = _deposits[i];
             uint erc20Balance = ERC20(_tokenContractAddress).balanceOf(deposit);
@@ -402,7 +410,7 @@ contract MasterDeposit is MasterDepositInterface, Claimable, ReentrancyGuard {
     }
 
     modifier onlyDepositCreatorOrMaster() {
-        require(msg.sender == owner || msg.sender == depositCreator);
+        require(msg.sender == owner || depositCreators[msg.sender]);
         _;
     }
 
