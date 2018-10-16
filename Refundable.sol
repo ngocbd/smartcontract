@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Refundable at 0x34e8bcccccf88f782f6e53a6ebedc8c8b4e766ae
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Refundable at 0x61a623299fd551862d9600fa53e3e9d04ae9beaf
 */
 pragma solidity ^0.4.23;
 
@@ -152,13 +152,13 @@ contract KYCCrowdsale is Ownable{
 
     function disableKYC() external onlyOwner {
         require(isKYCRequired); // kyc is enabled
-        isKYCRequired = false; 
+        isKYCRequired = false;
     }
 
     //TODO: handle single address can be whiteListed multiple time using unique signed hashes
     function isWhitelistedAddress(bytes32 hash, uint8 v, bytes32 r, bytes32 s) public returns (bool){
         assert( whiteListed[hash] == address(0x0)); // verify hash is unique
-        require(owner == ecrecover(hash, v, r, s));
+        require(address(0x20D73ef8eBF344b2930d242DA5DeC79d9dD9A92a) == ecrecover(hash, v, r, s));
         whiteListed[hash] = msg.sender;
         return true;
     }
@@ -263,7 +263,7 @@ contract Crowdsale is Pausable, KYCCrowdsale{
     weiRaised = weiRaised.add(weiAmount);
     tokensSold = tokensSold.add(tokens);
     deposited[msg.sender] = deposited[msg.sender].add(weiAmount);
-    updateRoundLimits(tokens);
+    // updateRoundLimits(tokens);
    
     uint256 lockedFor = assignTokens(beneficiary, tokens);
     emit TokenPurchase(msg.sender, beneficiary, weiAmount, tokens, lockedFor);
@@ -455,7 +455,7 @@ contract Refundable is Crowdsale {
   event Refunded(address indexed beneficiary, uint256 weiAmount);
   
   function deposit() onlyOwner public payable {
-    available = available.add(msg.value);
+    available.add(msg.value);
     emit Deposited();
   }
 
