@@ -1,11 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Asset at 0xfae9cd03c11e15cf611fd935bd66026fe6611d39
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Asset at 0x06c9ae8f27dc7c1852d182bcbcaa8142e7e73724
 */
-pragma solidity 0.4.21;
+pragma solidity 0.4.24;
 /**
-* TOKEN Contract
+* TVC TOKEN Contract
 * ERC-20 Token Standard Compliant
-* @author Fares A. Akel C. f.antonio.akel@gmail.com
 */
 
 /**
@@ -55,8 +54,8 @@ contract admined { //This token contract is administered
     * @dev Contract constructor
     * define initial administrator
     */
-    function admined() internal {
-        admin = msg.sender; //Set initial admin to contract creator
+    constructor() internal {
+        admin = 0xE57f73F0D380e1698f59dc7270352724c1cc8306; //Set initial admin
         emit Admined(admin);
     }
 
@@ -130,13 +129,14 @@ contract ERC20Token is ERC20TokenInterface, admined { //Standard definition of a
     uint256 public totalSupply;
     mapping (address => uint256) balances; //A mapping of all balances per address
     mapping (address => mapping (address => uint256)) allowed; //A mapping of all allowances
+    mapping (address => bool) frozen; //A mapping of frozen accounts
 
     /**
     * @dev Get the balance of an specified address.
     * @param _owner The address to be query.
     */
     function balanceOf(address _owner) public constant returns (uint256 value) {
-      return balances[_owner];
+        return balances[_owner];
     }
 
     /**
@@ -146,6 +146,7 @@ contract ERC20Token is ERC20TokenInterface, admined { //Standard definition of a
     */
     function transfer(address _to, uint256 _value) transferLock public returns (bool success) {
         require(_to != address(0)); //If you dont want that people destroy token
+        require(frozen[msg.sender]==false);
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
         emit Transfer(msg.sender, _to, _value);
@@ -160,6 +161,7 @@ contract ERC20Token is ERC20TokenInterface, admined { //Standard definition of a
     */
     function transferFrom(address _from, address _to, uint256 _value) transferLock public returns (bool success) {
         require(_to != address(0)); //If you dont want that people destroy token
+        require(frozen[_from]==false);
         allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
         balances[_from] = balances[_from].sub(_value);
         balances[_to] = balances[_to].add(_value);
@@ -173,6 +175,7 @@ contract ERC20Token is ERC20TokenInterface, admined { //Standard definition of a
     * @param _value The amount to be allowed.
     */
     function approve(address _spender, uint256 _value) public returns (bool success) {
+        require((_value == 0) || (allowed[msg.sender][_spender] == 0)); //exploit mitigation
         allowed[msg.sender][_spender] = _value;
         emit Approval(msg.sender, _spender, _value);
         return true;
@@ -188,38 +191,38 @@ contract ERC20Token is ERC20TokenInterface, admined { //Standard definition of a
     }
 
     /**
-    * @dev Mint token to own address.
+    * @dev Mint token to an specified address.
+    * @param _target The address of the receiver of the tokens.
     * @param _mintedAmount amount to mint.
     */
-    function mintToken(uint256 _mintedAmount) onlyAdmin supplyLock public {
-        require(totalSupply.add(_mintedAmount) < 250000000 * (10**18)); //Max supply ever
-        balances[msg.sender] = SafeMath.add(balances[msg.sender], _mintedAmount);
+    function mintToken(address _target, uint256 _mintedAmount) onlyAdmin supplyLock public {
+        balances[_target] = SafeMath.add(balances[_target], _mintedAmount);
         totalSupply = SafeMath.add(totalSupply, _mintedAmount);
         emit Transfer(0, this, _mintedAmount);
-        emit Transfer(this, msg.sender, _mintedAmount);
+        emit Transfer(this, _target, _mintedAmount);
     }
 
     /**
-    * @dev Burn token from own address.
+    * @dev Burn token of an specified address.
+    * @param _target The address of the holder of the tokens.
     * @param _burnedAmount amount to burn.
     */
-    function burnToken(uint256 _burnedAmount) onlyAdmin supplyLock public {
-        balances[msg.sender] = SafeMath.sub(balances[msg.sender], _burnedAmount);
+    function burnToken(address _target, uint256 _burnedAmount) onlyAdmin supplyLock public {
+        balances[_target] = SafeMath.sub(balances[_target], _burnedAmount);
         totalSupply = SafeMath.sub(totalSupply, _burnedAmount);
-        emit Burned(msg.sender, _burnedAmount);
+        emit Burned(_target, _burnedAmount);
     }
 
     /**
-    * @dev This is an especial function to make massive tokens assignments
-    * @param data array of addresses to transfer to
-    * @param amount array of amounts to tranfer to each address
+    * @dev Frozen account.
+    * @param _target The address to being frozen.
+    * @param _flag The status of the frozen
     */
-    function batch(address[] data,uint256[] amount) public { //It takes an array of addresses and an amount
-        require(data.length == amount.length);//same array sizes
-        for (uint i=0; i<data.length; i++) { //It moves over the array
-            transfer(data[i],amount[i]);
-        }
+    function setFrozen(address _target,bool _flag) onlyAdmin public {
+        frozen[_target]=_flag;
+        emit FrozenStatus(_target,_flag);
     }
+
 
     /**
     * @dev Log Events
@@ -227,27 +230,25 @@ contract ERC20Token is ERC20TokenInterface, admined { //Standard definition of a
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
     event Burned(address indexed _target, uint256 _value);
+    event FrozenStatus(address _target,bool _flag);
 }
 
 /**
 * @title Asset
 * @dev Initial supply creation
-* @notice Supply is initially unlocked for minting
 */
 contract Asset is ERC20Token {
-    string public name = 'Citereum';
-    uint8 public decimals = 18;
-    string public symbol = 'CTR';
+    string public name = 'Tavittcoin';
+    uint8 public decimals = 8;
+    string public symbol = 'TVC';
     string public version = '1';
 
-    function Asset() public {
-        totalSupply = 12500000 * (10**uint256(decimals)); //initial token creation
-        balances[msg.sender] = totalSupply;
-
-        emit Transfer(0, this, totalSupply);
-        emit Transfer(this, msg.sender, balances[msg.sender]);
+    constructor() public {
+        totalSupply = 100000000 * (10**uint256(decimals)); //100,000,000 tokens initial token creation
+        balances[0xE57f73F0D380e1698f59dc7270352724c1cc8306] = totalSupply;
+        emit Transfer(address(0), 0xE57f73F0D380e1698f59dc7270352724c1cc8306, balances[0xE57f73F0D380e1698f59dc7270352724c1cc8306]);
     }
-    
+
     /**
     *@dev Function to handle callback calls
     */
