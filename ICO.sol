@@ -1,17 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICO at 0x482bdc2c34e60949cd5c3d9d8d6d58803172092a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICO at 0xc316f2596a41db5bd29b502b338bccf43f76d504
 */
 pragma solidity 0.4.21;
 /**
 * @title ICO CONTRACT
 * @dev ERC-20 Token Standard Compliant
+* @notice Website: Ze.cash
 * @author Fares A. Akel C. f.antonio.akel@gmail.com
 */
 
 /**
- * @title SafeMath by OpenZeppelin
- * @dev Math operations with safety checks that throw on error
- */
+* @title SafeMath by OpenZeppelin
+* @dev Math operations with safety checks that throw on error
+*/
 library SafeMath {
 
     function mul(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -21,15 +22,27 @@ library SafeMath {
     }
 
     function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a / b;
-        return c;
+    uint256 c = a / b;
+    return c;
     }
+
 
     function add(uint256 a, uint256 b) internal pure returns (uint256) {
         uint256 c = a + b;
         assert(c >= a);
         return c;
     }
+
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+}
+
+contract FiatContract {
+ 
+  function USD(uint _id) public constant returns (uint256);
+
 }
 
 contract token {
@@ -37,51 +50,66 @@ contract token {
     function balanceOf(address _owner) public constant returns (uint256 balance);
     function transfer(address _to, uint256 _value) public returns (bool success);
 
+}
+
+/**
+* @title Admin parameters
+* @dev Define administration parameters for this contract
+*/
+contract admined { //This token contract is administered
+    address public admin; //Admin address is public
+
+    /**
+    * @dev Contract constructor
+    * define initial administrator
+    */
+    function admined() internal {
+        admin = msg.sender; //Set initial admin to contract creator
+        emit Admined(admin);
     }
 
-contract DateTimeAPI {
-        
-    function toTimestamp(uint16 year, uint8 month, uint8 day, uint8 hour, uint8 minute) public constant returns (uint timestamp);
+    modifier onlyAdmin() { //A modifier to define admin-only functions
+        require(msg.sender == admin);
+        _;
+    }
+
+   /**
+    * @dev Function to set new admin address
+    * @param _newAdmin The address to transfer administration to
+    */
+    function transferAdminship(address _newAdmin) onlyAdmin public { //Admin can be transfered
+        require(_newAdmin != address(0));
+        admin = _newAdmin;
+        emit TransferAdminship(admin);
+    }
+
+    event TransferAdminship(address newAdminister);
+    event Admined(address administer);
 
 }
 
-contract ICO {
-
-    DateTimeAPI dateTimeContract = DateTimeAPI(0x1a6184CD4C5Bea62B0116de7962EE7315B7bcBce);//Main
-    //DateTimeAPI dateTimeContract = DateTimeAPI(0x71b6e049E78c75fC61480357CD5aA1B81E1b16E0);//Kovan
-    //DateTimeAPI dateTimeContract = DateTimeAPI(0x670b2B167e13b131C491D87bA745dA41f07ecbc3);//Rinkeby
-    //DateTimeAPI dateTimeContract = DateTimeAPI(0x1F0a2ba4B115bd3e4007533C52BBd30C17E8B222);//Ropsten
-    
+contract ICO is admined{
     using SafeMath for uint256;
+    //This ico have 2 stages
     enum State {
-    //This ico have  states
-        preSale,
-        stage1a,
-        stage1b,
-        stage2a,
-        stage2b,
-        stage3a,
-        stage3b,
-        stage4a,
-        stage4b,
-        finishing,
+        Sale,
         Successful
     }
-
     //public variables
-    State public state = State.preSale; //Set initial stage
-    uint256 public startTime = dateTimeContract.toTimestamp(2018,4,1,0,0); //block-time when it start
+    State public state = State.Sale; //Set initial stage
+    uint256 public startTime = now; //block-time when it was deployed
     uint256 public totalRaised; //eth in wei
     uint256 public totalDistributed; //tokens distributed
-    uint256 public stageDistributed; //tokens distributed per stage
-    uint256[10] public rates = [2500,1250,1000,833,714,625,556,500,417,250];
-    uint256 public ICOdeadline;
-    uint256 public completedAt;
-    token public tokenReward;
-    address public creator;
-    address public beneficiary;
-    string public campaignUrl;
-    string public version = '1';
+    uint256 public completedAt; //Time stamp when the ico finish
+    token public tokenReward; //Address of the valit token used as reward
+    address public creator; //Address of the contract deployer
+    string public campaignUrl; //Web site of the campaing
+    string public version = '2';
+
+    FiatContract price = FiatContract(0x8055d0504666e2B6942BeB8D6014c964658Ca591); // MAINNET ADDRESS
+    //FiatContract price = FiatContract(0x2CDe56E5c8235D6360CCbb0c57Ce248Ca9C80909); // TESTNET ADDRESS (ROPSTEN)
+
+    uint256 remanent;
 
     //events for log
     event LogFundingReceived(address _addr, uint _amount, uint _currentTotal);
@@ -89,10 +117,8 @@ contract ICO {
     event LogFundingSuccessful(uint _totalRaised);
     event LogFunderInitialized(
         address _creator,
-        string _url,
-        uint256 _ICOdeadline);
+        string _url);
     event LogContributorsPayout(address _addr, uint _amount);
-    event LogStageDistributed(uint256 _amount, State _stage);
 
     modifier notFinished() {
         require(state != State.Successful);
@@ -100,201 +126,87 @@ contract ICO {
     }
     /**
     * @notice ICO constructor
+    * @param _campaignUrl is the ICO _url
     * @param _addressOfTokenUsedAsReward is the token totalDistributed
-    * @param _beneficiary is the address that will receive funds collected
     */
-    function ICO ( token _addressOfTokenUsedAsReward, address _beneficiary ) public {
-
+    function ICO (string _campaignUrl, token _addressOfTokenUsedAsReward) public {
         creator = msg.sender;
-        tokenReward = _addressOfTokenUsedAsReward;
-        beneficiary = _beneficiary;
-
-        ICOdeadline = dateTimeContract.toTimestamp(2018,6,30,23,59); //June 30 at 23:59 Unix time
+        campaignUrl = _campaignUrl;
+        tokenReward = token(_addressOfTokenUsedAsReward);
 
         emit LogFunderInitialized(
             creator,
-            campaignUrl,
-            ICOdeadline);
-            
+            campaignUrl
+            );
     }
 
     /**
     * @notice contribution handler
     */
     function contribute() public notFinished payable {
-        require(now >= startTime);
 
-        uint256 tokenBought = 0;
+        uint256 tokenBought; //Variable to store amount of tokens bought
+        uint256 tokenPrice = price.USD(0); //1 cent value in wei
 
-        totalRaised = totalRaised.add(msg.value);
+        tokenPrice = tokenPrice.div(10 ** 7);
+        totalRaised = totalRaised.add(msg.value); //Save the total eth totalRaised (in wei)
 
-        //Rate of exchange depends on stage
-        if (state == State.preSale){
-
-            tokenBought = msg.value.mul(rates[0]);
-            require(stageDistributed.add(tokenBought) <= 2000000 * (10**18));
+        tokenBought = msg.value.div(tokenPrice);
+        tokenBought = tokenBought.mul(10 **10); //0.10$ per token
         
-        } else if (state == State.stage1a){
-        
-            tokenBought = msg.value.mul(rates[1]);
-            require(stageDistributed.add(tokenBought) <= 1500000 * (10**18));
-        
-        } else if (state == State.stage1b){
-        
-            tokenBought = msg.value.mul(rates[2]);
-            require(stageDistributed.add(tokenBought) <= 1500000 * (10**18));
-        
-        } else if (state == State.stage2a){
-        
-            tokenBought = msg.value.mul(rates[3]);
-            require(stageDistributed.add(tokenBought) <= 1500000 * (10**18));
-        
-        } else if (state == State.stage2b){
-        
-            tokenBought = msg.value.mul(rates[4]);
-            require(stageDistributed.add(tokenBought) <= 1500000 * (10**18));
-        
-        } else if (state == State.stage3a){
-        
-            tokenBought = msg.value.mul(rates[5]);
-            require(stageDistributed.add(tokenBought) <= 1500000 * (10**18));
-        
-        } else if (state == State.stage3b){
-        
-            tokenBought = msg.value.mul(rates[6]);
-            require(stageDistributed.add(tokenBought) <= 1500000 * (10**18));
-        
-        } else if (state == State.stage4a){
-        
-            tokenBought = msg.value.mul(rates[7]);
-            require(stageDistributed.add(tokenBought) <= 1500000 * (10**18));
-        
-        } else if (state == State.stage4b){
-        
-            tokenBought = msg.value.mul(rates[8]);
-            require(stageDistributed.add(tokenBought) <= 1500000 * (10**18));
-        
-        } else if (state == State.finishing){
-
-            tokenBought = msg.value.mul(rates[9]);
-
-        }
-
-        stageDistributed = stageDistributed.add(tokenBought);
         totalDistributed = totalDistributed.add(tokenBought);
         
-        tokenReward.transfer(msg.sender, tokenBought);
-
-        emit LogFundingReceived(msg.sender, msg.value, totalRaised);
-        emit LogContributorsPayout(msg.sender, tokenBought);
-
-        checkIfFundingCompleteOrExpired();
-    }
-
-    /**
-    * @notice check status
-    */
-    function checkIfFundingCompleteOrExpired() public {
-
-        if(state == State.preSale && now > dateTimeContract.toTimestamp(2018,4,30,23,59)){ // Apr 30 2018
-
-            emit LogStageDistributed(stageDistributed,state);
-
-            state = State.stage1a;
-            stageDistributed = 0;
-
-        } else if(state == State.stage1a && now > dateTimeContract.toTimestamp(2018,5,7,23,59)){ // May 7 2018
-
-            emit LogStageDistributed(stageDistributed,state);
-
-            state = State.stage1b;
-            stageDistributed = 0;
-            
-        } else if(state == State.stage1b && now > dateTimeContract.toTimestamp(2018,5,14,23,59)){ // May 14 2018
-
-            emit LogStageDistributed(stageDistributed,state);
-            
-            state = State.stage2a;
-            stageDistributed = 0;
-            
-        } else if(state == State.stage2a && now > dateTimeContract.toTimestamp(2018,5,21,23,59)){ // May 21 2018
-
-            emit LogStageDistributed(stageDistributed,state);
-            
-            state = State.stage2b;
-            stageDistributed = 0;
-            
-        } else if(state == State.stage2b && now > dateTimeContract.toTimestamp(2018,5,28,23,59)){ // May 28 2018
-
-            emit LogStageDistributed(stageDistributed,state);
-            
-            state = State.stage3a;
-            stageDistributed = 0;
-            
-        } else if(state == State.stage3a && now > dateTimeContract.toTimestamp(2018,6,4,23,59)){ // Jun 4 2018
-
-            emit LogStageDistributed(stageDistributed,state);
-            
-            state = State.stage3b;
-            stageDistributed = 0;
-            
-        } else if(state == State.stage3b && now > dateTimeContract.toTimestamp(2018,6,11,23,59)){ // Jun 11 2018
-
-            emit LogStageDistributed(stageDistributed,state);
-            
-            state = State.stage4a;
-            stageDistributed = 0;
-            
-        } else if(state == State.stage4a && now > dateTimeContract.toTimestamp(2018,6,18,23,59)){ // Jun 18 2018
-
-            emit LogStageDistributed(stageDistributed,state);
-            
-            state = State.stage4b;
-            stageDistributed = 0;
-            
-        } else if(state == State.stage4b && now > dateTimeContract.toTimestamp(2018,6,25,23,59)){ // Jun 25 2018
-
-            emit LogStageDistributed(stageDistributed,state);
-            
-            state = State.finishing;
-            stageDistributed = 0;
-            
-        } else if(state == State.finishing && now > ICOdeadline && state!=State.Successful){ // ICOdeadline is Jun 30
-
-            emit LogStageDistributed(stageDistributed,state);
-            
-            state = State.Successful; //ico becomes Successful
-            completedAt = now; //ICO is complete
-
-            emit LogFundingSuccessful(totalRaised); //we log the finish
-            finished(); //and execute closure
-
-        }
-
-    }
-
-    /**
-    * @notice closure handler
-    */
-    function finished() public { //When finished eth and remaining tokens are transfered to beneficiary
-
-        require(state == State.Successful);
-        uint256 remanent = tokenReward.balanceOf(this);
-
-        require(beneficiary.send(address(this).balance));
-        tokenReward.transfer(beneficiary,remanent);
-
-        emit LogBeneficiaryPaid(beneficiary);
-        emit LogContributorsPayout(beneficiary, remanent);
-
-    }
-
-    /*
-    * @dev direct payments handle
-    */
-    function () public payable {
+        tokenReward.transfer(msg.sender,tokenBought);
         
-        contribute();
+        emit LogFundingReceived(msg.sender, msg.value, totalRaised);
+        emit LogContributorsPayout(msg.sender,tokenBought);
+    }
 
+    function finishFunding() onlyAdmin public {
+
+        state = State.Successful; //ico becomes Successful
+        completedAt = now; //ICO is complete
+        emit LogFundingSuccessful(totalRaised); //we log the finish
+        claimTokens();
+        claimEth();
+            
+    }
+
+    function claimTokens() onlyAdmin public{
+
+        remanent = tokenReward.balanceOf(this);
+        tokenReward.transfer(msg.sender,remanent);
+        
+        emit LogContributorsPayout(msg.sender,remanent);
+    }
+
+    function claimEth() onlyAdmin public { //When finished eth are transfered to creator
+        
+        require(msg.sender.send(address(this).balance));
+
+        emit LogBeneficiaryPaid(msg.sender);
+        
+    }
+
+    /**
+    * @dev This is an especial function to make massive tokens assignments
+    * @param _data array of addresses to transfer to
+    * @param _amount array of amounts to tranfer to each address
+    */
+    function batch(address[] _data,uint256[] _amount) onlyAdmin public { //It takes array of addresses and array of amount
+        require(_data.length == _amount.length);//same array sizes
+        for (uint i=0; i<_data.length; i++) { //It moves over the array
+            tokenReward.transfer(_data[i],_amount[i]);
+        }
+    }
+
+    /**
+    * @notice Function to handle eth transfers
+    * @dev BEWARE: if a call to this functions doesn't have
+    * enought gas, transaction could not be finished
+    */
+
+    function () public payable {
+        contribute();
     }
 }
