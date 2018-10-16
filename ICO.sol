@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICO at 0x381c23667cdb85514b8bc8ebe7406fec9d0c8f3c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICO at 0x4ed18fb6eb840415fd4cd19b7444503e7e64c511
 */
 pragma solidity ^0.4.18;
 
@@ -563,7 +563,7 @@ contract Deployer is Ownable {
     presale.setBountyTokensPercent(4);
     presale.setAdvisorsTokensPercent(2);
     presale.setDevTokensPercent(10);
-    presale.setSoftcap(40000000000000000000);
+    presale.setSoftcap(46000000000000000000);
     presale.setHardcap(50000000000000000000000);
     presale.addBonus(7,50);
     presale.addBonus(7,40);
