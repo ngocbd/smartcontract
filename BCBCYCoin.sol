@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BCBcyCoin at 0x298420e5b0dC1fCAaA49185CeF90FEd12d356038
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BCBcyCoin at 0xbe0b8FE07B72Dbb1dbb5a25C6206CD6D8d7E3dFc
 */
 pragma solidity ^0.4.18;
 
@@ -63,7 +63,7 @@ contract BCBcyCoin is ERC20 {
         _;
     }
 
-    function BCBCYCoin () public {
+    function BCBcyCoin () public {
         owner = msg.sender;
 		balances[msg.sender] = totalSupply;
     }
