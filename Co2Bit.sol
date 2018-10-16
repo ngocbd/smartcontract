@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Co2Bit at 0x574B36BceD443338875d171CC377E691f7d4F887
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Co2Bit at 0x97ba3d8ce6397ce7aea59a39e01ccd859c753387
 */
 pragma solidity ^0.4.18;
 /*
