@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GiftCrowdsale at 0x7448404e282a15723d19fce55444a1b09bf855d3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GiftCrowdsale at 0xf4a0767888e483143671f873b40376a7d20ba3e4
 */
 pragma solidity ^0.4.15;
 
@@ -331,7 +331,7 @@ contract GiftToken is BurnableToken, Pausable {
     string constant public symbol = "GIFT";
     uint8 constant public decimals = 18;
 
-    uint256 constant public INITIAL_TOTAL_SUPPLY = 2e7 * (uint256(10) ** decimals);
+    uint256 constant public INITIAL_TOTAL_SUPPLY = 1e8 * (uint256(10) ** decimals);
 
     address private addressIco;
 
@@ -397,6 +397,7 @@ contract Whitelist is Ownable {
     struct WalletInfo {
         string data;
         bool whitelisted;
+        uint256 createdTimestamp;
     }
 
     address private addressApi;
@@ -432,6 +433,7 @@ contract Whitelist is Ownable {
         require(!isWhitelisted(_wallet));
         whitelist[_wallet].data = _data;
         whitelist[_wallet].whitelisted = true;
+        whitelist[_wallet].createdTimestamp = now;
         whitelistLength++;
     }
 
@@ -475,6 +477,13 @@ contract Whitelist is Ownable {
         return whitelist[_wallet].data;
     }
 
+    /**
+    * @dev Get the creation timestamp for the specified whitelisted wallet.
+    * @param _wallet The address of wallet to get.
+    */
+    function walletCreatedTimestamp(address _wallet) constant public returns (uint256) {
+        return whitelist[_wallet].createdTimestamp;
+    }
 }
 
 // File: contracts/Whitelistable.sol
@@ -512,9 +521,7 @@ contract GiftCrowdsale is Pausable, Whitelistable {
     uint256 public minCap = 0;
 
     uint256 public endFirstPeriodTimestamp = 0;
-
     uint256 public endSecondPeriodTimestamp = 0;
-
     uint256 public endThirdPeriodTimestamp = 0;
 
     GiftToken public token = new GiftToken(this);
@@ -555,9 +562,7 @@ contract GiftCrowdsale is Pausable, Whitelistable {
         exchangeRate = _exchangeRate;
 
         endFirstPeriodTimestamp = _startTimestamp.add(1 days);
-
         endSecondPeriodTimestamp = _startTimestamp.add(1 weeks);
-
         endThirdPeriodTimestamp = _startTimestamp.add(2 weeks);
 
         minCap = _minCap;
@@ -567,18 +572,18 @@ contract GiftCrowdsale is Pausable, Whitelistable {
         if (now > endThirdPeriodTimestamp)
             return 0;
         if (now > endSecondPeriodTimestamp)
-            return 15;
+            return 5;
         if (now > endFirstPeriodTimestamp)
-            return 25;
-        return 35;
+            return 15;
+        return 25;
     }
 
-    function bonus() constant public returns (uint256) {
-        if (now > endSecondPeriodTimestamp)
-            return 0;
-        if (now > endFirstPeriodTimestamp)
-            return 3;
-        return 5;
+    function bonus(address _wallet) constant public returns (uint256) {
+        uint256 _created = whitelist.walletCreatedTimestamp(_wallet);
+        if (_created > 0 && _created < startTimestamp) {
+            return 10;
+        }
+        return 0;
     }
 
     /**
@@ -587,7 +592,7 @@ contract GiftCrowdsale is Pausable, Whitelistable {
     */
     function sellTokens () whenSaleIsOpen whenWhitelisted(msg.sender) whenNotPaused public payable {
         require(msg.value > minimumInvestment);
-        uint256 _bonus = bonus();
+        uint256 _bonus = bonus(msg.sender);
         uint256 _discount = discount();
         uint256 tokensAmount = (msg.value).mul(exchangeRate).mul(_bonus.add(100)).div((100 - _discount));
 
@@ -659,5 +664,31 @@ contract GiftCrowdsale is Pausable, Whitelistable {
 
     function updateIcoEnding(uint256 _endTimestamp) onlyOwner public {
         endTimestamp = _endTimestamp;
+    }
+}
+
+// File: contracts/GiftFactory.sol
+
+contract GiftFactory {
+    GiftCrowdsale public crowdsale;
+
+    function createCrowdsale (
+        uint256 _startTimestamp,
+        uint256 _endTimestamp,
+        uint256 _exchangeRate,
+        uint256 _minCap
+    ) public
+    {
+        crowdsale = new GiftCrowdsale(
+            _startTimestamp,
+            _endTimestamp,
+            _exchangeRate,
+            _minCap
+        );
+
+        Whitelist whitelist = crowdsale.whitelist();
+
+        crowdsale.transferOwnership(msg.sender);
+        whitelist.transferOwnership(msg.sender);
     }
 }
