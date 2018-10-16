@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PorterToken at 0xff9e14f8953310ba9a106f7e789d07f4433622a3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PorterToken at 0x17006897723295962e8bf2cf5ad4369a426b919e
 */
 pragma solidity ^0.4.4;
 
@@ -116,11 +116,11 @@ contract PorterToken is StandardToken {
 
     function PorterToken(
         ) {
-        balances[msg.sender] = 1000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 1000000;                        // Update total supply (100000 for example)
+        balances[msg.sender] = 100000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 100000000;                        // Update total supply (100000 for example)
         name = "Porter Coin";                                   // Set the name for display purposes
-        decimals = 18;                            // Amount of decimals for display purposes
-        symbol = "PTRC";                               // Set the symbol for display purposes
+        decimals = 2;                            // Amount of decimals for display purposes
+        symbol = "PTR";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
