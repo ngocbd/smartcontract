@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthAnte at 0xb5f29f36e9006f3e7245b5daf7bcdc9fa1daead5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthAnte at 0xc9010d9ae0f893d176ed1901868cf0b9e6e47763
 */
 /*
 *
@@ -40,7 +40,7 @@ contract EthAnte {
         lastBidder = msg.sender;
 		kBalance = msg.value;
 	    timeOut = now + 10 minutes;
-	    feeRate = 100; // i.e. 1%
+	    feeRate = 10; // i.e. 10%
 	} 
 	
 	function fund() public payable {
@@ -53,7 +53,7 @@ contract EthAnte {
 	    // merely extend the time but don't make them
 	    // eligible to win (Note that there is a trick 
 	    // play available here)
-	    if(_val < 9900 szabo) {
+	    if(_val < 9 finney) {
 	        timeOut += 2 minutes;
 	        return;
 	    }
@@ -67,7 +67,7 @@ contract EthAnte {
 	    }
 	    
 	    // The more you put in the less time you add
-	    timeOut += (10 minutes) * (9900 szabo) / _val;
+	    timeOut += (10 minutes) * (9 finney) / _val;
 	    lastBidder = msg.sender;
 	}
 
