@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LiverpoolvsManCity at 0xe88d59b921981626a2c1f2450b37e3137a3e6ba7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LiverpoolvsManCity at 0xe7154ec20f70b8f50ead3facaa57c67997a93ce1
 */
 pragma solidity ^0.4.11;
 
@@ -1035,7 +1035,7 @@ contract LiverpoolvsManCity is usingOraclize {
   uint public constant MIN_BET = 0.01 ether;
 
   uint public EXPECTED_START = 1522867200; // When the bet's event is expected to start
-  uint public EXPECTED_END = 1523482200; // When the bet's event is expected to end
+  uint public EXPECTED_END = 1522876500; // When the bet's event is expected to end
 
   uint public constant BETTING_OPENS = 1522660968;
   uint public BETTING_CLOSES = EXPECTED_START - 60; // Betting closes a minute before the bet event starts
@@ -1177,7 +1177,7 @@ contract LiverpoolvsManCity is usingOraclize {
     // ipfs.io/ipfs/<HASH>). Oraclize will then deploy this script.
     // Look over the Oraclize documentation to verify this info
     // for yourself.
-    oraclizeQueryId = makeOraclizeQuery(timeOrDelay, "nested", "[computation] ['QmZ7x9mEdGeMLcu642gLVgVkoPbr3E1mq4kXLQ72qNS95r', '164861', '164862', '${[decrypt] BP6bw6VvvF4JOkogZJSNc2or1ZhNQPdfgPSGINDDPjkQp64nfxsVu+1eTpmmOSOXokb61HRJ4mz4gtzHAqpm8cQDA9Q0p/UXzm/DKwLkzTTiR6EHeKCtSAKFzzQsCIUWev163WdQ2f9sO7KWFwVNrTo=}']", gas);
+    oraclizeQueryId = makeOraclizeQuery(timeOrDelay, "nested", "[computation] ['QmZ7x9mEdGeMLcu642gLVgVkoPbr3E1mq4kXLQ72qNS95r', '164861', '164862', '${[decrypt] BMIhQZOE/P50yfHqz+vAEVQn1PpdrwYx+7Hg7bx522F4SUi/CVGjezx6O8U42D1+vyfbl62/zyAmaPcTkYOcx3LtHtGOeqoO9rHh9x3w73vJMJEcW2rrYrbhI8ZinqdzsTpT3smk4SyQI/B7t7mvUDc=}']", gas);
   }
 
   function makeOraclizeQuery(uint timeOrDelay, string datasource, string query, uint gas) private returns(bytes32) {
