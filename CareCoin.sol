@@ -1,11 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CareCoin at 0x149a23f3d1a1e61e1e3b7eddd27f32e01f9788c7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Carecoin at 0xa09919d5abedcec55cc1945062b21b170ad19f86
 */
-pragma solidity ^0.4.13;
-
+pragma solidity ^0.4.16;
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
-
-contract CareCoin {
+contract Carecoin{
     // Public variables of the token
     string public name;
     string public symbol;
@@ -28,7 +26,7 @@ contract CareCoin {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function CareCoin(
+    function Carecoin(
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
@@ -137,7 +135,7 @@ contract CareCoin {
     }
 
     /**
-     * Destroy tokens from other ccount
+     * Destroy tokens from other account
      *
      * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
      *
