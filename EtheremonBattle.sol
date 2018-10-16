@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonBattle at 0x0fa8051dbdbbcc32d602803d5f1de1e6f92a0bbd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonBattle at 0x0c28bf52d0d4d9447e86d7e7f0e317f273d3c9a3
 */
 pragma solidity ^0.4.16;
 
@@ -304,7 +304,8 @@ contract EtheremonBattle is EtheremonEnum, BasicAccessControl, SafeMath {
     
     uint8 public winBrickReturn = 8;
     uint32 public castleMinBrick = 5;
-    uint8 public castleExpAdjustment = 100; // percentage
+    uint8 public castleExpAdjustment = 150; // percentage
+    uint8 public castleMaxLevelGap = 5;
     uint public brickETHPrice = 0.004 ether;
     uint8 public minHpDeducted = 10;
     uint public winTokenReward = 10 ** 8;
@@ -438,19 +439,23 @@ contract EtheremonBattle is EtheremonEnum, BasicAccessControl, SafeMath {
         paymentContract = _paymentContract;
     }
     
-    function setConfig(uint8 _ancestorBuffPercentage, uint8 _gasonBuffPercentage, uint8 _typeBuffPercentage, uint32 _castleMinBrick, 
-        uint8 _maxLevel, uint16 _maxActiveCastle, uint8 _maxRandomRound, uint8 _minHpDeducted, uint _winTokenReward, uint _brickETHPrice, uint8 _castleExpAdjustment) onlyModerators external{
+    function setConfig(uint8 _ancestorBuffPercentage, uint8 _gasonBuffPercentage, uint8 _typeBuffPercentage, 
+        uint8 _maxLevel, uint8 _maxRandomRound, uint8 _minHpDeducted, uint _winTokenReward) onlyModerators external{
         ancestorBuffPercentage = _ancestorBuffPercentage;
         gasonBuffPercentage = _gasonBuffPercentage;
         typeBuffPercentage = _typeBuffPercentage;
-        castleMinBrick = _castleMinBrick;
         maxLevel = _maxLevel;
-        maxActiveCastle = _maxActiveCastle;
         maxRandomRound = _maxRandomRound;
         minHpDeducted = _minHpDeducted;
         winTokenReward = _winTokenReward;
+    }
+    
+    function setCastleConfig(uint8 _castleMaxLevelGap, uint16 _maxActiveCastle, uint _brickETHPrice, uint8 _castleExpAdjustment, uint32 _castleMinBrick) onlyModerators external {
+        castleMaxLevelGap = _castleMaxLevelGap;
+        maxActiveCastle = _maxActiveCastle;
         brickETHPrice = _brickETHPrice;
         castleExpAdjustment = _castleExpAdjustment;
+        castleMinBrick = _castleMinBrick;
     }
     
     function genLevelExp() onlyModerators external {
@@ -963,6 +968,8 @@ contract EtheremonBattle is EtheremonEnum, BasicAccessControl, SafeMath {
         if (log.win)
             countWin += 1; 
         
+        if ((log.monsterLevel[0] + log.monsterLevel[1] + log.monsterLevel[2])/3 + castleMaxLevelGap < (log.monsterLevel[3] + log.monsterLevel[4] + log.monsterLevel[5])/3)
+            revert();
         
         updateCastle(_castleId, log.castleOwner, countWin>1);
         if (countWin>1) {
