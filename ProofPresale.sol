@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofPresale at 0x2816C772eBEC14ca3C3D3d45fba8b35ACFe07F54
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofPresale at 0x3931e02c9acb4f68d7617f19617a20acd3642607
 */
 pragma solidity ^0.4.11;
 
@@ -278,7 +278,7 @@ contract ProofPresale is Pausable {
     token = createTokenContract();
     wallet = 0x99892Ac6DA1b3851167Cb959fE945926bca89f09;
     rate = 20;
-    minInvestment = 10 ether;  //minimum investment in wei  (=10 ether)
+    minInvestment = 10 * (10**18);  //minimum investment in wei  (=10 ether)
     cap = 295257 * (10**18);  //cap in token base units (=295257 tokens)
     
   }
