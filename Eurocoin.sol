@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Eurocoin at 0x9Aa9Bd7e6d110225B160a5fB7b25449A5b0E2413
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Eurocoin at 0x5150dCbb97c035005Eba4931610331AbDedb3623
 */
 pragma solidity ^0.4.4;
 
@@ -25,8 +25,8 @@ contract Eurocoin {
          decimals = 0;
          symbol = "EUCE";
         
-        balanceOf[msg.sender] = 100000000;              // Give the creator all initial tokens
-        totalSupply = 100000000;                        // Update total supply
+        balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
+        totalSupply = initialSupply;                        // Update total supply
                                    
     }
 
