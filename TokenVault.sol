@@ -1,148 +1,426 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVault at 0x985fbb68ff6396938796008054147880626d5d52
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVault at 0x999b190dbbc297980e6b01c5e486a54cb8dbffd6
 */
-pragma solidity ^0.4.10;
-
-// Token selling smart contract
-// Inspired by https://github.com/bokkypoobah/TokenTrader
-
-// https://github.com/ethereum/EIPs/issues/20
+/*
+ * ERC20 interface
+ * see https://github.com/ethereum/EIPs/issues/20
+ */
 contract ERC20 {
-    function totalSupply() constant returns (uint totalSupply);
-    function balanceOf(address _owner) constant returns (uint balance);
-    function transfer(address _to, uint _value) returns (bool success);
-    function transferFrom(address _from, address _to, uint _value) returns (bool success);
-    function approve(address _spender, uint _value) returns (bool success);
-    function allowance(address _owner, address _spender) constant returns (uint remaining);
-    event Transfer(address indexed _from, address indexed _to, uint _value);
-    event Approval(address indexed _owner, address indexed _spender, uint _value);
+  uint public totalSupply;
+  function balanceOf(address who) constant returns (uint);
+  function allowance(address owner, address spender) constant returns (uint);
+
+  function transfer(address to, uint value) returns (bool ok);
+  function transferFrom(address from, address to, uint value) returns (bool ok);
+  function approve(address spender, uint value) returns (bool ok);
+  event Transfer(address indexed from, address indexed to, uint value);
+  event Approval(address indexed owner, address indexed spender, uint value);
 }
 
-// `owned` contracts allows us to specify an owner address
-// which has admin right to this contract
-contract owned {
-    address public owner;
-    event OwnershipTransferred(address indexed _from, address indexed _to);
 
-    function owned() {
-        owner = msg.sender;
-    }
 
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
+/**
+ * Math operations with safety checks
+ */
+contract SafeMath {
+  function safeMul(uint a, uint b) internal returns (uint) {
+    uint c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
-    function transferOwnership(address newOwner) onlyOwner {
-        OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
+  function safeDiv(uint a, uint b) internal returns (uint) {
+    assert(b > 0);
+    uint c = a / b;
+    assert(a == b * c + a % b);
+    return c;
+  }
+
+  function safeSub(uint a, uint b) internal returns (uint) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function safeAdd(uint a, uint b) internal returns (uint) {
+    uint c = a + b;
+    assert(c>=a && c>=b);
+    return c;
+  }
+
+  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a >= b ? a : b;
+  }
+
+  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a < b ? a : b;
+  }
+
+  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a >= b ? a : b;
+  }
+
+  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a < b ? a : b;
+  }
+
+  function assert(bool assertion) internal {
+    if (!assertion) {
+      throw;
     }
+  }
 }
 
-// `halting` contracts allow us to stop activity on this contract,
-// or even self-destruct if need be.
-contract halting is owned {
-    bool public running = true;
 
-    function start() onlyOwner {
-        running = true;
-    }
 
-    function stop() onlyOwner {
-        running = false;
-    }
+/**
+ * Standard ERC20 token with Short Hand Attack and approve() race condition mitigation.
+ *
+ * Based on code by FirstBlood:
+ * https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, SafeMath {
 
-    function destruct() onlyOwner {
-        selfdestruct(owner);
-    }
+  /* Token supply got increased and a new owner received these tokens */
+  event Minted(address receiver, uint amount);
 
-    modifier halting {
-        assert(running);
-        _;
-    }
+  /* Actual balances of token holders */
+  mapping(address => uint) balances;
+
+  /* approve() allowances */
+  mapping (address => mapping (address => uint)) allowed;
+
+  /* Interface declaration */
+  function isToken() public constant returns (bool weAre) {
+    return true;
+  }
+
+  /**
+   *
+   * Fix for the ERC20 short address attack
+   *
+   * http://vessenes.com/the-erc20-short-address-attack-explained/
+   */
+  modifier onlyPayloadSize(uint size) {
+     if(msg.data.length < size + 4) {
+       throw;
+     }
+     _;
+  }
+
+  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) returns (bool success) {
+    balances[msg.sender] = safeSub(balances[msg.sender], _value);
+    balances[_to] = safeAdd(balances[_to], _value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  function transferFrom(address _from, address _to, uint _value) returns (bool success) {
+    uint _allowance = allowed[_from][msg.sender];
+
+    // Check is not needed because safeSub(_allowance, _value) will already throw if this condition is not met
+    // if (_value > _allowance) throw;
+
+    balances[_to] = safeAdd(balances[_to], _value);
+    balances[_from] = safeSub(balances[_from], _value);
+    allowed[_from][msg.sender] = safeSub(_allowance, _value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  function balanceOf(address _owner) constant returns (uint balance) {
+    return balances[_owner];
+  }
+
+  function approve(address _spender, uint _value) returns (bool success) {
+
+    // To change the approve amount you first have to reduce the addresses`
+    //  allowance to zero by calling `approve(_spender, 0)` if it is not
+    //  already 0 to mitigate the race condition described here:
+    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) throw;
+
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  function allowance(address _owner, address _spender) constant returns (uint remaining) {
+    return allowed[_owner][_spender];
+  }
+
+  /**
+   * Atomic increment of approved spending
+   *
+   * Works around https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   *
+   */
+  function addApproval(address _spender, uint _addedValue)
+  returns (bool success) {
+      uint oldValue = allowed[msg.sender][_spender];
+      allowed[msg.sender][_spender] = safeAdd(oldValue, _addedValue);
+      Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+      return true;
+  }
+
+  /**
+   * Atomic decrement of approved spending.
+   *
+   * Works around https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   */
+  function subApproval(address _spender, uint _subtractedValue)
+  returns (bool success) {
+
+      uint oldVal = allowed[msg.sender][_spender];
+
+      if (_subtractedValue > oldVal) {
+          allowed[msg.sender][_spender] = 0;
+      } else {
+          allowed[msg.sender][_spender] = safeSub(oldVal, _subtractedValue);
+      }
+      Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+      return true;
+  }
+
 }
 
-// contract can buy or sell tokens for ETH
-// prices are in amount of wei per batch of token units
-contract TokenVault is owned, halting {
 
-    address public asset;    // address of token
-    uint public sellPrice;   // contract sells lots at this price (in wei)
-    uint public units;       // lot size (token-wei)
 
-    event MakerWithdrewAsset(uint tokens);
-    event MakerWithdrewEther(uint ethers);
-    event SoldTokens(uint tokens);
+/*
+ * Ownable
+ *
+ * Base contract with an owner.
+ * Provides onlyOwner modifier, which prevents function from running if it is called by anyone other than the owner.
+ */
+contract Ownable {
+  address public owner;
 
-    // Constructor - only to be called by the TokenTraderFactory contract
-    function TokenVault (
-        address _asset,
-        uint _sellPrice,
-        uint _units
-    ) {
-        asset       = _asset;
-        sellPrice   = _sellPrice;
-        units       = _units;
+  function Ownable() {
+    owner = msg.sender;
+  }
 
-        require(asset != 0);
-        require(sellPrice > 0);
-        require(units > 0);
+  modifier onlyOwner() {
+    if (msg.sender != owner) {
+      throw;
+    }
+    _;
+  }
+
+  function transferOwnership(address newOwner) onlyOwner {
+    if (newOwner != address(0)) {
+      owner = newOwner;
+    }
+  }
+
+}
+
+
+/**
+ * Hold tokens for a group investor of investors until the unlock date.
+ *
+ * After the unlock date the investor can claim their tokens.
+ *
+ * Steps
+ *
+ * - Prepare a spreadsheet for token allocation
+ * - Deploy this contract, with the sum to tokens to be distributed, from the owner account
+ * - Call setInvestor for all investors from the owner account using a local script and CSV input
+ * - Move tokensToBeAllocated in this contract using StandardToken.transfer()
+ * - Call lock from the owner account
+ * - Wait until the freeze period is over
+ * - After the freeze time is over investors can call claim() from their address to get their tokens
+ *
+ */
+contract TokenVault is Ownable {
+
+  /** How many investors we have now */
+  uint public investorCount;
+
+  /** Sum from the spreadsheet how much tokens we should get on the contract. If the sum does not match at the time of the lock the vault is faulty and must be recreated.*/
+  uint public tokensToBeAllocated;
+
+  /** How many tokens investors have claimed so far */
+  uint public totalClaimed;
+
+  /** How many tokens our internal book keeping tells us to have at the time of lock() when all investor data has been loaded */
+  uint public tokensAllocatedTotal;
+
+  /** How much we have allocated to the investors invested */
+  mapping(address => uint) public balances;
+
+  /** How many tokens investors have claimed */
+  mapping(address => uint) public claimed;
+
+  /** When our claim freeze is over (UNIX timestamp) */
+  uint public freezeEndsAt;
+
+  /** When this vault was locked (UNIX timestamp) */
+  uint public lockedAt;
+
+  /** We can also define our own token, which will override the ICO one ***/
+  StandardToken public token;
+
+  /** What is our current state.
+   *
+   * Loading: Investor data is being loaded and contract not yet locked
+   * Holding: Holding tokens for investors
+   * Distributing: Freeze time is over, investors can claim their tokens
+   */
+  enum State{Unknown, Loading, Holding, Distributing}
+
+  /** We allocated tokens for investor */
+  event Allocated(address investor, uint value);
+
+  /** We distributed tokens to an investor */
+  event Distributed(address investors, uint count);
+
+  event Locked();
+
+  /**
+   * Create presale contract where lock up period is given days
+   *
+   * @param _owner Who can load investor data and lock
+   * @param _freezeEndsAt UNIX timestamp when the vault unlocks
+   * @param _token Token contract address we are distributing
+   * @param _tokensToBeAllocated Total number of tokens this vault will hold - including decimal multiplcation
+   *
+   */
+  function TokenVault(address _owner, uint _freezeEndsAt, StandardToken _token, uint _tokensToBeAllocated) {
+
+    owner = _owner;
+
+    // Invalid owenr
+    if(owner == 0) {
+      throw;
     }
 
-    // Withdraw asset ERC20 Token
-    function makerWithdrawAsset(uint tokens) onlyOwner returns (bool ok) {
-        MakerWithdrewAsset(tokens);
-        return ERC20(asset).transfer(owner, tokens);
+    token = _token;
+
+    // Check the address looks like a token contract
+    if(!token.isToken()) {
+      throw;
     }
 
-    // Withdraw all eth from this contract
-    function makerWithdrawEther() onlyOwner {
-        MakerWithdrewEther(this.balance);
-        return owner.transfer(this.balance);
+    // Give argument
+    if(_freezeEndsAt == 0) {
+      throw;
     }
 
-    // Function to easily check this contracts balance
-    function getAssetBalance() constant returns (uint) {
-        return ERC20(asset).balanceOf(address(this));
+    // Sanity check on _tokensToBeAllocated
+    if(_tokensToBeAllocated == 0) {
+      throw;
     }
 
-    function min(uint a, uint b) private returns (uint) {
-        return a < b ? a : b;
+    freezeEndsAt = _freezeEndsAt;
+    tokensToBeAllocated = _tokensToBeAllocated;
+  }
+
+  /// @dev Add a presale participating allocation
+  function setInvestor(address investor, uint amount) public onlyOwner {
+
+    if(lockedAt > 0) {
+      // Cannot add new investors after the vault is locked
+      throw;
     }
 
-    // Primary function; called with Ether sent to contract
-    function takerBuyAsset() payable halting {
+    if(amount == 0) throw; // No empty buys
 
-        // Must request at least one asset
-        require(msg.value >= sellPrice);
-
-        uint order    = msg.value / sellPrice;
-        uint can_sell = getAssetBalance() / units;
-        // start with no change
-        uint256 change = 0;
-        if (msg.value > (can_sell * sellPrice)) {
-            change  = msg.value - (can_sell * sellPrice);
-            order = can_sell;
-        }
-        if (change > 0) {
-            if (!msg.sender.send(change)) throw;
-        }
-        if (order > 0) {
-            if (!ERC20(asset).transfer(msg.sender, order * units)) throw;
-        }
-        SoldTokens(order);
-
+    // Don't allow reset
+    if(balances[investor] > 0) {
+      throw;
     }
 
-    // Ether is sent to the contract; can be either Maker or Taker
-    function () payable {
-        if (msg.sender == owner) {
-            // Allow owner to simply add eth to contract
-            return;
-        }
-        else {
-            // Otherwise, interpret as a buy request
-            takerBuyAsset();
-        }
+    balances[investor] = amount;
+
+    investorCount++;
+
+    tokensAllocatedTotal += amount;
+
+    Allocated(investor, amount);
+  }
+
+  /// @dev Lock the vault
+  ///      - All balances have been loaded in correctly
+  ///      - Tokens are transferred on this vault correctly
+  ///      - Checks are in place to prevent creating a vault that is locked with incorrect token balances.
+  function lock() onlyOwner {
+
+    if(lockedAt > 0) {
+      throw; // Already locked
     }
+
+    // Spreadsheet sum does not match to what we have loaded to the investor data
+    if(tokensAllocatedTotal != tokensToBeAllocated) {
+      throw;
+    }
+
+    // Do not lock the vault if the given tokens are not on this contract
+    if(token.balanceOf(address(this)) != tokensAllocatedTotal) {
+      throw;
+    }
+
+    lockedAt = now;
+
+    Locked();
+  }
+
+  /// @dev In the case locking failed, then allow the owner to reclaim the tokens on the contract.
+  function recoverFailedLock() onlyOwner {
+    if(lockedAt > 0) {
+      throw;
+    }
+
+    // Transfer all tokens on this contract back to the owner
+    token.transfer(owner, token.balanceOf(address(this)));
+  }
+
+  /// @dev Get the current balance of tokens in the vault
+  /// @return uint How many tokens there are currently in vault
+  function getBalance() public constant returns (uint howManyTokensCurrentlyInVault) {
+    return token.balanceOf(address(this));
+  }
+
+  /// @dev Claim N bought tokens to the investor as the msg sender
+  function claim() {
+
+    address investor = msg.sender;
+
+    if(lockedAt == 0) {
+      throw; // We were never locked
+    }
+
+    if(now < freezeEndsAt) {
+      throw; // Trying to claim early
+    }
+
+    if(balances[investor] == 0) {
+      // Not our investor
+      throw;
+    }
+
+    if(claimed[investor] > 0) {
+      throw; // Already claimed
+    }
+
+    uint amount = balances[investor];
+
+    claimed[investor] = amount;
+
+    totalClaimed += amount;
+
+    token.transfer(investor, amount);
+
+    Distributed(investor, amount);
+  }
+
+  /// @dev Resolve the contract umambigious state
+  function getState() public constant returns(State) {
+    if(lockedAt == 0) {
+      return State.Loading;
+    } else if(now > freezeEndsAt) {
+      return State.Distributing;
+    } else {
+      return State.Holding;
+    }
+  }
+
 }
