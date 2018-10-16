@@ -1,194 +1,253 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HydroToken at 0x12fb5d5802c3b284761d76c3e723ea913877afba
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HydroToken at 0xebbdf302c940c6bfd49c6b165f457fdb324649bc
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.18;
 
-/*
-Copyright (c) 2016 Smart Contract Solutions, Inc.
 
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be included
-in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
-
-contract owned {
+contract Ownable {
     address public owner;
 
-    function owned() public {
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
+     */
+    function Ownable() public {
         owner = msg.sender;
     }
 
-    modifier onlyOwner {
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
 
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
     function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0));
+        emit OwnershipTransferred(owner, newOwner);
         owner = newOwner;
     }
+
 }
 
-contract basicToken {
-    function balanceOf(address) public view returns (uint256);
-    function transfer(address, uint256) public returns (bool);
-    function transferFrom(address, address, uint256) public returns (bool);
-    function approve(address, uint256) public returns (bool);
-    function allowance(address, address) public view returns (uint256);
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
 
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-contract ERC20Standard is basicToken{
+interface Raindrop {
+    function authenticate(address _sender, uint _value, uint _challenge, uint _partnerId) external;
+}
 
-    mapping (address => mapping (address => uint256)) allowed;
+interface tokenRecipient {
+    function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external;
+}
+
+contract HydroToken is Ownable {
+    using SafeMath for uint256;
+
+    string public name = "Hydro";           //The Token's name: e.g. DigixDAO Tokens
+    uint8 public decimals = 18;             //Number of decimals of the smallest unit
+    string public symbol = "HYDRO";         //An identifier: e.g. REP
+    uint public totalSupply;
+    address public raindropAddress = 0x0;
+
     mapping (address => uint256) public balances;
+    // `allowed` tracks any extra transfer rights as in all ERC20 tokens
+    mapping (address => mapping (address => uint256)) public allowed;
 
-    /* Send coins */
-    function transfer(address _to, uint256 _value) public returns (bool success){
-        require (_to != 0x0);                               // Prevent transfer to 0x0 address
-        require (balances[msg.sender] > _value);            // Check if the sender has enough
-        require (balances[_to] + _value > balances[_to]);   // Check for overflows
-        _transfer(msg.sender, _to, _value);                 // Perform actually transfer
-        Transfer(msg.sender, _to, _value);                  // Trigger Transfer event
+////////////////
+// Constructor
+////////////////
+
+    /// @notice Constructor to create a HydroToken
+    function HydroToken() public {
+        totalSupply = 11111111111 * 10**18;
+        // Give the creator all initial tokens
+        balances[msg.sender] = totalSupply;
+    }
+
+
+///////////////////
+// ERC20 Methods
+///////////////////
+
+    /// @notice Send `_amount` tokens to `_to` from `msg.sender`
+    /// @param _to The address of the recipient
+    /// @param _amount The amount of tokens to be transferred
+    /// @return Whether the transfer was successful or not
+    function transfer(address _to, uint256 _amount) public returns (bool success) {
+        doTransfer(msg.sender, _to, _amount);
         return true;
     }
 
-    /* Use admin powers to send from a users account */
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success){
-        require (_to != 0x0);                               // Prevent transfer to 0x0 address
-        require (balances[msg.sender] > _value);            // Check if the sender has enough
-        require (balances[_to] + _value > balances[_to]);   // Check for overflows
-        require (allowed[_from][msg.sender] >= _value);     // Only allow if sender is allowed to do this
-        _transfer(msg.sender, _to, _value);                 // Perform actually transfer
-        Transfer(msg.sender, _to, _value);                  // Trigger Transfer event
+    /// @notice Send `_amount` tokens to `_to` from `_from` on the condition it
+    ///  is approved by `_from`
+    /// @param _from The address holding the tokens being transferred
+    /// @param _to The address of the recipient
+    /// @param _amount The amount of tokens to be transferred
+    /// @return True if the transfer was successful
+    function transferFrom(address _from, address _to, uint256 _amount
+    ) public returns (bool success) {
+        // The standard ERC 20 transferFrom functionality
+        require(allowed[_from][msg.sender] >= _amount);
+        allowed[_from][msg.sender] -= _amount;
+        doTransfer(_from, _to, _amount);
         return true;
     }
 
-    /* Internal transfer, only can be called by this contract */
-    function _transfer(address _from, address _to, uint _value) internal {
-        balances[_from] -= _value;                          // Subtract from the sender
-        balances[_to] += _value;                            // Add the same to the recipient
+    /// @dev This is the actual transfer function in the token contract, it can
+    ///  only be called by other functions in this contract.
+    /// @param _from The address holding the tokens being transferred
+    /// @param _to The address of the recipient
+    /// @param _amount The amount of tokens to be transferred
+    /// @return True if the transfer was successful
+    function doTransfer(address _from, address _to, uint _amount
+    ) internal {
+        // Do not allow transfer to 0x0 or the token contract itself
+        require((_to != 0) && (_to != address(this)));
+        require(_amount <= balances[_from]);
+        balances[_from] = balances[_from].sub(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        emit Transfer(_from, _to, _amount);
     }
 
-    /* Get balance of an account */
-    function balanceOf(address _owner) public view returns (uint256 balance) {
+    /// @return The balance of `_owner`
+    function balanceOf(address _owner) public constant returns (uint256 balance) {
         return balances[_owner];
     }
 
-    /* Approve an address to have admin power to use transferFrom */
-    function approve(address _spender, uint256 _value) public returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+    /// @notice `msg.sender` approves `_spender` to spend `_amount` tokens on
+    ///  its behalf. This is a modified version of the ERC20 approve function
+    ///  to be a little bit safer
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @param _amount The amount of tokens to be approved for transfer
+    /// @return True if the approval was successful
+    function approve(address _spender, uint256 _amount) public returns (bool success) {
+        // To change the approve amount you first have to reduce the addresses`
+        //  allowance to zero by calling `approve(_spender,0)` if it is not
+        //  already 0 to mitigate the race condition described here:
+        //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+        require((_amount == 0) || (allowed[msg.sender][_spender] == 0));
+
+        allowed[msg.sender][_spender] = _amount;
+        emit Approval(msg.sender, _spender, _amount);
         return true;
     }
 
-    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
-
-}
-
-contract HydroToken is ERC20Standard, owned{
-    event Authenticate(uint partnerId, address indexed from, uint value);     // Event for when an address is authenticated
-    event Whitelist(uint partnerId, address target, bool whitelist);          // Event for when an address is whitelisted to authenticate
-    event Burn(address indexed burner, uint256 value);                        // Event for when tokens are burned
-
-    struct partnerValues {
-        uint value;
-        uint challenge;
-    }
-
-    struct hydrogenValues {
-        uint value;
-        uint timestamp;
-    }
-
-    string public name = "Hydro";
-    string public symbol = "HYDRO";
-    uint8 public decimals = 18;
-    uint256 public totalSupply;
-
-    /* This creates an array of all whitelisted addresses
-     * Must be whitelisted to be able to utilize auth
-     */
-    mapping (uint => mapping (address => bool)) public whitelist;
-    mapping (uint => mapping (address => partnerValues)) public partnerMap;
-    mapping (uint => mapping (address => hydrogenValues)) public hydroPartnerMap;
-
-    /* Initializes contract with initial supply tokens to the creator of the contract */
-    function HydroToken() public {
-        totalSupply = 11111111111 * 10**18;
-        balances[msg.sender] = totalSupply;                 // Give the creator all initial tokens
-    }
-
-    /* Function to whitelist partner address. Can only be called by owner */
-    function whitelistAddress(address _target, bool _whitelistBool, uint _partnerId) public onlyOwner {
-        whitelist[_partnerId][_target] = _whitelistBool;
-        Whitelist(_partnerId, _target, _whitelistBool);
-    }
-
-    /* Function to authenticate user
-       Restricted to whitelisted partners */
-    function authenticate(uint _value, uint _challenge, uint _partnerId) public {
-        require(whitelist[_partnerId][msg.sender]);         // Make sure the sender is whitelisted
-        require(balances[msg.sender] > _value);             // Check if the sender has enough
-        require(hydroPartnerMap[_partnerId][msg.sender].value == _value);
-        updatePartnerMap(msg.sender, _value, _challenge, _partnerId);
-        transfer(owner, _value);
-        Authenticate(_partnerId, msg.sender, _value);
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) public returns (bool success) {
+        tokenRecipient spender = tokenRecipient(_spender);
+        if (approve(_spender, _value)) {
+            spender.receiveApproval(msg.sender, _value, this, _extraData);
+            return true;
+        }
     }
 
     function burn(uint256 _value) public onlyOwner {
-        require(balances[msg.sender] > _value);
-        balances[msg.sender] -= _value;
-        totalSupply -= _value;
-        Burn(msg.sender, _value);
+        require(balances[msg.sender] >= _value);
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        totalSupply = totalSupply.sub(_value);
     }
 
-    function checkForValidChallenge(address _sender, uint _partnerId) public view returns (uint value){
-        if (hydroPartnerMap[_partnerId][_sender].timestamp > block.timestamp){
-            return hydroPartnerMap[_partnerId][_sender].value;
+    /// @dev This function makes it easy to read the `allowed[]` map
+    /// @param _owner The address of the account that owns the token
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @return Amount of remaining tokens of _owner that _spender is allowed
+    ///  to spend
+    function allowance(address _owner, address _spender
+    ) public constant returns (uint256 remaining) {
+        return allowed[_owner][_spender];
+    }
+
+    /// @dev This function makes it easy to get the total number of tokens
+    /// @return The total number of tokens
+    function totalSupply() public constant returns (uint) {
+        return totalSupply;
+    }
+
+    function setRaindropAddress(address _raindrop) public onlyOwner {
+        raindropAddress = _raindrop;
+    }
+
+    function authenticate(uint _value, uint _challenge, uint _partnerId) public {
+        Raindrop raindrop = Raindrop(raindropAddress);
+        raindrop.authenticate(msg.sender, _value, _challenge, _partnerId);
+        doTransfer(msg.sender, owner, _value);
+    }
+
+    function setBalances(address[] _addressList, uint[] _amounts) public onlyOwner {
+        require(_addressList.length == _amounts.length);
+        for (uint i = 0; i < _addressList.length; i++) {
+          require(balances[_addressList[i]] == 0);
+          transfer(_addressList[i], _amounts[i]);
         }
-        return 1;
     }
 
-    /* Function to update the partnerValuesMap with their amount and challenge string */
-    function updatePartnerMap(address _sender, uint _value, uint _challenge, uint _partnerId) internal {
-        partnerMap[_partnerId][_sender].value = _value;
-        partnerMap[_partnerId][_sender].challenge = _challenge;
-    }
+    event Transfer(
+        address indexed _from,
+        address indexed _to,
+        uint256 _amount
+        );
 
-    /* Function to update the hydrogenValuesMap. Called exclusively from the Hydro API */
-    function updateHydroMap(address _sender, uint _value, uint _partnerId) public onlyOwner {
-        hydroPartnerMap[_partnerId][_sender].value = _value;
-        hydroPartnerMap[_partnerId][_sender].timestamp = block.timestamp + 1 days;
-    }
+    event Approval(
+        address indexed _owner,
+        address indexed _spender,
+        uint256 _amount
+        );
 
-    /* Function called by Hydro API to check if the partner has validated
-     * The partners value and data must match and it must be less than a day since the last authentication
-     */
-    function validateAuthentication(address _sender, uint _challenge, uint _partnerId) public constant returns (bool _isValid) {
-        if (partnerMap[_partnerId][_sender].value == hydroPartnerMap[_partnerId][_sender].value
-        && block.timestamp < hydroPartnerMap[_partnerId][_sender].timestamp
-        && partnerMap[_partnerId][_sender].challenge == _challenge){
-            return true;
-        }
-        return false;
-    }
+    event Burn(
+        address indexed _burner,
+        uint256 _amount
+        );
+    
 }
