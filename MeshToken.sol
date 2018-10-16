@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MeshToken at 0xc17423a26ccc6d307d3f58219443ad3eaa78f74f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MeshToken at 0xfa89871f51b8000917d33dc4d4c3a871f796813d
 */
 pragma solidity ^0.4.18;
 
@@ -420,7 +420,7 @@ contract PausableToken is StandardToken, Pausable {
  * PausableToken overrides all transfers methods and adds a modifier to check if paused is set to false.
  */
 contract MeshToken is CappedToken, PausableToken {
-  string public name = "DJANGO UNCHAIN";
+  string public name = "DJANGO CHAIN";
   string public symbol = "DJANGO";
   uint256 public decimals = 18;
   uint256 public cap = 129498559 ether;
@@ -456,22 +456,6 @@ contract MeshToken is CappedToken, PausableToken {
    * adding this to limit owner's ability to pause the token in future.
    */
   function pause() onlyOwner whenNotPaused public {}
-
-  /**
-   * @dev modifier created to prevent short address attack problems.
-   * solution based on this blog post https://blog.coinfabrik.com/smart-contract-short-address-attack-mitigation-failure
-   */
-  modifier onlyPayloadSize(uint size) {
-    assert(msg.data.length >= size + 4);
-    _;
-  }
-
-  /**
-   * @dev overriding transfer method to include the onlyPayloadSize check modifier
-   */
-  function transfer(address _to, uint256 _value) onlyPayloadSize(2 * 32) public returns (bool) {
-    return super.transfer(_to, _value);
-  }
 
   /*------------------------------------new methods------------------------------------*/
 
