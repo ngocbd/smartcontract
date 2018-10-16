@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MPO at 0x706dded765c012b7f532c60c1d08563ba5e9f587
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MPO at 0xd88838359c8ad2fa9577bd3e8bfe1cc49b70ac47
 */
 contract MPO { 
 	uint256 public reading;
