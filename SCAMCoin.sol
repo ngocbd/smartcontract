@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ScamCoin at 0x7d4362676c4f6e0f0bb369de686f5b34f6043002
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ScamCoin at 0xc29da757ed787d535958ff98c8e41eded06c1e9e
 */
 pragma solidity ^0.4.2;
 
@@ -142,7 +142,7 @@ contract ScamCoin is StandardToken, SafeMath {
     uint public tierBudget = 100000;
 
     // Address of the founder of ScamCoin.
-    address public founder = 0x6B30F33Df149C3691C27e332fC2Bcd4d296F7b99;
+    address public founder = 0x43B141F00121F8caEce6068445aAcd4A505D7160;
 
     /*
      * Contract functions
@@ -195,8 +195,8 @@ contract ScamCoin is StandardToken, SafeMath {
     /// @dev Contract constructor function sets initial token balances.
     function ScamCoin()
     {   
-        // Only 20 coins premined
-        balances[founder] = 20000;
-        totalSupply += 20000;
+        // Absolutely no premining
+        balances[founder] = 0;
+        totalSupply += 0;
     }
 }
