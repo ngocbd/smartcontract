@@ -1,30 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NUCrowdsale at 0x6cbd17dcb8331e61baf3d2c7355a27ff9deff619
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NUCrowdsale at 0x006b4425ba57148466c0c54af1c484348a14a8a4
 */
 pragma solidity ^0.4.15;
 
-/**
- * @title IWingsAdapter
- * 
- * WINGS DAO Price Discovery & Promotion Pre-Beta https://www.wings.ai
- *
- * #created 04/10/2017
- * #author Frank Bonnet
- */
-contract IWingsAdapter {
-
-
-    /**
-     * Get the total raised amount of Ether
-     *
-     * Can only increase, meaning if you withdraw ETH from the wallet, it should be not modified (you can use two fields 
-     * to keep one with a total accumulated amount) amount of ETH in contract and totalCollected for total amount of ETH collected
-     *
-     * @return Total raised Ether amount
-     */
-    function totalCollected() constant returns (uint);
-}
-
+// File: contracts\infrastructure\ITokenRetreiver.sol
 
 /**
  * @title Token retrieve interface
@@ -44,10 +23,35 @@ contract ITokenRetreiver {
     function retreiveTokens(address _tokenContract);
 }
 
+// File: contracts\integration\wings\IWingsAdapter.sol
+
+/**
+ * @title IWingsAdapter
+ *
+ * WINGS DAO Price Discovery & Promotion Pre-Beta https://www.wings.ai
+ *
+ * #created 04/10/2017
+ * #author Frank Bonnet
+ */
+contract IWingsAdapter {
+
+
+    /**
+     * Get the total raised amount of Ether
+     *
+     * Can only increase, meaning if you withdraw ETH from the wallet, it should be not modified (you can use two fields
+     * to keep one with a total accumulated amount) amount of ETH in contract and totalCollected for total amount of ETH collected
+     *
+     * @return Total raised Ether amount
+     */
+    function totalCollected() constant returns (uint);
+}
+
+// File: contracts\infrastructure\modifier\Owned.sol
 
 contract Owned {
 
-    // The address of the account that is the current owner 
+    // The address of the account that is the current owner
     address internal owner;
 
 
@@ -69,6 +73,7 @@ contract Owned {
     }
 }
 
+// File: contracts\source\token\IToken.sol
 
 /**
  * @title ERC20 compatible token interface
@@ -79,28 +84,28 @@ contract Owned {
  * #created 29/09/2017
  * #author Frank Bonnet
  */
-contract IToken { 
+contract IToken {
 
-    /** 
+    /**
      * Get the total supply of tokens
-     * 
+     *
      * @return The total supply
      */
     function totalSupply() constant returns (uint);
 
 
-    /** 
-     * Get balance of `_owner` 
-     * 
+    /**
+     * Get balance of `_owner`
+     *
      * @param _owner The address from which the balance will be retrieved
      * @return The balance
      */
     function balanceOf(address _owner) constant returns (uint);
 
 
-    /** 
+    /**
      * Send `_value` token to `_to` from `msg.sender`
-     * 
+     *
      * @param _to The address of the recipient
      * @param _value The amount of token to be transferred
      * @return Whether the transfer was successful or not
@@ -108,9 +113,9 @@ contract IToken {
     function transfer(address _to, uint _value) returns (bool);
 
 
-    /** 
+    /**
      * Send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-     * 
+     *
      * @param _from The address of the sender
      * @param _to The address of the recipient
      * @param _value The amount of token to be transferred
@@ -119,9 +124,9 @@ contract IToken {
     function transferFrom(address _from, address _to, uint _value) returns (bool);
 
 
-    /** 
+    /**
      * `msg.sender` approves `_spender` to spend `_value` tokens
-     * 
+     *
      * @param _spender The address of the account able to transfer the tokens
      * @param _value The amount of tokens to be approved for transfer
      * @return Whether the approval was successful or not
@@ -129,9 +134,9 @@ contract IToken {
     function approve(address _spender, uint _value) returns (bool);
 
 
-    /** 
+    /**
      * Get the amount of remaining tokens that `_spender` is allowed to spend from `_owner`
-     * 
+     *
      * @param _owner The address of the account owning tokens
      * @param _spender The address of the account able to transfer the tokens
      * @return Amount of remaining tokens allowed to spent
@@ -139,6 +144,7 @@ contract IToken {
     function allowance(address _owner, address _spender) constant returns (uint);
 }
 
+// File: contracts\source\token\IManagedToken.sol
 
 /**
  * @title ManagedToken interface
@@ -150,18 +156,18 @@ contract IToken {
  * #created 29/09/2017
  * #author Frank Bonnet
  */
-contract IManagedToken is IToken { 
+contract IManagedToken is IToken {
 
-    /** 
+    /**
      * Returns true if the token is locked
-     * 
+     *
      * @return Whether the token is locked
      */
     function isLocked() constant returns (bool);
 
 
     /**
-     * Unlocks the token so that the transferring of value is enabled 
+     * Unlocks the token so that the transferring of value is enabled
      *
      * @return Whether the unlocking was successful or not
      */
@@ -178,11 +184,12 @@ contract IManagedToken is IToken {
     function issue(address _to, uint _value) returns (bool);
 }
 
+// File: contracts\source\crowdsale\ICrowdsale.sol
 
 /**
  * @title ICrowdsale
  *
- * Base crowdsale interface to manage the sale of 
+ * Base crowdsale interface to manage the sale of
  * an ERC20 token
  *
  * #created 29/09/2017
@@ -209,27 +216,27 @@ contract ICrowdsale {
     function hasBalance(address _beneficiary, uint _releaseDate) constant returns (bool);
 
 
-    /** 
+    /**
      * Get the allocated token balance of `_owner`
-     * 
+     *
      * @param _owner The address from which the allocated token balance will be retrieved
      * @return The allocated token balance
      */
     function balanceOf(address _owner) constant returns (uint);
 
 
-    /** 
+    /**
      * Get the allocated eth balance of `_owner`
-     * 
+     *
      * @param _owner The address from which the allocated eth balance will be retrieved
      * @return The allocated eth balance
      */
     function ethBalanceOf(address _owner) constant returns (uint);
 
 
-    /** 
+    /**
      * Get invested and refundable balance of `_owner` (only contributions during the ICO phase are registered)
-     * 
+     *
      * @param _owner The address from which the refundable balance will be retrieved
      * @return The invested refundable balance
      */
@@ -247,7 +254,7 @@ contract ICrowdsale {
 
 
     /**
-     * Convert `_wei` to an amount in tokens using 
+     * Convert `_wei` to an amount in tokens using
      * the `_rate`
      *
      * @param _wei amount of wei to convert
@@ -270,8 +277,8 @@ contract ICrowdsale {
 
 
     /**
-     * Refund in the case of an unsuccessful crowdsale. The 
-     * crowdsale is considered unsuccessful if minAmount was 
+     * Refund in the case of an unsuccessful crowdsale. The
+     * crowdsale is considered unsuccessful if minAmount was
      * not raised before end of the crowdsale
      */
     function refund();
@@ -283,11 +290,12 @@ contract ICrowdsale {
     function () payable;
 }
 
+// File: contracts\source\crowdsale\Crowdsale.sol
 
 /**
  * @title Crowdsale
  *
- * Abstract base crowdsale contract that manages the sale of 
+ * Abstract base crowdsale contract that manages the sale of
  * an ERC20 token
  *
  * #created 29/09/2017
@@ -313,7 +321,7 @@ contract Crowdsale is ICrowdsale, Owned {
         uint tokens;
         bool overwriteReleaseDate;
         uint fixedReleaseDate;
-        uint index; 
+        uint index;
     }
 
     struct Payout {
@@ -335,15 +343,15 @@ contract Crowdsale is ICrowdsale, Owned {
 
     // Crowdsale details
     uint public baseRate;
-    uint public minAmount; 
-    uint public maxAmount; 
+    uint public minAmount;
+    uint public maxAmount;
     uint public minAcceptedAmount;
-    uint public minAmountPresale; 
+    uint public minAmountPresale;
     uint public maxAmountPresale;
     uint public minAcceptedAmountPresale;
 
     // Company address
-    address public beneficiary; 
+    address public beneficiary;
 
     // Denominators
     uint internal percentageDenominator;
@@ -383,7 +391,7 @@ contract Crowdsale is ICrowdsale, Owned {
 
     /**
      * Throw if at stage other than current stage
-     * 
+     *
      * @param _stage expected stage to test for
      */
     modifier at_stage(Stages _stage) {
@@ -394,7 +402,7 @@ contract Crowdsale is ICrowdsale, Owned {
 
     /**
      * Only after crowdsaleEnd plus `_time`
-     * 
+     *
      * @param _time Time to pass
      */
     modifier only_after(uint _time) {
@@ -422,7 +430,7 @@ contract Crowdsale is ICrowdsale, Owned {
 
 
     /**
-     * Allows the implementing contract to validate a 
+     * Allows the implementing contract to validate a
      * contributing account
      *
      * @param _contributor Address that is being validated
@@ -502,8 +510,8 @@ contract Crowdsale is ICrowdsale, Owned {
         for (uint i = 0; i < _stakeholders.length; i++) {
             stakeholderPercentagesIndex.push(_stakeholders[i]);
             stakeholderPercentages[_stakeholders[i]] = Percentage(
-                _stakeholderEthPercentages[i], 
-                _stakeholderTokenPercentages[i], 
+                _stakeholderEthPercentages[i],
+                _stakeholderTokenPercentages[i],
                 _stakeholderTokenPayoutOverwriteReleaseDates[i],
                 _stakeholderTokenPayoutFixedReleaseDates[i], i);
         }
@@ -514,7 +522,7 @@ contract Crowdsale is ICrowdsale, Owned {
         }
     }
 
-    
+
     /**
      * Setup volume multipliers
      *
@@ -529,11 +537,11 @@ contract Crowdsale is ICrowdsale, Owned {
             volumeMultipliers[volumeMultiplierThresholds[i]] = VolumeMultiplier(_volumeMultiplierRates[i], _volumeMultiplierLockupPeriods[i]);
         }
     }
-    
+
 
     /**
      * After calling the deploy function the crowdsale
-     * rules become immutable 
+     * rules become immutable
      */
     function deploy() public only_owner at_stage(Stages.Deploying) {
         require(phases.length > 0);
@@ -543,7 +551,7 @@ contract Crowdsale is ICrowdsale, Owned {
 
 
     /**
-     * Prove that beneficiary is able to sign transactions 
+     * Prove that beneficiary is able to sign transactions
      * and start the crowdsale
      */
     function confirmBeneficiary() public only_beneficiary at_stage(Stages.Deployed) {
@@ -573,9 +581,9 @@ contract Crowdsale is ICrowdsale, Owned {
     }
 
 
-    /** 
+    /**
      * Get the allocated token balance of `_owner`
-     * 
+     *
      * @param _owner The address from which the allocated token balance will be retrieved
      * @return The allocated token balance
      */
@@ -589,9 +597,9 @@ contract Crowdsale is ICrowdsale, Owned {
     }
 
 
-    /** 
+    /**
      * Get the allocated eth balance of `_owner`
-     * 
+     *
      * @param _owner The address from which the allocated eth balance will be retrieved
      * @return The allocated eth balance
      */
@@ -605,9 +613,9 @@ contract Crowdsale is ICrowdsale, Owned {
     }
 
 
-    /** 
+    /**
      * Get invested and refundable balance of `_owner` (only contributions during the ICO phase are registered)
-     * 
+     *
      * @param _owner The address from which the refundable balance will be retrieved
      * @return The invested refundable balance
      */
@@ -621,7 +629,7 @@ contract Crowdsale is ICrowdsale, Owned {
      *
      * @return The index of the current phase
      */
-    function getCurrentPhase() public constant returns (uint found) {
+    function getCurrentPhase() public constant returns (uint) {
         for (uint i = 0; i < phases.length; i++) {
             if (now <= phases[i].end) {
                 return i;
@@ -657,15 +665,15 @@ contract Crowdsale is ICrowdsale, Owned {
                 }
             }
         }
-        
+
         return rate;
     }
 
 
     /**
-     * Get distribution data based on the current phase and 
+     * Get distribution data based on the current phase and
      * the volume in wei that is being distributed
-     * 
+     *
      * @param _phase The current crowdsale phase
      * @param _volume The amount wei used to determine what volume multiplier to use
      * @return Volumes and corresponding release dates
@@ -711,7 +719,7 @@ contract Crowdsale is ICrowdsale, Owned {
 
 
     /**
-     * Convert `_wei` to an amount in tokens using 
+     * Convert `_wei` to an amount in tokens using
      * the `_rate`
      *
      * @param _wei amount of wei to convert
@@ -724,7 +732,7 @@ contract Crowdsale is ICrowdsale, Owned {
 
 
     /**
-     * Function to end the crowdsale by setting 
+     * Function to end the crowdsale by setting
      * the stage to Ended
      */
     function endCrowdsale() public at_stage(Stages.InProgress) {
@@ -796,8 +804,8 @@ contract Crowdsale is ICrowdsale, Owned {
 
 
     /**
-     * Refund in the case of an unsuccessful crowdsale. The 
-     * crowdsale is considered unsuccessful if minAmount was 
+     * Refund in the case of an unsuccessful crowdsale. The
+     * crowdsale is considered unsuccessful if minAmount was
      * not raised before end of the crowdsale
      */
     function refund() public only_after_crowdsale at_stage(Stages.InProgress) {
@@ -830,11 +838,11 @@ contract Crowdsale is ICrowdsale, Owned {
 
     /**
      * Receive Eth and issue tokens to the sender
-     * 
-     * This function requires that msg.sender is not a contract. This is required because it's 
-     * not possible for a contract to specify a gas amount when calling the (internal) send() 
+     *
+     * This function requires that msg.sender is not a contract. This is required because it's
+     * not possible for a contract to specify a gas amount when calling the (internal) send()
      * function. Solidity imposes a maximum amount of gas (2300 gas at the time of writing)
-     * 
+     *
      * Contracts can call the contribute() function instead
      */
     function () payable {
@@ -845,9 +853,8 @@ contract Crowdsale is ICrowdsale, Owned {
 
     /**
      * Handle incoming transactions
-     * 
-     * @param _sender Transaction sender
-     * @param _received 
+     *
+
      */
     function _handleTransaction(address _sender, uint _received) private at_stage(Stages.InProgress) {
 
@@ -877,13 +884,13 @@ contract Crowdsale is ICrowdsale, Owned {
         }
 
         raised += acceptedAmount;
-        
+
         if (presalePhase) {
             // During the presale phase - Non refundable
-            _allocateStakeholdersEth(acceptedAmount, 0); 
+            _allocateStakeholdersEth(acceptedAmount, 0);
         } else {
             // During the ICO phase - 100% refundable
-            balances[_sender] += acceptedAmount; 
+            balances[_sender] += acceptedAmount;
         }
 
         // Distribute tokens
@@ -891,7 +898,7 @@ contract Crowdsale is ICrowdsale, Owned {
         uint phase = getCurrentPhase();
         var rate = getRate(phase, acceptedAmount);
         var (volumes, releaseDates) = getDistributionData(phase, acceptedAmount);
-        
+
         // Allocate tokens
         for (uint i = 0; i < volumes.length; i++) {
             var tokensAtCurrentRate = toTokens(volumes[i], rate);
@@ -923,7 +930,7 @@ contract Crowdsale is ICrowdsale, Owned {
      * @param _beneficiary The account to alocate the eth for
      * @param _amount The amount of ETH to allocate
      * @param _releaseDate The date after which the eth can be withdrawn
-     */    
+     */
     function _allocateEth(address _beneficiary, uint _amount, uint _releaseDate) private {
         if (hasBalance(_beneficiary, _releaseDate)) {
             allocated[_beneficiary][_releaseDate].eth += _amount;
@@ -942,7 +949,7 @@ contract Crowdsale is ICrowdsale, Owned {
      * @param _beneficiary The account to allocate the tokens for
      * @param _amount The amount of tokens to allocate
      * @param _releaseDate The date after which the tokens can be withdrawn
-     */    
+     */
     function _allocateTokens(address _beneficiary, uint _amount, uint _releaseDate) private {
         if (hasBalance(_beneficiary, _releaseDate)) {
             allocated[_beneficiary][_releaseDate].tokens += _amount;
@@ -960,7 +967,7 @@ contract Crowdsale is ICrowdsale, Owned {
      *
      * @param _amount The amount of ETH to allocate
      * @param _releaseDate The date after which the eth can be withdrawn
-     */    
+     */
     function _allocateStakeholdersEth(uint _amount, uint _releaseDate) private {
         for (uint i = 0; i < stakeholderPercentagesIndex.length; i++) {
             Percentage storage p = stakeholderPercentages[stakeholderPercentagesIndex[i]];
@@ -976,28 +983,29 @@ contract Crowdsale is ICrowdsale, Owned {
      *
      * @param _amount The amount of tokens created
      * @param _releaseDate The date after which the tokens can be withdrawn (unless overwitten)
-     */    
+     */
     function _allocateStakeholdersTokens(uint _amount, uint _releaseDate) private {
         for (uint i = 0; i < stakeholderPercentagesIndex.length; i++) {
             Percentage storage p = stakeholderPercentages[stakeholderPercentagesIndex[i]];
             if (p.tokens > 0) {
                 _allocateTokens(
-                    stakeholderPercentagesIndex[i], 
-                    _amount * p.tokens / percentageDenominator, 
+                    stakeholderPercentagesIndex[i],
+                    _amount * p.tokens / percentageDenominator,
                     p.overwriteReleaseDate ? p.fixedReleaseDate : _releaseDate);
             }
         }
     }
 }
 
+// File: contracts\source\NUCrowdsale.sol
 
 /**
  * @title NUCrowdsale
  *
  * Network Units (NU) is a decentralised worldwide collaboration of computing power
  *
- * By allowing gamers and service providers to participate in our unique mining 
- * process, we will create an ultra-fast, blockchain controlled multiplayer infrastructure 
+ * By allowing gamers and service providers to participate in our unique mining
+ * process, we will create an ultra-fast, blockchain controlled multiplayer infrastructure
  * rentable by developers
  *
  * Visit https://networkunits.io/
@@ -1022,15 +1030,16 @@ contract NUCrowdsale is Crowdsale, ITokenRetreiver, IWingsAdapter {
      * @param _maxAmountPresale The max cap for the presale
      * @param _minAcceptedAmountPresale The lowest accepted amount during the presale phase
      */
-    function NUCrowdsale(uint _start, address _token, uint _tokenDenominator, uint _percentageDenominator, uint _minAmount, uint _maxAmount, uint _minAcceptedAmount, uint _minAmountPresale, uint _maxAmountPresale, uint _minAcceptedAmountPresale) 
-        Crowdsale(_start, _token, _tokenDenominator, _percentageDenominator, _minAmount, _maxAmount, _minAcceptedAmount, _minAmountPresale, _maxAmountPresale, _minAcceptedAmountPresale) {
+    function NUCrowdsale(uint _start, address _token, uint _tokenDenominator, uint _percentageDenominator, uint _minAmount, uint _maxAmount, uint _minAcceptedAmount, uint _minAmountPresale, uint _maxAmountPresale, uint _minAcceptedAmountPresale)
+        Crowdsale(_start, _token, _tokenDenominator, _percentageDenominator, _minAmount, _maxAmount, _minAcceptedAmount, _minAmountPresale, _maxAmountPresale, _minAcceptedAmountPresale)
+        {
     }
 
 
     /**
      * Wings integration - Get the total raised amount of Ether
      *
-     * Can only increased, means if you withdraw ETH from the wallet, should be not modified (you can use two fields 
+     * Can only increased, means if you withdraw ETH from the wallet, should be not modified (you can use two fields
      * to keep one with a total accumulated amount) amount of ETH in contract and totalCollected for total amount of ETH collected
      *
      * @return Total raised Ether amount
@@ -1041,7 +1050,7 @@ contract NUCrowdsale is Crowdsale, ITokenRetreiver, IWingsAdapter {
 
 
     /**
-     * Allows the implementing contract to validate a 
+     * Allows the implementing contract to validate a
      * contributing account
      *
      * @param _contributor Address that is being validated
@@ -1054,7 +1063,7 @@ contract NUCrowdsale is Crowdsale, ITokenRetreiver, IWingsAdapter {
 
     /**
      * Failsafe mechanism
-     * 
+     *
      * Allows beneficary to retreive tokens from the contract
      *
      * @param _tokenContract The address of ERC20 compatible token
