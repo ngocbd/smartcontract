@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YUKCoin at 0x0850b3b0170d6bc5662b743ba6bb23671eddf938
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YUKCoin at 0xe7121ff8c912047f144c53f68c4905afa3c946f1
 */
 pragma solidity 0.4.18;
 library SafeMath {
@@ -153,7 +153,7 @@ contract StandardToken is ERC20, BasicToken {
 
 contract YUKCoin is StandardToken {
 
-    uint8 constant public DECIMALS = 0;
+    uint8 constant public decimals = 0;
     uint public totalSupply = 50000000; 
     string constant public NAME = "YUK Coin";
     string constant public SYMBOL = "YUK";
