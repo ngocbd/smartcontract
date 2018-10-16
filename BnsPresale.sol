@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BnsPresale at 0xc6715B8Eed812477Be1e634c3a6E0309F10da9A9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BnsPresale at 0x0180ec945191fda23c52b1d05eec64a2e3f68781
 */
 pragma solidity ^0.4.17;
 
@@ -34,17 +34,17 @@ pragma solidity ^0.4.17;
 
 contract BnsPresale {
 
-    string public constant VERSION = "0.2.0-bns-test-04-max_3125_eth";
+    string public constant VERSION = "0.2.0-bns-test-03-max_1_eth";
 
     /* ====== configuration START ====== */
-    uint public constant PRESALE_START  = 4465600; /* approx. TUE OCT 31 2017 19:40:06 GMT+0100 (CET) */
-    uint public constant PRESALE_END    = 4466750; /* approx. TUE OCT 31 2017 20:14:40 GMT+0100 (CET) */
-    uint public constant WITHDRAWAL_END = 4469100; /* approx. WED NOV 01 2017 09:15:50 GMT+0100 (CET) */
+    uint public constant PRESALE_START  = 4465500; /* approx. TUE OCT 31 2017 19:16:32 GMT+0100 (CET) */
+    uint public constant PRESALE_END    = 4466550; /* approx. TUE OCT 31 2017 23:09:47 GMT+0100 (CET) */
+    uint public constant WITHDRAWAL_END = 4469000; /* approx. WED NOV 01 2017 08:53:50 GMT+0100 (CET) */
 
     address public constant OWNER = 0xcEAfe38b8d3802789A2A2cc45EA5d08bE8EA3b49;
 
     uint public constant MIN_TOTAL_AMOUNT_TO_RECEIVE_ETH = 0;
-    uint public constant MAX_TOTAL_AMOUNT_TO_RECEIVE_ETH = 3125;
+    uint public constant MAX_TOTAL_AMOUNT_TO_RECEIVE_ETH = 1;
     uint public constant MIN_ACCEPTED_AMOUNT_FINNEY = 1;
 
     /* ====== configuration END ====== */
