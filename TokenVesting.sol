@@ -1,57 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVesting at 0xa1fb3d537ae38ca00537cdfe2004ad753464136d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVesting at 0x6b302c63c42a10d3bf90b8ef5cd5606bc8ec72f8
 */
-pragma solidity ^0.4.21;
+pragma solidity 0.4.21;
 
-// File: zeppelin-solidity/contracts/math/SafeMath.sol
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-// File: zeppelin-solidity/contracts/ownership/Ownable.sol
 
 /**
  * @title Ownable
@@ -87,13 +38,11 @@ contract Ownable {
    */
   function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
+    emit OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
-
 }
 
-// File: zeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
 
 /**
  * @title ERC20Basic
@@ -107,8 +56,6 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-// File: zeppelin-solidity/contracts/token/ERC20/ERC20.sol
-
 /**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
@@ -120,7 +67,6 @@ contract ERC20 is ERC20Basic {
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-// File: zeppelin-solidity/contracts/token/ERC20/SafeERC20.sol
 
 /**
  * @title SafeERC20
@@ -142,114 +88,164 @@ library SafeERC20 {
   }
 }
 
-// File: zeppelin-solidity/contracts/token/ERC20/TokenVesting.sol
 
 /**
- * @title TokenVesting
- * @dev A token holder contract that can release its token balance gradually like a
- * typical vesting scheme, with a cliff and vesting period. Optionally revocable by the
- * owner.
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
  */
-contract TokenVesting is Ownable {
-  using SafeMath for uint256;
-  using SafeERC20 for ERC20Basic;
-
-  event Released(uint256 amount);
-  event Revoked();
-
-  // beneficiary of tokens after they are released
-  address public beneficiary;
-
-  uint256 public cliff;
-  uint256 public start;
-  uint256 public duration;
-
-  bool public revocable;
-
-  mapping (address => uint256) public released;
-  mapping (address => bool) public revoked;
+library SafeMath {
 
   /**
-   * @dev Creates a vesting contract that vests its balance of any ERC20 token to the
-   * _beneficiary, gradually in a linear fashion until _start + _duration. By then all
-   * of the balance will have vested.
-   * @param _beneficiary address of the beneficiary to whom vested tokens are transferred
-   * @param _cliff duration in seconds of the cliff in which tokens will begin to vest
-   * @param _duration duration in seconds of the period in which the tokens will vest
-   * @param _revocable whether the vesting is revocable or not
-   */
-  function TokenVesting(address _beneficiary, uint256 _start, uint256 _cliff, uint256 _duration, bool _revocable) public {
-    require(_beneficiary != address(0));
-    require(_cliff <= _duration);
-
-    beneficiary = _beneficiary;
-    revocable = _revocable;
-    duration = _duration;
-    cliff = _start.add(_cliff);
-    start = _start;
-  }
-
-  /**
-   * @notice Transfers vested tokens to beneficiary.
-   * @param token ERC20 token which is being vested
-   */
-  function release(ERC20Basic token) public {
-    uint256 unreleased = releasableAmount(token);
-
-    require(unreleased > 0);
-
-    released[token] = released[token].add(unreleased);
-
-    token.safeTransfer(beneficiary, unreleased);
-
-    Released(unreleased);
-  }
-
-  /**
-   * @notice Allows the owner to revoke the vesting. Tokens already vested
-   * remain in the contract, the rest are returned to the owner.
-   * @param token ERC20 token which is being vested
-   */
-  function revoke(ERC20Basic token) public onlyOwner {
-    require(revocable);
-    require(!revoked[token]);
-
-    uint256 balance = token.balanceOf(this);
-
-    uint256 unreleased = releasableAmount(token);
-    uint256 refund = balance.sub(unreleased);
-
-    revoked[token] = true;
-
-    token.safeTransfer(owner, refund);
-
-    Revoked();
-  }
-
-  /**
-   * @dev Calculates the amount that has already vested but hasn't been released yet.
-   * @param token ERC20 token which is being vested
-   */
-  function releasableAmount(ERC20Basic token) public view returns (uint256) {
-    return vestedAmount(token).sub(released[token]);
-  }
-
-  /**
-   * @dev Calculates the amount that has already vested.
-   * @param token ERC20 token which is being vested
-   */
-  function vestedAmount(ERC20Basic token) public view returns (uint256) {
-    uint256 currentBalance = token.balanceOf(this);
-    uint256 totalBalance = currentBalance.add(released[token]);
-
-    if (now < cliff) {
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
       return 0;
-    } else if (now >= start.add(duration) || revoked[token]) {
-      return totalBalance;
-    } else {
-      return totalBalance.mul(now.sub(start)).div(duration);
     }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  /**
+  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
   }
 }
 
-// File: contracts/LDLTokenVesting.sol
+
+contract Whitelisting is Ownable {
+    mapping(address => bool) public isInvestorApproved;
+
+    event Approved(address indexed investor);
+    event Disapproved(address indexed investor);
+
+    function approveInvestor(address toApprove) public onlyOwner {
+        isInvestorApproved[toApprove] = true;
+        emit Approved(toApprove);
+    }
+
+    function approveInvestorsInBulk(address[] toApprove) public onlyOwner {
+        for (uint i=0; i<toApprove.length; i++) {
+            isInvestorApproved[toApprove[i]] = true;
+            emit Approved(toApprove[i]);
+        }
+    }
+
+    function disapproveInvestor(address toDisapprove) public onlyOwner {
+        delete isInvestorApproved[toDisapprove];
+        emit Disapproved(toDisapprove);
+    }
+
+    function disapproveInvestorsInBulk(address[] toDisapprove) public onlyOwner {
+        for (uint i=0; i<toDisapprove.length; i++) {
+            delete isInvestorApproved[toDisapprove[i]];
+            emit Disapproved(toDisapprove[i]);
+        }
+    }
+}
+
+/**
+ * @title TokenVesting
+ * @dev TokenVesting is a token holder contract that will allow a
+ * beneficiary to extract the tokens after a given release time
+ */
+contract TokenVesting is Ownable {
+    using SafeERC20 for ERC20Basic;
+    using SafeMath for uint256;
+
+    // ERC20 basic token contract being held
+    ERC20Basic public token;
+    // whitelisting contract being held
+    Whitelisting public whitelisting;
+
+    struct VestingObj {
+        uint256 token;
+        uint256 releaseTime;
+    }
+
+    mapping (address  => VestingObj[]) public vestingObj;
+
+    uint256 public totalTokenVested;
+
+    event AddVesting ( address _beneficiary, uint256 token, uint256 _vestingTime);
+    event Release ( address _beneficiary, uint256 token, uint256 _releaseTime);
+
+    modifier checkZeroAddress(address _add) {
+        require(_add != address(0));
+        _;
+    }
+
+    modifier checkZeroValue(uint256 value) {
+        require(value != 0);
+        _;
+    }
+
+    function TokenVesting(ERC20Basic _token, Whitelisting _whitelisting)
+        public
+        checkZeroAddress(_token)
+        checkZeroAddress(_whitelisting)
+    {
+        token = _token;
+        whitelisting = _whitelisting;
+    }
+
+    function addVesting ( address _beneficiary, uint256 _token, uint256 _vestingTime)
+        external
+        onlyOwner
+        checkZeroAddress(_beneficiary)
+        checkZeroValue(_token)
+    {
+        require(_vestingTime > now);
+        require(uint256(getBalance()) >= totalTokenVested.add(_token));
+        vestingObj[_beneficiary].push(VestingObj({
+            token : _token,
+            releaseTime : _vestingTime
+        }));
+        totalTokenVested = totalTokenVested.add(_token);
+        emit AddVesting(_beneficiary, _token, _vestingTime);
+    }
+
+  /**
+   * @notice Transfers tokens held by timelock to beneficiary.
+   */
+    function claim() external {
+        require(whitelisting.isInvestorApproved(msg.sender));
+        uint256 transferTokenCount = 0;
+        for (uint i = 0; i < vestingObj[msg.sender].length; i++) {
+            if (now >= vestingObj[msg.sender][i].releaseTime) {
+                transferTokenCount = transferTokenCount.add(vestingObj[msg.sender][i].token);
+                delete vestingObj[msg.sender][i];
+            }
+        }
+        require(transferTokenCount > 0);
+        token.safeTransfer(msg.sender, transferTokenCount);
+        emit Release(msg.sender, transferTokenCount, now);
+    }
+
+    function getBalance() public view returns (uint256) {
+        return token.balanceOf(address(this));
+    }
+}
