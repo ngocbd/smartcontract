@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthAnte at 0x0c08479f644a0d905eeb6e81a55141abbc91f73c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthAnte at 0x51d9e05775bde1b3c12d781d2f847b1ab93e3c3d
 */
 /*
 *
@@ -31,43 +31,31 @@ pragma solidity ^0.4.20;
 contract EthAnte {
     
     uint public timeOut;
-    uint public kBalance;
     uint public feeRate;
-    address TechnicalRise = 0x7c0Bf55bAb08B4C1eBac3FC115C394a739c62538;
-    address lastBidder;
+    address public TechnicalRise = 0x7c0Bf55bAb08B4C1eBac3FC115C394a739c62538;
+    address public lastBidder;
     
     function EthAnte() public payable { 
         lastBidder = msg.sender;
-		kBalance = msg.value;
-	    timeOut = now + 10 minutes;
+	    timeOut = now + 1 hours;
 	    feeRate = 10; // i.e. 10%
 	} 
 	
-	function () public payable {
-	    uint _fee = msg.value / feeRate;
-	    uint _val = msg.value - _fee;
-	    kBalance += _val;
-	    TechnicalRise.transfer(_fee);
-	    
-	    // If they sent nothing or almost nothing, 
-	    // merely extend the time but don't make them
-	    // eligible to win (Note that there is a trick 
-	    // play available here)
-	    if(_val < 9 finney) {
-	        timeOut += 2 minutes;
-	        return;
-	    }
+	function fund() public payable {
+	    require(msg.value >= 1 finney);
 	    
 	    // If the transaction is after the timer 
 	    // runs out pay the winner
 	    if (timeOut <= now) {
-	        lastBidder.transfer(kBalance - _val);
-	        kBalance = _val;
-	        timeOut = now;
+	        TechnicalRise.transfer((address(this).balance - msg.value) / feeRate);
+	        lastBidder.transfer((address(this).balance - msg.value) - address(this).balance / feeRate);
 	    }
 	    
-	    // The more you put in the less time you add
-	    timeOut += (10 minutes) * (9 finney) / _val;
+	    timeOut = now + 1 hours;
 	    lastBidder = msg.sender;
+	}
+
+	function () public payable {
+		fund();
 	}
 }
