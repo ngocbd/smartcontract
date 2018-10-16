@@ -1,224 +1,258 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fricacoin at 0x7f7584465ab12b67ecefe8fde6e799c16d1ae273
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FricaCoin at 0x09e9666c667f0b2df3b5a9e8c9cb1a669e164d30
 */
-pragma solidity ^0.4.16;
- 
-/* 
-    GcoinProt
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
- 
-/*
-   ERC20 interface
-  see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
- 
-/*  SafeMath - the lowest gas library
-  Math operations with safety checks that throw on error
+pragma solidity 0.4.20;
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-    
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
     uint256 c = a * b;
-    assert(a == 0 || c / a == b);
+    assert(c / a == b);
     return c;
   }
- 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
- 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
- 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
   }
-  
 }
- 
-/*
-Basic token
- Basic version of StandardToken, with no allowances. 
- */
-contract BasicToken is ERC20Basic {
-    
-  using SafeMath for uint256;
- 
-  mapping(address => uint256) balances;
- 
- function transfer(address _to, uint256 _value) returns (bool) {
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
- 
-  /*
-  Gets the balance of the specified address.
-   param _owner The address to query the the balance of. 
-   return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) constant returns (uint256 balance) {
-    return balances[_owner];
-  }
- 
-}
- 
-/* Implementation of the basic standard token.
-  https://github.com/ethereum/EIPs/issues/20
- */
-contract StandardToken is ERC20, BasicToken {
- 
-  mapping (address => mapping (address => uint256)) allowed;
- 
-  /*
-    Transfer tokens from one address to another
-    param _from address The address which you want to send tokens from
-    param _to address The address which you want to transfer to
-    param _value uint256 the amout of tokens to be transfered
-   */
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
-    var _allowance = allowed[_from][msg.sender];
- 
-    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-    // require (_value <= _allowance);
- 
-    balances[_to] = balances[_to].add(_value);
-    balances[_from] = balances[_from].sub(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
- 
-  /*
-  Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   param _spender The address which will spend the funds.
-   param _value The amount of Roman Lanskoj's tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) returns (bool) {
- 
-    // To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
- 
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
- 
-  /*
-  Function to check the amount of tokens that an owner allowed to a spender.
-  param _owner address The address which owns the funds.
-  param _spender address The address which will spend the funds.
-  return A uint256 specifing the amount of tokens still available for the spender.
-   */
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-}
-}
- 
-/*
-The Ownable contract has an owner address, and provides basic authorization control
- functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-    
-  address public owner;
- 
- 
-  function Ownable() {
-    owner = msg.sender;
-  }
- 
-  /*
-  Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
- 
-  /*
-  Allows the current owner to transfer control of the contract to a newOwner.
-  param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner {
-    require(newOwner != address(0));      
-    owner = newOwner;
-  }
- 
-}
- 
-contract TheLiquidToken is StandardToken, Ownable {
-    // mint can be finished and token become fixed for forever
-  event Mint(address indexed to, uint256 amount);
-  event MintFinished();
-  bool mintingFinished = false;
-  modifier canMint() {
-    require(!mintingFinished);
-    _;
-  }
- 
- function mint(address _to, uint256 _amount) onlyOwner canMint returns (bool) {
-    totalSupply = totalSupply.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    Mint(_to, _amount);
-    return true;
-  }
- 
-  /*
-  Function to stop minting new tokens.
-  return True if the operation was successful.
-   */
-  function finishMinting() onlyOwner returns (bool) {}
-  
-  function burn(uint _value)
-        public
-    {
-        require(_value > 0);
 
-        address burner = msg.sender;
-        balances[burner] = balances[burner].sub(_value);
-        totalSupply = totalSupply.sub(_value);
-        Burn(burner, _value);
+contract ERC20 {
+  function totalSupply()public view returns (uint total_Supply);
+  function balanceOf(address who)public view returns (uint256);
+  function allowance(address owner, address spender)public view returns (uint);
+  function transferFrom(address from, address to, uint value)public returns (bool ok);
+  function approve(address spender, uint value)public returns (bool ok);
+  function transfer(address to, uint value)public returns (bool ok);
+  function transferToAdvisors(address to, uint value)public returns (bool ok);
+  event Transfer(address indexed from, address indexed to, uint value);
+  event Approval(address indexed owner, address indexed spender, uint value);
+}
+
+
+contract FricaCoin is ERC20
+{ using SafeMath for uint256;
+    // Name of the token
+    string public constant name = "FricaCoin";
+
+    // Symbol of token
+    string public constant symbol = "FRI";
+    uint8 public constant decimals = 18;
+    uint public _totalsupply = 1000000000000 * 10 ** 18; // 1 trillion total supply // muliplies dues to decimal precision
+    address public owner;                    // Owner of this contract
+
+    uint256 no_of_tokens;
+    uint256 bonus_token;
+    uint256 total_token;
+    bool stopped = false;
+    uint256 public pre_startdate;
+    uint256 public ico1_startdate;
+    uint256 ico_first;
+    uint256 ico_second;
+    uint256 ico_third;
+    uint256 ico_fourth;
+    uint256 pre_enddate;
+  
+    uint256 public eth_received; // total ether received in the contract
+    uint256 maxCap_public = 50000000000 * 10 **18;  //  50 billion in Public Sale
+    mapping(address => uint) balances;
+    mapping(address => mapping(address => uint)) allowed;
+    /** Who are our advisors (iterable) */
+    mapping (address => bool) private Advisors;
+    
+     /** How many advisors we have now */
+    uint256 public advisorCount;
+
+    enum Stages {
+        NOTSTARTED,
+        PREICO,
+        ICO,
+        PAUSED,
+        ENDED
+    }
+    Stages public stage;
+    
+    modifier atStage(Stages _stage) {
+        if (stage != _stage)
+            // Contract not in expected state
+            revert();
+        _;
+    }
+    
+     modifier onlyOwner() {
+        if (msg.sender != owner) {
+            revert();
+        }
+        _;
     }
 
-    event Burn(address indexed burner, uint indexed value);
+    function FricaCoin() public
+    {
+        owner = msg.sender;
+        balances[owner] = 50000000000 * 10 **18; // 50 billion to owner
+        stage = Stages.NOTSTARTED;
+        Transfer(0, owner, balances[owner]);
+    }
   
-}
+
+     function start_PREICO() public onlyOwner atStage(Stages.NOTSTARTED)
+      {
+          stage = Stages.PREICO;
+          stopped = false;
+           balances[address(this)] =  maxCap_public;
+          pre_startdate = now;
+          pre_enddate = now + 16 days;
+          Transfer(0, address(this), balances[address(this)]);
+          }
+      
+      function start_ICO() public onlyOwner atStage(Stages.PREICO)
+      {
+          require(now > pre_enddate || eth_received >= 1500 ether);
+          stage = Stages.ICO;
+          stopped = false;
+          ico1_startdate = now;
+           ico_first = now + 15 days;
+          ico_second = ico_first + 15 days;
+          ico_third = ico_second + 15 days;
+          ico_fourth = ico_third + 15 days;
+          Transfer(0, address(this), balances[address(this)]);
+      }
     
-contract Fricacoin is TheLiquidToken {
-  string public constant name = "Fricacoin";
-  string public constant symbol = "FRI";
-  uint public constant decimals = 2;
-  uint256 public initialSupply;
+    // called by the owner, pause ICO
+    function PauseICO() external onlyOwner
+    {
+        stopped = true;
+       }
+
+    // called by the owner , resumes ICO
+    function ResumeICO() external onlyOwner
+    {
+        stopped = false;
+      }
+   
+     
+     
+     function end_ICO() external onlyOwner atStage(Stages.ICO)
+     {
+         require(now > ico_fourth);
+         stage = Stages.ENDED;
+         _totalsupply = (_totalsupply).sub(balances[address(this)]);
+         balances[address(this)] = 0;
+         Transfer(address(this), 0 , balances[address(this)]);
+         
+     }
+
+    // what is the total supply of the ech tokens
+     function totalSupply() public view returns (uint256 total_Supply) {
+         total_Supply = _totalsupply;
+     }
     
-  function Fricacoin () { 
-     totalSupply = 10000 * 10 ** decimals;
-      balances[msg.sender] = totalSupply;
-      initialSupply = totalSupply; 
-        Transfer(0, this, totalSupply);
-        Transfer(this, msg.sender, totalSupply);
-  }
+    // What is the balance of a particular account?
+     function balanceOf(address _owner)public view returns (uint256 balance) {
+         return balances[_owner];
+     }
+    
+    // Send _value amount of tokens from address _from to address _to
+     // The transferFrom method is used for a withdraw workflow, allowing contracts to send
+     // tokens on your behalf, for example to "deposit" to a contract address and/or to charge
+     // fees in sub-currencies; the command should fail unless the _from account has
+     // deliberately authorized the sender of the message via some mechanism; we propose
+     // these standardized APIs for approval:
+     function transferFrom( address _from, address _to, uint256 _amount )public returns (bool success) {
+     require(stage == Stages.ENDED);
+     require( _to != 0x0);
+     require(balances[_from] >= _amount && allowed[_from][msg.sender] >= _amount && _amount >= 0);
+     
+     if(isAdvisor(_to)) {
+         require(now > ico1_startdate + 150 days);
+     }
+     
+     balances[_from] = (balances[_from]).sub(_amount);
+     allowed[_from][msg.sender] = (allowed[_from][msg.sender]).sub(_amount);
+     balances[_to] = (balances[_to]).add(_amount);
+     Transfer(_from, _to, _amount);
+     return true;
+         }
+    
+    // Allow _spender to withdraw from your account, multiple times, up to the _value amount.
+     // If this function is called again it overwrites the current allowance with _value.
+     function approve(address _spender, uint256 _amount)public returns (bool success) {
+         require( _spender != 0x0);
+         allowed[msg.sender][_spender] = _amount;
+         Approval(msg.sender, _spender, _amount);
+         return true;
+     }
+  
+     function allowance(address _owner, address _spender)public view returns (uint256 remaining) {
+         require( _owner != 0x0 && _spender !=0x0);
+         return allowed[_owner][_spender];
+    }
+
+     // Transfer the balance from owner's account to another account
+     function transfer(address _to, uint256 _amount)public returns (bool success) {
+        require( _to != 0x0);
+        require(balances[msg.sender] >= _amount && _amount >= 0);
+        balances[msg.sender] = (balances[msg.sender]).sub(_amount);
+        balances[_to] = (balances[_to]).add(_amount);
+        Transfer(msg.sender, _to, _amount);
+             return true;
+         }
+    
+    // Transfer the balance from owner's account to another account
+    function transferTokens(address _to, uint256 _amount) private returns(bool success) {
+        require( _to != 0x0);       
+        require(balances[address(this)] >= _amount && _amount > 0);
+        balances[address(this)] = (balances[address(this)]).sub(_amount);
+        balances[_to] = (balances[_to]).add(_amount);
+        Transfer(address(this), _to, _amount);
+        return true;
+    }
+ 
+    // Transfer the balance from owner's account to advisor's account
+    function transferToAdvisors(address _to, uint256 _amount) public returns(bool success) {
+         require( _to != 0x0);
+        require(balances[msg.sender] >= _amount && _amount >= 0);
+        // if this is a new advisor
+        if(!isAdvisor(_to)) {
+          addAdvisor(_to);
+          advisorCount++ ;
+        }
+        balances[msg.sender] = (balances[msg.sender]).sub(_amount);
+        balances[_to] = (balances[_to]).add(_amount);
+        Transfer(msg.sender, _to, _amount);
+             return true;
+    }
+ 
+    function addAdvisor(address _advisor) public {
+        Advisors[_advisor]=true;
+    }
+
+    function isAdvisor(address _advisor) public returns(bool success){
+        return Advisors[_advisor];
+             return true;
+    }
+    
+    function drain() external onlyOwner {
+        owner.transfer(this.balance);
+    }
+    
 }
