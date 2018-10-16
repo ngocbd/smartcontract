@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Doubler at 0xfD2487cc0e5dCe97F08BE1Bc8eF1DCE8D5988B4D
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Doubler at 0x7d3ae940eb73dc9131758ad2e326c7d863b0916a
 */
 contract Doubler {
 
@@ -10,62 +10,52 @@ contract Doubler {
 
     Participant[] public participants;
 
-    uint public payoutIdx = 0;
-    uint public collectedFees;
-    uint public balance = 0;
+	uint public payoutIdx = 0;
+	uint public collectedFees = 0;
+	uint balance = 0;
 
-    address public owner;
-
-    // simple single-sig function modifier
+  // only owner modifier
+	address public owner;
     modifier onlyowner { if (msg.sender == owner) _ }
 
-    // this function is executed at initialization and sets the owner of the contract
+  // contract Constructor
     function Doubler() {
         owner = msg.sender;
     }
 
-    // fallback function - simple transactions trigger this
-    function() {
+ // fallback function
+    function(){
         enter();
     }
-    
-    function enter() {
-        if (msg.value < 1 ether) {
-            msg.sender.send(msg.value);
-            return;
-        }
 
-      	// add a new participant to array
-        uint idx = participants.length;
-        participants.length += 1;
+	function enter(){
+      // collect fee
+        uint fee = msg.value / 40; // 2.5 % fee
+        collectedFees += fee;
+
+      // add a new participant
+		uint idx = participants.length;
+        participants.length++;
         participants[idx].etherAddress = msg.sender;
-        participants[idx].amount = msg.value;
-        
-        // collect fees and update contract balance
-        if (idx != 0) {
-            collectedFees += msg.value / 10;
-            balance += msg.value;
-        } 
-        else {
-            // first participant has no one above him,
-            // so it goes all to fees
-            collectedFees += msg.value;
-        }
+        participants[idx].amount = msg.value - fee;
 
-	// if there are enough ether on the balance we can pay out to an earlier participant
-        if (balance > participants[payoutIdx].amount * 2) {
-            uint transactionAmount = 2 * (participants[payoutIdx].amount - participants[payoutIdx].amount / 10);
-            participants[payoutIdx].etherAddress.send(transactionAmount);
+      // update available balance
+      	balance += msg.value - fee;
+      	
+	  // if there are enough ether on the balance we can pay out to an earlier participant
+	  	uint txAmount = participants[payoutIdx].amount * 2;
+        if(balance >= txAmount){
+        	if(!participants[payoutIdx].etherAddress.send(txAmount)) throw;
 
-            balance -= participants[payoutIdx].amount * 2;
-            payoutIdx += 1;
+            balance -= txAmount;
+            payoutIdx++;
         }
     }
 
     function collectFees() onlyowner {
-        if (collectedFees == 0) return;
+        if(collectedFees == 0)return;
 
-        owner.send(collectedFees);
+        if(!owner.send(collectedFees))throw;
         collectedFees = 0;
     }
 
