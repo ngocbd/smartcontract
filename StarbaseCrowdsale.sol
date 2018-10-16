@@ -1,12 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StarbaseCrowdsale at 0x7e0899a5ccd8ec95a2ce17b4d2cda110ffa0176d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StarbaseCrowdsale at 0xce23395cebe802ae6d397d06d35eb250b907ff2d
 */
-pragma solidity ^0.4.13;
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
 library SafeMath {
   function mul(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a * b;
@@ -33,11 +27,7 @@ library SafeMath {
   }
 }
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
+
 contract Ownable {
   address public owner;
 
@@ -75,13 +65,6 @@ contract Ownable {
 
 }
 
-contract AbstractStarbaseToken {
-    function isFundraiser(address fundraiserAddress) public returns (bool);
-    function company() public returns (address);
-    function allocateToCrowdsalePurchaser(address to, uint256 value) public returns (bool);
-    function allocateToMarketingSupporter(address to, uint256 value) public returns (bool);
-}
-
 contract AbstractStarbaseCrowdsale {
     function startDate() constant returns (uint256) {}
     function endedAt() constant returns (uint256) {}
@@ -91,21 +74,30 @@ contract AbstractStarbaseCrowdsale {
     function numOfPurchasedTokensOnEpBy(address purchaser) constant returns (uint256);
 }
 
+
+contract AbstractStarbaseToken {
+    function isFundraiser(address fundraiserAddress) public returns (bool);
+    function company() public returns (address);
+    function allocateToCrowdsalePurchaser(address to, uint256 value) public returns (bool);
+    function allocateToMarketingSupporter(address to, uint256 value) public returns (bool);
+}
+
+
 contract StarbaseEarlyPurchase {
     /*
      *  Constants
      */
     string public constant PURCHASE_AMOUNT_UNIT = 'CNY';    // Chinese Yuan
     string public constant PURCHASE_AMOUNT_RATE_REFERENCE = 'http://www.xe.com/currencytables/';
-    uint public constant PURCHASE_AMOUNT_CAP = 9000000;
+    uint256 public constant PURCHASE_AMOUNT_CAP = 9000000;
 
     /*
      *  Types
      */
     struct EarlyPurchase {
         address purchaser;
-        uint amount;        // CNY based amount
-        uint purchasedAt;   // timestamp
+        uint256 amount;        // CNY based amount
+        uint256 purchasedAt;   // timestamp
     }
 
     /*
@@ -118,85 +110,85 @@ contract StarbaseEarlyPurchase {
      */
     address public owner;
     EarlyPurchase[] public earlyPurchases;
-    uint public earlyPurchaseClosedAt;
+    uint256 public earlyPurchaseClosedAt;
 
     /*
      *  Modifiers
      */
     modifier noEther() {
-        if (msg.value > 0) {
-            throw;
-        }
+        require(msg.value == 0);
         _;
     }
 
     modifier onlyOwner() {
-        if (msg.sender != owner) {
-            throw;
-        }
+        require(msg.sender == owner);
         _;
     }
 
     modifier onlyBeforeCrowdsale() {
-        if (address(starbaseCrowdsale) != 0 &&
-            starbaseCrowdsale.startDate() > 0)
-        {
-            throw;
-        }
+        assert(address(starbaseCrowdsale) == address(0) || starbaseCrowdsale.startDate() == 0);
         _;
     }
 
     modifier onlyEarlyPurchaseTerm() {
-        if (earlyPurchaseClosedAt > 0) {
-            throw;
-        }
+        assert(earlyPurchaseClosedAt <= 0);
         _;
     }
 
     /*
      *  Contract functions
      */
-    /// @dev Returns early purchased amount by purchaser's address
-    /// @param purchaser Purchaser address
+
+    /**
+     * @dev Returns early purchased amount by purchaser's address
+     * @param purchaser Purchaser address
+     */
     function purchasedAmountBy(address purchaser)
         external
         constant
         noEther
-        returns (uint amount)
+        returns (uint256 amount)
     {
-        for (uint i; i < earlyPurchases.length; i++) {
+        for (uint256 i; i < earlyPurchases.length; i++) {
             if (earlyPurchases[i].purchaser == purchaser) {
                 amount += earlyPurchases[i].amount;
             }
         }
     }
 
-    /// @dev Returns total amount of raised funds by Early Purchasers
+    /**
+     * @dev Returns total amount of raised funds by Early Purchasers
+     */
     function totalAmountOfEarlyPurchases()
         constant
         noEther
-        returns (uint totalAmount)
+        public
+        returns (uint256 totalAmount)
     {
-        for (uint i; i < earlyPurchases.length; i++) {
+        for (uint256 i; i < earlyPurchases.length; i++) {
             totalAmount += earlyPurchases[i].amount;
         }
     }
 
-    /// @dev Returns number of early purchases
+    /**
+     * @dev Returns number of early purchases
+     */
     function numberOfEarlyPurchases()
         external
         constant
         noEther
-        returns (uint)
+        returns (uint256)
     {
         return earlyPurchases.length;
     }
 
-    /// @dev Append an early purchase log
-    /// @param purchaser Purchaser address
-    /// @param amount Purchase amount
-    /// @param purchasedAt Timestamp of purchased date
-    function appendEarlyPurchase(address purchaser, uint amount, uint purchasedAt)
+    /**
+     * @dev Append an early purchase log
+     * @param purchaser Purchaser address
+     * @param amount Purchase amount
+     * @param purchasedAt Timestamp of purchased date
+     */
+    function appendEarlyPurchase(address purchaser, uint256 amount, uint256 purchasedAt)
         external
         noEther
         onlyOwner
@@ -210,15 +202,15 @@ contract StarbaseEarlyPurchase {
             return false;
         }
 
-        if (purchasedAt == 0 || purchasedAt > now) {
-            throw;
-        }
+        assert(purchasedAt != 0 || purchasedAt <= now);
 
         earlyPurchases.push(EarlyPurchase(purchaser, amount, purchasedAt));
         return true;
     }
 
-    /// @dev Close early purchase term
+    /**
+     * @dev Close early purchase term
+     */
     function closeEarlyPurchase()
         external
         noEther
@@ -228,8 +220,10 @@ contract StarbaseEarlyPurchase {
         earlyPurchaseClosedAt = now;
     }
 
-    /// @dev Setup function sets external contract's address
-    /// @param starbaseCrowdsaleAddress Token address
+    /**
+     * @dev Setup function sets external contract's address
+     * @param starbaseCrowdsaleAddress Token address
+     */
     function setup(address starbaseCrowdsaleAddress)
         external
         noEther
@@ -243,14 +237,11 @@ contract StarbaseEarlyPurchase {
         return false;
     }
 
-    /// @dev Contract constructor function
+    /**
+     * @dev Contract constructor function
+     */
     function StarbaseEarlyPurchase() noEther {
         owner = msg.sender;
-    }
-
-    /// @dev Fallback function always fails
-    function () {
-        throw;
     }
 }
 
@@ -259,8 +250,8 @@ contract StarbaseEarlyPurchaseAmendment {
     /*
      *  Events
      */
-    event EarlyPurchaseInvalidated(uint epIdx);
-    event EarlyPurchaseAmended(uint epIdx);
+    event EarlyPurchaseInvalidated(uint256 epIdx);
+    event EarlyPurchaseAmended(uint256 epIdx);
 
     /*
      *  External contracts
@@ -272,99 +263,101 @@ contract StarbaseEarlyPurchaseAmendment {
      *  Storage
      */
     address public owner;
-    uint[] public invalidEarlyPurchaseIndexes;
-    uint[] public amendedEarlyPurchaseIndexes;
-    mapping (uint => StarbaseEarlyPurchase.EarlyPurchase) public amendedEarlyPurchases;
+    uint256[] public invalidEarlyPurchaseIndexes;
+    uint256[] public amendedEarlyPurchaseIndexes;
+    mapping (uint256 => StarbaseEarlyPurchase.EarlyPurchase) public amendedEarlyPurchases;
 
     /*
      *  Modifiers
      */
     modifier noEther() {
-        if (msg.value > 0) {
-            throw;
-        }
+        require(msg.value == 0);
         _;
     }
 
     modifier onlyOwner() {
-        if (msg.sender != owner) {
-            throw;
-        }
+        require(msg.sender == owner);
         _;
     }
 
     modifier onlyBeforeCrowdsale() {
-        if (address(starbaseCrowdsale) != 0 &&
-            starbaseCrowdsale.startDate() > 0)
-        {
-            throw;
-        }
+        assert(address(starbaseCrowdsale) == address(0) || starbaseCrowdsale.startDate() == 0);
         _;
     }
 
     modifier onlyEarlyPurchasesLoaded() {
-        if (address(starbaseEarlyPurchase) == 0) {
-            throw;
-        }
+        assert(address(starbaseEarlyPurchase) != address(0));
         _;
     }
 
     /*
-     *  Contract functions are compatible with original ones
+     *  Functions below are compatible with starbaseEarlyPurchase contract
      */
-    /// @dev Returns an early purchase record
-    /// @param earlyPurchaseIndex Index number of an early purchase
-    function earlyPurchases(uint earlyPurchaseIndex)
+
+    /**
+     * @dev Returns an early purchase record
+     * @param earlyPurchaseIndex Index number of an early purchase
+     */
+    function earlyPurchases(uint256 earlyPurchaseIndex)
         external
         constant
         onlyEarlyPurchasesLoaded
-        returns (address purchaser, uint amount, uint purchasedAt)
+        returns (address purchaser, uint256 amount, uint256 purchasedAt)
     {
         return starbaseEarlyPurchase.earlyPurchases(earlyPurchaseIndex);
     }
 
-    /// @dev Returns early purchased amount by purchaser's address
-    /// @param purchaser Purchaser address
+    /**
+     * @dev Returns early purchased amount by purchaser's address
+     * @param purchaser Purchaser address
+     */
     function purchasedAmountBy(address purchaser)
         external
         constant
         noEther
-        returns (uint amount)
+        returns (uint256 amount)
     {
         StarbaseEarlyPurchase.EarlyPurchase[] memory normalizedEP =
             normalizedEarlyPurchases();
-        for (uint i; i < normalizedEP.length; i++) {
+        for (uint256 i; i < normalizedEP.length; i++) {
             if (normalizedEP[i].purchaser == purchaser) {
                 amount += normalizedEP[i].amount;
             }
         }
     }
 
-    /// @dev Returns total amount of raised funds by Early Purchasers
+    /**
+     * @dev Returns total amount of raised funds by Early Purchasers
+     */
     function totalAmountOfEarlyPurchases()
         constant
         noEther
-        returns (uint totalAmount)
+        public
+        returns (uint256 totalAmount)
     {
         StarbaseEarlyPurchase.EarlyPurchase[] memory normalizedEP =
             normalizedEarlyPurchases();
-        for (uint i; i < normalizedEP.length; i++) {
+        for (uint256 i; i < normalizedEP.length; i++) {
             totalAmount += normalizedEP[i].amount;
         }
     }
 
-    /// @dev Returns number of early purchases
+    /**
+     * @dev Returns number of early purchases
+     */
     function numberOfEarlyPurchases()
         external
         constant
         noEther
-        returns (uint)
+        returns (uint256)
     {
         return normalizedEarlyPurchases().length;
     }
 
-    /// @dev Setup function sets external contract's address
-    /// @param starbaseCrowdsaleAddress Token address
+    /**
+     * @dev Sets up function sets external contract's address
+     * @param starbaseCrowdsaleAddress Token address
+     */
     function setup(address starbaseCrowdsaleAddress)
         external
         noEther
@@ -379,9 +372,14 @@ contract StarbaseEarlyPurchaseAmendment {
     }
 
     /*
-     *  Contract functions
+     *  Contract functions unique to StarbaseEarlyPurchaseAmendment
      */
-    function invalidateEarlyPurchase(uint earlyPurchaseIndex)
+
+     /**
+      * @dev Invalidate early purchase
+      * @param earlyPurchaseIndex Index number of the purchase
+      */
+    function invalidateEarlyPurchase(uint256 earlyPurchaseIndex)
         external
         noEther
         onlyOwner
@@ -389,14 +387,10 @@ contract StarbaseEarlyPurchaseAmendment {
         onlyBeforeCrowdsale
         returns (bool)
     {
-        if (numberOfRawEarlyPurchases() <= earlyPurchaseIndex) {
-            throw;  // Array Index Out of Bounds Exception
-        }
+        assert(numberOfRawEarlyPurchases() > earlyPurchaseIndex); // Array Index Out of Bounds Exception
 
-        for (uint i; i < invalidEarlyPurchaseIndexes.length; i++) {
-            if (invalidEarlyPurchaseIndexes[i] == earlyPurchaseIndex) {
-                throw;  // disallow duplicated invalidation
-            }
+        for (uint256 i; i < invalidEarlyPurchaseIndexes.length; i++) {
+            assert(invalidEarlyPurchaseIndexes[i] != earlyPurchaseIndex);
         }
 
         invalidEarlyPurchaseIndexes.push(earlyPurchaseIndex);
@@ -404,16 +398,20 @@ contract StarbaseEarlyPurchaseAmendment {
         return true;
     }
 
-    function isInvalidEarlyPurchase(uint earlyPurchaseIndex)
+    /**
+     * @dev Checks whether early purchase is invalid
+     * @param earlyPurchaseIndex Index number of the purchase
+     */
+    function isInvalidEarlyPurchase(uint256 earlyPurchaseIndex)
         constant
         noEther
+        public
         returns (bool)
     {
-        if (numberOfRawEarlyPurchases() <= earlyPurchaseIndex) {
-            throw;  // Array Index Out of Bounds Exception
-        }
+        assert(numberOfRawEarlyPurchases() > earlyPurchaseIndex); // Array Index Out of Bounds Exception
 
-        for (uint i; i < invalidEarlyPurchaseIndexes.length; i++) {
+
+        for (uint256 i; i < invalidEarlyPurchaseIndexes.length; i++) {
             if (invalidEarlyPurchaseIndexes[i] == earlyPurchaseIndex) {
                 return true;
             }
@@ -421,7 +419,14 @@ contract StarbaseEarlyPurchaseAmendment {
         return false;
     }
 
-    function amendEarlyPurchase(uint earlyPurchaseIndex, address purchaser, uint amount, uint purchasedAt)
+    /**
+     * @dev Amends a given early purchase with data
+     * @param earlyPurchaseIndex Index number of the purchase
+     * @param purchaser Purchaser's address
+     * @param amount Value of purchase
+     * @param purchasedAt Purchase timestamp
+     */
+    function amendEarlyPurchase(uint256 earlyPurchaseIndex, address purchaser, uint256 amount, uint256 purchasedAt)
         external
         noEther
         onlyOwner
@@ -429,17 +434,11 @@ contract StarbaseEarlyPurchaseAmendment {
         onlyBeforeCrowdsale
         returns (bool)
     {
-        if (purchasedAt == 0 || purchasedAt > now) {
-            throw;
-        }
+        assert(purchasedAt != 0 || purchasedAt <= now);
 
-        if (numberOfRawEarlyPurchases() <= earlyPurchaseIndex) {
-            throw;  // Array Index Out of Bounds Exception
-        }
+        assert(numberOfRawEarlyPurchases() > earlyPurchaseIndex);
 
-        if (isInvalidEarlyPurchase(earlyPurchaseIndex)) {
-            throw;  // Invalid early purchase cannot be amended
-        }
+        assert(!isInvalidEarlyPurchase(earlyPurchaseIndex)); // Invalid early purchase cannot be amended
 
         if (!isAmendedEarlyPurchase(earlyPurchaseIndex)) {
             amendedEarlyPurchaseIndexes.push(earlyPurchaseIndex);
@@ -451,16 +450,18 @@ contract StarbaseEarlyPurchaseAmendment {
         return true;
     }
 
-    function isAmendedEarlyPurchase(uint earlyPurchaseIndex)
+    /**
+     * @dev Checks whether early purchase is amended
+     * @param earlyPurchaseIndex Index number of the purchase
+     */
+    function isAmendedEarlyPurchase(uint256 earlyPurchaseIndex)
         constant
         noEther
         returns (bool)
     {
-        if (numberOfRawEarlyPurchases() <= earlyPurchaseIndex) {
-            throw;  // Array Index Out of Bounds Exception
-        }
+        assert(numberOfRawEarlyPurchases() > earlyPurchaseIndex); // Array Index Out of Bounds Exception
 
-        for (uint i; i < amendedEarlyPurchaseIndexes.length; i++) {
+        for (uint256 i; i < amendedEarlyPurchaseIndexes.length; i++) {
             if (amendedEarlyPurchaseIndexes[i] == earlyPurchaseIndex) {
                 return true;
             }
@@ -468,6 +469,10 @@ contract StarbaseEarlyPurchaseAmendment {
         return false;
     }
 
+    /**
+     * @dev Loads early purchases data to StarbaseEarlyPurchaseAmendment contract
+     * @param starbaseEarlyPurchaseAddress Address from starbase early purchase
+     */
     function loadStarbaseEarlyPurchases(address starbaseEarlyPurchaseAddress)
         external
         noEther
@@ -475,43 +480,40 @@ contract StarbaseEarlyPurchaseAmendment {
         onlyBeforeCrowdsale
         returns (bool)
     {
-        if (starbaseEarlyPurchaseAddress == 0 ||
-            address(starbaseEarlyPurchase) != 0)
-        {
-            throw;
-        }
+        assert(starbaseEarlyPurchaseAddress != 0 ||
+            address(starbaseEarlyPurchase) == 0);
 
         starbaseEarlyPurchase = StarbaseEarlyPurchase(starbaseEarlyPurchaseAddress);
-        if (starbaseEarlyPurchase.earlyPurchaseClosedAt() == 0) {
-            throw;   // the early purchase must be closed
-        }
+        assert(starbaseEarlyPurchase.earlyPurchaseClosedAt() != 0); // the early purchase must be closed
+
         return true;
     }
 
-    /// @dev Contract constructor function
+    /**
+     * @dev Contract constructor function. It sets owner
+     */
     function StarbaseEarlyPurchaseAmendment() noEther {
         owner = msg.sender;
     }
 
-    /// @dev Fallback function always fails
-    function () {
-        throw;
-    }
-
     /**
      * Internal functions
+     */
+
+    /**
+     * @dev Normalizes early purchases data
      */
     function normalizedEarlyPurchases()
         constant
         internal
         returns (StarbaseEarlyPurchase.EarlyPurchase[] normalizedEP)
     {
-        uint rawEPCount = numberOfRawEarlyPurchases();
+        uint256 rawEPCount = numberOfRawEarlyPurchases();
         normalizedEP = new StarbaseEarlyPurchase.EarlyPurchase[](
             rawEPCount - invalidEarlyPurchaseIndexes.length);
 
-        uint normalizedIdx;
-        for (uint i; i < rawEPCount; i++) {
+        uint256 normalizedIdx;
+        for (uint256 i; i < rawEPCount; i++) {
             if (isInvalidEarlyPurchase(i)) {
                 continue;   // invalid early purchase should be ignored
             }
@@ -528,7 +530,10 @@ contract StarbaseEarlyPurchaseAmendment {
         }
     }
 
-    function getEarlyPurchase(uint earlyPurchaseIndex)
+    /**
+     * @dev Fetches early purchases data
+     */
+    function getEarlyPurchase(uint256 earlyPurchaseIndex)
         internal
         constant
         onlyEarlyPurchasesLoaded
@@ -539,15 +544,19 @@ contract StarbaseEarlyPurchaseAmendment {
         return StarbaseEarlyPurchase.EarlyPurchase(purchaser, amount, purchasedAt);
     }
 
+    /**
+     * @dev Returns raw number of early purchases
+     */
     function numberOfRawEarlyPurchases()
         internal
         constant
         onlyEarlyPurchasesLoaded
-        returns (uint)
+        returns (uint256)
     {
         return starbaseEarlyPurchase.numberOfEarlyPurchases();
     }
 }
+
 
 contract Certifier {
 	event Confirmed(address indexed who);
@@ -557,6 +566,7 @@ contract Certifier {
 	function getAddress(address, string) public constant returns (address);
 	function getUint(address, string) public constant returns (uint);
 }
+
 
 /**
  * @title Crowdsale contract - Starbase crowdsale to create STAR.
@@ -631,11 +641,13 @@ contract StarbaseCrowdsale is Ownable {
     address[] public earlyPurchasers;
     mapping (address => uint256) public earlyPurchasedAmountBy; // early purchased amount in CNY per purchasers' address
     bool public earlyPurchasesLoaded = false;  // returns whether all early purchases are loaded into this contract
-    uint256 public totalAmountOfEarlyPurchasesInCny; // including 20% bonus
+    uint256 public totalAmountOfEarlyPurchases; // including 20% bonus
 
     // crowdsale
+    bool public presalePurchasesLoaded = false; // returns whether all presale purchases are loaded into this contract
     uint256 public maxCrowdsaleCap;     // = 67M CNY - (total raised amount from EP)
-    uint256 public totalAmountOfPurchasesInCny; // totalEP + totalPreSale + totalCrowdsale (including bonuses)
+    uint256 public totalAmountOfCrowdsalePurchases; // in CNY, including bonuses
+    uint256 public totalAmountOfCrowdsalePurchasesWithoutBonus; // in CNY
     mapping (address => QualifiedPartners) public qualifiedPartners;
     uint256 public purchaseStartBlock;  // crowdsale purchases can be accepted from this block number
     uint256 public startDate;
@@ -661,6 +673,11 @@ contract StarbaseCrowdsale is Ownable {
     modifier minInvestment() {
         // User has to send at least the ether value of one token.
         assert(msg.value >= MIN_INVESTMENT);
+        _;
+    }
+
+    modifier whenNotStarted() {
+        assert(startDate == 0);
         _;
     }
 
@@ -774,10 +791,10 @@ contract StarbaseCrowdsale is Ownable {
      */
     function updatePurchaseStartBlock(uint256 _purchaseStartBlock)
         external
+        whenNotStarted
         onlyFundraiser
         returns (bool)
     {
-        require(startDate == 0);
         purchaseStartBlock = _purchaseStartBlock;
         return true;
     }
@@ -813,14 +830,16 @@ contract StarbaseCrowdsale is Ownable {
      */
     function ownerStartsCrowdsale(uint256 timestamp)
         external
+        whenNotStarted
         onlyOwner
     {
-        assert(startDate == 0 && block.number >= purchaseStartBlock);   // overwriting startDate is not permitted and it should be after the crowdsale start block
+        assert(block.number >= purchaseStartBlock);   // this should be after the crowdsale start block
         startCrowdsale(timestamp);
     }
 
     /**
      * @dev Ends crowdsale
+     *      This may be executed by an owner if the raised funds did not reach the map cap
      * @param timestamp Timestamp at the crowdsale ended
      */
     function endCrowdsale(uint256 timestamp)
@@ -828,10 +847,18 @@ contract StarbaseCrowdsale is Ownable {
         onlyOwner
     {
         assert(timestamp > 0 && timestamp <= now);
-        assert(block.number > purchaseStartBlock && endedAt == 0);   // cannot end before it starts and overwriting time is not permitted
+        assert(block.number >= purchaseStartBlock && endedAt == 0);   // cannot end before it starts and overwriting time is not permitted
         endedAt = timestamp;
-        totalAmountOfEarlyPurchasesInCny = totalAmountOfEarlyPurchasesWithBonus();
-        totalAmountOfPurchasesInCny = totalRaisedAmountInCny();
+        CrowdsaleEnded(endedAt);
+    }
+
+    /**
+     * @dev Ends crowdsale
+     *      This may be executed by purchaseWithEth when the raised funds reach the map cap
+     */
+    function endCrowdsale() internal {
+        assert(block.number >= purchaseStartBlock && endedAt == 0);
+        endedAt = now;
         CrowdsaleEnded(endedAt);
     }
 
@@ -863,7 +890,7 @@ contract StarbaseCrowdsale is Ownable {
 
             uint256 tokenCount =
                 SafeMath.mul(crowdsaleTokenAmount, crowdsalePurchaseValue) /
-                totalAmountOfPurchasesInCny;
+                totalRaisedAmountInCny();
 
             numOfPurchasedTokensOnCsBy[msg.sender] =
                 SafeMath.add(numOfPurchasedTokensOnCsBy[msg.sender], tokenCount);
@@ -888,9 +915,9 @@ contract StarbaseCrowdsale is Ownable {
             uint256 earlyPurchaserPurchaseValue = earlyPurchasedAmountBy[msg.sender];
             earlyPurchasedAmountBy[msg.sender] = 0;
 
-            uint256 epTokenCalculationFromEPTokenAmount = SafeMath.mul(earlyPurchaseTokenAmount, earlyPurchaserPurchaseValue) / totalAmountOfEarlyPurchasesInCny;
+            uint256 epTokenCalculationFromEPTokenAmount = SafeMath.mul(earlyPurchaseTokenAmount, earlyPurchaserPurchaseValue) / totalAmountOfEarlyPurchases;
 
-            uint256 epTokenCalculationFromCrowdsaleTokenAmount = SafeMath.mul(crowdsaleTokenAmount, earlyPurchaserPurchaseValue) / totalAmountOfPurchasesInCny;
+            uint256 epTokenCalculationFromCrowdsaleTokenAmount = SafeMath.mul(crowdsaleTokenAmount, earlyPurchaserPurchaseValue) / totalRaisedAmountInCny();
 
             uint256 epTokenCount = SafeMath.add(epTokenCalculationFromEPTokenAmount, epTokenCalculationFromCrowdsaleTokenAmount);
 
@@ -932,6 +959,7 @@ contract StarbaseCrowdsale is Ownable {
                 uint256 amountWithBonus = SafeMath.add(amount, bonus);
 
                 earlyPurchasedAmountBy[purchaser] = SafeMath.add(earlyPurchasedAmountBy[purchaser], amountWithBonus);
+                totalAmountOfEarlyPurchases = totalAmountOfEarlyPurchases.add(amountWithBonus);
             }
 
             numOfLoadedEarlyPurchases = SafeMath.add(numOfLoadedEarlyPurchases, 1);
@@ -942,6 +970,31 @@ contract StarbaseCrowdsale is Ownable {
             earlyPurchasesLoaded = true;    // enable the flag
         }
         return true;
+    }
+
+    /**
+     * @dev Load presale purchases from the contract keeps track of them
+     * @param starbaseCrowdsalePresale Starbase presale contract address
+     */
+    function loadPresalePurchases(address starbaseCrowdsalePresale)
+        external
+        onlyOwner
+        whenNotEnded
+    {
+        require(starbaseCrowdsalePresale != 0);
+        require(!presalePurchasesLoaded);
+        StarbaseCrowdsale presale = StarbaseCrowdsale(starbaseCrowdsalePresale);
+        for (uint i; i < presale.numOfPurchases(); i++) {
+            var (purchaser, amount, rawAmount, purchasedAt) =
+                presale.crowdsalePurchases(i);  // presale purchase
+            crowdsalePurchases.push(CrowdsalePurchase(purchaser, amount, rawAmount, purchasedAt));
+
+            // Increase the sums
+            crowdsalePurchaseAmountBy[purchaser] = SafeMath.add(crowdsalePurchaseAmountBy[purchaser], amount);
+            totalAmountOfCrowdsalePurchases = totalAmountOfCrowdsalePurchases.add(amount);
+            totalAmountOfCrowdsalePurchasesWithoutBonus = totalAmountOfCrowdsalePurchasesWithoutBonus.add(rawAmount);
+        }
+        presalePurchasesLoaded = true;
     }
 
     /**
@@ -999,28 +1052,10 @@ contract StarbaseCrowdsale is Ownable {
     }
 
     /**
-     * @dev Calculates total amount of tokens purchased includes bonus tokens.
-     */
-    function totalAmountOfCrowdsalePurchases() constant public returns (uint256 amount) {
-        for (uint256 i; i < crowdsalePurchases.length; i++) {
-            amount = SafeMath.add(amount, crowdsalePurchases[i].amount);
-        }
-    }
-
-    /**
-     * @dev Calculates total amount of tokens purchased without bonus conversion.
-     */
-    function totalAmountOfCrowdsalePurchasesWithoutBonus() constant public returns (uint256 amount) {
-        for (uint256 i; i < crowdsalePurchases.length; i++) {
-            amount = SafeMath.add(amount, crowdsalePurchases[i].rawAmount);
-        }
-    }
-
-    /**
      * @dev Returns total raised amount in CNY (includes EP) and bonuses
      */
     function totalRaisedAmountInCny() constant public returns (uint256) {
-        return SafeMath.add(totalAmountOfEarlyPurchasesWithBonus(), totalAmountOfCrowdsalePurchases());
+        return totalAmountOfEarlyPurchases.add(totalAmountOfCrowdsalePurchases);
     }
 
     /**
@@ -1083,6 +1118,10 @@ contract StarbaseCrowdsale is Ownable {
         uint256 rawAmount = SafeMath.mul(msg.value, cnyEthRate) / 1e18;
         recordPurchase(msg.sender, rawAmount, now);
 
+        if (totalAmountOfCrowdsalePurchasesWithoutBonus >= maxCrowdsaleCap) {
+            endCrowdsale(); // ends this crowdsale automatically
+        }
+
         return true;
     }
 
@@ -1095,7 +1134,7 @@ contract StarbaseCrowdsale is Ownable {
      */
     function startCrowdsale(uint256 timestamp) internal {
         startDate = timestamp;
-        uint256 presaleAmount = totalAmountOfCrowdsalePurchasesWithoutBonus();
+        uint256 presaleAmount = totalAmountOfCrowdsalePurchasesWithoutBonus;
         if (maxCrowdsaleCap > presaleAmount) {
             uint256 mainSaleCap = maxCrowdsaleCap.sub(presaleAmount);
             uint256 twentyPercentOfCrowdsalePurchase = mainSaleCap.mul(20).div(100);
@@ -1126,10 +1165,10 @@ contract StarbaseCrowdsale is Ownable {
 
         // presale transfers which occurs before the crowdsale ignores the crowdsale hard cap
         if (block.number >= purchaseStartBlock) {
-            require(totalAmountOfCrowdsalePurchasesWithoutBonus() < maxCrowdsaleCap);   // check if the amount has already reached the cap
+            require(totalAmountOfCrowdsalePurchasesWithoutBonus < maxCrowdsaleCap);   // check if the amount has already reached the cap
 
             uint256 crowdsaleTotalAmountAfterPurchase =
-                SafeMath.add(totalAmountOfCrowdsalePurchasesWithoutBonus(), amount);
+                SafeMath.add(totalAmountOfCrowdsalePurchasesWithoutBonus, amount);
 
             // check whether purchase goes over the cap and send the difference back to the purchaser.
             if (crowdsaleTotalAmountAfterPurchase > maxCrowdsaleCap) {
@@ -1139,7 +1178,6 @@ contract StarbaseCrowdsale is Ownable {
               amount = SafeMath.sub(amount, difference);
               rawAmount = amount;
             }
-
         }
 
         amount = getBonusAmountCalculation(amount); // at this point amount bonus is calculated
@@ -1148,6 +1186,8 @@ contract StarbaseCrowdsale is Ownable {
         crowdsalePurchases.push(purchase);
         StarbasePurchasedWithEth(msg.sender, amount, rawAmount, cnyEthRate);
         crowdsalePurchaseAmountBy[purchaser] = SafeMath.add(crowdsalePurchaseAmountBy[purchaser], amount);
+        totalAmountOfCrowdsalePurchases = totalAmountOfCrowdsalePurchases.add(amount);
+        totalAmountOfCrowdsalePurchasesWithoutBonus = totalAmountOfCrowdsalePurchasesWithoutBonus.add(rawAmount);
         return amount;
     }
 
@@ -1170,7 +1210,7 @@ contract StarbaseCrowdsale is Ownable {
         if (amount <= bonusRange) {
             bonusCalc = amount.mul(bonusTier).div(100);
 
-            if (amount.add(totalAmountOfCrowdsalePurchasesWithoutBonus()) >= bonusRange)
+            if (amount.add(totalAmountOfCrowdsalePurchasesWithoutBonus) >= bonusRange)
                 bonusMilestones = nextMilestone;
 
             result = results.add(amount).add(bonusCalc);
