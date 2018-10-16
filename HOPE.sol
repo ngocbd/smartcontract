@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HOPE at 0x051f73eaf3f93b0b5440cc1381cb604f1457a6d1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HOPE at 0xc1c96294ba4f46c286aa0e1f5546574a4e86456a
 */
 pragma solidity ^0.4.18;
 
-// MEAT 
+
 
 contract Ownable {
   address public owner;
