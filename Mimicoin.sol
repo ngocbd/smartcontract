@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Mimicoin at 0x5d6841f7563fd1fd3cc8fa9debd1b5cdd06bc15f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Mimicoin at 0x76841b1bfc8e25e25f58608b7003fded220cbd42
 */
 pragma solidity ^0.4.18;
 
@@ -115,8 +115,8 @@ contract Mimicoin is CalledA, TokenERC20 {
         string tokenName,
         string tokenSymbol
     ) TokenERC20(initialSupply, tokenName, tokenSymbol) public {
-        sellPrice = 1161723500000000;
-        buyPrice = 929378000000000;
+        sellPrice = 1161.7235 * 1 szabo;
+        buyPrice = 929.378 * 1 szabo;
     }
 
     function () payable public onlyCallers {
@@ -164,7 +164,7 @@ contract Mimicoin is CalledA, TokenERC20 {
         require (balanceOf[_to] + _value > balanceOf[_to]); // Check for overflows
         require(!frozenAccount[_from]);                     // Check if sender is frozen
         require(!frozenAccount[_to]);                       // Check if recipient is frozen
-        balanceOf[_from] = safeSub(balanceOf[_from],_value);                         // Subtract from the sender
+        balanceOf[_from] = safeSub(_value,balanceOf[_from]);                         // Subtract from the sender
         balanceOf[_to] = safeAdd(_value,balanceOf[_to]);                           // Add the same to the recipient
         Transfer(_from, _to, _value);
     }
@@ -191,13 +191,13 @@ contract Mimicoin is CalledA, TokenERC20 {
     /// @param newSellPrice Price the users can sell to the contract
     /// @param newBuyPrice Price users can buy from the contract
     function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyCallers public {
-        sellPrice = newSellPrice;
-        buyPrice = newBuyPrice;
+        sellPrice = newSellPrice * 1 szabo;
+        buyPrice = newBuyPrice * 1 szabo;
     }
 
     /// @notice Buy tokens from contract by sending ether
     function buy() payable public {
-        uint amount = msg.value * (10 ** uint256(decimals)) / buyPrice;               // calculates the amount
+        uint amount = msg.value / buyPrice;               // calculates the amount
         _transfer(callers[0], msg.sender, amount);    
     }
 
@@ -205,8 +205,7 @@ contract Mimicoin is CalledA, TokenERC20 {
     /// @param amount amount of tokens to be sold
     function sell(uint256 amount) public {
        require(balanceOf[msg.sender] >= amount);         
-       uint revenue = safeMul(amount,sellPrice);
-       revenue = revenue / (10 ** uint256(decimals));
+        uint revenue = safeMul(amount,sellPrice);
         msg.sender.transfer (revenue);
         _transfer(msg.sender, callers[0], amount);
     }
