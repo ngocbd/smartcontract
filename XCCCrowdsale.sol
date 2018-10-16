@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XCCCrowdsale at 0x1b4fa88505f552a61389b54b7189bce9c5268b8c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XCCCrowdsale at 0x062543100374b5fdb33aea4605fb791c4e867b06
 */
 pragma solidity ^0.4.23;
 
@@ -348,7 +348,7 @@ contract XCCCrowdsale is Ownable, Crowdsale, MintableToken {
 
     uint256 public constant INITIAL_SUPPLY = 5 * (10 ** 12) * (10 ** uint256(decimals));
     uint256 public fundForSale = 5 * (10 ** 12) * (10 ** uint256(decimals));
-    uint256 public fundPreSale =  1 * (10 ** 12) * (10 ** uint256(decimals));
+    uint256 public fundPreSale =  1 * (10 ** 9) * (10 ** uint256(decimals));
 
     uint256 public countInvestor;
 
