@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ledger at 0x29b77fa51f36991f99bbeb702471b7227510d05a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ledger at 0xe6a51bd48f93abcd6c1d532112094044971d8d4e
 */
 pragma solidity >=0.4.4;
 
@@ -169,6 +169,10 @@ contract Token is Finalizable, TokenReceivable, SafeMath, EventDefinitions {
         _;
     }
 
+    function burn(uint _amount) {
+        controller.burn(msg.sender, _amount);
+        Transfer(msg.sender, 0x0, _amount);
+    }
 }
 
 contract Controller is Owned, Finalizable {
@@ -229,6 +233,11 @@ contract Controller is Owned, Finalizable {
     onlyToken
     returns (bool success) {
         return ledger.decreaseApproval(_owner, _spender, _subtractedValue);
+    }
+
+
+    function burn(address _owner, uint _amount) onlyToken {
+        ledger.burn(_owner, _amount);
     }
 }
 
@@ -303,16 +312,37 @@ contract Ledger is Owned, SafeMath, Finalizable {
         return true;
     }
 
-    function mint(address _a, uint _amount) onlyOwner notFinalized {
-        balanceOf[_a] = safeAdd(balanceOf[_a], _amount);
-        totalSupply = safeAdd(totalSupply, _amount);
+    event LogMint(address indexed owner, uint amount);
+    event LogMintingStopped();
+
+    function mint(address _a, uint _amount) onlyOwner mintingActive {
+        balanceOf[_a] += _amount;
+        totalSupply += _amount;
+        LogMint(_a, _amount);
     }
 
-    function multiMint(uint[] bits) onlyOwner notFinalized {
+    function multiMint(uint[] bits) onlyOwner mintingActive {
         for (uint i=0; i<bits.length; i++) {
 	    address a = address(bits[i]>>96);
 	    uint amount = bits[i]&((1<<96) - 1);
 	    mint(a, amount);
         }
+    }
+
+    bool public mintingStopped;
+
+    function stopMinting() onlyOwner {
+        mintingStopped = true;
+        LogMintingStopped();
+    }
+
+    modifier mintingActive() {
+        if (mintingStopped) throw;
+        _;
+    }
+
+    function burn(address _owner, uint _amount) onlyController {
+        balanceOf[_owner] = safeSub(balanceOf[_owner], _amount);
+        totalSupply = safeSub(totalSupply, _amount);
     }
 }
