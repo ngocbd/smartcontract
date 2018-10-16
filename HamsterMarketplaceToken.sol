@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HamsterMarketplaceToken at 0x82d40ffb6352a3c6a13514df5ab26b0b86056a46
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HamsterMarketplaceToken at 0x8d0222d8384357c0770cd8db569785a0dfed49d4
 */
 pragma solidity ^0.4.13;
 
@@ -235,6 +235,28 @@ contract Pausable is Ownable {
 }
 
 /**
+ * @title Burnable Token
+ * @dev Token that can be irreversibly burned (destroyed).
+ */
+contract BurnableToken is StandardToken {
+ 
+  /**
+   * @dev Burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   */
+  function burn(uint _value) public {
+    require(_value > 0);
+    address burner = msg.sender;
+    balances[burner] = balances[burner].sub(_value);
+    totalSupply = totalSupply.sub(_value);
+    Burn(burner, _value);
+  }
+ 
+  event Burn(address indexed burner, uint indexed value);
+ 
+}
+
+/**
  * @title Hamster Marketplace Token Network Token
  * @dev ERC20 Hamster Marketplace Token Network Token (HMT)
  *
@@ -246,29 +268,37 @@ contract Pausable is Ownable {
  * 1 HMT is equivalent to:
  *   100000000 == 1 * 10**8 == 1e8 == One Hundred Million Grains
  *
- * 1 Billion HMT (total supply) is equivalent to:
- *   100000000000000000 == 1000000000 * 10**8 == 1e17 == One Hundred Quadrillion Grains
+ * 10 Million HMT (total supply) is equivalent to:
+ *   1000000000000000 == 10000000 * 10**8 == 1e15 == One Quadrillion Grains
  *
  * All initial HMT Grains are assigned to the creator of
  * this contract.
  *
  */
-contract HamsterMarketplaceToken is StandardToken, Pausable {
+contract HamsterMarketplaceToken is BurnableToken, Pausable {
 
-  string public constant name = 'Hamster Marketplace Token';                       // Set the token name for display
+  string public constant name = 'Hamster Marketplace Token';                   // Set the token name for display
   string public constant symbol = 'HMT';                                       // Set the token symbol for display
   uint8 public constant decimals = 8;                                          // Set the number of decimals for display
-  uint256 public constant INITIAL_SUPPLY = 20000000 * 10**uint256(decimals); // 1 Billion HMT specified in Grains\
+  uint256 constant INITIAL_SUPPLY = 10000000 * 10**uint256(decimals);          // 10 Million HMT specified in Grains
   uint256 public sellPrice;
-  uint256 public revenue;
+  mapping(address => uint256) bonuses;
+  uint8 public freezingPercentage;
+  uint32 public constant unfreezingTimestamp = 1550534400;                     // 2019, February, 19, 00:00:00 UTC
 
   /**
    * @dev HamsterMarketplaceToken Constructor
    * Runs only on initial contract creation.
    */
   function HamsterMarketplaceToken() {
-    totalSupply = INITIAL_SUPPLY;                               // Set the total supply
-    balances[msg.sender] = INITIAL_SUPPLY;                      // Creator address is assigned all
+    totalSupply = INITIAL_SUPPLY;                                              // Set the total supply
+    balances[msg.sender] = INITIAL_SUPPLY;                                     // Creator address is assigned all
+    sellPrice = 0;
+    freezingPercentage = 100;
+  }
+
+  function balanceOf(address _owner) constant returns (uint256 balance) {
+    return super.balanceOf(_owner) - bonuses[_owner] * freezingPercentage / 100;
   }
 
   /**
@@ -278,7 +308,49 @@ contract HamsterMarketplaceToken is StandardToken, Pausable {
    */
   function transfer(address _to, uint256 _value) whenNotPaused returns (bool) {
     require(_to != address(0));
+    require(balances[msg.sender] - bonuses[msg.sender] * freezingPercentage / 100 >= _value);
     return super.transfer(_to, _value);
+  }
+
+  /**
+   * @dev Transfer tokens and bonus tokens to a specified address
+   * @param _to The address to transfer to.
+   * @param _value The amount to be transferred.
+   * @param _bonus The bonus amount.
+   */
+  function transferWithBonuses(address _to, uint256 _value, uint256 _bonus) onlyOwner returns (bool) {
+    require(_to != address(0));
+    require(balances[msg.sender] - bonuses[msg.sender] * freezingPercentage / 100 >= _value + _bonus);
+    bonuses[_to] = bonuses[_to].add(_bonus);
+    return super.transfer(_to, _value + _bonus);
+  }
+
+  /**
+   * @dev Check the frozen bonus balance
+   * @param _owner The address to check the balance of.
+   */
+  function bonusesOf(address _owner) constant returns (uint256 balance) {
+    return bonuses[_owner] * freezingPercentage / 100;
+  }
+
+  /**
+   * @dev Unfreezing part of bonus tokens by owner
+   * @param _percentage uint8 Percentage of bonus tokens to be left frozen
+   */
+  function setFreezingPercentage(uint8 _percentage) onlyOwner returns (bool) {
+    require(_percentage < freezingPercentage);
+    require(now < unfreezingTimestamp);
+    freezingPercentage = _percentage;
+    return true;
+  }
+
+  /**
+   * @dev Unfreeze all bonus tokens
+   */
+  function unfreezeBonuses() returns (bool) {
+    require(now >= unfreezingTimestamp);
+    freezingPercentage = 0;
+    return true;
   }
 
   /**
@@ -289,6 +361,7 @@ contract HamsterMarketplaceToken is StandardToken, Pausable {
    */
   function transferFrom(address _from, address _to, uint256 _value) whenNotPaused returns (bool) {
     require(_to != address(0));
+    require(balances[_from] - bonuses[_from] * freezingPercentage / 100 >= _value);
     return super.transferFrom(_from, _to, _value);
   }
 
@@ -301,40 +374,63 @@ contract HamsterMarketplaceToken is StandardToken, Pausable {
     return super.approve(_spender, _value);
   }
 
+ /**
+  * @dev Gets the purchase price of tokens by contract
+  */
+  function getPrice() constant returns (uint256 _sellPrice) {
+      return sellPrice;
+  }
 
-  function setPrice(uint256 newSellPrice) onlyOwner returns (bool success) {
+  /**
+  * @dev Sets the purchase price of tokens by contract
+  * @param newSellPrice New purchase price
+  */
+  function setPrice(uint256 newSellPrice) external onlyOwner returns (bool success) {
       require(newSellPrice > 0);
       sellPrice = newSellPrice;
       return true;
   }
 
-
-  function sell(uint amount) returns (uint revenue){
-      require(balances[msg.sender] >= amount);         // checks if the sender has enough to sell
-      balances[this] = balances[this].add(amount);                        // adds the amount to owner's balance
-      balances[msg.sender] = balances[msg.sender].sub(amount);                  // subtracts the amount from seller's balance
-      revenue = amount.mul(sellPrice);
-      require(msg.sender.send(revenue));                // sends ether to the seller: it's important to do this last to prevent recursion attacks
-      Transfer(msg.sender, this, amount);               // executes an event reflecting on the change
-      return revenue;                                   // ends function and returns
+  /**
+    * @dev Buying ethereum for tokens
+    * @param amount Number of tokens
+    */
+  function sell(uint256 amount) external returns (uint256 revenue){
+      require(balances[msg.sender] - bonuses[msg.sender] * freezingPercentage / 100 >= amount);           // Checks if the sender has enough to sell
+      balances[this] = balances[this].add(amount);                                                        // Adds the amount to owner's balance
+      balances[msg.sender] = balances[msg.sender].sub(amount);                                            // Subtracts the amount from seller's balance
+      revenue = amount.mul(sellPrice);                                                                    // Calculate the seller reward
+      msg.sender.transfer(revenue);                                                                       // Sends ether to the seller: it's important to do this last to prevent recursion attacks
+      Transfer(msg.sender, this, amount);                                                                 // Executes an event reflecting on the change
+      return revenue;                                                                                     // Ends function and returns
   }
 
-  function getTokens(uint amount) onlyOwner  returns (bool success) {
-      require(balances[this] >= amount);               // checks if it has enough to sell
-      balances[msg.sender] = balances[msg.sender].add(amount);                    // adds the amount to buyer's balance
-      balances[this] = balances[this].sub(amount);                               // subtracts amount from seller's balance
-      Transfer(this, msg.sender, amount);               // execute an event reflecting the change
-      return true;                                    // ends function and returns
+  /**
+  * @dev Allows you to get tokens from the contract
+  * @param amount Number of tokens
+  */
+  function getTokens(uint256 amount) onlyOwner external returns (bool success) {
+      require(balances[this] >= amount);
+      balances[msg.sender] = balances[msg.sender].add(amount);
+      balances[this] = balances[this].sub(amount);
+      Transfer(this, msg.sender, amount);
+      return true;
   }
 
-  function sendEther() payable onlyOwner returns (bool success) {
-      return true;                                   // ends function and returns
+  /**
+  * @dev Allows you to put Ethereum to the smart contract
+  */
+  function sendEther() payable onlyOwner external returns (bool success) {
+      return true;
   }
 
-
-  function getEther(uint amount) onlyOwner returns (bool success) {
-      require(msg.sender.send(amount));                 // sends ether to the seller: it's important to do this last to prevent recursion attacks
-      return true;                                  // ends function and returns
+  /**
+  * @dev Allows you to get ethereum from the contract
+  * @param amount Number of tokens
+  */
+  function getEther(uint256 amount) onlyOwner external returns (bool success) {
+      require(amount > 0);
+      msg.sender.transfer(amount);
+      return true;
   }
-
 }
