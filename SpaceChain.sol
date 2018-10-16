@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SpaceChain at 0x5849de6c1e13c671f462baf37d7defde1a49cbf0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SpaceChain at 0xe7dfa3fd5cefd9c07fe88485b6f196ba7f8ac48b
 */
 /* Create by www.hestart.com */
 pragma solidity ^0.4.8;
@@ -28,7 +28,7 @@ contract SpaceChain {
         balanceOf[msg.sender] =  1000000000000 * 1000000000000000000;              // Give the creator all initial tokens
         totalSupply =  1000000000000 * 1000000000000000000;                        // Update total supply
         name = "SpaceChain";                                   // Set the name for display purposes
-        symbol = "Schain";                               // Set the symbol for display purposes
+        symbol = "SPACE";                               // Set the symbol for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
     }
 
