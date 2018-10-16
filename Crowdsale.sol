@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x1a350d0d94cdad152322ffefb58033c95477238a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xc2db3637b64503a821adb44bcf0f1a3a88823a4b
 */
 pragma solidity ^0.4.11;
 
@@ -77,10 +77,10 @@ contract Crowdsale {
 
   function Crowdsale() {
     //You will change this to your wallet where you need the ETH 
-    wallet = 0x7f2C22f715379F2c0Fa102661fB7ACf9234a38B8;
+    wallet = 0xE37C4541C34e4A8785DaAA9aEb5005DdD29854ac;
     // durationInMinutes = _durationInMinutes;
     //Here will come the checksum address we got
-    addressOfTokenUsedAsReward = 0xcAa6CC715164969AEd2f8752283F212a56ABa611;
+    addressOfTokenUsedAsReward = 0xcD5E0Fffcf81C85D1deDE8d4dDcA4370e4CCB05f;
 
 
     tokenReward = token(addressOfTokenUsedAsReward);
@@ -126,6 +126,7 @@ contract Crowdsale {
 
     // calculate token amount to be sent
     uint256 tokens = (weiAmount) * price;//weiamount * price 
+    // uint256 tokens = (weiAmount/10**(18-decimals)) * price;//weiamount * price 
 
     // update state
     weiRaised = weiRaised.add(weiAmount);
