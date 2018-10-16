@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumToken at 0xa5afe03f5b46007277e448975deca255a85b2cb0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumToken at 0xc1d54584c9c40a5403f6b20c54cb6e611a3ca59d
 */
-pragma solidity ^ 0.4 .9;
+pragma solidity ^0.4.11;
 library SafeMath {
     function mul(uint256 a, uint256 b) internal constant returns(uint256) {
         uint256 c = a * b;
@@ -26,8 +26,7 @@ library SafeMath {
     }
 }
 contract EthereumToken {
-    using SafeMath
-    for uint256;
+    using SafeMath for uint256;
     mapping(address => mapping(address => uint256)) allowed;
     mapping(address => uint256) balances;
     uint256 public totalSupply;
@@ -38,8 +37,8 @@ contract EthereumToken {
     event Approval(address indexed _owner, address indexed spender, uint256 value);
 
     function EthereumToken() {
-        totalSupply = 1000;
-        symbol = 'ETH3';
+        totalSupply = 10000;
+        symbol = 'ETH2';
         owner = 0x92079f5af24d9ec63b6f38d23b7a83159cdd8ee7;
         balances[owner] = totalSupply;
         decimals = 0;
