@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0x59b35d71102d143fded3326a37a8d77b78bb5fc6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0x5d8a20fd80dfa0417e09c10b8a4b224077948c25
 */
 pragma solidity ^0.4.13;
 
@@ -153,8 +153,8 @@ contract StandardToken is ERC20, BasicToken {
  * Created specifically for TokenDone.io
  */
 contract ApprovedTokenDone is StandardToken {
-	string public name = 'JOINT';
-	string public symbol = 'JOINT';
+	string public name = '2020';
+	string public symbol = '2020';
 	uint public decimals = 3;
 	uint public initialSupply = 100000000000;
 	string public publisher = 'TokenDone.io';
