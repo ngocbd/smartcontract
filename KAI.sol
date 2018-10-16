@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KAI at 0x5e86aab3e44acaf801b3358f8870c37e12a716c2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KAI at 0xaf71b19e6292c6e1491ff3a54b3e63dbd41ef023
 */
 pragma solidity ^0.4.11;
 
@@ -123,7 +123,7 @@ contract KAI is StandardToken{
       if(msg.sender != owner) throw;
       _;
     } 
-    function KAI(){
+    function EGC(){
         owner = msg.sender;
         totalSupply = 10*(10**8)*(10**decimals);
         balances[owner] =  totalSupply;
