@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FundsKeeper at 0x65b6b495730371a807915441ed337f09d039bc66
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FundsKeeper at 0x96288906f3a363e98b0595a9205f5c9e31e9a3c1
 */
 pragma solidity 0.4.19;
 
@@ -16,11 +16,8 @@ contract InterfaceDeusETH {
 
 contract FundsKeeper {
     using SafeMath for uint256;
-    InterfaceDeusETH private lottery = InterfaceDeusETH(0x0);
+    InterfaceDeusETH public deusETH = InterfaceDeusETH(0x0);
     bool public started = false;
-
-    // address of tokens
-    address public deusETH;
 
     uint256 public weiReceived;
 
@@ -49,9 +46,9 @@ contract FundsKeeper {
     }
 
     function getGain(uint256 _id) public {
-        require((lottery.gameOver() && salarySent) || lottery.gameOverByUser());
-        require(lottery.getHolder(_id) == msg.sender);
-        require(lottery.getState(_id) == 1); //living token only
+        require((deusETH.gameOver() && salarySent) || deusETH.gameOverByUser());
+        require(deusETH.getHolder(_id) == msg.sender);
+        require(deusETH.getState(_id) == 1); //living token only
         require(payments[_id] == false);
 
         address winner = msg.sender;
@@ -67,22 +64,36 @@ contract FundsKeeper {
         winner.transfer(gain);
     }
 
-    function setLottery(address _lottery) public onlyOwner {
+    function setLottery(address _deusETH) public onlyOwner {
         require(!started);
-        lottery = InterfaceDeusETH(_lottery);
-        deusETH = _lottery;
+        deusETH = InterfaceDeusETH(_deusETH);
         started = true;
     }
 
-    function getTeamSalary() public onlyOwner {
+    function getTeamSalary() public onlyOwner returns (bool) {
         require(!salarySent);
-        require(lottery.gameOver());
-        require(!lottery.gameOverByUser());
+        require(deusETH.gameOver());
+        require(!deusETH.gameOverByUser());
         salarySent = true;
         weiReceived = this.balance;
         uint256 salary = weiReceived/10;
         weiReceived = weiReceived.sub(salary);
         owner.transfer(salary);
+        return true;
+    }
+
+    function changeLottery(address _deusETH) onlyOwner public {
+        deusETH = InterfaceDeusETH(_deusETH);
+    }
+
+    function checkPayments(uint _id) public view returns (bool) {
+        return payments[_id];
+    }
+
+    function changeOwner(address _newOwner) public onlyOwner returns (bool) {
+        require(_newOwner != address(0));
+        owner = _newOwner;
+        return true;
     }
 
     function weiReceive() internal {
@@ -90,10 +101,10 @@ contract FundsKeeper {
     }
 
     function calcGain() internal returns (uint256) {
-        if (lottery.gameOverByUser() && (weiReceived == 0)) {
+        if (deusETH.gameOverByUser() && (weiReceived == 0)) {
             weiReceived = this.balance;
         }
-        return weiReceived/lottery.livingSupply();
+        return weiReceived/deusETH.livingSupply();
     }
 }
 
