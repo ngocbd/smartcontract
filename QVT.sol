@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QVT at 0x70c4eea814bee9b74cafeca0200991bb0d8a4320
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QVT at 0x1183F92A5624D68e85FFB9170F16BF0443B4c242
 */
 pragma solidity ^0.4.15;
 
@@ -121,14 +121,20 @@ contract QVT is StandardToken {
 
     string public name = "QVT";
     string public symbol = "QVT";
-    uint public decimals = 0;
+    uint public decimals = 18;
+    uint public multiplier = 1000000000000000000; // two decimals to the left
 
     /**
      * Boolean contract states
      */
     bool public halted = false; //the founder address can set this to true to halt the crowdsale due to emergency
-    bool public preIco = true; //Pre-ico state
     bool public freeze = true; //Freeze state
+
+    uint public roundCount = 1; //Round state
+    bool public isDayFirst = false; //Pre-ico state
+    bool public isDaySecond = false; //Pre-ico state
+    bool public isDayThird = false; //Pre-ico state
+    bool public isPreSale = false; // Pre-sale bonus
 
     /**
      * Initial founder address (set in constructor)
@@ -141,22 +147,21 @@ contract QVT is StandardToken {
     /**
      * Token count
      */
-    uint public totalTokens = 218750000;
-    uint public team = 41562500;
-    uint public bounty = 2187500; // Bounty count
+    uint public totalTokens = 21600000;
+    uint public team = 3420000;
+    uint public bounty = 180000 * multiplier; // Bounty count
+    uint public preIcoSold = 0;
 
     /**
      * Ico and pre-ico cap
      */
-    uint public preIcoCap = 17500000; // Max amount raised during pre ico 17500 ether (10%)
-    uint public icoCap = 175000000; // Max amount raised during crowdsale 175000 ether
+    uint public icoCap = 18000000; // Max amount raised during crowdsale 18000 ether
 
     /**
      * Statistic values
      */
     uint public presaleTokenSupply = 0; // This will keep track of the token supply created during the crowdsale
     uint public presaleEtherRaised = 0; // This will keep track of the Ether raised during the crowdsale
-    uint public preIcoTokenSupply = 0; // This will keep track of the token supply created during the pre-ico
 
     event Buy(address indexed sender, uint eth, uint fbt);
 
@@ -169,15 +174,17 @@ contract QVT is StandardToken {
         owner = msg.sender;
         founder = _founder;
 
+        team = safeMul(team, multiplier);
+
+        // Total supply is 18000000
+        totalSupply = safeMul(totalTokens, multiplier);
+        balances[owner] = safeSub(totalSupply, team);
+
         // Move team token pool to founder balance
         balances[founder] = team;
-        // Sub from total tokens team pool
-        totalTokens = safeSub(totalTokens, team);
-        // Sub from total tokens bounty pool
-        totalTokens = safeSub(totalTokens, bounty);
-        // Total supply is 175000000
-        totalSupply = totalTokens;
-        balances[owner] = totalSupply;
+
+        TokensSent(founder, team);
+        Transfer(owner, founder, team);
     }
 
     /**
@@ -209,57 +216,80 @@ contract QVT is StandardToken {
         uint tokens = _value / price();
 
         // Total tokens should be more than user want's to buy
-        require(balances[owner]>tokens);
+        require(balances[owner]>safeMul(tokens, multiplier));
 
-        // Gave +50% of tokents on pre-ico
-        if (preIco) {
+        // Gave pre-sale bonus
+        if (isPreSale) {
             tokens = tokens + (tokens / 2);
         }
 
-        // Check how much tokens already sold
-        if (preIco) {
-            // Check that required tokens count are less than tokens already sold on pre-ico
-            require(safeAdd(presaleTokenSupply, tokens) < preIcoCap);
-        } else {
-            // Check that required tokens count are less than tokens already sold on ico sub pre-ico
-            require(safeAdd(presaleTokenSupply, tokens) < safeSub(icoCap, preIcoTokenSupply));
+        // Gave +30% of tokents on first day
+        if (isDayFirst) {
+            tokens = tokens + safeMul(safeDiv(tokens, 10), 3);
         }
+
+        // Gave +20% of tokents on second day
+        if (isDaySecond) {
+            tokens = tokens + safeDiv(tokens, 5);
+        }
+
+        // Gave +10% of tokents on third day
+        if (isDayThird) {
+            tokens = tokens + safeDiv(tokens, 10);
+        }
+
+        // Check that required tokens count are less than tokens already sold on ico sub pre-ico
+        require(safeAdd(presaleTokenSupply, tokens) < icoCap);
 
         // Send wei to founder address
         founder.transfer(_value);
 
         // Add tokens to user balance and remove from totalSupply
-        balances[_to] = safeAdd(balances[_to], tokens);
+        balances[_to] = safeAdd(balances[_to], safeMul(tokens, multiplier));
         // Remove sold tokens from total supply count
-        balances[owner] = safeSub(balances[owner], tokens);
+        balances[owner] = safeSub(balances[owner], safeMul(tokens, multiplier));
 
-        // Update stats
-        if (preIco) {
-            preIcoTokenSupply  = safeAdd(preIcoTokenSupply, tokens);
-        }
         presaleTokenSupply = safeAdd(presaleTokenSupply, tokens);
         presaleEtherRaised = safeAdd(presaleEtherRaised, _value);
 
-        // Send buy Qvolta token action
-        Buy(_to, _value, tokens);
-
         // /* Emit log events */
-        TokensSent(_to, tokens);
+        Buy(_to, _value, safeMul(tokens, multiplier));
+        TokensSent(_to, safeMul(tokens, multiplier));
         ContributionReceived(_to, _value);
-        Transfer(owner, _to, tokens);
+        Transfer(owner, _to, safeMul(tokens, multiplier));
 
         return true;
     }
 
     /**
-     * Pre-ico state.
+     * Emit log events
      */
-    function setPreIco() onlyOwner() {
-        preIco = true;
+    function sendEvents(address to, uint256 value, uint tokens) internal {
+        // Send buy Qvolta token action
+        Buy(to, value, safeMul(tokens, multiplier));
+        TokensSent(to, safeMul(tokens, multiplier));
+        ContributionReceived(to, value);
+        Transfer(owner, to, safeMul(tokens, multiplier));
     }
 
-    function unPreIco() onlyOwner() {
-        preIco = false;
+    /**
+     * Run mass transfers with pre-ico *2 bonus
+     */
+    function proceedPreIcoTransactions(address[] toArray, uint[] valueArray) onlyOwner() {
+        uint tokens = 0;
+        address to = 0x0;
+        uint value = 0;
+
+        for (uint i = 0; i < toArray.length; i++) {
+            to = toArray[i];
+            value = valueArray[i];
+            tokens = value / price();
+            tokens = tokens + tokens;
+            balances[to] = safeAdd(balances[to], safeMul(tokens, multiplier));
+            balances[owner] = safeSub(balances[owner], safeMul(tokens, multiplier));
+            preIcoSold = safeAdd(preIcoSold, tokens);
+            sendEvents(to, value, tokens);
+        }
     }
 
     /**
@@ -274,36 +304,28 @@ contract QVT is StandardToken {
     }
 
     /**
-     * Transfer bounty to target address from bounty pool
-     */
-    function sendTeamTokens(address _to, uint256 _value) onlyOwner() {
-        balances[founder] = safeSub(balances[founder], _value);
-        balances[_to] = safeAdd(balances[_to], _value);
-        // /* Emit log events */
-        TokensSent(_to, _value);
-        Transfer(owner, _to, _value);
-    }
-
-    /**
      * Transfer team tokens to target address
      */
     function sendBounty(address _to, uint256 _value) onlyOwner() {
+        require(bounty > _value);
+
         bounty = safeSub(bounty, _value);
-        balances[_to] = safeAdd(balances[_to], _value);
+        balances[_to] = safeAdd(balances[_to], safeMul(_value, multiplier));
         // /* Emit log events */
-        TokensSent(_to, _value);
-        Transfer(owner, _to, _value);
+        TokensSent(_to, safeMul(_value, multiplier));
+        Transfer(owner, _to, safeMul(_value, multiplier));
     }
 
     /**
      * Transfer bounty to target address from bounty pool
      */
     function sendSupplyTokens(address _to, uint256 _value) onlyOwner() {
-        balances[owner] = safeSub(balances[owner], _value);
-        balances[_to] = safeAdd(balances[_to], _value);
+        balances[owner] = safeSub(balances[owner], safeMul(_value, multiplier));
+        balances[_to] = safeAdd(balances[_to], safeMul(_value, multiplier));
+
         // /* Emit log events */
-        TokensSent(_to, _value);
-        Transfer(owner, _to, _value);
+        TokensSent(_to, safeMul(_value, multiplier));
+        Transfer(owner, _to, safeMul(_value, multiplier));
     }
 
     /**
@@ -330,6 +352,66 @@ contract QVT is StandardToken {
     function burnRemainingTokens() isAvailable() onlyOwner() {
         Burn(owner, balances[owner]);
         balances[owner] = 0;
+    }
+
+    /**
+     * Set day first bonus
+     */
+    function setDayFirst() onlyOwner() {
+        isDayFirst = true;
+        isDaySecond = false;
+        isDayThird = false;
+    }
+
+    /**
+     * Set day second bonus
+     */
+    function setDaySecond() onlyOwner() {
+        isDayFirst = false;
+        isDaySecond = true;
+        isDayThird = false;
+    }
+
+    /**
+     * Set day first bonus
+     */
+    function setDayThird() onlyOwner() {
+        isDayFirst = false;
+        isDaySecond = false;
+        isDayThird = true;
+    }
+
+    /**
+     * Set day first bonus
+     */
+    function setBonusOff() onlyOwner() {
+        isDayFirst = false;
+        isDaySecond = false;
+        isDayThird = false;
+    }
+
+   /**
+    * Set pre-sale bonus
+    */
+   function setPreSaleOn() onlyOwner() {
+       isPreSale = true;
+   }
+
+   /**
+    * Set pre-sale bonus off
+    */
+   function setPreSaleOff() onlyOwner() {
+       isPreSale = false;
+   }
+
+    /**
+     * Start new investment round
+     */
+    function startNewRound() onlyOwner() {
+        require(roundCount < 5);
+        roundCount = roundCount + 1;
+
+        balances[owner] = safeAdd(balances[owner], safeMul(icoCap, multiplier));
     }
 
     modifier onlyOwner() {
