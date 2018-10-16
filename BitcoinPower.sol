@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitcoinPower at 0x8cc610cb837b3cf3508984867d7e7e80c6238e31
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitcoinPower at 0x6350a843cf4946247ce24df1d00fd2c488cdac8a
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'BitcoinPower' token contract
+// 'Bitcoin Power' token contract
 //
 // Deployed to : 0x2d57365a7ab22425f09D49bB0baFB0426EB8dDF9
-// Symbol      : BTCP
-// Name        : BitcoinPower
+// Symbol      : BP
+// Name        : Bitcoin Power
 // Total supply: 100000000
 // Decimals    : 18
 //
@@ -116,10 +116,10 @@ contract BitcoinPower is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function BitcoinPower() public {
-        symbol = "BTCP";
-        name = "BitcoinPower ";
+        symbol = "BP";
+        name = "Bitcoin Power ";
         decimals = 18;
-        _totalSupply = 100000000000000000000000000000;
+        _totalSupply = 1000000000000000000000000000;
         balances[0x2d57365a7ab22425f09D49bB0baFB0426EB8dDF9] = _totalSupply;
         Transfer(address(0), 0x2d57365a7ab22425f09D49bB0baFB0426EB8dDF9, _totalSupply);
     }
