@@ -1,7 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract THXToken at 0x4a41661a42436b4b07bc887abcf69b07d567c706
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract THXToken at 0x856d527f8cf65bbf4da14197ec21eb881f8f2cb8
 */
 pragma solidity ^0.4.19;
+
+/// @author Thanks Internet
+/// @title  THX - Thanks Internet Token
 
 contract Token {
 
@@ -109,7 +112,7 @@ contract THXToken is StandardToken {
     string public name;                   //fancy name: eg Simon Bucks
     uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
     string public symbol;                 //An identifier: eg SBX
-    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
+    string public version = 'H0.1';       //human 0.1 standard. Just an arbitrary versioning scheme.
 
 //
 // CHANGE THESE VALUES FOR YOUR TOKEN
@@ -119,9 +122,9 @@ contract THXToken is StandardToken {
 
     function THXToken(
         ) {
-        balances[msg.sender] = 2081141119;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 2081141119;                        // Update total supply (100000 for example)
-        name = "Thanks Internet";                                   // Set the name for display purposes
+        balances[msg.sender] = 4000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 4000000000;                        // Update total supply (100000 for example)
+        name = "Thanks Internet Token";                                   // Set the name for display purposes
         decimals = 0;                            // Amount of decimals for display purposes
         symbol = "THX";                               // Set the symbol for display purposes
     }
@@ -137,4 +140,4 @@ contract THXToken is StandardToken {
         if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
         return true;
     }
-}
+}//contract THX
