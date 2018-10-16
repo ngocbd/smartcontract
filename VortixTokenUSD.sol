@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VortixTokenUSD at 0xb577c2dff0394efeaaa27d8c28d2ee1a115a00dd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VortixTokenUSD at 0x8d1fc2a7d4bc3c64ff04f5a9485a32e3f6f8fdaf
 */
 pragma solidity ^0.4.21;
 
@@ -329,8 +329,8 @@ contract VortixTokenUSD is StandardToken, Ownable {
   // FIELDS
 
   // Standard fields used to describe the token
-  string public name = "VortixTokenUSD";
-  string public symbol = "VTX";
+  string public name = "Vortix$";
+  string public symbol = "VTX$";
   string public version = "H0.1";
   uint8 public decimals = 8;
 
@@ -341,5 +341,5 @@ contract VortixTokenUSD is StandardToken, Ownable {
   bool public mintingFinished = false;
 
   // Amount of USD (with 8 decimals) collected during sale phase
-  uint256 private totalCollected;
+  uint256 public totalCollected;
 }
