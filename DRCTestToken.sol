@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DRCTestToken at 0x76eee1e4a609f7af20926c268d4eba6f34818abe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DRCTestToken at 0xa11b7b74f5ebc096f2bd4e1661a112cb857b62bb
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.18;
 
 interface tokenRecipient { 
 
@@ -349,7 +349,9 @@ contract DRCTestToken is BurnableToken, MintableToken, PausableToken {
 
     uint256 public INITIAL_SUPPLY = 1000000000000000000000000000;
 
-
+    // add map for recording the accounts that will not be allowed to transfer tokens
+    mapping (address => bool) public frozenAccount;
+    event FrozenFunds(address target, bool frozen);
 
     /**
 
@@ -369,8 +371,86 @@ contract DRCTestToken is BurnableToken, MintableToken, PausableToken {
 
     }
 
+    /**
+     * freeze the account's balance 
+     *
+     * by default all the accounts will not be frozen until set freeze value as true. 
+     */
+    function freezeAccount(address target, bool freeze) onlyOwner public {
+        frozenAccount[target] = freeze;
+        FrozenFunds(target, freeze);
+    }
 
+  /**
+   * @dev transfer token for a specified address with froze status checking
+   * @param _to The address to transfer to.
+   * @param _value The amount to be transferred.
+   */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(!frozenAccount[msg.sender]);
+    return super.transfer(_to, _value);
+  }
 
+  /**
+   * @dev Transfer tokens from one address to another with checking the frozen status
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(!frozenAccount[_from]);
+    return super.transferFrom(_from, _to, _value);
+  }
+ 
+  /**
+   * @dev transfer token for a specified address with froze status checking
+   * @param _toMulti The addresses to transfer to.
+   * @param _values The array of the amount to be transferred.
+   */
+  function transferMultiAddress(address[] _toMulti, uint256[] _values) public returns (bool) {
+    require(!frozenAccount[msg.sender]);
+    uint256 i = 0;
+    while ( i < _toMulti.length) {
+        require(_toMulti[i] != address(0));
+        require(_values[i] <= balances[msg.sender]);
+
+        // SafeMath.sub will throw if there is not enough balance.
+        balances[msg.sender] = balances[msg.sender].sub(_values[i]);
+        balances[_toMulti[i]] = balances[_toMulti[i]].add(_values[i]);
+        Transfer(msg.sender, _toMulti[i], _values[i]);
+
+        i = i.add(1);
+    }
+
+    return true;
+  }
+
+  /**
+   * @dev Transfer tokens from one address to another with checking the frozen status
+   * @param _from address The address which you want to send tokens from
+   * @param _toMulti address[] The addresses which you want to transfer to
+   * @param _values uint256[] the array of the amounts of tokens to be transferred
+   */
+  function transferMultiAddressFrom(address _from, address[] _toMulti, uint256[] _values) public returns (bool) {
+    require(!frozenAccount[_from]);
+    
+    uint256 i = 0;
+    while ( i < _toMulti.length) {
+        require(_toMulti[i] != address(0));
+        require(_values[i] <= balances[_from]);
+        require(_values[i] <= allowed[_from][msg.sender]);
+
+        // SafeMath.sub will throw if there is not enough balance.
+        balances[_from] = balances[_from].sub(_values[i]);
+        balances[_toMulti[i]] = balances[_toMulti[i]].add(_values[i]);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_values[i]);
+        Transfer(_from, _toMulti[i], _values[i]);
+
+        i = i.add(1);
+    }
+
+    return true;
+  } 
     /**
 
      * Destroy tokens from other account
