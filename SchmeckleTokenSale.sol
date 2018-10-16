@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SchmeckleTokenSale at 0x79E50de3A0798033E1428A721a8085455A4128F2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SchmeckleTokenSale at 0x240f205c46e1607dc6f786fb313bde3dff068eb5
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.15;
 
 contract token { function transfer(address receiver, uint amount); }
 
@@ -9,19 +9,19 @@ contract SchmeckleTokenSale {
   int public currentStage;
   uint public priceInWei;
   uint public availableTokensOnCurrentStage;
+  token public tokenReward;
+  event SaleStageUp(int newSaleStage, uint newTokenPrice);
 
   address beneficiary;
   uint decimalBase;
   uint totalAmount;
-  token public tokenReward;
-  event SaleStageUp(int newSaleStage, uint newTokenPrice);
 
   function SchmeckleTokenSale() {
       beneficiary = msg.sender;
-      priceInWei = 700 szabo;
+      priceInWei = 100 szabo;
       decimalBase = 1000000000000000000;
-      tokenReward = token(0x0bB664f7b6FC928B2d1e5aA32182Ae07023Ed4aA);
-      availableTokensOnCurrentStage = 2000000;
+      tokenReward = token(0xD7a1BF3Cc676Fc7111cAD65972C8499c9B98Fb6f);
+      availableTokensOnCurrentStage = 538000;
       totalAmount = 0;
       currentStage = -3;
   }
@@ -39,12 +39,12 @@ contract SchmeckleTokenSale {
 
       totalAmount += amount;
       availableTokensOnCurrentStage -= tokens / decimalBase + 1;
-      if (totalAmount >= 21 ether && currentStage == -3) {
+      if (totalAmount >= 3 ether && currentStage == -3) {
           currentStage = -2;
-          priceInWei = 800 szabo;
+          priceInWei = 500 szabo;
           SaleStageUp(currentStage, priceInWei);
       }
-      if (totalAmount >= 333 ether && currentStage == -2) {
+      if (totalAmount >= 42 ether && currentStage == -2) {
           currentStage = -1;
           priceInWei = 1000 szabo;
           SaleStageUp(currentStage, priceInWei);
