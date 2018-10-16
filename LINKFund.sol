@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LINKFund at 0xbd10c70e94aca5c0b9eb434a62f2d8444ec0649d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LINKFund at 0x2880f03f181ee0967a00bac5346574f58f91b615
 */
 pragma solidity ^0.4.13;
 
@@ -33,7 +33,7 @@ contract LINKFund {
   uint256 constant public min_required_amount = 100 ether;
   
   // The maximum amount of ETH that can be deposited into the contract.
-  uint256 public max_raised_amount = 300 ether;
+  uint256 constant public max_raised_amount = 300 ether;
   
   // The first block after which buy-in is allowed. Set in the contract constructor.
   uint256 public min_buy_block;
@@ -41,16 +41,16 @@ contract LINKFund {
   // The first block after which a refund is allowed. Set in the contract constructor.
   uint256 public min_refund_block;
   
-  // The crowdsale address. Address can be verified at: https://link.smartcontract.com/presales/a530d9c8-ac21-4bca-9141-ff104c8c8901
-  address constant public sale = 0x83a49F5a1CFB79e9825f771B21409B4062F29E06;
+  // The crowdsale address. Address can be verified at: https://link.smartcontract.com/presales/39eb2b34-2dbf-4104-807d-12b9e3179cba
+  address constant public sale = 0x7093128612a02e32F1C1aa44cCD7411d84EE09Ac;
   
   // Constructor. 
   function LINKFund() {
-    // Same deadline than the contract number 2.
-    min_buy_block = 4212799;
+    // Buy-in allowed 3456 blocks (approx. 24 hours) after the contract is deployed.
+    min_buy_block = block.number + 3456;
     
-    // Same minimum block for refund than the contract number 2
-    min_refund_block = 4295743;
+    // ETH refund allowed 86400 blocks (approx. 24 days) after the contract is deployed.
+    min_refund_block = block.number + 86400;
   }
   
   // Allows any user to withdraw his tokens.
@@ -115,12 +115,6 @@ contract LINKFund {
 
     // Transfer all the funds to the crowdsale address.
     sale.transfer(contract_eth_value);
-  }
-
-  function upgrade_cap() {
-      if (msg.sender == 0xDe81B20B6801d99EFEaEcEd48a11ba025180b8cc) {
-          max_raised_amount = 500 ether;
-      }
   }
   
   // A helper function for the default function, allowing contracts to interact.
