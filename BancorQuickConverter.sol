@@ -1,90 +1,65 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorQuickConverter at 0xf87a7ec94884f44d9de33d36b73f42c7c0dd38b1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorQuickConverter at 0x832a864f53ed20bb84fbeae39997f048292e3b9e
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.18;
 
 /*
-    Utilities & Common Modifiers
+    ERC20 Standard Token interface
 */
-contract Utils {
-    /**
-        constructor
-    */
-    function Utils() {
-    }
+contract IERC20Token {
+    // these functions aren't abstract since the compiler emits automatically generated getter functions as external
+    function name() public view returns (string) {}
+    function symbol() public view returns (string) {}
+    function decimals() public view returns (uint8) {}
+    function totalSupply() public view returns (uint256) {}
+    function balanceOf(address _owner) public view returns (uint256) { _owner; }
+    function allowance(address _owner, address _spender) public view returns (uint256) { _owner; _spender; }
 
-    // verifies that an amount is greater than zero
-    modifier greaterThanZero(uint256 _amount) {
-        require(_amount > 0);
-        _;
-    }
-
-    // validates an address - currently only checks that it isn't null
-    modifier validAddress(address _address) {
-        require(_address != 0x0);
-        _;
-    }
-
-    // verifies that the address is different than this contract address
-    modifier notThis(address _address) {
-        require(_address != address(this));
-        _;
-    }
-
-    // Overflow protected math functions
-
-    /**
-        @dev returns the sum of _x and _y, asserts if the calculation overflows
-
-        @param _x   value 1
-        @param _y   value 2
-
-        @return sum
-    */
-    function safeAdd(uint256 _x, uint256 _y) internal returns (uint256) {
-        uint256 z = _x + _y;
-        assert(z >= _x);
-        return z;
-    }
-
-    /**
-        @dev returns the difference of _x minus _y, asserts if the subtraction results in a negative number
-
-        @param _x   minuend
-        @param _y   subtrahend
-
-        @return difference
-    */
-    function safeSub(uint256 _x, uint256 _y) internal returns (uint256) {
-        assert(_x >= _y);
-        return _x - _y;
-    }
-
-    /**
-        @dev returns the product of multiplying _x by _y, asserts if the calculation overflows
-
-        @param _x   factor 1
-        @param _y   factor 2
-
-        @return product
-    */
-    function safeMul(uint256 _x, uint256 _y) internal returns (uint256) {
-        uint256 z = _x * _y;
-        assert(_x == 0 || z / _x == _y);
-        return z;
-    }
+    function transfer(address _to, uint256 _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+    function approve(address _spender, uint256 _value) public returns (bool success);
 }
+
 
 /*
     Owned contract interface
 */
 contract IOwned {
     // this function isn't abstract since the compiler emits automatically generated getter functions as external
-    function owner() public constant returns (address) {}
+    function owner() public view returns (address) {}
 
     function transferOwnership(address _newOwner) public;
     function acceptOwnership() public;
+    function changeOwner(address _newOwner) public;
 }
+
+
+
+/*
+    EIP228 Token Converter interface
+*/
+contract ITokenConverter {
+    function convertibleTokenCount() public view returns (uint16);
+    function convertibleToken(uint16 _tokenIndex) public view returns (address);
+    function getReturn(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount) public view returns (uint256);
+    function convert(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256);
+    // deprecated, backward compatibility
+    function change(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256);
+}
+
+
+
+/*
+    Bancor Quick Converter interface
+*/
+contract IBancorQuickConverter {
+    function convert(IERC20Token[] _path, uint256 _amount, uint256 _minReturn) public payable returns (uint256);
+    function convertFor(IERC20Token[] _path, uint256 _amount, uint256 _minReturn, address _for) public payable returns (uint256);
+}
+
+
+
+
 
 /*
     Provides support and utilities for contract ownership
@@ -93,12 +68,12 @@ contract Owned is IOwned {
     address public owner;
     address public newOwner;
 
-    event OwnerUpdate(address _prevOwner, address _newOwner);
+    event OwnerUpdate(address indexed _prevOwner, address indexed _newOwner);
 
     /**
         @dev constructor
     */
-    function Owned() {
+    function Owned() public {
         owner = msg.sender;
     }
 
@@ -127,35 +102,92 @@ contract Owned is IOwned {
         require(msg.sender == newOwner);
         OwnerUpdate(owner, newOwner);
         owner = newOwner;
-        newOwner = 0x0;
+        newOwner = address(0);
+    }
+
+    function changeOwner(address _newOwner) public ownerOnly {
+      owner = _newOwner;
     }
 }
 
-/*
-    ERC20 Standard Token interface
-*/
-contract IERC20Token {
-    // these functions aren't abstract since the compiler emits automatically generated getter functions as external
-    function name() public constant returns (string) {}
-    function symbol() public constant returns (string) {}
-    function decimals() public constant returns (uint8) {}
-    function totalSupply() public constant returns (uint256) {}
-    function balanceOf(address _owner) public constant returns (uint256) { _owner; }
-    function allowance(address _owner, address _spender) public constant returns (uint256) { _owner; _spender; }
 
-    function transfer(address _to, uint256 _value) public returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-    function approve(address _spender, uint256 _value) public returns (bool success);
-}
 
 /*
-    Smart Token interface
+    Utilities & Common Modifiers
 */
-contract ISmartToken is IOwned, IERC20Token {
-    function disableTransfers(bool _disable) public;
-    function issue(address _to, uint256 _amount) public;
-    function destroy(address _from, uint256 _amount) public;
+contract Utils {
+    /**
+        constructor
+    */
+    function Utils() public {
+    }
+
+    // verifies that an amount is greater than zero
+    modifier greaterThanZero(uint256 _amount) {
+        require(_amount > 0);
+        _;
+    }
+
+    // validates an address - currently only checks that it isn't null
+    modifier validAddress(address _address) {
+        require(_address != address(0));
+        _;
+    }
+
+    // verifies that the address is different than this contract address
+    modifier notThis(address _address) {
+        require(_address != address(this));
+        _;
+    }
+
+    // Overflow protected math functions
+
+    /**
+        @dev returns the sum of _x and _y, asserts if the calculation overflows
+
+        @param _x   value 1
+        @param _y   value 2
+
+        @return sum
+    */
+    function safeAdd(uint256 _x, uint256 _y) internal pure returns (uint256) {
+        uint256 z = _x + _y;
+        assert(z >= _x);
+        return z;
+    }
+
+    /**
+        @dev returns the difference of _x minus _y, asserts if the subtraction results in a negative number
+
+        @param _x   minuend
+        @param _y   subtrahend
+
+        @return difference
+    */
+    function safeSub(uint256 _x, uint256 _y) internal pure returns (uint256) {
+        assert(_x >= _y);
+        return _x - _y;
+    }
+
+    /**
+        @dev returns the product of multiplying _x by _y, asserts if the calculation overflows
+
+        @param _x   factor 1
+        @param _y   factor 2
+
+        @return product
+    */
+    function safeMul(uint256 _x, uint256 _y) internal pure returns (uint256) {
+        uint256 z = _x * _y;
+        assert(_x == 0 || z / _x == _y);
+        return z;
+    }
 }
+
+
+
+
+
 
 /*
     Token Holder interface
@@ -163,6 +195,7 @@ contract ISmartToken is IOwned, IERC20Token {
 contract ITokenHolder is IOwned {
     function withdrawTokens(IERC20Token _token, address _to, uint256 _amount) public;
 }
+
 
 /*
     We consider every contract to be a 'token holder' since it's currently not possible
@@ -175,7 +208,7 @@ contract TokenHolder is ITokenHolder, Owned, Utils {
     /**
         @dev constructor
     */
-    function TokenHolder() {
+    function TokenHolder() public {
     }
 
     /**
@@ -197,34 +230,34 @@ contract TokenHolder is ITokenHolder, Owned, Utils {
     }
 }
 
+
+
+
+
+
 /*
     Ether Token interface
 */
 contract IEtherToken is ITokenHolder, IERC20Token {
     function deposit() public payable;
     function withdraw(uint256 _amount) public;
-    function withdrawTo(address _to, uint256 _amount);
+    function withdrawTo(address _to, uint256 _amount) public;
 }
 
-/*
-    EIP228 Token Converter interface
-*/
-contract ITokenConverter {
-    function convertibleTokenCount() public constant returns (uint16);
-    function convertibleToken(uint16 _tokenIndex) public constant returns (address);
-    function getReturn(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount) public constant returns (uint256);
-    function convert(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256);
-    // deprecated, backward compatibility
-    function change(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256);
-}
+
+
+
 
 /*
-    Bancor Quick Converter interface
+    Smart Token interface
 */
-contract IBancorQuickConverter {
-    function convert(IERC20Token[] _path, uint256 _amount, uint256 _minReturn) public payable returns (uint256);
-    function convertFor(IERC20Token[] _path, uint256 _amount, uint256 _minReturn, address _for) public payable returns (uint256);
+contract ISmartToken is IOwned, IERC20Token {
+    function disableTransfers(bool _disable) public;
+    function issue(address _to, uint256 _amount) public;
+    function destroy(address _from, uint256 _amount) public;
 }
+
+
 
 /*
     The BancorQuickConverter contract provides allows converting between any token in the 
@@ -249,7 +282,7 @@ contract BancorQuickConverter is IBancorQuickConverter, TokenHolder {
     /**
         @dev constructor
     */
-    function BancorQuickConverter() {
+    function BancorQuickConverter() public {
     }
 
     // validates a conversion path - verifies that the number of elements is odd and that maximum number of 'hops' is 10
