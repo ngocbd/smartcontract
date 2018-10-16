@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TNT at 0x8ea8ba1c013eaf33f21145824c71c227615b8a5b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TNT at 0x23221fe28dadf788c7c59d0367bafef3b1607344
 */
 contract TNT {
     /* Public variables of the token */
@@ -21,7 +21,7 @@ contract TNT {
          initialSupply = 100000000;
          name ="TNT";
         decimals = 0;
-         symbol = "Fire";
+         symbol = "P";
         
         balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
         totalSupply = initialSupply;                        // Update total supply
