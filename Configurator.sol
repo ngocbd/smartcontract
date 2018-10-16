@@ -1,7 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Configurator at 0x94180d58a9edec0caa52b2a4a3b1c5bfdfbb6f3a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Configurator at 0x485ec4741f2dd65a4d16fb1706778f66bc4540ec
 */
-pragma solidity 0.4.20;
+pragma solidity ^0.4.18;
+
+// File: contracts/ownership/Ownable.sol
 
 /**
  * @title Ownable
@@ -23,6 +25,7 @@ contract Ownable {
     owner = msg.sender;
   }
 
+
   /**
    * @dev Throws if called by any account other than the owner.
    */
@@ -30,6 +33,7 @@ contract Ownable {
     require(msg.sender == owner);
     _;
   }
+
 
   /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
@@ -43,15 +47,13 @@ contract Ownable {
 
 }
 
+// File: contracts/math/SafeMath.sol
+
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     if (a == 0) {
       return 0;
@@ -61,9 +63,6 @@ library SafeMath {
     return c;
   }
 
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
@@ -71,17 +70,11 @@ library SafeMath {
     return c;
   }
 
-  /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
   function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
@@ -89,17 +82,21 @@ library SafeMath {
   }
 }
 
+// File: contracts/token/ERC20Basic.sol
+
 /**
  * @title ERC20Basic
  * @dev Simpler version of ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/179
  */
 contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
+  uint256 public totalSupply;
   function balanceOf(address who) public view returns (uint256);
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
+
+// File: contracts/token/BasicToken.sol
 
 /**
  * @title Basic token
@@ -109,15 +106,6 @@ contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
 
   mapping(address => uint256) balances;
-
-  uint256 totalSupply_;
-
-  /**
-  * @dev total number of tokens in existence
-  */
-  function totalSupply() public view returns (uint256) {
-    return totalSupply_;
-  }
 
   /**
   * @dev transfer token for a specified address
@@ -146,6 +134,8 @@ contract BasicToken is ERC20Basic {
 
 }
 
+// File: contracts/token/ERC20.sol
+
 /**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
@@ -156,6 +146,8 @@ contract ERC20 is ERC20Basic {
   function approve(address spender, uint256 value) public returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
+
+// File: contracts/token/StandardToken.sol
 
 /**
  * @title Standard ERC20 token
@@ -252,130 +244,217 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-contract GoldMineCoin is StandardToken, Ownable {	
-    
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+// File: contracts/MintableToken.sol
 
-  uint public constant INITIAL_SUPPLY = 2500000000000;
+contract MintableToken is StandardToken, Ownable {
 
-  uint public constant BOUNTY_TOKENS_LIMIT = 125000000000;
+  event Mint(address indexed to, uint256 amount);
 
-  string public constant name = "GoldMineCoin";
-   
-  string public constant symbol = "GMC";
-    
-  uint32 public constant decimals = 6;
+  event MintFinished();
 
-  uint public bountyTokensTransferred;
+  bool public mintingFinished = false;
 
   address public saleAgent;
-  
-  bool public isCrowdsaleFinished;
 
-  uint public remainingLockDate;
-  
-  mapping(address => uint) public locks;
-
-  modifier notLocked(address from) {
-    require(isCrowdsaleFinished || (locks[from] !=0 && now >= locks[from]));
+  modifier notLocked() {
+    require(msg.sender == owner || msg.sender == saleAgent || mintingFinished);
     _;
   }
 
-  function GoldMineCoin() public {
-    totalSupply_ = INITIAL_SUPPLY;
-    balances[this] = totalSupply_;
-  }
-  
-  function addRestricedAccount(address restricedAccount, uint unlockedDate) public {
-    require(!isCrowdsaleFinished);    
+  function setSaleAgent(address newSaleAgnet) public {
     require(msg.sender == saleAgent || msg.sender == owner);
-    locks[restricedAccount] = unlockedDate;
+    saleAgent = newSaleAgnet;
   }
 
-  function transferFrom(address _from, address _to, uint256 _value) public notLocked(_from) returns (bool) {
-    super.transferFrom(_from, _to, _value);
+  function mint(address _to, uint256 _amount) public returns (bool) {
+    require((msg.sender == saleAgent || msg.sender == owner) && !mintingFinished);
+    
+    totalSupply = totalSupply.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    Mint(_to, _amount);
+    return true;
   }
 
-  function transfer(address _to, uint256 _value) public notLocked(msg.sender) returns (bool) {
-    super.transfer(_to, _value);
+  /**
+   * @dev Function to stop minting new tokens.
+   * @return True if the operation was successful.
+   */
+  function finishMinting() public returns (bool) {
+    require((msg.sender == saleAgent || msg.sender == owner) && !mintingFinished);
+    mintingFinished = true;
+    MintFinished();
+    return true;
   }
 
-  function crowdsaleTransfer(address to, uint amount) public {
-    require(msg.sender == saleAgent || msg.sender == owner);
-    require(!isCrowdsaleFinished || now >= remainingLockDate);
-    require(amount <= balances[this]);
-    balances[this] = balances[this].sub(amount);
-    balances[to] = balances[to].add(amount);
-    Transfer(this, to, amount);
+  function transfer(address _to, uint256 _value) public notLocked returns (bool) {
+    return super.transfer(_to, _value);
   }
 
-  function addBountyTransferredTokens(uint amount) public {
-    require(!isCrowdsaleFinished);
-    require(msg.sender == saleAgent);
-    bountyTokensTransferred = bountyTokensTransferred.add(amount);
-  }
-
-  function setSaleAgent(address newSaleAgent) public {
-    require(!isCrowdsaleFinished);
-    require(msg.sender == owner|| msg.sender == saleAgent);
-    require(newSaleAgent != address(0));
-    saleAgent = newSaleAgent;
-  }
-  
-  function setRemainingLockDate(uint newRemainingLockDate) public {
-    require(!isCrowdsaleFinished && msg.sender == saleAgent); 
-    remainingLockDate = newRemainingLockDate;
-  }
-
-  function finishCrowdsale() public {
-    require(msg.sender == saleAgent || msg.sender == owner);
-    isCrowdsaleFinished = true;
+  function transferFrom(address from, address to, uint256 value) public notLocked returns (bool) {
+    return super.transferFrom(from, to, value);
   }
 
 }
 
-contract CommonCrowdsale is Ownable {
+// File: contracts/FreezeTokensWallet.sol
+
+contract FreezeTokensWallet is Ownable {
 
   using SafeMath for uint256;
 
-  uint public price = 75000000;
+  MintableToken public token;
 
-  uint public constant MIN_INVESTED_ETH = 100000000000000000;
+  bool public started;
 
-  uint public constant PERCENT_RATE = 100000000;
-                                     
-  uint public constant BOUNTY_PERCENT = 1666667;
+  uint public startLockPeriod = 180 days;
 
-  uint public constant REFERER_PERCENT = 500000;
+  uint public period = 360 days;
 
-  address public bountyWallet;
+  uint public duration = 90 days;
+
+  uint public startUnlock;
+
+  uint public retrievedTokens;
+
+  uint public startBalance;
+
+  modifier notStarted() {
+    require(!started);
+    _;
+  }
+
+  function setPeriod(uint newPeriod) public onlyOwner notStarted {
+    period = newPeriod * 1 days;
+  }
+
+  function setDuration(uint newDuration) public onlyOwner notStarted {
+    duration = newDuration * 1 days;
+  }
+
+  function setStartLockPeriod(uint newStartLockPeriod) public onlyOwner notStarted {
+    startLockPeriod = newStartLockPeriod * 1 days;
+  }
+
+  function setToken(address newToken) public onlyOwner notStarted {
+    token = MintableToken(newToken);
+  }
+
+  function start() public onlyOwner notStarted {
+    startUnlock = now + startLockPeriod;
+    retrievedTokens = 0;
+    startBalance = token.balanceOf(this);
+    started = true;
+  }
+
+  function retrieveTokens(address to) public onlyOwner {
+    require(started && now >= startUnlock);
+    if (now >= startUnlock + period) {
+      token.transfer(to, token.balanceOf(this));
+    } else {
+      uint parts = period.div(duration);
+      uint tokensByPart = startBalance.div(parts);
+      uint timeSinceStart = now.sub(startUnlock);
+      uint pastParts = timeSinceStart.div(duration);
+      uint tokensToRetrieveSinceStart = pastParts.mul(tokensByPart);
+      uint tokensToRetrieve = tokensToRetrieveSinceStart.sub(retrievedTokens);
+      if(tokensToRetrieve > 0) {
+        retrievedTokens = retrievedTokens.add(tokensToRetrieve);
+        token.transfer(to, tokensToRetrieve);
+      }
+    }
+  }
+}
+
+// File: contracts/InvestedProvider.sol
+
+contract InvestedProvider is Ownable {
+
+  uint public invested;
+
+}
+
+// File: contracts/PercentRateProvider.sol
+
+contract PercentRateProvider is Ownable {
+
+  uint public percentRate = 100;
+
+  function setPercentRate(uint newPercentRate) public onlyOwner {
+    percentRate = newPercentRate;
+  }
+
+}
+
+// File: contracts/RetrieveTokensFeature.sol
+
+contract RetrieveTokensFeature is Ownable {
+
+  function retrieveTokens(address to, address anotherToken) public onlyOwner {
+    ERC20 alienToken = ERC20(anotherToken);
+    alienToken.transfer(to, alienToken.balanceOf(this));
+  }
+
+}
+
+// File: contracts/WalletProvider.sol
+
+contract WalletProvider is Ownable {
 
   address public wallet;
 
+  function setWallet(address newWallet) public onlyOwner {
+    wallet = newWallet;
+  }
+
+}
+
+// File: contracts/CommonSale.sol
+
+contract CommonSale is InvestedProvider, WalletProvider, PercentRateProvider, RetrieveTokensFeature {
+
+  using SafeMath for uint;
+
+  address public directMintAgent;
+
+  uint public price;
+
   uint public start;
 
-  uint public period;
+  uint public minInvestedLimit;
 
-  uint public tokensSold;
-  
-  bool isBountyRestriced;
+  MintableToken public token;
 
-  GoldMineCoin public token;
+  uint public hardcap;
 
-  modifier saleIsOn() {
-    require(now >= start && now < end() && msg.value >= MIN_INVESTED_ETH);
-    require(tokensSold < tokensSoldLimit());
+  modifier isUnderHardcap() {
+    require(invested < hardcap);
     _;
   }
-  
-  function tokensSoldLimit() public constant returns(uint);
 
-  function end() public constant returns(uint) {
-    return start + period * 1 days;
+  function setHardcap(uint newHardcap) public onlyOwner {
+    hardcap = newHardcap;
   }
 
-  function setBountyWallet(address newBountyWallet) public onlyOwner {
-    bountyWallet = newBountyWallet;
+  modifier onlyDirectMintAgentOrOwner() {
+    require(directMintAgent == msg.sender || owner == msg.sender);
+    _;
+  }
+
+  modifier minInvestLimited(uint value) {
+    require(value >= minInvestedLimit);
+    _;
+  }
+
+  function setStart(uint newStart) public onlyOwner {
+    start = newStart;
+  }
+
+  function setMinInvestedLimit(uint newMinInvestedLimit) public onlyOwner {
+    minInvestedLimit = newMinInvestedLimit;
+  }
+
+  function setDirectMintAgent(address newDirectMintAgent) public onlyOwner {
+    directMintAgent = newDirectMintAgent;
   }
 
   function setPrice(uint newPrice) public onlyOwner {
@@ -383,113 +462,211 @@ contract CommonCrowdsale is Ownable {
   }
 
   function setToken(address newToken) public onlyOwner {
-    token = GoldMineCoin(newToken);
+    token = MintableToken(newToken);
   }
 
-  function setStart(uint newStart) public onlyOwner {
-    start = newStart;
+  function calculateTokens(uint _invested) internal returns(uint);
+
+  function mintTokensExternal(address to, uint tokens) public onlyDirectMintAgentOrOwner {
+    mintTokens(to, tokens);
   }
 
-  function setPeriod(uint newPeriod) public onlyOwner {
-    require(bountyWallet != address(0));
-    period = newPeriod;
-    if(isBountyRestriced) {
-      token.addRestricedAccount(bountyWallet, end());
-    }
+  function mintTokens(address to, uint tokens) internal {
+    token.mint(this, tokens);
+    token.transfer(to, tokens);
   }
 
-  function setWallet(address newWallet) public onlyOwner {
-    wallet = newWallet;
+  function endSaleDate() public view returns(uint);
+
+  function mintTokensByETHExternal(address to, uint _invested) public onlyDirectMintAgentOrOwner returns(uint) {
+    return mintTokensByETH(to, _invested);
   }
 
-  function priceWithBonus() public constant returns(uint);
-  
-  function buyTokens() public payable saleIsOn {
+  function mintTokensByETH(address to, uint _invested) internal isUnderHardcap returns(uint) {
+    invested = invested.add(_invested);
+    uint tokens = calculateTokens(_invested);
+    mintTokens(to, tokens);
+    return tokens;
+  }
 
+  function fallback() internal minInvestLimited(msg.value) returns(uint) {
+    require(now >= start && now < endSaleDate());
     wallet.transfer(msg.value);
+    return mintTokensByETH(msg.sender, msg.value);
+  }
 
-    uint tokens = msg.value.mul(priceWithBonus()).div(1 ether);
-    
-    token.crowdsaleTransfer(msg.sender, tokens);
-    tokensSold = tokensSold.add(tokens);
+  function () public payable {
+    fallback();
+  }
 
-    // referer tokens
-    if(msg.data.length == 20) {
-      address referer = bytesToAddres(bytes(msg.data));
-      require(referer != address(token) && referer != msg.sender);
-      uint refererTokens = tokens.mul(REFERER_PERCENT).div(PERCENT_RATE);
-      token.crowdsaleTransfer(referer, refererTokens);
-      tokens.add(refererTokens);
-      tokensSold = tokensSold.add(refererTokens);
+}
+
+// File: contracts/StagedCrowdsale.sol
+
+contract StagedCrowdsale is Ownable {
+
+  using SafeMath for uint;
+
+  struct Milestone {
+    uint period;
+    uint bonus;
+  }
+
+  uint public totalPeriod;
+
+  Milestone[] public milestones;
+
+  function milestonesCount() public view returns(uint) {
+    return milestones.length;
+  }
+
+  function addMilestone(uint period, uint bonus) public onlyOwner {
+    require(period > 0);
+    milestones.push(Milestone(period, bonus));
+    totalPeriod = totalPeriod.add(period);
+  }
+
+  function removeMilestone(uint8 number) public onlyOwner {
+    require(number < milestones.length);
+    Milestone storage milestone = milestones[number];
+    totalPeriod = totalPeriod.sub(milestone.period);
+
+    delete milestones[number];
+
+    for (uint i = number; i < milestones.length - 1; i++) {
+      milestones[i] = milestones[i+1];
     }
 
-    // bounty tokens
-    if(token.bountyTokensTransferred() < token.BOUNTY_TOKENS_LIMIT()) {
-      uint bountyTokens = tokens.mul(BOUNTY_PERCENT).div(PERCENT_RATE);
-      uint diff = token.BOUNTY_TOKENS_LIMIT().sub(token.bountyTokensTransferred());
-      if(bountyTokens > diff) {
-        bountyTokens = diff;
-      }      
-      if(!isBountyRestriced) {
-        token.addRestricedAccount(bountyWallet, end());  
-        isBountyRestriced = true;
+    milestones.length--;
+  }
+
+  function changeMilestone(uint8 number, uint period, uint bonus) public onlyOwner {
+    require(number < milestones.length);
+    Milestone storage milestone = milestones[number];
+
+    totalPeriod = totalPeriod.sub(milestone.period);
+
+    milestone.period = period;
+    milestone.bonus = bonus;
+
+    totalPeriod = totalPeriod.add(period);
+  }
+
+  function insertMilestone(uint8 numberAfter, uint period, uint bonus) public onlyOwner {
+    require(numberAfter < milestones.length);
+
+    totalPeriod = totalPeriod.add(period);
+
+    milestones.length++;
+
+    for (uint i = milestones.length - 2; i > numberAfter; i--) {
+      milestones[i + 1] = milestones[i];
+    }
+
+    milestones[numberAfter + 1] = Milestone(period, bonus);
+  }
+
+  function clearMilestones() public onlyOwner {
+    require(milestones.length > 0);
+    for (uint i = 0; i < milestones.length; i++) {
+      delete milestones[i];
+    }
+    milestones.length -= milestones.length;
+    totalPeriod = 0;
+  }
+
+  function lastSaleDate(uint start) public view returns(uint) {
+    return start + totalPeriod * 1 days;
+  }
+
+  function currentMilestone(uint start) public view returns(uint) {
+    uint previousDate = start;
+    for(uint i=0; i < milestones.length; i++) {
+      if(now >= previousDate && now < previousDate + milestones[i].period * 1 days) {
+        return i;
       }
-      token.crowdsaleTransfer(bountyWallet, bountyTokens);
+      previousDate = previousDate.add(milestones[i].period * 1 days);
     }
-  }
-
-  function bytesToAddres(bytes source) internal pure returns(address) {
-    uint result;
-    uint mul = 1;
-    for(uint i = 20; i > 0; i--) {
-      result += uint8(source[i-1])*mul;
-      mul = mul*256;
-    }
-    return address(result);
-  }
-
-  function retrieveTokens(address anotherToken) public onlyOwner {
-    ERC20 alienToken = ERC20(anotherToken);
-    alienToken.transfer(wallet, token.balanceOf(this));
-  }
-
-  function() external payable {
-    buyTokens();
+    revert();
   }
 
 }
 
-contract StaggedCrowdale is CommonCrowdsale {
+// File: contracts/ICO.sol
 
-  uint public constant SALE_STEP = 5000000;
+contract ICO is StagedCrowdsale, CommonSale {
 
-  uint public timeStep = 5 * 1 days;
+  FreezeTokensWallet public teamTokensWallet;
 
-  function setTimeStep(uint newTimeStep) public onlyOwner {
-    timeStep = newTimeStep * 1 days;
+  address public bountyTokensWallet;
+
+  address public reservedTokensWallet;
+
+  uint public teamTokensPercent;
+
+  uint public bountyTokensPercent;
+
+  uint public reservedTokensPercent;
+
+  function setTeamTokensPercent(uint newTeamTokensPercent) public onlyOwner {
+    teamTokensPercent = newTeamTokensPercent;
   }
 
-  function priceWithBonus() public constant returns(uint) {
-    uint saleStage = now.sub(start).div(timeStep);
-    uint saleSub = saleStage.mul(SALE_STEP);
-    uint minSale = getMinPriceSale();
-    uint maxSale = getMaxPriceSale();
-    uint priceSale = maxSale;
-    if(saleSub >= maxSale.sub(minSale)) {
-      priceSale = minSale;
-    } else {
-      priceSale = maxSale.sub(saleSub);
+  function setBountyTokensPercent(uint newBountyTokensPercent) public onlyOwner {
+    bountyTokensPercent = newBountyTokensPercent;
+  }
+
+  function setReservedTokensPercent(uint newReservedTokensPercent) public onlyOwner {
+    reservedTokensPercent = newReservedTokensPercent;
+  }
+
+  function setTeamTokensWallet(address newTeamTokensWallet) public onlyOwner {
+    teamTokensWallet = FreezeTokensWallet(newTeamTokensWallet);
+  }
+
+  function setBountyTokensWallet(address newBountyTokensWallet) public onlyOwner {
+    bountyTokensWallet = newBountyTokensWallet;
+  }
+
+  function setReservedTokensWallet(address newReservedTokensWallet) public onlyOwner {
+    reservedTokensWallet = newReservedTokensWallet;
+  }
+
+  function calculateTokens(uint _invested) internal returns(uint) {
+    uint milestoneIndex = currentMilestone(start);
+    Milestone storage milestone = milestones[milestoneIndex];
+
+    uint tokens = _invested.mul(price).div(1 ether);
+    if(milestone.bonus > 0) {
+      tokens = tokens.add(tokens.mul(milestone.bonus).div(percentRate));
     }
-    return price.mul(PERCENT_RATE).div(PERCENT_RATE.sub(priceSale));
+    return tokens;
   }
-  
-  function getMinPriceSale() public constant returns(uint);
-  
-  function getMaxPriceSale() public constant returns(uint);
+
+  function finish() public onlyOwner {
+    uint summaryTokensPercent = bountyTokensPercent.add(teamTokensPercent).add(reservedTokensPercent);
+    uint mintedTokens = token.totalSupply();
+    uint allTokens = mintedTokens.mul(percentRate).div(percentRate.sub(summaryTokensPercent));
+    uint foundersTokens = allTokens.mul(teamTokensPercent).div(percentRate);
+    uint bountyTokens = allTokens.mul(bountyTokensPercent).div(percentRate);
+    uint reservedTokens = allTokens.mul(reservedTokensPercent).div(percentRate);
+    mintTokens(teamTokensWallet, foundersTokens);
+    mintTokens(bountyTokensWallet, bountyTokens);
+    mintTokens(reservedTokensWallet, reservedTokens);
+    token.finishMinting();
+    teamTokensWallet.start();
+    teamTokensWallet.transferOwnership(owner);
+  }
+
+  function endSaleDate() public view returns(uint) {
+    return lastSaleDate(start);
+  }
 
 }
 
-contract CrowdsaleWithNextSaleAgent is CommonCrowdsale {
+// File: contracts/NextSaleAgentFeature.sol
+
+contract NextSaleAgentFeature is Ownable {
 
   address public nextSaleAgent;
 
@@ -497,160 +674,161 @@ contract CrowdsaleWithNextSaleAgent is CommonCrowdsale {
     nextSaleAgent = newNextSaleAgent;
   }
 
-  function finishCrowdsale() public onlyOwner { 
+}
+
+// File: contracts/WhiteListFeature.sol
+
+contract WhiteListFeature is CommonSale {
+
+  mapping(address => bool)  public whiteList;
+
+  function addToWhiteList(address _address) public onlyDirectMintAgentOrOwner {
+    whiteList[_address] = true;
+  }
+
+  function deleteFromWhiteList(address _address) public onlyDirectMintAgentOrOwner {
+    whiteList[_address] = false;
+  }
+
+}
+
+// File: contracts/PreICO.sol
+
+contract PreICO is NextSaleAgentFeature, WhiteListFeature {
+
+  uint public period;
+
+  function calculateTokens(uint _invested) internal returns(uint) {
+    return _invested.mul(price).div(1 ether);
+  }
+
+  function setPeriod(uint newPeriod) public onlyOwner {
+    period = newPeriod;
+  }
+
+  function finish() public onlyOwner {
     token.setSaleAgent(nextSaleAgent);
   }
 
+  function endSaleDate() public view returns(uint) {
+    return start.add(period * 1 days);
+  }
+  
+  function fallback() internal minInvestLimited(msg.value) returns(uint) {
+    require(now >= start && now < endSaleDate());
+    require(whiteList[msg.sender]);
+    wallet.transfer(msg.value);
+    return mintTokensByETH(msg.sender, msg.value);
+  }
+  
 }
 
-contract Presale is CrowdsaleWithNextSaleAgent {
+// File: contracts/ReceivingContractCallback.sol
 
-  uint public constant PRICE_SALE = 60000000;
+contract ReceivingContractCallback {
 
-  uint public constant TOKENS_SOLD_LIMIT = 125000000000;
-
-  function tokensSoldLimit() public constant returns(uint) {
-    return TOKENS_SOLD_LIMIT;
-  }
-  
-  function priceWithBonus() public constant returns(uint) {
-    return price.mul(PERCENT_RATE).div(PERCENT_RATE.sub(PRICE_SALE));
-  }
-
-}
-
-contract PreICO is StaggedCrowdale, CrowdsaleWithNextSaleAgent {
-
-  uint public constant MAX_PRICE_SALE = 55000000;
-
-  uint public constant MIN_PRICE_SALE = 40000000;
-
-  uint public constant TOKENS_SOLD_LIMIT = 625000000000;
-
-  function tokensSoldLimit() public constant returns(uint) {
-    return TOKENS_SOLD_LIMIT;
-  }
-  
-  function getMinPriceSale() public constant returns(uint) {
-    return MIN_PRICE_SALE;
-  }
-  
-  function getMaxPriceSale() public constant returns(uint) {
-    return MAX_PRICE_SALE;
-  }
+  function tokenFallback(address _from, uint _value) public;
 
 }
 
-contract ICO is StaggedCrowdale {
+// File: contracts/UBCoinToken.sol
 
-  uint public constant MAX_PRICE_SALE = 40000000;
+contract UBCoinToken is MintableToken {
 
-  uint public constant MIN_PRICE_SALE = 20000000;
+  string public constant name = "UBCoin";
 
-  uint public constant ESCROW_TOKENS_PERCENT = 5000000;
+  string public constant symbol = "UBC";
 
-  uint public constant FOUNDERS_TOKENS_PERCENT = 10000000;
+  uint32 public constant decimals = 18;
 
-  uint public lockPeriod = 250;
+  mapping(address => bool)  public registeredCallbacks;
 
-  address public foundersTokensWallet;
-
-  address public escrowTokensWallet;
-
-  uint public constant TOKENS_SOLD_LIMIT = 1250000000000;
-
-  function tokensSoldLimit() public constant returns(uint) {
-    return TOKENS_SOLD_LIMIT;
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    return processCallback(super.transfer(_to, _value), msg.sender, _to, _value);
   }
 
-  function setLockPeriod(uint newLockPeriod) public onlyOwner {
-    lockPeriod = newLockPeriod;
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    return processCallback(super.transferFrom(_from, _to, _value), _from, _to, _value);
   }
 
-  function setFoundersTokensWallet(address newFoundersTokensWallet) public onlyOwner {
-    foundersTokensWallet = newFoundersTokensWallet;
+  function registerCallback(address callback) public onlyOwner {
+    registeredCallbacks[callback] = true;
   }
 
-  function setEscrowTokensWallet(address newEscrowTokensWallet) public onlyOwner {
-    escrowTokensWallet = newEscrowTokensWallet;
+  function deregisterCallback(address callback) public onlyOwner {
+    registeredCallbacks[callback] = false;
   }
 
-  function finishCrowdsale() public onlyOwner { 
-    uint totalSupply = token.totalSupply();
-    uint commonPercent = FOUNDERS_TOKENS_PERCENT + ESCROW_TOKENS_PERCENT;
-    uint commonExtraTokens = totalSupply.mul(commonPercent).div(PERCENT_RATE.sub(commonPercent));
-    if(commonExtraTokens > token.balanceOf(token)) {
-      commonExtraTokens = token.balanceOf(token);
+  function processCallback(bool result, address from, address to, uint value) internal returns(bool) {
+    if (result && registeredCallbacks[to]) {
+      ReceivingContractCallback targetCallback = ReceivingContractCallback(to);
+      targetCallback.tokenFallback(from, value);
     }
-    uint escrowTokens = commonExtraTokens.mul(FOUNDERS_TOKENS_PERCENT).div(PERCENT_RATE);
-    token.crowdsaleTransfer(foundersTokensWallet, foundersTokens);
-
-    uint foundersTokens = commonExtraTokens - escrowTokens;
-    token.crowdsaleTransfer(escrowTokensWallet, escrowTokens);
-
-    token.setRemainingLockDate(now + lockPeriod * 1 days);
-    token.finishCrowdsale();
-  }
-  
-  function getMinPriceSale() public constant returns(uint) {
-    return MIN_PRICE_SALE;
-  }
-  
-  function getMaxPriceSale() public constant returns(uint) {
-    return MAX_PRICE_SALE;
+    return result;
   }
 
 }
+
+// File: contracts/Configurator.sol
 
 contract Configurator is Ownable {
 
-  GoldMineCoin public token;
+  MintableToken public token;
 
-  Presale public presale;
-  
   PreICO public preICO;
-  
+
   ICO public ico;
 
-  function deploy() public onlyOwner {
-    token = new GoldMineCoin();
+  FreezeTokensWallet public teamTokensWallet;
 
-    presale = new Presale();
-    presale.setToken(token);
-    token.setSaleAgent(presale);
-    
-    presale.setBountyWallet(0x6FB77f2878A33ef21aadde868E84Ba66105a3E9c);
-    presale.setWallet(0x2d664D31f3AF6aD256A62fdb72E704ab0De42619);
-    presale.setStart(1519862400);
-    presale.setPeriod(20);
+  function deploy() public onlyOwner {
+
+    token = new UBCoinToken();
 
     preICO = new PreICO();
-    preICO.setToken(token);
-    presale.setNextSaleAgent(preICO);
-    
-    preICO.setTimeStep(5);
-    preICO.setBountyWallet(0x4ca3a7788A61590722A7AAb3b79E8b4DfDDf9559);
-    preICO.setWallet(0x2d664D31f3AF6aD256A62fdb72E704ab0De42619);
-    preICO.setStart(1521504000);
-    preICO.setPeriod(40);
-    
-    ico = new ICO();
-    ico.setToken(token);
-    preICO.setNextSaleAgent(ico);
-    
-    ico.setTimeStep(5);
-    ico.setLockPeriod(250);
-    ico.setBountyWallet(0x7cfe25bdd334cdB46Ae0c4996E7D34F95DFFfdD1);
-    ico.setEscrowTokensWallet(0x24D225818a19c75694FCB35297cA2f23E0bd8F82);
-    ico.setFoundersTokensWallet(0x54540fC0e7cCc29d1c93AD7501761d6b232d5b03);
-    ico.setWallet(0x2d664D31f3AF6aD256A62fdb72E704ab0De42619);
-    ico.setStart(1525132800);
-    ico.setPeriod(60);
 
-    token.transferOwnership(0xE8910a2C39Ef0405A9960eC4bD8CBA3211e3C796);
-    presale.transferOwnership(0xE8910a2C39Ef0405A9960eC4bD8CBA3211e3C796);
-    preICO.transferOwnership(0xE8910a2C39Ef0405A9960eC4bD8CBA3211e3C796);
-    ico.transferOwnership(0xE8910a2C39Ef0405A9960eC4bD8CBA3211e3C796);
+    preICO.setWallet(0x00EE9d057f66754C7D92550F77Aeb0A87AE34B01);
+    preICO.setStart(1520640000); // 10 Mar 2018 00:00:00 GMT
+    preICO.setPeriod(22);
+    preICO.setPrice(33334000000000000000000);
+    preICO.setMinInvestedLimit(100000000000000000);
+    preICO.setToken(token);
+    preICO.setHardcap(8500000000000000000000);
+    token.setSaleAgent(preICO);
+
+    ico = new ICO();
+
+    ico.addMilestone(20, 40);
+    ico.addMilestone(20, 20);
+    ico.addMilestone(20, 0);
+    ico.setMinInvestedLimit(100000000000000000);
+    ico.setToken(token);
+    ico.setPrice(14286000000000000000000);
+    ico.setWallet(0x5FB78D8B8f1161731BC80eF93CBcfccc5783356F);
+    ico.setBountyTokensWallet(0xdAA156b6eA6b9737eA20c68Db4040B1182E487B6);
+    ico.setReservedTokensWallet(0xE1D1898660469797B22D348Ff67d54643d848295);
+    ico.setStart(1522627200); // 02 Apr 2018 00:00:00 GMT
+    ico.setHardcap(96000000000000000000000);
+    ico.setTeamTokensPercent(12);
+    ico.setBountyTokensPercent(4);
+    ico.setReservedTokensPercent(34);
+
+    teamTokensWallet = new FreezeTokensWallet();
+    teamTokensWallet.setStartLockPeriod(180);
+    teamTokensWallet.setPeriod(360);
+    teamTokensWallet.setDuration(90);
+    teamTokensWallet.setToken(token);
+    teamTokensWallet.transferOwnership(ico);
+
+    ico.setTeamTokensWallet(teamTokensWallet);
+
+    preICO.setNextSaleAgent(ico);
+
+    address manager = 0xF1f94bAD54C8827C3B53754ad7dAa0FF5DCD527d;
+
+    token.transferOwnership(manager);
+    preICO.transferOwnership(manager);
+    ico.transferOwnership(manager);
   }
 
 }
