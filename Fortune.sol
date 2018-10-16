@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fortune at 0xbce652a5065fca396ddedca3494eefb4b781c165
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fortune at 0x82ea8ab1e836272322f376a5f71d5a34a71688f1
 */
 /*
  * DO NOT EDIT! DO NOT EDIT! DO NOT EDIT!
@@ -12,12 +12,8 @@
 
 pragma solidity ^0.4.10;
 
-
-
-
-
 contract Fortune {
-  string[] private fortunes;
+  string[] public fortunes; // automatically generates an indexed getter (only)
 
   function Fortune( string initialFortune ) public {
     addFortune( initialFortune );
@@ -29,11 +25,15 @@ contract Fortune {
     FortuneAdded( msg.sender, fortune );
   }
 
-  function drawFortune() public constant returns ( string fortune ) {
+  function drawFortune() public view returns ( string fortune ) {
     fortune = fortunes[ shittyRandom() % fortunes.length ];
   }
 
-  function shittyRandom() private constant returns ( uint number ) {
+  function countFortunes() public view returns ( uint count ) {
+    count = fortunes.length;	   
+  }
+
+  function shittyRandom() private view returns ( uint number ) {
     number = uint( block.blockhash( block.number - 1 ) );  	   
   }
 
