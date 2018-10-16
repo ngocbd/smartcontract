@@ -1,22 +1,42 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PassDao at 0x3730117F77ac04Eec364BF72a656010FA4703D76
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PassDao at 0x58F792248d5fE5cadcc8Cc222eAA97c1F4089F8b
 */
-pragma solidity ^0.4.2;
+pragma solidity ^0.4.6;
 
 /*
  *
  * This file is part of Pass DAO.
  *
- * The Token Manager smart contract is used for the management of tokens
- * by a client smart contract (the Dao). Defines the functions to set new funding rules,
- * create or reward tokens, check token balances, send tokens and send
- * tokens on behalf of a 3rd party and the corresponding approval process.
+ * The Manager smart contract is used for the management of accounts and tokens.
+ *
+ * Recipient is 0 for the Dao account manager and the address of
+ * contractor's recipient for the contractors's mahagers.
  *
 */
 
-/// @title Token Manager smart contract of the Pass Decentralized Autonomous Organisation
-contract PassTokenManagerInterface {
-    
+/// @title Manager smart contract of the Pass Decentralized Autonomous Organisation
+contract PassManagerInterface {
+
+    struct proposal {
+        // Amount (in wei) of the proposal
+        uint amount;
+        // A description of the proposal
+        string description;
+        // The hash of the proposal's document
+        bytes32 hashOfTheDocument;
+        // A unix timestamp, denoting the date when the proposal was created
+        uint dateOfProposal;
+        // The index of the last approved client proposal
+        uint lastClientProposalID;
+        // The sum amount (in wei) ordered for this proposal 
+        uint orderAmount;
+        // A unix timestamp, denoting the date of the last order for the approved proposal
+        uint dateOfOrder;
+    }
+        
+    // Proposals to work for the client
+    proposal[] public proposals;
+
     struct fundingData {
         // True if public funding without a main partner
         bool publicCreation; 
@@ -37,13 +57,21 @@ contract PassTokenManagerInterface {
         // Index of the client proposal
         uint proposalID;
     } 
+    
+    // Rules for the actual funding and the contractor token price
+    fundingData[2] public FundingRules;
+
+    // The address of the last Manager before cloning
+    address public clonedFrom;
 
     // Address of the creator of the smart contract
     address public creator;
-    // Address of the Dao    
-    address public client;
+    // Address of the Dao (for the Dao manager)
+    address client;
     // Address of the recipient;
     address public recipient;
+    // Address of the Dao manager (for contractor managers)
+    PassManager public daoManager;
     
     // The token name for display purpose
     string public name;
@@ -52,8 +80,13 @@ contract PassTokenManagerInterface {
     // The quantity of decimals for display purpose
     uint8 public decimals;
 
+    // End date of the setup procedure
+    uint public smartContractStartDate;
+    // Unix date when shares and tokens can be transferred after cloning (for the Dao manager)
+    uint closingTimeForCloning;
+    
     // Total amount of tokens
-    uint256 totalSupply;
+    uint256 totalTokenSupply;
 
     // Array with all balances
     mapping (address => uint256) balances;
@@ -62,17 +95,25 @@ contract PassTokenManagerInterface {
 
     // Map of the result (in wei) of fundings
     mapping (uint => uint) fundedAmount;
-    
+
+    // Array of token or share holders
+    address[] holders;
+    // Map with the indexes of the holders
+    mapping (address => uint) public holderID;
+
     // If true, the shares or tokens can be transfered
     bool public transferable;
     // Map of blocked Dao share accounts. Points to the date when the share holder can transfer shares
     mapping (address => uint) public blockedDeadLine; 
 
-    // Rules for the actual funding and the contractor token price
-    fundingData[2] public FundingRules;
+    // @return The client of this manager
+    function Client() constant returns (address);
+    
+    // @return The unix date when shares and tokens can be transferred after cloning
+    function ClosingTimeForCloning() constant returns (uint);
     
     /// @return The total supply of shares or tokens 
-    function TotalSupply() constant external returns (uint256);
+    function totalSupply() constant external returns (uint256);
 
     /// @param _owner The address from which the balance will be retrieved
     /// @return The balance
@@ -97,44 +138,129 @@ contract PassTokenManagerInterface {
     /// @return The maximal amount a main partner can fund at this moment
     /// @param _mainPartner The address of the main parner
     function fundingMaxAmount(address _mainPartner) constant external returns (uint);
-
-    // Modifier that allows only the client to manage this account manager
-    modifier onlyClient {if (msg.sender != client) throw; _;}
-
-    // Modifier that allows only the main partner to manage the actual funding
-    modifier onlyMainPartner {if (msg.sender !=  FundingRules[0].mainPartner) throw; _;}
     
-    // Modifier that allows only the contractor propose set the token price or withdraw
-    modifier onlyContractor {if (recipient == 0 || (msg.sender != recipient && msg.sender != creator)) throw; _;}
-    
-    // Modifier for Dao functions
-    modifier onlyDao {if (recipient != 0) throw; _;}
+    /// @return The number of share or token holders 
+    function numberOfHolders() constant returns (uint);
+
+    /// @param _index The index of the holder
+    /// @return the address of the an holder
+    function HolderAddress(uint _index) constant returns (address);
+
+    /// @return The number of Dao rules proposals     
+    function numberOfProposals() constant returns (uint);
     
     /// @dev The constructor function
-    /// @param _creator The address of the creator of the smart contract
-    /// @param _client The address of the client or Dao
-    /// @param _recipient The recipient of this manager
-    //function TokenManager(
-        //address _creator,
-        //address _client,
-        //address _recipient
-    //);
-
+    /// @param _client The address of the Dao
+    /// @param _daoManager The address of the Dao manager (for contractor managers)
+    /// @param _recipient The address of the recipient. 0 for the Dao
+    /// @param _clonedFrom The address of the last Manager before cloning
     /// @param _tokenName The token name for display purpose
     /// @param _tokenSymbol The token symbol for display purpose
     /// @param _tokenDecimals The quantity of decimals for display purpose
-    /// @param _initialSupplyRecipient The recipient of the initial supply (not mandatory)
-    /// @param _initialSupply The initial supply of tokens for the recipient (not mandatory)
     /// @param _transferable True if allows the transfer of tokens
-    function initToken(
-        string _tokenName,
-        string _tokenSymbol,
-        uint8 _tokenDecimals,
-        address _initialSupplyRecipient,
-        uint256 _initialSupply,
-        bool _transferable
-       );
+    //function PassManager(
+    //    address _client,
+    //    address _daoManager,
+    //    address _recipient,
+    //    address _clonedFrom,
+    //    string _tokenName,
+    //    string _tokenSymbol,
+    //    uint8 _tokenDecimals,
+    //    bool _transferable);
+    
+    /// @notice Function to clone a proposal from another manager contract
+    /// @param _amount Amount (in wei) of the proposal
+    /// @param _description A description of the proposal
+    /// @param _hashOfTheDocument The hash of the proposal's document
+    /// @param _dateOfProposal A unix timestamp, denoting the date when the proposal was created
+    /// @param _lastClientProposalID The index of the last approved client proposal
+    /// @param _orderAmount The sum amount (in wei) ordered for this proposal 
+    /// @param _dateOfOrder A unix timestamp, denoting the date of the last order for the approved proposal
+    /// @return Whether the function was successful or not 
+    function cloneProposal(
+        uint _amount,
+        string _description,
+        bytes32 _hashOfTheDocument,
+        uint _dateOfProposal,
+        uint _lastClientProposalID,
+        uint _orderAmount,
+        uint _dateOfOrder) returns (bool success);
+    
+    /// @dev Function to create initial tokens    
+    /// @param _recipient The beneficiary of the created tokens
+    /// @param _quantity The quantity of tokens to create    
+    /// @return Whether the function was successful or not     
+    function initialTokenSupply(
+        address _recipient, 
+        uint _quantity) returns (bool success);
+        
+    /// @notice Function to clone tokens from a manager
+    /// @param _from The index of the first holder
+    /// @param _to The index of the last holder
+    /// @return Whether the function was successful or not 
+    function cloneTokens(
+        uint _from,
+        uint _to) returns (bool success);
+    
+    /// @notice Function to close the setup procedure of this contract
+    function closeSetup();
 
+    /// @notice Function to update the recipent address
+    /// @param _newRecipient The adress of the recipient
+    function updateRecipient(address _newRecipient);
+
+    /// @notice Function to receive payments or deposits
+    function () payable;
+    
+    /// @notice Function to allow contractors to withdraw ethers
+    /// @param _amount The amount (in wei) to withdraw
+    function withdraw(uint _amount);
+
+    /// @notice Function to update the client address
+    function updateClient(address _newClient);
+    
+    /// @notice Function to make a proposal to work for the client
+    /// @param _amount The amount (in wei) of the proposal
+    /// @param _description String describing the proposal
+    /// @param _hashOfTheDocument The hash of the proposal document
+    /// @return The index of the contractor proposal
+    function newProposal(
+        uint _amount,
+        string _description, 
+        bytes32 _hashOfTheDocument
+    ) returns (uint);
+        
+    /// @notice Function used by the client to order according to the contractor proposal
+    /// @param _clientProposalID The index of the last approved client proposal
+    /// @param _proposalID The index of the contractor proposal
+    /// @param _amount The amount (in wei) of the order
+    /// @return Whether the order was made or not
+    function order(
+        uint _clientProposalID,
+        uint _proposalID,
+        uint _amount
+    ) external returns (bool) ;
+    
+    /// @notice Function used by the client to send ethers from the Dao manager
+    /// @param _recipient The address to send to
+    /// @param _amount The amount (in wei) to send
+    /// @return Whether the transfer was successful or not
+    function sendTo(
+        address _recipient, 
+        uint _amount
+    ) external returns (bool);
+    
+    /// @dev Internal function to add a new token or share holder
+    /// @param _holder The address of the token or share holder
+    function addHolder(address _holder) internal;
+    
+    /// @dev Internal function to create initial tokens    
+    /// @param _holder The beneficiary of the created tokens
+    /// @param _quantity The quantity of tokens to create
+    /// @return Whether the function was successful or not 
+    function createInitialTokens(address _holder, uint _quantity) internal returns (bool success) ;
+    
+    /// @notice Function that allow the contractor to propose a token price
     /// @param _initialPriceMultiplier The initial price multiplier of contractor tokens
     /// @param _inflationRate If 0, the contractor token price doesn't change during the funding
     /// @param _closingTime The initial price and inflation rate can be changed after this date
@@ -198,13 +324,22 @@ contract PassTokenManagerInterface {
     function ableTransfer();
 
     /// @notice Function to disable the transfer of Dao shares
-    function disableTransfer();
+    /// @param _closingTime Date when shares or tokens can be transferred
+    function disableTransfer(uint _closingTime);
 
     /// @notice Function used by the client to block the transfer of shares from and to a share holder
     /// @param _shareHolder The address of the share holder
     /// @param _deadLine When the account will be unblocked
     function blockTransfer(address _shareHolder, uint _deadLine) external;
 
+    /// @notice Function to buy Dao shares according to the funding rules 
+    /// with `msg.sender` as the beneficiary
+    function buyShares() payable;
+    
+    /// @notice Function to buy Dao shares according to the funding rules 
+    /// @param _recipient The beneficiary of the created shares
+    function buySharesFor(address _recipient) payable;
+    
     /// @dev Internal function to send `_value` token to `_to` from `_From`
     /// @param _from The address of the sender
     /// @param _to The address of the recipient
@@ -214,12 +349,13 @@ contract PassTokenManagerInterface {
         address _from,
         address _to, 
         uint256 _value
-        ) internal returns (bool);
+        ) internal returns (bool success);
 
     /// @notice send `_value` token to `_to` from `msg.sender`
     /// @param _to The address of the recipient
     /// @param _value The quantity of shares or tokens to be transferred
-    function transfer(address _to, uint256 _value);
+    /// @return Whether the function was successful or not 
+    function transfer(address _to, uint256 _value) returns (bool success);
 
     /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
     /// @param _from The address of the sender
@@ -237,18 +373,44 @@ contract PassTokenManagerInterface {
     /// @return Whether the approval was successful or not
     function approve(address _spender, uint256 _value) returns (bool success);
 
+    event FeesReceived(address indexed From, uint Amount);
+    event AmountReceived(address indexed From, uint Amount);
+    event paymentReceived(address indexed daoManager, uint Amount);
+    event ProposalCloned(uint indexed LastClientProposalID, uint indexed ProposalID, uint Amount, string Description, bytes32 HashOfTheDocument);
+    event ClientUpdated(address LastClient, address NewClient);
+    event RecipientUpdated(address LastRecipient, address NewRecipient);
+    event ProposalAdded(uint indexed ProposalID, uint Amount, string Description, bytes32 HashOfTheDocument);
+    event Order(uint indexed clientProposalID, uint indexed ProposalID, uint Amount);
+    event Withdawal(address indexed Recipient, uint Amount);
+    event TokenPriceProposalSet(uint InitialPriceMultiplier, uint InflationRate, uint ClosingTime);
+    event holderAdded(uint Index, address Holder);
     event TokensCreated(address indexed Sender, address indexed TokenHolder, uint Quantity);
     event FundingRulesSet(address indexed MainPartner, uint indexed FundingProposalId, uint indexed StartTime, uint ClosingTime);
     event FundingFueled(uint indexed FundingProposalID, uint FundedAmount);
     event TransferAble();
-    event TransferDisable();
+    event TransferDisable(uint closingTime);
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+
 
 }    
 
-contract PassTokenManager is PassTokenManagerInterface {
+contract PassManager is PassManagerInterface {
+
+// Constant functions
+
+    function Client() constant returns (address) {
+        if (recipient == 0) return client;
+        else return daoManager.Client();
+    }
     
-    function TotalSupply() constant external returns (uint256) {
-        return totalSupply;
+    function ClosingTimeForCloning() constant returns (uint) {
+        if (recipient == 0) return closingTimeForCloning;
+        else return daoManager.ClosingTimeForCloning();
+    }
+    
+    function totalSupply() constant external returns (uint256) {
+        return totalTokenSupply;
     }
 
      function balanceOf(address _owner) constant external returns (uint256 balance) {
@@ -288,37 +450,56 @@ contract PassTokenManager is PassTokenManagerInterface {
         
     }
 
-    function PassTokenManager(
-        address _creator,
-        address _client,
-        address _recipient
-    ) {
-        
-        if (_creator == 0 
-            || _client == 0 
-            || _client == _recipient 
-            || _client == address(this) 
-            || _recipient == address(this)) throw;
-
-        creator = _creator; 
-        client = _client;
-        recipient = _recipient;
-        
+    function numberOfHolders() constant returns (uint) {
+        return holders.length - 1;
     }
-   
-    function initToken(
+    
+    function HolderAddress(uint _index) constant returns (address) {
+        return holders[_index];
+    }
+
+    function numberOfProposals() constant returns (uint) {
+        return proposals.length - 1;
+    }
+
+// Modifiers
+
+    // Modifier that allows only the client to manage this account manager
+    modifier onlyClient {if (msg.sender != Client()) throw; _;}
+    
+    // Modifier that allows only the main partner to manage the actual funding
+    modifier onlyMainPartner {if (msg.sender !=  FundingRules[0].mainPartner) throw; _;}
+    
+    // Modifier that allows only the contractor propose set the token price or withdraw
+    modifier onlyContractor {if (recipient == 0 || (msg.sender != recipient && msg.sender != creator)) throw; _;}
+    
+    // Modifier for Dao functions
+    modifier onlyDao {if (recipient != 0) throw; _;}
+    
+// Constructor function
+
+    function PassManager(
+        address _client,
+        address _daoManager,
+        address _recipient,
+        address _clonedFrom,
         string _tokenName,
         string _tokenSymbol,
         uint8 _tokenDecimals,
-        address _initialSupplyRecipient,
-        uint256 _initialSupply,
-        bool _transferable) {
-           
-        if (_initialSupplyRecipient == address(this)
-            || decimals != 0
-            || msg.sender != creator
-            || totalSupply != 0) throw;
-            
+        bool _transferable
+    ) {
+
+        if ((_recipient == 0 && _client == 0)
+            || _client == _recipient) throw;
+
+        creator = msg.sender; 
+        client = _client;
+        recipient = _recipient;
+        
+        if (_recipient !=0) daoManager = PassManager(_daoManager);
+
+        clonedFrom = _clonedFrom;            
+        
         name = _tokenName;
         symbol = _tokenSymbol;
         decimals = _tokenDecimals;
@@ -328,13 +509,205 @@ contract PassTokenManager is PassTokenManagerInterface {
             TransferAble();
         } else {
             transferable = false;
-            TransferDisable();
+            TransferDisable(0);
+        }
+
+        holders.length = 1;
+        proposals.length = 1;
+        
+    }
+
+// Setting functions
+
+    function cloneProposal(
+        uint _amount,
+        string _description,
+        bytes32 _hashOfTheDocument,
+        uint _dateOfProposal,
+        uint _lastClientProposalID,
+        uint _orderAmount,
+        uint _dateOfOrder
+    ) returns (bool success) {
+            
+        if (smartContractStartDate != 0 || recipient == 0
+        || msg.sender != creator) throw;
+        
+        uint _proposalID = proposals.length++;
+        proposal c = proposals[_proposalID];
+
+        c.amount = _amount;
+        c.description = _description;
+        c.hashOfTheDocument = _hashOfTheDocument; 
+        c.dateOfProposal = _dateOfProposal;
+        c.lastClientProposalID = _lastClientProposalID;
+        c.orderAmount = _orderAmount;
+        c.dateOfOrder = _dateOfOrder;
+        
+        ProposalCloned(_lastClientProposalID, _proposalID, c.amount, c.description, c.hashOfTheDocument);
+        
+        return true;
+            
+    }
+
+    function initialTokenSupply(
+        address _recipient, 
+        uint _quantity) returns (bool success) {
+
+        if (smartContractStartDate != 0 || msg.sender != creator) throw;
+        
+        if (_recipient != 0 && _quantity != 0) {
+            return (createInitialTokens(_recipient, _quantity));
+        }
+            
+    }
+
+    function cloneTokens(
+        uint _from,
+        uint _to) returns (bool success) {
+        
+        if (smartContractStartDate != 0) throw;
+        
+        PassManager _clonedFrom = PassManager(clonedFrom);
+        
+        if (_from < 1 || _to > _clonedFrom.numberOfHolders()) throw;
+
+        address _holder;
+
+        for (uint i = _from; i <= _to; i++) {
+            _holder = _clonedFrom.HolderAddress(i);
+            if (balances[_holder] == 0) {
+                createInitialTokens(_holder, _clonedFrom.balanceOf(_holder));
+            }
+        }
+
+        return true;
+        
+    }
+
+    function closeSetup() {
+        
+        if (smartContractStartDate != 0 || msg.sender != creator) throw;
+
+        smartContractStartDate = now;
+
+    }
+
+// Function to receive payments or deposits
+
+    function () payable {
+        AmountReceived(msg.sender, msg.value);
+    }
+    
+// Contractors Account Management
+
+    function updateRecipient(address _newRecipient) onlyContractor {
+
+        if (_newRecipient == 0 
+            || _newRecipient == client) throw;
+
+        RecipientUpdated(recipient, _newRecipient);
+        recipient = _newRecipient;
+
+    } 
+
+    function withdraw(uint _amount) onlyContractor {
+        if (!recipient.send(_amount)) throw;
+        Withdawal(recipient, _amount);
+    }
+    
+// DAO Proposals Management
+
+    function updateClient(address _newClient) onlyClient {
+        
+        if (_newClient == 0 
+            || _newClient == recipient) throw;
+
+        ClientUpdated(client, _newClient);
+        client = _newClient;        
+
+    }
+
+    function newProposal(
+        uint _amount,
+        string _description, 
+        bytes32 _hashOfTheDocument
+    ) onlyContractor returns (uint) {
+
+        uint _proposalID = proposals.length++;
+        proposal c = proposals[_proposalID];
+
+        c.amount = _amount;
+        c.description = _description;
+        c.hashOfTheDocument = _hashOfTheDocument; 
+        c.dateOfProposal = now;
+        
+        ProposalAdded(_proposalID, c.amount, c.description, c.hashOfTheDocument);
+        
+        return _proposalID;
+        
+    }
+    
+    function order(
+        uint _clientProposalID,
+        uint _proposalID,
+        uint _orderAmount
+    ) external onlyClient returns (bool) {
+    
+        proposal c = proposals[_proposalID];
+        
+        uint _sum = c.orderAmount + _orderAmount;
+        if (_sum > c.amount
+            || _sum < c.orderAmount
+            || _sum < _orderAmount) return; 
+
+        c.lastClientProposalID =  _clientProposalID;
+        c.orderAmount = _sum;
+        c.dateOfOrder = now;
+        
+        Order(_clientProposalID, _proposalID, _orderAmount);
+        
+        return true;
+
+    }
+
+    function sendTo(
+        address _recipient,
+        uint _amount
+    ) external onlyClient onlyDao returns (bool) {
+
+        if (_recipient.send(_amount)) return true;
+        else return false;
+
+    }
+    
+// Token Management
+    
+    function addHolder(address _holder) internal {
+        
+        if (holderID[_holder] == 0) {
+            
+            uint _holderID = holders.length++;
+            holders[_holderID] = _holder;
+            holderID[_holder] = _holderID;
+            holderAdded(_holderID, _holder);
+
         }
         
-        balances[_initialSupplyRecipient] = _initialSupply; 
-        totalSupply = _initialSupply;
-        TokensCreated(msg.sender, _initialSupplyRecipient, _initialSupply);
-           
+    }
+    
+    function createInitialTokens(
+        address _holder, 
+        uint _quantity
+    ) internal returns (bool success) {
+
+        if (_quantity > 0 && balances[_holder] == 0) {
+            addHolder(_holder);
+            balances[_holder] = _quantity; 
+            totalTokenSupply += _quantity;
+            TokensCreated(msg.sender, _holder, _quantity);
+            return true;
+        }
+        
     }
     
     function setTokenPriceProposal(        
@@ -351,6 +724,7 @@ contract PassTokenManager is PassTokenManagerInterface {
         FundingRules[1].startTime = now;
         FundingRules[1].closingTime = _closingTime;
         
+        TokenPriceProposalSet(_initialPriceMultiplier, _inflationRate, _closingTime);
     }
     
     function setFundingRules(
@@ -416,11 +790,12 @@ contract PassTokenManager is PassTokenManagerInterface {
         uint _quantity = _multiplier/priceDivisor(_saleDate);
         if (_a/_amount != FundingRules[0].initialPriceMultiplier
             || _multiplier/100 != _a
-            || totalSupply + _quantity <= totalSupply 
-            || totalSupply + _quantity <= _quantity) return;
+            || totalTokenSupply + _quantity <= totalTokenSupply 
+            || totalTokenSupply + _quantity <= _quantity) return;
 
+        addHolder(_recipient);
         balances[_recipient] += _quantity;
-        totalSupply += _quantity;
+        totalTokenSupply += _quantity;
         FundingRules[0].fundedAmount += _amount;
 
         TokensCreated(msg.sender, _recipient, _quantity);
@@ -463,15 +838,16 @@ contract PassTokenManager is PassTokenManagerInterface {
     function ableTransfer() onlyClient {
         if (!transferable) {
             transferable = true;
+            closingTimeForCloning = 0;
             TransferAble();
         }
     }
 
-    function disableTransfer() onlyClient {
-        if (transferable) {
-            transferable = false;
-            TransferDisable();
-        }
+    function disableTransfer(uint _closingTime) onlyClient {
+        if (transferable && _closingTime == 0) transferable = false;
+        else closingTimeForCloning = _closingTime;
+            
+        TransferDisable(_closingTime);
     }
     
     function blockTransfer(address _shareHolder, uint _deadLine) external onlyClient onlyDao {
@@ -480,13 +856,24 @@ contract PassTokenManager is PassTokenManagerInterface {
         }
     }
     
+    function buyShares() payable {
+        buySharesFor(msg.sender);
+    } 
+    
+    function buySharesFor(address _recipient) payable onlyDao {
+        
+        if (!FundingRules[0].publicCreation 
+            || !createToken(_recipient, msg.value, now)) throw;
+
+    }
+    
     function transferFromTo(
         address _from,
         address _to, 
         uint256 _value
-        ) internal returns (bool) {  
+        ) internal returns (bool success) {  
 
-        if (transferable
+        if ((transferable && now > ClosingTimeForCloning())
             && now > blockedDeadLine[_from]
             && now > blockedDeadLine[_to]
             && _to != address(this)
@@ -496,6 +883,8 @@ contract PassTokenManager is PassTokenManagerInterface {
         ) {
             balances[_from] -= _value;
             balances[_to] += _value;
+            Transfer(_from, _to, _value);
+            addHolder(_to);
             return true;
         } else {
             return false;
@@ -503,8 +892,9 @@ contract PassTokenManager is PassTokenManagerInterface {
         
     }
 
-    function transfer(address _to, uint256 _value) {  
+    function transfer(address _to, uint256 _value) returns (bool success) {  
         if (!transferFromTo(msg.sender, _to, _value)) throw;
+        return true;
     }
 
     function transferFrom(
@@ -517,230 +907,17 @@ contract PassTokenManager is PassTokenManagerInterface {
             || !transferFromTo(_from, _to, _value)) throw;
             
         allowed[_from][msg.sender] -= _value;
-
+        return true;
     }
 
     function approve(address _spender, uint256 _value) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
         return true;
     }
-
-}    
-  
-
-pragma solidity ^0.4.2;
-
-/*
- *
- * This file is part of Pass DAO.
- *
- * The Manager smart contract is used for the management of accounts and tokens.
- * Allows to receive or withdraw ethers and to buy Dao shares.
- * The contract derives to the Token Manager smart contract for the management of tokens.
- *
- * Recipient is 0 for the Dao account manager and the address of
- * contractor's recipient for the contractors's mahagers.
- *
-*/
-
-/// @title Manager smart contract of the Pass Decentralized Autonomous Organisation
-contract PassManagerInterface is PassTokenManagerInterface {
-
-    struct proposal {
-        // Amount (in wei) of the proposal
-        uint amount;
-        // A description of the proposal
-        string description;
-        // The hash of the proposal's document
-        bytes32 hashOfTheDocument;
-        // A unix timestamp, denoting the date when the proposal was created
-        uint dateOfProposal;
-        // The sum amount (in wei) ordered for this proposal 
-        uint orderAmount;
-        // A unix timestamp, denoting the date of the last order for the approved proposal
-        uint dateOfOrder;
-    }
-        
-    // Proposals to work for the client
-    proposal[] public proposals;
-    
-    /// @dev The constructor function
-    /// @param _creator The address of the creator
-    /// @param _client The address of the Dao
-    /// @param _recipient The address of the recipient. 0 for the Dao
-    //function PassManager(
-        //address _creator,
-        //address _client,
-        //address _recipient
-    //) PassTokenManager(
-        //_creator,
-        //_client,
-        //_recipient);
-
-    /// @notice Fallback function to allow sending ethers to this smart contract
-    function () payable;
-    
-    /// @notice Function to update the recipent address
-    /// @param _newRecipient The adress of the recipient
-    function updateRecipient(address _newRecipient);
-
-    /// @notice Function to buy Dao shares according to the funding rules 
-    /// with `msg.sender` as the beneficiary
-    function buyShares() payable;
-    
-    /// @notice Function to buy Dao shares according to the funding rules 
-    /// @param _recipient The beneficiary of the created shares
-    function buySharesFor(address _recipient) payable;
-
-    /// @notice Function to make a proposal to work for the client
-    /// @param _amount The amount (in wei) of the proposal
-    /// @param _description String describing the proposal
-    /// @param _hashOfTheDocument The hash of the proposal document
-    /// @return The index of the contractor proposal
-    function newProposal(
-        uint _amount,
-        string _description, 
-        bytes32 _hashOfTheDocument
-    ) returns (uint);
-    
-    /// @notice Function used by the client to order according to the contractor proposal
-    /// @param _proposalID The index of the contractor proposal
-    /// @param _amount The amount (in wei) of the order
-    /// @return Whether the order was made or not
-    function order(
-        uint _proposalID,
-        uint _amount
-    ) external returns (bool) ;
-    
-    /// @notice Function used by the client to send ethers from the Dao manager
-    /// @param _recipient The address to send to
-    /// @param _amount The amount (in wei) to send
-    /// @return Whether the transfer was successful or not
-    function sendTo(
-        address _recipient, 
-        uint _amount
-    ) external returns (bool);
-
-    /// @notice Function to allow contractors to withdraw ethers
-    /// @param _amount The amount (in wei) to withdraw
-    function withdraw(uint _amount);
-    
-    event ProposalAdded(uint indexed ProposalID, uint Amount, string Description);
-    event Order(uint indexed ProposalID, uint Amount);
-    event Withdawal(address indexed Recipient, uint Amount);
-
-}    
-
-contract PassManager is PassManagerInterface, PassTokenManager {
-
-    function PassManager(
-        address _creator,
-        address _client,
-        address _recipient
-    ) PassTokenManager(
-        _creator,
-        _client,
-        _recipient
-        ) {
-        proposals.length = 1;
-    }
-
-    function () payable {}
-
-    function updateRecipient(address _newRecipient) onlyContractor {
-
-        if (_newRecipient == 0 
-            || _newRecipient == client) throw;
-
-        recipient = _newRecipient;
-    } 
-
-    function buyShares() payable {
-        buySharesFor(msg.sender);
-    } 
-    
-    function buySharesFor(address _recipient) payable onlyDao {
-        
-        if (!FundingRules[0].publicCreation 
-            || !createToken(_recipient, msg.value, now)) throw;
-
-    }
-   
-    function newProposal(
-        uint _amount,
-        string _description, 
-        bytes32 _hashOfTheDocument
-    ) onlyContractor returns (uint) {
-
-        uint _proposalID = proposals.length++;
-        proposal c = proposals[_proposalID];
-
-        c.amount = _amount;
-        c.description = _description;
-        c.hashOfTheDocument = _hashOfTheDocument; 
-        c.dateOfProposal = now;
-        
-        ProposalAdded(_proposalID, c.amount, c.description);
-        
-        return _proposalID;
-        
-    }
-    
-    function order(
-        uint _proposalID,
-        uint _orderAmount
-    ) external onlyClient returns (bool) {
-    
-        proposal c = proposals[_proposalID];
-        
-        uint _sum = c.orderAmount + _orderAmount;
-        if (_sum > c.amount
-            || _sum < c.orderAmount
-            || _sum < _orderAmount) return; 
-
-        c.orderAmount = _sum;
-        c.dateOfOrder = now;
-        
-        Order(_proposalID, _orderAmount);
-        
-        return true;
-
-    }
-
-    function sendTo(
-        address _recipient,
-        uint _amount
-    ) external onlyClient onlyDao returns (bool) {
-    
-        if (_recipient.send(_amount)) return true;
-        else return false;
-
-    }
-   
-    function withdraw(uint _amount) onlyContractor {
-        if (!recipient.send(_amount)) throw;
-        Withdawal(recipient, _amount);
-    }
     
 }    
 
-contract PassManagerCreator {
-    event NewPassManager(address Creator, address Client, address Recipient, address PassManager);
-    function createManager(
-        address _client,
-        address _recipient
-        ) returns (PassManager) {
-        PassManager _passManager = new PassManager(
-            msg.sender,
-            _client,
-            _recipient
-        );
-        NewPassManager(msg.sender, _client, _recipient, _passManager);
-        return _passManager;
-    }
-}
-
-pragma solidity ^0.4.2;
+pragma solidity ^0.4.6;
 
 /*
 This file is part of Pass DAO.
@@ -794,6 +971,13 @@ contract PassDaoInterface {
         mapping (address => bool) hasVoted;  
     }
 
+    struct Contractor {
+        // The address of the contractor manager smart contract
+        address contractorManager;
+        // The date of the first order for the contractor
+        uint creationDate;
+    }
+        
     struct Proposal {
         // Index to identify the board meeting of the proposal
         uint boardMeetingID;
@@ -834,10 +1018,22 @@ contract PassDaoInterface {
         uint feesRewardInflationRate;
         // True if the dao rules allow the transfer of shares
         bool transferable;
+        // Address of the new Dao smart contract after an upgrade
+        address newdao;
+        // The period in minutes for the cloning procedure of shares and tokens
+        uint minutesForTokensCloning;
     } 
-
+    
     // The creator of the Dao
-    address creator;
+    address public creator;
+    // The name of the project
+    string public projectName;
+    // The address of the last Dao before upgrade (not mandatory)
+    address public lastDao;
+    // End date of the setup procedure
+    uint public smartContractStartDate;
+    // The Dao manager smart contract
+    PassManager public daoManager;
     // The minimum periods in minutes 
     uint public minMinutesPeriods;
     // The maximum period in minutes for proposals (set+debate)
@@ -846,15 +1042,16 @@ contract PassDaoInterface {
     uint public maxMinutesFundingPeriod;
     // The maximum inflation rate for share price or rewards to voters
     uint public maxInflationRate;
-
-    // The Dao manager smart contract
-    PassManager public daoManager;
     
     // Map to allow the share holders to withdraw board meeting fees
-    mapping (address => uint) public pendingFeesWithdrawals;
+    mapping (address => uint) pendingFees;
 
     // Board meetings to vote for or against a proposal
     BoardMeeting[] public BoardMeetings; 
+    // Contractors of the Dao
+    Contractor[] public Contractors;
+    // Map with the indexes of the contractors
+    mapping (address => uint) contractorID;
     // Proposals to pay a contractor or fund the Dao
     Proposal[] public Proposals;
     // Proposals to update the Dao rules
@@ -862,9 +1059,26 @@ contract PassDaoInterface {
     // The current Dao rules
     Rules public DaoRules; 
     
+    // Date when shares and tokens can be transferred after cloning
+    uint public closingTimeForCloning;
+    
     /// @dev The constructor function
-    //function PassDao();
+    /// @param _projectName The name of the Dao
+    /// @param _lastDao The address of the last Dao before upgrade (not mandatory)
+    //function PassDao(
+    //    string _projectName,
+    //    address _lastDao);
+    
+    /// @dev Internal function to add a new contractor
+    /// @param _contractorManager The address of the contractor manager
+    /// @param _creationDate The date of the first order
+    function addContractor(address _contractorManager, uint _creationDate) internal;
 
+    /// @dev Function to clone a contractor from the last Dao in case of upgrade 
+    /// @param _contractorManager The address of the contractor manager
+    /// @param _creationDate The date of the first order
+    function cloneContractor(address _contractorManager, uint _creationDate);
+    
     /// @dev Function to initialize the Dao
     /// @param _daoManager Address of the Dao manager smart contract
     /// @param _maxInflationRate The maximum inflation rate for contractor and funding proposals
@@ -888,7 +1102,7 @@ contract PassDaoInterface {
         uint _minMinutesDebatePeriod,
         uint _feesRewardInflationRate
         );
-    
+        
     /// @dev Internal function to create a board meeting
     /// @param _proposalID The index of the proposal if for a contractor or for a funding
     /// @param _daoRulesProposalID The index of the proposal if Dao rules
@@ -933,6 +1147,8 @@ contract PassDaoInterface {
     /// @param _minMinutesDebatePeriod The minimum period in minutes of the board meetings
     /// @param _feesRewardInflationRate The inflation rate to calculate the reward of fees to voters during a board meeting
     /// @param _transferable True if the proposal foresees to allow the transfer of Dao shares
+    /// @param _newdao Address of a new Dao smart contract in case of upgrade (not mandatory)   
+    /// @param _minutesForTokensCloning The period in minutes for the cloning procedure of shares and tokens
     /// @param _minutesDebatingPeriod Period in minutes of the board meeting to vote on the proposal
     function newDaoRulesProposal(
         uint _minQuorumDivisor, 
@@ -941,6 +1157,8 @@ contract PassDaoInterface {
         uint _minMinutesDebatePeriod,
         uint _feesRewardInflationRate,
         bool _transferable,
+        address _newdao,
+        uint _minutesForTokensCloning,
         uint _minutesDebatingPeriod
     ) payable returns (uint);
     
@@ -966,21 +1184,76 @@ contract PassDaoInterface {
     /// @return Whether the withdraw was successful or not    
     function withdrawBoardMeetingFees() returns (bool);
 
+    /// @param _shareHolder Address of the shareholder
+    /// @return The amount in wei the shareholder can withdraw    
+    function PendingFees(address _shareHolder) constant returns (uint);
+    
     /// @return The minimum quorum for proposals to pass 
     function minQuorum() constant returns (uint);
-    
-    event ProposalAdded(uint indexed ProposalID, address indexed ContractorManager, uint ContractorProposalID, 
-            uint amount, address indexed MainPartner, uint InitialSharePriceMultiplier, uint MinutesFundingPeriod);
-    event DaoRulesProposalAdded(uint indexed DaoRulesProposalID, uint MinQuorumDivisor, uint MinBoardMeetingFees, 
-            uint MinutesSetProposalPeriod, uint MinMinutesDebatePeriod, uint FeesRewardInflationRate, bool Transferable);
-    event SentToContractor(uint indexed ContractorProposalID, address indexed ContractorManagerAddress, uint AmountSent);
-    event BoardMeetingClosed(uint indexed BoardMeetingID, uint FeesGivenBack, bool ProposalExecuted);
+
+    /// @return The number of contractors 
+   function numberOfContractors() constant returns (uint);
+
+    /// @return The number of board meetings (or proposals) 
+    function numberOfBoardMeetings() constant returns (uint);
+
+    event ContractorAdded(uint indexed ContractorID, address ContractorManager, uint CreationDate);
+    event ContractorProposalAdded(uint indexed ProposalID, uint boardMeetingID, address indexed ContractorManager, 
+        uint indexed ContractorProposalID, uint amount);
+    event FundingProposalAdded(uint indexed ProposalID, uint boardMeetingID, bool indexed LinkedToContractorProposal, 
+        uint amount, address MainPartner, uint InitialSharePriceMultiplier, uint InflationRate, uint MinutesFundingPeriod);
+    event DaoRulesProposalAdded(uint indexed DaoRulesProposalID, uint boardMeetingID, uint MinQuorumDivisor, 
+        uint MinBoardMeetingFees, uint MinutesSetProposalPeriod, uint MinMinutesDebatePeriod, uint FeesRewardInflationRate, 
+        bool Transferable, address NewDao, uint MinutesForTokensCloning);
+    event Voted(uint indexed boardMeetingID, uint ProposalID, uint DaoRulesProposalID, bool position, address indexed voter);
+    event ProposalClosed(uint indexed ProposalID, uint indexed DaoRulesProposalID, uint boardMeetingID, 
+        uint FeesGivenBack, bool ProposalExecuted, uint BalanceSentToDaoManager);
+    event SentToContractor(uint indexed ProposalID, uint indexed ContractorProposalID, address indexed ContractorManagerAddress, uint AmountSent);
+    event Withdrawal(address indexed Recipient, uint Amount);
+    event DaoUpgraded(address NewDao);
     
 }
 
 contract PassDao is PassDaoInterface {
 
-    function PassDao() {}
+    function PassDao(
+        string _projectName,
+        address _lastDao) {
+
+        lastDao = _lastDao;
+        creator = msg.sender;
+        projectName =_projectName;
+
+        Contractors.length = 1;
+        BoardMeetings.length = 1;
+        Proposals.length = 1;
+        DaoRulesProposals.length = 1; 
+        
+    }
+    
+    function addContractor(address _contractorManager, uint _creationDate) internal {
+        
+        if (contractorID[_contractorManager] == 0) {
+
+            uint _contractorID = Contractors.length++;
+            Contractor c = Contractors[_contractorID];
+            
+            contractorID[_contractorManager] = _contractorID;
+            c.contractorManager = _contractorManager;
+            c.creationDate = _creationDate;
+            
+            ContractorAdded(_contractorID, c.contractorManager, c.creationDate);
+        }
+        
+    }
+    
+    function cloneContractor(address _contractorManager, uint _creationDate) {
+        
+        if (DaoRules.minQuorumDivisor != 0 || msg.sender != creator) throw;
+
+        addContractor(_contractorManager, _creationDate);
+        
+    }
     
     function initDao(
         address _daoManager,
@@ -996,9 +1269,7 @@ contract PassDao is PassDaoInterface {
         ) {
             
         
-        if (DaoRules.minQuorumDivisor != 0) throw;
-
-        daoManager = PassManager(_daoManager);
+        if (smartContractStartDate != 0) throw;
 
         maxInflationRate = _maxInflationRate;
         minMinutesPeriods = _minMinutesPeriods;
@@ -1010,10 +1281,9 @@ contract PassDao is PassDaoInterface {
         DaoRules.minutesSetProposalPeriod = _minutesSetProposalPeriod;
         DaoRules.minMinutesDebatePeriod = _minMinutesDebatePeriod;
         DaoRules.feesRewardInflationRate = _feesRewardInflationRate;
-
-        BoardMeetings.length = 1; 
-        Proposals.length = 1;
-        DaoRulesProposals.length = 1;
+        daoManager = PassManager(_daoManager);
+        
+        smartContractStartDate = now;
         
     }
     
@@ -1090,8 +1360,17 @@ contract PassDao is PassDaoInterface {
 
         p.open = true;
         
-        ProposalAdded(_proposalID, p.contractorManager, p.contractorProposalID, p.amount, p.mainPartner, 
-            p.initialSharePriceMultiplier, _minutesFundingPeriod);
+        if (_contractorProposalID != 0) {
+            ContractorProposalAdded(_proposalID, p.boardMeetingID, p.contractorManager, p.contractorProposalID, p.amount);
+            if (_initialSharePriceMultiplier != 0) {
+                FundingProposalAdded(_proposalID, p.boardMeetingID, true, p.amount, p.mainPartner, 
+                    p.initialSharePriceMultiplier, _inflationRate, _minutesFundingPeriod);
+            }
+        }
+        else if (_initialSharePriceMultiplier != 0) {
+                FundingProposalAdded(_proposalID, p.boardMeetingID, false, p.amount, p.mainPartner, 
+                    p.initialSharePriceMultiplier, _inflationRate, _minutesFundingPeriod);
+        }
 
         return _proposalID;
         
@@ -1104,6 +1383,8 @@ contract PassDao is PassDaoInterface {
         uint _minMinutesDebatePeriod,
         uint _feesRewardInflationRate,
         bool _transferable,
+        address _newDao,
+        uint _minutesForTokensCloning,
         uint _minutesDebatingPeriod
     ) payable returns (uint) {
     
@@ -1124,11 +1405,13 @@ contract PassDao is PassDaoInterface {
         r.minMinutesDebatePeriod = _minMinutesDebatePeriod;
         r.feesRewardInflationRate = _feesRewardInflationRate;
         r.transferable = _transferable;
-        
+        r.newdao = _newDao;
+        r.minutesForTokensCloning = _minutesForTokensCloning;
+
         r.boardMeetingID = newBoardMeeting(0, _DaoRulesProposalID, _minutesDebatingPeriod);     
 
-        DaoRulesProposalAdded(_DaoRulesProposalID, _minQuorumDivisor, _minBoardMeetingFees, 
-            _minutesSetProposalPeriod, _minMinutesDebatePeriod, _feesRewardInflationRate ,_transferable);
+        DaoRulesProposalAdded(_DaoRulesProposalID, r.boardMeetingID, _minQuorumDivisor, _minBoardMeetingFees, 
+            _minutesSetProposalPeriod, _minMinutesDebatePeriod, _feesRewardInflationRate ,_transferable, _newDao ,_minutesForTokensCloning);
 
         return _DaoRulesProposalID;
         
@@ -1157,7 +1440,7 @@ contract PassDao is PassDaoInterface {
 
             uint _a = 100*b.fees;
             if ((_a/100 != b.fees) || ((_a*_balance)/_a != _balance)) throw;
-            uint _multiplier = (_a*_balance)/uint(daoManager.TotalSupply());
+            uint _multiplier = (_a*_balance)/uint(daoManager.totalSupply());
 
             uint _divisor = 100 + 100*DaoRules.feesRewardInflationRate*(now - b.setDeadline)/(100*365 days);
 
@@ -1165,9 +1448,11 @@ contract PassDao is PassDaoInterface {
             
             if (b.totalRewardedAmount + _rewardedamount > b.fees) _rewardedamount = b.fees - b.totalRewardedAmount;
             b.totalRewardedAmount += _rewardedamount;
-            pendingFeesWithdrawals[msg.sender] += _rewardedamount;
+            pendingFees[msg.sender] += _rewardedamount;
         }
 
+        Voted(_boardMeetingID, b.proposalID, b.daoRulesProposalID, _supportsProposal, msg.sender);
+        
         daoManager.blockTransfer(msg.sender, b.votingDeadline);
 
     }
@@ -1190,16 +1475,17 @@ contract PassDao is PassDaoInterface {
             && b.yea + b.nay >= _minQuorum) {
                     _fees = b.fees;
                     b.fees = 0;
-                    pendingFeesWithdrawals[b.creator] += _fees;
+                    pendingFees[b.creator] += _fees;
         }        
 
-        if (b.fees - b.totalRewardedAmount > 0) {
-            if (!daoManager.send(b.fees - b.totalRewardedAmount)) throw;
+        uint _balance = b.fees - b.totalRewardedAmount;
+        if (_balance > 0) {
+            if (!daoManager.send(_balance)) throw;
         }
         
         if (b.yea + b.nay < _minQuorum || b.yea <= b.nay) {
             p.open = false;
-            BoardMeetingClosed(_boardMeetingID, _fees, false);
+            ProposalClosed(b.proposalID, b.daoRulesProposalID, _boardMeetingID, _fees, false, _balance);
             return;
         }
 
@@ -1218,7 +1504,7 @@ contract PassDao is PassDaoInterface {
                 }
 
             }
-
+            
         } else {
 
             Rules r = DaoRulesProposals[b.daoRulesProposalID];
@@ -1232,11 +1518,23 @@ contract PassDao is PassDaoInterface {
 
             DaoRules.transferable = r.transferable;
             if (r.transferable) daoManager.ableTransfer();
-            else daoManager.disableTransfer();
-        }
+            else daoManager.disableTransfer(0);
             
-        BoardMeetingClosed(_boardMeetingID, _fees, true);
+            if (r.minutesForTokensCloning != 0) {
+                closingTimeForCloning = now + (r.minutesForTokensCloning * 1 minutes);
+                daoManager.disableTransfer(closingTimeForCloning);
+            }
 
+            if ((r.newdao != 0) && (r.newdao != address(this))) {
+                DaoRules.newdao = r.newdao;
+                daoManager.updateClient(r.newdao);
+                DaoUpgraded(r.newdao);
+            }
+            
+        }
+
+        ProposalClosed(b.proposalID, b.daoRulesProposalID, _boardMeetingID ,_fees, true, _balance);
+            
         return true;
         
     }
@@ -1257,10 +1555,12 @@ contract PassDao is PassDaoInterface {
         
         p.open = false;   
 
-        if (_amount == 0 || !p.contractorManager.order(p.contractorProposalID, _amount)) return;
+        if (_amount == 0 || !p.contractorManager.order(_proposalID, p.contractorProposalID, _amount)) return;
         
         if (!daoManager.sendTo(p.contractorManager, _amount)) throw;
-        SentToContractor(p.contractorProposalID, address(p.contractorManager), _amount);
+        SentToContractor(_proposalID, p.contractorProposalID, address(p.contractorManager), _amount);
+        
+        addContractor(address(p.contractorManager), now);
         
         return true;
 
@@ -1268,21 +1568,34 @@ contract PassDao is PassDaoInterface {
     
     function withdrawBoardMeetingFees() returns (bool) {
 
-        uint _amount = pendingFeesWithdrawals[msg.sender];
+        uint _amount = pendingFees[msg.sender];
 
-        pendingFeesWithdrawals[msg.sender] = 0;
+        pendingFees[msg.sender] = 0;
 
         if (msg.sender.send(_amount)) {
+            Withdrawal(msg.sender, _amount);
             return true;
         } else {
-            pendingFeesWithdrawals[msg.sender] = _amount;
+            pendingFees[msg.sender] = _amount;
             return false;
         }
 
     }
 
+    function PendingFees(address _shareHolder) constant returns (uint) {
+        return (pendingFees[_shareHolder]);
+    }
+    
     function minQuorum() constant returns (uint) {
-        return (uint(daoManager.TotalSupply()) / DaoRules.minQuorumDivisor);
+        return (uint(daoManager.totalSupply()) / DaoRules.minQuorumDivisor);
+    }
+
+    function numberOfContractors() constant returns (uint) {
+        return Contractors.length - 1;
+    }
+    
+    function numberOfBoardMeetings() constant returns (uint) {
+        return BoardMeetings.length - 1;
     }
     
 }
