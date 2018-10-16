@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LUXREUM at 0xc7cd49245e5ed59a3c379ff05872037cb804a350
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LUXREUM at 0xd278bf17c8b04cecf11187e92190430f009dc5ce
 */
 pragma solidity ^0.4.16;
 // Luxreum Token contract based on the full ERC20 Token standard
@@ -13,7 +13,10 @@ contract LUXREUMToken {
     function totalSupply() constant returns (uint256 supply);
     is replaced with:
     uint256 public totalSupply;
-
+    This automatically creates a getter function for the totalSupply.
+    This is moved to the base contract since public getter functions are not
+    currently recognised as an implementation of the matching abstract
+    function by the compiler.
     */
     /// total amount of tokens
     uint256 public totalSupply;
@@ -196,10 +199,12 @@ contract LUXREUM is LXRStandardToken {
     /* Public variables of the token */
     /*
     NOTE:
- 
+    The following variables are OPTIONAL vanities. One does not have to include them.
+    They allow one to customise the token contract & in no way influences the core functionality.
+    Some wallets/interfaces might not even bother to look at this information.
     */
     
-    uint256 constant public decimals = 18;
+    uint256 constant public decimals = 16;
     uint256 public totalSupply = 60 * (10**7) * 10**16 ; // 600 million tokens, 16 decimal places
     string constant public name = "Luxreum";
     string constant public symbol = "LXR";
