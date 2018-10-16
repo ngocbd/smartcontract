@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PXLProperty at 0xf07d979303c50a8632848cb154c6b30980218c07
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PXLProperty at 0x9bc0b36cdedadb9ae906f53bdea6debe20b81b8e
 */
 pragma solidity ^0.4.2;
+// Make setPrivate payout any pending payouts
 
 // ERC20 Token Interface
 contract Token {
@@ -69,6 +70,11 @@ contract StandardToken is Token {
     Moderation is handled inside PXLProperty, not by external DApps. It's up to other apps to respect the flags, however
 */
 contract PXLProperty is StandardToken {
+    /* ERC-20 MetaData */
+    string public constant name = "PixelPropertyToken";
+    string public constant symbol = "PXL";
+    uint256 public constant decimals = 0;
+    
     /* Access Level Constants */
     uint8 constant LEVEL_1_MODERATOR = 1;    // 1: Level 1 Moderator - nsfw-flagging power
     uint8 constant LEVEL_2_MODERATOR = 2;    // 2: Level 2 Moderator - ban power + [1]
@@ -93,6 +99,10 @@ contract PXLProperty is StandardToken {
     mapping (address => uint256[2]) public ownerWebsite;
     // Property Owner's hover text
     mapping (address => uint256[2]) public ownerHoverText;
+    // Whether migration is occuring or not
+    bool inMigrationPeriod;
+    // Old PXLProperty Contract from before update we migrate data from
+    PXLProperty oldPXLProperty;
     
     /* ### Ownable Property Structure ### */
     struct Property {
@@ -128,7 +138,9 @@ contract PXLProperty is StandardToken {
     }
     
     /* ### Constructor ### */
-    function PXLProperty() public {
+    function PXLProperty(address oldAddress) public {
+        inMigrationPeriod = true;
+        oldPXLProperty = PXLProperty(oldAddress);
         regulators[msg.sender] = LEVEL_3_ROOT; // Creator set to Level 3 Root
     }
     
@@ -164,6 +176,40 @@ contract PXLProperty is StandardToken {
     function setPropertyDAppContract(address propertyDAppContract, bool giveAccess) public regulatorAccess(LEVEL_1_ROOT) {
         require(propertyDAppContract != 0);
         regulators[propertyDAppContract] = giveAccess ? LEVEL_PROPERTY_DAPPS : 0;
+    }
+    
+        
+    /* ### Migration Functions Post Update ### */
+    //Migrates the owners of Properties
+    function migratePropertyOwnership(uint16[10] propertiesToCopy) public regulatorAccess(LEVEL_3_ROOT) {
+        require(inMigrationPeriod);
+        for(uint16 i = 0; i < 10; i++) {
+            if (propertiesToCopy[i] < 10000) {
+                if (properties[propertiesToCopy[i]].owner == 0) { //Only migrate if there is no current owner
+                    properties[propertiesToCopy[i]].owner = oldPXLProperty.getPropertyOwner(propertiesToCopy[i]);
+                }
+            }
+        }
+    }
+    
+    //Migrates the PXL balances of users
+    function migrateUsers(address[10] usersToMigrate) public regulatorAccess(LEVEL_3_ROOT) {
+        require(inMigrationPeriod);
+        for(uint16 i = 0; i < 10; i++) {
+            if(balances[usersToMigrate[i]] == 0) { //Only migrate if they have no funds to avoid duplicate migrations
+                uint256 oldBalance = oldPXLProperty.balanceOf(usersToMigrate[i]);
+                if (oldBalance > 0) {
+                    balances[usersToMigrate[i]] = oldBalance;
+                    totalSupply += oldBalance;
+                    Transfer(0, usersToMigrate[i], oldBalance);
+                }
+            }
+        }
+    }
+    
+    //Perminantly ends migration so it cannot be abused after it is deemed complete
+    function endMigrationPeriod() public regulatorAccess(LEVEL_3_ROOT) {
+        inMigrationPeriod = false;
     }
     
     /* ### PropertyDapp Functions ### */
@@ -278,6 +324,7 @@ contract PXLProperty is StandardToken {
         require(rewardedUser != 0);
         balances[rewardedUser] += amount;
         totalSupply += amount;
+        Transfer(0, rewardedUser, amount);
     }
     
     function burnPXL(address burningUser, uint256 amount) public pixelPropertyAccess() {
@@ -285,6 +332,7 @@ contract PXLProperty is StandardToken {
         require(balances[burningUser] >= amount);
         balances[burningUser] -= amount;
         totalSupply -= amount;
+        Transfer(burningUser, 0, amount);
     }
     
     function burnPXLRewardPXL(address burner, uint256 toBurn, address rewarder, uint256 toReward) public pixelPropertyAccess() {
@@ -292,10 +340,12 @@ contract PXLProperty is StandardToken {
         if (toBurn > 0) {
             balances[burner] -= toBurn;
             totalSupply -= toBurn;
+            Transfer(burner, 0, toBurn);
         }
         if (rewarder != 0) {
             balances[rewarder] += toReward;
             totalSupply += toReward;
+            Transfer(0, rewarder, toReward);
         }
     } 
     
@@ -304,16 +354,19 @@ contract PXLProperty is StandardToken {
         if (toBurn > 0) {
             balances[burner] -= toBurn;
             totalSupply -= toBurn;
+            Transfer(burner, 0, toBurn);
         }
         if (rewarder1 != 0) {
             balances[rewarder1] += toReward1;
             totalSupply += toReward1;
+            Transfer(0, rewarder1, toReward1);
         }
         if (rewarder2 != 0) {
             balances[rewarder2] += toReward2;
             totalSupply += toReward2;
+            Transfer(0, rewarder2, toReward2);
         }
-    } 
+    }
     
     /* ### All Getters/Views ### */
     function getOwnerHoverText(address user) public view returns(uint256[2]) {
@@ -341,12 +394,16 @@ contract PXLProperty is StandardToken {
     }
     
     function getPropertyColors(uint16 propertyID) public view returns(uint256[5]) {
-        return properties[propertyID].colors;
+        if (properties[propertyID].colors[0] != 0 || properties[propertyID].colors[1] != 0 || properties[propertyID].colors[2] != 0 || properties[propertyID].colors[3] != 0 || properties[propertyID].colors[4] != 0) {
+            return properties[propertyID].colors;
+        } else {
+            return oldPXLProperty.getPropertyColors(propertyID);
+        }
     }
 
     function getPropertyColorsOfRow(uint16 propertyID, uint8 rowIndex) public view returns(uint256) {
         require(rowIndex <= 9);
-        return properties[propertyID].colors[rowIndex];
+        return getPropertyColors(propertyID)[rowIndex];
     }
     
     function getPropertySalePrice(uint16 propertyID) public view returns(uint256) {
