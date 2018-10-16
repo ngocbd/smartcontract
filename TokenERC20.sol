@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x1ec8fe51a9b6a3a6c427d17d9ecc3060fbc4a45c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x694404595e3075a942397f466aacd462ff1a7bd0
 */
 pragma solidity ^0.4.16;
  
@@ -7,12 +7,12 @@ interface tokenRecipient { function receiveApproval(address _from, uint256 _valu
  
 contract TokenERC20 {
     // Public variables of the token
-    string public constant name = "smartillions.io A ETH";
-    string public constant symbol = "S-A-PAT";
+    string public constant name = "smartillions.io Class 1 ETH";
+    string public constant symbol = "PATENTS";
     uint8 public constant decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
-    uint256 public initialSupply = 50000000;
+    uint256 public initialSupply = 10000000;
  
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
