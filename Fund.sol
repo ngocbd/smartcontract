@@ -1,379 +1,421 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fund at 0x6f35804a4261da644f0bcc74338e418339f7c23f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fund at 0x23b9ed246ebe37dbc3ee6b0c84743de9d7217abc
 */
-pragma solidity ^0.4.17;
+pragma solidity 0.4.19;
 
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a * b;
-        assert(a == 0 || c / a == b);
-        return c;
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
     }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
 
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a / b;
-        return c;
-    }
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
 
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
 
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-contract Ownable {
-    address public owner;
+contract Restriction {
+    mapping (address => bool) internal accesses;
 
-    function Ownable() {
-        owner = msg.sender;
+    function Restriction() public {
+        accesses[msg.sender] = true;
     }
 
-    modifier onlyOwner() {
-        require(msg.sender == owner);
+    function giveAccess(address _addr) public restricted {
+        accesses[_addr] = true;
+    }
+
+    function removeAccess(address _addr) public restricted {
+        delete accesses[_addr];
+    }
+
+    function hasAccess() public constant returns (bool) {
+        return accesses[msg.sender];
+    }
+
+    modifier restricted() {
+        require(hasAccess());
         _;
     }
-
-    function transferOwnership(address newOwner) onlyOwner {
-        if (newOwner != address(0)) {
-            owner = newOwner;
-        }
-    }
-
 }
 
-contract Fund is Ownable {
-    using SafeMath for uint256;
-    
-    string public name = "Slot Token";
-    uint8 public decimals = 0;
-    string public symbol = "SLOT";
-    string public version = "0.8";
-    
-    uint8 constant TOKENS = 0;
-    uint8 constant TOTALSTAKE = 1;
-    
-    uint256 totalWithdrawn;
-    uint256 public totalSupply;
-    
-    mapping(address => uint256[2][]) balances;
-    mapping(address => uint256) withdrawals;
-    
-    event Withdrawn(
-            address indexed investor, 
-            address indexed beneficiary, 
-            uint256 weiAmount);
-    event Mint(
-            address indexed to, 
-            uint256 amount);
-    event MintFinished();
-    event Transfer(
-            address indexed from, 
-            address indexed to, 
-            uint256 value);
-    event Approval(
-            address indexed owner, 
-            address indexed spender, 
-            uint256 value);
-            
-    mapping (address => mapping (address => uint256)) allowed;
-
-    bool public mintingFinished = false;
-
-    modifier canMint() {
-        require(!mintingFinished);
-        _;
-    }
-    
-    function Fund() payable {}
-    function() payable {}
-    
-    function getEtherBalance(address _owner) constant public returns (uint256 _balance) {
-        uint256[2][] memory snps = balances[_owner];
-        
-        if (snps.length == 0) { return 0; }
-        if (snps.length == 1) {
-            uint256 bal = snps[0][TOKENS].mul(getTotalStake()).div(totalSupply);
-            return bal.sub(withdrawals[_owner]);
-        }
-
-        uint256 balance = 0;
-        uint256 prevSnTotalSt = 0;
-        
-        for (uint256 i = 0 ; i < snps.length-1 ; i++) {
-            uint256 snapTotalStake = snps[i][TOTALSTAKE];
-            uint256 spanBalance = snps[i][TOKENS].mul(snapTotalStake.sub(prevSnTotalSt)).div(totalSupply);
-            balance = balance.add(spanBalance);
-            prevSnTotalSt = snapTotalStake;
-        }
-        
-        uint256 b = snps[snps.length-1][TOKENS].mul(getTotalStake().sub(prevSnTotalSt)).div(totalSupply);
-        return balance.add(b).sub(withdrawals[_owner]);
-    }
-
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        uint256[2][] memory snps = balances[_owner];
-        if (snps.length == 0) { return 0; }
-        
-        return snps[snps.length-1][TOKENS];
-    }
-    
-    function getTotalStake() constant returns (uint256 _totalStake) {
-        return this.balance + totalWithdrawn;
-    }
-    
-    function withdrawEther(address _to, uint256 _value) public {
-        require(getEtherBalance(msg.sender) >= _value);
-        withdrawals[msg.sender] = withdrawals[msg.sender].add(_value);
-        totalWithdrawn = totalWithdrawn.add(_value);
-        _to.transfer(_value);
-        Withdrawn(msg.sender, _to, _value);
-    }
-    
-    function transfer(address _to, uint256 _value) returns (bool) {
-        return transferFromPrivate(msg.sender, _to, _value);
-    }
-    
-    function transferFromPrivate(address _from, address _to, uint256 _value) private returns (bool) {
-        require(balanceOf(msg.sender) >= _value);
-        uint256 fromTokens = balanceOf(msg.sender);
-        pushSnp(msg.sender, fromTokens-_value);
-        uint256 toTokens = balanceOf(_to);
-        pushSnp(_to, toTokens+_value);
-        Transfer(_from, _to, _value);
-        return true;
-    }
-    
-    function pushSnp(address _beneficiary, uint256 _amount) private {
-        if (balances[_beneficiary].length > 0) {
-            uint256 length = balances[_beneficiary].length;
-            assert(balances[_beneficiary][length-1][TOTALSTAKE] == 0);
-            balances[_beneficiary][length-1][TOTALSTAKE] = getTotalStake();
-        }
-        balances[_beneficiary].push([_amount, 0]);
-    }
-
-    function mint(address _to, uint256 _amount) public onlyOwner canMint returns (bool) {
-        pushSnp(_to, _amount.add(balanceOf(_to)));
-        totalSupply = totalSupply.add(_amount);
-        Mint(_to, _amount);
-        Transfer(0x0, _to, _amount);
-        return true;
-    }
-    
-
-    function finishMinting() onlyOwner returns (bool) {
-        mintingFinished = true;
-        MintFinished();
-        return true;
-    }
-    
-    
-    function approve(address _spender, uint256 _value) returns (bool) {
-        require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
-    
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
-        uint256 _allowance = allowed[_from][msg.sender];
-        transferFromPrivate(_from, _to, _value);
-        allowed[_from][msg.sender] = _allowance.sub(_value);
-        return true;
-    }
-    
-}
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
-
-  bool public paused = false;
-
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
-  
-  modifier whenPaused {
-    require(paused);
-    _;
-  }
-
-  function pause() onlyOwner whenNotPaused returns (bool) {
-    paused = true;
-    Pause();
-    return true;
-  }
-
-  function unpause() onlyOwner whenPaused returns (bool) {
-    paused = false;
-    Unpause();
-    return true;
-  }
+contract DreamConstants {
+    uint constant MINIMAL_DREAM = 3 ether;
+    uint constant TICKET_PRICE = 0.1 ether;
+    uint constant MAX_TICKETS = 2**32;
+    uint constant MAX_AMOUNT = 2**32 * TICKET_PRICE;
+    uint constant DREAM_K = 2;
+    uint constant ACCURACY = 10**18;
+    uint constant REFUND_AFTER = 90 days;
 }
 
-contract SlotCrowdsale is Ownable, Pausable {
+contract TicketHolder is Restriction, DreamConstants {
+    struct Ticket {
+        uint32 ticketAmount;
+        uint32 playerIndex;
+        uint dreamAmount;
+    }
+
+    uint64 public totalTickets;
+    uint64 public maxTickets;
+
+    mapping (address => Ticket) internal tickets;
+
+    address[] internal players;
+
+    function TicketHolder(uint _maxTickets) {
+        maxTickets = uint64(_maxTickets);
+    }
+
+    /**
+     * @dev Issue tickets for the specified address.
+     * @param _addr Receiver address.
+     * @param _ticketAmount Amount of tickets to issue.
+     * @param _dreamAmount Amount of dream or zero, if use previous.
+     */
+    function issueTickets(address _addr, uint _ticketAmount, uint _dreamAmount) public restricted {
+        require(_ticketAmount <= MAX_TICKETS);
+        require(totalTickets <= maxTickets);
+        Ticket storage ticket = tickets[_addr];
+
+        // if fist issue for this user
+        if (ticket.ticketAmount == 0) {
+            require(_dreamAmount >= MINIMAL_DREAM);
+            ticket.dreamAmount = _dreamAmount;
+            ticket.playerIndex = uint32(players.length);
+            players.push(_addr);
+        }
+
+
+        // add new ticket amount
+        ticket.ticketAmount += uint32(_ticketAmount);
+        // check to overflow
+        require(ticket.ticketAmount >= _ticketAmount);
+
+        // cal total
+        totalTickets += uint64(_ticketAmount);
+        // check to overflow
+        require(totalTickets >= _ticketAmount);
+    }
+
+    function setWinner(address _addr) public restricted {
+        Ticket storage ticket = tickets[_addr];
+        require(ticket.ticketAmount != 0);
+        ticket.ticketAmount = 0;
+    }
+
+    function getTickets(uint index) public constant returns (address addr, uint ticketAmount, uint dreamAmount) {
+        if (players.length == 0) {
+            return;
+        }
+        if (index > players.length - 1) {
+            return;
+        }
+
+        addr = players[index];
+        Ticket storage ticket = tickets[addr];
+        ticketAmount = ticket.ticketAmount;
+        dreamAmount = ticket.dreamAmount;
+    }
+
+    function getTicketsByAddress(address _addr) public constant returns (uint playerIndex, uint ticketAmount, uint dreamAmount) {
+        Ticket storage ticket = tickets[_addr];
+        playerIndex = ticket.playerIndex;
+        ticketAmount = ticket.ticketAmount;
+        dreamAmount = ticket.dreamAmount;
+    }
+
+    function getPlayersCount() public constant returns (uint) {
+        return players.length;
+    }
+}
+
+contract Fund is Restriction, DreamConstants {
     using SafeMath for uint256;
 
-    uint256 constant PRICE        =    1 ether;
-    uint256 constant TOKEN_CAP    =   10000000;
-    uint256 constant BOUNTY       =     250000;
-    uint256 constant OWNERS_STAKE =    3750000;
-    uint256 constant OWNERS_LOCK  =     200000;
-    
-    address public bountyWallet;
-    address public ownersWallet;
-    uint256 public lockBegunAtBlock;
-    bool public bountyDistributed = false;
-    bool public ownershipDistributed = false;
-    
+    mapping (address => uint) public balances;
+
+    event Pay(address receiver, uint amount);
+    event Refund(address receiver, uint amount);
+
+    // how many funds are collected
+    uint public totalAmount;
+    // how many funds are payed as prize
+    uint internal totalPrizeAmount;
+    // absolute refund date
+    uint32 internal refundDate;
+    // user who will receive all funds
+    address internal beneficiary;
+
+    function Fund(uint _absoluteRefundDate, address _beneficiary) public {
+        refundDate = uint32(_absoluteRefundDate);
+        beneficiary = _beneficiary;
+    }
+
+    function deposit(address _addr) public payable restricted {
+        uint balance = balances[_addr];
+
+        balances[_addr] = balance.add(msg.value);
+        totalAmount = totalAmount.add(msg.value);
+    }
+
+    function withdraw(uint amount) public restricted {
+        beneficiary.transfer(amount);
+    }
+
+    /**
+     * @dev Pay from fund to the specified address only if not payed already.
+     * @param _addr Address to pay.
+     * @param _amountWei Amount to pay.
+     */
+    function pay(address _addr, uint _amountWei) public restricted {
+        // we have enough funds
+        require(this.balance >= _amountWei);
+        require(balances[_addr] != 0);
+        delete balances[_addr];
+        totalPrizeAmount = totalPrizeAmount.add(_amountWei);
+        // send funds
+        _addr.transfer(_amountWei);
+        Pay(_addr, _amountWei);
+    }
+
+    /**
+     * @dev If funds already payed to the specified address.
+     * @param _addr Address to check.
+     */
+    function isPayed(address _addr) public constant returns (bool) {
+        return balances[_addr] == 0;
+    }
+
+    function enableRefund() public restricted {
+        require(refundDate > uint32(block.timestamp));
+        refundDate = uint32(block.timestamp);
+    }
+
+    function refund(address _addr) public restricted {
+        require(refundDate >= uint32(block.timestamp));
+        require(balances[_addr] != 0);
+        uint amount = refundAmount(_addr);
+        delete balances[_addr];
+        _addr.transfer(amount);
+        Refund(_addr, amount);
+    }
+
+    function refundAmount(address _addr) public constant returns (uint) {
+        uint balance = balances[_addr];
+        uint restTotal = totalAmount.sub(totalPrizeAmount);
+        uint share = balance.mul(ACCURACY).div(totalAmount);
+        return restTotal.mul(share).div(ACCURACY);
+    }
+}
+
+contract RandomOraclizeProxyI {
+    function requestRandom(function (bytes32) external callback, uint _gasLimit) public payable;
+    function getRandomPrice(uint _gasLimit) public constant returns (uint);
+}
+contract CompaniesManagerInterface {
+    function processing(address player, uint amount, uint ticketCount, uint totalTickets) public;
+}
+
+
+
+contract TicketSale is Restriction, DreamConstants {
+    using SafeMath for uint256;
+    uint constant RANDOM_GAS = 1000000;
+
+    TicketHolder public ticketHolder;
     Fund public fund;
-    
-    uint256[10] outcomes = [1000000,
-                             250000,
-                             100000,
-                              20000,
-                              10000,
-                               4000,
-                               2000,
-                               1250,
-                               1000,
-                                500];
+    RandomOraclizeProxyI private proxy;
+    CompaniesManagerInterface public companiesManager;
+    bytes32[] public randomNumbers;
 
-    uint16[10] outcomesChances = [1, 4, 10, 50, 100, 250, 500,  800, 1000, 2000];
-    uint16[10] addedUpChances =  [1, 5, 15, 65, 165, 415, 915, 1715, 2715, 4715];
-    
-    event OwnershipDistributed();
-    event BountyDistributed();
+    uint32 public endDate;
 
-    function SlotCrowdsale() public payable {
-        fund = new Fund();
-        bountyWallet = 0x00deF93928A3aAD581F39049a3BbCaaB9BbE36C8;
-        ownersWallet = 0x0001619153d8FE15B3FA70605859265cb0033c1a;
+    function TicketSale(uint _endDate, address _proxy, address _beneficiary, uint _maxTickets) public {
+        require(_endDate > block.timestamp);
+        require(_beneficiary != 0);
+        uint refundDate = block.timestamp + REFUND_AFTER;
+        // end date mist be less then refund
+        require(_endDate < refundDate);
+
+        ticketHolder = new TicketHolder(_maxTickets);
+        ticketHolder.giveAccess(msg.sender);
+
+        fund = new Fund(refundDate, _beneficiary);
+        fund.giveAccess(msg.sender);
+
+        endDate = uint32(_endDate);
+        proxy = RandomOraclizeProxyI(_proxy);
     }
 
-    function() public payable {
-        buyTokenFor(msg.sender);
+    function buyTickets(uint _dreamAmount) public payable {
+        buyTicketsInternal(msg.sender, msg.value, _dreamAmount);
     }
 
-    function buyTokenFor(address _beneficiary) public whenNotPaused() payable {
-        require(_beneficiary != 0x0);
-        require(msg.value >= PRICE);
-        
-        uint256 change = msg.value%PRICE;
-        uint256 value = msg.value.sub(change);
-
-        msg.sender.transfer(change);
-        ownersWallet.transfer(value);
-        fund.mint(_beneficiary, getAmount(value.div(PRICE)));
+    function buyTicketsFor(address _addr, uint _dreamAmount) public payable {
+        buyTicketsInternal(_addr, msg.value, _dreamAmount);
     }
-    
-    function correctedIndex(uint8 _index, uint8 i) private constant returns (uint8) {
-        require(i < outcomesChances.length);        
-        if (outcomesChances[_index] > 0) {
-            return uint8((_index + i)%outcomesChances.length);
-        } else {
-            return correctedIndex(_index, i+1);
+
+    function buyTicketsInternal(address _addr, uint _valueWei, uint _dreamAmount) internal notEnded {
+        require(_valueWei >= TICKET_PRICE);
+        require(checkDream(_dreamAmount));
+
+        uint change = _valueWei % TICKET_PRICE;
+        uint weiAmount = _valueWei - change;
+        uint ticketCount = weiAmount.div(TICKET_PRICE);
+
+        if (address(companiesManager) != 0) {
+            uint totalTickets = ticketHolder.totalTickets();
+            companiesManager.processing(_addr, weiAmount, ticketCount, totalTickets);
         }
-    }
-    
-    function getIndex(uint256 _randomNumber) private returns (uint8) {
-        for (uint8 i = 0 ; i < uint8(outcomesChances.length) ; i++) {
-            if (_randomNumber < addedUpChances[i]) {
-                uint8 index = correctedIndex(i, 0);
-                assert(outcomesChances[index] != 0);
-                outcomesChances[index]--;
-                return index; 
-            } else { 
-                continue; 
-            }
+
+        // issue right amount of tickets
+        ticketHolder.issueTickets(_addr, ticketCount, _dreamAmount);
+
+        // transfer to fund
+        fund.deposit.value(weiAmount)(_addr);
+
+        // return change
+        if (change != 0) {
+            msg.sender.transfer(change);
         }
     }
 
-    function getAmount(uint256 _numberOfTries) private returns (uint256) {
-        uint16 totalChances = addedUpChances[addedUpChances.length-1];
-        uint256 amount = 0;
+    // server integration methods
 
-        for (uint16 i = 0 ; i < _numberOfTries; i++) {
-            uint256 rand = uint256(keccak256(block.blockhash(block.number-1),i)) % totalChances;
-            amount = amount.add(outcomes[getIndex(rand)]);
-        }
-        
-        return amount;
-    }
-    
-    function crowdsaleEnded() constant private returns (bool) {
-        if (fund.totalSupply() >= TOKEN_CAP) { 
-            return true;
-        } else {
-            return false; 
-        }
-    }
-    
-    function lockEnded() constant private returns (bool) {
-        if (block.number.sub(lockBegunAtBlock) > OWNERS_LOCK) {
-            return true; 
-        } else {
-            return false;
-        }
-        
-    }
-        
-    function distributeBounty() public onlyOwner {
-        require(!bountyDistributed);
-        require(crowdsaleEnded());
-        
-        fund.mint(bountyWallet, BOUNTY);
-        
-        bountyDistributed = true;
-        lockBegunAtBlock = block.number;
-        
-        BountyDistributed();
-    }
-    
-    function distributeOwnership() public onlyOwner {
-        require(!ownershipDistributed);
-        require(crowdsaleEnded());
-        require(lockEnded());
-        
-        fund.mint(ownersWallet, OWNERS_STAKE);
-        ownershipDistributed = true;
-        
-        OwnershipDistributed();
-    }
-    
-    function changeOwnersWallet(address _newWallet) public onlyOwner {
-        require(_newWallet != 0x0);
-        ownersWallet = _newWallet;
-    }
-    
-    function changeBountyWallet(address _newWallet) public onlyOwner {
-        require(_newWallet != 0x0);
-        bountyWallet = _newWallet;
-    }
-    
-    function changeFundOwner(address _newOwner) public onlyOwner {
-        require(_newOwner != 0x0);
-        fund.transferOwnership(_newOwner);
+    function refund() public {
+        fund.refund(msg.sender);
     }
 
-    function changeFund(address _newFund) public onlyOwner {
-        require(_newFund != 0x0);
-        fund = Fund(_newFund);
+    /**
+     * @dev Send funds to player by index. In case server calculate all.
+     * @param _playerIndex The winner player index.
+     * @param _amountWei Amount of prize in wei.
+     */
+    function payout(uint _playerIndex, uint _amountWei) public restricted ended {
+        address playerAddress;
+        uint ticketAmount;
+        uint dreamAmount;
+        (playerAddress, ticketAmount, dreamAmount) = ticketHolder.getTickets(_playerIndex);
+        require(playerAddress != 0);
+
+        // pay the player's dream
+        fund.pay(playerAddress, _amountWei);
     }
 
-    function destroy() public onlyOwner {
-        selfdestruct(msg.sender);
+    /**
+     * @dev If funds already payed to the specified player by index.
+     * @param _playerIndex Player index.
+     */
+    function isPayed(uint _playerIndex) public constant returns (bool) {
+        address playerAddress;
+        uint ticketAmount;
+        uint dreamAmount;
+        (playerAddress, ticketAmount, dreamAmount) = ticketHolder.getTickets(_playerIndex);
+        require(playerAddress != 0);
+        return fund.isPayed(playerAddress);
+    }
+
+    /**
+     * @dev Server method. Finish lottery (force finish if required), enable refund.
+     */
+    function finish() public restricted {
+        // force end
+        if (endDate > uint32(block.timestamp)) {
+            endDate = uint32(block.timestamp);
+        }
+    }
+
+    // random integration
+    function requestRandom() public payable restricted {
+        uint price = proxy.getRandomPrice(RANDOM_GAS);
+        require(msg.value >= price);
+        uint change = msg.value - price;
+        proxy.requestRandom.value(price)(this.random_callback, RANDOM_GAS);
+        if (change > 0) {
+            msg.sender.transfer(change);
+        }
+    }
+
+    function random_callback(bytes32 _randomNumbers) external {
+        require(msg.sender == address(proxy));
+        randomNumbers.push(_randomNumbers);
+    }
+
+    // companies integration
+    function setCompanyManager(address _addr) public restricted {
+        companiesManager = CompaniesManagerInterface(_addr);
+    }
+
+    // constant methods
+    function isEnded() public constant returns (bool) {
+        return block.timestamp > endDate;
+    }
+
+    function checkDream(uint _dreamAmount) internal constant returns (bool) {
+        return
+            _dreamAmount == 0 ||
+            _dreamAmount == 3 ether ||
+            _dreamAmount == 5 ether ||
+            _dreamAmount == 7 ether ||
+            _dreamAmount == 10 ether ||
+            _dreamAmount == 15 ether ||
+            _dreamAmount == 20 ether ||
+            _dreamAmount == 30 ether ||
+            _dreamAmount == 40 ether ||
+            _dreamAmount == 50 ether ||
+            _dreamAmount == 75 ether ||
+            _dreamAmount == 100 ether ||
+            _dreamAmount == 150 ether ||
+            _dreamAmount == 200 ether ||
+            _dreamAmount == 300 ether ||
+            _dreamAmount == 400 ether ||
+            _dreamAmount == 500 ether ||
+            _dreamAmount == 750 ether ||
+            _dreamAmount == 1000 ether ||
+            _dreamAmount == 1500 ether ||
+            _dreamAmount == 2000 ether ||
+            _dreamAmount == 2500 ether;
+    }
+
+    modifier notEnded() {
+        require(!isEnded());
+        _;
+    }
+
+    modifier ended() {
+        require(isEnded());
+        _;
+    }
+
+    function randomCount() public constant returns (uint) {
+        return randomNumbers.length;
+    }
+
+    function getRandomPrice() public constant returns (uint) {
+        return proxy.getRandomPrice(RANDOM_GAS);
     }
 
 }
