@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TemplateCrowdsale at 0x3b69bd6342a5434c3fa78a885e9a35aa210f7176
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TemplateCrowdsale at 0x05711090b4d375431e841ea79e52666f623d3353
 */
 pragma solidity ^0.4.18;
 
@@ -767,11 +767,11 @@ contract usingConsts {
     uint8 constant TOKEN_DECIMALS_UINT8 = 18;
     uint constant TOKEN_DECIMAL_MULTIPLIER = 10 ** TOKEN_DECIMALS;
 
-    string constant TOKEN_NAME = "GPCCTOKEN";
-    string constant TOKEN_SYMBOL = "GPCCT";
-    bool constant PAUSED = false;
-    address constant TARGET_USER = 0x6D5BdbEec91CC5e79b7A4Ab8Fd4fB89520497e72;
-    uint constant START_TIME = 1517997621;
+    string constant TOKEN_NAME = "GlobalSpy";
+    string constant TOKEN_SYMBOL = "SPY";
+    bool constant PAUSED = true;
+    address constant TARGET_USER = 0xC46E5282CA98B982B9cd5d7B029a77573b2f8307;
+    uint constant START_TIME = 1521507420;
     bool constant CONTINUE_MINTING = true;
 }
 
@@ -779,9 +779,6 @@ contract usingConsts {
 
 contract MainToken is usingConsts, FreezableMintableToken, BurnableToken, Pausable {
     function MainToken() {
-        if (PAUSED) {
-            pause();
-        }
     }
 
     function name() constant public returns (string _name) {
@@ -899,23 +896,17 @@ contract MainCrowdsale is usingConsts, FinalizableCrowdsale {
         return now >= startTime;
     }
 
-    /**
-     * @dev override token creation to integrate with MyWish token.
-     */
-    function createTokenContract() internal returns (MintableToken) {
-        return new MainToken();
-    }
-
     function finalization() internal {
         super.finalization();
-        if (CONTINUE_MINTING) {
-            return;
-        }
 
         if (PAUSED) {
             MainToken(token).unpause();
         }
-        token.finishMinting();
+
+        if (!CONTINUE_MINTING) {
+            token.finishMinting();
+        }
+
         token.transferOwnership(TARGET_USER);
     }
 
@@ -1029,13 +1020,13 @@ contract BonusableCrowdsale is usingConsts, Crowdsale {
 
         
         // apply bonus for time & weiRaised
-        uint[1] memory weiRaisedStartsBoundaries = [uint(0)];
-        uint[1] memory weiRaisedEndsBoundaries = [uint(1000000000000000000000)];
-        uint64[1] memory timeStartsBoundaries = [uint64(1517997621)];
-        uint64[1] memory timeEndsBoundaries = [uint64(1522486735)];
-        uint[1] memory weiRaisedAndTimeRates = [uint(300)];
+        uint[2] memory weiRaisedStartsBoundaries = [uint(0),uint(0)];
+        uint[2] memory weiRaisedEndsBoundaries = [uint(30000000000000000000000),uint(30000000000000000000000)];
+        uint64[2] memory timeStartsBoundaries = [uint64(1521507420),uint64(1521702000)];
+        uint64[2] memory timeEndsBoundaries = [uint64(1521702000),uint64(1522303200)];
+        uint[2] memory weiRaisedAndTimeRates = [uint(200),uint(100)];
 
-        for (uint i = 0; i < 1; i++) {
+        for (uint i = 0; i < 2; i++) {
             bool weiRaisedInBound = (weiRaisedStartsBoundaries[i] <= weiRaised) && (weiRaised < weiRaisedEndsBoundaries[i]);
             bool timeInBound = (timeStartsBoundaries[i] <= now) && (now < timeEndsBoundaries[i]);
             if (weiRaisedInBound && timeInBound) {
@@ -1046,10 +1037,10 @@ contract BonusableCrowdsale is usingConsts, Crowdsale {
 
         
         // apply amount
-        uint[2] memory weiAmountBoundaries = [uint(1000000000000000000000),uint(100000000000000000000)];
-        uint[2] memory weiAmountRates = [uint(0),uint(600)];
+        uint[4] memory weiAmountBoundaries = [uint(10000000000000000000),uint(5000000000000000000),uint(5000000000000000000),uint(1000000000000000000)];
+        uint[4] memory weiAmountRates = [uint(200),uint(100),uint(0),uint(50)];
 
-        for (uint j = 0; j < 2; j++) {
+        for (uint j = 0; j < 4; j++) {
             if (weiAmount >= weiAmountBoundaries[j]) {
                 bonusRate += bonusRate * weiAmountRates[j] / 1000;
                 break;
@@ -1077,10 +1068,10 @@ contract TemplateCrowdsale is usingConsts, MainCrowdsale
     bool public initialized = false;
 
     function TemplateCrowdsale(MintableToken _token)
-        Crowdsale(START_TIME > now ? START_TIME : now, 1522486740, 10000 * TOKEN_DECIMAL_MULTIPLIER, TARGET_USER)
-        CappedCrowdsale(1000000000000000000000)
+        Crowdsale(START_TIME > now ? START_TIME : now, 1526364000, 5000 * TOKEN_DECIMAL_MULTIPLIER, 0xC46E5282CA98B982B9cd5d7B029a77573b2f8307)
+        CappedCrowdsale(30000000000000000000000)
         
-        RefundableCrowdsale(100000000000000000000)
+        RefundableCrowdsale(1000000000000000000000)
         
     {
         token = _token;
@@ -1090,9 +1081,13 @@ contract TemplateCrowdsale is usingConsts, MainCrowdsale
         require(!initialized);
         initialized = true;
 
+        if (PAUSED) {
+            MainToken(token).pause();
+        }
+
         
-        address[1] memory addresses = [address(0x15917b976598ca9b4662ba953193fb9e4472ce28)];
-        uint[1] memory amounts = [uint(6000000000000000000000000)];
+        address[1] memory addresses = [address(0xc46e5282ca98b982b9cd5d7b029a77573b2f8307)];
+        uint[1] memory amounts = [uint(20000000000000000000000000)];
         uint64[1] memory freezes = [uint64(0)];
 
         for (uint i = 0; i < addresses.length; i ++) {
@@ -1114,13 +1109,6 @@ contract TemplateCrowdsale is usingConsts, MainCrowdsale
      */
     function createTokenContract() internal returns (MintableToken) {
         return MintableToken(0);
-    }
-
-    function finalization() internal {
-        super.finalization();
-        
-        token.transferOwnership(0x1e1fedbeb8ce004a03569a3ff03a1317a6515cf1);
-        
     }
 
     
