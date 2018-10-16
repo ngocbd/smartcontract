@@ -1,167 +1,74 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract tokenDemo at 0x2b6cb3e260fedcaa522f5b6d3c02b8716345d26d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenDemo at 0x3a133b45931c2a954af8a2fe7d0d2d5c75b00be5
 */
 pragma solidity ^0.4.16;
-//????????????????????????????
-contract owned{
-    //??????????????????
-    address public owner;
-    //????????????????????????owner??
-    function owned(){
-        owner=msg.sender;
-    }
-    //??????????????????????????
-    modifier onlyOwner{
-        if(msg.sender != owner){
-            revert();
-        }else{
-            _;
-        }
-    }
-    //??????????????
-    function transferOwner(address newOwner) onlyOwner {
-        owner=newOwner;
-    }
+contract Token{
+    uint256 public totalSupply;
+
+    function balanceOf(address _owner) public constant returns (uint256 balance);
+    function transfer(address _to, uint256 _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) public returns   
+    (bool success);
+
+    function approve(address _spender, uint256 _value) public returns (bool success);
+
+    function allowance(address _owner, address _spender) public constant returns 
+    (uint256 remaining);
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 
+    _value);
 }
 
+contract TokenDemo is Token {
 
-contract tokenDemo is owned{
-    string public name;//????
-    string public symbol;//????
-    uint8 public decimals=18;//?????
-    uint public totalSupply;//????
-    
-    uint public sellPrice=0.01 ether;//????????????????
-    uint public buyPrice=0.01 ether;//??????????
-    
-    //????????????????????????
-    mapping(address => uint) public balanceOf;
-    //????????????????????
-    mapping(address => bool) public frozenAccount;
-    
-    
-    //???????????????????
-    function tokenDemo(
-        uint initialSupply,
-        string _name,
-        string _symbol,
-        address centralMinter
-        ) payable {
-        //???????????????????????????
-        if(centralMinter !=0){
-            owner=centralMinter;
-        }
-        
-        totalSupply=initialSupply * 10 ** uint256(decimals);
-        balanceOf[owner]=totalSupply;
-        name=_name;
-        symbol=_symbol;
+    string public name;                  
+    uint8 public decimals;              
+    string public symbol;              
+
+    function TokenDemo(uint256 _initialAmount, string _tokenName, uint8 _decimalUnits, string _tokenSymbol) public {
+        totalSupply = _initialAmount * 10 ** uint256(_decimalUnits);         
+        balances[msg.sender] = totalSupply; 
+
+        name = _tokenName;                   
+        decimals = _decimalUnits;          
+        symbol = _tokenSymbol;
     }
-    
-    function rename(string newTokenName,string newSymbolName) public onlyOwner
-    {
-        name = newTokenName;
-        symbol = newSymbolName;
+
+    function transfer(address _to, uint256 _value) public returns (bool success) {
+        require(balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]);
+        require(_to != 0x0);
+        balances[msg.sender] -= _value;
+        balances[_to] += _value;
+        Transfer(msg.sender, _to, _value);
+        return true;
     }
-    
-    //?????????????????
-    function mintToken(address target,uint mintedAmount) onlyOwner{
-        //??????????
-        if(target !=0){
-            //????????????
-            balanceOf[target] += mintedAmount;
-            //????
-            totalSupply +=mintedAmount;
-        }else{
-            revert();
-        }
+
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns 
+    (bool success) {
+        require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
+        balances[_to] += _value;
+        balances[_from] -= _value;
+        allowed[_from][msg.sender] -= _value;
+        Transfer(_from, _to, _value);
+        return true;
     }
-    
-    //??????????
-    function freezeAccount(address target,bool _bool) onlyOwner{
-        if(target != 0){
-            frozenAccount[target]=_bool;
-        }
+    function balanceOf(address _owner) public constant returns (uint256 balance) {
+        return balances[_owner];
     }
-        
-    function transfer(address _to,uint _value){
-        //??????????????????
-        if(frozenAccount[msg.sender]){
-            revert();
-        }
-        //??????????????????
-        if(balanceOf[msg.sender]<_value){
-            revert();
-        }
-        //????
-        if((balanceOf[_to]+_value)<balanceOf[_to]){
-            revert();
-        }
-        //??????
-        balanceOf[msg.sender] -=_value;
-        balanceOf[_to] +=_value;
+
+
+    function approve(address _spender, uint256 _value) public returns (bool success)   
+    { 
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
     }
-    
-    
-    //?????????    
-    function setPrice(uint newSellPrice,uint newBuyPrice)onlyOwner{
-        sellPrice=newSellPrice;
-        buyPrice=newBuyPrice;
-    }   
-    
-    
-    //????????????????????????
-    function sell(uint amount) returns(uint revenue){
-        //?????????????????
-        if(frozenAccount[msg.sender]){
-            revert();
-        }
-        //???????????????????
-        if(balanceOf[msg.sender]<amount){
-            revert();
-        }
-        //???????????????
-        balanceOf[owner] +=amount;
-        //????????????
-        balanceOf[msg.sender] -=amount;
-        //??????????? 
-        revenue=amount*sellPrice;
-        //?????????????????
-        if(msg.sender.send(revenue)){
-            return revenue;
-            
-        }else{
-            //????????????????????????
-            revert();
-        }
+
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+        return allowed[_owner][_spender];
     }
-    
-    
-    //???????????
-    function buy() payable returns(uint amount){
-        //?????????0
-        if(buyPrice<=0){
-            //????????
-            revert();
-        }
-        //????????????????????????????
-        amount=msg.value/buyPrice;
-        //????????????????
-        if(balanceOf[owner]<amount){
-            revert();
-        }
-        //????????????
-        if(!owner.send(msg.value)){
-            //????????
-            revert();
-        }
-        //???????????????
-        balanceOf[owner] -=amount;
-        //????????????
-        balanceOf[msg.sender] +=amount;
-        
-        return amount;
-    }
-    
-    
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
 }
