@@ -1,7 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BdpControllerHelper at 0x57db9d1890eb580a5ba18926a7c76f7abaa1831d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BdpControllerHelper at 0x850c430378909ba9ff2494d0a4df17928e99f8f4
 */
 pragma solidity ^0.4.19;
+
+// File: contracts/BdpBaseData.sol
 
 contract BdpBaseData {
 
@@ -13,11 +15,14 @@ contract BdpBaseData {
 
 	bool public paused = false;
 
-	bool public setupComplete = false;
+	bool public setupCompleted = false;
 
 	bytes8 public version;
 
 }
+
+// File: contracts/libraries/BdpContracts.sol
+
 library BdpContracts {
 
 	function getBdpEntryPoint(address[16] _contracts) pure internal returns (address) {
@@ -50,6 +55,8 @@ library BdpContracts {
 
 }
 
+// File: contracts/BdpBase.sol
+
 contract BdpBase is BdpBaseData {
 
 	modifier onlyOwner() {
@@ -62,15 +69,15 @@ contract BdpBase is BdpBaseData {
 		_;
 	}
 
-	modifier whenContractActive() {
-		require(!paused && setupComplete);
+	modifier whileContractIsActive() {
+		require(!paused && setupCompleted);
 		_;
 	}
 
 	modifier storageAccessControl() {
 		require(
-			(! setupComplete && (msg.sender == ownerAddress || msg.sender == managerAddress))
-			|| (setupComplete && !paused && (msg.sender == BdpContracts.getBdpEntryPoint(contracts)))
+			(! setupCompleted && (msg.sender == ownerAddress || msg.sender == managerAddress))
+			|| (setupCompleted && !paused && (msg.sender == BdpContracts.getBdpEntryPoint(contracts)))
 		);
 		_;
 	}
@@ -97,8 +104,8 @@ contract BdpBase is BdpBaseData {
 		paused = false;
 	}
 
-	function setSetupComplete() external onlyOwner {
-		setupComplete = true;
+	function setSetupCompleted() external onlyOwner {
+		setupCompleted = true;
 	}
 
 	function kill() public onlyOwner {
@@ -107,47 +114,55 @@ contract BdpBase is BdpBaseData {
 
 }
 
+// File: contracts/libraries/SafeMath.sol
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
 
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
+	/**
+	* @dev Multiplies two numbers, throws on overflow.
+	*/
+	function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+		if (a == 0) {
+			return 0;
+		}
+		uint256 c = a * b;
+		assert(c / a == b);
+		return c;
+	}
 
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+	/**
+	* @dev Integer division of two numbers, truncating the quotient.
+	*/
+	function div(uint256 a, uint256 b) internal pure returns (uint256) {
+		// assert(b > 0); // Solidity automatically throws when dividing by 0
+		uint256 c = a / b;
+		// assert(a == b * c + a % b); // There is no case in which this doesn't hold
+		return c;
+	}
 
-  /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+	/**
+	* @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+	*/
+	function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+		assert(b <= a);
+		return a - b;
+	}
 
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+	/**
+	* @dev Adds two numbers, throws on overflow.
+	*/
+	function add(uint256 a, uint256 b) internal pure returns (uint256) {
+		uint256 c = a + b;
+		assert(c >= a);
+		return c;
+	}
 }
+
+// File: contracts/storage/BdpDataStorage.sol
 
 contract BdpDataStorage is BdpBase {
 
@@ -273,6 +288,8 @@ contract BdpDataStorage is BdpBase {
 
 }
 
+// File: contracts/storage/BdpPriceStorage.sol
+
 contract BdpPriceStorage is BdpBase {
 
 	uint64[1001] public pricePoints;
@@ -326,6 +343,8 @@ contract BdpPriceStorage is BdpBase {
 	}
 
 }
+
+// File: contracts/libraries/BdpCalculator.sol
 
 library BdpCalculator {
 
@@ -398,295 +417,7 @@ library BdpCalculator {
 
 }
 
-contract BdpOwnershipStorage is BdpBase {
-
-	using SafeMath for uint256;
-
-	// Mapping from token ID to owner
-	mapping (uint256 => address) public tokenOwner;
-
-	// Mapping from token ID to approved address
-	mapping (uint256 => address) public tokenApprovals;
-
-	// Mapping from owner to the sum of owned area
-	mapping (address => uint256) public ownedArea;
-
-	// Mapping from owner to list of owned token IDs
-	mapping (address => uint256[]) public ownedTokens;
-
-	// Mapping from token ID to index of the owner tokens list
-	mapping(uint256 => uint256) public ownedTokensIndex;
-
-	// All tokens list tokens ids
-	uint256[] public tokenIds;
-
-	// Mapping from tokenId to index of the tokens list
-	mapping (uint256 => uint256) public tokenIdsIndex;
-
-
-	function getTokenOwner(uint256 _tokenId) view public returns (address) {
-		return tokenOwner[_tokenId];
-	}
-
-	function setTokenOwner(uint256 _tokenId, address _owner) public storageAccessControl {
-		tokenOwner[_tokenId] = _owner;
-	}
-
-	function getTokenApproval(uint256 _tokenId) view public returns (address) {
-		return tokenApprovals[_tokenId];
-	}
-
-	function setTokenApproval(uint256 _tokenId, address _to) public storageAccessControl {
-		tokenApprovals[_tokenId] = _to;
-	}
-
-	function getOwnedArea(address _owner) view public returns (uint256) {
-		return ownedArea[_owner];
-	}
-
-	function setOwnedArea(address _owner, uint256 _area) public storageAccessControl {
-		ownedArea[_owner] = _area;
-	}
-
-	function incrementOwnedArea(address _owner, uint256 _area) public storageAccessControl returns (uint256) {
-		ownedArea[_owner] = ownedArea[_owner].add(_area);
-		return ownedArea[_owner];
-	}
-
-	function decrementOwnedArea(address _owner, uint256 _area) public storageAccessControl returns (uint256) {
-		ownedArea[_owner] = ownedArea[_owner].sub(_area);
-		return ownedArea[_owner];
-	}
-
-	function getOwnedTokensLength(address _owner) view public returns (uint256) {
-		return ownedTokens[_owner].length;
-	}
-
-	function getOwnedToken(address _owner, uint256 _index) view public returns (uint256) {
-		return ownedTokens[_owner][_index];
-	}
-
-	function setOwnedToken(address _owner, uint256 _index, uint256 _tokenId) public storageAccessControl {
-		ownedTokens[_owner][_index] = _tokenId;
-	}
-
-	function pushOwnedToken(address _owner, uint256 _tokenId) public storageAccessControl returns (uint256) {
-		ownedTokens[_owner].push(_tokenId);
-		return ownedTokens[_owner].length;
-	}
-
-	function decrementOwnedTokensLength(address _owner) public storageAccessControl {
-		ownedTokens[_owner].length--;
-	}
-
-	function getOwnedTokensIndex(uint256 _tokenId) view public returns (uint256) {
-		return ownedTokensIndex[_tokenId];
-	}
-
-	function setOwnedTokensIndex(uint256 _tokenId, uint256 _tokenIndex) public storageAccessControl {
-		ownedTokensIndex[_tokenId] = _tokenIndex;
-	}
-
-	function getTokenIdsLength() view public returns (uint256) {
-		return tokenIds.length;
-	}
-
-	function getTokenIdByIndex(uint256 _index) view public returns (uint256) {
-		return tokenIds[_index];
-	}
-
-	function setTokenIdByIndex(uint256 _index, uint256 _tokenId) public storageAccessControl {
-		tokenIds[_index] = _tokenId;
-	}
-
-	function pushTokenId(uint256 _tokenId) public storageAccessControl returns (uint256) {
-		tokenIds.push(_tokenId);
-		return tokenIds.length;
-	}
-
-	function decrementTokenIdsLength() public storageAccessControl {
-		tokenIds.length--;
-	}
-
-	function getTokenIdsIndex(uint256 _tokenId) view public returns (uint256) {
-		return tokenIdsIndex[_tokenId];
-	}
-
-	function setTokenIdsIndex(uint256 _tokenId, uint256 _tokenIdIndex) public storageAccessControl {
-		tokenIdsIndex[_tokenId] = _tokenIdIndex;
-	}
-
-	function BdpOwnershipStorage(bytes8 _version) public {
-		ownerAddress = msg.sender;
-		managerAddress = msg.sender;
-		version = _version;
-	}
-
-}
-
-library BdpOwnership {
-
-	using SafeMath for uint256;
-
-	event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
-
-	event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
-
-	function ownerOf(address[16] _contracts, uint256 _tokenId) public view returns (address) {
-		var owner = BdpOwnershipStorage(BdpContracts.getBdpOwnershipStorage(_contracts)).getTokenOwner(_tokenId);
-		require(owner != address(0));
-		return owner;
-	}
-
-	function balanceOf(address[16] _contracts, address _owner) public view returns (uint256) {
-		return BdpOwnershipStorage(BdpContracts.getBdpOwnershipStorage(_contracts)).getOwnedTokensLength(_owner);
-	}
-
-	function approve(address[16] _contracts, address _to, uint256 _tokenId) public {
-		var ownStorage = BdpOwnershipStorage(BdpContracts.getBdpOwnershipStorage(_contracts));
-
-		address owner = ownerOf(_contracts, _tokenId);
-		require(_to != owner);
-		if (ownStorage.getTokenApproval(_tokenId) != 0 || _to != 0) {
-			ownStorage.setTokenApproval(_tokenId, _to);
-			Approval(owner, _to, _tokenId);
-		}
-	}
-
-	/**
-	 * @dev Clear current approval of a given token ID
-	 * @param _tokenId uint256 ID of the token to be transferred
-	 */
-	function clearApproval(address[16] _contracts, address _owner, uint256 _tokenId) public {
-		var ownStorage = BdpOwnershipStorage(BdpContracts.getBdpOwnershipStorage(_contracts));
-
-		require(ownerOf(_contracts, _tokenId) == _owner);
-		if (ownStorage.getTokenApproval(_tokenId) != 0) {
-			BdpOwnershipStorage(BdpContracts.getBdpOwnershipStorage(_contracts)).setTokenApproval(_tokenId, 0);
-			Approval(_owner, 0, _tokenId);
-		}
-	}
-
-	/**
-	 * @dev Clear current approval and transfer the ownership of a given token ID
-	 * @param _from address which you want to send tokens from
-	 * @param _to address which you want to transfer the token to
-	 * @param _tokenId uint256 ID of the token to be transferred
-	 */
-	function clearApprovalAndTransfer(address[16] _contracts, address _from, address _to, uint256 _tokenId) public {
-		require(_to != address(0));
-		require(_to != ownerOf(_contracts, _tokenId));
-		require(ownerOf(_contracts, _tokenId) == _from);
-
-		clearApproval(_contracts, _from, _tokenId);
-		removeToken(_contracts, _from, _tokenId);
-		addToken(_contracts, _to, _tokenId);
-		Transfer(_from, _to, _tokenId);
-	}
-
-	/**
-	 * @dev Internal function to add a token ID to the list of a given address
-	 * @param _to address representing the new owner of the given token ID
-	 * @param _tokenId uint256 ID of the token to be added to the tokens list of the given address
-	 */
-	function addToken(address[16] _contracts, address _to, uint256 _tokenId) private {
-		var ownStorage = BdpOwnershipStorage(BdpContracts.getBdpOwnershipStorage(_contracts));
-
-		require(ownStorage.getTokenOwner(_tokenId) == address(0));
-
-		// Set token owner
-		ownStorage.setTokenOwner(_tokenId, _to);
-
-		// Add token to tokenIds list
-		var tokenIdsLength = ownStorage.pushTokenId(_tokenId);
-		ownStorage.setTokenIdsIndex(_tokenId, tokenIdsLength.sub(1));
-
-		uint256 ownedTokensLength = ownStorage.getOwnedTokensLength(_to);
-
-		// Add token to ownedTokens list
-		ownStorage.pushOwnedToken(_to, _tokenId);
-		ownStorage.setOwnedTokensIndex(_tokenId, ownedTokensLength);
-
-		// Increment total owned area
-		var (area,,) = BdpCalculator.calculateArea(_contracts, _tokenId);
-		ownStorage.incrementOwnedArea(_to, area);
-	}
-
-	/**
-	 * @dev Internal function to remove a token ID from the list of a given address
-	 * @param _from address representing the previous owner of the given token ID
-	 * @param _tokenId uint256 ID of the token to be removed from the tokens list of the given address
-	 */
-	function removeToken(address[16] _contracts, address _from, uint256 _tokenId) private {
-		var ownStorage = BdpOwnershipStorage(BdpContracts.getBdpOwnershipStorage(_contracts));
-
-		require(ownerOf(_contracts, _tokenId) == _from);
-
-		// Clear token owner
-		ownStorage.setTokenOwner(_tokenId, 0);
-
-		removeFromTokenIds(ownStorage, _tokenId);
-		removeFromOwnedToken(ownStorage, _from, _tokenId);
-
-		// Decrement total owned area
-		var (area,,) = BdpCalculator.calculateArea(_contracts, _tokenId);
-		ownStorage.decrementOwnedArea(_from, area);
-	}
-
-	/**
-	 * @dev Remove token from ownedTokens list
-	 * Note that this will handle single-element arrays. In that case, both ownedTokenIndex and lastOwnedTokenIndex are going to
-	 * be zero. Then we can make sure that we will remove _tokenId from the ownedTokens list since we are first swapping
-	 * the lastOwnedToken to the first position, and then dropping the element placed in the last position of the list
-	 */
-	function removeFromOwnedToken(BdpOwnershipStorage _ownStorage, address _from, uint256 _tokenId) private {
-		var ownedTokenIndex = _ownStorage.getOwnedTokensIndex(_tokenId);
-		var lastOwnedTokenIndex = _ownStorage.getOwnedTokensLength(_from).sub(1);
-		var lastOwnedToken = _ownStorage.getOwnedToken(_from, lastOwnedTokenIndex);
-		_ownStorage.setOwnedToken(_from, ownedTokenIndex, lastOwnedToken);
-		_ownStorage.setOwnedToken(_from, lastOwnedTokenIndex, 0);
-		_ownStorage.decrementOwnedTokensLength(_from);
-		_ownStorage.setOwnedTokensIndex(_tokenId, 0);
-		_ownStorage.setOwnedTokensIndex(lastOwnedToken, ownedTokenIndex);
-	}
-
-	/**
-	 * @dev Remove token from tokenIds list
-	 */
-	function removeFromTokenIds(BdpOwnershipStorage _ownStorage, uint256 _tokenId) private {
-		var tokenIndex = _ownStorage.getTokenIdsIndex(_tokenId);
-		var lastTokenIdIndex = _ownStorage.getTokenIdsLength().sub(1);
-		var lastTokenId = _ownStorage.getTokenIdByIndex(lastTokenIdIndex);
-		_ownStorage.setTokenIdByIndex(tokenIndex, lastTokenId);
-		_ownStorage.setTokenIdByIndex(lastTokenIdIndex, 0);
-		_ownStorage.decrementTokenIdsLength();
-		_ownStorage.setTokenIdsIndex(_tokenId, 0);
-		_ownStorage.setTokenIdsIndex(lastTokenId, tokenIndex);
-	}
-
-	/**
-	 * @dev Mint token function
-	 * @param _to The address that will own the minted token
-	 * @param _tokenId uint256 ID of the token to be minted by the msg.sender
-	 */
-	function mint(address[16] _contracts, address _to, uint256 _tokenId) public {
-		require(_to != address(0));
-		addToken(_contracts, _to, _tokenId);
-		Transfer(address(0), _to, _tokenId);
-	}
-
-	/**
-	 * @dev Burns a specific token
-	 * @param _tokenId uint256 ID of the token being burned
-	 */
-	function burn(address[16] _contracts, uint256 _tokenId) public {
-		address owner = BdpOwnershipStorage(BdpContracts.getBdpOwnershipStorage(_contracts)).getTokenOwner(_tokenId);
-		clearApproval(_contracts, owner, _tokenId);
-		removeToken(_contracts, owner, _tokenId);
-		Transfer(owner, address(0), _tokenId);
-	}
-
-}
+// File: contracts/storage/BdpImageStorage.sol
 
 contract BdpImageStorage is BdpBase {
 
@@ -859,6 +590,302 @@ contract BdpImageStorage is BdpBase {
 
 }
 
+// File: contracts/storage/BdpOwnershipStorage.sol
+
+contract BdpOwnershipStorage is BdpBase {
+
+	using SafeMath for uint256;
+
+	// Mapping from token ID to owner
+	mapping (uint256 => address) public tokenOwner;
+
+	// Mapping from token ID to approved address
+	mapping (uint256 => address) public tokenApprovals;
+
+	// Mapping from owner to the sum of owned area
+	mapping (address => uint256) public ownedArea;
+
+	// Mapping from owner to list of owned token IDs
+	mapping (address => uint256[]) public ownedTokens;
+
+	// Mapping from token ID to index of the owner tokens list
+	mapping(uint256 => uint256) public ownedTokensIndex;
+
+	// All tokens list tokens ids
+	uint256[] public tokenIds;
+
+	// Mapping from tokenId to index of the tokens list
+	mapping (uint256 => uint256) public tokenIdsIndex;
+
+
+	function getTokenOwner(uint256 _tokenId) view public returns (address) {
+		return tokenOwner[_tokenId];
+	}
+
+	function setTokenOwner(uint256 _tokenId, address _owner) public storageAccessControl {
+		tokenOwner[_tokenId] = _owner;
+	}
+
+	function getTokenApproval(uint256 _tokenId) view public returns (address) {
+		return tokenApprovals[_tokenId];
+	}
+
+	function setTokenApproval(uint256 _tokenId, address _to) public storageAccessControl {
+		tokenApprovals[_tokenId] = _to;
+	}
+
+	function getOwnedArea(address _owner) view public returns (uint256) {
+		return ownedArea[_owner];
+	}
+
+	function setOwnedArea(address _owner, uint256 _area) public storageAccessControl {
+		ownedArea[_owner] = _area;
+	}
+
+	function incrementOwnedArea(address _owner, uint256 _area) public storageAccessControl returns (uint256) {
+		ownedArea[_owner] = ownedArea[_owner].add(_area);
+		return ownedArea[_owner];
+	}
+
+	function decrementOwnedArea(address _owner, uint256 _area) public storageAccessControl returns (uint256) {
+		ownedArea[_owner] = ownedArea[_owner].sub(_area);
+		return ownedArea[_owner];
+	}
+
+	function getOwnedTokensLength(address _owner) view public returns (uint256) {
+		return ownedTokens[_owner].length;
+	}
+
+	function getOwnedToken(address _owner, uint256 _index) view public returns (uint256) {
+		return ownedTokens[_owner][_index];
+	}
+
+	function setOwnedToken(address _owner, uint256 _index, uint256 _tokenId) public storageAccessControl {
+		ownedTokens[_owner][_index] = _tokenId;
+	}
+
+	function pushOwnedToken(address _owner, uint256 _tokenId) public storageAccessControl returns (uint256) {
+		ownedTokens[_owner].push(_tokenId);
+		return ownedTokens[_owner].length;
+	}
+
+	function decrementOwnedTokensLength(address _owner) public storageAccessControl {
+		ownedTokens[_owner].length--;
+	}
+
+	function getOwnedTokensIndex(uint256 _tokenId) view public returns (uint256) {
+		return ownedTokensIndex[_tokenId];
+	}
+
+	function setOwnedTokensIndex(uint256 _tokenId, uint256 _tokenIndex) public storageAccessControl {
+		ownedTokensIndex[_tokenId] = _tokenIndex;
+	}
+
+	function getTokenIdsLength() view public returns (uint256) {
+		return tokenIds.length;
+	}
+
+	function getTokenIdByIndex(uint256 _index) view public returns (uint256) {
+		return tokenIds[_index];
+	}
+
+	function setTokenIdByIndex(uint256 _index, uint256 _tokenId) public storageAccessControl {
+		tokenIds[_index] = _tokenId;
+	}
+
+	function pushTokenId(uint256 _tokenId) public storageAccessControl returns (uint256) {
+		tokenIds.push(_tokenId);
+		return tokenIds.length;
+	}
+
+	function decrementTokenIdsLength() public storageAccessControl {
+		tokenIds.length--;
+	}
+
+	function getTokenIdsIndex(uint256 _tokenId) view public returns (uint256) {
+		return tokenIdsIndex[_tokenId];
+	}
+
+	function setTokenIdsIndex(uint256 _tokenId, uint256 _tokenIdIndex) public storageAccessControl {
+		tokenIdsIndex[_tokenId] = _tokenIdIndex;
+	}
+
+	function BdpOwnershipStorage(bytes8 _version) public {
+		ownerAddress = msg.sender;
+		managerAddress = msg.sender;
+		version = _version;
+	}
+
+}
+
+// File: contracts/libraries/BdpOwnership.sol
+
+library BdpOwnership {
+
+	using SafeMath for uint256;
+
+	event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
+
+	event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
+
+	function ownerOf(address[16] _contracts, uint256 _tokenId) public view returns (address) {
+		var owner = BdpOwnershipStorage(BdpContracts.getBdpOwnershipStorage(_contracts)).getTokenOwner(_tokenId);
+		require(owner != address(0));
+		return owner;
+	}
+
+	function balanceOf(address[16] _contracts, address _owner) public view returns (uint256) {
+		return BdpOwnershipStorage(BdpContracts.getBdpOwnershipStorage(_contracts)).getOwnedTokensLength(_owner);
+	}
+
+	function approve(address[16] _contracts, address _to, uint256 _tokenId) public {
+		var ownStorage = BdpOwnershipStorage(BdpContracts.getBdpOwnershipStorage(_contracts));
+
+		address owner = ownerOf(_contracts, _tokenId);
+		require(_to != owner);
+		if (ownStorage.getTokenApproval(_tokenId) != 0 || _to != 0) {
+			ownStorage.setTokenApproval(_tokenId, _to);
+			Approval(owner, _to, _tokenId);
+		}
+	}
+
+	/**
+	 * @dev Clear current approval of a given token ID
+	 * @param _tokenId uint256 ID of the token to be transferred
+	 */
+	function clearApproval(address[16] _contracts, address _owner, uint256 _tokenId) public {
+		var ownStorage = BdpOwnershipStorage(BdpContracts.getBdpOwnershipStorage(_contracts));
+
+		require(ownerOf(_contracts, _tokenId) == _owner);
+		if (ownStorage.getTokenApproval(_tokenId) != 0) {
+			BdpOwnershipStorage(BdpContracts.getBdpOwnershipStorage(_contracts)).setTokenApproval(_tokenId, 0);
+			Approval(_owner, 0, _tokenId);
+		}
+	}
+
+	/**
+	 * @dev Clear current approval and transfer the ownership of a given token ID
+	 * @param _from address which you want to send tokens from
+	 * @param _to address which you want to transfer the token to
+	 * @param _tokenId uint256 ID of the token to be transferred
+	 */
+	function clearApprovalAndTransfer(address[16] _contracts, address _from, address _to, uint256 _tokenId) public {
+		require(_to != address(0));
+		require(_to != ownerOf(_contracts, _tokenId));
+		require(ownerOf(_contracts, _tokenId) == _from);
+
+		clearApproval(_contracts, _from, _tokenId);
+		removeToken(_contracts, _from, _tokenId);
+		addToken(_contracts, _to, _tokenId);
+		Transfer(_from, _to, _tokenId);
+	}
+
+	/**
+	 * @dev Internal function to add a token ID to the list of a given address
+	 * @param _to address representing the new owner of the given token ID
+	 * @param _tokenId uint256 ID of the token to be added to the tokens list of the given address
+	 */
+	function addToken(address[16] _contracts, address _to, uint256 _tokenId) private {
+		var ownStorage = BdpOwnershipStorage(BdpContracts.getBdpOwnershipStorage(_contracts));
+
+		require(ownStorage.getTokenOwner(_tokenId) == address(0));
+
+		// Set token owner
+		ownStorage.setTokenOwner(_tokenId, _to);
+
+		// Add token to tokenIds list
+		var tokenIdsLength = ownStorage.pushTokenId(_tokenId);
+		ownStorage.setTokenIdsIndex(_tokenId, tokenIdsLength.sub(1));
+
+		uint256 ownedTokensLength = ownStorage.getOwnedTokensLength(_to);
+
+		// Add token to ownedTokens list
+		ownStorage.pushOwnedToken(_to, _tokenId);
+		ownStorage.setOwnedTokensIndex(_tokenId, ownedTokensLength);
+
+		// Increment total owned area
+		var (area,,) = BdpCalculator.calculateArea(_contracts, _tokenId);
+		ownStorage.incrementOwnedArea(_to, area);
+	}
+
+	/**
+	 * @dev Internal function to remove a token ID from the list of a given address
+	 * @param _from address representing the previous owner of the given token ID
+	 * @param _tokenId uint256 ID of the token to be removed from the tokens list of the given address
+	 */
+	function removeToken(address[16] _contracts, address _from, uint256 _tokenId) private {
+		var ownStorage = BdpOwnershipStorage(BdpContracts.getBdpOwnershipStorage(_contracts));
+
+		require(ownerOf(_contracts, _tokenId) == _from);
+
+		// Clear token owner
+		ownStorage.setTokenOwner(_tokenId, 0);
+
+		removeFromTokenIds(ownStorage, _tokenId);
+		removeFromOwnedToken(ownStorage, _from, _tokenId);
+
+		// Decrement total owned area
+		var (area,,) = BdpCalculator.calculateArea(_contracts, _tokenId);
+		ownStorage.decrementOwnedArea(_from, area);
+	}
+
+	/**
+	 * @dev Remove token from ownedTokens list
+	 * Note that this will handle single-element arrays. In that case, both ownedTokenIndex and lastOwnedTokenIndex are going to
+	 * be zero. Then we can make sure that we will remove _tokenId from the ownedTokens list since we are first swapping
+	 * the lastOwnedToken to the first position, and then dropping the element placed in the last position of the list
+	 */
+	function removeFromOwnedToken(BdpOwnershipStorage _ownStorage, address _from, uint256 _tokenId) private {
+		var ownedTokenIndex = _ownStorage.getOwnedTokensIndex(_tokenId);
+		var lastOwnedTokenIndex = _ownStorage.getOwnedTokensLength(_from).sub(1);
+		var lastOwnedToken = _ownStorage.getOwnedToken(_from, lastOwnedTokenIndex);
+		_ownStorage.setOwnedToken(_from, ownedTokenIndex, lastOwnedToken);
+		_ownStorage.setOwnedToken(_from, lastOwnedTokenIndex, 0);
+		_ownStorage.decrementOwnedTokensLength(_from);
+		_ownStorage.setOwnedTokensIndex(_tokenId, 0);
+		_ownStorage.setOwnedTokensIndex(lastOwnedToken, ownedTokenIndex);
+	}
+
+	/**
+	 * @dev Remove token from tokenIds list
+	 */
+	function removeFromTokenIds(BdpOwnershipStorage _ownStorage, uint256 _tokenId) private {
+		var tokenIndex = _ownStorage.getTokenIdsIndex(_tokenId);
+		var lastTokenIdIndex = _ownStorage.getTokenIdsLength().sub(1);
+		var lastTokenId = _ownStorage.getTokenIdByIndex(lastTokenIdIndex);
+		_ownStorage.setTokenIdByIndex(tokenIndex, lastTokenId);
+		_ownStorage.setTokenIdByIndex(lastTokenIdIndex, 0);
+		_ownStorage.decrementTokenIdsLength();
+		_ownStorage.setTokenIdsIndex(_tokenId, 0);
+		_ownStorage.setTokenIdsIndex(lastTokenId, tokenIndex);
+	}
+
+	/**
+	 * @dev Mint token function
+	 * @param _to The address that will own the minted token
+	 * @param _tokenId uint256 ID of the token to be minted by the msg.sender
+	 */
+	function mint(address[16] _contracts, address _to, uint256 _tokenId) public {
+		require(_to != address(0));
+		addToken(_contracts, _to, _tokenId);
+		Transfer(address(0), _to, _tokenId);
+	}
+
+	/**
+	 * @dev Burns a specific token
+	 * @param _tokenId uint256 ID of the token being burned
+	 */
+	function burn(address[16] _contracts, uint256 _tokenId) public {
+		address owner = BdpOwnershipStorage(BdpContracts.getBdpOwnershipStorage(_contracts)).getTokenOwner(_tokenId);
+		clearApproval(_contracts, owner, _tokenId);
+		removeToken(_contracts, owner, _tokenId);
+		Transfer(owner, address(0), _tokenId);
+	}
+
+}
+
+// File: contracts/libraries/BdpImage.sol
+
 library BdpImage {
 
 	function checkImageInput(address[16] _contracts, uint256 _regionId, uint256 _imageId, uint256[] _imageData, bool _swapImages, bool _clearImage) view public {
@@ -917,6 +944,8 @@ library BdpImage {
 	}
 
 }
+
+// File: contracts/controller/BdpControllerHelper.sol
 
 contract BdpControllerHelper is BdpBase {
 
