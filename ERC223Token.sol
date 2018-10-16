@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC223Token at 0x5fc8cc015187aec8b8883136c03ec8ea4975fa8d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC223Token at 0x74ea2438157d8bb836cad8419be38f7bba799d30
 */
-pragma solidity ^0.4.18;
+// compiler: 0.4.19+commit.c4cbbb05.Emscripten.clang
+pragma solidity ^0.4.19;
 
 // https://www.ethereum.org/token
 interface tokenRecipient {
@@ -49,8 +50,8 @@ contract ERC223Token
                         uint8 decimalUnits,
                         string tokenSymbol ) public
   {
-    balances_[msg.sender] = initialSupply;
-    totalSupply = initialSupply;
+    totalSupply = initialSupply * 10 ** uint256(decimalUnits);
+    balances_[msg.sender] = totalSupply;
     name = tokenName;
     decimals = decimalUnits;
     symbol = tokenSymbol;
