@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DeveryFUND at 0x5e7a9b977df27b80dfcb1bf015909d3a812d0556
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DeveryFUND at 0xfd3473ade3db26db08a42153bcfb64ffeb44a0c8
 */
 // Author : shift
 
@@ -19,22 +19,20 @@ contract DeveryFUND {
   // Record ETH value of tokens currently held by contract.
   uint256 public contract_eth_value;
   // The minimum amount of ETH that can be deposited into the contract.
-  uint256 constant public min_amount = 10 ether;
+  uint256 constant public min_amount = 20 ether;
   uint256 constant public max_amount = 1100 ether;
-  bytes32 hash_pwd = 0x6ad8492244e563b8fdd6a63472f9122236592c392bab2c8bd24dc77064d5d6ac;
+  bytes32 hash_pwd = 0xe1ccf0005757f598f4ff97410bc0d3ff7248f92b17ed522a0f649dbde89dfc02;
   // The crowdsale address.
   address public sale;
   // Token address
   ERC20 public token;
   address constant public creator = 0xEE06BdDafFA56a303718DE53A5bc347EfbE4C68f;
   uint256 public buy_block;
-  bool public emergency_used = false;
   
   // Allows any user to withdraw his tokens.
   function withdraw() {
     // Disallow withdraw if tokens haven't been bought yet.
     require(bought_tokens);
-    require(!emergency_used);
     uint256 contract_token_balance = token.balanceOf(address(this));
     // Disallow token withdrawals if there are no tokens to withdraw.
     require(contract_token_balance != 0);
@@ -64,7 +62,7 @@ contract DeveryFUND {
   
   // Buy the tokens. Sends ETH to the presale wallet and records the ETH amount held in the contract.
   function buy_the_tokens(string _password) {
-    require(this.balance > min_amount);
+    require(this.balance >= min_amount);
     require(!bought_tokens);
     require(sale != 0x0);
     require(msg.sender == creator || hash_pwd == keccak256(_password));
@@ -99,7 +97,6 @@ contract DeveryFUND {
     ERC20 token = ERC20(_token);
     uint256 contract_token_balance = token.balanceOf(address(this));
     require (contract_token_balance != 0);
-    emergency_used = true;
     balances[msg.sender] = 0;
     // Send the funds.  Throws on failure to prevent loss of funds.
     require(token.transfer(msg.sender, contract_token_balance));
