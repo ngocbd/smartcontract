@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PepFarmer at 0x6018c166be244c3634801679ae147856c97354bb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PepFarmer at 0x6114c567e210da0eac7ef287e86f68a9e2540e6e
 */
 pragma solidity ^0.4.18;
 
@@ -60,8 +60,9 @@ contract PepFarmer {
     
     bool private reentrancy_lock = false;
     
-    address public shop = 0x347eD75c305f4ab85757Bfcc5600D9BfCb413898;
-    address public object = 0x9648915F9A4B6778C3d3716bC084F0a44E4Cba48;
+    address public shop = 0xbD4282E6b2Bf8eef232eD211e53b54E560D71a2B;
+    address public object = 0xFc1082B4d80651d9948b58ffCce45A5e6586AFE6;
+    address public taxMan = 0xd5048F05Ed7185821C999e3e077A3d1baed0952c;
     
     mapping(address => uint256) public workDone;
     
@@ -77,12 +78,15 @@ contract PepFarmer {
             CornFarm(shop).buyObject(this);
         }
         
-        workDone[msg.sender] = workDone[msg.sender].add(uint256(100 ether));
+        workDone[msg.sender] = workDone[msg.sender].add(uint256(95 ether));
+        workDone[taxMan] = workDone[taxMan].add(uint256(5 ether));
     }
     
     function reapFarm() nonReentrant external {
         require(workDone[msg.sender] > 0);
         Corn(object).transfer(msg.sender, workDone[msg.sender]);
+        Corn(object).transfer(taxMan, workDone[taxMan]);
         workDone[msg.sender] = 0;
+        workDone[taxMan] = 0;
     }
 }
