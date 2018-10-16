@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StupidCoin at 0x4ca68c8ecb94acbc736bcb4119fd76aa5170b226
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StupidCoin at 0x79ebd9040baeb547863a31305a3247df5037f329
 */
 pragma solidity ^0.4.18;
 
@@ -373,11 +373,11 @@ contract StupidCrowdsale is Ownable, Pausable, TokenDestructible {
 
   // function to get the price of the token
   // returns how many token units a buyer gets per wei, needs to be divided by 10
-  function getRate() constant returns (uint16) {
-    if      (block.timestamp < START)            return 1000; // presale, 100% bonus
-    else if (block.timestamp <= START + 14 days) return 835; // day 1 to 14, 67% bonus
-    else if (block.timestamp <= START + 28 days) return 665; // day 15 to 28, 33% bonus
-    return 500; // no bonus
+  function getRate() constant returns (uint8) {
+    if      (block.timestamp < START)            return 200; // presale, 100% bonus
+    else if (block.timestamp <= START + 14 days) return 167; // day 1 to 14, 67% bonus
+    else if (block.timestamp <= START + 28 days) return 133; // day 15 to 28, 33% bonus
+    return 100; // no bonus
   }
 
   // fallback function can be used to buy tokens
@@ -390,14 +390,13 @@ contract StupidCrowdsale is Ownable, Pausable, TokenDestructible {
     require(msg.value != 0);
     require(block.timestamp <= END);
 
-    uint256 weiAmount = msg.value;
-    uint256 tokens = weiAmount.mul(getRate());
+    uint256 tokens = weiAmount.mul(getRate() * 4);
 
     if (tokensLeft.sub(tokens) < 0) revert();
     
     tokensLeft = tokensLeft.sub(tokens);
 
-    
+    uint256 weiAmount = msg.value;
     weiRaised = weiRaised.add(weiAmount);
     
     token.mint(beneficiary, tokens);
