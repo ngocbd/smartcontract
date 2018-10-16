@@ -1,13 +1,19 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IPFSProxy at 0x36a30a5bbfa28d3fc909eb3de5ae6b71ff3aa738
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IPFSProxy at 0xf5758d7450a6e7076d99db583f037b47b5135744
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.19;
 
+// File: contracts/IPFSEvents.sol
 
 contract IPFSEvents {
-	event HashAdded(address PubKey, string IPFSHash, uint ttl);
-	event HashRemoved(address PubKey, string IPFSHash);
+    event HashAdded(string hash, uint ttl);
+    event HashRemoved(string hash);
+
+    event MetadataObjectAdded(string hash);
+    event MetadataObjectRemoved(string hash);    
 }
+
+// File: contracts/Multimember.sol
 
 contract Multimember {
 
@@ -98,9 +104,9 @@ contract Multimember {
             return;
 
         clearPending();
-        if (m_numMembers >= c_maxMembers)
+        if (m_numMembers >= MAXMEMBERS)
             reorganizeMembers();
-        if (m_numMembers >= c_maxMembers)
+        if (m_numMembers >= MAXMEMBERS)
             return;
         m_numMembers++;
         m_members[m_numMembers] = uint(_member);
@@ -223,7 +229,7 @@ contract Multimember {
     
     // list of members
     uint[256] m_members;
-    uint constant c_maxMembers = 250;
+    uint constant MAXMEMBERS = 250;
     // index on the list of members to allow reverse lookup
     mapping(uint => uint) m_memberIndex;
     // the ongoing operations.
@@ -231,101 +237,85 @@ contract Multimember {
     bytes32[] m_pendingIndex;
 }
 
+// File: contracts/IPFSProxy.sol
+
 contract IPFSProxy is IPFSEvents, Multimember {
-	mapping(address => mapping( address => bool)) public complained;
-	mapping(address => uint) public complaint;
-	uint public banThreshold;
-	uint public sizeLimit;
-	address[] members;
-	
-	/**
-	* @dev Throws if called by any account other than a valid member. 
-	*/
-	modifier onlyValidMembers {
-		require (isMember(msg.sender));
-		_;
-	}
+    uint public persistLimit;
 
-    event ContractAdded(address PubKey, uint ttl);
-    event ContractRemoved(address PubKey);
-	event Banned(string IPFSHash);
-	event BanAttempt(address complainer, address _Member, uint complaints );
-	event PersistLimitChanged(uint Limit);	
+    event PersistLimitChanged(uint limit);	
+    event ContractAdded(address pubKey,uint startBlock);
+    event ContractRemoved(address pubKey);
 
-	/**
-	* @dev Constructor - adds the owner of the contract to the list of valid members
-	*/
-	function IPFSProxy() Multimember (members, 1) public {
-		addContract(this, 0);
-		updateBanThreshold(1);
-		setTotalPersistLimit(10000000000); //10 GB
-	}
+    /**
+    * @dev Constructor - adds the owner of the contract to the list of valid members
+    */
+    function IPFSProxy(address[] _members,uint _required, uint _persistlimit) Multimember (_members, _required) public {
+        setTotalPersistLimit(_persistlimit);
+        for (uint i = 0; i < _members.length; ++i) {
+            MemberAdded(_members[i]);
+        }
+        addContract(this,block.number);
+    }
 
-	/**
-	* @dev Add hash to persistent storage
-	* @param _IPFSHash The ipfs hash to propagate.
-	* @param _ttl amount of time is seconds to persist this. 
-	*/
-	function addHash(string _IPFSHash, uint _ttl) public onlyValidMembers {
-		HashAdded(msg.sender,_IPFSHash,_ttl);
-	}
+    /**
+    * @dev Add hash to persistent storage
+    * @param _ipfsHash The ipfs hash to propagate.
+    * @param _ttl amount of time is seconds to persist this. 0 = infinite
+    */
+    function addHash(string _ipfsHash, uint _ttl) public onlymember {
+        HashAdded(_ipfsHash,_ttl);
+    }
 
-	/**
-	* @dev Remove hash from persistent storage
-	* @param _IPFSHash The ipfs hash to propagate.	
-	*/
-	function removeHash(string _IPFSHash) public onlyValidMembers {
-		HashRemoved(msg.sender,_IPFSHash);
-	}
+    /**
+    * @dev Remove hash from persistent storage
+    * @param _ipfsHash The ipfs hash to propagate.	
+    */
+    function removeHash(string _ipfsHash) public onlymember {
+        HashRemoved(_ipfsHash);
+    }
 
+   /** 
+    * Add a contract to watch list. Each proxy will then 
+    * watch it for HashAdded and HashRemoved events 
+    * and cache these events
+    * @param _contractAddress The contract address.
+    * @param _startBlock The startblock where to look for events.
+    */
+    function addContract(address _contractAddress,uint _startBlock) public onlymember {
+        ContractAdded(_contractAddress,_startBlock);
+    }
 
-	/** 
-	* Add a contract to watch list. Each node will then 
-	* watch it for `HashAdded(msg.sender,_IPFSHash,_ttl);` 
-	* events and it will cache these events
-	*/
+    /**
+    * @dev Remove contract from watch list
+    */
+    function removeContract(address _contractAddress) public onlymember {
+        require(_contractAddress != address(this));
+        ContractRemoved(_contractAddress);
+    }
 
-	function addContract(address _toWatch, uint _ttl) public onlyValidMembers {
-		ContractAdded(_toWatch, _ttl);
-	}
+   /** 
+    * Add a metadata of an object. Each proxy will then 
+    * read the ipfs hash file with the metadata about the object and parse it 
+    */
+    function addMetadataObject(string _metadataHash) public onlymember {
+        HashAdded(_metadataHash,0);
+        MetadataObjectAdded(_metadataHash);
+    }
 
-	/**
-	* @dev Remove contract from watch list
-	*/
-	function removeContract(address _contractAddress) public onlyValidMembers {
-		ContractRemoved(_contractAddress);
-	}
+    /** 
+    * removed a metadata of an object.
+    */
+    function removeMetadataObject(string _metadataHash) public onlymember {
+        HashRemoved(_metadataHash);
+        MetadataObjectRemoved(_metadataHash);
+    }
 
-	/**
-	*@dev removes a member who exceeds the cap
-	*/
-	function banMember (address _Member, string _evidence) public onlyValidMembers {
-		require(isMember(_Member));
-		require(!complained[msg.sender][_Member]);
-		complained[msg.sender][_Member] = true;
-		complaint[_Member] += 1;	
-		if (complaint[_Member] >= banThreshold) { 
-			removeMember(_Member);
-			if (!isMember(_Member)) {
-				Banned(_evidence);
-			} 
-		} else {
-			BanAttempt(msg.sender, _Member, complaint[_Member]);
-		}
-	}
-	/**
-	* @dev update ban threshold
-	*/
-	function updateBanThreshold (uint _banThreshold) public onlymanymembers(keccak256(_banThreshold)) {
-		banThreshold = _banThreshold;
-	}
-
-	/**
-	* @dev set total allowed upload
-	*
-	**/
-	function setTotalPersistLimit (uint _limit) public onlymanymembers(keccak256(_limit)) {
-		sizeLimit = _limit;
-		PersistLimitChanged(_limit);
-	}
+    /**
+    * @dev set total allowed upload
+    *
+    **/
+    function setTotalPersistLimit (uint _limit) public onlymanymembers(keccak256(_limit)) {
+        persistLimit = _limit;
+        PersistLimitChanged(_limit);
+    }
 }
