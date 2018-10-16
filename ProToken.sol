@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProToken at 0x20c11E5E049CC1F13B3F27780Cc7830059d92984
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProToken at 0x9041fe5b3fdea0f5e4afdc17e75180738d877a01
 */
 // Abstract contract for the full ERC 20 Token standard
 // https://github.com/ethereum/EIPs/issues/20
@@ -108,7 +108,7 @@ contract ProToken is StandardToken {
 
     function () {
         //if ether is sent to this address, send it back.
-        throw;
+        revert();
     }
 
     /* Public variables of the token */
@@ -122,7 +122,7 @@ contract ProToken is StandardToken {
     string public name;                   //fancy name: eg Simon Bucks
     uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
     string public symbol;                 //An identifier: eg SBX
-    string public version = 'PRO1.0';     //ProToken 0.1 standard. Just an arbitrary versioning scheme.
+    string public version = 'PRO1.0';     //ProToken 1.0 standard. Just an arbitrary versioning scheme.
 
     function ProToken(
         uint256 _initialAmount,
@@ -145,7 +145,7 @@ contract ProToken is StandardToken {
         //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
         //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
         //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
-        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
+        require(_spender.call(bytes4(bytes32(keccak256("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData));
         return true;
     }
 }
