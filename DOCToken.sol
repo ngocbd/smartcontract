@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DOCToken at 0x39a87dc12a7199aa012c18f114b763e27d0deca4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DOCToken at 0xb1a819a4aa03741d8b2af06d78ca91a74c831029
 */
 pragma solidity ^0.4.19;
 library SafeMath {
@@ -320,20 +320,19 @@ contract DOCTokenConfig {
     uint256 public constant DECIMALSFACTOR    = 10**uint256(TOKEN_DECIMALS);
     uint256 public constant TOKEN_TOTALSUPPLY = 1000000000 * DECIMALSFACTOR;
 
-    address public constant PUBLIC_RESERVED = 0xcd6b3d0c0dd850bad071cd20e428940d2e25120f;
+    address public constant PUBLIC_RESERVED = 0x347364f2bc343f6c676620d09eb9c37431dbee60;
     uint256 public constant PUBLIC_RESERVED_PERSENTAGE = 9000;
 
-    address[] public BOARD_RESERVED = [ 0x91cdb4c96d43591432fba178b672800b30266d63,
-    0x5a4dd8f6fc098869fa306c4143b281f214384de4,
-    0x2e067592283a463f9b425165c3bde40bc6cf8309,
-    0x49cbdc6c74b57eeccd6487999c2170a723193851,
-    0xd6c723a5fbe81e9744ac1a72767ba0744f67e713,
-    0x81409970ed8b78769eb58d62c0bf0371dad772e1,
-    0x13505e4fe6bdc6813b5e6fb63c44ac9ed4ac44ac,
-    0x87da1a7e6d460cad057740ef56f0c223dc572ebb,
-    0x05cb91a12b8da165f19cd4f81002566b0383cef7,
-    0xaf68b2dc937301d84d6d350d9beec880448dbac0
-    ];
+    address[] public BOARD_RESERVED = [0x7a59b7a5d6b00745effe411090ff424819b7055a,
+    0x00b9991e08d8e20b6efd12d259321b7ab88a700a,
+    0x4826f541eba27b6db07c14a7c2b1a4ea404eca37,
+    0xf2baf639dc3f7f05912b8760049094adebc85244,
+    0xb64ddc7df18737863eeb613f692595523a0e8d4b,
+    0x46c999a445d6ae5d800ce76e90ce06935188b7ab,
+    0x46c999a445d6ae5d800ce76e90ce06935188b7ab,
+    0x428e8c098453fa9968b712ac59806f91ae202807,
+    0x17a58a997a0a5ea218e82c7ae6d560e04f4defa0,
+    0x03ff44be1efb207fea4a30fd546b0741a476a0e4];
 
     uint256[] public BOARD_RESERVED_PERSENTAGE = [200,200,200,500,500,1000,1000,2000,2000,2400];
 
