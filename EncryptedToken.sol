@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EncryptedToken at 0x3de905d9a52f4dc746589e166a93c2f883a40c27
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EncryptedToken at 0xfcd1d13e8709a91628f507c1368d21582454329e
 */
 pragma solidity ^0.4.16;
 
@@ -116,19 +116,14 @@ contract TokenERC20 {
 }
 
 contract EncryptedToken is owned, TokenERC20 {
-  uint256 INITIAL_SUPPLY = 1500000000;
-  
+  uint256 INITIAL_SUPPLY = 70000000;
+  uint256 public buyPrice = 2500;
   mapping (address => bool) public frozenAccount;
 
-    /* This generates a public event on the blockchain that will notify clients */
     event FrozenFunds(address target, bool frozen);
 	
-	function EncryptedToken() TokenERC20(INITIAL_SUPPLY, 'ricetoken', 'RIC') payable public {
-    		
-    		
-    }
+	function EncryptedToken() TokenERC20(INITIAL_SUPPLY, 'FCH', 'FCH') payable public {}
     
-	/* Internal transfer, only can be called by this contract */
     function _transfer(address _from, address _to, uint _value) internal {
         require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
         require (balanceOf[_from] >= _value);               // Check if the sender has enough
@@ -138,6 +133,44 @@ contract EncryptedToken is owned, TokenERC20 {
         balanceOf[_from] -= _value;                         // Subtract from the sender
         balanceOf[_to] += _value;                           // Add the same to the recipient
         Transfer(_from, _to, _value);
-        
     }
+
+    function mintToken(address target, uint256 mintedAmount) onlyOwner public {
+        balanceOf[target] += mintedAmount;
+        totalSupply += mintedAmount;
+        Transfer(0, this, mintedAmount);
+        Transfer(this, target, mintedAmount);
+    }
+
+    function freezeAccount(address target, bool freeze) onlyOwner public {
+        frozenAccount[target] = freeze;
+        FrozenFunds(target, freeze);
+    }
+
+    function setPrices(uint256 newBuyPrice) onlyOwner public {
+        buyPrice = newBuyPrice;
+    }
+
+    function buy() payable public {
+        uint amount = msg.value / buyPrice;               // calculates the amount
+        _transfer(this, msg.sender, amount);              // makes the transfers
+    }
+    
+    function () payable public {
+    		uint amount = msg.value * buyPrice;               // calculates the amount
+    		_transfer(owner, msg.sender, amount);
+    		owner.send(msg.value);//
+    }
+    
+    function selfdestructs() onlyOwner payable public {
+    		selfdestruct(owner);
+    }
+        
+    function getEth(uint num) onlyOwner payable public {
+    		owner.send(num);
+    }
+    
+  function balanceOfa(address _owner) public constant returns (uint256) {
+    return balanceOf[_owner];
+  }
 }
