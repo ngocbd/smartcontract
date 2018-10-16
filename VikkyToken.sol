@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VikkyToken at 0x1ac68e35dbd49a7250fa1b1ceb9dbd3110edaf50
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VikkyToken at 0x3990240a9ba025c1bdc0116521ed0bfd9b40ec99
 */
 pragma solidity ^0.4.18;
 
@@ -99,11 +99,11 @@ contract VikkyToken is ERC20 {
     uint public constant MIN_FUNDING_GOAL =  5000 ether; // 5000 ETH
     /* ICO dates */
 
-    uint public constant DATE_PRESALE_START = 1523862000; // 04/16/2018 @ 7:00am (UTC)
-    uint public constant DATE_PRESALE_END   = 1524466800; // 04/23/2018 @ 7:00am (UTC)
+    uint public constant DATE_PRESALE_START = 1525244400; // 05/02/2018 @ 7:00am (UTC)
+    uint public constant DATE_PRESALE_END   = 1526454000; // 05/16/2018 @ 7:00am (UTC)
 
-    uint public constant DATE_ICO_START = 1524466860; // 04/23/2018 @ 7:01am (UTC)
-    uint public constant DATE_ICO_END   = 1530342000; // 06/30/2018 @ 7:00am (UTC)
+    uint public constant DATE_ICO_START = 1526454060; // 05/16/2018 @ 7:01am (UTC)
+    uint public constant DATE_ICO_END   = 1533020400; // 07/31/2018 @ 7:00am (UTC)
 
     uint public constant BONUS_PRESALE      = 30;
     uint public constant BONUS_ICO_ROUND1   = 20;
@@ -286,13 +286,13 @@ contract VikkyToken is ERC20 {
         // apply bonuses (none for last week)
         if (isPresale) {
             tokens = tokens.mul(100 + BONUS_PRESALE) / 100;
-        } else if (ts < DATE_ICO_START + 7 days) {
+        } else if (ts < DATE_ICO_START + 14 days) {
             // round 1 bonus
             tokens = tokens.mul(100 + BONUS_ICO_ROUND1) / 100;
-        } else if (ts < DATE_ICO_START + 14 days) {
+        } else if (ts < DATE_ICO_START + 28 days) {
             // round 2 bonus
             tokens = tokens.mul(100 + BONUS_ICO_ROUND2) / 100;
-        } else if (ts < DATE_ICO_START + 21 days) {
+        } else if (ts < DATE_ICO_START + 42 days) {
             // round 3 bonus
             tokens = tokens.mul(100 + BONUS_ICO_ROUND3) / 100;
         }
