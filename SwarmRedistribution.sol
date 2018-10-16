@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SwarmRedistribution at 0x95c2906debbb9203ff7007f26c2f00a936c77b5d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SwarmRedistribution at 0x6846b938f9be9f1eeeb9bfd853636c805f8f54d3
 */
 pragma solidity ^0.4.6;
 
@@ -84,6 +84,10 @@ contract SwarmRedistribution is RES {
     modifier isOpen {
       if(campaignOpen != true) throw;
       _;
+    }
+    
+    function changeJohanNygrensAddress(address _newAddress) onlyJohan {
+      JohanNygren = _newAddress;
     }
     
     function closeCampaign() onlyJohan {
