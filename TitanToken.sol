@@ -1,147 +1,458 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TitanToken at 0xb03481f9529a8846d8fb22e19f4a1808b95472d0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TitanToken at 0x69a53cb980eb6b08a9a13017faac550732d173c6
 */
-pragma solidity ^0.4.4;
+pragma solidity ^0.4.18;
 
-contract Token {
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
 
-    /// @return total amount of tokens
-    function totalSupply() constant returns (uint256 supply) {}
+    /**
+    * @dev Multiplies two numbers, throws on overflow.
+    */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        if (a == 0) {
+            return 0;
+        }
+        c = a * b;
+        assert(c / a == b);
+        return c;
+    }
 
-    /// @param _owner The address from which the balance will be retrieved
-    /// @return The balance
-    function balanceOf(address _owner) constant returns (uint256 balance) {}
+    /**
+    * @dev Integer division of two numbers, truncating the quotient.
+    */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        // uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return a / b;
+    }
 
-    /// @notice send `_value` token to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _value) returns (bool success) {}
+    /**
+    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    */
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
 
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
-
-    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of wei to be approved for transfer
-    /// @return Whether the approval was successful or not
-    function approve(address _spender, uint256 _value) returns (bool success) {}
-
-    /// @param _owner The address of the account owning tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
+    /**
+    * @dev Adds two numbers, throws on overflow.
+    */
+    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        c = a + b;
+        assert(c >= a);
+        return c;
+    }
 }
 
-contract StandardToken is Token {
 
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        //Default assumes totalSupply can't be over max (2^256 - 1).
-        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
-        //Replace the if with this one instead.
-        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[msg.sender] >= _value && _value > 0) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
-            return true;
-        } else { return false; }
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+    address public owner;
+
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
+     */
+    function Ownable() public {
+        owner = msg.sender;
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        //same as above. Replace this line with the following if you want to protect against wrapping uints.
-        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
-            return true;
-        } else { return false; }
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
     }
 
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0));
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
+}
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+    function totalSupply() public view returns (uint256);
+    function balanceOf(address who) public view returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
+    using SafeMath for uint256;
+
+    mapping(address => uint256) balances;
+
+    uint256 totalSupply_;
+
+    /**
+    * @dev total number of tokens in existence
+    */
+    function totalSupply() public view returns (uint256) {
+        return totalSupply_;
     }
 
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+    /**
+    * @dev transfer token for a specified address
+    * @param _to The address to transfer to.
+    * @param _value The amount to be transferred.
+    */
+    function transfer(address _to, uint256 _value) public returns (bool) {
+        require(_to != address(0));
+        require(_value <= balances[msg.sender]);
+
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        emit Transfer(msg.sender, _to, _value);
         return true;
     }
 
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
+    /**
+    * @dev Gets the balance of the specified address.
+    * @param _owner The address to query the the balance of.
+    * @return An uint256 representing the amount owned by the passed address.
+    */
+    function balanceOf(address _owner) public view returns (uint256) {
+        return balances[_owner];
     }
 
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-    uint256 public totalSupply;
 }
 
-contract TitanToken is StandardToken { // CHANGE THIS. Update the contract name.
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+    function allowance(address owner, address spender) public view returns (uint256);
+    function transferFrom(address from, address to, uint256 value) public returns (bool);
+    function approve(address spender, uint256 value) public returns (bool);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
-    /* Public variables of the token */
-
-    /*
-    NOTE:
-    The following variables are OPTIONAL vanities. One does not have to include them.
-    They allow one to customise the token contract & in no way influences the core functionality.
-    Some wallets/interfaces might not even bother to look at this information.
-    */
-    string public name;                   // Token Name
-    uint8 public decimals;                // How many decimals to show. To be standard complicant keep it 18
-    string public symbol;                 // An identifier: eg SBX, XPR etc..
-    string public version = 'H1.0'; 
-    uint256 public unitsOneEthCanBuy;     // How many units of your coin can be bought by 1 ETH?
-    uint256 public totalEthInWei;         // WEI is the smallest unit of ETH (the equivalent of cent in USD or satoshi in BTC). We'll store the total ETH raised via our ICO here.  
-    address public fundsWallet;           // Where should the raised ETH go?
-
-    // This is a constructor function 
-    // which means the following function name has to match the contract name declared above
-    function TitanToken() {
-        balances[msg.sender] = 10000000000;               // 
-        totalSupply = 10000000000;                        // 
-        decimals = 0;                                  //
-        symbol = "TTTN";                                 // 
-        name = "TitanToken";                               // 
-        unitsOneEthCanBuy = 8000;                        // 
-        fundsWallet = msg.sender;                       //
+/**
+ * @title Roles
+ * @author Francisco Giordano (@frangio)
+ * @dev Library for managing addresses assigned to a Role.
+ *      See RBAC.sol for example usage.
+ */
+library Roles {
+    struct Role {
+        mapping (address => bool) bearer;
     }
 
-    function() payable{
-        totalEthInWei = totalEthInWei + msg.value;
-        uint256 amount = msg.value * unitsOneEthCanBuy;
-        if (balances[fundsWallet] < amount) {
-            return;
-        }
-
-        balances[fundsWallet] = balances[fundsWallet] - amount;
-        balances[msg.sender] = balances[msg.sender] + amount;
-
-        Transfer(fundsWallet, msg.sender, amount); // Broadcast a message to the blockchain
-
-        //Transfer ether to fundsWallet
-        fundsWallet.transfer(msg.value);                               
+    /**
+     * @dev give an address access to this role
+     */
+    function add(Role storage role, address addr)
+    internal
+    {
+        role.bearer[addr] = true;
     }
 
-    /* Approves and then calls the receiving contract */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
+    /**
+     * @dev remove an address' access to this role
+     */
+    function remove(Role storage role, address addr)
+    internal
+    {
+        role.bearer[addr] = false;
+    }
+
+    /**
+     * @dev check if an address has this role
+     * // reverts
+     */
+    function check(Role storage role, address addr)
+    view
+    internal
+    {
+        require(has(role, addr));
+    }
+
+    /**
+     * @dev check if an address has this role
+     * @return bool
+     */
+    function has(Role storage role, address addr)
+    view
+    internal
+    returns (bool)
+    {
+        return role.bearer[addr];
+    }
+}
+
+/**
+ * @title RBAC (Role-Based Access Control)
+ * @author Matt Condon (@Shrugs)
+ * @dev Stores and provides setters and getters for roles and addresses.
+ * @dev Supports unlimited numbers of roles and addresses.
+ * @dev See //contracts/mocks/RBACMock.sol for an example of usage.
+ * This RBAC method uses strings to key roles. It may be beneficial
+ *  for you to write your own implementation of this interface using Enums or similar.
+ * It's also recommended that you define constants in the contract, like ROLE_ADMIN below,
+ *  to avoid typos.
+ */
+contract RBAC {
+    using Roles for Roles.Role;
+
+    mapping (string => Roles.Role) private roles;
+
+    event RoleAdded(address addr, string roleName);
+    event RoleRemoved(address addr, string roleName);
+
+    /**
+     * @dev reverts if addr does not have role
+     * @param addr address
+     * @param roleName the name of the role
+     * // reverts
+     */
+    function checkRole(address addr, string roleName)
+    view
+    public
+    {
+        roles[roleName].check(addr);
+    }
+
+    /**
+     * @dev determine if addr has role
+     * @param addr address
+     * @param roleName the name of the role
+     * @return bool
+     */
+    function hasRole(address addr, string roleName)
+    view
+    public
+    returns (bool)
+    {
+        return roles[roleName].has(addr);
+    }
+
+    /**
+     * @dev add a role to an address
+     * @param addr address
+     * @param roleName the name of the role
+     */
+    function addRole(address addr, string roleName)
+    internal
+    {
+        roles[roleName].add(addr);
+        emit RoleAdded(addr, roleName);
+    }
+
+    /**
+     * @dev remove a role from an address
+     * @param addr address
+     * @param roleName the name of the role
+     */
+    function removeRole(address addr, string roleName)
+    internal
+    {
+        roles[roleName].remove(addr);
+        emit RoleRemoved(addr, roleName);
+    }
+
+    /**
+     * @dev modifier to scope access to a single role (uses msg.sender as addr)
+     * @param roleName the name of the role
+     * // reverts
+     */
+    modifier onlyRole(string roleName)
+    {
+        checkRole(msg.sender, roleName);
+        _;
+    }
+
+    /**
+     * @dev modifier to scope access to a set of roles (uses msg.sender as addr)
+     * @param roleNames the names of the roles to scope access to
+     * // reverts
+     *
+     * @TODO - when solidity supports dynamic arrays as arguments to modifiers, provide this
+     *  see: https://github.com/ethereum/solidity/issues/2467
+     */
+    // modifier onlyRoles(string[] roleNames) {
+    //     bool hasAnyRole = false;
+    //     for (uint8 i = 0; i < roleNames.length; i++) {
+    //         if (hasRole(msg.sender, roleNames[i])) {
+    //             hasAnyRole = true;
+    //             break;
+    //         }
+    //     }
+
+    //     require(hasAnyRole);
+
+    //     _;
+    // }
+}
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
+
+    mapping (address => mapping (address => uint256)) internal allowed;
+
+
+    /**
+     * @dev Transfer tokens from one address to another
+     * @param _from address The address which you want to send tokens from
+     * @param _to address The address which you want to transfer to
+     * @param _value uint256 the amount of tokens to be transferred
+     */
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        require(_to != address(0));
+        require(_value <= balances[_from]);
+        require(_value <= allowed[_from][msg.sender]);
+
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        emit Transfer(_from, _to, _value);
+        return true;
+    }
+
+    /**
+     * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+     *
+     * Beware that changing an allowance with this method brings the risk that someone may use both the old
+     * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+     * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+     * @param _spender The address which will spend the funds.
+     * @param _value The amount of tokens to be spent.
+     */
+    function approve(address _spender, uint256 _value) public returns (bool) {
         allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        emit Approval(msg.sender, _spender, _value);
+        return true;
+    }
 
-        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
-        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
-        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
-        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
+    /**
+     * @dev Function to check the amount of tokens that an owner allowed to a spender.
+     * @param _owner address The address which owns the funds.
+     * @param _spender address The address which will spend the funds.
+     * @return A uint256 specifying the amount of tokens still available for the spender.
+     */
+    function allowance(address _owner, address _spender) public view returns (uint256) {
+        return allowed[_owner][_spender];
+    }
+
+    /**
+     * @dev Increase the amount of tokens that an owner allowed to a spender.
+     *
+     * approve should be called when allowed[_spender] == 0. To increment
+     * allowed value is better to use this function to avoid 2 calls (and wait until
+     * the first transaction is mined)
+     * From MonolithDAO Token.sol
+     * @param _spender The address which will spend the funds.
+     * @param _addedValue The amount of tokens to increase the allowance by.
+     */
+    function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
+    }
+
+    /**
+     * @dev Decrease the amount of tokens that an owner allowed to a spender.
+     *
+     * approve should be called when allowed[_spender] == 0. To decrement
+     * allowed value is better to use this function to avoid 2 calls (and wait until
+     * the first transaction is mined)
+     * From MonolithDAO Token.sol
+     * @param _spender The address which will spend the funds.
+     * @param _subtractedValue The amount of tokens to decrease the allowance by.
+     */
+    function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+        uint oldValue = allowed[msg.sender][_spender];
+        if (_subtractedValue > oldValue) {
+            allowed[msg.sender][_spender] = 0;
+        } else {
+            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+        }
+        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
+    }
+
+}
+
+/**
+ * @title Titan Coin Contract
+ */
+contract TitanToken is Ownable, StandardToken, RBAC {
+
+    string public name = 'Titan Coin';
+    string public symbol = 'TC';
+    uint256 public decimals = 8;
+
+    string public constant ROLE_EXCHANGER = "exchanger";
+
+    uint256 public constant INITIAL_SUPPLY = 100000000 * 10 ** 8;
+    uint256 public MAXIMUM_ICO_TOKENS = 87000000 * 10 ** 8;
+
+    uint256 public MAX_BOUNTY_ALLOCATED_TOKENS = 3000000;
+    uint256 public OWNERS_ALLOCATED_TOKENS = 100000000;
+
+    modifier hasExchangePermission() {
+        checkRole(msg.sender, ROLE_EXCHANGER);
+        _;
+    }
+
+    constructor() public {
+        totalSupply_ = INITIAL_SUPPLY;
+        balances[this] = INITIAL_SUPPLY;
+    }
+
+    /**
+     * @dev add an exchanger role to an address
+     * @param exchanger address
+     */
+    function addExchanger(address exchanger) onlyOwner public {
+        addRole(exchanger, ROLE_EXCHANGER);
+    }
+
+    /**
+     * @dev remove an exchanger role from an address
+     * @param exchanger address
+     */
+    function removeExchanger(address exchanger) onlyOwner public {
+        removeRole(exchanger, ROLE_EXCHANGER);
+    }
+
+    function exchangeTokens(address _to, uint256 _amount) hasExchangePermission public returns (bool) {
+        this.transfer(_to, _amount);
         return true;
     }
 }
