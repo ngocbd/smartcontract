@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WeBetCrypto at 0x03c18d649e743ee0b09f28a81d33575f03af9826
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WeBetCrypto at 0x74951B677de32D596EE851A233336926e6A2cd09
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
 
 
 /**
@@ -11,7 +11,7 @@ pragma solidity ^0.4.16;
  */
 contract WeBetCrypto {
     string public name = "We Bet Crypto";
-    string public symbol = "WBC";
+    string public symbol = "WBA";
 	
     address public selfAddress;
     address public admin;
@@ -20,32 +20,30 @@ contract WeBetCrypto {
     uint8 public decimals = 7;
     uint256 public relativeDateSave;
     uint256 public totalFunds;
-    uint256 public totalSupply = 300000000000000;
-    uint256 public pricePerEther;
+    uint256 public totalSupply = 400000000000000;
+    uint256 public IOUSupply = 0;
     uint256 private amountInCirculation;
     uint256 private currentProfits;
     uint256 private currentIteration;
 	uint256 private actualProfitSplit;
 	
-    bool public DAppReady;
     bool public isFrozen;
-	bool public splitInService = true;
-	bool private hasICORun;
     bool private running;
-	bool[4] private devApprovals;
 	
     mapping(address => uint256) balances;
+    mapping(address => uint256) moneySpent;
     mapping(address => uint256) monthlyLimit;
+	mapping(address => uint256) cooldown;
 	
     mapping(address => bool) isAdded;
-    mapping(address => bool) freezeUser;
+    mapping(address => bool) claimedBonus;
+	mapping(address => bool) bannedUser;
+    //mapping(address => bool) loggedUser;
 	
     mapping (address => mapping (address => uint256)) allowed;
-	mapping (address => mapping (address => uint256)) cooldown;
 	
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    event CurrentTLSNProof(address indexed _from, string _proof);
     
 	/**
 	 * @notice Ensures admin is caller
@@ -69,7 +67,7 @@ contract WeBetCrypto {
 	/**
 	 * @notice Ensures system isn't frozen
 	 */
-    modifier requireThaw() {
+    modifier noFreeze() {
         require(!isFrozen);
         _;
     }
@@ -78,23 +76,18 @@ contract WeBetCrypto {
 	 * @notice Ensures player isn't logged in on platform
 	 */
     modifier userNotPlaying(address _user) {
-        require(!freezeUser[_user]);
+        //require(!loggedUser[_user]);
+        uint256 check = 0;
+        check -= 1;
+        require(cooldown[_user] == check);
         _;
     }
-	
-	/**
-	 * @notice Ensures function runs only once
-	 */
-	modifier oneTime() {
-		require(!hasICORun);
-		_;
-	}
     
-	/**
-	 * @notice Ensures WBC DApp is online
-	 */
-    modifier DAppOnline() {
-        require(DAppReady);
+    /**
+     * @notice Ensures player isn't bannedUser
+     */
+    modifier userNotBanned(address _user) {
+        require(!bannedUser[_user]);
         _;
     }
     
@@ -102,11 +95,11 @@ contract WeBetCrypto {
 	 * @notice SafeMath Library safeSub Import
 	 * @dev 
 	        Since we are dealing with a limited currency
-	        circulation of 30 million tokens and values
+	        circulation of 40 million tokens and values
 	        that will not surpass the uint256 limit, only
 	        safeSub is required to prevent underflows.
 	 */
-    function safeSub(uint256 a, uint256 b) internal constant returns (uint256 z) {
+    function safeSub(uint256 a, uint256 b) internal pure returns (uint256 z) {
         assert((z = a - b) <= a);
     }
 	
@@ -117,30 +110,17 @@ contract WeBetCrypto {
 	        token distribution to the team members and pushing the first 
 	        profit split to 6 months when the DApp will already be live.
 	 */
-    function WeBetCrypto() {
+    function WeBetCrypto() public {
         admin = msg.sender;
         selfAddress = this;
-        balances[0x166Cb48973C2447dafFA8EFd3526da18076088de] = 22500000000000;
-        addUser(0x166Cb48973C2447dafFA8EFd3526da18076088de);
-        Transfer(selfAddress, 0x166Cb48973C2447dafFA8EFd3526da18076088de, 22500000000000);
-        balances[0xE59CbD028f71447B804F31Cf0fC41F0e5E13f4bF] = 15000000000000;
-        addUser(0xE59CbD028f71447B804F31Cf0fC41F0e5E13f4bF);
-        Transfer(selfAddress, 0xE59CbD028f71447B804F31Cf0fC41F0e5E13f4bF, 15000000000000);
-        balances[0x1ab13D2C1AC4303737981Ce8B8bD5116C84c744d] = 5000000000000;
-        addUser(0x1ab13D2C1AC4303737981Ce8B8bD5116C84c744d);
-        Transfer(selfAddress, 0x1ab13D2C1AC4303737981Ce8B8bD5116C84c744d, 5000000000000);
-        balances[0x06908Df389Cf2589375b6908D0b1c8FcC34721B5] = 2500000000000;
-        addUser(0x06908Df389Cf2589375b6908D0b1c8FcC34721B5);
-        Transfer(selfAddress, 0x06908Df389Cf2589375b6908D0b1c8FcC34721B5, 2500000000000);
-        balances[0xEdBd4c6757DC425321584a91bDB355Ce65c42b13] = 2500000000000;
-        addUser(0xEdBd4c6757DC425321584a91bDB355Ce65c42b13);
-        Transfer(selfAddress, 0xEdBd4c6757DC425321584a91bDB355Ce65c42b13, 2500000000000);
-        balances[0x4309Fb4B31aA667673d69db1072E6dcD50Fd8858] = 2500000000000;
-        addUser(0x4309Fb4B31aA667673d69db1072E6dcD50Fd8858);
-        Transfer(selfAddress, 0x4309Fb4B31aA667673d69db1072E6dcD50Fd8858, 2500000000000);
-        relativeDateSave = now + 180 days;
-        pricePerEther = 33209;
-        balances[selfAddress] = 250000000000000;
+        balances[0x66AE070A8501E816CA95ac99c4E15C7e132fd289] = 200000000000000;
+        addUser(0x66AE070A8501E816CA95ac99c4E15C7e132fd289);
+        Transfer(selfAddress, 0x66AE070A8501E816CA95ac99c4E15C7e132fd289, 200000000000000);
+        balances[0xcf8d242C523bfaDC384Cc1eFF852Bf299396B22D] = 50000000000000;
+        addUser(0xcf8d242C523bfaDC384Cc1eFF852Bf299396B22D);
+        Transfer(selfAddress, 0xcf8d242C523bfaDC384Cc1eFF852Bf299396B22D, 50000000000000);
+        relativeDateSave = now + 40 days;
+        balances[selfAddress] = 150000000000000;
     }
     
     /**
@@ -207,6 +187,20 @@ contract WeBetCrypto {
     }
     
     /**
+     * @notice Query whether the user is eligible for claiming dividence
+     * @param _user The address to query
+     * @return _success Whether or not the user is eligible
+     */
+    function eligibleForDividence(address _user) public view returns (bool _success) {
+        if (moneySpent[_user] == 0) {
+            return false;
+		} else if ((balances[_user] + allowed[selfAddress][_user])/moneySpent[_user] > 20) {
+		    return false;
+        }
+        return true;
+    }
+    
+    /**
      * @notice Transfer tokens from an address to another ~ ERC-20 Standard
 	 * @dev 
 	        Adjusts the monthly limit in case the _from address is the Casino
@@ -216,11 +210,12 @@ contract WeBetCrypto {
      * @param _to The recipient address
 	 * @param _value The amount of tokens to be transferred
      */
-    function transferFrom(address _from, address _to, uint256 _value) external requireThaw userNotPlaying(_to) {
-		require(cooldown[_from][_to] <= now);
+    function transferFrom(address _from, address _to, uint256 _value) external noFreeze {
         var _allowance = allowed[_from][_to];
         if (_from == selfAddress) {
             monthlyLimit[_to] = safeSub(monthlyLimit[_to], _value);
+            require(cooldown[_to] < now /*&& !loggedUser[_to]*/);
+            IOUSupply -= _value;
         }
         balances[_to] = balances[_to]+_value;
         balances[_from] = safeSub(balances[_from], _value);
@@ -232,27 +227,13 @@ contract WeBetCrypto {
     /**
 	 * @notice Authorize an address to retrieve funds from you ~ ERC-20 Standard
 	 * @dev 
-	        Each approval comes with a default cooldown of 30 minutes
-	        to prevent against the ERC-20 race attack.
+	        30 minute cooldown removed for easier participation in
+	        trading platforms such as Ether Delta
 	 * @param _spender The address you wish to authorize
 	 * @param _value The amount of tokens you wish to authorize
 	 */
     function approve(address _spender, uint256 _value) external {
         allowed[msg.sender][_spender] = _value;
-		cooldown[msg.sender][_spender] = now + 30 minutes;
-        Approval(msg.sender, _spender, _value);
-    }
-	
-	/**
-	 * @notice Authorize an address to retrieve funds from you with a custom cooldown ~ ERC-20 Standard
-	 * @dev Allowing custom cooldown for the ERC-20 race attack prevention.
-	 * @param _spender The address you wish to authorize
-	 * @param _value The amount of tokens you wish to authorize
-	 * @param _cooldown The amount of seconds the recipient needs to wait before withdrawing the balance
-	 */
-    function approve(address _spender, uint256 _value, uint256 _cooldown) external {
-        allowed[msg.sender][_spender] = _value;
-		cooldown[msg.sender][_spender] = now + _cooldown;
         Approval(msg.sender, _spender, _value);
     }
     
@@ -267,14 +248,14 @@ contract WeBetCrypto {
 					"success": "Transaction success"
 				}
      */
-    function transfer(address _to, uint256 _value) external isRunning requireThaw returns (bool success){
+    function transfer(address _to, uint256 _value) external isRunning noFreeze returns (bool success) {
         bytes memory empty;
         if (_to == selfAddress) {
-            return transferToSelf(_value, empty);
+            return transferToSelf(_value);
         } else if (isContract(_to)) {
             return transferToContract(_to, _value, empty);
         } else {
-            return transferToAddress(_to, _value, empty);
+            return transferToAddress(_to, _value);
         }
     }
     
@@ -285,7 +266,7 @@ contract WeBetCrypto {
 					"is_contract": "Result of query"
 				}
      */
-    function isContract(address _address) internal returns (bool is_contract) {
+    function isContract(address _address) internal view returns (bool is_contract) {
         uint length;
         assembly {
             length := extcodesize(_address)
@@ -303,13 +284,13 @@ contract WeBetCrypto {
 					"success": "Transaction success"
 				}
      */
-    function transfer(address _to, uint256 _value, bytes _data) external isRunning requireThaw returns (bool success){
+    function transfer(address _to, uint256 _value, bytes _data) external isRunning noFreeze returns (bool success){
         if (_to == selfAddress) {
-            return transferToSelf(_value, _data);
+            return transferToSelf(_value);
         } else if (isContract(_to)) {
             return transferToContract(_to, _value, _data);
         } else {
-            return transferToAddress(_to, _value, _data);
+            return transferToAddress(_to, _value);
         }
     }
     
@@ -317,12 +298,11 @@ contract WeBetCrypto {
 	 * @notice Handles transfer to an ECA (Externally Controlled Account), a normal account ~ ERC-223 Proposed Standard
 	 * @param _to The address to transfer to
 	 * @param _value The amount of tokens to transfer
-	 * @param _data Any extra embedded data of the transaction
 	 * @return {
 					"success": "Transaction success"
 				}
      */
-    function transferToAddress(address _to, uint256 _value, bytes _data) internal returns (bool success) {
+    function transferToAddress(address _to, uint256 _value) internal returns (bool success) {
         balances[msg.sender] = safeSub(balances[msg.sender], _value);
         balances[_to] = balances[_to]+_value;
         addUser(_to);
@@ -352,16 +332,16 @@ contract WeBetCrypto {
     /**
 	 * @notice Handles Casino deposits ~ Custom ERC-223 Proposed Standard Addition
 	 * @param _value The amount of tokens to transfer
-	 * @param _data Any extra embedded data of the transaction
 	 * @return {
 					"success": "Transaction success"
 				}
      */
-    function transferToSelf(uint256 _value, bytes _data) internal returns (bool success) {
+    function transferToSelf(uint256 _value) internal returns (bool success) {
         balances[msg.sender] = safeSub(balances[msg.sender], _value);
         balances[selfAddress] = balances[selfAddress]+_value;
         Transfer(msg.sender, selfAddress, _value);
 		allowed[selfAddress][msg.sender] = _value + allowed[selfAddress][msg.sender];
+		IOUSupply += _value;
 		Approval(selfAddress, msg.sender, allowed[selfAddress][msg.sender]);
         return true;
     }
@@ -372,33 +352,16 @@ contract WeBetCrypto {
 	 * @param _value The amount of tokens the address sent to this contract
 	 * @param _data Any embedded data of the transaction
 	 */
-	function tokenFallback(address _sender, uint256 _value, bytes _data) {}
-	
-	/**
-	 * @notice Check the cooldown remaining until the allowee can withdraw the balance
-	 * @param _allower The holder of the balance
-	 * @param _allowee The recipient of the balance
-	 * @return {
-					"remaining": "Cooldown remaining in seconds"
-				}
-     */
-	function checkCooldown(address _allower, address _allowee) external constant returns (uint256 remaining) {
-		if (cooldown[_allower][_allowee] > now) {
-			return (cooldown[_allower][_allowee] - now);
-		} else {
-			return 0;
-		}
-	}
+	function tokenFallback(address _sender, uint256 _value, bytes _data) public {}
 	
 	/**
 	 * @notice Check how much Casino withdrawal balance remains for address
-	 * @param _owner The address to check
 	 * @return {
 					"remaining": "Withdrawal balance remaining"
 				}
      */
-    function checkMonthlyLimit(address _owner) external constant returns (uint256 remaining) {
-        return monthlyLimit[_owner];
+    function checkMonthlyLimit() external constant returns (uint256 remaining) {
+        return monthlyLimit[msg.sender];
     }
 	
 	/**
@@ -456,64 +419,13 @@ contract WeBetCrypto {
 			in case userbase gets too big.
 	 */
 	function emergencySplitToggle() isAdmin external {
-		splitInService = !splitInService;
-	}
-    
-	/**
-	 * @notice Adjust the price of Ether according to Coin Market Cap's API
-	 * @dev 
-	        The subfolder is public domain so anyone can verify that we indeed got the price
-	        from a trusted source at the time we updated it. 2 decimal precision is achieved
-	        by multiplying the price of Ether by 100 and then offsetting the multiplication
-	        in the calculation the price is used in. The TLSNotaryProof string can be added
-	        to the end of https://webetcrypto.io/TLSNotary/ to get the perspective TLS proof.
-	 * @param newPrice The new Ethereum price with 2 decimal precision
-	 * @param TLSNotaryProof The webetcrypto.io subfolder the TLSNotary proof is stored
-	 */
-    function setPriceOfEther(uint256 newPrice, string TLSNotaryProof) external isAdmin {
-        pricePerEther = newPrice;
-        CurrentTLSNProof(selfAddress, TLSNotaryProof);
-    }
-	
-	/**
-	 * @notice Get the current 2-decimal precision price per token
-	 * @dev 
-	        The price retains the 2 decimal precision by multiplying it with
-	        100 and offsetting that in the calculations the price is used in.
-	        For example 50 means each token costs 0.50$.
-	 * @return {
-					"price": "Price of a single WBC Token"
-				}
-     */
-	function getPricePerToken() public constant returns (uint256 price) {
-        if (balances[selfAddress] > 200000000000000) {
-            return 50;
-        } else if (balances[selfAddress] > 150000000000000) {
-			return 200;
-		} else if (balances[selfAddress] > 100000000000000) {
-			return 400;
+		uint temp = 0;
+		temp -= 1;
+		if (relativeDateSave == temp) {
+		    relativeDateSave = now;
 		} else {
-			return 550;
-        }
-    }
-	
-	/**
-	 * @notice Convert Wei to WBC tokens
-	 * @dev 
-		    The _value is multiplied by 10^7 because of the 7 decimal precision
-			of WBC and to ensure that a user can invest less than 1 ether and 
-			still get his WBC tokens, preventing rounding errors. A hard cap
-			of 500k WBC tokens per purchase is enforced so as to prevent users
-			from buying large amounts at a higher or lower Ether price due to 
-			hourly price updates.
-	 * @param _value The amount of Wei to convert
-	 * @return {
-					"tokenAmount": "Amount of WBC Tokens input is worth"
-				}
-     */
-	function calculateTokenAmount(uint256 _value) internal returns (uint256 tokenAmount) {
-		tokenAmount = ((_value*(10**7)/1 ether)*pricePerEther)/getPricePerToken();
-		assert(tokenAmount <= 5000000000000);
+	    	relativeDateSave = temp;
+		}
 	}
 	
 	/**
@@ -524,7 +436,7 @@ contract WeBetCrypto {
 	function addUser(address _user) internal {
 		if (!isAdded[_user]) {
             users.push(_user);
-            monthlyLimit[_user] = 5000000000000;
+            monthlyLimit[_user] = 1000000000000;
             isAdded[_user] = true;
         }
 	}
@@ -539,7 +451,6 @@ contract WeBetCrypto {
 			a loop-state-save is implemented to ensure scalability.
 	 */
     function splitProfits() external {
-		require(splitInService);
         uint i;
         if (!isFrozen) {
             require(now >= relativeDateSave);
@@ -547,131 +458,60 @@ contract WeBetCrypto {
             require(balances[selfAddress] > 30000000000000);
             relativeDateSave = now + 30 days;
             currentProfits = ((balances[selfAddress]-30000000000000)/10)*7; 
-            amountInCirculation = safeSub(300000000000000, balances[selfAddress]);
+            amountInCirculation = safeSub(400000000000000, balances[selfAddress]) + IOUSupply;
             currentIteration = 0;
 			actualProfitSplit = 0;
         } else {
             for (i = currentIteration; i < users.length; i++) {
-                monthlyLimit[users[i]] = 5000000000000;
-                if (msg.gas < 240000) {
+                monthlyLimit[users[i]] = 1000000000000;
+                if (msg.gas < 250000) {
                     currentIteration = i;
                     break;
                 }
-				if (allowed[selfAddress][users[i]] == 0) {
-					checkSplitEnd(i);
-					continue;
-				} else if ((balances[users[i]]/allowed[selfAddress][users[i]]) < 19) {
-					checkSplitEnd(i);
+				if (!eligibleForDividence(users[i])) {
+				    moneySpent[users[i]] = 0;
+        			checkSplitEnd(i);
                     continue;
-                }
-				actualProfitSplit += (balances[users[i]]*currentProfits)/amountInCirculation;
-                balances[users[i]] += (balances[users[i]]*currentProfits)/amountInCirculation;
+				}
+				moneySpent[users[i]] = 0;
+				actualProfitSplit += ((balances[users[i]]+allowed[selfAddress][users[i]])*currentProfits)/amountInCirculation;
+                Transfer(selfAddress, users[i], ((balances[users[i]]+allowed[selfAddress][users[i]])*currentProfits)/amountInCirculation);
+                balances[users[i]] += ((balances[users[i]]+allowed[selfAddress][users[i]])*currentProfits)/amountInCirculation;
 				checkSplitEnd(i);
-                Transfer(selfAddress, users[i], (balances[users[i]]/amountInCirculation)*currentProfits);
             }
         }
     }
 	
 	/**
 	 * @notice Change variables on split end
-	 * @param i The current index of the split loop
+	 * @param i The current index of the split loop.
 	 */
 	function checkSplitEnd(uint256 i) internal {
 		if (i == users.length-1) {
 			assetThaw();
-			balances[0x166Cb48973C2447dafFA8EFd3526da18076088de] = balances[0x166Cb48973C2447dafFA8EFd3526da18076088de] + currentProfits/22;
-			balances[selfAddress] = balances[selfAddress] - actualProfitSplit - currentProfits/22;
+			balances[0x66AE070A8501E816CA95ac99c4E15C7e132fd289] = balances[0x66AE070A8501E816CA95ac99c4E15C7e132fd289] + currentProfits/20;
+			balances[selfAddress] = balances[selfAddress] - actualProfitSplit - currentProfits/20;
 		}
 	}
-	
-	/**
-	 * @notice Split the unsold WBC of the ICO
-	 * @dev 
-			One time function to distribute the unsold tokens.
-	 */
-    function ICOSplit() external isAdmin oneTime {
-        uint i;
-        if (!isFrozen) {
-            require((relativeDateSave - now) >= (relativeDateSave - 150 days));
-            assetFreeze();
-            require(balances[selfAddress] > 50000000000000);
-            currentProfits = ((balances[selfAddress] - 50000000000000) / 10) * 7; 
-            amountInCirculation = safeSub(300000000000000, balances[selfAddress]);
-            currentIteration = 0;
-			actualProfitSplit = 0;
-        } else {
-            for (i = currentIteration; i < users.length; i++) {
-                if (msg.gas < 240000) {
-                    currentIteration = i;
-                    break;
-                }
-				actualProfitSplit += (balances[users[i]]*currentProfits)/amountInCirculation;
-                balances[users[i]] += (balances[users[i]]*currentProfits)/amountInCirculation;
-                if (i == users.length-1) {
-                    assetThaw();
-                    balances[selfAddress] = balances[selfAddress] - actualProfitSplit;
-					hasICORun = true;
-                }
-                Transfer(selfAddress, users[i], (balances[users[i]]/amountInCirculation)*currentProfits);
-            }
-        }
-    }
-	
-	/**
-	 * @notice Sign that the DApp is ready
-	 * @dev 
-	        Only the core team members have access to this function. This is 
-	        created as an extra layer of security for investors and users of 
-			the coin, since a multi-signature approval is required before the 
-			function that alters the Casino balance is used.
-	 */
-    function assureDAppIsReady() external {
-        if (msg.sender == 0x166Cb48973C2447dafFA8EFd3526da18076088de) {
-            devApprovals[0] = true;
-        } else if (msg.sender == 0x1ab13D2C1AC4303737981Ce8B8bD5116C84c744d) {
-            devApprovals[1] = true;
-        } else if (msg.sender == 0xEC5a48d6F11F8a981aa3D913DA0A69194280cDBc) {
-            devApprovals[2] = true;
-        } else if (msg.sender == 0xE59CbD028f71447B804F31Cf0fC41F0e5E13f4bF) {
-            devApprovals[3] = true;
-        } else {
-			revert();
-		}
-    }
-	
-	/**
-     * @notice Verify that the DApp is ready
-	 * @dev 
-			Since iterating through the devApprovals array costs gas
-			and the functions with the DAppOnline modifier are going
-			to be repetitively used, it is better to store the DApp
-			state in a variable that needs to be altered once.
-	 */
-    function isDAppReady() external isAdmin {
-        uint8 numOfApprovals = 0;
-        for (uint i = 0; i < devApprovals.length; i++) {
-            if (devApprovals[i]) {
-                numOfApprovals++;
-            }
-        }
-        DAppReady = (numOfApprovals>=2);
-    }
     
 	/**
 	 * @notice Rise or lower user bank balance - Backend Function
 	 * @dev 
-	        This allows real-time adjustment of the balance a user has within the Casino to
-			represent earnings and losses. Underflow impossible since only bets can lower the
-			balance.
+	        This allows adjustment of the balance a user has within the Casino to
+			represent earnings and losses.
 	 * @param _toAlter The address whose Casino balance to alter
 	 * @param _amount The amount to alter it by
 	 */
-    function alterBankBalance(address _toAlter, uint256 _amount, bool sign) external DAppOnline isAdmin {
-        if (sign && (_amount+allowed[selfAddress][_toAlter]) > allowed[selfAddress][_toAlter]) {
-			allowed[selfAddress][_toAlter] = _amount + allowed[selfAddress][_toAlter];
+    function alterBankBalance(address _toAlter, uint256 _amount) internal {
+        if (_amount > allowed[selfAddress][_toAlter]) {
+            IOUSupply += (_amount - allowed[selfAddress][_toAlter]);
+            moneySpent[_toAlter] += (_amount - allowed[selfAddress][_toAlter]);
+			allowed[selfAddress][_toAlter] = _amount;
 			Approval(selfAddress, _toAlter, allowed[selfAddress][_toAlter]);
         } else {
-            allowed[selfAddress][_toAlter] = safeSub(allowed[selfAddress][_toAlter], _amount);
+            IOUSupply -= (allowed[selfAddress][_toAlter] - _amount);
+            moneySpent[_toAlter] += (allowed[selfAddress][_toAlter] - _amount);
+            allowed[selfAddress][_toAlter] = _amount;
 			Approval(selfAddress, _toAlter, allowed[selfAddress][_toAlter]);
         }
     }
@@ -679,63 +519,91 @@ contract WeBetCrypto {
 	/**
 	 * @notice Freeze user during platform use - Backend Function
 	 * @dev Prevents against the ERC-20 race attack on the Casino
-	 * @param _user The user to freeze
 	 */
-    function loginUser(address _user) external DAppOnline isAdmin {
-        freezeUser[_user] = true;
+    function platformLogin() userNotBanned(msg.sender) external {
+        //loggedUser[msg.sender] = true;
+        cooldown[msg.sender] = 0;
+        cooldown[msg.sender] -= 1;
     }
 	
 	/**
 	 * @notice De-Freeze user - Backend Function
      * @dev Used when a user logs out or loses connection with the DApp
-	 * @param _user The user to de-freeze
 	 */
-	function logoutUser(address _user) external DAppOnline isAdmin {
-		freezeUser[_user] = false;
+	function platformLogout(address _toLogout, uint256 _newBalance) external isAdmin {
+		//loggedUser[msg.sender] = false;
+		cooldown[_toLogout] = now + 30 minutes;
+		alterBankBalance(_toLogout,_newBalance);
 	}
-    
+	
+	/**
+	 * @notice Check if user is logged internal
+	 * @dev Used to ensure that the user is logged in throughout 
+	 *      the whole casino session
+	 * @param _toCheck The user address to check
+	 */
+	function checkLogin(address _toCheck) view external returns (bool) {
+	    uint256 check = 0;
+	    check -= 1;
+	    return (cooldown[_toCheck] == check);
+	}
+	
+	/**
+	 * @notice Ban a user
+	 * @dev Used in extreme circumstances where the users break the law
+	 * @param _user The user to ban
+	 */
+	function banUser(address _user) external isAdmin {
+	    bannedUser[_user] = true;
+	    cooldown[_user] = now + 30 minutes;
+	}
+	
+	/**
+	 * @notice Unban a user
+	 * @dev Used in extreme circumstances where the users have redeemed
+	 * @param _user The user to unban
+	 */
+	function unbanUser(address _user) external isAdmin {
+	    bannedUser[_user] = false;
+	}
+	
+	/**
+	 * @notice Check if a user is banned
+	 * @dev Used by the back-end to give a message to the user
+	 * @param _user The user to check
+	 */
+	function checkBan(address _user) external view returns (bool) {
+	    return bannedUser[_user];
+	}
+	
     /**
-	 * @notice Fallback function 
-	 * @dev Triggered when Ether is sent to the contract. Throws intentionally to refund the sender.
-	 */
-    function() payable {
-		revert();
-    }
-	
-	/**
-	 * @notice Purchase WBC Tokens for Address - ICO
-	 * @param _recipient The recipient of the WBC tokens
-	 */
-	function buyTokensForAddress(address _recipient) external payable {
-        totalFunds = totalFunds + msg.value;
-        require(msg.value > 0);
-		require(_recipient != admin);
-		require((totalFunds/1 ether)*pricePerEther < 6000000000);
-        addUser(_recipient);
-		uint tokenAmount = calculateTokenAmount(msg.value);
-		balances[selfAddress] = balances[selfAddress] - tokenAmount;
-		assert(balances[selfAddress] >= 50000000000000);
-        balances[_recipient] = balances[_recipient] + tokenAmount;
-        Transfer(selfAddress, _recipient, tokenAmount);
-        address etherTransfer = 0x166Cb48973C2447dafFA8EFd3526da18076088de;
-        etherTransfer.transfer(msg.value);
-    }
-	
-	/**
 	 * @notice Purchase WBC Tokens for Self - ICO
 	 */
-	function buyTokensForSelf() external payable {
+    function() payable external {
         totalFunds = totalFunds + msg.value;
-		address etherTransfer = 0x166Cb48973C2447dafFA8EFd3526da18076088de;
+		address etherTransfer = 0x66AE070A8501E816CA95ac99c4E15C7e132fd289;
         require(msg.value > 0);
 		require(msg.sender != etherTransfer);
-		require((totalFunds/1 ether)*pricePerEther < 6000000000);
+		require(totalFunds/1 ether < 2000);
         addUser(msg.sender);
-		uint tokenAmount = calculateTokenAmount(msg.value);
+        uint256 tokenAmount = msg.value/100000000;
 		balances[selfAddress] = balances[selfAddress] - tokenAmount;
-		assert(balances[selfAddress] >= 50000000000000);
         balances[msg.sender] = balances[msg.sender] + tokenAmount;
         Transfer(selfAddress, msg.sender, tokenAmount);
         etherTransfer.transfer(msg.value);
+    }
+    
+    /**
+     * @notice Advertising Token Distribution
+     * @dev Ensures the user has at least 0.1 Ether on his 
+     *      account before distributing 20 WBC
+     */
+    function claimBonus() external {
+        require(msg.sender.balance/(1000 finney) >= 1 && !claimedBonus[msg.sender]);
+        claimedBonus[msg.sender] = true;
+		allowed[selfAddress][msg.sender] = allowed[selfAddress][msg.sender] + 200000000;
+		IOUSupply += 200000000;
+        addUser(msg.sender);
+		Approval(selfAddress, msg.sender, allowed[selfAddress][msg.sender]);
     }
 }
