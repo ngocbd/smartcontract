@@ -1,10 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CentrallyIssuedToken at 0xc324a2f6b05880503444451b8b27e6f9e63287cb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CentrallyIssuedToken at 0x139de531700a03666ce1ceee95ac80723605f83d
 */
-/*
- * ERC20 interface
- * see https://github.com/ethereum/EIPs/issues/20
- */
 contract ERC20 {
   uint public totalSupply;
   function balanceOf(address who) constant returns (uint);
@@ -17,14 +13,6 @@ contract ERC20 {
   event Approval(address indexed owner, address indexed spender, uint value);
 }
 
-
-
-
-
-
-/**
- * Math operations with safety checks
- */
 contract SafeMath {
   function safeMul(uint a, uint b) internal returns (uint) {
     uint c = a * b;
@@ -73,14 +61,27 @@ contract SafeMath {
   }
 }
 
+contract UpgradeAgent {
+
+  uint public originalSupply;
+
+  /** Interface marker */
+  function isUpgradeAgent() public constant returns (bool) {
+    return true;
+  }
+
+  /**
+   * Upgrade amount of tokens to a new version.
+   *
+   * Only callable by UpgradeableToken.
+   *
+   * @param _tokenHolder Address that wants to upgrade its tokens
+   * @param _amount Number of tokens to upgrade. The address may consider to hold back some amount of tokens in the old version.
+   */
+  function upgradeFrom(address _tokenHolder, uint256 _amount) external;
+}
 
 
-/**
- * Standard ERC20 token with Short Hand Attack and approve() race condition mitigation.
- *
- * Based on code by FirstBlood:
- * https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
 contract StandardToken is ERC20, SafeMath {
 
   /* Actual balances of token holders */
@@ -135,46 +136,8 @@ contract StandardToken is ERC20, SafeMath {
 }
 
 
-/**
- * Upgrade agent interface inspired by Lunyr.
- *
- * Upgrade agent transfers tokens to a new version of a token contract.
- * Upgrade agent can be set on a token by the upgrade master.
- *
- * Steps are
- * - Upgradeabletoken.upgradeMaster calls UpgradeableToken.setUpgradeAgent()
- * - Individual token holders can now call UpgradeableToken.upgrade()
- *   -> This results to call UpgradeAgent.upgradeFrom() that issues new tokens
- *   -> UpgradeableToken.upgrade() reduces the original total supply based on amount of upgraded tokens
- *
- * Upgrade agent itself can be the token contract, or just a middle man contract doing the heavy lifting.
- */
-contract UpgradeAgent {
-
-  uint public originalSupply;
-
-  /** Interface marker */
-  function isUpgradeAgent() public constant returns (bool) {
-    return true;
-  }
-
-  /**
-   * Upgrade amount of tokens to a new version.
-   *
-   * Only callable by UpgradeableToken.
-   *
-   * @param _tokenHolder Address that wants to upgrade its tokens
-   * @param _amount Number of tokens to upgrade. The address may consider to hold back some amount of tokens in the old version.
-   */
-  function upgradeFrom(address _tokenHolder, uint256 _amount) external;
-}
 
 
-/**
- * A token upgrade mechanism where users can opt-in amount of tokens to the next smart contract revision.
- *
- * First envisioned by Golem and Lunyr projects.
- */
 contract UpgradeableToken is StandardToken {
 
   /** Contract / person who can set the upgrade path. This can be the same as team multisig wallet, as what it is with its default value. */
@@ -302,35 +265,16 @@ contract UpgradeableToken is StandardToken {
 
 }
 
-
-
-/**
- * Centrally issued Ethereum token.
- *
- * We mix in burnable and upgradeable traits.
- *
- * Token supply is created in the token contract creation and allocated to owner.
- * The owner can then transfer from its supply to crowdsale participants.
- * The owner, or anybody, can burn any excessive tokens they are holding.
- *
- */
 contract CentrallyIssuedToken is UpgradeableToken {
 
-  // Token meta information
   string public name;
   string public symbol;
   uint public decimals;
 
-  // Token release switch
-  bool public released = false;
-
-  // The date before the release must be finalized or upgrade path will be forced
-  uint public releaseFinalizationDate;
-
   /** Name and symbol were updated. */
   event UpdatedTokenInformation(string newName, string newSymbol);
 
-  function CentrallyIssuedToken(address _owner, string _name, string _symbol, uint _totalSupply, uint _decimals, uint _releaseFinalizationDate)  UpgradeableToken(_owner) {
+  function CentrallyIssuedToken(address _owner, string _name, string _symbol, uint _totalSupply, uint _decimals)  UpgradeableToken(_owner) {
     name = _name;
     symbol = _symbol;
     totalSupply = _totalSupply;
@@ -338,8 +282,6 @@ contract CentrallyIssuedToken is UpgradeableToken {
 
     // Allocate initial balance to the owner
     balances[_owner] = _totalSupply;
-
-    releaseFinalizationDate = _releaseFinalizationDate;
   }
 
   /**
@@ -369,30 +311,4 @@ contract CentrallyIssuedToken is UpgradeableToken {
     UpdatedTokenInformation(name, symbol);
   }
 
-
-  /**
-   * Kill switch for the token in the case of distribution issue.
-   *
-   */
-  function transfer(address _to, uint _value) returns (bool success) {
-
-    if(now > releaseFinalizationDate) {
-      if(!released) {
-        throw;
-      }
-    }
-
-    return super.transfer(_to, _value);
-  }
-
-  /**
-   * One way function to perform the final token release.
-   */
-  function releaseTokenTransfer() {
-    if(msg.sender != upgradeMaster) {
-      throw;
-    }
-
-    released = true;
-  }
 }
