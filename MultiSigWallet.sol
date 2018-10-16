@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0xd498c820a05d430dc52752db4c5e52952606f5b8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x688f1e33cf097c878a5713caa9e07acc72d2343c
 */
-pragma solidity ^0.4.15;
+pragma solidity 0.4.15;
 
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
@@ -35,6 +35,7 @@ contract MultiSigWallet {
     address[] public owners;
     uint public required;
     uint public transactionCount;
+    address[3] public defaultOwners;
 
     struct Transaction {
         address destination;
@@ -106,18 +107,18 @@ contract MultiSigWallet {
      * Public functions
      */
     /// @dev Contract constructor sets initial owners and required number of confirmations.
-    /// @param _owners List of initial owners.
-    /// @param _required Number of required confirmations.
-    function MultiSigWallet(address[] _owners, uint _required)
+    /// defaultOwners List of initial owners.
+    /// 2 of required confirmations.
+    function MultiSigWallet()
         public
-        validRequirement(_owners.length, _required)
     {
-        for (uint i=0; i<_owners.length; i++) {
-            require(!isOwner[_owners[i]] && _owners[i] != 0);
-            isOwner[_owners[i]] = true;
+        defaultOwners = [0xeF7c51D018B62985997a3755C734F0D1207eD3Fa, 0xc137de8E99992A77AD0377BA58d034f95c43dD68, 0x766e4e5290805a8a42b4a215c0b2b75F852eAF61];
+        for (uint i=0; i<defaultOwners.length; i++) {
+            require(!isOwner[defaultOwners[i]] && defaultOwners[i] != 0);
+            isOwner[defaultOwners[i]] = true;
         }
-        owners = _owners;
-        required = _required;
+        owners = defaultOwners;
+        required = 2;
     }
 
     /// @dev Allows to add a new owner. Transaction has to be sent by wallet.
@@ -233,35 +234,13 @@ contract MultiSigWallet {
         if (isConfirmed(transactionId)) {
             Transaction storage txn = transactions[transactionId];
             txn.executed = true;
-            if (external_call(txn.destination, txn.value, txn.data.length, txn.data))
+            if (txn.destination.call.value(txn.value)(txn.data))
                 Execution(transactionId);
             else {
                 ExecutionFailure(transactionId);
                 txn.executed = false;
             }
         }
-    }
-
-    // call has been separated into its own function in order to take advantage
-    // of the Solidity's code generator to produce a loop that copies tx.data into memory.
-    function external_call(address destination, uint value, uint dataLength, bytes data) private returns (bool) {
-        bool result;
-        assembly {
-            let x := mload(0x40)   // "Allocate" memory for output (0x40 is where "free memory" pointer is stored by convention)
-            let d := add(data, 32) // First 32 bytes are the padded length of data, so exclude that
-            result := call(
-                sub(gas, 34710),   // 34710 is the value that solidity is currently emitting
-                                   // It includes callGas (700) + callVeryLow (3, to pay for SUB) + callValueTransferGas (9000) +
-                                   // callNewAccountGas (25000, in case the destination address does not exist and needs creating)
-                destination,
-                value,
-                d,
-                dataLength,        // Size of the input (in bytes) - this is what fixes the padding problem
-                x,
-                0                  // Output is ignored, therefore the output size is zero
-            )
-        }
-        return result;
     }
 
     /// @dev Returns the confirmation status of a transaction.
