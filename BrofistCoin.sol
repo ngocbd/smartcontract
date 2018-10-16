@@ -1,25 +1,62 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BroFistCoin at 0xa701122c1b67220a8b6883d03c8ad67896b12466
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BroFistCoin at 0x9e5fa9927ac3c06046ae6c40e032b8d26195ed7f
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.21;
 
+interface IERC20 {
+    function totalSupply() constant returns (uint256 totalSupply);
+    function balanceOf(address _owner) constant returns (uint256 balance);
+    function transfer(address _to, uint256 _value) returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+    function approve(address _spender, uint256 _value) returns (bool success);
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+}
+
+
+
+
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
     uint256 c = a * b;
-    assert(a == 0 || c / a == b);
+    assert(c / a == b);
     return c;
   }
 
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
+  /**
+  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
   function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
@@ -27,271 +64,117 @@ library SafeMath {
   }
 }
 
-contract ForeignToken {
-    function balanceOf(address _owner) constant public returns (uint256);
-    function transfer(address _to, uint256 _value) public returns (bool);
-}
 
-contract ERC20Basic {
-    uint256 public totalSupply;
-    function balanceOf(address who) public constant returns (uint256);
-    function transfer(address to, uint256 value) public returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 value);
-}
 
-contract ERC20 is ERC20Basic {
-    function allowance(address owner, address spender) public constant returns (uint256);
-    function transferFrom(address from, address to, uint256 value) public returns (bool);
-    function approve(address spender, uint256 value) public returns (bool);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-interface Token { 
-    function distr(address _to, uint256 _value) public returns (bool);
-    function totalSupply() constant public returns (uint256 supply);
-    function balanceOf(address _owner) constant public returns (uint256 balance);
-}
-
-contract BroFistCoin is ERC20 {
+contract BroFistCoin is IERC20 {
     
     using SafeMath for uint256;
-    address owner = msg.sender;
-
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-    mapping (address => bool) public blacklist;
-
+    
+    uint public _totalSupply = 0; // Begins with 0 Coins
+    
+    string public constant symbol = "BRO";
     string public constant name = "BroFistCoin";
-    string public constant symbol = "PEW";
-    uint public constant decimals = 8;
+    uint8 public constant decimals = 18;  
+         
+    uint public startDate = 1520776800; // GMT/UTC: Sunday, 11. March 2018 2pm 
+    uint public endDate = 1525096800; // GMT/UTC: Monday, 30. April 2018 2pm 
     
-    uint256 public totalSupply = 50000000e8;
-    uint256 private totalReserved = (totalSupply.div(100)).mul(15);
-    uint256 private totalBounties = (totalSupply.div(100)).mul(5);
-    uint256 public totalDistributed = totalReserved.add(totalBounties);
-    uint256 public totalRemaining = totalSupply.sub(totalDistributed);
-    uint256 public value;
-    uint256 public minReq;
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    uint256 public constant maxSupply = 500000000 * 10**uint(decimals); // Max possible coins while crowdsale 500000000
+    uint256 public RATE = 50000; // 1 BRO = 0.00002 ETH --- 1 ETH = 50000 BRO 
     
-    event Distr(address indexed to, uint256 amount);
-    event DistrFinished();
+    uint256 public constant pewdiepie = 5000000 * 10**uint(decimals); // 1% reserved for Pewdiepie 5000000
     
-    event Burn(address indexed burner, uint256 value);
-
-    bool public distributionFinished = false;
+    address public owner;
     
-    modifier canDistr() {
-        require(!distributionFinished);
-        _;
+    mapping(address => uint256) balances;
+    mapping(address => mapping(address => uint256)) allowed;
+    
+   
+    // Bonus     
+    function applyBonus(uint256 tokens) returns (uint256){
+        uint genesisDuration = now - startDate;
+        if (genesisDuration <= 168 hours) {   
+            tokens = (tokens.mul(150).div(100)); // First 7 days 50% Bonus
+        } 
+        else if (genesisDuration <= 336 hours) {  
+            tokens = (tokens.mul(130).div(100)); // First 14 days 30% Bonus
+        }  
+        else if (genesisDuration <= 504 hours) {  
+            tokens = (tokens.mul(120).div(100)); // First 21 days 20% Bonus
+        } 
+        else if (genesisDuration <= 672 hours) {  
+            tokens = (tokens.mul(110).div(100)); // First 28 days 10% Bonus
+        } 
+        else {
+            tokens = tokens;
+        }  
+        return tokens;
+    } 
+    function () payable {
+        createTokens();
     }
     
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
+    function BroFistCoin(){  
+        owner = msg.sender;  
+        balances[msg.sender] = pewdiepie;  
+        _totalSupply = _totalSupply.add(pewdiepie);
+    }  
+    function createTokens() payable{
+        require(msg.value > 0);  
+        require(now >= startDate && now <= endDate);  
+        require(_totalSupply < maxSupply);   
+          
+        uint256 tokens = msg.value.mul(RATE); 
+        tokens = applyBonus(tokens); 
+        balances[msg.sender] = balances[msg.sender].add(tokens);
+        _totalSupply = _totalSupply.add(tokens);
+        
+        owner.transfer(msg.value);
     }
     
-    modifier onlyWhitelist() {
-        require(blacklist[msg.sender] == false);
-        _;
+    function totalSupply() constant returns (uint256 totalSupply){
+        return _totalSupply;
     }
     
-    function BroFistCoin (uint256 _value, uint256 _minReq) public {
-        owner = msg.sender;
-        value = _value;
-        minReq = _minReq;
-        balances[msg.sender] = totalDistributed;
+    function balanceOf(address _owner) constant returns (uint256 balance){
+        return balances[_owner];  
     }
     
-     function setParameters (uint256 _value, uint256 _minReq) onlyOwner public {
-        value = _value;
-        minReq = _minReq;
-    }
-
-    function transferOwnership(address newOwner) onlyOwner public {
-        if (newOwner != address(0)) {
-            owner = newOwner;
-        }
-    }
-    
-    function enableWhitelist(address[] addresses) onlyOwner public {
-        for (uint i = 0; i < addresses.length; i++) {
-            blacklist[addresses[i]] = false;
-        }
-    }
-
-    function disableWhitelist(address[] addresses) onlyOwner public {
-        for (uint i = 0; i < addresses.length; i++) {
-            blacklist[addresses[i]] = true;
-        }
-    }
-
-    function finishDistribution() onlyOwner canDistr public returns (bool) {
-        distributionFinished = true;
-        DistrFinished();
+    function transfer(address _to, uint256 _value) returns (bool success){
+        require(
+            balances[msg.sender] >= _value
+            && _value > 0
+        );
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        Transfer(msg.sender, _to, _value);
         return true;
     }
     
-    function distr(address _to, uint256 _amount) canDistr private returns (bool) {
-        totalDistributed = totalDistributed.add(_amount);
-        totalRemaining = totalRemaining.sub(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        Distr(_to, _amount);
-        Transfer(address(0), _to, _amount);
-        return true;
-        
-        if (totalDistributed >= totalSupply) {
-            distributionFinished = true;
-        }
-    }
-    
-    function airdrop(address[] addresses) onlyOwner canDistr public {
-        
-        require(addresses.length <= 255);
-        require(value <= totalRemaining);
-        
-        for (uint i = 0; i < addresses.length; i++) {
-            require(value <= totalRemaining);
-            distr(addresses[i], value);
-        }
-	
-        if (totalDistributed >= totalSupply) {
-            distributionFinished = true;
-        }
-    }
-    
-    function distribution(address[] addresses, uint256 amount) onlyOwner canDistr public {
-        
-        require(addresses.length <= 255);
-        require(amount <= totalRemaining);
-        
-        for (uint i = 0; i < addresses.length; i++) {
-            require(amount <= totalRemaining);
-            distr(addresses[i], amount);
-        }
-	
-        if (totalDistributed >= totalSupply) {
-            distributionFinished = true;
-        }
-    }
-    
-    function distributeAmounts(address[] addresses, uint256[] amounts) onlyOwner canDistr public {
-
-        require(addresses.length <= 255);
-        require(addresses.length == amounts.length);
-        
-        for (uint8 i = 0; i < addresses.length; i++) {
-            require(amounts[i] <= totalRemaining);
-            distr(addresses[i], amounts[i]);
-            
-            if (totalDistributed >= totalSupply) {
-                distributionFinished = true;
-            }
-        }
-    }
-    
-    function () external payable {
-            getTokens();
-     }
-    
-    function getTokens() payable canDistr onlyWhitelist public {
-        
-        require(value <= totalRemaining);
-        
-        address investor = msg.sender;
-        uint256 toGive = value;
-        
-        if (msg.value < minReq){
-            toGive = value.sub(value);
-        }
-        
-        distr(investor, toGive);
-        
-        if (toGive > 0) {
-            blacklist[investor] = true;
-        }
-
-        if (totalDistributed >= totalSupply) {
-            distributionFinished = true;
-        }
-    }
-
-    function balanceOf(address _owner) constant public returns (uint256) {
-	    return balances[_owner];
-    }
-
-    // mitigates the ERC20 short address attack
-    modifier onlyPayloadSize(uint size) {
-        assert(msg.data.length >= size + 4);
-        _;
-    }
-    
-    function transfer(address _to, uint256 _amount) onlyPayloadSize(2 * 32) public returns (bool success) {
-
-        require(_to != address(0));
-        require(_amount <= balances[msg.sender]);
-        
-        balances[msg.sender] = balances[msg.sender].sub(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        Transfer(msg.sender, _to, _amount);
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success){
+        require(
+            allowed[_from][msg.sender] >= _value
+            && balances[_from] >= _value
+            && _value > 0
+        );
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        Transfer(_from, _to, _value);
         return true;
     }
     
-    function transferFrom(address _from, address _to, uint256 _amount) onlyPayloadSize(3 * 32) public returns (bool success) {
-
-        require(_to != address(0));
-        require(_amount <= balances[_from]);
-        require(_amount <= allowed[_from][msg.sender]);
-        
-        balances[_from] = balances[_from].sub(_amount);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        Transfer(_from, _to, _amount);
-        return true;
-    }
-    
-    function approve(address _spender, uint256 _value) public returns (bool success) {
-        // mitigates the ERC20 spend/approval race condition
-        if (_value != 0 && allowed[msg.sender][_spender] != 0) { return false; }
+    function approve(address _spender, uint256 _value) returns (bool success){
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
     }
     
-    function allowance(address _owner, address _spender) constant public returns (uint256) {
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining){
         return allowed[_owner][_spender];
     }
     
-    function getTokenBalance(address tokenAddress, address who) constant public returns (uint){
-        ForeignToken t = ForeignToken(tokenAddress);
-        uint bal = t.balanceOf(who);
-        return bal;
-    }
+    event Transfer(address indexed _from, address indexed _to, uint256 _value); 
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
     
-    function withdraw() onlyOwner public {
-        uint256 etherBalance = this.balance;
-        owner.transfer(etherBalance);
-    }
-    
-    function burn(uint256 _value) onlyOwner public {
-        require(_value <= balances[msg.sender]);
-        // no need to require value <= totalSupply, since that would imply the
-        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
-
-        address burner = msg.sender;
-        balances[burner] = balances[burner].sub(_value);
-        totalSupply = totalSupply.sub(_value);
-        totalDistributed = totalDistributed.sub(_value);
-        Burn(burner, _value);
-    }
-    
-    function withdrawForeignTokens(address _tokenContract) onlyOwner public returns (bool) {
-        ForeignToken token = ForeignToken(_tokenContract);
-        uint256 amount = token.balanceOf(address(this));
-        return token.transfer(owner, amount);
-    }
-
-
 }
