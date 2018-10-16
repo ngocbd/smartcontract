@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CertifierDb at 0x5385d02f3a254ca716c144c7c333553a2e6ec931
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CertifierDb at 0x2bcd65daca1084f2e27daedfe6350fb632f4b1ec
 */
 pragma solidity ^0.4.2;
 
@@ -123,9 +123,6 @@ contract CertifierDb is Owned, CertifierDbI, BalanceFixable {
     }
 
     function CertifierDb() {
-        if (msg.value > 0) {
-            throw;
-        }
     }
 
     function addCertifier(address certifier)
