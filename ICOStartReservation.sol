@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICOStartReservation at 0xe6bb1eae6488aec1fcaf67cfaa10dcdf178d2899
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICOStartReservation at 0x8ddc117d6a7a5fcaa33579741bd34d50898b4d2d
 */
 /*
   8888888 .d8888b.   .d88888b.   .d8888b.  888                     888                 888      
