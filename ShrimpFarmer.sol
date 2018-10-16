@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShrimpFarmer at 0x1d3aa397363129069aa5957c5b817110918b7523
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShrimpFarmer at 0x06483d0742a254fcc92f7240b92a9e728da377b0
 */
 pragma solidity ^0.4.18; // solhint-disable-line
-/**
- * ShrimpFarm 2.0
- * Anti-bot 50 Starting.
- * Anti-whale 25% reduction in shrimp eggs when selling shrimp.
- **/
 
+// PepeFarmer 2.0
+// Anti-bot 50 Starting.
+// Anti-whale 25% reduction in shrimp eggs when selling shrimp.
+// Combat inflation as people Sell by not adding to total marketEggs.
 
+// 50 Tokens, seeded market of 8640000000 Eggs
 contract ShrimpFarmer{
     //uint256 EGGS_PER_SHRIMP_PER_SECOND=1;
     uint256 public EGGS_TO_HATCH_1SHRIMP=86400;//for final version should be seconds in a day
@@ -17,6 +17,7 @@ contract ShrimpFarmer{
     uint256 PSNH=5000;
     bool public initialized=false;
     address public ceoAddress;
+    uint256 public ceoDevfund;
     mapping (address => uint256) public hatcheryShrimp;
     mapping (address => uint256) public claimedEggs;
     mapping (address => uint256) public lastHatch;
@@ -25,6 +26,17 @@ contract ShrimpFarmer{
     function ShrimpFarmer() public{
         ceoAddress=msg.sender;
     }
+    /**
+     * Sends accumulated devFee to ceoAddress
+     * Doing it this way will save on transaction fees for users
+     */
+    function payCeo() payable public {
+      require(msg.sender == ceoAddress);
+      require(ceoDevfund > 0);
+      ceoAddress.transfer(ceoDevfund);
+      ceoDevfund = 0;
+    }
+    
     function hatchEggs(address ref) public{
         require(initialized);
         if(referrals[msg.sender]==0 && referrals[msg.sender]!=msg.sender){
@@ -40,7 +52,7 @@ contract ShrimpFarmer{
         claimedEggs[referrals[msg.sender]]=SafeMath.add(claimedEggs[referrals[msg.sender]],SafeMath.div(eggsUsed,5));
         
         //boost market to nerf shrimp hoarding
-        marketEggs=SafeMath.add(marketEggs,SafeMath.div(eggsUsed,10));
+        marketEggs=SafeMath.add(marketEggs,eggsUsed);
     }
     function sellEggs() public{
         require(initialized);
@@ -50,15 +62,20 @@ contract ShrimpFarmer{
         hatcheryShrimp[msg.sender]=SafeMath.mul(SafeMath.div(hatcheryShrimp[msg.sender],4),3);
         claimedEggs[msg.sender]=0;
         lastHatch[msg.sender]=now;
-        marketEggs=SafeMath.add(marketEggs,hasEggs);
-        ceoAddress.transfer(fee);
+        // Instead of adding marketEggs let's not adding marketEggs
+        // marketEggs=SafeMath.add(marketEggs,hasEggs);
+        // To save on fees put devFee in a pot to be removed by ceo instead of per transaction
+        // Old function: ceoAddress.transfer(fee);
+        ceoDevfund += fee;
         msg.sender.transfer(SafeMath.sub(eggValue,fee));
     }
     function buyEggs() public payable{
         require(initialized);
         uint256 eggsBought=calculateEggBuy(msg.value,SafeMath.sub(address(this).balance,msg.value));
         eggsBought=SafeMath.sub(eggsBought,devFee(eggsBought));
-        ceoAddress.transfer(devFee(msg.value));
+        // To save on fees put devFee in a pot to be removed by ceo instead of per transaction
+        // Old function: ceoAddress.transfer(devFee(msg.value));
+        ceoDevfund += devFee(msg.value);
         claimedEggs[msg.sender]=SafeMath.add(claimedEggs[msg.sender],eggsBought);
     }
     //magic trade balancing algorithm
@@ -76,7 +93,7 @@ contract ShrimpFarmer{
         return calculateEggBuy(eth,address(this).balance);
     }
     function devFee(uint256 amount) public pure returns(uint256){
-        return SafeMath.div(SafeMath.mul(amount,5),100);
+        return SafeMath.div(SafeMath.mul(amount,4),100);
     }
     function seedMarket(uint256 eggs) public payable{
         require(marketEggs==0);
