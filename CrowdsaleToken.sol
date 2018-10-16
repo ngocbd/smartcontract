@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleToken at 0xa645264c5603e96c3b0b078cdab68733794b0a71
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleToken at 0x8ae4bf2c33a8e667de34b54938b0ccd03eb8cc06
 */
 /*
  * ERC20 interface
@@ -476,7 +476,7 @@ library SafeMathLib {
 
   function plus(uint a, uint b) returns (uint) {
     uint c = a + b;
-    assert(c>=a && c>=b);
+    assert(c>=a);
     return c;
   }
 
@@ -503,20 +503,20 @@ contract MintableToken is StandardToken, Ownable {
   /** List of agents that are allowed to create new tokens */
   mapping (address => bool) public mintAgents;
 
+  event MintingAgentChanged(address addr, bool state  );
+
   /**
    * Create new tokens and allocate them to an address..
    *
    * Only callably by a crowdsale contract (mint agent).
    */
   function mint(address receiver, uint amount) onlyMintAgent canMint public {
-
-    if(amount == 0) {
-      throw;
-    }
-
     totalSupply = totalSupply.plus(amount);
     balances[receiver] = balances[receiver].plus(amount);
-    Minted(receiver, amount);
+
+    // This will make the mint transaction apper in EtherScan.io
+    // We can remove this after there is a standardized minting event
+    Transfer(0, receiver, amount);
   }
 
   /**
@@ -524,6 +524,7 @@ contract MintableToken is StandardToken, Ownable {
    */
   function setMintAgent(address addr, bool state) onlyOwner canMint public {
     mintAgents[addr] = state;
+    MintingAgentChanged(addr, state);
   }
 
   modifier onlyMintAgent() {
@@ -540,7 +541,6 @@ contract MintableToken is StandardToken, Ownable {
     _;
   }
 }
-
 
 
 
@@ -569,8 +569,14 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
    * Construct the token.
    *
    * This token must be created through a team multisig wallet, so that it is owned by that wallet.
+   *
+   * @param _name Token name
+   * @param _symbol Token symbol - should be all caps
+   * @param _initialSupply How many tokens we start with
+   * @param _decimals Number of decimal places
+   * @param _mintable Are new tokens created over the crowdsale or do we distribute only the initial supply? Note that when the token becomes transferable the minting always ends.
    */
-  function CrowdsaleToken(string _name, string _symbol, uint _initialSupply, uint _decimals)
+  function CrowdsaleToken(string _name, string _symbol, uint _initialSupply, uint _decimals, bool _mintable)
     UpgradeableToken(msg.sender) {
 
     // Create any address, can be transferred
@@ -587,6 +593,18 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
 
     // Create initially all balance on the team multisig
     balances[owner] = totalSupply;
+
+    if(totalSupply > 0) {
+      Minted(owner, totalSupply);
+    }
+
+    // No more new supply allowed after the token creation
+    if(!_mintable) {
+      mintingFinished = true;
+      if(totalSupply == 0) {
+        throw; // Cannot create a token without supply and no minting
+      }
+    }
   }
 
   /**
@@ -601,7 +619,7 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
    * Allow upgrade agent functionality kick in only if the crowdsale was success.
    */
   function canUpgrade() public constant returns(bool) {
-    return released;
+    return released && super.canUpgrade();
   }
 
   /**
