@@ -1,9 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xffbb1b01919b9d0acf4b2ceac7127dceeb8f909a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x78b29e7f87cd3e040b0bc1c3708c49022a31e441
 */
 pragma solidity ^0.4.4;
 
 contract Token {
+
+    /// Token-Info:
+    /// Bux
+    /// BUX
+    /// 0
+    /// 1.806.000.000
 
     /// @return total amount of tokens
     function totalSupply() constant returns (uint256 supply) {}
@@ -40,8 +46,6 @@ contract Token {
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
     
 }
-
-
 
 contract StandardToken is Token {
 
@@ -119,11 +123,11 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 10000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 10000000000;                        // Update total supply (100000 for example)
-        name = "IVATOR";                                   // Set the name for display purposes
-        decimals = 0;                              // Amount of decimals for display purposes
-        symbol = "IVAT";                                 // Set the symbol for display purposes
+        balances[msg.sender] = 1806000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 1806000000;                        // Update total supply (100000 for example)
+        name = "Bux";                                   // Set the name for display purposes
+        decimals = 0;                            // Amount of decimals for display purposes
+        symbol = "BUX";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
