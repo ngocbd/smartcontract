@@ -1,11 +1,91 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FeeBurner at 0x1e6eF17b78DD4E27b99C1cfd9Cd02A8A160AA95C
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FeeBurner at 0x7afc2b1a1be58e3a6f3b974b9e71e99b5a417c80
 */
 pragma solidity 0.4.18;
+
+// File: contracts/ERC20Interface.sol
+
+// https://github.com/ethereum/EIPs/issues/20
+interface ERC20 {
+    function totalSupply() public view returns (uint supply);
+    function balanceOf(address _owner) public view returns (uint balance);
+    function transfer(address _to, uint _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint _value) public returns (bool success);
+    function approve(address _spender, uint _value) public returns (bool success);
+    function allowance(address _owner, address _spender) public view returns (uint remaining);
+    function decimals() public view returns(uint digits);
+    event Approval(address indexed _owner, address indexed _spender, uint _value);
+}
+
+// File: contracts/FeeBurnerInterface.sol
 
 interface FeeBurnerInterface {
     function handleFees (uint tradeWeiAmount, address reserve, address wallet) public returns(bool);
 }
+
+// File: contracts/Utils.sol
+
+/// @title Kyber constants contract
+contract Utils {
+
+    ERC20 constant internal ETH_TOKEN_ADDRESS = ERC20(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
+    uint  constant internal PRECISION = (10**18);
+    uint  constant internal MAX_QTY   = (10**28); // 10B tokens
+    uint  constant internal MAX_RATE  = (PRECISION * 10**6); // up to 1M tokens per ETH
+    uint  constant internal MAX_DECIMALS = 18;
+    uint  constant internal ETH_DECIMALS = 18;
+    mapping(address=>uint) internal decimals;
+
+    function setDecimals(ERC20 token) internal {
+        if (token == ETH_TOKEN_ADDRESS) decimals[token] = ETH_DECIMALS;
+        else decimals[token] = token.decimals();
+    }
+
+    function getDecimals(ERC20 token) internal view returns(uint) {
+        if (token == ETH_TOKEN_ADDRESS) return ETH_DECIMALS; // save storage access
+        uint tokenDecimals = decimals[token];
+        // technically, there might be token with decimals 0
+        // moreover, very possible that old tokens have decimals 0
+        // these tokens will just have higher gas fees.
+        if(tokenDecimals == 0) return token.decimals();
+
+        return tokenDecimals;
+    }
+
+    function calcDstQty(uint srcQty, uint srcDecimals, uint dstDecimals, uint rate) internal pure returns(uint) {
+        require(srcQty <= MAX_QTY);
+        require(rate <= MAX_RATE);
+
+        if (dstDecimals >= srcDecimals) {
+            require((dstDecimals - srcDecimals) <= MAX_DECIMALS);
+            return (srcQty * rate * (10**(dstDecimals - srcDecimals))) / PRECISION;
+        } else {
+            require((srcDecimals - dstDecimals) <= MAX_DECIMALS);
+            return (srcQty * rate) / (PRECISION * (10**(srcDecimals - dstDecimals)));
+        }
+    }
+
+    function calcSrcQty(uint dstQty, uint srcDecimals, uint dstDecimals, uint rate) internal pure returns(uint) {
+        require(dstQty <= MAX_QTY);
+        require(rate <= MAX_RATE);
+        
+        //source quantity is rounded up. to avoid dest quantity being too low.
+        uint numerator;
+        uint denominator;
+        if (srcDecimals >= dstDecimals) {
+            require((srcDecimals - dstDecimals) <= MAX_DECIMALS);
+            numerator = (PRECISION * dstQty * (10**(srcDecimals - dstDecimals)));
+            denominator = rate;
+        } else {
+            require((dstDecimals - srcDecimals) <= MAX_DECIMALS);
+            numerator = (PRECISION * dstQty);
+            denominator = (rate * (10**(dstDecimals - srcDecimals)));
+        }
+        return (numerator + denominator - 1) / denominator; //avoid rounding down errors
+    }
+}
+
+// File: contracts/PermissionGroups.sol
 
 contract PermissionGroups {
 
@@ -130,65 +210,14 @@ contract PermissionGroups {
     }
 }
 
-contract Utils {
+// File: contracts/Withdrawable.sol
 
-    ERC20 constant internal ETH_TOKEN_ADDRESS = ERC20(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
-    uint  constant internal PRECISION = (10**18);
-    uint  constant internal MAX_QTY   = (10**28); // 10B tokens
-    uint  constant internal MAX_RATE  = (PRECISION * 10**6); // up to 1M tokens per ETH
-    uint  constant internal MAX_DECIMALS = 18;
-    uint  constant internal ETH_DECIMALS = 18;
-    mapping(address=>uint) internal decimals;
-
-    function setDecimals(ERC20 token) internal {
-        if (token == ETH_TOKEN_ADDRESS) decimals[token] = ETH_DECIMALS;
-        else decimals[token] = token.decimals();
-    }
-
-    function getDecimals(ERC20 token) internal view returns(uint) {
-        if (token == ETH_TOKEN_ADDRESS) return ETH_DECIMALS; // save storage access
-        uint tokenDecimals = decimals[token];
-        // technically, there might be token with decimals 0
-        // moreover, very possible that old tokens have decimals 0
-        // these tokens will just have higher gas fees.
-        if(tokenDecimals == 0) return token.decimals();
-
-        return tokenDecimals;
-    }
-
-    function calcDstQty(uint srcQty, uint srcDecimals, uint dstDecimals, uint rate) internal pure returns(uint) {
-        require(srcQty <= MAX_QTY);
-        require(rate <= MAX_RATE);
-
-        if (dstDecimals >= srcDecimals) {
-            require((dstDecimals - srcDecimals) <= MAX_DECIMALS);
-            return (srcQty * rate * (10**(dstDecimals - srcDecimals))) / PRECISION;
-        } else {
-            require((srcDecimals - dstDecimals) <= MAX_DECIMALS);
-            return (srcQty * rate) / (PRECISION * (10**(srcDecimals - dstDecimals)));
-        }
-    }
-
-    function calcSrcQty(uint dstQty, uint srcDecimals, uint dstDecimals, uint rate) internal pure returns(uint) {
-        require(dstQty <= MAX_QTY);
-        require(rate <= MAX_RATE);
-
-        //source quantity is rounded up. to avoid dest quantity being too low.
-        uint numerator;
-        uint denominator;
-        if (srcDecimals >= dstDecimals) {
-            require((srcDecimals - dstDecimals) <= MAX_DECIMALS);
-            numerator = (PRECISION * dstQty * (10**(srcDecimals - dstDecimals)));
-            denominator = rate;
-        } else {
-            require((dstDecimals - srcDecimals) <= MAX_DECIMALS);
-            numerator = (PRECISION * dstQty);
-            denominator = (rate * (10**(dstDecimals - srcDecimals)));
-        }
-        return (numerator + denominator - 1) / denominator; //avoid rounding down errors
-    }
-}
-
+/**
+ * @title Contracts that should be able to recover tokens or ethers
+ * @author Ilan Doron
+ * @dev This allows to recover any tokens or Ethers received in a contract.
+ * This will prevent any accidental loss of tokens.
+ */
 contract Withdrawable is PermissionGroups {
 
     event TokenWithdraw(ERC20 token, uint amount, address sendTo);
@@ -213,26 +242,34 @@ contract Withdrawable is PermissionGroups {
     }
 }
 
+// File: contracts/FeeBurner.sol
+
 interface BurnableToken {
     function transferFrom(address _from, address _to, uint _value) public returns (bool);
     function burnFrom(address _from, uint256 _value) public returns (bool);
 }
 
+
 contract FeeBurner is Withdrawable, FeeBurnerInterface, Utils {
 
     mapping(address=>uint) public reserveFeesInBps;
-    mapping(address=>address) public reserveKNCWallet;
-    mapping(address=>uint) public walletFeesInBps;
+    mapping(address=>address) public reserveKNCWallet; //wallet holding knc per reserve. from here burn and send fees.
+    mapping(address=>uint) public walletFeesInBps; // wallet that is the source of tx is entitled so some fees.
     mapping(address=>uint) public reserveFeeToBurn;
+    mapping(address=>uint) public feePayedPerReserve; // track burned fees and sent wallet fees per reserve.
     mapping(address=>mapping(address=>uint)) public reserveFeeToWallet;
+    address public taxWallet;
+    uint public taxFeeBps = 0; // burned fees are taxed. % out of burned fees.
 
     BurnableToken public knc;
     address public kyberNetwork;
     uint public kncPerETHRate = 300;
 
-    function FeeBurner(address _admin, BurnableToken kncToken) public {
+    function FeeBurner(address _admin, BurnableToken kncToken, address _kyberNetwork) public {
         require(_admin != address(0));
         require(kncToken != address(0));
+        require(_kyberNetwork != address(0));
+        kyberNetwork = _kyberNetwork;
         admin = _admin;
         knc = kncToken;
     }
@@ -249,13 +286,18 @@ contract FeeBurner is Withdrawable, FeeBurnerInterface, Utils {
         walletFeesInBps[wallet] = feesInBps;
     }
 
-    function setKyberNetwork(address _kyberNetwork) public onlyAdmin {
-        require(_kyberNetwork != address(0));
-        kyberNetwork = _kyberNetwork;
+    function setTaxInBps(uint _taxFeeBps) public onlyAdmin {
+        require(_taxFeeBps < 10000); // under 100%
+        taxFeeBps = _taxFeeBps;
+    }
+
+    function setTaxWallet(address _taxWallet) public onlyAdmin {
+        require(_taxWallet != address(0));
+        taxWallet = _taxWallet;
     }
 
     function setKNCRate(uint rate) public onlyAdmin {
-        require(kncPerETHRate <= MAX_RATE);
+        require(rate <= MAX_RATE);
         kncPerETHRate = rate;
     }
 
@@ -287,16 +329,31 @@ contract FeeBurner is Withdrawable, FeeBurnerInterface, Utils {
         return true;
     }
 
+
     // this function is callable by anyone
-    event BurnAssignedFees(address indexed reserve, address sender);
+    event BurnAssignedFees(address indexed reserve, address sender, uint quantity);
+    event SendTaxFee(address indexed reserve, address sender, address taxWallet, uint quantity);
 
     function burnReserveFees(address reserve) public {
         uint burnAmount = reserveFeeToBurn[reserve];
-        require(burnAmount > 1);
+        uint taxToSend = 0;
+        require(burnAmount > 2);
         reserveFeeToBurn[reserve] = 1; // leave 1 twei to avoid spikes in gas fee
+        if (taxWallet != address(0) && taxFeeBps != 0) {
+            taxToSend = (burnAmount - 1) * taxFeeBps / 10000;
+            require(burnAmount - 1 > taxToSend);
+            burnAmount -= taxToSend;
+            if (taxToSend > 0) {
+                require (knc.transferFrom(reserveKNCWallet[reserve], taxWallet, taxToSend));
+                SendTaxFee(reserve, msg.sender, taxWallet, taxToSend);
+            }
+        }
         require(knc.burnFrom(reserveKNCWallet[reserve], burnAmount - 1));
 
-        BurnAssignedFees(reserve, msg.sender);
+        //update reserve "payments" so far
+        feePayedPerReserve[reserve] += (taxToSend + burnAmount - 1);
+
+        BurnAssignedFees(reserve, msg.sender, (burnAmount - 1));
     }
 
     event SendWalletFees(address indexed wallet, address reserve, address sender);
@@ -308,17 +365,7 @@ contract FeeBurner is Withdrawable, FeeBurnerInterface, Utils {
         reserveFeeToWallet[reserve][wallet] = 1; // leave 1 twei to avoid spikes in gas fee
         require(knc.transferFrom(reserveKNCWallet[reserve], wallet, feeAmount - 1));
 
+        feePayedPerReserve[reserve] += (feeAmount - 1);
         SendWalletFees(wallet, reserve, msg.sender);
     }
-}
-
-interface ERC20 {
-    function totalSupply() public view returns (uint supply);
-    function balanceOf(address _owner) public view returns (uint balance);
-    function transfer(address _to, uint _value) public returns (bool success);
-    function transferFrom(address _from, address _to, uint _value) public returns (bool success);
-    function approve(address _spender, uint _value) public returns (bool success);
-    function allowance(address _owner, address _spender) public view returns (uint remaining);
-    function decimals() public view returns(uint digits);
-    event Approval(address indexed _owner, address indexed _spender, uint _value);
 }
