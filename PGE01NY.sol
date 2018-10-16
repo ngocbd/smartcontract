@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PGE01NY at 0xf43e6adbbdb569217c73838fa05ea5f538430958
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PGE01NY at 0xcfe109c184ee70dcb9954029de995847f0fe4b3f
 */
 pragma solidity ^0.4.18;
 
@@ -117,7 +117,7 @@ contract PGE01NY is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function PGE01NY() public {
-        symbol = "PGE01NY";
+        symbol = "PGE101NY";
         name = "Porini Global Events 01 New York";
         decimals = 0;
         _totalSupply = 99;
