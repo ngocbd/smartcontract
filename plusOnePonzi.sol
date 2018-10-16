@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract plusOnePonzi at 0xa850E6f693B9bCB31df3eE44e7888EF19E608107
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract plusOnePonzi at 0x16A4ff536001405f2B0d7ddAfC79f6A10D024640
 */
 contract plusOnePonzi {
 
-  uint public constant VALUE = 9 ether;
+  uint public constant VALUE = 901 finney;
 
 
   struct Payout {
@@ -15,7 +15,7 @@ contract plusOnePonzi {
   uint public payoutIndex = 0;
   uint public payoutTotal = 0;
 
-  function PlusOnePonzi() {
+  function plusOnePonzi() {
   }
 
   function() {
