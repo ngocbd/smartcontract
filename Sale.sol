@@ -1,8 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale at 0xc48ff50311a4c019bfe5f7f552eed87af70172b9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale at 0x8a7afe3a6dbf4c29a615758e9a88bc5cea71f0b4
 */
+// Copyright New Alchemy Limited, 2017. All rights reserved.
+
 pragma solidity >=0.4.10;
 
+// Just the bits of ERC20 that we need.
 contract Token {
 	function balanceOf(address addr) returns(uint);
 	function transfer(address to, uint amount) returns(bool);
@@ -32,6 +35,13 @@ contract Sale {
 
 	function () payable {
 		require(block.timestamp >= start);
+
+		// If we've reached end-of-sale conditions, accept
+		// this as the last contribution and emit the EndSale event.
+		// (Technically this means we allow exactly one contribution
+		// after the end of the sale.)
+		// Conversely, if we haven't started the sale yet, emit
+		// the StartSale event.
 		if (block.timestamp > end || this.balance > cap) {
 			require(live);
 			live = false;
@@ -47,6 +57,11 @@ contract Sale {
 		start = _start;
 		end = _end;
 		cap = _cap;
+	}
+
+	function softCap(uint _newend) onlyOwner {
+		require(_newend >= block.timestamp && _newend >= start && _newend <= end);
+		end = _newend;
 	}
 
 	// 1st half of ownership change
