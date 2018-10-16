@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xec362bef9d3b0b2875260819388d8ea5a59128d7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x2cdc03ccec8a8e7d349a472b8b49011bcd3307a1
 */
 pragma solidity ^0.4.4;
 
@@ -117,15 +117,17 @@ contract ERC20Token is StandardToken {
 
 //make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
 
-    function MUSPRA(
+    function ERC20Token(
         ) {
-        balances[msg.sender] = 101000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 101000000000000000000000000;                        // Update total supply (100000 for example)
-        name = "MUSPRA Coin";                                   // Set the name for display purposes
-        decimals = 18;                            // Amount of decimals for display purposes
-        symbol = "MPR";                               // Set the symbol for display purposes
+        balances[msg.sender] = 18000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 18000000000000000;                        // Update total supply (100000 for example)
+        name = "TULIPS";                                   // Set the name for display purposes
+        decimals = 8;                            // Amount of decimals for display purposes
+        symbol = "TULIPS";                               // Set the symbol for display purposes
+        
     }
-
+        
+        
     /* Approves and then calls the receiving contract */
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
