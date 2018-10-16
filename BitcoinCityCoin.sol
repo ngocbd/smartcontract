@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitcoinCityCoin at 0x798f4b0b2c4bfbe4928e857520414028b2718719
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitcoinCityCoin at 0xc4491e81c7fe666ab95912a5140ed2348f4e9400
 */
 pragma solidity ^0.4.17;
 
@@ -253,8 +253,8 @@ contract BurnableToken is MintableToken {
 }
 
 /**
- * @title SimpleTokenCoin
- * @dev SimpleToken is a standard ERC20 token with some additional functionality
+ * @title BitcoinCityCoin
+ * @dev BitcoinCityCoin is a standard ERC20 token with some additional functionality
  */
 contract BitcoinCityCoin is BurnableToken {
     
@@ -268,9 +268,9 @@ contract BitcoinCityCoin is BurnableToken {
     
     
     /**
-    * @dev The SimpleTokenCoin constructor mints tokens to four addresses.
+    * @dev The BitcoinCityCoin constructor mints tokens to four addresses.
     */
-    function BitcoinCityCoin()public {
+    function SimpleTokenCoin()public {
        balances[0xb2DeC9309Ca7047a6257fC83a95fcFc23Ab821DC] = 500000000 * 10**decimals;
     }
     
