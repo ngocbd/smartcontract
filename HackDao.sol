@@ -1,13 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HackDao at 0xcd3e727275bc2f511822dc9a26bd7b0bbf161784
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HackDao at 0xdcf59ee4803931a376a0fb6244036e49ebc7dd61
 */
-/* 
-http://platform.dao.casino 
-For questions contact noxon i448539@gmail.com
-*/
-
 pragma solidity ^0.4.8;
 
+//? ???? ???????? ????????? ?? ????????? ?????????? ??????? ??????
+//????? ????? ???? ????
+//???????? ????? ????????? ??????? ?? js,html,css
 //ide http://dapps.oraclize.it/browser-solidity/
 
 // <ORACLIZE_API>
@@ -322,139 +320,50 @@ contract usingOraclize {
 }
 // </ORACLIZE_API>
 
-
-
 contract HackDao is usingOraclize {
-  
-   struct Game {
-	    address player;
-	    bool results;
-	    uint betsvalue;
-	    uint betslevel;
-	}
-	
+ 
   mapping (bytes32 => address) bets;
   mapping (bytes32 => bool) public results; 
   mapping (bytes32 => uint) betsvalue;
-  mapping (bytes32 => uint) betslevel;
-  address public owner;
   
+  event Transfer(address indexed from, address indexed to, uint256 value);
+
   
-    
-  function HackDao() {
-    
-    if (owner>0) throw;
-    owner = msg.sender;
-    //oraclize_setNetwork(networkID_consensys);
-    }
+  function Contract() {
+    oraclize_setNetwork(networkID_consensys);
+  }
   
-  modifier onlyOwner {
-        if (msg.sender != owner)
-            throw;
-        _;
-    }
-	
   event LogB(bytes32 h);
-  event LogS(string s);
-  event LogI(uint s);
-    
-	  function game (uint level) payable returns (bytes32) {
-	   
-	   if (msg.value <= 0) throw;
-	   if (level > 10) throw;
-	   if (level < 1) throw;
-	   
-	   
-	   //temprorary  disabled
-	   /* 
-	   if (level == 1 && msg.value < 0.99 ether) throw;
-	   if (level == 2 && msg.value < 0.99 ether*1.09) throw;
-	   if (level == 3 && msg.value < 0.99 ether*1.3298) throw;
-	   if (level == 4 && msg.value < 0.99 ether*1.86172) throw;
-	   if (level == 5 && msg.value < 0.99 ether*3.0346036) throw;
-	   if (level == 6 && msg.value < 0.99 ether*5.947823056) throw;
-	   if (level == 7 && msg.value < 0.99 ether*14.5721664872) throw;
-	   if (level == 8 && msg.value < 0.99 ether*47.505262748272) throw;
-	   if (level == 9 && msg.value < 0.99 ether*232.7757874665328) throw;
-	   */
+	event LogS(string s);
+	event LogI(uint s);
 	  
-	   
-	   if (msg.value > 10 ether) throw;
-	   
-  	   uint random_number;
-  	   
-	   if (msg.value < 5 ether) {
-    	    myid = bytes32(keccak256(msg.sender, block.blockhash(block.number - 1)));
-    	    random_number = uint(block.blockhash(block.number-1))%10 + 1;
-	   } else {
-	        bytes32 myid = oraclize_query("WolframAlpha", "random integer number between 1 and 10");
-	   }
-  	   
+	  function game () payable returns (bytes32) {
+	   if (msg.value <= 0) throw;
+  	   bytes32 myid = oraclize_query("WolframAlpha", "random integer number between 0 and 1");
+  	   //LogI(price);
   	   bets[myid] = msg.sender;
-  	   betsvalue[myid] = msg.value; //-10000000000000000 ?????? ?? ??????? ???????? ?? ??????? ~0.01 eth
-  	   betslevel[myid] = level;
-  	   
-  	   if (random_number > 0) __callback(myid, uint2str(random_number),true);
-  	  
+  	   betsvalue[myid] = msg.value-10000000000000000; //?????? ?? ??????? ???????? ?? ??????? ~0.01 eth
   	   LogB(myid);
-  	   
-  	   
   	   return myid;
 	  }
 	 
-	  function get_return_by_level(uint level) {
-	      
-	  }
 	  
-
 	  function __callback(bytes32 myid, string result) {
-	      __callback(myid, result, false);
-	  }
-	   
-	  function __callback(bytes32 myid, string result, bool ishashranodm) {
         LogS('callback');
-        if (msg.sender != oraclize_cbAddress() && ishashranodm == false) throw;
+        if (msg.sender != oraclize_cbAddress()) throw;
        
         //log0(result);
-      
-        //TODO alex bash
-
         
-        LogB(myid);
-        
-        if (parseInt(result) > betslevel[myid]) {
-            LogS("win");
-            LogI(betslevel[myid]);
-            uint koef;
-            if (betslevel[myid] == 1) koef = 109; //90
-            if (betslevel[myid] == 2) koef = 122; //80
-            if (betslevel[myid] == 3) koef = 140; //70
-            if (betslevel[myid] == 4) koef = 163; //
-            if (betslevel[myid] == 5) koef = 196;
-            if (betslevel[myid] == 6) koef = 245;
-            if (betslevel[myid] == 7) koef = 326;
-            if (betslevel[myid] == 8) koef = 490;
-            if (betslevel[myid] == 9) koef = 980;
-            
-            if (!bets[myid].send(betsvalue[myid]*koef/100)) {LogS("bug! bet to winner was not sent!");} else {
-                //LogI();
+        if (parseInt(result) == 1) {
+            if (!bets[myid].send(betsvalue[myid]*2)) {LogS("bug! bet to winner was not sent!");} else {
+                LogS("sent");
+                LogI(betsvalue[myid]*2);
               }
             results[myid] = true;
         } else {
-                
-            LogS("lose");
             results[myid] = false;
         }
         
-      }
-      
-      
-      function ownerDeposit() payable onlyOwner  {
-        
-      }
-      
-      function ownerWithdrawl() onlyOwner  {
-        owner.send(this.balance);
       }
     
 }
