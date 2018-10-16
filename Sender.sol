@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sender at 0x28f01187b61d799f6d90a7c8c5325a9de95f025d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sender at 0x1d5ed1d93c516d327b1cde038319a3014dbcd46c
 */
 pragma solidity ^0.4.11;
 /*
@@ -14,7 +14,7 @@ MIT PGP KEY ID: 078E41CB
 
  contract token {
 
- 	function transfer(address _to, uint256 _value) returns (bool); 
+    function transfer(address _to, uint256 _value); 
  
  }
 
@@ -55,15 +55,19 @@ contract admined {
 
 contract Sender is admined {
     
-    token public DEEM;
+    token public ERC20Token;
     
-	function Sender (token _addressOfToken) public {
-		DEEM = _addressOfToken; 
-	}
-
+    function Sender (token _addressOfToken) public {
+        ERC20Token = _addressOfToken; 
+    }
+    /**
+    * @dev batch the adminship of the contract
+    * @param _data Array of addresses.
+    * @param _amount amount to transfer per address.
+    */
     function batch(address[] _data, uint256 _amount) onlyAdmin public { //It takes an array of addresses and an amount
         for (uint i=0; i<_data.length; i++) { //It moves over the array
-            require(DEEM.transfer(_data[i], _amount));
+            ERC20Token.transfer(_data[i], _amount);
         }
     }
 
