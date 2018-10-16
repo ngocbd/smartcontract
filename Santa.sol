@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Santa at 0x9b1a5a8fdea9af4016d8ab1304a3eb9af8f08242
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Santa at 0x260a9ceb69fd1dd0848cf9b1eef415feb1b9a580
 */
 pragma solidity ^0.4.18;
 
@@ -130,10 +130,10 @@ contract Santa {
 		require(msg.sender == santaFundWallet);
 		require(now >= startAirdropTime);
 	    
-	    uint256 bonusRate = tokensForBonus.div(tokensSold); 
+	    uint bonusRate = tokensForBonus.div(tokensSold); 
 		for(uint i = 0; i < santaGiftList.length; i++) {
 		    if (balanceOf[santaGiftList[i]] > 0) { 
-				uint256 bonus = balanceOf[santaGiftList[i]].mul(bonusRate);
+				uint bonus = balanceOf[santaGiftList[i]].mul(bonusRate);
 				transferFrom(santaFundWallet, santaGiftList[i], bonus);
 		    }
 		}
