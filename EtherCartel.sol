@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherCartel at 0x8c069c70e265a36738753e1707a8999111f655db
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherCartel at 0x5088b94cf8a1143eb228b6d3f008350ca742ddc2
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
@@ -12,7 +12,7 @@ contract EtherCartel{
     uint256 PSN=10000;
     uint256 PSNH=5000;
     bool public initialized=false;
-    address public ceoAddress;
+    address public ceoAddress=0x85abE8E3bed0d4891ba201Af1e212FE50bb65a26;
     mapping (address => uint256) public Kilos;
     mapping (address => uint256) public claimedDrugs;
     mapping (address => uint256) public lastCollect;
