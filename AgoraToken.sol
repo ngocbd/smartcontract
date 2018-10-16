@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AgoraToken at 0xbf97ddee05ed6a21b13b5b173a113bd18f48ceb3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AgoraToken at 0xbea80c6235486cb352f488f4be14141fe4d788d2
 */
 pragma solidity ^0.4.8;
 
@@ -16,37 +16,37 @@ contract ERC20Interface {
 }
 
 contract AgoraToken is ERC20Interface {
-  address contractOwner;
+
   string public constant name = "Agora";
   string public constant symbol = "AGO";
-  uint8 public constant decimals = 0;
+  uint8  public constant decimals = 18;
+
+  uint256 constant minimumToRaise = 1000 ether;
+  uint256 constant icoStartBlock = 4116800;
+  uint256 constant icoPremiumEndBlock = icoStartBlock + 78776; // Two weeks
+  uint256 constant icoEndBlock = icoStartBlock + 315106; // Two months
+
+  address owner;
+  uint256 raised = 0;
+  uint256 created = 0;
 
   struct BalanceSnapshot {
     bool initialized;
     uint256 value;
   }
 
+  mapping(address => uint256) shares;
   mapping(address => uint256) balances;
   mapping(address => mapping (address => uint256)) allowed;
   mapping(uint256 => mapping (address => BalanceSnapshot)) balancesAtBlock;
 
-  uint256 public constant creatorSupply = 30000000;
-  uint256 public constant seriesASupply = 10000000;
-  uint256 public constant seriesBSupply = 30000000;
-  uint256 public constant seriesCSupply = 60000000;
-
-  uint256 public currentlyReleased = 0;
-  uint256 public valueRaised = 0;
-
-  // When building the contract, we release 30,000,000 tokens
-  // to the creator address.
   function AgoraToken() {
-    contractOwner = msg.sender;
-    balances[contractOwner] = creatorSupply;
-    currentlyReleased += creatorSupply;
+    owner = msg.sender;
   }
 
+  // ==========================
   // ERC20 Logic Implementation
+  // ==========================
 
   // Returns the balance of an address.
   function balanceOf(address _owner) constant returns (uint256 balance) {
@@ -55,12 +55,18 @@ contract AgoraToken is ERC20Interface {
 
   // Make a transfer of AGO between two addresses.
   function transfer(address _to, uint256 _value) returns (bool success) {
-    if (balances[msg.sender] >= _value && _value > 0) {
+    // Freeze for dev team
+    require(msg.sender != owner);
+
+    if (balances[msg.sender] >= _value &&
+        _value > 0 &&
+        balances[_to] + _value > balances[_to]) {
       // We need to register the balance known for the last reference block.
       // That way, we can be sure that when the Claimer wants to check the balance
       // the system can be protected against double-spending AGO tokens claiming.
-      registerBalanceForReference(msg.sender);
-      registerBalanceForReference(_to);
+      uint256 referenceBlockNumber = latestReferenceBlockNumber();
+      registerBalanceForReference(msg.sender, referenceBlockNumber);
+      registerBalanceForReference(_to, referenceBlockNumber);
 
       // Standard transfer stuff
       balances[msg.sender] -= _value;
@@ -71,13 +77,17 @@ contract AgoraToken is ERC20Interface {
   }
 
   function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-    if(balances[_from] >= _value && _value > 0 && allowed[_from][msg.sender] >= _value) {
+    if(balances[_from] >= _value &&
+       _value > 0 &&
+       allowed[_from][msg.sender] >= _value &&
+       balances[_to] + _value > balances[_to]) {
       // Same as `transfer` :
       // We need to register the balance known for the last reference block.
       // That way, we can be sure that when the Claimer wants to check the balance
       // the system can be protected against double-spending AGO tokens claiming.
-      registerBalanceForReference(_from);
-      registerBalanceForReference(_to);
+      uint256 referenceBlockNumber = latestReferenceBlockNumber();
+      registerBalanceForReference(_from, referenceBlockNumber);
+      registerBalanceForReference(_to, referenceBlockNumber);
 
       // Standard transferFrom stuff
       balances[_from] -= _value;
@@ -90,6 +100,9 @@ contract AgoraToken is ERC20Interface {
 
   // Approve a payment from msg.sender account to another one.
   function approve(address _spender, uint256 _value) returns (bool success) {
+    // Freeze for dev team
+    require(msg.sender != owner);
+
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
     return true;
@@ -101,62 +114,56 @@ contract AgoraToken is ERC20Interface {
   }
 
   // Returns the total supply of token issued.
-  function totalSupply() constant returns (uint256 totalSupply) {
-    return creatorSupply + seriesASupply + seriesBSupply + seriesCSupply;
-  }
+  function totalSupply() constant returns (uint256 totalSupply) { return created; }
 
+  // ========================
   // ICO Logic Implementation
+  // ========================
 
-  // Get tokens with a Ether payment.
+  // ICO Status overview. Used for Agora landing page
+  function icoOverview() constant returns(
+    uint256 currentlyRaised,
+    uint256 tokensCreated,
+    uint256 developersTokens
+  ){
+    currentlyRaised = raised;
+    tokensCreated = created;
+    developersTokens = balances[owner];
+  }
+
+  // Get Agora tokens with a Ether payment.
   function() payable {
-    // Require to be after block 4116800 to start the ICO.
-    require(block.number > 4116800);
+    require(block.number > icoStartBlock && block.number < icoEndBlock);
 
-    // Require a value to be sent.
-    require(msg.value >= 0);
+    uint256 tokenAmount = msg.value * ((block.number < icoPremiumEndBlock) ? 550 : 500);
 
-    // Retrieve the current round information
-    var(pricePerThousands, supplyRemaining) = currentRoundInformation();
+    shares[msg.sender] += msg.value;
+    balances[msg.sender] += tokenAmount;
+    balances[owner] += tokenAmount / 6;
 
-    // Require a round to be started (currentRoundInformation return 0,0 if no
-    // round is in progress).
-    require(pricePerThousands > 0);
-
-    // Make the calculation : how many AGO token for this Ether value.
-    uint256 tokenToReceive = (msg.value * 1000 / pricePerThousands);
-
-    // Require there is enough token remaining in the supply.
-    require(tokenToReceive <= supplyRemaining);
-
-    // Credits the user balance with this tokens.
-    balances[msg.sender] += tokenToReceive;
-    currentlyReleased += tokenToReceive;
-    valueRaised += msg.value;
+    raised += msg.value;
+    created += tokenAmount;
   }
 
-  // Returns the current ICO round information.
-  // pricePerThousands is the current X ether = 1000 AGO
-  // supplyRemaining is the remaining supply of ether at this price
-  function currentRoundInformation() constant returns (uint256 pricePerThousands, uint256 supplyRemaining) {
-    if(currentlyReleased >= 30000000 && currentlyReleased < 40000000) {
-      return(0.75 ether, 40000000-currentlyReleased);
-    } else if(currentlyReleased >= 40000000 && currentlyReleased < 70000000) {
-      return(1.25 ether, 70000000-currentlyReleased);
-    } else if(currentlyReleased >= 70000000 && currentlyReleased < 130000000) {
-      return(1.5 ether, 130000000-currentlyReleased);
-    } else {
-      return(0,0);
-    }
-  }
-
-  // Method use by the creators. Used to retrieve the Ethers raised from the ICO.
+  // Method use by the creators. Requires the ICO to be a success.
+  // Used to retrieve the Ethers raised from the ICO.
   // That way, Agora is becoming possible :).
-  function withdrawICO(uint256 amount) {
-    require(msg.sender == contractOwner);
-    contractOwner.transfer(amount);
+  function withdraw(uint256 amount) {
+    require(block.number > icoEndBlock && raised >= minimumToRaise && msg.sender == owner);
+    owner.transfer(amount);
   }
 
-  // Claiming Logic Implementation
+  // Methods use by the ICO investors. Requires the ICO to be a fail.
+  function refill() {
+    require(block.number > icoEndBlock && raised < minimumToRaise);
+    uint256 share = shares[msg.sender];
+    shares[msg.sender] = 0;
+    msg.sender.transfer(share);
+  }
+
+  // ============================
+  // Claimer Logic Implementation
+  // ============================
   // This part is used by the claimer.
   // The claimer can ask the balance of an user at a reference block.
   // That way, the claimer is protected against double-spending AGO claimings.
@@ -166,8 +173,7 @@ contract AgoraToken is ERC20Interface {
   // saved for this block yet.
   // Meaning that this is a the first transaction since the last reference block,
   // so this balance can be uses as the reference.
-  function registerBalanceForReference(address _owner) private {
-    uint256 referenceBlockNumber = latestReferenceBlockNumber();
+  function registerBalanceForReference(address _owner, uint256 referenceBlockNumber) private {
     if (balancesAtBlock[referenceBlockNumber][_owner].initialized) { return; }
     balancesAtBlock[referenceBlockNumber][_owner].initialized = true;
     balancesAtBlock[referenceBlockNumber][_owner].value = balances[_owner];
@@ -178,7 +184,7 @@ contract AgoraToken is ERC20Interface {
     return (block.number - block.number % 157553);
   }
 
-  // What is the valance of an user at a block ?
+  // What is the balance of an user at a block ?
   // If the user have made (or received) a transfer of AGO token since the
   // last reference block, its balance will be written in the `balancesAtBlock`
   // mapping. So we can retrieve it from here.
