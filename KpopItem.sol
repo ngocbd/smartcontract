@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KpopItem at 0xbb0002850a8b3f7cffefbe56804cf864332039d6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KpopItem at 0xf28460e6c571f1d1e481c81dd84973f9b00e1b7b
 */
 // KpopItem is a ERC-721 item (https://github.com/ethereum/eips/issues/721)
 // Each KpopItem has its connected KpopToken itemrity card
@@ -7,6 +7,11 @@
 
 pragma solidity ^0.4.18;
 
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
 
   /**
@@ -191,15 +196,23 @@ contract KpopItem is ERC721 {
 
   /** START FUNCTIONS FOR AUTHORS **/
 
-  function createItem(string _name, uint _price, uint _celebId, uint[6] _traitValues) public onlyManufacturer {
+  function createItem(string _name, uint _price, uint _celebId, address _owner, uint[6] _traitValues) public onlyManufacturer {
     require(_price >= MIN_STARTING_PRICE);
 
+    address owner = _owner == 0x0 ? author : _owner;
     uint itemId = items.push(Item(_name)) - 1;
-    itemIdToOwner[itemId] = author;
+    itemIdToOwner[itemId] = owner;
     itemIdToPrice[itemId] = _price;
     itemIdToCelebId[itemId] = _celebId;
     itemIdToTraitValues[itemId] = _traitValues; // TODO: fetch celeb traits later
-    userToNumItems[author]++;
+    userToNumItems[owner]++;
+  }
+
+  function updateItem(uint _itemId, string _name, uint[6] _traitValues) public onlyAuthors {
+    require(_itemId >= 0 && _itemId < totalSupply());
+
+    items[_itemId].name = _name;
+    itemIdToTraitValues[_itemId] = _traitValues;
   }
 
   function withdraw(uint _amount, address _to) public onlyAuthors {
