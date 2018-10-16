@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenRegistry at 0xa21c1f2ae7f721ae77b1204a4f0811c642638da9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenRegistry at 0xad3407dedc56a1f69389edc191b770f0c935ea37
 */
 /*
   Copyright 2017 Loopring Project Ltd (Loopring Foundation).
@@ -13,7 +13,36 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-pragma solidity 0.4.19;
+pragma solidity 0.4.21;
+/// @title Utility Functions for address
+/// @author Daniel Wang - <daniel@loopring.org>
+library AddressUtil {
+    function isContract(address addr)
+        internal
+        view
+        returns (bool)
+    {
+        if (addr == 0x0) {
+            return false;
+        } else {
+            uint size;
+            assembly { size := extcodesize(addr) }
+            return size > 0;
+        }
+    }
+}
+/*
+  Copyright 2017 Loopring Project Ltd (Loopring Foundation).
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+  http://www.apache.org/licenses/LICENSE-2.0
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
 /*
   Copyright 2017 Loopring Project Ltd (Loopring Foundation).
   Licensed under the Apache License, Version 2.0 (the "License");
@@ -63,7 +92,7 @@ contract Ownable {
     /// @param newOwner The address to transfer ownership to.
     function transferOwnership(address newOwner) onlyOwner public {
         require(newOwner != 0x0);
-        OwnershipTransferred(owner, newOwner);
+        emit OwnershipTransferred(owner, newOwner);
         owner = newOwner;
     }
 }
@@ -85,7 +114,7 @@ contract Claimable is Ownable {
     }
     /// @dev Allows the pendingOwner address to finalize the transfer.
     function claimOwnership() onlyPendingOwner public {
-        OwnershipTransferred(owner, pendingOwner);
+        emit OwnershipTransferred(owner, pendingOwner);
         owner = pendingOwner;
         pendingOwner = 0x0;
     }
@@ -95,6 +124,8 @@ contract Claimable is Ownable {
 /// @author Kongliang Zhong - <kongliang@loopring.org>,
 /// @author Daniel Wang - <daniel@loopring.org>.
 contract TokenRegistry is Claimable {
+    using AddressUtil for address;
+    address tokenMintAddr;
     address[] public addresses;
     mapping (address => TokenInfo) addressMap;
     mapping (string => address) symbolMap;
@@ -118,6 +149,11 @@ contract TokenRegistry is Claimable {
     function () payable public {
         revert();
     }
+    function TokenRegistry(address _tokenMintAddr) public
+    {
+        require(_tokenMintAddr.isContract());
+        tokenMintAddr = _tokenMintAddr;
+    }
     function registerToken(
         address addr,
         string  symbol
@@ -125,14 +161,16 @@ contract TokenRegistry is Claimable {
         external
         onlyOwner
     {
-        require(0x0 != addr);
-        require(bytes(symbol).length > 0);
-        require(0x0 == symbolMap[symbol]);
-        require(0 == addressMap[addr].pos);
-        addresses.push(addr);
-        symbolMap[symbol] = addr;
-        addressMap[addr] = TokenInfo(addresses.length, symbol);
-        TokenRegistered(addr, symbol);
+        registerTokenInternal(addr, symbol);
+    }
+    function registerMintedToken(
+        address addr,
+        string  symbol
+        )
+        external
+    {
+        require(msg.sender == tokenMintAddr);
+        registerTokenInternal(addr, symbol);
     }
     function unregisterToken(
         address addr,
@@ -157,7 +195,7 @@ contract TokenRegistry is Claimable {
             addressMap[lastToken].pos = pos;
         }
         addresses.length--;
-        TokenUnregistered(addr, symbol);
+        emit TokenUnregistered(addr, symbol);
     }
     function areAllTokensRegistered(address[] addressList)
         external
@@ -215,5 +253,20 @@ contract TokenRegistry is Claimable {
         for (uint i = start; i < end; i++) {
             addressList[i - start] = addresses[i];
         }
+    }
+    function registerTokenInternal(
+        address addr,
+        string  symbol
+        )
+        internal
+    {
+        require(0x0 != addr);
+        require(bytes(symbol).length > 0);
+        require(0x0 == symbolMap[symbol]);
+        require(0 == addressMap[addr].pos);
+        addresses.push(addr);
+        symbolMap[symbol] = addr;
+        addressMap[addr] = TokenInfo(addresses.length, symbol);
+        emit TokenRegistered(addr, symbol);
     }
 }
