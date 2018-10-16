@@ -1,12 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JWCToken at 0xf0840466b8ac28ec53fb78561399316a18769f55
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JWCToken at 0x323a60675142021adc78b147c72d479de923f4a5
 */
 pragma solidity ^0.4.18;
-
-/**
- * @author Hieu Phan - https://github.com/phanletrunghieu
- * @author Hanh Pham - https://github.com/HanhPhamPhuoc
- */
 
 /**
  * @title SafeMath
@@ -23,9 +18,7 @@ library SafeMath {
   }
 
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
@@ -371,7 +364,7 @@ contract JWCToken is ERC20BasicToken {
  * Store config of phase ICO
  */
 contract IcoPhase {
-  uint256 public constant phasePresale_From = 1515679200;//14h 20/01/2018 GMT (test 14h 11/01/2018 GMT)
+  uint256 public constant phasePresale_From = 1516456800;//14h 20/01/2018 GMT
   uint256 public constant phasePresale_To = 1517839200;//14h 05/02/2018 GMT
 
   uint256 public constant phasePublicSale1_From = 1519912800;//14h 01/03/2018 GMT
@@ -674,7 +667,7 @@ contract IcoContract is IcoPhase, Ownable, Pausable, Affiliate, Bonus {
 	uint256 public tokenRemainPreSale;//tokens remain for pre-sale
 	uint256 public tokenRemainPublicSale;//tokens for public-sale
 
-	address public ethFundDeposit = 0x3A94528d2a5986Cd2825eE0DA16328dAbc461559;//multi-sig wallet
+	address public ethFundDeposit = 0x133f29F316Aac08ABC0b39b5CdbD0E7f134671dB;//multi-sig wallet
 	address public tokenAddress;
 
 	bool public isFinalized;
