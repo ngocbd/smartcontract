@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DayTrader at 0x15a322aaca55b30112b7f43b4c737e448cccc8ab
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DayTrader at 0x722ab587b0f710cf60c19d89b31127a616eed97b
 */
 pragma solidity ^0.4.18;
 
