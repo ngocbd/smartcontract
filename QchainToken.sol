@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QchainToken at 0xc438b4c0dfbb1593be6dee03bbd1a84bb3aa6213
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QchainToken at 0xb478c246c27a8dc083a07d82bc368a0a9494663e
 */
 pragma solidity ^0.4.18;
 
@@ -291,8 +291,8 @@ contract QchainToken is Token {
         require(multisig.send(msg.value));
 
         // Allocate tokens to an investor
-        balances[icoAllocation] -= tokensNumber;
-        balances[investor] += tokensNumber;
+        balances[icoAllocation] = sub(balances[icoAllocation], tokensNumber);
+        balances[investor] = add(balances[icoAllocation], tokensNumber);
         Transfer(icoAllocation, investor, tokensNumber);
     }
 
