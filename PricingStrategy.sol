@@ -1,8 +1,86 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PricingStrategy at 0xbbb26e9d4643dc8fc069b30af64e9bf32d60a587
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PricingStrategy at 0x71923ef72c78e381d2f1461bad408f80ae692c69
 */
 pragma solidity ^0.4.15;
 
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+/**
+ * @title Contracts that should not own Ether
+ * @author Remco Bloemen <remco@2?.com>
+ * @dev This tries to block incoming ether to prevent accidental loss of Ether. Should Ether end up
+ * in the contract, it will allow the owner to reclaim this ether.
+ * @notice Ether can still be send to this contract by:
+ * calling functions labeled `payable`
+ * `selfdestruct(contract_address)`
+ * mining directly to the contract address
+*/
+contract HasNoEther is Ownable {
+
+  /**
+  * @dev Constructor that rejects incoming Ether
+  * @dev The `payable` flag is added so we can access `msg.value` without compiler warning. If we
+  * leave out payable, then Solidity will allow inheriting contracts to implement a payable
+  * constructor. By doing it this way we prevent a payable constructor from working. Alternatively
+  * we could use assembly to access msg.value.
+  */
+  function HasNoEther() payable {
+    require(msg.value == 0);
+  }
+
+  /**
+   * @dev Disallows direct send by settings a default function without the `payable` flag.
+   */
+  function() external {
+  }
+
+  /**
+   * @dev Transfer all Ether held by the contract to the owner.
+   */
+  function reclaimEther() external onlyOwner {
+    assert(owner.send(this.balance));
+  }
+}
 
 /**
  * @title SafeMath
@@ -34,39 +112,39 @@ library SafeMath {
   }
 }
 
-contract PricingStrategy {
-
+/**
+ * Fixed crowdsale pricing - everybody gets the same price.
+ */
+contract PricingStrategy is HasNoEther {
     using SafeMath for uint;
 
-    uint[6] public limits;
-    uint[6] public rates;
+    /* How many weis one token costs */
+    uint256 public oneTokenInWei;
 
-    function PricingStrategy(
-        uint[6] _limits,
-        uint[6] _rates
-    ) public 
-    {
-        require(_limits.length == _rates.length);
-        
-        limits = _limits;
-        rates = _rates;
+    address public crowdsaleAddress;
+
+    function PricingStrategy(address _crowdsale) {
+        crowdsaleAddress = _crowdsale;
     }
 
-    /** Interface declaration. */
-    function isPricingStrategy() public constant returns (bool) {
+    modifier onlyCrowdsale() {
+        require(msg.sender == crowdsaleAddress);
+        _;
+    }
+
+    /**
+     * Calculate the current price for buy in amount.
+     *
+     */
+    function calculatePrice(uint256 _value, uint256 _decimals) public constant returns (uint) {
+        uint256 multiplier = 10 ** _decimals;
+        uint256 weiAmount = _value.mul(multiplier);
+        uint256 tokens = weiAmount.div(oneTokenInWei);
+        return tokens;
+    }
+
+    function setTokenPriceInWei(uint _oneTokenInWei) onlyCrowdsale public returns (bool) {
+        oneTokenInWei = _oneTokenInWei;
         return true;
-    }
-
-    /** Calculate the current price for buy in amount. */
-    function calculateTokenAmount(uint weiAmount, uint tokensSold) public constant returns (uint tokenAmount) {
-        uint rate = 0;
-
-        for (uint8 i = 0; i < limits.length; i++) {
-            if (tokensSold >= limits[i]) {
-                rate = rates[i];
-            }
-        }
-
-        return weiAmount.mul(rate);
     }
 }
