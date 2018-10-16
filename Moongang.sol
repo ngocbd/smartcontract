@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Moongang at 0xd2943044a142895fe07650c3bcd70bd2e17885d9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Moongang at 0x45aaf948ca47329f0059facb78806f1c63a3d197
 */
 // Author : shift
 
@@ -51,7 +51,7 @@ contract ERC20 {
 */
 
 contract Moongang {
-
+  using SafeMath for uint256;
   modifier onlyOwner {
     require(msg.sender == owner);
     _;
@@ -85,8 +85,6 @@ contract Moongang {
   //Store the amount of ETH deposited by each account.
   mapping (address => uint256) public balances;
   mapping (address => uint256) public balances_bonus;
-  //whitelist
-  mapping (address => bool) public whitelist;
   // Track whether the contract has bought the tokens yet.
   bool public bought_tokens;
   // Record ETH value of tokens currently held by contract.
@@ -104,8 +102,7 @@ contract Moongang {
   bool public allow_refunds;
   //The reduction of the allocation in % | example : 40 -> 40% reduction
   uint256 public percent_reduction;
-  //flag controlled by owner to enable/disable whitelists
-  bool public whitelist_enabled;
+  bool public owner_supplied_eth;
 
   //Internal functions
   function Moongang(uint256 max, uint256 min, uint256 cap) {
@@ -116,14 +113,12 @@ contract Moongang {
     max_amount = SafeMath.div(SafeMath.mul(max, 100), 99);
     min_amount = min;
     individual_cap = cap;
-    //enable whitelist by default
-    whitelist_enabled = true;
   }
 
   //Functions for the owner
 
   // Buy the tokens. Sends ETH to the presale wallet and records the ETH amount held in the contract.
-  function buy_the_tokens() onlyOwner minAmountReached {
+  function buy_the_tokens() onlyOwner minAmountReached underMaxAmount {
     //Avoids burning the funds
     require(!bought_tokens && sale != 0x0);
     //Record that the contract has bought the tokens.
@@ -151,31 +146,18 @@ contract Moongang {
   }
 
   function force_partial_refund(address _to_refund) onlyOwner {
-    require(percent_reduction > 0);
+    require(bought_tokens && percent_reduction > 0);
     //Amount to refund is the amount minus the X% of the reduction
     //amount_to_refund = balance*X
-    uint256 basic_amount = SafeMath.div(SafeMath.mul(balances[_to_refund], percent_reduction), 100);
-    uint256 eth_to_withdraw = basic_amount;
-    if (!bought_tokens) {
-      //We have to take in account the partial refund of the fee too if the tokens weren't bought yet
-      eth_to_withdraw = SafeMath.div(SafeMath.mul(basic_amount, 100), 99);
-      fees = SafeMath.sub(fees, SafeMath.div(eth_to_withdraw, FEE));
-    }
-    balances[_to_refund] = SafeMath.sub(balances[_to_refund], eth_to_withdraw);
+    uint256 amount = SafeMath.div(SafeMath.mul(balances[_to_refund], percent_reduction), 100);
+    balances[_to_refund] = SafeMath.sub(balances[_to_refund], amount);
     balances_bonus[_to_refund] = balances[_to_refund];
-    _to_refund.transfer(eth_to_withdraw);
-  }
-
-  function whitelist_addys(address[] _addys) onlyOwner {
-    for (uint256 i = 0; i < _addys.length; i++) {
-      whitelist[_addys[i]] = true;
+    if (owner_supplied_eth) {
+      //dev fees aren't refunded, only owner fees
+      uint256 fee = amount.div(FEE).mul(percent_reduction).div(100);
+      amount = amount.add(fee);
     }
-  }
-
-  function blacklist_addys(address[] _addys) onlyOwner {
-    for (uint256 i = 0; i < _addys.length; i++) {
-      whitelist[_addys[i]] = false;
-    }
+    _to_refund.transfer(amount);
   }
 
   function set_sale_address(address _sale) onlyOwner {
@@ -200,13 +182,15 @@ contract Moongang {
     allow_refunds = _boolean;
   }
 
-  function set_percent_reduction(uint256 _reduction) onlyOwner {
-    require(_reduction <= 100);
+  function set_percent_reduction(uint256 _reduction) onlyOwner payable {
+    require(bought_tokens && _reduction <= 100);
     percent_reduction = _reduction;
-  }
-
-  function set_whitelist_enabled(bool _boolean) onlyOwner {
-    whitelist_enabled = _boolean;
+    if (msg.value > 0) {
+      owner_supplied_eth = true;
+    }
+    //we substract by contract_eth_value*_reduction basically
+    contract_eth_value = contract_eth_value.sub((contract_eth_value.mul(_reduction)).div(100));
+    contract_eth_value_bonus = contract_eth_value;
   }
 
   function change_individual_cap(uint256 _cap) onlyOwner {
@@ -281,27 +265,23 @@ contract Moongang {
   //Allows any user to get a part of his ETH refunded, in proportion
   //to the % reduced of the allocation
   function partial_refund() {
-    require(allow_refunds && percent_reduction > 0);
+    require(bought_tokens && percent_reduction > 0);
     //Amount to refund is the amount minus the X% of the reduction
     //amount_to_refund = balance*X
-    uint256 basic_amount = SafeMath.div(SafeMath.mul(balances[msg.sender], percent_reduction), 100);
-    uint256 eth_to_withdraw = basic_amount;
-    if (!bought_tokens) {
-      //We have to take in account the partial refund of the fee too if the tokens weren't bought yet
-      eth_to_withdraw = SafeMath.div(SafeMath.mul(basic_amount, 100), 99);
-      fees = SafeMath.sub(fees, SafeMath.div(eth_to_withdraw, FEE));
-    }
-    balances[msg.sender] = SafeMath.sub(balances[msg.sender], eth_to_withdraw);
+    uint256 amount = SafeMath.div(SafeMath.mul(balances[msg.sender], percent_reduction), 100);
+    balances[msg.sender] = SafeMath.sub(balances[msg.sender], amount);
     balances_bonus[msg.sender] = balances[msg.sender];
-    msg.sender.transfer(eth_to_withdraw);
+    if (owner_supplied_eth) {
+      //dev fees aren't refunded, only owner fees
+      uint256 fee = amount.div(FEE).mul(percent_reduction).div(100);
+      amount = amount.add(fee);
+    }
+    msg.sender.transfer(amount);
   }
 
   // Default function.  Called when a user sends ETH to the contract.
   function () payable underMaxAmount {
     require(!bought_tokens);
-    if (whitelist_enabled) {
-      require(whitelist[msg.sender]);
-    }
     //1% fee is taken on the ETH
     uint256 fee = SafeMath.div(msg.value, FEE);
     fees = SafeMath.add(fees, fee);
