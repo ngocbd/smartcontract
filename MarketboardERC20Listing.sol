@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MarketboardERC20Listing at 0x885a4819e899c772b439f05944096a3236315550
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MarketboardERC20Listing at 0xb3230fca7067819f4a27bcfb68b6dd736709bf00
 */
 pragma solidity ^0.4.19;
 
@@ -28,8 +28,32 @@ contract ERC20 {
  *
  *	# Marketboard Listing
  *
- *	This contract represents an item listed on marketboard.io
+ *	This contract represents an item listed on the marketboard at marketboard.io
  *
+ *  Steps for listing:
+ *  - Server creates a bunch of these contracts in 'idle' state (async, in cron job, 'creating' state until mined)
+ *  - When a user starts a transaction, server returns an 'idle' state one and marks it as 'pending:tokens' state
+ *  - User sets their price per token, this is saved on the servers.
+ *  - User gets the contract address, and sends some tokens to the contract.
+ *  - While webapp is open, constantly query for incoming tokens to this contract
+ *  - If no query for 24 hours, put contract back to 'idle' state. Do a token query just in case maybe?
+ *  - Once tokens received, send a `finalize(tokenContractAddr, senderAddr, tokenPrice)` transaction to the contract from the server, mark as 'pending:finalize'
+ *  - Show success to user, item is now listed but with finalizing logo
+ *  - Server contantly queries all 'pending:finalize' contracts until they've been mined
+ *  - Once mined (ie calling `isReady()` returns true) state change to 'ready'
+ *
+ *  Steps for buyback:
+ *  - REQUIRES 'ready' state
+ *  - User sends a call to the contract's `buyback()` function
+ *
+ *  Steps for purchase:
+ *  - REQUIRES 'ready' state
+ *  - User calls `purchase(recipientAddr)` and sends required money to the contract
+ *  - Server constantly monitors 'ready' contracts (maybe only when a user views it?)
+ *  - Once contract has been reset, mark contract as 'idle' state
+ *
+ *  Type IDs:
+ *  - 0x01  :   ERC20 listing
  */
 
 /// Represents a listing on the ProWallet Marketboard
@@ -37,7 +61,7 @@ contract MarketboardERC20Listing {
 
     /// Contract version
     function _version() pure public returns(uint32) {
-        return 2;
+        return 1;
     }
 
     /// Notifies when the listing has been completed
@@ -108,21 +132,11 @@ contract MarketboardERC20Listing {
 
     }
 
-    /// Get the number of tokens that equals 1 TOKEN in it's base denomination
-    function tokenBase() public view returns(uint256) {
-
-        // Fetch token balance
-        ERC20 erc = ERC20(tokenContract);
-        uint256 decimals = erc.decimals();
-        return 10 ** decimals;
-
-    }
-
     /// Get the total amount of Ether needed to successfully purchase this item.
     function totalPrice() public view returns(uint256) {
 
         // Return price required
-        return tokenPrice * tokenCount() / tokenBase() + fee();
+        return tokenPrice * tokenCount() + fee();
 
     }
 
@@ -130,7 +144,7 @@ contract MarketboardERC20Listing {
     function fee() public view returns(uint256) {
 
         // Get total raw price, item cost * item count
-        uint256 price = tokenPrice * tokenCount() / tokenBase();
+        uint256 price = tokenPrice * tokenCount();
 
         // Calculate fee
         return price * feePercentage / feePercentageMax + feeFixed;
