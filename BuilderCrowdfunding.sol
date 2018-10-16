@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BuilderCrowdfunding at 0xa2772a351e984d0582ad80a8ba8863489939f6db
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BuilderCrowdfunding at 0x113058C101b2D78e001D4a7D2174a66b5ff3A4A7
 */
 pragma solidity ^0.4.4;
 
@@ -101,6 +101,51 @@ contract ERC20
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
+
+/**
+ * @title Asset recipient interface
+ */
+contract Recipient {
+    /**
+     * @dev On received ethers
+     * @param sender Ether sender
+     * @param amount Ether value
+     */
+    event ReceivedEther(address indexed sender,
+                        uint256 indexed amount);
+
+    /**
+     * @dev On received custom ERC20 tokens
+     * @param from Token sender
+     * @param value Token value
+     * @param token Token contract address
+     * @param extraData Custom additional data
+     */
+    event ReceivedTokens(address indexed from,
+                         uint256 indexed value,
+                         address indexed token,
+                         bytes extraData);
+
+    /**
+     * @dev Receive approved ERC20 tokens
+     * @param _from Spender address
+     * @param _value Transaction value
+     * @param _token ERC20 token contract address
+     * @param _extraData Custom additional data
+     */
+    function receiveApproval(address _from, uint256 _value,
+                             ERC20 _token, bytes _extraData) {
+        if (!_token.transferFrom(_from, this, _value)) throw;
+        ReceivedTokens(_from, _value, _token, _extraData);
+    }
+
+    /**
+     * @dev Catch sended to contract ethers
+     */
+    function () payable
+    { ReceivedEther(msg.sender, msg.value); }
+}
+
 
 /**
  * @title Token contract represents any asset in digital economy
@@ -237,50 +282,6 @@ contract TokenEmission is Token {
 }
 
 /**
- * @title Asset recipient interface
- */
-contract Recipient {
-    /**
-     * @dev On received ethers
-     * @param sender Ether sender
-     * @param amount Ether value
-     */
-    event ReceivedEther(address indexed sender,
-                        uint256 indexed amount);
-
-    /**
-     * @dev On received custom ERC20 tokens
-     * @param from Token sender
-     * @param value Token value
-     * @param token Token contract address
-     * @param extraData Custom additional data
-     */
-    event ReceivedTokens(address indexed from,
-                         uint256 indexed value,
-                         address indexed token,
-                         bytes extraData);
-
-    /**
-     * @dev Receive approved ERC20 tokens
-     * @param _from Spender address
-     * @param _value Transaction value
-     * @param _token ERC20 token contract address
-     * @param _extraData Custom additional data
-     */
-    function receiveApproval(address _from, uint256 _value,
-                             ERC20 _token, bytes _extraData) {
-        if (!_token.transferFrom(_from, this, _value)) throw;
-        ReceivedTokens(_from, _value, _token, _extraData);
-    }
-
-    /**
-     * @dev Catch sended to contract ethers
-     */
-    function () payable
-    { ReceivedEther(msg.sender, msg.value); }
-}
-
-/**
  * @title Crowdfunding contract
  */
 contract Crowdfunding is Object, Recipient {
@@ -361,9 +362,9 @@ contract Crowdfunding is Object, Recipient {
      * @dev Crowdfunding running checks
      */
     modifier onlyRunning {
-        bool isRunning = totalFunded  < config.maxValue
-                      && block.number > config.startBlock
-                      && block.number < config.stopBlock;
+        bool isRunning = totalFunded + msg.value <= config.maxValue
+                      && block.number >= config.startBlock
+                      && block.number <= config.stopBlock;
         if (!isRunning) throw;
         _;
     }
@@ -440,6 +441,8 @@ contract Crowdfunding is Object, Recipient {
         donations[msg.sender] += msg.value;
 
         var bountyVal = bountyValue(msg.value, block.number);
+        if (bountyVal == 0) throw;
+
         bounty.emission(bountyVal);
         bounty.transfer(msg.sender, bountyVal);
     }
