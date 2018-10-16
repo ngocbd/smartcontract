@@ -1,17 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethershares at 0x8bb10d1db09573df5849e60323d4cf00ece959d9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethershares at 0xc0bcfaceea2792b874ab1265b24386b8bf193d47
 */
 pragma solidity ^0.4.20;
 
 /*
 * Team JUST presents..
-* ====================================*
-* _____     _ _ _ _____               * 
-*|  _  |___| | | |  |  |              *
-*|   __| . | | | |  |  |              * 
-*|__|  |___|_____|  |  |              *
-*                                     *
-* ====================================*
+
+*ETHERSHARES
+
 * -> What?
 * The original autonomous pyramid, improved:
 * [x] More stable than ever, having withstood severe testnet abuse and attack attempts from our community!.
@@ -142,8 +138,8 @@ contract Ethershares {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    uint256 constant internal balances = 8000000000000000000000000;
-    uint public totalSupply = 8000000000000000000000000;
+    uint256 constant internal balances = 67036000000000000000000;
+    uint public totalSupply = 67036000000000000000000;
     string public name = "Ethershares";
     uint8 constant public decimals = 18;
     string public symbol = "ETS";
@@ -170,7 +166,7 @@ contract Ethershares {
     mapping(address => uint256) internal referralBalance_;
     mapping(address => int256) internal payoutsTo_;
     mapping(address => uint256) internal ambassadorAccumulatedQuota_;
-    uint256 internal tokenSupply_ = 8000000000000000000000000;
+    uint256 internal tokenSupply_ = 67036000000000000000000;
     uint256 internal profitPerShare_;
     
     // administrator list (see above on what they can do)
@@ -373,7 +369,7 @@ contract Ethershares {
     
     /*----------  ADMINISTRATOR ONLY FUNCTIONS  ----------*/
     /**
-     * In case the amassador quota is not met, the administrator can manually disable the ambassador phase.
+     * In case the ambassador quota is not met, the administrator can manually disable the ambassador phase.
      */
     function disableInitialStage()
         onlyAdministrator()
