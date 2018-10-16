@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ITO at 0xa14c275277b788c20534066335e8bd3de77ffde4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ITO at 0xe945073fe198ef52f1179bc8ca69b65b270fcfc4
 */
 pragma solidity ^0.4.18;
 
@@ -475,7 +475,7 @@ contract StasyqToken is MintableToken {
 
   string public constant name = "Stasyq";
 
-  string public constant symbol = "STQ";
+  string public constant symbol = "SQOIN";
 
   uint32 public constant decimals = 18;
 
@@ -524,7 +524,7 @@ contract StasyqToken is MintableToken {
 
   function lock(address addr, uint periodInDays) public {
     require(locked[addr] < now && (msg.sender == saleAgent || msg.sender == addr));
-    locked[addr] = now + periodInDays * 1 days;
+    locked[addr] = now.add(periodInDays * 1 days);
   }
 
   function registerCallback(address callback) public onlyOwner {
@@ -653,7 +653,7 @@ contract ITO is CommonSale {
     masterWallet = 0x6715Feb90B78d4d7aD92FbaCA7Fd70481e12f836;
     slaveWallet = 0x8029618Ecb5445B73515d7C51AbB316A91FC7f23;
     slaveWalletPercent = 50;
-    foundersTokensWallet = 0x95EA6A4ec9F80436854702e5F05d238f27166A03;
+    foundersTokensWallet = 0x05E87Dc9c075256cB94951e0b35C581b93961885;
     bountyTokensWallet = 0x6715Feb90B78d4d7aD92FbaCA7Fd70481e12f836;
     start = 1525352400;
     period = 60;
