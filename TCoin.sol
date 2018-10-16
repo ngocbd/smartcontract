@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TCoin at 0xEe4b7e6bC34A9f8069f910C6AC71dc294263EB26
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TCoin at 0x4432e7ffd729442614d9233499000530e08e9d62
 */
 pragma solidity ^0.4.18;
 
@@ -252,10 +252,10 @@ contract StandardToken is ERC20, BasicToken {
  * @title TCoin Token.
  */
 contract TCoin is StandardToken, Ownable {
-    string public NAME = "TRAVEL";
-    string public SYMBOL = "TRAVEL";
-    uint public DECIMALS = 8;
-    string public VERSION = "1.0";
+    string public name = "TRA";
+    string public symbol = "TRA";
+    uint public decimals = 8;
+    string public version = "1.0";
   
     function TCoin() public {
         totalSupply_ = 20000000000 * 10 ** 8;
