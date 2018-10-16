@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ParetoTreasuryLockup at 0x6f6b155e3ab5d668665f9d8e13120d3cec285678
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ParetoTreasuryLockup at 0x4f2e42e35f8bf1ab1ec0509b6d481dacc933eadf
 */
 pragma solidity ^0.4.18;
 
@@ -107,7 +107,7 @@ contract ParetoTreasuryLockup {
   
   uint256 public month = 30 days;
 
-  uint256 public previousWithdrawal = 0;
+  uint256 public maxThreshold = 0;
 
   function ParetoTreasuryLockup()public {
     token = ERC20Basic(0xea5f88E54d982Cbb0c441cde4E79bC305e5b43Bc);
@@ -128,14 +128,16 @@ contract ParetoTreasuryLockup {
         releaseTime = now.add(month.sub(diff));
     }
     
-    uint256 amount = token.balanceOf(this);
-    require(amount > 0);
+    if(maxThreshold == 0){
+        
+        uint256 amount = token.balanceOf(this);
+        require(amount > 0);
+        
+        // calculate 5% of existing amount
+        maxThreshold = (amount.mul(5)).div(100);
+    }
 
-    // calculate 5% of existing amount
-    amount = (amount.mul(5)).div(100);
-
-    token.safeTransfer(beneficiary, amount);
+    token.safeTransfer(beneficiary, maxThreshold);
     
-    previousWithdrawal = amount;
   }
 }
