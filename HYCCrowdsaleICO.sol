@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HYCCrowdsaleICO at 0x21b09c73b97ac5d1619c9541460a0982bbbf1001
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HYCCrowdsaleICO at 0x0b08b0b558a2ff86860c4bd55f69aefbf4f50e50
 */
 pragma solidity ^0.4.18;
 
@@ -315,8 +315,6 @@ contract Hydrocoin is MintableToken, MultipleOwners {
     string public symbol = "HYC";
     uint8 public decimals = 18;
 
-    // current total supply
-    uint256 public totalSupply = 500100000 ether;
     // maximum supply
     uint256 public hardCap = 1000000000 ether;
 
@@ -327,6 +325,8 @@ contract Hydrocoin is MintableToken, MultipleOwners {
     function Hydrocoin(address _paymentContract, uint256 _teamTransferFreeze, address _founders)
         public
     {
+        // current total supply
+        totalSupply = 500100000 ether;
         teamTransferFreeze = _teamTransferFreeze;
         founders = _founders;
         // fundation address, gas station reserve,team
