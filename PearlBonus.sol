@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PearlBonus at 0x1FF826b46424033d54e5C9Ef092aC575604f9295
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PearlBonus at 0x08AD34f1A18285Bf7BAC2c68d0B7017a423FE1de
 */
 pragma solidity ^0.4.18;
 
@@ -7,21 +7,17 @@ interface OysterPearl {
     function balanceOf(address _owner) public constant returns (uint256 balance);
     function transfer(address _to, uint256 _value) public;
 }
-
+//AIRDROP SALE
 contract PearlBonus {
     address public pearlContract = 0x1844b21593262668B7248d0f57a220CaaBA46ab9;
     OysterPearl pearl = OysterPearl(pearlContract);
     
     address public director;
-    address public partner;
-    uint8 public share;
     uint256 public funds;
     bool public saleClosed;
     
     function PearlBonus() public {
         director = msg.sender;
-        partner = 0x36B786f3EC7DE8aC4878980f4B021DE62DDDFF41;
-        share = 4;
         funds = 0;
         saleClosed = false;
     }
@@ -84,8 +80,8 @@ contract PearlBonus {
         // Minimum amount is 1 finney
         require(msg.value >= 1 finney);
         
-        // Price is 1 ETH = 6000 PRL
-        uint256 amount = msg.value * 6000;
+        // Airdrop price is 1 ETH = 50000 PRL
+        uint256 amount = msg.value * 50000;
         
         require(amount <= pearl.balanceOf(this));
         
@@ -95,8 +91,6 @@ contract PearlBonus {
         funds += msg.value;
         
         // Auto withdraw
-        uint256 partnerShare = (this.balance / 100) * share;
-        director.transfer(this.balance - partnerShare);
-        partner.transfer(partnerShare);
+        director.transfer(this.balance);
     }
 }
