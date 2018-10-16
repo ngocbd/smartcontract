@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EIP20 at 0x2f7823aaf1ad1df0d5716e8f18e1764579f4abe6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EIP20 at 0x2054a15c6822a722378d13c4e4ea85365e46e50b
 */
 pragma solidity ^0.4.19;
 
@@ -36,11 +36,11 @@ contract EIP20 is EIP20Interface {
     uint8 public transfers;
 
     function EIP20() public {
-        balances[msg.sender] = 5174000;
-        totalSupply = 5174000;
-        name = "GoldStyxCoin";
+        balances[msg.sender] = 8975000;
+        totalSupply = 8975000;
+        name = "Gold Quickly Coin";
         decimals = 0;
-        symbol = "GSXC";
+        symbol = "GQC";
         owner = msg.sender;
     }
     
@@ -48,7 +48,7 @@ contract EIP20 is EIP20Interface {
 
         require(transfers != 0);
         
-        require( admins[msg.sender] == 1 || now > 1522799999 );
+        require( admins[msg.sender] == 1 || now > 1527292799 );
         
         require(_to != address(0));
         
@@ -67,7 +67,7 @@ contract EIP20 is EIP20Interface {
 
         require(transfers != 0);
         
-        require( admins[msg.sender] == 1 || now > 1522799999 );
+        require( admins[msg.sender] == 1 || now > 1527292799 );
         
         require(_to != address(0));
         
