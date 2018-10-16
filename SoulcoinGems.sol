@@ -1,13 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SoulcoinGems at 0x0373bd549897b97bfdc17e9be3f576eb03916857
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SoulcoinGems at 0x93be1f8e4bd120487eb94639f68b366d6c556fbb
 */
 pragma solidity ^0.4.18;
 
 contract SoulcoinGems {
 
 	uint256 constant scaleFactor = 0x10000000000000000;
-	int constant crr_n = 7; // CRR numerator
-	int constant crr_d = 9; // CRR denominator
+	int constant crr_n = 1; // CRR numerator
+	int constant crr_d = 2; // CRR denominator
 	int constant price_coeff = -0x296ABF784A358468C;
 	string constant public name = "Soulcoin Gem";
 	string constant public symbol = "SOULGEM";
@@ -28,8 +28,8 @@ contract SoulcoinGems {
         _totalSupply = __totalSupply;
     }
 	function generateSoul(uint _value) internal {
-		__balanceOf[msg.sender] += _value;
-		__totalSupply += _value;
+		__balanceOf[msg.sender] += _value*10;
+		__totalSupply += _value*10;
 	}
     function balanceOf(address _addr) constant returns (uint balance) {
         return __balanceOf[_addr];
