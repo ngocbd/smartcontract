@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreCAToken at 0x68e14bb5a45b9681327e16e528084b9d962c1a39
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreCAToken at 0x1f88888732d0943bb49f7573a8848814ff0a4090
 */
 pragma solidity ^0.4.11;
 
@@ -409,8 +409,8 @@ contract CAToken is MintableToken, PausableToken {
 contract PreCAToken is CAToken, Destructible {
 
     // Metadata
-    string public constant symbol = "CAT";
-    string public constant name = "BitClave - Consumer Activity Token";
+    string public constant symbol = "testCAT";
+    string public constant name = "testCAT";
     uint8 public constant decimals = 18;
     string public constant version = "1.1";
 
