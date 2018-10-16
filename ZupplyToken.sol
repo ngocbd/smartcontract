@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZupplyToken at 0x460a40f16a00e3c6be9c55ef6696e7b036db2703
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZupplyToken at 0xf5d161f170cb657a91216bebe3cdfc7738856b4d
 */
 pragma solidity ^0.4.16;
 
@@ -121,8 +121,8 @@ contract StdToken is Token {
 contract ZupplyToken is StdToken
 {
 /// Fields:
-    string public constant name = "Zupply Token";
-    string public constant symbol = "ZUP";
+    string public name = "ZupplyToken";
+    string public symbol = "ZUP";
     uint public constant decimals = 18;
 
     // this includes DEVELOPERS_BONUS
@@ -297,24 +297,26 @@ contract ZupplyToken is StdToken
 
 /// Overrides:
     function transfer(address _to, uint256 _value) returns(bool){
-        if(enableTransfers)
-            return super.transfer(_to,_value);
-        else
-            return false;
+        require(enableTransfers || msg.sender == tokenManager || msg.sender == teamTokenBonus || msg.sender == earlyInvestorsBonus );
+        return super.transfer(_to,_value);
+        
     }
 
     function transferFrom(address _from, address _to, uint256 _value) returns(bool){
-        if(enableTransfers)
-            return super.transferFrom(_from,_to,_value);
-        else
-            return false;    
+        require(enableTransfers || msg.sender == tokenManager || msg.sender == teamTokenBonus || msg.sender == earlyInvestorsBonus );
+        return super.transferFrom(_from,_to,_value);
+            
     }
 
     function approve(address _spender, uint256 _value) returns (bool) {
-        if(enableTransfers)
-            return super.approve(_spender,_value);
-        else
-            return false;
+        require(enableTransfers || msg.sender == tokenManager || msg.sender == teamTokenBonus || msg.sender == earlyInvestorsBonus );
+        return super.approve(_spender,_value);
+        
+    }
+    
+    function setNewAttributes(string _newName, string _newSymbol) public onlyTokenManager{
+        name = _newName;
+        symbol = _newSymbol;
     }
 
 /// Setters/getters
