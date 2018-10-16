@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeikhosBounty at 0xfce151195f62ab55c117960216466f6d22dfa2a1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeikhosBounty at 0xf01b26626550448606de2b6e7eeda1216d9cd239
 */
 contract SHA3_512 {
     function SHA3_512() public {}
@@ -229,15 +229,10 @@ contract SHA3_512 {
 contract TeikhosBounty is SHA3_512 {
 
     // Proof-of-public-key in format 2xbytes32, to support xor operator and ecrecover r, s v format
-    bytes32 proof_of_public_key1 = hex"bd7c2d389d79b574152c3d9d98e8671a4552f0c0c0e389460eb4e16df173faba";
-    bytes32 proof_of_public_key2 = hex"fe0238309e6e2ee8e4fd0efbcecf0969c8a1084fab7137b124c830ecb016c936";
+    bytes32 proof_of_public_key1 = hex"501802c3b21818b74a6a77b24a9eec140bd8c196712467135740c217a32ff17b";
+    bytes32 proof_of_public_key2 = hex"5a011cbd1416f0fa7f4a81f2c0f64bcafe06d8239a38b820a8efbef4abf11f20";
     
     function authenticate(bytes _publicKey) public { // Accepts an array of bytes, for example ["0x00","0xaa", "0xff"]
-
-        // Get address from public key
-        address signer = address(keccak256(_publicKey));
-
-        require(signer == msg.sender);
 
         // Use SHA3_512 library to get a sha3_512 hash of public key
 
@@ -292,6 +287,9 @@ contract TeikhosBounty is SHA3_512 {
 
         // Get msgHash for use with ecrecover
         bytes32 msgHash = keccak256("\x19Ethereum Signed Message:\n64", _publicKey);
+
+        // Get address from public key
+        address signer = address(keccak256(_publicKey));
 
         // The value v is not known, try both 27 and 28
         if(ecrecover(msgHash, 27, r, s) == signer) selfdestruct(msg.sender);
