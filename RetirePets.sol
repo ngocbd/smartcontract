@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RetirePets at 0xfeb49ac4e7e82c409ddff93f351f3dbefbbebffd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RetirePets at 0x9f6ae96be72cd4f9870e66c953d58f6d3af502e8
 */
 pragma solidity ^0.4.17;
 
@@ -186,8 +186,7 @@ contract RetirePets is AccessControl, SafeMath {
        petCardData.transferPet(msg.sender, address(0), pet4);
        petCardData.transferPet(msg.sender, address(0), pet5);
        petCardData.transferPet(msg.sender, address(0), pet6);
-         uint8 _newLuck = getRandomNumber(39,30,msg.sender);
-        getNewPetCard(getRandomNumber(12,9,msg.sender), _newLuck);
+        getNewPetCard(getRandomNumber(12,9,msg.sender));
          
      }
 
@@ -209,14 +208,13 @@ contract RetirePets is AccessControl, SafeMath {
        petCardData.transferPet(msg.sender, address(0), pet4);
        petCardData.transferPet(msg.sender, address(0), pet5);
        petCardData.transferPet(msg.sender, address(0), pet6);
-       uint8 _newLuck = getRandomNumber(49,40,msg.sender);
-        getNewPetCard(getRandomNumber(16,13,msg.sender), _newLuck);
+        getNewPetCard(getRandomNumber(16,13,msg.sender));
          
      }
 
 
     
-   function getNewPetCard(uint8 opponentId, uint8 _luck) private {
+   function getNewPetCard(uint8 opponentId) private {
         uint16 _auraRed = 0;
         uint16 _auraYellow = 0;
         uint16 _auraBlue = 0;
@@ -226,9 +224,9 @@ contract RetirePets is AccessControl, SafeMath {
         if (_auraColor == 1) { _auraYellow = 14;}
         if (_auraColor == 2) { _auraBlue = 14;}
         
-      
+        uint8 _newLuck = getRandomNumber(39,30,msg.sender);
         IPetCardData petCardData = IPetCardData(petCardDataContract);
-        uint64 petId = petCardData.setPet(opponentId, msg.sender, 'Rover', _luck, _auraRed, _auraYellow, _auraBlue);
+        uint64 petId = petCardData.setPet(opponentId+4, msg.sender, 'Rover', _newLuck, _auraRed, _auraYellow, _auraBlue);
         EventNewPet(petId);
         }
 
