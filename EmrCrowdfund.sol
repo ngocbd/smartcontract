@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EmrCrowdfund at 0xbe7173aA9E05f08840B73701f9F96eb6fdaBdf64
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EmrCrowdfund at 0x5B5D0fbBd75d4501E5CDc854c445fb0eABcB0AFc
 */
 pragma solidity ^0.4.21;
 
@@ -13,7 +13,7 @@ contract owned {
 contract EmrCrowdfund is owned {
     string public name;
     string public symbol;
-    uint8 public decimals = 12;
+    uint8 public decimals = 18;
     uint256 public totalSupply;
     uint256 public tokenPrice;
 
