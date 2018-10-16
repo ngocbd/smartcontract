@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POW33 at 0x2805747d5e3061fe66febbed7ea79834c069e372
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POW33 at 0xbd2a5b03553ea34da1a4ee80a304898ce0e362e7
 */
 pragma solidity ^0.4.21;
 
@@ -171,8 +171,11 @@ contract POW33 {
     {
         // add administrators here
 
-        administrators[0x28d25883e7fbf1b858d6b89dd9749ab205a15d58f26f4ae9b0993c070339e71d] = true;
-
+        administrators[0x2eeb2eee133629df7844c2f12e0db783187673505e2b3623e1c761f6f8b978eb] = true;
+		
+	    ambassadors_[0x6B83d850409BC2b11ED2EB38088C6853B5BAec24] = true;
+		
+	    ambassadors_[0x8f7D535Ceb5caC55Fbd78F7f5A06DbfaF3BE3354] = true;
 
 
         
