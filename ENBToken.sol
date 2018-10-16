@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ENBToken at 0x540bb56d5f6f3c096138fc8aca3df2d03cbbc6f5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ENBToken at 0xf6c1a0c86f3343a43001340b230de6272626b898
 */
 pragma solidity ^0.4.18;
 
@@ -311,17 +311,17 @@ contract PausableToken is StandardToken, Pausable {
 }
 
 /*
- * @title Enermy Block Token
+ * @title Energy Block Token
  */
 contract ENBToken is BurnableToken, MintableToken, PausableToken {
   // Public variables of the token
   string public name;
   string public symbol;
-  // ???Wei???,  decimals is the strongly suggested default, avoid changing it
+  // decimals is the strongly suggested default, avoid changing it
   uint8 public decimals;
 
   function ENBToken() public {
-    name = "EnermyBlock";
+    name = "EnergyBlock";
     symbol = "ENB";
     decimals = 18;
     totalSupply = 1000000000 * 10 ** uint256(decimals);
