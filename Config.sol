@@ -1,7 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Config at 0xb494dd4a4eeebd9e3b76030161d707417abd761d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Config at 0x0f1e2ffd515c24b3ed0a4a9df0f02e86d6755e03
 */
 pragma solidity ^0.4.20;
+
+
+
+
+
 
 
 /**
@@ -109,7 +114,98 @@ contract ConfigInterface
 
     function getTutorialBabyGen(uint16 _dadGen) public pure returns (uint16);
 
-    function getBreedingFee(uint40 _momId, uint40 _dadId) public pure returns (uint256);
+    function getBreedingFee(uint40 _momId, uint40 _dadId) public view returns (uint256);
+}
+
+
+
+contract CutieCoreInterface
+{
+    function isCutieCore() pure public returns (bool);
+
+    function transferFrom(address _from, address _to, uint256 _cutieId) external;
+    function transfer(address _to, uint256 _cutieId) external;
+
+    function ownerOf(uint256 _cutieId)
+        external
+        view
+        returns (address owner);
+
+    function getCutie(uint40 _id)
+        external
+        view
+        returns (
+        uint256 genes,
+        uint40 birthTime,
+        uint40 cooldownEndTime,
+        uint40 momId,
+        uint40 dadId,
+        uint16 cooldownIndex,
+        uint16 generation
+    );
+
+    function getGenes(uint40 _id)
+        public
+        view
+        returns (
+        uint256 genes
+    );
+
+
+    function getCooldownEndTime(uint40 _id)
+        public
+        view
+        returns (
+        uint40 cooldownEndTime
+    );
+
+    function getCooldownIndex(uint40 _id)
+        public
+        view
+        returns (
+        uint16 cooldownIndex
+    );
+
+
+    function getGeneration(uint40 _id)
+        public
+        view
+        returns (
+        uint16 generation
+    );
+
+    function getOptional(uint40 _id)
+        public
+        view
+        returns (
+        uint64 optional
+    );
+
+
+    function changeGenes(
+        uint40 _cutieId,
+        uint256 _genes)
+        public;
+
+    function changeCooldownEndTime(
+        uint40 _cutieId,
+        uint40 _cooldownEndTime)
+        public;
+
+    function changeCooldownIndex(
+        uint40 _cutieId,
+        uint16 _cooldownIndex)
+        public;
+
+    function changeOptional(
+        uint40 _cutieId,
+        uint64 _optional)
+        public;
+
+    function changeGeneration(
+        uint40 _cutieId,
+        uint16 _generation)
+        public;
 }
 
 
@@ -149,9 +245,18 @@ contract Config is Ownable, ConfigInterface
         cooldowns[index] = newCooldown;
     }*/
 
+    CutieCoreInterface public coreContract;
+
+    function setup(address _coreAddress) public onlyOwner
+    {
+        CutieCoreInterface candidateContract = CutieCoreInterface(_coreAddress);
+        require(candidateContract.isCutieCore());
+        coreContract = candidateContract;
+    }
+
     function getCooldownIndexFromGeneration(uint16 _generation) public view returns (uint16)
     {
-        uint16 result = uint16(_generation / 2);
+        uint16 result = _generation;
         if (result > getCooldownIndexCount()) {
             result = uint16(getCooldownIndexCount() - 1);
         }
@@ -180,15 +285,17 @@ contract Config is Ownable, ConfigInterface
 
     function getTutorialBabyGen(uint16 _dadGen) public pure returns (uint16)
     {
-        // Tutorial pet gen is 26
-        return getBabyGen(26, _dadGen);
+        // Tutorial pet gen is 13
+        return getBabyGen(13, _dadGen);
     }
 
-    function getBreedingFee(uint40 /*_momId*/, uint40 /*_dadId*/)
+    function getBreedingFee(uint40 _momId, uint40 _dadId)
         public
-        pure
+        view
         returns (uint256)
     {
-        return 2000000000000000;
+        uint16 momGen = coreContract.getGeneration(_momId);
+        uint16 dadGen = coreContract.getGeneration(_dadId);
+        return 500 szabo*(momGen+dadGen);
     }
 }
