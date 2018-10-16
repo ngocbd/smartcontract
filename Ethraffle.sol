@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethraffle at 0xD0D977cf5fA3cE79a6e442c2250E8A5F37B69598
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethraffle at 0x04ebe325519223119ab6bde2b84e23a6ecd05d65
 */
 pragma solidity ^0.4.0;
 
@@ -9,34 +9,6 @@ contract Ethraffle {
         address addr;
         uint raffleId;
     }
-
-    // Events
-    event RaffleResult(
-        uint raffleId,
-        uint winningNumber,
-        address winningAddress,
-        uint blockTimestamp,
-        uint blockNumber,
-        uint gasLimit,
-        uint difficulty,
-        uint gas,
-        uint value,
-        address msgSender,
-        address blockCoinbase,
-        bytes32 sha
-    );
-
-    event TicketPurchase(
-        uint raffleId,
-        address contestant,
-        uint number
-    );
-
-    event TicketRefund(
-        uint raffleId,
-        address contestant,
-        uint number
-    );
 
     // Constants
     address public creatorAddress;
@@ -49,6 +21,7 @@ contract Ethraffle {
     // Variables
     uint public raffleId = 0;
     uint public nextTicket = 0;
+    uint public lastWinningNumber = 0;
     mapping (uint => Contestant) public contestants;
     uint[] public gaps;
 
@@ -81,7 +54,6 @@ contract Ethraffle {
             }
 
             contestants[currTicket] = Contestant(msg.sender, raffleId);
-            TicketPurchase(raffleId, msg.sender, currTicket);
             moneySent -= pricePerTicket;
         }
 
@@ -97,13 +69,9 @@ contract Ethraffle {
     }
 
     function chooseWinner() private {
-        uint lastWinningNumber = getRandom();
-        address winningAddress = contestants[lastWinningNumber].addr;
-        RaffleResult(
-            raffleId, lastWinningNumber, winningAddress, block.timestamp,
-            block.number, block.gaslimit, block.difficulty, msg.gas,
-            msg.value, msg.sender, block.coinbase, getSha()
-        );
+        uint winningTicket = getRandom();
+        lastWinningNumber = winningTicket;
+        address winningAddress = contestants[winningTicket].addr;
         resetRaffle();
         winningAddress.transfer(prize);
         rakeAddress.transfer(rake);
@@ -111,20 +79,15 @@ contract Ethraffle {
 
     // Choose a random int between 1 and totalTickets
     function getRandom() private returns (uint) {
-        return (uint(getSha()) % totalTickets) + 1;
-    }
-
-    function getSha() private returns (bytes32) {
-        return sha3(
-            block.timestamp +
-            block.number +
-            block.gaslimit +
-            block.difficulty +
-            msg.gas +
-            msg.value +
-            uint(msg.sender) +
-            uint(block.coinbase)
-        );
+        return (uint(sha3(
+          block.timestamp +
+          block.number +
+          block.gaslimit +
+          block.difficulty +
+          msg.gas +
+          uint(msg.sender) +
+          uint(block.coinbase)
+        )) % totalTickets) + 1;
     }
 
     function getRefund() public {
@@ -134,7 +97,6 @@ contract Ethraffle {
                 refunds++;
                 contestants[i] = Contestant(address(0), 0);
                 gaps.push(i);
-                TicketRefund(raffleId, msg.sender, i);
             }
         }
 
