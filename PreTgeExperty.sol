@@ -1,7 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreTgeExperty at 0xeaf2ed8cddb811593705e6f2b0c312ebbe0a0a75
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreTgeExperty at 0x942ffef843d37805c59f30fabb99b46aad135288
 */
 pragma solidity ^0.4.4;
+
+// kovan:   0x722475921ebc15078d4d6c93b4cff43eadf099c2
+// mainnet: 0x942ffef843d37805c59f30fabb99b46aad135288
 
 contract PreTgeExperty {
 
@@ -15,26 +18,29 @@ contract PreTgeExperty {
   Contributor[] public contributors;
   mapping(address => bool) public isWhitelisted;
   address public managerAddr;
+  address public whitelistManagerAddr;
 
   // wallet
   struct Tx {
     address founder;
     address destAddr;
+    uint256 amount;
     bool active;
   }
   mapping (address => bool) public founders;
   Tx[] public txs;
-  
-  // preICO constructor
+
+  // preTGE constructor
   function PreTgeExperty() public {
-    managerAddr = 0x71e2f5362fdf6A48ab726E1D3ef1Cd4B087436fC;
+    whitelistManagerAddr = 0x8179C4797948cb4922bd775D3BcE90bEFf652b23;
+    managerAddr = 0x9B7A647b3e20d0c8702bAF6c0F79beb8E9B58b25;
     founders[0xCE05A8Aa56E1054FAFC214788246707F5258c0Ae] = true;
     founders[0xBb62A710BDbEAF1d3AD417A222d1ab6eD08C37f5] = true;
     founders[0x009A55A3c16953A359484afD299ebdC444200EdB] = true;
   }
-  
+
   // whitelist address
-  function whitelist(address addr) public isManager {
+  function whitelist(address addr) public isWhitelistManager {
     isWhitelisted[addr] = true;
   }
 
@@ -69,10 +75,11 @@ contract PreTgeExperty {
   }
 
   // one of founders can propose destination address for ethers
-  function proposeTx(address destAddr) public isFounder {
+  function proposeTx(address destAddr, uint256 amount) public isFounder {
     txs.push(Tx({
       founder: msg.sender,
       destAddr: destAddr,
+      amount: amount,
       active: true
     }));
   }
@@ -81,21 +88,58 @@ contract PreTgeExperty {
   function approveTx(uint8 txIdx) public isFounder {
     assert(txs[txIdx].founder != msg.sender);
     assert(txs[txIdx].active);
-    
+
     txs[txIdx].active = false;
-    txs[txIdx].destAddr.transfer(this.balance);
+    txs[txIdx].destAddr.transfer(txs[txIdx].amount);
+  }
+
+  // founder who created tx can cancel it
+  function cancelTx(uint8 txIdx) {
+    assert(txs[txIdx].founder == msg.sender);
+    assert(txs[txIdx].active);
+
+    txs[txIdx].active = false;
   }
 
   // isManager modifier
   modifier isManager() {
-    if (msg.sender == managerAddr) {
-      _;
-    }
+    assert(msg.sender == managerAddr);
+    _;
   }
-  
+
+  // isWhitelistManager modifier
+  modifier isWhitelistManager() {
+    assert(msg.sender == whitelistManagerAddr);
+    _;
+  }
+
   // check if msg.sender is founder
   modifier isFounder() {
-    require(founders[msg.sender]);
+    assert(founders[msg.sender]);
     _;
+  }
+
+  // view functions
+  function getContributionsCount(address addr) view returns (uint count) {
+    count = 0;
+    for (uint i = 0; i < contributors.length; ++i) {
+      if (contributors[i].addr == addr) {
+        ++count;
+      }
+    }
+    return count;
+  }
+
+  function getContribution(address addr, uint idx) view returns (uint amount, uint timestamp, bool rejected) {
+    uint count = 0;
+    for (uint i = 0; i < contributors.length; ++i) {
+      if (contributors[i].addr == addr) {
+        if (count == idx) {
+          return (contributors[i].amount, contributors[i].timestamp, contributors[i].rejected);
+        }
+        ++count;
+      }
+    }
+    return (0, 0, false);
   }
 }
