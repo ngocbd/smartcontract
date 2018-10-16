@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CNYTokenPlus at 0x1bf63aca0124c9617d99c13ec3c279ff3e76f467
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CNYTokenPlus at 0x10c96243ece921bcd2481767f14e4910ef7494a4
 */
 pragma solidity ^0.4.23;
 
@@ -274,6 +274,43 @@ contract PausableToken is StandardToken, Pausable {
 }
 
 /**
+ * @title TokenTimelock
+ * @dev TokenTimelock is a token holder contract that will allow a
+ * beneficiary to extract the tokens after a time has passed
+ */
+contract TokenTimelock {
+
+  // ERC20 basic token contract being held
+  ERC20Basic token;
+
+  // beneficiary of tokens after they are released
+  address beneficiary;
+
+  // timestamp where token release is enabled
+  uint releaseTime;
+
+  function TokenTimelock(ERC20Basic _token, address _beneficiary, uint _releaseTime) {
+    require(_releaseTime > now);
+    token = _token;
+    beneficiary = _beneficiary;
+    releaseTime = _releaseTime;
+  }
+
+  /**
+   * @dev beneficiary claims tokens held by time lock
+   */
+  function claim() {
+    require(msg.sender == beneficiary);
+    require(now >= releaseTime);
+
+    uint amount = token.balanceOf(this);
+    require(amount > 0);
+
+    token.transfer(beneficiary, amount);
+  }
+}
+
+/**
  * @title CNYTokenPlus
  * @dev CNY Token Plus contract
  */
@@ -286,17 +323,31 @@ contract CNYTokenPlus is PausableToken {
   }
 
   string public name = "CNYTokenPlus";
-  string public symbol = "CNYt?";
+  string public symbol = "CTP";
   uint8 public decimals = 18;
   uint public totalSupply = 100000000000000000000000000;
-  string public version = 'CNYt? 2.0';
+  string public version = 'CNYt? 3.0';
   // The nonce for avoid transfer replay attacks
   mapping(address => uint256) nonces;
 
   event Burn(address indexed burner, uint256 value);
+  event TimeLock(address indexed to, uint value, uint time);
 
   function CNYTokenPlus() {
       balances[msg.sender] = totalSupply;              // Give the creator all initial tokens
+  }
+
+  /**
+   * @dev transfer timelocked tokens
+   */
+  function transferTimelocked(address _to, uint256 _amount, uint256 _releaseTime)
+    onlyOwner whenNotPaused returns (TokenTimelock) {
+
+    TokenTimelock timelock = new TokenTimelock(this, _to, _releaseTime);
+    transfer(timelock,_amount);
+    emit TimeLock(_to, _amount,_releaseTime);
+
+    return timelock;
   }
 
   /**
