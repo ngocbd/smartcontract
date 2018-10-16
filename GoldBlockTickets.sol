@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GoldBlockTickets at 0x50d84c843847318d7e8c4318a8fe8aa4e0b15d6f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GoldBlockTickets at 0x90ccc765e4c2f90575e0052a2069b05325a36d6e
 */
 pragma solidity ^0.4.4;
 
