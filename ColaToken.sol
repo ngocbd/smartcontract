@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ColaToken at 0x4dc64a91acc6d3f69da1908935e168e0449db506
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ColaToken at 0x1d2915eefbd2cda4689d61338925108a61fc5af3
 */
 pragma solidity ^0.4.8;
 
@@ -20,7 +20,7 @@ contract ColaToken {
     event Burn(address indexed from, uint256 value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
-    function ColaToken() {
+    function ColaTokenToken() {
         balances[msg.sender] = 6000000000000000;
         _totalSupply = 6000000000000000;
         name = 'Colacoin';
