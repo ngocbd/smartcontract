@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0x15fc70db1ed03b09012459ec48ba5b2cd98cb9bb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0x804a86d6cb1c301fbc38b5d3233471a63d3cbf3d
 */
 pragma solidity ^0.4.11;
 
@@ -27,8 +27,8 @@ contract Lottery {
     function Lottery(){
         owner = msg.sender;
         player_count = 0;
-        ante = 1 ether;
-        required_number_players = 100;
+        ante = 0.05 ether;
+        required_number_players = 200;
         winner_percentage = 90;
     }
 
