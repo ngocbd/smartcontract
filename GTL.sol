@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GTL at 0xdf3390866c6af5c1ec56fadd2d152ed7de9137df
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GTL at 0x7c8ae803260fc26d9afa3d4aad07da3a54bda41b
 */
 pragma solidity ^0.4.13;
 
@@ -130,7 +130,7 @@ contract GTL is StandardToken, Ownable {
   string public constant symbol = "GTL";
   uint public constant decimals = 9;
   // Constructor
-  function GTL() {
+  function PGUC() {
       totalSupply = 250000000 * 10 ** decimals; 
       balances[msg.sender] = totalSupply; 
   }
