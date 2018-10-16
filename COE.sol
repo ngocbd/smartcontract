@@ -1,100 +1,139 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COE at 0xc7F1c3500496771B2Ef4e17aD10624131adE5Cd9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COE at 0xfe2a80103c9037354a04094972fc7ecab747272b
 */
-pragma solidity ^0.4.21;
-
 contract Partner {
     function exchangeTokensFromOtherContract(address _source, address _recipient, uint256 _RequestedTokens);
 }
 
+contract Target {
+    function transfer(address _to, uint _value);
+}
+
 contract COE {
 
-    string public name = "CoEval";
+    string public name = "Coeval by Monkey Capital";
     uint8 public decimals = 18;
     string public symbol = "COE";
 
-    address public _owner;
-    address public _premine = 0x76D05E325973D7693Bb854ED258431aC7DBBeDc3;
-    address public _dev = 0xC96CfB18C39DC02FBa229B6EA698b1AD5576DF4c;
-    address public _devFeesAddr;
-    uint256 public _tokePerEth = 177000000000000000;
-    bool public _coldStorage = true;
-    bool public _receiveEth = true;
-    // fees vars - added for future extensibility purposes only
-    bool _feesEnabled = false;
-    bool _payFees = false;
-    uint256 _fees;  // the calculation expects % * 100 (so 10% is 1000)
-    uint256 _lifeVal = 0;
-    uint256 _feeLimit = 0;
-    uint256 _devFees = 0;
+    address public owner;
+    address public devFeesAddr = 0xF772464393Ac87a1b7C628bF79090e014d931A23;
+    address public premine;
+    address tierController;
 
-    uint256 public _totalSupply = 100000 * 1 ether;
-    uint256 public _circulatingSupply = 0;
-    uint256 public _frozenTokens = 0;
+    uint256[] tierTokens = [
+        1000000000000000000000,
+        900000000000000000000,
+        800000000000000000000,
+        700000000000000000000,
+        2300000000000000000000,
+        6500000000000000000000,
+        2000000000000000000000,
+        1200000000000000000000,
+        4500000000000000000000,
+        75000000000000000000
+    ];
 
-    event Transfer(address indexed _from, address indexed _to, uint _value);
-    event Exchanged(address indexed _from, address indexed _to, uint _value);
+    // cost per token (cents *10^18) amounts for each tier.
+    uint256[] costPerToken = [
+        3.85E21,
+        6.1E21,
+        4.15E21,
+        5.92E21,
+        9.47E21,
+        1.1E22,
+        1.123E22,
+        1.115E22,
+        1.135E22,
+        1.013E22
+    ];
+
+    uint256 public totalSupply = 100000000000000000000000;
+    uint tierLevel = 0;
+    uint fiatPerEth = 385000000000000000000000;    // cents per ETH in this case (*10^18)
+    uint256 circulatingSupply = 0;
+    uint maxTier = 9;
+    uint256 devFees = 0;
+    uint256 fees = 10000;  // the calculation expects % * 100 (so 10% is 1000)
+
+    // flags
+    bool public receiveEth = true;
+    bool payFees = true;
+    bool distributionDone = false;
+    bool canExchange = true;
+
     // Storage
     mapping (address => uint256) public balances;
-
-    // list of contract addresses that can request tokens
-    // use add/remove functions to update
     mapping (address => bool) public exchangePartners;
 
-    // permitted exch partners and associated token rates
-    // rate is X target tokens per Y incoming so newTokens = Tokens/Rate
-    mapping (address => uint256) public exchangeRates;
+    // events
+    event Transfer(address indexed _from, address indexed _to, uint _value);
 
     function COE() {
-        _owner = msg.sender;
-        preMine();
+        owner = msg.sender;
     }
 
-    function preMine() internal {
-        balances[_premine] = 32664750000000000000000;
-        Transfer(this, _premine, 32664750000000000000000);
-        _totalSupply = sub(_totalSupply, 32664750000000000000000);
-        _circulatingSupply = add(_circulatingSupply, 32664750000000000000000);
+    function premine() public {
+        require(msg.sender == owner);
+        balances[premine] = add(balances[premine],32664993546427000000000);
+        Transfer(this, premine, 32664993546427000000000);
+        circulatingSupply = add(circulatingSupply, 32664993546427000000000);
+        totalSupply = sub(totalSupply,32664993546427000000000);
     }
 
-    function transfer(address _to, uint _value, bytes _data) public {
-        // sender must have enough tokens to transfer
-        require(balances[msg.sender] >= _value);
+    function () payable public {
+        require((msg.value > 0) && (receiveEth));
 
-        if(_to == address(this)) {
-            // WARNING: if you transfer tokens back to the contract you will lose them
-            _totalSupply = add(_totalSupply, _value);
-            balances[msg.sender] = sub(balanceOf(msg.sender), _value);
-            Transfer(msg.sender, _to, _value);
+        if(payFees) {
+            devFees = add(devFees, ((msg.value * fees) / 10000));
+        }
+        allocateTokens(convertEthToCents(msg.value));
+    }
+
+    function convertEthToCents(uint256 _incoming) internal returns (uint256) {
+        return mul(_incoming, fiatPerEth);
+    }
+
+    function allocateTokens(uint256 _submitted) internal {
+        uint256 _availableInTier = mul(tierTokens[tierLevel], costPerToken[tierLevel]);
+        uint256 _allocation = 0;
+        // multiply _submitted by cost per token and see if that is greater than _availableInTier
+
+        if(_submitted >= _availableInTier) {
+            _allocation = tierTokens[tierLevel];
+            tierTokens[tierLevel] = 0;
+            tierLevel++;
+            _submitted = sub(_submitted, _availableInTier);
         }
         else {
-            uint codeLength;
+            uint256 _tokens = div(div(mul(_submitted, 1 ether), costPerToken[tierLevel]), 1 ether);
+            _allocation = add(_allocation, _tokens);
+            tierTokens[tierLevel] = sub(tierTokens[tierLevel], _tokens);
+            _submitted = sub(_submitted, mul(_tokens, costPerToken[tierLevel]));
+        }
 
-            assembly {
-                codeLength := extcodesize(_to)
-            }
+        // transfer tokens allocated so far to wallet address from contract
+        balances[msg.sender] = add(balances[msg.sender],_allocation);
+        circulatingSupply = add(circulatingSupply, _allocation);
+        totalSupply = sub(totalSupply, _allocation);
 
-            if(codeLength != 0) {
-                // only allow transfer to exchange partner contracts - this is handled by another function
-                exchange(_to, _value);
-            }
-            else {
-                balances[msg.sender] = sub(balanceOf(msg.sender), _value);
-                balances[_to] = add(balances[_to], _value);
-
-                Transfer(msg.sender, _to, _value);
-            }
+        if((_submitted != 0) && (tierLevel <= maxTier)) {
+            allocateTokens(_submitted);
+        }
+        else {
+            // emit transfer event
+            Transfer(this, msg.sender, balances[msg.sender]);
         }
     }
 
     function transfer(address _to, uint _value) public {
-        /// sender must have enough tokens to transfer
+        // sender must have enough tokens to transfer
         require(balances[msg.sender] >= _value);
+        totalSupply = add(totalSupply, _value);
+        circulatingSupply = sub(circulatingSupply, _value);
 
         if(_to == address(this)) {
             // WARNING: if you transfer tokens back to the contract you will lose them
             // use the exchange function to exchange for tokens with approved partner contracts
-            _totalSupply = add(_totalSupply, _value);
             balances[msg.sender] = sub(balanceOf(msg.sender), _value);
             Transfer(msg.sender, _to, _value);
         }
@@ -106,13 +145,22 @@ contract COE {
             }
 
             if(codeLength != 0) {
-                // only allow transfer to exchange partner contracts - this is handled by another function
-                exchange(_to, _value);
+                if(exchangePartners[_to]) {
+                    if(canExchange == true) {
+                        exchange(_to, _value);
+                    }
+                    else revert();  // until MNY is ready to accept COE revert attempts to exchange
+                }
+                else {
+                    // WARNING: if you transfer to a contract that cannot handle incoming tokens you may lose them
+                    balances[msg.sender] = sub(balanceOf(msg.sender), _value);
+                    balances[_to] = add(balances[_to], _value);
+                    Transfer(msg.sender, _to, _value);
+                }
             }
             else {
                 balances[msg.sender] = sub(balanceOf(msg.sender), _value);
                 balances[_to] = add(balances[_to], _value);
-
                 Transfer(msg.sender, _to, _value);
             }
         }
@@ -121,44 +169,10 @@ contract COE {
     function exchange(address _partner, uint _amount) internal {
         require(exchangePartners[_partner]);
         require(requestTokensFromOtherContract(_partner, this, msg.sender, _amount));
-
-        if(_coldStorage) {
-            // put the tokens from this contract into cold storage if we need to
-            // (NB: if these are in reality to be burnt, we just never defrost them)
-            _frozenTokens = add(_frozenTokens, _amount);
-        }
-        else {
-            // or return them to the available supply if not
-            _totalSupply = add(_totalSupply, _amount);
-        }
-
         balances[msg.sender] = sub(balanceOf(msg.sender), _amount);
-        _circulatingSupply = sub(_circulatingSupply, _amount);
-        Exchanged(msg.sender, _partner, _amount);
+        circulatingSupply = sub(circulatingSupply, _amount);
+        totalSupply = add(totalSupply, _amount);
         Transfer(msg.sender, this, _amount);
-    }
-
-    // fallback to receive ETH into contract and send tokens back based on current exchange rate
-    function () payable public {
-        require((msg.value > 0) && (_receiveEth));
-        uint256 _tokens = div(mul(msg.value,_tokePerEth), 1 ether);
-        require(_totalSupply >= _tokens);//, "Insufficient tokens available at current exchange rate");
-        _totalSupply = sub(_totalSupply, _tokens);
-        balances[msg.sender] = add(balances[msg.sender], _tokens);
-        _circulatingSupply = add(_circulatingSupply, _tokens);
-        Transfer(this, msg.sender, _tokens);
-        _lifeVal = add(_lifeVal, msg.value);
-
-        if(_feesEnabled) {
-            if(!_payFees) {
-                // then check whether fees are due and set _payFees accordingly
-                if(_lifeVal >= _feeLimit) _payFees = true;
-            }
-
-            if(_payFees) {
-                _devFees = add(_devFees, ((msg.value * _fees) / 10000));
-            }
-        }
     }
 
     function requestTokensFromOtherContract(address _targetContract, address _sourceContract, address _recipient, uint256 _value) internal returns (bool){
@@ -167,148 +181,120 @@ contract COE {
         return true;
     }
 
-    function exchangeTokensFromOtherContract(address _source, address _recipient, uint256 _RequestedTokens) {
-        require(exchangeRates[msg.sender] > 0);
-        uint256 _exchanged = mul(_RequestedTokens, exchangeRates[_source]);
-        require(_exchanged <= _totalSupply);
-        balances[_recipient] = add(balances[_recipient],_exchanged);
-        _totalSupply = sub(_totalSupply, _exchanged);
-        _circulatingSupply = add(_circulatingSupply, _exchanged);
-        Exchanged(_source, _recipient, _exchanged);
-        Transfer(this, _recipient, _exchanged);
-    }
-
-    function changePayRate(uint256 _newRate) public {
-        require(((msg.sender == _owner) || (msg.sender == _dev)) && (_newRate >= 0));
-        _tokePerEth = _newRate;
-    }
-
-    function safeWithdrawal(address _receiver, uint256 _value) public {
-        require((msg.sender == _owner));
-        uint256 valueAsEth = mul(_value,1 ether);
-
-        // if fees are enabled send the dev fees
-        if(_feesEnabled) {
-            if(_payFees) _devFeesAddr.transfer(_devFees);
-            _devFees = 0;
-        }
-
-        // check balance before transferring
-        require(valueAsEth <= this.balance);
-        _receiver.transfer(valueAsEth);
-    }
-
-    function balanceOf(address _receiver) public constant returns (uint balance) {
+    function balanceOf(address _receiver) public constant returns (uint256) {
         return balances[_receiver];
     }
 
-    function changeOwner(address _receiver) public {
-        require(msg.sender == _owner);
-        _dev = _receiver;
+    function balanceInTier() public constant returns (uint256) {
+        return tierTokens[tierLevel];
     }
 
-    function changeDev(address _receiver) public {
-        require(msg.sender == _dev);
-        _owner = _receiver;
+    function currentTier() public constant returns (uint256) {
+        return tierLevel;
     }
 
-    function changeDevFeesAddr(address _receiver) public {
-        require(msg.sender == _dev);
-        _devFeesAddr = _receiver;
-    }
-
-    function toggleReceiveEth() public {
-        require((msg.sender == _dev) || (msg.sender == _owner));
-        if(!_receiveEth) {
-            _receiveEth = true;
-        }
-        else {
-            _receiveEth = false;
-        }
-    }
-
-    function toggleFreezeTokensFlag() public {
-        require((msg.sender == _dev) || (msg.sender == _owner));
-        if(!_coldStorage) {
-            _coldStorage = true;
-        }
-        else {
-            _coldStorage = false;
-        }
-    }
-
-    function defrostFrozenTokens() public {
-        require((msg.sender == _dev) || (msg.sender == _owner));
-        _totalSupply = add(_totalSupply, _frozenTokens);
-        _frozenTokens = 0;
-    }
-
-    function addExchangePartnerAddressAndRate(address _partner, uint256 _rate) {
-        require((msg.sender == _dev) || (msg.sender == _owner));
-        uint codeLength;
-        assembly {
-            codeLength := extcodesize(_partner)
-        }
-        require(codeLength > 0);
-        exchangeRates[_partner] = _rate;
+    function setFiatPerEthRate(uint256 _newRate) {
+        require(msg.sender == owner);
+        fiatPerEth = _newRate;
     }
 
     function addExchangePartnerTargetAddress(address _partner) public {
-        require((msg.sender == _dev) || (msg.sender == _owner));
+        require(msg.sender == owner);
         exchangePartners[_partner] = true;
     }
 
+    function canContractExchange(address _contract) public constant returns (bool) {
+        return exchangePartners[_contract];
+    }
+
     function removeExchangePartnerTargetAddress(address _partner) public {
-        require((msg.sender == _dev) || (msg.sender == _owner));
+        require(msg.sender == owner);
         exchangePartners[_partner] = false;
     }
 
-    function canExchange(address _targetContract) public constant returns (bool) {
-        return exchangePartners[_targetContract];
+    function withdrawDevFees() public {
+        require(payFees);
+        devFeesAddr.transfer(devFees);
+        devFees = 0;
     }
 
-    function contractExchangeRate(address _exchangingContract) public constant returns (uint256) {
-        return exchangeRates[_exchangingContract];
+    function changeDevFees(address _devFees) public {
+        require(msg.sender == owner);
+        devFeesAddr = _devFees;
     }
 
-    function totalSupply() public constant returns (uint256) {
-        return _totalSupply;
-    }
-
-    function getBalance() public constant returns (uint256) {
-        return this.balance;
-    }
-
-    function getLifeVal() public constant returns (uint256) {
-        require((msg.sender == _owner) || (msg.sender == _dev));
-        return _lifeVal;
-    }
-
-    function getCirculatingSupply() public constant returns (uint256) {
-        return _circulatingSupply;
+    function changePreMine(address _preMine) {
+        require(msg.sender == owner);
+        premine = _preMine;
     }
 
     function payFeesToggle() {
-        require((msg.sender == _dev) || (msg.sender == _owner));
-        if(_payFees) {
-            _payFees = false;
+        require(msg.sender == owner);
+        if(payFees) {
+            payFees = false;
         }
         else {
-            _payFees = true;
+            payFees = true;
         }
+    }
+
+    function safeWithdrawal(address _receiver, uint256 _value) public {
+        require(msg.sender == owner);
+        // check balance before transferring
+        require(_value <= this.balance);
+        _receiver.transfer(_value);
     }
 
     // enables fee update - must be between 0 and 100 (%)
     function updateFeeAmount(uint _newFee) public {
-        require((msg.sender == _dev) || (msg.sender == _owner));
+        require(msg.sender == owner);
         require((_newFee >= 0) && (_newFee <= 100));
-        _fees = _newFee * 100;
+        fees = _newFee * 100;
     }
 
-    function withdrawDevFees() public {
-        require(_payFees);
-        _devFeesAddr.transfer(_devFees);
-        _devFees = 0;
+    function handleTokensFromOtherContracts(address _contract, address _recipient, uint256 _tokens) {
+        require(msg.sender == owner);
+        Target t;
+        t = Target(_contract);
+        t.transfer(_recipient, _tokens);
+    }
+
+    function changeOwner(address _recipient) {
+        require(msg.sender == owner);
+        owner = _recipient;
+    }
+
+    function changeTierController(address _controller) {
+        require(msg.sender == owner);
+        tierController = _controller;
+    }
+
+    function setTokenAndRate(uint256 _tokens, uint256 _rate) {
+        require((msg.sender == owner) || (msg.sender == tierController));
+        maxTier++;
+        tierTokens[maxTier] = _tokens;
+        costPerToken[maxTier] = _rate;
+    }
+
+    function setPreMineAddress(address _premine) {
+        require(msg.sender == owner);
+        premine = _premine;
+    }
+
+    function toggleReceiveEth() {
+        require(msg.sender == owner);
+        if(receiveEth == true) {
+            receiveEth = false;
+        }
+        else receiveEth = true;
+    }
+
+    function toggleTokenExchange() {
+        require(msg.sender == owner);
+        if(canExchange == true) {
+            canExchange = false;
+        }
+        else canExchange = true;
     }
 
     function mul(uint a, uint b) internal pure returns (uint) {
