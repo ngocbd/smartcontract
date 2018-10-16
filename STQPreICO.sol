@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract STQPreICO at 0x2f22c502a8029d5e64aeafb6e0a214c0323f43c7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract STQPreICO at 0xa2ed452396e3afd966a0337c5186456d0dc67bfa
 */
 pragma solidity 0.4.15;
 
@@ -337,7 +337,7 @@ contract STQPreICO is Ownable, ReentrancyGuard, InvestmentAnalytics {
     uint public constant c_MinInvestment = 10 finney;
 
     /// @notice maximum investments to be accepted during pre-ICO
-    uint public constant c_MaximumFunds = 8000 ether;
+    uint public constant c_MaximumFunds = 3500 ether;
 
 
     /// @notice starting exchange rate of STQ
