@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherTanks at 0xef8a560fa19f26982c27c78101545b8fe3018237
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherTanks at 0xca5088449b96c225801ced8e9efdcae1e0c92a3d
 */
 pragma solidity ^0.4.0;
 
@@ -22,14 +22,12 @@ contract EtherTanks {
         string name; // Tank's name
         uint32 hull; // Hull's ID
         uint32 weapon; // Weapon's ID
-        // Unfortunately, it's impossible to define the variable inside the struct as constant.
+        // Unfortunately, it's imposible to define the variable inside the struct as constant.
         // However, you can read this smart-contract and see that there are no changes at all related to the start prices.
         uint256 startPrice;
         uint256 currentPrice; // The current price. Changes every time someone buys this kind of tank
         uint256 earning; // The amount of earning each owner of this tank gets when someone buys this type of tank
         uint256 releaseTime; // The moment when it will be allowed to buy this type of tank
-        uint32 amountOfTanks; // The amount of tanks with this kind of product
-        
     }
         
     struct TankEntity {
@@ -41,7 +39,6 @@ contract EtherTanks {
         uint256 auctionEntity; // If it's on the auction,
         uint256 earned; // Total funds earned with this tank
         uint32 exp; // Tank's experience
-        uint32 lastCashoutIndex; // Last amount of tanks existing in the game with the same ProductID
     }
     
 
@@ -119,8 +116,6 @@ contract EtherTanks {
     address public UpgradeMaster; // Earns fees for upgrading tanks (0.05 Eth)
     address public AuctionMaster; // Earns fees for producing auctions (3%)
     address public TankSellMaster; // Earns fees for selling tanks (start price)
-    address public ExportMaster; // Exports tanks from the previous contract.
-    bool public canExport = true; // If false -- the exporting is not allowed for this contract forever, so it's safe.
     // No modifiers were needed, because each access is checked no more than one time in the whole code,
     // So calling "require(msg.sender == UpgradeMaster);" is enough.
     
@@ -139,17 +134,11 @@ contract EtherTanks {
         AuctionMaster = _newMaster;
     }
     
-    function FinishedExporting () public {
-        require(msg.sender == ExportMaster);
-        canExport = false; // Now, the exporting process has been finished, so we do not need to export anything anymore. Done.
-    }
-    
     function EtherTanks() public {
         
         UpgradeMaster = msg.sender;
         AuctionMaster = msg.sender;
         TankSellMaster = msg.sender;
-        ExportMaster = msg.sender;
 
         // Creating 11 hulls
         newTankHull(100, 5, 1);
@@ -202,21 +191,6 @@ contract EtherTanks {
         }
         if (msg.sender.send(_amount)){ // Sending funds and if the transaction is successful
             balances[msg.sender] -= _amount; // Changing the amount of funds on the player's in-game balance
-        }
-        
-        EventCashOut (msg.sender, _amount);
-        return;
-    }
-    
-    function cashOutTank (uint32 _tankID) public payable {
-        require (_tankID > 0 && _tankID < newIdTank); // Checking if the tank exists
-        require (tanks[_tankID].owner == msg.sender); // Checking if sender owns this tank
-        uint256 _amount = tankProducts[tanks[_tankID].productID].earning*(tankProducts[tanks[_tankID].productID].amountOfTanks-tanks[_tankID].lastCashoutIndex);
-        require (this.balance >= _amount); // Checking if this contract has enought money to pay
-        require (_amount > 0);
-        
-        if (tanks[_tankID].owner.send(_amount)){ // Sending funds and if the transaction is successful
-            tanks[_tankID].lastCashoutIndex = tankProducts[tanks[_tankID].productID].amountOfTanks; // Changing the amount of funds on the player's in-game balance
         }
         
         EventCashOut (msg.sender, _amount);
@@ -336,7 +310,7 @@ contract EtherTanks {
     
     
     function newTankProduct (string _name, uint32 _hull, uint32 _weapon, uint256 _price, uint256 _earning, uint256 _releaseTime) private {
-        tankProducts[newIdTankProduct++] = TankProduct(_name, _hull, _weapon, _price, _price, _earning, _releaseTime, 0);
+        tankProducts[newIdTankProduct++] = TankProduct(_name, _hull, _weapon, _price, _price, _earning, _releaseTime);
         
         EventProduct (newIdTankProduct-1, _name, _hull, _weapon, _price, _earning, _releaseTime, now);
     }
@@ -347,13 +321,6 @@ contract EtherTanks {
     
     function newTankWeapon (uint32 _minDamage, uint32 _maxDamage, uint32 _attackSpeed, uint8 _league) private {
         tankWeapons[newIdTankWeapon++] = TankWeapon(_minDamage, _maxDamage, _attackSpeed, _league);
-    }
-    
-    function exportTank (address _owner, uint32 _tankproductID) public {
-        require (canExport == true); // Can be called only if the process of exporting is allowed
-        tankProducts[_tankproductID].currentPrice += tankProducts[_tankproductID].earning;
-        tanks[newIdTank++] = TankEntity (_tankproductID, [0, 0, 0, 0], _owner, _owner, false, 0, 0, 0, ++tankProducts[_tankproductID].amountOfTanks);
-        EventBuyTank (msg.sender, _tankproductID, newIdTank-1);
     }
     
     function buyTank (uint32 _tankproductID) public payable {
@@ -370,20 +337,19 @@ contract EtherTanks {
         
         tankProducts[_tankproductID].currentPrice += tankProducts[_tankproductID].earning;
         
-        /*for (uint32 index = 1; index < newIdTank; index++){
+        for (uint32 index = 1; index < newIdTank; index++){
             if (tanks[index].productID == _tankproductID){
                 balances[tanks[index].earner] += tankProducts[_tankproductID].earning;
                 tanks[index].earned += tankProducts[_tankproductID].earning;
             }
-        }*/
-        // This is why we decided to create the new contract - to avoid loops. Our suggestion to you: NEVER EVER USE LOOPS IN SMART-CONTRACTS
+        }
         
         if (tanksBeforeTheNewTankType() == 0 && newIdTankProduct <= 121){
             newTankType();
         }
         
-        tanks[newIdTank++] = TankEntity (_tankproductID, [0, 0, 0, 0], msg.sender, msg.sender, false, 0, 0, 0, ++tankProducts[_tankproductID].amountOfTanks);
-
+        tanks[newIdTank++] = TankEntity (_tankproductID, [0, 0, 0, 0], msg.sender, msg.sender, false, 0, 0, 0);
+        
         // After all owners of the same type of tank got their earnings, admins get the amount which remains and no one need it
         // Basically, it is the start price of the tank.
         balances[TankSellMaster] += tankProducts[_tankproductID].startPrice;
@@ -425,7 +391,6 @@ contract EtherTanks {
     mapping (uint32 => TankEntity) tanks; // The storage 
     mapping (uint32 => TankProduct) tankProducts;
     mapping (uint32 => TankHull) tankHulls;
-    mapping (address => uint32[]) tankOwners;
     mapping (uint32 => TankWeapon) tankWeapons;
     mapping (uint256 => AuctionEntity) auctions;
     mapping (address => uint) balances;
@@ -469,7 +434,7 @@ contract EtherTanks {
     }
     
     function getTankEarning (uint32 _ID) public constant returns (uint256){
-        return tankProducts[tanks[_ID].productID].earning*(tankProducts[tanks[_ID].productID].amountOfTanks-tanks[_ID].lastCashoutIndex);
+        return tanks[_ID].earned;
     }
     
     function getCurrentPriceAuction (uint32 _ID) public constant returns (uint256){
@@ -500,8 +465,6 @@ contract EtherTanks {
 }
 
 /*
-    The previous contract address: 0xca5088449b96c225801ced8e9efdcae1e0c92a3d
-    
     EtherTanks.com
     EthereTanks.com
 */
