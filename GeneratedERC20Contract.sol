@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GeneratedERC20Contract at 0xfdcb5701ece8418ab824d8538c3e28eda109f4ec
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GeneratedERC20Contract at 0xe45a3e0dc3e0c19df8ee1f057ea3b2f42ad9de37
 */
 pragma solidity ^0.4.21;
 
@@ -86,10 +86,10 @@ contract GeneratedERC20Contract is StandardToken {
     string public symbol;
     string public version = 'v0.0.1';
 
-    function GeneratedERC20Contract() { 
-        balances[msg.sender] = 10000000000;
-        totalSupply = 10000000000;
-        name = "Tech-Token";
+    function GeneratedERC20Contract() {
+        balances[msg.sender] = 1000000000000000000;
+        totalSupply = 1000000000000000000;
+        name = "Tec-Token";
         symbol = "TECH";
         decimals = 18;
     }
