@@ -1,18 +1,19 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract E4Lava at 0xd87c91884f5796e7b0a7ee8cc5d40ad6c63f289d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract E4Lava at 0xce5c603c78d047ef43032e96b5b785324f753a4f
 */
-pragma solidity ^0.4.11;
-
-// VERSION LAVA(D)
-
-// --------------------------
-// here's how this works:
-// the current amount of dividends due to each token-holder's  is:
-//   previous_due + [ p(x) * t(x)/N ] + [ p(x+1) * t(x+1)/N ] + ...
-//   where p(x) is the x'th payment received by the contract
-//         t(x) is the number of tokens held by the token-holder at the time of p(x)
-//         N    is the total number of tokens, which never changes
-//
+pragma solidity ^0.4.11;                                                                                                           
+                                                                                                                                   
+// VERSION LAVA(J)                                                                                                                 
+                                                                                                                                   
+                                                                                                                                   
+// --------------------------                                                                                                      
+// here's how this works:                                                                                                          
+// the current amount of dividends due to each token-holder's  is:                                                                 
+//   previous_due + [ p(x) * t(x)/N ] + [ p(x+1) * t(x+1)/N ] + ...                                                                
+//   where p(x) is the x'th payment received by the contract                                                                       
+//         t(x) is the number of tokens held by the token-holder at the time of p(x)                                               
+//         N    is the total number of tokens, which never changes                                                                 
+//                                                                                                                                 
 // assume that t(x) takes on 3 values, t(a), t(b) and t(c), during periods a, b, and c. then:
 // factoring:
 //   current_due = { (t(a) * [p(x) + p(x+1)] ...) +
@@ -90,7 +91,7 @@ pragma solidity ^0.4.11;
 // ---------------------------------
 // ABSTRACT standard token class
 // ---------------------------------
-contract Token { 
+contract Token {
     function totalSupply() constant returns (uint256 supply);
     function balanceOf(address _owner) constant returns (uint256 balance);
     function transfer(address _to, uint256 _value) returns (bool success);
@@ -111,13 +112,23 @@ contract E4LavaRewards
         function checkDividends(address _addr) constant returns(uint _amount);
         function withdrawDividends() public returns (uint namount);
         function transferDividends(address _to) returns (bool success);
+        function getAccountInfo(address _addr) constant returns(uint _tokens, uint _snapshot, uint _points);
 
 }
 
 // --------------------------
+//  E4LavaOptin - abstract e4 optin contract
+// --------------------------
+contract E4LavaOptIn
+{
+        function optInFromClassic() public;
+}
+
+
+// --------------------------
 //  E4ROW (LAVA) - token contract
 // --------------------------
-contract E4Lava is Token, E4LavaRewards {
+contract E4Lava is Token, E4LavaRewards, E4LavaOptIn {
         event StatEvent(string msg);
         event StatEventI(string msg, uint val);
 
@@ -143,7 +154,7 @@ contract E4Lava is Token, E4LavaRewards {
         address public developers;                    // developers token holding address
         address public owner;                         // deployer executor
         address public oldE4;                         // addr of old e4 token contract
-        address public oldE4RecycleBin;  // addr to transfer old tokens
+        address public oldE4RecycleBin;               // addr to transfer old tokens
 
         uint public decimals;
         string public symbol;
@@ -154,9 +165,10 @@ contract E4Lava is Token, E4LavaRewards {
         uint public numAccounts;
 
         uint public payoutThreshold;                  // no withdrawals less than this amount, to avoid remainders
-        uint public vestTime;                         // 1 year past sale vest developer tokens
         uint public rwGas;                            // reward gas
-        uint public optInGas;
+        uint public optInXferGas;                     // gas used when optInFromClassic calls xfer on old contract
+        uint public optInFcnMinGas;                   // gas we need for the optInFromClassic fcn, *excluding* optInXferGas
+        uint public vestTime = 1525219201;            // 1 year past sale vest developer tokens
 
         SettingStateValue public settingsState;
 
@@ -164,7 +176,7 @@ contract E4Lava is Token, E4LavaRewards {
         // --------------------
         // contract constructor
         // --------------------
-        function E4Lava() 
+        function E4Lava()
         {
                 owner = msg.sender;
                 developers = msg.sender;
@@ -175,15 +187,16 @@ contract E4Lava is Token, E4LavaRewards {
         // -----------------------------------
         // use this to reset everything, will never be called after lockRelease
         // -----------------------------------
-        function applySettings(SettingStateValue qState, uint _threshold, uint _vest, uint _rw, uint _optGas )
+        function applySettings(SettingStateValue qState, uint _threshold, uint _rw, uint _optXferGas, uint _optFcnGas )
         {
-                if (msg.sender != owner) 
+                if (msg.sender != owner)
                         return;
 
                 // these settings are permanently tweakable for performance adjustments
                 payoutThreshold = _threshold;
                 rwGas = _rw;
-                optInGas = _optGas;
+                optInXferGas = _optXferGas;
+                optInFcnMinGas = _optFcnGas;
 
                 // this first test checks if already locked
                 if (settingsState == SettingStateValue.lockedRelease)
@@ -192,7 +205,7 @@ contract E4Lava is Token, E4LavaRewards {
                 settingsState = qState;
 
                 // this second test allows locking without changing other permanent settings
-                // WARNING, MAKE SURE YOUR'RE HAPPY WITH ALL SETTINGS 
+                // WARNING, MAKE SURE YOUR'RE HAPPY WITH ALL SETTINGS
                 // BEFORE LOCKING
 
                 if (qState == SettingStateValue.lockedRelease) {
@@ -200,7 +213,7 @@ contract E4Lava is Token, E4LavaRewards {
                         return;
                 }
 
-                // zero out all token holders.  
+                // zero out all token holders.
                 // leave alloced on, leave num accounts
                 // cant delete them anyways
 
@@ -213,8 +226,9 @@ contract E4Lava is Token, E4LavaRewards {
                         }
                 }
 
-                vestTime = _vest;
                 numToksSwitchedOver = 0;
+                holdoverBalance = 0;
+                TotalFeesReceived = 0;
 
                 if (this.balance > 0) {
                         if (!owner.call.gas(rwGas).value(this.balance)())
@@ -251,9 +265,9 @@ contract E4Lava is Token, E4LavaRewards {
         // sender transfers tokens to a new acct
         // do not use this fcn for a token-split transfer from the old token contract!
         // ----------------------------
-        function transfer(address _to, uint256 _value) returns (bool success) 
+        function transfer(address _to, uint256 _value) returns (bool success)
         {
-                if ((msg.sender == developers) 
+                if ((msg.sender == developers)
                         &&  (now < vestTime)) {
                         //statEvent("Tokens not yet vested.");
                         return false;
@@ -267,7 +281,7 @@ contract E4Lava is Token, E4LavaRewards {
                     //first credit sender with points accrued so far.. must do this before number of held tokens changes
                     calcCurPointsForAcct(msg.sender);
                     holderAccounts[msg.sender].tokens -= _value;
-                    
+
                     if (!holderAccounts[_to].alloced) {
                         addAccount(_to);
                     }
@@ -277,14 +291,14 @@ contract E4Lava is Token, E4LavaRewards {
 
                     Transfer(msg.sender, _to, _value);
                     return true;
-                } else { 
-                    return false; 
+                } else {
+                    return false;
                 }
         }
 
 
         function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-                if ((_from == developers) 
+                if ((_from == developers)
                         &&  (now < vestTime)) {
                         //statEvent("Tokens not yet vested.");
                         return false;
@@ -296,7 +310,7 @@ contract E4Lava is Token, E4LavaRewards {
 
                     calcCurPointsForAcct(_from);
                     holderAccounts[_from].tokens -= _value;
-                    
+
                     if (!holderAccounts[_to].alloced) {
                         addAccount(_to);
                     }
@@ -307,8 +321,8 @@ contract E4Lava is Token, E4LavaRewards {
                     allowed[_from][msg.sender] -= _value;
                     Transfer(_from, _to, _value);
                     return true;
-                } else { 
-                    return false; 
+                } else {
+                    return false;
                 }
         }
 
@@ -336,7 +350,7 @@ contract E4Lava is Token, E4LavaRewards {
         // time we updated the account's snapshot of the running point count, TotalFeesReceived. during the period the account's
         // number of tokens must not have changed. so always call this fcn before changing the number of tokens.
         // ----------------------------
-        function calcCurPointsForAcct(address _acct) {
+        function calcCurPointsForAcct(address _acct) internal {
               holderAccounts[_acct].currentPoints += (TotalFeesReceived - holderAccounts[_acct].lastSnapshot) * holderAccounts[_acct].tokens;
               holderAccounts[_acct].lastSnapshot = TotalFeesReceived;
         }
@@ -372,7 +386,7 @@ contract E4Lava is Token, E4LavaRewards {
                         StatEventI("low Balance", _amount);
                         return;
                 } else {
-                        if ((msg.sender == developers) 
+                        if ((msg.sender == developers)
                                 &&  (now < vestTime)) {
                                 StatEvent("Tokens not yet vested.");
                                 _amount = 0;
@@ -390,9 +404,9 @@ contract E4Lava is Token, E4LavaRewards {
         // ----------------------------
         // allow sender to transfer dividends
         // ----------------------------
-        function transferDividends(address _to) returns (bool success) 
+        function transferDividends(address _to) returns (bool success)
         {
-                if ((msg.sender == developers) 
+                if ((msg.sender == developers)
                         &&  (now < vestTime)) {
                         //statEvent("Tokens not yet vested.");
                         return false;
@@ -417,14 +431,15 @@ contract E4Lava is Token, E4LavaRewards {
         // ----------------------------
         // set gas for operations
         // ----------------------------
-        function setOpGas(uint _rw, uint _optIn)
+        function setOpGas(uint _rw, uint _optXferGas, uint _optFcnGas)
         {
                 if (msg.sender != owner && msg.sender != developers) {
                         //StatEvent("only owner calls");
                         return;
                 } else {
                         rwGas = _rw;
-                        optInGas = _optIn;
+                        optInXferGas = _optXferGas;
+                        optInFcnMinGas = _optFcnGas;
                 }
         }
 
@@ -436,7 +451,7 @@ contract E4Lava is Token, E4LavaRewards {
         {
                 if (holderAccounts[_addr].alloced) {
                    //don't call calcCurPointsForAcct here, cuz this is a constant fcn
-                   uint _currentPoints = holderAccounts[_addr].currentPoints + 
+                   uint _currentPoints = holderAccounts[_addr].currentPoints +
                         ((TotalFeesReceived - holderAccounts[_addr].lastSnapshot) * holderAccounts[_addr].tokens);
                    _amount = _currentPoints / NewTokenSupply;
 
@@ -453,7 +468,7 @@ contract E4Lava is Token, E4LavaRewards {
         // ----------------------------
         // swap executor
         // ----------------------------
-        function changeOwner(address _addr) 
+        function changeOwner(address _addr)
         {
                 if (msg.sender != owner
                         || settingsState == SettingStateValue.lockedRelease)
@@ -464,7 +479,7 @@ contract E4Lava is Token, E4LavaRewards {
         // ----------------------------
         // set developers account
         // ----------------------------
-        function setDeveloper(address _addr) 
+        function setDeveloper(address _addr)
         {
                 if (msg.sender != owner
                         || settingsState == SettingStateValue.lockedRelease)
@@ -475,7 +490,7 @@ contract E4Lava is Token, E4LavaRewards {
         // ----------------------------
         // set oldE4 Addresses
         // ----------------------------
-        function setOldE4(address _oldE4, address _oldE4Recyle) 
+        function setOldE4(address _oldE4, address _oldE4Recyle)
         {
                 if (msg.sender != owner
                         || settingsState == SettingStateValue.lockedRelease)
@@ -484,6 +499,15 @@ contract E4Lava is Token, E4LavaRewards {
                 oldE4RecycleBin = _oldE4Recyle;
         }
 
+        // ----------------------------
+        // get account info
+        // ----------------------------
+        function getAccountInfo(address _addr) constant returns(uint _tokens, uint _snapshot, uint _points)
+        {
+                _tokens = holderAccounts[_addr].tokens;
+                _snapshot = holderAccounts[_addr].lastSnapshot;
+                _points = holderAccounts[_addr].currentPoints;
+        }
 
 
         // ----------------------------
@@ -503,9 +527,9 @@ contract E4Lava is Token, E4LavaRewards {
         // OPT IN FROM CLASSIC.
         // All old token holders can opt into this new contract by calling this function.
         // This "transferFrom"s tokens from the old addresses to the new recycleBin address
-        // which is a new address set up on the old contract.  Afterwhich new tokens 
-        // are credited to the old holder.  Also the lastSnapShot is set to 0 then 
-        // calcCredited points are called setting up the new signatoree all of his 
+        // which is a new address set up on the old contract.  Afterwhich new tokens
+        // are credited to the old holder.  Also the lastSnapShot is set to 0 then
+        // calcCredited points are called setting up the new signatoree all of his
         // accrued dividends.
         // ----------------------------
         function optInFromClassic() public
@@ -521,7 +545,7 @@ contract E4Lava is Token, E4LavaRewards {
                 // as it is empty now. the reason for this check is cuz we are going to credit him with
                 // dividends, according to his token count, from the begin of time.
                 if (holderAccounts[nrequester].tokens != 0) {
-                        StatEvent("Account has already been allocd!");
+                        StatEvent("Account has already has tokens!");
                         return;
                 }
 
@@ -539,8 +563,13 @@ contract E4Lava is Token, E4LavaRewards {
                         return;
                 }
 
-                // 4, transfer his old toks to recyle bin
-                iclassic.transferFrom.gas(optInGas)(nrequester, oldE4RecycleBin, _toks);
+                // 4. before we do the transfer, make sure that we have at least enough gas for the
+                // transfer plus the remainder of this fcn.
+                if (msg.gas < optInXferGas + optInFcnMinGas)
+                        throw;
+
+                // 5. transfer his old toks to recyle bin
+                iclassic.transferFrom.gas(optInXferGas)(nrequester, oldE4RecycleBin, _toks);
 
                 // todo, error check?
                 if (iclassic.balanceOf(nrequester) == 0) {
@@ -559,5 +588,7 @@ contract E4Lava is Token, E4LavaRewards {
 
 
         }
+
+
 
 }
