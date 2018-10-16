@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract eXtremeHodlCoin at 0x28e5fa624745b7c67cf1e8eb6291029ae07e012d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract eXtremehoDLCoin at 0x9e046dcead1a5d711d89daff4c6af980a766aaf2
 */
 pragma solidity ^0.4.2;
 
@@ -129,12 +129,12 @@ contract SafeMath {
 
 /// @title Token contract - Implements Standard Token Interface but adds Pyramid Scheme Support :)
 /// @author Rishab Hegde - <contact@rishabhegde.com>
-contract eXtremeHodlCoin is StandardToken, SafeMath {
+contract eXtremehoDLCoin is StandardToken, SafeMath {
 
     /*
      * Token meta data
      */
-    string constant public name = "eXtreme Hodl Coin";
+    string constant public name = "eXtreme hoDL Coin";
     string constant public symbol = "XDL";
     uint8 constant public decimals = 0;
     
@@ -150,7 +150,6 @@ contract eXtremeHodlCoin is StandardToken, SafeMath {
     function update_prices() private{
         sellPrice = sell_value();
         buyPrice = buy_value();
-    
     }
     
     // Address of the founder of RiskCoin.
@@ -201,7 +200,7 @@ contract eXtremeHodlCoin is StandardToken, SafeMath {
     }
 
     /// @dev Contract constructor function sets initial token balances.
-    function eXtremeHodlCoin()
+    function eXtremehoDLCoin()
     {   
         update_prices();
     }
