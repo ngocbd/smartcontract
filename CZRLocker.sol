@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CZRLocker at 0xc39be70b50ba867db776126986fb5b9fdaf4d8e5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CZRLocker at 0x6C508B8AaCC804A9a359892A28081d25B3612123
 */
 pragma solidity ^0.4.16;
 
