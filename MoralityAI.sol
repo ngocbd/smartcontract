@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MoralityAI at 0x58876fb4e63053997876e1612f7345b991b7d63d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MoralityAI at 0x94d45663d70030ec058c9ed2063dcb0881260c60
 */
 pragma solidity ^0.4.11;
 
@@ -52,7 +52,7 @@ contract admined {
 	}
 
 	// Transfer the admin role to a new address
-	function transferAdminship(address newAdmin) public onlyAdmin {
+	function transferAdminship(address newAdmin) onlyAdmin {
 		admin = newAdmin;
 	}
 }
@@ -105,7 +105,7 @@ contract MoralityAI is admined, Token{
 	}
 
 	// Minting function that can only be called by the admin
-	function mintToken(address target, uint256 mintedAmount) public onlyAdmin{
+	function mintToken(address target, uint256 mintedAmount) onlyAdmin{
 		// Increase the balance of the target address with the amount of minted tokens
 		balanceOf[target] = safeAdd(balanceOf[target], mintedAmount);
 		// Increase the total supply of tokens
