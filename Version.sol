@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Version at 0x63a2442e4ad6c1c3c9c7e32021c2db37b8b34a25
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Version at 0x2e6d6d288b80107a1b549681a3725f778a46775a
 */
 pragma solidity ^0.4.13;
 
@@ -363,7 +363,6 @@ contract Asset is DSMath, AssetInterface, ERC223Interface {
     function balanceOf(address _owner) constant public returns (uint) {
         return balances[_owner];
     }
-
 }
 
 interface ERC223ReceivingContract {
@@ -432,6 +431,9 @@ contract Shares is Asset, SharesInterface {
     function getCreationTime() view returns (uint) { return creationTime; }
     function toSmallestShareUnit(uint quantity) view returns (uint) { return mul(quantity, 10 ** getDecimals()); }
     function toWholeShareUnit(uint quantity) view returns (uint) { return quantity / (10 ** getDecimals()); }
+    function transfer(address _to, uint256 _value) public returns (bool) { require(_to == address(this)); }
+    function transfer(address _to, uint256 _value, bytes _data) public returns (bool) { require(_to == address(this)); }
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) { require(_to == address(this)); }
 
     // INTERNAL METHODS
 
@@ -756,6 +758,11 @@ contract Fund is DSMath, DBC, Owned, RestrictedShares, FundInterface, ERC223Rece
         // Require Quote assets exists in pricefeed
         QUOTE_ASSET = Asset(ofQuoteAsset);
         NATIVE_ASSET = NativeAssetInterface(ofNativeAsset);
+        // Quote Asset and Native asset always in owned assets list
+        ownedAssets.push(ofQuoteAsset);
+        isInAssetList[ofQuoteAsset] = true;
+        ownedAssets.push(ofNativeAsset);
+        isInAssetList[ofNativeAsset] = true;
         require(address(QUOTE_ASSET) == module.pricefeed.getQuoteAsset()); // Sanity check
         atLastUnclaimedFeeAllocation = Calculations({
             gav: 0,
@@ -879,10 +886,6 @@ contract Fund is DSMath, DBC, Owned, RestrictedShares, FundInterface, ERC223Rece
             request.requestType == RequestType.invest &&
             costQuantity <= request.giveQuantity
         ) {
-            if (!isInAssetList[address(QUOTE_ASSET)]) {
-                ownedAssets.push(address(QUOTE_ASSET));
-                isInAssetList[address(QUOTE_ASSET)] = true;
-            }
             request.status = RequestStatus.executed;
             assert(AssetInterface(request.requestAsset).transferFrom(request.participant, this, costQuantity)); // Allocate Value
             createShares(request.participant, request.shareQuantity); // Accounting
@@ -978,7 +981,7 @@ contract Fund is DSMath, DBC, Owned, RestrictedShares, FundInterface, ERC223Rece
         require(exchangeIdsToOpenMakeOrderIds[exchangeNumber][sellAsset] != 0);
 
         // Update ownedAssets array and isInAssetList, isInOpenMakeOrder mapping
-        isInOpenMakeOrder[sellAsset] = true;
+        isInOpenMakeOrder[buyAsset] = true;
         if (!isInAssetList[buyAsset]) {
             ownedAssets.push(buyAsset);
             isInAssetList[buyAsset] = true;
@@ -1138,7 +1141,7 @@ contract Fund is DSMath, DBC, Owned, RestrictedShares, FundInterface, ERC223Rece
             }
             // gav as sum of mul(assetHoldings, assetPrice) with formatting: mul(mul(exchangeHoldings, exchangePrice), 10 ** shareDecimals)
             gav = add(gav, mul(assetHoldings, assetPrice) / (10 ** uint256(assetDecimals)));   // Sum up product of asset holdings of this vault and asset prices
-            if (assetHoldings != 0 || ofAsset == address(QUOTE_ASSET) || isInOpenMakeOrder[ofAsset]) { // Check if asset holdings is not zero or is address(QUOTE_ASSET) or in open make order
+            if (assetHoldings != 0 || ofAsset == address(QUOTE_ASSET) || ofAsset == address(NATIVE_ASSET) || isInOpenMakeOrder[ofAsset]) { // Check if asset holdings is not zero or is address(QUOTE_ASSET) or in open make order
                 ownedAssets.push(ofAsset);
             } else {
                 isInAssetList[ofAsset] = false; // Remove from ownedAssets if asset holdings are zero
