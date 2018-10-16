@@ -1,18 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x57e03e646642c81f29c947ee35ff0bf430d4ac14
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x69786859bc92e0ca82fcfe1bffc502b7bea6a069
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
 contract TokenERC20 {
     // Public variables of the token
-    string public name = "XAOS";
-    string public symbol = "XAOS";
-    uint8 public decimals = 18;
+    string public name = "European Crypto Bank";
+    string public symbol = "ECB";
+    uint8 public decimals = 4;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
-    uint256 public initialSupply = 38000000;
+    uint256 public initialSupply = 677283261;
 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
@@ -30,13 +30,11 @@ contract TokenERC20 {
      * Initializes contract with initial supply tokens to the creator of the contract
      */
     function TokenERC20(
-        string tokenName,
-        string tokenSymbol
+
     ) public {
         totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = tokenName;                                   // Set the name for display purposes
-        symbol = tokenSymbol;                               // Set the symbol for display purposes
+
     }
 
     /**
@@ -136,6 +134,9 @@ contract TokenERC20 {
         return true;
     }
 
+    
+    
+
     /**
      * Destroy tokens from other account
      *
@@ -153,6 +154,6 @@ contract TokenERC20 {
         Burn(_from, _value);
         return true;
     }
+    
+/* European Crypto Bank Initial Coin Offering - Private Banking and Wealth Management on cryptocurrencies - https://europeancryptobank.io - M.M. */
 }
-
-/* XAOS.LTD */
