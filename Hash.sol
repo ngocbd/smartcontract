@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hash at 0xa7620c421d29db2bb991cd603a725b960e927ced
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hash at 0xca260ffffb0270ee07ec6892fa9d44f040454e4d
 */
 pragma solidity ^0.4.18;
 
@@ -17,8 +17,12 @@ contract Hash {
         revert();
     }
 
-    function hash(string dataString) public pure returns(bytes32){
+    function hashString(string dataString) public pure returns(bytes32){
         return(keccak256(dataString));
+    }
+
+    function hashBytes(bytes dataBytes) public pure returns(bytes32){
+        return(keccak256(dataBytes));
     }
 
     function selfDestruct() public {
