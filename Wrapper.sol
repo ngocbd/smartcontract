@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Wrapper at 0x9708ac13652a70dd64d7aa848cce0e5e89414a51
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Wrapper at 0xb6a1c0a18f82ff497d10ea1d1ac3804417e382b2
 */
 pragma solidity 0.4.18;
 
@@ -1503,7 +1503,7 @@ contract KyberReserve is KyberReserveInterface, Withdrawable, Utils {
 
 contract Wrapper is Utils {
 
-    function getBalances(address reserve, ERC20[] tokens) public view returns(uint[]) {
+    function getBalances(address reserve, ERC20[] tokens) public view returns(uint[],uint) {
         uint[] memory result = new uint[](tokens.length);
         for (uint i = 0; i < tokens.length; i++) {
             uint balance = 0;
@@ -1516,7 +1516,7 @@ contract Wrapper is Utils {
             result[i] = balance;
         }
 
-        return result;
+        return (result,block.number);
     }
 
     function getByteFromBytes14(bytes14 x, uint byteInd) public pure returns(byte) {
@@ -1529,20 +1529,6 @@ contract Wrapper is Utils {
         return int8(x[byteInd]);
     }
 
-//    struct TokenRatesCompactData {
-//        bytes14 buy;  // change buy rate of token from baseBuyRate in 10 bps
-//        bytes14 sell; // change sell rate of token from baseSellRate in 10 bps
-//
-//        uint32 blockNumber;
-//    }
-//
-//    function getDataFromCompact(TokenRatesCompactData compact, uint byteInd) public pure
-//        returns(int8 buyByte, int8 sellByte, uint blockNumber)
-//    {
-//        blockNumber = uint(compact.blockNumber);
-////        return (compact.buy[byteInd], compact.sell[byteInd], uint(compact.blockNumber));
-//    }
-
     function getCompactData(ConversionRates ratesContract, ERC20 token) internal view returns(int8,int8,uint) {
         uint bulkIndex; uint index; byte buy; byte sell; uint updateBlock;
         (bulkIndex, index, buy, sell) = ratesContract.getCompactData(token);
@@ -1553,7 +1539,7 @@ contract Wrapper is Utils {
 
     function getTokenRates(ConversionRates ratesContract, ERC20[] tokenList)
         public view
-        returns(uint[], uint[], int8[], int8[], uint[])
+        returns(uint[], uint[], int8[], int8[], uint[],uint)
     {
         uint[] memory buyBases = new uint[](tokenList.length);
         uint[] memory sellBases = new uint[](tokenList.length);
@@ -1568,10 +1554,10 @@ contract Wrapper is Utils {
             (compactBuy[i], compactSell[i], updateBlock[i]) = getCompactData(ratesContract, tokenList[i]);
         }
 
-        return (buyBases, sellBases, compactBuy, compactSell, updateBlock);
+        return (buyBases, sellBases, compactBuy, compactSell, updateBlock,block.number);
     }
 
-    function getTokenIndicies(ConversionRates ratesContract, ERC20[] tokenList) public view returns(uint[], uint[]) {
+    function getTokenIndicies(ConversionRates ratesContract, ERC20[] tokenList) public view returns(uint[], uint[],uint) {
         uint[] memory bulkIndices = new uint[](tokenList.length);
         uint[] memory tokenIndexInBulk = new uint[](tokenList.length);
 
@@ -1583,15 +1569,15 @@ contract Wrapper is Utils {
             tokenIndexInBulk[i] = index;
         }
 
-        return (bulkIndices,tokenIndexInBulk);
+        return (bulkIndices,tokenIndexInBulk,block.number);
     }
 
 
-    function getExpectedRates( KyberNetwork network, ERC20[] srcs, ERC20[] dests, uint[] qty )
-        public view returns(uint[], uint[])
+    function getExpectedRates( KyberNetwork network, ERC20[] srcs, ERC20[] dests, uint[] qty)
+        public view returns(uint[], uint[],uint)
     {
         require( srcs.length == dests.length );
-        require( srcs.length == dests.length );
+        require( srcs.length == qty.length );
 
         uint[] memory rates = new uint[](srcs.length);
         uint[] memory slippage = new uint[](srcs.length);
@@ -1599,13 +1585,12 @@ contract Wrapper is Utils {
             (rates[i],slippage[i]) = network.getExpectedRate(srcs[i],dests[i],qty[i]);
         }
 
-        return (rates, slippage);
+        return (rates, slippage,block.number);
     }
 
     function getReserveRate(KyberReserve reserve, ERC20[] srcs, ERC20[] dests)
-        public view returns(uint[], uint[])
+        public view returns(uint[], uint[],uint)
     {
-        require( srcs.length == dests.length );
         require( srcs.length == dests.length );
 
         uint[] memory rates      = new uint[](srcs.length);
@@ -1621,5 +1606,7 @@ contract Wrapper is Utils {
                                                  0,
                                                  block.number);
         }
+
+        return (rates,sanityRate,block.number);
     }
 }
