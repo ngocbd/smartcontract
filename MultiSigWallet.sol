@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x402e214433fa08f741c52a22b25fc24d71531617
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0xe4429f4ec58ff05bc35cf396c2c1f54ca451bffa
 */
 pragma solidity 0.4.15;
 
@@ -47,50 +47,59 @@ contract MultiSigWallet {
      *  Modifiers
      */
     modifier onlyWallet() {
-        require(msg.sender == address(this));
+        if (msg.sender != address(this))
+            throw;
         _;
     }
 
     modifier ownerDoesNotExist(address owner) {
-        require(!isOwner[owner]);
+        if (isOwner[owner])
+            throw;
         _;
     }
 
     modifier ownerExists(address owner) {
-        require(isOwner[owner]);
+        if (!isOwner[owner])
+            throw;
         _;
     }
 
     modifier transactionExists(uint transactionId) {
-        require(transactions[transactionId].destination != 0);
+        if (transactions[transactionId].destination == 0)
+            throw;
         _;
     }
 
     modifier confirmed(uint transactionId, address owner) {
-        require(confirmations[transactionId][owner]);
+        if (!confirmations[transactionId][owner])
+            throw;
         _;
     }
 
     modifier notConfirmed(uint transactionId, address owner) {
-        require(!confirmations[transactionId][owner]);
+        if (confirmations[transactionId][owner])
+            throw;
         _;
     }
 
     modifier notExecuted(uint transactionId) {
-        require(!transactions[transactionId].executed);
+        if (transactions[transactionId].executed)
+            throw;
         _;
     }
 
     modifier notNull(address _address) {
-        require(_address != 0);
+        if (_address == 0)
+            throw;
         _;
     }
 
     modifier validRequirement(uint ownerCount, uint _required) {
-        require(ownerCount <= MAX_OWNER_COUNT
-            && _required <= ownerCount
-            && _required != 0
-            && ownerCount != 0);
+        if (   ownerCount > MAX_OWNER_COUNT
+            || _required > ownerCount
+            || _required == 0
+            || ownerCount == 0)
+            throw;
         _;
     }
 
@@ -113,7 +122,8 @@ contract MultiSigWallet {
         validRequirement(_owners.length, _required)
     {
         for (uint i=0; i<_owners.length; i++) {
-            require(!isOwner[_owners[i]] && _owners[i] != 0);
+            if (isOwner[_owners[i]] || _owners[i] == 0)
+                throw;
             isOwner[_owners[i]] = true;
         }
         owners = _owners;
@@ -231,13 +241,13 @@ contract MultiSigWallet {
         notExecuted(transactionId)
     {
         if (isConfirmed(transactionId)) {
-            Transaction storage txn = transactions[transactionId];
-            txn.executed = true;
-            if (txn.destination.call.value(txn.value)(txn.data))
+            Transaction tx = transactions[transactionId];
+            tx.executed = true;
+            if (tx.destination.call.value(tx.value)(tx.data))
                 Execution(transactionId);
             else {
                 ExecutionFailure(transactionId);
-                txn.executed = false;
+                tx.executed = false;
             }
         }
     }
