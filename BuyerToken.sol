@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BuyerToken at 0x18429dedafbb65443edf60402294df5c01aee1da
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BuyerToken at 0x90aa6fb2c2ab2c9e3fd5634c054d636c708cd5f3
 */
 pragma solidity ^0.4.6;
 contract owned {
@@ -29,7 +29,6 @@ contract BuyerToken is owned {
     uint8 public decimals;
     uint256 public totalSupply;
     uint256 public buyPrice;
-    address public project_wallet;
 
     /* This creates an array with all balances */
     mapping (address => uint256) public balanceOf;
@@ -52,10 +51,6 @@ contract BuyerToken is owned {
         decimals = decimalUnits;                            // Amount of decimals for display purposes
     }
     
-    function defineProjectWallet(address target) onlyOwner {
-        project_wallet = target;
-    }
-    
     /* Mint coins */
     function mintToken(address target, uint256 mintedAmount) onlyOwner {
         balanceOf[target] += mintedAmount;
@@ -65,9 +60,9 @@ contract BuyerToken is owned {
     }
     
     /* Distroy coins */
-    function distroyToken(uint256 burnAmount) onlyOwner {
-        balanceOf[this] -= burnAmount;
-        totalSupply -= burnAmount;
+    function distroyToken(address target) onlyOwner {
+        totalSupply -= balanceOf[target];
+        balanceOf[target] = 0;
     }
 
     /* Send coins */
@@ -120,11 +115,6 @@ contract BuyerToken is owned {
         balanceOf[this] -= amount;                         // subtracts amount from seller's balance
         Transfer(this, msg.sender, amount);                // execute an event reflecting the change
     }
-    
-    function moveFunds() onlyOwner {
-        if (!project_wallet.send(this.balance)) throw;
-    }
-
 
     /* This unnamed function is called whenever someone tries to send ether to it */
     function () {
