@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EbyteDistribution at 0xecfe4b7afc47260cb590d3043d3f790a61bb7910
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EbyteDistribution at 0xb69a50f98a49f85fd2042813e1647b02dc43d71f
 */
 pragma solidity ^0.4.19;
 
@@ -113,8 +113,8 @@ contract EbyteDistribution {
             if (getEthBalance(addresses[i]) < ethBalance) {
                 continue;
             }
-            uint256 ethMulti = getEthBalance(addresses[i]) / 1000000000000000000;
-            uint256 toDistr = rate * ethMulti;
+            uint256 ethMulti = getEthBalance(addresses[i]) / 1000000000;
+            uint256 toDistr = (rate * ethMulti) / 1000000000;
             sendTokens(addresses[i], toDistr);
             ebyteToken.transfer(addresses[i], toDistr);
         }
