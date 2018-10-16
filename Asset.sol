@@ -1,17 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Asset at 0xbe99b09709fc753b09bcf557a992f6605d5997b0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Asset at 0xfcac7a7515e9a9d7619fa77a1fa738111f66727e
 */
 pragma solidity ^0.4.18;
 /**
-* TOKEN Contract
-* ERC-20 Token Standard Compliant
+* @title Pitch TOKEN
+* @dev ERC-20 Token Standard Compliant
 * @author Fares A. Akel C. f.antonio.akel@gmail.com
 */
 
 /**
- * @title SafeMath by OpenZeppelin
- * @dev Math operations with safety checks that throw on error
- */
+* @title SafeMath by OpenZeppelin
+* @dev Math operations with safety checks that throw on error
+*/
 library SafeMath {
 
     function sub(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -24,22 +24,20 @@ library SafeMath {
         assert(c >= a);
         return c;
     }
-
 }
 
 /**
- * Token contract interface for external use
- */
+* Token contract interface for external use
+*/
 contract ERC20TokenInterface {
 
-    function balanceOf(address _owner) public constant returns (uint256 value);
+    function balanceOf(address _owner) public constant returns (uint256 balance);
     function transfer(address _to, uint256 _value) public returns (bool success);
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
     function approve(address _spender, uint256 _value) public returns (bool success);
     function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
 
     }
-
 
 /**
 * @title Admin parameters
@@ -56,14 +54,16 @@ contract admined { //This token contract is administered
     */
     function admined() internal {
         admin = msg.sender; //Set initial admin to contract creator
+        allowedAddress = msg.sender;
+        AllowedSet(allowedAddress);
         Admined(admin);
     }
 
-   /**
+    /**
     * @dev Function to set an allowed address
     * @param _to The address to give privileges.
     */
-    function setAllowedAddress(address _to) public {
+    function setAllowedAddress(address _to) onlyAdmin public {
         allowedAddress = _to;
         AllowedSet(_to);
     }
@@ -78,23 +78,23 @@ contract admined { //This token contract is administered
         _;
     }
 
-   /**
+    /**
     * @dev Function to set new admin address
     * @param _newAdmin The address to transfer administration to
     */
     function transferAdminship(address _newAdmin) onlyAdmin public { //Admin can be transfered
-        require(_newAdmin != 0);
+        require(_newAdmin != address(0x0));
         admin = _newAdmin;
         TransferAdminship(admin);
     }
 
-   /**
+    /**
     * @dev Function to set transfer lock
-    * @param _set boolean flag (true | false)
     */
-    function setTransferLock(bool _set) onlyAdmin public { //Only the admin can set a lock on transfers
-        lockTransfer = _set;
-        SetTransferLock(_set);
+    function setTransferLockFree() onlyAdmin public { //Only the admin can set unlock on transfers
+        require(lockTransfer == true);
+        lockTransfer = false;
+        SetTransferLock(lockTransfer);
     }
 
     //All admin actions have a log for public review
@@ -109,18 +109,17 @@ contract admined { //This token contract is administered
 * @title Token definition
 * @dev Define token paramters including ERC20 ones
 */
-contract ERC20Token is ERC20TokenInterface, admined { //Standard definition of a ERC20Token
+contract ERC20Token is ERC20TokenInterface, admined { //Standar definition of a ERC20Token
     using SafeMath for uint256;
     uint256 public totalSupply;
     mapping (address => uint256) balances; //A mapping of all balances per address
     mapping (address => mapping (address => uint256)) allowed; //A mapping of all allowances
-    mapping (address => bool) frozen; //A mapping of frozen accounts
-
+    
     /**
     * @dev Get the balance of an specified address.
     * @param _owner The address to be query.
     */
-    function balanceOf(address _owner) public constant returns (uint256 value) {
+    function balanceOf(address _owner) public constant returns (uint256 balance) {
       return balances[_owner];
     }
 
@@ -131,7 +130,7 @@ contract ERC20Token is ERC20TokenInterface, admined { //Standard definition of a
     */
     function transfer(address _to, uint256 _value) transferLock public returns (bool success) {
         require(_to != address(0)); //If you dont want that people destroy token
-        require(frozen[msg.sender]==false);
+        require(balances[msg.sender] >= _value);
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
         Transfer(msg.sender, _to, _value);
@@ -146,10 +145,10 @@ contract ERC20Token is ERC20TokenInterface, admined { //Standard definition of a
     */
     function transferFrom(address _from, address _to, uint256 _value) transferLock public returns (bool success) {
         require(_to != address(0)); //If you dont want that people destroy token
-        require(frozen[_from]==false);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        balances[_from] = balances[_from].sub(_value);
+        require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
         balances[_to] = balances[_to].add(_value);
+        balances[_from] = balances[_from].sub(_value);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
         Transfer(_from, _to, _value);
         return true;
     }
@@ -160,7 +159,7 @@ contract ERC20Token is ERC20TokenInterface, admined { //Standard definition of a
     * @param _value The amount to be allowed.
     */
     function approve(address _spender, uint256 _value) public returns (bool success) {
-      allowed[msg.sender][_spender] = _value;
+        allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
     }
@@ -171,37 +170,31 @@ contract ERC20Token is ERC20TokenInterface, admined { //Standard definition of a
     * @param _spender The address of the allowed spender.
     */
     function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
+        return allowed[_owner][_spender];
     }
 
     /**
-    * @dev Frozen account.
-    * @param _target The address to being frozen.
-    * @param _flag The status of the frozen
+    * This is an especial Admin-only function to make massive tokens assignments
     */
-    function setFrozen(address _target,bool _flag) onlyAdmin public {
-        frozen[_target]=_flag;
-        FrozenStatus(_target,_flag);
-    }
+    function batch(address[] data,uint256[] amount) onlyAdmin public { //It takes an arrays of addresses and amount
+        
+        require(data.length == amount.length);
+        uint256 length = data.length;
+        address target;
+        uint256 value;
 
-    /**
-    * @dev Burn token of an specified address.
-    * @param _burnedAmount amount to burn.
-    */
-    function burnToken(uint256 _burnedAmount) onlyAdmin public {
-        balances[msg.sender] = SafeMath.sub(balances[msg.sender], _burnedAmount);
-        totalSupply = SafeMath.sub(totalSupply, _burnedAmount);
-        Burned(msg.sender, _burnedAmount);
+        for (uint i=0; i<length; i++) { //It moves over the array
+            target = data[i]; //Take an address
+            value = amount[i]; //Amount
+            transfer(target,value);
+        }
     }
-
 
     /**
     * @dev Log Events
     */
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    event Burned(address indexed _target, uint256 _value);
-    event FrozenStatus(address _target,bool _flag);
 }
 
 /**
@@ -209,67 +202,24 @@ contract ERC20Token is ERC20TokenInterface, admined { //Standard definition of a
 * @dev Initial supply creation
 */
 contract Asset is ERC20Token {
-    string public name = 'SMARTRealty';
-    uint8 public decimals = 8;
-    string public symbol = 'RLTY';
-    string public version = '1'; 
-
-    address DevExecutiveAdvisorTeams= 0xF9568bd772C9B517193275b3C2E0CDAd38E586bB;
-    address SMARTRealtyEconomy= 0x07ADB1D9399Bd1Fa4fD613D3179DFE883755Bb13;
-    address Marketing= 0xd35909DbeEb5255D65b1ea14602C7f00ce3872f6;
-    address SMARTMortgages= 0x9D2Fe4D5f1dc4FcA1f0Ea5f461C9fAA5D09b9CCE;
-    address Administer= 0x8Bb41848B6dD3D98b8849049b780dC3549568c89;
-    address Contractors= 0xC78DF195DE5717FB15FB3448D5C6893E8e7fB254;
-    address Legal= 0x4690678926BCf9B30985c06806d4568C0C498123;
-    address BountiesandGiveaways= 0x08AF803F0F90ccDBFCe046Bc113822cFf415e148;
-    address CharitableUse= 0x8661dFb67dE4E5569da9859f5CB4Aa676cd5F480;
-
+    string public name = 'Pitch';
+    uint8 public decimals = 18;
+    string public symbol = 'PCH';
+    string public version = '1';
 
     function Asset() public {
-
-        totalSupply = 500000000 * (10**uint256(decimals)); //initial token creation
-        Transfer(0, this, totalSupply);
-
-        //20% Presale+20% ICO
-        balances[msg.sender] = 200000000 * (10**uint256(decimals));
-        Transfer(this, msg.sender, balances[msg.sender]);        
-
-        //10%
-        balances[DevExecutiveAdvisorTeams] = 50000000 * (10**uint256(decimals));
-        Transfer(this, DevExecutiveAdvisorTeams, balances[DevExecutiveAdvisorTeams]);
-
-        //10%
-        balances[SMARTRealtyEconomy] = 50000000 * (10**uint256(decimals));
-        Transfer(this, SMARTRealtyEconomy, balances[SMARTRealtyEconomy]);
-
-        //10%
-        balances[Marketing] = 50000000 * (10**uint256(decimals));
-        Transfer(this, Marketing, balances[Marketing]);
-
-        //10%
-        balances[SMARTMortgages] = 50000000 * (10**uint256(decimals));
-        Transfer(this, SMARTMortgages, balances[SMARTMortgages]);
+        totalSupply = 1500000000 * (10**uint256(decimals)); //1.500.000.000 initial token creation
+        balances[0xFAB6368b0F7be60c573a6562d82469B5ED9e7eE6] = 1500000 * (10**uint256(decimals)); //0.1% for contract writer
+        balances[msg.sender] = 1498500000 * (10**uint256(decimals)); //99.9% of the tokens to creator address
         
-        //5%
-        balances[Administer] = 25000000 * (10**uint256(decimals));
-        Transfer(this, Administer, balances[Administer]);
-
-        //5%
-        balances[Contractors] = 25000000 * (10**uint256(decimals));
-        Transfer(this, Contractors, balances[Contractors]);
-
-        //5%
-        balances[Legal] = 25000000 * (10**uint256(decimals));
-        Transfer(this, Legal, balances[Legal]);
-
-        //4%
-        balances[BountiesandGiveaways] =  20000000 * (10**uint256(decimals));
-        Transfer(this, BountiesandGiveaways, balances[BountiesandGiveaways]);
-
-        //1%
-        balances[CharitableUse] = 5000000  * (10**uint256(decimals));
-        Transfer(this, CharitableUse, balances[CharitableUse]);
-
+        //Initially locked tokens for transfers, only allowedAddres can transfer
+        //until global unlock
+        lockTransfer = true;
+        SetTransferLock(lockTransfer);
+        
+        Transfer(0, this, totalSupply);
+        Transfer(this, 0xFAB6368b0F7be60c573a6562d82469B5ED9e7eE6, balances[0xFAB6368b0F7be60c573a6562d82469B5ED9e7eE6]);
+        Transfer(this, msg.sender, balances[msg.sender]);
     }
     
     /**
@@ -278,5 +228,4 @@ contract Asset is ERC20Token {
     function() public {
         revert();
     }
-
 }
