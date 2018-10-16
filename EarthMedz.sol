@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EarthMedz at 0x9fe7140cb8b62e4a6ba85c177757d712bfce9de8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EarthMedz at 0xc600958ba32f09191905de7bd101079166e581c2
 */
 pragma solidity ^0.4.4;
 
@@ -109,8 +109,8 @@ contract EarthMedz is StandardToken { // CHANGE THIS. Update the contract name.
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
     function EarthMedz() {
-        balances[msg.sender] = 20000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
-        totalSupply = 20000000000000000;                        // Update total supply (1000 for example) (E a r t h M e d z )
+        balances[msg.sender] = 200000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
+        totalSupply = 200000000;                        // Update total supply (1000 for example) (E a r t h M e d z )
         name = "EarthMedz";                                   // Set the name for display purposes (E a r t h M e d z  )
         decimals = 8;                                               // Amount of decimals for display purposes (E a r t h M e d z  )
         symbol = "ETD";                                             // Set the symbol for display purposes (E a r t h M e d z  )
