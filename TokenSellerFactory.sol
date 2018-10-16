@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSellerFactory at 0x39239803c79940d7c2dca4259dfacbe763835d6b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSellerFactory at 0xb1eb96f752c624dc784d80961a1accfaf348c923
 */
 pragma solidity ^0.4.4;
 
@@ -12,7 +12,12 @@ pragma solidity ^0.4.4;
 // This caters for the Golem Network Token which does not implement the
 // ERC20 transferFrom(...), approve(...) and allowance(...) methods
 //
-// Enjoy. (c) JonnyLatte, Cintix & BokkyPooBah 2016. The MIT licence.
+// History:
+//   Jan 25 2017 - BPB Added makerTransferAsset(...)
+//   Feb 05 2017 - BPB Bug fix in the change calculation for the Unicorn
+//                     token with natural number 1
+//
+// Enjoy. (c) JonnyLatte, Cintix & BokkyPooBah 2017. The MIT licence.
 // ------------------------------------------------------------------------
 
 // https://github.com/ethereum/EIPs/issues/20
@@ -59,6 +64,7 @@ contract TokenSeller is Owned {
 
     event ActivatedEvent(bool sells);
     event MakerWithdrewAsset(uint256 tokens);
+    event MakerTransferredAsset(address toTokenSeller, uint256 tokens);
     event MakerWithdrewERC20Token(address tokenAddress, uint256 tokens);
     event MakerWithdrewEther(uint256 ethers);
     event TakerBoughtAsset(address indexed buyer, uint256 ethersSent,
@@ -70,7 +76,7 @@ contract TokenSeller is Owned {
         uint256 _sellPrice,
         uint256 _units,
         bool    _sellsTokens
-    ) internal {
+    ) {
         asset       = _asset;
         sellPrice   = _sellPrice;
         units       = _units;
@@ -103,6 +109,32 @@ contract TokenSeller is Owned {
     function makerWithdrawAsset(uint256 tokens) onlyOwner returns (bool ok) {
         MakerWithdrewAsset(tokens);
         return ERC20Partial(asset).transfer(owner, tokens);
+    }
+
+    // Maker can transfer asset tokens from this contract to another
+    // TokenSeller contract, with the following parameter:
+    //   toTokenSeller  Another TokenSeller contract owned by the
+    //                  same owner
+    //   tokens         is the number of asset tokens to be moved
+    //
+    // The MakerTransferredAsset() event is logged with the following
+    // parameters:
+    //   toTokenSeller  The other TokenSeller contract owned by
+    //                  the same owner
+    //   tokens         is the number of tokens transferred
+    //
+    // The asset Transfer() event is logged from this contract to
+    // the other contract
+    //
+    function makerTransferAsset(
+        TokenSeller toTokenSeller,
+        uint256 tokens
+    ) onlyOwner returns (bool ok) {
+        if (owner != toTokenSeller.owner() || asset != toTokenSeller.asset()) {
+            throw;
+        }
+        MakerTransferredAsset(toTokenSeller, tokens);
+        return ERC20Partial(asset).transfer(toTokenSeller, tokens);
     }
 
     // Maker can withdraw any ERC20 asset tokens from this contract
@@ -149,18 +181,22 @@ contract TokenSeller is Owned {
     // This method was called buy() in the old version
     function takerBuyAsset() payable {
         if (sellsTokens || msg.sender == owner) {
+            // Note that sellPrice has already been validated as > 0
             uint order    = msg.value / sellPrice;
+            // Note that units has already been validated as > 0
             uint can_sell = ERC20Partial(asset).balanceOf(address(this)) / units;
             uint256 change = 0;
-            if (order > can_sell) {
-                change = msg.value - (can_sell * sellPrice);
+            if (msg.value > (can_sell * sellPrice)) {
+                change  = msg.value - (can_sell * sellPrice);
                 order = can_sell;
+            }
+            if (change > 0) {
                 if (!msg.sender.send(change)) throw;
             }
             if (order > 0) {
-                if(!ERC20Partial(asset).transfer(msg.sender, order * units)) throw;
+                if (!ERC20Partial(asset).transfer(msg.sender, order * units)) throw;
             }
-            TakerBoughtAsset(msg.sender, msg.value, order * units, change);
+            TakerBoughtAsset(msg.sender, msg.value, change, order * units);
         }
         // Return user funds if the contract is not selling
         else if (!msg.sender.send(msg.value)) throw;
@@ -245,6 +281,8 @@ contract TokenSellerFactory is Owned {
         uint256 units,
         bool    sellsTokens
     ) returns (address seller) {
+        // Cannot have invalid asset
+        if (asset == 0x0) throw;
         // Cannot set zero or negative price
         if (sellPrice <= 0) throw;
         // Cannot sell zero or negative units
