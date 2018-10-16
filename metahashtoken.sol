@@ -1,23 +1,23 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract metahashtoken at 0xE2fe5E7E206e7B46CAd6A5146320e5b4b9A18E97
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract metahashtoken at 0x20047cE357D083D022114592aF4001fc019F4c47
 */
 /* version metahashtoken 0.1.4 RC */
 pragma solidity ^0.4.18;
 contract metahashtoken {
 
     /* token settings */
-    string public name;             /* token name              */
-    string public symbol;           /* token symbol            */
+    string public name;             /* token name               */
+    string public symbol;           /* token symbol         */
     uint8  public decimals;         /* number of digits after the decimal point      */
     uint   public totalTokens;      /* total amount of tokens  */
     uint   public finalyze;
 
     /* token management data */
-    address public ownerContract;   /* contract owner         */
-    address public owner;           /* owner                  */
+    address public ownerContract;   /* contract owner       */
+    address public owner;           /* owner                */
     
     /* arrays */
-    mapping (address => uint256) public balance;                  /* array of balance              */
+    mapping (address => uint256) public balance;                /* array of balance              */
     mapping (address => mapping (address => uint256)) allowed;    /* arrays of allowed transfers  */
     
     /* events */
@@ -139,4 +139,5 @@ contract metahashtoken {
         }
         finalyze = 1;
     }
+
 }
