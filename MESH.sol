@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MESH at 0x01f2acf2914860331c1cb1a9acecda7475e06af8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MESH at 0xcf9fbffec9e0e5bbc62e79bf1965f5db76955661
 */
 // Abstract contract for the full ERC 20 Token standard
 // https://github.com/ethereum/EIPs/issues/20
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.23;
 
 contract Token {
     /* This is a slight change to the ERC20 base standard.*/
@@ -54,7 +54,7 @@ contract Owned {
     address public owner;
 
     /// @notice The Constructor assigns the message sender to be `owner`
-    function Owned() public {
+    constructor() public {
         owner = msg.sender;
     }
 
@@ -71,7 +71,7 @@ contract Owned {
     /// accept the ownership
     function acceptOwnership() public{
         require(msg.sender == newOwner);
-        OwnerUpdate(owner, newOwner);
+        emit OwnerUpdate(owner, newOwner);
         owner = newOwner;
         newOwner = 0x0;
     }
@@ -79,7 +79,7 @@ contract Owned {
 
 contract Controlled is Owned{
 
-    function Controlled() public {
+    constructor() public {
        setExclude(msg.sender);
     }
 
@@ -100,10 +100,9 @@ contract Controlled is Owned{
         return true;
     }
 
-    function addLock(address[] _addrs) public onlyOwner returns (bool success){
-        for (uint256 i = 0; i < _addrs.length; i++){
-            locked[_addrs[i]]=true;
-         }
+    function addLock(address _addr) public onlyOwner returns (bool success){
+        require(_addr!=msg.sender);
+        locked[_addr]=true;
         return true;
     }
 
@@ -112,10 +111,8 @@ contract Controlled is Owned{
         return true;
     }
 
-    function removeLock(address[] _addrs) public onlyOwner returns (bool success){
-        for (uint256 i = 0; i < _addrs.length; i++){
-            locked[_addrs[i]]=false;
-         }
+    function removeLock(address _addr) public onlyOwner returns (bool success){
+        locked[_addr]=false;
         return true;
     }
 
@@ -138,21 +135,21 @@ contract StandardToken is Token,Controlled {
         //Default assumes totalSupply can't be over max (2^256 - 1).
         //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
         //Replace the if with this one instead.
-        if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        if (balances[msg.sender] >= _value && balances[_to] + _value >= balances[_to]) {
             balances[msg.sender] -= _value;
             balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
+            emit Transfer(msg.sender, _to, _value);
             return true;
         } else { return false; }
     }
 
     function transferFrom(address _from, address _to, uint256 _value) public transferAllowed(_from) returns (bool success) {
         //same as above. Replace this line with the following if you want to protect against wrapping uints.
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value >= balances[_to]) {
             balances[_to] += _value;
             balances[_from] -= _value;
             allowed[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
+            emit Transfer(_from, _to, _value);
             return true;
         } else { return false; }
     }
@@ -163,7 +160,7 @@ contract StandardToken is Token,Controlled {
 
     function approve(address _spender, uint256 _value) public returns (bool success) {
         allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
@@ -191,7 +188,7 @@ contract MESH is StandardToken {
     // The nonce for avoid transfer replay attacks
     mapping(address => uint256) nonces;
 
-    function MESH() public {
+    constructor() public {
         allocateEndTime = now + 1 days;
     }
 
@@ -209,19 +206,20 @@ contract MESH is StandardToken {
     function transferProxy(address _from, address _to, uint256 _value, uint256 _feeMesh,
         uint8 _v,bytes32 _r, bytes32 _s) public transferAllowed(_from) returns (bool){
 
-        if(balances[_from] < _feeMesh + _value) revert();
+        if(balances[_from] < _feeMesh + _value 
+            || _feeMesh > _feeMesh + _value) revert();
 
         uint256 nonce = nonces[_from];
-        bytes32 h = keccak256(_from,_to,_value,_feeMesh,nonce,name);
+        bytes32 h = keccak256(_from,_to,_value,_feeMesh,nonce,address(this));
         if(_from != ecrecover(h,_v,_r,_s)) revert();
 
         if(balances[_to] + _value < balances[_to]
             || balances[msg.sender] + _feeMesh < balances[msg.sender]) revert();
         balances[_to] += _value;
-        Transfer(_from, _to, _value);
+        emit Transfer(_from, _to, _value);
 
         balances[msg.sender] += _feeMesh;
-        Transfer(_from, msg.sender, _feeMesh);
+        emit Transfer(_from, msg.sender, _feeMesh);
 
         balances[_from] -= _value + _feeMesh;
         nonces[_from] = nonce + 1;
@@ -242,14 +240,13 @@ contract MESH is StandardToken {
         uint8 _v,bytes32 _r, bytes32 _s) public returns (bool success) {
 
         uint256 nonce = nonces[_from];
-        bytes32 hash = keccak256(_from,_spender,_value,nonce,name);
+        bytes32 hash = keccak256(_from,_spender,_value,nonce,address(this));
         if(_from != ecrecover(hash,_v,_r,_s)) revert();
         allowed[_from][_spender] = _value;
-        Approval(_from, _spender, _value);
+        emit Approval(_from, _spender, _value);
         nonces[_from] = nonce + 1;
         return true;
     }
-
 
     /*
      * Get the nonce
@@ -257,33 +254,6 @@ contract MESH is StandardToken {
      */
     function getNonce(address _addr) public constant returns (uint256){
         return nonces[_addr];
-    }
-
-    /* Approves and then calls the receiving contract */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) public returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-
-        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
-        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
-        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
-        if(!_spender.call(bytes4(bytes32(keccak256("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { revert(); }
-        return true;
-    }
-
-    /* Approves and then calls the contract code */
-    function approveAndCallcode(address _spender, uint256 _value, bytes _extraData) public returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-
-        //Call the contract code
-        if(!_spender.call(_extraData)) { revert(); }
-        return true;
-    }
-
-   /* Refundable tokens sent to the smart contract for misoperation of the user */
-    function getBackToken(address _spender,address _to,uint256 _value) public onlyOwner{
-        if(!_spender.call(bytes4(bytes32(keccak256("transfer(address,uint256)"))), _to, _value)) { revert(); }
     }
 
     // Allocate tokens to the users
