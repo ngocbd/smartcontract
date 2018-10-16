@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LDLMintableToken at 0x11e691b0f006691554771d07567a78a82c56f707
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LDLMintableToken at 0xe896370eb4e70ccc334c61aadf1a43c6496eea88
 */
 pragma solidity ^0.4.21;
 
@@ -340,7 +340,7 @@ contract MintableToken is StandardToken, Ownable {
 
 contract LDLMintableToken is MintableToken, BurnableToken {
 
-  string public constant name = "LordLess Token"; // solium-disable-line uppercase
+  string public constant name = "LORDLESS TOKEN"; // solium-disable-line uppercase
   string public constant symbol = "LDL"; // solium-disable-line uppercase
   uint8 public constant decimals = 18; // solium-disable-line uppercase
 
