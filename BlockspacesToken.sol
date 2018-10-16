@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlockspacesToken at 0x32ff10bf603558873dea928859fc527113a33f46
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlockspacesToken at 0x86757a336431539e82fb280991d82279e474d579
 */
 pragma solidity ^0.4.18;
 
@@ -338,7 +338,7 @@ contract BlockspacesToken is MintableToken {
     decimals = 18;
     version = "0.1";
 
-    totalSupply_ = 10000000000000000000000000;
+    totalSupply_ = 10000000;
 
     balances[msg.sender] = totalSupply_;
   }
