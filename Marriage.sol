@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Marriage at 0xd09b6e3c8fb7e05e248197ec45c38cd338d66c1a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Marriage at 0x958a8f594101d2c0485a52319f29b2647f2ebc06
 */
 pragma solidity ^0.4.16;
 
