@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthernautsMarket at 0x62590a381465eeb2c909787fc927d150ce340d5b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthernautsMarket at 0x97d1761564c564fe0325e5538d35687a73970cd4
 */
 pragma solidity ^0.4.19;
 
@@ -29,6 +29,9 @@ contract ERC721 {
     // ERC-165 Compatibility (https://github.com/ethereum/EIPs/issues/165)
     function supportsInterface(bytes4 _interfaceID) external view returns (bool);
 }
+
+
+
 
 
 
@@ -78,7 +81,7 @@ library SafeMath {
     /**
     * @dev Compara two numbers, and return the bigger one.
     */
-    function max(uint256 a, uint256 b) internal pure returns (uint256) {
+    function max(int256 a, int256 b) internal pure returns (int256) {
         if (a > b) {
             return a;
         } else {
@@ -89,7 +92,7 @@ library SafeMath {
     /**
     * @dev Compara two numbers, and return the bigger one.
     */
-    function min(uint256 a, uint256 b) internal pure returns (uint256) {
+    function min(int256 a, int256 b) internal pure returns (int256) {
         if (a < b) {
             return a;
         } else {
@@ -324,9 +327,9 @@ contract ClockAuctionBase {
         // NOTE: We don't use SafeMath (or similar) in this function because
         //  all of our entry functions carefully cap the maximum values for
         //  currency (at 128-bits), and ownerCut <= 10000 (see the require()
-        //  statement in the ClockAuction constructor). The result of this
+        //  statement in the EhternautsMarket constructor). The result of this
         //  function is always guaranteed to be <= _price.
-        return SafeMath.mul(_price, SafeMath.div(ownerCut,10000));
+        return SafeMath.div(SafeMath.mul(_price, ownerCut), 10000);
     }
 
 }
@@ -1138,6 +1141,7 @@ contract EthernautsOwnership is EthernautsAccessControl, ERC721 {
     /// @param _stats see Asset Struct description
     function createNewAsset(
         uint256 _creatorTokenID,
+        address _owner,
         uint256 _price,
         uint16 _assetID,
         uint8 _category,
@@ -1148,11 +1152,11 @@ contract EthernautsOwnership is EthernautsAccessControl, ERC721 {
     returns (uint256)
     {
         // owner must be sender
-        require(msg.sender != address(0));
+        require(_owner != address(0));
 
         uint256 tokenID = ethernautsStorage.createAsset(
             _creatorTokenID,
-            msg.sender,
+            _owner,
             _price,
             _assetID,
             _category,
@@ -1165,7 +1169,7 @@ contract EthernautsOwnership is EthernautsAccessControl, ERC721 {
 
         // emit the build event
         Build(
-            msg.sender,
+            _owner,
             tokenID,
             _assetID,
             _price
@@ -1332,6 +1336,54 @@ contract EthernautsMarket is EthernautsLogic, ClockAuctionBase {
         Auction storage auction = tokenIdToAuction[_tokenId];
         require(_isOnAuction(auction));
         _cancelAuction(_tokenId, auction.seller);
+    }
+
+    /// @dev Create an auction when the contract is paused to
+    ///  recreate pending bids from last contract.
+    ///  This should only be used in emergencies.
+    /// @param _contract - previous contract
+    /// @param _seller - original seller of previous contract
+    /// @param _tokenId - ID of token to auction, sender must be owner.
+    /// @param _startingPrice - Price of item (in wei) at beginning of auction.
+    /// @param _endingPrice - Price of item (in wei) at end of auction.
+    /// @param _duration - Length of time to move between starting
+    function createAuctionWhenPaused(
+        address _contract,
+        address _seller,
+        uint256 _tokenId,
+        uint256 _startingPrice,
+        uint256 _endingPrice,
+        uint256 _duration
+    )
+    whenPaused
+    onlyCLevel
+    external
+    {
+        // Sanity check that no inputs overflow how many bits we've allocated
+        // to store them in the auction struct.
+        require(_startingPrice == uint256(uint128(_startingPrice)));
+        require(_endingPrice == uint256(uint128(_endingPrice)));
+        require(_duration == uint256(uint64(_duration)));
+
+        // ensure this contract owns the auction
+        require(_owns(_contract, _tokenId));
+        require(_seller != address(0));
+
+        ethernautsStorage.approve(_tokenId, address(this));
+
+        /// Escrows the NFT, assigning ownership to this contract.
+        /// Throws if the escrow fails.
+        _transferFrom(_contract, this, _tokenId);
+
+        Auction memory auction = Auction(
+            _seller,
+            uint128(_startingPrice),
+            uint128(_endingPrice),
+            uint64(_duration),
+            uint64(now)
+        );
+
+        _addAuction(_tokenId, auction);
     }
 
     /// @dev Returns auction info for an NFT on auction.
