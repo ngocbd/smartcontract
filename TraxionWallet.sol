@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TraxionWallet at 0x6909d7fce51fb70daabc1173c521f2600dd5fa35
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TraxionWallet at 0x042ae5dd4f08fcbf848c48487642b4195d160283
 */
 pragma solidity ^0.4.23;
 
