@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HydroCoinPresale at 0xd81f9b05e409e0ab40f8ec766370b7a7c8a25864
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HydroCoinPresale at 0x5914ce317d4d0d17df0047d220ac38d79c5521a9
 */
 pragma solidity ^0.4.13;
 
@@ -356,11 +356,10 @@ contract HydroCoin is MintableToken, Pausable {
         Ev("add",whom,value);
     }
 
-   function remove(address whom) internal {
+    function remove(address whom) internal {
         if (first == whom) {
             first = theList[whom].next;
             theList[whom] = XRec(false,0x0,0x0,0);
-            Ev("remove",whom,0);
             return;
         }
         address next = theList[whom].next;
@@ -371,10 +370,6 @@ contract HydroCoin is MintableToken, Pausable {
         if (next != 0x0) {
             theList[next].prev = prev;
         }
-        if (last == whom) {
-            last = prev;
-        }
-
         theList[whom] =XRec(false,0x0,0x0,0);
         Ev("remove",whom,0);
     }
