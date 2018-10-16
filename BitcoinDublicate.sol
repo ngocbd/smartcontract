@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitcoinDublicate at 0x5d75654ad2697ab6a8c83f3b21930e2e15a43af8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitcoinDublicate at 0xa00bda47b6945cb2449dd71ad1168f56a8ff0216
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'BitcoinDublicate' token contract
+// 'Bitcoin Dublicate' token contract
 //
 // Deployed to : 0x2d57365a7ab22425f09D49bB0baFB0426EB8dDF9
-// Symbol      : BTCD
-// Name        : BitcoinDublicate
+// Symbol      : BD
+// Name        : Bitcoin Dublicate
 // Total supply: 100000000
 // Decimals    : 18
 //
@@ -116,8 +116,8 @@ contract BitcoinDublicate is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function BitcoinDublicate() public {
-        symbol = "BTCD";
-        name = "BitcoinDublicate ";
+        symbol = "BD";
+        name = "Bitcoin Dublicate ";
         decimals = 18;
         _totalSupply = 21000000000000000000000000;
         balances[0x2d57365a7ab22425f09D49bB0baFB0426EB8dDF9] = _totalSupply;
