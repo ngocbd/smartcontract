@@ -1,7 +1,200 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Rouleth at 0x908c41461cddefb9f7b4d90c03b66c1c52ab6093
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Rouleth at 0x91a57b2f6fa86b373bce5716eb26c81cbb004223
 */
 pragma solidity ^0.4.8;
+
+contract OwnedByWinsome {
+
+  address public owner;
+  mapping (address => bool) allowedWorker;
+
+  function initOwnership(address _owner, address _worker) internal{
+    owner = _owner;
+    allowedWorker[_owner] = true;
+    allowedWorker[_worker] = true;
+  }
+
+  function allowWorker(address _new_worker) onlyOwner{
+    allowedWorker[_new_worker] = true;
+  }
+  function removeWorker(address _old_worker) onlyOwner{
+    allowedWorker[_old_worker] = false;
+  }
+  function changeOwner(address _new_owner) onlyOwner{
+    owner = _new_owner;
+  }
+						    
+  modifier onlyAllowedWorker{
+    if (!allowedWorker[msg.sender]){
+      throw;
+    }
+    _;
+  }
+
+  modifier onlyOwner{
+    if (msg.sender != owner){
+      throw;
+    }
+    _;
+  }
+
+  
+}
+
+/**
+ * Math operations with safety checks
+ */
+library SafeMath {
+  function mul(uint a, uint b) internal returns (uint) {
+    uint c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint a, uint b) internal returns (uint) {
+    assert(b > 0);
+    uint c = a / b;
+    assert(a == b * c + a % b);
+    return c;
+  }
+
+  function sub(uint a, uint b) internal returns (uint) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint a, uint b) internal returns (uint) {
+    uint c = a + b;
+    assert(c >= a);
+    return c;
+  }
+
+  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a >= b ? a : b;
+  }
+
+  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a < b ? a : b;
+  }
+
+  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a >= b ? a : b;
+  }
+
+  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a < b ? a : b;
+  }
+
+  function assert(bool assertion) internal {
+    if (!assertion) {
+      throw;
+    }
+  }
+}
+
+
+/*
+ * Basic token
+ * Basic version of StandardToken, with no allowances
+ */
+contract BasicToken {
+  using SafeMath for uint;
+  event Transfer(address indexed from, address indexed to, uint value);
+  mapping(address => uint) balances;
+  uint public     totalSupply =    0;    			 // Total supply of 500 million Tokens
+  
+  /*
+   * Fix for the ERC20 short address attack  
+   */
+  modifier onlyPayloadSize(uint size) {
+     if(msg.data.length < size + 4) {
+       throw;
+     }
+     _;
+  }
+
+  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) {
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+  }
+
+  function balanceOf(address _owner) constant returns (uint balance) {
+    return balances[_owner];
+  }
+  
+}
+
+
+contract StandardToken is BasicToken{
+  
+  event Approval(address indexed owner, address indexed spender, uint value);
+
+  
+  mapping (address => mapping (address => uint)) allowed;
+
+  function transferFrom(address _from, address _to, uint _value) {
+    var _allowance = allowed[_from][msg.sender];
+
+    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
+    // if (_value > _allowance) throw;
+
+    balances[_to] = balances[_to].add(_value);
+    balances[_from] = balances[_from].sub(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
+    Transfer(_from, _to, _value);
+  }
+
+  function approve(address _spender, uint _value) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+  }
+
+  function allowance(address _owner, address _spender) constant returns (uint remaining) {
+    return allowed[_owner][_spender];
+  }
+
+}
+
+
+contract WinToken is StandardToken, OwnedByWinsome{
+
+  string public   name =           "Winsome.io Token";
+  string public   symbol =         "WIN";
+  uint public     decimals =       18;
+  
+  mapping (address => bool) allowedMinter;
+
+  function WinToken(address _owner){
+    allowedMinter[_owner] = true;
+    initOwnership(_owner, _owner);
+  }
+
+  function allowMinter(address _new_minter) onlyOwner{
+    allowedMinter[_new_minter] = true;
+  }
+  function removeMinter(address _old_minter) onlyOwner{
+    allowedMinter[_old_minter] = false;
+  }
+
+  modifier onlyAllowedMinter{
+    if (!allowedMinter[msg.sender]){
+      throw;
+    }
+    _;
+  }
+  function mintTokens(address _for, uint _value_wei) onlyAllowedMinter {
+    balances[_for] = balances[_for].add(_value_wei);
+    totalSupply = totalSupply.add(_value_wei) ;
+    Transfer(address(0), _for, _value_wei);
+  }
+  function destroyTokens(address _for, uint _value_wei) onlyAllowedMinter {
+    balances[_for] = balances[_for].sub(_value_wei);
+    totalSupply = totalSupply.sub(_value_wei);
+    Transfer(_for, address(0), _value_wei);    
+  }
+  
+}
 
 contract Rouleth
 {
@@ -11,10 +204,14 @@ contract Rouleth
   uint8 public blockExpiration; //nb of blocks before bet expiration (due to hash storage limits)
   uint256 public maxGamble; //max gamble value manually set by config
   uint256 public minGamble; //min gamble value manually set by config
-  uint public maxBetsPerBlock; //limits the number of bets per blocks to prevent miner cheating
-  uint nbBetsCurrentBlock; //counts the nb of bets in the block
 
-    
+  mapping (address => uint) pendingTokens;
+  
+  address public WINTOKENADDRESS;
+  WinToken winTokenInstance;
+
+  uint public emissionRate;
+  
   //Gambles
   enum BetTypes{number, color, parity, dozen, column, lowhigh} 
   struct Gamble
@@ -24,14 +221,14 @@ contract Rouleth
     bool win;
     //Possible bet types
     BetTypes betType;
-    uint8 input; //stores number, color, dozen or oddeven
+    uint input; //stores number, color, dozen or oddeven
     uint256 wager;
     uint256 blockNumber; //block of bet
     uint256 blockSpinned; //block of spin
     uint8 wheelResult;
   }
   Gamble[] private gambles;
-  uint public totalGambles; 
+
   //Tracking progress of players
   mapping (address=>uint) gambleIndex; //current gamble index of the player
   //records current status of player
@@ -42,14 +239,16 @@ contract Rouleth
   //        Management & Config FUNCTIONS        //
   //**********************************************
 
-  function  Rouleth() //creation settings
-  { 
-    developer = msg.sender;
+  function  Rouleth(address _developer, address _winToken) //creation settings
+  {
+    WINTOKENADDRESS = _winToken;
+    winTokenInstance = WinToken(_winToken);
+    developer = _developer;
     blockDelay=0; //indicates which block after bet will be used for RNG
-    blockExpiration=200; //delay after which gamble expires
-    minGamble=50 finney; //configurable min bet
-    maxGamble=750 finney; //configurable max bet
-    maxBetsPerBlock=5; // limit of bets per block, to prevent multiple bets per miners
+    blockExpiration=245; //delay after which gamble expires
+    minGamble=10 finney; //configurable min bet
+    maxGamble=1 ether; //configurable max bet
+    emissionRate = 5;
   }
     
   modifier onlyDeveloper() 
@@ -76,37 +275,14 @@ contract Rouleth
   }
 
 
-  //Activate, Deactivate Betting
-  enum States{active, inactive} States private contract_state;
-    
-  function disableBetting_only_Dev()
-    onlyDeveloper
-  {
-    contract_state=States.inactive;
-  }
-
-
-  function enableBetting_only_Dev()
-    onlyDeveloper
-  {
-    contract_state=States.active;
-
-  }
-    
-  modifier onlyActive()
-  {
-    if (contract_state==States.inactive) throw;
-    _;
-  }
 
 
 
   //Change some settings within safety bounds
-  function changeSettings_only_Dev(uint newMaxBetsBlock, uint256 newMinGamble, uint256 newMaxGamble, uint8 newBlockDelay, uint8 newBlockExpiration)
+  function changeSettings_only_Dev(uint256 newMinGamble, uint256 newMaxGamble, uint8 newBlockDelay, uint8 newBlockExpiration, uint newEmissionRate)
     onlyDeveloper
   {
-    //Max number of bets per block to prevent miner cheating
-    maxBetsPerBlock=newMaxBetsBlock;
+    emissionRate = newEmissionRate;
     //MAX BET : limited by payroll/(casinoStatisticalLimit*35)
     if (newMaxGamble<newMinGamble) throw;  
     maxGamble=newMaxGamble; 
@@ -136,55 +312,62 @@ contract Rouleth
   // returns bet value
   function checkBetValue() private returns(uint256)
   {
-    uint256 playerBetValue;
     if (msg.value < minGamble) throw;
     if (msg.value > maxGamble){
-      playerBetValue = maxGamble;
+      return maxGamble;
     }
     else{
-      playerBetValue=msg.value;
+      return msg.value;
     }
-    return playerBetValue;
   }
 
-
-  //check number of bets in block (to prevent miner cheating)
-  modifier checkNbBetsCurrentBlock()
-  {
-    if (gambles.length!=0 && block.number==gambles[gambles.length-1].blockNumber) nbBetsCurrentBlock+=1;
-    else nbBetsCurrentBlock=0;
-    if (nbBetsCurrentBlock>=maxBetsPerBlock) throw;
-    _;
-  }
 
 
   //Function record bet called by all others betting functions
-  function placeBet(BetTypes betType_, uint8 input_) private
+  function placeBet(BetTypes betType, uint input) private
   {
-    if (playerStatus[msg.sender]!=Status.waitingForBet)
-      {
-	SpinTheWheel(msg.sender);
-      }
+
+    if (playerStatus[msg.sender] != Status.waitingForBet) {
+      if (!SpinTheWheel(msg.sender)) throw;
+    }
+
     //Once this is done, we can record the new bet
-    playerStatus[msg.sender]=Status.waitingForSpin;
-    gambleIndex[msg.sender]=gambles.length;
-    totalGambles++;
+    playerStatus[msg.sender] = Status.waitingForSpin;
+    gambleIndex[msg.sender] = gambles.length;
+    
     //adapts wager to casino limits
     uint256 betValue = checkBetValue();
-    gambles.push(Gamble(msg.sender, false, false, betType_, input_, betValue, block.number, 0, 37)); //37 indicates not spinned yet
+    pendingTokens[msg.sender] += betValue * emissionRate;
+
+    
+    gambles.push(Gamble(msg.sender, false, false, betType, input, betValue, block.number, 0, 37)); //37 indicates not spinned yet
+    
     //refund excess bet (at last step vs re-entry)
-    if (betValue < msg.value) 
-      {
-	if (msg.sender.send(msg.value-betValue)==false) throw;
-      }
+    if (betValue < msg.value) {
+      if (msg.sender.send(msg.value-betValue)==false) throw;
+    }
   }
 
+  function getPendingTokens(address account) constant returns (uint){
+    return pendingTokens[account];
+  }
+  
+  function redeemTokens(){
+    uint totalTokens = pendingTokens[msg.sender];
+    if (totalTokens == 0) return;
+    pendingTokens[msg.sender] = 0;
+
+    //ADD POTENTIAL BONUS BASED ON How long waited!
+    
+    //mint WIN Tokens
+    winTokenInstance.mintTokens(msg.sender, totalTokens);
+  }
+
+  
 
   //***//bet on Number	
-  function betOnNumber(uint8 numberChosen)
+  function betOnNumber(uint numberChosen)
     payable
-    onlyActive
-    checkNbBetsCurrentBlock
   {
     //check that number chosen is valid and records bet
     if (numberChosen>36) throw;
@@ -197,10 +380,8 @@ contract Rouleth
   //input : 1 for black
   function betOnColor(bool Black)
     payable
-    onlyActive
-    checkNbBetsCurrentBlock
   {
-    uint8 input;
+    uint input;
     if (!Black) 
       { 
 	input=0;
@@ -217,10 +398,8 @@ contract Rouleth
   //input : 1 for low
   function betOnLowHigh(bool High)
     payable
-    onlyActive
-    checkNbBetsCurrentBlock
   {
-    uint8 input;
+    uint input;
     if (!High) 
       { 
 	input=0;
@@ -238,10 +417,8 @@ contract Rouleth
   //input : 1 for odd
   function betOnOddEven(bool Odd)
     payable
-    onlyActive
-    checkNbBetsCurrentBlock
   {
-    uint8 input;
+    uint input;
     if (!Odd) 
       { 
 	input=0;
@@ -257,10 +434,9 @@ contract Rouleth
   //     //input : 0 for first dozen
   //     //input : 1 for second dozen
   //     //input : 2 for third dozen
-  function betOnDozen(uint8 dozen_selected_0_1_2)
+  function betOnDozen(uint dozen_selected_0_1_2)
     payable
-    onlyActive
-    checkNbBetsCurrentBlock
+
   {
     if (dozen_selected_0_1_2 > 2) throw;
     placeBet(BetTypes.dozen, dozen_selected_0_1_2);
@@ -272,10 +448,8 @@ contract Rouleth
   //     //input : 0 for first column
   //     //input : 1 for second column
   //     //input : 2 for third column
-  function betOnColumn(uint8 column_selected_0_1_2)
+  function betOnColumn(uint column_selected_0_1_2)
     payable
-    onlyActive
-    checkNbBetsCurrentBlock
   {
     if (column_selected_0_1_2 > 2) throw;
     placeBet(BetTypes.column, column_selected_0_1_2);
@@ -296,7 +470,7 @@ contract Rouleth
   }
 
 
-  function SpinTheWheel(address playerSpinned) private
+  function SpinTheWheel(address playerSpinned) private returns(bool)
   {
     if (playerSpinned==0)
       {
@@ -304,16 +478,19 @@ contract Rouleth
       }
 
     //check that player has to spin
-    if (playerStatus[playerSpinned]!=Status.waitingForSpin) throw;
+    if (playerStatus[playerSpinned] != Status.waitingForSpin) return false;
+
     //redundent double check : check that gamble has not been spinned already
-    if (gambles[gambleIndex[playerSpinned]].spinned==true) throw;
+    if (gambles[gambleIndex[playerSpinned]].spinned == true) throw;
+
+    
     //check that the player waited for the delay before spin
     //and also that the bet is not expired
     uint playerblock = gambles[gambleIndex[playerSpinned]].blockNumber;
     //too early to spin
-    if (block.number<=playerblock+blockDelay) throw;
+    if (block.number <= playerblock+blockDelay) throw;
     //too late, bet expired, player lost
-    else if (block.number>playerblock+blockExpiration)  solveBet(playerSpinned, 255, false, 1, 0, 0) ;
+    else if (block.number > playerblock+blockExpiration) solveBet(playerSpinned, 255, false, 1, 0, 0) ;
     //spin !
     else
       {
@@ -329,6 +506,7 @@ contract Rouleth
 	//check result against bet and pay if win
 	checkBetResult(wheelResult, playerSpinned, blockHash, shaPlayer);
       }
+    return true;
   }
     
 
@@ -482,7 +660,7 @@ contract Rouleth
   }
 
 
-  function checkMyBet(address player) constant returns(Status player_status, BetTypes bettype, uint8 input, uint value, uint8 result, bool wheelspinned, bool win, uint blockNb, uint blockSpin, uint gambleID)
+  function checkMyBet(address player) constant returns(Status player_status, BetTypes bettype, uint input, uint value, uint8 result, bool wheelspinned, bool win, uint blockNb, uint blockSpin, uint gambleID)
   {
     player_status=playerStatus[player];
     bettype=gambles[gambleIndex[player]].betType;
@@ -496,8 +674,13 @@ contract Rouleth
     gambleID=gambleIndex[player];
     return;
   }
-    
-  function getGamblesList(uint256 index) constant returns(address player, BetTypes bettype, uint8 input, uint value, uint8 result, bool wheelspinned, bool win, uint blockNb, uint blockSpin)
+
+  function getTotalGambles() constant returns(uint){
+    return gambles.length;
+  }
+
+  
+  function getGamblesList(uint256 index) constant returns(address player, BetTypes bettype, uint input, uint value, uint8 result, bool wheelspinned, bool win, uint blockNb, uint blockSpin)
   {
     player=gambles[index].player;
     bettype=gambles[index].betType;
