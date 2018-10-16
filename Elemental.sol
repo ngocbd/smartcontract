@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Elemental at 0x26fb012015e06c087bf88cd9cc2a967a0e944b44
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Elemental at 0x6f1e8ceeda88dc15f00ee36533d932f88b9bd40e
 */
 pragma solidity ^0.4.4;
 
@@ -101,7 +101,7 @@ contract Elemental is ElementalToken { // CHANGE THIS. Update the contract name.
     uint8 public decimals = 18;                // How many decimals to show. To be standard complicant keep it 18
     string public symbol = 'ELEM';                 // An identifier: eg SBX, XPR etc..
     string public version = '1.0'; 
-    uint256 public unitsOneEthCanBuy = 1600;     // How many units of your coin can be bought by 1 ETH?
+    uint256 public unitsOneEthCanBuy;     // How many units of your coin can be bought by 1 ETH?
     uint256 public totalEthInWei;         // WEI is the smallest unit of ETH (the equivalent of cent in USD or satoshi in BTC). We'll store the total ETH raised via our ICO here.  
     address public fundsWallet;           // Where should the raised ETH go?
 
