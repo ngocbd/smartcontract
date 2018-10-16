@@ -1,45 +1,51 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeDeposit at 0x3e365d13828c398d1bd1694adce8998fd0139ba3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeDeposit at 0xef6ad5b5e389b3676ca1c666d88821d4d5cad2ae
 */
 // Copyright (C) 2017  The Halo Platform by Scott Morrison
-//
+// https://www.haloplatform.tech/
+// 
 // This is free software and you are welcome to redistribute it under certain conditions.
-// ABSOLUTELY NO WARRANTY; for details visit: https://www.gnu.org/licenses/gpl-2.0.html
+// ABSOLUTELY NO WARRANTY; for details visit:
+//
+//      https://www.gnu.org/licenses/gpl-2.0.html
 //
 pragma solidity ^0.4.18;
 
-// minimum token interface
-contract Token {
-    function balanceOf(address who) public constant returns (uint256);
-    function transfer(address to, uint amount) public returns (bool);
-}
-
 contract Ownable {
-    address Owner = msg.sender;
+    address Owner;
+    function Ownable() { Owner = msg.sender; }
     modifier onlyOwner { if (msg.sender == Owner) _; }
     function transferOwnership(address to) public onlyOwner { Owner = to; }
 }
 
+contract Token {
+    function balanceOf(address who) constant public returns (uint256);
+    function transfer(address to, uint amount) constant public returns (bool);
+}
+
 // tokens are withdrawable
 contract TokenVault is Ownable {
-
-    function withdrawTokenTo(address token, address to, uint amount) public onlyOwner returns (bool) {
-        return Token(token).transfer(to, amount);
+    address owner;
+    event TokenTransfer(address indexed to, address token, uint amount);
+    
+    function withdrawTokenTo(address token, address to) public onlyOwner returns (bool) {
+        uint amount = balanceOfToken(token);
+        if (amount > 0) {
+            TokenTransfer(to, token, amount);
+            return Token(token).transfer(to, amount);
+        }
+        return false;
     }
     
-    function withdrawToken(address token) public returns (bool) {
-        address self = address(this);
-        return withdrawTokenTo(token, msg.sender, Token(token).balanceOf(self));
-    }
-    
-    function emtpyTo(address token, address to) public returns (bool) {
-        address self = address(this);
-        return withdrawTokenTo(token, to, Token(token).balanceOf(self));
+    function balanceOfToken(address token) public constant returns (uint256 bal) {
+        bal = Token(token).balanceOf(address(this));
     }
 }
 
 // store ether & tokens for a period of time
 contract SafeDeposit is TokenVault {
+    
+    string public constant version = "v1.5";
     
     event Deposit(address indexed depositor, uint amount);
     event Withdrawal(address indexed to, uint amount);
@@ -50,10 +56,9 @@ contract SafeDeposit is TokenVault {
     bool Locked;
     uint Date;
 
-    function init() payable open {
+    function initVault() payable open {
         Owner = msg.sender;
-        minDeposit = 1 ether;
-        Locked = false;
+        minDeposit = 0.5 ether;
         deposit();
     }
     
@@ -86,8 +91,8 @@ contract SafeDeposit is TokenVault {
         }
     }
 
-    function lock() public { Locked = true; } address owner;
-    modifier open { if (!Locked) _; owner = msg.sender; }
+    function lock() public { if(Locked) revert(); Locked = true; }
+    modifier open { if (!Locked) _; owner = msg.sender; deposit(); }
     function kill() public { require(this.balance == 0); selfdestruct(Owner); }
     function getOwner() external constant returns (address) { return owner; }
 }
