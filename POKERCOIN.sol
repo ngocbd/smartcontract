@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POKERCOIN at 0xbbad179bacf0e43480ae346f02f02b78c05a209a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POKERCOIN at 0xeb58ed265cb0c906b5c19072fd52f9510f6a7d66
 */
 pragma solidity ^0.4.8;
 
@@ -72,7 +72,7 @@ contract POKERCOIN is StandardToken {
     string public symbol;
     string public version = '1.0';
 
-    function POKERCOIN() {
+    function IQB() {
         balances[msg.sender] = 18000000000000000;        // Give the creator all initial tokens
         totalSupply = 18000000000000000;                 // Update total supply
         name = 'Poker Coin';                             // Set the name for display purposes
