@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XdacTokenCrowdsale at 0xf126248db756ddb86032febc785f6f24b7f8ede9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XdacTokenCrowdsale at 0x3d09042559ed46e61f0f1b6a13355e3d06368b2a
 */
 pragma solidity ^0.4.18;
 
@@ -476,6 +476,7 @@ contract XdacTokenCrowdsale is Ownable {
     function _sendToken(address _address, uint256 _amountTokens) internal{
         XdacToken _token = XdacToken(token);
         require(_token.balanceOf(_token.owner()) >= _amountTokens);
+        _whitelistAddress(_address);
         _token.transfer(_address, _amountTokens);
     }
 
