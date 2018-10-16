@@ -1,8 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LifToken at 0x275a9048bf6d775a7f8b200cb2e258c33dbf6bdf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LifToken at 0x949f335fe05b4df0c01d128763baf0cf5e9e785d
 */
 pragma solidity ^0.4.18;
 
+// File: zeppelin-solidity/contracts/ownership/Ownable.sol
 
 /**
  * @title Ownable
@@ -43,6 +44,8 @@ contract Ownable {
   }
 
 }
+
+// File: zeppelin-solidity/contracts/math/SafeMath.sol
 
 /**
  * @title SafeMath
@@ -90,6 +93,7 @@ library SafeMath {
   }
 }
 
+// File: zeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
 
 /**
  * @title ERC20Basic
@@ -103,33 +107,7 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-/**
-   @title ERC827 interface, an extension of ERC20 token standard
-
-   Interface of a ERC827 token, following the ERC20 standard with extra
-   methods to transfer value and data and execute calls in transfers and
-   approvals.
- */
-contract ERC827 is ERC20 {
-
-  function approve( address _spender, uint256 _value, bytes _data ) public returns (bool);
-  function transfer( address _to, uint256 _value, bytes _data ) public returns (bool);
-  function transferFrom( address _from, address _to, uint256 _value, bytes _data ) public returns (bool);
-
-}
-
+// File: zeppelin-solidity/contracts/token/ERC20/BasicToken.sol
 
 /**
  * @title Basic token
@@ -176,6 +154,20 @@ contract BasicToken is ERC20Basic {
 
 }
 
+// File: zeppelin-solidity/contracts/token/ERC20/ERC20.sol
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+// File: zeppelin-solidity/contracts/token/ERC20/StandardToken.sol
 
 /**
  * @title Standard ERC20 token
@@ -272,128 +264,7 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-/**
-   @title ERC827, an extension of ERC20 token standard
-
-   Implementation the ERC827, following the ERC20 standard with extra
-   methods to transfer value and data and execute calls in transfers and
-   approvals.
-   Uses OpenZeppelin StandardToken.
- */
-contract ERC827Token is ERC827, StandardToken {
-
-  /**
-     @dev Addition to ERC20 token methods. It allows to
-     approve the transfer of value and execute a call with the sent data.
-
-     Beware that changing an allowance with this method brings the risk that
-     someone may use both the old and the new allowance by unfortunate
-     transaction ordering. One possible solution to mitigate this race condition
-     is to first reduce the spender's allowance to 0 and set the desired value
-     afterwards:
-     https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-
-     @param _spender The address that will spend the funds.
-     @param _value The amount of tokens to be spent.
-     @param _data ABI-encoded contract call to call `_to` address.
-
-     @return true if the call function was executed successfully
-   */
-  function approve(address _spender, uint256 _value, bytes _data) public returns (bool) {
-    require(_spender != address(this));
-
-    super.approve(_spender, _value);
-
-    require(_spender.call(_data));
-
-    return true;
-  }
-
-  /**
-     @dev Addition to ERC20 token methods. Transfer tokens to a specified
-     address and execute a call with the sent data on the same transaction
-
-     @param _to address The address which you want to transfer to
-     @param _value uint256 the amout of tokens to be transfered
-     @param _data ABI-encoded contract call to call `_to` address.
-
-     @return true if the call function was executed successfully
-   */
-  function transfer(address _to, uint256 _value, bytes _data) public returns (bool) {
-    require(_to != address(this));
-
-    super.transfer(_to, _value);
-
-    require(_to.call(_data));
-    return true;
-  }
-
-  /**
-     @dev Addition to ERC20 token methods. Transfer tokens from one address to
-     another and make a contract call on the same transaction
-
-     @param _from The address which you want to send tokens from
-     @param _to The address which you want to transfer to
-     @param _value The amout of tokens to be transferred
-     @param _data ABI-encoded contract call to call `_to` address.
-
-     @return true if the call function was executed successfully
-   */
-  function transferFrom(address _from, address _to, uint256 _value, bytes _data) public returns (bool) {
-    require(_to != address(this));
-
-    super.transferFrom(_from, _to, _value);
-
-    require(_to.call(_data));
-    return true;
-  }
-
-  /**
-   * @dev Addition to StandardToken methods. Increase the amount of tokens that
-   * an owner allowed to a spender and execute a call with the sent data.
-   *
-   * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _addedValue The amount of tokens to increase the allowance by.
-   * @param _data ABI-encoded contract call to call `_spender` address.
-   */
-  function increaseApproval(address _spender, uint _addedValue, bytes _data) public returns (bool) {
-    require(_spender != address(this));
-
-    super.increaseApproval(_spender, _addedValue);
-
-    require(_spender.call(_data));
-
-    return true;
-  }
-
-  /**
-   * @dev Addition to StandardToken methods. Decrease the amount of tokens that
-   * an owner allowed to a spender and execute a call with the sent data.
-   *
-   * approve should be called when allowed[_spender] == 0. To decrement
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _subtractedValue The amount of tokens to decrease the allowance by.
-   * @param _data ABI-encoded contract call to call `_spender` address.
-   */
-  function decreaseApproval(address _spender, uint _subtractedValue, bytes _data) public returns (bool) {
-    require(_spender != address(this));
-
-    super.decreaseApproval(_spender, _subtractedValue);
-
-    require(_spender.call(_data));
-
-    return true;
-  }
-
-}
-
+// File: zeppelin-solidity/contracts/token/ERC20/MintableToken.sol
 
 /**
  * @title Mintable token
@@ -438,6 +309,7 @@ contract MintableToken is StandardToken, Ownable {
   }
 }
 
+// File: zeppelin-solidity/contracts/lifecycle/Pausable.sol
 
 /**
  * @title Pausable
@@ -483,6 +355,7 @@ contract Pausable is Ownable {
   }
 }
 
+// File: zeppelin-solidity/contracts/token/ERC20/PausableToken.sol
 
 /**
  * @title Pausable token
@@ -511,6 +384,7 @@ contract PausableToken is StandardToken, Pausable {
   }
 }
 
+// File: contracts/LifToken.sol
 
 /**
    @title Líf, the Winding Tree token
@@ -520,7 +394,7 @@ contract PausableToken is StandardToken, Pausable {
    on transfer.
    Uses OpenZeppelin StandardToken, ERC827Token, MintableToken and PausableToken.
  */
-contract LifToken is StandardToken, ERC827Token, MintableToken, PausableToken {
+contract LifToken is StandardToken, MintableToken, PausableToken {
   // Token Name
   string public constant NAME = "Líf";
 
