@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x3B6B74df081BC0E2c4776b3Ceb3D4Bc61C20ad32
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xeC94d178D97bAC527FDCD4b3D4bf41b57D640c5B
 */
 pragma solidity ^0.4.8;
 
@@ -11,16 +11,16 @@ contract Crowdsale {
     mapping(address => uint256) public balanceOf;
     event GoalReached(address beneficiary, uint amountRaised);
     event FundTransfer(address backer, uint amount, bool isContribution);
-    bool public crowdsaleClosed = true;
+    bool public crowdsaleClosed = false;
     bool public minimumTargetReached = false;
 
     // initialization
     address public beneficiary = 0x35A9dd5a6b59eE5e28FC519802A468379573af39;/*ifSuccessfulSendTo*/
-    uint public price = 0.0015 ether;/*costOfEachToken*/
-    uint public minimumTarget = 10 * price;/*minimumTargetInTokens*/
-    uint public maximumTarget = 1000 * price;/*maximumTargetInTokens*/
-    uint public deadline =  now + 1440 * 1 minutes;/*durationInMinutes*/
-    token public tokenReward = token(0x2Fd8019ce2AAc3bf9DB18D851A57EFe1a6151BBF);/*addressOfTokenUsedAsReward*/
+    uint public price = 0.0016 ether;/*costOfEachToken*/
+    uint public minimumTarget = 3 * price;/*minimumTargetInTokens*/
+    uint public maximumTarget = 10 * price;/*maximumTargetInTokens*/
+    uint public deadline =  now + 20 * 1 minutes;/*durationInMinutes*/
+    token public tokenReward = token(0xc570800b8e4A202d0928ea5dC5DCb96573B6FDe8);/*addressOfTokenUsedAsReward*/
 
 
     // the function without name is the default function that is called whenever anyone sends funds to a contract
@@ -54,7 +54,6 @@ contract Crowdsale {
         uint wAmount = num / den;
         if (beneficiary.send(wAmount)) {
             FundTransfer(beneficiary, wAmount, false);
-            resAmount -= wAmount;
         }
     }
 
@@ -63,7 +62,7 @@ contract Crowdsale {
         if (!minimumTargetReached || !(beneficiary == msg.sender)) throw;
         if (beneficiary.send(resAmount)) {
             FundTransfer(beneficiary, resAmount, false);
-            resAmount -= resAmount;
+            resAmount = 0;
         }
     }
 
@@ -92,16 +91,14 @@ contract Crowdsale {
         }
     }
 
-    // return your funds after deadline if minimumTarget is not reached (activate if crowdsale close)
+    // return your funds after deadline if minimumTarget is not reached (activate if crowdsale closing)
     function safeWithdrawal() afterDeadline {
-        if (!crowdsaleClosed) throw;
         if (!minimumTargetReached && crowdsaleClosed) {
             uint amount = balanceOf[msg.sender];
             balanceOf[msg.sender] = 0;
             if (amount > 0) {
                 if (msg.sender.send(amount)) {
                     FundTransfer(msg.sender, amount, false);
-                    resAmount -= amount;
                 } else {
                     balanceOf[msg.sender] = amount;
                 }
