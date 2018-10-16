@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Snake at 0x01dd8186B8f38DFA01eA2c044355EA95206a4481
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Snake at 0x08d109b4be6d131acacddd6fb6fa6f93e7ec72fe
 */
 pragma solidity ^0.4.19;
 
@@ -45,7 +45,7 @@ contract Snake {
     }
     // increases length of the snake
     function _extend(uint256 id) internal {
-        snake[id] = 1 * 10**16;
+        snake[id] = 5 * 10**16;
         owners[id] = msg.sender;
     }
 }
