@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BetstreakToken at 0xA7F40CCD6833a65dD514088F4d419Afd9F0B0B52
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BetstreakToken at 0x4b98AE70e25F1f3aF918f3186809F337BAF2b5B1
 */
 pragma solidity ^0.4.11;
 /**
- * Official BST Token smart contract (EBET) - https://ethbet.io/
+ * Official BST Token smart contract (BST) - https://ico.betstreak.io/
  * ICO website: https://ico.betstreak.io
  * Betstreak website: https://betstreak.co
  * Link from Betstreak website to ICO Betstreak: https://www.betstreak.co/ico 
@@ -199,7 +199,7 @@ contract BetstreakToken is StandardToken {
   string public constant symbol = "BST";
   uint8 public constant decimals = 2; // only two deciminals, token cannot be divided past 1/100th
 
-  uint256 public constant INITIAL_SUPPLY = 20000000000; // 10 million + 2 decimals
+  uint256 public constant INITIAL_SUPPLY = 20000000000; // 200 million + 2 decimals
 
   /**
    * @dev Contructor that gives msg.sender all of existing tokens.
