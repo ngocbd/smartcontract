@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bocc at 0x8b9f055341b2383404ad0a6bc468714dcc9a3539
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bocc at 0x200c777c0d2e949524aecab181102c645d07ba70
 */
 pragma solidity 0.4.23;
 
@@ -127,7 +127,7 @@ contract StandardToken is ERC20 {
 
 contract Bocc is StandardToken {
   string public constant name = "Bank of CryptoCurrency";
-  string public constant symbol = "BO";
+  string public constant symbol = "BOCC";
   uint8 public constant decimals = 18;
 
   constructor() public {
