@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UUNIOToken at 0xcb7d2c31b87e0e88d5148c88bd7adfdf96c3ddf9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UUNIOToken at 0x2878bef8013414b49d3cf898b47a1b78196d2002
 */
 pragma solidity ^0.4.23;
 
@@ -36,7 +36,7 @@ library Math {
 }
 
 
-contract ERC20 {
+contract QRC20 {
 
 
     function totalSupply() public view returns (uint256);
@@ -77,7 +77,7 @@ contract Ownable {
 }
 
 
-contract BasicToken is ERC20 {
+contract BasicToken is QRC20 {
     
 
     using Math for uint256;
