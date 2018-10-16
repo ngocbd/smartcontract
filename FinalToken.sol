@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FinalToken at 0x5031AA6515C4C406318124A4959b15d07C8CBfed
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FinalToken at 0xb3342A4e1DBBB2a3Db3E9a7Ca888034843A2B3E7
 */
 pragma solidity ^0.4.18;
 
@@ -245,9 +245,9 @@ contract PausableToken is StandardToken, Pausable {
 
 contract FinalToken is PausableToken, MintableToken {
 
-    string public constant symbol = "CARGO";
+    string public constant symbol = "PIGGY";
 
-    string public constant name = "CARGO";
+    string public constant name = "PIGGY";
 
     uint8 public constant decimals = 18;
 
