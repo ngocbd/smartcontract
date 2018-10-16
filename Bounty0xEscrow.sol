@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bounty0xEscrow at 0xa520524ea67040ad51b1b84cca82dfb19dfc6c19
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bounty0xEscrow at 0x1e7c6b740f45e42c722db1b286b23a60acfdf6e2
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.18;
 
 
 /**
@@ -10,7 +10,7 @@ pragma solidity ^0.4.21;
  * @dev see https://github.com/ethereum/EIPs/issues/179
  */
 contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
+  uint256 public totalSupply;
   function balanceOf(address who) public view returns (uint256);
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
@@ -54,6 +54,7 @@ contract Ownable {
     owner = msg.sender;
   }
 
+
   /**
    * @dev Throws if called by any account other than the owner.
    */
@@ -62,118 +63,53 @@ contract Ownable {
     _;
   }
 
+
   /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param newOwner The address to transfer ownership to.
    */
   function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
+    OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
 
 }
-
-
-
-
 
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     if (a == 0) {
       return 0;
     }
-    c = a * b;
+    uint256 c = a * b;
     assert(c / a == b);
     return c;
   }
 
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
+    uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
+    return c;
   }
 
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
     assert(c >= a);
     return c;
   }
 }
 
 
-
-
-
-
-
-
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
-
-  bool public paused = false;
-
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
-  modifier whenPaused() {
-    require(paused);
-    _;
-  }
-
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused public {
-    paused = true;
-    emit Pause();
-  }
-
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused public {
-    paused = false;
-    emit Unpause();
-  }
-}
 
 
 
@@ -194,7 +130,7 @@ contract ERC20 is ERC20Basic {
 
 
 
-contract Bounty0xEscrow is Ownable, ERC223ReceivingContract, Pausable {
+contract Bounty0xEscrow is Ownable, ERC223ReceivingContract {
 
     using SafeMath for uint256;
 
@@ -207,7 +143,7 @@ contract Bounty0xEscrow is Ownable, ERC223ReceivingContract, Pausable {
     event Distribution(address token, address host, address hunter, uint256 amount, uint64 timestamp);
 
 
-    constructor() public {
+    function Bounty0xEscrow() public {
         address Bounty0xToken = 0xd2d6158683aeE4Cc838067727209a0aAF4359de3;
         supportedTokens.push(Bounty0xToken);
         tokenIsSupported[Bounty0xToken] = true;
@@ -226,7 +162,7 @@ contract Bounty0xEscrow is Ownable, ERC223ReceivingContract, Pausable {
 
         for (uint i = 0; i < supportedTokens.length; i++) {
             if (supportedTokens[i] == _token) {
-                uint256 indexOfLastToken = supportedTokens.length - 1;
+                var indexOfLastToken = supportedTokens.length - 1;
                 supportedTokens[i] = supportedTokens[indexOfLastToken];
                 supportedTokens.length--;
                 tokenIsSupported[_token] = false;
@@ -240,16 +176,16 @@ contract Bounty0xEscrow is Ownable, ERC223ReceivingContract, Pausable {
     }
 
 
-    function tokenFallback(address _from, uint _value, bytes _data) public whenNotPaused {
-        address _token = msg.sender;
+    function tokenFallback(address _from, uint _value, bytes _data) public {
+        var _token = msg.sender;
         require(tokenIsSupported[_token]);
 
         tokens[_token][_from] = SafeMath.add(tokens[_token][_from], _value);
-        emit Deposit(_token, _from, _value, tokens[_token][_from]);
+        Deposit(_token, _from, _value, tokens[_token][_from]);
     }
 
 
-    function depositToken(address _token, uint _amount) public whenNotPaused {
+    function depositToken(address _token, uint _amount) public {
         //remember to call Token(address).approve(this, amount) or this contract will not be able to do the transfer on your behalf.
         require(_token != address(0));
         require(tokenIsSupported[_token]);
@@ -257,7 +193,7 @@ contract Bounty0xEscrow is Ownable, ERC223ReceivingContract, Pausable {
         require(ERC20(_token).transferFrom(msg.sender, this, _amount));
         tokens[_token][msg.sender] = SafeMath.add(tokens[_token][msg.sender], _amount);
 
-        emit Deposit(_token, msg.sender, _amount, tokens[_token][msg.sender]);
+        Deposit(_token, msg.sender, _amount, tokens[_token][msg.sender]);
     }
 
 
@@ -270,7 +206,7 @@ contract Bounty0xEscrow is Ownable, ERC223ReceivingContract, Pausable {
         tokens[_token][_host] = SafeMath.sub(tokens[_token][_host], _amount);
         require(ERC20(_token).transfer(_hunter, _amount));
 
-        emit Distribution(_token, _host, _hunter, _amount, uint64(now));
+        Distribution(_token, _host, _hunter, _amount, uint64(now));
     }
 
     function distributeTokenToAddressesAndAmounts(address _token, address _host, address[] _hunters, uint256[] _amounts) external onlyOwner {
@@ -289,7 +225,7 @@ contract Bounty0xEscrow is Ownable, ERC223ReceivingContract, Pausable {
         for (uint i = 0; i < _hunters.length; i++) {
             require(ERC20(_token).transfer(_hunters[i], _amounts[i]));
 
-            emit Distribution(_token, _host, _hunters[i], _amounts[i], uint64(now));
+            Distribution(_token, _host, _hunters[i], _amounts[i], uint64(now));
         }
     }
 
@@ -307,7 +243,7 @@ contract Bounty0xEscrow is Ownable, ERC223ReceivingContract, Pausable {
         for (uint i = 0; i < _hunters.length; i++) {
             require(ERC20(_token).transfer(_hunters[i], _amounts[i]));
 
-            emit Distribution(_token, this, _hunters[i], _amounts[i], uint64(now));
+            Distribution(_token, this, _hunters[i], _amounts[i], uint64(now));
         }
     }
 
