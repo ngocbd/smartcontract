@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PoetToken at 0x0e0989b1f9b8a38983c2ba8053269ca62ec9b195
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PoetToken at 0x2ec0b77eca516a15889f5db97d6ca5a893faa7a8
 */
 pragma solidity ^0.4.15;
 
@@ -196,16 +196,16 @@ contract Token is StandardToken, SafeMath {
 }
 
 
-/// @title Token contract - Implements Standard ERC20 Token with Po.et features.
+/// @title Token contract - Implements Standard ERC20 Token with Poet features.
 /// @author Zerion - <zerion@inbox.com>
 contract PoetToken is Token {
 
     /*
      * Token meta data
      */
-    string constant public name = "Po.et";
+    string constant public name = "Poet";
     string constant public symbol = "POE";
-    uint8 constant public decimals = 8;
+    uint8 constant public decimals = 8;  // TODO: Confirm this number
 
     // Address where all investors tokens created during the ICO stage initially allocated
     address constant public icoAllocation = 0x1111111111111111111111111111111111111111;
