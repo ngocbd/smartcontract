@@ -1,262 +1,287 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x13D74c5690cd16000DfE853a21D1E906177b3702
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xf44745fbd41f6a1ba151df190db0564c5fcc4410
 */
-pragma solidity ^0.4;
+pragma solidity ^0.4.18;
 
-
-contract ERC20 {
-    uint public totalSupply;
-    function balanceOf(address _account) public constant returns (uint balance);
-    function transfer(address _to, uint _value) public returns (bool success);
-    function transferFrom(address _from, address _to, uint _value) public returns (bool success);
-    function approve(address _spender, uint _value) public returns (bool success);
-    function allowance(address _owner, address _spender) public constant returns (uint remaining);
-    event Transfer(address indexed _from, address indexed _to, uint _value);
-    event Approval(address indexed _owner, address indexed _spender, uint _value);
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
 
-contract Token is ERC20 {
-    // Balances for trading
-    // Default balance - 0
-    mapping(address => uint256) public balances;
-    mapping(address => uint256) public FreezeBalances;
-    mapping(address => mapping (address => uint)) allowed;
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
 
-    // Total amount of supplied tokens
-    uint256 public totalSupply;
-    uint256 public preSaleSupply;
-    uint256 public ICOSupply;
-    uint256 public userGrowsPoolSupply;
-    uint256 public auditSupply;
-    uint256 public bountySupply;
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
 
-    // Total tokens remind balance
-    uint256 public totalTokensRemind;
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
 
-    // Information about token
-    string public constant name = "AdMine";
-    string public constant symbol = "MCN";
-    address public owner;
-    uint8 public decimals = 5;
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
 
-    // If function has this modifier, only owner can execute this function
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
+  mapping(address => uint256) balances;
+
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public view returns (uint256 balance) {
+    return balances[_owner];
+  }
+
+}
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) internal allowed;
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) public view returns (uint256) {
+    return allowed[_owner][_spender];
+  }
+
+  /**
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   */
+  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+}
+
+//
+// CPYToken is a standard ERC20 token with additional functionality:
+// - tokenSaleContract receives the whole balance for distribution
+// - Tokens are only transferable by the tokenSaleContract until finalization
+// - Token holders can burn their tokens after finalization
+//
+contract Token is StandardToken {
+
+    string  public constant name   = "COPYTRACK Token";
+    string  public constant symbol = "CPY";
+
+    uint8 public constant   decimals = 18;
+
+    uint256 constant EXA       = 10 ** 18;
+    uint256 public totalSupply = 100 * 10 ** 6 * EXA;
+
+    bool public finalized = false;
+
+    address public tokenSaleContract;
+
+    //
+    // EVENTS
+    //
+    event Finalized();
+
+    event Burnt(address indexed _from, uint256 _amount);
+
+
+    // Initialize the token with the tokenSaleContract and transfer the whole balance to it
+    function Token(address _tokenSaleContract)
+        public
+    {
+        // Make sure address is set
+        require(_tokenSaleContract != 0);
+
+        balances[_tokenSaleContract] = totalSupply;
+
+        tokenSaleContract = _tokenSaleContract;
     }
 
-    uint public unfreezeTime;
-    uint public AdmineTeamTokens;
-    uint public AdmineAdvisorTokens;
 
+    // Implementation of the standard transfer method that takes the finalize flag into account
+    function transfer(address _to, uint256 _value)
+        public
+        returns (bool success)
+    {
+        checkTransferAllowed(msg.sender);
 
-    function Token() public {
-        owner = msg.sender;
-        // 100 ????????? ???????  = 100 000 000
-        // 100 000 000 * 10^5 = 10000000000000
-        totalSupply = 10000000000000;
-
-        // Pre Sale supply calculate 5%
-        preSaleSupply = totalSupply * 5 / 100;
-
-        // ICO supply calculate 60%
-        ICOSupply = totalSupply * 60 / 100;
-
-        // User growth pool 10%
-        userGrowsPoolSupply = totalSupply * 10 / 100;
-
-        // AdMine team tokens 15%
-        AdmineTeamTokens = totalSupply * 15 / 100;
-
-        // Admine advisors tokens supply 6%
-        AdmineAdvisorTokens = totalSupply * 6 / 100;
-
-        // Audit tokens supply 2%
-        auditSupply = totalSupply * 2 / 100;
-
-        // Bounty tokens supply 2%
-        bountySupply = totalSupply * 2 / 100;
-
-        totalTokensRemind = totalSupply;
-        balances[owner] = totalSupply;
-        unfreezeTime = now + 1 years;
-
-        freeze(0x01306bfbC0C20BEADeEc30000F634d08985D87de, AdmineTeamTokens);
+        return super.transfer(_to, _value);
     }
 
-    // Transfere tokens to audit partners (2%)
-    function transferAuditTokens(address _to, uint256 _amount) public onlyOwner {
-        require(auditSupply>=_amount);
-        balances[owner] -= _amount;
-        balances[_to] += _amount;
-        auditSupply -= _amount;
-        totalTokensRemind -= _amount;
+
+    // Implementation of the standard transferFrom method that takes into account the finalize flag
+    function transferFrom(address _from, address _to, uint256 _value)
+        public
+        returns (bool success)
+    {
+        checkTransferAllowed(msg.sender);
+
+        return super.transferFrom(_from, _to, _value);
     }
 
-    // Transfer tokens to bounty partners (2%)
-    function transferBountyTokens(address _to, uint256 _amount) public onlyOwner {
-        require(bountySupply>=_amount);
-        balances[owner] -= _amount;
-        balances[_to] += _amount;
-        bountySupply -= _amount;
-        totalTokensRemind -= _amount;
+
+    function checkTransferAllowed(address _sender)
+        private
+        view
+    {
+        if (finalized) {
+            // Every token holder should be allowed to transfer tokens once token was finalized
+            return;
+        }
+
+        // Only allow tokenSaleContract to transfer tokens before finalization
+        require(_sender == tokenSaleContract);
     }
 
-    function returnBountyTokens(address _from, uint256 _amount) public onlyOwner {
-        require(balances[_from]>=_amount);
-        balances[owner] += _amount;
-        balances[_from] -= _amount;
-        bountySupply += _amount;
-        totalTokensRemind += _amount;
-    }
 
-    // Transfer tokens to AdMine users pool (10%)
-    function transferUserGrowthPoolTokens(address _to, uint256 _amount) public onlyOwner {
-        require(userGrowsPoolSupply>=_amount);
-        balances[owner] -= _amount;
-        balances[_to] += _amount;
-        userGrowsPoolSupply -= _amount;
-        totalTokensRemind -= _amount;
-    }
+    // Finalize method marks the point where token transfers are finally allowed for everybody
+    function finalize()
+        external
+        returns (bool success)
+    {
+        require(!finalized);
+        require(msg.sender == tokenSaleContract);
 
-    function returnUserGrowthPoolTokens(address _from, uint256 _amount) public onlyOwner {
-        require(balances[_from]>=_amount);
-        balances[owner] += _amount;
-        balances[_from] -= _amount;
-        userGrowsPoolSupply += _amount;
-        totalTokensRemind += _amount;
-    }
+        finalized = true;
 
-    // Transfer tokens to advisors (6%)
-    function transferAdvisorTokens(address _to, uint256 _amount) public onlyOwner {
-        require(AdmineAdvisorTokens>=_amount);
-        balances[owner] -= _amount;
-        balances[_to] += _amount;
-        AdmineAdvisorTokens -= _amount;
-        totalTokensRemind -= _amount;
-    }
+        Finalized();
 
-    function returnAdvisorTokens(address _from, uint256 _amount) public onlyOwner {
-        require(balances[_from]>=_amount);
-        balances[owner] += _amount;
-        balances[_from] -= _amount;
-        AdmineAdvisorTokens += _amount;
-        totalTokensRemind += _amount;
-    }
-
-    // Transfer tokens to ico partners (60%)
-    function transferIcoTokens(address _to, uint256 _amount) public onlyOwner {
-        require(ICOSupply>=_amount);
-        balances[owner] -= _amount;
-        balances[_to] += _amount;
-        ICOSupply -= _amount;
-        totalTokensRemind -= _amount;
-    }
-
-    function returnIcoTokens(address _from, uint256 _amount) public onlyOwner {
-        require(balances[_from]>=_amount);
-        balances[owner] += _amount;
-        balances[_from] -= _amount;
-        ICOSupply += _amount;
-        totalTokensRemind += _amount;
-    }
-
-    // Transfer tokens to pre sale partners (5%)
-    function transferPreSaleTokens(address _to, uint256 _amount) public onlyOwner {
-        require(preSaleSupply>=_amount);
-        balances[owner] -= _amount;
-        balances[_to] += _amount;
-        preSaleSupply -= _amount;
-        totalTokensRemind -= _amount;
-    }
-
-    function returnPreSaleTokens(address _from, uint256 _amount) public onlyOwner {
-        require(balances[_from]>=_amount);
-        balances[owner] += _amount;
-        balances[_from] -= _amount;
-        preSaleSupply += _amount;
-        totalTokensRemind += _amount;
-    }
-
-    // Erase unsold pre sale tokens
-    function eraseUnsoldPreSaleTokens() public onlyOwner {
-        balances[owner] -= preSaleSupply;
-        preSaleSupply = 0;
-        totalTokensRemind -= preSaleSupply;
-    }
-
-    function transferUserTokensTo(address _from, address _to, uint256 _amount) public onlyOwner {
-        require(balances[_from] >= _amount && _amount > 0);
-        balances[_from] -= _amount;
-        balances[_to] += _amount;
-        Transfer(_from, _to, _amount);
-    }
-
-    // Chech trade balance of account
-    function balanceOf(address _account) public constant returns (uint256 balance) {
-        return balances[_account];
-    }
-
-    // Transfer tokens from your account to other account
-    function transfer(address _to, uint _value) public  returns (bool success) {
-        require(_to != 0x0);                               // Prevent transfer to 0x0 address.
-        require(balances[msg.sender] >= _value);           // Check if the sender has enough
-        balances[msg.sender] -= _value;                    // Subtract from the sender
-        balances[_to] += _value;                           // Add the same to the recipient
-        Transfer(msg.sender, _to, _value);
         return true;
     }
 
-    // Transfer tokens from account (_from) to another account (_to)
-    function transferFrom(address _from, address _to, uint256 _amount) public  returns(bool) {
-        require(_amount <= allowed[_from][msg.sender]);
-        if (balances[_from] >= _amount && _amount > 0) {
-            balances[_from] -= _amount;
-            balances[_to] += _amount;
-            allowed[_from][msg.sender] -= _amount;
-            Transfer(_from, _to, _amount);
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
 
-    function approve(address _spender, uint _value) public  returns (bool success){
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+    // Implement a burn function to permit msg.sender to reduce its balance which also reduces totalSupply
+    function burn(uint256 _value)
+        public
+        returns (bool success)
+    {
+        require(finalized);
+        require(_value <= balances[msg.sender]);
+
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+
+        Burnt(msg.sender, _value);
+
         return true;
     }
-
-    function allowance(address _owner, address _spender) public constant returns (uint remaining) {
-        return allowed[_owner][_spender];
-    }
-
-    function add_tokens(address _to, uint256 _amount) public onlyOwner {
-        balances[owner] -= _amount;
-        balances[_to] += _amount;
-        totalTokensRemind -= _amount;
-    }
-
-
-    // ??????? ??? ??????? ?????  ??? -????? ????? ????? ???????????
-    function all_unfreeze() public onlyOwner {
-        require(now >= unfreezeTime);
-        // ???? ???????? ?? ?????? ??????? ???????? ? ????????????
-        unfreeze(0x01306bfbC0C20BEADeEc30000F634d08985D87de);
-    }
-
-    function unfreeze(address _user) internal {
-        uint amount = FreezeBalances[_user];
-        balances[_user] += amount;
-    }
-
-
-    function freeze(address _user, uint256 _amount) public onlyOwner {
-        balances[owner] -= _amount;
-        FreezeBalances[_user] += _amount;
-
-    }
-
 }
