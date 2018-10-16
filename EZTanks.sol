@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EZTanks at 0x39f73ec09e135bbf5c7f38875db6093115866c96
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EZTanks at 0x7a2890a92491cf7c27aa61ab9150eaf41efb3224
 */
 pragma solidity ^0.4.0;
 
@@ -12,7 +12,8 @@ contract EZTanks{
 
         // tank quality
         uint8[4] upgrades;
-
+        uint8 exp;
+        uint8 next;
         bool inBattle;
         
         // stats
@@ -336,6 +337,8 @@ contract EZTanks{
         tanks[newTankID++] = TankObject ({
             typeID : _typeID,
             upgrades : [0,0,0,0],
+            exp: 0,
+            next: 0,
             inBattle : false,
             tankOwner : msg.sender,
             earningsIndex : earningsIndex,
@@ -421,6 +424,15 @@ contract EZTanks{
         
         EventJoinedBattle(msg.sender, _tankID);
 
+        // upgrade from exp
+        if(tanks[_tankID].exp == 5){
+            tanks[_tankID].upgrades[tanks[_tankID].next++]++;
+            tanks[_tankID].exp = 0;
+            if(tanks[_tankID].next == 4){
+                tanks[_tankID].next = 0;
+            }
+        }
+
         // add to teams
         if(battleTeams.length < 2*teamSize - 1){
             battleTeams.push(_tankID);
@@ -482,6 +494,7 @@ contract EZTanks{
 
             for(i=0; i<2*teamSize; i++){
                 tanks[battleTeams[i]].inBattle = false;
+                tanks[battleTeams[i]].exp++;
             }
 
             EventBattleOver();
@@ -684,5 +697,16 @@ contract EZTanks{
         uint256 numTanks = baseTanks[tankType].numTanks;
 
         return earnings * (numTanks - earningsIndex);
+    }
+
+    // returns [exp, next]
+    function getExp(uint256 _tankID) public constant returns (uint8[2]){
+        require(0<_tankID && _tankID < newTankID);
+
+        uint8[2] memory out;
+        out[0] = tanks[_tankID].exp;
+        out[1] = tanks[_tankID].next;
+
+        return out;
     }
 }
