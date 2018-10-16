@@ -1,22 +1,44 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x1fd4B5A62d33bE9e5b4d4193B99e561C2e6c9b6d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract token at 0xc6c4c7826D44ABF22c711E8E86bDC3f5242d2182
 */
-pragma solidity ^0.4.2;
-contract Token {
-    address public issuer;
-    mapping (address => uint) public balances;
+pragma solidity ^0.4.6;
 
-    function Token() {
-        issuer = msg.sender;
-        balances[issuer] = 1000000;
+contract token { 
+    /* Public variables of the token */
+    string public standard = 'Token 0.1';
+    
+	string public name;
+    string public symbol;
+    uint8 public decimals;
+    uint256 public totalSupply;
+	
+    mapping (address => uint256) public coinBalanceOf;
+    event CoinTransfer(address sender, address receiver, uint256 amount);
+
+  /* Initializes contract with initial supply tokens to the creator of the contract */
+  function token(
+        uint256 initialSupply,	
+        string tokenName,
+        uint8 decimalUnits,
+        string tokenSymbol
+        ) {
+        coinBalanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
+        totalSupply = initialSupply;                        // Update total supply
+        name = tokenName;                                   // Set the name for display purposes
+        symbol = tokenSymbol;                               // Set the symbol for display purposes
+        decimals = decimalUnits;                            // Amount of decimals for display purposes
     }
 
-    function transfer(address _to, uint _amount) {
-        if (balances[msg.sender] < _amount) {
-            throw;
-        }
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return coinBalanceOf[_owner];
+    }
 
-        balances[msg.sender] -= _amount;
-        balances[_to] += _amount;
+  /* Very simple trade function */
+    function sendCoin(address receiver, uint256 amount) returns(bool sufficient) {
+        if (coinBalanceOf[msg.sender] < amount) return false;
+        coinBalanceOf[msg.sender] -= amount;
+        coinBalanceOf[receiver] += amount;
+        CoinTransfer(msg.sender, receiver, amount);
+        return true;
     }
 }
