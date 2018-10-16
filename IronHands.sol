@@ -1,28 +1,23 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IronHands at 0x099764910a38190bbd317857e635e6f461b11119
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IronHands at 0x39d24136e961054a585c69f570af209ad8464d45
 */
 pragma solidity ^0.4.21;
 
 /**
  * 
- *            _       ____  ___      _ _   _       _ _           
- *           (_)     (_)  \/  |     | | | (_)     | (_)          
- *  _ __ ___  _ _ __  _| .  . |_   _| | |_ _ _ __ | |_  ___ _ __ 
- * | '_ ` _ \| | '_ \| | |\/| | | | | | __| | '_ \| | |/ _ \ '__|
- * | | | | | | | | | | | |  | | |_| | | |_| | |_) | | |  __/ |   
- * |_| |_| |_|_|_| |_|_\_|  |_/\__,_|_|\__|_| .__/|_|_|\___|_|   
- *                                        | |                  
- *                                        |_|  
- * - 150% return, 0.005 ETH max deposit
+ * 
+ * EPX/PHX Doubler
+ * - Takes 50% of the ETH in it and buys tokens.
+ * - Takes 50% of the ETH in it and pays back depositors.
+ * - Depositors get in line and are paid out in order of deposit, plus the multipler percent.
+ * - The tokens collect dividends, which in turn pay into the payout pool to be split 50/50.
+ * 
+ * - PHX mined by this contract will be sold and reinvested in the doubler :)
+ * 
  * - Code from BoomerangLiquidyFund: https://gist.github.com/TSavo/2401671fbfdb6ac384a556914934c64f
- * - Original BLF Doubler contract: 0xE58b65d1c0C8e8b2a0e3A3AcEC633271531084ED
- * 
- * - Why? So the chain moves fast and you have some funny shit to buy when you're watching charts all day
- *      - Plus it provides micro volume to P3D so the contract balance isn't stagnant for long periods
- * 
- *      - In addition, if this contract ever gains a good amount of P3D tokens it will very easily 1.5x people's 0.005 ETH :)
- * 
+ * - Original BLF PoWH3D doubler: 0xE58b65d1c0C8e8b2a0e3A3AcEC633271531084ED        
  *
+ * 
  * ATTENTION!
  * 
  * This code? IS NOT DESIGNED FOR ACTUAL USE.
@@ -47,22 +42,6 @@ pragma solidity ^0.4.21;
  * make you forget to file your taxes, and give you cancer.
  * 
  * So.... tl;dr: This contract sucks, don't send money to it.
- * 
- * What it does:
- * 
- * It takes 50% of the ETH in it and buys tokens.
- * It takes 50% of the ETH in it and pays back depositors.
- * Depositors get in line and are paid out in order of deposit, plus the deposit
- * percent.
- * The tokens collect dividends, which in turn pay into the payout pool
- * to be split 50/50.
- * 
- * If your seeing this contract in it's initial configuration, it should be
- * set to 200% (double deposits), and pointed at PoWH:
- * 0xB3775fB83F7D12A36E0475aBdD1FCA35c091efBe
- * 
- * But you should verify this for yourself.
- *  
  *  
  */
 
@@ -70,12 +49,16 @@ contract ERC20Interface {
     function transfer(address to, uint256 tokens) public returns (bool success);
 }
 
-contract POWH {
-    
-    function buy(address) public payable returns(uint256);
-    function withdraw() public;
-    function myTokens() public view returns(uint256);
-    function myDividends(bool) public view returns(uint256);
+contract EPX {
+
+    function fund() public payable returns(uint256){}
+    function withdraw() public {}
+    function dividends(address) public returns(uint256) {}
+    function balanceOf() public view returns(uint256) {}
+}
+
+contract PHX {
+    function mine() public {}
 }
 
 contract Owned {
@@ -104,6 +87,9 @@ contract Owned {
 
 contract IronHands is Owned {
     
+    
+    address phxContract = 0x14b759A158879B133710f4059d32565b4a66140C;
+    
     /**
      * Modifiers
      */
@@ -119,8 +105,8 @@ contract IronHands is Owned {
     /**
      * The tokens can never be stolen.
      */
-    modifier notPowh(address aContract){
-        require(aContract != address(weak_hands));
+    modifier notEthPyramid(address aContract){
+        require(aContract != address(ethpyramid));
         _;
     }
    
@@ -158,16 +144,23 @@ contract IronHands is Owned {
     //How much each person is owed
     mapping(address => uint256) public creditRemaining;
     //What we will be buying
-    POWH weak_hands;
+    EPX ethpyramid;
+    PHX phx;
 
     /**
      * Constructor
      */
-    function IronHands(uint multiplierPercent, address powh) public {
+    function IronHands(uint multiplierPercent, address addr) public {
         multiplier = multiplierPercent;
-        weak_hands = POWH(powh);
+        ethpyramid = EPX(addr);
+        phx = PHX(phxContract);
     }
     
+    
+    function minePhx() public onlyOwner {
+        phx.mine.gas(1000000)();
+        
+    }
     
     /**
      * Fallback function allows anyone to send money for the cost of gas which
@@ -182,8 +175,8 @@ contract IronHands is Owned {
      * then pay out who we owe and buy more tokens.
      */ 
     function deposit() payable public {
-        //You have to send more than 1000000 wei and <= 0.005 ETH
-        require(msg.value > 1000000 && msg.value <= 5000000000000000);
+        //You have to send more than 1000000 wei.
+        require(msg.value > 1000000);
         //Compute how much to pay them
         uint256 amountCredited = (msg.value * multiplier) / 100;
         //Get in line to be paid back.
@@ -219,9 +212,9 @@ contract IronHands is Owned {
         //Take away the amount we are investing from the amount to send
         balance -= investment;
         //Invest it in more tokens.
-        uint256 tokens = weak_hands.buy.value(investment).gas(1000000)(msg.sender);
+        address(ethpyramid).call.value(investment).gas(1000000)();
         //Record that tokens were purchased
-        emit Purchase(investment, tokens);
+        //emit Purchase(investment, tokens);
         //While we still have money to send
         while (balance > 0) {
             //Either pay them what they are owed or however much we have, whichever is lower.
@@ -265,14 +258,14 @@ contract IronHands is Owned {
      * Number of tokens the contract owns.
      */
     function myTokens() public view returns(uint256){
-        return weak_hands.myTokens();
+        return ethpyramid.balanceOf();
     }
     
     /**
      * Number of dividends owed to the contract.
      */
     function myDividends() public view returns(uint256){
-        return weak_hands.myDividends(true);
+        return ethpyramid.dividends(address(this));
     }
     
     /**
@@ -288,7 +281,7 @@ contract IronHands is Owned {
      */
     function withdraw() public {
         uint256 balance = address(this).balance;
-        weak_hands.withdraw.gas(1000000)();
+        ethpyramid.withdraw.gas(1000000)();
         uint256 dividendsPaid = address(this).balance - balance;
         dividends += dividendsPaid;
         emit Dividends(dividendsPaid);
@@ -346,7 +339,7 @@ contract IronHands is Owned {
     /**
      * A trap door for when someone sends tokens other than the intended ones so the overseers can decide where to send them.
      */
-    function transferAnyERC20Token(address tokenAddress, address tokenOwner, uint tokens) public onlyOwner notPowh(tokenAddress) returns (bool success) {
+    function transferAnyERC20Token(address tokenAddress, address tokenOwner, uint tokens) public onlyOwner notEthPyramid(tokenAddress) returns (bool success) {
         return ERC20Interface(tokenAddress).transfer(tokenOwner, tokens);
     }
     
