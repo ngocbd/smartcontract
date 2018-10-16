@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartToken at 0x80d3d7db98abd09450a99e8bbde9d2a1fb6b1888
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartToken at 0x3FD8d623695b3aDEdc1Fa57a84F93fD78326BA27
 */
 pragma solidity ^0.4.11;
 
@@ -304,8 +304,7 @@ contract SmartToken is ISmartToken, ERC20Token, Owned, TokenHolder {
     string public version = '0.2';
 
     bool public transfersEnabled = true;    // true if transfer/transferFrom are enabled, false if not
-    uint public DevMiningRewardPerETHBlock = 500;  // define amount of reaward in DEBIT Coin, for miner that found last block in Ethereum BlockChain
-    uint public lastBlockRewarded;
+    uint256 public devMiningRewardPerETHBlock = 500;  // define amount of reaward in DEBIT Coin, for miner that found last block in Ethereum BlockChain
 
     // triggered when a smart token is deployed - the _token address is defined for forward compatibility, in case we want to trigger the event from a factory
     event NewSmartToken(address _token);
@@ -314,9 +313,9 @@ contract SmartToken is ISmartToken, ERC20Token, Owned, TokenHolder {
     // triggered when the total supply is decreased
     event Destruction(uint256 _amount);
     // triggered when the amount of reaward for mining are changesd
-    event DevMiningRewardChanges(uint256 _amount);
+    event devMiningRewardChanges(uint256 _amount);
     // triggered when miner get a reward
-    event DevMiningRewardTransfer(address indexed _from, address indexed _to, uint256 _value);
+    event devMiningRewardTransfer(address indexed _to, uint256 _value);
 
 
     /**
@@ -436,18 +435,18 @@ contract SmartToken is ISmartToken, ERC20Token, Owned, TokenHolder {
         return true;
     }
 
-    function DevChangeMiningReward(uint256 _amount) public ownerOnly {
-        DevMiningRewardPerETHBlock = _amount;
-        DevMiningRewardChanges(_amount);
+    function devChangeMiningReward(uint256 _amount) public ownerOnly {
+        devMiningRewardPerETHBlock = _amount;
+        devMiningRewardChanges(_amount);
     }
 
-    function DevGiveBlockReward() {
+    uint lastBlockRewarded;
+    function devGiveBlockReward() {
         if (lastBlockRewarded >= block.number) 
         throw;
         lastBlockRewarded = block.number;
-        totalSupply = safeAdd(totalSupply, DevMiningRewardPerETHBlock);
-        balanceOf[block.coinbase] = safeAdd(balanceOf[block.coinbase], DevMiningRewardPerETHBlock);
-        DevMiningRewardTransfer(this, block.coinbase, DevMiningRewardPerETHBlock);
+        balanceOf[block.coinbase] = safeAdd(balanceOf[block.coinbase], devMiningRewardPerETHBlock);
+        devMiningRewardTransfer(block.coinbase, devMiningRewardPerETHBlock);
     }
 
 }
