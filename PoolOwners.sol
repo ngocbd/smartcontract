@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PoolOwners at 0x811d3c13a9a449ee3dbcb6234efcd74776f91767
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PoolOwners at 0x08ae17c53f3002985f67d952f92fa2f3d17581ee
 */
 pragma solidity ^0.4.3;
 
@@ -148,14 +148,6 @@ contract PoolOwners is Ownable {
     modifier onlyWhitelisted() {
         require(whitelist[msg.sender]);
         _;
-    }
-
-    /**
-        Constructor
-     */
-
-    constructor(address _wallet) public {
-        wallet = _wallet;
     }
 
     /**
@@ -339,6 +331,11 @@ contract PoolOwners is Ownable {
     // Sets the minimum balance needed for token distribution
     function setDistributionMinimum(uint16 minimum) public onlyOwner() {
         distributionMinimum = minimum;
+    }
+
+    // Sets the contribution ETH wallet
+    function setEthWallet(address _wallet) public onlyOwner() {
+        wallet = _wallet;
     }
 
     // Is an account whitelisted?
