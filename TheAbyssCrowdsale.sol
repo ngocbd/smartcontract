@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheAbyssCrowdsale at 0xf4627DE2DFa6A6c5E4710d24b113fDA3E1cCD168
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheAbyssCrowdsale at 0x3A0cdeb95EF7E07c83b788dE3863ff04071435CC
 */
 pragma solidity ^0.4.18;
 
@@ -85,70 +85,24 @@ contract Ownable {
     }
 }
 
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Ownable {
-    event Pause();
-    event Unpause();
-
-    bool public paused = false;
-
-
-    /**
-     * @dev Modifier to make a function callable only when the contract is not paused.
-     */
-    modifier whenNotPaused() {
-        require(!paused);
-        _;
-    }
-
-    /**
-     * @dev Modifier to make a function callable only when the contract is paused.
-     */
-    modifier whenPaused() {
-        require(paused);
-        _;
-    }
-
-    /**
-     * @dev called by the owner to pause, triggers stopped state
-     */
-    function pause() onlyOwner whenNotPaused public {
-        paused = true;
-        Pause();
-    }
-
-    /**
-     * @dev called by the owner to unpause, returns to normal state
-     */
-    function unpause() onlyOwner whenPaused public {
-        paused = false;
-        Unpause();
-    }
-}
-
-contract TheAbyssCrowdsale is Ownable, SafeMath, Pausable {
+contract TheAbyssCrowdsale is Ownable, SafeMath {
     mapping (address => uint256) public balances;
 
     uint256 public constant TOKEN_PRICE_NUM = 2500;
     uint256 public constant TOKEN_PRICE_DENOM = 1;
 
-    uint256 public constant PRESALE_ETHER_MIN_CONTRIB = 1 ether;
+    uint256 public constant PRESALE_ETHER_MIN_CONTRIB = 5 ether;
     uint256 public constant SALE_ETHER_MIN_CONTRIB = 0.1 ether;
-
-    uint256 public constant HARD_CAP = 100000 ether;
-
-    uint256 public PRE_SALE_START_TIME = 1513263600;
-    uint256 public PRE_SALE_END_TIME = 1514764740;
-
-    uint256 public SALE_START_TIME = 1515510000;
-    uint256 public SALE_END_TIME = 1518739140;
 
     uint256 public totalEtherContributed = 0;
     uint256 public totalTokensToSupply = 0;
     address public wallet = 0x0;
+
+    uint256 public preSaleStartTime = 0;
+    uint256 public preSaleEndTime = 0;
+
+    uint256 public saleStartTime = 0;
+    uint256 public saleEndTime = 0;
 
     uint256 public bonusWindow1EndTime = 0;
     uint256 public bonusWindow2EndTime = 0;
@@ -157,32 +111,37 @@ contract TheAbyssCrowdsale is Ownable, SafeMath, Pausable {
     event LogContribution(address indexed contributor, uint256 amountWei, uint256 tokenAmount, uint256 tokenBonus, uint256 timestamp);
 
     modifier checkContribution() {
-        require((now >= PRE_SALE_START_TIME && now < PRE_SALE_END_TIME && msg.value >= PRESALE_ETHER_MIN_CONTRIB) || (now >= SALE_START_TIME && now < SALE_END_TIME && msg.value >= SALE_ETHER_MIN_CONTRIB));
+        require((now >= preSaleStartTime && now < preSaleEndTime && msg.value >= PRESALE_ETHER_MIN_CONTRIB) || (now >= saleStartTime && now < saleEndTime && msg.value >= SALE_ETHER_MIN_CONTRIB));
         _;
     }
 
-    modifier checkCap() {
-        require(safeAdd(totalEtherContributed, msg.value) <= HARD_CAP);
-        _;
-    }
-
-    function TheAbyssCrowdsale(address _wallet) public {
+    function TheAbyssCrowdsale(address _wallet, uint256 _preSaleStartTime, uint256 _preSaleEndTime, uint256 _saleStartTime, uint256 _saleEndTime) public {
+        require(_preSaleStartTime >= now);
+        require(_preSaleEndTime > _preSaleStartTime);
+        require(_saleStartTime > _preSaleEndTime);
+        require(_saleEndTime > _saleStartTime);
         require(_wallet != address(0));
 
         wallet = _wallet;
 
-        bonusWindow1EndTime = SALE_START_TIME + 1 days;
-        bonusWindow2EndTime = SALE_START_TIME + 4 days;
-        bonusWindow3EndTime = SALE_START_TIME + 20 days;
+        preSaleStartTime = _preSaleStartTime;
+        preSaleEndTime = _preSaleEndTime;
+
+        saleStartTime = _saleStartTime;
+        saleEndTime = _saleEndTime;
+
+        bonusWindow1EndTime = saleStartTime + 1 days;
+        bonusWindow2EndTime = saleStartTime + 4 days;
+        bonusWindow3EndTime = saleStartTime + 20 days;
     }
 
     function getBonus() internal constant returns (uint256, uint256) {
         uint256 numerator = 0;
         uint256 denominator = 100;
 
-        if(now >= PRE_SALE_START_TIME && now < PRE_SALE_END_TIME) {
+        if(now >= preSaleStartTime && now < preSaleEndTime) {
             numerator = 25;
-        } else if(now >= SALE_START_TIME && now < SALE_END_TIME) {
+        } else if(now >= saleStartTime && now < saleEndTime) {
             if(now < bonusWindow1EndTime) {
                 numerator = 15;
             } else if(now < bonusWindow2EndTime) {
@@ -200,7 +159,7 @@ contract TheAbyssCrowdsale is Ownable, SafeMath, Pausable {
         processContribution();
     }
 
-    function processContribution() private whenNotPaused checkContribution checkCap {
+    function processContribution() private checkContribution {
         uint256 bonusNum = 0;
         uint256 bonusDenom = 100;
         (bonusNum, bonusDenom) = getBonus();
