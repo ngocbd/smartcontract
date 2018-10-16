@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract koinconekt at 0xa555b246fea9f1c119198af247e6307064022749
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract koinconekt at 0xd21d0eaa659606bb6112c4576a02d74b5c591f3e
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'KOINCONEKT' token contract
+// 'koinconekt' token contract
 //
-// Deployed to : 0x2892774C7D9eC77c881cd8829E4ED5c6A49c7e41
-// Symbol      : KCK
-// Name        : KOINCONEKT
+// Deployed to : 0x6eE71747bF1bBdba24a6b27521D54f65e8968027
+// Symbol      : kck
+// Name        : koinconekt
 // Total supply: 100000000
 // Decimals    : 18
 //
@@ -115,13 +115,13 @@ contract koinconekt is ERC20Interface, Owned, SafeMath {
     // ------------------------------------------------------------------------
     // Constructor
     // ------------------------------------------------------------------------
-    function KOINCONEKT() public {
-        symbol = "KCK";
-        name = "KOINCONEKT";
+    function koinconekt() public {
+        symbol = "kck";
+        name = "koinconekt";
         decimals = 18;
         _totalSupply = 50000000000000000000000000;
-        balances[0x2892774C7D9eC77c881cd8829E4ED5c6A49c7e41] = _totalSupply;
-        Transfer(address(0), 0x2892774C7D9eC77c881cd8829E4ED5c6A49c7e41, _totalSupply);
+        balances[0x6eE71747bF1bBdba24a6b27521D54f65e8968027] = _totalSupply;
+        Transfer(address(0), 0x6eE71747bF1bBdba24a6b27521D54f65e8968027, _totalSupply);
     }
 
 
