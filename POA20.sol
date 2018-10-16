@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POA20 at 0xc1f1b22d07302f8529a5710aff7eb8f003c76730
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POA20 at 0x6758b7d441a9739b98552b373703d8d3d14f9e62
 */
-pragma solidity 0.4.21;
+pragma solidity 0.4.23;
 
 // File: contracts/ERC677Receiver.sol
 
@@ -415,7 +415,7 @@ contract POA20 is
     function isContract(address _addr)
         private
         view
-        returns (bool hasCode)
+        returns (bool)
     {
         uint length;
         assembly { length := extcodesize(_addr) }
