@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FreeCoin at 0x66be7382aaa85e6a47864d686e51ba10a313ced1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FreeCoin at 0xfdea2ad97ec5297090c8d945f25a15f17f4c283d
 */
 /**
 ----------------------------------------------------------------------------------------------
-FreeCoin Token Contract, version 3.00
+FreeCoin Token Contract, version 3.01
 
 Interwave Global
 www.iw-global.com
@@ -39,7 +39,7 @@ contract TokenERC20 {
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
     
-    uint public free = 100;
+    uint public free = 100 * 10 ** uint256(decimals);
 
     // This creates an array with all balances
     mapping (address => uint256) public balances;
@@ -51,6 +51,11 @@ contract TokenERC20 {
 
     // This notifies clients about the amount burnt
     event Burn(address indexed from, uint256 value);
+
+
+    function changeFree(uint newFree) public {
+        free = newFree;
+    }
 
 
     function balanceOf(address _owner) public constant returns (uint balance) {
