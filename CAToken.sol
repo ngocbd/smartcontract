@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CAToken at 0xbc1234552ebea32b5121190356bba6d3bb225bb5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CAToken at 0xba5e000c215e001ffffb9867799cf76bdfd608bb
 */
 pragma solidity ^0.4.11;
 
@@ -381,7 +381,7 @@ contract PausableToken is StandardToken, Pausable {
 contract CAToken is MintableToken, PausableToken {
     
     // Metadata
-    string public constant symbol = "BCL";
+    string public constant symbol = "BASE";
     string public constant name = "BitClave";
     uint8 public constant decimals = 18;
     string public constant version = "2.0";
