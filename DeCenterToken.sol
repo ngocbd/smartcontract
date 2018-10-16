@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DeCenterToken at 0x41de5b7cf63c8d028daa2626d9aeaf02cad8c6c3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DeCenterToken at 0x4b864991128799784649c85ccf11bdded3cbb987
 */
 pragma solidity ^0.4.11;
 
@@ -107,8 +107,6 @@ contract DeCenterToken is owned, queue, DSMath {
     uint public refundStartTime;
     uint public refundDuration = 3 days; // 3 years
     uint public firstStageDuration = 3 days; // 31 days
-    uint public lastScheduledTopUp;
-    uint public lastProcessedDay = 3;
 
     uint public maxDailyCap = 3333300000000; // 33 333 DC
     mapping (uint => uint) public dailyTotals;
@@ -118,6 +116,9 @@ contract DeCenterToken is owned, queue, DSMath {
     address public beneficiary;
     address public expertsAccount;
     address public teamAccount;
+
+    uint public lastScheduledTopUp;
+    uint public lastProcessedDay;
 
     mapping (address => uint256) public balanceOf;
 
@@ -146,6 +147,8 @@ contract DeCenterToken is owned, queue, DSMath {
         refundStartTime = _refundStartTime;
 
         balanceOf[this] = totalSupply;
+
+        lastProcessedDay = firstStageDuration - 1;
 
         scheduledTopUp();
     }
