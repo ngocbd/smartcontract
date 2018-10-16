@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NeuroDAO at 0xCC97eBb7c5a7D97db32fb23A23fe516575C5e10a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NeuroDAO at 0xfa9b1aa07f785e92ae0de2fca2128ed130bb0740
 */
 /*
 This file is part of the NeuroDAO Contract.
@@ -23,14 +23,14 @@ IF YOU ARE ENJOYED IT DONATE TO 0x3Ad38D1060d1c350aF29685B2b8Ec3eDE527452B ! :)
 */
 
 
-pragma solidity ^0.4.0;
+pragma solidity ^0.4.11;
 
 contract owned {
 
     address public owner;
-    address public newOwner;
+    address public candidate;
 
-    function owned() payable {
+    function owned() public payable {
         owner = msg.sender;
     }
     
@@ -41,13 +41,13 @@ contract owned {
 
     function changeOwner(address _owner) onlyOwner public {
         require(_owner != 0);
-        newOwner = _owner;
+        candidate = _owner;
     }
     
     function confirmOwner() public {
-        require(newOwner == msg.sender);
-        owner = newOwner;
-        delete newOwner;
+        require(candidate == msg.sender);
+        owner = candidate;
+        delete candidate;
     }
 }
 
@@ -57,25 +57,16 @@ contract owned {
  */
 contract ERC20 {
     uint public totalSupply;
-    function balanceOf(address who) constant returns (uint);
-    function transfer(address to, uint value);
-    function allowance(address owner, address spender) constant returns (uint);
-    function transferFrom(address from, address to, uint value);
-    function approve(address spender, uint value);
+    function balanceOf(address who) public constant returns (uint);
+    function transfer(address to, uint value) public;
+    function allowance(address owner, address spender) public constant returns (uint);
+    function transferFrom(address from, address to, uint value) public;
+    function approve(address spender, uint value) public;
     event Approval(address indexed owner, address indexed spender, uint value);
     event Transfer(address indexed from, address indexed to, uint value);
 }
 
-contract ManualMigration is owned, ERC20 {
-
-    uint    public freezedMoment;
-    address public original;
-
-    modifier enabled {
-        require(original == 0);
-        _;
-    }
-    
+contract BaseNeuroDAO {
     struct SpecialTokenHolder {
         uint limit;
         bool isTeam;
@@ -89,7 +80,20 @@ contract ManualMigration is owned, ERC20 {
     }
     mapping (address => TokenHolder) public holders;
 
-    function ManualMigration(address _original) payable owned() {
+    function freezedBalanceOf(address _who) constant public returns(uint);
+}
+
+contract ManualMigration is owned, ERC20, BaseNeuroDAO {
+
+    uint    public freezedMoment;
+    address public original;
+
+    modifier enabled {
+        require(original == 0);
+        _;
+    }
+    
+    function ManualMigration(address _original) payable public owned() {
         original = _original;
         totalSupply = ERC20(original).totalSupply();
         holders[this].balance = ERC20(original).balanceOf(original);
@@ -97,17 +101,26 @@ contract ManualMigration is owned, ERC20 {
         Transfer(this, original, holders[original].balance);
     }
 
-    function migrateManual(address _who, bool _isTeam) onlyOwner {
+    function migrateManual(address _who) public onlyOwner {
         require(original != 0);
         require(holders[_who].balance == 0);
-        uint balance = ERC20(original).balanceOf(_who);
+        bool isTeam;
+        uint limit;
+        uint balance = BaseNeuroDAO(original).freezedBalanceOf(_who);
         holders[_who].balance = balance;
-        specials[_who] = SpecialTokenHolder({limit: balance, isTeam:_isTeam});
+        (limit, isTeam) = BaseNeuroDAO(original).specials(_who);
+        specials[_who] = SpecialTokenHolder({limit: limit, isTeam: isTeam});
         holders[original].balance -= balance;
         Transfer(original, _who, balance);
     }
     
-    function sealManualMigration(bool force) onlyOwner {
+    function migrateManual2(address [] _who, uint count) public onlyOwner {
+        for(uint i = 0; i < count; ++i) {
+            migrateManual(_who[i]);
+        }
+    }
+    
+    function sealManualMigration(bool force) public onlyOwner {
         require(force || holders[original].balance == 0);
         delete original;
     }
@@ -120,33 +133,10 @@ contract ManualMigration is owned, ERC20 {
     }
 }
 
-contract Crowdsale is ManualMigration {
-    
-    function Crowdsale(address _original) payable ManualMigration(_original) {}
-
-    function () payable enabled {
-        require(holders[this].balance > 0);
-        uint256 tokens = 5000 * msg.value / 1000000000000000000;
-        if (tokens > holders[this].balance) {
-            tokens = holders[this].balance;
-            uint valueWei = tokens * 1000000000000000000 / 5000;
-            msg.sender.transfer(msg.value - valueWei);
-        }
-        require(holders[msg.sender].balance + tokens > holders[msg.sender].balance); // overflow
-        require(tokens > 0);
-        beforeBalanceChanges(msg.sender);
-        beforeBalanceChanges(this);
-        holders[msg.sender].balance += tokens;
-        specials[msg.sender].limit += tokens;
-        holders[this].balance -= tokens;
-        Transfer(this, msg.sender, tokens);
-    }
-}
-
-contract Token is Crowdsale {
+contract Token is ManualMigration {
 
     string  public standard    = 'Token 0.1';
-    string  public name        = 'NeuroDAO';
+    string  public name        = 'NeuroDAO 3.0';
     string  public symbol      = "NDAO";
     uint8   public decimals    = 0;
 
@@ -157,7 +147,7 @@ contract Token is Crowdsale {
     event Burned(address indexed owner, uint256 value);
 
     function Token(address _original, uint _startTime)
-        payable Crowdsale(_original) {
+        payable public ManualMigration(_original) {
         startTime = _startTime;    
     }
 
@@ -182,7 +172,11 @@ contract Token is Crowdsale {
                     blocked = limit * (100 - periods) / 100;
                 }
             }
-            _avail -= blocked;
+            if (_avail <= blocked) {
+                _avail = 0;
+            } else {
+                _avail -= blocked;
+            }
         }
     }
     
@@ -240,7 +234,7 @@ contract Token is Crowdsale {
 }
 
 contract MigrationAgent {
-    function migrateFrom(address _from, uint256 _value);
+    function migrateFrom(address _from, uint256 _value) public;
 }
 
 contract TokenMigration is Token {
@@ -251,7 +245,7 @@ contract TokenMigration is Token {
     event Migrate(address indexed from, address indexed to, uint256 value);
 
     function TokenMigration(address _original, uint _startTime)
-        payable Token(_original, _startTime) {}
+        payable public Token(_original, _startTime) {}
 
     // Migrate _value of tokens to the new token contract
     function migrate() external {
@@ -277,7 +271,7 @@ contract TokenMigration is Token {
 contract NeuroDAO is TokenMigration {
 
     function NeuroDAO(address _original, uint _startTime)
-        payable TokenMigration(_original, _startTime) {}
+        payable public TokenMigration(_original, _startTime) {}
     
     function withdraw() public onlyOwner {
         owner.transfer(this.balance);
@@ -302,39 +296,20 @@ contract NeuroDAO is TokenMigration {
         require(totalSupply == 0);
         selfdestruct(owner);
     }
-}
 
-contract Adapter is owned {
-    
-    address public neuroDAO;
-    address public erc20contract;
-    address public masterHolder;
-    
-    mapping (address => bool) public alreadyUsed;
-    
-    function Adapter(address _neuroDAO, address _erc20contract, address _masterHolder)
-        payable owned() {
-        neuroDAO = _neuroDAO;
-        erc20contract = _erc20contract;
-        masterHolder = _masterHolder;
-    }
-    
-    function killMe() public onlyOwner {
-        selfdestruct(owner);
-    }
- 
-    /**
-     * Move tokens int erc20contract to NDAO tokens holder
-     * 
-     * # Freeze balances in NeuroDAO smartcontract by calling freezeTheMoment() function.
-     * # Allow transferFrom masterHolder in ERC20 smartcontract by calling approve() function
-     *   from masterHolder address, gives this contract address as spender parameter.
-     * # ERC20 smartcontract must have enougth tokens on masterHolder balance.
-     */
-    function giveMeTokens() public {
-        require(!alreadyUsed[msg.sender]);
-        uint balance = NeuroDAO(neuroDAO).freezedBalanceOf(msg.sender);
-        ERC20(erc20contract).transferFrom(masterHolder, msg.sender, balance);
-        alreadyUsed[msg.sender] = true;
+    function mintTokens(uint _tokens, address _who, bool _isTeam) enabled public onlyOwner {
+        require(holders[this].balance > 0);
+        require(holders[msg.sender].balance + _tokens > holders[msg.sender].balance); // overflow
+        require(_tokens > 0);
+        beforeBalanceChanges(_who);
+        beforeBalanceChanges(this);
+        if (holders[_who].balance == 0) {
+            // set isTeam only once!
+            specials[_who].isTeam = _isTeam;
+        }
+        holders[_who].balance += _tokens;
+        specials[_who].limit += _tokens;
+        holders[this].balance -= _tokens;
+        Transfer(this, _who, _tokens);
     }
 }
