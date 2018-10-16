@@ -1,13 +1,23 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WavesEthereumSwap at 0xac44b0c61c20c5063e22d3a0ff67f13afdfed103
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WavesEthereumSwap at 0x3B6d241e1b38776C2eFE944E7012239ed59334c1
 */
-pragma solidity ^0.4.2;
+pragma solidity ^0.4.8;
 
 // ----------------------------------------------------------------------------------------------
-// Basic ERC20 Token Contract For **TESTING ONLY** on Testnet or Dev blockchain.
-//
-// Enjoy. (c) Bok Consulting Pty Ltd 2016. The MIT Licence.
+// A collaboration between Incent and Bok :)
+// Enjoy. (c) Incent Loyalty Pty Ltd, and Bok Consulting Pty Ltd 2017. The MIT Licence.
 // ----------------------------------------------------------------------------------------------
+
+//config contract
+contract TokenConfig {
+
+    string public constant name = "Incent Coffee Token";
+    string public constant symbol = "INCOF";
+    uint8 public constant decimals = 0;  // 0 decimal places, the same as tokens on Wave
+    uint256 _totalSupply = 824;
+
+}
+
 
 // ERC Token Standard #20 Interface
 // https://github.com/ethereum/EIPs/issues/20
@@ -44,13 +54,7 @@ contract ERC20Interface {
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
-contract IncentCoffeeToken is ERC20Interface {
-
-    /* copied from Bok's github - https://github.com/bokkypoobah/TokenTrader/wiki/GNT-%E2%80%90-Golem-Network-Token */
-    string public constant name = "Incent Coffee Token";
-    string public constant symbol = "INCOF";
-    string public constant wavesAssetId = "4rmhfoscYcjz1imNDvtz45doouvrQqDpbX7xdfLB4guF";
-    uint8 public constant decimals = 0;  // 0 decimal places, the same as tokens on Wave
+contract IncentCoffeeToken is ERC20Interface, TokenConfig {
 
     // Owner of this contract
     address public owner;
@@ -60,9 +64,6 @@ contract IncentCoffeeToken is ERC20Interface {
 
     // Owner of account approves the transfer of an amount to another account
     mapping(address => mapping (address => uint256)) allowed;
-
-    // Total supply
-    uint256 _totalSupply;
 
     // Functions with this modifier can only be executed by the owner
     modifier onlyOwner() {
@@ -75,7 +76,6 @@ contract IncentCoffeeToken is ERC20Interface {
     // Constructor
     function IncentCoffeeToken() {
 
-        _totalSupply = 824;
         owner = msg.sender;
         balances[owner] = _totalSupply;
     }
@@ -144,7 +144,7 @@ contract IncentCoffeeToken is ERC20Interface {
 
 contract WavesEthereumSwap is IncentCoffeeToken {
 
- event WavesTransfer(address indexed _from, string indexed wavesAddress, uint256 amount);
+ event WavesTransfer(address indexed _from, string wavesAddress, uint256 amount);
 
  function moveToWaves(string wavesAddress, uint256 amount) {
 
