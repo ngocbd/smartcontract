@@ -1,17 +1,16 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BokkyPooBahsEtherRefundablePrize at 0x4d8fe567cea1eaae8a9b108047103b55f7fee235
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BokkyPooBahsEtherRefundablePrize at 0x385f9016fcb55cc7f31293025726ca221e6dfb85
 */
 pragma solidity ^0.4.8;
 
 // ----------------------------------------------------------------------------
 // BokkyPooBah's Ether Refundable Prize
 //
-// A gift token backed by ethers. Designed to incentivise The DAO refund
-// withdrawals, but can be used for any other purposes
+// A gift token backed by ethers. Holders of this token can always sell back
+// their tokens to this contract at a known price
 //
-// These tokens can be bought from this contract at the Buy Price.
-//
-// These tokens can be sold back to this contract at the Sell Price.
+// Tokens can be bought from this contract at the Buy Price. Tokens can be
+// sold back to this contract at the Sell Price 
 // 
 // Period                                ETH per BERP
 // ------------------------- ------------------------
@@ -148,14 +147,13 @@ contract BokkyPooBahsEtherRefundablePrize is ERC20Token {
         deployedAt = now;
     }
 
-
     // ------------------------------------------------------------------------
     // Members buy tokens from this contract at this price
     //
     // This is a maximum price that the tokens should be bought at, as buyers
     // can always buy tokens from this contract for this price
     //
-    // Check out the BERP prices on https://cryptoderivatives.market/ to see
+    // Check out the BARF prices on https://cryptoderivatives.market/ to see
     // if you can buy these tokens for less than this maximum price
     // ------------------------------------------------------------------------
     function buyPrice() constant returns (uint256) {
@@ -178,23 +176,42 @@ contract BokkyPooBahsEtherRefundablePrize is ERC20Token {
         }
     }
 
-
     // ------------------------------------------------------------------------
-    // Members can always sell to the contract at 1 BERP = 0.001 ETH
+    // Members can always sell to the contract at 1 BARF = 0.01 ETH
     //
     // This is a minimum price that the tokens should sell for, as the owner of
     // the token can always sell tokens to this contract at this price
     //
-    // Check out the BERP prices on https://cryptoderivatives.market/ to see
+    // Check out the BARF prices on https://cryptoderivatives.market/ to see
     // if you can sell these tokens for more than this minimum price
     // ------------------------------------------------------------------------
     function sellPrice() constant returns (uint256) {
         return 10**15;
     }
 
+    // ------------------------------------------------------------------------
+    // Owner Withdrawal
+    // ------------------------------------------------------------------------
+    function ownerWithdraw(uint256 amount) onlyOwner {
+        uint256 maxWithdrawalAmount = amountOfEthersOwnerCanWithdraw();
+        if (amount > maxWithdrawalAmount) {
+            amount = maxWithdrawalAmount;
+        }
+        if (!owner.send(amount)) throw;
+        Withdrawn(amount, maxWithdrawalAmount - amount);
+    }
+    event Withdrawn(uint256 amount, uint256 remainingWithdrawal);
 
     // ------------------------------------------------------------------------
-    // Buy tokens from the contract
+    // Receive deposits
+    // ------------------------------------------------------------------------
+    function deposit() payable {
+        Deposited(msg.value, this.balance);
+    }
+    event Deposited(uint256 amount, uint256 balance);
+
+    // ------------------------------------------------------------------------
+    // Buy and Sell tokens from/to the contract
     // ------------------------------------------------------------------------
     function () payable {
         buyTokens();
@@ -213,10 +230,6 @@ contract BokkyPooBahsEtherRefundablePrize is ERC20Token {
         uint256 newEtherBalance, uint256 tokens, uint256 newTotalSupply, 
         uint256 buyPrice);
 
-
-    // ------------------------------------------------------------------------
-    // Sell tokens to the contract
-    // ------------------------------------------------------------------------
     function sellTokens(uint256 amountOfTokens) {
         if (amountOfTokens > balances[msg.sender]) throw;
         balances[msg.sender] -= amountOfTokens;
@@ -229,30 +242,6 @@ contract BokkyPooBahsEtherRefundablePrize is ERC20Token {
     event TokensSold(address indexed seller, uint256 ethers, 
         uint256 newEtherBalance, uint256 tokens, uint256 newTotalSupply, 
         uint256 sellPrice);
-
-
-    // ------------------------------------------------------------------------
-    // Receive deposits. This could be a free donation, or fees earned by
-    // a system of payments backing this contract
-    // ------------------------------------------------------------------------
-    function deposit() payable {
-        Deposited(msg.value, this.balance);
-    }
-    event Deposited(uint256 amount, uint256 balance);
-
-
-    // ------------------------------------------------------------------------
-    // Owner Withdrawal
-    // ------------------------------------------------------------------------
-    function ownerWithdraw(uint256 amount) onlyOwner {
-        uint256 maxWithdrawalAmount = amountOfEthersOwnerCanWithdraw();
-        if (amount > maxWithdrawalAmount) {
-            amount = maxWithdrawalAmount;
-        }
-        if (!owner.send(amount)) throw;
-        Withdrawn(amount, maxWithdrawalAmount - amount);
-    }
-    event Withdrawn(uint256 amount, uint256 remainingWithdrawal);
 
 
     // ------------------------------------------------------------------------
