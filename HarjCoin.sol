@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HarjCoin at 0x883e2ac54dcd24475143da66b0a1ce3581ae2e9a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HarjCoin at 0x4e817bb432a4ee6c21e8f9be7a8ca3369ed982c5
 */
 pragma solidity ^0.4.20;
-// Norsefire is fgt ^
- 
+//Harj7 is fgt ^
+
 /*
 * Team JUST presents...
      
@@ -110,7 +110,7 @@ contract HarjCoin is ERC20Interface {
     event Message(string message);
     
 
-    function HarjCoin()
+    function JUST()
         public
     {
         owner = msg.sender;
