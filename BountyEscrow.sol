@@ -1,11 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BountyEscrow at 0x789c92a14235ab4194dd0ecf14ecbd2d1d38f142
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BountyEscrow at 0xe473295e0561678f67bf7e39204412006b6ad273
 */
+pragma solidity^0.4.17;
+
 contract BountyEscrow {
 
   address public admin;
 
-  function BountyEscrow() {
+  function BountyEscrow() public {
     admin = msg.sender;
   }
   
@@ -19,7 +21,7 @@ contract BountyEscrow {
 
   // transfer deposits funds to recipients
   // Gas used in each `send` will be default stipend, 2300
-  function payout(address[] recipients, uint256[] amounts) {
+  function payout(address[] recipients, uint256[] amounts) public {
     require(admin == msg.sender);
     require(recipients.length == amounts.length);
     for (uint i = 0; i < recipients.length; i++) {
@@ -32,4 +34,6 @@ contract BountyEscrow {
       );
     }
   }
+  
+  function () public payable { }
 }
