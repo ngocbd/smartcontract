@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleTokenExt at 0xd48f07D942a075FBbA9836a2898Dda2702c7FFdA
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleTokenExt at 0x8A204aec8FBafc95a9A82D2eDB5Bb12CB53469c3
 */
-// Created using ICO Wizard https://github.com/poanetwork/ico-wizard by POA Network 
+// Created using Token Wizard https://github.com/poanetwork/token-wizard by POA Network 
 pragma solidity ^0.4.11;
 
 
@@ -553,40 +553,70 @@ contract MintableTokenExt is StandardToken, Ownable {
     uint inTokens;
     uint inPercentageUnit;
     uint inPercentageDecimals;
+    bool isReserved;
+    bool isDistributed;
   }
 
   mapping (address => ReservedTokensData) public reservedTokensList;
   address[] public reservedTokensDestinations;
   uint public reservedTokensDestinationsLen = 0;
+  bool reservedTokensDestinationsAreSet = false;
 
-  function setReservedTokensList(address addr, uint inTokens, uint inPercentageUnit, uint inPercentageDecimals) canMint onlyOwner {
-    assert(addr != address(0));
-    if (reservedTokensList[addr].inTokens == 0 && reservedTokensList[addr].inPercentageUnit == 0) {
-      reservedTokensDestinations.push(addr);
-      reservedTokensDestinationsLen++;
+  modifier onlyMintAgent() {
+    // Only crowdsale contracts are allowed to mint new tokens
+    if(!mintAgents[msg.sender]) {
+        throw;
     }
-
-    reservedTokensList[addr] = ReservedTokensData({inTokens:inTokens, inPercentageUnit:inPercentageUnit, inPercentageDecimals: inPercentageDecimals});
+    _;
   }
 
-  function getReservedTokensListValInTokens(address addr) constant returns (uint inTokens) {
+  /** Make sure we are not done yet. */
+  modifier canMint() {
+    if(mintingFinished) throw;
+    _;
+  }
+
+  function finalizeReservedAddress(address addr) public onlyMintAgent canMint {
+    ReservedTokensData storage reservedTokensData = reservedTokensList[addr];
+    reservedTokensData.isDistributed = true;
+  }
+
+  function isAddressReserved(address addr) public constant returns (bool isReserved) {
+    return reservedTokensList[addr].isReserved;
+  }
+
+  function areTokensDistributedForAddress(address addr) public constant returns (bool isDistributed) {
+    return reservedTokensList[addr].isDistributed;
+  }
+
+  function getReservedTokens(address addr) public constant returns (uint inTokens) {
     return reservedTokensList[addr].inTokens;
   }
 
-  function getReservedTokensListValInPercentageUnit(address addr) constant returns (uint inPercentageUnit) {
+  function getReservedPercentageUnit(address addr) public constant returns (uint inPercentageUnit) {
     return reservedTokensList[addr].inPercentageUnit;
   }
 
-  function getReservedTokensListValInPercentageDecimals(address addr) constant returns (uint inPercentageDecimals) {
+  function getReservedPercentageDecimals(address addr) public constant returns (uint inPercentageDecimals) {
     return reservedTokensList[addr].inPercentageDecimals;
   }
 
-  function setReservedTokensListMultiple(address[] addrs, uint[] inTokens, uint[] inPercentageUnit, uint[] inPercentageDecimals) canMint onlyOwner {
+  function setReservedTokensListMultiple(
+    address[] addrs, 
+    uint[] inTokens, 
+    uint[] inPercentageUnit, 
+    uint[] inPercentageDecimals
+  ) public canMint onlyOwner {
+    assert(!reservedTokensDestinationsAreSet);
+    assert(addrs.length == inTokens.length);
+    assert(inTokens.length == inPercentageUnit.length);
+    assert(inPercentageUnit.length == inPercentageDecimals.length);
     for (uint iterator = 0; iterator < addrs.length; iterator++) {
       if (addrs[iterator] != address(0)) {
         setReservedTokensList(addrs[iterator], inTokens[iterator], inPercentageUnit[iterator], inPercentageDecimals[iterator]);
       }
     }
+    reservedTokensDestinationsAreSet = true;
   }
 
   /**
@@ -611,21 +641,22 @@ contract MintableTokenExt is StandardToken, Ownable {
     MintingAgentChanged(addr, state);
   }
 
-  modifier onlyMintAgent() {
-    // Only crowdsale contracts are allowed to mint new tokens
-    if(!mintAgents[msg.sender]) {
-        throw;
+  function setReservedTokensList(address addr, uint inTokens, uint inPercentageUnit, uint inPercentageDecimals) private canMint onlyOwner {
+    assert(addr != address(0));
+    if (!isAddressReserved(addr)) {
+      reservedTokensDestinations.push(addr);
+      reservedTokensDestinationsLen++;
     }
-    _;
-  }
 
-  /** Make sure we are not done yet. */
-  modifier canMint() {
-    if(mintingFinished) throw;
-    _;
+    reservedTokensList[addr] = ReservedTokensData({
+      inTokens: inTokens, 
+      inPercentageUnit: inPercentageUnit, 
+      inPercentageDecimals: inPercentageDecimals,
+      isReserved: true,
+      isDistributed: false
+    });
   }
 }
-
 
 
 /**
