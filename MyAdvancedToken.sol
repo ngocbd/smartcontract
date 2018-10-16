@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x4f2db9cd7543eea193dc54d5bea3352c66680c76
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x4c7f2f802cf6a51bfcf9bac3c5d6dbb30f85b83d
 */
 pragma solidity ^0.4.16;
 
@@ -22,7 +22,7 @@ contract owned {
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
-contract WaterToken {
+contract TokenERC20 {
     // Public variables of the token
     string public name;
     string public symbol;
@@ -45,7 +45,7 @@ contract WaterToken {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function WaterToken(
+    function TokenERC20(
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
@@ -176,7 +176,7 @@ contract WaterToken {
 /*       ADVANCED TOKEN STARTS HERE       */
 /******************************************/
 
-contract MyAdvancedToken is owned, WaterToken {
+contract MyAdvancedToken is owned, TokenERC20 {
 
     uint256 public sellPrice;
     uint256 public buyPrice;
@@ -191,7 +191,7 @@ contract MyAdvancedToken is owned, WaterToken {
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
-    ) WaterToken(initialSupply, tokenName, tokenSymbol) public {}
+    ) TokenERC20(initialSupply, tokenName, tokenSymbol) public {}
 
     /* Internal transfer, only can be called by this contract */
     function _transfer(address _from, address _to, uint _value) internal {
