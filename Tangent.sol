@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tangent at 0xc3d4230aa46168bac185dec95dc79b4ef595a0dc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tangent at 0x71747928e976c48928418c71c52482bdd8E7c61d
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.20;
 
 library SafeMath {
     function add(uint a, uint b) internal pure returns (uint c) {
@@ -83,7 +83,7 @@ contract Tangent is ERC20Interface, Owned {
         symbol = "TAN";
         name = "Tangent";
         decimals = 18;
-        _totalSupply = 1000000 * 10**uint(decimals);
+        _totalSupply = 1000000000 * 10**uint(decimals);
         balances[owner] = _totalSupply;
         Transfer(address(0), owner, _totalSupply);
     }
@@ -134,5 +134,138 @@ contract Tangent is ERC20Interface, Owned {
 
     function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
         return ERC20Interface(tokenAddress).transfer(owner, tokens);
+    }
+}
+
+contract TangentStake is Owned {
+    // prevents overflows
+    using SafeMath for uint;
+    
+    // represents a purchase object
+    // addr is the buying address
+    // amount is the number of wei in the purchase
+    // sf is the sum of (purchase amount / sum of previous purchase amounts)
+    struct Purchase {
+        address addr;
+        uint amount;
+        uint sf;
+    }
+    
+    // Purchase object array that holds entire purchase history
+    Purchase[] purchases;
+    
+    // tangents are rewarded along with Ether upon cashing out
+    Tangent tokenContract;
+    
+    // the rate of tangents to ether is multiplier / divisor
+    uint multiplier;
+    uint divisor;
+    
+    // accuracy multiplier
+    uint acm;
+    
+    uint netStakes;
+    
+    // logged when a purchase is made
+    event PurchaseEvent(uint index, address addr, uint eth, uint sf);
+    
+    // logged when a person cashes out or the contract is destroyed
+    event CashOutEvent(uint index, address addr, uint eth, uint tangles);
+    
+    event NetStakesChange(uint netStakes);
+    
+    // logged when the rate of tangents to ether is decreased
+    event Revaluation(uint oldMul, uint oldDiv, uint newMul, uint newDiv);
+    
+    // constructor, sets initial rate to 1000 TAN per 1 Ether
+    function TangentStake(address tokenAddress) public {
+        tokenContract = Tangent(tokenAddress);
+        multiplier = 1000;
+        divisor = 1;
+        acm = 10**18;
+        netStakes = 0;
+    }
+    
+    // decreases the rate of Tangents to Ether, the contract cannot be told
+    // to give out more Tangents per Ether, only fewer.
+    function revalue(uint newMul, uint newDiv) public onlyOwner {
+        require( (newMul.div(newDiv)) <= (multiplier.div(divisor)) );
+        Revaluation(multiplier, divisor, newMul, newDiv);
+        multiplier = newMul;
+        divisor = newDiv;
+        return;
+    }
+    
+    // returns the current amount of wei that will be given for the purchase 
+    // at purchases[index]
+    function getEarnings(uint index) public constant returns (uint earnings, uint amount) {
+        Purchase memory cpurchase;
+        Purchase memory lpurchase;
+        
+        cpurchase = purchases[index];
+        amount = cpurchase.amount;
+        
+        if (cpurchase.addr == address(0)) {
+            return (0, amount);
+        }
+        
+        earnings = (index == 0) ? acm : 0;
+        lpurchase = purchases[purchases.length-1];
+        earnings = earnings.add( lpurchase.sf.sub(cpurchase.sf) );
+        earnings = earnings.mul(amount).div(acm);
+        return (earnings, amount);
+    }
+    
+    // Cash out Ether and Tangent at for the purchase at index "index".
+    // All of the Ether and Tangent associated with with that purchase will
+    // be sent to recipient, and no future withdrawals can be made for the
+    // purchase.
+    function cashOut(uint index) public {
+        require(0 <= index && index < purchases.length);
+        require(purchases[index].addr == msg.sender);
+        
+        uint earnings;
+        uint amount;
+        uint tangles;
+        
+        (earnings, amount) = getEarnings(index);
+        purchases[index].addr = address(0);
+        require(earnings != 0 && amount != 0);
+        netStakes = netStakes.sub(amount);
+        
+        tangles = earnings.mul(multiplier).div(divisor);
+        CashOutEvent(index, msg.sender, earnings, tangles);
+        NetStakesChange(netStakes);
+        
+        tokenContract.transfer(msg.sender, tangles);
+        msg.sender.transfer(earnings);
+        return;
+    }
+    
+    
+    // The fallback function used to purchase stakes
+    // sf is the sum of the proportions of:
+    // (ether of current purchase / sum of ether prior to purchase)
+    // It is used to calculate earnings upon withdrawal.
+    function () public payable {
+        require(msg.value != 0);
+        
+        uint index = purchases.length;
+        uint sf;
+        uint f;
+        
+        if (index == 0) {
+            sf = 0;
+        } else {
+            f = msg.value.mul(acm).div(netStakes);
+            sf = purchases[index-1].sf.add(f);
+        }
+        
+        netStakes = netStakes.add(msg.value);
+        purchases.push(Purchase(msg.sender, msg.value, sf));
+        
+        NetStakesChange(netStakes);
+        PurchaseEvent(index, msg.sender, msg.value, sf);
+        return;
     }
 }
