@@ -1,18 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyEtherCity at 0xffb845b33d65b0d9b5751506d9df16d4e0aa4f8c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyEtherCity at 0xfad40d201cf137e3167649e4fc4ef87b336977be
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.18;
 
 /*
-This is the pre-sale contract for MyEtherCity's lands. You can join our pre-sale on https://myethercity.github.io/city/ 
+This is the pre-sale contract for MyEtherCity's lands. You can join our pre-sale on https://myethercity.com/  
 Game Name: MyEtherCity
-Game Link: https://myethercity.github.io/city/
+Game Link: https://myethercity.com/
 */
 
 contract MyEtherCity {
 
-    address ceoAddress = 0xe0cc9ED08CD2c79f66453d90DD0132cBB56C7607;
-    address cfoAddress = 0x105110518dD14Dc57447E71C83AbBc73b44fBF28;
+    address ceoAddress = 0x699dE541253f253a4eFf0D3c006D70c43F2E2DaE;
+    address cfoAddress = 0x50f75eAD8CEE4376704d39842B14F400b4263cca;
     
     modifier onlyCeo() {
         require (msg.sender == ceoAddress);
