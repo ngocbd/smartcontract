@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OwnTheDayContract at 0x16d790ad4e33725d44741251f100e635c323beb9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OwnTheDayContract at 0xcdbdd5dceb8f6d6eb678bd5b890898e52d1e6958
 */
 // OwnTheDay-Token Source code
 // copyright 2018 xeroblood <https://owntheday.io>
@@ -212,7 +212,7 @@ contract OwnTheDayContract is ERC721, Pausable, ReentrancyGuard {
 
     // Total amount of tokens
     uint256 private totalTokens;
-    bool private migrationFinished = false;
+    bool private mintingFinished = false;
 
     // Mapping from token ID to owner
     mapping (uint256 => address) public tokenOwner;
@@ -246,8 +246,8 @@ contract OwnTheDayContract is ERC721, Pausable, ReentrancyGuard {
         _;
     }
 
-    modifier onlyDuringMigration() {
-        require(!migrationFinished);
+    modifier canMint() {
+        require(!mintingFinished);
         _;
     }
 
@@ -259,24 +259,38 @@ contract OwnTheDayContract is ERC721, Pausable, ReentrancyGuard {
         return "DAYS";
     }
 
+    /// @dev Creates the initial day tokens available (this is the minting process)
+    function createInitialDays(uint256 _count) public onlyOwner canMint {
+        require(totalTokens < 366 && _count > 0);
+        for (uint256 i = 0; i < _count && totalTokens < 366; i++) {
+            _mint(msg.sender, totalTokens);
+        }
+    }
+
     /// @dev Assigns initial days to owners during minting period.
     /// This is only used during migration from old contract to new contract (this one).
-    function assignInitialDays(address _to, uint256 _tokenId, uint256 _price) public onlyOwner onlyDuringMigration {
+    function assignInitialDays(address _to, uint256 _tokenId, uint256 _price) public onlyOwner canMint {
         require(msg.sender != address(0));
         require(_to != address(0));
         require(_tokenId >= 0 && _tokenId < 366);
         require(_price >= 1 finney);
+
+        tokenOwner[_tokenId] = _to;
+        uint256 length = balanceOf(_to);
+        ownedTokens[_to].push(_tokenId);
+        ownedTokensIndex[_tokenId] = length;
+        totalTokens = totalTokens.add(1);
         dayIndexToPrice[_tokenId] = _price;
-        _mint(_to, _tokenId);
+        Transfer(msg.sender, _to, _tokenId);
     }
 
-    function finishMigration() public onlyOwner {
-        require(!migrationFinished);
-        migrationFinished = true;
+    function finishMinting() public onlyOwner {
+        require(!mintingFinished);
+        mintingFinished = true;
     }
 
-    function isMigrationFinished() public view returns (bool) {
-        return migrationFinished;
+    function isMintingFinished() public view returns (bool) {
+        return mintingFinished;
     }
 
     /**
@@ -312,6 +326,7 @@ contract OwnTheDayContract is ERC721, Pausable, ReentrancyGuard {
     */
     function ownerOf(uint256 _tokenId) public view returns (address) {
         address owner = tokenOwner[_tokenId];
+        require(owner != address(0));
         return owner;
     }
 
@@ -437,11 +452,7 @@ contract OwnTheDayContract is ERC721, Pausable, ReentrancyGuard {
         Sold(_dayIndex, seller, purchasePrice);
 
         // Transfer token
-        if (seller == address(0)) {
-            _mint(buyer, _dayIndex);
-        } else {
-            clearApprovalAndTransfer(seller, buyer, _dayIndex);
-        }
+        clearApprovalAndTransfer(seller, buyer, _dayIndex);
 
         // Transfer Funds
         if (seller != address(0)) {
