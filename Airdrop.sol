@@ -1,87 +1,56 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDrop at 0xc7d020d8c92d099b3ade17321310b4815ef20a90
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdrop at 0x220348263aab5a038845483f6096895aa59f3977
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.11;
 
-contract ERC20 {
-
-    /// @return total amount of tokens
-    function totalSupply() constant returns (uint256 supply);
-
-    /// @param _owner The address from which the balance will be retrieved
-    /// @return The balance
-    function balanceOf(address _owner) constant returns (uint256 balance);
-    /// @notice send `_value` token to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _value) returns (bool success);
-
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
-
-
-
-    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of wei to be approved for transfer
-    /// @return Whether the approval was successful or not
-    function approve(address _spender, uint256 _value) returns (bool success);
-
-    /// @param _owner The address of the account owning tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+contract token { function preallocate(address receiver, uint fullTokens, uint weiPrice) public;
+                function transferOwnership(address _newOwner) public;
+                function acceptOwnership() public;
+                }
+contract Airdrop {
+    token public tokenReward;
     
-}
-
-
-contract AirDrop{
-    address owner;
-    mapping(address => uint256) tokenBalance;
-    
-    function AirDrop(){
-        owner=msg.sender;
+    function Airdrop(token _addressOfTokenUsedAsTransfer) public{
+         tokenReward = token(_addressOfTokenUsedAsTransfer);
     }
-    
-    function transfer(address _token,address _to,uint256 _amount) public returns(bool){
-        require(msg.sender==owner);
-        ERC20 token=ERC20(_token);
-        return token.transfer(_to,_amount);
-    }
-    
-    function doAirdrop(address _token,address[] _to,uint256 _amount) public{
-        ERC20 token=ERC20(_token);
-        for(uint256 i=0;i<_to.length;++i){
-            token.transferFrom(msg.sender,_to[i],_amount);
+
+   /* TransferToken function for send token to many accound
+        @param _to address array hold the receiver address
+        @param _value send token value 
+        @param weiPrice Price of a single full token in wei
+   */
+
+    function TransferToken (address[] _to, uint _value, uint _weiPrice) public
+    {   for (uint i=0; i< _to.length; i++)
+        {
+        tokenReward.preallocate(_to[i], _value, _weiPrice);
         }
     }
-    
-    function doAirdrop2(address _token,address[] _to,uint256 _amount) public{
-        ERC20 token=ERC20(_token);
-        for(uint256 i=0;i<_to.length;++i){
-            token.transfer(_to[i],_amount);
-        }
+
+    /* TransferOwner function for Transfer the owner ship to address
+        @param _owner address of owner
+    */
+
+
+    function TransferOwner (address _owner) public {
+        tokenReward.transferOwnership(_owner);
     }
-    
-    function doCustomAirdrop(address _token,address[] _to,uint256[] _amount) public{
-        ERC20 token=ERC20(_token);
-        for(uint256 i=0;i<_to.length;++i){
-            token.transferFrom(msg.sender,_to[i],_amount[i]);
-        }
+
+    /* 
+        acceptOwner function for accept owner ship of account
+    */
+
+    function acceptOwner () public {
+        tokenReward.acceptOwnership();
     }
-    
-    function doCustomAirdrop2(address _token,address[] _to,uint256[] _amount) public{
-        ERC20 token=ERC20(_token);
-        for(uint256 i=0;i<_to.length;++i){
-            token.transfer(_to[i],_amount[i]);
-        }
-    }
+
+    /* 
+        removeContract function for destroy the contract on network
+    */
+
+    function removeContract() public
+        {
+            selfdestruct(msg.sender);
+            
+        }   
 }
