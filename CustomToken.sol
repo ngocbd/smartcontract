@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x077fe934551b5a5fc4e2650562807a81a143ef91
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x5da42ed34fa685af8743752707fbc1e04ee6329e
 */
 pragma solidity ^0.4.19;
 
@@ -47,11 +47,11 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 800000000000000000000000000;
-        name = 'Realestatechain';
-        symbol = 'REC';
+        totalSupply = 1000000000000000000000000000;
+        name = 'UntCoin';
+        symbol = 'UNT';
         decimals = 18;
-        balanceOf[0x57cad6a4c83286406fd0fc9218931b3b83853e65] = totalSupply;
-        Transfer(address(0), 0x57cad6a4c83286406fd0fc9218931b3b83853e65, totalSupply);
+        balanceOf[0x0040b2f16328dde1ad8639d46c2e3ad8671c76d9] = totalSupply;
+        Transfer(address(0), 0x0040b2f16328dde1ad8639d46c2e3ad8671c76d9, totalSupply);
     }
 }
