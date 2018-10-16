@@ -1,50 +1,90 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract T20coin at 0x6bbbea61f293befef8e6d540bc1636ef54e3a82d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract T20coin at 0x062f2e8a62972c325ed58db3995eae43a8be222f
 */
-contract T20coin {
-  
-    string public standard = 'Token 0.1';
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-    uint256 public initialSupply;
+pragma solidity ^0.4.18;
+
+
+contract T20Interface {
+
     uint256 public totalSupply;
 
-    
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
 
-  
-    
-    function T20coin() {
+    function balanceOf(address _owner) public view returns (uint256 balance);
 
-         initialSupply = 1000000000;
-         name ="T20coin";
-        decimals = 1;
-         symbol = "T20";
-        
-        balanceOf[msg.sender] = initialSupply;              
-        totalSupply = initialSupply;                        
-                                   
-    }
 
-    
-    function transfer(address _to, uint256 _value) {
-        if (balanceOf[msg.sender] < _value) throw;           
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw; 
-        balanceOf[msg.sender] -= _value;                     
-        balanceOf[_to] += _value;                            
-      
-    }
+    function transfer(address _to, uint256 _value) public returns (bool success);
 
    
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
 
-    
+ 
+    function approve(address _spender, uint256 _value) public returns (bool success);
 
-   
 
-    
-    function () {
-        throw;    
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
+
+     
+    event Transfer(address indexed _from, address indexed _to, uint256 _value); 
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+}
+
+
+
+
+    contract T20coin is T20Interface {
+
+    uint256 constant private MAX_UINT256 = 2**256 - 1;
+    mapping (address => uint256) public balances;
+    mapping (address => mapping (address => uint256)) public allowed;
+
+    string public name;                  
+    uint8 public decimals;               
+    string public symbol;               
+
+    function T20coin(
+        uint256 _initialAmount,
+        string _tokenName,
+        uint8 _decimalUnits,
+        string _tokenSymbol
+    ) public {
+        balances[msg.sender] = _initialAmount;              
+        totalSupply = _initialAmount;                        
+        name = _tokenName;                                   
+        decimals = _decimalUnits;                            
+        symbol = _tokenSymbol;                               
     }
+
+    function transfer(address _to, uint256 _value) public returns (bool success) {
+        require(balances[msg.sender] >= _value);
+        balances[msg.sender] -= _value;
+        balances[_to] += _value;
+        Transfer(msg.sender, _to, _value);
+        return true;
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        uint256 allowance = allowed[_from][msg.sender];
+        require(balances[_from] >= _value && allowance >= _value);
+        balances[_to] += _value;
+        balances[_from] -= _value;
+        if (allowance < MAX_UINT256) {
+            allowed[_from][msg.sender] -= _value;
+        }
+        Transfer(_from, _to, _value);
+        return true;
+    }
+
+    function balanceOf(address _owner) public view returns (uint256 balance) {
+        return balances[_owner];
+    }
+
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
+        return allowed[_owner][_spender];
+    }   
 }
