@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DDDico at 0x66618f48976e9c9f9cc5001d416e82d87789481c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DDDico at 0x5854f05e13d2e87bdea5335c4b1156d727c1e676
 */
 pragma solidity ^0.4.11;
 
@@ -279,13 +279,13 @@ contract DDDico is SafeMath {
     uint256 weiAmount;
     uint256 tok;
 
-    uint256 public block0 = 4594600;
-    uint256 public block1 = 4594840;
-    uint256 public block2 = 4600600;
-    uint256 public block3 = 4640920;
-    uint256 public block4 = 4681240;
-    uint256 public block5 = 4721560;
-    uint256 public block6 = 4761880;
+    uint256 public block0 = 4594000;
+    uint256 public block1 = 4594240;
+    uint256 public block2 = 4600000;
+    uint256 public block3 = 4640320;
+    uint256 public block4 = 4680640;
+    uint256 public block5 = 4720960;
+    uint256 public block6 = 4761280;
 
     event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
 
@@ -340,27 +340,27 @@ contract DDDico is SafeMath {
     // @notice Calculates the rate based on slabs
     function fetchRate() constant returns (uint256){
         if( block0 <= block.number && block1 > block.number ){
-            applicableRate = 15000000000;
+            applicableRate = 1500000000000;
             return applicableRate;
         }
         if ( block1 <= block.number && block2 > block.number ){
-            applicableRate = 14000000000;
+            applicableRate = 1400000000000;
             return applicableRate;
         }
         if ( block2 <= block.number && block3 > block.number ){
-            applicableRate = 13000000000;
+            applicableRate = 1300000000000;
             return applicableRate;
         }
         if ( block3 <= block.number && block4 > block.number ){
-            applicableRate = 12000000000;
+            applicableRate = 1200000000000;
             return applicableRate;
         }
         if ( block4 <= block.number && block5 > block.number ){
-            applicableRate = 11000000000;
+            applicableRate = 1100000000000;
             return applicableRate;
         }
         if ( block5 <= block.number && block6 > block.number ){
-            applicableRate = 10000000000;
+            applicableRate = 1000000000000;
             return applicableRate;
         }
     }
