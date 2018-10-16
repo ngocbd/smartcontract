@@ -1,11 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnableOpenPaymentFactory at 0x480A53482a6BB981c73473fDCe1284dFe9BdF839
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnableOpenPaymentFactory at 0x7c52209718662dde9e18690e5ce435aa81502edd
 */
 //A BurnableOpenPaymet is instantiated with a specified payer and a commitThreshold.
 //The recipient not set when the contract is instantiated.
-
-//The constructor is payable, so the contract can be instantiated with initial funds.
-//Anyone can contribute to the payment at any time (the () function is payable).
 
 //All behavior of the contract is directed by the payer, but
 //the payer can never directly recover the payment unless he becomes the recipient.
@@ -21,17 +18,10 @@ contract BurnableOpenPayment {
     address public payer;
     address public recipient;
     address public burnAddress = 0xdead;
-    string public payerString;
-    string public recipientString;
     uint public commitThreshold;
     
     modifier onlyPayer() {
         if (msg.sender != payer) throw;
-        _;
-    }
-    
-    modifier onlyRecipient() {
-        if (msg.sender != recipient) throw;
         _;
     }
     
@@ -40,46 +30,38 @@ contract BurnableOpenPayment {
         _;
     }
     
-    modifier onlyWithoutRecipient() {
-        if (recipient != address(0x0)) throw;
-        _;
-    }
+    //Only allowing the payer to fund the contract ensures that the contract's
+    //balance is at most as difficult to predict or interpret as the payer.
+    //If the payer is another smart contract or script-based, balance changes
+    //could reliably indicate certain intentions, judgements or states of the payer.
+    function () payable onlyPayer { }
     
-    function () payable {}
-    
-    function BurnableOpenPayment(address _payer, uint _commitThreshold)
-    public
-    payable {
+    function BurnableOpenPayment(address _payer, uint _commitThreshold) payable {
         payer = _payer;
         commitThreshold = _commitThreshold;
     }
     
-    function getPayer()
-    public returns (address) { return payer; }
+    function getPayer() returns (address) {
+        return payer;
+    }
     
-    function getRecipient()
-    public returns (address) { return recipient; }
+    function getRecipient() returns (address) {
+        return recipient;
+    }
     
-    function getCommitThreshold()
-    public returns (uint) { return commitThreshold; }
-    
-    function getPayerString()
-    public returns (string) { return payerString; }
-    
-    function getRecipientString()
-    public returns (string) { return recipientString; }
+    function getCommitThreshold() returns (uint) {
+        return commitThreshold;
+    }
     
     function commit()
-    public
-    onlyWithoutRecipient()
     payable
     {
+        if (recipient != address(0x0)) throw;
         if (msg.value < commitThreshold) throw;
         recipient = msg.sender;
     }
     
     function burn(uint amount)
-    public
     onlyPayer()
     onlyWithRecipient()
     returns (bool)
@@ -88,34 +70,16 @@ contract BurnableOpenPayment {
     }
     
     function release(uint amount)
-    public
     onlyPayer()
     onlyWithRecipient()
     returns (bool)
     {
         return recipient.send(amount);
     }
-    
-    function setPayerString(string _string)
-    public
-    onlyPayer()
-    {
-        payerString = _string;
-    }
-    
-    function setRecipientString(string _string)
-    public
-    onlyRecipient()
-    {
-        recipientString = _string;
-    }
 }
 
 contract BurnableOpenPaymentFactory {
-    function newBurnableOpenPayment(address payer, uint commitThreshold)
-    public
-    payable
-    returns (address) {
+    function newBurnableOpenPayment(address payer, uint commitThreshold) payable returns (address) {
         //pass along any ether to the constructor
         return (new BurnableOpenPayment).value(msg.value)(payer, commitThreshold);
     }
