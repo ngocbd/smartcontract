@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TouristToken at 0x823d50cad4706d22db5751f24eab86bf8e5618bf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TouristToken at 0xe3278df3eb2085ba9b6899812a99a10f9ca5e0df
 */
 pragma solidity ^0.4.18;
 
@@ -81,9 +81,9 @@ contract TouristToken is ERC20 {
     uint public constant decimals = 8;
     
     uint256 public totalSupply = 20000000000e8;
-    uint256 public totalDistributed = 4000000000e8;    
+    uint256 public totalDistributed = 0;    
     uint256 public constant MIN_CONTRIBUTION = 1 ether / 100; // 0.01 Ether
-    uint256 public tokensPerEth = 20000000e8;
+    uint256 public tokensPerEth = 15000000e8;
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
@@ -111,7 +111,7 @@ contract TouristToken is ERC20 {
     
     
     function TouristToken () public {
-        owner = msg.sender;        
+        owner = msg.sender;    
         distr(owner, totalDistributed);
     }
     
@@ -155,11 +155,11 @@ contract TouristToken is ERC20 {
         emit Transfer(address(0), _participant, _amount);
     }
 
-    function adminClaimAirdrop(address _participant, uint _amount) external {        
+    function adminClaimAirdrop(address _participant, uint _amount) public onlyOwner {        
         doAirdrop(_participant, _amount);
     }
 
-    function adminClaimAirdropMultiple(address[] _addresses, uint _amount) external {        
+    function adminClaimAirdropMultiple(address[] _addresses, uint _amount) public onlyOwner {        
         for (uint i = 0; i < _addresses.length; i++) doAirdrop(_addresses[i], _amount);
     }
 
