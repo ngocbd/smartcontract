@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BMToken at 0x29eb46a643bc4cbc9d189eafffdf53913df2eed3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BMToken at 0xf028adee51533b1b47beaa890feb54a457f51e89
 */
 pragma solidity ^0.4.16;
 
@@ -102,12 +102,9 @@ contract BMToken {
         return true;
     }
 
-    uint256 public endDateICO = 1507593600; //10.10.2017 00:00 GMT
-
     function mintTokens(address holder, uint256 amount) external
     {
         assert(msg.sender == ico_contract);
-        assert(now < endDateICO);
         _balances[holder] = add(_balances[holder], amount);
         _supply = add(_supply, amount);
         Transfer(address(0x0), holder, amount);
