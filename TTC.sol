@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TTC at 0x99ac77522b6866a3770971bbf7f2c06b8e00fe55
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TTC at 0x8f2f4ce535ee239c7a10c6aeff0f2eaf6690cddb
 */
 pragma solidity ^0.4.16;
 
@@ -53,8 +53,6 @@ contract ERC20 is ERC20Basic {
   event Approval(address indexed owner, address indexed spender, uint value);
 }
 
-
-
 contract BasicToken is ERC20Basic {
   
   using SafeMath for uint;
@@ -94,6 +92,7 @@ contract StandardToken is BasicToken, ERC20 {
   }
 }
 
+
 contract Ownable {
     address public owner;
 
@@ -113,24 +112,18 @@ contract Ownable {
 }
 
 
-/**
- *  TTC token contract. Implements
- */
 contract TTC is StandardToken, Ownable {
   string public constant name = "TTC";
   string public constant symbol = "TTC";
   uint public constant decimals = 18;
 
 
-  // Constructor
   function TTC() public {
       totalSupply = 1000000000000000000000000000;
       balances[msg.sender] = totalSupply; // Send all tokens to owner
   }
 
-  /**
-   *  Burn away the specified amount of SkinCoin tokens
-   */
+
   function burn(uint _value) onlyOwner public returns (bool) {
     balances[msg.sender] = balances[msg.sender].sub(_value);
     totalSupply = totalSupply.sub(_value);
