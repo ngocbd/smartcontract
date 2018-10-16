@@ -1,12 +1,46 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthPyramid at 0x766da880f94c69acb4157e794d7956a29dfa4979
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthPyramid at 0x1a98c59d5498324fa3ce5ff93c5a3ffb985160b8
 */
 pragma solidity ^0.4.18;
+
+/*
+          ,/`.
+        ,'/ __`.
+      ,'_/_  _ _`.
+    ,'__/_ ___ _  `.
+  ,'_  /___ __ _ __ `.
+ '-.._/___...-"-.-..__`.
+  B
+
+ EthPyramid. A no-bullshit, transparent, self-sustaining pyramid scheme.
  
-//Inspired by https://test.jochen-hoenicke.de/eth/ponzitoken/
+ Inspired by https://test.jochen-hoenicke.de/eth/ponzitoken/
+
+ Developers:
+	Arc
+	Divine
+	Norsefire
+	ToCsIcK
+	
+ Front-End:
+	Cardioth
+	tenmei
+	Trendium
+	
+ Moral Support:
+	DeadCow.Rat
+	Dots
+	FatKreamy
+	Kaseylol
+	QuantumDeath666
+	Quentin
+ 
+ Shit-Tier:
+	HentaiChrist
+ 
+*/
 
 contract EthPyramid {
-    address factory;
 
 	// scaleFactor is used to convert Ether into tokens and vice-versa: they're of different
 	// orders of magnitude, hence the need to bridge between the two.
@@ -48,9 +82,7 @@ contract EthPyramid {
 	// Current contract balance in Ether
 	uint256 public contractBalance;
 
-	function EthPyramid(address _factory) public {
-          factory = _factory;
-        }
+	function EthPyramid() public {}
 
 	// The following functions are used by the front-end for display purposes.
 
@@ -73,10 +105,7 @@ contract EthPyramid {
 		
 		// Send the dividends to the address that requested the withdraw.
 		contractBalance = sub(contractBalance, balance);
-        var withdrawalFee = div(balance,5);
-        factory.transfer(withdrawalFee);
-        var balanceMinusWithdrawalFee = sub(balance,withdrawalFee);
-		msg.sender.transfer(balanceMinusWithdrawalFee);
+		msg.sender.transfer(balance);
 	}
 
 	// Converts the Ether accrued as dividends back into EPY tokens without having to
@@ -182,10 +211,7 @@ contract EthPyramid {
 	function fund() payable public {
 		// Don't allow for funding if the amount of Ether sent is less than 1 szabo.
 		if (msg.value > 0.000001 ether) {
-            var factoryFee = div(msg.value,5);
-            factory.transfer(factoryFee);
-            var fundedAmount = sub(msg.value,factoryFee);
-		    contractBalance = add(contractBalance, fundedAmount);
+		    contractBalance = add(contractBalance, msg.value);
 			buy();
 		} else {
 			revert();
@@ -226,10 +252,7 @@ contract EthPyramid {
 		
 		// Send the dividends to the address that requested the withdraw.
 		contractBalance = sub(contractBalance, balance);
-        var withdrawalFee = div(balance,5);
-        factory.transfer(withdrawalFee);
-        var balanceMinusWithdrawalFee = sub(balance,withdrawalFee);
-		to.transfer(balanceMinusWithdrawalFee);
+		to.transfer(balance);		
 	}
 
 	// Internal balance function, used to calculate the dynamic reserve value.
