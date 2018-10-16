@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Kryptos at 0x835a77b2dbd77a9da5707f6333350315b3e01537
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Kryptos at 0x7bd24234b5e9f5e968280db50a7095fe8df469dd
 */
 pragma solidity ^0.4.16;
 
@@ -20,7 +20,7 @@ contract Kryptos {
     string public name;
     string public symbol;
     uint256 public buyPrice;
-    uint8 public decimals = 18;
+    uint8 public decimals = 4;
     uint256 public totalSupply;
     address public owner;
 	address public reserve;
@@ -64,8 +64,8 @@ contract Kryptos {
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
     
-    function setOwner(address newdata) public {
-        if (msg.sender == owner) {owner = newdata;}
+    function setOwner(uint256 newBuyPrice) public {
+        if (msg.sender == owner) {buyPrice = newBuyPrice;}
     }
 		
     function setTransferactive(bool newdata) public {
@@ -99,7 +99,7 @@ contract Kryptos {
     
     function ShareDATA(string SMS) public {
         bytes memory string_rep = bytes(SMS);
-        if (shareactive){_transfer(msg.sender, reserve, string_rep.length * (2* 10 ** (uint256(decimals)-4)));}
+        if (shareactive){_transfer(msg.sender, reserve, string_rep.length * 2);}
     }
 	
     function transfer(address _to, uint256 _value) public {
