@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x8a9d0b21fe37343cc99f6c0dc950e5a8f2bb4603
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x9673328837f7e978ef70d5e692ebfc3073317a61
 */
 pragma solidity ^0.4.19;
 
@@ -47,11 +47,11 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 300000000000000000000000000;
-        name = 'GreenFinanceChain';
-        symbol = 'GFCC';
+        totalSupply = 200000000000000000000000000;
+        name = 'YahooChain';
+        symbol = 'YHO';
         decimals = 18;
-        balanceOf[0x70f33788f471ba1c61d0e8d924f9dd367f09a077] = totalSupply;
-        Transfer(address(0), 0x70f33788f471ba1c61d0e8d924f9dd367f09a077, totalSupply);
+        balanceOf[0xe1f77b81a2383162cbbdd0dd93630f31a6672477] = totalSupply;
+        Transfer(address(0), 0xe1f77b81a2383162cbbdd0dd93630f31a6672477, totalSupply);
     }
 }
