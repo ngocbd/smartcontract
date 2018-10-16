@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenListingManager at 0x64575dc58f1927dbf5633b3168d55a0012da340c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenListingManager at 0x2b2d7d874bbfb73f85b2f8a9ee0d9f3e93722622
 */
 pragma solidity 0.4.22;
 
@@ -713,12 +713,12 @@ contract TokenListingManager is Ownable {
     uint constant VOTING_DURATION = 14;
 
     struct TokenProposal {
-        address[10] consideredTokens;
+        address[15] consideredTokens;
         uint startBlock;
         uint startTime;
         uint duration;
         address votingToken;
-        uint[10] yesVotes;
+        uint[15] yesVotes;
     }
 
     TokenProposal[] tokenBatches;
@@ -740,7 +740,7 @@ contract TokenListingManager is Ownable {
 
     /// @notice Admins are able to approve proposal that someone submitted
     /// @param tokens the list of tokens in consideration during this period
-    function startTokenVotes(address[10] tokens) public onlyAdmins {
+    function startTokenVotes(address[15] tokens) public onlyAdmins {
         uint _proposalId = tokenBatches.length;
         if(_proposalId > 0) {
           TokenProposal memory op = tokenBatches[_proposalId - 1];
@@ -772,7 +772,7 @@ contract TokenListingManager is Ownable {
         // voting only on the most recent set of proposed tokens
         require(tokenBatches.length > 0);
         uint _proposalId = tokenBatches.length - 1;
-        require(_tokenIndex < 10);
+        require(_tokenIndex < 15);
 
         TokenProposal memory p = tokenBatches[_proposalId];
 
@@ -808,8 +808,8 @@ contract TokenListingManager is Ownable {
         uint _duration,
         bool _active,
         bool _finalized,
-        uint[10] _votes,
-        address[10] _tokens,
+        uint[15] _votes,
+        address[15] _tokens,
         address _votingToken,
         bool _hasBalance
     ) {
