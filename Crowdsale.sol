@@ -1,235 +1,455 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdSale at 0x9c0c2c6d734d075a013c822b0cfea8917a3f5e75
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xd77fc35cc9007557dcd18bfe26fe66f1ea3a0e7f
 */
 pragma solidity ^0.4.11;
 
-contract SafeMath {
-  function safeMul(uint a, uint b) internal returns (uint) {
+library SafeMath {
+  function mul(uint a, uint b) internal returns (uint) {
     uint c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
-
-  function safeDiv(uint a, uint b) internal returns (uint) {
+  function div(uint a, uint b) internal returns (uint) {
     assert(b > 0);
     uint c = a / b;
     assert(a == b * c + a % b);
     return c;
   }
-
-  function safeSub(uint a, uint b) internal returns (uint) {
+  function sub(uint a, uint b) internal returns (uint) {
     assert(b <= a);
     return a - b;
   }
-
-  function safeAdd(uint a, uint b) internal returns (uint) {
+  function add(uint a, uint b) internal returns (uint) {
     uint c = a + b;
-    assert(c>=a && c>=b);
+    assert(c >= a);
     return c;
   }
-
   function max64(uint64 a, uint64 b) internal constant returns (uint64) {
     return a >= b ? a : b;
   }
-
   function min64(uint64 a, uint64 b) internal constant returns (uint64) {
     return a < b ? a : b;
   }
-
   function max256(uint256 a, uint256 b) internal constant returns (uint256) {
     return a >= b ? a : b;
   }
-
   function min256(uint256 a, uint256 b) internal constant returns (uint256) {
     return a < b ? a : b;
   }
-
   function assert(bool assertion) internal {
     if (!assertion) {
       throw;
     }
   }
 }
+contract PullPayment {
 
-contract Owned {
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
+  using SafeMath for uint;
+  
+  mapping(address => uint) public payments;
+
+  event LogRefundETH(address to, uint value);
+
+
+  /**
+  *  Store sent amount as credit to be pulled, called by payer 
+  **/
+  function asyncSend(address dest, uint amount) internal {
+    payments[dest] = payments[dest].add(amount);
+  }
+
+  // withdraw accumulated balance, called by payee
+  function withdrawPayments() {
+    address payee = msg.sender;
+    uint payment = payments[payee];
+    
+    if (payment == 0) {
+      throw;
     }
 
+    if (this.balance < payment) {
+      throw;
+    }
+
+    payments[payee] = 0;
+
+    if (!payee.send(payment)) {
+      throw;
+    }
+    LogRefundETH(payee,payment);
+  }
+}
+contract ERC20Basic {
+  uint public totalSupply;
+  function balanceOf(address who) constant returns (uint);
+  function transfer(address to, uint value);
+  event Transfer(address indexed from, address indexed to, uint value);
+}
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint);
+  function transferFrom(address from, address to, uint value);
+  function approve(address spender, uint value);
+  event Approval(address indexed owner, address indexed spender, uint value);
+}
+contract Migrations {
+  address public owner;
+  uint public last_completed_migration;
+
+  modifier restricted() {
+    if (msg.sender == owner) _;
+  }
+
+  function Migrations() {
+    owner = msg.sender;
+  }
+
+  function setCompleted(uint completed) restricted {
+    last_completed_migration = completed;
+  }
+
+  function upgrade(address new_address) restricted {
+    Migrations upgraded = Migrations(new_address);
+    upgraded.setCompleted(last_completed_migration);
+  }
+}
+contract Ownable {
     address public owner;
 
-    function Owned() {
+    function Ownable() {
         owner = msg.sender;
     }
 
-    address public newOwner;
-
-    function changeOwner(address _newOwner) onlyOwner {
-        newOwner = _newOwner;
+    modifier onlyOwner {
+        if (msg.sender != owner) throw;
+        _;
     }
 
-    function acceptOwnership() {
-        if (msg.sender == newOwner) {
+    function transferOwnership(address newOwner) onlyOwner {
+        if (newOwner != address(0)) {
             owner = newOwner;
         }
     }
 }
-
-
-contract SphereTokenFactory{
-	function mint(address target, uint amount);
-}
-/*
- * Haltable
- *
- * Abstract contract that allows children to implement an
- * emergency stop mechanism. Differs from Pausable by causing a throw when in halt mode.
- *
- *
- * Originally envisioned in FirstBlood ICO contract.
- */
-contract Haltable is Owned {
-  bool public halted;
+contract Pausable is Ownable {
+  bool public stopped;
 
   modifier stopInEmergency {
-    if (halted) throw;
+    if (stopped) {
+      throw;
+    }
     _;
   }
-
+  
   modifier onlyInEmergency {
-    if (!halted) throw;
+    if (!stopped) {
+      throw;
+    }
     _;
   }
 
   // called by the owner on emergency, triggers stopped state
-  function halt() external onlyOwner {
-    halted = true;
+  function emergencyStop() external onlyOwner {
+    stopped = true;
   }
 
   // called by the owner on end of emergency, returns to normal state
-  function unhalt() external onlyOwner onlyInEmergency {
-    halted = false;
+  function release() external onlyOwner onlyInEmergency {
+    stopped = false;
   }
 
 }
+contract BasicToken is ERC20Basic {
+  
+  using SafeMath for uint;
+  
+  mapping(address => uint) balances;
+  
+  /*
+   * Fix for the ERC20 short address attack  
+  */
+  modifier onlyPayloadSize(uint size) {
+     if(msg.data.length < size + 4) {
+       throw;
+     }
+     _;
+  }
 
-contract PricingMechanism is Haltable, SafeMath{
-    uint public decimals;
-    PriceTier[] public priceList;
-    uint8 public numTiers;
-    uint public currentTierIndex;
-    uint public totalDepositedEthers;
+  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) {
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+  }
+
+  function balanceOf(address _owner) constant returns (uint balance) {
+    return balances[_owner];
+  }
+}
+contract StandardToken is BasicToken, ERC20 {
+  mapping (address => mapping (address => uint)) allowed;
+
+  function transferFrom(address _from, address _to, uint _value) onlyPayloadSize(3 * 32) {
+    var _allowance = allowed[_from][msg.sender];
+    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
+    // if (_value > _allowance) throw;
+    balances[_to] = balances[_to].add(_value);
+    balances[_from] = balances[_from].sub(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
+    Transfer(_from, _to, _value);
+  }
+
+  function approve(address _spender, uint _value) {
+    // To change the approve amount you first have to reduce the addresses`
+    //  allowance to zero by calling `approve(_spender, 0)` if it is not
+    //  already 0 to mitigate the race condition described here:
+    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) throw;
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+  }
+
+  function allowance(address _owner, address _spender) constant returns (uint remaining) {
+    return allowed[_owner][_spender];
+  }
+}
+/**
+ *  Tix token contract. Implements
+ */
+contract Tix is StandardToken, Ownable {
+  string public constant name = "Tettix";
+  string public constant symbol = "TIX";
+  uint public constant decimals = 8;
+
+
+  // Constructor
+  function Tix() {
+      totalSupply = 100000000000000000;
+      balances[msg.sender] = totalSupply; // Send all tokens to owner
+  }
+
+  /**
+   *  Burn away the specified amount of SkinCoin tokens
+   */
+  function burn(uint _value) onlyOwner returns (bool) {
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    totalSupply = totalSupply.sub(_value);
+    Transfer(msg.sender, 0x0, _value);
+    return true;
+  }
+
+}
+/*
+  Crowdsale Smart Contract for the Tettix.io project
+  This smart contract collects ETH, and in return emits TIX tokens to the backers
+*/
+contract Crowdsale is Pausable, PullPayment {
     
-    struct  PriceTier {
-        uint costPerToken;
-        uint ethersDepositedInTier;
-        uint maxEthersInTier;
+    using SafeMath for uint;
+
+    struct Backer {
+        uint weiReceived; // Amount of Ether given
+        uint coinSent;
     }
-    function setPricing() onlyOwner{
-        uint factor = 10 ** decimals;
-        priceList.push(PriceTier(uint(safeDiv(1 ether, 100 * factor)),0,5000 ether));
-        priceList.push(PriceTier(uint((1 ether - (10 wei * factor)) / (90 * factor)),0,5000 ether));
-        priceList.push(PriceTier(uint(1 ether / (80* factor)),0,5000 ether));
-        priceList.push(PriceTier(uint((1 ether - (50 wei * factor)) / (70* factor)),0,5000 ether));
-        priceList.push(PriceTier(uint((1 ether - (40 wei * factor)) / (60* factor)),0,5000 ether));
-        priceList.push(PriceTier(uint(1 ether / (50* factor)),0,5000 ether));
-        priceList.push(PriceTier(uint(1 ether / (40* factor)),0,5000 ether));
-        priceList.push(PriceTier(uint((1 ether - (10 wei * factor))/ (30* factor)),0,5000 ether));
-        priceList.push(PriceTier(uint((1 ether - (10 wei * factor))/ (15* factor)),0,30000 ether));
-        numTiers = 9;
+
+    /*
+    * Constants
+    */
+    /* Minimum number of TIX to sell */
+    uint public constant MIN_CAP = 1000000000000; 
+    /* Maximum number of TIX to sell */
+    uint public constant MAX_CAP = 40000000000000000;
+    /* Minimum amount to invest */
+    uint public constant MIN_INVEST_ETHER = 10 finney;
+    /* Crowdsale period */
+    uint private constant CROWDSALE_PERIOD = 21 days;
+    /* Number of TIX per Ether */
+    uint public constant COIN_PER_ETHER = 1000000000000;
+
+
+    /*
+    * Variables
+    */
+    /* TIX contract reference */
+    Tix public coin;
+    /* Multisig contract that will receive the Ether */
+    address public multisigEther;
+    /* Number of Ether received */
+    uint public etherReceived;
+    /* Number of TIX sent to Ether contributors */
+    uint public coinSentToEther;
+    /* Crowdsale start time */
+    uint public startTime;
+    /* Crowdsale end time */
+    uint public endTime;
+    /* Is crowdsale still on going */
+    bool public crowdsaleClosed;
+
+    /* Backers Ether indexed by their Ethereum address */
+    mapping(address => Backer) public backers;
+
+
+    /*
+    * Modifiers
+    */
+    modifier minCapNotReached() {
+        if ((now < endTime) || coinSentToEther >= MIN_CAP ) throw;
+        _;
     }
-    function allocateTokensInternally(uint value) internal constant returns(uint numTokens){
-        if (numTiers == 0) return 0;
-        numTokens = 0;
-        uint8 tierIndex = 0;
-        for (uint8 i = 0; i < numTiers; i++){
-            if (priceList[i].ethersDepositedInTier < priceList[i].maxEthersInTier){
-                uint ethersToDepositInTier = min256(priceList[i].maxEthersInTier - priceList[i].ethersDepositedInTier, value);
-                numTokens = safeAdd(numTokens, ethersToDepositInTier / priceList[i].costPerToken);
-                priceList[i].ethersDepositedInTier = safeAdd(ethersToDepositInTier, priceList[i].ethersDepositedInTier);
-                totalDepositedEthers = safeAdd(ethersToDepositInTier, totalDepositedEthers);
-                value = safeSub(value, ethersToDepositInTier);
-                if (priceList[i].ethersDepositedInTier > 0)
-                    tierIndex = i;
+
+    modifier respectTimeFrame() {
+        if ((now < startTime) || (now > endTime )) throw;
+        _;
+    }
+
+    /*
+     * Event
+    */
+    event LogReceivedETH(address addr, uint value);
+    event LogCoinsEmited(address indexed from, uint amount);
+
+    /*
+     * Constructor
+    */
+    function Crowdsale(address _tixAddress, address _to) {
+        coin = Tix(_tixAddress);
+        multisigEther = _to;
+    }
+
+    /* 
+     * The fallback function corresponds to a donation in ETH
+     */
+    function() stopInEmergency respectTimeFrame payable {
+        receiveETH(msg.sender);
+    }
+
+    /* 
+     * To call to start the crowdsale
+     */
+    function start() onlyOwner {
+        if (startTime != 0) throw; // Crowdsale was already started
+
+        startTime = now ;            
+        endTime =  now + CROWDSALE_PERIOD;    
+    }
+
+    /*
+     *  Receives a donation in Ether
+    */
+    function receiveETH(address beneficiary) internal {
+        if (msg.value < MIN_INVEST_ETHER) throw; // Don't accept funding under a predefined threshold
+        
+        uint coinToSend = bonus(msg.value.mul(COIN_PER_ETHER).div(1 ether)); // Compute the number of TIX to send
+        if (coinToSend.add(coinSentToEther) > MAX_CAP) throw;   
+
+        Backer backer = backers[beneficiary];
+        coin.transfer(beneficiary, coinToSend); // Transfer TIX right now 
+
+        backer.coinSent = backer.coinSent.add(coinToSend);
+        backer.weiReceived = backer.weiReceived.add(msg.value); // Update the total wei collected during the crowdfunding for this backer    
+
+        etherReceived = etherReceived.add(msg.value); // Update the total wei collected during the crowdfunding
+        coinSentToEther = coinSentToEther.add(coinToSend);
+
+        // Send events
+        LogCoinsEmited(msg.sender ,coinToSend);
+        LogReceivedETH(beneficiary, etherReceived); 
+    }
+    
+
+    /*
+     *Compute the TIX bonus according to the investment period
+     */
+    function bonus(uint amount) internal constant returns (uint) {
+        if (now < startTime.add(5 days)) return amount.add(amount.div(5));   // bonus 20%
+        return amount;
+    }
+
+    /*  
+     * Finalize the crowdsale, should be called after the refund period
+    */
+    function finalize() onlyOwner public {
+
+        if (now < endTime) { // Cannot finalise before CROWDSALE_PERIOD or before selling all coins
+            if (coinSentToEther == MAX_CAP) {
+            } else {
+                throw;
             }
         }
-        currentTierIndex = tierIndex;
-        return numTokens;
-    }
-    
-}
 
-contract DAOController{
-    address public dao;
-    modifier onlyDAO{
-        if (msg.sender != dao) throw;
-        _;
-    }
-}
+        if (coinSentToEther < MIN_CAP && now < endTime + 15 days) throw; // If MIN_CAP is not reached donors have 15days to get refund before we can finalise
 
-contract CrowdSale is PricingMechanism, DAOController{
-    SphereTokenFactory public tokenFactory;
-    uint public hardCapAmount;
-    bool public isStarted = false;
-    bool public isFinalized = false;
-    uint public duration = 30 days;
-    uint public startTime;
-    address public multiSig;
-    bool public finalizeSet = false;
-    
-    modifier onlyStarted{
-        if (!isStarted) throw;
-        _;
-    }
-    modifier notFinalized{
-        if (isFinalized) throw;
-        _;
-    }
-    modifier afterFinalizeSet{
-        if (!finalizeSet) throw;
-        _;
-    }
-    function CrowdSale(){
-        tokenFactory = SphereTokenFactory(0xf961eb0acf690bd8f92c5f9c486f3b30848d87aa);
-        decimals = 4;
-        setPricing();
-        hardCapAmount = 75000 ether;
-    }
-    function startCrowdsale() onlyOwner {
-        if (isStarted) throw;
-        isStarted = true;
-        startTime = now;
-    }
-    function setDAOAndMultiSig(address _dao, address _multiSig) onlyOwner{
-        dao = _dao;
-        multiSig = _multiSig;
-        finalizeSet = true;
-    }
-    function() payable stopInEmergency onlyStarted notFinalized{
-        if (totalDepositedEthers >= hardCapAmount) throw;
-        uint contribution = msg.value;
-        if (safeAdd(totalDepositedEthers, msg.value) > hardCapAmount){
-            contribution = safeSub(hardCapAmount, totalDepositedEthers);
+        if (!multisigEther.send(this.balance)) throw; // Move the remaining Ether to the multisig address
+        
+        uint remains = coin.balanceOf(this);
+        if (remains > 0) { // Burn the rest of TIX
+            if (!coin.burn(remains)) throw ;
         }
-        uint excess = safeSub(msg.value, contribution);
-        uint numTokensToAllocate = allocateTokensInternally(contribution);
-        tokenFactory.mint(msg.sender, numTokensToAllocate);
-        if (excess > 0){
-            msg.sender.send(excess);
+        crowdsaleClosed = true;
+    }
+
+    /*  
+    * Failsafe drain
+    */
+    function drain() onlyOwner {
+        if (!owner.send(this.balance)) throw;
+    }
+
+    /**
+     * Allow to change the team multisig address in the case of emergency.
+     */
+    function setMultisig(address addr) onlyOwner public {
+        if (addr == address(0)) throw;
+        multisigEther = addr;
+    }
+
+    /**
+     * Manually back TIX owner address.
+     */
+    function backTixOwner() onlyOwner public {
+        coin.transferOwnership(owner);
+    }
+
+    /**
+     * Transfer remains to owner in case if impossible to do min invest
+     */
+    function getRemainCoins() onlyOwner public {
+        var remains = MAX_CAP - coinSentToEther;
+        uint minCoinsToSell = bonus(MIN_INVEST_ETHER.mul(COIN_PER_ETHER) / (1 ether));
+
+        if(remains > minCoinsToSell) throw;
+
+        Backer backer = backers[owner];
+        coin.transfer(owner, remains); // Transfer TIX right now 
+
+        backer.coinSent = backer.coinSent.add(remains);
+
+        coinSentToEther = coinSentToEther.add(remains);
+
+        // Send events
+        LogCoinsEmited(this ,remains);
+        LogReceivedETH(owner, etherReceived); 
+    }
+
+
+    /* 
+     * When MIN_CAP is not reach:
+     * 1) backer call the "approve" function of the TIX token contract with the amount of all TIXs they got in order to be refund
+     * 2) backer call the "refund" function of the Crowdsale contract with the same amount of TIX
+     * 3) backer call the "withdrawPayments" function of the Crowdsale contract to get a refund in ETH
+     */
+    function refund(uint _value) minCapNotReached public {
+        
+        if (_value != backers[msg.sender].coinSent) throw; // compare value from backer balance
+
+        coin.transferFrom(msg.sender, address(this), _value); // get the token back to the crowdsale contract
+
+        if (!coin.burn(_value)) throw ; // token sent for refund are burnt
+
+        uint ETHToSend = backers[msg.sender].weiReceived;
+        backers[msg.sender].weiReceived=0;
+
+        if (ETHToSend > 0) {
+            asyncSend(msg.sender, ETHToSend); // pull payment to get refund in ETH
         }
     }
-    
-    function finalize() payable onlyOwner afterFinalizeSet{
-        if (hardCapAmount == totalDepositedEthers || (now - startTime) > duration){
-            dao.call.gas(150000).value(totalDepositedEthers * 3 / 10)();
-            multiSig.call.gas(150000).value(this.balance)();
-            isFinalized = true;
-        }
-    }
-    function emergencyCease() payable onlyStarted onlyInEmergency onlyOwner afterFinalizeSet{
-        isFinalized = true;
-        isStarted = false;
-        multiSig.call.gas(150000).value(this.balance)();
-    }
+
 }
