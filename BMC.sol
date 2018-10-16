@@ -1,158 +1,179 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BMC at 0x8bccd8547cd101ee78c33c41476670cf58fff411
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BMC at 0x3fedeb84209ED302c0Ce9279e300312349887C33
 */
-pragma solidity ^0.4.11;
-
-contract BMCAssetInterface {
-    function __transferWithReference(address _to, uint _value, string _reference, address _sender) returns(bool);
-    function __transferFromWithReference(address _from, address _to, uint _value, string _reference, address _sender) returns(bool);
-    function __approve(address _spender, uint _value, address _sender) returns(bool);
-    function __process(bytes _data, address _sender) payable {
-        throw;
-    }
-}
-
-contract BMCAssetProxy {
-    address public bmcPlatform;
-    function __transferWithReference(address _to, uint _value, string _reference, address _sender) returns(bool);
-    function __transferFromWithReference(address _from, address _to, uint _value, string _reference, address _sender) returns(bool);
-    function __approve(address _spender, uint _value, address _sender) returns(bool);    
-    function getLatestVersion() returns(address);
-    function init(address _bmcPlatform, string _symbol, string _name);
-    function proposeUpgrade(address _newVersion);
-}
+pragma solidity ^0.4.18;
+/**
+ * This smart contract code is Copyright 2017 Bitmart. For more information see https://www.bitmart.com
+ *
+ * Licensed under the Apache License, version 2.0
+ */
 
 /**
- * @title BMC Asset implementation contract.
- *
- * Basic asset implementation contract, without any additional logic.
- * Every other asset implementation contracts should derive from this one.
- * Receives calls from the proxy, and calls back immediatly without arguments modification.
- *
- * Note: all the non constant functions return false instead of throwing in case if state change
- * didn't happen yet.
+ * @title SafeMath
+ * @dev Math operations with safety checks that revert() on error
  */
-contract BMCAsset is BMCAssetInterface {
-    // Assigned asset proxy contract, immutable.
-    BMCAssetProxy public proxy;
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
 
-    /**
-     * Only assigned proxy is allowed to call.
-     */
-    modifier onlyProxy() {
-        if (proxy == msg.sender) {
-            _;
-        }
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically revert()s when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+
+/*
+ * BMC
+ *
+ * Abstract contract that create Bitmart Token based on ERC20.
+ *
+ */
+contract BMC {
+    using SafeMath for uint256;
+    string public name;
+    string public symbol;
+    uint8 public decimals;
+    uint256 public totalSupply;
+    address public owner;
+
+    /* This creates an array with all balances */
+    mapping (address => uint256) public balanceOf;
+    mapping (address => uint256) public freezeOf;
+    mapping (address => mapping (address => uint256)) public allowance;
+
+    /* This generates a public event on the blockchain that will notify clients */
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    /* This notifies clients about the amount burnt */
+    event Burn(address indexed from, uint256 value);
+
+    /* This notifies clients about the amount frozen */
+    event Freeze(address indexed from, uint256 value);
+
+    /* This notifies clients about the amount unfrozen */
+    event Unfreeze(address indexed from, uint256 value);
+
+    /* This notifies the owner transfer */
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    /* Initializes contract with initial supply tokens to the creator of the contract */
+    function BMC( uint256 initialSupply, uint8 decimalUnits) public {
+        balanceOf[msg.sender] = initialSupply; // Give the creator all initial tokens
+        totalSupply = initialSupply; // Update total supply
+        name = "BitMartToken";   // Set the name for display purposes
+        symbol = "BMC";    // Set the symbol for display purposes
+        decimals = decimalUnits;  // Amount of decimals for display purposes
+        owner = msg.sender;
     }
 
     /**
-     * Sets asset proxy address.
-     *
-     * Can be set only once.
-     *
-     * @param _proxy asset proxy contract address.
-     *
-     * @return success.
-     * @dev function is final, and must not be overridden.
+     * @dev Throws if called by any account other than the owner.
      */
-    function init(BMCAssetProxy _proxy) returns(bool) {
-        if (address(proxy) != 0x0) {
-            return false;
-        }
-        proxy = _proxy;
+    modifier onlyOwner() {
+      require(msg.sender == owner);
+      _;
+    }
+
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address newOwner) public onlyOwner {
+      require(newOwner != address(0));
+      OwnershipTransferred(owner, newOwner);
+      owner = newOwner;
+    }
+
+    /* Send Coins */
+    function transfer(address _to, uint256 _value) public {
+        require(_to != 0x0);
+        require(_value > 0);
+        require(balanceOf[msg.sender] >= _value );// Check if the sender has enough
+        require(balanceOf[_to] + _value >= balanceOf[_to]); // Check for overflows
+
+        balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value); // Subtract from the sender
+        balanceOf[_to] = balanceOf[_to].add(_value);  // Add the same to the recipient
+        Transfer(msg.sender, _to, _value);   // Notify anyone listening that this transfer took place
+    }
+
+    /* Allow another contract to spend some tokens in your behalf */
+    function approve(address _spender, uint256 _value) public returns (bool) {
+        require(_value > 0);
+        allowance[msg.sender][_spender] = _value;
         return true;
     }
 
-    /**
-     * Passes execution into virtual function.
-     *
-     * Can only be called by assigned asset proxy.
-     *
-     * @return success.
-     * @dev function is final, and must not be overridden.
-     */
-    function __transferWithReference(address _to, uint _value, string _reference, address _sender) onlyProxy() returns(bool) {
-        return _transferWithReference(_to, _value, _reference, _sender);
-    }
+    /* A contract attempts to get the coins */
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        require(_to != 0x0);
+        require(_value > 0);
+        require(balanceOf[_from] >= _value );// Check if the sender has enough
+        require(balanceOf[_to] + _value >= balanceOf[_to]); // Check for overflows
+        require(_value <= allowance[_from][msg.sender]); // Check allowance
 
-    /**
-     * Calls back without modifications.
-     *
-     * @return success.
-     * @dev function is virtual, and meant to be overridden.
-     */
-    function _transferWithReference(address _to, uint _value, string _reference, address _sender) internal returns(bool) {
-        return proxy.__transferWithReference(_to, _value, _reference, _sender);
-    }
-
-    /**
-     * Passes execution into virtual function.
-     *
-     * Can only be called by assigned asset proxy.
-     *
-     * @return success.
-     * @dev function is final, and must not be overridden.
-     */
-    function __transferFromWithReference(address _from, address _to, uint _value, string _reference, address _sender) onlyProxy() returns(bool) {
-        return _transferFromWithReference(_from, _to, _value, _reference, _sender);
-    }
-
-    /**
-     * Calls back without modifications.
-     *
-     * @return success.
-     * @dev function is virtual, and meant to be overridden.
-     */
-    function _transferFromWithReference(address _from, address _to, uint _value, string _reference, address _sender) internal returns(bool) {
-        return proxy.__transferFromWithReference(_from, _to, _value, _reference, _sender);
-    }
-
-    /**
-     * Passes execution into virtual function.
-     *
-     * Can only be called by assigned asset proxy.
-     *
-     * @return success.
-     * @dev function is final, and must not be overridden.
-     */
-    function __approve(address _spender, uint _value, address _sender) onlyProxy() returns(bool) {
-        return _approve(_spender, _value, _sender);
-    }
-
-    /**
-     * Calls back without modifications.
-     *
-     * @return success.
-     * @dev function is virtual, and meant to be overridden.
-     */
-    function _approve(address _spender, uint _value, address _sender) internal returns(bool) {
-        return proxy.__approve(_spender, _value, _sender);
-    }
-}
-
-
-/**
- * @title Blackmooncrypto.com BMC tokens contract.
- *
- * The official Blackmooncrypto.com token implementation.
- */
-contract BMC is BMCAsset {
-
-    uint public icoUsd;
-    uint public icoEth;
-    uint public icoBtc;
-    uint public icoLtc;
-
-    function initBMC(BMCAssetProxy _proxy, uint _icoUsd, uint _icoEth, uint _icoBtc, uint _icoLtc) returns(bool) {
-        if(icoUsd != 0 || icoEth != 0 || icoBtc != 0 || icoLtc != 0) {
-            return false;
-        }
-        icoUsd = _icoUsd;
-        icoEth = _icoEth;
-        icoBtc = _icoBtc;
-        icoLtc = _icoLtc;
-        super.init(_proxy);
+        balanceOf[_from] = balanceOf[_from].sub(_value);   // Subtract from the sender
+        balanceOf[_to] = balanceOf[_to].add(_value);  // Add the same to the recipient
+        allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(_value);
+        Transfer(_from, _to, _value);
         return true;
     }
 
+    function burn(uint256 _value) public onlyOwner returns (bool) {
+        require(balanceOf[msg.sender] >= _value);// Check if the sender has enough
+        require(_value > 0);
+
+        balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);  // Subtract from the sender
+        totalSupply = totalSupply.sub(_value); // Updates totalSupply
+        Burn(msg.sender, _value);
+        return true;
+    }
+
+    function freeze(uint256 _value) public returns (bool) {
+        require(balanceOf[msg.sender] >= _value);// Check if the sender has enough
+        require(_value > 0);
+
+        balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value); // Subtract from the sender
+        freezeOf[msg.sender] = freezeOf[msg.sender].add(_value);  // Updates totalSupply
+        Freeze(msg.sender, _value);
+        return true;
+    }
+
+    function unfreeze(uint256 _value) public returns (bool) {
+        require(freezeOf[msg.sender] >= _value); // Check if the sender has enough
+        require(_value > 0);
+
+        freezeOf[msg.sender] = freezeOf[msg.sender].sub(_value); // Subtract from the sender
+        balanceOf[msg.sender] = balanceOf[msg.sender].add(_value);
+        Unfreeze(msg.sender, _value);
+        return true;
+    }
+
+    // transfer contract balance to owner
+    function withdrawEther(uint256 amount) public onlyOwner {
+        owner.transfer(amount);
+    }
+
+    // can accept ether
+    function() payable public {
+    }
 }
