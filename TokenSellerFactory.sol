@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSellerFactory at 0x74c2a14172cf17e8e9afcb32bb1517c4d8f3bb43
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSellerFactory at 0x8a628e600c9e170a73cc140b5f5770bd05f102e3
 */
 pragma solidity ^0.4.4;
 
@@ -59,6 +59,7 @@ contract TokenSeller is Owned {
 
     event ActivatedEvent(bool sells);
     event MakerWithdrewAsset(uint256 tokens);
+    event MakerTransferredAsset(address toTokenSeller, uint256 tokens);
     event MakerWithdrewERC20Token(address tokenAddress, uint256 tokens);
     event MakerWithdrewEther(uint256 ethers);
     event TakerBoughtAsset(address indexed buyer, uint256 ethersSent,
@@ -105,6 +106,32 @@ contract TokenSeller is Owned {
         return ERC20Partial(asset).transfer(owner, tokens);
     }
 
+    // Maker can transfer asset tokens from this contract to another
+    // TokenSeller contract, with the following parameter:
+    //   toTokenSeller  Another TokenSeller contract owned by the
+    //                  same owner
+    //   tokens         is the number of asset tokens to be moved
+    //
+    // The MakerTransferredAsset() event is logged with the following
+    // parameters:
+    //   toTokenSeller  The other TokenSeller contract owned by
+    //                  the same owner
+    //   tokens         is the number of tokens transferred
+    //
+    // The asset Transfer() event is logged from this contract to
+    // the other contract
+    //
+    function makerTransferAsset(
+        TokenSeller toTokenSeller,
+        uint256 tokens
+    ) onlyOwner returns (bool ok) {
+        if (owner != toTokenSeller.owner() || asset != toTokenSeller.asset()) {
+            throw;
+        }
+        MakerTransferredAsset(toTokenSeller, tokens);
+        return ERC20Partial(asset).transfer(toTokenSeller, tokens);
+    }
+
     // Maker can withdraw any ERC20 asset tokens from this contract
     //
     // This method is included in the case where this contract receives
@@ -149,7 +176,9 @@ contract TokenSeller is Owned {
     // This method was called buy() in the old version
     function takerBuyAsset() payable {
         if (sellsTokens || msg.sender == owner) {
+            // Note that sellPrice has already been validated as > 0
             uint order    = msg.value / sellPrice;
+            // Note that units has already been validated as > 0
             uint can_sell = ERC20Partial(asset).balanceOf(address(this)) / units;
             uint256 change = 0;
             if (order > can_sell) {
@@ -160,7 +189,7 @@ contract TokenSeller is Owned {
             if (order > 0) {
                 if(!ERC20Partial(asset).transfer(msg.sender, order * units)) throw;
             }
-            TakerBoughtAsset(msg.sender, msg.value, order * units, change);
+            TakerBoughtAsset(msg.sender, msg.value, change, order * units);
         }
         // Return user funds if the contract is not selling
         else if (!msg.sender.send(msg.value)) throw;
@@ -175,9 +204,9 @@ contract TokenSeller is Owned {
 // This contract deploys TokenSeller contracts and logs the event
 contract TokenSellerFactory is Owned {
 
-    event TradeListing(address ownerAddress, address tokenSellerAddress, address asset,
-        uint256 sellPrice, uint256 units, bool sellsTokens);
-    event OwnerWithdrewERC20Token(address tokenAddress, uint256 tokens);
+    event TradeListing(address indexed ownerAddress, address indexed tokenSellerAddress,
+        address indexed asset, uint256 sellPrice, uint256 units, bool sellsTokens);
+    event OwnerWithdrewERC20Token(address indexed tokenAddress, uint256 tokens);
 
     mapping(address => bool) _verify;
 
@@ -245,8 +274,10 @@ contract TokenSellerFactory is Owned {
         uint256 units,
         bool    sellsTokens
     ) returns (address seller) {
-        // Cannot set negative price
-        if (sellPrice < 0) throw;
+        // Cannot have invalid asset
+        if (asset == 0x0) throw;
+        // Cannot set zero or negative price
+        if (sellPrice <= 0) throw;
         // Cannot sell zero or negative units
         if (units <= 0) throw;
         seller = new TokenSeller(
