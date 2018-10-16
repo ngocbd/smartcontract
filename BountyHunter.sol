@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BountyHunter at 0x9ac63e7a52247b05ac878f1ede7b1e1285a54843
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BountyHunter at 0x99c65c81c15cB84DEEC9809fDF755C286B280087
 */
 pragma solidity ^0.4.19;
 
@@ -59,6 +59,11 @@ contract BountyHunter {
   address ceoAddress = 0xc10A6AedE9564efcDC5E842772313f0669D79497;
   address hunter;
   address hunted;
+  address emblemOwner;
+  uint256 emblemPrice = 10000000000000000;
+  uint256 killshot;
+  uint256 x;
+  //uint256 secondKillShot;
 
   struct ContractData {
     address user;
@@ -120,6 +125,16 @@ contract BountyHunter {
 
   }
 
+  function purchaseMysteriousEmblem() public payable returns (address, uint) {
+    require(msg.value >= emblemPrice);
+    emblemOwner = msg.sender;
+    return (emblemOwner, emblemPrice);
+  }
+
+  function getEmblemOwner() public view returns (address) {
+    return emblemOwner;
+  }
+
 
   function getUsers() public view returns (address[], uint256[]) {
     address[] memory users = new address[](8);
@@ -145,29 +160,68 @@ contract BountyHunter {
     uint256 FACTOR = 1157920892373161954235709850086879078532699846656405640394575840079131296399;
     return uint256(uint256( (hashVal) / FACTOR) + 1) % max;
   }
-  
-  
-  function playerKiller() private {
-    uint256 killshot = rand(31);
 
+
+  function playerKiller() private {
+    if (msg.sender == emblemOwner){
+      x = 24;
+    }
+    else {
+      x = 31;
+    }
+    killshot = rand(x);
     if( (killshot < 8) &&  (msg.sender != data[killshot].user) ){
       hunter = msg.sender;
-      if( ceoAddress != data[killshot].user){
+      if( ceoAddress != data[killshot].user &&  emblemOwner != data[killshot].user){
         hunted = data[killshot].user;
+            if (this.balance > 100000000000000000) {
+              if (killshot == 0) {
+                data[4].hunterPrice = 5000000000000000;
+                data[4].user = ceoAddress;
+              }
+              if (killshot == 1){
+                data[5].hunterPrice = 5000000000000000;
+                data[5].user = 5000000000000000;
+              }
+              if (killshot == 2) {
+                data[6].hunterPrice = 5000000000000000;
+                data[6].user = ceoAddress;
+              }
+              if (killshot == 3) {
+                data[7].hunterPrice = 5000000000000000;
+                data[7].user = ceoAddress;
+              }      
+              if (killshot == 4) {
+                data[0].hunterPrice = 5000000000000000;
+                data[0].user = ceoAddress;
+              }      
+              if (killshot == 5) {
+                data[1].hunterPrice = 5000000000000000;
+                data[1].user = ceoAddress;
+              }      
+              if (killshot == 6) {
+                data[2].hunterPrice = 5000000000000000;
+                data[2].user = ceoAddress;
+              }      
+              if (killshot == 7) {
+                data[3].hunterPrice = 5000000000000000;
+                data[3].user = ceoAddress;
+              }
+
+           }
+        data[killshot].hunterPrice  = 5000000000000000;
+        data[killshot].user  = ceoAddress;
+        ceoAddress.transfer((this.balance / 100) * (10));
+        msg.sender.transfer(this.balance);
       }
-      else{
+      else {
         hunted = address(0);
-      }
-      
-      data[killshot].hunterPrice  = 5000000000000000;
-      data[killshot].user  = 5000000000000000;
-
-      msg.sender.transfer((this.balance / 10) * (9));
-      ceoAddress.transfer((this.balance / 10) * (1));
-
-    }
     
+    }
   }
+}
+
+
 
   function killFeed() public view returns(address, address){
     return(hunter, hunted);
