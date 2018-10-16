@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Creator at 0x96dda865d9fda4ee781126a671a085e1c4efd0f2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Creator at 0xcc95f9245666001bc132e432561237724b275f5b
 */
 pragma solidity ^0.4.18;
 
@@ -60,11 +60,11 @@ contract ERC20 is ERC20Basic {
 contract Filler is ERC20 {
     using SafeMath for uint256;
 
-    string public name = "TEXO";
-    string public symbol = "TXO";
+    string public name = "E-DEBIT";
+    string public symbol = "EDEBIT";
     uint256 public decimals = 18;
-    uint256 public _totalSupply = 1000000000 * (10 ** decimals);
-    address public beneficiary = 0x32f33d685a39867FBCF47b2fFaa7898fe31662c2;
+    uint256 public _totalSupply = 5000000000 * (10 ** decimals);
+    address public beneficiary = 0xA3572B9D3bDB56F4bB7bFAbE7359B2A3B16B1afD;
 
     mapping (address => uint256) public funds; 
     mapping(address => mapping(address => uint256)) allowed;
