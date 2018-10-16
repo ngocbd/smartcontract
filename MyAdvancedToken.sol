@@ -1,82 +1,68 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x7b3567464569ed8d6ce4955a2766eae3aac1be47
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xdac0b4794888005b32bad9b7e4f81664512eca79
 */
-pragma solidity ^0.4.16;
-
+pragma solidity 0.4.12;
 contract owned {
     address public owner;
 
-    function owned() public {
+    function owned() {
         owner = msg.sender;
     }
 
     modifier onlyOwner {
-        require(msg.sender == owner);
+        if (msg.sender != owner) throw;
         _;
     }
 
-    function transferOwnership(address newOwner) onlyOwner public {
+    function transferOwnership(address newOwner) onlyOwner {
         owner = newOwner;
     }
 }
 
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
+contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
 
-contract TokenERC20 {
+contract token {
+    string public standard = 'Token 0.1';
     string public name;
     string public symbol;
-    uint8 public decimals = 18;
+    uint8 public decimals;
     uint256 public totalSupply;
+    event Burn(address indexed from, uint256 value);
 
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
 
     event Transfer(address indexed from, address indexed to, uint256 value);
 
-    event Burn(address indexed from, uint256 value);
-
-    function TokenERC20(
+    function token(
         uint256 initialSupply,
         string tokenName,
+        uint8 decimalUnits,
         string tokenSymbol
-    ) public {
-        totalSupply = initialSupply * 10 ** uint256(decimals);
-        balanceOf[msg.sender] = totalSupply;
+        ) {
+        balanceOf[msg.sender] = initialSupply;
+        totalSupply = initialSupply;
         name = tokenName;
         symbol = tokenSymbol;
+        decimals = decimalUnits;
     }
 
-    function _transfer(address _from, address _to, uint _value) internal {
-        require(_to != 0x0);
-        require(balanceOf[_from] >= _value);
-        require(balanceOf[_to] + _value > balanceOf[_to]);
-        uint previousBalances = balanceOf[_from] + balanceOf[_to];
-        balanceOf[_from] -= _value;
+    function transfer(address _to, uint256 _value) {
+        if (balanceOf[msg.sender] < _value) throw;
+        if (balanceOf[_to] + _value < balanceOf[_to]) throw;
+        balanceOf[msg.sender] -= _value;
         balanceOf[_to] += _value;
-        emit Transfer(_from, _to, _value);
-        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+        Transfer(msg.sender, _to, _value);
     }
 
-    function transfer(address _to, uint256 _value) public {
-        _transfer(msg.sender, _to, _value);
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(_value <= allowance[_from][msg.sender]);
-        allowance[_from][msg.sender] -= _value;
-        _transfer(_from, _to, _value);
-        return true;
-    }
-
-    function approve(address _spender, uint256 _value) public
+    function approve(address _spender, uint256 _value)
         returns (bool success) {
         allowance[msg.sender][_spender] = _value;
         return true;
     }
 
     function approveAndCall(address _spender, uint256 _value, bytes _extraData)
-        public
-        returns (bool success) {
+        returns (bool success) {    
         tokenRecipient spender = tokenRecipient(_spender);
         if (approve(_spender, _value)) {
             spender.receiveApproval(msg.sender, _value, this, _extraData);
@@ -84,29 +70,23 @@ contract TokenERC20 {
         }
     }
 
-    function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);
-        balanceOf[msg.sender] -= _value;
-        totalSupply -= _value;
-        emit Burn(msg.sender, _value);
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        if (balanceOf[_from] < _value) throw;
+        if (balanceOf[_to] + _value < balanceOf[_to]) throw;
+        if (_value > allowance[_from][msg.sender]) throw;
+        balanceOf[_from] -= _value;
+        balanceOf[_to] += _value;
+        allowance[_from][msg.sender] -= _value;
+        Transfer(_from, _to, _value);
         return true;
     }
 
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);
-        require(_value <= allowance[_from][msg.sender]);
-        balanceOf[_from] -= _value;
-        allowance[_from][msg.sender] -= _value;
-        totalSupply -= _value;
-        emit Burn(_from, _value);
-        return true;
+    function () {
+        throw;
     }
 }
 
-contract MyAdvancedToken is owned, TokenERC20 {
-
-    uint256 public sellPrice;
-    uint256 public buyPrice;
+contract MyAdvancedToken is owned, token {
 
     mapping (address => bool) public frozenAccount;
 
@@ -115,29 +95,62 @@ contract MyAdvancedToken is owned, TokenERC20 {
     function MyAdvancedToken(
         uint256 initialSupply,
         string tokenName,
+        uint8 decimalUnits,
         string tokenSymbol
-    ) TokenERC20(initialSupply, tokenName, tokenSymbol) public {}
+    ) token (initialSupply, tokenName, decimalUnits, tokenSymbol) {}
 
-    function _transfer(address _from, address _to, uint _value) internal {
-        require (_to != 0x0);
-        require (balanceOf[_from] >= _value);
-        require (balanceOf[_to] + _value > balanceOf[_to]);
-        require(!frozenAccount[_from]);
-        require(!frozenAccount[_to]);
+    function transfer(address _to, uint256 _value) {
+        if (balanceOf[msg.sender] < _value) throw;
+        if (balanceOf[_to] + _value < balanceOf[_to]) throw;
+        if (frozenAccount[msg.sender]) throw;
+        balanceOf[msg.sender] -= _value;
+        balanceOf[_to] += _value;
+        Transfer(msg.sender, _to, _value);
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        if (frozenAccount[_from]) throw;
+        if (balanceOf[_from] < _value) throw;
+        if (balanceOf[_to] + _value < balanceOf[_to]) throw;
+        if (_value > allowance[_from][msg.sender]) throw;
         balanceOf[_from] -= _value;
         balanceOf[_to] += _value;
-        emit Transfer(_from, _to, _value);
+        allowance[_from][msg.sender] -= _value;
+        Transfer(_from, _to, _value);
+        return true;
     }
 
-    function mintToken(address target, uint256 mintedAmount) onlyOwner public {
+    function mintToken(address target, uint256 mintedAmount) onlyOwner {
         balanceOf[target] += mintedAmount;
         totalSupply += mintedAmount;
-        emit Transfer(0, this, mintedAmount);
-        emit Transfer(this, target, mintedAmount);
+        Transfer(0, this, mintedAmount);
+        Transfer(this, target, mintedAmount);
     }
 
-    function freezeAccount(address target, bool freeze) onlyOwner public {
+    function freezeAccount(address target, bool freeze) onlyOwner {
         frozenAccount[target] = freeze;
-        emit FrozenFunds(target, freeze);
+        FrozenFunds(target, freeze);
+    }
+    function unfreezeAccount(address target, bool freeze) onlyOwner {
+        frozenAccount[target] = !freeze;
+        FrozenFunds(target, !freeze);
+    }
+
+    function burn(uint256 _value) public returns (bool success) {        
+        require(balanceOf[msg.sender] >= _value);
+        balanceOf[msg.sender] -= _value;
+        totalSupply -= _value;
+        Burn(msg.sender, _value);        
+        return true;
+    }
+    
+    function burnFrom(address _from, uint256 _value) public returns (bool success) {        
+        require(balanceOf[_from] >= _value);
+        require(_value <= allowance[_from][msg.sender]);
+        balanceOf[_from] -= _value;
+        allowance[_from][msg.sender] -= _value;
+        totalSupply -= _value;
+        Burn(_from, _value);        
+        return true;
     }
 }
