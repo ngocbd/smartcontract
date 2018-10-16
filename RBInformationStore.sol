@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RBInformationStore at 0x958f81df7c7d4832058bf4a520f000f05f4601d1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RBInformationStore at 0x7e28b1b39d333007e14e7eea1c80186937aa2232
 */
 pragma solidity ^0.4.13;
 
@@ -18,47 +18,55 @@ contract Ownable {
   }
 }
 
+
 contract RBInformationStore is Ownable {
     address public profitContainerAddress;
     address public companyWalletAddress;
     uint public etherRatioForOwner;
-    address public multisig;
+    address public multiSigAddress;
+    address public accountAddressForSponsee;
 
-    function RBInformationStore(address _profitContainerAddress, address _companyWalletAddress, uint _etherRatioForOwner, address _multisig) {
+    modifier onlyMultiSig() {
+        require(multiSigAddress == msg.sender);
+        _;
+    }
+
+    function RBInformationStore
+    (
+        address _profitContainerAddress,
+        address _companyWalletAddress,
+        uint _etherRatioForOwner,
+        address _multiSigAddress,
+        address _accountAddressForSponsee
+    ) {
         profitContainerAddress = _profitContainerAddress;
         companyWalletAddress = _companyWalletAddress;
         etherRatioForOwner = _etherRatioForOwner;
-        multisig = _multisig;
+        multiSigAddress = _multiSigAddress;
+        accountAddressForSponsee = _accountAddressForSponsee;
     }
 
-    function setProfitContainerAddress(address _address)  {
-        require(multisig == msg.sender);
-        if(_address != 0x0) {
-            profitContainerAddress = _address;
-        }
+    function changeProfitContainerAddress(address _address) onlyMultiSig {
+        profitContainerAddress = _address;
     }
 
-    function setCompanyWalletAddress(address _address)  {
-        require(multisig == msg.sender);
-        if(_address != 0x0) {
-            companyWalletAddress = _address;
-        }
+    function changeCompanyWalletAddress(address _address) onlyMultiSig {
+        companyWalletAddress = _address;
     }
 
-    function setEtherRatioForOwner(uint _value)  {
-        require(multisig == msg.sender);
-        if(_value != 0) {
-            etherRatioForOwner = _value;
-        }
+    function changeEtherRatioForOwner(uint _value) onlyMultiSig {
+        etherRatioForOwner = _value;
     }
 
-    function changeMultiSig(address newAddress){
-        require(multisig == msg.sender);
-        multisig = newAddress;
+    function changeMultiSigAddress(address _address) onlyMultiSig {
+        multiSigAddress = _address;
     }
 
-    function changeOwner(address newOwner){
-        require(multisig == msg.sender);
-        owner = newOwner;
+    function changeOwner(address _address) onlyMultiSig {
+        owner = _address;
+    }
+
+    function changeAccountAddressForSponsee(address _address) onlyMultiSig {
+        accountAddressForSponsee = _address;
     }
 }
