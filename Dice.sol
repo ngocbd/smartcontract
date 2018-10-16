@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dice at 0xaae10c1223df062e2df6982a80621977fa8b2d34
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dice at 0x78F6A1d4b94d2e6c4cE3c5CC858b9dfB6e98B50f
 */
 // <ORACLIZE_API>
 /*
@@ -558,7 +558,6 @@ contract Dice is usingOraclize {
             if (addr != houseAddress) {
                 //Forward to house address all change
                 if (!(houseAddress.call.gas(safeGas).value(value)())) FailedSend(houseAddress, value);
-                delete investorsProfit;
             }
         }
     }
@@ -599,7 +598,7 @@ contract Dice is usingOraclize {
         uint betValue = msg.value - oraclizeFee;
         if ((((betValue * ((10000 - edge) - pwin)) / pwin ) <= (maxWin * getBankroll()) / 10000) && (betValue >= minBet)) {
             // encrypted arg: '\n{"jsonrpc":2.0,"method":"generateSignedIntegers","params":{"apiKey":"YOUR_API_KEY","n":1,"min":1,"max":10000},"id":1}'
-            bytes32 myid = oraclize_query("URL", "json(https://api.random.org/json-rpc/1/invoke).result.random.data.0","BDHJtabQ1ZOTn7ru7NwtVZEVKMS3XC58L3kS7WAcW1yfJU7uPfq4hp5N9Uvj9ZAhYl3qfyyUWHiPng8PLAAZhMqp24mUifAbScZZQyJWST4NcHSOtZf9yK6pQKo+cLzRZrC+YlB5VRSgPOGFTJXA16GRfAbmKEAE6BcD+ELIPTOgHZKfT/WQuDxB8N0vrtmDK1RddlxIE5OKlruRL6L2EaV0c77K7Xtr326wr/epJefuJBy0p90/SDCwWHzRwsNaFO1hq9vAHGik655GX6fl0O157w3P9z7BaxqiGOQH5V0=", ORACLIZE_GAS_LIMIT + safeGas);
+            bytes32 myid = oraclize_query("URL", "json(https://api.random.org/json-rpc/1/invoke).result.random.data.0","BPwAkLB04N2SS7xdbypA3lBJIAGzWtjPHFag/rIv9ki0zldEjuBbjirZlDAJhqoTq9qHASoAmkFcEhSYrQ+oICxfg+q/DzZIWK9mfdxi6nq8OpP9fvcahq0iGirEOHZYqUAcAH2iqzUoklowA6DKBwC9jH58lDUm3WsQSbnj2EHSvbdfqvVGdozBGsrtk6F/H5FIIf4b91ydLdh9rfdthu9iANL5KZmpRhFBD49y2xmFI5tum0KUiZR+HHEZ/5ihOCIyNjp5p4N1wiqhtRH4cygyVARcm+W4flSdz1JDNYU=", ORACLIZE_GAS_LIMIT + safeGas);
             bets[myid] = Bet(msg.sender, betValue, 0);
             betsKeys.push(myid);
         }
