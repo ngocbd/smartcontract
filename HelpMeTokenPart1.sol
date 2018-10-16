@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HelpMeTokenPart1 at 0xd1a3ace46c98e028229974217201433e7163c4dd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HelpMeTokenPart1 at 0xf6228fcd2a2fbcc29f629663689987bdcdba5d13
 */
 pragma solidity ^0.4.18;
 
@@ -53,7 +53,7 @@ contract HelpMeTokenPart1 is Ownable {
         _;
     }
     
-    event Transfer(address indexed from, address indexed to, uint tokens);
+    event Transfer(address from, address to, uint tokens);
     
     function setHelpMeTokenParts(address[] _a) public onlyOwner returns(bool)
     {
@@ -67,7 +67,7 @@ contract HelpMeTokenPart1 is Ownable {
         owner.transfer(msg.value);
         
         thank_you[msg.sender] = true;
-        emit Transfer(msg.sender, address(this), num);
+        emit Transfer(msg.sender, address(this), num * 1 ether);
         for(uint256 i=0; i<= HelpMeTokens.length-1; i++){
             HelpMeTokenInterface token = HelpMeTokenInterface( HelpMeTokens[i] );
             token.thankYou( msg.sender );
@@ -81,7 +81,7 @@ contract HelpMeTokenPart1 is Ownable {
             token.thankYou( _a );
         }
         thank_you[_a] = true;
-        emit Transfer(msg.sender, address(this), 1);
+        emit Transfer(msg.sender, address(this), 1 ether);
         return true;
     }
     
@@ -102,18 +102,16 @@ contract HelpMeTokenPart1 is Ownable {
     }
     
     function transfer(address _to, uint256 _value) public returns (bool) {
-        emit Transfer(msg.sender, _to, 1);
         return true;
     }
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        emit Transfer(_from, _to, num);
         return true;
     }
     function approve(address _spender, uint256 _value) public returns (bool) {
         return true;
     }
     function allowance(address _owner, address _spender) public view returns (uint256) {
-        return num;
+        return 0;
      }
 
 }
