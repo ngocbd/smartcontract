@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWalletWithDailyLimit at 0x02b0fd94c4f4b1e3e12abdf9b92c0939fa87abc0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWalletWithDailyLimit at 0xd364934752d976b38eac0fe70170612a5b006665
 */
-pragma solidity 0.4.4;
+pragma solidity 0.4.10;
 
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
