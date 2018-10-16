@@ -1,13 +1,16 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UNITYCOIN at 0xaa1b582744a3659603fea630c9e4225ba4875732
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Unitycoin at 0x6c3a7a00ea36045a04bae212bcf2200febb5b361
 */
-contract UNITYCOIN {
+pragma solidity ^0.4.2;
+
+contract Unitycoin {
     /* Public variables of the token */
     string public standard = 'Token 0.1';
     string public name;
     string public symbol;
     uint8 public decimals;
     uint256 public initialSupply;
+    uint256 public totalSupply;
 
     /* This creates an array with all balances */
     mapping (address => uint256) public balanceOf;
@@ -15,15 +18,15 @@ contract UNITYCOIN {
 
   
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function UNITYCOIN() {
+    function Unitycoin() {
 
-         initialSupply = 210000000;
-         name ="UNITYCOIN";
-        decimals = 5;
-         symbol = "UTY";
+         initialSupply = 100000000000000000000000000;
+         name ="Unitycoin";
+        decimals = 18;
+         symbol = "UNT";
         
         balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
-        uint256 totalSupply = initialSupply;                        // Update total supply
+        totalSupply = initialSupply;                        // Update total supply
                                    
     }
 
