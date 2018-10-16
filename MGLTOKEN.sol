@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MGLTOKEN at 0xf9c56d7e9e7e17d43a8f900aa65e8573c6f7a8c3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MGLTOKEN at 0x4bed05e3d9e9c09e7f5ee95828c485b907873589
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// (c) MGLTOKEN Contract, Gune created under name of MGLForex. 
+// (c) by MGLForex created with Gune under name of MGLForex. 
 // Safe maths
 // ----------------------------------------------------------------------------
 contract SafeMath {
@@ -38,7 +38,7 @@ contract ERC20Interface {
     function transfer(address to, uint tokens) public returns (bool success);
     function approve(address spender, uint tokens) public returns (bool success);
     function transferFrom(address from, address to, uint tokens) public returns (bool success);
-    function burnToken(address target, uint tokens) returns (bool result);    
+    function burnToken(address target,uint tokens) returns (bool result);    
     function mintToken(address target, uint tokens) returns (bool result);
 
     event Transfer(address indexed from, address indexed to, uint tokens);
@@ -101,12 +101,9 @@ contract MGLTOKEN is ERC20Interface, Owned, SafeMath {
     uint public initialSupply = 20000000e18;
     uint public totalSupply_;
     uint public HARD_CAP_T = 100000000;
-    uint public SOFT_CAP_T = 30000000;
+    uint public SOFT_CAP_T = 300000000;
     uint public startCrowdsale;
-    uint public endCrowdsale;
-    address public tokenOwner;
-    
-  
+    uint public endCrowdsalel;
 
     mapping(address => uint) balances;
     mapping(address => mapping(address => uint)) allowed;
@@ -121,11 +118,8 @@ contract MGLTOKEN is ERC20Interface, Owned, SafeMath {
         decimals = 18;
         bonusEnds = now + 31 days;
         endDate = now + 61 days;
-        endCrowdsale = 100000000e18;
+        endCrowdsalel = 100000000e18;
         startCrowdsale = 0;
-        tokenOwner = address(0x158A4507A22a0b98EeAf9694b91a8Ddf1f49Dd7d);
-    
-    
     }
     // ------------------------------------------------------------------------
     // Total supply
@@ -211,10 +205,10 @@ contract MGLTOKEN is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // 7000 MGL Tokens per 1 ETH 
+    // 7000 MGLT Tokens per 1 ETH 
     // ------------------------------------------------------------------------
     function () public payable {
-        require(now >= startDate && now <= endDate && totalSupply_ >= startCrowdsale && totalSupply_ < endCrowdsale);
+        require(now >= startDate && now <= endDate && totalSupply_ >= startCrowdsale && totalSupply_ < endCrowdsalel);
         uint tokens;
         if (now <= bonusEnds) {
             tokens = msg.value *8400;
@@ -227,24 +221,17 @@ contract MGLTOKEN is ERC20Interface, Owned, SafeMath {
         owner.transfer(msg.value);
     }
 
-function burnToken(address target,uint tokens) returns (bool result){ 
+function burnToken(address target, uint tokens) returns (bool result){ 
         balances[target] -= tokens;
 	totalSupply_ = safeSub(totalSupply_, tokens);
         Transfer(owner, target, tokens);
-        require(msg.sender == tokenOwner);
-}
- 
+    }
 
 function mintToken(address target, uint tokens) returns (bool result){ 
         balances[target] += tokens;
 	totalSupply_ = safeAdd(totalSupply_, tokens);
         Transfer(owner, target, tokens);
-        require(msg.sender == tokenOwner);
-    
-}
-        
-
-
+    }
 
     // ------------------------------------------------------------------------
     // Owner can transfer out any accidentally sent ERC20 tokens
