@@ -1,268 +1,134 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XmasToken at 0xf24d3dfffcaf9f9a5dda9c57eeeb1ac0bba49c86
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XmasToken at 0xcda0f7d68eb1398d459458fa3b31751a65030e6e
 */
-/**
- * The Xmas Token contract complies with the ERC20 standard (see https://github.com/ethereum/EIPs/issues/20).
- * Santa Claus doesn't kepp any shares and all tokens not being sold during the crowdsale (but the 
- * reserved gift shares) are burned by the elves.
- * 
- * Author: Christmas Elf
- * Audit: Rudolf the red nose Reindear
- */
+pragma solidity ^0.4.18;
 
-pragma solidity ^0.4.15;
-
-/**
- * Defines functions that provide safe mathematical operations.
- */
-library SafeMath {
-	function mul(uint256 a, uint256 b) internal returns(uint256) {
-		uint256 c = a * b;
-		assert(a == 0 || c / a == b);
-		return c;
-	}
-	
-	function div(uint256 a, uint256 b) internal returns(uint256) {
-		uint256 c = a / b;
-		return c;
-	}
-
-	function sub(uint256 a, uint256 b) internal returns(uint256) {
-		assert(b <= a);
-		return a - b;
-	}
-
-	function add(uint256 a, uint256 b) internal returns(uint256) {
-		uint256 c = a + b;
-		assert(c >= a && c >= b);
-		return c;
-	}
+contract ForeignToken {
+    function balanceOf(address _owner) constant returns (uint256);
+    function transfer(address _to, uint256 _value) returns (bool);
 }
 
-/**
- * Implementation of Xmas Token contract.
- */
 contract XmasToken {
+    address owner = msg.sender;
+
+    bool public purchasingAllowed = false;
+
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+
+    uint256 public totalContribution = 0;
+
+    uint256 public totalSupply = 0;
+    uint256 public hardCap = 1000000;
     
-    using SafeMath for uint256; 
-	
-	// Xmas token basic data
-	string constant public standard = "ERC20";
-	string constant public symbol = "xmas";
-	string constant public name = "XmasToken";
-	uint8 constant public decimals = 18;
-	
-	// Xmas token distribution
-	uint256 constant public initialSupply = 4000000 * 1 ether;
-	uint256 constant public tokensForIco = 3000000 * 1 ether;
-	uint256 constant public tokensForBonus = 1000000 * 1 ether;
-	
-	/** 
-	 * Starting with this time tokens may be transfered.
-	 */
-	uint256 constant public startAirdropTime = 1514073600;
-	
-	/** 
-	 * Starting with this time tokens may be transfered.
-	 */
-	uint256 public startTransferTime;
-	
-	/**
-	 * Number of tokens sold in crowdsale
-	 */
-	uint256 public tokensSold;
+    function name() constant returns (string) { return "XmasToken Limited Edition"; }
+    function symbol() constant returns (string) { return "XMAS"; }
+    function decimals() constant returns (uint8) { return 0; }
 
-	/**
-	 * true if tokens have been burned
-	 */
-	bool public burned;
+    function balanceOf(address _owner) constant returns (uint256) { return balances[_owner]; }
 
-	mapping(address => uint256) public balanceOf;
-	mapping(address => mapping(address => uint256)) public allowance;
-	
-	// -------------------- Crowdsale parameters --------------------
-	
-	/**
-	 * the start date of the crowdsale 
-	 */
-	uint256 constant public start = 1510401600;
-	
-	/**
-	 * the end date of the crowdsale 
-	 */
-	uint256 constant public end = 1512863999;
+    function transfer(address _to, uint256 _value) returns (bool success) {
+        // mitigates the ERC20 short address attack
+        if(msg.data.length < (2 * 32) + 4) { throw; }
 
-	/**
-	 * the exchange rate: 1 eth = 1000 xmas tokens
-	 */
-	uint256 constant public tokenExchangeRate = 1000;
-	
-	/**
-	 * how much has been raised by crowdale (in ETH) 
-	 */
-	uint256 public amountRaised;
+        if (_value == 0) { return false; }
 
-	/**
-	 * indicates if the crowdsale has been closed already 
-	 */
-	bool public crowdsaleClosed = false;
+        uint256 fromBalance = balances[msg.sender];
 
-	/**
-	 * tokens will be transfered from this address 
-	 */
-	address public xmasFundWallet;
-	
-	/**
-	 * the wallet on which the eth funds will be stored 
-	 */
-	address ethFundWallet;
-	
-	// -------------------- Events --------------------
-	
-	// public events on the blockchain that will notify listeners
-	event Transfer(address indexed from, address indexed to, uint256 value);
-	event Approval(address indexed _owner, address indexed spender, uint256 value);
-	event FundTransfer(address backer, uint amount, bool isContribution, uint _amountRaised);
-	event Burn(uint256 amount);
+        bool sufficientFunds = fromBalance >= _value;
+        bool overflowed = balances[_to] + _value < balances[_to];
 
-	/** 
-	 * Initializes contract with initial supply tokens to the creator of the contract 
-	 */
-	function XmasToken(address _ethFundWallet) {
-		ethFundWallet = _ethFundWallet;
-		xmasFundWallet = msg.sender;
-		balanceOf[xmasFundWallet] = initialSupply;
-		startTransferTime = end;
-	}
-		
-	/**
-	 * Default function called whenever anyone sends funds to this contract.
-	 * Only callable if the crowdsale started and hasn't been closed already and the tokens for icos haven't been sold yet.
-	 * The current token exchange rate is looked up and the corresponding number of tokens is transfered to the receiver.
-	 * The sent value is directly forwarded to a safe wallet.
-	 * This method allows to purchase tokens in behalf of another address.
-	 */
-	function() payable {
-		uint256 amount = msg.value;
-		uint256 numTokens = amount.mul(tokenExchangeRate); 
-		require(numTokens >= 100 * 1 ether);
-		require(!crowdsaleClosed && now >= start && now <= end && tokensSold.add(numTokens) <= tokensForIco);
+        if (sufficientFunds && !overflowed) {
+            balances[msg.sender] -= _value;
+            balances[_to] += _value;
 
-		ethFundWallet.transfer(amount);
-		
-		balanceOf[xmasFundWallet] = balanceOf[xmasFundWallet].sub(numTokens); 
-		balanceOf[msg.sender] = balanceOf[msg.sender].add(numTokens);
+            Transfer(msg.sender, _to, _value);
+            return true;
+        } else { return false; }
+    }
 
-		Transfer(xmasFundWallet, msg.sender, numTokens);
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        // mitigates the ERC20 short address attack
+        if(msg.data.length < (3 * 32) + 4) { throw; }
 
-		// update status
-		amountRaised = amountRaised.add(amount);
-		tokensSold += numTokens;
+        if (_value == 0) { return false; }
 
-		FundTransfer(msg.sender, amount, true, amountRaised);
-	}
-	
-	/** 
-	 * Sends the specified amount of tokens from msg.sender to a given address.
-	 * @param _to the address to transfer to.
-	 * @param _value the amount of tokens to be trasferred.
-	 * @return true if the trasnfer is successful, false otherwise.
-	 */
-	function transfer(address _to, uint256 _value) returns(bool success) {
-		require(now >= startTransferTime); 
+        uint256 fromBalance = balances[_from];
+        uint256 allowance = allowed[_from][msg.sender];
 
-		balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value); 
-		balanceOf[_to] = balanceOf[_to].add(_value); 
+        bool sufficientFunds = fromBalance >= _value;
+        bool sufficientAllowance = allowance >= _value;
+        bool overflowed = balances[_to] + _value > balances[_to];
 
-		Transfer(msg.sender, _to, _value); 
+        if (sufficientFunds && sufficientAllowance && !overflowed) {
+            balances[_to] += _value;
+            balances[_from] -= _value;
 
-		return true;
-	}
+            allowed[_from][msg.sender] -= _value;
 
-	/** 
-	 * Allows another contract or person to spend the specified amount of tokens on behalf of msg.sender.
-	 * @param _spender the address which will spend the funds.
-	 * @param _value the amount of tokens to be spent.
-	 * @return true if the approval is successful, false otherwise.
-	 */
-	function approve(address _spender, uint256 _value) returns(bool success) {
-		require((_value == 0) || (allowance[msg.sender][_spender] == 0));
+            Transfer(_from, _to, _value);
+            return true;
+        } else { return false; }
+    }
 
-		allowance[msg.sender][_spender] = _value;
+    function approve(address _spender, uint256 _value) returns (bool success) {
+        // mitigates the ERC20 spend/approval race condition
+        if (_value != 0 && allowed[msg.sender][_spender] != 0) { return false; }
 
-		Approval(msg.sender, _spender, _value);
+        allowed[msg.sender][_spender] = _value;
 
-		return true;
-	}
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
 
-	/** 
-	 * Transfers tokens from one address to another address.
-	 * This is only allowed if the token holder approves. 
-	 * @param _from the address from which the given _value will be transfer.
-	 * @param _to the address to which the given _value will be transfered.
-	 * @param _value the amount of tokens which will be transfered from one address to another.
-	 * @return true if the transfer was successful, false otherwise. 
-	 */
-	function transferFrom(address _from, address _to, uint256 _value) returns(bool success) {
-		if (now < startTransferTime) 
-			require(_from == xmasFundWallet);
-		var _allowance = allowance[_from][msg.sender];
-		require(_value <= _allowance);
-		
-		balanceOf[_from] = balanceOf[_from].sub(_value); 
-		balanceOf[_to] = balanceOf[_to].add(_value); 
-		allowance[_from][msg.sender] = _allowance.sub(_value);
+    function allowance(address _owner, address _spender) constant returns (uint256) {
+        return allowed[_owner][_spender];
+    }
 
-		Transfer(_from, _to, _value);
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
-		return true;
-	}
-	
-	/** 
-	 * Burns the remaining tokens except the gift share.
-	 * To be called when ICO is closed. Anybody may burn the tokens after ICO ended, but only once.
-	 */
-	function burn() internal {
-		require(now > startTransferTime);
-		require(burned == false);
-			
-		uint256 difference = balanceOf[xmasFundWallet].sub(tokensForBonus);
-		tokensSold = tokensForIco.sub(difference);
-		balanceOf[xmasFundWallet] = tokensForBonus;
-			
-		burned = true;
+    function enablePurchasing() {
+        if (msg.sender != owner) { throw; }
 
-		Burn(difference);
-	}
+        purchasingAllowed = true;
+    }
 
-	/**
-	 * Marks the crowdsale as closed.
-	 * Burns the unsold tokens, if any.
-	 */
-	function markCrowdsaleEnding() {
-		require(now > end);
+    function disablePurchasing() {
+        if (msg.sender != owner) { throw; }
 
-		burn(); 
-		crowdsaleClosed = true;
-	}
-	
-	/**
-	 * Sends the bonus tokens to addresses from Santa's list gift.
-	 * @return true if the airdrop is successful, false otherwise.
-	 */
-	function sendGifts(address[] santaGiftList) returns(bool success)  {
-		require(msg.sender == xmasFundWallet);
-		require(now >= startAirdropTime);
-	
-		for(uint i = 0; i < santaGiftList.length; i++) {
-		    uint256 tokensHold = balanceOf[santaGiftList[i]];
-			if (tokensHold >= 100 * 1 ether) { 
-				uint256 bonus = tokensForBonus.div(1 ether);
-				uint256 giftTokens = ((tokensHold.mul(bonus)).div(tokensSold)) * 1 ether;
-				transferFrom(xmasFundWallet, santaGiftList[i], giftTokens);
-			}
-		}
-		
-		return true;
-	}
+        purchasingAllowed = false;
+    }
+
+    function withdrawForeignTokens(address _tokenContract) returns (bool) {
+        if (msg.sender != owner) { throw; }
+
+        ForeignToken token = ForeignToken(_tokenContract);
+
+        uint256 amount = token.balanceOf(address(this));
+        return token.transfer(owner, amount);
+    }
+
+    function getStats() constant returns (uint256, uint256, uint256, bool) {
+        return (totalContribution, totalSupply, hardCap, purchasingAllowed);
+    }
+
+    function() payable {
+        if (!purchasingAllowed) { throw; }
+
+        if (msg.value == 0) { return; }
+
+        uint256 tokensIssued = (msg.value / 10000000000000000 + 2 * (msg.value / uint256(100000000000000000)) + 5 * (msg.value / uint256(1000000000000000000)));
+
+        if (totalSupply + tokensIssued > hardCap || tokensIssued == 0) {return; }
+        
+        owner.transfer(msg.value);
+        totalContribution += msg.value;
+        
+        totalSupply += tokensIssued;
+        
+        balances[msg.sender] += tokensIssued;
+
+        Transfer(address(this), msg.sender, tokensIssued);
+    }
 }
