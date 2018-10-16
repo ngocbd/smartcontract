@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract InterCrypto at 0xc876b7545c2b6bfac4cd82db1ebd33f70d738277
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract InterCrypto at 0x2d3b62a8b756103e417d161c20e97e76ed5ef0c2
 */
 pragma solidity ^0.4.15;
-
 
 /**
  * @title Ownable
@@ -11,6 +10,9 @@ pragma solidity ^0.4.15;
  */
 contract Ownable {
   address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
 
   /**
@@ -37,6 +39,7 @@ contract Ownable {
    */
   function transferOwnership(address newOwner) onlyOwner {
     require(newOwner != address(0));      
+    OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
 
@@ -87,6 +90,10 @@ contract myUsingOraclize is Ownable {
 
     function oraclize_getPrice(string datasource) internal returns (uint) {
         return oraclize.getPrice(datasource, oraclize_gaslimit);
+    }
+    
+    function oraclize_setGasPrice(uint _gasPrice) onlyOwner public {
+        oraclize.setCustomGasPrice(_gasPrice);
     }
 
 
