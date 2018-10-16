@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BankeraToken at 0xd2e06619cb0fbe3818dacfb62b29b7d317ad997a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BankeraToken at 0xc80c5e40220172b36adee2c951f26f2a577810c5
 */
 pragma solidity ^0.4.18;
 /**
