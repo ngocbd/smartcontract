@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x16Bb5d4424e64dD928714e596e69aE9a2c8bE1Ed
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x7360bb3aca074b8d855e1fa8122de242942f75ec
 */
 pragma solidity ^0.4.16;
 
@@ -29,11 +29,14 @@ contract TokenERC20 {
      * Initializes contract with initial supply tokens to the creator of the contract
      */
     function TokenERC20(
+        uint256 initialSupply,
+        string tokenName,
+        string tokenSymbol
     ) public {
-        totalSupply = 20483871 * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = "ZEEW-TOKEN";                                   // Set the name for display purposes
-        symbol = "%Z";                               // Set the symbol for display purposes
+        name = tokenName;                                   // Set the name for display purposes
+        symbol = tokenSymbol;                               // Set the symbol for display purposes
     }
 
     /**
