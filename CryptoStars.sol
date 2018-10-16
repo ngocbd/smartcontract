@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoStars at 0xd54920cedf704b87342fa26d5773efabf9037a77
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoStars at 0x75E13520fc29D0BcdD21Da14Ed693563091Ff0FC
 */
-pragma solidity ^0.4.12;
+pragma solidity ^0.4.8;
 
 //import "./ConvertLib.sol";
 
@@ -109,10 +109,6 @@ contract CryptoStars {
         starIndexToAddress[119514] = owner;
         Assign(owner, 119514, starIndexToSTRZName[119514], starIndexToSTRZMasterName[119514]);
 
-        Transfer(0x0, owner, 5);
-
-        balanceOf[msg.sender] = 5;
-
     }
 
 
@@ -123,7 +119,6 @@ contract CryptoStars {
         while (numberOfStarsReserved < numberOfStarsToReserve && numberStarsReservedThisRun < maxForThisRun) {
             starIndexToAddress[nextStarIndexToAssign] = msg.sender;
             Assign(msg.sender, nextStarIndexToAssign,starIndexToSTRZName[nextStarIndexToAssign], starIndexToSTRZMasterName[nextStarIndexToAssign]);
-            Transfer(0x0, msg.sender, 1);
             numberStarsReservedThisRun++;
             nextStarIndexToAssign++;
         }
@@ -180,8 +175,6 @@ contract CryptoStars {
     
         balanceOf[msg.sender]++;
         Assign(msg.sender, starIndex, starIndexToSTRZName[starIndex], starIndexToSTRZMasterName[starIndex]);
-        Transfer(0x0, msg.sender, 1);
-
     }
 
     
@@ -194,7 +187,6 @@ contract CryptoStars {
         balanceOf[to]++;
         StarTransfer(msg.sender, to, starIndex);
         Assign(to, starIndex, starIndexToSTRZName[starIndex], starIndexToSTRZMasterName[starIndex]);
-        Transfer(msg.sender, to, 1);
         pendingWithdrawals[owner] += msg.value;
         //kill any bids and refund bid
         Bid bid = starBids[starIndex];
@@ -252,8 +244,6 @@ contract CryptoStars {
 
         Assign(msg.sender, starIndex,starIndexToSTRZName[starIndex], starIndexToSTRZMasterName[starIndex]);
 
-        Transfer(seller, msg.sender, 1);
-
         uint amountseller = msg.value*97/100;
         uint amountowner = msg.value*3/100;           //Owner of contract receives 3% registration fee
 
@@ -297,7 +287,6 @@ contract CryptoStars {
         StarBought(starIndex, msg.value, owner, msg.sender, strSTRZName, STRZMasterName ,MinStarIndexAvailable, MaxStarIndexAvailable);
 
         Assign(msg.sender, starIndex, starIndexToSTRZName[starIndex], starIndexToSTRZMasterName[starIndex]);
-        Transfer(0x0, msg.sender, 1);
         //Assign(msg.sender, starIndex);
     }
 
