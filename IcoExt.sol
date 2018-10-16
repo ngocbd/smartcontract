@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IcoExt at 0x92277b492f4398f1c74d13ac87faece4d7f49000
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IcoExt at 0x94d7e215fcb6d731919b7726f0a3571bf2fe7c6f
 */
 pragma solidity ^0.4.15;
 
@@ -81,32 +81,31 @@ contract IcoExt {
     // Constructor function with main constants and variables 
  
  	function IcoExt() {
-	    authorizedCaller = msg.sender;
-	    owner = msg.sender;
+		authorizedCaller = msg.sender;
+		owner = msg.sender;
 
-      collectorAddress = 0x6835706E8e58544deb6c4EC59d9815fF6C20417f;
-	    tokenAdd = 0x22f0af8d78851b72ee799e05f54a77001586b18a;
-      tokenSpender = 0x6835706E8e58544deb6c4EC59d9815fF6C20417f;
+		collectorAddress = 0x6835706E8e58544deb6c4EC59d9815fF6C20417f;
+		tokenAdd = 0x22f0af8d78851b72ee799e05f54a77001586b18a;
+		tokenSpender = 0x6835706E8e58544deb6c4EC59d9815fF6C20417f;
 
-      whitelistAdd = 0xad56C554f32D51526475d541F5DeAabE1534854d;
+		whitelistAdd = 0xad56C554f32D51526475d541F5DeAabE1534854d;
 
-	    autoPrice = true;
-	    authorized[authorizedCaller] = true;
+		authorized[authorizedCaller] = true;
 
-      minAcceptedETH = 0.05 ether;
+		minAcceptedETH = 0.05 ether;
 
-	    tokenDecimals = 10;
-	    tokenMult = 10 ** tokenDecimals;
+		tokenDecimals = 10;
+		tokenMult = 10 ** tokenDecimals;
 
-	   	initialPrice = 10000 * tokenMult; // 10,000 tokens per ether (0,0001 eth/token)
-      tokenPrice = initialPrice;
-      autoPrice = false;
+		initialPrice = 10000 * tokenMult; // 10,000 tokens per ether (0,0001 eth/token)
+		tokenPrice = initialPrice;
+		autoPrice = true;
 
-	    initialTime = now; // 1521590400; // March 21st, 2018
-	    increasePerBlock = 159; // Percentage to add per each block respect original price, in cents
-	    increasePerBlockDiv = 1000000000; // According to specs: 1,59% x 10 ^ -5 (= 159 / 10 ^ 7)
+		initialTime = 1520627210 ; // March 9th, 2018
+		increasePerBlock = 159; // Percentage to add per each block respect original price, in cents
+		increasePerBlockDiv = 1000000000; // According to specs: 1.59% x 10 ^ -5 (= 159 / 10 ^ 7) == 0.055 % per day
 
-	    stage = 0;
+		stage = 1;
 	}
 
 
@@ -196,15 +195,14 @@ function calculatePrice(uint _when) constant public returns(uint _result){
 	uint delay = (_when - initialTime) / 25;
 	uint factor = delay * increasePerBlock;
 	uint multip = initialPrice * factor;
-	uint result = initialPrice - multip / increasePerBlockDiv / 100; // 100 = percent
-	require (result<=initialPrice);
+	uint result = initialPrice - multip / increasePerBlockDiv;
+	require (result <= initialPrice);
 	return result;
-   	//return initialPrice - initialPrice * (_when - initialTime) / 25 * increasePerBlock / increasePerBlockDiv;
-}
+ }
 
 
 function changeToStage(uint8 _stage) isAuthorized returns(bool) {
-	require(stage<_stage && _stage < 4);
+	require(stage < _stage && _stage < 4);
 	stage = _stage;
 	return true;
 }
