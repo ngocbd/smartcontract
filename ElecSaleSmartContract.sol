@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ElecSaleSmartContract at 0x3f796139c44bb79ea4744a1ca43b9ae91fdf62eb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ElecSaleSmartContract at 0x12795d1331b2f9a4c789203efc5987030854ad55
 */
 pragma solidity ^0.4.11;
 
@@ -185,7 +185,7 @@ contract StandardToken is ERC20, BasicToken {
 
 
 contract ElecTokenSmartContract is StandardToken, Ownable {
-    string  public  constant name = "ELECTRIFY TOKEN";
+    string  public  constant name = "ElectrifyAsia";
     string  public  constant symbol = "ELEC";
     uint8    public  constant decimals = 18;
 
@@ -517,7 +517,7 @@ contract ElecSaleSmartContract is ElecApprover{
         // send payment to wallet
         sendETHToMultiSig( weiPayment );
         raisedWei = raisedWei.add( weiPayment );
-        uint recievedTokens = weiPayment.mul( 5000 );
+        uint recievedTokens = weiPayment.mul( 11750 );
 
         assert( token.transfer( recipient, recievedTokens ) );
 
