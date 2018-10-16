@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AkiCoin at 0x298efc582f84bb5cc2c45f8882440315e37a76d4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AkiCoin at 0x7ef8eed38c44f5952b65d9c778eed74807fdd12c
 */
 pragma solidity ^0.4.11;
 
@@ -110,9 +110,8 @@ contract ERC20CompatibleToken {
         allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
         if(codeLength>0) {
             ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
-            receiver.tokenFallback(msg.sender, _value, empty);
+            receiver.tokenFallback(_from, _value, empty);
         }
-
         Transfer(_from, _to, _value);
         return true;
     }
