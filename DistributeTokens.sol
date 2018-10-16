@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DistributeTokens at 0x8f4a025372e3bfe4867d56ce243ade9232cf0fad
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DistributeTokens at 0xa1febe73d8ef9df7f51d8557cb25640a1ecc3e6a
 */
 /**
  * @title Ownable
@@ -8,7 +8,7 @@
  */
 contract Ownable {
   address public owner;
-
+ 
 
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
@@ -48,7 +48,6 @@ contract DistributeTokens is Ownable{
   
 	token tokenReward;
   address public addressOfTokenUsedAsReward;
-
   function setTokenReward(address _addr) onlyOwner {
     tokenReward = token(_addr);
     addressOfTokenUsedAsReward = _addr;
