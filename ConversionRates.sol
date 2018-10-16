@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ConversionRates at 0x92bE5717e07Ce2316fE27F842848Fd06a11aA510
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ConversionRates at 0x3209f7ae16d545c60d8cc9c6a5f02181a94fea52
 */
 pragma solidity 0.4.18;
 
@@ -670,7 +670,7 @@ contract ConversionRates is ConversionRatesInterface, VolumeImbalanceRecorder, U
             rate = addBps(rate, extraBps);
         }
 
-        if (abs(totalImbalance + imbalanceQty) >= getMaxTotalImbalance(token)) return 0;
+        if (abs(totalImbalance) >= getMaxTotalImbalance(token)) return 0;
         if (abs(blockImbalance + imbalanceQty) >= getMaxPerBlockImbalance(token)) return 0;
 
         return rate;
