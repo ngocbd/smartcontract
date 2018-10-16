@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartToken at 0x1bce0e684a1607fd86407909073eea2336042bf7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartToken at 0xa415cd56c694bd7402d14560d18bb19a28f77617
 */
 pragma solidity ^0.4.11;
 
@@ -41,7 +41,7 @@ contract Utils {
 
         @return sum
     */
-    function safeAdd(uint256 _x, uint256 _y) internal returns (uint256) {
+    function safeAdd(uint256 _x, uint256 _y) internal constant returns (uint256) {
         uint256 z = _x + _y;
         assert(z >= _x);
         return z;
@@ -55,7 +55,7 @@ contract Utils {
 
         @return difference
     */
-    function safeSub(uint256 _x, uint256 _y) internal returns (uint256) {
+    function safeSub(uint256 _x, uint256 _y) internal constant returns (uint256) {
         assert(_x >= _y);
         return _x - _y;
     }
@@ -68,7 +68,7 @@ contract Utils {
 
         @return product
     */
-    function safeMul(uint256 _x, uint256 _y) internal returns (uint256) {
+    function safeMul(uint256 _x, uint256 _y) internal constant returns (uint256) {
         uint256 z = _x * _y;
         assert(_x == 0 || z / _x == _y);
         return z;
@@ -146,15 +146,6 @@ contract IERC20Token {
     function transfer(address _to, uint256 _value) public returns (bool success);
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
     function approve(address _spender, uint256 _value) public returns (bool success);
-}
-
-/*
-    Smart Token interface
-*/
-contract ISmartToken is IOwned, IERC20Token {
-    function disableTransfers(bool _disable) public;
-    function issue(address _to, uint256 _amount) public;
-    function destroy(address _from, uint256 _amount) public;
 }
 
 /**
@@ -295,6 +286,15 @@ contract TokenHolder is ITokenHolder, Owned, Utils {
     {
         assert(_token.transfer(_to, _amount));
     }
+}
+
+/*
+    Smart Token interface
+*/
+contract ISmartToken is IOwned, IERC20Token {
+    function disableTransfers(bool _disable) public;
+    function issue(address _to, uint256 _amount) public;
+    function destroy(address _from, uint256 _amount) public;
 }
 
 /*
