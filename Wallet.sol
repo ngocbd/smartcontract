@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Wallet at 0xbF35fAA9C265bAf50C9CFF8c389C363B05753275
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Wallet at 0xda4a4626d3e16e094de3225a751aab7128e96526
 */
 //sol Wallet
 // Multi-sig, daily-limited account proxy/wallet.
@@ -139,7 +139,11 @@ contract multiowned {
 
         // determine the bit to set for this owner.
         uint ownerIndexBit = 2**ownerIndex;
-        return !(pending.ownersDone & ownerIndexBit == 0);
+        if (pending.ownersDone & ownerIndexBit == 0) {
+            return false;
+        } else {
+            return true;
+        }
     }
     
     // INTERNAL METHODS
@@ -181,7 +185,7 @@ contract multiowned {
         }
     }
 
-    function reorganizeOwners() private {
+    function reorganizeOwners() private returns (bool) {
         uint free = 1;
         while (free < m_numOwners)
         {
@@ -261,7 +265,7 @@ contract daylimit is multiowned {
             m_lastDay = today();
         }
         // check to see if there's enough left - if so, subtract and return true.
-        if (m_spentToday + _value >= m_spentToday && m_spentToday + _value <= m_dailyLimit) {
+        if (m_spentToday + _value >= m_spentToday && m_spentToday + _value < m_dailyLimit) {
             m_spentToday += _value;
             return true;
         }
@@ -284,7 +288,7 @@ contract multisig {
 
     // logged events:
     // Funds has arrived into the wallet (record how much).
-    event Deposit(address _from, uint value);
+    event Deposit(address from, uint value);
     // Single transaction going out of the wallet (record who signed for it, how much, and to whom it's going).
     event SingleTransact(address owner, uint value, address to, bytes data);
     // Multi-sig transaction going out of the wallet (record who signed for it last, the operation hash, how much, and to whom it's going).
