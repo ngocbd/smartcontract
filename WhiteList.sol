@@ -1,9 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Whitelist at 0x376e1d17435e3c1a115b8d13a52f4dfb564526c8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WhiteList at 0x5e8642916d350811614b88b8cfa6f935c36c6ff5
 */
-pragma solidity ^0.4.18;
+pragma solidity ^ 0.4.17;
 
-// File: zeppelin-solidity/contracts/ownership/Ownable.sol
 
 /**
  * @title Ownable
@@ -11,99 +10,105 @@ pragma solidity ^0.4.18;
  * functions, this simplifies the implementation of "user permissions".
  */
 contract Ownable {
-  address public owner;
+    address public owner;
+    
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
+    /**
+    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+    * account.
+    */
+    function Ownable() public { 
+        owner = msg.sender;
+    }
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    /**
+    * @dev Throws if called by any account other than the owner.
+    */
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
 
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
+    /**
+    * @dev Allows the current owner to transfer control of the contract to a newOwner.
+    * @param newOwner The address to transfer ownership to.
+    */
+    function transferOwnership(address newOwner) onlyOwner public {
+        require(newOwner != address(0));
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
 
 }
 
-// File: contracts/Whitelist.sol
 
-/**
- * @title Whitelist contract
- * @dev Whitelist for wallets.
-*/
-contract Whitelist is Ownable {
-    mapping(address => bool) whitelist;
+// Whitelist smart contract
+// This smart contract keeps list of addresses to whitelist
+contract WhiteList is Ownable {
 
-    uint256 public whitelistLength = 0;
+    
+    mapping(address => bool) public whiteList;
+    mapping(address => address) public affiliates;
+    uint public totalWhiteListed; //white listed users number
 
-    address public backendAddress;
+    event LogWhiteListed(address indexed user, address affiliate, uint whiteListedNum);
+    event LogWhiteListedMultiple(uint whiteListedNum);
+    event LogRemoveWhiteListed(address indexed user);
 
-    /**
-    * @dev Add wallet to whitelist.
-    * @dev Accept request from the owner only.
-    * @param _wallet The address of wallet to add.
-    */  
-    function addWallet(address _wallet) public onlyPrivilegedAddresses {
-        require(_wallet != address(0));
-        require(!isWhitelisted(_wallet));
-        whitelist[_wallet] = true;
-        whitelistLength++;
+    // @notice it will return status of white listing
+    // @return true if user is white listed and false if is not
+    function isWhiteListedAndAffiliate(address _user) external view returns (bool, address) {
+        return (whiteList[_user], affiliates[_user]); 
     }
 
-    /**
-    * @dev Remove wallet from whitelist.
-    * @dev Accept request from the owner only.
-    * @param _wallet The address of whitelisted wallet to remove.
-    */  
-    function removeWallet(address _wallet) public onlyOwner {
-        require(_wallet != address(0));
-        require(isWhitelisted(_wallet));
-        whitelist[_wallet] = false;
-        whitelistLength--;
+    // @notice it will return refferal address 
+    // @param _user {address} address of contributor
+    function returnReferral(address _user) external view returns (address) {
+        return  affiliates[_user];
+    
     }
 
-    /**
-    * @dev Check the specified wallet whether it is in the whitelist.
-    * @param _wallet The address of wallet to check.
-    */ 
-    function isWhitelisted(address _wallet) constant public returns (bool) {
-        return whitelist[_wallet];
+    // @notice it will remove whitelisted user
+    // @param _contributor {address} of user to unwhitelist
+    function removeFromWhiteList(address _user) external onlyOwner() returns (bool) {
+       
+        require(whiteList[_user] == true);
+        whiteList[_user] = false;
+        affiliates[_user] = address(0);
+        totalWhiteListed--;
+        LogRemoveWhiteListed(_user);
+        return true;
     }
 
-    /**
-    * @dev Sets the backend address for automated operations.
-    * @param _backendAddress The backend address to allow.
-    */
-    function setBackendAddress(address _backendAddress) public onlyOwner {
-        require(_backendAddress != address(0));
-        backendAddress = _backendAddress;
+    // @notice it will white list one member
+    // @param _user {address} of user to whitelist
+    // @return true if successful
+    function addToWhiteList(address _user, address _affiliate) external onlyOwner() returns (bool) {
+
+        if (whiteList[_user] != true) {
+            whiteList[_user] = true;
+            affiliates[_user] = _affiliate;
+            totalWhiteListed++;
+            LogWhiteListed(_user, _affiliate, totalWhiteListed);            
+        }
+        return true;
     }
 
-    /**
-    * @dev Allows the function to be called only by the owner and backend.
-    */
-    modifier onlyPrivilegedAddresses() {
-        require(msg.sender == owner || msg.sender == backendAddress);
-        _;
+    // @notice it will white list multiple members
+    // @param _user {address[]} of users to whitelist
+    // @return true if successful
+    function addToWhiteListMultiple(address[] _users, address[] _affiliate) external onlyOwner() returns (bool) {
+
+        for (uint i = 0; i < _users.length; ++i) {
+
+            if (whiteList[_users[i]] != true) {
+                whiteList[_users[i]] = true;
+                affiliates[_users[i]] = _affiliate[i];
+                totalWhiteListed++;                          
+            }           
+        }
+        LogWhiteListedMultiple(totalWhiteListed); 
+        return true;
     }
 }
