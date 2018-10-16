@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BKKToken at 0x753e7389ecc2566264587522a3e96e12d7a442c9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BKKToken at 0xe554b8835b3fa8ebd120eef63b5235ccc0514534
 */
 pragma solidity ^0.4.19;
 
@@ -7,11 +7,11 @@ interface tokenRecipient { function receiveApproval(address _from, uint256 _valu
 
 contract BKKToken {
     // Public variables of the token
-    string public name = "Bikoko Token";
-    string public symbol = "BKK";
+    string public name = "BKEX Token";
+    string public symbol = "BKT";
     uint256 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
-    uint256 public totalSupply = 300*1000*1000*10**decimals;
+    uint256 public totalSupply = 3*1000*1000*1000*10**decimals;
 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
