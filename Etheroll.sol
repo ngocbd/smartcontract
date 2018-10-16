@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etheroll at 0x048717ea892f23fb0126f00640e2b18072efd9d2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etheroll at 0xe0b1bb3d16aba1ca1745005646ecb9d7c859c60f
 */
 pragma solidity ^0.4.18;
 
@@ -1834,12 +1834,12 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
     uint public maxProfitAsPercentOfHouse;                    
     uint public minBet; 
     //init discontinued contract data       
-    uint public totalBets = 263935;
+    uint public totalBets = 263934;
     uint public maxPendingPayouts;
     //init discontinued contract data   
     uint public totalWeiWon = 119805027051623961676537;
     //init discontinued contract data     
-    uint public totalWeiWagered = 331721907637461976915056; 
+    uint public totalWeiWagered = 331721807637461976915056; 
     uint public randomQueryID;
     
 
@@ -1911,7 +1911,7 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
         * integer query is in plain text
         */       
         randomQueryID += 1;
-        string memory queryString1 = "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random[\"serialNumber\",\"data\"]', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BJ8BMENGnafmVci9OE5n98MGZRU624r/QWOQi90YwuZzHL2jaK2SCf5L38gsyD3kG4CS3sjZVLPdprfbo+L9lUXQtVJb/8SPIjkMU3lk943v60Co2+oLMVgSRtNKAAzHS6DJPeLOYaDHLhbCLORoUt2fPKSp87E=},\"n\":1,\"min\":1,\"max\":100,\"replacement\":true,\"base\":10${[identity] \"}\"},\"id\":";
+        string memory queryString1 = "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random[\"serialNumber\",\"data\"]', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BBbTxNu16S9wiIVEUGOW+si+W4WLWrVy95AC7MPzFr0XpZ8fgXO/BXHzSxVRccbSbpp0QLZu8k27+rjansbHr6qGSnmy9Z9khNpSdZquAXX7cQ+GC52TLTVxcq/PpL1E5h91ZR7e6ZUorZlRJzCL0mh1Zuk0fCw=},\"n\":1,\"min\":1,\"max\":100,\"replacement\":true,\"base\":10${[identity] \"}\"},\"id\":";
         string memory queryString2 = uint2str(randomQueryID);
         string memory queryString3 = "${[identity] \"}\"}']";
 
