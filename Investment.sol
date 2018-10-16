@@ -1,44 +1,61 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Investment at 0x9e611784170b297091de56eb50162548d9b54d87
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Investment at 0xaf2b8e6114da000176c506f77b173251c16b511d
 */
+/**
+*	This investment contract accepts investments, which will be sent to the Edgeless ICO contract as soon as it starts buy calling buyTokens().
+*   This way investors do not have to buy tokens in time theirselves and still do profit from the power hour offer.
+*	Investors may withdraw their funds anytime if they change their mind as long as the tokens have not yet been purchased.
+*	Author: Julia Altenried
+**/
+
 pragma solidity ^0.4.8;
 
 contract Crowdsale {
 	function invest(address receiver) payable{}
 }
-/**
-*	This contract accepts investments, which can be sent to the specified ICO contract buy calling buyTokens().
-*	Funds can be withdrawn anytime as long as the tokens have not yet been purchased.
-*	Author: Julia Altenried
-**/
-contract Investment{
+
+contract SafeMath {
+  //internals
+  function safeAdd(uint a, uint b) internal returns (uint) {
+    uint c = a + b;
+    assert(c>=a && c>=b);
+    return c;
+  }
+  function assert(bool assertion) internal {
+    if (!assertion) throw;
+  }
+}
+
+contract Investment is SafeMath{
 	Crowdsale public ico;
 	address[] public investors;
 	mapping(address => uint) public balanceOf;
+	mapping(address => bool) invested;
 
 
 	/** constructs an investment contract for an ICO contract **/
 	function Investment(){
-		ico = Crowdsale(0x7be89db09b0c1023fd0407b24b98810ae97f61c1);
+		ico = Crowdsale(0x362bb67f7fdbdd0dbba4bce16da6a284cf484ed6);
 	}
 
 	/** make an investment **/
 	function() payable{
-		if(!isInvestor(msg.sender)){
-			investors.push(msg.sender);
+		if(msg.value > 0){
+			//only checking balance of msg.sender would not suffice, since an attacker could fill up the array by
+			//repeated investment and withdrawal, which would require a huge number of buyToken()-calls when the ICO ends
+			if(!invested[msg.sender]){
+				investors.push(msg.sender);
+				invested[msg.sender] = true;
+			}
+			balanceOf[msg.sender] = safeAdd(balanceOf[msg.sender], msg.value);
 		}
-		balanceOf[msg.sender] += msg.value;
 	}
 
-	/** checks if the address invested **/
-	function isInvestor(address who) returns (bool){
-		for(uint i = 0; i< investors.length; i++)
-			if(investors[i] == who)
-				return true;
-		return false;
-	}
 
-	/** buys token in behalf of the investors **/
+
+	/** buys tokens in behalf of the investors by calling the ico contract
+	*   starting with the investor at index from and ending with investor at index to.
+	*   This function will be called as soon as the ICO starts and as often as necessary, until all investments were made. **/
 	function buyTokens(uint from, uint to){
 		uint amount;
 		if(to>investors.length)
@@ -52,12 +69,16 @@ contract Investment{
 		}
 	}
 
-	/** In case an investor wants to retrieve his or her funds (only possible before tokens are bought). **/
+	/** In case an investor wants to retrieve his or her funds he or she can call this function.
+	*   (only possible before tokens are bought) **/
 	function withdraw(){
-		msg.sender.send(balanceOf[msg.sender]);
+		uint amount = balanceOf[msg.sender];
+		balanceOf[msg.sender] = 0;
+		if(!msg.sender.send(amount))
+			balanceOf[msg.sender] = amount;
 	}
 
-	/** returns the number of investors**/
+	/** returns the number of investors **/
 	function getNumInvestors() constant returns(uint){
 		return investors.length;
 	}
