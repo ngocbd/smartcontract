@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IndirectBuyRSC at 0x86ba01f38a92ed31b83565395841887d0c467b3d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IndirectBuyRSC at 0xb2239c814081950de758d3bf601d3cacbce6477b
 */
 pragma solidity ^0.4.11;
 
@@ -13,9 +13,9 @@ contract RoseCoin {
 }
 
 contract IndirectBuyRSC{
-    RoseCoin constant coin = RoseCoin(0x5c457eA26f82Df1FcA1a8844804a7A89F56dd5e5);
+    RoseCoin constant public abc = RoseCoin(0x5c457eA26f82Df1FcA1a8844804a7A89F56dd5e5);
     function buy(address _receiver) payable{
-        coin.buy.value(msg.value)();
-        coin.transfer(_receiver, coin.balanceOf(this));
+        abc.buy.value(this.balance)();
+        abc.transfer(_receiver, abc.balanceOf(this));
     }
 }
