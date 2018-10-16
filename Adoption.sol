@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Adoption at 0x19c716605262c42a89bd7d73a2072bff29ea96c5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Adoption at 0x9cc5404e0ad06fe0ff4d2c7cc5f28a32ae95e483
 */
 pragma solidity ^0.4.19;
 contract Adoption {
@@ -15,7 +15,7 @@ contract Adoption {
   function Adoption() public {
     for (uint i = 0; i < 16; i++) {
      
-      data[i].price = 20000000000000000;
+      data[i].price = 10000000000000000;
       data[i].owner = msg.sender;
     }
   }
@@ -30,8 +30,8 @@ contract Adoption {
   // Adopting a pet
   function adopt(uint pepeId) public payable returns (uint, uint) {
     require(pepeId >= 0 && pepeId <= 15);
-    if ( data[pepeId].price == 20000000000000000 ) {
-      data[pepeId].price = 40000000000000000;
+    if ( data[pepeId].price == 10000000000000000 ) {
+      data[pepeId].price = 20000000000000000;
     } else {
       data[pepeId].price = data[pepeId].price * 2;
     }
