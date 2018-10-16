@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Quantormassa at 0x5ace91f9d1653bcb35e93b5b9855e36087ae53e7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Quantormassa at 0xb83afb8d185c7380ae003cdf778ae741438b9541
 */
 pragma solidity ^ 0.4 .19;
 library SafeMath {
@@ -38,7 +38,7 @@ contract Quantormassa {
     event Approval(address indexed _owner, address indexed spender, uint256 value);
 
     function Quantormassa() {
-        totalSupply = 100000000;
+        totalSupply = 100000000000000000000000000;
         symbol = 'qtma';
         owner = 0x53A896d7E86F0ec156281c2B28090007a5371BD5;
         balances[owner] = totalSupply;
