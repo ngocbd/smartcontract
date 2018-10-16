@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DOTS at 0x33d3b085b60af885e2d67d44859e0e81964e27e8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DOTS at 0x983183727a949f98f997a52622e254a284ffeee4
 */
 pragma solidity ^0.4.18;
 
@@ -59,7 +59,7 @@ contract ApproveAndCallFallBack {
 /// @dev The actual token contract, the default controller is the msg.sender
 ///  that deploys the contract, so usually this token will be deployed by a
 ///  token controller contract, which Giveth will call a "Campaign"
-contract MiniMeToken is Controlled {
+contract DOTSToken is Controlled {
 
     string public name;                //The Token's name: e.g. DigixDAO Tokens
     uint8 public decimals;             //Number of decimals of the smallest unit
@@ -81,7 +81,7 @@ contract MiniMeToken is Controlled {
 
     // `parentToken` is the Token address that was cloned to produce this token;
     //  it will be 0x0 for a token that was not cloned
-    MiniMeToken public parentToken;
+    DOTSToken public parentToken;
 
     // `parentSnapShotBlock` is the block number from the Parent Token that was
     //  used to determine the initial distribution of the Clone Token
@@ -105,14 +105,14 @@ contract MiniMeToken is Controlled {
     bool public transfersEnabled;
 
     // The factory used to create new clone tokens
-    MiniMeTokenFactory public tokenFactory;
+    DOTSTokenFactory public tokenFactory;
 
 ////////////////
 // Constructor
 ////////////////
 
-    /// @notice Constructor to create a MiniMeToken
-    /// @param _tokenFactory The address of the MiniMeTokenFactory contract that
+    /// @notice Constructor to create a DOTSToken
+    /// @param _tokenFactory The address of the DOTSTokenFactory contract that
     ///  will create the Clone token contracts, the token factory needs to be
     ///  deployed first
     /// @param _parentToken Address of the parent token, set to 0x0 if it is a
@@ -124,7 +124,7 @@ contract MiniMeToken is Controlled {
     /// @param _decimalUnits Number of decimals of the new token
     /// @param _tokenSymbol Token Symbol for the new token
     /// @param _transfersEnabled If true, tokens will be able to be transferred
-    function MiniMeToken(
+    function DOTSToken(
         address _tokenFactory,
         address _parentToken,
         uint _parentSnapShotBlock,
@@ -133,11 +133,11 @@ contract MiniMeToken is Controlled {
         string _tokenSymbol,
         bool _transfersEnabled
     ) public {
-        tokenFactory = MiniMeTokenFactory(_tokenFactory);
+        tokenFactory = DOTSTokenFactory(_tokenFactory);
         name = _tokenName;                                 // Set the name
         decimals = _decimalUnits;                          // Set the decimals
         symbol = _tokenSymbol;                             // Set the symbol
-        parentToken = MiniMeToken(_parentToken);
+        parentToken = DOTSToken(_parentToken);
         parentSnapShotBlock = _parentSnapShotBlock;
         transfersEnabled = _transfersEnabled;
         creationBlock = block.number;
@@ -363,7 +363,7 @@ contract MiniMeToken is Controlled {
     ///  copied to set the initial distribution of the new clone token;
     ///  if the block is zero than the actual block, the current block is used
     /// @param _transfersEnabled True if transfers are allowed in the clone
-    /// @return The address of the new MiniMeToken Contract
+    /// @return The address of the new DOTSToken Contract
     function createCloneToken(
         string _cloneTokenName,
         uint8 _cloneDecimalUnits,
@@ -372,7 +372,7 @@ contract MiniMeToken is Controlled {
         bool _transfersEnabled
         ) public returns(address) {
         if (_snapshotBlock == 0) _snapshotBlock = block.number;
-        MiniMeToken cloneToken = tokenFactory.createCloneToken(
+        DOTSToken cloneToken = tokenFactory.createCloneToken(
             this,
             _snapshotBlock,
             _cloneTokenName,
@@ -523,7 +523,7 @@ contract MiniMeToken is Controlled {
             return;
         }
 
-        MiniMeToken token = MiniMeToken(_token);
+        DOTSToken token = DOTSToken(_token);
         uint balance = token.balanceOf(this);
         token.transfer(controller, balance);
         ClaimedTokens(_token, controller, balance);
@@ -545,13 +545,13 @@ contract MiniMeToken is Controlled {
 
 
 ////////////////
-// MiniMeTokenFactory
+// DOTSTokenFactory
 ////////////////
 
 /// @dev This contract is used to generate clone contracts from a contract.
 ///  In solidity this is the way to create a contract from a contract of the
 ///  same class
-contract MiniMeTokenFactory {
+contract DOTSTokenFactory {
 
     /// @notice Update the DApp by creating a new token with new functionalities
     ///  the msg.sender becomes the controller of this clone token
@@ -570,8 +570,8 @@ contract MiniMeTokenFactory {
         uint8 _decimalUnits,
         string _tokenSymbol,
         bool _transfersEnabled
-    ) public returns (MiniMeToken) {
-        MiniMeToken newToken = new MiniMeToken(
+    ) public returns (DOTSToken) {
+        DOTSToken newToken = new DOTSToken(
             this,
             _parentToken,
             _snapshotBlock,
@@ -587,14 +587,14 @@ contract MiniMeTokenFactory {
 }
 
 
-contract DOTS is MiniMeToken {
-  // @dev DOTS constructor just parametrizes the MiniMeToken constructor
+contract DOTS is DOTSToken {
+  // @dev DOTS constructor just parametrizes the DOTSToken constructor
   function DOTS(
-  ) MiniMeToken(
-    0x122d76562d43A7d9f37F9d9F8EaABaA217Bb31dE, // address of tokenfactory
+  ) DOTSToken(
+    0xd010cfdf53b23b27fe80ea418843b428c4c3526e, // address of tokenfactory
     0x0,                    // no parent token
     0,                      // no snapshot block number from parent
-    "DOT$",                 // Token name
+    "DOTS",                 // Token name
     18,                     // Decimals
     "DOT$",                 // Symbol
     true                    // Enable transfers
