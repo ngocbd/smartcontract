@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlockClout at 0xb5b4a5522825b70eeb0e74665d0df19f052133a7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlockClout at 0x08daf7a5604c256aa96c00053747ab71f400c57e
 */
 pragma solidity ^0.4.19;
 
@@ -8,12 +8,12 @@ pragma solidity ^0.4.19;
 *
 *
 * This the authentic token contract for BlockClout. 
-* Always refer to our website to confirm the accuracy of our smart contract and project development.
+* Always refer to our website: https://blockclout.com to confirm the accuracy of our smart contract address and project development.
 *
 *
 *
 *
-* Etherscan will also display our Official Links and Token Image
+*
 
 */
 
@@ -108,10 +108,10 @@ contract BlockClout is StandardToken {
     function BlockClout() {
         balances[msg.sender] = 112000000000000000000000000;
         totalSupply = 112000000000000000000000000;
-        name = "BlockClout";
+        name = "Block Clout";
         decimals = 18;
-        symbol = "CLOUT";
-        unitsOneEthCanBuy = 7754;
+        symbol = "BCTK";
+        unitsOneEthCanBuy = 15000;
         fundsWallet = msg.sender;
     }
 
