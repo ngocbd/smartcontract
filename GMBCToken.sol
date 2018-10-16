@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GMBCToken at 0xfbf797e8cfa43ae5ec7b5ad2d7c2f18c2cb2cd0c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GMBCToken at 0x58870bcbc4b0001d99ecc84adf8736d6193b8af6
 */
 pragma solidity ^0.4.18;
 
@@ -382,17 +382,25 @@ contract HasNoEther is Ownable {
 
 // File: source\GMBCToken.sol
 
+// in order for this to be flattened & compiled: zeppelin-solidity from /node_modules should be copied to source/ before hand
+// TODO: automate this process
+
+
+
+
 contract GMBCToken is HasNoEther, CappedMintableToken {
 	using SafeMath for uint256;
 
-	string public constant name = "Gamblica Token";
+	string public constant name = "Official Gamblica Coin";
 	string public constant symbol = "GMBC";
 	uint8 public constant decimals = 18;
 
-	uint256 public TOKEN_SALE_CAP = 600000000 * (10 ** uint256(decimals));	// 60%, 40% will be minted on finalize
+	uint256 public TOKEN_SALE_CAP = 600000000 * (10 ** uint256(decimals));
 	uint256 public END_OF_MINT_DATE = 1527811200;	// Fri, 01 Jun 2018 00:00:00 +0000 in RFC 822, 1036, 1123, 2822
 
 	bool public finalized = false;
+
+	
 
 	/**
 	 * GMBCToken
@@ -401,7 +409,9 @@ contract GMBCToken is HasNoEther, CappedMintableToken {
 	 */
 	function GMBCToken() public 
 		CappedMintableToken(TOKEN_SALE_CAP, END_OF_MINT_DATE)
-	{}
+	{
+		
+	}
 
 	/**
 		Performs the final stage of the token sale, 
