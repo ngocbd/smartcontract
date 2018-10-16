@@ -1,10 +1,16 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleLotto at 0xd43cbd8a74535327a8a196ea36cd44fc799ca289
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleLotto at 0x466f39a5fd8d1bd54ea7e82975177c0f00c68492
 */
 contract SimpleLotto {
-    int playCount = 0;
-    address owner = msg.sender;
+    int public playCount = 0;
+    address public owner = msg.sender;
     mapping (address => uint) public players;
+    Aggregate public aggregate;
+
+  struct Aggregate {
+    uint msgValue;
+    uint gas;
+  }
 
     modifier onlyBy(address _account) {
         if (msg.sender != _account)
@@ -12,34 +18,21 @@ contract SimpleLotto {
         _
     }
     
+    function SimpleLotto() {
+        playCount = 42;
+    }
+    
     event Sent(address from, address to, int amount);
     
-    function play(address receiver, uint amount) external constant returns (int playCount){
-        playCount++;
-      Sent(owner, receiver, playCount);
-      players[receiver] += amount;
-      return playCount;
-    } 
-    
-    function play1(address receiver, uint amount) external  returns (int playCount){
-        playCount++;
-      Sent(owner, receiver, playCount);
-      players[receiver] += amount;
-      return playCount;
-    } 
-    
-    function play2(address receiver, uint amount) public returns (int playCount){
+    function play(address receiver, uint amount) returns (uint){
         playCount++;
         Sent(owner, receiver, playCount);
         players[receiver] += amount;
-        return playCount;
-    } 
-    
-        function play4(address receiver, uint amount) returns (int playCount){
-        playCount++;
-        Sent(owner, receiver, playCount);
-        players[receiver] += amount;
-        return playCount;
+        
+        aggregate.msgValue = msg.value;
+        aggregate.gas = msg.gas;
+        
+        return msg.value;
     } 
 
     function terminate() { 
