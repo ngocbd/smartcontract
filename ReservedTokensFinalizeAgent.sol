@@ -1,6 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReservedTokensFinalizeAgent at 0x5c4a7fe7b47007da7cb5a7d25cc9084755b49000
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReservedTokensFinalizeAgent at 0x9600bca0dcc728b3a3d2cc39e2f248663957d7d1
 */
+// Created using ICO Wizard https://github.com/oraclesorg/ico-wizard by Oracles Network 
 pragma solidity ^0.4.11;
 /**
  * @title ERC20Basic
@@ -305,8 +306,6 @@ contract CrowdsaleExt is Haltable {
   address[] public joinedCrowdsales;
   uint public joinedCrowdsalesLen = 0;
   address public lastCrowdsale;
-  /// Event created on money deposit.
-  event Deposit (address recipient, uint value);
   /**
     * Do we verify that contributor has been cleared on the server side (accredited investors only).
     * This method was first used in FirstBlood crowdsale to ensure all contributors have accepted terms on sale (on the web).
@@ -439,6 +438,10 @@ contract CrowdsaleExt is Haltable {
     if(isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold)) {
       throw;
     }
+    if(investedAmountOf[receiver] == 0) {
+       // A new investor
+       investorCount++;
+    }
     // Update investor
     investedAmountOf[receiver] = investedAmountOf[receiver].plus(weiAmount);
     tokenAmountOf[receiver] = tokenAmountOf[receiver].plus(tokenAmount);
@@ -447,10 +450,6 @@ contract CrowdsaleExt is Haltable {
     tokensSold = tokensSold.plus(tokenAmount);
     if(pricingStrategy.isPresalePurchase(receiver)) {
         presaleWeiRaised = presaleWeiRaised.plus(weiAmount);
-    }
-    if(investedAmountOf[receiver] == 0) {
-       // A new investor
-       investorCount++;
     }
     assignTokens(receiver, tokenAmount);
     // Pocket the money
@@ -470,7 +469,6 @@ contract CrowdsaleExt is Haltable {
     }
     // Tell us invest was success
     Invested(receiver, weiAmount, tokenAmount, customerId);
-    Deposit(receiver, weiAmount);
   }
   /**
    * Preallocate tokens for the early investors.
