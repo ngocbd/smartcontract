@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20 at 0x850d2f801e58a40c959520cd1462a6f7cbf532b4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20 at 0x8a5ab6f781e95e59cacbfdb44894de250586ff67
 */
 pragma solidity ^0.4.16;
 
@@ -11,7 +11,7 @@ contract ERC20 {
     uint8 public decimals = 2;
     uint256 public totalSupply;
     address public owner;
-    mapping (address => uint256) public balanceOf;
+    mapping (address => uint256) public balance;
     mapping (address => mapping (address => uint256)) public allowance;
 
     event Transfer(address indexed from, address indexed to, uint256 value);
@@ -23,7 +23,7 @@ contract ERC20 {
         symbol = token_symbol;
         totalSupply = supply * 10 ** uint256(decimals);
         owner = msg.sender;
-        balanceOf[msg.sender] = totalSupply;
+        balance[msg.sender] = totalSupply;
     }
     
     modifier owned {
@@ -33,13 +33,13 @@ contract ERC20 {
 
     function _transfer (address _from, address _to, uint256 _value) internal {
         require(_to != 0x0);
-        require(balanceOf[_from] >= _value);
-        require(balanceOf[_to] + _value > balanceOf[_to]);
-        uint prev_balances = balanceOf[_from] + balanceOf[_to];
-        balanceOf[_from] -= _value;
-        balanceOf[_to] += _value;
+        require(balance[_from] >= _value);
+        require(balance[_to] + _value > balance[_to]);
+        uint prev_balances = balance[_from] + balance[_to];
+        balance[_from] -= _value;
+        balance[_to] += _value;
         Transfer(_from, _to, _value);
-        assert(balanceOf[_from] + balanceOf[_to] == prev_balances);
+        assert(balance[_from] + balance[_to] == prev_balances);
     }
     
     function approve (address _spender, uint256 _value, bytes _data) public {
@@ -60,17 +60,17 @@ contract ERC20 {
     }
     
     function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value); 
-        balanceOf[msg.sender] -= _value;
+        require(balance[msg.sender] >= _value); 
+        balance[msg.sender] -= _value;
         totalSupply -= _value; 
         Burn(msg.sender, _value);
         return true;
     }
     
     function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);
+        require(balance[_from] >= _value);
         require(_value <= allowance[_from][msg.sender]); 
-        balanceOf[_from] -= _value;
+        balance[_from] -= _value;
         allowance[_from][msg.sender] -= _value; 
         totalSupply -= _value; 
         Burn(_from, _value);
@@ -78,7 +78,7 @@ contract ERC20 {
     }
     
     function mint(address target, uint256 mint_value) public owned {
-        balanceOf[target] += mint_value;
+        balance[target] += mint_value;
         totalSupply += mint_value;
         Transfer(0, this, mint_value);
         Transfer(this, target, mint_value);
