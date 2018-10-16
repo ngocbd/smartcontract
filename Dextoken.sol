@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dextoken at 0x0fb84b7e8c345faeda0c1dd934f73988bffc0643
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dextoken at 0xf206dfa89deb5e58dc9403bb32c87ea46fe4b2b7
 */
 pragma solidity ^0.4.16;
 
@@ -102,8 +102,10 @@ contract Dextoken is StandardToken {
     uint8 public decimals = 18;
     string public version = "1.0";
 
-    function Dextoken() public {
-        totalSupply = 10**27;                        // 1 billion tokens
+    function Dextoken(
+        uint256 _initialAmount
+    ) public {
+        totalSupply = _initialAmount;
         balances[msg.sender] = totalSupply;          // Give the creator all initial tokens
     }
 
