@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SIMPLECOIN at 0x1bee0ba6c6dee64b3ea062ba2f779e0e8ff4d733
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SIMPLECOIN at 0x1ee6b9d7c9f15ae6e0177273594612448cfeb750
 */
 // SIMPLECOIN TOKEN
 // simplecoin.co
@@ -196,7 +196,6 @@ contract SIMPLECOIN is StandardToken, Ownable {
     //---------------------   Constants   ------------------------//
     uint public constant WEI = 1000000000000000000;
     uint public constant INITIAL_SUPPLY = 500000000 * WEI; // 500 mln SMP. Impossible to mint more than this
-    uint public constant ICO_START_TIME = 1507572447;
     uint public constant PRICE = 600;
 
     uint public constant _ONE = 1 * WEI;
@@ -521,30 +520,10 @@ contract SIMPLECOIN is StandardToken, Ownable {
         return balances[addr];
     }
 
-    // *
-
-    // Overriding payment functions to take control over the logic
-    modifier allowedPayments(address payer, uint value) {
-        // Don't allow to transfer coins until the ICO ends
-        if (isPreICOPrivateOpened || isPreICOPublicOpened || isICOOpened) {
-            revert();
-        }
-
-        if (!isPreICOPrivateClosed || !isPreICOPublicClosed || !isICOClosed) {
-            revert();
-        }
-
-        if (block.timestamp < ICO_START_TIME) {
-            revert();
-        }
-
-        _;
-    }
-
-    function transferFrom(address _from, address _to, uint _value) allowedPayments(_from, _value) {
+    function transferFrom(address _from, address _to, uint _value) {
         super.transferFrom(_from, _to, _value);
     }
-    function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) allowedPayments(msg.sender, _value) {
+    function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) {
         super.transfer(_to, _value);
     }
 
