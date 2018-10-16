@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ULTRONEUM at 0x7dc0f35531385111205d1520fd379aa68ddacbd5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ULTRONEUM at 0xb7174c01c6a8328258b6b68c1adc78a9e0f21e19
 */
 pragma solidity ^0.4.16;
 // Ultroneum tokens Smart contract based on the full ERC20 Token standard
@@ -204,9 +204,9 @@ contract ULTRONEUM is XUMStandardToken {
     Some wallets/interfaces might not even bother to look at this information.
     */
     
-    uint256 constant public decimals = 8;
-    uint256 public totalSupply = 15 * (10**7) * 10**8 ; // 150 million tokens, 8 decimal places, 
-    string constant public name = "Ultroneum Token";
+    uint256 constant public decimals = 16;
+    uint256 public totalSupply = 15 * (10**7) * 10**16 ; // 150 million tokens, 16 decimal places, 
+    string constant public name = "Ultroneum";
     string constant public symbol = "XUM";
     
     function ULTRONEUM(){
