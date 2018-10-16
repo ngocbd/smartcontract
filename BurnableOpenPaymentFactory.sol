@@ -1,8 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnableOpenPaymentFactory at 0x1c3e1bbc9cb9374df0de4544abca02136845b85d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnableOpenPaymentFactory at 0x38b394cd27c3b0d865f58a4512b65c7b0ab6db66
 */
-//A BurnableOpenPayment is instantiated with a specified payer and a commitThreshold.
-//The recipient is not set when the contract is instantiated.
+//A BurnableOpenPayment is instantiated with a specified payer and a serviceDeposit.
+//The worker is not set when the contract is instantiated.
 
 //The constructor is payable, so the contract can be instantiated with initial funds.
 //In addition, anyone can add more funds to the Payment by calling addFunds.
@@ -12,46 +12,49 @@
 //unless he calls the recover() function before anyone else commit()s.
 
 //If the BOP is in the Open state,
-//anyone can become the recipient by contributing the commitThreshold with commit().
+//anyone can become the worker by contributing the serviceDeposit with commit().
 //This changes the state from Open to Committed. The BOP will never return to the Open state.
-//The recipient will never be changed once it's been set via commit().
+//The worker will never be changed once it's been set via commit().
 
 //In the committed state,
-//the payer can at any time choose to burn or release to the recipient any amount of funds.
+//the payer can at any time choose to burn or release to the worker any amount of funds.
 
 pragma solidity ^ 0.4.10;
 contract BurnableOpenPaymentFactory {
-	event NewBOP(address indexed contractAddress, address newBOPAddress, address payer, uint commitThreshold, bool hasDefaultRelease, uint defaultTimeoutLength, string initialPayerString);
+	event NewBOP(address indexed newBOPAddress, address payer, uint serviceDeposit, uint autoreleaseTime, string title, string initialStatement);
 
 	//contract address array
-	address[]public contracts;
+	address[]public BOPs;
 
-	function getContractCount()
+	function getBOPCount()
 	public
 	constant
 	returns(uint) {
-		return contracts.length;
+		return BOPs.length;
 	}
 
-	function newBurnableOpenPayment(address payer, uint commitThreshold, bool hasDefaultRelease, uint defaultTimeoutLength, string initialPayerString)
+	function newBurnableOpenPayment(address payer, uint serviceDeposit, uint autoreleaseInterval, string title, string initialStatement)
 	public
 	payable
 	returns(address) {
 		//pass along any ether to the constructor
-		address newBOPAddr = (new BurnableOpenPayment).value(msg.value)(payer, commitThreshold, hasDefaultRelease, defaultTimeoutLength, initialPayerString);
-		NewBOP(this, newBOPAddr, payer, commitThreshold, hasDefaultRelease, defaultTimeoutLength, initialPayerString);
+		address newBOPAddr = (new BurnableOpenPayment).value(msg.value)(payer, serviceDeposit, autoreleaseInterval, title, initialStatement);
+		NewBOP(newBOPAddr, payer, serviceDeposit, autoreleaseInterval, title, initialStatement);
 
 		//save created BOPs in contract array
-		contracts.push(newBOPAddr);
+		BOPs.push(newBOPAddr);
 
 		return newBOPAddr;
 	}
 }
 
 contract BurnableOpenPayment {
-	//BOP will start with a payer but no recipient (recipient==0x0)
+    //title will never change
+    string public title;
+    
+	//BOP will start with a payer but no worker (worker==0x0)
 	address public payer;
-	address public recipient;
+	address public worker;
 	address constant burnAddress = 0x0;
 	
 	//Set to true if fundsRecovered is called
@@ -62,35 +65,26 @@ contract BurnableOpenPayment {
 	uint public amountBurned;
 	uint public amountReleased;
 
-	//payerString and recipientString enable rudimentary communication/publishing.
-	//Although the two parties might quickly move to another medium with better privacy or convenience,
-	//beginning with this is nice because it's already trustless/transparent/signed/pseudonymous/etc.
-	string public payerString;
-	string public recipientString;
+	//Amount of ether a prospective worker must pay to permanently become the worker. See commit().
+	uint public serviceDeposit;
 
-	//Amount of ether a prospective recipient must pay to permanently become the recipient. See commit().
-	uint public commitThreshold;
+	//How long should we wait before allowing the default release to be called?
+	uint public autoreleaseInterval;
 
-	//What if the payer falls off the face of the planet?
-	//A BOP is instantiated with or without defaultRelease, which cannot be changed after instantiation.
-	bool public hasDefaultRelease;
-
-	//if hasDefaultRelease == True, how long should we wait allowing the default release to be called?
-	uint public defaultTimeoutLength;
-
-	//Calculated from defaultTimeoutLength in commit(),
-	//and recaluclated whenever the payer (or possibly the recipient) calls delayhasDefaultRelease()
-	uint public defaultTriggerTime;
+	//Calculated from autoreleaseInterval in commit(),
+	//and recaluclated whenever the payer (or possibly the worker) calls delayhasDefaultRelease()
+	//After this time, auto-release can be called by the Worker.
+	uint public autoreleaseTime;
 
 	//Most action happens in the Committed state.
 	enum State {
 		Open,
 		Committed,
-		Expended
+		Closed
 	}
 	State public state;
-	//Note that a BOP cannot go from Committed back to Open, but it can go from Expended back to Committed
-	//(this would retain the committed recipient). Search for Expended and Unexpended events to see how this works.
+	//Note that a BOP cannot go from Committed back to Open, but it can go from Closed back to Committed
+	//(this would retain the committed worker). Search for Closed and Unclosed events to see how this works.
 
 	modifier inState(State s) {
 		require(s == state);
@@ -100,55 +94,57 @@ contract BurnableOpenPayment {
 		require(msg.sender == payer);
 		_;
 	}
-	modifier onlyRecipient() {
-		require(msg.sender == recipient);
+	modifier onlyWorker() {
+		require(msg.sender == worker);
 		_;
 	}
-	modifier onlyPayerOrRecipient() {
-		require((msg.sender == payer) || (msg.sender == recipient));
+	modifier onlyPayerOrWorker() {
+		require((msg.sender == payer) || (msg.sender == worker));
 		_;
 	}
 
-	event Created(address indexed contractAddress, address payer, uint commitThreshold, bool hasDefaultRelease, uint defaultTimeoutLength, string initialPayerString);
-	event FundsAdded(uint amount); //The payer has added funds to the BOP.
-	event PayerStringUpdated(string newPayerString);
-	event RecipientStringUpdated(string newRecipientString);
+	event Created(address indexed contractAddress, address payer, uint serviceDeposit, uint autoreleaseInterval, string title);
+	event FundsAdded(address from, uint amount); //The payer has added funds to the BOP.
+	event PayerStatement(string statement);
+	event WorkerStatement(string statement);
 	event FundsRecovered();
-	event Committed(address recipient);
+	event Committed(address worker);
 	event FundsBurned(uint amount);
 	event FundsReleased(uint amount);
-	event Expended();
-	event Unexpended();
-	event DefaultReleaseDelayed();
-	event DefaultReleaseCalled();
+	event Closed();
+	event Unclosed();
+	event AutoreleaseDelayed();
+	event AutoreleaseTriggered();
 
-	function BurnableOpenPayment(address _payer, uint _commitThreshold, bool _hasDefaultRelease, uint _defaultTimeoutLength, string _payerString)
+	function BurnableOpenPayment(address _payer, uint _serviceDeposit, uint _autoreleaseInterval, string _title, string initialStatement)
 	public
 	payable {
-		Created(this, _payer, _commitThreshold, _hasDefaultRelease, _defaultTimeoutLength, _payerString);
+		Created(this, _payer, _serviceDeposit, _autoreleaseInterval, _title);
 
 		if (msg.value > 0) {
-			FundsAdded(msg.value);
+		    //Here we use tx.origin instead of msg.sender (msg.sender is just the factory contract)
+			FundsAdded(tx.origin, msg.value);
 			amountDeposited += msg.value;
 		}
+		
+		title = _title;
 
 		state = State.Open;
 		payer = _payer;
 
-		commitThreshold = _commitThreshold;
+		serviceDeposit = _serviceDeposit;
 
-		hasDefaultRelease = _hasDefaultRelease;
-		if (hasDefaultRelease)
-			defaultTimeoutLength = _defaultTimeoutLength;
+		autoreleaseInterval = _autoreleaseInterval;
 
-		payerString = _payerString;
+		if (bytes(initialStatement).length > 0)
+		    PayerStatement(initialStatement);
 	}
 
 	function getFullState()
 	public
 	constant
-	returns(State, address, string, address, string, uint, uint, uint, uint, uint, bool, uint, uint) {
-		return (state, payer, payerString, recipient, recipientString, this.balance, commitThreshold, amountDeposited, amountBurned, amountReleased, hasDefaultRelease, defaultTimeoutLength, defaultTriggerTime);
+	returns(address, string, State, address, uint, uint, uint, uint, uint, uint, uint) {
+		return (payer, title, state, worker, this.balance, serviceDeposit, amountDeposited, amountBurned, amountReleased, autoreleaseInterval, autoreleaseTime);
 	}
 
 	function addFunds()
@@ -156,11 +152,11 @@ contract BurnableOpenPayment {
 	payable {
 		require(msg.value > 0);
 
-		FundsAdded(msg.value);
+		FundsAdded(msg.sender, msg.value);
 		amountDeposited += msg.value;
-		if (state == State.Expended) {
+		if (state == State.Closed) {
 			state = State.Committed;
-			Unexpended();
+			Unclosed();
 		}
 	}
 
@@ -177,20 +173,18 @@ contract BurnableOpenPayment {
 	public
 	inState(State.Open)
 	payable{
-		require(msg.value >= commitThreshold);
+		require(msg.value == serviceDeposit);
 
 		if (msg.value > 0) {
-			FundsAdded(msg.value);
+			FundsAdded(msg.sender, msg.value);
 			amountDeposited += msg.value;
 		}
 
-		recipient = msg.sender;
+		worker = msg.sender;
 		state = State.Committed;
-		Committed(recipient);
+		Committed(worker);
 
-		if (hasDefaultRelease) {
-			defaultTriggerTime = now + defaultTimeoutLength;
-		}
+		autoreleaseTime = now + autoreleaseInterval;
 	}
 
 	function internalBurn(uint amount)
@@ -202,8 +196,8 @@ contract BurnableOpenPayment {
 		FundsBurned(amount);
 
 		if (this.balance == 0) {
-			state = State.Expended;
-			Expended();
+			state = State.Closed;
+			Closed();
 		}
 	}
 
@@ -217,14 +211,14 @@ contract BurnableOpenPayment {
 	function internalRelease(uint amount)
 	private
 	inState(State.Committed) {
-		recipient.transfer(amount);
+		worker.transfer(amount);
 
 		amountReleased += amount;
 		FundsReleased(amount);
 
 		if (this.balance == 0) {
-			state = State.Expended;
-			Expended();
+			state = State.Closed;
+			Closed();
 		}
 	}
 
@@ -235,40 +229,33 @@ contract BurnableOpenPayment {
 		internalRelease(amount);
 	}
 
-	function setPayerString(string _string)
+	function logPayerStatement(string statement)
 	public
 	onlyPayer() {
-		payerString = _string;
-		PayerStringUpdated(payerString);
+	    PayerStatement(statement);
 	}
 
-	function setRecipientString(string _string)
+	function logWorkerStatement(string statement)
 	public
-	onlyRecipient() {
-		recipientString = _string;
-		RecipientStringUpdated(recipientString);
+	onlyWorker() {
+		WorkerStatement(statement);
 	}
 
-	function delayDefaultRelease()
+	function delayAutorelease()
 	public
-	onlyPayerOrRecipient()
+	onlyPayer()
 	inState(State.Committed) {
-		require(hasDefaultRelease);
-
-		defaultTriggerTime = now + defaultTimeoutLength;
-		DefaultReleaseDelayed();
+		autoreleaseTime = now + autoreleaseInterval;
+		AutoreleaseDelayed();
 	}
 
-	function callDefaultRelease()
+	function triggerAutorelease()
 	public
-	onlyPayerOrRecipient()
+	onlyWorker()
 	inState(State.Committed) {
-		require(hasDefaultRelease);
-		require(now >= defaultTriggerTime);
+		require(now >= autoreleaseTime);
 
-		if (hasDefaultRelease) {
-			internalRelease(this.balance);
-		}
-		DefaultReleaseCalled();
+        AutoreleaseTriggered();
+		internalRelease(this.balance);
 	}
 }
