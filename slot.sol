@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Slot at 0xdb9822bb9885d844d1986a8949fce1a4ceb5f8b6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Slot at 0x41ff0796a6c7a201476bff53c4cb2c48b084e5e0
 */
 pragma solidity ^0.4.11;
 
@@ -1693,9 +1693,9 @@ contract Slot is usingOraclize, EmergencyWithdrawalModule, DSMath {
     
     uint public totalAmountWagered; 
     
-    event LOG_newSpinsContainer(bytes32 indexed myid, address indexed playerAddress, uint amountWagered, uint nSpins);
-    event LOG_SpinExecuted(bytes32 indexed myid, address indexed playerAddress, uint spinIndex, uint numberDrawn, uint grossPayoutForSpin);
-    event LOG_SpinsContainerInfo(bytes32 indexed myid, address indexed playerAddress, uint netPayout);
+    event LOG_newSpinsContainer(bytes32 myid, address playerAddress, uint amountWagered, uint nSpins);
+    event LOG_SpinExecuted(bytes32 myid, address playerAddress, uint spinIndex, uint numberDrawn, uint grossPayoutForSpin);
+    event LOG_SpinsContainerInfo(bytes32 myid, address playerAddress, uint netPayout);
 
     LedgerProofVerifyI externalContract;
     
