@@ -1,11 +1,19 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Wrapper at 0x69569ec8ddf4dbd0a48a96bf7ab37e62cfe2c3ec
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Wrapper at 0x7a8a770b36e27177a68424c9d4ddcdd2c32dcb1b
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.13;
 
-interface BurnableToken {
-    function transferFrom(address _from, address _to, uint _value) public returns (bool);
-    function burnFrom(address _from, uint256 _value) public returns (bool);
+interface ConversionRatesInterface {
+
+    function recordImbalance(
+        ERC20 token,
+        int buyAmount,
+        uint rateUpdateBlock,
+        uint currentBlock
+    )
+        public;
+
+    function getRate(ERC20 token, uint currentBlockNumber, bool buy, uint qty) public view returns(uint);
 }
 
 interface ERC20 {
@@ -19,52 +27,30 @@ interface ERC20 {
     event Approval(address indexed _owner, address indexed _spender, uint _value);
 }
 
-interface SanityRatesInterface {
-    function getSanityRate(ERC20 src, ERC20 dest) public view returns(uint);
-}
-
-contract Utils {
-
-    ERC20 constant internal ETH_TOKEN_ADDRESS = ERC20(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
-    uint  constant internal PRECISION = (10**18);
-    uint  constant internal MAX_QTY   = (10**28); // 1B tokens
-    uint  constant internal MAX_RATE  = (PRECISION * 10**6); // up to 1M tokens per ETH
-    uint  constant internal MAX_DECIMALS = 18;
-
-    function calcDstQty(uint srcQty, uint srcDecimals, uint dstDecimals, uint rate) internal pure returns(uint) {
-        if (dstDecimals >= srcDecimals) {
-            require((dstDecimals - srcDecimals) <= MAX_DECIMALS);
-            return (srcQty * rate * (10**(dstDecimals - srcDecimals))) / PRECISION;
-        } else {
-            require((srcDecimals - dstDecimals) <= MAX_DECIMALS);
-            return (srcQty * rate) / (PRECISION * (10**(srcDecimals - dstDecimals)));
-        }
-    }
-
-    function calcSrcQty(uint dstQty, uint srcDecimals, uint dstDecimals, uint rate) internal pure returns(uint) {
-        //source quantity is rounded up. to avoid dest quantity being too low.
-        uint numerator;
-        uint denominator;
-        if (srcDecimals >= dstDecimals) {
-            require((srcDecimals - dstDecimals) <= MAX_DECIMALS);
-            numerator = (PRECISION * dstQty * (10**(srcDecimals - dstDecimals)));
-            denominator = rate;
-        } else {
-            require((dstDecimals - srcDecimals) <= MAX_DECIMALS);
-            numerator = (PRECISION * dstQty);
-            denominator = (rate * (10**(dstDecimals - srcDecimals)));
-        }
-        return (numerator + denominator - 1) / denominator; //avoid rounding down errors
-    }
+interface ExpectedRateInterface {
+    function getExpectedRate(ERC20 src, ERC20 dest, uint srcQty) public view
+        returns (uint expectedRate, uint slippageRate);
 }
 
 interface FeeBurnerInterface {
     function handleFees (uint tradeWeiAmount, address reserve, address wallet) public returns(bool);
 }
 
-interface ExpectedRateInterface {
-    function getExpectedRate(ERC20 src, ERC20 dest, uint srcQty) public view
-        returns (uint expectedRate, uint slippageRate);
+interface KyberReserveInterface {
+
+    function trade(
+        ERC20 srcToken,
+        uint srcAmount,
+        ERC20 destToken,
+        address destAddress,
+        uint conversionRate,
+        bool validate
+    )
+        public
+        payable
+        returns(bool);
+
+    function getConversionRate(ERC20 src, ERC20 dest, uint srcQty, uint blockNumber) public view returns(uint);
 }
 
 contract PermissionGroups {
@@ -75,6 +61,7 @@ contract PermissionGroups {
     mapping(address=>bool) internal alerters;
     address[] internal operatorsGroup;
     address[] internal alertersGroup;
+    uint constant internal MAX_GROUP_SIZE = 50;
 
     function PermissionGroups() public {
         admin = msg.sender;
@@ -115,6 +102,17 @@ contract PermissionGroups {
         pendingAdmin = newAdmin;
     }
 
+    /**
+     * @dev Allows the current admin to set the admin in one tx. Useful initial deployment.
+     * @param newAdmin The address to transfer ownership to.
+     */
+    function transferAdminQuickly(address newAdmin) public onlyAdmin {
+        require(newAdmin != address(0));
+        TransferAdminPending(newAdmin);
+        AdminClaimed(newAdmin, admin);
+        admin = newAdmin;
+    }
+
     event AdminClaimed( address newAdmin, address previousAdmin);
 
     /**
@@ -131,6 +129,8 @@ contract PermissionGroups {
 
     function addAlerter(address newAlerter) public onlyAdmin {
         require(!alerters[newAlerter]); // prevent duplicates.
+        require(alertersGroup.length < MAX_GROUP_SIZE);
+
         AlerterAdded(newAlerter, true);
         alerters[newAlerter] = true;
         alertersGroup.push(newAlerter);
@@ -154,6 +154,8 @@ contract PermissionGroups {
 
     function addOperator(address newOperator) public onlyAdmin {
         require(!operators[newOperator]); // prevent duplicates.
+        require(operatorsGroup.length < MAX_GROUP_SIZE);
+
         OperatorAdded(newOperator, true);
         operators[newOperator] = true;
         operatorsGroup.push(newOperator);
@@ -172,6 +174,73 @@ contract PermissionGroups {
             }
         }
     }
+}
+
+interface SanityRatesInterface {
+    function getSanityRate(ERC20 src, ERC20 dest) public view returns(uint);
+}
+
+contract Utils {
+
+    ERC20 constant internal ETH_TOKEN_ADDRESS = ERC20(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
+    uint  constant internal PRECISION = (10**18);
+    uint  constant internal MAX_QTY   = (10**28); // 10B tokens
+    uint  constant internal MAX_RATE  = (PRECISION * 10**6); // up to 1M tokens per ETH
+    uint  constant internal MAX_DECIMALS = 18;
+    uint  constant internal ETH_DECIMALS = 18;
+    mapping(address=>uint) internal decimals;
+
+    function setDecimals(ERC20 token) internal {
+        if (token == ETH_TOKEN_ADDRESS) decimals[token] = ETH_DECIMALS;
+        else decimals[token] = token.decimals();
+    }
+
+    function getDecimals(ERC20 token) internal view returns(uint) {
+        if (token == ETH_TOKEN_ADDRESS) return ETH_DECIMALS; // save storage access
+        uint tokenDecimals = decimals[token];
+        // technically, there might be token with decimals 0
+        // moreover, very possible that old tokens have decimals 0
+        // these tokens will just have higher gas fees.
+        if(tokenDecimals == 0) return token.decimals();
+
+        return tokenDecimals;
+    }
+
+    function calcDstQty(uint srcQty, uint srcDecimals, uint dstDecimals, uint rate) internal pure returns(uint) {
+        require(srcQty <= MAX_QTY);
+        require(rate <= MAX_RATE);
+
+        if (dstDecimals >= srcDecimals) {
+            require((dstDecimals - srcDecimals) <= MAX_DECIMALS);
+            return (srcQty * rate * (10**(dstDecimals - srcDecimals))) / PRECISION;
+        } else {
+            require((srcDecimals - dstDecimals) <= MAX_DECIMALS);
+            return (srcQty * rate) / (PRECISION * (10**(srcDecimals - dstDecimals)));
+        }
+    }
+
+    function calcSrcQty(uint dstQty, uint srcDecimals, uint dstDecimals, uint rate) internal pure returns(uint) {
+        require(dstQty <= MAX_QTY);
+        require(rate <= MAX_RATE);
+        
+        //source quantity is rounded up. to avoid dest quantity being too low.
+        uint numerator;
+        uint denominator;
+        if (srcDecimals >= dstDecimals) {
+            require((srcDecimals - dstDecimals) <= MAX_DECIMALS);
+            numerator = (PRECISION * dstQty * (10**(srcDecimals - dstDecimals)));
+            denominator = rate;
+        } else {
+            require((dstDecimals - srcDecimals) <= MAX_DECIMALS);
+            numerator = (PRECISION * dstQty);
+            denominator = (rate * (10**(dstDecimals - srcDecimals)));
+        }
+        return (numerator + denominator - 1) / denominator; //avoid rounding down errors
+    }
+}
+
+contract WhiteListInterface {
+    function getUserCapInWei(address user) external view returns (uint userCapWei);
 }
 
 contract Withdrawable is PermissionGroups {
@@ -198,51 +267,624 @@ contract Withdrawable is PermissionGroups {
     }
 }
 
-contract ExpectedRate is Withdrawable, ExpectedRateInterface {
+contract KyberNetwork is Withdrawable, Utils {
 
-    KyberNetwork internal kyberNetwork;
-    uint public quantityFactor = 2;
-    uint public minSlippageFactorInBps = 50;
+    uint public negligibleRateDiff = 10; // basic rate steps will be in 0.01%
+    KyberReserveInterface[] public reserves;
+    mapping(address=>bool) public isReserve;
+    WhiteListInterface public whiteListContract;
+    ExpectedRateInterface public expectedRateContract;
+    FeeBurnerInterface    public feeBurnerContract;
+    uint                  public maxGasPrice = 50 * 1000 * 1000 * 1000; // 50 gwei
+    bool                  public enabled = false; // network is enabled
+    mapping(bytes32=>uint) public info; // this is only a UI field for external app.
+    mapping(address=>mapping(bytes32=>bool)) public perReserveListedPairs;
 
-    function ExpectedRate(KyberNetwork _kyberNetwork, address _admin) public {
+    function KyberNetwork(address _admin) public {
         require(_admin != address(0));
-        require(_kyberNetwork != address(0));
-        kyberNetwork = _kyberNetwork;
         admin = _admin;
     }
 
-    event QuantityFactorSet (uint newFactor, uint oldFactor, address sender);
+    event EtherReceival(address indexed sender, uint amount);
 
-    function setQuantityFactor(uint newFactor) public onlyOperator {
-        QuantityFactorSet(quantityFactor, newFactor, msg.sender);
-        quantityFactor = newFactor;
+    /* solhint-disable no-complex-fallback */
+    function() public payable {
+        require(isReserve[msg.sender]);
+        EtherReceival(msg.sender, msg.value);
+    }
+    /* solhint-enable no-complex-fallback */
+
+    event ExecuteTrade(address indexed sender, ERC20 src, ERC20 dest, uint actualSrcAmount, uint actualDestAmount);
+
+    /// @notice use token address ETH_TOKEN_ADDRESS for ether
+    /// @dev makes a trade between src and dest token and send dest token to destAddress
+    /// @param src Src token
+    /// @param srcAmount amount of src tokens
+    /// @param dest   Destination token
+    /// @param destAddress Address to send tokens to
+    /// @param maxDestAmount A limit on the amount of dest tokens
+    /// @param minConversionRate The minimal conversion rate. If actual rate is lower, trade is canceled.
+    /// @param walletId is the wallet ID to send part of the fees
+    /// @return amount of actual dest tokens
+    function trade(
+        ERC20 src,
+        uint srcAmount,
+        ERC20 dest,
+        address destAddress,
+        uint maxDestAmount,
+        uint minConversionRate,
+        address walletId
+    )
+        public
+        payable
+        returns(uint)
+    {
+        require(enabled);
+
+        uint userSrcBalanceBefore;
+        uint userSrcBalanceAfter;
+        uint userDestBalanceBefore;
+        uint userDestBalanceAfter;
+
+        userSrcBalanceBefore = getBalance(src, msg.sender);
+        if (src == ETH_TOKEN_ADDRESS)
+            userSrcBalanceBefore += msg.value;
+        userDestBalanceBefore = getBalance(dest, destAddress);
+
+        uint actualDestAmount = doTrade(src,
+                                        srcAmount,
+                                        dest,
+                                        destAddress,
+                                        maxDestAmount,
+                                        minConversionRate,
+                                        walletId
+                                        );
+        require(actualDestAmount > 0);
+
+        userSrcBalanceAfter = getBalance(src, msg.sender);
+        userDestBalanceAfter = getBalance(dest, destAddress);
+
+        require(userSrcBalanceAfter <= userSrcBalanceBefore);
+        require(userDestBalanceAfter >= userDestBalanceBefore);
+
+        require((userDestBalanceAfter - userDestBalanceBefore) >=
+            calcDstQty((userSrcBalanceBefore - userSrcBalanceAfter), getDecimals(src), getDecimals(dest),
+                minConversionRate));
+
+        return actualDestAmount;
     }
 
-    event MinSlippageFactorSet (uint newMin, uint oldMin, address sender);
+    event AddReserveToNetwork(KyberReserveInterface reserve, bool add);
 
-    function setMinSlippageFactor(uint bps) public onlyOperator {
-        MinSlippageFactorSet(bps, minSlippageFactorInBps, msg.sender);
-        minSlippageFactorInBps = bps;
+    /// @notice can be called only by admin
+    /// @dev add or deletes a reserve to/from the network.
+    /// @param reserve The reserve address.
+    /// @param add If true, the add reserve. Otherwise delete reserve.
+    function addReserve(KyberReserveInterface reserve, bool add) public onlyAdmin {
+
+        if (add) {
+            require(!isReserve[reserve]);
+            reserves.push(reserve);
+            isReserve[reserve] = true;
+            AddReserveToNetwork(reserve, true);
+        } else {
+            isReserve[reserve] = false;
+            // will have trouble if more than 50k reserves...
+            for (uint i = 0; i < reserves.length; i++) {
+                if (reserves[i] == reserve) {
+                    reserves[i] = reserves[reserves.length - 1];
+                    reserves.length--;
+                    AddReserveToNetwork(reserve, false);
+                    break;
+                }
+            }
+        }
     }
+
+    event ListReservePairs(address reserve, ERC20 src, ERC20 dest, bool add);
+
+    /// @notice can be called only by admin
+    /// @dev allow or prevent a specific reserve to trade a pair of tokens
+    /// @param reserve The reserve address.
+    /// @param src Src token
+    /// @param dest Destination token
+    /// @param add If true then enable trade, otherwise delist pair.
+    function listPairForReserve(address reserve, ERC20 src, ERC20 dest, bool add) public onlyAdmin {
+        (perReserveListedPairs[reserve])[keccak256(src, dest)] = add;
+
+        if (src != ETH_TOKEN_ADDRESS) {
+            if (add) {
+                src.approve(reserve, 2**255); // approve infinity
+            } else {
+                src.approve(reserve, 0);
+            }
+        }
+
+        setDecimals(src);
+        setDecimals(dest);
+
+        ListReservePairs(reserve, src, dest, add);
+    }
+
+    function setParams(
+        WhiteListInterface    _whiteList,
+        ExpectedRateInterface _expectedRate,
+        FeeBurnerInterface    _feeBurner,
+        uint                  _maxGasPrice,
+        uint                  _negligibleRateDiff
+    )
+        public
+        onlyAdmin
+    {
+        require(_whiteList != address(0));
+        require(_feeBurner != address(0));
+        require(_expectedRate != address(0));
+        require(_negligibleRateDiff <= 100 * 100); // at most 100%
+        
+        whiteListContract = _whiteList;
+        expectedRateContract = _expectedRate;
+        feeBurnerContract = _feeBurner;
+        maxGasPrice = _maxGasPrice;
+        negligibleRateDiff = _negligibleRateDiff;
+    }
+
+    function setEnable(bool _enable) public onlyAdmin {
+        if (_enable) {
+            require(whiteListContract != address(0));
+            require(feeBurnerContract != address(0));
+            require(expectedRateContract != address(0));
+        }
+        enabled = _enable;
+    }
+
+    function setInfo(bytes32 field, uint value) public onlyOperator {
+        info[field] = value;
+    }
+
+    /// @dev returns number of reserves
+    /// @return number of reserves
+    function getNumReserves() public view returns(uint) {
+        return reserves.length;
+    }
+
+    /// @notice should be called off chain with as much gas as needed
+    /// @dev get an array of all reserves
+    /// @return An array of all reserves
+    function getReserves() public view returns(KyberReserveInterface[]) {
+        return reserves;
+    }
+
+    /// @dev get the balance of a user.
+    /// @param token The token type
+    /// @return The balance
+    function getBalance(ERC20 token, address user) public view returns(uint) {
+        if (token == ETH_TOKEN_ADDRESS)
+            return user.balance;
+        else
+            return token.balanceOf(user);
+    }
+
+    /// @notice use token address ETH_TOKEN_ADDRESS for ether
+    /// @dev best conversion rate for a pair of tokens, if number of reserves have small differences. randomize
+    /// @param src Src token
+    /// @param dest Destination token
+    /* solhint-disable code-complexity */
+    function findBestRate(ERC20 src, ERC20 dest, uint srcQty) public view returns(uint, uint) {
+        uint bestRate = 0;
+        uint bestReserve = 0;
+        uint numRelevantReserves = 0;
+        uint numReserves = reserves.length;
+        uint[] memory rates = new uint[](numReserves);
+        uint[] memory reserveCandidates = new uint[](numReserves);
+
+        for (uint i = 0; i < numReserves; i++) {
+            //list all reserves that have this token.
+            if (!(perReserveListedPairs[reserves[i]])[keccak256(src, dest)]) continue;
+
+            rates[i] = reserves[i].getConversionRate(src, dest, srcQty, block.number);
+
+            if (rates[i] > bestRate) {
+                //best rate is highest rate
+                bestRate = rates[i];
+            }
+        }
+
+        if (bestRate > 0) {
+            uint random = 0;
+            uint smallestRelevantRate = (bestRate * 10000) / (10000 + negligibleRateDiff);
+
+            for (i = 0; i < numReserves; i++) {
+                if (rates[i] >= smallestRelevantRate) {
+                    reserveCandidates[numRelevantReserves++] = i;
+                }
+            }
+
+            if (numRelevantReserves > 1) {
+                //when encountering small rate diff from bestRate. draw from relevant reserves
+                random = uint(block.blockhash(block.number-1)) % numRelevantReserves;
+            }
+
+            bestReserve = reserveCandidates[random];
+            bestRate = rates[bestReserve];
+        }
+
+        return (bestReserve, bestRate);
+    }
+    /* solhint-enable code-complexity */
 
     function getExpectedRate(ERC20 src, ERC20 dest, uint srcQty)
         public view
         returns (uint expectedRate, uint slippageRate)
     {
-        require(quantityFactor != 0);
+        require(expectedRateContract != address(0));
+        return expectedRateContract.getExpectedRate(src, dest, srcQty);
+    }
 
-        uint bestReserve;
-        uint minSlippage;
+    function getUserCapInWei(address user) public view returns(uint) {
+        return whiteListContract.getUserCapInWei(user);
+    }
 
-        (bestReserve, expectedRate) = kyberNetwork.findBestRate(src, dest, srcQty);
-        (bestReserve, slippageRate) = kyberNetwork.findBestRate(src, dest, (srcQty * quantityFactor));
+    function doTrade(
+        ERC20 src,
+        uint srcAmount,
+        ERC20 dest,
+        address destAddress,
+        uint maxDestAmount,
+        uint minConversionRate,
+        address walletId
+    )
+        internal
+        returns(uint)
+    {
+        require(tx.gasprice <= maxGasPrice);
+        require(validateTradeInput(src, srcAmount, destAddress));
 
-        minSlippage = ((10000 - minSlippageFactorInBps) * expectedRate) / 10000;
-        if (slippageRate >= minSlippage) {
-            slippageRate = minSlippage;
+        uint reserveInd;
+        uint rate;
+
+        (reserveInd, rate) = findBestRate(src, dest, srcAmount);
+        KyberReserveInterface theReserve = reserves[reserveInd];
+        require(rate > 0);
+        require(rate < MAX_RATE);
+        require(rate >= minConversionRate);
+
+        uint actualSrcAmount = srcAmount;
+        uint actualDestAmount = calcDestAmount(src, dest, actualSrcAmount, rate);
+        if (actualDestAmount > maxDestAmount) {
+            actualDestAmount = maxDestAmount;
+            actualSrcAmount = calcSrcAmount(src, dest, actualDestAmount, rate);
+            require(actualSrcAmount <= srcAmount);
         }
 
-        return (expectedRate, slippageRate);
+        // do the trade
+        // verify trade size is smaller than user cap
+        uint ethAmount;
+        if (src == ETH_TOKEN_ADDRESS) {
+            ethAmount = actualSrcAmount;
+        } else {
+            ethAmount = actualDestAmount;
+        }
+
+        require(ethAmount <= getUserCapInWei(msg.sender));
+        require(doReserveTrade(
+                src,
+                actualSrcAmount,
+                dest,
+                destAddress,
+                actualDestAmount,
+                theReserve,
+                rate,
+                true));
+
+        if ((actualSrcAmount < srcAmount) && (src == ETH_TOKEN_ADDRESS)) {
+            msg.sender.transfer(srcAmount - actualSrcAmount);
+        }
+
+        require(feeBurnerContract.handleFees(ethAmount, theReserve, walletId));
+
+        ExecuteTrade(msg.sender, src, dest, actualSrcAmount, actualDestAmount);
+        return actualDestAmount;
+    }
+
+    /// @notice use token address ETH_TOKEN_ADDRESS for ether
+    /// @dev do one trade with a reserve
+    /// @param src Src token
+    /// @param amount amount of src tokens
+    /// @param dest   Destination token
+    /// @param destAddress Address to send tokens to
+    /// @param reserve Reserve to use
+    /// @param validate If true, additional validations are applicable
+    /// @return true if trade is successful
+    function doReserveTrade(
+        ERC20 src,
+        uint amount,
+        ERC20 dest,
+        address destAddress,
+        uint expectedDestAmount,
+        KyberReserveInterface reserve,
+        uint conversionRate,
+        bool validate
+    )
+        internal
+        returns(bool)
+    {
+        uint callValue = 0;
+
+        if (src == ETH_TOKEN_ADDRESS) {
+            callValue = amount;
+        } else {
+            // take src tokens to this contract
+            src.transferFrom(msg.sender, this, amount);
+        }
+
+        // reserve sends tokens/eth to network. network sends it to destination
+        require(reserve.trade.value(callValue)(src, amount, dest, this, conversionRate, validate));
+
+        if (dest == ETH_TOKEN_ADDRESS) {
+            destAddress.transfer(expectedDestAmount);
+        } else {
+            require(dest.transfer(destAddress, expectedDestAmount));
+        }
+
+        return true;
+    }
+
+    function calcDestAmount(ERC20 src, ERC20 dest, uint srcAmount, uint rate) internal view returns(uint) {
+        return calcDstQty(srcAmount, getDecimals(src), getDecimals(dest), rate);
+    }
+
+    function calcSrcAmount(ERC20 src, ERC20 dest, uint destAmount, uint rate) internal view returns(uint) {
+        return calcSrcQty(destAmount, getDecimals(src), getDecimals(dest), rate);
+    }
+
+    /// @notice use token address ETH_TOKEN_ADDRESS for ether
+    /// @dev checks that user sent ether/tokens to contract before trade
+    /// @param src Src token
+    /// @param srcAmount amount of src tokens
+    /// @return true if input is valid
+    function validateTradeInput(ERC20 src, uint srcAmount, address destAddress) internal view returns(bool) {
+        if ((srcAmount >= MAX_QTY) || (srcAmount == 0) || (destAddress == 0))
+            return false;
+
+        if (src == ETH_TOKEN_ADDRESS) {
+            if (msg.value != srcAmount)
+                return false;
+        } else {
+            if ((msg.value != 0) || (src.allowance(msg.sender, this) < srcAmount))
+                return false;
+        }
+
+        return true;
+    }
+}
+
+contract KyberReserve is KyberReserveInterface, Withdrawable, Utils {
+
+    address public kyberNetwork;
+    bool public tradeEnabled;
+    ConversionRatesInterface public conversionRatesContract;
+    SanityRatesInterface public sanityRatesContract;
+    mapping(bytes32=>bool) public approvedWithdrawAddresses; // sha3(token,address)=>bool
+
+    function KyberReserve(address _kyberNetwork, ConversionRatesInterface _ratesContract, address _admin) public {
+        require(_admin != address(0));
+        require(_ratesContract != address(0));
+        require(_kyberNetwork != address(0));
+        kyberNetwork = _kyberNetwork;
+        conversionRatesContract = _ratesContract;
+        admin = _admin;
+        tradeEnabled = true;
+    }
+
+    event DepositToken(ERC20 token, uint amount);
+
+    function() public payable {
+        DepositToken(ETH_TOKEN_ADDRESS, msg.value);
+    }
+
+    event TradeExecute(
+        address indexed origin,
+        address src,
+        uint srcAmount,
+        address destToken,
+        uint destAmount,
+        address destAddress
+    );
+
+    function trade(
+        ERC20 srcToken,
+        uint srcAmount,
+        ERC20 destToken,
+        address destAddress,
+        uint conversionRate,
+        bool validate
+    )
+        public
+        payable
+        returns(bool)
+    {
+        require(tradeEnabled);
+        require(msg.sender == kyberNetwork);
+
+        require(doTrade(srcToken, srcAmount, destToken, destAddress, conversionRate, validate));
+
+        return true;
+    }
+
+    event TradeEnabled(bool enable);
+
+    function enableTrade() public onlyAdmin returns(bool) {
+        tradeEnabled = true;
+        TradeEnabled(true);
+
+        return true;
+    }
+
+    function disableTrade() public onlyAlerter returns(bool) {
+        tradeEnabled = false;
+        TradeEnabled(false);
+
+        return true;
+    }
+
+    event WithdrawAddressApproved(ERC20 token, address addr, bool approve);
+
+    function approveWithdrawAddress(ERC20 token, address addr, bool approve) public onlyAdmin {
+        approvedWithdrawAddresses[keccak256(token, addr)] = approve;
+        WithdrawAddressApproved(token, addr, approve);
+
+        setDecimals(token);
+    }
+
+    event WithdrawFunds(ERC20 token, uint amount, address destination);
+
+    function withdraw(ERC20 token, uint amount, address destination) public onlyOperator returns(bool) {
+        require(approvedWithdrawAddresses[keccak256(token, destination)]);
+
+        if (token == ETH_TOKEN_ADDRESS) {
+            destination.transfer(amount);
+        } else {
+            require(token.transfer(destination, amount));
+        }
+
+        WithdrawFunds(token, amount, destination);
+
+        return true;
+    }
+
+    event SetContractAddresses(address network, address rate, address sanity);
+
+    function setContracts(address _kyberNetwork, ConversionRatesInterface _conversionRates, SanityRatesInterface _sanityRates)
+        public
+        onlyAdmin
+    {
+        require(_kyberNetwork != address(0));
+        require(_conversionRates != address(0));
+
+        kyberNetwork = _kyberNetwork;
+        conversionRatesContract = _conversionRates;
+        sanityRatesContract = _sanityRates;
+
+        SetContractAddresses(kyberNetwork, conversionRatesContract, sanityRatesContract);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+    /// status functions ///////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
+    function getBalance(ERC20 token) public view returns(uint) {
+        if (token == ETH_TOKEN_ADDRESS)
+            return this.balance;
+        else
+            return token.balanceOf(this);
+    }
+
+    function getDestQty(ERC20 src, ERC20 dest, uint srcQty, uint rate) public view returns(uint) {
+        uint dstDecimals = getDecimals(dest);
+        uint srcDecimals = getDecimals(src);
+
+        return calcDstQty(srcQty, srcDecimals, dstDecimals, rate);
+    }
+
+    function getSrcQty(ERC20 src, ERC20 dest, uint dstQty, uint rate) public view returns(uint) {
+        uint dstDecimals = getDecimals(dest);
+        uint srcDecimals = getDecimals(src);
+
+        return calcSrcQty(dstQty, srcDecimals, dstDecimals, rate);
+    }
+
+    function getConversionRate(ERC20 src, ERC20 dest, uint srcQty, uint blockNumber) public view returns(uint) {
+        ERC20 token;
+        bool  buy;
+
+        if (!tradeEnabled) return 0;
+
+        if (ETH_TOKEN_ADDRESS == src) {
+            buy = true;
+            token = dest;
+        } else if (ETH_TOKEN_ADDRESS == dest) {
+            buy = false;
+            token = src;
+        } else {
+            return 0; // pair is not listed
+        }
+
+        uint rate = conversionRatesContract.getRate(token, blockNumber, buy, srcQty);
+        uint destQty = getDestQty(src, dest, srcQty, rate);
+
+        if (getBalance(dest) < destQty) return 0;
+
+        if (sanityRatesContract != address(0)) {
+            uint sanityRate = sanityRatesContract.getSanityRate(src, dest);
+            if (rate > sanityRate) return 0;
+        }
+
+        return rate;
+    }
+
+    /// @dev do a trade
+    /// @param srcToken Src token
+    /// @param srcAmount Amount of src token
+    /// @param destToken Destination token
+    /// @param destAddress Destination address to send tokens to
+    /// @param validate If true, additional validations are applicable
+    /// @return true iff trade is successful
+    function doTrade(
+        ERC20 srcToken,
+        uint srcAmount,
+        ERC20 destToken,
+        address destAddress,
+        uint conversionRate,
+        bool validate
+    )
+        internal
+        returns(bool)
+    {
+        // can skip validation if done at kyber network level
+        if (validate) {
+            require(conversionRate > 0);
+            if (srcToken == ETH_TOKEN_ADDRESS)
+                require(msg.value == srcAmount);
+            else
+                require(msg.value == 0);
+        }
+
+        uint destAmount = getDestQty(srcToken, destToken, srcAmount, conversionRate);
+        // sanity check
+        require(destAmount > 0);
+
+        // add to imbalance
+        ERC20 token;
+        int buy;
+        if (srcToken == ETH_TOKEN_ADDRESS) {
+            buy = int(destAmount);
+            token = destToken;
+        } else {
+            buy = -1 * int(srcAmount);
+            token = srcToken;
+        }
+
+        conversionRatesContract.recordImbalance(
+            token,
+            buy,
+            0,
+            block.number
+        );
+
+        // collect src tokens
+        if (srcToken != ETH_TOKEN_ADDRESS) {
+            require(srcToken.transferFrom(msg.sender, this, srcAmount));
+        }
+
+        // send dest tokens
+        if (destToken == ETH_TOKEN_ADDRESS) {
+            destAddress.transfer(destAmount);
+        } else {
+            require(destToken.transfer(destAddress, destAmount));
+        }
+
+        TradeExecute(msg.sender, srcToken, srcAmount, destToken, destAmount, destAddress);
+
+        return true;
     }
 }
 
@@ -450,7 +1092,7 @@ contract VolumeImbalanceRecorder is Withdrawable {
     }
 }
 
-contract ConversionRates is VolumeImbalanceRecorder, Utils {
+contract ConversionRates is ConversionRatesInterface, VolumeImbalanceRecorder, Utils {
 
     // bps - basic rate steps. one step is 1 / 10000 of the rate.
     struct StepFunction {
@@ -494,6 +1136,9 @@ contract ConversionRates is VolumeImbalanceRecorder, Utils {
     address public reserveContract;
     uint constant internal NUM_TOKENS_IN_COMPACT_DATA = 14;
     uint constant internal BYTES_14_OFFSET = (2 ** (8 * NUM_TOKENS_IN_COMPACT_DATA));
+    uint constant internal MAX_STEPS_IN_FUNCTION = 10;
+    int  constant internal MAX_BPS_ADJUSTMENT = 10 ** 11; // 1B %
+    int  constant internal MIN_BPS_ADJUSTMENT = -100 * 100; // cannot go down by more than 100%
 
     function ConversionRates(address _admin) public VolumeImbalanceRecorder(_admin)
         { } // solhint-disable-line no-empty-blocks
@@ -514,6 +1159,8 @@ contract ConversionRates is VolumeImbalanceRecorder, Utils {
         numTokensInCurrentCompactData = (numTokensInCurrentCompactData + 1) % NUM_TOKENS_IN_COMPACT_DATA;
 
         setGarbageToVolumeRecorder(token);
+
+        setDecimals(token);
     }
 
     function setCompactData(bytes14[] buy, bytes14[] sell, uint blockNumber, uint[] indices) public onlyOperator {
@@ -569,6 +1216,8 @@ contract ConversionRates is VolumeImbalanceRecorder, Utils {
     {
         require(xBuy.length == yBuy.length);
         require(xSell.length == ySell.length);
+        require(xBuy.length <= MAX_STEPS_IN_FUNCTION);
+        require(xSell.length <= MAX_STEPS_IN_FUNCTION);
         require(tokenData[token].listed);
 
         tokenData[token].buyRateQtyStepFunction = StepFunction(xBuy, yBuy);
@@ -587,6 +1236,8 @@ contract ConversionRates is VolumeImbalanceRecorder, Utils {
     {
         require(xBuy.length == yBuy.length);
         require(xSell.length == ySell.length);
+        require(xBuy.length <= MAX_STEPS_IN_FUNCTION);
+        require(xSell.length <= MAX_STEPS_IN_FUNCTION);
         require(tokenData[token].listed);
 
         tokenData[token].buyRateImbalanceStepFunction = StepFunction(xBuy, yBuy);
@@ -692,7 +1343,7 @@ contract ConversionRates is VolumeImbalanceRecorder, Utils {
             rate = addBps(rate, extraBps);
         }
 
-        if (abs(totalImbalance + imbalanceQty) >= getMaxTotalImbalance(token)) return 0;
+        if (abs(totalImbalance) >= getMaxTotalImbalance(token)) return 0;
         if (abs(blockImbalance + imbalanceQty) >= getMaxPerBlockImbalance(token)) return 0;
 
         return rate;
@@ -707,6 +1358,8 @@ contract ConversionRates is VolumeImbalanceRecorder, Utils {
     }
 
     function getCompactData(ERC20 token) public view returns(uint, uint, byte, byte) {
+        require(tokenData[token].listed);
+
         uint arrayIndex = tokenData[token].compactDataArrayIndex;
         uint fieldOffset = tokenData[token].compactDataFieldIndex;
 
@@ -758,8 +1411,8 @@ contract ConversionRates is VolumeImbalanceRecorder, Utils {
     }
 
     function getTokenQty(ERC20 token, uint ethQty, uint rate) internal view returns(uint) {
-        uint dstDecimals = token.decimals();
-        uint srcDecimals = 18;
+        uint dstDecimals = getDecimals(token);
+        uint srcDecimals = ETH_DECIMALS;
 
         return calcDstQty(ethQty, srcDecimals, dstDecimals, rate);
     }
@@ -790,6 +1443,10 @@ contract ConversionRates is VolumeImbalanceRecorder, Utils {
     }
 
     function addBps(uint rate, int bps) internal pure returns(uint) {
+        require(rate <= MAX_RATE);
+        require(bps >= MIN_BPS_ADJUSTMENT);
+        require(bps <= MAX_BPS_ADJUSTMENT);
+
         uint maxBps = 100 * 100;
         return (rate * uint(int(maxBps) + bps)) / maxBps;
     }
@@ -801,796 +1458,6 @@ contract ConversionRates is VolumeImbalanceRecorder, Utils {
             return uint(x);
     }
 }
-
-contract KyberNetwork is Withdrawable, Utils {
-
-    uint public negligibleRateDiff = 10; // basic rate steps will be in 0.01%
-    KyberReserve[] public reserves;
-    mapping(address=>bool) public isReserve;
-    WhiteList public whiteListContract;
-    ExpectedRateInterface public expectedRateContract;
-    FeeBurnerInterface    public feeBurnerContract;
-    uint                  public maxGasPrice = 50 * 1000 * 1000 * 1000; // 50 gwei
-    bool                  public enabled = false; // network is enabled
-    mapping(address=>mapping(bytes32=>bool)) public perReserveListedPairs;
-
-    function KyberNetwork(address _admin) public {
-        require(_admin != address(0));
-        admin = _admin;
-    }
-
-    event EtherReceival(address indexed sender, uint amount);
-
-    /* solhint-disable no-complex-fallback */
-    function() public payable {
-        require(isReserve[msg.sender]);
-        EtherReceival(msg.sender, msg.value);
-    }
-    /* solhint-enable no-complex-fallback */
-
-    event ExecuteTrade(address indexed sender, ERC20 src, ERC20 dest, uint actualSrcAmount, uint actualDestAmount);
-
-    /// @notice use token address ETH_TOKEN_ADDRESS for ether
-    /// @dev makes a trade between src and dest token and send dest token to destAddress
-    /// @param src Src token
-    /// @param srcAmount amount of src tokens
-    /// @param dest   Destination token
-    /// @param destAddress Address to send tokens to
-    /// @param maxDestAmount A limit on the amount of dest tokens
-    /// @param minConversionRate The minimal conversion rate. If actual rate is lower, trade is canceled.
-    /// @param walletId is the wallet ID to send part of the fees
-    /// @return amount of actual dest tokens
-    function trade(
-        ERC20 src,
-        uint srcAmount,
-        ERC20 dest,
-        address destAddress,
-        uint maxDestAmount,
-        uint minConversionRate,
-        address walletId
-    )
-        public
-        payable
-        returns(uint)
-    {
-        require(enabled);
-
-        uint userSrcBalanceBefore;
-        uint userSrcBalanceAfter;
-        uint userDestBalanceBefore;
-        uint userDestBalanceAfter;
-
-        userSrcBalanceBefore = getBalance(src, msg.sender);
-        if (src == ETH_TOKEN_ADDRESS)
-            userSrcBalanceBefore += msg.value;
-        userDestBalanceBefore = getBalance(dest, destAddress);
-
-        uint actualDestAmount = doTrade(src,
-                                        srcAmount,
-                                        dest,
-                                        destAddress,
-                                        maxDestAmount,
-                                        minConversionRate,
-                                        walletId
-                                        );
-        require(actualDestAmount > 0);
-
-        userSrcBalanceAfter = getBalance(src, msg.sender);
-        userDestBalanceAfter = getBalance(dest, destAddress);
-
-        require(userSrcBalanceAfter <= userSrcBalanceBefore);
-        require(userDestBalanceAfter >= userDestBalanceBefore);
-
-        require((userDestBalanceAfter - userDestBalanceBefore) >=
-            calcDstQty((userSrcBalanceBefore - userSrcBalanceAfter), getDecimals(src), getDecimals(dest),
-                minConversionRate));
-
-        return actualDestAmount;
-    }
-
-    event AddReserveToNetwork(KyberReserve reserve, bool add);
-
-    /// @notice can be called only by admin
-    /// @dev add or deletes a reserve to/from the network.
-    /// @param reserve The reserve address.
-    /// @param add If true, the add reserve. Otherwise delete reserve.
-    function addReserve(KyberReserve reserve, bool add) public onlyAdmin {
-
-        if (add) {
-            require(!isReserve[reserve]);
-            reserves.push(reserve);
-            isReserve[reserve] = true;
-            AddReserveToNetwork(reserve, true);
-        } else {
-            isReserve[reserve] = false;
-            // will have trouble if more than 50k reserves...
-            for (uint i = 0; i < reserves.length; i++) {
-                if (reserves[i] == reserve) {
-                    reserves[i] = reserves[reserves.length - 1];
-                    reserves.length--;
-                    AddReserveToNetwork(reserve, false);
-                    break;
-                }
-            }
-        }
-    }
-
-    event ListReservePairs(address reserve, ERC20 src, ERC20 dest, bool add);
-
-    /// @notice can be called only by admin
-    /// @dev allow or prevent a specific reserve to trade a pair of tokens
-    /// @param reserve The reserve address.
-    /// @param src Src token
-    /// @param dest Destination token
-    /// @param add If true then enable trade, otherwise delist pair.
-    function listPairForReserve(address reserve, ERC20 src, ERC20 dest, bool add) public onlyAdmin {
-        (perReserveListedPairs[reserve])[keccak256(src, dest)] = add;
-
-        if (src != ETH_TOKEN_ADDRESS) {
-            if (add) {
-                src.approve(reserve, 2**255); // approve infinity
-            } else {
-                src.approve(reserve, 0);
-            }
-        }
-
-        ListReservePairs(reserve, src, dest, add);
-    }
-
-    function setParams(
-        WhiteList _whiteList,
-        ExpectedRateInterface _expectedRate,
-        FeeBurnerInterface    _feeBurner,
-        uint                  _maxGasPrice,
-        uint                  _negligibleRateDiff
-    )
-        public
-        onlyAdmin
-    {
-        require(_whiteList != address(0));
-        require(_feeBurner != address(0));
-        require(_expectedRate != address(0));
-        whiteListContract = _whiteList;
-        expectedRateContract = _expectedRate;
-        feeBurnerContract = _feeBurner;
-        maxGasPrice = _maxGasPrice;
-        negligibleRateDiff = _negligibleRateDiff;
-    }
-
-    function setEnable(bool _enable) public onlyAdmin {
-        if (_enable) {
-            require(whiteListContract != address(0));
-            require(feeBurnerContract != address(0));
-            require(expectedRateContract != address(0));
-        }
-        enabled = _enable;
-    }
-
-    /// @dev returns number of reserves
-    /// @return number of reserves
-    function getNumReserves() public view returns(uint) {
-        return reserves.length;
-    }
-
-    /// @notice should be called off chain with as much gas as needed
-    /// @dev get an array of all reserves
-    /// @return An array of all reserves
-    function getReserves() public view returns(KyberReserve[]) {
-        return reserves;
-    }
-
-    /// @dev get the balance of a user.
-    /// @param token The token type
-    /// @return The balance
-    function getBalance(ERC20 token, address user) public view returns(uint) {
-        if (token == ETH_TOKEN_ADDRESS)
-            return user.balance;
-        else
-            return token.balanceOf(user);
-    }
-
-    /// @notice use token address ETH_TOKEN_ADDRESS for ether
-    /// @dev best conversion rate for a pair of tokens, if number of reserves have small differences. randomize
-    /// @param src Src token
-    /// @param dest Destination token
-    /* solhint-disable code-complexity */
-    function findBestRate(ERC20 src, ERC20 dest, uint srcQty) public view returns(uint, uint) {
-        uint bestRate = 0;
-        uint bestReserve = 0;
-        uint numRelevantReserves = 0;
-        uint numReserves = reserves.length;
-        uint[] memory rates = new uint[](numReserves);
-        uint[] memory reserveCandidates = new uint[](numReserves);
-
-        for (uint i = 0; i < numReserves; i++) {
-            //list all reserves that have this token.
-            if (!(perReserveListedPairs[reserves[i]])[keccak256(src, dest)]) continue;
-
-            rates[i] = reserves[i].getConversionRate(src, dest, srcQty, block.number);
-
-            if (rates[i] > bestRate) {
-                //best rate is highest rate
-                bestRate = rates[i];
-            }
-        }
-
-        if (bestRate > 0) {
-            uint random = 0;
-            uint smallestRelevantRate = (bestRate * 10000) / (10000 + negligibleRateDiff);
-
-            for (i = 0; i < numReserves; i++) {
-                if (rates[i] >= smallestRelevantRate) {
-                    reserveCandidates[numRelevantReserves++] = i;
-                }
-            }
-
-            if (numRelevantReserves > 1) {
-                //when encountering small rate diff from bestRate. draw from relevant reserves
-                random = uint(block.blockhash(block.number-1)) % numRelevantReserves;
-            }
-
-            bestReserve = reserveCandidates[random];
-            bestRate = rates[bestReserve];
-        }
-
-        return (bestReserve, bestRate);
-    }
-    /* solhint-enable code-complexity */
-
-    function getExpectedRate(ERC20 src, ERC20 dest, uint srcQty)
-        public view
-        returns (uint expectedRate, uint slippageRate)
-    {
-        require(expectedRateContract != address(0));
-        return expectedRateContract.getExpectedRate(src, dest, srcQty);
-    }
-
-    function getUserCapInWei(address user) public view returns(uint) {
-        return whiteListContract.getUserCapInWei(user);
-    }
-
-    function doTrade(
-        ERC20 src,
-        uint srcAmount,
-        ERC20 dest,
-        address destAddress,
-        uint maxDestAmount,
-        uint minConversionRate,
-        address walletId
-    )
-        internal
-        returns(uint)
-    {
-        require(tx.gasprice <= maxGasPrice);
-        require(validateTradeInput(src, srcAmount, destAddress));
-
-        uint reserveInd;
-        uint rate;
-
-        (reserveInd, rate) = findBestRate(src, dest, srcAmount);
-        KyberReserve theReserve = reserves[reserveInd];
-        require(rate > 0);
-        require(rate < MAX_RATE);
-        require(rate >= minConversionRate);
-
-        uint actualSrcAmount = srcAmount;
-        uint actualDestAmount = calcDestAmount(src, dest, actualSrcAmount, rate);
-        if (actualDestAmount > maxDestAmount) {
-            actualDestAmount = maxDestAmount;
-            actualSrcAmount = calcSrcAmount(src, dest, actualDestAmount, rate);
-            require(actualSrcAmount <= srcAmount);
-        }
-
-        // do the trade
-        // verify trade size is smaller than user cap
-        uint ethAmount;
-        if (src == ETH_TOKEN_ADDRESS) {
-            ethAmount = actualSrcAmount;
-        } else {
-            ethAmount = actualDestAmount;
-        }
-
-        require(ethAmount <= getUserCapInWei(msg.sender));
-        require(doReserveTrade(
-                src,
-                actualSrcAmount,
-                dest,
-                destAddress,
-                actualDestAmount,
-                theReserve,
-                rate,
-                true));
-
-        if ((actualSrcAmount < srcAmount) && (src == ETH_TOKEN_ADDRESS)) {
-            msg.sender.transfer(srcAmount - actualSrcAmount);
-        }
-
-        require(feeBurnerContract.handleFees(ethAmount, theReserve, walletId));
-
-        ExecuteTrade(msg.sender, src, dest, actualSrcAmount, actualDestAmount);
-        return actualDestAmount;
-    }
-
-    /// @notice use token address ETH_TOKEN_ADDRESS for ether
-    /// @dev do one trade with a reserve
-    /// @param src Src token
-    /// @param amount amount of src tokens
-    /// @param dest   Destination token
-    /// @param destAddress Address to send tokens to
-    /// @param reserve Reserve to use
-    /// @param validate If true, additional validations are applicable
-    /// @return true if trade is successful
-    function doReserveTrade(
-        ERC20 src,
-        uint amount,
-        ERC20 dest,
-        address destAddress,
-        uint expectedDestAmount,
-        KyberReserve reserve,
-        uint conversionRate,
-        bool validate
-    )
-        internal
-        returns(bool)
-    {
-        uint callValue = 0;
-
-        if (src == ETH_TOKEN_ADDRESS) {
-            callValue = amount;
-        } else {
-            // take src tokens to this contract
-            src.transferFrom(msg.sender, this, amount);
-        }
-
-        // reserve sends tokens/eth to network. network sends it to destination
-        require(reserve.trade.value(callValue)(src, amount, dest, this, conversionRate, validate));
-
-        if (dest == ETH_TOKEN_ADDRESS) {
-            destAddress.transfer(expectedDestAmount);
-        } else {
-            require(dest.transfer(destAddress, expectedDestAmount));
-        }
-
-        return true;
-    }
-
-    function getDecimals(ERC20 token) internal view returns(uint) {
-        if (token == ETH_TOKEN_ADDRESS) return 18;
-        return token.decimals();
-    }
-
-    function calcDestAmount(ERC20 src, ERC20 dest, uint srcAmount, uint rate) internal view returns(uint) {
-        return calcDstQty(srcAmount, getDecimals(src), getDecimals(dest), rate);
-    }
-
-    function calcSrcAmount(ERC20 src, ERC20 dest, uint destAmount, uint rate) internal view returns(uint) {
-        return calcSrcQty(destAmount, getDecimals(src), getDecimals(dest), rate);
-    }
-
-    /// @notice use token address ETH_TOKEN_ADDRESS for ether
-    /// @dev checks that user sent ether/tokens to contract before trade
-    /// @param src Src token
-    /// @param srcAmount amount of src tokens
-    /// @return true if input is valid
-    function validateTradeInput(ERC20 src, uint srcAmount, address destAddress) internal view returns(bool) {
-        if ((srcAmount >= MAX_QTY) || (srcAmount == 0) || (destAddress == 0))
-            return false;
-
-        if (src == ETH_TOKEN_ADDRESS) {
-            if (msg.value != srcAmount)
-                return false;
-        } else {
-            if ((msg.value != 0) || (src.allowance(msg.sender, this) < srcAmount))
-                return false;
-        }
-
-        return true;
-    }
-}
-
-contract KyberReserve is Withdrawable, Utils {
-
-    address public kyberNetwork;
-    bool public tradeEnabled;
-    ConversionRates public conversionRatesContract;
-    SanityRatesInterface public sanityRatesContract;
-    mapping(bytes32=>bool) public approvedWithdrawAddresses; // sha3(token,address)=>bool
-
-    function KyberReserve(address _kyberNetwork, ConversionRates _ratesContract, address _admin) public {
-        require(_admin != address(0));
-        require(_ratesContract != address(0));
-        require(_kyberNetwork != address(0));
-        kyberNetwork = _kyberNetwork;
-        conversionRatesContract = _ratesContract;
-        admin = _admin;
-        tradeEnabled = true;
-    }
-
-    event DepositToken(ERC20 token, uint amount);
-
-    function() public payable {
-        DepositToken(ETH_TOKEN_ADDRESS, msg.value);
-    }
-
-    event TradeExecute(
-        address indexed origin,
-        address src,
-        uint srcAmount,
-        address destToken,
-        uint destAmount,
-        address destAddress
-    );
-
-    function trade(
-        ERC20 srcToken,
-        uint srcAmount,
-        ERC20 destToken,
-        address destAddress,
-        uint conversionRate,
-        bool validate
-    )
-        public
-        payable
-        returns(bool)
-    {
-        require(tradeEnabled);
-        require(msg.sender == kyberNetwork);
-
-        require(doTrade(srcToken, srcAmount, destToken, destAddress, conversionRate, validate));
-
-        return true;
-    }
-
-    event TradeEnabled(bool enable);
-
-    function enableTrade() public onlyAdmin returns(bool) {
-        tradeEnabled = true;
-        TradeEnabled(true);
-
-        return true;
-    }
-
-    function disableTrade() public onlyAlerter returns(bool) {
-        tradeEnabled = false;
-        TradeEnabled(false);
-
-        return true;
-    }
-
-    event WithdrawAddressApproved(ERC20 token, address addr, bool approve);
-
-    function approveWithdrawAddress(ERC20 token, address addr, bool approve) public onlyAdmin {
-        approvedWithdrawAddresses[keccak256(token, addr)] = approve;
-        WithdrawAddressApproved(token, addr, approve);
-    }
-
-    event WithdrawFunds(ERC20 token, uint amount, address destination);
-
-    function withdraw(ERC20 token, uint amount, address destination) public onlyOperator returns(bool) {
-        require(approvedWithdrawAddresses[keccak256(token, destination)]);
-
-        if (token == ETH_TOKEN_ADDRESS) {
-            destination.transfer(amount);
-        } else {
-            require(token.transfer(destination, amount));
-        }
-
-        WithdrawFunds(token, amount, destination);
-
-        return true;
-    }
-
-    event SetContractAddresses(address network, address rate, address sanity);
-
-    function setContracts(address _kyberNetwork, ConversionRates _conversionRates, SanityRatesInterface _sanityRates)
-        public
-        onlyAdmin
-    {
-        require(_kyberNetwork != address(0));
-        require(_conversionRates != address(0));
-
-        kyberNetwork = _kyberNetwork;
-        conversionRatesContract = _conversionRates;
-        sanityRatesContract = _sanityRates;
-
-        SetContractAddresses(kyberNetwork, conversionRatesContract, sanityRatesContract);
-    }
-
-    ////////////////////////////////////////////////////////////////////////////
-    /// status functions ///////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////
-    function getBalance(ERC20 token) public view returns(uint) {
-        if (token == ETH_TOKEN_ADDRESS)
-            return this.balance;
-        else
-            return token.balanceOf(this);
-    }
-
-    function getDecimals(ERC20 token) public view returns(uint) {
-        if (token == ETH_TOKEN_ADDRESS) return 18;
-        return token.decimals();
-    }
-
-    function getDestQty(ERC20 src, ERC20 dest, uint srcQty, uint rate) public view returns(uint) {
-        uint dstDecimals = getDecimals(dest);
-        uint srcDecimals = getDecimals(src);
-
-        return calcDstQty(srcQty, srcDecimals, dstDecimals, rate);
-    }
-
-    function getSrcQty(ERC20 src, ERC20 dest, uint dstQty, uint rate) public view returns(uint) {
-        uint dstDecimals = getDecimals(dest);
-        uint srcDecimals = getDecimals(src);
-
-        return calcSrcQty(dstQty, srcDecimals, dstDecimals, rate);
-    }
-
-    function getConversionRate(ERC20 src, ERC20 dest, uint srcQty, uint blockNumber) public view returns(uint) {
-        ERC20 token;
-        bool  buy;
-
-        if (!tradeEnabled) return 0;
-
-        if (ETH_TOKEN_ADDRESS == src) {
-            buy = true;
-            token = dest;
-        } else if (ETH_TOKEN_ADDRESS == dest) {
-            buy = false;
-            token = src;
-        } else {
-            return 0; // pair is not listed
-        }
-
-        uint rate = conversionRatesContract.getRate(token, blockNumber, buy, srcQty);
-        uint destQty = getDestQty(src, dest, srcQty, rate);
-
-        if (getBalance(dest) < destQty) return 0;
-
-        if (sanityRatesContract != address(0)) {
-            uint sanityRate = sanityRatesContract.getSanityRate(src, dest);
-            if (rate > sanityRate) return 0;
-        }
-
-        return rate;
-    }
-
-    /// @dev do a trade
-    /// @param srcToken Src token
-    /// @param srcAmount Amount of src token
-    /// @param destToken Destination token
-    /// @param destAddress Destination address to send tokens to
-    /// @param validate If true, additional validations are applicable
-    /// @return true iff trade is successful
-    function doTrade(
-        ERC20 srcToken,
-        uint srcAmount,
-        ERC20 destToken,
-        address destAddress,
-        uint conversionRate,
-        bool validate
-    )
-        internal
-        returns(bool)
-    {
-        // can skip validation if done at kyber network level
-        if (validate) {
-            require(conversionRate > 0);
-            if (srcToken == ETH_TOKEN_ADDRESS)
-                require(msg.value == srcAmount);
-            else
-                require(msg.value == 0);
-        }
-
-        uint destAmount = getDestQty(srcToken, destToken, srcAmount, conversionRate);
-        // sanity check
-        require(destAmount > 0);
-
-        // add to imbalance
-        ERC20 token;
-        int buy;
-        if (srcToken == ETH_TOKEN_ADDRESS) {
-            buy = int(destAmount);
-            token = destToken;
-        } else {
-            buy = -1 * int(srcAmount);
-            token = srcToken;
-        }
-
-        conversionRatesContract.recordImbalance(
-            token,
-            buy,
-            0,
-            block.number
-        );
-
-        // collect src tokens
-        if (srcToken != ETH_TOKEN_ADDRESS) {
-            require(srcToken.transferFrom(msg.sender, this, srcAmount));
-        }
-
-        // send dest tokens
-        if (destToken == ETH_TOKEN_ADDRESS) {
-            destAddress.transfer(destAmount);
-        } else {
-            require(destToken.transfer(destAddress, destAmount));
-        }
-
-        TradeExecute(msg.sender, srcToken, srcAmount, destToken, destAmount, destAddress);
-
-        return true;
-    }
-}
-
-contract WhiteList is Withdrawable {
-
-    uint public weiPerSgd; // amount of weis in 1 singapore dollar
-    mapping (address=>uint) public userCategory; // each user has a category defining cap on trade. 0 for standard.
-    mapping (uint=>uint)    public categoryCap;  // will define cap on trade amount per category in singapore Dollar.
-
-    function WhiteList(address _admin) public {
-        require(_admin != address(0));
-        admin = _admin;
-    }
-
-    function getUserCapInWei(address user) external view returns (uint userCapWei) {
-        uint category = userCategory[user];
-        return (categoryCap[category] * weiPerSgd);
-    }
-
-    event UserCategorySet(address user, uint category);
-
-    function setUserCategory(address user, uint category) public onlyOperator {
-        userCategory[user] = category;
-        UserCategorySet(user, category);
-    }
-
-    event CategoryCapSet (uint category, uint sgdCap);
-
-    function setCategoryCap(uint category, uint sgdCap) public onlyOperator {
-        categoryCap[category] = sgdCap;
-        CategoryCapSet(category, sgdCap);
-    }
-
-    event SgdToWeiRateSet (uint rate);
-
-    function setSgdToEthRate(uint _sgdToWeiRate) public onlyOperator {
-        weiPerSgd = _sgdToWeiRate;
-        SgdToWeiRateSet(_sgdToWeiRate);
-    }
-}
-
-contract FeeBurner is Withdrawable, FeeBurnerInterface {
-
-    mapping(address=>uint) public reserveFeesInBps;
-    mapping(address=>address) public reserveKNCWallet;
-    mapping(address=>uint) public walletFeesInBps;
-    mapping(address=>uint) public reserveFeeToBurn;
-    mapping(address=>mapping(address=>uint)) public reserveFeeToWallet;
-
-    BurnableToken public knc;
-    address public kyberNetwork;
-    uint public kncPerETHRate = 300;
-
-    function FeeBurner(address _admin, BurnableToken kncToken) public {
-        require(_admin != address(0));
-        require(kncToken != address(0));
-        admin = _admin;
-        knc = kncToken;
-    }
-
-    function setReserveData(address reserve, uint feesInBps, address kncWallet) public onlyAdmin {
-        require(feesInBps < 100); // make sure it is always < 1%
-        require(kncWallet != address(0));
-        reserveFeesInBps[reserve] = feesInBps;
-        reserveKNCWallet[reserve] = kncWallet;
-    }
-
-    function setWalletFees(address wallet, uint feesInBps) public onlyAdmin {
-        require(feesInBps < 10000); // under 100%
-        walletFeesInBps[wallet] = feesInBps;
-    }
-
-    function setKyberNetwork(address _kyberNetwork) public onlyAdmin {
-        require(_kyberNetwork != address(0));
-        kyberNetwork = _kyberNetwork;
-    }
-
-    function setKNCRate(uint rate) public onlyAdmin {
-        kncPerETHRate = rate;
-    }
-
-    event AssignFeeToWallet(address reserve, address wallet, uint walletFee);
-    event AssignBurnFees(address reserve, uint burnFee);
-
-    function handleFees(uint tradeWeiAmount, address reserve, address wallet) public returns(bool) {
-        require(msg.sender == kyberNetwork);
-
-        uint kncAmount = tradeWeiAmount * kncPerETHRate;
-        uint fee = kncAmount * reserveFeesInBps[reserve] / 10000;
-
-        uint walletFee = fee * walletFeesInBps[wallet] / 10000;
-        require(fee >= walletFee);
-        uint feeToBurn = fee - walletFee;
-
-        if (walletFee > 0) {
-            reserveFeeToWallet[reserve][wallet] += walletFee;
-            AssignFeeToWallet(reserve, wallet, walletFee);
-        }
-
-        if (feeToBurn > 0) {
-            AssignBurnFees(reserve, feeToBurn);
-            reserveFeeToBurn[reserve] += feeToBurn;
-        }
-
-        return true;
-    }
-
-    // this function is callable by anyone
-    event BurnAssignedFees(address indexed reserve, address sender);
-
-    function burnReserveFees(address reserve) public {
-        uint burnAmount = reserveFeeToBurn[reserve];
-        require(burnAmount > 1);
-        reserveFeeToBurn[reserve] = 1; // leave 1 twei to avoid spikes in gas fee
-        require(knc.burnFrom(reserveKNCWallet[reserve], burnAmount - 1));
-
-        BurnAssignedFees(reserve, msg.sender);
-    }
-
-    event SendWalletFees(address indexed wallet, address reserve, address sender);
-
-    // this function is callable by anyone
-    function sendFeeToWallet(address wallet, address reserve) public {
-        uint feeAmount = reserveFeeToWallet[reserve][wallet];
-        require(feeAmount > 1);
-        reserveFeeToWallet[reserve][wallet] = 1; // leave 1 twei to avoid spikes in gas fee
-        require(knc.transferFrom(reserveKNCWallet[reserve], wallet, feeAmount - 1));
-
-        SendWalletFees(wallet, reserve, msg.sender);
-    }
-}
-
-contract SanityRates is SanityRatesInterface, Withdrawable, Utils {
-    mapping(address=>uint) public tokenRate;
-    mapping(address=>uint) public reasonableDiffInBps;
-
-    function SanityRates(address _admin) public {
-        require(_admin != address(0));
-        admin = _admin;
-    }
-
-    function setReasonableDiff(ERC20[] srcs, uint[] diff) public onlyAdmin {
-        require(srcs.length == diff.length);
-        for (uint i = 0; i < srcs.length; i++) {
-            reasonableDiffInBps[srcs[i]] = diff[i];
-        }
-    }
-
-    function setSanityRates(ERC20[] srcs, uint[] rates) public onlyOperator {
-        require(srcs.length == rates.length);
-
-        for (uint i = 0; i < srcs.length; i++) {
-            tokenRate[srcs[i]] = rates[i];
-        }
-    }
-
-    function getSanityRate(ERC20 src, ERC20 dest) public view returns(uint) {
-        if (src != ETH_TOKEN_ADDRESS && dest != ETH_TOKEN_ADDRESS) return 0;
-
-        uint rate;
-        address token;
-        if (src == ETH_TOKEN_ADDRESS) {
-            rate = (PRECISION*PRECISION)/tokenRate[dest];
-            token = dest;
-        } else {
-            rate = tokenRate[src];
-            token = src;
-        }
-
-        return rate * (10000 + reasonableDiffInBps[token])/10000;
-    }
-}
-
 
 contract Wrapper is Utils {
 
