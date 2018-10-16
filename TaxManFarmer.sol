@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TaxManFarmer at 0xc090e4fe2e098207e1b8695161c3c6a9e20b4802
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TaxManFarmer at 0x9c2f554150cc87dbe3617e1ee3a254665523242e
 */
 pragma solidity ^0.4.18;
 
@@ -62,7 +62,7 @@ contract TaxManFarmer {
     
     address public shop = 0x2dadfF9Fc12bcd339B68692622C3438A5B46EA53;
     address public object = 0xB3EfD0FA677822203BB69623F3DB2Cdc3377d5f2;
-    address public taxMan = 0xd5048F05Ed7185821C999e3e077A3d1baed0952c;
+    address public taxMan = 0xB503Ec22A950288415F04da3B30f6964dC07a34a;
     
     mapping(address => uint256) public workDone;
     
