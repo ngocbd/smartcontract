@@ -1,149 +1,143 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Main at 0x72fff882555c0406dd3b7e1cad86e97ebafd72fc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract main at 0x682664463c7e9b9182f9b6a8172f374785825c12
 */
-pragma solidity ^0.4.22;
-
-// File: contracts/interfaces/IERC20Token.sol
-
 /*
-    ERC20 Standard Token interface
-*/
-contract IERC20Token {
-    // these functions aren't abstract since the compiler emits automatically generated getter functions as external
-    function name() public view returns (string) {}
-    function symbol() public view returns (string) {}
-    function decimals() public view returns (uint8) {}
-    function totalSupply() public view returns (uint256) {}
-    function balanceOf(address _owner) public view returns (uint256) { _owner; }
-    function allowance(address _owner, address _spender) public view returns (uint256) { _owner; _spender; }
-
-    function transfer(address _to, uint256 _value) public returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-    function approve(address _spender, uint256 _value) public returns (bool success);
-}
-
-// File: zeppelin-solidity/contracts/ownership/Ownable.sol
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
+ * Copyright(C) 2018 by @phalexo (gitter) and Big Deeper Advisors, Inc. a Wyoming corporation.
+ * All rights reserved.
+ *
+ * A non-exclusive, non-transferable, perpetual license to use is hereby granted to Expercoin, Inc.
+ * For questions about the license contact: bigdeeperadvisors@gmail.com
+ *
+ * Expercoin, Inc. can be reached via support@expercoin.com and expercoin.com website.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE,
+ * TITLE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR ANYONE DISTRIBUTING THE
+ * SOFTWARE BE LIABLE FOR ANY DAMAGES OR OTHER LIABILITY, WHETHER IN CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-contract Ownable {
-  address public owner;
 
+pragma solidity ^0.4.23;
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+contract References {
 
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
+  mapping (bytes32 => address) internal references;
 
 }
 
-// File: zeppelin-solidity/contracts/ownership/Claimable.sol
+contract AuthorizedList {
 
-/**
- * @title Claimable
- * @dev Extension for the Ownable contract, where the ownership needs to be claimed.
- * This allows the new owner to accept the transfer.
- */
-contract Claimable is Ownable {
-  address public pendingOwner;
-
-  /**
-   * @dev Modifier throws if called by any account other than the pendingOwner.
-   */
-  modifier onlyPendingOwner() {
-    require(msg.sender == pendingOwner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to set the pendingOwner address.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner public {
-    pendingOwner = newOwner;
-  }
-
-  /**
-   * @dev Allows the pendingOwner address to finalize the transfer.
-   */
-  function claimOwnership() onlyPendingOwner public {
-    OwnershipTransferred(owner, pendingOwner);
-    owner = pendingOwner;
-    pendingOwner = address(0);
-  }
-}
-
-// File: contracts/Main.sol
-
-contract Bancor {
-    function quickConvert(IERC20Token[] _path, uint256 _amount, uint256 _minReturn)
-    public
-    payable
-    returns (uint256);
+    bytes32 constant PRESIDENT = keccak256("Republics President!");
+    bytes32 constant STAFF_MEMBER = keccak256("Staff Member.");
+    bytes32 constant AIR_DROP = keccak256("Airdrop Permission.");
+    bytes32 constant INTERNAL = keccak256("Internal Authorization.");
+    mapping (address => mapping(bytes32 => bool)) authorized;
 
 }
 
-contract Main is Claimable {
+contract Authorized is AuthorizedList {
 
-    Bancor bancor;
+    /// @dev Set the initial permission for the contract creator
+    /// The contract creator can then add permissions for others
+    function Authorized() public {
 
-    function Main(address _bancor) {
-        bancor = Bancor(_bancor);
+       authorized[msg.sender][PRESIDENT] = true;
+
     }
 
-    function transferToken(
-        address[] path,
-        address receiverAddress,
-        address executor,
-        uint256 amount
-    )
-    public
-    returns
-    (
-        bool
-    )
-    {
-        //TODO: require
-        //TODO: events
 
-        IERC20Token[] memory pathConverted = new IERC20Token[](path.length);
+    /// @dev Ensure that _address is authorized, modifier
+    /// @param _address Address to be checked, usually msg.sender
+    /// @param _authorization key for specific authorization
+    modifier ifAuthorized(address _address, bytes32 _authorization) {
 
-        for (uint i = 0; i < path.length; i++) {
-            pathConverted[i] = IERC20Token(path[i]);
-        }
+       require(authorized[_address][_authorization] || authorized[_address][PRESIDENT], "Not authorized to access!");
+       _;
 
-        require(IERC20Token(path[0]).transferFrom(msg.sender, address(this), amount), "transferFrom msg.sender failed");
-        require(IERC20Token(path[0]).approve(address(bancor), amount), "approve to bancor failed");
-        uint256 amountReceived = bancor.quickConvert(pathConverted, amount, 1);
-        require(IERC20Token(path[path.length - 1]).transfer(receiverAddress, amountReceived), "transfer back to receiverAddress failed");
-        return true;
     }
+
+    /// @dev Check _address' authorization, boolean function
+    /// @param _address Boolean value, true if authorized, false otherwise
+    /// @param _authorization key for specific authorization
+    function isAuthorized(address _address, bytes32 _authorization) public view returns (bool) {
+
+       return authorized[_address][_authorization];
+
+    }
+
+    /// @dev Toggle boolean flag to allow or prevent access
+    /// @param _address Boolean value, true if authorized, false otherwise
+    /// @param _authorization key for specific authorization
+    function toggleAuthorization(address _address, bytes32 _authorization) public ifAuthorized(msg.sender, PRESIDENT) {
+
+       /// Prevent inadvertent self locking out, cannot change own authority
+       require(_address != msg.sender, "Cannot change own permissions.");
+
+       /// No need for lower level authorization to linger
+       if (_authorization == PRESIDENT && !authorized[_address][PRESIDENT])
+           authorized[_address][STAFF_MEMBER] = false;
+
+       authorized[_address][_authorization] = !authorized[_address][_authorization];
+
+    }
+
+}
+
+contract main is References, AuthorizedList, Authorized {
+
+  event LogicUpgrade(address indexed _oldbiz, address indexed _newbiz);
+  event StorageUpgrade(address indexed _oldvars, address indexed _newvars);
+
+  function main(address _logic, address _storage) public Authorized() {
+
+     require(_logic != address(0), "main: Unexpectedly logic address is 0x0.");
+     require(_storage != address(0), "main: Unexpectedly storage address is 0x0.");
+     references[bytes32(0)] = _logic;
+     references[bytes32(1)] = _storage;
+
+  }
+
+  /// @dev Set an address at _key location
+  /// @param _address Address to set
+  /// @param _key bytes32 key location
+  function setReference(address _address, bytes32 _key) external ifAuthorized(msg.sender, PRESIDENT) {
+
+     require(_address != address(0), "setReference: Unexpectedly _address is 0x0");
+
+     if (_key == bytes32(0)) emit LogicUpgrade(references[bytes32(0)], _address);
+     else emit StorageUpgrade(references[_key], _address);
+
+     if (references[_key] != address(0))
+          delete references[_key];
+
+     references[_key] = _address;
+
+  }
+
+  /// @dev Retrieve contract address at _key location, mostly for convenience
+  /// @return Contract address or 0x0 if it does not exist
+  function getReference(bytes32 _key) external view ifAuthorized(msg.sender, PRESIDENT) returns(address) {
+
+      return references[_key];
+
+  }
+
+  function() external payable {
+
+      address _target = references[bytes32(0)];
+      assembly {
+          let _calldata := mload(0x40)
+          mstore(0x40, add(_calldata, calldatasize))
+          calldatacopy(_calldata, 0x0, calldatasize)
+          switch delegatecall(gas, _target, _calldata, calldatasize, 0, 0)
+            case 0 { revert(0, 0) }
+            default {
+              let _returndata := mload(0x40)
+              returndatacopy(_returndata, 0, returndatasize)
+              mstore(0x40, add(_returndata, returndatasize))
+              return(_returndata, returndatasize)
+            }
+       }
+   }
 
 }
