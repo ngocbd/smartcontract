@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Database at 0x471bd1ec14c3309404ba23eda9dbc7f09b51d050
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Database at 0x3270360ede054cba2ef829af1e124c4d6e0f8a60
 */
 pragma solidity ^0.4.23;
 
@@ -21,7 +21,7 @@ contract Database {
 
     // Here the 'Table' event is treated as an SQL table
     // Each property is indexed and can be retrieved easily via web3.js
-    event Table(uint256 indexed _row, string indexed _column, string indexed _value);
+    event Table(uint256 indexed _row, bytes32 indexed _column, bytes32 indexed _value);
     /*
     _______
     |||Table|||
@@ -33,6 +33,6 @@ contract Database {
     */
 
     function put(uint256 _row, string _column, string _value) public {
-        emit Table(_row, _column, _value);
+        emit Table(_row, keccak256(_column), keccak256(_value));
     }
 }
