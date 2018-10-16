@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SolarDaoTokenCrowdsale at 0xd4e5a29686Bd97341Ca21bbC08e6Bc43C7655194
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SolarDaoTokenCrowdsale at 0x1c9055f7ecc5c679b85393b970b17eefc3a8cf98
 */
 pragma solidity ^0.4.13;
 
@@ -46,9 +46,7 @@ contract SafeMath {
     return a < b ? a : b;
   }
 
-  function assert(bool assertion) internal {
-    require(assertion);
-  }
+ 
 }
 
 
@@ -272,14 +270,14 @@ contract SolarDaoTokenCrowdsale is Haltable, Killable, SafeMath {
   /// Miminal tokens funding goal in USD cents, if this goal isn't reached during ICO, refund will begin
   uint public constant MIN_ICO_GOAL = 1e7;
 
+  /// Miminal investment value
+  uint public constant MIN_INVESTMENT = 5 ether;
+
   /// Percent of bonus tokens team receives from each investment
   uint public constant TEAM_BONUS_PERCENT = 25;
 
   /// The token price in USD cents
   uint constant public PRICE = 100;
-
-  /// Duration of the pre-ICO stage
-  uint constant public PRE_ICO_DURATION = 6 weeks;
 
   /// The token we are selling
   SolarDaoToken public token;
@@ -356,7 +354,7 @@ contract SolarDaoTokenCrowdsale is Haltable, Killable, SafeMath {
   /// Refund was processed for a contributor
   event Refund(address investor, uint weiAmount);
   /// Crowdsale end time has been changed
-  event EndsAtChanged(uint endsAt);
+  //event EndsAtChanged(uint endsAt);
   /// Calculated new price
   event ExchangeRateChanged(uint oldValue, uint newValue);
 
@@ -383,7 +381,7 @@ contract SolarDaoTokenCrowdsale is Haltable, Killable, SafeMath {
     require(_start != 0);
     require(_end != 0);
     require(_start < _end);
-    require(_end > _preInvestStart + PRE_ICO_DURATION);
+    require(_end >  1514419199);
 
     token = SolarDaoToken(_token);
 
@@ -392,16 +390,10 @@ contract SolarDaoTokenCrowdsale is Haltable, Killable, SafeMath {
     endsAt = _end;
     preInvestStart = _preInvestStart;
 
-    var preIcoBonuses = [uint(100), 80, 70, 60, 50, 50];
-    for (uint i = 0; i < preIcoBonuses.length; i++) {
-      milestones.push(Milestone(preInvestStart + i * 1 weeks, preInvestStart + (i + 1) * 1 weeks, preIcoBonuses[i]));
-    }
-    milestones.push(Milestone(startsAt, startsAt + 4 days, 25));
-    milestones.push(Milestone(startsAt + 4 days, startsAt + 1 weeks, 20));
-    delete preIcoBonuses;
+    milestones.push(Milestone(preInvestStart, 1514419199, 40));
 
     var icoBonuses = [uint(15), 10, 5];
-    for (i = 1; i <= icoBonuses.length; i++) {
+    for (uint i = 1; i <= icoBonuses.length; i++) {
       milestones.push(Milestone(startsAt + i * 1 weeks, startsAt + (i + 1) * 1 weeks, icoBonuses[i - 1]));
     }
     delete icoBonuses;
@@ -426,8 +418,10 @@ contract SolarDaoTokenCrowdsale is Haltable, Killable, SafeMath {
   function investInternal(address receiver) stopInEmergency private {
     var state = getState();
     require(state == State.Funding || state == State.PreFunding);
+    require(msg.value >= MIN_INVESTMENT);
 
     uint weiAmount = msg.value;
+
     uint tokensAmount = calculateTokens(weiAmount);
     assert (tokensAmount > 0);
 
@@ -528,7 +522,7 @@ contract SolarDaoTokenCrowdsale is Haltable, Killable, SafeMath {
   function setEndsAt(uint time) onlyOwner {
     require(time >= now);
     endsAt = time;
-    EndsAtChanged(endsAt);
+    //EndsAtChanged(endsAt);
   }
 
   /// @dev Allow load refunds back on the contract for the refunding.
