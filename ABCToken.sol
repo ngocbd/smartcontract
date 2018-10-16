@@ -1,12 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ABCToken at 0x036407F23D5E1C1486F7488332CF54bf06E5F09F
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ABCToken at 0xaac8253a42c213b6a9cdf4f25cd5de29d09b96f9
 */
 pragma solidity ^0.4.11;
-
-
-/*
-  Author: Victor Mezrin  victor@mezrin.com
-*/
 
 
 /* Interface of the ERC223 token */
@@ -182,7 +177,6 @@ contract ERC223Token is ERC223TokenInterface, SafeMath {
         return (length > 0);
     }
 }
-
 
 
 contract ABCToken is ERC223Token {
