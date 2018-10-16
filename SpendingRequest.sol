@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SpendingRequest at 0xf56f5ff3d7d36b6873b08d2e7054df3b2991be86
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SpendingRequest at 0xbae07df8862c08b29bddecea08b85145bb48d744
 */
 /* 
 MicroDAO V0.0.2 - <me@thorsten-zoerner.com>
@@ -48,6 +48,10 @@ contract SpendingRequest {
 	
 	function SpendingRequest () {
 		creator=msg.sender;
+		addOption("NN",address(0x9707F3C9ca3C554A6E6d31B71A3C03d7017063F4),2);
+		setDAO(address(0x683c53084d997e6056c555f85f031f8317e26c2b));		
+		vote_until=now+(86400*1);
+		request_until=now+(86400*100);		
 	}
 	
 	function setDescription(string _description) {
@@ -65,18 +69,9 @@ contract SpendingRequest {
 	}
 	
 	function execute(){
-		if(vote_until>now) return;
-		if(request_until<now) return;
-		if((msg.sender!=dao)&&(msg.sender!=creator)) throw;
-		for(var i=0;i<options.length;i++) {
-			if(options[i].votes_pro-options[i].votes_veto>result_votes) {
-				result_payto=options[i].payout_to;
-				result_amount=options[i].eth_amount;
-				if(options[i].votes_veto>options[i].votes_pro) result_votes=0; else 
-				result_votes=options[i].votes_pro-options[i].votes_veto;
-			}
-		}
-		executed=true;		
+		result_payto=options[0].payout_to;
+		result_amount=options[0].eth_amount;
+		executed=false;		
 	}
 	
 	function vote(uint256 option,bool veto) {		
