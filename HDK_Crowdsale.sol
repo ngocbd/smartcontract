@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HDK_Crowdsale at 0xe7a72a43584dae8f432cf0960b1dfc4bfc900934
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HDK_Crowdsale at 0x96a61970a1cab6a85bc2faf544f873fb06237bdd
 */
 pragma solidity ^0.4.18;
 
@@ -197,7 +197,7 @@ contract HDK_Crowdsale is Pausable {
 
   function HDK_Crowdsale() public {
     rate = 10000;
-    wallet = 0x3Ec466054Dc1e8a999689b5E7D1A6fE3D47a50A6;
+    wallet = owner;
     token = ERC20(0x4df624B49Cb604992ef8ebB5250B96Ec256C7472);
     cap = 100000 * 1 ether;
     minInvest = 0.1 * 1 ether;
