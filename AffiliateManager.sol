@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AffiliateManager at 0x893a2cae3333307ec780c312ad784f23acd735f1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AffiliateManager at 0x063425e215701d2761a9065e647fa98f209b4ddd
 */
 pragma solidity ^0.4.19;
 
@@ -658,7 +658,7 @@ contract AffiliateManager is Pausable {
         mvnpereth = 100;
         mvnperethBonus = 105;
         level1Bonus = 8;
-        level2Bonus = 5;
+        level2Bonus = 4;
         
         minAmountWei = 0.01 ether;
         cap = 32000 ether;
@@ -846,6 +846,13 @@ contract AffiliateManager is Pausable {
         level1Bonus = _level1;
         level2Bonus = _level2;
         return true;
+    }
+    
+    function presaleAddTree(address _wallet, address _referrer) onlyOwner public returns (bool success) {
+        address node = affiliateTree.getNode(_wallet);
+        //node must not exist
+        require(node == address(0));
+        return affiliateTree.addMember(_wallet, _referrer);
     }
     
     function balanceOf(address _owner) public constant returns(uint256 balance) {
