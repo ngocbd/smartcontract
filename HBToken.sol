@@ -1,126 +1,370 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HBToken at 0x6f259637dcd74c767781e37bc6133cd6a68aa161
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HBToken at 0xd2cdce6d77604123eabd57bd522a18a28f29f0c7
 */
-pragma solidity 0.4.19;
+pragma solidity ^0.4.23;
 
-contract Token {
+/**
+ * Math operations with safety checks
+ */
+ library SafeMath {
+   /**
+   * @dev Multiplies two numbers, revert()s on overflow.
+   */
+   function mul(uint256 a, uint256 b) internal returns (uint256 c) {
+     if (a == 0) {
+       return 0;
+     }
+     c = a * b;
+     assert(c / a == b);
+     return c;
+   }
 
-    /// @return total amount of tokens
-    function totalSupply() constant returns (uint supply) {}
+   /**
+   * @dev Integer division of two numbers, truncating the quotient.
+   */
+   function div(uint256 a, uint256 b) internal returns (uint256) {
+     // assert(b > 0); // Solidity automatically revert()s when dividing by 0
+     // uint256 c = a / b;
+     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+     return a / b;
+   }
 
-    /// @param _owner The address from which the balance will be retrieved
-    /// @return The balance
-    function balanceOf(address _owner) constant returns (uint balance) {}
+   /**
+   * @dev Subtracts two numbers, revert()s on overflow (i.e. if subtrahend is greater than minuend).
+   */
+   function sub(uint256 a, uint256 b) internal returns (uint256) {
+     assert(b <= a);
+     return a - b;
+   }
 
-    /// @notice send `_value` token to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint _value) returns (bool success) {}
+   /**
+   * @dev Adds two numbers, revert()s on overflow.
+   */
+   function add(uint256 a, uint256 b) internal returns (uint256 c) {
+     c = a + b;
+     assert(c >= a && c >= b);
+     return c;
+   }
 
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transferFrom(address _from, address _to, uint _value) returns (bool success) {}
+   function assert(bool assertion) internal {
+     if (!assertion) {
+       revert();
+     }
+   }
+ }
 
-    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of wei to be approved for transfer
-    /// @return Whether the approval was successful or not
-    function approve(address _spender, uint _value) returns (bool success) {}
-
-    /// @param _owner The address of the account owning tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) constant returns (uint remaining) {}
-
-    event Transfer(address indexed _from, address indexed _to, uint _value);
-    event Approval(address indexed _owner, address indexed _spender, uint _value);
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20Basic {
+  function balanceOf(address who) constant returns (uint);
+  function transfer(address to, uint value);
+  event Transfer(address indexed from, address indexed to, uint value);
 }
 
-contract RegularToken is Token {
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint;
 
-    function transfer(address _to, uint _value) returns (bool) {
-        //Default assumes totalSupply can't be over max (2^256 - 1).
-        if (balances[msg.sender] >= _value && balances[_to] + _value >= balances[_to]) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
-            return true;
-        } else { return false; }
-    }
+  mapping(address => uint) balances;
 
-    function transferFrom(address _from, address _to, uint _value) returns (bool) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value >= balances[_to]) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
-            return true;
-        } else { return false; }
-    }
+  /**
+   * @dev Fix for the ERC20 short address attack.
+   */
+  modifier onlyPayloadSize(uint size) {
+     if(msg.data.length < size.add(4)) {
+       revert();
+     }
+     _;
+  }
 
-    function balanceOf(address _owner) constant returns (uint) {
-        return balances[_owner];
-    }
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) {
+    require(_to != 0x0);
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    emit Transfer(msg.sender, _to, _value);
+  }
 
-    function approve(address _spender, uint _value) returns (bool) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    function allowance(address _owner, address _spender) constant returns (uint) {
-        return allowed[_owner][_spender];
-    }
-
-    mapping (address => uint) balances;
-    mapping (address => mapping (address => uint)) allowed;
-    uint public totalSupply;
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) constant returns (uint balance) {
+    return balances[_owner];
+  }
 }
 
-contract UnboundedRegularToken is RegularToken {
-
-    uint constant MAX_UINT = 2**256 - 1;
-    
-    /// @dev ERC20 transferFrom, modified such that an allowance of MAX_UINT represents an unlimited amount.
-    /// @param _from Address to transfer from.
-    /// @param _to Address to transfer to.
-    /// @param _value Amount to transfer.
-    /// @return Success of transfer.
-    function transferFrom(address _from, address _to, uint _value)
-        public
-        returns (bool)
-    {
-        uint allowance = allowed[_from][msg.sender];
-        if (balances[_from] >= _value
-            && allowance >= _value
-            && balances[_to] + _value >= balances[_to]
-        ) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            if (allowance < MAX_UINT) {
-                allowed[_from][msg.sender] -= _value;
-            }
-            Transfer(_from, _to, _value);
-            return true;
-        } else {
-            return false;
-        }
-    }
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint);
+  function transferFrom(address from, address to, uint value);
+  function approve(address spender, uint value);
+  event Approval(address indexed owner, address indexed spender, uint value);
 }
 
-contract HBToken is UnboundedRegularToken {
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implemantation of the basic standart token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is BasicToken, ERC20 {
 
-    uint public totalSupply = 5*10**26;
-    uint8 constant public decimals = 18;
-    string constant public name = "HuobiToken";
-    string constant public symbol = "HT";
+  mapping (address => mapping (address => uint)) allowed;
 
-    function HBToken() {
-        balances[msg.sender] = totalSupply;
-        Transfer(address(0), msg.sender, totalSupply);
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint the amout of tokens to be transfered
+   */
+  function transferFrom(address _from, address _to, uint _value) onlyPayloadSize(3 * 32) {
+    require(_to != 0x0);
+    uint _allowance = allowed[_from][msg.sender];
+
+    // Check is not needed because sub(_allowance, _value) will already revert() if this condition is not met
+    // if (_value > _allowance) revert();
+
+    balances[_to] = balances[_to].add(_value);
+    balances[_from] = balances[_from].sub(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
+    emit Transfer(_from, _to, _value);
+  }
+
+  /**
+   * @dev Aprove the passed address to spend the specified amount of tokens on beahlf of msg.sender.
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint _value) {
+
+    // To change the approve amount you first have to reduce the addresses`
+    //  allowance to zero by calling `approve(_spender, 0)` if it is not
+    //  already 0 to mitigate the race condition described here:
+    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) revert();
+
+    allowed[msg.sender][_spender] = _value;
+    emit Approval(msg.sender, _spender, _value);
+  }
+
+  /**
+   * @dev Function to check the amount of tokens than an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint specifing the amount of tokens still avaible for the spender.
+   */
+  function allowance(address _owner, address _spender) constant returns (uint remaining) {
+    return allowed[_owner][_spender];
+  }
+}
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev revert()s if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    if (msg.sender != owner) {
+      revert();
     }
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner {
+    if (newOwner != address(0)) {
+      owner = newOwner;
+    }
+  }
+}
+
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+  /**
+   * @dev modifier to allow actions only when the contract IS paused
+   */
+  modifier whenNotPaused() {
+    if (paused) revert();
+    _;
+  }
+
+  /**
+   * @dev modifier to allow actions only when the contract IS NOT paused
+   */
+  modifier whenPaused {
+    if (!paused) revert();
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused returns (bool) {
+    paused = true;
+    emit Pause();
+    return true;
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused returns (bool) {
+    paused = false;
+    emit Unpause();
+    return true;
+  }
+}
+
+
+/**
+ * Pausable token
+ *
+ * Simple ERC20 Token example, with pausable token creation
+ **/
+
+contract PausableToken is StandardToken, Pausable {
+
+  function transfer(address _to, uint _value) whenNotPaused {
+    super.transfer(_to, _value);
+  }
+
+  function transferFrom(address _from, address _to, uint _value) whenNotPaused {
+    super.transferFrom(_from, _to, _value);
+  }
+}
+
+
+/**
+ * @title TokenTimelock
+ * @dev TokenTimelock is a token holder contract that will allow a
+ * beneficiary to extract the tokens after a time has passed
+ */
+contract TokenTimelock {
+
+  // ERC20 basic token contract being held
+  ERC20Basic token;
+
+  // beneficiary of tokens after they are released
+  address beneficiary;
+
+  // timestamp where token release is enabled
+  uint releaseTime;
+
+  function TokenTimelock(ERC20Basic _token, address _beneficiary, uint _releaseTime) {
+    require(_releaseTime > now);
+    token = _token;
+    beneficiary = _beneficiary;
+    releaseTime = _releaseTime;
+  }
+
+  /**
+   * @dev beneficiary claims tokens held by time lock
+   */
+  function claim() {
+    require(msg.sender == beneficiary);
+    require(now >= releaseTime);
+
+    uint amount = token.balanceOf(this);
+    require(amount > 0);
+
+    token.transfer(beneficiary, amount);
+  }
+}
+
+/**
+ * @title HBToken
+ * @dev HB Token contract
+ */
+contract HBToken is PausableToken {
+  using SafeMath for uint256;
+
+  function () {
+      //if ether is sent to this address, send it back.
+      revert();
+  }
+
+  string public name = "HBToken";
+  string public symbol = "HB";
+  uint8 public decimals = 18;
+  uint public totalSupply = 1000000000000000000000000000;
+
+  event TimeLock(address indexed to, uint value, uint time);
+  event Burn(address indexed burner, uint256 value);
+
+  function HBToken() {
+      balances[msg.sender] = totalSupply;              // Give the creator all initial tokens
+  }
+
+  /**
+   * @dev transfer timelocked tokens
+   */
+  function transferTimelocked(address _to, uint256 _amount, uint256 _releaseTime)
+    onlyOwner whenNotPaused returns (TokenTimelock) {
+    require(_to != 0x0);
+
+    TokenTimelock timelock = new TokenTimelock(this, _to, _releaseTime);
+    transfer(timelock,_amount);
+    emit TimeLock(_to, _amount,_releaseTime);
+
+    return timelock;
+  }
+
+  /**
+   * @dev Burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   */
+  function burn(uint256 _value) onlyOwner whenNotPaused {
+    _burn(msg.sender, _value);
+  }
+
+  function _burn(address _who, uint256 _value) internal {
+    require(_value <= balances[_who]);
+    // no need to require value <= totalSupply, since that would imply the
+    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+    balances[_who] = balances[_who].sub(_value);
+    totalSupply = totalSupply.sub(_value);
+    emit Burn(_who, _value);
+    emit Transfer(_who, address(0), _value);
+  }
 }
