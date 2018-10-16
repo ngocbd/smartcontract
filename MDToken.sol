@@ -1,19 +1,26 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MDToken at 0x814e0908b12a99fecf5bc101bb5d0b8b5cdf7d26
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MDToken at 0x8198e349AFD0A09EfB06B460452eC1BeAb7a20aa
 */
 pragma solidity ^0.4.18;
 
+// File: contracts/commons/SafeMath.sol
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
     uint256 c = a * b;
-    assert(a == 0 || c / a == b);
+    assert(c / a == b);
     return c;
   }
 
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
@@ -27,24 +34,15 @@ library SafeMath {
     assert(c >= a);
     return c;
   }
-
-  function max64(uint64 a, uint64 b) internal pure returns (uint64) {
-        return a >= b ? a : b;
-    }
-
-  function min64(uint64 a, uint64 b) internal pure returns (uint64) {
-      return a < b ? a : b;
-  }
-
-  function max256(uint256 a, uint256 b) internal pure returns (uint256) {
-      return a >= b ? a : b;
-  }
-
-  function min256(uint256 a, uint256 b) internal pure returns (uint256) {
-      return a < b ? a : b;
-  }
 }
 
+// File: contracts/flavours/Ownable.sol
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
   address public owner;
 
@@ -72,419 +70,276 @@ contract Ownable {
    */
   function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
-    owner = newOwner;
     OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+}
+
+// File: contracts/flavours/Lockable.sol
+
+/**
+ * @title Lockable
+ * @dev Base contract which allows children to
+ *      implement main operations locking mechanism.
+ */
+contract Lockable is Ownable {
+  event Lock();
+  event Unlock();
+
+  bool public locked = false;
+
+  /**
+   * @dev Modifier to make a function callable
+  *       only when the contract is not locked.
+   */
+  modifier whenNotLocked() {
+    require(!locked);
+    _;
   }
 
+  /**
+   * @dev Modifier to make a function callable
+   *      only when the contract is locked.
+   */
+  modifier whenLocked() {
+    require(locked);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to locke, triggers locked state
+   */
+  function lock() onlyOwner whenNotLocked public {
+    locked = true;
+    Lock();
+  }
+
+  /**
+   * @dev called by the owner
+   *      to unlock, returns to unlocked state
+   */
+  function unlock() onlyOwner whenLocked public {
+    locked = false;
+    Unlock();
+  }
 }
 
-contract ERC20Basic {
-    uint256 public totalSupply;
-    function balanceOf(address _owner) public constant returns (uint256 balance);
-    function transfer(address _to, uint256 _value) public returns (bool success);
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+// File: contracts/base/BaseFixedERC20Token.sol
+
+contract BaseFixedERC20Token is Lockable {
+  using SafeMath for uint;
+
+  /// @dev ERC20 Total supply
+  uint public totalSupply;
+
+  mapping(address => uint) balances;
+
+  mapping(address => mapping (address => uint)) private allowed;
+
+  /// @dev Fired if Token transfered accourding to ERC20
+  event Transfer(address indexed from, address indexed to, uint value);
+
+  /// @dev Fired if Token withdraw is approved accourding to ERC20
+  event Approval(address indexed owner, address indexed spender, uint value);
+
+  /**
+   * @dev Gets the balance of the specified address.
+   * @param owner_ The address to query the the balance of.
+   * @return An uint representing the amount owned by the passed address.
+   */
+  function balanceOf(address owner_) public view returns (uint balance) {
+    return balances[owner_];
+  }
+
+  /**
+   * @dev Transfer token for a specified address
+   * @param to_ The address to transfer to.
+   * @param value_ The amount to be transferred.
+   */
+  function transfer(address to_, uint value_) whenNotLocked public returns (bool) {
+    require(to_ != address(0) && value_ <= balances[msg.sender]);
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[msg.sender] = balances[msg.sender].sub(value_);
+    balances[to_] = balances[to_].add(value_);
+    Transfer(msg.sender, to_, value_);
+    return true;
+  }
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param from_ address The address which you want to send tokens from
+   * @param to_ address The address which you want to transfer to
+   * @param value_ uint the amount of tokens to be transferred
+   */
+  function transferFrom(address from_, address to_, uint value_) whenNotLocked public returns (bool) {
+    require(to_ != address(0) && value_ <= balances[from_] && value_ <= allowed[from_][msg.sender]);
+    balances[from_] = balances[from_].sub(value_);
+    balances[to_] = balances[to_].add(value_);
+    allowed[from_][msg.sender] = allowed[from_][msg.sender].sub(value_);
+    Transfer(from_, to_, value_);
+    return true;
+  }
+
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering.
+   *
+   * To change the approve amount you first have to reduce the addresses
+   * allowance to zero by calling `approve(spender_, 0)` if it is not
+   * already 0 to mitigate the race condition described in:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   *
+   * @param spender_ The address which will spend the funds.
+   * @param value_ The amount of tokens to be spent.
+   */
+  function approve(address spender_, uint value_) whenNotLocked public returns (bool) {
+    if (value_ != 0 && allowed[msg.sender][spender_] != 0) {
+      revert();
+    }
+    allowed[msg.sender][spender_] = value_;
+    Approval(msg.sender, spender_, value_);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param owner_ address The address which owns the funds.
+   * @param spender_ address The address which will spend the funds.
+   * @return A uint specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address owner_, address spender_) view public returns (uint) {
+    return allowed[owner_][spender_];
+  }
 }
 
-contract BasicToken is ERC20Basic {
-    using SafeMath for uint256;
+// File: contracts/base/BaseICOToken.sol
 
-    mapping(address => uint256) balances;
+/**
+ * @dev Not mintable, ERC20 compilant token, distributed by ICO/Pre-ICO.
+ */
+contract BaseICOToken is BaseFixedERC20Token {
 
-    /**
-    * @dev Transfer token for a specified address.
-    * @param _to address The address to transfer to.
-    * @param _value uint256 The amount to be transferred.
-    */
-    function transfer(address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
+  /// @dev Available supply of tokens
+  uint public availableSupply;
 
-        // SafeMath.sub will throw if there is not enough balance.
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
-        return true;
-    }
+  /// @dev ICO/Pre-ICO smart contract allowed to distribute public funds for this
+  address public ico;
 
-    /**
-    * @dev Gets the balance of the specified address.
-    * @param _owner address The address to query the the balance of.
-    * @return An uint256 representing the amount owned by the passed address.
-    */
-    function balanceOf(address _owner) public constant returns (uint256 balance) {
-        return balances[_owner];
-    }
+  /// @dev Fired if investment for `amount` of tokens performed by `to` address
+  event ICOTokensInvested(address indexed to, uint amount);
 
+  /// @dev ICO contract changed for this token
+  event ICOChanged(address indexed icoContract);
+
+  /**
+   * @dev Not mintable, ERC20 compilant token, distributed by ICO/Pre-ICO.
+   * @param totalSupply_ Total tokens supply.
+   */
+  function BaseICOToken(uint totalSupply_) public {
+    locked = true;
+    totalSupply = totalSupply_;
+    availableSupply = totalSupply_;
+  }
+
+  /**
+   * @dev Set address of ICO smart-contract which controls token
+   * initial token distribution.
+   * @param ico_ ICO contract address.
+   */
+  function changeICO(address ico_) onlyOwner public {
+    ico = ico_;
+    ICOChanged(ico);
+  }
+
+  function isValidICOInvestment(address to_, uint amount_) internal view returns(bool) {
+    return msg.sender == ico && to_ != address(0) && amount_ <= availableSupply;
+  }
+
+  /**
+   * @dev Assign `amount_` of tokens to investor identified by `to_` address.
+   * @param to_ Investor address.
+   * @param amount_ Number of tokens distributed.
+   */
+  function icoInvestment(address to_, uint amount_) public returns (uint) {
+    require(isValidICOInvestment(to_, amount_));
+    availableSupply -= amount_;
+    balances[to_] = balances[to_].add(amount_);
+    ICOTokensInvested(to_, amount_);
+    return amount_;
+  }
 }
 
-contract ERC20 is ERC20Basic {
-    function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-    function approve(address _spender, uint256 _value) public returns (bool success);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-}
+// File: contracts/MDToken.sol
 
-contract ERC677 is ERC20 {
-    function transferAndCall(address _to, uint256 _value, bytes _data) public returns (bool success);
-    
-    event ERC677Transfer(address indexed _from, address indexed _to, uint256 _value, bytes _data);
-}
+/**
+ * @title MD token contract.
+ */
+contract MDToken is BaseICOToken {
+  using SafeMath for uint;
 
-contract ERC677Receiver {
-    function onTokenTransfer(address _sender, uint _value, bytes _data) public returns (bool success);
-}
+  string public constant name = 'MD Tokens';
 
-contract ERC677Token is ERC677 {
+  string public constant symbol = 'MDTK';
 
-    /**
-    * @dev Transfer token to a contract address with additional data if the recipient is a contact.
-    * @param _to address The address to transfer to.
-    * @param _value uint256 The amount to be transferred.
-    * @param _data bytes The extra data to be passed to the receiving contract.
-    */
-    function transferAndCall(address _to, uint256 _value, bytes _data) public returns (bool success) {
-        require(super.transfer(_to, _value));
-        ERC677Transfer(msg.sender, _to, _value, _data);
-        if (isContract(_to)) {
-            contractFallback(_to, _value, _data);
-        }
-        return true;
-    }
+  uint8 public constant decimals = 18;
 
-    // PRIVATE
+  uint internal constant ONE_TOKEN = 1e18;
 
-    function contractFallback(address _to, uint256 _value, bytes _data) private {
-        ERC677Receiver receiver = ERC677Receiver(_to);
-        require(receiver.onTokenTransfer(msg.sender, _value, _data));
-    }
+  /// @dev Fired some tokens distributed to someone from staff,business
+  event ReservedTokensDistributed(address indexed to, uint8 group, uint amount);
 
-    // assemble the given address bytecode. If bytecode exists then the _addr is a contract.
-    function isContract(address _addr) private view returns (bool hasCode) {
-        uint length;
-        assembly { length := extcodesize(_addr) }
-        return length > 0;
-    }
-}
+  function MDToken(uint totalSupplyTokens_,
+                   uint reservedStaffTokens_,
+                   uint reservedBusinessTokens_,
+                   uint reservedEcosystemTokens_)
+    BaseICOToken(totalSupplyTokens_ * ONE_TOKEN) public {
+    require(availableSupply == totalSupply);
+    availableSupply = availableSupply
+                        .sub(reservedStaffTokens_ * ONE_TOKEN)
+                        .sub(reservedBusinessTokens_ * ONE_TOKEN)
+                        .sub(reservedEcosystemTokens_ * ONE_TOKEN);
+    reserved[RESERVED_STAFF_GROUP] = reservedStaffTokens_ * ONE_TOKEN;
+    reserved[RESERVED_BUSINESS_GROUP] = reservedBusinessTokens_ * ONE_TOKEN;
+    reserved[RESERVED_ECOSYSTEM_GROUP] = reservedEcosystemTokens_ * ONE_TOKEN;
+  }
 
-contract StandardToken is ERC20, BasicToken {
+  // Disable direct payments
+  function() external payable {
+    revert();
+  }
 
-    mapping (address => mapping (address => uint256)) allowed;
+  //---------------------------- MD tokens specific
 
-    /**
-    * @dev Transfer tokens from one address to another.
-    * @param _from address The address which you want to send tokens from.
-    * @param _to address The address which you want to transfer to.
-    * @param _value uint256 the amout of tokens to be transfered.
-    */
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
+  uint8 public RESERVED_STAFF_GROUP = 0x1;
 
-        var _allowance = allowed[_from][msg.sender];
+  uint8 public RESERVED_BUSINESS_GROUP = 0x2;
 
-        // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-        // require (_value <= _allowance);
+  uint8 public RESERVED_ECOSYSTEM_GROUP = 0x4;
 
-        balances[_to] = balances[_to].add(_value);
-        balances[_from] = balances[_from].sub(_value);
-        allowed[_from][msg.sender] = _allowance.sub(_value);
-        Transfer(_from, _to, _value);
-        return true;
-    }
+  /// @dev Token reservation mapping: key(RESERVED_X) => value(number of tokens)
+  mapping(uint8 => uint) public reserved;
 
-    /**
-    * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
-    * @param _spender address The address which will spend the funds.
-    * @param _value uint256 The amount of tokens to be spent.
-    */
-    function approve(address _spender, uint256 _value) public returns (bool) {
-        // To change the approve amount you first have to reduce the addresses`
-        //  allowance to zero by calling `approve(_spender, 0)` if it is not
-        //  already 0 to mitigate the race condition described here:
-        //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-        require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+  /**
+   * @dev Get reserved tokens for specific group
+   */
+  function getReservedTokens(uint8 group_) view public returns (uint) {
+    return reserved[group_];
+  }
 
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    /**
-    * @dev Function to check the amount of tokens that an owner allowed to a spender.
-    * @param _owner address The address which owns the funds.
-    * @param _spender address The address which will spend the funds.
-    * @return A uint256 specifing the amount of tokens still avaible for the spender.
-    */
-    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
-}
-
-contract MDToken is StandardToken, ERC677Token, Ownable {
-    using SafeMath for uint256;
-
-    // Token metadata
-    string public constant name = "Measurable Data Token";
-    string public constant symbol = "MDT";
-    uint256 public constant decimals = 18;
-    uint256 public constant maxSupply = 10 * (10**8) * (10**decimals); // 1 billion MDT
-
-    // 240 million MDT reserved for MDT team (24%)
-    uint256 public constant TEAM_TOKENS_RESERVED = 240 * (10**6) * (10**decimals);
-
-    // 150 million MDT reserved for user growth (15%)
-    uint256 public constant USER_GROWTH_TOKENS_RESERVED = 150 * (10**6) * (10**decimals);
-
-    // 110 million MDT reserved for early investors (11%)
-    uint256 public constant INVESTORS_TOKENS_RESERVED = 110 * (10**6) * (10**decimals);
-
-    // 200 million MDT reserved for bonus giveaway (20%)
-    uint256 public constant BONUS_TOKENS_RESERVED = 200 * (10**6) * (10**decimals);
-
-    // Token sale wallet address, contains tokens for private sale, early bird and bonus giveaway
-    address public tokenSaleAddress;
-
-    // MDT team wallet address
-    address public mdtTeamAddress;
-
-    // User Growth Pool wallet address
-    address public userGrowthAddress;
-
-    // Early Investors wallet address
-    address public investorsAddress;
-
-    // MDT team foundation wallet address, contains tokens which were not sold during token sale and unraised bonus
-    address public mdtFoundationAddress;
-
-    event Burn(address indexed _burner, uint256 _value);
-
-    /// @dev Reverts if address is 0x0 or this token address
-    modifier validRecipient(address _recipient) {
-        require(_recipient != address(0) && _recipient != address(this));
-        _;
-    }
-
-    /**
-    * @dev MDToken contract constructor.
-    * @param _tokenSaleAddress address The token sale address.
-    * @param _mdtTeamAddress address The MDT team address.
-    * @param _userGrowthAddress address The user growth address.
-    * @param _investorsAddress address The investors address.
-    * @param _mdtFoundationAddress address The MDT Foundation address.
-    * @param _presaleAmount uint256 Amount of MDT tokens sold during presale.
-    * @param _earlybirdAmount uint256 Amount of MDT tokens to sold during early bird.
-    */
-    function MDToken(
-        address _tokenSaleAddress,
-        address _mdtTeamAddress,
-        address _userGrowthAddress,
-        address _investorsAddress,
-        address _mdtFoundationAddress,
-        uint256 _presaleAmount,
-        uint256 _earlybirdAmount)
-        public
-    {
-
-        require(_tokenSaleAddress != address(0));
-        require(_mdtTeamAddress != address(0));
-        require(_userGrowthAddress != address(0));
-        require(_investorsAddress != address(0));
-        require(_mdtFoundationAddress != address(0));
-
-        tokenSaleAddress = _tokenSaleAddress;
-        mdtTeamAddress = _mdtTeamAddress;
-        userGrowthAddress = _userGrowthAddress;
-        investorsAddress = _investorsAddress;
-        mdtFoundationAddress = _mdtFoundationAddress;
-
-        // issue tokens to token sale, MDT team, etc
-        uint256 saleAmount = _presaleAmount.add(_earlybirdAmount).add(BONUS_TOKENS_RESERVED);
-        mint(tokenSaleAddress, saleAmount);
-        mint(mdtTeamAddress, TEAM_TOKENS_RESERVED);
-        mint(userGrowthAddress, USER_GROWTH_TOKENS_RESERVED);
-        mint(investorsAddress, INVESTORS_TOKENS_RESERVED);
-
-        // issue remaining tokens to MDT Foundation
-        uint256 remainingTokens = maxSupply.sub(totalSupply);
-        if (remainingTokens > 0) {
-            mint(mdtFoundationAddress, remainingTokens);
-        }
-    }
-
-    /**
-    * @dev Mint MDT tokens. (internal use only)
-    * @param _to address Address to send minted MDT to.
-    * @param _amount uint256 Amount of MDT tokens to mint.
-    */
-    function mint(address _to, uint256 _amount)
-        private
-        validRecipient(_to)
-        returns (bool)
-    {
-        require(totalSupply.add(_amount) <= maxSupply);
-        totalSupply = totalSupply.add(_amount);
-        balances[_to] = balances[_to].add(_amount);
-
-        Transfer(0x0, _to, _amount);
-        return true;
-    }
-
-    /**
-    * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
-    * @param _spender address The address which will spend the funds.
-    * @param _value uint256 The amount of tokens to be spent.
-    */
-    function approve(address _spender, uint256 _value)
-        public
-        validRecipient(_spender)
-        returns (bool)
-    {
-        return super.approve(_spender, _value);
-    }
-
-    /**
-    * @dev Transfer token for a specified address.
-    * @param _to address The address to transfer to.
-    * @param _value uint256 The amount to be transferred.
-    */
-    function transfer(address _to, uint256 _value)
-        public
-        validRecipient(_to)
-        returns (bool)
-    {
-        return super.transfer(_to, _value);
-    }
-
-    /**
-    * @dev Transfer token to a contract address with additional data if the recipient is a contact.
-    * @param _to address The address to transfer to.
-    * @param _value uint256 The amount to be transferred.
-    * @param _data bytes The extra data to be passed to the receiving contract.
-    */
-    function transferAndCall(address _to, uint256 _value, bytes _data)
-        public
-        validRecipient(_to)
-        returns (bool success)
-    {
-        return super.transferAndCall(_to, _value, _data);
-    }
-
-    /**
-    * @dev Transfer tokens from one address to another.
-    * @param _from address The address which you want to send tokens from.
-    * @param _to address The address which you want to transfer to.
-    * @param _value uint256 the amout of tokens to be transfered.
-    */
-    function transferFrom(address _from, address _to, uint256 _value)
-        public
-        validRecipient(_to)
-        returns (bool)
-    {
-        return super.transferFrom(_from, _to, _value);
-    }
-
-    /**
-     * @dev Burn tokens. (token owner only)
-     * @param _value uint256 The amount to be burned.
-     * @return always true.
-     */
-    function burn(uint256 _value)
-        public
-        onlyOwner
-        returns (bool)
-    {
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        totalSupply = totalSupply.sub(_value);
-        Burn(msg.sender, _value);
-        return true;
-    }
-
-    /**
-     * @dev Burn tokens on behalf of someone. (token owner only)
-     * @param _from address The address of the owner of the token.
-     * @param _value uint256 The amount to be burned.
-     * @return always true.
-     */
-    function burnFrom(address _from, uint256 _value)
-        public
-        onlyOwner
-        returns(bool)
-    {
-        var _allowance = allowed[_from][msg.sender];
-        balances[_from] = balances[_from].sub(_value);
-        allowed[_from][msg.sender] = _allowance.sub(_value);
-        totalSupply = totalSupply.sub(_value);
-        Burn(_from, _value);
-        return true;
-    }
-
-    /**
-     * @dev Transfer to owner any tokens send by mistake to this contract. (token owner only)
-     * @param token ERC20 The address of the token to transfer.
-     * @param amount uint256 The amount to be transfered.
-     */
-    function emergencyERC20Drain(ERC20 token, uint256 amount)
-        public
-        onlyOwner
-    {
-        token.transfer(owner, amount);
-    }
-
-    /**
-     * @dev Change to a new token sale address. (token owner only)
-     * @param _tokenSaleAddress address The new token sale address.
-     */
-    function changeTokenSaleAddress(address _tokenSaleAddress)
-        public
-        onlyOwner
-        validRecipient(_tokenSaleAddress)
-    {
-        tokenSaleAddress = _tokenSaleAddress;
-    }
-
-    /**
-     * @dev Change to a new MDT team address. (token owner only)
-     * @param _mdtTeamAddress address The new MDT team address.
-     */
-    function changeMdtTeamAddress(address _mdtTeamAddress)
-        public
-        onlyOwner
-        validRecipient(_mdtTeamAddress)
-    {
-        mdtTeamAddress = _mdtTeamAddress;
-    }
-
-    /**
-     * @dev Change to a new user growth address. (token owner only)
-     * @param _userGrowthAddress address The new user growth address.
-     */
-    function changeUserGrowthAddress(address _userGrowthAddress)
-        public
-        onlyOwner
-        validRecipient(_userGrowthAddress)
-    {
-        userGrowthAddress = _userGrowthAddress;
-    }
-
-    /**
-     * @dev Change to a new investors address. (token owner only)
-     * @param _investorsAddress address The new investors address.
-     */
-    function changeInvestorsAddress(address _investorsAddress)
-        public
-        onlyOwner
-        validRecipient(_investorsAddress)
-    {
-        investorsAddress = _investorsAddress;
-    }
-
-    /**
-     * @dev Change to a new MDT Foundation address. (token owner only)
-     * @param _mdtFoundationAddress address The new MDT Foundation address.
-     */
-    function changeMdtFoundationAddress(address _mdtFoundationAddress)
-        public
-        onlyOwner
-        validRecipient(_mdtFoundationAddress)
-    {
-        mdtFoundationAddress = _mdtFoundationAddress;
-    }
+  /**
+   * @dev Assign `amount_` of privately distributed tokens
+   *      to someone identified with `to_` address.
+   * @param to_   Tokens owner
+   * @param group_ Group identifier of privately distributed tokens
+   * @param amount_ Number of tokens distributed with decimals part
+   */
+  function assignReserved(address to_, uint8 group_, uint amount_) onlyOwner public {
+    require(to_ != address(0) && (group_ & 0x7) != 0);
+    // SafeMath will check reserved[group_] >= amount
+    reserved[group_] = reserved[group_].sub(amount_);
+    balances[to_] = balances[to_].add(amount_);
+    ReservedTokensDistributed(to_, group_, amount_);
+  }
 }
