@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Mainsale at 0x45f2ca168f3defcc1205d8597120ee9a36a94d39
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Mainsale at 0xc7415a04871131db90d67bc8785dcc92df8d9113
 */
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.15;
 
 /**
  * @title ERC20Basic
@@ -277,11 +277,11 @@ contract Pausable is Ownable {
   
 }
 
-contract CovestingToken is MintableToken {	
+contract QBEToken is MintableToken {	
     
-  string public constant name = "Covesting";
+  string public constant name = "Qubicle";
    
-  string public constant symbol = "COV";
+  string public constant symbol = "QBE";
     
   uint32 public constant decimals = 18;
 
@@ -349,7 +349,7 @@ contract StagedCrowdsale is Pausable {
   }
 
   function removeStage(uint8 number) public onlyOwner {
-    require(number >=0 && number < stages.length);
+    require(number >= 0 && number < stages.length);
     Stage storage stage = stages[number];
     totalHardcap = totalHardcap.sub(stage.hardcap);    
     delete stages[number];
@@ -358,9 +358,9 @@ contract StagedCrowdsale is Pausable {
     }
     stages.length--;
   }
-
+ 
   function changeStage(uint8 number, uint hardcap, uint price) public onlyOwner {
-    require(number >= 0 &&number < stages.length);
+    require(number >= 0 && number < stages.length);
     Stage storage stage = stages[number];
     totalHardcap = totalHardcap.sub(stage.hardcap);    
     stage.hardcap = hardcap.mul(1 ether);
@@ -402,8 +402,8 @@ contract StagedCrowdsale is Pausable {
   }
 
   function currentStage() public saleIsOn isUnderHardcap constant returns(uint) {
-    for(uint i=0; i < stages.length; i++) {
-      if(stages[i].closed == 0) {
+    for (uint i = 0; i < stages.length; i++) {
+      if (stages[i].closed == 0) {
         return i;
       }
     }
@@ -420,7 +420,7 @@ contract CommonSale is StagedCrowdsale {
 
   uint public totalTokensMinted;
 
-  CovestingToken public token;
+  QBEToken public token;
   
   function setMinPrice(uint newMinPrice) public onlyOwner {
     minPrice = newMinPrice;
@@ -431,12 +431,12 @@ contract CommonSale is StagedCrowdsale {
   }
   
   function setToken(address newToken) public onlyOwner {
-    token = CovestingToken(newToken);
+    token = QBEToken(newToken);
   }
 
   function createTokens() public whenNotPaused payable {
     require(msg.value >= minPrice);
-    uint stageIndex = currentStage();
+    uint stageIndex = currentStage(); // should check if current stage returned a valid stage
     multisigWallet.transfer(msg.value);
     Stage storage stage = stages[stageIndex];
     uint tokens = msg.value.mul(stage.price);
@@ -445,7 +445,7 @@ contract CommonSale is StagedCrowdsale {
     totalTokensMinted = totalTokensMinted.add(tokens);
     totalInvested = totalInvested.add(msg.value);
     stage.invested = stage.invested.add(msg.value);
-    if(stage.invested >= stage.hardcap) {
+    if (stage.invested >= stage.hardcap) {
       stage.closed = now;
     }
   }
@@ -494,25 +494,31 @@ contract Mainsale is CommonSale {
   address public foundersTokensWallet;
   
   address public bountyTokensWallet;
-  
-  uint public foundersTokensPercent;
-  
-  uint public bountyTokensPercent;
-  
-  uint public percentRate = 100;
 
+  address public unsoldTokensWallet;
+  
+  uint public foundersTokensReserve;
+  
+  uint public bountyTokensReserve;
+
+  uint public maxTokenSupply;
+  
   uint public lockPeriod;
 
   function setLockPeriod(uint newLockPeriod) public onlyOwner {
     lockPeriod = newLockPeriod;
   }
 
-  function setFoundersTokensPercent(uint newFoundersTokensPercent) public onlyOwner {
-    foundersTokensPercent = newFoundersTokensPercent;
+  function setFoundersTokensReserve(uint newFoundersTokensReserve) public onlyOwner {
+    foundersTokensReserve = newFoundersTokensReserve;
   }
 
-  function setBountyTokensPercent(uint newBountyTokensPercent) public onlyOwner {
-    bountyTokensPercent = newBountyTokensPercent;
+  function setBountyTokensReserve(uint newBountyTokensReserve) public onlyOwner {
+    bountyTokensReserve = newBountyTokensReserve;
+  }
+
+  function setMaxTokenSupply(uint newMaxTokenSupply) public onlyOwner {
+    maxTokenSupply = newMaxTokenSupply;
   }
 
   function setFoundersTokensWallet(address newFoundersTokensWallet) public onlyOwner {
@@ -523,63 +529,65 @@ contract Mainsale is CommonSale {
     bountyTokensWallet = newBountyTokensWallet;
   }
 
+  function setUnsoldTokensWallet(address newUnsoldTokensWallet) public onlyOwner {
+    unsoldTokensWallet = newUnsoldTokensWallet;
+  }
+  
   function finishMinting() public whenNotPaused onlyOwner {
-    uint summaryTokensPercent = bountyTokensPercent + foundersTokensPercent;
-    uint mintedTokens = token.totalSupply();
-    uint summaryFoundersTokens = mintedTokens.mul(summaryTokensPercent).div(percentRate - summaryTokensPercent);
-    uint totalSupply = summaryFoundersTokens + mintedTokens;
-    uint foundersTokens = totalSupply.mul(foundersTokensPercent).div(percentRate);
-    uint bountyTokens = totalSupply.mul(bountyTokensPercent).div(percentRate);
-    token.mint(this, foundersTokens);
+    token.mint(this, foundersTokensReserve);
     token.lock(foundersTokensWallet, lockPeriod * 1 days);
-    token.transfer(foundersTokensWallet, foundersTokens);
-    token.mint(this, bountyTokens);
-    token.transfer(bountyTokensWallet, bountyTokens);
-    totalTokensMinted = totalTokensMinted.add(foundersTokens).add(bountyTokens);
+    token.transfer(foundersTokensWallet, foundersTokensReserve);
+    token.mint(this, bountyTokensReserve);
+    token.transfer(bountyTokensWallet, bountyTokensReserve);
+    totalTokensMinted = totalTokensMinted.add(foundersTokensReserve).add(bountyTokensReserve);
+
+    uint totalUnsoldTokens = maxTokenSupply.sub(totalTokensMinted);
+    if (totalUnsoldTokens > 0){
+      token.mint(this, totalUnsoldTokens);
+      token.transfer(unsoldTokensWallet, totalUnsoldTokens);
+    }
+    
     token.finishMinting();
   }
 
 }
 
-contract Configurator is Ownable {
+contract TestConfigurator is Ownable {
 
-  CovestingToken public token; 
+  QBEToken public token; 
 
   Presale public presale;
 
   Mainsale public mainsale;
 
   function deploy() public onlyOwner {
-    token = new CovestingToken();
+    token = new QBEToken();
 
     presale = new Presale();
 
     presale.setToken(token);
-    presale.addStage(5000,300);
-    presale.setMultisigWallet(0x6245C05a6fc205d249d0775769cfE73CB596e57D);
-    presale.setStart(1508504400);
-    presale.setPeriod(30);
+    presale.addStage(10,3000);
+    presale.setMultisigWallet(0x4c076e99d9E8cFC647E1807D89506189d4256Ee1);
+    presale.setStart(1509393730);
+    presale.setPeriod(1);
     presale.setMinPrice(100000000000000000);
     token.setSaleAgent(presale);	
 
     mainsale = new Mainsale();
 
     mainsale.setToken(token);
-    mainsale.addStage(5000,200);
-    mainsale.addStage(5000,180);
-    mainsale.addStage(10000,170);
-    mainsale.addStage(20000,160);
-    mainsale.addStage(20000,150);
-    mainsale.addStage(40000,130);
-    mainsale.setMultisigWallet(0x15A071B83396577cCbd86A979Af7d2aBa9e18970);
-    mainsale.setFoundersTokensWallet(0x25ED4f0D260D5e5218D95390036bc8815Ff38262);
-    mainsale.setBountyTokensWallet(0x717bfD30f039424B049D918F935DEdD069B66810);
-    mainsale.setStart(1511528400);
-    mainsale.setPeriod(30);
-    mainsale.setLockPeriod(90);
+    mainsale.addStage(100,1500);
+    mainsale.setMultisigWallet(0xf32737F7779cA2D20c017Da8F51b2DF99F86A221);
+    mainsale.setFoundersTokensWallet(0x5b819179C8Ba84FB4a517Dd566cb09Ff4b8a277f);
+    mainsale.setBountyTokensWallet(0x7D2b00C23aDab97152aaB6588A50FcEdCEbD58e4);
+    mainsale.setUnsoldTokensWallet(0xAE5e64280eD777c6D2bb8EddfeF2394A21f147DD);
+    mainsale.setStart(1509393800);
+    mainsale.setPeriod(1);
+    mainsale.setLockPeriod(1);
     mainsale.setMinPrice(100000000000000000);
-    mainsale.setFoundersTokensPercent(13);
-    mainsale.setBountyTokensPercent(5);
+    mainsale.setFoundersTokensReserve(20 * (10**6) * 10**18);
+    mainsale.setBountyTokensReserve(10 * (10**6) * 10**18);
+    mainsale.setMaxTokenSupply(100 * (10**6) * 10**18);
 
     presale.setMainsale(mainsale);
 
@@ -588,4 +596,49 @@ contract Configurator is Ownable {
     mainsale.transferOwnership(owner);
   }
 
+}
+
+contract Configurator is Ownable {
+
+  QBEToken public token; 
+
+  Presale public presale;
+
+  Mainsale public mainsale;
+
+  function deploy() public onlyOwner {
+    token = new QBEToken();
+
+    presale = new Presale();
+
+    presale.setToken(token);
+    presale.addStage(6000,3000);
+    presale.setMultisigWallet(0x17FB4A3ff095F445287AA6F3Ab699a3DCaE3DC56);
+    presale.setStart(1510128000);
+    presale.setPeriod(31);
+    presale.setMinPrice(100000000000000000);
+    token.setSaleAgent(presale);	
+
+    mainsale = new Mainsale();
+
+    mainsale.setToken(token);
+    mainsale.addStage(45000,1500);
+    mainsale.setMultisigWallet(0xdfF07F415E00a338205A8E21C39eC007eb37F746);
+    mainsale.setFoundersTokensWallet(0x7bfC9AdaF3D07adC4a1d3D03cde6581100845540);
+    mainsale.setBountyTokensWallet(0xce8d83BA3cDD4E7447339936643861478F8037AD);
+    mainsale.setUnsoldTokensWallet(0xd88a0920Dc4A044A95874f4Bd4858Fb013511290);
+    mainsale.setStart(1514764800);
+    mainsale.setPeriod(60);
+    mainsale.setLockPeriod(90);
+    mainsale.setMinPrice(100000000000000000);
+    mainsale.setFoundersTokensReserve(20 * (10**6) * 10**18);
+    mainsale.setBountyTokensReserve(10 * (10**6) * 10**18);
+    mainsale.setMaxTokenSupply(100 * (10**6) * 10**18);
+
+    presale.setMainsale(mainsale);
+
+    token.transferOwnership(owner);
+    presale.transferOwnership(owner);
+    mainsale.transferOwnership(owner);
+  }
 }
