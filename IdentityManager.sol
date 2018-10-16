@@ -1,40 +1,38 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IdentityManager at 0xb7d66b18fbe8eb655ce7daa5d616d908c25c32a7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IdentityManager at 0x22a4d688748845e9d5d7394a0f05bc583adf4656
 */
 pragma solidity 0.4.15;
 
 
-contract Controlled {
-    address public controller;
-    modifier onlyController() {
-        require(isController(msg.sender));
+contract Owned {
+    address public owner;
+    modifier onlyOwner() {
+        require(isOwner(msg.sender));
         _;
     }
 
-    function Controlled() { controller = msg.sender; }
+    function Owned() { owner = msg.sender; }
 
-    function isController(address addr) public returns(bool) { return addr == controller; }
+    function isOwner(address addr) public returns(bool) { return addr == owner; }
 
-    function changeController(address newController) public onlyController {
-        if (newController != address(this)) {
-            controller = newController;
+    function transfer(address newOwner) public onlyOwner {
+        if (newOwner != address(this)) {
+            owner = newOwner;
         }
     }
 }
 
+contract Proxy is Owned {
+    event Forwarded (address indexed destination, uint value, bytes data);
+    event Received (address indexed sender, uint value);
 
-contract Proxy is Controlled {
-    event LogForwarded (address indexed destination, uint value, bytes data);
-    event LogReceived (address indexed sender, uint value);
+    function () payable { Received(msg.sender, msg.value); }
 
-    function () payable { LogReceived(msg.sender, msg.value); }
-
-    function forward(address destination, uint value, bytes data) public onlyController {
+    function forward(address destination, uint value, bytes data) public onlyOwner {
         require(destination.call.value(value)(data));
-        LogForwarded(destination, value, data);
+        Forwarded(destination, value, data);
     }
 }
-
 
 contract IdentityManager {
     uint adminTimeLock;
@@ -218,7 +216,7 @@ contract IdentityManager {
         address newIdManager = migrationNewAddress[identity];
         delete migrationInitiated[identity];
         delete migrationNewAddress[identity];
-        identity.changeController(newIdManager);
+        identity.transfer(newIdManager);
         delete recoveryKeys[identity];
         // We can only delete the owner that we know of. All other owners
         // needs to be removed before a call to this method.
