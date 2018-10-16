@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShareErc20 at 0x4042ee024b4cfafbeec83532b3bc22743fd8a208
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShareErc20 at 0xff1f9e2e0dcbaaa85d9320bca4d82d619eec531e
 */
 pragma solidity ^0.4.21;
 
@@ -44,7 +44,6 @@ contract Control {
 contract Share is Control {
     uint256 public totalSupply;
     uint256 public watermark;
-    Share public h;
 
     mapping (address => uint256) public balances;
     mapping (address => uint256) public fullfilled;
@@ -57,9 +56,8 @@ contract Share is Control {
     event Buy(address seller, address buyer, uint256 amount, uint256 value);
     event Withdraw(address owner, uint256 amount);
 
-    function Share(uint256 _totalSupply) public {
+    constructor(uint256 _totalSupply) public {
         totalSupply = _totalSupply;
-        h = Share(0x1db45a09efcdd8955b1C3BB855b5A8d333446bFf);
         balances[msg.sender] = totalSupply;
 
         emit Transfer(0, msg.sender, totalSupply);
@@ -70,10 +68,6 @@ contract Share is Control {
             uint256 split = (msg.value / totalSupply);
             watermark += split;
             assert(watermark * totalSupply > watermark);
-
-            if ((msg.value - split * totalSupply) > 0) {
-                h.onIncome.value(msg.value - split * totalSupply)();
-            }
             emit Income(msg.value);
         }
     }
@@ -164,7 +158,7 @@ contract ShareErc20 is Share, ERC20Interface {
     /**
      * at start the owner has 100% share, which is 10,000 holds
      */
-    function ShareErc20(string _symbol, string _name, uint _totalSupply)
+    constructor(string _symbol, string _name, uint _totalSupply)
       Share(_totalSupply)
       public {        
         name = _name;
