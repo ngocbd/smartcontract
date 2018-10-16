@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OpenAddressLottery at 0x4fdc2078d8bc92e1ee594759d7362f94b60b1a3d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OpenAddressLottery at 0xd1915A2bCC4B77794d64c4e483E43444193373Fa
 */
 pragma solidity ^0.4.19;
 /*
