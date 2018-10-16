@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract E93 at 0xd9916449771e72ac6f7ed15265f728ed9fb56c07
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract E93 at 0x11acec4762979df69fb537aed5a88b7af0381e81
 */
 pragma solidity ^0.4.2;
 
@@ -1071,7 +1071,7 @@ contract E93 is DSSafeAddSub, usingOraclize {
         _;
     }
     
-    address owner;
+    address public owner = 0x44fc32c2a5d18700284cc9e0e2da3ad83e9a6c5d;
     address public charity = 0xD3F81260a44A1df7A7269CF66Abd9c7e4f8CdcD1; // Heifer International - see https://www.heifer.org/support/faq/online-donations to verify this is their Ethereum donation address. 5% of ticket sale revenue goes to this address.
     address public tokenContract = 0xfc5429ef09ed041622a23fee92e65efab389c1ce; // 1% of ticket sales go to E93 token holders, who can trade their E93 tokens in at any time.
     uint public roundNumber;
@@ -1200,7 +1200,7 @@ contract E93 is DSSafeAddSub, usingOraclize {
         
         waiting = false;
         
-        string memory part1 = "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random.data.0', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateIntegers\",\"params\":{\"apiKey\":${[decrypt] BNP9YOjVlFoCNaYBEVKgGqvSUXLrCFWNCXkoRPTnumiEM1+dNJkZFtnmpIP3CFHbUvy4uXaC8GF7xBwJtHu0LJAStZD/2pk5i7eh8jqyHWRLnDjVWZpxjVaIX+8rijblUp7CPBNRVoW0JS4TqGb0KL1XG+SZhcg=},\"n\":1,\"min\":0,\"max\":";
+        string memory part1 = "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random.data.0', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateIntegers\",\"params\":{\"apiKey\":${[decrypt] BM6215lJMQLdkA/ELpxVpyyBbQ6HTNUzZS3Do/ILznENhTDIzKBRaQzhIDEAk0XX3gQC9dbD8N0F7loF92N6rzNY4onCX7IQAhcDB7cnQ48UM0AORq4bP9Wava5MJI6QIYxlfxmPUZ5tIV0+KfC/bmcMV3A9VYA=},\"n\":1,\"min\":0,\"max\":";
 
         string memory maxRandomNumber = uint2str(lotteries[roundNumber].ticketsSold - 1);
 
