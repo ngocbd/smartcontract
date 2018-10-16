@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CampaignBeneficiary at 0xdce94f49e659bd1335213a6e1c54d6cd171f97dd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CampaignBeneficiary at 0x3e15c9eac04cbe4a191c6696982a29b62126039e
 */
 pragma solidity ^ 0.4 .6;
 
 contract Campaign {
 
         address public JohanNygren;
-        bool public campaignOpen;
+        bool campaignOpen;
 
         function Campaign() {
                 JohanNygren = 0x948176cb42b65d835ee4324914b104b66fb93b52;
