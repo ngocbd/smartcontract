@@ -1,7 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x773418c3cbcf93241e688209ef462910462d3704
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xcf26e90169f00bdbc7018ea203b55f0ec8ba426c
 */
 pragma solidity ^0.4.16;
+
+//BUBBLEUM source code
+//with 100% cryptonano BUBB rubber inside
 
 contract owned {
     address public owner;
@@ -26,7 +29,7 @@ contract TokenERC20 {
     // Public variables of the token
     string public name;
     string public symbol;
-    uint8 public decimals = 18;
+    uint8 public decimals = 5;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
 
