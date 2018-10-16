@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AuctionPotato at 0xa84a51c521cd87beb3f9330819d10f3d84de3df1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AuctionPotato at 0x433b189d5fbdfee89e3a9f4c6b9469495fcb00f1
 */
 // based on Bryn Bellomy code
 // https://medium.com/@bryn.bellomy/solidity-tutorial-building-a-simple-auction-contract-fcc918b0878a
@@ -64,7 +64,6 @@ contract AuctionPotato {
     address public owner;
     uint public startTime;
     uint public endTime;
-    string public infoUrl;
     string name;
     
     // start auction manually at given time
@@ -108,14 +107,13 @@ contract AuctionPotato {
         owner = msg.sender;
         creatureOwner = owner;
         
-        // 0.002 ETH
-        highestBindingBid = 2000000000000000;
+        // 0.01 ETH
+        highestBindingBid = 10000000000000000;
         potato = 0;
         
         started = false;
         
-        name = "Stomper";
-        infoUrl = "https://chibifighters.io";
+        name = "Pixor";
         
     }
 
@@ -197,7 +195,7 @@ contract AuctionPotato {
         // 44% potato results in ? 13% 4/9 
         // 50% potato results in ~16% /2
         oldPotato = potato;
-        potato = highestBindingBid.mul(4).div(9);
+        potato = highestBindingBid.mul(5).div(9);
         
         emit LogBid(msg.sender, highestBidder, oldHighestBindingBid, highestBindingBid);
         blockerPay = false;
