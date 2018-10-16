@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract tickingBomb at 0x09F0aaABe4Df881797698aF29477A65AC9A302d1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract tickingBomb at 0xf36b0F457999CbBB436EeB28DBb5944bfC3f99DE
 */
 contract tickingBomb {
 
@@ -10,8 +10,8 @@ contract tickingBomb {
         uint nbrMembers;
     }
 
-    uint public constant DELAY =  60 * 60 * 12; // 12 Hours
-    uint public constant INVEST_AMOUNT = 500 finney; // 0.5 ETH
+    uint public constant DELAY =  60 * 60 * 24; // 24 Hours
+    uint public constant INVEST_AMOUNT = 1000 finney; // 1 ETH
     uint constant FEE = 3;
 
     team public red;
