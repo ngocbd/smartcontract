@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cookie at 0x190f064876450617ded5f66735b822c18ba26dd2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cookie at 0xf3fb69ef211c6d1e838a5c2223ef54fed4f24090
 */
 pragma solidity ^0.4.18;
 
@@ -83,7 +83,7 @@ contract Cookie is ERC20, CookieStandard, Ownable {
     uint public stakeStartTime;
     uint public stakeMinAge = 2 days;
     uint public stakeMaxAge = 60 days;
-    uint public maxMintCookie = 15**17;
+    uint public maxMintCookie = 150000000000000000;
 
     uint public totalSupply;
     uint public maxTotalSupply;
@@ -111,8 +111,8 @@ contract Cookie is ERC20, CookieStandard, Ownable {
     }
 
     function Cookie() {
-        maxTotalSupply = 12**25; // 12 Million
-        totalInitialSupply = 20**24; // 1 Million
+        maxTotalSupply = 12000000000000000000000000; // 12 Million
+        totalInitialSupply = 2000000000000000000000000; // 2 Million
 
         chainStartTime = now;
         chainStartBlockNumber = block.number;
