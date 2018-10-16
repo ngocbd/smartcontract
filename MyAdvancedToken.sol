@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x302640df886a6c3dcf045b0aed753f06f6553224
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x25587c25f1c7f245b5d419dbdf14f497ac5dce1b
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.13;
 
 contract owned {
     address public owner;
