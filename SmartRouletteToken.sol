@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartRouletteToken at 0xb961339f6f7f3b020255d9281fdd3bf2eb9b4d1e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartRouletteToken at 0x7dd8d4c556d2005c5bafc3d5449a99fb46279e6b
 */
 pragma solidity ^0.4.8;
 
@@ -156,7 +156,20 @@ contract SmartRouletteToken {
 	}
 
 	function kill() isDeveloper {
+		/*uint256 token_price = this.balance/_supply;
+		for(uint256 i = 0; i < listAddrHolders.length; i++){
+			if(_balances[listAddrHolders[i]].tokens_count>0){
+				if(listAddrHolders[i].send(token_price*_balances[listAddrHolders[i]].tokens_count)==false){ throw; }
+				else{
+					_balances[listAddrHolders[i]].tokens_count = 0;
+				}
+			}
+		}*/
 		suicide(developer);
+	}
+
+	function getListGames() constant returns(address[]){
+		return addrGames;
 	}
 
 	function addUserToList(address user) internal {
@@ -184,7 +197,7 @@ contract SmartRouletteToken {
 		stop_operation = false;
 	}
 
-	function isOperationBlocked() external constant returns (bool){
+	function statusOperation() constant returns (bool){
 		return stop_operation;
 	}
 
@@ -209,6 +222,7 @@ contract SmartRouletteToken {
 	}
 
 	function balanceOf( address who ) external constant returns (uint256 value) {
+		//holderData data_holder = _balances[who];
 		return _balances[who].tokens_count;
 	}
 
@@ -326,7 +340,7 @@ contract SmartRouletteToken {
 	event TempTokensSend(address indexed recipient, uint256 count, uint256 start, uint256 end);
 
 	function sendTempTokens(address recipient, uint256 count, uint256 period) isManager {
-		if(stop_operation) throw;
+		if(!stop_operation) throw;
 
 		if(count==0 || period==0) throw;
 		
@@ -354,7 +368,7 @@ contract SmartRouletteToken {
 	}
 
 	function returnTempTokens(address recipient) isManager {
-		if(stop_operation) throw;
+		if(!stop_operation) throw;
 		
 		if(_temp_balance[recipient].tokens_count == 0) throw;
 
@@ -383,13 +397,26 @@ contract SmartRouletteToken {
 
 	function() payable
 	{	
-		if(stop_operation) throw;
+		if(!stop_operation) throw;
 		if(msg.sender == developer) throw;
 		if(msg.sender == manager) throw;
 		if(msg.sender == developer_wallet) throw;
 		if(msg.sender == wallet_ICO) throw;
 		if(msg.sender == fond_wallet) throw;
 
+		/*if(listGames[msg.sender].init){
+			uint256 profit_one_token = (msg.value+this.balance)/_supply;
+			for(uint256 i = 0; i < listAddrHolders.length; i++){
+				if(_balances[listAddrHolders[i]].tokens_count>0){
+					if(listAddrHolders[i].send(profit_one_token*_balances[listAddrHolders[i]].tokens_count)){
+						SuccessProfitSend(listAddrHolders[i], profit_one_token*_balances[listAddrHolders[i]].tokens_count);
+					}
+					else{
+						FailProfitSend(listAddrHolders[i], profit_one_token*_balances[listAddrHolders[i]].tokens_count);
+					}
+				}
+			}
+		}*/
 		if(listGames[msg.sender].init) throw;
 
 		if(enableICO == false) throw;
