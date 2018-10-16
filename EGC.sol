@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EGC at 0x848217a9569ca64fffba9d000cda05f9d2fa97f5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EGC at 0xef6338d6f390e36954355dcc13380df67b154247
 */
 pragma solidity ^0.4.11;
 
@@ -119,15 +119,31 @@ contract EGC is StandardToken{
     uint public constant decimals = 18;
     string public constant version = "1.0";
     // uint public constant totalNumber =13*(10**8)*(10**decimals);
+    //all coin is under this host
+    address public host;
+    //can make token start
     address public owner;
+
     modifier onlyOwner{
       if(msg.sender != owner) throw;
       _;
     } 
+
+    //events
+    event InitHostBalance(address _host,uint number);
+
     function EGC(){
         owner = msg.sender;
+        //set total number of token
         totalSupply = 13*(10**8)*(10**decimals);
-        balances[owner] =  totalSupply;
+    }
+
+    function initToken(address _host) onlyOwner{
+      //set all tokens to _host
+      if(_host==0x0) throw;
+      host = _host;
+      balances[host] = balances[host].add(totalSupply);
+      InitHostBalance(host,totalSupply);
     }
 
     function changeOwner(address newOwner) onlyOwner{
@@ -138,8 +154,8 @@ contract EGC is StandardToken{
     function () payable{
         throw;
     }
-
+    
     function kill() onlyOwner{
-        suicide(owner);
+        selfdestruct(owner);
     }
 }
