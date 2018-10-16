@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x653f052a42b6f02530742171c987fd0811b2d1f1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x0363611917dd6392baadb311686adfe77fe6b2f3
 */
 pragma solidity ^0.4.18;
 
@@ -142,14 +142,6 @@ contract Crowdsale is Ownable {
     require(_rate > 0);
     rate = _rate;
   }
-
-  // ?????????? ????? ???????? ??? ????? ???????
-  function setWallet (address _wallet) public onlyOwner {
-    require (_wallet != 0x0);
-    wallet = _wallet;
-      
-  }
-  
 
   // ?????????? ????????? ?????
   function setToken (ERC20 _token) public onlyOwner {
