@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fundraiser at 0xcf965cfe7c30323e9c9e41d4e398e2167506f764
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fundraiser at 0xa8855be2f7142f1485a958ca4135a7ee2752c732
 */
 //! Fundraiser contract. Just records who sent what.
 //! By Parity Technologies, 2017.
@@ -14,7 +14,7 @@ contract Fundraiser {
 
 
     // How much is enough?
-    uint public constant dust = 180 finney;
+    uint public constant dust = 1 finney; // XXX: change for production
 
 
     // Special addresses: 
