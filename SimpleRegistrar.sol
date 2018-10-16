@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleRegistrar at 0x1bebbc372772817d5d11a06ee2a4eba33ab6ee65
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleRegistrar at 0x4b855725bb816b7e2b3e67bcffe0436b407675ae
 */
 /**
  * SimpleRegistrar lets you claim a subdomain name for yourself and configure it
@@ -102,7 +102,7 @@ contract SimpleRegistrar is owned {
     }
     
     modifier can_register(bytes32 label) {
-        if(ens.owner(label) != 0 || msg.value < fee) throw;
+        if(ens.owner(sha3(rootNode, label)) != 0 || msg.value < fee) throw;
         _;
     }
     
