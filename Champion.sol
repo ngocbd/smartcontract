@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Champion at 0xa031ed83f48a346be35ed04319174a3bfbac0b44
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Champion at 0xdc00a48795cdda3e379ef3fed2a908b12529db3d
 */
+pragma solidity ^0.4.13;
+
 /**
  * @title Ownable
  * @dev The Ownable contract has an owner address, and provides basic authorization control
@@ -40,19 +42,16 @@ contract Ownable {
 
 }
 
-
 contract Champion is Ownable {
     uint8 constant NUMBER = 1;
     uint8 constant STRING = 0;
     
-    /** game statuses **/
     uint8 constant GS_NOT_STARTED = 0;
     uint8 constant GS_IN_PROCESS = 1;
     uint8 constant GS_WAITING_USERS = 2;
+    uint8 constant BILLIONS_STEP = 35; 
     
     uint256 public game = 0;
-    
-    uint256 public gamePlayerNumber = 0;
     
     uint8 public currentGameStatus;
     
@@ -60,33 +59,19 @@ contract Champion is Ownable {
     
     uint256[] public allGames;
     
-    mapping(uint256 => uint256[]) internal games;
-    
-    mapping(uint256 => Rules) internal gamesRules;
+    mapping(uint256 => uint256) internal gameStartBlock;
     
     mapping(uint256 => address[]) internal gamePlayers;
     
-    /** game => user **/
     mapping(uint256 => address) public winners;
     
     mapping(uint256 => mapping(address => uint256[])) internal playerNumbersInGame;
 
     mapping(uint256 => uint256) gamePrize;
     
-    struct Rules {
-        uint8 right;
-        uint8 left;
-    }
-    
     function Champion() {
         currentGameStatus = GS_NOT_STARTED;
         game = block.number;
-    }
-
-    function getAllGames() constant returns(uint256[]) {
-        uint256[] memory allgames = new uint256[](allGames.length);
-        allgames = allGames;
-        return allgames;
     }
 
     function getAllGamesCount() constant returns(uint256) {
@@ -101,28 +86,10 @@ contract Champion is Ownable {
         winners[_game] = _winner;
     }
     
-    function getGameRules(uint256 _game) 
-            constant returns (uint8 leftSide, uint8 rightSide) 
-    {
-        return (leftSideRule(_game), rightSideRule(_game));
-    }
-    
-    function leftSideRule(uint256 _game) 
-            private constant returns (uint8) 
-    {
-        return gamesRules[getStartBlock(_game)].left;
-    }
-    
-    function rightSideRule(uint256 _game) 
-            private constant returns (uint8) 
-    {
-        return gamesRules[getStartBlock(_game)].right;
-    }
-    
     function getStartBlock(uint256 _game) 
             constant returns (uint256) 
     {
-        return games[_game][0];
+        return gameStartBlock[_game];
     }
 
     function getPlayersCountByGame(uint256 _game) 
@@ -136,33 +103,15 @@ contract Champion is Ownable {
     {
         return playerNumbersInGame[_gameBlock][_palayer];
     }
-    
-    function setGamePrize(uint256 _game, uint256 _amount) {
-        gamePrize[_game] = _amount;
-    }
 
     function getGamePrize(uint256 _game) constant returns (uint256) {
         return gamePrize[_game];
     }
-
-    /** define game rules **/
-    function defineGameRules(uint256 _game) private returns (bool) {
-        
-        Rules memory rules;
-        
-        if (isNumber(_game)) {
-            rules.left = NUMBER;
-            rules.right = STRING;
-        } else {
-            rules.left = STRING;
-            rules.right = NUMBER;
-        }
-        
-        gamesRules[_game] = rules;
-        
-        return true;
-    }
     
+    function setGamePrize(uint256 _game, uint256 _amount) onlyOwner {
+        gamePrize[_game] = _amount;
+    }
+
     function isNumber(uint256 _game) private constant returns (bool) {
         bytes32 hash = block.blockhash(_game);
         require(hash != 0x0);
@@ -178,60 +127,51 @@ contract Champion is Ownable {
         return false;
     }
     
-    function startGame() returns (bool) {
+    function startGame() onlyOwner returns (bool) {
         require(currentGameStatus == GS_WAITING_USERS);
         currentGameStatus = GS_IN_PROCESS;
         currentGameBlockNumber = game;
         game = block.number;
-        gamePlayerNumber = 0;
         
         allGames.push(currentGameBlockNumber);
         
         uint256 startBlock = block.number - 1;
-        defineGameRules(startBlock);
-        games[currentGameBlockNumber].push(startBlock);
+        gameStartBlock[currentGameBlockNumber] = startBlock;
         
         return true;
     }
 
-    function finishCurrentGame() returns (address) {
+    function finishCurrentGame() onlyOwner returns (address) {
         return finishGame(currentGameBlockNumber);
     }
 
     function finishGame(uint256 _game) onlyOwner returns (address) {
-        require(currentGameBlockNumber != 0);
+        require(_game != 0);
         require(winners[_game] == 0x0);
         require(currentGameStatus == GS_IN_PROCESS);
 
         uint256 steps = getCurrentGameSteps();
-        uint256 startBlock = getStartBlock(currentGameBlockNumber);
+        uint256 startBlock = getStartBlock(_game);
         require(startBlock + steps < block.number);
         
-        uint256 lMin = 1;
-        uint256 lMax = 2;
-        uint256 rMin = 3;
-        uint256 rMax = 4;
+        uint256 lMin = 0;
+        uint256 lMax = 0;
+        uint256 rMin = 0;
+        uint256 rMax = 0;
         
-        for (uint8 i = 1; i <= steps; i++) {
-            require(block.blockhash(_game + i) != 0x0);
-            (lMin, lMax, rMin, rMax) = processSteps(currentGameBlockNumber, i);
+        (lMin, lMax, rMin, rMax) = processSteps(_game);
         
-            if (lMin == lMax && rMin == rMax && lMin == rMin) {
-                address winner = gamePlayers[currentGameBlockNumber][rMax];
-                
-                setWinner(
-                    currentGameBlockNumber, 
-                    winner
-                );
-                                
-                currentGameBlockNumber = 0;
-                currentGameStatus = GS_WAITING_USERS;
-                
-                return winner;
-            }
-        }
+        address winner = gamePlayers[_game][rMax];
+            
+        setWinner(
+            _game, 
+            winner
+        );
+                        
+        currentGameBlockNumber = 0;
+        currentGameStatus = GS_WAITING_USERS;
         
-        return 0x0;
+        return winner;
     }
     
     function getCurrentGameSteps() constant returns (uint256) {
@@ -270,17 +210,87 @@ contract Champion is Ownable {
             y := add(y, mul(256, gt(arg, 0x8000000000000000000000000000000000000000000000000000000000000000)))
         }
     }
+    
+    function getGameRules(uint256 _game) 
+            constant returns (uint8 left, uint8 right) {
+        if (isNumber(_game)) {
+            left = NUMBER;
+            right = STRING;
+        } else {
+            left = STRING;
+            right = NUMBER;
+        }
 
-    function processSteps(uint256 _gameBlock, uint256 step) 
-            constant returns (uint256, uint256, uint256, uint256) {
+        return (left, right);
+    }
+
+    function processSteps(uint256 _gameBlock) 
+            internal returns (uint256 lMin, uint256 lMax, uint256 rMin, uint256 rMax) {
+        require(_gameBlock != 0);
+        
+        lMin = 0;
+        lMax = 0;
+        rMin = 0;
+        rMax = gamePlayers[_gameBlock].length - 1;
+        
+        if (isEvenNumber(rMax)) {
+            lMax = rMax / 2;
+            rMin = rMax / 2 + 1;
+        } else {
+            lMax = rMax / 2;
+            rMin = rMax / 2 + 1;
+        }
+
+        uint8 left = 0;
+        uint8 right = 0;
+        (left, right) = getGameRules(_gameBlock);
+
+        for (uint8 i = 1; i <= BILLIONS_STEP; i++) {
+            bool isNumberRes = isNumber(getStartBlock(_gameBlock) + i);
+            
+            if ((isNumberRes && left == NUMBER) ||
+                (!isNumberRes && left == STRING)
+            ) {
+                if (lMin == lMax) {
+                    rMin = lMin;
+                    rMax = lMax;
+                    break;
+                }
+                
+                rMax = lMax;
+            } else if (isNumberRes && right == NUMBER ||
+                (!isNumberRes && right == STRING)
+            ) {
+                if (rMin == rMax) {
+                    lMin = rMin;
+                    lMax = rMax;
+                    break;
+                }
+                
+                lMin = rMin;
+            }
+            
+            if (rMax - lMin != 1) {
+                lMax = lMin + (rMax - lMin) / 2;
+                rMin = lMin + (rMax - lMin) / 2 + 1;
+            } else {
+                lMax = lMin;
+                rMin = rMax;
+            }
+        }
+        
+        return (lMin, lMax, rMin, rMax);
+    }
+
+    function processStepsByStep(uint256 _gameBlock, uint256 step) 
+            constant returns (uint256 lMin, uint256 lMax, uint256 rMin, uint256 rMax) {
         require(_gameBlock != 0);
         require((getStartBlock(_gameBlock) + i) < block.number);
-        // TODO check 
         
-        uint256 lMin = 0;
-        uint256 lMax = 0;
-        uint256 rMin = 0;
-        uint256 rMax = gamePlayers[_gameBlock].length - 1;
+        lMin = 0;
+        lMax = 0;
+        rMin = 0;
+        rMax = gamePlayers[_gameBlock].length - 1;
         
         if (isEvenNumber(rMax)) {
             lMax = rMax / 2;
@@ -294,11 +304,15 @@ contract Champion is Ownable {
             return (lMin, lMax, rMin, rMax);
         } 
         
+        uint8 left = 0;
+        uint8 right = 0;
+        (left, right) = getGameRules(_gameBlock);
+
         for (uint i = 1; i <= step; i++) {
             bool isNumberRes = isNumber(getStartBlock(_gameBlock) + i);
             
-            if ((isNumberRes && leftSideRule(_gameBlock) == NUMBER) ||
-                (!isNumberRes && leftSideRule(_gameBlock) == STRING)
+            if ((isNumberRes && left == NUMBER) ||
+                (!isNumberRes && left == STRING)
             ) {
                 if (lMin == lMax) {
                     rMin = lMin;
@@ -307,8 +321,8 @@ contract Champion is Ownable {
                 }
                 
                 rMax = lMax;
-            } else if (isNumberRes && rightSideRule(_gameBlock) == NUMBER ||
-                (!isNumberRes && rightSideRule(_gameBlock) == STRING)
+            } else if (isNumberRes && right == NUMBER ||
+                (!isNumberRes && right == STRING)
             ) {
                 if (rMin == rMax) {
                     lMin = rMin;
@@ -319,12 +333,9 @@ contract Champion is Ownable {
                 lMin = rMin;
             }
             
-            if ((rMax - lMin != 1) && isEvenNumber(rMax)) {
-                lMax = rMax / 2;
-                rMin = rMax / 2 + 1;
-            } else if (rMax - lMin != 1) {
-                lMax = rMax / 2;
-                rMin = rMax / 2 + 1;
+            if (rMax - lMin != 1) {
+                lMax = lMin + (rMax - lMin) / 2;
+                rMin = lMin + (rMax - lMin) / 2 + 1;
             } else {
                 lMax = lMin;
                 rMin = rMax;
@@ -333,7 +344,7 @@ contract Champion is Ownable {
         
         return (lMin, lMax, rMin, rMax);
     }
-    
+
     function isEvenNumber(uint _v1) 
             internal constant returns (bool) {
         uint v1u = _v1 * 100;
@@ -349,21 +360,18 @@ contract Champion is Ownable {
         return true;
     }
     
-    /** buy ticket && start game | init game by conditions **/
     function buyTicket(address _player) onlyOwner 
             returns (uint256 playerNumber, uint256 gameNumber) {
         if (currentGameStatus == GS_NOT_STARTED) {
             currentGameStatus = GS_WAITING_USERS;
         }
         
+        playerNumber = gamePlayers[game].length;
+
         gamePlayers[game].push(_player);
         
-        playerNumber = gamePlayerNumber;
-        
         playerNumbersInGame[game][_player].push(playerNumber);
-        
-        gamePlayerNumber++;
-        
+                
         return (playerNumber, game);
     }
 }
