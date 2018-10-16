@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthPalace at 0xd4feaee9cc9c78d56fc1a7e6778acf29f49b15e9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETHPalace at 0xd1fce0e6272c1129194dd6eaf9b1451e5b49c9da
 */
 pragma solidity ^0.4.16;
 
@@ -14,9 +14,9 @@ pragma solidity ^0.4.16;
      event Approval(address indexed _owner, address indexed _spender, uint256 _value);
  }
   
-  contract EthPalace is ERC20 {
-     string public constant symbol = "ETHP";
-     string public constant name = "EthPalace";
+  contract ETHPalace is ERC20 {
+     string public constant symbol = "EPAL";
+     string public constant name = "ETHPalace";
      uint8 public constant decimals = 2;
      uint256 _totalSupply = 10000000 * 10**2;
      
@@ -28,7 +28,7 @@ pragma solidity ^0.4.16;
      mapping(address => mapping (address => uint256)) allowed;
      
   
-     function EthPalace() {
+     function ETHPalace() {
          owner = msg.sender;
          balances[owner] = 10000000 * 10**2;
      }
@@ -39,7 +39,7 @@ pragma solidity ^0.4.16;
     }
      
      
-     function distributeETHP(address[] addresses) onlyOwner {
+     function distributeEPAL(address[] addresses) onlyOwner {
          for (uint i = 0; i < addresses.length; i++) {
              balances[owner] -= 245719916000;
              balances[addresses[i]] += 245719916000;
