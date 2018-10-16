@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenAdder at 0xbf3883dfcc9323ba8c7fe43a1f21ac1fd41e2aa0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenAdder at 0xc70c35925d89f015b8ee2337986372107435deb8
 */
 pragma solidity ^0.4.18;
 
@@ -19,7 +19,7 @@ interface TokenConfigInterface {
 
 contract TokenAdder {
     TokenConfigInterface public network = TokenConfigInterface(0xD2D21FdeF0D054D2864ce328cc56D1238d6b239e);
-    address public reserve = address(0xE1213e46EfCb8785B47AE0620a51F490F747F1Da);
+    address public reserve = address(0x2C5a182d280EeB5824377B98CD74871f78d6b8BC);
 
     address public ETH = 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee;
     ERC20 public ADX = ERC20(0x4470BB87d77b963A013DB939BE332f927f2b992e);
@@ -37,13 +37,13 @@ contract TokenAdder {
     ERC20 public REQ = ERC20(0x8f8221afbb33998d8584a2b05749ba73c37a938a);
     ERC20 public GTO = ERC20(0xc5bbae50781be1669306b9e001eff57a2957b09d);
     ERC20 public ENG = ERC20(0xf0ee6b27b759c9893ce4f094b49ad28fd15a23e4);
+    ERC20 public ZIL = ERC20(0x05f4a42e251f2d52b8ed15e9fedaacfcef1fad27);
+    ERC20 public LINK = ERC20(0x514910771af9ca656af840dff83e8264ecf986ca);
 
     address[] public newTokens = [
-        REQ,
-        ENG,
-        ADX,
         AST,
-        RCN];
+        LINK,
+        ZIL];
 
     function TokenAdder(TokenConfigInterface _network, address _reserve, address _admin) public {
         network = _network;
