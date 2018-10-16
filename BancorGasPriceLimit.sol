@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorGasPriceLimit at 0x1595470306a3f03d6a72e431e39b98edd15bdc28
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorGasPriceLimit at 0x7fd539ef2be3192b6d6bdf095968bac2d74daa6e
 */
 pragma solidity ^0.4.18;
 
@@ -12,17 +12,7 @@ contract IOwned {
 
     function transferOwnership(address _newOwner) public;
     function acceptOwnership() public;
-    function changeOwner(address _newOwner) public;
 }
-
-
-/*
-    Bancor Gas Price Limit interface
-*/
-contract IBancorGasPriceLimit {
-    function gasPrice() public view returns (uint256) {}
-}
-
 
 
 
@@ -69,11 +59,8 @@ contract Owned is IOwned {
         owner = newOwner;
         newOwner = address(0);
     }
-
-    function changeOwner(address _newOwner) public ownerOnly {
-      owner = _newOwner;
-    }
 }
+
 
 
 
@@ -150,6 +137,13 @@ contract Utils {
 }
 
 
+/*
+    Bancor Gas Price Limit interface
+*/
+contract IBancorGasPriceLimit {
+    function gasPrice() public view returns (uint256) {}
+}
+
 
 /*
     The BancorGasPriceLimit contract serves as an extra front-running attack mitigation mechanism.
@@ -174,6 +168,16 @@ contract BancorGasPriceLimit is IBancorGasPriceLimit, Owned, Utils {
     }
 
     /*
+        @dev gas price getter
+
+        @return the current gas price
+    */
+    function gasPrice() public view returns (uint256) {
+        validateGasPrice(tx.gasprice);
+        return gasPrice;
+    }
+
+    /*
         @dev allows the owner to update the gas price limit
 
         @param _gasPrice    new gas price limit
@@ -184,5 +188,18 @@ contract BancorGasPriceLimit is IBancorGasPriceLimit, Owned, Utils {
         greaterThanZero(_gasPrice)
     {
         gasPrice = _gasPrice;
+    }
+
+    /*
+        @dev validate that the given gas price is equal to the current network gas price
+
+        @param _gasPrice    tested gas price
+    */
+    function validateGasPrice(uint256 _gasPrice)
+        public
+        view
+        greaterThanZero(_gasPrice)
+    {
+        require(_gasPrice == gasPrice);
     }
 }
