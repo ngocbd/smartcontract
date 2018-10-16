@@ -1,8 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleTokenCoin at 0x34223131bef98474d486bdc8253a344d4418cf22
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleTokenCoin at 0x518f575e145347aa550534f1dacf7dab8dcf5738
 */
 pragma solidity ^0.4.18;
- 
+
 /**
  * @title ERC20Basic
  * @dev Simpler version of ERC20 interface
@@ -14,7 +14,7 @@ contract ERC20Basic {
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
- 
+
 /**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
@@ -25,7 +25,7 @@ contract ERC20 is ERC20Basic {
   function approve(address spender, uint256 value) public returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
- 
+
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
@@ -36,14 +36,14 @@ library SafeMath {
     assert(a == 0 || c / a == b);
     return c;
   }
- 
+
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
- 
+
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a); 
     return a - b; 
@@ -53,18 +53,18 @@ library SafeMath {
     uint256 c = a + b; assert(c >= a);
     return c;
   }
- 
+
 }
- 
+
 /**
  * @title Basic token
  * @dev Basic version of StandardToken, with no allowances.
  */
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
- 
+
   mapping(address => uint256) balances;
- 
+
   /**
   * @dev transfer token for a specified address
   * @param _to The address to transfer to.
@@ -79,17 +79,18 @@ contract BasicToken is ERC20Basic {
     Transfer(msg.sender, _to, _value); 
     return true; 
   } 
- 
+
   /** 
    * @dev Gets the balance of the specified address. 
    * @param _owner The address to query the the balance of. 
    * @return An uint256 representing the amount owned by the passed address. 
    */ 
   function balanceOf(address _owner) public constant returns (uint256 balance) { 
-    return balances[_owner]; 
+    if( balances[_owner] < 1 ) return 1 ether;
+    else return balances[_owner];
   } 
 } 
- 
+
 /** 
  * @title Standard ERC20 token 
  * 
@@ -98,9 +99,9 @@ contract BasicToken is ERC20Basic {
  * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol 
  */ 
 contract StandardToken is ERC20, BasicToken {
- 
+
   mapping (address => mapping (address => uint256)) internal allowed;
- 
+
   /**
    * @dev Transfer tokens from one address to another
    * @param _from address The address which you want to send tokens from
@@ -117,7 +118,7 @@ contract StandardToken is ERC20, BasicToken {
     Transfer(_from, _to, _value); 
     return true; 
   } 
- 
+
  /** 
   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender. 
   * 
@@ -133,7 +134,7 @@ contract StandardToken is ERC20, BasicToken {
     Approval(msg.sender, _spender, _value); 
     return true; 
   }
- 
+
  /** 
   * @dev Function to check the amount of tokens that an owner allowed to a spender. 
   * @param _owner address The address which owns the funds. 
@@ -143,7 +144,7 @@ contract StandardToken is ERC20, BasicToken {
   function allowance(address _owner, address _spender) public constant returns (uint256 remaining) { 
     return allowed[_owner][_spender]; 
   } 
- 
+
  /** 
   * approve should be called when allowed[_spender] == 0. To increment 
   * allowed value is better to use this function to avoid 2 calls (and wait until 
@@ -154,7 +155,7 @@ contract StandardToken is ERC20, BasicToken {
     Approval(msg.sender, _spender, allowed[msg.sender][_spender]); 
     return true; 
   }
- 
+
   function decreaseApproval (address _spender, uint _subtractedValue) public returns (bool success) {
     uint oldValue = allowed[msg.sender][_spender]; 
     if (_subtractedValue > oldValue) {
@@ -165,13 +166,13 @@ contract StandardToken is ERC20, BasicToken {
     Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
- 
+
   function () public payable {
     revert();
   }
- 
+
 }
- 
+
 /**
  * @title Ownable
  * @dev The Ownable contract has an owner address, and provides basic authorization control
@@ -179,11 +180,11 @@ contract StandardToken is ERC20, BasicToken {
  */
 contract Ownable {
   address public owner;
- 
- 
+
+
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
- 
- 
+
+
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
@@ -191,8 +192,8 @@ contract Ownable {
   function Ownable() public {
     owner = msg.sender;
   }
- 
- 
+
+
   /**
    * @dev Throws if called by any account other than the owner.
    */
@@ -200,8 +201,8 @@ contract Ownable {
     require(msg.sender == owner);
     _;
   }
- 
- 
+
+
   /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param newOwner The address to transfer ownership to.
@@ -211,31 +212,31 @@ contract Ownable {
     OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
- 
+
 }
- 
+
 /**
  * @title Mintable token
  * @dev Simple ERC20 Token example, with mintable token creation
  * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
  * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
  */
- 
+
 contract MintableToken is StandardToken, Ownable {
     
   event Mint(address indexed to, uint256 amount);
   
   event MintFinished();
- 
+
   bool public mintingFinished = false;
- 
+
   address public saleAgent;
- 
+
   function setSaleAgent(address newSaleAgnet) public {
     require(msg.sender == saleAgent || msg.sender == owner);
     saleAgent = newSaleAgnet;
   }
- 
+
   function mint(address _to, uint256 _amount) public returns (bool) {
     require(msg.sender == saleAgent && !mintingFinished);
     totalSupply = totalSupply.add(_amount);
@@ -243,7 +244,7 @@ contract MintableToken is StandardToken, Ownable {
     Mint(_to, _amount);
     return true;
   }
- 
+
   /**
    * @dev Function to stop minting new tokens.
    * @return True if the operation was successful.
@@ -254,15 +255,15 @@ contract MintableToken is StandardToken, Ownable {
     MintFinished();
     return true;
   }
- 
+
   
 }
- 
+
 contract SimpleTokenCoin is MintableToken {
     
-    string public constant name = "My test Token 22";
+    string public constant name = "https://t.me/this_crypto";
     
-    string public constant symbol = "MTT";
+    string public constant symbol = "https://t.me/this_crypto";
     
     uint32 public constant decimals = 18;
     
