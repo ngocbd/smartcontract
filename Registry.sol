@@ -1,13 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Registry at 0x61ab321758fe7a302026b8831d1532c7c9cebe21
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Registry at 0xf0577c974bde656df648d66778701903d3650e40
 */
 pragma solidity ^0.4.4;
 
 contract Registry {
-  address owner;
+  address public owner;
   mapping (address => uint) public expirations;
-  uint public weiPerBlock;
-  uint public minBlockPurchase;
+  uint weiPerBlock;
+  uint minBlockPurchase;
 
   function Registry() {
     owner = msg.sender;
@@ -18,10 +18,9 @@ contract Registry {
   }
 
   function () payable {
-    uint senderExpirationBlock = expirations[msg.sender];
-    if (senderExpirationBlock > 0 && senderExpirationBlock < block.number) {
+    if (expirations[msg.sender] > 0 && expirations[msg.sender] < block.number) {
       // The sender already has credit, add to it
-      expirations[msg.sender] = senderExpirationBlock + blocksForWei(msg.value);
+      expirations[msg.sender] += blocksForWei(msg.value);
     } else {
       // The senders credit has either expired or the sender is unregistered
       // Give them block credits starting from the current block
