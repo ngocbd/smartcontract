@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0x5540bffe3b88df2b4e039b82753a98d7ff595fb9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0x1aed65031a8d9f20d9f8b9a7179a3972662517c3
 */
 pragma solidity ^0.4.18;
     
     // ----------------------------------------------------------------------------
-    // 'ACT97114' token contract
+    // 'ACT82190' token contract
     //
     // Deployed to : 0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187
-    // Symbol      : ACT97114
-    // Name        : ADZbuzz Petology.stream Community Token
+    // Symbol      : ACT82190
+    // Name        : ADZbuzz Thehouseflipping.life Community Token
     // Total supply: 2000000
     // Decimals    : 8
     //
@@ -117,8 +117,8 @@ pragma solidity ^0.4.18;
         // Constructor
         // ------------------------------------------------------------------------
         function ADZbuzzCommunityToken() public {
-            symbol = "ACT97114";
-            name = "ADZbuzz Petology.stream Community Token";
+            symbol = "ACT82190";
+            name = "ADZbuzz Thehouseflipping.life Community Token";
             decimals = 8;
             _totalSupply = 200000000000000;
             balances[0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187] = _totalSupply;
