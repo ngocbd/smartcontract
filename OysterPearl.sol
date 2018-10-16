@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OysterPearl at 0xa3d48af5b7541658e7b663905f11433f1b4074f5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OysterPearl at 0x8105CAc7aE60FA550C58DFD1999Ea7c34827802C
 */
 pragma solidity ^0.4.17;
 
@@ -8,7 +8,7 @@ interface tokenRecipient { function receiveApproval(address _from, uint256 _valu
 contract OysterPearl {
     // Public variables of the token
     string public name = "Oyster Pearl";
-    string public symbol = "TPRL";
+    string public symbol = "TESTPRL";
     uint8 public decimals = 18;
     uint256 public totalSupply;
     uint256 public funds = 0;
@@ -42,7 +42,6 @@ contract OysterPearl {
      */
     function OysterPearl() public {
         owner = msg.sender;
-        totalSupply = 0;
         totalSupply += 25000000 * 10 ** uint256(decimals); //marketing share (5%)
         totalSupply += 75000000 * 10 ** uint256(decimals); //devfund share (15%)
         totalSupply += 1000000 * 10 ** uint256(decimals);  //allocation to match PREPRL supply
