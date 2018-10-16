@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NomToken at 0x9d37452c03883De65EaE2fc8bD64EC8A404e5474
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NomToken at 0xD5fCc92743fe55FF080ACC35EF7D7EC9c0f3Df56
 */
-pragma solidity ^0.4.18;
+pragma solidity 0.4.18;
 
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -163,24 +163,24 @@ contract NomToken is StandardToken {
 
   uint256 public constant totalTokens = 113300000 * 1 ether;
   
-  uint256 public initialIssueMinting = totalTokens.mul(45).div(100);  //45% of tokens
-  uint public constant initialIssueMintingDate = 1514764800;          //01.01.2018 UTC
-  bool public initialIssueMinted = false;
+  uint256 public initialIssue = totalTokens.mul(45).div(100);       //45% of tokens
     
-  uint256 public firstStageMinting = totalTokens.mul(15).div(100);    //15% of tokens
-  uint public constant firstStageMintingDate = 1579046400;            //15.01.2020 UTC
+  uint256 public firstStageMinting = totalTokens.mul(15).div(100);  //15% of tokens
+  uint public constant firstStageMintingDate = 1579046400;          //15.01.2020 UTC
   bool public firstStageMinted = false;
     
-  uint256 public secondStageMinting = totalTokens.mul(20).div(100);   //20% of tokens
-  uint public constant secondStageMintingDate = 1594771200;           //15.07.2020 UTC
+  uint256 public secondStageMinting = totalTokens.mul(20).div(100); //20% of tokens
+  uint public constant secondStageMintingDate = 1594771200;         //15.07.2020 UTC
   bool public secondStageMinted = false;
   
-  uint256 public thirdStageMinting = totalTokens.mul(20).div(100);    //20% of tokens
-  uint public constant thirdStageMintingDate = 1610668800;            //15.01.2021 UTC
+  uint256 public thirdStageMinting = totalTokens.mul(20).div(100);  //20% of tokens
+  uint public constant thirdStageMintingDate = 1610668800;          //15.01.2021 UTC
   bool public thirdStageMinted = false;
     
   function NomToken() public {
     owner = msg.sender;
+    totalSupply = initialIssue;
+    balances[owner] = initialIssue;
   }
   
    /**
@@ -191,11 +191,7 @@ contract NomToken is StandardToken {
     require(msg.sender == owner);
     
     uint256 tokensToMint = 0;
-    if (now > initialIssueMintingDate && !initialIssueMinted) {
-        tokensToMint = tokensToMint.add(initialIssueMinting);
-        initialIssueMinted = true;
-    }
-	if (now > firstStageMintingDate && !firstStageMinted) {
+    if (now > firstStageMintingDate && !firstStageMinted) {
         tokensToMint = tokensToMint.add(firstStageMinting);
         firstStageMinted = true;
     }
