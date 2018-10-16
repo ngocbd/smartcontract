@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AbabPreICOToken at 0x961e593b36920a767dad75f9fda07723231d9b77
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AbabPreICOToken at 0x0f520115112f79c7aeaaac47e0b2513814c85b77
 */
 pragma solidity ^0.4.11;
 
@@ -166,8 +166,7 @@ contract ERC20Token is Owned {
     }
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender,
-        uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
 
@@ -177,7 +176,7 @@ contract AbabPreICOToken is ERC20Token {
     // Token information
     // ------------------------------------------------------------------------
     string public constant symbol   = "pAA";
-    string public constant name     = "AbabPreICOToken";
+    string public constant name     = "AbabPreICOToken_Ver2";
     uint8  public constant decimals = 18;
 
     uint256 public STARTDATE;  
@@ -186,21 +185,49 @@ contract AbabPreICOToken is ERC20Token {
     uint256 public CAP;
 
     function AbabPreICOToken() {
-        STARTDATE = 1499951593;        // 2017-07-13T13:13:13UTC to uint256 = 1499951593
-        ENDDATE   = 1500815593;        // 2017-07-23T13:13:13UTC to uint256 = 1500815593
-        BUYPRICE  = 4000;              // in eth will actualize before start. calc $0.05 @ $200 ETH/USD //  4000 pAA per ETH
+        STARTDATE = 1499951593;        // 13 July 2017 ?., 13:13:13
+        ENDDATE   = 1817029631;        // 31 July 2027 ?., 10:27:11
+        BUYPRICE  = 3333;              // $0.06 @ $200 ETH/USD
         CAP       = 2500*1 ether;      // in eth ($500K / 0.05 ) / etherPrice
+        
+InitBalanceFrom961e593b36920a767dad75f9fda07723231d9b77(0x2EDE66ED71E557CC90B9A76C298185C09591991B, 0.25 ether);
+InitBalanceFrom961e593b36920a767dad75f9fda07723231d9b77(0x56B8729FFCC28C4BB5718C94261543477A4EB4E5, 0.5  ether);
+InitBalanceFrom961e593b36920a767dad75f9fda07723231d9b77(0x56B8729FFCC28C4BB5718C94261543477A4EB4E5, 0.5  ether);
+InitBalanceFrom961e593b36920a767dad75f9fda07723231d9b77(0xCC89FB091E138D5087A8742306AEDBE0C5CF8CE6, 0.15 ether);
+InitBalanceFrom961e593b36920a767dad75f9fda07723231d9b77(0xCC89FB091E138D5087A8742306AEDBE0C5CF8CE6, 0.35 ether);
+InitBalanceFrom961e593b36920a767dad75f9fda07723231d9b77(0x5FB3DC3EC639F33429AEA0773ED292A37B87A4D8, 1    ether);
+InitBalanceFrom961e593b36920a767dad75f9fda07723231d9b77(0xD428F83278B587E535C414DFB32C24F7272DCFE9, 1    ether);
+InitBalanceFrom961e593b36920a767dad75f9fda07723231d9b77(0xFD4876F2BEDFEAE635F70E010FC3F78D2A01874C, 2.9  ether);
+InitBalanceFrom961e593b36920a767dad75f9fda07723231d9b77(0xC2C319C7E7C678E060945D3203F46E320D3BC17B, 3.9  ether);
+InitBalanceFrom961e593b36920a767dad75f9fda07723231d9b77(0xCD4A005339CC97DE0466332FFAE0215F68FBDFAF, 10   ether);
+InitBalanceFrom961e593b36920a767dad75f9fda07723231d9b77(0x04DA469D237E85EC55A4085874E1737FB53548FD, 9.6  ether);
+InitBalanceFrom961e593b36920a767dad75f9fda07723231d9b77(0x8E32917F0FE7D9069D753CAFF946D7146FAC528A, 5    ether);
+InitBalanceFrom961e593b36920a767dad75f9fda07723231d9b77(0x72EC91441AB84639CCAB04A31FFDAC18756E70AA, 7.4  ether);
+InitBalanceFrom961e593b36920a767dad75f9fda07723231d9b77(0xE5389809FEDFB0225719D136D9734845A7252542, 2    ether);
+InitBalanceFrom961e593b36920a767dad75f9fda07723231d9b77(0xE1D8D6D31682D8A901833E60DA15EE1A870B8370, 5    ether);
     }
 	
-    function ActualizePriceBeforeStart(uint256 _start, uint256 _end, uint256 _buyPrice, uint256 _cap) 
+    function ActualizePrice(uint256 _start, uint256 _end, uint256 _buyPrice, uint256 _cap) 
     onlyOwner returns (bool success) 
     {
-        require(now < STARTDATE);
         STARTDATE = _start;
         ENDDATE   = _end;
         BUYPRICE  = _buyPrice;
         CAP       = _cap; 
         return true;
+    }
+    
+    uint BUYPRICE961e593b36920a767dad75f9fda07723231d9b77 = 4000;
+    
+    function InitBalanceFrom961e593b36920a767dad75f9fda07723231d9b77(address sender, uint val)
+    onlyOwner
+    {
+        totalEthers = totalEthers.add(val);
+        uint tokens = val * BUYPRICE961e593b36920a767dad75f9fda07723231d9b77;
+        _totalSupply = _totalSupply.add(tokens);
+        balances[sender] = balances[sender].add(tokens);
+
+        Transfer(0x0, sender, tokens);
     }
 
     uint256 public totalEthers;
