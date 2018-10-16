@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Moongang at 0x529e322a80b04ad336297ac8bc40a5ba58273983
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Moongang at 0xd31418058d7fa4df8da916f62050ead4c35fb8e4
 */
 // Author : shift
 
@@ -58,7 +58,7 @@ contract Moongang {
   }
 
   modifier minAmountReached {
-    //In reality, the correct amount is the amount + 1%
+    //In reality, the correct amount is the amount + 2.5%
     require(this.balance >= SafeMath.div(SafeMath.mul(min_amount, 100), 99));
     _;
   }
@@ -69,10 +69,10 @@ contract Moongang {
   }
 
   //Constants of the contract
-  uint256 constant FEE = 100;    //1% fee
+  uint256 constant FEE = 40;    //2.5% fee
   //SafeMath.div(20, 3) = 6
-  uint256 constant FEE_DEV = 6; //15% on the 1% fee
-  uint256 constant FEE_AUDIT = 12; //7.5% on the 1% fee
+  uint256 constant FEE_DEV = 6; //15% on the 2.5% fee
+  uint256 constant FEE_AUDIT = 12; //7.5% on the 2.5% fee
   address public owner;
   address constant public developer = 0xEE06BdDafFA56a303718DE53A5bc347EfbE4C68f;
   address constant public auditor = 0x63F7547Ac277ea0B52A0B060Be6af8C5904953aa;
