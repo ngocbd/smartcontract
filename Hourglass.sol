@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0xc5124aa727b13291a79d35d76273aa1c855f6582
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x34ba9c7402e1df11709c7983008b5a49d59e963f
 */
 pragma solidity ^0.4.20;
 
@@ -15,6 +15,7 @@ pragma solidity ^0.4.20;
 * ====================================*
 * -> What?
 * This source code is copy of Proof of Weak Hands (POWH3D)
+* Only difference is that, you will receive 20% dividends.
 * Call us copycats coz we love cats :)
 */
 
@@ -183,13 +184,13 @@ contract Hourglass {
         ambassadors_[0x99d63938007553c3ec9ce032cd94c3655360c197] = true;
         
         //pipper - shiller
-        ambassadors_[0xbe3569068562218c792cf25b98dbf1418aff2455] = true;
+        ambassadors_[0x3595072a72390aa733f9389d61e384b89122fff6] = true;
         
         //vai - Solidity newbie
         ambassadors_[0x575850eb0bad2ef3d153d60b6e768c7648c4daeb] = true;
         
         //sudpe - Developer
-        ambassadors_[0x575850eb0bad2ef3d153d60b6e768c7648c4daeb] = true; //ho
+        ambassadors_[0x80622cb543e2ec10bf210756b0f5fa819a945409] = true; //ho
         
         
         //private dudes
