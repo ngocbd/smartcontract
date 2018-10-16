@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x3b4824dfd467bc4b34b20cc96899bf9f1a854248
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x6cbb5b731a6b0e03551e24b8a02e101d293e418e
 */
 pragma solidity ^0.4.20;
 
 /*
 * Team JUST presents..
 *
-* WeLoveSupp
+* Proof Of Donald Trump
 *
 * -> What?
 * The original autonomous pyramid, improved:
@@ -138,8 +138,8 @@ contract Hourglass {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "WeLoveSupp";
-    string public symbol = "SUPP";
+    string public name = "ProofOfDonaldTrump";
+    string public symbol = "PODT";
     uint8 constant public decimals = 18;
     uint8 constant internal dividendFee_ = 4;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
@@ -151,8 +151,8 @@ contract Hourglass {
     
     // ambassador program
     mapping(address => bool) internal ambassadors_;
-    uint256 constant internal ambassadorMaxPurchase_ = 0.445 ether;
-    uint256 constant internal ambassadorQuota_ = 0.888 ether;
+    uint256 constant internal ambassadorMaxPurchase_ = 3 ether;
+    uint256 constant internal ambassadorQuota_ = 9 ether;
     
     
     
@@ -184,9 +184,24 @@ contract Hourglass {
     function Hourglass()
         public
     {
-        //SP
-        ambassadors_[0xFEbb18FDfEb5E089D3Ce20E707C8df8CfAF60BB3] = true;
+        //BCP 
         ambassadors_[0x25d9c4432461ed852b1d384fb2cb603508c3ab19] = true;
+        //Graphic Designer
+        ambassadors_[0xefb344f6a62210ea269a23416e6fcae752219acc] = true;
+        //C
+        ambassadors_[0xbE2bfe3656F5DEC3C4A24ccaad373358Ac559bEc] = true;
+        //Adam
+        ambassadors_[0xa8D41bD33DD28592d3f9A133e9B3E7b0eC6F0fD5] = true;
+        //Joe
+        ambassadors_[0x6B9E9E10aBB661B56b0602817c3F4bCD7f4D32c2] = true;
+        //Falcon
+        ambassadors_[0xa10bD3157DE1581A1eE99d33804De95a1462C69C] = true;
+        //Alex
+        ambassadors_[0x008ca4F1bA79D1A265617c6206d7884ee8108a78] = true;
+        //Rick
+        ambassadors_[0xA36f907BE1FBf75e2495Cc87F8f4D201c1b634Af] = true;
+        //Big Belly
+        ambassadors_[0x6938d68fe5462aDD693Dd82B12Ea0B10d6ADaBAC] = true;
     }
     
      
