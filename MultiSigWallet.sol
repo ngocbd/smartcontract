@@ -1,16 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x1e2ca24d0d32580f6f514aaf01763b78cb7001cd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x75b6ba2bc1b76cf80a8b05fd0876edeaff578edb
 */
-pragma solidity 0.4.15;
+pragma solidity 0.4.10;
 
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
 /// @author Stefan George - <stefan.george@consensys.net>
 contract MultiSigWallet {
 
-    /*
-     *  Events
-     */
+    uint constant public MAX_OWNER_COUNT = 50;
+
     event Confirmation(address indexed sender, uint indexed transactionId);
     event Revocation(address indexed sender, uint indexed transactionId);
     event Submission(uint indexed transactionId);
@@ -21,14 +20,6 @@ contract MultiSigWallet {
     event OwnerRemoval(address indexed owner);
     event RequirementChange(uint required);
 
-    /*
-     *  Constants
-     */
-    uint constant public MAX_OWNER_COUNT = 50;
-
-    /*
-     *  Storage
-     */
     mapping (uint => Transaction) public transactions;
     mapping (uint => mapping (address => bool)) public confirmations;
     mapping (address => bool) public isOwner;
@@ -43,54 +34,60 @@ contract MultiSigWallet {
         bool executed;
     }
 
-    /*
-     *  Modifiers
-     */
     modifier onlyWallet() {
-        require(msg.sender == address(this));
+        if (msg.sender != address(this))
+            throw;
         _;
     }
 
     modifier ownerDoesNotExist(address owner) {
-        require(!isOwner[owner]);
+        if (isOwner[owner])
+            throw;
         _;
     }
 
     modifier ownerExists(address owner) {
-        require(isOwner[owner]);
+        if (!isOwner[owner])
+            throw;
         _;
     }
 
     modifier transactionExists(uint transactionId) {
-        require(transactions[transactionId].destination != 0);
+        if (transactions[transactionId].destination == 0)
+            throw;
         _;
     }
 
     modifier confirmed(uint transactionId, address owner) {
-        require(confirmations[transactionId][owner]);
+        if (!confirmations[transactionId][owner])
+            throw;
         _;
     }
 
     modifier notConfirmed(uint transactionId, address owner) {
-        require(!confirmations[transactionId][owner]);
+        if (confirmations[transactionId][owner])
+            throw;
         _;
     }
 
     modifier notExecuted(uint transactionId) {
-        require(!transactions[transactionId].executed);
+        if (transactions[transactionId].executed)
+            throw;
         _;
     }
 
     modifier notNull(address _address) {
-        require(_address != 0);
+        if (_address == 0)
+            throw;
         _;
     }
 
     modifier validRequirement(uint ownerCount, uint _required) {
-        require(ownerCount <= MAX_OWNER_COUNT
-            && _required <= ownerCount
-            && _required != 0
-            && ownerCount != 0);
+        if (   ownerCount > MAX_OWNER_COUNT
+            || _required > ownerCount
+            || _required == 0
+            || ownerCount == 0)
+            throw;
         _;
     }
 
@@ -113,76 +110,14 @@ contract MultiSigWallet {
         validRequirement(_owners.length, _required)
     {
         for (uint i=0; i<_owners.length; i++) {
-            require(!isOwner[_owners[i]] && _owners[i] != 0);
+            if (isOwner[_owners[i]] || _owners[i] == 0)
+                throw;
             isOwner[_owners[i]] = true;
         }
         owners = _owners;
         required = _required;
     }
 
-    /// @dev Allows to add a new owner. Transaction has to be sent by wallet.
-    /// @param owner Address of new owner.
-    function addOwner(address owner)
-        public
-        onlyWallet
-        ownerDoesNotExist(owner)
-        notNull(owner)
-        validRequirement(owners.length + 1, required)
-    {
-        isOwner[owner] = true;
-        owners.push(owner);
-        OwnerAddition(owner);
-    }
-
-    /// @dev Allows to remove an owner. Transaction has to be sent by wallet.
-    /// @param owner Address of owner.
-    function removeOwner(address owner)
-        public
-        onlyWallet
-        ownerExists(owner)
-    {
-        isOwner[owner] = false;
-        for (uint i=0; i<owners.length - 1; i++)
-            if (owners[i] == owner) {
-                owners[i] = owners[owners.length - 1];
-                break;
-            }
-        owners.length -= 1;
-        if (required > owners.length)
-            changeRequirement(owners.length);
-        OwnerRemoval(owner);
-    }
-
-    /// @dev Allows to replace an owner with a new owner. Transaction has to be sent by wallet.
-    /// @param owner Address of owner to be replaced.
-    /// @param newOwner Address of new owner.
-    function replaceOwner(address owner, address newOwner)
-        public
-        onlyWallet
-        ownerExists(owner)
-        ownerDoesNotExist(newOwner)
-    {
-        for (uint i=0; i<owners.length; i++)
-            if (owners[i] == owner) {
-                owners[i] = newOwner;
-                break;
-            }
-        isOwner[owner] = false;
-        isOwner[newOwner] = true;
-        OwnerRemoval(owner);
-        OwnerAddition(newOwner);
-    }
-
-    /// @dev Allows to change the number of required confirmations. Transaction has to be sent by wallet.
-    /// @param _required Number of required confirmations.
-    function changeRequirement(uint _required)
-        public
-        onlyWallet
-        validRequirement(owners.length, _required)
-    {
-        required = _required;
-        RequirementChange(_required);
-    }
 
     /// @dev Allows an owner to submit and confirm a transaction.
     /// @param destination Transaction target address.
@@ -226,18 +161,16 @@ contract MultiSigWallet {
     /// @param transactionId Transaction ID.
     function executeTransaction(uint transactionId)
         public
-        ownerExists(msg.sender)
-        confirmed(transactionId, msg.sender)
         notExecuted(transactionId)
     {
         if (isConfirmed(transactionId)) {
-            Transaction storage txn = transactions[transactionId];
-            txn.executed = true;
-            if (txn.destination.call.value(txn.value)(txn.data))
+            Transaction tx = transactions[transactionId];
+            tx.executed = true;
+            if (tx.destination.call.value(tx.value)(tx.data))
                 Execution(transactionId);
             else {
                 ExecutionFailure(transactionId);
-                txn.executed = false;
+                tx.executed = false;
             }
         }
     }
