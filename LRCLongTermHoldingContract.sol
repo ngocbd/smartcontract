@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LRCLongTermHoldingContract at 0x0167ea36024d646ee38062cd07f041e1e1d3a89a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LRCLongTermHoldingContract at 0x239de3a0d6ca5f21601f83327ea2174225eb7156
 */
 /*
 
@@ -137,9 +137,12 @@ contract LRCLongTermHoldingContract {
     // The bonus is this contract's initial LRC balance.
     uint public constant WITHDRAWAL_DELAY           = 540 days; // = 1 year and 6 months
 
-    // This implies a 0.001ETH fee per 10000 LRC partial withdrawal;
-    // for a once-for-all withdrawal, the fee is 0.
+    // Send 0.001ETH per 10000 LRC partial withdrawal, or 0 for a once-for-all withdrawal.
+    // All ETH will be returned.
     uint public constant WITHDRAWAL_SCALE           = 1E7; // 1ETH for withdrawal of 10,000,000 LRC.
+
+    // Ower can drain all remaining LRC after 3 years.
+    uint public constant DRAIN_DELAY                = 1080 days; // = 3 years.
     
     address public lrcTokenAddress  = 0x0;
     address public owner            = 0x0;
@@ -161,6 +164,9 @@ contract LRCLongTermHoldingContract {
 
     /// Emitted when program starts.
     event Started(uint _time);
+
+    /// Emitted when all LRC are drained.
+    event Drained(uint _lrcAmount);
 
     /// Emitted for each sucuessful deposit.
     uint public depositId = 0;
@@ -193,6 +199,20 @@ contract LRCLongTermHoldingContract {
         depositStopTime  = depositStartTime + DEPOSIT_PERIOD;
 
         Started(depositStartTime);
+    }
+
+
+    /// @dev drain LRC.
+    function drain() public {
+        require(msg.sender == owner);
+        require(depositStartTime > 0 && now >= depositStartTime + DRAIN_DELAY);
+
+        uint balance = lrcBalance();
+        require(balance > 0);
+
+        require(Token(lrcTokenAddress).transfer(owner, balance));
+
+        Drained(balance);
     }
 
     function () payable {
@@ -233,6 +253,7 @@ contract LRCLongTermHoldingContract {
         lrcDeposited += lrcAmount;
 
         Deposit(depositId++, msg.sender, lrcAmount);
+        
         require(lrcToken.transferFrom(msg.sender, address(this), lrcAmount));
     }
 
@@ -265,14 +286,18 @@ contract LRCLongTermHoldingContract {
         }
 
         Withdrawal(withdrawId++, msg.sender, lrcAmount);
+
         require(Token(lrcTokenAddress).transfer(msg.sender, lrcAmount));
+        if (msg.value > 0) {
+            msg.sender.transfer(msg.value);
+        }
     }
 
     function getBonus(uint _lrcWithdrawalBase) constant returns (uint) {
         return internalCalculateBonus(lrcBalance() - lrcDeposited,lrcDeposited, _lrcWithdrawalBase);
     }
 
-    function internalCalculateBonus(uint _totalBonusRemaining, uint _lrcDeposited, uint _lrcWithdrawalBase) constant returns (uint) {
+    function internalCalculateBonus(uint _totalBonusRemaining, uint _lrcDeposited, uint _lrcWithdrawalBase) internal constant returns (uint) {
         require(_lrcDeposited > 0);
         require(_totalBonusRemaining >= 0);
 
@@ -283,7 +308,7 @@ contract LRCLongTermHoldingContract {
             .div(_lrcDeposited.mul(sqrt(sqrt(sqrt(sqrt(_lrcDeposited))))));
     }
 
-    function sqrt(uint x) returns (uint) {
+    function sqrt(uint x) internal constant returns (uint) {
         uint y = x;
         while (true) {
             uint z = (y + (x / y)) / 2;
