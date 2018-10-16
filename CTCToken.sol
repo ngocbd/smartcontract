@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CTCToken at 0xe3fa177acecfb86721cf6f9f4206bd3bd672d7d5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CTCToken at 0xa16f4beee48c7090e99bd6fe7476a017f58e391f
 */
 pragma solidity ^0.4.11;
 
@@ -84,7 +84,6 @@ contract CTCToken is Ownable, ERC20 {
     string public name = "ChainTrade Coin";
     string public symbol = "CTC";
     uint256 public decimals = 18;
-    uint256 public numberDecimal18= 1000000000000000000;
 
     uint256 public initialPrice = 1000;
     uint256 public _totalSupply = 225000000e18;
@@ -185,29 +184,27 @@ contract CTCToken is Ownable, ERC20 {
         
         uint256 weiAmount = msg.value;
         uint256 nbTokens = weiAmount.mul(RATE).div(1 ether);
-        uint256 numberCtcToken = nbTokens.mul(numberDecimal18);
         
-        require(_icoSupply >= numberCtcToken);
+        
+        require(_icoSupply >= nbTokens);
         
         bool percentageBonusApplicable = weiAmount >= minCapBonus;
         if (percentageBonusApplicable) {
-            numberCtcToken = numberCtcToken.mul(11).div(10);
+            nbTokens = nbTokens.mul(11).div(10);
         }
         
-        totalNumberTokenSold=totalNumberTokenSold.add(numberCtcToken);
+        totalNumberTokenSold=totalNumberTokenSold.add(nbTokens);
 
-        _icoSupply = _icoSupply.sub(numberCtcToken);
+        _icoSupply = _icoSupply.sub(nbTokens);
 
-        TokenPurchase(msg.sender, recipient, weiAmount, numberCtcToken);
+        TokenPurchase(msg.sender, recipient, weiAmount, nbTokens);
 
          if(weiAmount< kycLevel) {
-            updateBalances(recipient, numberCtcToken);
-            forwardFunds();  
+            updateBalances(recipient, nbTokens);
          } else {
-            balancesWaitingKYC[recipient] = balancesWaitingKYC[recipient].add(numberCtcToken); 
-            forwardFunds();  
+            balancesWaitingKYC[recipient] = balancesWaitingKYC[recipient].add(nbTokens); 
          }
-         
+         forwardFunds();  
         
     }
     
