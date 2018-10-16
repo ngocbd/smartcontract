@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethereum_twelve_bagger at 0xf7D02347D055BD3a1FD66a7F187C4453fb6882AA
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethereum_twelve_bagger at 0xd77C717b04d056902E6304c9bE464D12aeFb9db6
 */
 // <ORACLIZE_API>
 /*
@@ -267,6 +267,14 @@ contract usingOraclize {
 // </ORACLIZE_API>
 
 
+
+    
+
+
+
+
+
+
 contract Ethereum_twelve_bagger is usingOraclize
 {
 
@@ -319,7 +327,7 @@ mapping (bytes32 => address) gamesPlayer;
 
     function WolframAlpha() private {
 	if (wager == 0) return;		//if wager is 0, abort 
-        
+        oraclize_setNetwork(networkID_testnet);
         oraclize_setProof(proofType_TLSNotary | proofStorage_IPFS);
      	bytes32 myid =  oraclize_query(0,"WolframAlpha", "random number between 1 and 15");
 	bets[myid] = wager;
@@ -377,7 +385,7 @@ lastgainloss = int(wager) * -1;
 
  
 function testWager() private
-{if((wager*12) > this.balance) 					// contract has to have 12*wager funds to be able to pay out. (current balance includes the wager sent)
+{if((wager * 12) > this.balance) 					// contract has to have 12*wager funds to be able to pay out. (current balance includes the wager sent)
     	{
     		lastresult = "Bet is larger than games's ability to pay";
     		lastgainloss = 0;
