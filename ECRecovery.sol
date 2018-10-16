@@ -1,12 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ECRecovery at 0x7b63308d5c70f3d5eb73c697056fe8d527bd0b6a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ECRecovery at 0xd8e8328501e9645d16cf49539efc04f734606ee4
 */
+pragma solidity 0.4.18;
+
 /**
  * @title Eliptic curve signature operations
  *
  * @dev Based on https://gist.github.com/axic/5b33912c6f61ae6fd96d6c4a47afde6d
  */
-
 library ECRecovery {
 
   /**
