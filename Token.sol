@@ -1,258 +1,204 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x682b75e6fc80ea337074cc2e0a8565101d5f476f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x7cf271966f36343bf0150f25e5364f7961c58201
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.15;
 
-contract SafeMath {
+contract Base {
+    
+    modifier only(address allowed) {
+        require(msg.sender == allowed);
+        _;
+    }
 
-    function safeMul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
-        }
+    // *************************************************
+    // *          reentrancy handling                  *
+    // *************************************************
+
+    uint private bitlocks = 0;
+    modifier noReentrancy(uint m) {
+        var _locks = bitlocks;
+        require(_locks & m <= 0);
+        bitlocks |= m;
+        _;
+        bitlocks = _locks;
+    }
+
+    modifier noAnyReentrancy {
+        var _locks = bitlocks;
+        require(_locks <= 0);
+        bitlocks = uint(-1);
+        _;
+        bitlocks = _locks;
+    }
+
+    modifier reentrant { _; }
+}
+
+contract Owned {
+    address public owner;
+    address public newOwner;
+    
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function Owned() public {
+        owner = msg.sender;
+    }
+
+    function transferOwnership(address _newOwner) onlyOwner public {
+        newOwner = _newOwner;
+    }
+
+    function acceptOwnership() onlyOwner public {
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
+
+    event OwnershipTransferred(address indexed _from, address indexed _to);
+}
+
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal constant returns (uint256) {
         uint256 c = a * b;
-        assert(c / a == b);
+        assert(a == 0 || c / a == b);
         return c;
     }
 
-    function safeDiv(uint256 a, uint256 b) internal pure returns (uint256) {
+    function div(uint256 a, uint256 b) internal constant returns (uint256) {
         // assert(b > 0); // Solidity automatically throws when dividing by 0
         uint256 c = a / b;
         // assert(a == b * c + a % b); // There is no case in which this doesn't hold
         return c;
     }
 
-    function safeSub(uint256 a, uint256 b) internal pure returns (uint256) {
+    function sub(uint256 a, uint256 b) internal constant returns (uint256) {
         assert(b <= a);
         return a - b;
     }
 
-    function safeAdd(uint256 a, uint256 b) internal pure returns (uint256) {
+    function add(uint256 a, uint256 b) internal constant returns (uint256) {
         uint256 c = a + b;
         assert(c >= a);
         return c;
     }
 }
 
-contract Ownable {
-    address public owner;
-
-    function Ownable() public {
-        owner = msg.sender;
-    }
-
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
-
-    function transferOwner(address newOwner) public onlyOwner {
-        owner = newOwner;
-    }
-}
-
-contract Lockable is Ownable {
-    bool public contractLocked = false;
-
-    modifier notLocked() {
-        require(!contractLocked);
-        _;
-    }
-
-    function lockContract() public onlyOwner {
-        contractLocked = true;
-    }
-
-    function unlockContract() public onlyOwner {
-        contractLocked = false;
-    }
-}
-
-contract FeeCalculator is Ownable, SafeMath {
-
-    uint public feeNumerator = 0;
-
-    uint public feeDenominator = 0;
-
-    uint public minFee = 0;
-
-    uint public maxFee = 0;
-
-    function setFee(uint _feeNumerator, uint _feeDenominator, uint _minFee, uint _maxFee) public onlyOwner {
-        feeNumerator = _feeNumerator;
-        feeDenominator = _feeDenominator;
-        minFee = _minFee;
-        maxFee = _maxFee;
-    }
-
-    function calculateFee(uint value) public view returns (uint requiredFee) {
-        if (feeNumerator == 0 || feeDenominator == 0) return 0;
-
-        uint fee = safeDiv(safeMul(value, feeNumerator), feeDenominator);
-
-        if (fee < minFee) return minFee;
-
-        if (fee > maxFee) return maxFee;
-
-        return fee;
-    }
-
-    function subtractFee(uint value) internal returns (uint newValue);
-}
-
-contract EIP20Interface {
+contract ERC20 {
     uint256 public totalSupply;
-
-    function balanceOf(address owner) public view returns (uint256 balance);
-
-    function transfer(address to, uint256 value) public returns (bool success);
-
-    function transferFrom(address from, address to, uint256 value) public returns (bool success);
-
-    function approve(address spender, uint256 value) public returns (bool success);
-
-    function allowance(address owner, address spender) public view returns (uint256 remaining);
-
-    event Transfer(address indexed from, address indexed to, uint256 value);
-
+  
+    function balanceOf(address who) public constant returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+    function allowance(address owner, address spender) public constant returns (uint256);
+    function transferFrom(address from, address to, uint256 value) public returns (bool);
+    function approve(address spender, uint256 value) public returns (bool);
+  
     event Approval(address indexed owner, address indexed spender, uint256 value);
+    event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-contract Mintable is Ownable {
-    mapping(address => bool) public minters;
+contract StandartToken is ERC20 {
+    using SafeMath for uint256;
 
-    modifier onlyMinter {
-        require(minters[msg.sender] == true);
+    mapping(address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+    
+    bool public isStarted = false;
+    
+    modifier isStartedOnly() {
+        require(isStarted);
         _;
     }
 
-    function Mintable() public {
-        adjustMinter(msg.sender, true);
-    }
+    function transfer(address _to, uint256 _value) isStartedOnly public returns (bool) {
+        require(_to != address(0));
+        require(_value <= balances[msg.sender]);
 
-    function adjustMinter(address minter, bool canMint) public onlyOwner {
-        minters[minter] = canMint;
-    }
-
-    function mint(address to, uint256 value) public;
-
-}
-
-contract Token is EIP20Interface, Ownable, SafeMath, Mintable, Lockable, FeeCalculator {
-
-    mapping(address => uint256) public balances;
-
-    mapping(address => mapping(address => uint256)) public allowed;
-
-    mapping(address => bool) frozenAddresses;
-
-    string public name;
-
-    uint8 public decimals;
-
-    string public symbol;
-
-    bool public isBurnable;
-
-    bool public canAnyoneBurn;
-
-    modifier notFrozen(address target) {
-        require(!frozenAddresses[target]);
-        _;
-    }
-
-    event AddressFroze(address target, bool isFrozen);
-
-    function Token(string _name, uint8 _decimals, string _symbol) public {
-        name = _name;
-        decimals = _decimals;
-        symbol = _symbol;
-    }
-
-    function transfer(address to, uint256 value) notLocked notFrozen(msg.sender) public returns (bool success) {
-        return transfer(msg.sender, to, value);
-    }
-
-    function transfer(address from, address to, uint256 value) internal returns (bool success) {
-        balances[from] = safeSub(balances[from], value);
-        value = subtractFee(value);
-        balances[to] = safeAdd(balances[to], value);
-
-        emit Transfer(from, to, value);
+        // SafeMath.sub will throw if there is not enough balance.
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        Transfer(msg.sender, _to, _value);
         return true;
     }
 
-    function transferFrom(address from, address to, uint256 value) notLocked notFrozen(from) public returns (bool success) {
-        uint256 allowance = allowed[from][msg.sender];
-        balances[from] = safeSub(balances[from], value);
-        allowed[from][msg.sender] = safeSub(allowance, value);
-        value = subtractFee(value);
-        balances[to] = safeAdd(balances[to], value);
+    function balanceOf(address _owner) public constant returns (uint256 balance) {
+        return balances[_owner];
+    }
+  
+    function transferFrom(address _from, address _to, uint256 _value) isStartedOnly public returns (bool) {
+        require(_to != address(0));
+        require(_value <= balances[_from]);
+        require(_value <= allowed[_from][msg.sender]);
 
-        emit Transfer(from, to, value);
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        Transfer(_from, _to, _value);
         return true;
     }
 
-    function balanceOf(address owner) public view returns (uint256 balance) {
-        return balances[owner];
-    }
-
-    function approve(address spender, uint256 value) notLocked public returns (bool success) {
-        allowed[msg.sender][spender] = value;
-        emit Approval(msg.sender, spender, value);
+    function approve(address _spender, uint256 _value) isStartedOnly public returns (bool) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
         return true;
     }
 
-    function allowance(address owner, address spender) public view returns (uint256 remaining) {
-        return allowed[owner][spender];
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+        return allowed[_owner][_spender];
     }
 
-    function freezeAddress(address target, bool freeze) onlyOwner public {
-        if (freeze) {
-            frozenAddresses[target] = true;
+    function increaseApproval (address _spender, uint _addedValue) isStartedOnly public returns (bool success) {
+        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
+    }
+
+    function decreaseApproval (address _spender, uint _subtractedValue) isStartedOnly public returns (bool success) {
+        uint oldValue = allowed[msg.sender][_spender];
+        if (_subtractedValue > oldValue) {
+            allowed[msg.sender][_spender] = 0;
         } else {
-            delete frozenAddresses[target];
+            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
         }
-        emit AddressFroze(target, freeze);
+        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
+    }
+}
+
+//Contract belongs to Aridika Corporation OU
+//Nominal (initial) cost of one token = 1$
+
+contract Token is Owned, StandartToken {
+    string public name = "CRYPTODEPOZIT";
+    string public symbol = "DEPO";
+    uint public decimals = 0;
+    address public constant company = 0xC01aed0F75f117d1f47f9146E41C9A6E0870350e;
+    
+    function Token() public {
+        mint(msg.sender, 10 ** 9);
+        mint(company, 10 * 10 ** 6);
+        start();
     }
 
-    function isAddressFrozen(address target) public view returns (bool frozen){
-        return frozenAddresses[target];
+    function () public {
+        revert();
     }
 
-    function mint(address to, uint256 value) public onlyMinter {
-        totalSupply = safeAdd(totalSupply, value);
-        balances[to] = safeAdd(balances[to], value);
-        emit Transfer(0x0, to, value);
+    function mint(address _to, uint256 _amount)
+        internal
+        returns (bool)
+    {
+        totalSupply = totalSupply.add(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        return true;
     }
 
-    function subtractFee(uint value) internal returns (uint newValue) {
-        uint feeToTake = calculateFee(value);
-
-        if (feeToTake == 0) return value;
-
-        balances[this] = safeAdd(balances[this], feeToTake);
-
-        return value - feeToTake;
-    }
-
-    function withdrawFees(address to) onlyOwner public returns (bool success) {
-        return transfer(this, to, balances[this]);
-    }
-
-    function setBurnPolicy(bool _isBurnable, bool _canAnyoneBurn) public {
-        isBurnable = _isBurnable;
-        canAnyoneBurn = _canAnyoneBurn;
-    }
-
-    function burn(uint256 value) public returns (bool success) {
-        require(isBurnable);
-
-        if (!canAnyoneBurn && msg.sender != owner) {
-            return false;
-        }
-
-        balances[msg.sender] = safeSub(balances[msg.sender], value);
-        totalSupply = totalSupply - value;
+    function start()
+        internal
+        returns (bool)
+    {
+        isStarted = true;
         return true;
     }
 }
