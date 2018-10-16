@@ -1,13 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TOPB at 0xf6317dd9b04097a9e7b016cd23dcaa7cfe19d9c6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TOPB at 0x5adc39092dccb2c578258d527d49c70ac9339f95
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.19;
 
 contract TOPB {
-    string public name = 'TOPBTC TOKEN';
+    string public name = 'TOPBTC PLATFORM TOKEN';
     string public symbol = 'TOPB';
     uint8 public decimals = 18;
-    uint256 public totalSupply;
+    uint256 public supply;
 	
     mapping (address => uint256) public balanceOf;
 	
@@ -19,8 +19,8 @@ contract TOPB {
     }
 
     function TOPB() public {
-        totalSupply = 200000000 * 10 ** uint256(decimals);
-        balanceOf[msg.sender] = totalSupply;
+        supply = 200000000 * 10 ** uint256(decimals);
+        balanceOf[msg.sender] = supply;
     }
 
     function _transfer(address _from, address _to, uint256 _value) internal {
@@ -30,7 +30,7 @@ contract TOPB {
 		uint256 previousBalances = balanceOf[_from] + balanceOf[_to];
 		balanceOf[_from] -= _value;
 		balanceOf[_to] += _value;
-		emit Transfer(_from, _to, _value);
+		Transfer(_from, _to, _value);
 		assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
 
@@ -41,8 +41,8 @@ contract TOPB {
     function burn(uint256 _value) public returns (bool success) {
         assert(balanceOf[msg.sender] >= _value); 
         balanceOf[msg.sender] -= _value;
-        totalSupply -= _value;
-        emit Burn(msg.sender, _value);
+        supply -= _value;
+        Burn(msg.sender, _value);
         return true;
     }
 }
