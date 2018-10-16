@@ -1,14 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GalaxyToken at 0x44c5ea8178bf7747de1d5a2719150394bcd68d54
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GalaxyToken at 0x949c97692133b7593e06d7bc5a445dea52665b48
 */
 pragma solidity ^0.4.13;
-
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
 
 library SafeMath {
 
@@ -50,6 +43,88 @@ library SafeMath {
     assert(c >= a);
     return c;
   }
+}
+
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    emit Pause();
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    emit Unpause();
+  }
+}
+
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
 contract BasicToken is ERC20Basic {
@@ -187,25 +262,151 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-contract GalaxyToken  is StandardToken {
-    string public name = 'GalaxyCoin';
-    string public symbol = 'GC';
-    uint8 public decimals = 18;
-    uint256 public INITIAL_SUPPLY = 500000000;
+contract MintableToken is StandardToken, Ownable {
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
 
-    address public saosao2=0x6D1336bf6fA4b9996966Eb98b7DDD81b42c5C184;
-    address public saosao3=0x048a94a6eeFf9a1B354957d83BFC88631d288ED6;
-    address public saosao4=0xbdF53dAb57E4f88FA6C42FC0CeF250b9d12b4c6e;
-    address public saosao5=0xD4FCE5a63b6B1Af4aef0474daf7F92702A799169;
-    address public saosao6=0x2A5608c2CD8E901b2618c6C22F13B6B36dd12869;
+  bool public mintingFinished = false;
 
-    constructor() public {
-        totalSupply_ = INITIAL_SUPPLY * 10 ** uint256(decimals);
 
-        balances[saosao2] = totalSupply_.mul(10).div(100);
-        balances[saosao3] = totalSupply_.mul(30).div(100);
-        balances[saosao4] = totalSupply_.mul(30).div(100);
-        balances[saosao5] = totalSupply_.mul(18).div(100);
-        balances[saosao6] = totalSupply_.mul(12).div(100);
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
+
+  /**
+   * @dev Function to mint tokens
+   * @param _to The address that will receive the minted tokens.
+   * @param _amount The amount of tokens to mint.
+   * @return A boolean that indicates if the operation was successful.
+   */
+  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+    totalSupply_ = totalSupply_.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    emit Mint(_to, _amount);
+    emit Transfer(address(0), _to, _amount);
+    return true;
+  }
+
+  /**
+   * @dev Function to stop minting new tokens.
+   * @return True if the operation was successful.
+   */
+  function finishMinting() onlyOwner canMint public returns (bool) {
+    mintingFinished = true;
+    emit MintFinished();
+    return true;
+  }
+}
+
+contract CappedToken is MintableToken {
+
+  uint256 public cap;
+
+  function CappedToken(uint256 _cap) public {
+    require(_cap > 0);
+    cap = _cap;
+  }
+
+  /**
+   * @dev Function to mint tokens
+   * @param _to The address that will receive the minted tokens.
+   * @param _amount The amount of tokens to mint.
+   * @return A boolean that indicates if the operation was successful.
+   */
+  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+    require(totalSupply_.add(_amount) <= cap);
+
+    return super.mint(_to, _amount);
+  }
+
+}
+
+contract PausableToken is StandardToken, Pausable {
+
+  function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
+    return super.transfer(_to, _value);
+  }
+
+  function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
+    return super.transferFrom(_from, _to, _value);
+  }
+
+  function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
+    return super.approve(_spender, _value);
+  }
+
+  function increaseApproval(address _spender, uint _addedValue) public whenNotPaused returns (bool success) {
+    return super.increaseApproval(_spender, _addedValue);
+  }
+
+  function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool success) {
+    return super.decreaseApproval(_spender, _subtractedValue);
+  }
+}
+
+contract GalaxyToken  is PausableToken, CappedToken {
+    string public constant name = 'GalaxyCoin';
+    string public constant symbol = 'GC';
+    uint256 public constant decimals = 18;
+    uint256 public constant CAP = 500000000 * (10 ** decimals);
+
+    // angel investors wallet
+    address public angelInvestorsWallet;
+    // public offering wallet
+    address public publicOfferingWallet;
+    // private offering wallet
+    address public privateOfferingWallet;
+    // operations wallet
+    address public operationsWallet;
+    // ecosystem building wallet
+    address public ecosystemBuildingWallet;
+    // mining incentive wallet
+    address public miningIncentiveWallet;
+
+    // 10%
+    uint256 public angelInvestorsTokens = 50000000 * (10 ** 18);
+    // 20%
+    uint256 public publicOfferingTokens = 100000000 * (10 ** 18);
+    // 10%
+    uint256 public privateOfferingTokens = 50000000 * (10 ** 18);
+    // 30%
+    uint256 public operationsTokens = 150000000 * (10 ** 18);
+    // 18%
+    uint256 public ecosystemBuildingTokens = 90000000 * (10 ** 18);
+    // 12%
+    uint256 public miningIncentiveTokens = 60000000 * (10 ** 18);
+
+    constructor(
+        address _angelInvestorsWallet,
+        address _publicOfferingWallet,
+        address _privateOfferingWallet,
+        address _operationsWallet,
+        address _ecosystemBuildingWallet,
+        address _miningIncentiveWallet
+    ) CappedToken( CAP ) public {
+        require(_angelInvestorsWallet != address(0));
+        require(_publicOfferingWallet != address(0));
+        require(_privateOfferingWallet != address(0));
+        require(_operationsWallet != address(0));
+        require(_ecosystemBuildingWallet != address(0));
+        require(_miningIncentiveWallet != address(0));
+
+        angelInvestorsWallet = _angelInvestorsWallet;
+        publicOfferingWallet = _publicOfferingWallet;
+        privateOfferingWallet = _privateOfferingWallet;
+        operationsWallet = _operationsWallet;
+        ecosystemBuildingWallet = _ecosystemBuildingWallet;
+        miningIncentiveWallet = _miningIncentiveWallet;
+
+
+        mint(angelInvestorsWallet, angelInvestorsTokens);
+        mint(publicOfferingWallet, publicOfferingTokens);
+        mint(privateOfferingWallet, privateOfferingTokens);
+        mint(operationsWallet, operationsTokens);
+        mint(ecosystemBuildingWallet, ecosystemBuildingTokens);
+        mint(miningIncentiveWallet, miningIncentiveTokens);
+        finishMinting();
+        transferOwnership(owner);
     }
 }
