@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x71968e9103585ad07db2031988dc062f772fa828
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x98cac2bf6c40ed374a3271c70a240b7b534f09e7
 */
 pragma solidity ^0.4.15;
 
@@ -232,11 +232,11 @@ contract MintableToken is StandardToken, Ownable {
   
 }
 
-contract HoneybeeToken is MintableToken {
+contract tatataToken is MintableToken {
     
-    string public constant name = "Honeybee";
+    string public constant name = "tatata";
     
-    string public constant symbol = "HNBEE";
+    string public constant symbol = "TTTT";
     
     uint32 public constant decimals = 18;
     
@@ -253,7 +253,7 @@ contract Crowdsale is Ownable {
 
     address restricted;
 
-    HoneybeeToken public token = new HoneybeeToken();
+    tatataToken public token = new tatataToken();
 
     uint start;
     
@@ -264,8 +264,8 @@ contract Crowdsale is Ownable {
     uint rate;
 
     function Crowdsale() {
-        multisig = 0x45473295B5116DA3F88ADBD30C3024966DD1FcB9;
-        restricted = 0xF38644ce4697e8643DdE39513fe924a101F6F4c3;
+        multisig = 0x785862CEBCEcE601c6E1f79315c9320A6721Ea92;
+        restricted = 0x18A09596E20A84EC5915DC1EBdC0B13312C924cD;
         restrictedPercent = 3;
         rate = 5000e18;
         start = 1524171629;
