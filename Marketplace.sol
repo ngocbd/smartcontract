@@ -1,353 +1,405 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Marketplace at 0x8ad5b423096548ff65f4fc3c8bca404dea8c66eb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Marketplace at 0x6a362e3042442cb9bb6fce29fb5c0da35191ae6f
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.18;
 
-contract DigixConstants {
-  /// general constants
-  uint256 constant SECONDS_IN_A_DAY = 24 * 60 * 60;
+// File: node_modules/zeppelin-solidity/contracts/math/SafeMath.sol
 
-  /// asset events
-  uint256 constant ASSET_EVENT_CREATED_VENDOR_ORDER = 1;
-  uint256 constant ASSET_EVENT_CREATED_TRANSFER_ORDER = 2;
-  uint256 constant ASSET_EVENT_CREATED_REPLACEMENT_ORDER = 3;
-  uint256 constant ASSET_EVENT_FULFILLED_VENDOR_ORDER = 4;
-  uint256 constant ASSET_EVENT_FULFILLED_TRANSFER_ORDER = 5;
-  uint256 constant ASSET_EVENT_FULFILLED_REPLACEMENT_ORDER = 6;
-  uint256 constant ASSET_EVENT_MINTED = 7;
-  uint256 constant ASSET_EVENT_MINTED_REPLACEMENT = 8;
-  uint256 constant ASSET_EVENT_RECASTED = 9;
-  uint256 constant ASSET_EVENT_REDEEMED = 10;
-  uint256 constant ASSET_EVENT_FAILED_AUDIT = 11;
-  uint256 constant ASSET_EVENT_ADMIN_FAILED = 12;
-  uint256 constant ASSET_EVENT_REMINTED = 13;
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
 
-  /// roles
-  uint256 constant ROLE_ZERO_ANYONE = 0;
-  uint256 constant ROLE_ROOT = 1;
-  uint256 constant ROLE_VENDOR = 2;
-  uint256 constant ROLE_XFERAUTH = 3;
-  uint256 constant ROLE_POPADMIN = 4;
-  uint256 constant ROLE_CUSTODIAN = 5;
-  uint256 constant ROLE_AUDITOR = 6;
-  uint256 constant ROLE_MARKETPLACE_ADMIN = 7;
-  uint256 constant ROLE_KYC_ADMIN = 8;
-  uint256 constant ROLE_FEES_ADMIN = 9;
-  uint256 constant ROLE_DOCS_UPLOADER = 10;
-  uint256 constant ROLE_KYC_RECASTER = 11;
-  uint256 constant ROLE_FEES_DISTRIBUTION_ADMIN = 12;
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
 
-  /// states
-  uint256 constant STATE_ZERO_UNDEFINED = 0;
-  uint256 constant STATE_CREATED = 1;
-  uint256 constant STATE_VENDOR_ORDER = 2;
-  uint256 constant STATE_TRANSFER = 3;
-  uint256 constant STATE_CUSTODIAN_DELIVERY = 4;
-  uint256 constant STATE_MINTED = 5;
-  uint256 constant STATE_AUDIT_FAILURE = 6;
-  uint256 constant STATE_REPLACEMENT_ORDER = 7;
-  uint256 constant STATE_REPLACEMENT_DELIVERY = 8;
-  uint256 constant STATE_RECASTED = 9;
-  uint256 constant STATE_REDEEMED = 10;
-  uint256 constant STATE_ADMIN_FAILURE = 11;
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
 
-  /// interactive contracts
-  bytes32 constant CONTRACT_INTERACTIVE_ASSETS_EXPLORER = "i:asset:explorer";
-  bytes32 constant CONTRACT_INTERACTIVE_DIGIX_DIRECTORY = "i:directory";
-  bytes32 constant CONTRACT_INTERACTIVE_MARKETPLACE = "i:mp";
-  bytes32 constant CONTRACT_INTERACTIVE_MARKETPLACE_ADMIN = "i:mpadmin";
-  bytes32 constant CONTRACT_INTERACTIVE_POPADMIN = "i:popadmin";
-  bytes32 constant CONTRACT_INTERACTIVE_PRODUCTS_LIST = "i:products";
-  bytes32 constant CONTRACT_INTERACTIVE_TOKEN = "i:token";
-  bytes32 constant CONTRACT_INTERACTIVE_BULK_WRAPPER = "i:bulk-wrapper";
-  bytes32 constant CONTRACT_INTERACTIVE_TOKEN_CONFIG = "i:token:config";
-  bytes32 constant CONTRACT_INTERACTIVE_TOKEN_INFORMATION = "i:token:information";
-  bytes32 constant CONTRACT_INTERACTIVE_MARKETPLACE_INFORMATION = "i:mp:information";
-  bytes32 constant CONTRACT_INTERACTIVE_IDENTITY = "i:identity";
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
 
-  /// controller contracts
-  bytes32 constant CONTRACT_CONTROLLER_ASSETS = "c:asset";
-  bytes32 constant CONTRACT_CONTROLLER_ASSETS_RECAST = "c:asset:recast";
-  bytes32 constant CONTRACT_CONTROLLER_ASSETS_EXPLORER = "c:explorer";
-  bytes32 constant CONTRACT_CONTROLLER_DIGIX_DIRECTORY = "c:directory";
-  bytes32 constant CONTRACT_CONTROLLER_MARKETPLACE = "c:mp";
-  bytes32 constant CONTRACT_CONTROLLER_MARKETPLACE_ADMIN = "c:mpadmin";
-  bytes32 constant CONTRACT_CONTROLLER_PRODUCTS_LIST = "c:products";
-
-  bytes32 constant CONTRACT_CONTROLLER_TOKEN_APPROVAL = "c:token:approval";
-  bytes32 constant CONTRACT_CONTROLLER_TOKEN_CONFIG = "c:token:config";
-  bytes32 constant CONTRACT_CONTROLLER_TOKEN_INFO = "c:token:info";
-  bytes32 constant CONTRACT_CONTROLLER_TOKEN_TRANSFER = "c:token:transfer";
-
-  bytes32 constant CONTRACT_CONTROLLER_JOB_ID = "c:jobid";
-  bytes32 constant CONTRACT_CONTROLLER_IDENTITY = "c:identity";
-
-  /// storage contracts
-  bytes32 constant CONTRACT_STORAGE_ASSETS = "s:asset";
-  bytes32 constant CONTRACT_STORAGE_ASSET_EVENTS = "s:asset:events";
-  bytes32 constant CONTRACT_STORAGE_DIGIX_DIRECTORY = "s:directory";
-  bytes32 constant CONTRACT_STORAGE_MARKETPLACE = "s:mp";
-  bytes32 constant CONTRACT_STORAGE_PRODUCTS_LIST = "s:products";
-  bytes32 constant CONTRACT_STORAGE_GOLD_TOKEN = "s:goldtoken";
-  bytes32 constant CONTRACT_STORAGE_JOB_ID = "s:jobid";
-  bytes32 constant CONTRACT_STORAGE_IDENTITY = "s:identity";
-
-  /// service contracts
-  bytes32 constant CONTRACT_SERVICE_TOKEN_DEMURRAGE = "sv:tdemurrage";
-  bytes32 constant CONTRACT_SERVICE_MARKETPLACE = "sv:mp";
-  bytes32 constant CONTRACT_SERVICE_DIRECTORY = "sv:directory";
-
-  /// fees distributors
-  bytes32 constant CONTRACT_DEMURRAGE_FEES_DISTRIBUTOR = "fees:distributor:demurrage";
-  bytes32 constant CONTRACT_RECAST_FEES_DISTRIBUTOR = "fees:distributor:recast";
-  bytes32 constant CONTRACT_TRANSFER_FEES_DISTRIBUTOR = "fees:distributor:transfer";
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-contract ContractResolver {
+// File: node_modules/zeppelin-solidity/contracts/ownership/Ownable.sol
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
   address public owner;
-  bool public locked;
-  function init_register_contract(bytes32 _key, address _contract_address) public returns (bool _success);
-  function unregister_contract(bytes32 _key) public returns (bool _success);
-  function get_contract(bytes32 _key) public constant returns (address _contract);
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
 }
 
-contract ResolverClient {
+// File: node_modules/zeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
 
-  /// The address of the resolver contract for this project
-  address public resolver;
-  /// The key to identify this contract
-  bytes32 public key;
-
-  /// Make our own address available to us as a constant
-  address public CONTRACT_ADDRESS;
-
-  /// Function modifier to check if msg.sender corresponds to the resolved address of a given key
-  /// @param _contract The resolver key
-  modifier if_sender_is(bytes32 _contract) {
-    require(msg.sender == ContractResolver(resolver).get_contract(_contract));
-    _;
-  }
-
-  /// Function modifier to check resolver's locking status.
-  modifier unless_resolver_is_locked() {
-    require(is_locked() == false);
-    _;
-  }
-
-  /// @dev Initialize new contract
-  /// @param _key the resolver key for this contract
-  /// @return _success if the initialization is successful
-  function init(bytes32 _key, address _resolver)
-           internal
-           returns (bool _success)
-  {
-    bool _is_locked = ContractResolver(_resolver).locked();
-    if (_is_locked == false) {
-      CONTRACT_ADDRESS = address(this);
-      resolver = _resolver;
-      key = _key;
-      require(ContractResolver(resolver).init_register_contract(key, CONTRACT_ADDRESS));
-      _success = true;
-    }  else {
-      _success = false;
-    }
-  }
-
-  /// @dev Destroy the contract and unregister self from the ContractResolver
-  /// @dev Can only be called by the owner of ContractResolver
-  function destroy()
-           public
-           returns (bool _success)
-  {
-    bool _is_locked = ContractResolver(resolver).locked();
-    require(!_is_locked);
-
-    address _owner_of_contract_resolver = ContractResolver(resolver).owner();
-    require(msg.sender == _owner_of_contract_resolver);
-
-    _success = ContractResolver(resolver).unregister_contract(key);
-    require(_success);
-
-    selfdestruct(_owner_of_contract_resolver);
-  }
-
-  /// @dev Check if resolver is locked
-  /// @return _locked if the resolver is currently locked
-  function is_locked()
-           private
-           constant
-           returns (bool _locked)
-  {
-    _locked = ContractResolver(resolver).locked();
-  }
-
-  /// @dev Get the address of a contract
-  /// @param _key the resolver key to look up
-  /// @return _contract the address of the contract
-  function get_contract(bytes32 _key)
-           public
-           constant
-           returns (address _contract)
-  {
-    _contract = ContractResolver(resolver).get_contract(_key);
-  }
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-/// @title Some useful constants
-/// @author Digix Holdings Pte Ltd
-contract Constants {
-  address constant NULL_ADDRESS = address(0x0);
-  uint256 constant ZERO = uint256(0);
-  bytes32 constant EMPTY = bytes32(0x0);
+// File: node_modules/zeppelin-solidity/contracts/token/ERC20/ERC20.sol
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-/// @title Condition based access control
-/// @author Digix Holdings Pte Ltd
-contract ACConditions is Constants {
+// File: contracts/Marketplace.sol
 
-  modifier not_null_address(address _item) {
-    require(_item != NULL_ADDRESS);
-    _;
-  }
+// TODO: Add require reasons as soon as Solidity 0.4.22 is out (now commented out)
+//   follow progress at https://github.com/ethereum/solidity/projects/6
+contract Marketplace is Ownable {
+    using SafeMath for uint256;
 
-  modifier if_null_address(address _item) {
-    require(_item == NULL_ADDRESS);
-    _;
-  }
+    // product events
+    event ProductCreated(address indexed owner, bytes32 indexed id, string name, address beneficiary, uint pricePerSecond, Currency currency, uint minimumSubscriptionSeconds);
+    event ProductUpdated(address indexed owner, bytes32 indexed id, string name, address beneficiary, uint pricePerSecond, Currency currency, uint minimumSubscriptionSeconds);
+    event ProductDeleted(address indexed owner, bytes32 indexed id, string name, address beneficiary, uint pricePerSecond, Currency currency, uint minimumSubscriptionSeconds);
+    event ProductRedeployed(address indexed owner, bytes32 indexed id, string name, address beneficiary, uint pricePerSecond, Currency currency, uint minimumSubscriptionSeconds);
+    event ProductOwnershipOffered(address indexed owner, bytes32 indexed id, address indexed to);
+    event ProductOwnershipChanged(address indexed newOwner, bytes32 indexed id, address indexed oldOwner);
 
-  modifier not_null_uint(uint256 _item) {
-    require(_item != ZERO);
-    _;
-  }
+    // subscription events
+    event Subscribed(bytes32 indexed productId, address indexed subscriber, uint endTimestamp);
+    event NewSubscription(bytes32 indexed productId, address indexed subscriber, uint endTimestamp);
+    event SubscriptionExtended(bytes32 indexed productId, address indexed subscriber, uint endTimestamp);
+    event SubscriptionTransferred(bytes32 indexed productId, address indexed from, address indexed to, uint secondsTransferred, uint datacoinTransferred);    
 
-  modifier if_null_uint(uint256 _item) {
-    require(_item == ZERO);
-    _;
-  }
+    // currency events
+    event ExchangeRatesUpdated(uint timestamp, uint dataInUsd);
 
-  modifier not_empty_bytes(bytes32 _item) {
-    require(_item != EMPTY);
-    _;
-  }
-
-  modifier if_empty_bytes(bytes32 _item) {
-    require(_item == EMPTY);
-    _;
-  }
-
-  modifier not_null_string(string _item) {
-    bytes memory _i = bytes(_item);
-    require(_i.length > 0);
-    _;
-  }
-
-  modifier if_null_string(string _item) {
-    bytes memory _i = bytes(_item);
-    require(_i.length == 0);
-    _;
-  }
-
-  modifier require_gas(uint256 _requiredgas) {
-    require(msg.gas  >= (_requiredgas - 22000));
-    _;
-  }
-
-  function is_contract(address _contract)
-           public
-           constant
-           returns (bool _is_contract)
-  {
-    uint32 _code_length;
-
-    assembly {
-      _code_length := extcodesize(_contract)
+    enum ProductState {
+        NotDeployed,                // non-existent or deleted
+        Deployed                    // created or redeployed
     }
 
-    if(_code_length > 1) {
-      _is_contract = true;
-    } else {
-      _is_contract = false;
+    enum Currency {
+        DATA,                       // data atoms or "wei" (10^-18 DATA)
+        USD                         // nanodollars (10^-9 USD)
     }
-  }
 
-  modifier if_contract(address _contract) {
-    require(is_contract(_contract) == true);
-    _;
-  }
+    struct Product {
+        bytes32 id;
+        string name;
+        address owner;
+        address beneficiary;        // account where revenue is directed to
+        uint pricePerSecond;
+        Currency priceCurrency;
+        uint minimumSubscriptionSeconds;
+        ProductState state;
+        mapping(address => TimeBasedSubscription) subscriptions;
+        address newOwnerCandidate;  // Two phase hand-over to minimize the chance that the product ownership is lost to a non-existent address.
+    }
 
-  modifier unless_contract(address _contract) {
-    require(is_contract(_contract) == false);
-    _;
-  }
-}
+    struct TimeBasedSubscription {        
+        uint endTimestamp;
+    }
 
-contract MarketplaceAdminController {
-}
+    mapping (bytes32 => Product) products;
+    function getProduct(bytes32 id) public view returns (string name, address owner, address beneficiary, uint pricePerSecond, Currency currency, uint minimumSubscriptionSeconds, ProductState state) {
+        return (
+            products[id].name,
+            products[id].owner,
+            products[id].beneficiary,
+            products[id].pricePerSecond,
+            products[id].priceCurrency,
+            products[id].minimumSubscriptionSeconds,
+            products[id].state
+        );
+    }
 
-contract MarketplaceStorage {
-}
+    function getSubscription(bytes32 productId, address subscriber) public view returns (bool isValid, uint endTimestamp) {
+        TimeBasedSubscription storage sub;
+        (isValid, , sub) = _getSubscription(productId, subscriber);
+        endTimestamp = sub.endTimestamp;        
+    }
 
-contract MarketplaceController {
-  function put_purchase_for(uint256 _wei_sent, address _buyer, address _recipient, uint256 _block_number, uint256 _nonce, uint256 _wei_per_dgx_mg, address _signer, bytes _signature) payable public returns (bool _success, uint256 _purchased_amount);
-}
+    function getSubscriptionTo(bytes32 productId) public view returns (bool isValid, uint endTimestamp) {
+        return getSubscription(productId, msg.sender);
+    }
 
-contract MarketplaceCommon is ResolverClient, ACConditions, DigixConstants {
+    ERC20 datacoin;
 
-  function marketplace_admin_controller()
-           internal
-           constant
-           returns (MarketplaceAdminController _contract)
-  {
-    _contract = MarketplaceAdminController(get_contract(CONTRACT_CONTROLLER_MARKETPLACE_ADMIN));
-  }
+    address public currencyUpdateAgent;
 
-  function marketplace_storage()
-           internal
-           constant
-           returns (MarketplaceStorage _contract)
-  {
-    _contract = MarketplaceStorage(get_contract(CONTRACT_STORAGE_MARKETPLACE));
-  }
+    function Marketplace(address datacoinAddress, address currencyUpdateAgentAddress) Ownable() public {        
+        _initialize(datacoinAddress, currencyUpdateAgentAddress);
+    }
 
-  function marketplace_controller()
-           internal
-           constant
-           returns (MarketplaceController _contract)
-  {
-    _contract = MarketplaceController(get_contract(CONTRACT_CONTROLLER_MARKETPLACE));
-  }
-}
+    function _initialize(address datacoinAddress, address currencyUpdateAgentAddress) internal {
+        currencyUpdateAgent = currencyUpdateAgentAddress;
+        datacoin = ERC20(datacoinAddress);
+    }
 
-/// @title Digix's Marketplace
-/// @author Digix Holdings Pte Ltd
-/// @notice This contract is for KYC-approved users to purchase DGX using ETH
-contract Marketplace is MarketplaceCommon {
+    ////////////////// Product management /////////////////
 
-  function Marketplace(address _resolver) public
-  {
-    require(init(CONTRACT_INTERACTIVE_MARKETPLACE, _resolver));
-  }
+    // also checks that p exists: p.owner == 0 for non-existent products    
+    modifier onlyProductOwner(bytes32 productId) {
+        Product storage p = products[productId];
+        require(p.owner == msg.sender || owner == msg.sender); //, "Only product owner may call this function");
+        _;
+    }
 
-  /// @dev purchase DGX gold
-  /// @param _block_number Block number from DTPO (Digix Trusted Price Oracle)
-  /// @param _nonce Nonce from DTPO
-  /// @param _wei_per_dgx_mg Price in wei for one milligram of DGX
-  /// @param _signer Address of the DTPO signer
-  /// @param _signature Signature of the payload
-  /// @return {
-  ///   "_success": "returns true if operation is successful",
-  ///   "_purchased_amount": "DGX nanograms received"
-  /// }
-  function purchase(uint256 _block_number, uint256 _nonce, uint256 _wei_per_dgx_mg, address _signer, bytes _signature)
-           payable
-           public
-           returns (bool _success, uint256 _purchased_amount)
-  {
-    address _sender = msg.sender;
+    function createProduct(bytes32 id, string name, address beneficiary, uint pricePerSecond, Currency currency, uint minimumSubscriptionSeconds) public whenNotHalted {
+        require(id != 0); //, "Product ID can't be empty/null");
+        require(pricePerSecond > 0); //, "Free streams go through different channel");
+        Product storage p = products[id];
+        require(p.id == 0); //, "Product with this ID already exists");        
+        products[id] = Product(id, name, msg.sender, beneficiary, pricePerSecond, currency, minimumSubscriptionSeconds, ProductState.Deployed, 0);
+        emit ProductCreated(msg.sender, id, name, beneficiary, pricePerSecond, currency, minimumSubscriptionSeconds);
+    }
 
-    (_success, _purchased_amount) =
-      marketplace_controller().put_purchase_for.value(msg.value).gas(600000)(msg.value, _sender, _sender, _block_number,
-                                                                             _nonce, _wei_per_dgx_mg, _signer, _signature);
-    require(_success);
-  }
+    /**
+    * Stop offering the product
+    */
+    function deleteProduct(bytes32 productId) public onlyProductOwner(productId) {        
+        Product storage p = products[productId];
+        require(p.state == ProductState.Deployed);
+        p.state = ProductState.NotDeployed;
+        emit ProductDeleted(p.owner, productId, p.name, p.beneficiary, p.pricePerSecond, p.priceCurrency, p.minimumSubscriptionSeconds);
+    }
+
+    /**
+    * Return product to market
+    */
+    function redeployProduct(bytes32 productId) public onlyProductOwner(productId) {        
+        Product storage p = products[productId];
+        require(p.state == ProductState.NotDeployed);
+        p.state = ProductState.Deployed;
+        emit ProductRedeployed(p.owner, productId, p.name, p.beneficiary, p.pricePerSecond, p.priceCurrency, p.minimumSubscriptionSeconds);
+    }
+
+    function updateProduct(bytes32 productId, string name, address beneficiary, uint pricePerSecond, Currency currency, uint minimumSubscriptionSeconds) public onlyProductOwner(productId) {
+        require(pricePerSecond > 0); //, "Free streams go through different channel");
+        Product storage p = products[productId]; 
+        p.name = name;
+        p.beneficiary = beneficiary;
+        p.pricePerSecond = pricePerSecond;
+        p.priceCurrency = currency;
+        p.minimumSubscriptionSeconds = minimumSubscriptionSeconds;        
+        emit ProductUpdated(p.owner, p.id, name, beneficiary, pricePerSecond, currency, minimumSubscriptionSeconds);
+    }
+
+    /**
+    * Changes ownership of the product. Two phase hand-over minimizes the chance that the product ownership is lost to a non-existent address.
+    */
+    function offerProductOwnership(bytes32 productId, address newOwnerCandidate) public onlyProductOwner(productId) {
+        // that productId exists is already checked in onlyProductOwner
+        products[productId].newOwnerCandidate = newOwnerCandidate;
+        emit ProductOwnershipOffered(products[productId].owner, productId, newOwnerCandidate);
+    }
+
+    /**
+    * Changes ownership of the product. Two phase hand-over minimizes the chance that the product ownership is lost to a non-existent address.
+    */
+    function claimProductOwnership(bytes32 productId) public whenNotHalted {
+        // also checks that productId exists (newOwnerCandidate is zero for non-existent)
+        Product storage p = products[productId]; 
+        require(msg.sender == p.newOwnerCandidate);
+        emit ProductOwnershipChanged(msg.sender, productId, p.owner);
+        p.owner = msg.sender;
+        p.newOwnerCandidate = 0;
+    }
+
+    /////////////// Subscription management ///////////////
+
+    /**
+     * Purchases access to this stream for msg.sender.
+     * If the address already has a valid subscription, extends the subscription by the given period.
+     */
+    function buy(bytes32 productId, uint subscriptionSeconds) public whenNotHalted {
+        Product storage product;
+        TimeBasedSubscription storage sub;
+        (, product, sub) = _getSubscription(productId, msg.sender);
+        require(product.state == ProductState.Deployed); //, "Product has been deleted");        
+        _addSubscription(product, msg.sender, subscriptionSeconds, sub);
+
+        uint price = _toDatacoin(product.pricePerSecond.mul(subscriptionSeconds), product.priceCurrency);
+        require(datacoin.transferFrom(msg.sender, product.beneficiary, price));  //, "Not enough DATAcoin allowance");
+    }
+
+    /**
+    * Checks if the given address currently has a valid subscription
+    */
+    function hasValidSubscription(bytes32 productId, address subscriber) public constant returns (bool isValid) {
+        (isValid, ,) = _getSubscription(productId, subscriber);
+    }
+
+    /**
+    * Transfer a valid subscription from msg.sender to a new address.
+    * If the address already has a valid subscription, extends the subscription by the msg.sender's remaining period.
+    */
+    function transferSubscription(bytes32 productId, address newSubscriber) public whenNotHalted {
+        bool isValid = false;
+        Product storage product;
+        TimeBasedSubscription storage sub;
+        (isValid, product, sub) = _getSubscription(productId, msg.sender);
+        require(isValid);   //, "Only valid subscriptions can be transferred");
+        uint secondsLeft = sub.endTimestamp.sub(block.timestamp);
+        uint datacoinLeft = secondsLeft.mul(product.pricePerSecond);
+        TimeBasedSubscription storage newSub = product.subscriptions[newSubscriber];
+        _addSubscription(product, newSubscriber, secondsLeft, newSub);
+        delete product.subscriptions[msg.sender];
+        emit SubscriptionTransferred(productId, msg.sender, newSubscriber, secondsLeft, datacoinLeft);
+    }
+
+    function _getSubscription(bytes32 productId, address subscriber) internal constant returns (bool subIsValid, Product storage, TimeBasedSubscription storage) {
+        Product storage p = products[productId];
+        require(p.id != 0); //, "Product doesn't exist");
+        TimeBasedSubscription storage s = p.subscriptions[subscriber];
+        return (s.endTimestamp >= block.timestamp, p, s);
+    }
+    
+    function _addSubscription(Product storage p, address subscriber, uint addSeconds, TimeBasedSubscription storage oldSub) internal {
+        uint endTimestamp;
+        if (oldSub.endTimestamp > block.timestamp) {
+            require(addSeconds > 0); //, "Must top up worth at least one second");
+            endTimestamp = oldSub.endTimestamp.add(addSeconds);
+            oldSub.endTimestamp = endTimestamp;  
+            emit SubscriptionExtended(p.id, subscriber, endTimestamp);
+        } else {
+            require(addSeconds >= p.minimumSubscriptionSeconds); //, "More ether required to meet the minimum subscription period");
+            endTimestamp = block.timestamp.add(addSeconds);
+            TimeBasedSubscription memory newSub = TimeBasedSubscription(endTimestamp);
+            p.subscriptions[subscriber] = newSub;
+            emit NewSubscription(p.id, subscriber, endTimestamp);
+        }
+        emit Subscribed(p.id, subscriber, endTimestamp);
+    }
+
+    // TODO: transfer allowance to another Marketplace contract
+    // Mechanism basically is that this Marketplace draws from the allowance and credits
+    //   the account on another Marketplace; OR that there is a central credit pool (say, an ERC20 token)
+    // Creating another ERC20 token for this could be a simple fix: it would need the ability to transfer allowances
+
+    /////////////// Currency management ///////////////
+
+    uint public dataPerUsd = 1;
+
+    /**
+    * Update currency exchange rates; all purchases are still billed in DATAcoin
+    * @param timestamp in seconds when the exchange rates were last updated
+    * @param dataUsd how many data atoms (10^-18 DATA) equal one nanodollar (10^-9 USD)
+    */
+    function updateExchangeRates(uint timestamp, uint dataUsd) public {
+        require(msg.sender == currencyUpdateAgent);
+        require(dataUsd > 0);
+        dataPerUsd = dataUsd;
+        emit ExchangeRatesUpdated(timestamp, dataUsd);
+    }
+
+    /**
+    * Allow updating currency exchange rates even if time of exchange rate isn't known
+    */
+    function updateExchangeRates(uint dataUsd) public {
+        require(msg.sender == currencyUpdateAgent);
+        dataPerUsd = dataUsd;
+        emit ExchangeRatesUpdated(block.timestamp, dataUsd);
+    }    
+
+    function _toDatacoin(uint number, Currency unit) view internal returns (uint datacoinAmount) {
+        if (unit == Currency.DATA) {
+            return number;
+        }
+        return number.mul(dataPerUsd);
+    }
+
+    /////////////// Admin functionality ///////////////
+    
+    event Halted();
+    event Resumed();
+    bool public halted = false;
+
+    modifier whenNotHalted() {
+        require(!halted || owner == msg.sender);
+        _;
+    }
+    function halt() public onlyOwner {
+        halted = true;
+        emit Halted();
+    }
+    function resume() public onlyOwner {
+        halted = false;
+        emit Resumed();
+    }
+
+    function reInitialize(address datacoinAddress, address currencyUpdateAgentAddress) public onlyOwner {
+        _initialize(datacoinAddress, currencyUpdateAgentAddress);
+    }
 }
