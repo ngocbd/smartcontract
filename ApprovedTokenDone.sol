@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0x26e6503a95131247fee68b6489a8b9ea50be66eb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0x78898682fc04ffa59ebd367feda4b5cfe429ed0e
 */
 pragma solidity ^0.4.13;
 
@@ -153,16 +153,16 @@ contract StandardToken is ERC20, BasicToken {
  * Created specifically for TokenDone.io
  */
 contract ApprovedTokenDone is StandardToken {
-	string public name = 'WORK';
-	string public symbol = 'WORK';
+	string public name = 'AEROFLOT';
+	string public symbol = 'AEROFLOT';
 	uint public decimals = 3;
-	uint public initialSupply = 100000000000;
+	uint public initialSupply = 99999999999;
 	string public publishier = 'TokenDone.io';
-	uint public CreationTime;
+	uint public creationTime;
 	
 	function ApprovedTokenDone() {
 		totalSupply = initialSupply;
     	balances[0xe90fFFd34aEcFE44db61a6efD85663296094A09c] = initialSupply;
-		CreationTime = now;
+		creationTime = now;
 	}
 }
