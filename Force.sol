@@ -1,186 +1,260 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Force at 0x794eb1f985f472c0b44c4041b4198478366f9940
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Force at 0x437604cbefc7b83c58e6ba96d299259b74b2124a
 */
-pragma solidity ^0.4.18;
-
+pragma solidity 0.4.21;
 
 /**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
  */
-contract Ownable {
-    address public owner;
-
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+library SafeMath {
 
     /**
-    * @dev Throws if called by any account other than the owner.
+    * @dev Multiplies two numbers, throws on overflow.
     */
+    function mul(uint a, uint b) internal pure returns (uint) {
+        if (a == 0) {
+            return 0;
+        }
+        uint c = a * b;
+        assert(c / a == b);
+        return c;
+    }
+
+    /**
+    * @dev Integer division of two numbers, truncating the quotient.
+    */
+    function div(uint a, uint b) internal pure returns (uint) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
+
+    /**
+    * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    */
+    function sub(uint a, uint b) internal pure returns (uint) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    /**
+    * @dev Adds two numbers, throws on overflow.
+    */
+    function add(uint a, uint b) internal pure returns (uint) {
+        uint c = a + b;
+        assert(c >= a);
+        return c;
+    }
+}
+
+
+contract Ownable {
+    address public owner;
+    address public ICO; // ICO contract
+    address public DAO; // DAO contract
+
+    function Ownable() public {
+        owner = msg.sender;
+    }
+
     modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
 
-    /**
-    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-    * account.
-    */
-    function Ownable() public {
-        owner = msg.sender;
+    function transferOwnership(address _owner) public onlyOwner {
+        owner = _owner;
     }
 
-    /**
-    * @dev Allows the current owner to transfer control of the contract to a newOwner.
-    * @param newOwner The address to transfer ownership to.
-    */
-    function transferOwnership(address newOwner) onlyOwner public {
-        require(newOwner != address(0));
-        OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
+    function setDAO(address _DAO) onlyMasters public {
+        DAO = _DAO;
     }
 
-}
+    function setICO(address _ICO) onlyMasters public {
+        ICO = _ICO;
+    }
 
-/*
- * ERC20Basic
- * Simpler version of ERC20 interface
- * see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20Basic {
-    function totalSupply() public constant returns (uint256);
-    function balanceOf(address _owner) public constant returns (uint256);
-    function transfer(address _to, uint256 _value) public returns (bool);
-    event Transfer(address indexed from, address indexed to, uint value);
+    modifier onlyDAO() {
+        require(msg.sender == DAO);
+        _;
+    }
+
+    modifier onlyMasters() {
+        require(msg.sender == ICO || msg.sender == owner || msg.sender == DAO);
+        _;
+    }
 }
 
 
-contract ERC223Basic is ERC20Basic {
-    function transfer(address to, uint value, bytes data) public returns (bool);
-}
+contract hasHolders {
+    mapping(address => uint) private holdersId;
+    // holder id starts at 1
+    mapping(uint => address) public holders;
+    uint public holdersCount = 0;
 
+    event AddHolder(address indexed holder, uint index);
+    event DelHolder(address indexed holder);
+    event UpdHolder(address indexed holder, uint index);
 
-/*
- * ERC20 interface
- * see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC223Basic {
-    // active supply of tokens
-    function allowance(address _owner, address _spender) public constant returns (uint256);
-    function transferFrom(address _from, address _to, uint _value) public returns (bool);
-    function approve(address _spender, uint256 _value) public returns (bool);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
- /*
- * Contract that is working with ERC223 tokens
- */
-
-contract ERC223ReceivingContract {
-    function tokenFallback(address _from, uint _value, bytes _data) public;
-}
-
-/**
- * @title ControlCentreInterface
- * @dev ControlCentreInterface is an interface for providing commonly used function
- * signatures to the ControlCentre
- */
-contract ControllerInterface {
-
-    function totalSupply() public constant returns (uint256);
-    function balanceOf(address _owner) public constant returns (uint256);
-    function allowance(address _owner, address _spender) public constant returns (uint256);
-    function approve(address owner, address spender, uint256 value) public returns (bool);
-    function transfer(address owner, address to, uint value, bytes data) public returns (bool);
-    function transferFrom(address owner, address from, address to, uint256 amount, bytes data) public returns (bool);
-    function mint(address _to, uint256 _amount) public returns (bool);
-}
-
-contract Token is Ownable, ERC20 {
-
-    event Mint(address indexed to, uint256 amount);
-    event MintToggle(bool status);
-
-    // Constant Functions
-    function balanceOf(address _owner) public constant returns (uint256) {
-        return ControllerInterface(owner).balanceOf(_owner);
-    }
-
-    function totalSupply() public constant returns (uint256) {
-        return ControllerInterface(owner).totalSupply();
-    }
-
-    function allowance(address _owner, address _spender) public constant returns (uint256) {
-        return ControllerInterface(owner).allowance(_owner, _spender);
-    }
-
-    function mint(address _to, uint256 _amount) onlyOwner public returns (bool) {
-        bytes memory empty;
-        _checkDestination(address(this), _to, _amount, empty);
-        Mint(_to, _amount);
-        Transfer(address(0), _to, _amount);
-        return true;
-    }
-
-    function mintToggle(bool status) onlyOwner public returns (bool) {
-        MintToggle(status);
-        return true;
-    }
-
-    // public functions
-    function approve(address _spender, uint256 _value) public returns (bool) {
-        ControllerInterface(owner).approve(msg.sender, _spender, _value);
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    function transfer(address _to, uint256 _value) public returns (bool) {
-        bytes memory empty;
-        return transfer(_to, _value, empty);
-    }
-
-    function transfer(address to, uint value, bytes data) public returns (bool) {
-        ControllerInterface(owner).transfer(msg.sender, to, value, data);
-        Transfer(msg.sender, to, value);
-        _checkDestination(msg.sender, to, value, data);
-        return true;
-    }
-
-    function transferFrom(address _from, address _to, uint _value) public returns (bool) {
-        bytes memory empty;
-        return transferFrom(_from, _to, _value, empty);
-    }
-
-
-    function transferFrom(address _from, address _to, uint256 _amount, bytes _data) public returns (bool) {
-        ControllerInterface(owner).transferFrom(msg.sender, _from, _to, _amount, _data);
-        Transfer(_from, _to, _amount);
-        _checkDestination(_from, _to, _amount, _data);
-        return true;
-    }
-
-    // Internal Functions
-    function _checkDestination(address _from, address _to, uint256 _value, bytes _data) internal {
-        uint256 codeLength;
-        assembly {
-            codeLength := extcodesize(_to)
+    // add new token holder
+    function _addHolder(address _holder) internal returns (bool) {
+        if (holdersId[_holder] == 0) {
+            holdersId[_holder] = ++holdersCount;
+            holders[holdersCount] = _holder;
+            emit AddHolder(_holder, holdersCount);
+            return true;
         }
-        if(codeLength>0) {
-            ERC223ReceivingContract untrustedReceiver = ERC223ReceivingContract(_to);
-            // untrusted contract call
-            untrustedReceiver.tokenFallback(_from, _value, _data);
+        return false;
+    }
+
+    // delete token holder
+    function _delHolder(address _holder) internal returns (bool){
+        uint id = holdersId[_holder];
+        if (id != 0 && holdersCount > 0) {
+            //replace with last
+            holders[id] = holders[holdersCount];
+            // delete Holder element
+            delete holdersId[_holder];
+            //delete last id and decrease count
+            delete holders[holdersCount--];
+            emit DelHolder(_holder);
+            emit UpdHolder(holders[id], id);
+            return true;
         }
+        return false;
     }
 }
 
+contract Force is Ownable, hasHolders {
+    using SafeMath for uint;
+    string public name = "Force";
+    string public symbol = "4TH";
+    uint8 public decimals = 0;
+    uint public totalSupply = 100000000;
 
-/**
- Simple Token based on OpenZeppelin token contract
- */
-contract Force is  Token {
+    mapping(address => uint) private balances;
+    mapping(address => mapping(address => uint)) private allowed;
 
-    string public constant name = "Force";
-    string public constant symbol = "FORCE";
-    uint8 public constant decimals = 18;
+    string public information; // info
+
+    event Transfer(address indexed _from, address indexed _to, uint _value);
+    event Approval(address indexed _owner, address indexed _spender, uint _value);
+    event Mint(address indexed _to, uint _amount);
+
+    function Force() public {
+        balances[address(this)] = totalSupply;
+        emit Transfer(address(0), address(this), totalSupply);
+        _addHolder(this);
+    }
+
+    /**
+    * @dev set public information
+    */
+    function setInformation(string _information) external onlyMasters {
+        information = _information;
+    }
+
+    /**
+    * @dev internal transfer function
+    */
+    function _transfer(address _from, address _to, uint _value) internal returns (bool){
+        require(_to != address(0));
+        require(_value > 0);
+        require(balances[_from] >= _value);
+
+        // SafeMath.sub will throw if there is not enough balance.
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        emit Transfer(_from, _to, _value);
+
+        _addHolder(_to);
+        if (balances[_from] == 0) {
+            _delHolder(_from);
+        }
+        return true;
+    }
+
+    /**
+    * @dev service transfer token function, allowed only from masters
+    */
+    function serviceTransfer(address _from, address _to, uint _value) external onlyMasters returns (bool success) {
+        return _transfer(_from, _to, _value);
+    }
+
+    /**
+    * @dev transfer token for a specified address
+    */
+    function transfer(address _to, uint _value) external returns (bool) {
+        return _transfer(msg.sender, _to, _value);
+    }
+
+    /**
+    * @dev Gets the balance of the specified address.
+    */
+    function balanceOf(address _owner) public view returns (uint) {
+        return balances[_owner];
+    }
+    /**
+     * @dev Transfer tokens from one address to another
+     */
+    function transferFrom(address _from, address _to, uint _value) external returns (bool) {
+        require(_value <= allowed[_from][_to]);
+        allowed[_from][_to] = allowed[_from][_to].sub(_value);
+        return _transfer(_from, _to, _value);
+    }
+
+    /**
+     * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+     */
+    function approve(address _spender, uint _value) external returns (bool) {
+        require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+        allowed[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    /**
+     * @dev Function to check the amount of tokens that an owner allowed to a spender.
+     */
+    function allowance(address _owner, address _spender) public view returns (uint) {
+        return allowed[_owner][_spender];
+    }
+
+    /**
+     * @dev Increase the amount of tokens that an owner allowed to a spender.
+     */
+    function increaseApproval(address _spender, uint _addedValue) external returns (bool) {
+        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
+    }
+
+    /**
+     * @dev Decrease the amount of tokens that an owner allowed to a spender.
+     */
+    function decreaseApproval(address _spender, uint _subtractedValue) external returns (bool) {
+        uint oldValue = allowed[msg.sender][_spender];
+        if (_subtractedValue > oldValue) {
+            allowed[msg.sender][_spender] = 0;
+        } else {
+            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+        }
+        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
+    }
+
+    function mint(address _to, uint _amount) external onlyDAO returns (bool) {
+        require(_amount > 0);
+        totalSupply = totalSupply.add(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        emit Mint(_to, _amount);
+        emit Transfer(address(0), _to, _amount);
+        return true;
+    }
+
+    // disable ether transfer
+    function() external {}
 
 }
