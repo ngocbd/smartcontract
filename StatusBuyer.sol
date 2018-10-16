@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StatusBuyer at 0xce6a5b2516539aaf70d4c2969557144348895d31
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StatusBuyer at 0xf5aca7f577de131c176d6a2069eb90b494a34fff
 */
 pragma solidity ^0.4.11;
 
@@ -21,10 +21,7 @@ contract ERC20 {
 
 // Interface to Status ICO Contract
 contract StatusContribution {
-  uint256 public maxGasPrice;
-  uint256 public startBlock;
   uint256 public totalNormalCollected;
-  uint256 public finalizedBlock;
   function proxyPayment(address _th) payable returns (bool);
 }
 
@@ -41,11 +38,12 @@ contract DynamicCeiling {
 contract StatusBuyer {
   // Store the amount of ETH deposited by each account.
   mapping (address => uint256) public deposits;
-  // Track how much SNT each account would have been able to purchase on their own.
-  mapping (address => uint256) public simulated_snt;
+  // Track the amount of SNT each account's "buy" calls have purchased from the ICO.
+  // Allows tracking which accounts would have made it into the ICO on their own.
+  mapping (address => uint256) public purchased_snt;
   // Bounty for executing buy.
   uint256 public bounty;
-  // Track whether the contract has bought tokens yet.
+  // Track whether the contract has started buying tokens yet.
   bool public bought_tokens;
   
   // The Status Token Sale address.
@@ -77,8 +75,8 @@ contract StatusBuyer {
     // No fee for withdrawing if user would have made it into the crowdsale alone.
     uint256 fee = 0;
     // 1% fee on portion of tokens user would not have been able to buy alone.
-    if (simulated_snt[msg.sender] < snt_amount) {
-      fee = (snt_amount - simulated_snt[msg.sender]) / 100;
+    if (purchased_snt[msg.sender] < snt_amount) {
+      fee = (snt_amount - purchased_snt[msg.sender]) / 100;
     }
     // Send the funds.  Throws on failure to prevent loss of funds.
     if(!token.transfer(msg.sender, snt_amount - fee)) throw;
@@ -87,44 +85,54 @@ contract StatusBuyer {
   }
   
   // Allow anyone to contribute to the buy execution bounty.
-  function add_to_bounty() payable {
-    // Disallow adding to the bounty if contract has already bought the tokens.
-    if (bought_tokens) throw;
+  function add_bounty() payable {
     // Update bounty to include received amount.
     bounty += msg.value;
   }
   
-  // Allow users to simulate entering the crowdsale to avoid the fee.  Callable by anyone.
-  function simulate_ico() {
-    // Limit maximum gas price to the same value as the Status ICO (50 GWei).
-    if (tx.gasprice > sale.maxGasPrice()) throw;
-    // Restrict until after the ICO has started.
-    if (block.number < sale.startBlock()) throw;
-    if (dynamic.revealedCurves() == 0) throw;
-    // Extract the buy limit and rate-limiting slope factor of the current curve/cap.
-    uint256 limit;
-    uint256 slopeFactor;
-    (,limit,slopeFactor,) = dynamic.curves(dynamic.currentIndex());
-    // Retrieve amount of ETH the ICO has collected so far.
-    uint256 totalNormalCollected = sale.totalNormalCollected();
-    // Verify the ICO is not currently at a cap, waiting for a reveal.
-    if (limit <= totalNormalCollected) throw;
-    // Add the maximum contributable amount to the user's simulated SNT balance.
-    simulated_snt[msg.sender] += ((limit - totalNormalCollected) / slopeFactor);
+  // Buys tokens for the contract and rewards the caller.  Callable by anyone.
+  function buy() {
+    buy_for(msg.sender);
   }
   
-  // Buys tokens in the crowdsale and rewards the sender.  Callable by anyone.
-  function buy() {
-    // Short circuit to save gas if the contract has already bought tokens.
-    if (bought_tokens) return;
-    // Record that the contract has bought tokens first to prevent recursive call.
+  // Buys tokens in the crowdsale and rewards the given address.  Callable by anyone.
+  // Enables Sybil attacks, wherein a single user creates multiple accounts with which
+  // to call "buy_for" to reward their primary account.  Useful for bounty-seekers who
+  // haven't sent ETH to the contract, but don't want to clean up Sybil dust, or for users
+  // who have sent a large amount of ETH to the contract and want to reduce/avoid their fee.
+  function buy_for(address user) {
+    // Short circuit to save gas if the contract doesn't have any ETH left to buy tokens.
+    if (this.balance == 0) return;
+    // Store the current curve/cap index as temporary variable to avoid calling twice.
+    uint256 currentIndex = dynamic.currentIndex();
+    // Check whether the current curve/cap is the last one revealed so far.
+    if ((currentIndex + 1) >= dynamic.revealedCurves()) {
+      // Extract the buy limit of the current curve/cap.
+      uint256 limit;
+      (,limit,,) = dynamic.curves(currentIndex);
+      // Short circuit to save gas if the ICO is currently at the cap, waiting for a reveal.
+      if (limit <= sale.totalNormalCollected()) return;
+    }
+    // Record that the contract has started buying tokens.
     bought_tokens = true;
+    // Store the contract's ETH balance prior to the purchase in a temporary variable.
+    uint256 old_contract_eth_balance = this.balance;
     // Transfer all the funds (less the bounty) to the Status ICO contract 
     // to buy tokens.  Throws if the crowdsale hasn't started yet or has 
     // already completed, preventing loss of funds.
     sale.proxyPayment.value(this.balance - bounty)(address(this));
+    // Verify contract ETH balance has not increased instead of decreased.
+    if (this.balance > old_contract_eth_balance) throw;
+    // Calculate ETH spent to buy tokens.
+    uint256 eth_spent = old_contract_eth_balance - this.balance;
+    // Update user's number of purchased SNT to include this purchase.
+    purchased_snt[user] += (eth_spent * 10000);
+    // Calculate the user's bounty proportionally to the amount purchased.
+    uint256 user_bounty = (bounty * eth_spent) / (old_contract_eth_balance - bounty);
+    // Update the bounty prior to sending ETH to prevent recursive call.
+    bounty -= user_bounty;
     // Send the user their bounty for buying tokens for the contract.
-    msg.sender.transfer(bounty);
+    user.transfer(user_bounty);
   }
   
   // A helper function for the default function, allowing contracts to interact.
@@ -133,20 +141,13 @@ contract StatusBuyer {
     if (!bought_tokens) {
       // Update records of deposited ETH to include the received amount.
       deposits[msg.sender] += msg.value;
-      // Block each user from contributing more than 30 ETH.  No whales!  >:C
-      if (deposits[msg.sender] > 30 ether) throw;
     }
+    // Withdraw the sender's ETH and SNT if the contract has started purchasing SNT.
     else {
       // Reject ETH sent after the contract has already purchased tokens.
       if (msg.value != 0) throw;
-      // If the ICO isn't over yet, simulate entering the crowdsale.
-      if (sale.finalizedBlock() == 0) {
-        simulate_ico();
-      }
-      else {
-        // Withdraw user's funds if they sent 0 ETH to the contract after the ICO.
-        withdraw();
-      }
+      // Withdraw user's funds if they sent 0 ETH to the contract after the ICO.
+      withdraw();
     }
   }
   
@@ -154,8 +155,9 @@ contract StatusBuyer {
   function () payable {
     throw;  // Safety throw, which will be removed in deployed version.
     // Avoid recursively buying tokens when the sale contract refunds ETH.
-    if (msg.sender == address(sale)) return;
-    // Delegate to the helper function.
-    default_helper();
+    if (msg.sender != address(sale)) {
+      // Delegate to the helper function.
+      default_helper();
+    }
   }
 }
