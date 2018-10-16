@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EvaCurrency at 0x8aa3aeb44af42d4ff0f68066cace6658a076dee8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EvaCurrency at 0x21fcf6e1046f7de62557e64470447f8e516919ac
 */
 pragma solidity ^0.4.23;
 
@@ -500,8 +500,8 @@ contract EvaCurrency is PausableToken, BurnableToken {
     balances[staker] = balances[staker].add(fee);
     lastUsedNonce[sender] = _nonce;
     
-    emit Transfer(sender, _to, _amount);
-    emit Transfer(sender, address(0), fee);
+    emit Transfer(sender, address(0), _amount);
+    emit Transfer(address(0), _to, resultAmount);
     return true;
   }
 
