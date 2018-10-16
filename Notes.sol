@@ -1,39 +1,54 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Notes at 0x5d66a6657bad3f4fa26f7546dd297d8393d8b7d7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Notes at 0x5e6364d4534f780ae053b93b45c8b8840e683eb7
 */
-pragma solidity ^0.4.10;
+pragma solidity ^0.4.18;
+
+library SafeMath {
+
+    /**
+    * @dev Multiplies two numbers, throws on overflow.
+    */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
+        }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
+    }
+
+    /**
+    * @dev Integer division of two numbers, truncating the quotient.
+    */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
+
+    /**
+    * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    */
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    /**
+    * @dev Adds two numbers, throws on overflow.
+    */
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
+}
 
 // The NOTES ERC20 Token. There is a delay before addresses that are not added to the "activeGroup" can transfer tokens. 
-// That delay ends when admin calls the "activate()"" function, or when "activateDate" is reached.
-// Otherwise a generic ERC20 standard token.
-
-contract SafeMath {
-
-    /* function assert(bool assertion) internal { */
-    /*   if (!assertion) { */
-    /*     throw; */
-    /*   } */
-    /* }      // assert no longer needed once solidity is on 0.4.10 */
-
-    function safeAdd(uint256 x, uint256 y) internal returns(uint256) {
-      uint256 z = x + y;
-      assert((z >= x) && (z >= y));
-      return z;
-    }
-
-    function safeSubtract(uint256 x, uint256 y) internal returns(uint256) {
-      assert(x >= y);
-      uint256 z = x - y;
-      return z;
-    }
-
-    function safeMult(uint256 x, uint256 y) internal returns(uint256) {
-      uint256 z = x * y;
-      assert((x == 0)||(z/x == y));
-      return z;
-    }
-
-}
+// That delay ends when admin calls the "activate()" function.
+// Otherwise it is a generic ERC20 standard token, based originally on the BAT token
+// https://etherscan.io/address/0x0d8775f648430679a709e98d2b0cb6250d2887ef#code
 
 // The standard ERC20 Token interface
 contract Token {
@@ -43,22 +58,24 @@ contract Token {
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
     function approve(address _spender, uint256 _value) returns (bool success);
     function allowance(address _owner, address _spender) constant returns (uint256 remaining);
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 // NOTES Token Implementation - transfers are prohibited unless switched on by admin
 contract Notes is Token {
 
+    using SafeMath for uint256;
+
     //// CONSTANTS
 
-    // Number of NOTES
-    uint256 public constant nFund = 80 * (10**6) * 10**decimals;
+    // Number of NOTES (800 million)
+    uint256 public constant TOTAL_SUPPLY = 2000 * (10**6) * 10**uint256(decimals);
 
     // Token Metadata
     string public constant name = "NOTES";
-    string public constant symbol = "NTS";
-    uint256 public constant decimals = 18;
+    string public constant symbol = "NOTES";
+    uint8 public constant decimals = 18;
     string public version = "1.0";
 
     //// PROPERTIES
@@ -73,59 +90,58 @@ contract Notes is Token {
 
     modifier active()
     {
-      require(activated || activeGroup[msg.sender]);
-      _;
+        require(activated || activeGroup[msg.sender]);
+        _;
     }
 
     modifier onlyAdmin()
     {
-      require(msg.sender == admin);
-      _;
+        require(msg.sender == admin);
+        _;
     }
 
     //// CONSTRUCTOR
 
-    function Notes(address fund)
+    function Notes(address fund, address _admin)
     {
-      admin = msg.sender;
-      totalSupply = nFund;
-      balances[fund] = nFund;    // Deposit all to fund
-      activeGroup[fund] = true;  // Allow the fund to transfer
+        admin = _admin;
+        totalSupply = TOTAL_SUPPLY;
+        balances[fund] = TOTAL_SUPPLY;    // Deposit all to fund
+        Transfer(address(this), fund, TOTAL_SUPPLY);
+        activeGroup[fund] = true;  // Allow the fund to transfer
     }
 
     //// ADMIN FUNCTIONS
 
     function addToActiveGroup(address a) onlyAdmin {
-      activeGroup[a] = true;
+        activeGroup[a] = true;
     }
 
     function activate() onlyAdmin {
-      activated = true;
+        activated = true;
     }
 
-    //// TOKEN FUNCTIONS    
+    //// TOKEN FUNCTIONS
 
     function transfer(address _to, uint256 _value) active returns (bool success) {
-      if (balances[msg.sender] >= _value && _value > 0) {
-        balances[msg.sender] -= _value;
-        balances[_to] += _value;
+        require(_to != address(0));
+        require(_value > 0);
+        require(balances[msg.sender] >= _value);
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
         Transfer(msg.sender, _to, _value);
         return true;
-      } else {
-        return false;
-      }
     }
 
     function transferFrom(address _from, address _to, uint256 _value) active returns (bool success) {
-      if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-        balances[_to] += _value;
-        balances[_from] -= _value;
-        allowed[_from][msg.sender] -= _value;
+        require(_to != address(0));
+        require(balances[_from] >= _value);
+        require(allowed[_from][msg.sender] >= _value && _value > 0);
+        balances[_to] = balances[_to].add(_value);
+        balances[_from] = balances[_from].sub(_value);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
         Transfer(_from, _to, _value);
         return true;
-      } else {
-        return false;
-      }
     }
 
     function balanceOf(address _owner) constant returns (uint256 balance) {
@@ -139,7 +155,7 @@ contract Notes is Token {
     }
 
     function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
+        return allowed[_owner][_spender];
     }
 
 }
