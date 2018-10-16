@@ -1,566 +1,235 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NUToken at 0xd871242910d43a697bcc9f57947777757b7469aa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NuToken at 0x23e12ede899959ed3e36331a2e5ec0af4a05f2ca
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.18;
 
-// File: contracts\infrastructure\ITokenRetreiver.sol
 
 /**
- * @title Token retrieve interface
- *
- * Allows tokens to be retrieved from a contract
- *
- * #created 29/09/2017
- * #author Frank Bonnet
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
  */
-contract ITokenRetreiver {
+library SafeMath {
 
-    /**
-     * Extracts tokens from the contract
-     *
-     * @param _tokenContract The address of ERC20 compatible token
-     */
-    function retreiveTokens(address _tokenContract);
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-// File: contracts\source\token\IToken.sol
 
 /**
- * @title ERC20 compatible token interface
- *
- * Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20
- * - Short address attack fix
- *
- * #created 29/09/2017
- * #author Frank Bonnet
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
  */
-contract IToken {
-
-    /**
-     * Get the total supply of tokens
-     *
-     * @return The total supply
-     */
-    function totalSupply() constant returns (uint);
-
-
-    /**
-     * Get balance of `_owner`
-     *
-     * @param _owner The address from which the balance will be retrieved
-     * @return The balance
-     */
-    function balanceOf(address _owner) constant returns (uint);
-
-
-    /**
-     * Send `_value` token to `_to` from `msg.sender`
-     *
-     * @param _to The address of the recipient
-     * @param _value The amount of token to be transferred
-     * @return Whether the transfer was successful or not
-     */
-    function transfer(address _to, uint _value) returns (bool);
-
-
-    /**
-     * Send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-     *
-     * @param _from The address of the sender
-     * @param _to The address of the recipient
-     * @param _value The amount of token to be transferred
-     * @return Whether the transfer was successful or not
-     */
-    function transferFrom(address _from, address _to, uint _value) returns (bool);
-
-
-    /**
-     * `msg.sender` approves `_spender` to spend `_value` tokens
-     *
-     * @param _spender The address of the account able to transfer the tokens
-     * @param _value The amount of tokens to be approved for transfer
-     * @return Whether the approval was successful or not
-     */
-    function approve(address _spender, uint _value) returns (bool);
-
-
-    /**
-     * Get the amount of remaining tokens that `_spender` is allowed to spend from `_owner`
-     *
-     * @param _owner The address of the account owning tokens
-     * @param _spender The address of the account able to transfer the tokens
-     * @return Amount of remaining tokens allowed to spent
-     */
-    function allowance(address _owner, address _spender) constant returns (uint);
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-// File: contracts\infrastructure\ownership\ITransferableOwnership.sol
-
-contract ITransferableOwnership {
-
-    /**
-     * Transfer ownership to `_newOwner`
-     *
-     * @param _newOwner The address of the account that will become the new owner
-     */
-    function transferOwnership(address _newOwner);
-}
-
-// File: contracts\infrastructure\modifier\Owned.sol
-
-contract Owned {
-
-    // The address of the account that is the current owner
-    address internal owner;
 
 
-    /**
-     * The publisher is the inital owner
-     */
-    function Owned() {
-        owner = msg.sender;
-    }
-
-
-    /**
-     * Access is restricted to the current owner
-     */
-    modifier only_owner() {
-        require(msg.sender == owner);
-
-        _;
-    }
-}
-
-// File: contracts\infrastructure\ownership\IOwnership.sol
-
-contract IOwnership {
-
-    /**
-     * Returns true if `_account` is the current owner
-     *
-     * @param _account The address to test against
-     */
-    function isOwner(address _account) constant returns (bool);
-
-
-    /**
-     * Gets the current owner
-     *
-     * @return address The current owner
-     */
-    function getOwner() constant returns (address);
-}
-
-// File: contracts\infrastructure\ownership\Ownership.sol
-
-contract Ownership is IOwnership, Owned {
-
-
-    /**
-     * Returns true if `_account` is the current owner
-     *
-     * @param _account The address to test against
-     */
-    function isOwner(address _account) public constant returns (bool) {
-        return _account == owner;
-    }
-
-
-    /**
-     * Gets the current owner
-     *
-     * @return address The current owner
-     */
-    function getOwner() public constant returns (address) {
-        return owner;
-    }
-}
-
-// File: contracts\infrastructure\ownership\TransferableOwnership.sol
-
-contract TransferableOwnership is ITransferableOwnership, Ownership {
-
-
-    /**
-     * Transfer ownership to `_newOwner`
-     *
-     * @param _newOwner The address of the account that will become the new owner
-     */
-    function transferOwnership(address _newOwner) public only_owner {
-        owner = _newOwner;
-    }
-}
-
-// File: contracts\source\token\IManagedToken.sol
 
 /**
- * @title ManagedToken interface
- *
- * Adds the following functionallity to the basic ERC20 token
- * - Locking
- * - Issuing
- *
- * #created 29/09/2017
- * #author Frank Bonnet
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
  */
-contract IManagedToken is IToken {
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
 
-    /**
-     * Returns true if the token is locked
-     *
-     * @return Whether the token is locked
-     */
-    function isLocked() constant returns (bool);
+  mapping(address => uint256) balances;
 
+  uint256 totalSupply_;
 
-    /**
-     * Unlocks the token so that the transferring of value is enabled
-     *
-     * @return Whether the unlocking was successful or not
-     */
-    function unlock() returns (bool);
+  /**
+  * @dev total number of tokens in existence
+  */
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
+  }
 
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
 
-    /**
-     * Issues `_value` new tokens to `_to`
-     *
-     * @param _to The address to which the tokens will be issued
-     * @param _value The amount of new tokens to issue
-     * @return Whether the tokens where sucessfully issued or not
-     */
-    function issue(address _to, uint _value) returns (bool);
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public view returns (uint256 balance) {
+    return balances[_owner];
+  }
+
 }
 
-// File: contracts\infrastructure\modifier\InputValidator.sol
 
-contract InputValidator {
-
-
-    /**
-     * ERC20 Short Address Attack fix
-     */
-    modifier safe_arguments(uint _numArgs) {
-        assert(msg.data.length == _numArgs * 32 + 4);
-        _;
-    }
-}
-
-// File: contracts\source\token\Token.sol
 
 /**
- * @title ERC20 compatible token
- *
- * Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20
- * - Short address attack fix
- *
- * #created 29/09/2017
- * #author Frank Bonnet
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
  */
-contract Token is IToken, InputValidator {
-
-    // Ethereum token standard
-    string public standard = "Token 0.3";
-    string public name;
-    string public symbol;
-    uint8 public decimals = 8;
-
-    // Token state
-    uint internal totalTokenSupply;
-
-    // Token balances
-    mapping (address => uint) internal balances;
-
-    // Token allowances
-    mapping (address => mapping (address => uint)) internal allowed;
-
-
-    // Events
-    event Transfer(address indexed _from, address indexed _to, uint _value);
-    event Approval(address indexed _owner, address indexed _spender, uint _value);
-
-    /**
-     * Construct
-     *
-     * @param _name The full token name
-     * @param _symbol The token symbol (aberration)
-     */
-    function Token(string _name, string _symbol) {
-        name = _name;
-        symbol = _symbol;
-        balances[msg.sender] = 0;
-        totalTokenSupply = 0;
-    }
-
-
-    /**
-     * Get the total token supply
-     *
-     * @return The total supply
-     */
-    function totalSupply() public constant returns (uint) {
-        return totalTokenSupply;
-    }
-
-
-    /**
-     * Get balance of `_owner`
-     *
-     * @param _owner The address from which the balance will be retrieved
-     * @return The balance
-     */
-    function balanceOf(address _owner) public constant returns (uint) {
-        return balances[_owner];
-    }
-
-
-    /**
-     * Send `_value` token to `_to` from `msg.sender`
-     *
-     * @param _to The address of the recipient
-     * @param _value The amount of token to be transferred
-     * @return Whether the transfer was successful or not
-     */
-    function transfer(address _to, uint _value) public safe_arguments(2) returns (bool) {
-
-        // Check if the sender has enough tokens
-        require(balances[msg.sender] >= _value);
-
-        // Check for overflows
-        require(balances[_to] + _value >= balances[_to]);
-
-        // Transfer tokens
-        balances[msg.sender] -= _value;
-        balances[_to] += _value;
-
-        // Notify listeners
-        Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-
-    /**
-     * Send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-     *
-     * @param _from The address of the sender
-     * @param _to The address of the recipient
-     * @param _value The amount of token to be transferred
-     * @return Whether the transfer was successful or not
-     */
-    function transferFrom(address _from, address _to, uint _value) public safe_arguments(3) returns (bool) {
-
-        // Check if the sender has enough
-        require(balances[_from] >= _value);
-
-        // Check for overflows
-        require(balances[_to] + _value >= balances[_to]);
-
-        // Check allowance
-        require(_value <= allowed[_from][msg.sender]);
-
-        // Transfer tokens
-        balances[_to] += _value;
-        balances[_from] -= _value;
-
-        // Update allowance
-        allowed[_from][msg.sender] -= _value;
-
-        // Notify listeners
-        Transfer(_from, _to, _value);
-        return true;
-    }
-
-
-    /**
-     * `msg.sender` approves `_spender` to spend `_value` tokens
-     *
-     * @param _spender The address of the account able to transfer the tokens
-     * @param _value The amount of tokens to be approved for transfer
-     * @return Whether the approval was successful or not
-     */
-    function approve(address _spender, uint _value) public safe_arguments(2) returns (bool) {
-
-        // Update allowance
-        allowed[msg.sender][_spender] = _value;
-
-        // Notify listeners
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-
-    /**
-     * Get the amount of remaining tokens that `_spender` is allowed to spend from `_owner`
-     *
-     * @param _owner The address of the account owning tokens
-     * @param _spender The address of the account able to transfer the tokens
-     * @return Amount of remaining tokens allowed to spent
-     */
-    function allowance(address _owner, address _spender) public constant returns (uint) {
-      return allowed[_owner][_spender];
-    }
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-// File: contracts\source\token\ManagedToken.sol
+
 
 /**
- * @title ManagedToken
+ * @title Standard ERC20 token
  *
- * Adds the following functionallity to the basic ERC20 token
- * - Locking
- * - Issuing
- *
- * #created 29/09/2017
- * #author Frank Bonnet
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
-contract ManagedToken is IManagedToken, Token, TransferableOwnership {
+contract StandardToken is ERC20, BasicToken {
 
-    // Token state
-    bool internal locked;
+  mapping (address => mapping (address => uint256)) internal allowed;
 
 
-    /**
-     * Allow access only when not locked
-     */
-    modifier only_when_unlocked() {
-        require(!locked);
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
 
-        _;
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) public view returns (uint256) {
+    return allowed[_owner][_spender];
+  }
+
+  /**
+   * @dev Increase the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _addedValue The amount of tokens to increase the allowance by.
+   */
+  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  /**
+   * @dev Decrease the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To decrement
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _subtractedValue The amount of tokens to decrease the allowance by.
+   */
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
 
-
-    /**
-     * Construct
-     *
-     * @param _name The full token name
-     * @param _symbol The token symbol (aberration)
-     * @param _locked Whether the token should be locked initially
-     */
-    function ManagedToken(string _name, string _symbol, bool _locked) Token(_name, _symbol) {
-        locked = _locked;
-    }
-
-
-    /**
-     * Send `_value` token to `_to` from `msg.sender`
-     *
-     * @param _to The address of the recipient
-     * @param _value The amount of token to be transferred
-     * @return Whether the transfer was successful or not
-     */
-    function transfer(address _to, uint _value) public only_when_unlocked returns (bool) {
-        return super.transfer(_to, _value);
-    }
-
-
-    /**
-     * Send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-     *
-     * @param _from The address of the sender
-     * @param _to The address of the recipient
-     * @param _value The amount of token to be transferred
-     * @return Whether the transfer was successful or not
-     */
-    function transferFrom(address _from, address _to, uint _value) public only_when_unlocked returns (bool) {
-        return super.transferFrom(_from, _to, _value);
-    }
-
-
-    /**
-     * `msg.sender` approves `_spender` to spend `_value` tokens
-     *
-     * @param _spender The address of the account able to transfer the tokens
-     * @param _value The amount of tokens to be approved for transfer
-     * @return Whether the approval was successful or not
-     */
-    function approve(address _spender, uint _value) public returns (bool) {
-        return super.approve(_spender, _value);
-    }
-
-
-    /**
-     * Returns true if the token is locked
-     *
-     * @return Wheter the token is locked
-     */
-    function isLocked() public constant returns (bool) {
-        return locked;
-    }
-
-
-    /**
-     * Unlocks the token so that the transferring of value is enabled
-     *
-     * @return Whether the unlocking was successful or not
-     */
-    function unlock() public only_owner returns (bool)  {
-        locked = false;
-        return !locked;
-    }
-
-
-    /**
-     * Issues `_value` new tokens to `_to`
-     *
-     * @param _to The address to which the tokens will be issued
-     * @param _value The amount of new tokens to issue
-     * @return Whether the approval was successful or not
-     */
-    function issue(address _to, uint _value) public only_owner safe_arguments(2) returns (bool) {
-
-        // Check for overflows
-        require(balances[_to] + _value >= balances[_to]);
-
-        // Create tokens
-        balances[_to] += _value;
-        totalTokenSupply += _value;
-
-        // Notify listeners
-        Transfer(0, this, _value);
-        Transfer(this, _to, _value);
-
-        return true;
-    }
 }
 
-// File: contracts\source\NUToken.sol
 
-/**
- * @title NU (NU) token
- *
- * #created 22/10/2017
- * #author Frank Bonnet
- */
-contract NUToken is ManagedToken, ITokenRetreiver {
+contract NuToken is StandardToken {
+  string public name = 'NuToken';
+  string public symbol = 'NU';
+  uint8 public decimals = 18;
+  uint public INITIAL_SUPPLY = 1000000000 * 10**uint256(decimals);
 
-
-    /**
-     * Starts with a total supply of zero and the creator starts with
-     * zero tokens (just like everyone else)
-     */
-    function NUToken() ManagedToken("NU", "NU", true) {}
-
-
-    /**
-     * Failsafe mechanism
-     *
-     * Allows owner to retreive tokens from the contract
-     *
-     * @param _tokenContract The address of ERC20 compatible token
-     */
-    function retreiveTokens(address _tokenContract) public only_owner {
-        IToken tokenInstance = IToken(_tokenContract);
-        uint tokenBalance = tokenInstance.balanceOf(this);
-        if (tokenBalance > 0) {
-            tokenInstance.transfer(owner, tokenBalance);
-        }
-    }
-
-
-    /**
-     * Prevents accidental sending of ether
-     */
-    function () payable {
-        revert();
-    }
+  function NuToken() public {
+    totalSupply_ = INITIAL_SUPPLY;
+    balances[msg.sender] = INITIAL_SUPPLY;
+  }
 }
