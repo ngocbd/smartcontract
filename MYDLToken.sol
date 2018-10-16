@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MYDLToken at 0xb68f4d17cfc1d453b622b888cae0f032c05d0343
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MYDLToken at 0x348b7acfedace7af6fdbf5356d063d657f06c236
 */
 pragma solidity ^0.4.18;
 
@@ -112,8 +112,8 @@ contract MYDLToken is ERC20Interface, Owned, SafeMath {
         name = "MYDL Token";
         decimals = 18;
         _totalSupply = 100000000000000000000000000;
-        balances[0xb315c1D4DbDBE812FaB045d78c7f356F8CeaC081] = _totalSupply;
-        Transfer(address(0), 0xb315c1D4DbDBE812FaB045d78c7f356F8CeaC081, _totalSupply);
+        balances[0x3D66Cd9687ea3c7C77C093E0526DA0aC65f3da32] = _totalSupply;
+        Transfer(address(0), 0x3D66Cd9687ea3c7C77C093E0526DA0aC65f3da32, _totalSupply);
     }
 
 
