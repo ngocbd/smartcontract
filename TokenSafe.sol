@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSafe at 0xaf31604f0a88f7fcebc7d4cf4dd14653f4a6773c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSafe at 0x91417a1f7a5c289feec3a509d6052d8b28ab68f2
 */
 pragma solidity ^0.4.13;
 
@@ -80,7 +80,7 @@ contract TokenSafe {
     //100%
     allocations[3] = 1000;
     
-    isAddressInclude[0xaf430805522178db0f2fd2c786bf506bd537a539] = true;
+    isAddressInclude[0x2814495c778a1f168782587bb1cc38936ac98541] = true;
     isAddressInclude[0xb94a75e6fd07bfba543930a500e1648c2e8c9622] = true;
     isAddressInclude[0x59c582aefb682e0f32c9274a6cd1c2aa45353a1f] = true;
   }
@@ -101,7 +101,7 @@ contract TokenSafe {
     
     uint256 balanceShouldRest = limitAmount - limitAmount * allocations[unlockTimeLine] / 1000;
     uint256 canWithdrawAmount = balance - balanceShouldRest;
-    
+
     require(canWithdrawAmount > 0);
     
     if (!StandardToken(originalContract).transfer(msg.sender, canWithdrawAmount )){
