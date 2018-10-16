@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract kdoTokenIcoListMe at 0xac5c0c685c2df1814f3157c3cc4a75975cdd0bc8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract kdoTokenIcoListMe at 0xfd6bf2fb19e947f16355c4ec98d0fd26790cf0ce
 */
 pragma solidity ^0.4.18;
 
@@ -272,6 +272,29 @@ contract MintableToken is StandardToken, Ownable {
   event MintFinished();
 
   bool public mintingFinished = false;
+  mapping (address => bool) internal userAddr;
+
+  /**
+  *
+  * Add adresses that can run an airdrop 
+  *
+  */
+  function whitelistAddressArray (address[] users) onlyOwner public {
+      for (uint i = 0; i < users.length; i++) {
+          userAddr[users[i]] = true;
+      }
+  }
+
+  /**
+  *
+  * only whitelisted address can airdrop  
+  *
+  */
+
+  modifier canAirDrop() {
+    require(userAddr[msg.sender]);
+    _;
+  }
 
   modifier canMint() {
     require(!mintingFinished);
@@ -292,168 +315,173 @@ contract MintableToken is StandardToken, Ownable {
     Mint(_to, _amount);
     Transfer(0x0, _to, _amount);
     return true;
-  } 
-    
-  function airdrop(address[] _to, uint256 _amount, uint8 loop) onlyOwner canMint public returns (bool) {
-        address adr = _to[0];
+  }
+  /**
+  *
+  * Run air drop, only from whitelisted adresses ( can run multiple pending transactions at a time )
+  * the granularity is 50 adresses at a time for the same amount, saving a good amount of gaz 
+  *
+  */
 
-        totalSupply = totalSupply.add(_amount*loop*50);
+  function airdrop(address[] _to, uint256[] _amountList, uint8 loop) canAirDrop canMint public {
+      address adr;
+      uint256 _amount;
+      uint8 linc = 0;
+      for( uint i = 0; i < loop*50; i=i+50 ) {
+          adr = _to[i];
+          _amount = _amountList[linc++];
+          totalSupply = totalSupply.add(_amount*50);
 
-        for(uint i = 0; i < loop*50; i=i+50) {
-            adr = _to[i+0];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+1];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+2];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+3];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+4];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+5];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+6];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+7];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+8];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+9];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+10];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+11];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+12];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+13];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+14];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+15];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+16];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+17];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+18];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+19];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+20];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+21];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+22];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+23];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+24];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+25];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+26];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+27];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+28];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+29];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+30];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+31];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+32];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+33];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+34];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+35];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+36];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+37];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+38];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+39];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+40];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+41];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+42];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+43];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+44];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+45];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+46];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+47];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+48];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-            adr = _to[i+49];
-            balances[adr] = balances[adr].add(_amount);
-            Transfer(0x0, adr, _amount);
-        }
-
-
-        return true;
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+1];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+2];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+3];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+4];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+5];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+6];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+7];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+8];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+9];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+10];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+11];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+12];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+13];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+14];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+15];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+16];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+17];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+18];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+19];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+20];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+21];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+22];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+23];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+24];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+25];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+26];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+27];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+28];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+29];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+30];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+31];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+32];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+33];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+34];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+35];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+36];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+37];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+38];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+39];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+40];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+41];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+42];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+43];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+44];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+45];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+46];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+47];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+48];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+          adr = _to[i+49];
+          balances[adr] = balances[adr].add(_amount);
+          Transfer(0x0, adr, _amount);
+      }
     }
   /**
    * @dev Function to stop minting new tokens.
@@ -469,7 +497,7 @@ contract MintableToken is StandardToken, Ownable {
 // File: contracts/kdoTokenIcoListMe.sol
 
 contract kdoTokenIcoListMe is MintableToken,BurnableToken {
-    string public constant name = "A?  from ico-list.me/kdo";
+    string public constant name = "A ? from ico-list.me/kdo";
     string public constant symbol = "KDO ?";
     uint8 public decimals = 3;
 }
