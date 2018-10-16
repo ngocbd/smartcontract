@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChronosCore at 0x26Da10Ed6B1258e0b1888E52F2F5A461F649D600
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChronosCore at 0x5ba708a7d74e3f87b719c234231548d3de0cabad
 */
 pragma solidity ^0.4.18;
 
@@ -287,38 +287,57 @@ contract ChronosBase is ChronosAccessControl {
     /// for the next game.
     uint256 public nextTimeout;
     
-    /// @notice The minimum number of seconds before the game ends.
-    uint256 public minimumTimeout;
+    /// @notice The final number of seconds before the game ends.
+    uint256 public finalTimeout;
     
-    /// @notice The minmum number of seconds before the game ends --
+    /// @notice The final number of seconds before the game ends --
     /// setting for the next game.
-    uint256 public nextMinimumTimeout;
+    uint256 public nextFinalTimeout;
     
     /// @notice The number of wagers required to move to the
-    /// minimum timeout.
-    uint256 public numberOfWagersToMinimumTimeout;
+    /// final timeout.
+    uint256 public numberOfWagersToFinalTimeout;
     
     /// @notice The number of wagers required to move to the
-    /// minimum timeout -- setting for the next game.
-    uint256 public nextNumberOfWagersToMinimumTimeout;
+    /// final timeout -- setting for the next game.
+    uint256 public nextNumberOfWagersToFinalTimeout;
     
-    /// @notice The wager index of the the current wager in the game.
+    /// @notice The index of the current game.
+    uint256 public gameIndex = 0;
+    
+    /// @notice The index of the the current wager in the game.
     uint256 public wagerIndex = 0;
     
     /// @notice Calculate the current game's timeout.
     function calculateTimeout() public view returns(uint256) {
-        if (wagerIndex >= numberOfWagersToMinimumTimeout || numberOfWagersToMinimumTimeout == 0) {
-            return minimumTimeout;
+        if (wagerIndex >= numberOfWagersToFinalTimeout || numberOfWagersToFinalTimeout == 0) {
+            return finalTimeout;
         } else {
-            // This cannot underflow, as timeout is guaranteed to be
-            // greater than or equal to minimumTimeout.
-            uint256 difference = timeout - minimumTimeout;
+            if (finalTimeout <= timeout) {
+                // The timeout decreases over time.
             
-            // Calculate the decrease in timeout, based on the number of wagers performed.
-            uint256 decrease = difference.mul(wagerIndex).div(numberOfWagersToMinimumTimeout);
+                // This cannot underflow, as timeout is guaranteed to be
+                // greater than or equal to finalTimeout.
+                uint256 difference = timeout - finalTimeout;
+                
+                // Calculate the decrease in timeout, based on the number of wagers performed.
+                uint256 decrease = difference.mul(wagerIndex).div(numberOfWagersToFinalTimeout);
+                
+                // This subtraction cannot underflow, as decrease is guaranteed to be less than or equal to timeout.            
+                return (timeout - decrease);
+            } else {
+                // The timeout increases over time.
             
-            // This subtraction cannot underflow, as decrease is guaranteed to be less than or equal to timeout.            
-            return (timeout - decrease);
+                // This cannot underflow, as timeout is guaranteed to be
+                // smaller than finalTimeout.
+                difference = finalTimeout - timeout;
+                
+                // Calculate the increase in timeout, based on the number of wagers performed.
+                uint256 increase = difference.mul(wagerIndex).div(numberOfWagersToFinalTimeout);
+                
+                // This addition cannot overflow, as timeout + increase is guaranteed to be less than or equal to finalTimeout.
+                return (timeout + increase);
+            }
         }
     }
 }
@@ -365,12 +384,11 @@ contract PullPayment {
 
 /// @dev Defines base finance functionality for Chronos.
 contract ChronosFinance is ChronosBase, PullPayment {
-    /// @notice The dev fee in 1/1000th
-    /// of a percentage.
+    /// @notice The developer fee in 1/1000th of a percentage.
     uint256 public feePercentage = 2500;
     
     /// @notice The game starter fee.
-    uint256 public gameStarterDividendPercentage = 1000;
+    uint256 public gameStarterDividendPercentage = 2500;
     
     /// @notice The wager price.
     uint256 public price;
@@ -384,11 +402,20 @@ contract ChronosFinance is ChronosBase, PullPayment {
     /// @notice The current 7th wager pool (in wei).
     uint256 public wagerPool;
     
+    /// @notice Sets a new fee percentage.
+    /// @param _feePercentage The new fee percentage.
+    function setFeePercentage(uint256 _feePercentage) external onlyCFO {
+        // Fee percentage must be 4% at the most.
+        require(_feePercentage <= 4000);
+        
+        feePercentage = _feePercentage;
+    }
+    
     /// @notice Sets a new game starter dividend percentage.
     /// @param _gameStarterDividendPercentage The new game starter dividend percentage.
     function setGameStarterDividendPercentage(uint256 _gameStarterDividendPercentage) external onlyCFO {
-        // Game started dividend percentage must be 0.5% at least and 4% at the most.
-        require(500 <= _gameStarterDividendPercentage && _gameStarterDividendPercentage <= 4000);
+        // Game starter dividend percentage must be 0.5% at least and 5% at the most.
+        require(500 <= _gameStarterDividendPercentage && _gameStarterDividendPercentage <= 5000);
         
         gameStarterDividendPercentage = _gameStarterDividendPercentage;
     }
@@ -421,25 +448,24 @@ contract ChronosFinance is ChronosBase, PullPayment {
 /// @dev Defines core Chronos functionality.
 contract ChronosCore is ChronosFinance {
     
-    function ChronosCore(uint256 _price, uint256 _timeout, uint256 _minimumTimeout, uint256 _numberOfWagersToMinimumTimeout) public {
-        require(_timeout >= _minimumTimeout);
-        
+    function ChronosCore(uint256 _price, uint256 _timeout, uint256 _finalTimeout, uint256 _numberOfWagersToFinalTimeout) public {
         nextPrice = _price;
         nextTimeout = _timeout;
-        nextMinimumTimeout = _minimumTimeout;
-        nextNumberOfWagersToMinimumTimeout = _numberOfWagersToMinimumTimeout;
-        NextGame(nextPrice, nextTimeout, nextMinimumTimeout, nextNumberOfWagersToMinimumTimeout);
+        nextFinalTimeout = _finalTimeout;
+        nextNumberOfWagersToFinalTimeout = _numberOfWagersToFinalTimeout;
+        NextGame(nextPrice, nextTimeout, nextFinalTimeout, nextNumberOfWagersToFinalTimeout);
     }
     
-    event NextGame(uint256 price, uint256 timeout, uint256 minimumTimeout, uint256 numberOfWagersToMinimumTimeout);
-    event Start(address indexed starter, uint256 timestamp, uint256 price, uint256 timeout, uint256 minimumTimeout, uint256 numberOfWagersToMinimumTimeout);
-    event End(address indexed winner, uint256 timestamp, uint256 prize);
-    event Play(address indexed player, uint256 timestamp, uint256 timeoutTimestamp, uint256 wagerIndex, uint256 newPrizePool);
-    event SpiceUpPrizePool(address indexed spicer, uint256 spiceAdded, string message, uint256 newPrizePool);
+    event NextGame(uint256 price, uint256 timeout, uint256 finalTimeout, uint256 numberOfWagersToFinalTimeout);
+    event Start(uint256 indexed gameIndex, address indexed starter, uint256 timestamp, uint256 price, uint256 timeout, uint256 finalTimeout, uint256 numberOfWagersToFinalTimeout);
+    event End(uint256 indexed gameIndex, uint256 wagerIndex, address indexed winner, uint256 timestamp, uint256 prize);
+    event Play(uint256 indexed gameIndex, uint256 indexed wagerIndex, address indexed player, uint256 timestamp, uint256 timeoutTimestamp, uint256 newPrizePool);
+    event SpiceUpPrizePool(uint256 indexed gameIndex, address indexed spicer, uint256 spiceAdded, string message, uint256 newPrizePool);
     
     /// @notice Participate in the game.
+    /// @param _gameIndex The index of the game to play on.
     /// @param startNewGameIfIdle Start a new game if the current game is idle.
-    function play(bool startNewGameIfIdle) external payable {
+    function play(uint256 _gameIndex, bool startNewGameIfIdle) external payable {
         // Check to see if the game should end. Process payment.
         _processGameEnd();
         
@@ -454,8 +480,8 @@ contract ChronosCore is ChronosFinance {
             // Set the price and timeout.
             price = nextPrice;
             timeout = nextTimeout;
-            minimumTimeout = nextMinimumTimeout;
-            numberOfWagersToMinimumTimeout = nextNumberOfWagersToMinimumTimeout;
+            finalTimeout = nextFinalTimeout;
+            numberOfWagersToFinalTimeout = nextNumberOfWagersToFinalTimeout;
             
             // Start the game.
             gameStarted = true;
@@ -464,7 +490,17 @@ contract ChronosCore is ChronosFinance {
             gameStarter = msg.sender;
             
             // Emit start event.
-            Start(msg.sender, block.timestamp, price, timeout, minimumTimeout, numberOfWagersToMinimumTimeout);
+            Start(gameIndex, msg.sender, block.timestamp, price, timeout, finalTimeout, numberOfWagersToFinalTimeout);
+        }
+        
+        // Check the game index.
+        if (startNewGameIfIdle) {
+            // The given game index must be the current game index, or the previous
+            // game index.
+            require(_gameIndex == gameIndex || _gameIndex.add(1) == gameIndex);
+        } else {
+            // Only play on the game indicated by the player.
+            require(_gameIndex == gameIndex);
         }
         
         // Enough Ether must be supplied.
@@ -508,13 +544,13 @@ contract ChronosCore is ChronosFinance {
         prizePool = prizePool.add(price.sub(fee).sub(dividend).sub(wagerPoolPart));
         
         // Emit event.
-        Play(msg.sender, block.timestamp, lastWagerTimeoutTimestamp, wagerIndex, prizePool);
+        Play(gameIndex, wagerIndex, msg.sender, block.timestamp, lastWagerTimeoutTimestamp, prizePool);
         
         // Send the game starter dividend.
         _sendFunds(gameStarter, dividend);
         
-        // Increment the wager index.
-        wagerIndex = wagerIndex.add(1);
+        // Increment the wager index. This won't overflow before the heat death of the universe.
+        wagerIndex++;
         
         // Refund any excess Ether sent.
         // This subtraction never underflows, as msg.value is guaranteed
@@ -527,8 +563,15 @@ contract ChronosCore is ChronosFinance {
     }
     
     /// @notice Spice up the prize pool.
+    /// @param _gameIndex The index of the game to add spice to.
     /// @param message An optional message to be sent along with the spice.
-    function spiceUp(string message) external payable {
+    function spiceUp(uint256 _gameIndex, string message) external payable {
+        // Check to see if the game should end. Process payment.
+        _processGameEnd();
+        
+        // Check the game index.
+        require(_gameIndex == gameIndex);
+    
         // Game must be live or unpaused.
         require(gameStarted || !paused);
         
@@ -539,24 +582,22 @@ contract ChronosCore is ChronosFinance {
         prizePool = prizePool.add(msg.value);
         
         // Emit event.
-        SpiceUpPrizePool(msg.sender, msg.value, message, prizePool);
+        SpiceUpPrizePool(gameIndex, msg.sender, msg.value, message, prizePool);
     }
     
     /// @notice Set the parameters for the next game.
     /// @param _price The price of wagers for the next game.
     /// @param _timeout The timeout in seconds for the next game.
-    /// @param _minimumTimeout The minimum timeout in seconds for
+    /// @param _finalTimeout The final timeout in seconds for
     /// the next game.
-    /// @param _numberOfWagersToMinimumTimeout The number of wagers
-    /// required to move to the minimum timeout for the next game.
-    function setNextGame(uint256 _price, uint256 _timeout, uint256 _minimumTimeout, uint256 _numberOfWagersToMinimumTimeout) external onlyCFO {
-        require(_timeout >= _minimumTimeout);
-    
+    /// @param _numberOfWagersToFinalTimeout The number of wagers
+    /// required to move to the final timeout for the next game.
+    function setNextGame(uint256 _price, uint256 _timeout, uint256 _finalTimeout, uint256 _numberOfWagersToFinalTimeout) external onlyCFO {
         nextPrice = _price;
         nextTimeout = _timeout;
-        nextMinimumTimeout = _minimumTimeout;
-        nextNumberOfWagersToMinimumTimeout = _numberOfWagersToMinimumTimeout;
-        NextGame(nextPrice, nextTimeout, nextMinimumTimeout, nextNumberOfWagersToMinimumTimeout);
+        nextFinalTimeout = _finalTimeout;
+        nextNumberOfWagersToFinalTimeout = _numberOfWagersToFinalTimeout;
+        NextGame(nextPrice, nextTimeout, nextFinalTimeout, nextNumberOfWagersToFinalTimeout);
     } 
     
     /// @notice End the game. Pay prize.
@@ -584,7 +625,7 @@ contract ChronosCore is ChronosFinance {
         _sendFunds(lastPlayer, prize);
         
         // Emit event.
-        End(lastPlayer, lastWagerTimeoutTimestamp, prize);
+        End(gameIndex, wagerIndex, lastPlayer, lastWagerTimeoutTimestamp, prize);
         
         // Reset the game.
         gameStarted = false;
@@ -594,6 +635,9 @@ contract ChronosCore is ChronosFinance {
         wagerIndex = 0;
         prizePool = 0;
         wagerPool = 0;
+        
+        // Increment the game index. This won't overflow before the heat death of the universe.
+        gameIndex++;
         
         // Indicate ending the game was successful.
         return true;
