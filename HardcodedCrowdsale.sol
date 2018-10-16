@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HardcodedCrowdsale at 0x961bb40fd91453da2c9a40987cb85db494b8ec3d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HardcodedCrowdsale at 0x2f32087aa2474dd84ae973d216de2bc8669003ee
 */
 pragma solidity ^0.4.18;
 
@@ -51,7 +51,7 @@ contract HardcodedCrowdsale {
 
     bool public halted = false;
      
-    uint256 public minTokensToBuy = 700;
+    uint256 public minTokensToBuy = 10;
     
     uint256 public preICOcontributors = 0;
 
