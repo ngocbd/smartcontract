@@ -1,210 +1,133 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0xc545841575be98d58ccde7842e5caa11ec61a0a1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0xa5471660caf2a239f64470be2a84be9478fe0c05
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
 
-interface TrimpoToken {
-
-  function presaleAddr() constant returns (address);
-  function transferPresale(address _to, uint _value) public;
-
-}
-
-contract Admins {
-  address public admin1;
-
-  address public admin2;
-
-  address public admin3;
-
-  function Admins(address a1, address a2, address a3) public {
-    admin1 = a1;
-    admin2 = a2;
-    admin3 = a3;
-  }
-
-  modifier onlyAdmins {
-    require(msg.sender == admin1 || msg.sender == admin2 || msg.sender == admin3);
-    _;
-  }
-
-  function setAdmin(address _adminAddress) onlyAdmins public {
-
-    require(_adminAddress != admin1);
-    require(_adminAddress != admin2);
-    require(_adminAddress != admin3);
-
-    if (admin1 == msg.sender) {
-      admin1 = _adminAddress;
-    }
-    else
-    if (admin2 == msg.sender) {
-      admin2 = _adminAddress;
-    }
-    else
-    if (admin3 == msg.sender) {
-      admin3 = _adminAddress;
-    }
-  }
-
-}
-
-
-contract Presale is Admins {
-
-
-  uint public duration;
-
-  uint public period;
-
-  uint public periodAmount;
-
-  uint public hardCap;
-
-  uint public raised;
-
-  address public benefit;
-
-  uint public start;
-
-  TrimpoToken token;
-
-  address public tokenAddress;
-
-  uint public tokensPerEther;
-
-  mapping (address => uint) public balanceOf;
-
-  mapping (uint => uint) public periodBonuses;
-
-  struct amountBonusStruct {
-  uint value;
-  uint bonus;
-  }
-
-  mapping (uint => amountBonusStruct)  public amountBonuses;
-
-
-  modifier goodDate {
-    require(start > 0);
-    require(start <= now);
-    require((start+duration) > now);
-    _;
-  }
-
-  modifier belowHardCap {
-    require(raised < hardCap);
-    _;
-  }
-
-  event Investing(address investor, uint investedFunds, uint tokensWithoutBonus, uint periodBounus, uint amountBonus, uint tokens);
-  event Raise(address to, uint funds);
-
-
-  function Presale(
-  address _tokenAddress,
-  address a1,
-  address a2,
-  address a3
-  ) Admins(a1, a2, a3) public {
-
-    hardCap = 5000 ether;
-
-    period = 7 days;
-
-    periodAmount = 4;
-
-    periodBonuses[0] = 20;
-    periodBonuses[1] = 15;
-    periodBonuses[2] = 10;
-    periodBonuses[3] = 5;
-
-    duration = periodAmount * (period);
-
-    amountBonuses[0].value = 125 ether;
-    amountBonuses[0].bonus = 5;
-
-    amountBonuses[1].value = 250 ether;
-    amountBonuses[1].bonus = 10;
-
-    amountBonuses[2].value = 375 ether;
-    amountBonuses[2].bonus = 15;
-
-    amountBonuses[3].value = 500 ether;
-    amountBonuses[3].bonus = 20;
-
-    tokensPerEther = 400;
-
-    tokenAddress = _tokenAddress;
-
-    token = TrimpoToken(_tokenAddress);
-
-    start = 1526342400; //15 May UTC 00:00
-
-  }
-
-
-  function getPeriodBounus() public returns (uint bonus) {
-    if (start == 0) {return 0;}
-    else if (start + period > now) {
-      return periodBonuses[0];
-    } else if (start + period * 2 > now) {
-      return periodBonuses[1];
-    } else if (start + period * 3 > now) {
-      return periodBonuses[2];
-    } else if (start + period * 4 > now) {
-      return periodBonuses[3];
-    }
-    return 0;
-
-
-  }
-
-  function getAmountBounus(uint value) public returns (uint bonus) {
-    if (value >= amountBonuses[3].value) {
-      return amountBonuses[3].bonus;
-    } else if (value >= amountBonuses[2].value) {
-      return amountBonuses[2].bonus;
-    } else if (value >= amountBonuses[1].value) {
-      return amountBonuses[1].bonus;
-    } else if (value >= amountBonuses[0].value) {
-      return amountBonuses[0].bonus;
-    }
-    return 0;
-  }
-
-  function() payable public goodDate belowHardCap {
-
-    uint tokenAmountWithoutBonus = msg.value * tokensPerEther;
-
-    uint periodBonus = getPeriodBounus();
-
-    uint amountBonus = getAmountBounus(msg.value);
-
-    uint tokenAmount = tokenAmountWithoutBonus + (tokenAmountWithoutBonus * (periodBonus + amountBonus)/100);
-
-    token.transferPresale(msg.sender, tokenAmount);
-
-    raised+=msg.value;
-
-    balanceOf[msg.sender]+= msg.value;
-
-    Investing(msg.sender, msg.value, tokenAmountWithoutBonus, periodBonus, amountBonus, tokenAmount);
-
-  }
-
-  function setBenefit(address _benefit) public onlyAdmins {
-    benefit = _benefit;
-  }
-
-  function getFunds(uint amount) public onlyAdmins {
-    require(benefit != 0x0);
-    require(amount <= this.balance);
-    Raise(benefit, amount);
-    benefit.send(amount);
-  }
-
-
-
-
-}
+// Bravo Coin (BRV)
+// Presale Contract
+// 1 ETH = 15000 BRV
+
+// -----------------
+
+// Ownable
+
+contract Ownable {
+  address public owner;
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+  function Ownable() public {
+    owner = msg.sender;}
+
+  modifier onlyOwner() {
+    require(msg.sender == owner); _; } }
+
+// Presale
+
+contract Presale is Ownable {
+  using SafeMath for uint256;
+
+  ERC20 public token;
+  address public wallet;
+  uint256 public rate;
+  uint256 public weiRaised;
+
+  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+
+  function Presale (uint256 _rate, address _wallet, ERC20 _token) public {
+    require(_rate > 0);
+    require(_wallet != address(0));
+    require(_token != address(0));
+
+    rate = _rate;
+    wallet = _wallet;
+    token = _token; }
+
+  function () external payable {
+    buyTokens(msg.sender);}
+
+
+  function buyTokens(address _beneficiary) public payable {
+    require(msg.value >= 0.001 ether);
+    uint256 weiAmount = msg.value;
+    _preValidatePurchase(_beneficiary, weiAmount);
+    uint256 tokens = _getTokenAmount(weiAmount);
+    weiRaised = weiRaised.add(weiAmount);
+    _processPurchase(_beneficiary, tokens);
+    TokenPurchase(msg.sender, _beneficiary, weiAmount, tokens);
+    _updatePurchasingState(_beneficiary, weiAmount);
+    _forwardFunds();
+    _postValidatePurchase(_beneficiary, weiAmount); }
+
+  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal {
+    require(_beneficiary != address(0));
+    require(_weiAmount != 0); }
+
+  function _postValidatePurchase(address _beneficiary, uint256 _weiAmount) internal { }
+
+  function _deliverTokens(address _beneficiary, uint256 _tokenAmount) internal {
+    token.transfer(_beneficiary, _tokenAmount); }
+
+  function _processPurchase(address _beneficiary, uint256 _tokenAmount) internal {
+    _deliverTokens(_beneficiary, _tokenAmount); }
+
+  function _updatePurchasingState(address _beneficiary, uint256 _weiAmount) internal { }
+
+  function _getTokenAmount(uint256 _weiAmount) internal view returns (uint256) {
+    return _weiAmount.mul(rate); }
+
+  function _forwardFunds() internal {
+    wallet.transfer(msg.value); }
+   
+// Used to end the Presale
+
+  function TokenDestructible() public payable { }
+  function destroy(address[] tokens) onlyOwner public {
+
+// Transfer tokens to owner
+
+    for (uint256 i = 0; i < tokens.length; i++) {
+      ERC20Basic token = ERC20Basic(tokens[i]);
+      uint256 balance = token.balanceOf(this);
+      token.transfer(owner, balance);} 
+    selfdestruct(owner); }}
+    
+  
+  
+// SafeMath    
+
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0; }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c; }
+    
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a / b;
+    return c; }
+    
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b; }
+    
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;}}
+    
+// ERC20Basic    
+    
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);}
+
+// ERC20
+
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);}
