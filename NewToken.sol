@@ -1,16 +1,20 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NewToken at 0xc0bd05407fbe1fb6461ce6f33e487a573551b927
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NewToken at 0x7a3aa244cb5520cd40876c604953c269044f6599
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.21;
 
-contract ERC20Standard {
-	uint public totalSupply;
+contract NewToken {
+	uint public totalSupply = 2300000000000000;
 	
-	string public name;
-	uint8 public decimals;
-	string public symbol;
-	string public version;
-	
+	string public name = "TTInvest";
+	uint8 public decimals = 8;
+	string public symbol = "TTInvest";
+	string public version = "1.0";
+
+function NewToken(){
+  balances[msg.sender] = 2300000000000000;
+}
+
 	mapping (address => uint256) balances;
 	mapping (address => mapping (address => uint)) allowed;
 
@@ -62,15 +66,4 @@ contract ERC20Standard {
 		uint _value
 		);
 
-}
-
-contract NewToken is ERC20Standard {
-	function NewToken() {
-		totalSupply = 10000000000;
-		name = "Realty Crypto Investment";
-		decimals = 2;
-		symbol = "RCI";
-		version = "1.0";
-		balances[msg.sender] = totalSupply;
-	}
 }
