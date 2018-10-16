@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AcjCrowdsale at 0x5fbae92b356f59857ef4afc1d0ba7989a39bb429
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AcjCrowdsale at 0xace518c4cb2b823c2ab2b12c709e71e11cfb8896
 */
 pragma solidity ^0.4.18;
+
 
 /**
  * Math operations with safety checks
@@ -386,14 +387,13 @@ contract AcjToken is BurnableToken, MintableToken, PausableToken {
 
 }
 
+ 
+
 
 contract AcjCrowdsale is Ownable {
 
-
     using SafeMath for uint256;
-
-    /* Bonuses */
-
+    
     // Presale bonus percentage
     uint public constant BONUS_PRESALE = 10;            
     // Medium bonus percentage
@@ -404,58 +404,41 @@ contract AcjCrowdsale is Ownable {
     uint public constant BONUS_MID_QTY = 150 ether;     
     // High bonus threshold
     uint public constant BONUS_HI_QTY = 335 ether;      
-
-    /* Absolute dates as timestamps */
-
+    // Absolute dates as timestamps
     uint public startPresale;            
     uint public endPresale;             
     uint public startIco;              
     uint public endIco;               
-
     // 30 days refund period on fail
     uint public constant REFUND_PERIOD = 30 days;
-
-    /* Tokens **/
-
     // Indicative token balances during the crowdsale 
     mapping(address => uint256) public tokenBalances;    
     // Token smart contract address
     address public token;
     // Total tokens created
-    uint256 public tokensTotalSupply; 
+    uint256 public constant TOKENS_TOTAL_SUPPLY = 150000000 ether; 
     // Tokens available for sale
-    uint256 public tokensForSale;    
+    uint256 public constant TOKENS_FOR_SALE = 75000000 ether;    
+    // soft cap in Tokens
+    uint256 public constant TOKENS_SOFT_CAP = 500000 ether;       
     // Tokens sold via buyTokens
     uint256 public tokensSold;                             
     // Tokens created during the sale
-    uint256 public tokensDistributed;                      
-    // soft cap in ETH
-    uint256 public tokensSoftCap;                          
+    uint256 public tokensDistributed;                                         
     // ICO flat rate subject to bonuses
-    uint256 public ethTokenRate;                             
-
-    /* Management */
-
+    uint256 public ethTokenRate;                                 
     // Allow multiple administrators
-    mapping(address => bool) public admins;                
-
-    /* Various */
-
+    mapping(address => bool) public admins;                    
     // Total wei received 
     uint256 public weiReceived;                            
     // Minimum contribution in ETH
-    uint256 public weiMinContribution = 1 ether;           
+    uint256 public constant MIN_CONTRIBUTION = 100 finney;           
     // Contributions in wei for each address
     mapping(address => uint256) public contributions;
     // Refund state for each address
     mapping(address => bool) public refunds;
-
-    /* Wallets */
-
     // Company wallet that will receive the ETH
-    address public companyWallet;                           
-
-    /* Events */
+    address public companyWallet;     
 
     // Yoohoo someone contributed !
     event Contribute(address indexed _from, uint _amount); 
@@ -463,16 +446,14 @@ contract AcjCrowdsale is Ownable {
     event TokenRateUpdated(uint _newRate);                  
     // ETH Refund 
     event Refunded(address indexed _from, uint _amount);    
-
-    /* Modifiers */ 
-
+    
     modifier belowTotalSupply {
-        require(tokensDistributed < tokensTotalSupply);
+        require(tokensDistributed < TOKENS_TOTAL_SUPPLY);
         _;
     }
 
     modifier belowHardCap {
-        require(tokensDistributed < tokensForSale);
+        require(tokensDistributed < TOKENS_FOR_SALE);
         _;
     }
 
@@ -503,11 +484,9 @@ contract AcjCrowdsale is Ownable {
     }
 
     modifier aboveMinimum {
-        require(msg.value >= weiMinContribution);
+        require(msg.value >= MIN_CONTRIBUTION);
         _;
     }
-
-    /* Public methods */
 
     /* 
      * Constructor
@@ -516,66 +495,48 @@ contract AcjCrowdsale is Ownable {
      * 
      */
     function AcjCrowdsale(
-            uint _presaleStart, 
-            uint _presaleEnd, 
-            uint _icoStart, 
-            uint _icoEnd, 
-            uint256 _rate, 
-            uint256 _cap, 
-            uint256 _goal, 
-            uint256 _totalSupply,
-            address _token
-            ) public {
-
+        uint _presaleStart,
+        uint _presaleEnd,
+        uint _icoStart,
+        uint _icoEnd,
+        uint256 _rate,
+        address _token
+    ) public 
+    {
         require(_presaleEnd > _presaleStart);
         require(_icoStart > _presaleEnd);
         require(_icoEnd > _icoStart);
-
         require(_rate > 0); 
-        require(_cap > 0);
-        require(_goal > 0);
-        require(_totalSupply > _goal);
 
         startPresale = _presaleStart;
         endPresale = _presaleEnd;
         startIco = _icoStart;
         endIco = _icoEnd;
-
-        ethTokenRate = _rate;        
-        tokensSoftCap = _cap.mul(1 ether);
-        tokensForSale = _goal.mul(1 ether);
-        tokensTotalSupply = _totalSupply.mul(1 ether);
-
+        ethTokenRate = _rate;
+        
         admins[msg.sender] = true;
         companyWallet = msg.sender;
 
         token = _token;
     }
 
-
     /*
      * Fallback payable
      */
     function () external payable {
-
         buyTokens(msg.sender);
     }
 
-
     /* Crowdsale staff only */
-
-
     /*
      * Admin management
      */
     function addAdmin(address _adr) external onlyOwner {
-
         require(_adr != address(0));
         admins[_adr] = true;
     }
 
     function removeAdmin(address _adr) external onlyOwner {
-
         require(_adr != address(0));
         admins[_adr] = false;
     }
@@ -584,7 +545,6 @@ contract AcjCrowdsale is Ownable {
      * Change the company wallet
      */
     function updateCompanyWallet(address _wallet) external adminOnly {
-
         companyWallet = _wallet;
     }
 
@@ -592,16 +552,13 @@ contract AcjCrowdsale is Ownable {
      *  Change the owner of the token
      */
     function proposeTokenOwner(address _newOwner) external adminOnly {
-
         AcjToken _token = AcjToken(token);
         _token.proposeNewOwner(_newOwner);
     }
 
-    function acceptTokenOwnership() external onlyOwner {
-        
+    function acceptTokenOwnership() external onlyOwner {    
         AcjToken _token = AcjToken(token);
         _token.acceptOwnership();
-
     }
 
     /*
@@ -616,7 +573,6 @@ contract AcjCrowdsale is Ownable {
      * Adjust the token value before the ICO
      */
     function adjustTokenExchangeRate(uint _rate) external adminOnly {
-
         require(now > endPresale && now < startIco);
         ethTokenRate = _rate;
         TokenRateUpdated(_rate);
@@ -627,7 +583,6 @@ contract AcjCrowdsale is Ownable {
      * Each contributor has to claim own  ETH 
      */     
     function refundContribution() external crowdsaleFailed afterSale {
-
         require(!refunds[msg.sender]);
         require(contributions[msg.sender] > 0);
 
@@ -636,7 +591,6 @@ contract AcjCrowdsale is Ownable {
         refunds[msg.sender] = true;
         Refunded(msg.sender, contributions[msg.sender]);
         msg.sender.transfer(_amount);
-
     }
 
     /*
@@ -645,7 +599,6 @@ contract AcjCrowdsale is Ownable {
      * Allow withdrawal at any time if the ICO is a success.
      */     
     function withdrawUnclaimed() external adminOnly {
-
         require(now > endIco + REFUND_PERIOD || isSuccess());
         companyWallet.transfer(this.balance);
     }
@@ -654,11 +607,10 @@ contract AcjCrowdsale is Ownable {
      * Pre-ICO and offline Investors, collaborators and team tokens
      */
     function reserveTokens(address _beneficiary, uint256 _tokensQty) external adminOnly belowTotalSupply {
-
-//        require(_beneficiary != address(0));
+        require(_beneficiary != address(0));
         uint _distributed = tokensDistributed.add(_tokensQty);
 
-        require(_distributed <= tokensTotalSupply);
+        require(_distributed <= TOKENS_TOTAL_SUPPLY);
 
         tokenBalances[_beneficiary] = _tokensQty.add(tokenBalances[_beneficiary]);
         tokensDistributed = _distributed;
@@ -667,7 +619,6 @@ contract AcjCrowdsale is Ownable {
         _token.initialTransfer(_beneficiary, _tokensQty);
     }
 
-
     /*
      * Actually buy the tokens
      * requires an active sale time
@@ -675,15 +626,14 @@ contract AcjCrowdsale is Ownable {
      * and sold tokens inferior to tokens for sale
      */     
     function buyTokens(address _beneficiary) public payable duringSale aboveMinimum belowHardCap {
-
         require(_beneficiary != address(0));
         uint256 _weiAmount = msg.value;        
         uint256 _tokensQty = msg.value.mul(getBonus(_weiAmount));
         uint256 _distributed = _tokensQty.add(tokensDistributed);
         uint256 _sold = _tokensQty.add(tokensSold);
 
-        require(_distributed <= tokensTotalSupply);
-        require(_sold <= tokensForSale);
+        require(_distributed <= TOKENS_TOTAL_SUPPLY);
+        require(_sold <= TOKENS_FOR_SALE);
 
         contributions[_beneficiary] = _weiAmount.add(contributions[_beneficiary]);
         tokenBalances[_beneficiary] = _tokensQty.add(tokenBalances[_beneficiary]);
@@ -701,7 +651,6 @@ contract AcjCrowdsale is Ownable {
      * Crowdsale Helpers 
      */
     function hasEnded() public view returns(bool) {
-
         return now > endIco;
     }
 
@@ -709,8 +658,7 @@ contract AcjCrowdsale is Ownable {
      * Checks if the crowdsale is a success
      */
     function isSuccess() public view returns(bool) {
-
-        if (tokensSold >= tokensSoftCap) {
+        if (tokensDistributed >= TOKENS_SOFT_CAP) {
             return true;
         }
         return false;
@@ -720,8 +668,7 @@ contract AcjCrowdsale is Ownable {
      * Checks if the crowdsale failed
      */
     function isFailed() public view returns(bool) {
-
-        if (tokensSold < tokensSoftCap && now > endIco) {
+        if (tokensDistributed < TOKENS_SOFT_CAP && now > endIco) {
             return true;
         }
         return false;
@@ -732,7 +679,6 @@ contract AcjCrowdsale is Ownable {
      * Either time or ETH quantity based 
      */
     function getBonus(uint256 _wei) internal constant returns(uint256 ethToAcj) {
-
         uint256 _bonus = 0;
 
         // Time based bonus
