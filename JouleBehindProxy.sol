@@ -1,13 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JouleBehindProxy at 0x91804740b76b4fac61f0ca94d2b349c5e1e79275
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JouleBehindProxy at 0x16430b21aA4Ed2127Ea6b96A6CD53375CD1a0924
 */
 pragma solidity ^0.4.19;
 
-/**
- * Joule source codes are available at https://github.com/MyWishPlatform/joule
- * Joule UI is available at https://joule.mywish.io
- * Joule was made by MyWish team, please welcome to our site https://mywish.io
- */
 
 /**
  * @title Ownable
@@ -291,7 +286,7 @@ contract usingConsts {
     // remaining gas - amount of gas to finish transaction after invoke
     uint constant REMAINING_GAS = 30000;
     // joule gas - gas to joule (including proxy and others) invocation, excluding contract gas
-    uint constant JOULE_GAS = TRANSACTION_GAS + REMAINING_GAS + 5000;
+    uint constant JOULE_GAS = TRANSACTION_GAS + REMAINING_GAS + 8000;
 
     // minimal default gas price (because of network load)
     uint32 constant DEFAULT_MIN_GAS_PRICE_GWEI = 20;
@@ -302,7 +297,7 @@ contract usingConsts {
     // not, it mist be less then 0x00ffffff, because high bytes might be used for storing flags
     uint constant MAX_GAS = 4000000;
     // Code version
-    bytes8 constant VERSION = 0x0108007600aa60ef;
+    bytes8 constant VERSION = 0x0108007f086575bc;
     //                          ^^ - major
     //                            ^^ - minor
     //                              ^^^^ - build
