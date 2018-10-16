@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Mimicoin at 0x475a1bdf009386294d52364f889b25782a093f90
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Mimicoin at 0x5d6841f7563fd1fd3cc8fa9debd1b5cdd06bc15f
 */
 pragma solidity ^0.4.18;
 
