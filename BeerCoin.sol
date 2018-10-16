@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BEERCOIN at 0x313b4c42bee0d45d05b8cc51c0cd8298264c24af
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BEERCOIN at 0xfaf47dc575b50b495ae22f9e009acd1b6f3493c8
 */
 pragma solidity ^0.4.4;
 
@@ -119,9 +119,9 @@ contract BEERCOIN is StandardToken {
 
     function BEERCOIN(
         ) {
-        balances[msg.sender] = 8000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 12000000000;                        // Update total supply (100000 for example)
-        name = "NAME OF YOUR TOKEN HERE";                                   // Set the name for display purposes
+        balances[msg.sender] = 5000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 8000000000;                        // Update total supply (100000 for example)
+        name = "BEERCOIN";                                   // Set the name for display purposes
         decimals = 3;                            // Amount of decimals for display purposes
         symbol = "BEER";                               // Set the symbol for display purposes
     }
