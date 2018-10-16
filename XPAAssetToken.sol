@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XPAAssetToken at 0x0080d4b7be95b550a69e8789340baa38da771743
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XPAAssetToken at 0x926439F758B20E6D992A18Fa934b822C93E47558
 */
 pragma solidity ^0.4.21;
 
@@ -15,40 +15,32 @@ interface Token {
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
-interface Baliv {
-    function getPrice(address fromToken_, address toToken_) external view returns(uint256);
-}
-
-contract TokenRecipient {
-    function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external;
-}
-
 contract SafeMath {
     function safeAdd(uint x, uint y)
         internal
         pure
     returns(uint) {
-        uint256 z = x + y;
-        require((z >= x) && (z >= y));
-        return z;
+      uint256 z = x + y;
+      require((z >= x) && (z >= y));
+      return z;
     }
 
     function safeSub(uint x, uint y)
         internal
         pure
     returns(uint) {
-        require(x >= y);
-        uint256 z = x - y;
-        return z;
+      require(x >= y);
+      uint256 z = x - y;
+      return z;
     }
 
     function safeMul(uint x, uint y)
         internal
         pure
     returns(uint) {
-        uint z = x * y;
-        require((x == 0) || (z / x == y));
-        return z;
+      uint z = x * y;
+      require((x == 0) || (z / x == y));
+      return z;
     }
     
     function safeDiv(uint x, uint y)
@@ -63,8 +55,8 @@ contract SafeMath {
         internal
         view
     returns(uint) {
-        bytes32 hash = keccak256(block.number, msg.sender, salt);
-        return uint(hash) % N;
+      bytes32 hash = keccak256(block.number, msg.sender, salt);
+      return uint(hash) % N;
     }
 }
 
@@ -210,20 +202,6 @@ contract StandardToken is SafeMath {
         return true;
     }
 
-    /* Approve and then communicate the approved contract in a single tx */
-    function approveAndCall(
-        address _spender,
-        uint256 _value,
-        bytes _extraData
-    )
-        public
-    returns (bool success) {    
-        if (approve(_spender, _value)) {
-            TokenRecipient(_spender).receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
-        }
-    }
-
     function allowance(address _owner, address _spender) constant public returns (uint256 remaining) {
         return allowed[_owner][_spender];
     }
@@ -366,293 +344,6 @@ contract XPAAssetToken is StandardToken, Authorization {
         for(uint256 i = 0; i < burners.length; i++) {
             if(burners[i] == account_) {
                 return true;
-            }
-        }
-    }
-}
-
-contract TokenFactory is Authorization {
-    string public version = "0.5.0";
-
-    event eNominatingExchange(address);
-    event eNominatingXPAAssets(address);
-    event eNominatingETHAssets(address);
-    event eCancelNominatingExchange(address);
-    event eCancelNominatingXPAAssets(address);
-    event eCancelNominatingETHAssets(address);
-    event eChangeExchange(address, address);
-    event eChangeXPAAssets(address, address);
-    event eChangeETHAssets(address, address);
-    event eAddFundAccount(address);
-    event eRemoveFundAccount(address);
-
-    address[] public assetTokens;
-    address[] public fundAccounts;
-    address public exchange = 0x008ea74569c1b9bbb13780114b6b5e93396910070a;
-    address public exchangeOldVersion = 0x0013b4b9c415213bb2d0a5d692b6f2e787b927c211;
-    address public XPAAssets = address(0);
-    address public ETHAssets = address(0);
-    address public candidateXPAAssets = address(0);
-    address public candidateETHAssets = address(0);
-    address public candidateExchange = address(0);
-    uint256 public candidateTillXPAAssets = 0;
-    uint256 public candidateTillETHAssets = 0;
-    uint256 public candidateTillExchange = 0;
-    address public XPA = 0x0090528aeb3a2b736b780fd1b6c478bb7e1d643170;
-    address public ETH = address(0);
-
-     /* constructor */
-    function TokenFactory(
-        address XPAAddr, 
-        address balivAddr
-    ) public {
-        XPA = XPAAddr;
-        exchange = balivAddr;
-    }
-
-    function createToken(
-        string symbol_,
-        string name_,
-        uint256 defaultExchangeRate_
-    )
-        public
-    returns(address) {
-        require(msg.sender == XPAAssets);
-        bool tokenRepeat = false;
-        address newAsset;
-        for(uint256 i = 0; i < assetTokens.length; i++) {
-            if(XPAAssetToken(assetTokens[i]).getSymbol() == keccak256(symbol_)){
-                tokenRepeat = true;
-                newAsset = assetTokens[i];
-                break;
-            }
-        }
-        if(!tokenRepeat){
-            newAsset = new XPAAssetToken(symbol_, name_, defaultExchangeRate_);
-            XPAAssetToken(newAsset).assignOperator(XPAAssets);
-            XPAAssetToken(newAsset).assignOperator(ETHAssets);
-            for(uint256 j = 0; j < fundAccounts.length; j++) {
-                XPAAssetToken(newAsset).assignBurner(fundAccounts[j]);
-            }
-            assetTokens.push(newAsset);
-        }
-        return newAsset;
-    }
-
-    // set to candadite, after 7 days set to exchange, set again after 7 days
-    function setExchange(
-        address exchange_
-    )
-        public
-        onlyOperator
-    {
-        require(
-            exchange_ != address(0)
-        );
-        if(
-            exchange_ == exchange &&
-            candidateExchange != address(0)
-        ) {
-            emit eCancelNominatingExchange(candidateExchange);
-            candidateExchange = address(0);
-            candidateTillExchange = 0;
-        } else if(
-            exchange == address(0)
-        ) {
-            // initial value
-            emit eChangeExchange(address(0), exchange_);
-            exchange = exchange_;
-            exchangeOldVersion = exchange_;
-        } else if(
-            exchange_ != candidateExchange &&
-            candidateTillExchange + 86400 * 7 < block.timestamp
-        ) {
-            // set to candadite
-            emit eNominatingExchange(exchange_);
-            candidateExchange = exchange_;
-            candidateTillExchange = block.timestamp + 86400 * 7;
-        } else if(
-            exchange_ == candidateExchange &&
-            candidateTillExchange < block.timestamp
-        ) {
-            // set to exchange
-            emit eChangeExchange(exchange, candidateExchange);
-            exchangeOldVersion = exchange;
-            exchange = candidateExchange;
-            candidateExchange = address(0);
-        }
-    }
-
-    function setXPAAssets(
-        address XPAAssets_
-    )
-        public
-        onlyOperator
-    {
-        require(
-            XPAAssets_ != address(0)
-        );
-        if(
-            XPAAssets_ == XPAAssets &&
-            candidateXPAAssets != address(0)
-        ) {
-            emit eCancelNominatingXPAAssets(candidateXPAAssets);
-            candidateXPAAssets = address(0);
-            candidateTillXPAAssets = 0;
-        } else if(
-            XPAAssets == address(0)
-        ) {
-            // initial value
-            emit eChangeXPAAssets(address(0), XPAAssets_);
-            XPAAssets = XPAAssets_;
-        } else if(
-            XPAAssets_ != candidateXPAAssets &&
-            candidateTillXPAAssets + 86400 * 7 < block.timestamp
-        ) {
-            // set to candadite
-            emit eNominatingXPAAssets(XPAAssets_);
-            candidateXPAAssets = XPAAssets_;
-            candidateTillXPAAssets = block.timestamp + 86400 * 7;
-        } else if(
-            XPAAssets_ == candidateXPAAssets &&
-            candidateTillXPAAssets < block.timestamp
-        ) {
-            // set to XPAAssets
-            emit eChangeXPAAssets(XPAAssets, candidateXPAAssets);
-            dismissTokenOperator(XPAAssets);
-            assignTokenOperator(candidateXPAAssets);
-            XPAAssets = candidateXPAAssets;
-            candidateXPAAssets = address(0);
-        }
-    }
-
-    function setETHAssets(
-        address ETHAssets_
-    )
-        public
-        onlyOperator
-    {
-        require(
-            ETHAssets_ != address(0)
-        );
-        if(
-            ETHAssets_ == ETHAssets &&
-            candidateETHAssets != address(0)
-        ) {
-            emit eCancelNominatingETHAssets(candidateETHAssets);
-            candidateETHAssets = address(0);
-            candidateTillETHAssets = 0;
-        } else if(
-            ETHAssets == address(0)
-        ) {
-            // initial value
-            ETHAssets = ETHAssets_;
-        } else if(
-            ETHAssets_ != candidateETHAssets &&
-            candidateTillETHAssets + 86400 * 7 < block.timestamp
-        ) {
-            // set to candadite
-            emit eNominatingETHAssets(ETHAssets_);
-            candidateETHAssets = ETHAssets_;
-            candidateTillETHAssets = block.timestamp + 86400 * 7;
-        } else if(
-            ETHAssets_ == candidateETHAssets &&
-            candidateTillETHAssets < block.timestamp
-        ) {
-            // set to ETHAssets
-            emit eChangeETHAssets(ETHAssets, candidateETHAssets);
-            dismissTokenOperator(ETHAssets);
-            assignTokenOperator(candidateETHAssets);
-            ETHAssets = candidateETHAssets;
-            candidateETHAssets = address(0);
-        }
-    }
-
-    function addFundAccount(
-        address account_
-    )
-        public
-        onlyOperator
-    {
-        require(account_ != address(0));
-        for(uint256 i = 0; i < fundAccounts.length; i++) {
-            if(fundAccounts[i] == account_) {
-                return;
-            }
-        }
-        for(uint256 j = 0; j < assetTokens.length; j++) {
-            XPAAssetToken(assetTokens[i]).assignBurner(account_);
-        }
-        emit eAddFundAccount(account_);
-        fundAccounts.push(account_);
-    }
-
-    function removeFundAccount(
-        address account_
-    )
-        public
-        onlyOperator
-    {
-        require(account_ != address(0));
-        uint256 i = 0;
-        uint256 j = 0;
-        for(i = 0; i < fundAccounts.length; i++) {
-            if(fundAccounts[i] == account_) {
-                for(j = 0; j < assetTokens.length; j++) {
-                    XPAAssetToken(assetTokens[i]).dismissBunner(account_);
-                }
-                fundAccounts[i] = fundAccounts[fundAccounts.length - 1];
-                fundAccounts.length -= 1;
-            }
-        }
-    }
-
-    function getPrice(
-        address token_
-    ) 
-        public
-        view
-    returns(uint256) {
-        uint256 currPrice = Baliv(exchange).getPrice(XPA, token_);
-        if(currPrice == 0) {
-            currPrice = XPAAssetToken(token_).getDefaultExchangeRate();
-        }
-        return currPrice;
-    }
-
-    function getAssetLength(
-    )
-        public
-        view
-    returns(uint256) {
-        return assetTokens.length;
-    }
-
-    function getAssetToken(
-        uint256 index_
-    )
-        public
-        view
-    returns(address) {
-        return assetTokens[index_];
-    }
-
-    function assignTokenOperator(address user_)
-        internal
-    {
-        if(user_ != address(0)) {
-            for(uint256 i = 0; i < assetTokens.length; i++) {
-                XPAAssetToken(assetTokens[i]).assignOperator(user_);
-            }
-        }
-    }
-    
-    function dismissTokenOperator(address user_)
-        internal
-    {
-        if(user_ != address(0)) {
-            for(uint256 i = 0; i < assetTokens.length; i++) {
-                XPAAssetToken(assetTokens[i]).dismissOperator(user_);
             }
         }
     }
