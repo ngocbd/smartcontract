@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Blockjack at 0x36b14bae0989f65f80892b99a55378d3e1a80c81
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Blockjack at 0x49516fe7bdc54b29a7f95ff55fdd38d9228e55af
 */
+pragma solidity ^0.4.8;
+
 library ArrayLib {
   // Inserts to keep array sorted (assumes input array is sorted)
 	function insertInPlace(uint8[] storage self, uint8 n) {
@@ -88,13 +90,7 @@ library DeckLib {
 	}
 }
 
-contract AbstractBlockjackLogs {
-  event GameEnded(uint256 gameID, address player, uint gameResult, uint256 payout, uint8 playerHand, uint8 houseHand);
-  event GameNeedsTick(uint256 gameID, address player, uint256 actionBlock);
 
-  function recordLog(uint256 gameID, address player, uint gameResult, uint256 payout, uint8 playerHand, uint8 houseHand);
-  function tickRequiredLog(uint256 gameID, address player, uint256 actionBlock);
-}
 
 library GameLib {
   using DeckLib for *;
@@ -146,12 +142,9 @@ library GameLib {
       return true;
     }
     if (!needsTick(self)) return true; // not needed, everything is fine
-
     if (self.state == GameState.InitialCards) dealInitialCards(self);
     if (self.state == GameState.Hit) dealHitCard(self);
     if (self.state == GameState.DoubleDown) {
-      if (!canDoubleDown(self)) throw;
-      self.bet += msg.value;
       dealHitCard(self);
       forceStand(self);
     }
@@ -189,10 +182,9 @@ library GameLib {
     uint8 playerHand = countHand(self.playerCards);
     if (playerHand == target && self.playerCards.length == 2) return endGame(self, GameResult.PlayerNatural); // player natural
     if (playerHand > target) return endGame(self, GameResult.House); // Player busted
-    if (playerHand == target) {
-      // Player is forced to stand with 21
+    if (playerHand == target && self.state == GameState.Waiting) {
+      // Player is forced to stand with 21 (but should not  already standing, ie in double down)
       forceStand(self);
-      if (!tick(self)) throw; // Forces tick, commitment to play actually happened past block
     }
   }
 
@@ -200,6 +192,7 @@ library GameLib {
     uint256 currentActionBlock = self.actionBlock;
     playerDecision(self, GameState.Stand);
     self.actionBlock = currentActionBlock;
+    if (!tick(self)) throw; // Forces tick, commitment to play actually happened past block
   }
 
   function canDoubleDown(Game storage self) returns (bool) {
@@ -207,11 +200,17 @@ library GameLib {
     uint8 totalPlayer = countHand(self.playerCards);
     if (totalPlayer < 9 || totalPlayer > 11) return false;
     if (msg.value != self.bet) return false;
+    return true;
   }
 
   function playerDecision(Game storage self, GameState decision)  {
     if (self.state != GameState.Waiting) throw;
-    if (decision != GameState.Hit && decision != GameState.Stand) throw;
+    if (decision != GameState.Hit && decision != GameState.Stand && decision != GameState.DoubleDown) throw;
+
+    if (decision == GameState.DoubleDown){
+      if (!canDoubleDown(self)) throw;
+      self.bet += msg.value;
+    }
 
     self.state = decision;
     self.actionBlock = block.number;
@@ -221,19 +220,16 @@ library GameLib {
     self.playerCards.push(self.deck.getCard(self.actionBlock));
     self.houseCards.push(self.deck.getCard(self.actionBlock));
     self.playerCards.push(self.deck.getCard(self.actionBlock));
-
     self.state = GameState.Waiting;
   }
 
   function dealHitCard(Game storage self) private {
     self.playerCards.push(self.deck.getCard(self.actionBlock));
-
     self.state = GameState.Waiting;
   }
 
   function dealHouseCards(Game storage self) private {
     self.houseCards.push(self.deck.getCard(self.actionBlock));
-
     if (countHand(self.houseCards) < houseLimit) dealHouseCards(self);
   }
 
@@ -319,40 +315,27 @@ library GameLib {
 }
 
 contract Blockjack {
-  AbstractBlockjackLogs blockjacklogs;
+  
+  event GameEnded(uint256 gameID, address player, uint gameResult, uint256 wager, uint256 payout, uint8 playerHand, uint8 houseHand);
+  event GameNeedsTick(uint256 gameID, address player, uint256 actionBlock);
 
   using GameLib for GameLib.Game;
 
   GameLib.Game[] games;
   mapping (address => uint256) public currentGame;
 
-  bool contractCleared;
   // Initial settings
-  uint256 public minBet = 50 finney;
+  uint256 public minBet = 10 finney;
   uint256 public maxBet = 500 finney;
-  bool public allowsNewGames = false;
+  bool public allowsNewGames = true;
   uint256 public maxBlockActions = 10;
 
   mapping (uint256 => uint256) blockActions;
 
-  // Admin
-
-  //kovan
-  //  address public DX =       0x0006426a1057cbc60762802FFb5FBdc55D008fAf;
-  //  address public DEV =      0x0031EDb4846BAb2EDEdd7f724E58C50762a45Cb2;
-
   //main
-  address public DX = 0x296Ae1d2D9A8701e113EcdF6cE986a4a7D0A6dC5;
-  address public DEV = 0xBC4343B11B7cfdd6dD635f61039b8a66aF6E73Bb;
+  address public DX;
+  address public DEV;
 
-
-
-  address public ADMIN_CONTRACT;
-
-  uint256 public BANKROLL_LOCK_PERIOD = 30 days;
-
-  uint256 public bankrollLockedUntil;
-  uint256 public profitsLockedUntil;
   uint256 public initialBankroll;
   uint256 public currentBankroll;
 
@@ -379,13 +362,14 @@ contract Blockjack {
     _;
   }
 
-  function Blockjack(address _admin_contract, address _logs_contract) { // only(DEV) {
-    ADMIN_CONTRACT = _admin_contract;
-    blockjacklogs = AbstractBlockjackLogs(_logs_contract);
+  function Blockjack(address _DX, address _DEV) {
+    DX = _DX;
+    DEV = _DEV;
     games.length += 1;
     games[0].init(0); // Init game 0 so indices start on 1
     games[0].player = this;
-    setupTrustedAccounts();
+    isOwner[DX] = true;
+    isOwner[DEV] = true;
   }
 
   function () payable {
@@ -417,7 +401,6 @@ contract Blockjack {
 
   function hit(uint256 gameID) onlyPlayer(gameID) blockActionProtected {
     GameLib.Game game = games[gameID];
-
     if (!game.tick()) throw;
     game.playerDecision(GameLib.GameState.Hit);
     tickRequiredLog(game);
@@ -425,7 +408,6 @@ contract Blockjack {
 
   function doubleDown(uint256 gameID) onlyPlayer(gameID) blockActionProtected payable {
     GameLib.Game game = games[gameID];
-
     if (!game.tick()) throw;
     game.playerDecision(GameLib.GameState.DoubleDown);
     tickRequiredLog(game);
@@ -433,7 +415,6 @@ contract Blockjack {
 
   function stand(uint256 gameID) onlyPlayer(gameID) blockActionProtected {
     GameLib.Game game = games[gameID];
-
     if (!game.tick()) throw;
     game.playerDecision(GameLib.GameState.Stand);
     tickRequiredLog(game);
@@ -454,18 +435,19 @@ contract Blockjack {
       currentBankroll = currentBankroll + openedGame.bet - openedGame.payout;
     }
 
-    blockjacklogs.recordLog(
-			    openedGame.gameID,
-			    openedGame.player,
-			    uint(openedGame.result),
-			    openedGame.payout,
-			    GameLib.countHand(openedGame.playerCards),
-			    GameLib.countHand(openedGame.houseCards)
-			    );
+    GameEnded(
+	      openedGame.gameID,
+	      openedGame.player,
+	      uint(openedGame.result),
+	      openedGame.bet,
+	      openedGame.payout,
+	      GameLib.countHand(openedGame.playerCards),
+	      GameLib.countHand(openedGame.houseCards)
+	      );
   }
 
   function tickRequiredLog(GameLib.Game storage game) private {
-    blockjacklogs.tickRequiredLog(game.gameID, game.player, game.actionBlock);
+    GameNeedsTick(game.gameID, game.player, game.actionBlock);
   }
 
   // Constants
@@ -487,14 +469,6 @@ contract Blockjack {
 	    );
   }
 
-  // Admin
-  function setupTrustedAccounts()
-    internal
-  {
-    isOwner[DX] = true;
-    isOwner[DEV] = true;
-    isOwner[ADMIN_CONTRACT] = true;
-  }
 
   function changeDev(address newDev) only(DEV) {
     isOwner[DEV] = false;
@@ -508,23 +482,17 @@ contract Blockjack {
     isOwner[DX] = true;
   }
 
-  function changeAdminContract(address _new_admin_contract) only(ADMIN_CONTRACT) {
-    isOwner[ADMIN_CONTRACT] = false;
-    ADMIN_CONTRACT = _new_admin_contract;
-    isOwner[ADMIN_CONTRACT] = true;
-  }
-
-  function setSettings(uint256 _min, uint256 _max, uint256 _maxBlockActions) only(ADMIN_CONTRACT) {
+  function setSettings(uint256 _min, uint256 _max, uint256 _maxBlockActions) only(DX) {
     minBet = _min;
     maxBet = _max;
     maxBlockActions = _maxBlockActions;
   }
 
-  function registerOwner(address _new_watcher) only(ADMIN_CONTRACT) {
+  function registerOwner(address _new_watcher) only(DX) {
     isOwner[_new_watcher] = true;
   }
 
-  function removeOwner(address _old_watcher) only(ADMIN_CONTRACT) {
+  function removeOwner(address _old_watcher) only(DX) {
     isOwner[_old_watcher] = false;
   }
 
@@ -532,7 +500,7 @@ contract Blockjack {
     allowsNewGames = false;
   }
 
-  function startBlockjack() only(ADMIN_CONTRACT) {
+  function startBlockjack() only(DX) {
     allowsNewGames = true;
   }
 
@@ -541,42 +509,29 @@ contract Blockjack {
     currentBankroll += msg.value;
   }
 
-  function remainingBankroll() constant returns (uint256) {
-    return currentBankroll > initialBankroll ? initialBankroll : currentBankroll;
-  }
-
-  function removeBankroll() only(DX) {
-    if (initialBankroll > currentBankroll - 5 ether && bankrollLockedUntil > now) throw;
-
+  function migrateBlockjack() only(DX) {
     stopBlockjack();
-
-    if (currentBankroll > initialBankroll) { // there are profits
-      if (!DEV.send(currentBankroll - initialBankroll)) throw;
-    }
-
-    suicide(DX); // send rest to dx
-    contractCleared = true;
+    shareProfits();
+    suicide(DX);
   }
 
-  function migrateBlockjack() only(ADMIN_CONTRACT) {
-    stopBlockjack();
-
-    if (currentBankroll > initialBankroll) { // there are profits, share them
-      if (!ADMIN_CONTRACT.call.value(currentBankroll - initialBankroll)()) throw;
-    }
-    suicide(DX); // send rest to dx
-    //DX will have to refund the non finalized bets that may have been stopped
-  }
-
-  function shareProfits() onlyOwner {
-    if (profitsLockedUntil > now) throw;
-    if (currentBankroll <= initialBankroll) throw; // there are no profits
-
+  uint256 DX_PROFITS = 90;
+  uint256 DEV_PROFITS = 10;
+  uint256 PROFITS_BASE = 100;
+  
+  function shareProfits() onlyOwner{
+    if (currentBankroll <= initialBankroll) return; // there are no profits
     uint256 profit = currentBankroll - initialBankroll;
-    if (!ADMIN_CONTRACT.call.value(profit)()) throw;
-    currentBankroll -= profit;
-
-    bankrollLockedUntil = now + BANKROLL_LOCK_PERIOD;
-    profitsLockedUntil = bankrollLockedUntil + BANKROLL_LOCK_PERIOD;
+    uint256 notSent;
+    if (!DX.send(profit * DX_PROFITS / PROFITS_BASE)) {
+      notSent = profit * DX_PROFITS / PROFITS_BASE;
+    }
+    if (!DEV.send(profit * DEV_PROFITS / PROFITS_BASE)){
+      notSent = profit * DEV_PROFITS / PROFITS_BASE;
+    }
+    currentBankroll -= profit - notSent;
   }
+
+
+  
 }
