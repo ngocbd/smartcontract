@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WinnerTakesAll at 0x77ce1c41db1baf27614a03b64c0b4995535d9179
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WinnerTakesAll at 0xf2b527b2488795f9c233cdcf9cd3b06a50073141
 */
 pragma solidity ^0.4.4;
 
 contract WinnerTakesAll { 
     uint8 public currentPlayers;
     uint8 constant public requiredPlayers = 6;
-    uint256 constant public requiredBet = 0.005*1e18; // Only acceptable bet is 0.005 ether
+    uint256 constant public requiredBet = 0.1*1e18;
     address[requiredPlayers] public players;
     event roundEvent(
         address[requiredPlayers] roundPlayers,
