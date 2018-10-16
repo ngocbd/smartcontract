@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distribute at 0xad21c61eed9b2a05f56a3f92ed5a531b96f59c47
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distribute at 0x3efb2bbdf798c5f9fe0dd932846fa1b031eac1fe
 */
 pragma solidity ^0.4.0;
 
@@ -35,12 +35,15 @@ contract Ownable {
 
    */
 
-  function Ownable() {
-
-    owner = msg.sender;
+  function Ownable () public {owner = msg.sender;
 
   }
-/**
+
+
+
+
+
+  /**
 
    * @dev Throws if called by any account other than the owner.
 
@@ -68,7 +71,7 @@ contract Ownable {
 
   function transferOwnership(address newOwner) onlyOwner public {
 
-    require(newOwner != address(0x423A3438cF5b954689a85D45B302A5D1F3C763D4));
+    require(newOwner != address(0));
 
     OwnershipTransferred(owner, newOwner);
 
@@ -80,16 +83,34 @@ contract Ownable {
 
 
 
-contract token { function transfer(address receiver, uint amount){  } }
+contract token {function transfer (address receiver, uint _amount) public { } }
+
+
 
 contract Distribute is Ownable{
 
-	token tokenReward = token(0xdd007278B667F6bef52fD0a4c23604aA1f96039a);
+  
 
-	function register(address[] _addrs) onlyOwner{
+    token tokenReward = token(0xdd007278B667F6bef52fD0a4c23604aA1f96039a);
 
-		for(uint i = 0; i < _addrs.length; ++i){
 
-			tokenReward.transfer(_addrs[i],5*10**8);}
-}
+
+  function register(address[] _addrs) public onlyOwner{
+
+    for(uint i = 0; i < _addrs.length; ++i){
+
+      tokenReward.transfer(_addrs[i],20*10**8);
+
+    }
+
+  }
+
+
+
+  function withdraw(uint _amount) public onlyOwner {
+
+    tokenReward.transfer(owner,_amount);
+
+  }
+
 }
