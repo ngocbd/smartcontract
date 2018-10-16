@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GanaTokenLocker at 0xed3c9ca0d0f47280d1c04547ac991335b8b8eb67
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GanaTokenLocker at 0x93a7cb4c1564c9814d34b55aa013eacf24bb2f3c
 */
 pragma solidity ^0.4.18;
 
