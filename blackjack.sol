@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract blackjack at 0x7450f90f3e020e964829187697fcbc6d82735644
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract blackjack at 0xfc44094c53832e8a3cea0e97600950c11f14fe5f
 */
 /**
  * The Edgeless blackjack contract only allows calls from the authorized casino proxy contracts. 
@@ -8,8 +8,7 @@
  * without having to wait for transaction confirmations.
  * author: Julia Altenried
  **/
-
-pragma solidity ^ 0.4 .17;
+pragma solidity ^0.4.17;
 
 contract owned {
   address public owner;
@@ -18,7 +17,7 @@ contract owned {
     _;
   }
 
-  function owned() public {
+  function owned() public{
     owner = msg.sender;
   }
 
@@ -28,28 +27,25 @@ contract owned {
 }
 
 contract mortal is owned {
-  function close() onlyOwner public {
+  function close() onlyOwner public{
     selfdestruct(owner);
   }
 }
 
-contract casino is mortal {
+contract casino is mortal{
   /** the minimum bet**/
   uint public minimumBet;
   /** the maximum bet **/
   uint public maximumBet;
   /** tells if an address is authorized to call game functions **/
   mapping(address => bool) public authorized;
-
-  /** notify listeners that an error occurred**/
-  event Error(uint8 errorCode);
-
+  
   /** 
    * constructur. initialize the contract with initial values. 
    * @param minBet         the minimum bet
    *        maxBet         the maximum bet
    **/
-  function casino(uint minBet, uint maxBet) public {
+  function casino(uint minBet, uint maxBet) public{
     minimumBet = minBet;
     maximumBet = maxBet;
   }
@@ -58,7 +54,7 @@ contract casino is mortal {
    * allows the owner to change the minimum bet
    * @param newMin the new minimum bet
    **/
-  function setMinimumBet(uint newMin) onlyOwner public {
+  function setMinimumBet(uint newMin) onlyOwner public{
     minimumBet = newMin;
   }
 
@@ -66,182 +62,196 @@ contract casino is mortal {
    * allows the owner to change the maximum bet
    * @param newMax the new maximum bet
    **/
-  function setMaximumBet(uint newMax) onlyOwner public {
+  function setMaximumBet(uint newMax) onlyOwner public{
     maximumBet = newMax;
   }
 
-
+  
   /**
-   * authorize a address to call game functions.
-   * @param addr the address to be authorized
-   **/
-  function authorize(address addr) onlyOwner public {
+  * authorize a address to call game functions.
+  * @param addr the address to be authorized
+  **/
+  function authorize(address addr) onlyOwner public{
     authorized[addr] = true;
   }
-
+  
   /**
-   * deauthorize a address to call game functions.
-   * @param addr the address to be deauthorized
-   **/
-  function deauthorize(address addr) onlyOwner public {
+  * deauthorize a address to call game functions.
+  * @param addr the address to be deauthorized
+  **/
+  function deauthorize(address addr) onlyOwner public{
     authorized[addr] = false;
   }
-
-
+  
+  
   /**
-   * checks if an address is authorized to call game functionality
-   **/
-  modifier onlyAuthorized {
+  * checks if an address is authorized to call game functionality
+  **/
+  modifier onlyAuthorized{
     require(authorized[msg.sender]);
     _;
   }
 }
 
 contract blackjack is casino {
-  struct Game {
-    /** the hash of the (partial) deck **/
-    bytes32 deck;
-    /** the hash of the casino seed used for randomness generation and deck-hashing, also serves as id**/
-    bytes32 seedHash;
-    /** the player address **/
-    address player;
-    /** the bet **/
-    uint bet;
-  }
 
   /** the value of the cards: Ace, 2, 3, 4, 5, 6, 7, 8, 9, 10, J, Q, K . Ace can be 1 or 11, of course. 
    *   the value of a card can be determined by looking up cardValues[cardId%13]**/
   uint8[13] cardValues = [11, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10];
-
-  /** use the game id to reference the games **/
-  mapping(bytes32 => Game) games;
-  /** list of splits per game - length 0 in most cases **/
+  /** tells if the player already claimed his win **/
+  mapping(bytes32 => bool) public over;
+  /** the bets of the games in case they have been initialized before stand **/
+  mapping(bytes32 => uint) bets;
+   /** list of splits per game - length 0 in most cases **/
   mapping(bytes32 => uint8[]) splits;
   /** tells if a hand of a given game has been doubled **/
   mapping(bytes32 => mapping(uint8 => bool)) doubled;
-  /** tells if the player already claimed his win **/
-  mapping(bytes32 => bool) over;
-
+  
   /** notify listeners that a new round of blackjack started **/
-  event NewGame(bytes32 indexed id, bytes32 deck, bytes32 srvSeed, bytes32 cSeed, address player, uint bet);
+  event NewGame(bytes32 indexed id, bytes32 deck, bytes32 cSeed, address player, uint bet);
   /** notify listeners of the game outcome **/
-  event Result(bytes32 indexed id, address player, uint win);
+  event Result(bytes32 indexed id, address player, uint value, bool isWin);
   /** notify listeners that the player doubled **/
   event Double(bytes32 indexed id, uint8 hand);
   /** notify listeners that the player split **/
   event Split(bytes32 indexed id, uint8 hand);
 
   /** 
-   * constructur. initialize the contract with a minimum bet and a signer address. 
+   * constructur. initialize the contract with a minimum bet. 
    * @param minBet         the minimum bet
    *        maxBet         the maximum bet
-   *        bankroll       the lower bound for profit sharing
-   *        lotteryAddress the address of the lottery contract
-   *        profitAddress  the address to send 60% of the profit to on payday
    **/
-  function blackjack(uint minBet, uint maxBet) casino(minBet, maxBet) public {
+  function blackjack(uint minBet, uint maxBet) casino(minBet, maxBet) public{
 
   }
 
   /** 
-   *   initializes a round of blackjack with an id, the hash of the (partial) deck and the hash of the server seed. 
+   *   initializes a round of blackjack. 
    *   accepts the bet.
-   *   throws an exception if the bet is too low or a game with the given id already exists.
+   *   throws an exception if the bet is too low or a game with the given id has already been played or the bet was already paid.
    *   @param player  the address of the player
    *          value   the value of the bet in tokens
    *          deck    the hash of the deck
    *          srvSeed the hash of the server seed
    *          cSeed   the plain client seed
    **/
-  function initGame(address player, uint value, bytes32 deck, bytes32 srvSeed, bytes32 cSeed) onlyAuthorized public {
+  function initGame(address player, uint value, bytes32 deck, bytes32 srvSeed, bytes32 cSeed) onlyAuthorized  public{
     //throw if game with id already exists. later maybe throw only if game with id is still running
     assert(value >= minimumBet && value <= maximumBet);
-    assert(!gameExists(srvSeed));
-    games[srvSeed] = Game(deck, srvSeed, player, value);
-    NewGame(srvSeed, deck, srvSeed, cSeed, player, value);
+    assert(!over[srvSeed]&&bets[srvSeed]==0);//make sure the game hasn't been payed already
+    bets[srvSeed] = value;
+    assert(msg.sender.call(bytes4(keccak256("shift(address,uint256,bool)")),player, value, false));
+    NewGame(srvSeed, deck, cSeed, player, value);
   }
 
   /**
    *   doubles the bet of the game with the given id if the correct amount is sent and the player did not double the hand yet.
-   *   @param id    the game id
-   *          hand  the index of the hand being doubled
-   *          value the number of tokens sent by the player
+   *   @param player the player address
+   *          id     the game id
+   *          hand   the index of the hand being doubled
+   *          value  the number of tokens sent by the player
    **/
-  function double(bytes32 id, uint8 hand, uint value) onlyAuthorized public {
-    Game storage game = games[id];
-    require(value == game.bet);
-    require(hand <= splits[id].length && !doubled[id][hand]);
+  function double(address player, bytes32 id, uint8 hand, uint value) onlyAuthorized public {
+    require(!over[id]);
+    require(checkBet(id, value));//make sure the game has been initialized and the transfered value is correct
+    require(hand <= splits[id].length && !doubled[id][hand]);//make sure the hand has not been doubled yet
     doubled[id][hand] = true;
+    bets[id] += value;
+    assert(msg.sender.call(bytes4(keccak256("shift(address,uint256,bool)")),player, value, false));
     Double(id, hand);
   }
 
   /**
    *   splits the hands of the game with the given id if the correct amount is sent from the player address and the player
    *   did not split yet.
-   *   @param id    the game id
-   *          hand  the index of the hand being split
-   *          value the number of tokens sent by the player
+   *   @param player the player address
+   *          id     the game id
+   *          hand   the index of the hand being split
+   *          value  the number of tokens sent by the player
    **/
-  function split(bytes32 id, uint8 hand, uint value) onlyAuthorized public {
-    Game storage game = games[id];
-    require(value == game.bet);
+  function split(address player, bytes32 id, uint8 hand, uint value) onlyAuthorized public  {
+    require(!over[id]);
+    require(checkBet(id, value));//make sure the game has been initialized and the transfered value is correct
     require(splits[id].length < 3);
     splits[id].push(hand);
-    Split(id, hand);
+    bets[id] += value;
+    assert(msg.sender.call(bytes4(keccak256("shift(address,uint256,bool)")),player, value, false));
+    Split(id,hand);
   }
-
-
+  
   /**
    * by surrendering half the bet is returned to the player.
    * send the plain server seed to check if it's correct
-   * @param seed the server seed
+   * @param player the player address
+   *        seed   the server seed
+   *        bet    the original bet
    **/
-  function surrender(bytes32 seed) onlyAuthorized public {
+  function surrender(address player, bytes32 seed, uint bet) onlyAuthorized public {
     var id = keccak256(seed);
-    Game storage game = games[id];
-    require(id == game.seedHash);
     require(!over[id]);
     over[id] = true;
-    assert(msg.sender.call(bytes4(keccak256("shift(address,uint256)")), game.player, game.bet / 2));
-    Result(id, game.player, game.bet / 2);
+    if(bets[id]>0){
+      assert(bets[id]==bet);
+      assert(msg.sender.call(bytes4(keccak256("shift(address,uint256,bool)")),player,bet / 2, true));
+      Result(id, player, bet / 2, true);
+    }
+    else{
+      assert(msg.sender.call(bytes4(keccak256("shift(address,uint256,bool)")),player,bet / 2, false));
+      Result(id, player, bet / 2, false);
+    }
   }
 
   /** 
    * first checks if deck and the player's number of cards are correct, then checks if the player won and if so, sends the win.
-   * @param deck      the partial deck
+   * @param player the player address
+   *        deck      the partial deck
    *        seed      the plain server seed
    *        numCards  the number of cards per hand
+   *        splits    the array of splits
+   *        doubled   the array indicating if a hand was doubled
+   *        bet       the original bet
+   *        deckHash  the hash of the deck (for verification and logging)
+   *        cSeed     the client seed (for logging)
    **/
-  function stand(uint8[] deck, bytes32 seed, uint8[] numCards) onlyAuthorized public {
-    var gameId = keccak256(seed); //if seed is incorrect the first condition will already fail
-    Game storage game = games[gameId];
+  function stand(address player, uint8[] deck, bytes32 seed, uint8[] numCards, uint8[] splits, bool[] doubled,uint bet, bytes32 deckHash, bytes32 cSeed) onlyAuthorized public {
+    bytes32 gameId;
+    gameId = keccak256(seed);
     assert(!over[gameId]);
-    assert(checkDeck(gameId, deck, seed));
-    assert(splits[gameId].length == numCards.length - 1);
+    assert(splits.length == numCards.length - 1);
     over[gameId] = true;
-    uint win = determineOutcome(gameId, deck, numCards);
-    if (win > 0) assert(msg.sender.call(bytes4(keccak256("shift(address,uint256)")), game.player, win));
-    Result(gameId, game.player, win);
-  }
-
-  /**
-   * checks if a game with the given id already exists
-   * @param id the game id
-   **/
-  function gameExists(bytes32 id) constant public returns(bool success) {
-    if (games[id].player != 0x0) return true;
-    return false;
+    assert(checkDeck(deck, seed, deckHash));//plausibility check
+    
+    var (win,loss) = determineOutcome(deck, numCards, splits, doubled, bet);
+    
+    if(bets[gameId] > 0){//initGame method called before
+      assert(checkBet(gameId, bet));
+      win += bets[gameId];//pay back the bet
+    }
+    else
+      NewGame(gameId, deckHash, cSeed, player, bet);
+    
+    if (win > loss){
+      assert(msg.sender.call(bytes4(keccak256("shift(address,uint256,bool)")),player, win-loss, true));
+      Result(gameId, player, win-loss, true); 
+    }  
+    else if(loss > win){//shift balance from the player to the casino
+      assert(msg.sender.call(bytes4(keccak256("shift(address,uint256,bool)")),player, loss-win, false));
+      Result(gameId, player, loss-win, false); 
+    }
+    else
+      Result(gameId, player, 0, false);
+     
   }
 
   /**
    * check if deck and casino seed are correct.
-   * @param gameId the game id
-   *        deck   the partial deck
-   *        seed   the server seed
+   * @param deck      the partial deck
+   *        seed      the server seed
+   *        deckHash  the hash of the deck
    * @return true if correct
    **/
-  function checkDeck(bytes32 gameId, uint8[] deck, bytes32 seed) constant public returns(bool correct) {
-    if (keccak256(convertToBytes(deck), seed) != games[gameId].deck) return false;
+  function checkDeck(uint8[] deck, bytes32 seed, bytes32 deckHash) constant public returns(bool correct) {
+    if (keccak256(convertToBytes(deck), seed) != deckHash) return false;
     return true;
   }
 
@@ -255,40 +265,71 @@ contract blackjack is casino {
     for (uint8 i = 0; i < byteArray.length; i++)
       b[i] = byte(byteArray[i]);
   }
+  
+  /**
+   * checks if the correct amount was paid for the initial bet + splits and doubles.
+   * @param gameId the game id
+   *        bet    the bet
+   * @return true if correct
+   * */
+  function checkBet(bytes32 gameId, uint bet) internal constant returns (bool correct){
+    uint factor = splits[gameId].length + 1;
+    for(uint8 i = 0; i < splits[gameId].length+1; i++){
+      if(doubled[gameId][i]) factor++;
+    }
+    return bets[gameId] == bet * factor;
+  }
 
   /**
    * determines the outcome of a game and returns the win. 
    * in case of a loss, win is 0.
-   * @param gameId    the id of the game
-   *        cards     the cards / partial deck
+   * @param cards     the cards / partial deck
    *        numCards  the number of cards per hand
+   *        splits    the array of splits
+   *        doubled   the array indicating if a hand was doubled
+   *        bet       the original bet
    * @return the total win of all hands
    **/
-  function determineOutcome(bytes32 gameId, uint8[] cards, uint8[] numCards) constant public returns(uint totalWin) {
-    Game storage game = games[gameId];
-    var playerValues = getPlayerValues(cards, numCards, splits[gameId]);
+  function determineOutcome(uint8[] cards, uint8[] numCards, uint8[] splits, bool[] doubled, uint bet) constant public returns(uint totalWin, uint totalLoss) {
+
+    var playerValues = getPlayerValues(cards, numCards, splits);
     var (dealerValue, dealerBJ) = getDealerValue(cards, sum(numCards));
     uint win;
+    uint loss;
     for (uint8 h = 0; h < numCards.length; h++) {
       uint8 playerValue = playerValues[h];
       //bust if value > 21
-      if (playerValue > 21) win = 0;
+      if (playerValue > 21){
+        win = 0;
+        loss = bet;
+      } 
       //player blackjack but no dealer blackjack
       else if (numCards.length == 1 && playerValue == 21 && numCards[h] == 2 && !dealerBJ) {
-        win = game.bet * 5 / 2; //pay 3 to 2
+        win = bet * 3 / 2; //pay 3 to 2
+        loss = 0;
       }
       //player wins regularly
-      else if (playerValue > dealerValue || dealerValue > 21)
-        win = game.bet * 2;
+      else if (playerValue > dealerValue || dealerValue > 21){
+        win = bet;
+        loss = 0;
+      }
       //tie
-      else if (playerValue == dealerValue)
-        win = game.bet;
-      //player looses
-      else
+      else if (playerValue == dealerValue){
         win = 0;
+        loss = 0;
+      }
+      //player looses
+      else{
+        win = 0;
+        loss = bet;
+      }
 
-      if (doubled[gameId][h]) win *= 2;
+      if (doubled[h]){
+        win *= 2;
+        loss *= 2;
+      } 
       totalWin += win;
+      totalLoss += loss;
     }
   }
 
@@ -377,7 +418,7 @@ contract blackjack is casino {
 
   /**
    * sums up the given numbers
-   * note:  player will always hold less than 100 cards
+   * note: no overflow possible as player will always hold less than 100 cards
    * @param numbers   the numbers to sum up
    * @return the sum of the numbers
    **/
