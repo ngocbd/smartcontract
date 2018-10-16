@@ -1,178 +1,129 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GreenMed at 0xeca0415f309789ade195a51988d760b6d51f5de9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GreenMed at 0xb444208cB0516C150178fCf9a52604BC04A1aCEa
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.18;
 
-//----------------------------------------------------------------------------------------------
-// GreenMed token contract
-// The MIT Licence.
-//----------------------------------------------------------------------------------------------
-   
-// ERC Token Standard #20 Interface
-// https://github.com/ethereum/EIPs/issues/20
- contract ERC20Interface {
-     // Get the total token supply
-     function totalSupply() constant returns (uint256 totalSupply);
- 
-     // Get the account balance of another account with address _owner
-     function balanceOf(address _owner) constant returns (uint256 balance);
-  
-     // Send _value amount of tokens to address _to
-     function transfer(address _to, uint256 _value) returns (bool success);
-  
-     // Send _value amount of tokens from address _from to address _to
-     function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
-  
-     // Allow _spender to withdraw from your account, multiple times, up to the _value amount.
-     // If this function is called again it overwrites the current allowance with _value.
-     // this function is required for some DEX functionality
-     function approve(address _spender, uint256 _value) returns (bool success);
-  
-     // Returns the amount which _spender is still allowed to withdraw from _owner
-     function allowance(address _owner, address _spender) constant returns (uint256 remaining);
-  
-     // Triggered when tokens are transferred.
-     event Transfer(address indexed _from, address indexed _to, uint256 _value);
-  
-     // Triggered whenever approve(address _spender, uint256 _value) is called.
-     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
- }
 
- contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
-  
- contract GreenMed is ERC20Interface {
-     string public constant symbol = "GRMD";
-     string public constant name = "GreenMed";
-     uint8 public constant decimals = 18;
-     uint256 _totalSupply = 100000000000000000000000000;
-     
-     // Owner of this contract
-     address public owner;
+contract owned {
+    address public owner;
+    address public candidate;
 
-    uint256 public sellPrice;
-    uint256 public buyPrice;
-
-    mapping (address => bool) public frozenAccount;
-
-    /* This generates a public event on the blockchain that will notify clients */
-    event FrozenFunds(address target, bool frozen);
-  
-     // Balances for each account
-     mapping(address => uint256) balances;
-  
-     // Owner of account approves the transfer of an amount to another account
-     mapping(address => mapping (address => uint256)) allowed;
-  
-     // Functions with this modifier can only be executed by the owner
-     modifier onlyOwner() {
-         if (msg.sender != owner) {
-             throw;
-         }
-         _;
-     }
-  
-     // Constructor
-     function GreenMed() {
-         owner = msg.sender;
-         balances[owner] = _totalSupply;
-     }
-  
-     function totalSupply() constant returns (uint256 totalSupply) {
-         totalSupply = _totalSupply;
-     }
-  
-     // What is the balance of a particular account?
-     function balanceOf(address _owner) constant returns (uint256 balance) {
-         return balances[_owner];
-     }
-  
-     // Transfer the balance from owner's account to another account
-     function transfer(address _to, uint256 _amount) returns (bool success) {
-         if (balances[msg.sender] >= _amount 
-             && _amount > 0
-             && balances[_to] + _amount > balances[_to]) {
-             balances[msg.sender] -= _amount;
-             balances[_to] += _amount;
-             Transfer(msg.sender, _to, _amount);
-             return true;
-         } else {
-             return false;
-         }
-     }
-  
-     // Send _value amount of tokens from address _from to address _to
-     // The transferFrom method is used for a withdraw workflow, allowing contracts to send
-     // tokens on your behalf, for example to "deposit" to a contract address and/or to charge
-     // fees in sub-currencies; the command should fail unless the _from account has
-     // deliberately authorized the sender of the message via some mechanism; we propose
-     // these standardized APIs for approval:
-     function transferFrom(
-         address _from,
-         address _to,
-         uint256 _amount
-     ) returns (bool success) {
-         if (balances[_from] >= _amount
-             && allowed[_from][msg.sender] >= _amount
-             && _amount > 0
-             && balances[_to] + _amount > balances[_to]) {
-             balances[_from] -= _amount;
-             allowed[_from][msg.sender] -= _amount;
-             balances[_to] += _amount;
-             Transfer(_from, _to, _amount);
-             return true;
-         } else {
-             return false;
-         }
-     }
-  
-     // Allow _spender to withdraw from your account, multiple times, up to the _value amount.
-     // If this function is called again it overwrites the current allowance with _value.
-     function approve(address _spender, uint256 _amount) returns (bool success) {
-         allowed[msg.sender][_spender] = _amount;
-         Approval(msg.sender, _spender, _amount);
-         return true;
-     }
-
-     /* Approve and then communicate the approved contract in a single tx */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
-        returns (bool success) {    
-        tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
-        }
+    function owned() payable internal {
+        owner = msg.sender;
     }
 
-  
-     function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-         return allowed[_owner][_spender];
-     }
-     function freezeAccount(address target, bool freeze) onlyOwner {
+    modifier onlyOwner {
+        require(owner == msg.sender);
+        _;
+    }
+
+    function changeOwner(address _owner) onlyOwner public {
+        candidate = _owner;
+    }
+
+    function confirmOwner() public {
+        require(candidate != address(0));
+        require(candidate == msg.sender);
+        owner = candidate;
+        delete candidate;
+    }
+}
+
+
+library SafeMath {
+    function sub(uint256 a, uint256 b) pure internal returns (uint256) {
+        assert(a >= b);
+        return a - b;
+    }
+
+    function add(uint256 a, uint256 b) pure internal returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a && c >= b);
+        return c;
+    }
+}
+
+
+contract ERC20 {
+    uint256 public totalSupply;
+    function balanceOf(address who) public constant returns (uint256 value);
+    function allowance(address owner, address spender) public constant returns (uint256 _allowance);
+    function transfer(address to, uint256 value) public returns (bool success);
+    function transferFrom(address from, address to, uint256 value) public returns (bool success);
+    function approve(address spender, uint256 value) public returns (bool success);
+
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+
+contract GreenMed is ERC20, owned {
+    using SafeMath for uint256;
+    string public name = "GreenMed";
+    string public symbol = "GRMD";
+    uint8 public decimals = 18;
+    uint256 public totalSupply;
+
+    mapping (address => uint256) private balances;
+    mapping (address => mapping (address => uint256)) private allowed;
+    mapping (address => bool) public frozenAccount;
+
+    event FrozenFunds(address target, bool frozen);
+    event Burn(address indexed from, uint256 value);
+
+    function balanceOf(address _who) public constant returns (uint256) {
+        return balances[_who];
+    }
+
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+        return allowed[_owner][_spender];
+    }
+
+    function GreenMed() public {
+        totalSupply = 100000000 * 1 ether;
+        balances[msg.sender] = totalSupply;
+        Transfer(0, msg.sender, totalSupply);
+    }
+
+    function transfer(address _to, uint256 _value) public returns (bool success) {
+        require(_to != address(0));
+        require(balances[msg.sender] >= _value);
+        require(!frozenAccount[msg.sender] && !frozenAccount[_to]);
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        Transfer(msg.sender, _to, _value);
+        return true;
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        require(_to != address(0));
+        require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
+        require(!frozenAccount[_from] && !frozenAccount[_to]);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        Transfer(_from, _to, _value);
+        return true;
+    }
+
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        require(_spender != address(0));
+        require(balances[msg.sender] >= _value);
+        require(!frozenAccount[_spender] && !frozenAccount[msg.sender]);
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function freezeAccount(address target, bool freeze) onlyOwner public {
         frozenAccount[target] = freeze;
         FrozenFunds(target, freeze);
     }
 
-    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner {
-        sellPrice = newSellPrice;
-        buyPrice = newBuyPrice;
+    function burn(uint256 _value) onlyOwner public returns (bool success) {
+        balances[this] = balances[this].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        Burn(this, _value);
+        return true;
     }
-
-    function buy() payable {
-        uint amount = msg.value / buyPrice;                // calculates the amount
-        if (balances[this] < amount) throw;               // checks if it has enough to sell
-        balances[msg.sender] += amount;                   // adds the amount to buyer's balance
-        balances[this] -= amount;                         // subtracts amount from seller's balance
-        Transfer(this, msg.sender, amount);                // execute an event reflecting the change
-    }
-
-    function sell(uint256 amount) {
-        if (balances[msg.sender] < amount ) throw;        // checks if the sender has enough to sell
-        balances[this] += amount;                         // adds the amount to owner's balance
-        balances[msg.sender] -= amount;                   // subtracts the amount from seller's balance
-        if (!msg.sender.send(amount * sellPrice)) {        // sends ether to the seller. It's important
-            throw;                                         // to do this last to avoid recursion attacks
-        } else {
-            Transfer(msg.sender, this, amount);            // executes an event reflecting on the change
-        }               
-    }
- }
+}
