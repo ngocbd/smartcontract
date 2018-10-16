@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ManagedToken at 0xd3b964032fdc3941c2e62e32d6e6012500fbe304
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ManagedToken at 0x3034c8171ebb1bd3211183d6e1249e19ab7fcd09
 */
 pragma solidity ^0.4.18;
 
@@ -28,6 +28,7 @@ library SafeMath {
 }
 
 interface TokenUpgraderInterface{
+    function hasUpgraded(address _for) public view returns (bool alreadyUpgraded);
     function upgradeFor(address _for, uint256 _value) public returns (bool success);
     function upgradeFrom(address _by, address _for, uint256 _value) public returns (bool success);
 }
@@ -37,7 +38,6 @@ contract ManagedToken {
 
     address public owner = msg.sender;
     address public crowdsaleContractAddress;
-    address public crowdsaleManager;
 
     string public name;
     string public symbol;
@@ -55,10 +55,6 @@ contract ManagedToken {
         _;
     }
 
-    modifier unlockedOrByManager() {
-        require(!locked || (crowdsaleManager != address(0) && msg.sender == crowdsaleManager) || (msg.sender == owner));
-        _;
-    }
     // Ownership
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
@@ -97,7 +93,7 @@ contract ManagedToken {
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
-    function transfer(address _to, uint256 _value) unlockedOrByManager public returns (bool) {
+    function transfer(address _to, uint256 _value) unlocked public returns (bool) {
         require(_to != address(0));
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
@@ -182,11 +178,6 @@ contract ManagedToken {
         return true;
     }
 
-    function setManager(address _newManager) onlyOwner public returns (bool success) {
-        crowdsaleManager = _newManager;
-        return true;
-    }
-
     function mint(address _for, uint256 _amount) onlyCrowdsale public returns (bool success) {
         require(mintingAllowed);
         balances[_for] = balances[_for].add(_amount);
@@ -242,7 +233,7 @@ contract ManagedToken {
         return true;
     }
 
-    function () payable external {
+    function () external {
         if (upgradable) {
             assert(upgrade());
             return;
