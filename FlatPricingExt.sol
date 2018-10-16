@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlatPricingExt at 0xc88b5279ECD8d4b1C973BD4531Fe75a8cC635ea3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlatPricingExt at 0xB9A4d5F5F0349F4148DCdb45765de633D6AAb291
 */
-// Created using ICO Wizard https://github.com/oraclesorg/ico-wizard by Oracles Network 
+// Official Crowdsale Ethconnect
 pragma solidity ^0.4.11;
 
 
