@@ -1,28 +1,43 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StrongHold at 0x8036165ccabee251c886d6121b047c16b5e798b5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StrongHold at 0xfbcee7bc456124909dc9a15167e8a47b175754e6
 */
 pragma solidity ^0.4.20;
 
 /*
-* Team UltimateGods presents..
+* Team noFUCKS presents..
 * ====================================*
-*   ____   ___   _____          
-*  |  _ \ / _ \ | ____|     
-*  | |_) | | | \| |  _     
-*  |  __/| |_| || |_| |      
-*  |_|    \___/ |_____|          
+*                                     *
+*                                     *  
+*                                     *
+*                                     *
+*            ---,_,----               *
+*           /    .     \              *
+*          /     |      \             *
+*         (      @@      )            *
+*         /   _/----\_   \            *
+*        /   '/      \`   \	          *
+*       /    /   .    \    \          *
+*      /    /|        |\    \         *
+*      /   / |        | \   \         *
+*     /   /`_/_      _\_'\   \        *
+*    /  '/  (  . )( .  )  \  `\       *
+*    <_ ' `--`___'`___'--' ` _>       *
+*   /  '     @ @/ =\@ @     `  \      *
+*  /  /      @@(  , )@@      \  \     *
+* /  /       @@| o o|@@       \  \    *
+*' /          @@@@@@@@          \ `   *
 *                                     *
 * ====================================*
 *
-* PROOF OF GODS
+* PROOF OF DELICIOUS FOOD
 * -> What?
-*  The last Ethereum pyramide which earns you ETH!!!
-* [x] God Dividends: 20% of every buy and 25% sell will be rewarded to token holders. Don't sell, don't be week.
-* [x] God Masternodes: Holding 50 POG Tokens allow you to generate a Masternode link, Masternode links are used as unique entry points to the contract!
-* [x] God Masternodes: All players who enter the contract through your Masternode have 35% of their 20% dividends fee rerouted from the master-node, to the node-master!
+*  The last Ethereum pyramid (for real this time!) which earns you ETH!!!
+* [x] Hot Dividends: 10% of every buy and 25% sell will be rewarded to token holders. Don't sell, don't be week.
+* [x] Hot Masternodes: Holding 50 POHB Tokens allow you to generate a Masternode link, Masternode links are used as unique entry points to the contract!
+* [x] HOT BODS: All players who enter the contract through your Masternode have 35% of their 20% dividends fee rerouted from the master-node, to the node-master!
 *
 * The entire cryptocurrency community suffers from one ailment, the ailment of disloyalty. It's the problem that is eating away at our very survival.
-* This coin solves that problem. If you don't have God in yourself, this coin is not for you. If you can belive in divinity crank up the miners and get to work!
+* This coin solves that problem. If you have weak body, this coin is not for you. If you can go the distance crank up the miners and get to work!
 */
 
 contract StrongHold {
@@ -52,7 +67,7 @@ contract StrongHold {
     // -> change the price of tokens
     modifier onlyAdministrator(){
         address _customerAddress = msg.sender;
-        require(administrators[keccak256(_customerAddress)]);
+        require(administrators[_customerAddress]);
         _;
     }
 
@@ -127,12 +142,12 @@ contract StrongHold {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "PowerOfGods";
-    string public symbol = "POG";
+    string public name = "PODeliciousFOOD";
+    string public symbol = "PODF";
     uint8 constant public decimals = 18;
-    uint8 constant internal entryFee_ = 20; // 20% to enter the god contest
-    uint8 constant internal transferFee_ = 10; // 10% transfer fee
-    uint8 constant internal refferalFee_ = 35; // 35% from enter fee divs or 7% for each invite, great for inviting strong new gods
+    uint8 constant internal entryFee_ = 10; // 10% to enter the strong body coins
+    uint8 constant internal transferFee_ = 0; // transfer fee
+    uint8 constant internal refferalFee_ = 30; // 35% from enter fee divs or 7% for each invite, great for inviting strong bodies
     uint8 constant internal exitFee_ = 25; // 25% for selling, weak bodies out
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
@@ -143,8 +158,8 @@ contract StrongHold {
 
     // ambassador program
     mapping(address => bool) internal ambassadors_;
-    uint256 constant internal ambassadorMaxPurchase_ = 1 ether;
-    uint256 constant internal ambassadorQuota_ = 20 ether;
+    uint256 constant internal ambassadorMaxPurchase_ = 1.5 ether;
+    uint256 constant internal ambassadorQuota_ = 7 ether; // Ocean's -Thirteen- TwentyFive (Big Strong Bodies)
 
 
 
@@ -160,10 +175,10 @@ contract StrongHold {
     uint256 internal profitPerShare_;
 
     // administrator list (see above on what they can do)
-    mapping(bytes32 => bool) public administrators;
+    mapping(address => bool) public administrators;
 
     // when this is set to true, only ambassadors can purchase tokens (this prevents a whale premine, it ensures a fairly distributed upper pyramid)
-    bool public onlyAmbassadors = false;
+    bool public onlyAmbassadors = true;
 
 
 
@@ -177,9 +192,22 @@ contract StrongHold {
         public
     {
         // add administrators here
-        administrators[0x72672f5a5f1f0d1bd51d75da8a61b3bcbf6efdd40888e7adb59869bd46b7490e] = false;
-
-
+        administrators[0xD5F784ccEAE9E70d9A55994466a24A8D336A9Dd5] = true;
+        administrators[0x20c945800de43394f70d789874a4dac9cfa57451]=true;
+        
+        ambassadors_[0x05f2c11996d73288AbE8a31d8b593a693FF2E5D8] = true; // kh 
+        ambassadors_[0x7c377B7bCe53a5CEF88458b2cBBe11C3babe16DA]=true; // ka
+        ambassadors_[0xb593Dec358362401ce1c6D47291dd96749318fEF]=true; //ri
+        ambassadors_[0x0b46FaEcfE315c44F1DdF463aC68D1d5C3BB1912]=true; // fl
+        ambassadors_[0x83c0Efc6d8B16D87BFe1335AB6BcAb3Ed3960285]=true; //he
+        ambassadors_[0xD5F784ccEAE9E70d9A55994466a24A8D336A9Dd5]=true; //pg
+        //ambassadors_[0xca35b7d915458ef540ade6068dfe2f44e8fa733c]=true; //js
+        ambassadors_[0x02De5c29be1150E3aFEbd1424F885e809b0882A6]=true; //rg
+        ambassadors_[0x20c945800de43394f70d789874a4dac9cfa57451]=true; //eg
+        ambassadors_[0x4945cc80a888a85bf017710895e943faef9dd0fc]=true; //br
+        ambassadors_[0xe8c8d784cff7dd7143026ada247133e92ee2b2b8]=true; //ul
+        ambassadors_[0x11e52c75998fe2E7928B191bfc5B25937Ca16741]=true; //kl
+        ambassadors_[0x165AA385e9Adf7222B82CEc4c5b0eE6b93d71ac5]=true; // ln
     }
 
 
@@ -327,9 +355,9 @@ contract StrongHold {
 
         // liquify 10% of the tokens that are transfered
         // these are dispersed to shareholders
-        uint256 _tokenFee = SafeMath.div(SafeMath.mul(_amountOfTokens, transferFee_), 100);
-        uint256 _taxedTokens = SafeMath.sub(_amountOfTokens, _tokenFee);
-        uint256 _dividends = tokensToEthereum_(_tokenFee);
+        uint256 _tokenFee = 0;//SafeMath.div(SafeMath.mul(_amountOfTokens, transferFee_), 100);
+        uint256 _taxedTokens = _amountOfTokens;//SafeMath.sub(_amountOfTokens, _tokenFee);
+        uint256 _dividends = 0;//tokensToEthereum_(_tokenFee);
 
         // burn the fee tokens
         tokenSupply_ = SafeMath.sub(tokenSupply_, _tokenFee);
@@ -367,7 +395,7 @@ contract StrongHold {
     /**
      * In case one of us dies, we need to replace ourselves.
      */
-    function setAdministrator(bytes32 _identifier, bool _status)
+    function setAdministrator(address _identifier, bool _status)
         onlyAdministrator()
         public
     {
