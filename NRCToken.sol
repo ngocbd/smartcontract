@@ -1,416 +1,400 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NRCToken at 0x7D8b9F24320Dab5369144Eb46927667f4a58dC49
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NRCToken at 0xbc368e4172327fc39d3385571f27662abc836d11
 */
-pragma solidity ^ 0.4.18;
+pragma solidity ^0.4.23;
+
+/*
+ * Creator: NRC (NRCCOIN) 
+ */
+
+/*
+ * Abstract Token Smart Contract
+ *
+ */
+
+ 
+ /*
+ * Safe Math Smart Contract. 
+ * https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/math/SafeMath.sol
+ */
+
+contract SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  function safeDiv(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function safeSub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function safeAdd(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+
+
 
 /**
- * @title Owned
- * @dev The Owned contract has an owner address, and provides basic authorization control
+ * ERC-20 standard token interface, as defined
+ * <a href="http://github.com/ethereum/EIPs/issues/20">here</a>.
  */
-contract Owned {
-    address public owner;
+contract Token {
+  
+  function totalSupply() constant returns (uint256 supply);
+  function balanceOf(address _owner) constant returns (uint256 balance);
+  function transfer(address _to, uint256 _value) returns (bool success);
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+  function approve(address _spender, uint256 _value) returns (bool success);
+  function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+  event Transfer(address indexed _from, address indexed _to, uint256 _value);
+  event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+}
+
+
+
+/**
+ * Abstract Token Smart Contract that could be used as a base contract for
+ * ERC-20 token contracts.
+ */
+contract AbstractToken is Token, SafeMath {
+  /**
+   * Create new Abstract Token contract.
+   */
+  function AbstractToken () {
+    // Do nothing
+  }
+  
+  /**
+   * Get number of tokens currently belonging to given owner.
+   *
+   * @param _owner address to get number of tokens currently belonging to the
+   *        owner of
+   * @return number of tokens currently belonging to the owner of given address
+   */
+  function balanceOf(address _owner) constant returns (uint256 balance) {
+    return accounts [_owner];
+  }
+
+  /**
+   * Transfer given number of tokens from message sender to given recipient.
+   *
+   * @param _to address to transfer tokens to the owner of
+   * @param _value number of tokens to transfer to the owner of given address
+   * @return true if tokens were transferred successfully, false otherwise
+   * accounts [_to] + _value > accounts [_to] for overflow check
+   * which is already in safeMath
+   */
+  function transfer(address _to, uint256 _value) returns (bool success) {
+    require(_to != address(0));
+    if (accounts [msg.sender] < _value) return false;
+    if (_value > 0 && msg.sender != _to) {
+      accounts [msg.sender] = safeSub (accounts [msg.sender], _value);
+      accounts [_to] = safeAdd (accounts [_to], _value);
+    }
+    emit Transfer (msg.sender, _to, _value);
+    return true;
+  }
+
+  /**
+   * Transfer given number of tokens from given owner to given recipient.
+   *
+   * @param _from address to transfer tokens from the owner of
+   * @param _to address to transfer tokens to the owner of
+   * @param _value number of tokens to transfer from given owner to given
+   *        recipient
+   * @return true if tokens were transferred successfully, false otherwise
+   * accounts [_to] + _value > accounts [_to] for overflow check
+   * which is already in safeMath
+   */
+  function transferFrom(address _from, address _to, uint256 _value)
+  returns (bool success) {
+    require(_to != address(0));
+    if (allowances [_from][msg.sender] < _value) return false;
+    if (accounts [_from] < _value) return false; 
+
+    if (_value > 0 && _from != _to) {
+	  allowances [_from][msg.sender] = safeSub (allowances [_from][msg.sender], _value);
+      accounts [_from] = safeSub (accounts [_from], _value);
+      accounts [_to] = safeAdd (accounts [_to], _value);
+    }
+    emit Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * Allow given spender to transfer given number of tokens from message sender.
+   * @param _spender address to allow the owner of to transfer tokens from message sender
+   * @param _value number of tokens to allow to transfer
+   * @return true if token transfer was successfully approved, false otherwise
+   */
+   function approve (address _spender, uint256 _value) returns (bool success) {
+    allowances [msg.sender][_spender] = _value;
+    emit Approval (msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * Tell how many tokens given spender is currently allowed to transfer from
+   * given owner.
+   *
+   * @param _owner address to get number of tokens allowed to be transferred
+   *        from the owner of
+   * @param _spender address to get number of tokens allowed to be transferred
+   *        by the owner of
+   * @return number of tokens given spender is currently allowed to transfer
+   *         from given owner
+   */
+  function allowance(address _owner, address _spender) constant
+  returns (uint256 remaining) {
+    return allowances [_owner][_spender];
+  }
+
+  /**
+   * Mapping from addresses of token holders to the numbers of tokens belonging
+   * to these token holders.
+   */
+  mapping (address => uint256) accounts;
+
+  /**
+   * Mapping from addresses of token holders to the mapping of addresses of
+   * spenders to the allowances set by these token holders to these spenders.
+   */
+  mapping (address => mapping (address => uint256)) private allowances;
+  
+}
+
+
+/**
+ * NRC token smart contract.
+ */
+contract NRCToken is AbstractToken {
+  /**
+   * Maximum allowed number of tokens in circulation.
+   * tokenSupply = tokensIActuallyWant * (10 ^ decimals)
+   */
    
-    /*Set owner of the contract*/
-    function Owned() public {
-        owner = msg.sender;
-    }
-
-    /*only owner can be modifier*/
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
-}
-
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Owned {
-  event Pause();
-  event Unpause();
-
-  bool public paused = false;
-
+   
+  uint256 constant MAX_TOKEN_COUNT = 50000000 * (10**6);
+   
+  /**
+   * Address of the owner of this smart contract.
+   */
+  address private owner;
+  
+  /**
+   * Frozen account list holder
+   */
+  mapping (address => bool) private frozenAccount;
 
   /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
+   * Current number of tokens in circulation.
    */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
+  uint256 tokenCount = 0;
+  
+ 
+  /**
+   * True if tokens transfers are currently frozen, false otherwise.
+   */
+  bool frozen = false;
+  
+ 
+  /**
+   * Create new token smart contract and make msg.sender the
+   * owner of this smart contract.
+   */
+  function NRCToken () {
+    owner = msg.sender;
   }
 
   /**
-   * @dev Modifier to make a function callable only when the contract is paused.
+   * Get total number of tokens in circulation.
+   *
+   * @return total number of tokens in circulation
    */
-  modifier whenPaused() {
-    require(paused);
-    _;
+  function totalSupply() constant returns (uint256 supply) {
+    return tokenCount;
+  }
+
+  string constant public name = "NRCCOIN";
+  string constant public symbol = "NRC";
+  uint8 constant public decimals = 6;
+  
+  /**
+   * Transfer given number of tokens from message sender to given recipient.
+   * @param _to address to transfer tokens to the owner of
+   * @param _value number of tokens to transfer to the owner of given address
+   * @return true if tokens were transferred successfully, false otherwise
+   */
+  function transfer(address _to, uint256 _value) returns (bool success) {
+    require(!frozenAccount[msg.sender]);
+	if (frozen) return false;
+    else return AbstractToken.transfer (_to, _value);
   }
 
   /**
-   * @dev called by the owner to pause, triggers stopped state
+   * Transfer given number of tokens from given owner to given recipient.
+   *
+   * @param _from address to transfer tokens from the owner of
+   * @param _to address to transfer tokens to the owner of
+   * @param _value number of tokens to transfer from given owner to given
+   *        recipient
+   * @return true if tokens were transferred successfully, false otherwise
    */
-  function pause() public onlyOwner whenNotPaused {
-    paused = true;
-    Pause();
+  function transferFrom(address _from, address _to, uint256 _value)
+    returns (bool success) {
+	require(!frozenAccount[_from]);
+    if (frozen) return false;
+    else return AbstractToken.transferFrom (_from, _to, _value);
+  }
+
+   /**
+   * Change how many tokens given spender is allowed to transfer from message
+   * spender.  In order to prevent double spending of allowance,
+   * To change the approve amount you first have to reduce the addresses`
+   * allowance to zero by calling `approve(_spender, 0)` if it is not
+   * already 0 to mitigate the race condition described here:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender address to allow the owner of to transfer tokens from
+   *        message sender
+   * @param _value number of tokens to allow to transfer
+   * @return true if token transfer was successfully approved, false otherwise
+   */
+  function approve (address _spender, uint256 _value)
+    returns (bool success) {
+	require(allowance (msg.sender, _spender) == 0 || _value == 0);
+    return AbstractToken.approve (_spender, _value);
   }
 
   /**
-   * @dev called by the owner to unpause, returns to normal state
+   * Create _value new tokens and give new created tokens to msg.sender.
+   * May only be called by smart contract owner.
+   *
+   * @param _value number of tokens to create
+   * @return true if tokens were created successfully, false otherwise
    */
-  function unpause() public onlyOwner whenPaused {
-    paused = false;
-    Unpause();
-  }
-}
+  function createTokens(uint256 _value)
+    returns (bool success) {
+    require (msg.sender == owner);
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-    /**
-     * @dev Multiplies two numbers, throws on overflow.
-     */
-    function mul(uint256 a, uint256 b) internal pure returns(uint256) {
-        if (a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        assert(c / a == b);
-        return c;
+    if (_value > 0) {
+      if (_value > safeSub (MAX_TOKEN_COUNT, tokenCount)) return false;
+	  
+      accounts [msg.sender] = safeAdd (accounts [msg.sender], _value);
+      tokenCount = safeAdd (tokenCount, _value);
+	  
+	  // adding transfer event and _from address as null address
+	  emit Transfer(0x0, msg.sender, _value);
+	  
+	  return true;
     }
-
-    /**
-     * @dev Integer division of two numbers, truncating the quotient.
-     */
-    function div(uint256 a, uint256 b) internal pure returns(uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
-
-    /**
-     * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-     */
-    function sub(uint256 a, uint256 b) internal pure returns(uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-
-    /**
-     * @dev Adds two numbers, throws on overflow.
-     */
-    function add(uint256 a, uint256 b) internal pure returns(uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
-
-}
-
-/*ERC20*/
-contract TokenERC20 is Pausable {
-    using SafeMath for uint256;
-    // Public variables of the token
-    string public name = "NRC";
-    string public symbol = "R";
-    uint8 public decimals = 0;
-    // how many token units a buyer gets per wei
-    uint256 public rate = 50000;
-    // address where funds are collected
-    address public wallet = 0xd3C8326064044c36B73043b009155a59e92477D0;
-    // contributors address
-    address public contributorsAddress = 0xa7db53CB73DBe640DbD480a928dD06f03E2aE7Bd;
-    // company address
-    address public companyAddress = 0x9c949b51f2CafC3A5efc427621295489B63D861D;
-    // market Address 
-    address public marketAddress = 0x199EcdFaC25567eb4D21C995B817230050d458d9;
-    // share of all token 
-    uint8 public constant ICO_SHARE = 20;
-    uint8 public constant CONTRIBUTORS_SHARE = 30;
-    uint8 public constant COMPANY_SHARE = 20;
-    uint8 public constant MARKET_SHARE = 30;
-    // unfronzen periods 
-    uint8 constant COMPANY_PERIODS = 10;
-    uint8 constant CONTRIBUTORS_PERIODS = 3;
-    // token totalsupply amount
-    uint256 public constant TOTAL_SUPPLY = 80000000000;
-    // ico token amount
-    uint256 public icoTotalAmount = 16000000000;
-    uint256 public companyPeriodsElapsed;
-    uint256 public contributorsPeriodsElapsed;
-    // token frozened amount
-    uint256 public frozenSupply;
-    uint256 public initDate;
-    uint8 public contributorsCurrentPeriod;
-    uint8 public companyCurrentPeriod;
-    // This creates an array with all balances
-    mapping(address => uint256) public balanceOf;
-
-    // This generates a public event on the blockchain that will notify clients
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event InitialToken(string desc, address indexed target, uint256 value);    
+	
+	  return false;
     
-    /**
-     * Constrctor function
-     * Initializes contract with initial supply tokens to the creator of the contract
-     */
-    function TokenERC20(
-    ) public {
-        // contributors share 30% of totalSupply,but get all by 3 years
-        uint256 tempContributors = TOTAL_SUPPLY.mul(CONTRIBUTORS_SHARE).div(100).div(CONTRIBUTORS_PERIODS);
-        contributorsPeriodsElapsed = tempContributors;
-        balanceOf[contributorsAddress] = tempContributors;
-        InitialToken("contributors", contributorsAddress, tempContributors);
-        
-        // company shares 20% of totalSupply,but get all by 10 years
-        uint256 tempCompany = TOTAL_SUPPLY.mul(COMPANY_SHARE).div(100).div(COMPANY_PERIODS);
-        companyPeriodsElapsed = tempCompany;
-        balanceOf[companyAddress] = tempCompany;
-        InitialToken("company", companyAddress, tempCompany);
+  }
+  
 
-        // ico takes 20% of totalSupply
-        uint256 tempIco = TOTAL_SUPPLY.mul(ICO_SHARE).div(100);
-        icoTotalAmount = tempIco;
+  /**
+   * Set new owner for the smart contract.
+   * May only be called by smart contract owner.
+   *
+   * @param _newOwner address of new owner of the smart contract
+   */
+  function setOwner(address _newOwner) {
+    require (msg.sender == owner);
 
-        // expand the market cost 30% of totalSupply
-        uint256 tempMarket = TOTAL_SUPPLY.mul(MARKET_SHARE).div(100);
-        balanceOf[marketAddress] = tempMarket;
-        InitialToken("market", marketAddress, tempMarket);
+    owner = _newOwner;
+  }
 
-        // frozenSupply waitting for being unfrozen
-        uint256 tempFrozenSupply = TOTAL_SUPPLY.sub(tempContributors).sub(tempIco).sub(tempCompany).sub(tempMarket);
-        frozenSupply = tempFrozenSupply;
-        initDate = block.timestamp;
-        contributorsCurrentPeriod = 1;
-        companyCurrentPeriod = 1;
-        paused = true;
+  /**
+   * Freeze ALL token transfers.
+   * May only be called by smart contract owner.
+   */
+  function freezeTransfers () {
+    require (msg.sender == owner);
+
+    if (!frozen) {
+      frozen = true;
+      emit Freeze ();
     }
+  }
 
-    /**
-     * Internal transfer, only can be called by this contract
-     */
-    function _transfer(address _from, address _to, uint _value) internal {
-        // Prevent transfer to 0x0 address. Use burn() instead
-        require(_to != 0x0);
-        // Check if the sender has enough
-        require(balanceOf[_from] >= _value);
-        // Check for overflows
-        require(balanceOf[_to].add(_value) > balanceOf[_to]);
-        // Save this for an assertion in the future
-        uint previousBalances = balanceOf[_from].add(balanceOf[_to]);
-        // Subtract from the sender
-        balanceOf[_from] = balanceOf[_from].sub(_value);
-        // Add the same to the recipient
-        balanceOf[_to] = balanceOf[_to].add(_value);
-        Transfer(_from, _to, _value);
-        // Asserts are used to use static analysis to find bugs in your code. They should never fail
-        assert(balanceOf[_from].add(balanceOf[_to]) == previousBalances);
+  /**
+   * Unfreeze ALL token transfers.
+   * May only be called by smart contract owner.
+   */
+  function unfreezeTransfers () {
+    require (msg.sender == owner);
+
+    if (frozen) {
+      frozen = false;
+      emit Unfreeze ();
     }
+  }
+  
+  
+  /*A user is able to unintentionally send tokens to a contract 
+  * and if the contract is not prepared to refund them they will get stuck in the contract. 
+  * The same issue used to happen for Ether too but new Solidity versions added the payable modifier to
+  * prevent unintended Ether transfers. However, there’s no such mechanism for token transfers.
+  * so the below function is created
+  */
+  
+  function refundTokens(address _token, address _refund, uint256 _value) {
+    require (msg.sender == owner);
+    require(_token != address(this));
+    AbstractToken token = AbstractToken(_token);
+    token.transfer(_refund, _value);
+    emit RefundTokens(_token, _refund, _value);
+  }
+  
+  /**
+   * Freeze specific account
+   * May only be called by smart contract owner.
+   */
+  function freezeAccount(address _target, bool freeze) {
+      require (msg.sender == owner);
+	  require (msg.sender != _target);
+      frozenAccount[_target] = freeze;
+      emit FrozenFunds(_target, freeze);
+ }
 
-    /**
-     * Transfer tokens
-     *
-     * Send `_value` tokens to `_to` from your account
-     *
-     * @param _to The address of the recipient
-     * @param _value the amount to send
-     */
-    function transfer(address _to, uint256 _value) public {
-        _transfer(msg.sender, _to, _value);
-    }
-}
-/******************************************/
-/*       NRCToken STARTS HERE       */
-/******************************************/
+  /**
+   * Logged when token transfers were frozen.
+   */
+  event Freeze ();
 
-contract NRCToken is Owned, TokenERC20 {
-    uint256 private etherChangeRate = 10 ** 18;
-    uint256 private minutesOneYear = 365*24*60 minutes;
-    bool public  tokenSaleActive = true;
-    // token have been sold
-    uint256 public totalSoldToken;
-    // all frozenAccount addresses
-    mapping(address => bool) public frozenAccount;
-
-    /* This generates a public log event on the blockchain that will notify clients */
-    event LogFrozenAccount(address target, bool frozen);
-    event LogUnfrozenTokens(string desc, address indexed targetaddress, uint256 unfrozenTokensAmount);
-    event LogSetTokenPrice(uint256 tokenPrice);
-    event TimePassBy(string desc, uint256 times );
-    /**
-     * event for token purchase logging
-     * @param purchaser who paid for the tokens
-     * @param value ehter paid for purchase
-     * @param amount amount of tokens purchased
-     */
-    event LogTokenPurchase(address indexed purchaser, uint256 value, uint256 amount);
-    // ICO finished Event
-    event TokenSaleFinished(string desc, address indexed contributors, uint256 icoTotalAmount, uint256 totalSoldToken, uint256 leftAmount);
-    
-    /* Initializes contract with initial supply tokens to the creator of the contract */
-    function NRCToken() TokenERC20() public {}
-
-    /* Internal transfer, only can be called by this contract */
-    function _transfer(address _from, address _to, uint _value) internal {
-        require(_from != _to);
-        require(_to != 0x0); // Prevent transfer to 0x0 address. Use burn() instead
-        require(balanceOf[_from] >= _value); // Check if the sender has enough
-        require(balanceOf[_to].add(_value) > balanceOf[_to]); // Check for overflows
-        require(!frozenAccount[_from]); // Check if sender is frozen
-        require(!frozenAccount[_to]); // Check if recipient is frozen
-        balanceOf[_from] = balanceOf[_from].sub(_value); // Subtract from the sender
-        balanceOf[_to] = balanceOf[_to].add(_value); // Add the same to the recipient
-        Transfer(_from, _to, _value);
-    }
-       /**
-     * Transfer tokens
-     *
-     * Send `_value` tokens to `_to` from your account
-     *
-     * @param _to The address of the recipient
-     * @param _value the amount to send
-     */
-    function transfer(address _to, uint256 _value) public {
-        _transfer(msg.sender, _to, _value);
-    }
-
-    /// @notice `freeze? Prevent | Allow` `target` from sending & receiving tokens
-    /// @param target Address to be frozen
-    /// @param freeze either to freeze it or not
-    function freezeAccount(address target, bool freeze) public onlyOwner whenNotPaused {
-        require(target != 0x0);
-        require(target != owner);
-        require(frozenAccount[target] != freeze);
-        frozenAccount[target] = freeze;
-        LogFrozenAccount(target, freeze);
-    }
-
-    /// @notice Allow users to buy tokens for `newTokenRate` eth
-    /// @param newTokenRate Price users can buy from the contract
-    function setPrices(uint256 newTokenRate) public onlyOwner whenNotPaused {
-        require(newTokenRate > 0);
-        require(newTokenRate <= icoTotalAmount);
-        require(tokenSaleActive);
-        rate = newTokenRate;
-        LogSetTokenPrice(newTokenRate);
-    }
-
-    /// @notice Buy tokens from contract by sending ether
-    function buy() public payable whenNotPaused {
-        // if ICO finished ,can not buy any more!
-        require(!frozenAccount[msg.sender]); 
-        require(tokenSaleActive);
-        require(validPurchase());
-        uint tokens = getTokenAmount(msg.value); // calculates the amount
-        require(!validSoldOut(tokens));
-        LogTokenPurchase(msg.sender, msg.value, tokens);
-        balanceOf[msg.sender] = balanceOf[msg.sender].add(tokens);
-        calcTotalSoldToken(tokens);
-        forwardFunds();
-    }
-
-    // Override this method to have a way to add business logic to your crowdsale when buying
-    function getTokenAmount(uint256 etherAmount) internal view returns(uint256) {
-        uint256 temp = etherAmount.mul(rate);
-        uint256 amount = temp.div(etherChangeRate);
-        return amount;
-    }
-
-    // send ether to the funder wallet
-    function forwardFunds() internal {
-        wallet.transfer(msg.value);
-    }
-
-    // calc totalSoldToken
-    function calcTotalSoldToken(uint256 soldAmount) internal {
-        totalSoldToken = totalSoldToken.add(soldAmount);
-        if (totalSoldToken >= icoTotalAmount) { 
-            tokenSaleActive = false;
-        }
-    }
-
-    // @return true if the transaction can buy tokens
-    function validPurchase() internal view returns(bool) {
-        bool limitPurchase = msg.value >= 1 ether;
-        bool isNotTheOwner = msg.sender != owner;
-        bool isNotTheCompany = msg.sender != companyAddress;
-        bool isNotWallet = msg.sender != wallet;
-        bool isNotContributors = msg.sender != contributorsAddress;
-        bool isNotMarket = msg.sender != marketAddress;
-        return limitPurchase && isNotTheOwner && isNotTheCompany && isNotWallet && isNotContributors && isNotMarket;
-    }
-
-    // @return true if the ICO is in progress.
-    function validSoldOut(uint256 soldAmount) internal view returns(bool) {
-        return totalSoldToken.add(soldAmount) > icoTotalAmount;
-    }
-    // @return current timestamp
-    function time() internal constant returns (uint) {
-        return block.timestamp;
-    }
-
-    /// @dev send the rest of the tokens after the crowdsale end and
-    /// send to contributors address
-    function finaliseICO() public onlyOwner whenNotPaused {
-        require(tokenSaleActive == true);        
-        uint256 tokensLeft = icoTotalAmount.sub(totalSoldToken);
-        tokenSaleActive = false;
-        require(tokensLeft > 0);
-        balanceOf[contributorsAddress] = balanceOf[contributorsAddress].add(tokensLeft);
-        TokenSaleFinished("finaliseICO", contributorsAddress, icoTotalAmount, totalSoldToken, tokensLeft);
-        totalSoldToken = icoTotalAmount;
-    }
+  /**
+   * Logged when token transfers were unfrozen.
+   */
+  event Unfreeze ();
+  
+  /**
+   * Logged when a particular account is frozen.
+   */
+  
+  event FrozenFunds(address target, bool frozen);
 
 
-    /// @notice freeze unfrozenAmount
-    function unfrozenTokens() public onlyOwner whenNotPaused {
-        require(frozenSupply >= 0);
-        if (contributorsCurrentPeriod < CONTRIBUTORS_PERIODS) {
-            unfrozenContributorsTokens();
-            unfrozenCompanyTokens();
-        } else {
-            unfrozenCompanyTokens();
-        }
-    }
-
-    // unfrozen contributors token year by year
-    function unfrozenContributorsTokens() internal {
-        require(contributorsCurrentPeriod < CONTRIBUTORS_PERIODS);
-        uint256 contributortimeShouldPassBy = contributorsCurrentPeriod * (minutesOneYear);
-        TimePassBy("contributortimeShouldPassBy", contributortimeShouldPassBy);
-        uint256 contributorsTimePassBy = time() - initDate;
-        TimePassBy("contributortimePassBy", contributorsTimePassBy);
-
-        contributorsCurrentPeriod = contributorsCurrentPeriod + 1;
-        require(contributorsTimePassBy >= contributortimeShouldPassBy);
-        frozenSupply = frozenSupply.sub(contributorsPeriodsElapsed);
-        balanceOf[contributorsAddress] = balanceOf[contributorsAddress].add(contributorsPeriodsElapsed);
-        LogUnfrozenTokens("contributors", contributorsAddress, contributorsPeriodsElapsed);
-    }
-
-    // unfrozen company token year by year
-    function unfrozenCompanyTokens() internal {
-        require(companyCurrentPeriod < COMPANY_PERIODS);
-        uint256 companytimeShouldPassBy = companyCurrentPeriod * (minutesOneYear);
-        TimePassBy("CompanytimeShouldPassBy", companytimeShouldPassBy);
-        uint256 companytimePassBy = time() - initDate;
-        TimePassBy("CompanytimePassBy", companytimePassBy);
-
-        require(companytimePassBy >= companytimeShouldPassBy);
-        companyCurrentPeriod = companyCurrentPeriod + 1;
-        frozenSupply = frozenSupply.sub(companyPeriodsElapsed);
-        balanceOf[companyAddress] = balanceOf[companyAddress].add(companyPeriodsElapsed);
-        LogUnfrozenTokens("company", companyAddress, companyPeriodsElapsed);
-    }
-
-    // fallback function - do not allow any eth transfers to this contract
-    function() external {
-        revert();
-    }
-
+  
+  /**
+   * when accidentally send other tokens are refunded
+   */
+  
+  event RefundTokens(address _token, address _refund, uint256 _value);
 }
