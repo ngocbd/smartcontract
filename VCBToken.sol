@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VCBToken at 0x27555d7292f22a65e24d7a45b17faa970a2cb20d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VCBToken at 0x9746953f5b1324a78132895cfd263f417b0faae3
 */
 pragma solidity ^0.4.18;
 
@@ -442,97 +442,17 @@ contract BurnableToken is BasicToken {
     }
 }
 
-/**
- * @title SafeERC20
- * @dev Wrappers around ERC20 operations that throw on failure.
- * To use this library you can add a `using SafeERC20 for ERC20;` statement to your contract,
- * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
- */
-library SafeERC20 {
-  function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
-    assert(token.transfer(to, value));
-  }
-
-  function safeTransferFrom(ERC20 token, address from, address to, uint256 value) internal {
-    assert(token.transferFrom(from, to, value));
-  }
-
-  function safeApprove(ERC20 token, address spender, uint256 value) internal {
-    assert(token.approve(spender, value));
-  }
-}
-
-//it mimic the TokenTimelock
-
-contract HTLC {
-
-    using SafeERC20 for ERC20Basic;
-
-    // ERC20 basic token contract being held
-    ERC20Basic public token;
-
-    // beneficiary of tokens being released by hashing
-    address public beneficiary;
-
-    // timestamp when lock is timeout
-    uint256 public releaseTime;
-
-    // sha256 hash to release
-    bytes32 sha256hash;
-
-    function HTLC(ERC20Basic _token, bytes32 _hash, address _beneficiary, uint256 _releaseTime) public {
-        require(_releaseTime > now);
-        token = _token;
-        beneficiary = _beneficiary;
-        releaseTime = _releaseTime;
-        sha256hash = _hash;
-    }
-
-    /**
-     * @notice Transfer to the specified address if anyone can provide the correct preimage.
-     */
-    function redeem(bytes preimage) public {
-        require(sha256(preimage) == sha256hash);
-
-        uint256 amount = token.balanceOf(this);
-        require(amount > 0);
-
-        token.safeTransfer(beneficiary, amount);
-        selfdestruct(msg.sender);
-    }
-
-    /** 
-     * @notice Default action when timeout: override this.
-     */
-    function onTimeout(uint256) internal {
-        selfdestruct(msg.sender);
-    }
-
-    /**
-     * @notice When timeout. for default action, the token in it will lost forever
-     */
-    function release() public {
-        require(now >= releaseTime);
-
-        uint256 amount = token.balanceOf(this);
-        require(amount > 0);
-
-        onTimeout(amount);
-    }
-
-}
-
 contract VCBToken is CappedToken, BurnableToken, DetailedERC20 {
 
     using SafeMath for uint256;
 
     uint8 constant DECIMALS = 18;
-    uint  constant TOTALTOKEN = 1 * 10 ** (8 + uint(DECIMALS));
-    string constant NAME = "ValueCyber Token";
+    uint  constant TOTALTOKEN = 1 * 10 ** (9 + uint(DECIMALS));
+    string constant NAME = "ValueCyberToken";
     string constant SYM = "VCT";
 
     address constant PRESALE = 0x638a3C7dF9D1B3A56E19B92bE07eCC84b6475BD6;
-    uint  constant PRESALETOKEN = 55 * 10 ** (6 + uint(DECIMALS));
+    uint  constant PRESALETOKEN = 7 * 10 ** (8 + uint(DECIMALS));
 
     function VCBToken() CappedToken(TOTALTOKEN) DetailedERC20 (NAME, SYM, DECIMALS) public {
         
@@ -546,12 +466,12 @@ contract VCBCrowdSale is Crowdsale, Ownable {
 
     using SafeMath for uint256;
 
-    uint  constant RATIO = 800;
-    uint8 constant RATIODENO = 100;
-    uint constant SALELASTFOR = 50 days;
+    uint  constant RATIO = 9000;
+    uint16 constant RATIODENO = 10000;
+    uint constant SALELASTFOR = 31 days;
     address constant FUNDWALLET = 0x622969e0928fa6bEeda9f26F8a60D0b22Db7E6f1;
 
-    mapping(address => uint8) giftList;
+    mapping(address => uint16) giftList;
 
     event CrowdsaleFinalized();
     /**
@@ -561,7 +481,7 @@ contract VCBCrowdSale is Crowdsale, Ownable {
     */
     event TokenGift(address indexed beneficiary, uint256 amount);
 
-    function VCBCrowdSale() Crowdsale(now, now + SALELASTFOR, RATIO, FUNDWALLET) public {
+    function VCBCrowdSale(uint256 start) Crowdsale(start, start + SALELASTFOR, RATIO, FUNDWALLET) public {
     }
 
     function createTokenContract() internal returns (MintableToken) {
@@ -604,7 +524,7 @@ contract VCBCrowdSale is Crowdsale, Ownable {
         giftTokens(beneficiary);
     }
 
-    function addGift(address beneficiary, uint8 giftratio) onlyOwner public {
+    function addGift(address beneficiary, uint16 giftratio) onlyOwner public {
         require(giftratio < RATIODENO);
         giftList[beneficiary] = giftratio;
     }
@@ -612,27 +532,15 @@ contract VCBCrowdSale is Crowdsale, Ownable {
     /**
     * @dev Gets the gift ratio of the specified address.
     * @param _owner The address to query the gift ratio of.
-    * @return An uint8 representing the ratio obtained by the passed address.
+    * @return An uint16 representing the ratio obtained by the passed address.
     */
-    function giftRatioOf(address _owner) public view returns (uint8 ratio) {
+    function giftRatioOf(address _owner) public view returns (uint16 ratio) {
         return giftList[_owner];
     }
 
-    // directly mint tokens to a HTLC contract
+    // directly mint tokens
     function preserveTokens(address preservecontract, uint256 amount) onlyOwner public {        
         token.mint(preservecontract, amount);
     }    
-
-}
-
-contract CrowdSaleHTLC is HTLC {
-    function CrowdSaleHTLC(ERC20Basic _token, bytes32 _hash, address _beneficiary, uint256 _releaseTime) HTLC(_token, _hash, _beneficiary, _releaseTime) public {
-    }
-
-    function onTimeout(uint256 amount) internal {
-        BurnableToken t = BurnableToken (token);
-        t.burn(amount);
-        super.onTimeout(amount);
-    }
 
 }
