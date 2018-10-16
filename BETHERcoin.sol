@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BETHERcoin at 0x2ad105411c0abc4c399a837664b22d37f8446630
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BETHERcoin at 0x112573092d9cfafecb750a75b177c268dc5ff9c1
 */
 pragma solidity ^0.4.4;
 
@@ -113,7 +113,7 @@ contract BETHERcoin is StandardToken { // CHANGE THIS. Update the contract name.
         name = "BETHER COIN";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
         symbol = "BETHER";                                             // Set the symbol for display purposes (CHANGE THIS)
-        unitsOneEthCanBuy = 1000000;                                      // Set the price of your token for the ICO (CHANGE THIS)
+        unitsOneEthCanBuy = 400000;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
     }
 
