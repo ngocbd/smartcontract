@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MANHATTANPROXY4THST at 0x89e8dc2885d91c5b6d58928af8c6bad091cfc38b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MANHATTANPROXY4THST at 0x2ebdd3438223fb3057e32e7e44fc9bf6a78374aa
 */
 pragma solidity ^0.4.4;
 
 // ----------------------------------------------------------------------------------------------
 // MANHATTAN:PROXY BY KEVIN ABOSCH ©2018
-// 4TH STREET (10,000 ERC-20 TOKENS)
+// 3TH STREET (10,000 ERC-20 TOKENS)
 // VERIFY SMART CONTRACT ADDRESS WITH LIST AT HTTP://MANHATTANPROXY.COM
 // ----------------------------------------------------------------------------------------------
 
