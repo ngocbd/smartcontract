@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeamTokenLock at 0x22298dc8a359c99f98f460ed03fc6ed424f08a2d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeamTokenLock at 0x73e86ee0adb893b77c932937883c78fd08f4af31
 */
 pragma solidity ^0.4.18;
 
@@ -41,7 +41,6 @@ contract Ownable {
     }
 }
 
-
 contract TeamTokenLock is Ownable {
 
     ERC20 public token;
@@ -49,7 +48,7 @@ contract TeamTokenLock is Ownable {
     // address where receives funds when unlock period
     address public beneficiary;
 
-    uint public startTime = 1514592000;
+    uint public startTime = 1513728000;  // About time at 2018-1-1
     uint public firstLockTime = 365 days;
     uint public secondLockTime = 2 * 365 days;
 
