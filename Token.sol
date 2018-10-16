@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xdc24805aeE05a6c0dEb61bcd08c0d814CB9d73F9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x787C2fFFB74F559219836a77FAd6181f808b6F73
 */
 pragma solidity ^0.4.13;
 contract Token {
@@ -17,10 +17,10 @@ contract Token {
 	event Transfer(address indexed from, address indexed to, uint256 value);
 
 	function Token() {
-	    totalSupply = 10*(10**8)*(10**18);
-		balanceOf[msg.sender] = 10*(10**8)*(10**18);              // Give the creator all initial tokens
-		name = "Rcash";                                   // Set the name for display purposes
-		symbol = "RCH";                               // Set the symbol for display purposes
+	    totalSupply = 5*(10**8)*(10**18);
+		balanceOf[msg.sender] = 5*(10**8)*(10**18);              // Give the creator all initial tokens
+		name = "klcoin";                                   // Set the name for display purposes
+		symbol = "KLC";                               // Set the symbol for display purposes
 		decimals = 18;                            // Amount of decimals for display purposes
 	}
 
