@@ -1,152 +1,83 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CJXToken at 0x2ce349291b8365F8d12C4CedF992969f680C726E
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CJXToken at 0xab921bd020fe7e987e72cebdda2beba8924a8fa4
 */
-pragma solidity 0.4.8;
-contract owned {
-    address public owner;
+pragma solidity ^0.4.15;
 
-    function owned() {
-        owner = msg.sender;
-    }
+/*
 
-    modifier onlyOwner {
-        if (msg.sender != owner) throw;
-        _;
-    }
+    CJX.io - ERC20 Token
+    
+*/
 
-    function transferOwnership(address newOwner) onlyOwner {
-        owner = newOwner;
-    }
+contract ERC20 {
+    uint256 public totalSupply;
+    function balanceOf(address _owner) constant returns (uint256 balance);
+    function transfer(address _to, uint256 _value) returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+    function approve(address _spender, uint256 _value) returns (bool success);
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
-contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
+contract Token is ERC20 {
 
-contract token {
-    /* Public variables of the token */
-    string public standard = 'CJX 0.1';
-    string public name = 'CJX';
-    string public symbol = 'CJX';
-    uint8 public decimals = 6;
-    uint256 public totalSupply = 0;
-
-    /* This creates an array with all balances */
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
-
-    /* This generates a public event on the blockchain that will notify clients */
-    event Transfer(address indexed from, address indexed to, uint256 value);
-
-    /* Initializes contract with initial supply tokens to the creator of the contract */
-    function token(
-        uint256 initialSupply,
-        string tokenName,
-        uint8 decimalUnits,
-        string tokenSymbol
-        ) {
-        balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
-        totalSupply = initialSupply;                        // Update total supply
-        name = name;                                   // Set the name for display purposes
-        symbol = symbol;                               // Set the symbol for display purposes
-        decimals = decimals;                            // Amount of decimals for display purposes
-    }
-
-    /* Send coins */
-    function transfer(address _to, uint256 _value) {
-        if (balanceOf[msg.sender] < _value) throw;           // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
-        balanceOf[msg.sender] -= _value;                     // Subtract from the sender
-        balanceOf[_to] += _value;                            // Add the same to the recipient
-        Transfer(msg.sender, _to, _value);                   // Notify anyone listening that this transfer took place
-    }
-
-    /* Allow another contract to spend some tokens in your behalf */
-    function approve(address _spender, uint256 _value)
-        returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
-        tokenRecipient spender = tokenRecipient(_spender);
+    function transfer(address _to, uint256 _value) returns (bool success) {
+        require(balances[msg.sender] >= _value);
+        balances[msg.sender] -= _value;
+        balances[_to] += _value;
+        Transfer(msg.sender, _to, _value);
         return true;
     }
 
-    /* Approve and then comunicate the approved contract in a single tx */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
-        returns (bool success) {
-        tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
-        }
-    }
-
-    /* A contract attempts to get the coins */
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        if (balanceOf[_from] < _value) throw;                 // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw;  // Check for overflows
-        if (_value > allowance[_from][msg.sender]) throw;   // Check allowance
-        balanceOf[_from] -= _value;                          // Subtract from the sender
-        balanceOf[_to] += _value;                            // Add the same to the recipient
-        allowance[_from][msg.sender] -= _value;
+        require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
+        balances[_to] += _value;
+        balances[_from] -= _value;
+        allowed[_from][msg.sender] -= _value;
         Transfer(_from, _to, _value);
         return true;
     }
 
-    /* This unnamed function is called whenever someone tries to send ether to it */
-    function () {
-        throw;     // Prevents accidental sending of ether
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
     }
+
+    function approve(address _spender, uint256 _value) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+      return allowed[_owner][_spender];
+    }
+
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
 }
 
-contract CJXToken is owned, token {
 
-    string public currentKey;
-    uint256 public bandwidthFactor;
-    uint256 public memoryFactor;
-    uint256 public timeFactor;
-    uint256 public totalSupply;
+contract CJXToken is Token {
 
-    mapping (address => bool) public frozenAccount;
+    string public name;
+    uint8 public decimals;
+    string public symbol;
+    string public version = 'CJX0.1';
 
-    /* This generates a public event on the blockchain that will notify clients */
-    event FrozenFunds(address target, bool frozen);
-
-    /* Initializes contract with initial supply tokens to the creator of the contract */
-    function CJXToken(
-        uint256 initialSupply,
-        string tokenName,
-        uint8 decimalUnits,
-        string tokenSymbol,
-        address centralMinter
-    ) token (initialSupply, tokenName, decimalUnits, tokenSymbol) {
-        if(centralMinter != 0 ) owner = centralMinter;      // Sets the owner as specified (if centralMinter is not specified the owner is msg.sender)
-        balanceOf[owner] = initialSupply;                   // Give the owner all initial tokens
+    function CJXToken() {
+        balances[msg.sender] = 1000000000000000000000000;
+        totalSupply = 1000000000000000000000000;
+        name = "CJX COIN";
+        decimals = 18;
+        symbol = "CJX";
     }
 
-    /* Send coins */
-    function transfer(address _to, uint256 _value) {
-        if (balanceOf[msg.sender] < _value) throw;           // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
-        if (frozenAccount[msg.sender]) throw;                // Check if frozen
-        balanceOf[msg.sender] -= _value;                     // Subtract from the sender
-        balanceOf[_to] += _value;                            // Add the same to the recipient
-        Transfer(msg.sender, _to, _value);                   // Notify anyone listening that this transfer took place
-    }
-
-
-    function mintToken(address target, uint256 mintedAmount) onlyOwner {
-        balanceOf[target] += mintedAmount;
-        totalSupply += mintedAmount;
-        Transfer(0, this, mintedAmount);
-        Transfer(this, target, mintedAmount);
-    }
-
-    function freezeAccount(address target, bool freeze) onlyOwner {
-        frozenAccount[target] = freeze;
-        FrozenFunds(target, freeze);
-    }
-
-    function setFactors(uint256 bf, uint256 mf, uint256 tf, string ck) onlyOwner {
-        bandwidthFactor = bf;
-        memoryFactor = mf;
-        timeFactor = tf;
-        currentKey = ck;
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        require(_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData));
+        return true;
     }
 }
