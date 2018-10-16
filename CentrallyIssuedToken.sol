@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CentrallyIssuedToken at 0x1d921eed55a6a9ccaa9c79b1a4f7b25556e44365
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CentrallyIssuedToken at 0xb64ef51c888972c908cfacf59b47c1afbc0ab8ac
 */
 /*
  * ERC20 interface
@@ -73,9 +73,8 @@ contract SafeMath {
 
 
 /**
- * Standard ERC20 token
+ * Standard ERC20 token with Short Hand Attack and approve() race condition mitigation.
  *
- * https://github.com/ethereum/EIPs/issues/20
  * Based on code by FirstBlood:
  * https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
@@ -84,14 +83,30 @@ contract StandardToken is ERC20, SafeMath {
   mapping(address => uint) balances;
   mapping (address => mapping (address => uint)) allowed;
 
-  function transfer(address _to, uint _value) returns (bool success) {
+  // Interface marker
+  bool public constant isToken = true;
+
+  /**
+   *
+   * Fix for the ERC20 short address attack
+   *
+   * http://vessenes.com/the-erc20-short-address-attack-explained/
+   */
+  modifier onlyPayloadSize(uint size) {
+     if(msg.data.length < size + 4) {
+       throw;
+     }
+     _;
+  }
+
+  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) returns (bool success) {
     balances[msg.sender] = safeSub(balances[msg.sender], _value);
     balances[_to] = safeAdd(balances[_to], _value);
     Transfer(msg.sender, _to, _value);
     return true;
   }
 
-  function transferFrom(address _from, address _to, uint _value) returns (bool success) {
+  function transferFrom(address _from, address _to, uint _value)  returns (bool success) {
     var _allowance = allowed[_from][msg.sender];
 
     // Check is not needed because safeSub(_allowance, _value) will already throw if this condition is not met
@@ -109,6 +124,13 @@ contract StandardToken is ERC20, SafeMath {
   }
 
   function approve(address _spender, uint _value) returns (bool success) {
+
+    // To change the approve amount you first have to reduce the addresses`
+    //  allowance to zero by calling `approve(_spender, 0)` if it is not
+    //  already 0 to mitigate the race condition described here:
+    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) throw;
+
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
     return true;
@@ -122,6 +144,14 @@ contract StandardToken is ERC20, SafeMath {
 
 
 
+/**
+ * A trait that allows any token owner to decrease the token supply.
+ *
+ * We add a Burned event to differentiate from normal transfers.
+ * However, we still try to support some legacy Ethereum ecocsystem,
+ * as ERC-20 has not standardized on the burn event yet.
+ *
+ */
 contract BurnableToken is StandardToken {
 
   address public constant BURN_ADDRESS = 0;
@@ -139,12 +169,12 @@ contract BurnableToken is StandardToken {
     totalSupply = safeSub(totalSupply, burnAmount);
     Burned(burner, burnAmount);
 
-    // Keep exchanges happy by sending the burned amount to
-    // "burn address"
+    // Keep token balance tracking services happy by sending the burned amount to
+    // "burn address", so that it will show up as a ERC-20 transaction
+    // in etherscan, etc. as there is no standarized burn event yet
     Transfer(burner, BURN_ADDRESS, burnAmount);
   }
 }
-
 
 
 
