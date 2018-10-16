@@ -1,11 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x355a458d555151d3b27f94227960ade1504e526a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x3dda8f6237429de89ea2e372ba51314aa9aeb422
 */
 pragma solidity ^0.4.16;
 
-interface tokenRecipient { 
-    function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; 
-}
+interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
 contract TokenERC20 {
     // Public variables of the token
@@ -30,11 +28,15 @@ contract TokenERC20 {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function TokenERC20() public {
-        totalSupply = 10000000000 * 10 ** uint256(18);  // Update total supply with the decimal amount
-        balanceOf[msg.sender] = totalSupply;           // Give the creator all initial tokens
-        name = 'StockChain Coin';                      // Set the name for display purposes
-        symbol = 'SCC';                                // Set the symbol for display purposes
+    function TokenERC20(
+        uint256 initialSupply,
+        string tokenName,
+        string tokenSymbol
+    ) public {
+        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
+        name = tokenName;                                   // Set the name for display purposes
+        symbol = tokenSymbol;                               // Set the symbol for display purposes
     }
 
     /**
@@ -56,17 +58,6 @@ contract TokenERC20 {
         Transfer(_from, _to, _value);
         // Asserts are used to use static analysis to find bugs in your code. They should never fail
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
-    }
-    
-    /**
-     * tokens balance
-     *
-     * Get `_owner` tokens
-     *
-     * @param _owner The address 
-     */
-    function balanceOf(address _owner) public view returns (uint256 balance) {
-        return balanceOf[_owner];
     }
 
     /**
