@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BCE at 0x324d65aa829a9b976fe661b03a7d4cd0d66ff843
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BCE at 0x71449c1f769d01fbe0f5d84a7b762f1ad84f8993
 */
 pragma solidity ^0.4.18;
 
@@ -45,7 +45,7 @@ contract BCE {
     string public symbol;
     uint8 public decimals = 18;
     uint256 public totalSupply;
-    uint256 public supplyLeftAtOrigin = 21000000 * 10 ** uint256(decimals);
+    uint256 public supplyLeftAtOrigin = totalSupply;
 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
