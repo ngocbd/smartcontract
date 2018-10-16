@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Mainsale at 0xbe46b1e6bddc1e1fcf004c9ed6784c9e0cee1038
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Mainsale at 0xe25c208bbef3ee313e841340e91db2d873f104cd
 */
 pragma solidity ^0.4.18;
 
@@ -219,20 +219,21 @@ contract Ownable {
 
 }
 
+/**
+ * @title Mintable token
+ * @dev Simple ERC20 Token example, with mintable token creation
+ * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
+ * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
+ */
 contract MintableToken is StandardToken, Ownable {
-    
+
   event Mint(address indexed to, uint256 amount);
-  
+
   event MintFinished();
 
   bool public mintingFinished = false;
 
   address public saleAgent;
-
-  modifier notLocked() {
-    require(msg.sender == owner || msg.sender == saleAgent || mintingFinished);
-    _;
-  }
 
   function setSaleAgent(address newSaleAgnet) public {
     require(msg.sender == saleAgent || msg.sender == owner);
@@ -258,14 +259,7 @@ contract MintableToken is StandardToken, Ownable {
     return true;
   }
 
-  function transfer(address _to, uint256 _value) public notLocked returns (bool) {
-    return super.transfer(_to, _value);
-  }
 
-  function transferFrom(address from, address to, uint256 value) public notLocked returns (bool) {
-    return super.transferFrom(from, to, value);
-  }
-  
 }
 
 /**
