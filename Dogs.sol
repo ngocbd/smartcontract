@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dogs at 0xd58297b5e0ad69f6ba949fdde9da0f2b978f00a0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dogs at 0xB5e4Ebe6CE2c46327F725659F3B7E63A7f89c9F4
 */
 pragma solidity ^0.4.18;
 
@@ -84,6 +84,7 @@ contract Dogs {
 
   mapping (uint => address) private subTokenCreator;
   mapping (uint => address) private lastSubTokenBuyer;
+  mapping (uint => bool) private unlocked;
 
   uint8 constant BASE_TOKEN_ID = 0;
   uint16 constant MAX_SETS_INDEX = 10000;
@@ -153,8 +154,10 @@ contract Dogs {
         if (subTokenCreator[_tokenId]!=address(0))
           subTokenCreator[_tokenId].transfer(feeOnce);
 
-        lastSubTokenBuyer[BASE_TOKEN_ID] = msg.sender;
-        lastSubTokenBuyer[_tokenId % MAX_SETS_INDEX] = msg.sender;
+        if (unlocked[_tokenId]) {
+          lastSubTokenBuyer[BASE_TOKEN_ID] = msg.sender;
+          lastSubTokenBuyer[_tokenId % MAX_SETS_INDEX] = msg.sender;
+        }
       } else {
         lastSubTokenBuyer[_tokenId].transfer(feeOnce*2);
       }
@@ -241,6 +244,30 @@ contract Dogs {
     promoCreatedCount++;
     _createCollectible(tokenId, _price);
     subTokenCreator[tokenId] = collectibleOwner;
+    unlocked[tokenId] = true;
+    // This will assign ownership, and also emit the Transfer event as
+    // per ERC721 draft
+    _transfer(address(0), collectibleOwner, tokenId);
+
+  }
+
+  function createSecondPromoCollectible(uint256 tokenId, address _creator, uint256 _price, address _owner) public onlyCOO {
+    require(collectibleIndexToOwner[tokenId]==address(0));
+    require(promoCreatedCount < PROMO_CREATION_LIMIT);
+
+    address collectibleOwner = _owner;
+    if (collectibleOwner == address(0)) {
+      collectibleOwner = cooAddress;
+    }
+
+    if (_price <= 0) {
+      _price = getInitialPriceOfToken(tokenId);
+    }
+
+    promoCreatedCount++;
+    _createCollectible(tokenId, _price);
+    subTokenCreator[tokenId] = _creator;
+    unlocked[tokenId] = true;
     // This will assign ownership, and also emit the Transfer event as
     // per ERC721 draft
     _transfer(address(0), collectibleOwner, tokenId);
@@ -253,6 +280,9 @@ contract Dogs {
     require((_owns(msg.sender, _tokenId) && !isChangePriceLocked) || (_owns(address(0), _tokenId) && msg.sender == cooAddress));
     require(newPrice<collectibleIndexToPrice[_tokenId]);
     collectibleIndexToPrice[_tokenId] = newPrice;
+  }
+  function unlockToken(uint tokenId) public onlyCOO {
+    unlocked[tokenId] = true;
   }
   function unlockPriceChange() public onlyCOO {
     isChangePriceLocked = false;
