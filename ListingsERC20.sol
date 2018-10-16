@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ListingsERC20 at 0xab24cd33766da327ecd4ec9e46e2e7ba72cda783
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ListingsERC20 at 0x2655b32b7735c5543b06bdd4cf48a9cf042d5612
 */
 pragma solidity ^0.4.18;
 
@@ -157,8 +157,8 @@ contract ListingsERC20 is Ownable {
         uint256 sale = price.mul(amount);
         uint256 allowance = listing.allowance;
         require(now <= listing.dateEnds);
-        require(allowance - sold[listingId] >= amount);
-        require(allowance - amount >= 0);
+        require(allowance - sold[listingId] > amount);
+        require(allowance - amount > 0);
         require(getBalance(contractAddress, seller) >= allowance);
         require(getAllowance(contractAddress, seller, this) <= allowance);
         require(msg.value == sale);
