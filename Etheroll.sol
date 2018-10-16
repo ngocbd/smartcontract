@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etheroll at 0x77d7536EB289F61C47C728142Bda4da54cA9C71F
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etheroll at 0xb69d539c777E7793Fda30f31633dE321e8feE613
 */
 //just updated the encrypted api key
 //updated contractBalance -= 57245901639344;
@@ -1398,17 +1398,17 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
 	{        
         
         /* safely update contract balance to account for cost to call oraclize*/
-        contractBalance = safeSub(contractBalance, oraclize_getPrice("URL", 235000));
+        contractBalance -= 58245901639344;
 
         /*
         * assign partially encrypted query to oraclize
         * only the apiKey is encrypted 
         * integer query is in plain text
         */
-        bytes32 rngId = oraclize_query("nested", "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random[\"serialNumber\",\"data\"]', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BHj7ngJtNNHD286q2h43E4WAsH5zo0N4YnhTFSgR5/L2p6sFXub8on2ikpTBt3BZoMzm57LzGjap0KMNRAa1KQ6nmLVd5G8S43mOPPs3IFwyJnJnzgp6bNyEm90HbxUhKzfjSgIO8Eak4AL6/ha0kHcyanAdUEo=},\"n\":1,\"min\":1,\"max\":100,\"replacement\":true,\"base\":10${[identity] \"}\"},\"id\":1${[identity] \"}\"}']", gasForOraclize);
+        bytes32 rngId = oraclize_query("nested", "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random[\"serialNumber\",\"data\"]', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BDsqRqF48Vv3jzZ/Kul9DRGhdQ6PJh6WIiDiwB6rTXKGxy3995Pl32KMk36S1Cp9LpRerFc8POQomGETJ4jr55MDhEstcG79YuyHYOOv07HA/c4HtG+7yQAa4uSd68XHnjkamoPWt1bwISsZ/Y3/hBatsO1FG40=},\"n\":1,\"min\":1,\"max\":100,\"replacement\":true,\"base\":10${[identity] \"}\"},\"id\":1${[identity] \"}\"}']", gasForOraclize);
         	        
         /* total number of bets */
-        //totalBets += 1;
+        totalBets += 1;
         /* map bet id to this oraclize query */
 		playerBetId[rngId] = rngId;
         /* map player lucky number to this oraclize query */
