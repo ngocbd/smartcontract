@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PoliticoinToken at 0xe3eeb1be813f81c04979f8d0b5d2012da78da0c8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PoliticoinToken at 0xd810650bd094a2eba59912ecfc07ee108699116c
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
 
 contract owned {
     address public owner;
@@ -27,7 +27,7 @@ contract TokenERC20 {
     string public name;
     string public symbol;
     uint8 public decimals = 9;
-    // 18 decimals is the strongly suggested default, avoid changing it
+    
     uint256 public totalSupply;
 
     // This creates an array with all balances
@@ -39,6 +39,7 @@ contract TokenERC20 {
 
     // This notifies clients about the amount burnt
     event Burn(address indexed from, uint256 value);
+    
 
     /**
      * Constrctor function
@@ -173,13 +174,13 @@ contract TokenERC20 {
 }
 
 /******************************************/
-/*       ADVANCED TOKEN STARTS HERE       */
+/*              PoliticoinToken            */
 /******************************************/
 
 contract PoliticoinToken is owned, TokenERC20 {
 
-    uint256 public sellPrice;
-    uint256 public buyPrice;
+    uint256 public sellPrice = 63770;
+    uint256 public buyPrice = 63800;
 
     mapping (address => bool) public frozenAccount;
 
@@ -187,11 +188,7 @@ contract PoliticoinToken is owned, TokenERC20 {
     event FrozenFunds(address target, bool frozen);
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function PoliticoinToken(
-        uint256 initialSupply,
-        string tokenName,
-        string tokenSymbol
-    ) TokenERC20(initialSupply, tokenName, tokenSymbol) public {}
+    function PoliticoinToken( ) TokenERC20(31000000000, 'Politicoin', 'PBLC') public {}
 
     /* Internal transfer, only can be called by this contract */
     function _transfer(address _from, address _to, uint _value) internal {
@@ -229,6 +226,11 @@ contract PoliticoinToken is owned, TokenERC20 {
     function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner public {
         sellPrice = newSellPrice;
         buyPrice = newBuyPrice;
+    }
+
+    /// Default fallback function to buy tokens
+    function () payable public {
+        buy();
     }
 
     /// @notice Buy tokens from contract by sending ether
