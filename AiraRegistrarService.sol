@@ -1,48 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AiraRegistrarService at 0xe5322b2b1a512ba8dbae458e7f0ef38c743c93b9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AiraRegistrarService at 0xebc7FdCE290D380a295D6024B56B4d7Fe410F53E
 */
 pragma solidity ^0.4.2;
-/**
- * @title Contract for object that have an owner
- */
 contract Owned {
-    /**
-     * Contract owner address
-     */
     address public owner;
-
-    /**
-     * @dev Store owner on creation
-     */
     function Owned() { owner = msg.sender; }
-
-    /**
-     * @dev Delegate contract to another person
-     * @param _owner is another person address
-     */
     function delegate(address _owner) onlyOwner
     { owner = _owner; }
-
-    /**
-     * @dev Owner check modifier
-     */
     modifier onlyOwner { if (msg.sender != owner) throw; _; }
 }
-/**
- * @title Contract for objects that can be morder
- */
 contract Mortal is Owned {
-    /**
-     * @dev Destroy contract and scrub a data
-     * @notice Only owner can kill me
-     */
     function kill() onlyOwner
     { suicide(owner); }
 }
-//sol Registrar
-// Simple global registrar.
-// @authors:
-//   Gav Wood <g@ethdev.com>
 contract Registrar {
 	event Changed(string indexed name);
 
@@ -51,10 +21,6 @@ contract Registrar {
 	function subRegistrar(string _name) constant returns (address o_subRegistrar);
 	function content(string _name) constant returns (bytes32 o_content);
 }
-//sol OwnedRegistrar
-// Global registrar with single authoritative owner.
-// @authors:
-//   Gav Wood <g@ethdev.com>
 contract AiraRegistrarService is Registrar, Mortal {
 	struct Record {
 		address addr;
