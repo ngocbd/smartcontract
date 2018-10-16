@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PixelStorageWithFee at 0xead504431dcc01142c0b9cdb9367b57932672079
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PixelStorageWithFee at 0xb92d13833f9044eb0c14893a4bb4cb009c209beb
 */
 pragma solidity ^0.4.18;
 
@@ -22,7 +22,7 @@ contract PixelStorageWithFee {
     // [color] is a 4-bit integer; the upper 4 bits of the uint8 are discarded.
 
     function set(uint32 index, uint8 color) public payable {
-        require(index < 500000);
+        require(index < 1000000);
         require(msg.value >= feeWei);
 
         uint32 packedByteIndex = index / 2;
