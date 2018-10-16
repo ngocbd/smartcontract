@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PRASMToken at 0xeb6ce9be3591d95c2bb5ce793ee2b9c58322bb9e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PRASMToken at 0x1a66e09f7dccc10eae46e27cfa6b8d44a50df1e7
 */
 pragma solidity ^0.4.22;
 
@@ -137,6 +137,7 @@ contract PRASMToken is ERC20, Ownable, Pausable {
 
     event Unlock(address indexed holder, uint256 value);
     event Lock(address indexed holder, uint256 value);
+    event Burn(address indexed owner, uint256 value);
 
     constructor() public {
         name = "PRASM";
@@ -265,6 +266,15 @@ contract PRASMToken is ERC20, Ownable, Pausable {
         return true;
     }
 
+    function burn(uint256 _value) public onlyOwner returns (bool success) {
+        require(_value <= balances[msg.sender]);
+        address burner = msg.sender;
+        balances[burner] = balances[burner].sub(_value);
+        totalSupply_ = totalSupply_.sub(_value);
+        emit Burn(burner, _value);
+        return true;
+    }
+
     function isContract(address addr) internal view returns (bool) {
         uint size;
         assembly{size := extcodesize(addr)}
@@ -281,7 +291,7 @@ contract PRASMToken is ERC20, Ownable, Pausable {
     function releaseTimeLock(address _holder) internal returns(bool) {
         require(locks[_holder]);
         uint256 releaseAmount = 0;
-
+        // If lock status of holder is finished, delete lockup info. 
         if (lockupInfo[_holder].lockupBalance <= lockupInfo[_holder].unlockAmountPerMonth) {
             releaseAmount = lockupInfo[_holder].lockupBalance;
             delete lockupInfo[_holder];
