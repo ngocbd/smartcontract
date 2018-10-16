@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintableToken at 0x167abb3654bf1c5866dA900AeAf86fcfCb95048f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintableToken at 0x1561a0228128149d71d82bc60b890dd6bfb57e99
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
 
 
 /**
@@ -34,6 +34,7 @@ library SafeMath {
   }
 }
 
+
 /**
  * @title ERC20Basic
  * @dev Simpler version of ERC20 interface
@@ -56,7 +57,6 @@ contract ERC20 is ERC20Basic {
   function approve(address spender, uint256 value) public returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
-
 
 /**
  * @title Basic token
@@ -94,41 +94,7 @@ contract BasicToken is ERC20Basic {
 
 }
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-    mapping(address => bool)  internal owners;
 
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-    /**
-     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-     * account.
-     */
-    function Ownable() {
-        owners[msg.sender] = true;
-    }
-
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner() {
-        require(owners[msg.sender] == true);
-        _;
-    }
-
-    function addOwner(address newAllowed) onlyOwner public {
-        owners[newAllowed] = true;
-    }
-
-    function removeOwner(address toRemove) onlyOwner public {
-        owners[toRemove] = false;
-    }
-
-}
 
 /**
  * @title Standard ERC20 token
@@ -212,6 +178,50 @@ contract StandardToken is ERC20, BasicToken {
 }
 
 /**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+
+/**
  * @title Mintable token
  * @dev Simple ERC20 Token example, with mintable token creation
  * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
@@ -219,13 +229,11 @@ contract StandardToken is ERC20, BasicToken {
  */
 
 contract MintableToken is StandardToken, Ownable {
-
-  string public constant name = "DreamToken";
-  string public constant symbol = "DREAM";
-  uint8 public constant decimals = 18;
-
   event Mint(address indexed to, uint256 amount);
   event MintFinished();
+
+  string public name = 'LUKAS TOKEN';  
+  string public symbol = 'LKT';        
 
   bool public mintingFinished = false;
 
@@ -262,6 +270,7 @@ contract MintableToken is StandardToken, Ownable {
 
 
 
+
 /**
  * @title Crowdsale
  * @dev Crowdsale is a base contract for managing a token crowdsale.
@@ -270,7 +279,7 @@ contract MintableToken is StandardToken, Ownable {
  * on a token per ETH rate. Funds collected are forwarded to a wallet
  * as they arrive.
  */
-contract Crowdsale is Ownable{
+contract Crowdsale {
   using SafeMath for uint256;
 
   // The token being sold
@@ -306,7 +315,6 @@ contract Crowdsale is Ownable{
     require(_wallet != address(0));
 
     token = createTokenContract();
-    token.addOwner(msg.sender);
     startTime = _startTime;
     endTime = _endTime;
     rate = _rate;
@@ -362,25 +370,5 @@ contract Crowdsale is Ownable{
     return now > endTime;
   }
 
-  // set start date
-  function setStartDate(uint256 _startTime) onlyOwner public {
-    require(_startTime >= now);
-    startTime = _startTime;
-  }
-
-  // set end date
-  function setEndDate(uint256 _endTime) onlyOwner public {
-    endTime = _endTime;
-  }
-
-  // set rate
-  function setRate(uint256 _rate) onlyOwner public {
-    rate = _rate;
-  }
-
-  // set address
-  function setWallet(address _wallet) onlyOwner public {
-    wallet = _wallet;
-  }
 
 }
