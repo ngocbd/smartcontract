@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MXToken at 0x9C3D5c5cfDE9e7EbF579a9CfC22f55F03174475F
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MXToken at 0x240dfc8877158aa92ca12413a50207af17017cad
 */
 pragma solidity ^0.4.18;
+
 
 /**
  * @title SafeMath
@@ -36,11 +37,6 @@ library SafeMath {
     }
 }
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
 contract Ownable {
     address public owner;
 
@@ -124,21 +120,16 @@ contract Pausable is Ownable {
 
 contract ERC20Basic {
     uint256 public totalSupply;
-
     function balanceOf(address who) public view returns (uint256);
-
     function transfer(address to, uint256 value) public returns (bool);
-
     event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
+
 contract ERC20 is ERC20Basic {
     function allowance(address owner, address spender) public view returns (uint256);
-
     function transferFrom(address from, address to, uint256 value) public returns (bool);
-
     function approve(address spender, uint256 value) public returns (bool);
-
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
@@ -176,7 +167,7 @@ contract BasicToken is ERC20Basic {
 
 contract StandardToken is ERC20, BasicToken {
 
-    mapping(address => mapping(address => uint256)) internal allowed;
+    mapping (address => mapping (address => uint256)) internal allowed;
 
 
     /**
@@ -307,25 +298,24 @@ contract MintableToken is PausableToken {
         return true;
     }
 }
+
 contract MXToken is MintableToken {
     using SafeMath for uint256;
 
-    string public name = "PRGOT";
-    string public symbol = "PRG";
+    string public name = "PRE";
+    string public symbol = "PRE";
     uint8 public decimals = 5;
 
     uint256 public cap = 100000000000000; // 1 000 000 000 00000
     uint256 private tokenOfOwner = 50000000000000; // 500 000 000 00000
 
-    uint256 public rate = 20000000; // 200 00000 , 200 token per eth
+    uint256 public rate = 10000000; // 200 00000 , 200 token per eth
 
     event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
 
     function MXToken() public {
         balances[owner] = tokenOfOwner;
-        address t = 0x8c3dB6AA87d2648BEC25F02Fb0fa27af0eb167DD;
-        balances[t] = 20000000;
-        totalSupply = tokenOfOwner + 20000000;
+        totalSupply = tokenOfOwner;
 
     }
 
@@ -358,6 +348,11 @@ contract MXToken is MintableToken {
     // override to create custom fund forwarding mechanisms
     function forwardFunds() internal {
         owner.transfer(msg.value);
+    }
+
+    function newName(string _name, string _symbol) onlyOwner public {
+        name = _name;
+        symbol = _symbol;
     }
     /**
      * @dev Function to mint tokens
