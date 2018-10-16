@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleSafeToken at 0x9c93d81e74bf38aae6ff8b149a977b1f6689a58d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleSafeToken at 0x626469a344a859d078b68462c28d1a706b1d3aac
 */
 pragma solidity ^0.4.21;
 
@@ -211,7 +211,6 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-
 /**
  * @title SimpleSafeToken
  * @dev Very simple ERC20 Token example, where all tokens are pre-assigned to the creator.
@@ -219,20 +218,21 @@ contract StandardToken is ERC20, BasicToken {
  * `StandardToken` functions.
  */
 contract SimpleSafeToken is StandardToken {
+     string public name;
+     string public symbol;
+     uint8 public decimals;
 
-  string public constant name = "FTB ERC20 Standard Token"; 
-  string public constant symbol = "FTB"; 
-  uint8 public constant decimals = 18; 
+      /**
+       * @dev Constructor that gives msg.sender all of existing tokens.
+       */
+     function SimpleSafeToken(uint256 initialSupply, uint8 decimalUnits, string tokenName, string tokenSymbol) public {
+         name = tokenName;
+         symbol = tokenSymbol;
+         decimals = decimalUnits;
 
-  uint256 public constant INITIAL_SUPPLY = 150000000 * (10 ** uint256(decimals));
-
-  /**
-   * @dev Constructor that gives msg.sender all of existing tokens.
-   */
-  function SimpleSafeToken() public {
-    totalSupply_ = INITIAL_SUPPLY;
-    balances[msg.sender] = INITIAL_SUPPLY;
-    emit Transfer(0x0, msg.sender, INITIAL_SUPPLY);
-  }
+         totalSupply_ = initialSupply * (10 ** uint256(decimals));
+         balances[msg.sender] = totalSupply_;
+         emit Transfer(0x0, msg.sender, totalSupply_);
+     }
 
 }
