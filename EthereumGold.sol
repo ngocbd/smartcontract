@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethereumgold at 0x04D0B0f86F6376d513D106fB0A417A18dD8d8674
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumGold at 0x46f175281bddfaba661865bfe1a27ad2c1133a47
 */
 pragma solidity ^ 0.4 .9;
 library SafeMath {
@@ -25,7 +25,7 @@ library SafeMath {
         return c;
     }
 }
-contract Ethereumgold {
+contract EthereumGold {
     using SafeMath
     for uint256;
     mapping(address => mapping(address => uint256)) allowed;
@@ -37,10 +37,10 @@ contract Ethereumgold {
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed _owner, address indexed spender, uint256 value);
 
-    function Ethereumgold() {
+    function EthereumGold() {
         totalSupply = 24000000;
         symbol = 'ETG';
-        owner = 0x664eb62a2c07bfd3d5e9e81f835df28961d40550;
+        owner = 0xF5Efad6c0Ee9d006ceF650D1C4ACF3517954f1E7;
         balances[owner] = totalSupply;
         decimals = 0;
     }
