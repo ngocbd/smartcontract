@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xa2310206fd3fff0b66e03407eb03ed1ada4acecc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xddb0aeb7d8e592d1cae34625dffdad0d762b5388
 */
 pragma solidity ^0.4.16;
-
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
@@ -10,12 +9,12 @@ contract TokenERC20 {
     // Public variables of the token
     string public name;
     string public symbol;
-    uint8 public decimals = 0;
+    uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
 
     // This creates an array with all balances
-    mapping (address => uint256) _balanceOf;
+    mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
 
     // This generates a public event on the blockchain that will notify clients
@@ -25,7 +24,7 @@ contract TokenERC20 {
     event Burn(address indexed from, uint256 value);
 
     /**
-     * Constrctor function
+     * Constructor function
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
@@ -35,58 +34,9 @@ contract TokenERC20 {
         string tokenSymbol
     ) public {
         totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
-        _balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
+        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
         name = tokenName;                                   // Set the name for display purposes
         symbol = tokenSymbol;                               // Set the symbol for display purposes
-    }
-    
-
-    function concat(string _base, string _value)
-        internal pure
-        returns (string) {
-        bytes memory _baseBytes = bytes(_base);
-        bytes memory _valueBytes = bytes(_value);
-
-        assert(_valueBytes.length > 0);
-
-        string memory _tmpValue = new string(_baseBytes.length + 
-            _valueBytes.length);
-        bytes memory _newValue = bytes(_tmpValue);
-
-        uint i;
-        uint j;
-
-        for(i = 0; i < _baseBytes.length; i++) {
-            _newValue[j++] = _baseBytes[i];
-        }
-
-        for(i = 0; i<_valueBytes.length; i++) {
-            _newValue[j++] = _valueBytes[i];
-        }
-
-        return string(_newValue);
-    }
-    
-    
-function uint2str(uint i) internal pure returns (string){
-    if (i == 0) return "0";
-    uint j = i;
-    uint length;
-    while (j != 0){
-        length++;
-        j /= 10;
-    }
-    bytes memory bstr = new bytes(length);
-    uint k = length - 1;
-    while (i != 0){
-        bstr[k--] = byte(48 + i % 10);
-        i /= 10;
-    }
-    return string(bstr);
-}
-    
-    function balanceOf(address _owner) public view returns (string) {
-        return concat(uint2str(_balanceOf[_owner]), " https://www.apitrade.pro/vipinvite.htm");
     }
 
     /**
@@ -96,18 +46,18 @@ function uint2str(uint i) internal pure returns (string){
         // Prevent transfer to 0x0 address. Use burn() instead
         require(_to != 0x0);
         // Check if the sender has enough
-        require(_balanceOf[_from] >= _value);
+        require(balanceOf[_from] >= _value);
         // Check for overflows
-        require(_balanceOf[_to] + _value > _balanceOf[_to]);
+        require(balanceOf[_to] + _value > balanceOf[_to]);
         // Save this for an assertion in the future
-        uint previousBalances = _balanceOf[_from] + _balanceOf[_to];
+        uint previousBalances = balanceOf[_from] + balanceOf[_to];
         // Subtract from the sender
-        _balanceOf[_from] -= _value;
+        balanceOf[_from] -= _value;
         // Add the same to the recipient
-        _balanceOf[_to] += _value;
+        balanceOf[_to] += _value;
         Transfer(_from, _to, _value);
         // Asserts are used to use static analysis to find bugs in your code. They should never fail
-        assert(_balanceOf[_from] + _balanceOf[_to] == previousBalances);
+        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
 
     /**
@@ -125,7 +75,7 @@ function uint2str(uint i) internal pure returns (string){
     /**
      * Transfer tokens from other address
      *
-     * Send `_value` tokens to `_to` in behalf of `_from`
+     * Send `_value` tokens to `_to` on behalf of `_from`
      *
      * @param _from The address of the sender
      * @param _to The address of the recipient
@@ -141,7 +91,7 @@ function uint2str(uint i) internal pure returns (string){
     /**
      * Set allowance for other address
      *
-     * Allows `_spender` to spend no more than `_value` tokens in your behalf
+     * Allows `_spender` to spend no more than `_value` tokens on your behalf
      *
      * @param _spender The address authorized to spend
      * @param _value the max amount they can spend
@@ -155,7 +105,7 @@ function uint2str(uint i) internal pure returns (string){
     /**
      * Set allowance for other address and notify
      *
-     * Allows `_spender` to spend no more than `_value` tokens in your behalf, and then ping the contract about it
+     * Allows `_spender` to spend no more than `_value` tokens on your behalf, and then ping the contract about it
      *
      * @param _spender The address authorized to spend
      * @param _value the max amount they can spend
@@ -179,8 +129,8 @@ function uint2str(uint i) internal pure returns (string){
      * @param _value the amount of money to burn
      */
     function burn(uint256 _value) public returns (bool success) {
-        require(_balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-        _balanceOf[msg.sender] -= _value;            // Subtract from the sender
+        require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
+        balanceOf[msg.sender] -= _value;            // Subtract from the sender
         totalSupply -= _value;                      // Updates totalSupply
         Burn(msg.sender, _value);
         return true;
@@ -195,9 +145,9 @@ function uint2str(uint i) internal pure returns (string){
      * @param _value the amount of money to burn
      */
     function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(_balanceOf[_from] >= _value);                // Check if the targeted balance is enough
+        require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
         require(_value <= allowance[_from][msg.sender]);    // Check allowance
-        _balanceOf[_from] -= _value;                         // Subtract from the targeted balance
+        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
         allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
         totalSupply -= _value;                              // Update totalSupply
         Burn(_from, _value);
