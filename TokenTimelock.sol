@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTimelock at 0xb394114456d3388a329230ab1d98cee2d35ee5b7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTimelock at 0x19e82c3b08cdb001161b563568ef2ac1f2251cbf
 */
 pragma solidity ^0.4.13;
 
@@ -41,9 +41,9 @@ contract TokenTimelock {
   address public beneficiary;
 
   // timestamp when token release is enabled
-  uint64 public releaseTime;
+  uint256 public releaseTime;
 
-  function TokenTimelock(ERC20Basic _token, address _beneficiary, uint64 _releaseTime) public {
+  function TokenTimelock(ERC20Basic _token, address _beneficiary, uint256 _releaseTime) public {
     require(_releaseTime > now);
     token = _token;
     beneficiary = _beneficiary;
