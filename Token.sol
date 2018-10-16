@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x5000807064653d5fff77905f9813141ff1ab7edc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x5b82ff7efa33bf915d68be95172827ac30067a96
 */
+/*! age.sol | (c) 2018 Develop by BelovITLab LLC (smartcontract.ru), author @stupidlovejoy | License: MIT */
+
 pragma solidity 0.4.18;
 
 library SafeMath {
@@ -45,6 +47,23 @@ contract Ownable {
         require(newOwner != address(0));
         owner = newOwner;
         OwnershipTransferred(owner, newOwner);
+    }
+}
+
+contract Withdrawable is Ownable {
+    function withdrawEther(address _to, uint _value) onlyOwner public returns(bool) {
+        require(_to != address(0));
+        require(this.balance >= _value);
+
+        _to.transfer(_value);
+
+        return true;
+    }
+
+    function withdrawTokens(ERC20 _token, address _to, uint _value) onlyOwner public returns(bool) {
+        require(_to != address(0));
+
+        return _token.transfer(_to, _value);
     }
 }
 
@@ -179,7 +198,6 @@ contract MintableToken is StandardToken, Ownable {
     bool public mintingFinished = false;
 
     modifier canMint() { require(!mintingFinished); _; }
-    modifier notMint() { require(mintingFinished); _; }
 
     function mint(address _to, uint256 _amount) onlyOwner canMint public returns(bool) {
         totalSupply = totalSupply.add(_amount);
@@ -200,21 +218,6 @@ contract MintableToken is StandardToken, Ownable {
     }
 }
 
-contract CappedToken is MintableToken {
-    uint256 public cap;
-
-    function CappedToken(uint256 _cap) public {
-        require(_cap > 0);
-        cap = _cap;
-    }
-
-    function mint(address _to, uint256 _amount) onlyOwner canMint public returns(bool) {
-        require(totalSupply.add(_amount) <= cap);
-
-        return super.mint(_to, _amount);
-    }
-}
-
 contract BurnableToken is StandardToken {
     event Burn(address indexed burner, uint256 value);
 
@@ -231,54 +234,15 @@ contract BurnableToken is StandardToken {
 }
 
 /*
-
-ICO Gap
-
-    - Crowdsale goes in 4 steps:
-    - 1st step PreSale 0: the administrator can issue tokens; purchase and sale are closed; Max. tokens 5 000 000
-    - 2nd step PreSale 1: the administrator can not issue tokens; the sale is open; purchase is closed; Max. tokens 5 000 000 + 10 000 000
-    - The third step of PreSale 2: the administrator can not issue tokens; the sale is open; purchase is closed; Max. tokens 5 000 000 + 10 000 000 + 15 000 000
-    - 4th step ICO: administrator can not issue tokens; the sale is open; the purchase is open; Max. tokens 5 000 000 + 10 000 000 + 15 000 000 + 30 000 000
-
-    Addition:
-    - Total emissions are limited: 100,000,000 tokens
-    - at each step it is possible to change the price of the token
-    - the steps are not limited in time and the step change is made by the nextStep administrator
-    - funds are accumulated on a contract basis
-    - at any time closeCrowdsale can be called: the funds and management of the token are transferred to the beneficiary; the release of + 65% of tokens to the beneficiary; minting closes
-    - at any time, refundCrowdsale can be called: funds remain on the contract; withdraw becomes unavailable; there is an opportunity to get refund 
-    - transfer of tokens before closeCrowdsale is unavailable
-    - you can buy no more than 500 000 tokens for 1 purse.
+    ADGEX Limited
 */
-
-contract Token is CappedToken, BurnableToken {
-    function Token() CappedToken(100000000 * 1 ether) StandardToken("GAP Token", "GAP", 18) public {
+contract Token is MintableToken, BurnableToken, Withdrawable {
+    function Token() StandardToken("ADGEX Limited", "AGE", 18) public {
         
-    }
-    
-    function transfer(address _to, uint256 _value) notMint public returns(bool) {
-        return super.transfer(_to, _value);
-    }
-    
-    function multiTransfer(address[] _to, uint256[] _value) notMint public returns(bool) {
-        return super.multiTransfer(_to, _value);
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) notMint public returns(bool) {
-        return super.transferFrom(_from, _to, _value);
-    }
-
-    function burnOwner(address _from, uint256 _value) onlyOwner canMint public {
-        require(_value <= balances[_from]);
-
-        balances[_from] = balances[_from].sub(_value);
-        totalSupply = totalSupply.sub(_value);
-
-        Burn(_from, _value);
     }
 }
 
-contract Crowdsale is Pausable {
+contract Crowdsale is Withdrawable, Pausable {
     using SafeMath for uint;
 
     struct Step {
@@ -286,76 +250,56 @@ contract Crowdsale is Pausable {
         uint tokensForSale;
         uint tokensSold;
         uint collectedWei;
-
-        bool purchase;
-        bool issue;
-        bool sale;
     }
 
     Token public token;
-    address public beneficiary = 0x4B97b2938844A775538eF0b75F08648C4BD6fFFA;
+    address public beneficiary = 0x1d94940Df6deCB60a30ACd741a8c3a4C13E7A247;
+    address public beneficiary2 = 0xf75D691dbcA084794510A607132Fcb6a98023dd1;
 
     Step[] public steps;
     uint8 public currentStep = 0;
 
     bool public crowdsaleClosed = false;
-    bool public crowdsaleRefund = false;
-    uint public refundedWei;
 
-    mapping(address => uint256) public canSell;
-    mapping(address => uint256) public purchaseBalances; 
-
+    event NewRate(uint256 rate);
     event Purchase(address indexed holder, uint256 tokenAmount, uint256 etherAmount);
-    event Sell(address indexed holder, uint256 tokenAmount, uint256 etherAmount);
-    event Issue(address indexed holder, uint256 tokenAmount);
-    event Refund(address indexed holder, uint256 etherAmount);
     event NextStep(uint8 step);
     event CrowdsaleClose();
-    event CrowdsaleRefund();
 
     function Crowdsale() public {
         token = new Token();
 
-        steps.push(Step(1 ether / 1000, 5000000 * 1 ether, 0, 0, false, true, false));
-        steps.push(Step(1 ether / 1000, 10000000 * 1 ether, 0, 0, true, false, false));
-        steps.push(Step(1 ether / 500, 15000000 * 1 ether, 0, 0, true, false, false));
-        steps.push(Step(1 ether / 100, 30000000 * 1 ether, 0, 0, true, false, true));
-    }
+        token.mint(0xa0E69d6A52d585624dca2311B9AD5fAb1272Fc99, 607083870 ether);
+
+        steps.push(Step(5.625e12, 500000000 ether, 0, 0));
+        steps.push(Step(7.5e12 ether, 12866185000 ether, 0, 0));    }
 
     function() payable public {
         purchase();
     }
 
-    function setTokenRate(uint _value) onlyOwner whenPaused public {
+    function setTokenRate(uint _value) onlyOwner public {
         require(!crowdsaleClosed);
+        
         steps[currentStep].priceTokenWei = 1 ether / _value;
+
+        NewRate(steps[currentStep].priceTokenWei);
     }
     
     function purchase() whenNotPaused payable public {
         require(!crowdsaleClosed);
-        require(msg.value >= 0.001 ether);
+        require(msg.value >= 0.01 ether);
 
         Step memory step = steps[currentStep];
 
-        require(step.purchase);
         require(step.tokensSold < step.tokensForSale);
-        require(token.balanceOf(msg.sender) < 500000 ether);
 
         uint sum = msg.value;
         uint amount = sum.mul(1 ether).div(step.priceTokenWei);
         uint retSum = 0;
-        uint retAmount;
         
         if(step.tokensSold.add(amount) > step.tokensForSale) {
-            retAmount = step.tokensSold.add(amount).sub(step.tokensForSale);
-            retSum = retAmount.mul(step.priceTokenWei).div(1 ether);
-
-            amount = amount.sub(retAmount);
-            sum = sum.sub(retSum);
-        }
-
-        if(token.balanceOf(msg.sender).add(amount) > 500000 ether) {
-            retAmount = token.balanceOf(msg.sender).add(amount).sub(500000 ether);
+            uint retAmount = step.tokensSold.add(amount).sub(step.tokensForSale);
             retSum = retAmount.mul(step.priceTokenWei).div(1 ether);
 
             amount = amount.sub(retAmount);
@@ -364,8 +308,9 @@ contract Crowdsale is Pausable {
 
         steps[currentStep].tokensSold = step.tokensSold.add(amount);
         steps[currentStep].collectedWei = step.collectedWei.add(sum);
-        purchaseBalances[msg.sender] = purchaseBalances[msg.sender].add(sum);
 
+        beneficiary.transfer(sum.div(100).mul(16));
+        beneficiary2.transfer(sum.sub(sum.div(100).mul(16)));
         token.mint(msg.sender, amount);
 
         if(retSum > 0) {
@@ -373,56 +318,6 @@ contract Crowdsale is Pausable {
         }
 
         Purchase(msg.sender, amount, sum);
-    }
-
-    function issue(address _to, uint256 _value) onlyOwner whenNotPaused public {
-        require(!crowdsaleClosed);
-
-        Step memory step = steps[currentStep];
-        
-        require(step.issue);
-        require(step.tokensSold.add(_value) <= step.tokensForSale);
-
-        steps[currentStep].tokensSold = step.tokensSold.add(_value);
-        canSell[_to] = canSell[_to].add(_value).div(100).mul(20);
-
-        token.mint(_to, _value);
-
-        Issue(_to, _value);
-    }
-
-    function sell(uint256 _value) whenNotPaused public {
-        require(!crowdsaleClosed);
-
-        require(canSell[msg.sender] >= _value);
-        require(token.balanceOf(msg.sender) >= _value);
-
-        Step memory step = steps[currentStep];
-        
-        require(step.sale);
-
-        canSell[msg.sender] = canSell[msg.sender].sub(_value);
-        token.burnOwner(msg.sender, _value);
-
-        uint sum = _value.mul(step.priceTokenWei).div(1 ether);
-
-        msg.sender.transfer(sum);
-
-        Sell(msg.sender, _value, sum);
-    }
-    
-    function refund() public {
-        require(crowdsaleRefund);
-        require(purchaseBalances[msg.sender] > 0);
-
-        uint sum = purchaseBalances[msg.sender];
-
-        purchaseBalances[msg.sender] = 0;
-        refundedWei = refundedWei.add(sum);
-
-        msg.sender.transfer(sum);
-        
-        Refund(msg.sender, sum);
     }
 
     function nextStep() onlyOwner public {
@@ -437,22 +332,10 @@ contract Crowdsale is Pausable {
     function closeCrowdsale() onlyOwner public {
         require(!crowdsaleClosed);
         
-        beneficiary.transfer(this.balance);
-        token.mint(beneficiary, token.totalSupply().div(100).mul(65));
-        token.finishMinting();
         token.transferOwnership(beneficiary);
 
         crowdsaleClosed = true;
 
         CrowdsaleClose();
-    }
-
-    function refundCrowdsale() onlyOwner public {
-        require(!crowdsaleClosed);
-
-        crowdsaleRefund = true;
-        crowdsaleClosed = true;
-
-        CrowdsaleRefund();
     }
 }
