@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GasCrowdsale at 0x126f7fc5e32905734c639d1708fdfe4b2c4e704b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GasCrowdsale at 0xa54a1b3a6203cef877b759b64c6d205421e9f86c
 */
 pragma solidity ^0.4.19;
 
@@ -62,7 +62,7 @@ contract GasCrowdsale {
         fundingGoal = 8000 ether;
         startdate = 1518134400;
         deadline = startdate + 29 days;
-        price = 0.0008 ether;
+        price = 0.0003 ether;
         tokenReward = token(0x75c79b88facE8892E7043797570c390bc2Db52A7);
     }
 
