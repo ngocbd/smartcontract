@@ -1,442 +1,253 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0x54484fe83a51c3151f4075a04ff65d029475a471
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0xafdd6fec9be6e31ad9dd7e28631625ac8e38f9c3
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
 
-contract Token {
+contract EIP20Interface {
+    uint256 public totalSupply;
 
-  function totalSupply () constant returns (uint256 _totalSupply);
+    function balanceOf(address _owner) public view returns (uint256 balance);
+    function transfer(address _to, uint256 _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+    function approve(address _spender, uint256 _value) public returns (bool success);
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
 
-  function balanceOf (address _owner) constant returns (uint256 balance);
-
-  function transfer (address _to, uint256 _value) returns (bool success);
-
-  function transferFrom (address _from, address _to, uint256 _value) returns (bool success);
-
-  function approve (address _spender, uint256 _value) returns (bool success);
-
-  function allowance (address _owner, address _spender) constant returns (uint256 remaining);
-
-  event Transfer (address indexed _from, address indexed _to, uint256 _value);
-
-  event Approval (address indexed _owner, address indexed _spender, uint256 _value);
+    event Transfer(address indexed _from, address indexed _to, uint256 _value); 
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    event Burn(address indexed burner, uint256 value);
 }
 
-contract SafeMath {
-  uint256 constant private MAX_UINT256 =
-  0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
-
-  function safeAdd (uint256 x, uint256 y) constant internal returns (uint256 z) {
-    assert (x <= MAX_UINT256 - y);
-    return x + y;
-  }
-
-  function safeSub (uint256 x, uint256 y) constant internal returns (uint256 z) {
-    assert (x >= y);
-    return x - y;
-  }
-
-  function safeMul (uint256 x, uint256 y)  constant internal  returns (uint256 z) {
-    if (y == 0) return 0; // Prevent division by zero at the next line
-    assert (x <= MAX_UINT256 / y);
-    return x * y;
-  }
-  
-  
-   function safeDiv(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a / b;
+/**
+ * Math operations with safety checks
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
     return c;
   }
-  
-}
 
-
-contract AbstractToken is Token, SafeMath {
-
-  function AbstractToken () {
-    // Do nothing
-  }
- 
-  function balanceOf (address _owner) constant returns (uint256 balance) {
-    return accounts [_owner];
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
   }
 
-  function transfer (address _to, uint256 _value) returns (bool success) {
-    if (accounts [msg.sender] < _value) return false;
-    if (_value > 0 && msg.sender != _to) {
-      accounts [msg.sender] = safeSub (accounts [msg.sender], _value);
-      accounts [_to] = safeAdd (accounts [_to], _value);
-    }
-    Transfer (msg.sender, _to, _value);
-    return true;
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
   }
 
-  function transferFrom (address _from, address _to, uint256 _value)  returns (bool success) {
-    if (allowances [_from][msg.sender] < _value) return false;
-    if (accounts [_from] < _value) return false;
-
-    allowances [_from][msg.sender] =
-      safeSub (allowances [_from][msg.sender], _value);
-
-    if (_value > 0 && _from != _to) {
-      accounts [_from] = safeSub (accounts [_from], _value);
-      accounts [_to] = safeAdd (accounts [_to], _value);
-    }
-    Transfer (_from, _to, _value);
-    return true;
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
   }
-
- 
-  function approve (address _spender, uint256 _value) returns (bool success) {
-    allowances [msg.sender][_spender] = _value;
-    Approval (msg.sender, _spender, _value);
-    return true;
-  }
-
-  
-  function allowance (address _owner, address _spender) constant
-  returns (uint256 remaining) {
-    return allowances [_owner][_spender];
-  }
-
-  /**
-   * Mapping from addresses of token holders to the numbers of tokens belonging
-   * to these token holders.
-   */
-  mapping (address => uint256) accounts;
-
-  /**
-   * Mapping from addresses of token holders to the mapping of addresses of
-   * spenders to the allowances set by these token holders to these spenders.
-   */
-  mapping (address => mapping (address => uint256)) private allowances;
-}
-
-
-contract LicerioToken is AbstractToken {
-    
-     address public owner;
-     
-     uint256 tokenCount = 0;
-     
-     bool frozen = false;
-     
-     uint256 constant MAX_TOKEN_COUNT = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
-     
-     
-    modifier onlyOwner() {
-	    require(owner == msg.sender);
-	    _;
-	}
-     
-     function LicerioToken() {
-         owner = msg.sender;
-         createTokens(100 * (10**24));
-     }
-     
-     function totalSupply () constant returns (uint256 _totalSupply) {
-        return tokenCount;
-     }
-     
-    function name () constant returns (string result) {
-		return "LICERIO";
-	}
-	
-	function symbol () constant returns (string result) {
-		return "LCR";
-	}
-	
-	function decimals () constant returns (uint result) {
-        return (10**18);
-    }
-    
-    function transfer (address _to, uint256 _value) returns (bool success) {
-    if (frozen) return false;
-    else return AbstractToken.transfer (_to, _value);
-  }
-
-  
-  function transferFrom (address _from, address _to, uint256 _value)
-    returns (bool success) {
-    if (frozen) return false;
-    else return AbstractToken.transferFrom (_from, _to, _value);
-  }
-
-  
-  function approve (address _spender, uint256 _currentValue, uint256 _newValue)
-    returns (bool success) {
-    if (allowance (msg.sender, _spender) == _currentValue)
-      return approve (_spender, _newValue);
-    else return false;
-  }
-
-  function burnTokens (uint256 _value) returns (bool success) {
-    if (_value > accounts [msg.sender]) return false;
-    else if (_value > 0) {
-      accounts [msg.sender] = safeSub (accounts [msg.sender], _value);
-      tokenCount = safeSub (tokenCount, _value);
-      return true;
-    } else return true;
-  }
-
-
-  function createTokens (uint256 _value) returns (bool success) {
-    require (msg.sender == owner);
-
-    if (_value > 0) {
-      if (_value > safeSub (MAX_TOKEN_COUNT, tokenCount)) return false;
-      accounts [msg.sender] = safeAdd (accounts [msg.sender], _value);
-      tokenCount = safeAdd (tokenCount, _value);
-    }
-
-    return true;
-  }
-
-
-  function setOwner (address _newOwner) {
-    require (msg.sender == owner);
-
-    owner = _newOwner;
-  }
-
-  function freezeTransfers () {
-    require (msg.sender == owner);
-
-    if (!frozen) {
-      frozen = true;
-      Freeze ();
-    }
-  }
-
-
-  function unfreezeTransfers () {
-    require (msg.sender == owner);
-
-    if (frozen) {
-      frozen = false;
-      Unfreeze ();
-    }
-  }
-
-  event Freeze ();
-
-  event Unfreeze ();
 
 }
 
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public constant returns (uint256);
+  function transfer(address to, uint256 value) public;
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
-contract TokenSale is LicerioToken  {
- 
-    enum State { PRIVATE_SALE, PRE_ICO, ICO_FIRST, ICO_SECOND, STOPPED, CLOSED }
-    
-    // 0 , 1 , 2 , 3 , 4 , 5
-    
-    State public currentState = State.STOPPED;
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public;
+  function approve(address spender, uint256 value) public;
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
-    uint public tokenPrice = 250000000000000; // wei , 0.00025 eth , 0.12 usd
-    uint public _minAmount = 0.01 ether;
-	
+/*
+ * Ownable
+ *
+ * Base contract with an owner.
+ * Provides onlyOwner modifier, which prevents function from running if it is
+ * called by anyone other than the owner.
+ */
+contract Ownable {
+  address public owner;
+
+  function Owanble() public{
+    owner = msg.sender;
+  }
+
+  // Modifier onlyOwner prevents function from running
+  // if it is called by anyone other than the owner
+
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  // Function transferOwnership allows owner to change ownership.
+  // Before the appying changes it checks if the owner
+  // called this function and if the address is not 0x0.
+
+  function transferOwnership(address newOwner) public onlyOwner {
+    if (newOwner != address(0)) {
+      owner = newOwner;
+    }
+  }
+
+}
+
+/*
+ * Haltable
+ *
+ * Abstract contract that allows children to implement an
+ * emergency stop mechanism. Differs from Pausable by causing a throw when in halt mode.
+ *
+ *
+ * Originally envisioned in FirstBlood ICO contract.
+ */
+contract Haltable is Ownable {
+  bool public halted = false;
+
+  modifier stopInEmergency {
+    require(!halted);
+    _;
+  }
+
+  modifier onlyInEmergency {
+    require(halted);
+    _;
+  }
+
+  // called by the owner on emergency, triggers stopped state
+  function halt() external onlyOwner {
+    halted = true;
+  }
+
+  // called by the owner on end of emergency, returns to normal state
+  function unhalt() external onlyOwner onlyInEmergency {
+    halted = false;
+  }
+
+}
+
+contract TokenSale is Haltable {
+    using SafeMath for uint;
+
+    string public name = "TokenSale Contract";
+
+    // Constants
+    EIP20Interface public token;
     address public beneficiary;
-	
-	uint256 private BountyFound = 10 * (10**24);
-	uint256 private SaleFound = 70 * (10**24);
-	uint256 private PartnersFound = 5 * (10**24);
-	uint256 private TeamFound = 15 * (10**24);
-	
-	uint256 public totalSold = 0;
-	
-	
-	uint256 private _hardcap = 14000 ether;
-	uint256 private _softcap = 2500 ether;
-	
-	bool private _allowedTransfers = true;
-	
-	
-    address[] public Partners;
-    address[] public Holders;
-	
-	modifier minAmount() {
-        require(msg.value >= _minAmount);
-        _;
-    }
-    
-    modifier saleIsOn() {
-        require(currentState != State.STOPPED && currentState != State.CLOSED && totalSold < SaleFound);
-        _;
-    }
-    
-	function TokenSale() {
-	    owner = msg.sender;
-	    beneficiary = msg.sender;
-	}
-	
-	function setState(State _newState) public onlyOwner {
-	    require(currentState != State.CLOSED);
-	    currentState = _newState;
-	}
-	
-	function setMinAmount(uint _new) public onlyOwner {
-	    
-	    _minAmount = _new;
-	    
-	}
-	
-	function allowTransfers() public onlyOwner {
-		_allowedTransfers = true;		
-	}
-	
-	function stopTransfers() public onlyOwner {
-		_allowedTransfers = false;
-	}
-	
-	function stopSale() public onlyOwner {
-	    currentState = State.CLOSED;
-	    payoutPartners();
-	    payoutBonusesToHolders();
-	}
-	
-    function setBeneficiaryAddress(address _new) public onlyOwner {
-        
-        beneficiary = _new;
-        
-    }
-    
-    function setTokenPrice(uint _price) public onlyOwner {
-        
-        tokenPrice = _price;
-        
-    }
-    
-    function addPartner(address _newPartner) public onlyOwner {
-        
-        Partners.push(_newPartner);
-        
-    }
-    
-    function payoutPartners() private returns (bool) {
+    address public reserve;
+    uint public price = 0; // in wei
 
-        if(Partners.length == 0) return false;
+    // Counters
+    uint public tokensSoldTotal = 0; // in wei
+    uint public weiRaisedTotal = 0; // in wei
+    uint public investorCount = 0;
 
-        uint tokensToPartners = safeDiv(PartnersFound, Partners.length);
+    event NewContribution(
+        address indexed holder,
+        uint256 tokenAmount,
+        uint256 etherAmount);
+
+    function TokenSale(
+        ) public {
+            
+        // Grant owner rights to deployer of a contract
+        owner = msg.sender;
         
-        for(uint i = 0 ; i <= Partners.length - 1; i++) {
-            address addr = Partners[i];
-            accounts[addr] = safeAdd(accounts[addr], tokensToPartners);
-	        accounts[owner] = safeSub(accounts[owner], tokensToPartners);
-        }
+        // Set token address and initialize constructor
+        token = EIP20Interface(address(0x2F7823AaF1ad1dF0D5716E8F18e1764579F4ABe6));
         
-        return true;
+        // Set beneficiary address to receive ETH
+        beneficiary = address(0xf2b9DA535e8B8eF8aab29956823df7237f1863A3);
         
+        // Set reserve address to receive ETH
+        reserve = address(0x966c0FD16a4f4292E6E0372e04fbB5c7013AD02e);
+        
+        // Set price of 1 token
+        price = 0.00379 ether;
+    }
+
+    function changeBeneficiary(address _beneficiary) public onlyOwner stopInEmergency {
+        beneficiary = _beneficiary;
+    }
+    
+    function changeReserve(address _reserve) public onlyOwner stopInEmergency {
+        reserve = _reserve;
+    }
+    
+    function changePrice(uint _price) public onlyOwner stopInEmergency {
+        price = _price;
+    }
+
+    function () public payable stopInEmergency {
+        
+        // require min limit of contribution
+        require(msg.value >= price);
+        
+        // calculate token amount
+        uint tokens = msg.value / price;
+        
+        // throw if you trying to buy over the token exists
+        require(token.balanceOf(this) >= tokens);
+        
+        // recalculate counters
+        tokensSoldTotal = tokensSoldTotal.add(tokens);
+        if (token.balanceOf(msg.sender) == 0) investorCount++;
+        weiRaisedTotal = weiRaisedTotal.add(msg.value);
+        
+        // transfer bought tokens to the contributor 
+        token.transfer(msg.sender, tokens);
+
+        // 100% / 10 = 10%
+        uint reservePie = msg.value.div(10);
+        
+        // 100% - 10% = 90%
+        uint beneficiaryPie = msg.value.sub(reservePie);
+
+        // transfer funds to the reserve address
+        reserve.transfer(reservePie);
+
+        // transfer funds to the beneficiary address
+        beneficiary.transfer(beneficiaryPie);
+
+        emit NewContribution(msg.sender, tokens, msg.value);
     }
     
     
-    function payoutBonusesToHolders() private returns (bool) {
-        
-        if(Holders.length == 0) return false;
-        
-        uint tokensToHolders = safeDiv(BountyFound, Holders.length);
-        
-        for(uint i = 0 ; i <= Holders.length - 1; i++) {
-            address addr = Holders[i];
-            accounts[addr] = safeAdd(accounts[addr], tokensToHolders);
-	        accounts[owner] = safeSub(accounts[owner], tokensToHolders); 
-        }
-        
-        return true;
+    // Withdraw any accidently sent to the contract ERC20 tokens.
+    // Can be performed only by the owner.
+    function withdrawERC20Token(address _token) public onlyOwner stopInEmergency {
+        ERC20 foreignToken = ERC20(_token);
+        foreignToken.transfer(msg.sender, foreignToken.balanceOf(this));
     }
     
-	
-	function transferFromOwner(address _address, uint _amount) public onlyOwner returns (bool) {
-	    
-	    uint tokens = get_tokens_count(_amount * 1 ether);
-	    
-	    tokens = safeAdd(tokens, get_bounty_count(tokens));
-	    
-	    accounts[_address] = safeAdd(accounts[_address], tokens);
-	    accounts[owner] = safeSub(accounts[owner], tokens);
-	    
-	    totalSold = safeAdd(totalSold, _amount);
-	    
-	    Holders.push(_address);
-	    
-	    return true;
-
-	}
-	
-
-	
-	function transferPayable(address _address, uint _amount) private returns (bool) {
-	    
-	    if(SaleFound < _amount) return false;
-	    
-	    accounts[_address] = safeAdd(accounts[_address], _amount);
-	    accounts[owner] = safeSub(accounts[owner], _amount);
-	    
-	    totalSold = safeAdd(totalSold, _amount);
-	    
-	    Holders.push(_address);
-	    
-	    return true;
-	    
-	}
-	
-	
-	function buyLCRTokens() public saleIsOn() minAmount() payable {
-	  
-	    
-	    uint tokens = get_tokens_count(msg.value);
-		require(transferPayable(msg.sender , tokens));
-		if(_allowedTransfers) {
-			beneficiary.transfer(msg.value);
-	    }
-	    
-	}
-	
-	
-	function get_tokens_count(uint _amount) private returns (uint) {
-	    
-	     uint currentPrice = tokenPrice;
-	     uint tokens = safeDiv( safeMul(_amount, decimals()), currentPrice ) ;
-    	 return tokens;
-	    
-	}
-	
-	
-	function get_bounty_count(uint _tokens) private returns (uint) {
-	
-	    uint bonuses = 0;
-	
-	    if(currentState == State.PRIVATE_SALE) {
-	        bonuses = _tokens ;
-	    }
-	    
-	    if(currentState == State.PRE_ICO) {
-	        bonuses = safeDiv(_tokens , 2);
-	    }
-	    
-	    if(currentState == State.ICO_FIRST) {
-	         bonuses = safeDiv(_tokens , 4);
-	    }
-	    
-	    if(currentState == State.ICO_SECOND) {
-	         bonuses = safeDiv(_tokens , 5);
-	    }
-	    
-	    if(BountyFound < bonuses) {
-	        bonuses = BountyFound;
-	    }
-	    
-	    if(bonuses > 0) {
-	        safeSub(BountyFound, bonuses);
-	    }
-
-	    return bonuses;
-	
-	}
-	
-	function() external payable {
-      buyLCRTokens();
+    // Withdraw any accidently sent to the contract EIP20 tokens.
+    // Can be performed only by the owner.
+    function withdrawEIP20Token(address _token) public onlyOwner stopInEmergency {
+        EIP20Interface foreignToken = EIP20Interface(_token);
+        foreignToken.transfer(msg.sender, foreignToken.balanceOf(this));
     }
-	
+    
+    // Withdraw all not sold tokens.
+    // Can be performed only by the owner.
+    function withdrawToken() public onlyOwner stopInEmergency {
+        token.transfer(msg.sender, token.balanceOf(this));
+    }
+    
+    // Get the contract token balance
+    function tokensRemaining() public constant returns (uint256) {
+        return token.balanceOf(this);
+    }
     
 }
