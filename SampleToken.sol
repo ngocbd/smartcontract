@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SampleToken at 0xe324d1b4733ec3569f971e95fa16dbbaaeca5496
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SampleToken at 0x65dcf265a5dfb8767a6c7b8603ad6019a6377483
 */
 pragma solidity ^0.4.13;
 //Sad Token By Kenneth Tan
@@ -171,8 +171,8 @@ contract StandardToken is ERC20, BasicToken {
 }
 
 contract SampleToken is StandardToken, Ownable {
-    string  public  constant name = "Sad Token o(???)o";
-    string  public  constant symbol = "o(???)o";
+    string  public  constant name = "Like Token ??????";
+    string  public  constant symbol = "??????";
     uint    public  constant decimals = 8;
     uint    public  constant INITIAL_SUPPLY = 10000000000000000;
     address public  crowdsaleContract;
