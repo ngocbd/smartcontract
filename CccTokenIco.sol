@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CccTokenIco at 0x6651562d6251953dbee83d80c4014eb3f4c00f55
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CccTokenIco at 0x59af705aE5c1a41CF7b50Fd374dE359Eb2c7Cf5c
 */
 pragma solidity ^0.4.10;
 
@@ -119,14 +119,14 @@ contract CccTokenIco is StandardToken {
     uint8 public constant decimals = 6;
     
     uint256 public cntMembers = 0;
-    uint256 public totalSupply;
+    uint256 public totalSupply = 200000000 * (uint256(10) ** decimals);
     uint256 public totalRaised;
 
     uint256 public startTimestamp;
     uint256 public durationSeconds = uint256(86400 * 7 * 11);
 
-    uint256 public minCap;
-    uint256 public maxCap;
+    uint256 public minCap = 3000000 * (uint256(10) ** decimals);
+    uint256 public maxCap = 200000000 * (uint256(10) ** decimals);
     
     uint256 public avgRate = uint256(uint256(10)**(18-decimals)).div(460);
 
@@ -134,7 +134,7 @@ contract CccTokenIco is StandardToken {
     address public teama = 0xfc6851324e2901b3ea6170a90Cc43BFe667D617A;
     address public teamb = 0x21f0F5E81BEF4dc696C6BF0196c60a1aC797f953;
     address public teamc = 0xE8726942a46E6C6B3C1F061c14a15c0053A97B6b;
-    address public founder = 0xbb2efFab932a4c2f77Fc1617C1a563738D71B0a7;//0x194EAc9301b15629c54C02c45bBbCB9134F914b2;
+    address public founder = 0xbb2efFab932a4c2f77Fc1617C1a563738D71B0a7;
     address public baseowner;
 
     event LogTransfer(address sender, address to, uint amount);
@@ -144,11 +144,8 @@ contract CccTokenIco is StandardToken {
     ) 
     {
         cntMembers = 0;
-        startTimestamp = now - 11 days;
+        startTimestamp = now - 14 days;
         baseowner = msg.sender;
-        minCap = 3000000 * (uint256(10) ** decimals); 
-        maxCap = 200000000 * (uint256(10) ** decimals);
-        totalSupply = maxCap;
         balances[baseowner] = totalSupply;
         Transfer(0x0, baseowner, totalSupply);
     }
@@ -180,6 +177,10 @@ contract CccTokenIco is StandardToken {
         {
           Clearing(adviser, msg.value.mul(20).div(100));
           adviser.transfer(msg.value.mul(20).div(100));
+        }else
+        {
+          Clearing(founder, msg.value.mul(20).div(100));
+          founder.transfer(msg.value.mul(20).div(100));
         } 
       }
       totalRaised = totalRaised.add(tokenAmount);
@@ -202,8 +203,8 @@ contract CccTokenIco is StandardToken {
         teamc.transfer(msg.value.mul(9).div(1000));
         Clearing(stuff, msg.value.mul(9).div(1000));
         stuff.transfer(msg.value.mul(9).div(1000));
-        Clearing(founder, msg.value.mul(70).div(100));
-        founder.transfer(msg.value.mul(70).div(100));
+        Clearing(founder, msg.value.mul(90).div(100));
+        founder.transfer(msg.value.mul(90).div(100));
         totalRaised = totalRaised.add(tokenAmount);
         balances[baseowner] = balances[baseowner].sub(tokenAmount);
         balances[msg.sender] = balances[msg.sender].add(tokenAmount);
