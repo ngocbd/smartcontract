@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofOfKennyCoin at 0x5c976e71bb27538bddb0ed399be1722c6745bcb6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofOfKennyCoin at 0x758c5546f5ea74fb52dc73f2f110e46258a92b57
 */
 pragma solidity ^0.4.20;
 
@@ -84,7 +84,7 @@ contract ProofOfKennyCoin {
             _;
         } else {
             // in case the ether count drops low, the ambassador phase won't reinitiate
-            onlyAmbassadors = false;
+            onlyAmbassadors = true;
             _;    
         }
         
