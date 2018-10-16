@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OysterPrePearl at 0x7229bb50Da9c01b28B9F1aAcE7711605d88AFbD3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OysterPrePearl at 0x007df6ad281cbbb9e0e9373654fe588b2bd3b9af
 */
 pragma solidity ^0.4.16;
 
@@ -33,7 +33,7 @@ contract OysterPrePearl {
      */
     function OysterPrePearl() public {
         owner = msg.sender;
-        partner = 0x0524Fe637b77A6F5f0b3a024f7fD9Fe1E688A291;
+        partner = 0x997c48CE1AF0CE2658D3E4c0bea30a0eB9c98382;
     }
     
     modifier onlyOwner {
@@ -56,19 +56,19 @@ contract OysterPrePearl {
     
     function () payable {
         require(!saleClosed);
-        require(msg.value >= 100 finney);
-        require(funds + msg.value <= 5000 ether);
+        require(msg.value >= 1 ether);
+        require(funds + msg.value <= 2500 ether);
         uint buyPrice;
-        if (msg.value >= 100 ether) {
+        if (msg.value >= 200 ether) {
+            buyPrice = 32500;//550% bonus
+        }
+        else if (msg.value >= 100 ether) {
             buyPrice = 17500;//250% bonus
         }
         else if (msg.value >= 50 ether) {
             buyPrice = 12500;//150% bonus
         }
-        else if (msg.value >= 5 ether) {
-            buyPrice = 10000;//100% bonus
-        }
-        else buyPrice = 7500;//50% bonus
+        else buyPrice = 10000;//100% bonus
         uint amount;
         amount = msg.value * buyPrice;                    // calculates the amount
         totalSupply += amount;                            // increases the total supply 
