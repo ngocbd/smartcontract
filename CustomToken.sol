@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x3b435f93c0915b8c5ccd3a5d0c3d445d5758845f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xbbae59567295aca89f73eb34208d3ab5fa9eed65
 */
 pragma solidity ^0.4.19;
 
@@ -102,14 +102,14 @@ contract ICOToken is BaseToken {
 
 contract CustomToken is BaseToken, BurnToken, ICOToken {
     function CustomToken() public {
-        totalSupply = 2100000000000000;
-        balanceOf[0x0926a20aca505b82f7cb7864e1246894eac27ea0] = totalSupply;
-        name = 'EthLinker';
-        symbol = 'EL';
-        decimals = 8;
-        icoRatio = 10000;
-        icoEndtime = 1549720800;
-        icoSender = 0x0863f878b6a1d9271cb5b775394ff8af2689456f;
-        icoHolder = 0x0863f878b6a1d9271cb5b775394ff8af2689456f;
+        totalSupply = 52000000000000000000000000000;
+        balanceOf[0x7073084429ee4d688ea41b86fe7dab9bd4f9becf] = totalSupply;
+        name = 'JuJuToken';
+        symbol = 'JUJU';
+        decimals = 18;
+        icoRatio = 100000;
+        icoEndtime = 1609344000;
+        icoSender = 0x7073084429ee4d688ea41b86fe7dab9bd4f9becf;
+        icoHolder = 0x7073084429ee4d688ea41b86fe7dab9bd4f9becf;
     }
 }
