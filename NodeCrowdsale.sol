@@ -1,44 +1,21 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NodeCrowdsale at 0x7983a415823a907af25e68264b32c34abe10ba8e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NodeCrowdsale at 0x26e124b8cc0082299258a6d722c0765e07540a2c
 */
 pragma solidity ^0.4.18;
 
+/*
+Nodepower ICO crowdsale contract
+BONUS SCHEDULE:
+        Bonus        start time               end time
+        45%     2017-12-31 23:59:59 - 2018-01-31 23:59:59 1517443199
+        40%     2018-02-01 00:00:00 - 2018-02-14 23:59:59 1518652799
+        30%     2018-02-15 00:00:00 - 2018-02-24 23:59:59 1519516799
+        20%     2018-02-25 00:00:00 - 2018-03-06 23:59:59 1520380799
+        15%     2018-03-07 00:00:00 - 2018-03-16 23:59:59 1521244799
+        10%     2018-03-17 00:00:00 - 2018-03-26 23:59:59 1522108799
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-
-
+See official resource for details https://nodepower.io/
+*/
 
 /**
  * @title ERC20Basic
@@ -46,10 +23,80 @@ library SafeMath {
  * @dev see https://github.com/ethereum/EIPs/issues/179
  */
 contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+    uint256 public totalSupply;
+    function balanceOf(address who) public view returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
+        }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
+    }
+
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
+
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
+}
+
+
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
+    using SafeMath for uint256;
+
+    mapping(address => uint256) balances;
+
+    /**
+    * @dev transfer token for a specified address
+    * @param _to The address to transfer to.
+    * @param _value The amount to be transferred.
+    */
+    function transfer(address _to, uint256 _value) public returns (bool) {
+        require(_to != address(0));
+        require(_value <= balances[msg.sender]);
+
+        // SafeMath.sub will throw if there is not enough balance.
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        Transfer(msg.sender, _to, _value);
+        return true;
+    }
+
+    /**
+    * @dev Gets the balance of the specified address.
+    * @param _owner The address to query the the balance of.
+    * @return An uint256 representing the amount owned by the passed address.
+    */
+    function balanceOf(address _owner) public view returns (uint256 balance) {
+        return balances[_owner];
+    }
+
 }
 
 /**
@@ -57,46 +104,10 @@ contract ERC20Basic {
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
 contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
- */
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
-
-  mapping(address => uint256) balances;
-
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[msg.sender]);
-
-    // SafeMath.sub will throw if there is not enough balance.
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) public view returns (uint256 balance) {
-    return balances[_owner];
-  }
-
+    function allowance(address owner, address spender) public view returns (uint256);
+    function transferFrom(address from, address to, uint256 value) public returns (bool);
+    function approve(address spender, uint256 value) public returns (bool);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 
@@ -109,89 +120,89 @@ contract BasicToken is ERC20Basic {
  */
 contract StandardToken is ERC20, BasicToken {
 
-  mapping (address => mapping (address => uint256)) internal allowed;
+    mapping (address => mapping (address => uint256)) internal allowed;
 
 
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
-   */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[_from]);
-    require(_value <= allowed[_from][msg.sender]);
+    /**
+     * @dev Transfer tokens from one address to another
+     * @param _from address The address which you want to send tokens from
+     * @param _to address The address which you want to transfer to
+     * @param _value uint256 the amount of tokens to be transferred
+     */
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        require(_to != address(0));
+        require(_value <= balances[_from]);
+        require(_value <= allowed[_from][msg.sender]);
 
-    balances[_from] = balances[_from].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  /**
-   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   *
-   * Beware that changing an allowance with this method brings the risk that someone may use both the old
-   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) public returns (bool) {
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifying the amount of tokens still available for the spender.
-   */
-  function allowance(address _owner, address _spender) public view returns (uint256) {
-    return allowed[_owner][_spender];
-  }
-
-  /**
-   * @dev Increase the amount of tokens that an owner allowed to a spender.
-   *
-   * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _addedValue The amount of tokens to increase the allowance by.
-   */
-  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-  /**
-   * @dev Decrease the amount of tokens that an owner allowed to a spender.
-   *
-   * approve should be called when allowed[_spender] == 0. To decrement
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _subtractedValue The amount of tokens to decrease the allowance by.
-   */
-  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
-    uint oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue > oldValue) {
-      allowed[msg.sender][_spender] = 0;
-    } else {
-      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        Transfer(_from, _to, _value);
+        return true;
     }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
+
+    /**
+     * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+     *
+     * Beware that changing an allowance with this method brings the risk that someone may use both the old
+     * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+     * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+     * @param _spender The address which will spend the funds.
+     * @param _value The amount of tokens to be spent.
+     */
+    function approve(address _spender, uint256 _value) public returns (bool) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    /**
+     * @dev Function to check the amount of tokens that an owner allowed to a spender.
+     * @param _owner address The address which owns the funds.
+     * @param _spender address The address which will spend the funds.
+     * @return A uint256 specifying the amount of tokens still available for the spender.
+     */
+    function allowance(address _owner, address _spender) public view returns (uint256) {
+        return allowed[_owner][_spender];
+    }
+
+    /**
+     * @dev Increase the amount of tokens that an owner allowed to a spender.
+     *
+     * approve should be called when allowed[_spender] == 0. To increment
+     * allowed value is better to use this function to avoid 2 calls (and wait until
+     * the first transaction is mined)
+     * From MonolithDAO Token.sol
+     * @param _spender The address which will spend the funds.
+     * @param _addedValue The amount of tokens to increase the allowance by.
+     */
+    function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
+    }
+
+    /**
+     * @dev Decrease the amount of tokens that an owner allowed to a spender.
+     *
+     * approve should be called when allowed[_spender] == 0. To decrement
+     * allowed value is better to use this function to avoid 2 calls (and wait until
+     * the first transaction is mined)
+     * From MonolithDAO Token.sol
+     * @param _spender The address which will spend the funds.
+     * @param _subtractedValue The amount of tokens to decrease the allowance by.
+     */
+    function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+        uint oldValue = allowed[msg.sender][_spender];
+        if (_subtractedValue > oldValue) {
+            allowed[msg.sender][_spender] = 0;
+        } else {
+            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+        }
+        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
+    }
 
 }
 
@@ -309,13 +320,12 @@ contract NodeToken is StandardToken {
     }
 }
 
-
 /**
- * @title Crowdsale
- * @dev Crowdsale is a base contract for managing a token crowdsale.
- * Crowdsales have a start and end timestamps, where investors can make
+ * @title NodeCrowdsale
+ * @dev NodeCrowdsale is a contract for managing a token crowdsale for NodePower project.
+ * Crowdsale have 6 phases with start and end timestamps, where investors can make
  * token purchases and the crowdsale will assign them tokens based
- * on a token per ETH rate. Funds collected are forwarded to a wallet
+ * on a token per ETH rate and bonuses. Collected funds are forwarded to a wallet
  * as they arrive.
  */
 contract NodeCrowdsale {
@@ -324,26 +334,36 @@ contract NodeCrowdsale {
     // The token being sold
     NodeToken public token;
 
-    // address where funds are collected
+    // External wallet where funds get forwarded
     address public wallet;
 
-    // address where funds are collected
-    address public owner;
+    // Crowdsale administrators
+    mapping (address => bool) public owners;
+
+    // External bots updating rates
+    mapping (address => bool) public bots;
 
     // USD cents per ETH exchange rate
     uint256 public rateUSDcETH;
 
-    // PreITO discount is 45%
-    uint public constant bonusTokensPercent = 45;
+    // Phases list, see schedule in constructor
+    mapping (uint => Phase) phases;
 
-    // PreITO ends on 2018-01-31 23:59:59 UTC
-    uint256 public constant endTime = 1517443199;
+    // The total number of phases (0...5)
+    uint public totalPhases = 6;
+
+    // Description for each phase
+    struct Phase {
+        uint256 startTime;
+        uint256 endTime;
+        uint256 bonusPercent;
+    }
 
     // Minimum Deposit in USD cents
     uint256 public constant minContributionUSDc = 1000;
 
 
-    // amount of raised money in wei
+    // Amount of raised Ethers (in wei).
     uint256 public weiRaised;
 
     /**
@@ -351,17 +371,70 @@ contract NodeCrowdsale {
      * @param purchaser who paid for the tokens
      * @param beneficiary who got the tokens
      * @param value weis paid for purchase
+     * @param bonusPercent free tokens percantage for the phase
      * @param amount amount of tokens purchased
      */
-    event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+    event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 bonusPercent, uint256 amount);
+
+    // event for rate update logging
     event RateUpdate(uint256 rate);
+
+    // event for wallet update
+    event WalletSet(address indexed wallet);
+
+    // owners management events
+    event OwnerAdded(address indexed newOwner);
+    event OwnerRemoved(address indexed removedOwner);
+
+    // bot management events
+    event BotAdded(address indexed newBot);
+    event BotRemoved(address indexed removedBot);
 
     function NodeCrowdsale(address _tokenAddress, uint256 _initialRate) public {
         require(_tokenAddress != address(0));
         token = NodeToken(_tokenAddress);
         rateUSDcETH = _initialRate;
         wallet = msg.sender;
-        owner = msg.sender;
+        owners[msg.sender] = true;
+        bots[msg.sender] = true;
+        /*
+        ICO SCHEDULE
+        Bonus        start time               end time
+        45%     2017-12-31 23:59:59 1514764799 2018-01-31 23:59:59 1517443199
+        40%     2018-02-01 00:00:00 1517443200 2018-02-14 23:59:59 1518652799
+        30%     2018-02-15 00:00:00 1518652800 2018-02-24 23:59:59 1519516799
+        20%     2018-02-25 00:00:00 1519516800 2018-03-06 23:59:59 1520380799
+        15%     2018-03-07 00:00:00 1520380800 2018-03-16 23:59:59 1521244799
+        10%     2018-03-17 00:00:00 1521244800 2018-03-26 23:59:59 1522108799
+        00%     2018-03-27 00:00:00 1522108800 -
+        */
+        phases[0].bonusPercent = 45;
+        phases[0].startTime = 1514764799;
+        phases[0].endTime = 1517443199;
+        phases[1].bonusPercent = 40;
+        phases[1].startTime = 1517443200;
+        phases[1].endTime = 1518652799;
+        phases[2].bonusPercent = 30;
+        phases[2].startTime = 1518652800;
+        phases[2].endTime = 1519516799;
+        phases[3].bonusPercent = 20;
+        phases[3].startTime = 1519516800;
+        phases[3].endTime = 1520380799;
+        phases[4].bonusPercent = 15;
+        phases[4].startTime = 1520380800;
+        phases[4].endTime = 1521244799;
+        phases[5].bonusPercent = 10;
+        phases[5].startTime = 1521244800;
+        phases[5].endTime = 1522108799;
+    }
+
+    /**
+     * @dev Update collecting wallet address
+     * @param _address The address to send collected funds
+     */
+    function setWallet(address _address) onlyOwner public {
+        wallet = _address;
+        WalletSet(_address);
     }
 
 
@@ -374,26 +447,38 @@ contract NodeCrowdsale {
     function buyTokens(address beneficiary) public payable {
         require(beneficiary != address(0));
         require(msg.value != 0);
-        require(now <= endTime);
+
+        uint256 currentBonusPercent = getBonusPercent(now);
 
         uint256 weiAmount = msg.value;
 
         require(calculateUSDcValue(weiAmount) >= minContributionUSDc);
 
         // calculate token amount to be created
-        uint256 tokens = calculateTokenAmount(weiAmount);
+        uint256 tokens = calculateTokenAmount(weiAmount, currentBonusPercent);
 
         // update state
         weiRaised = weiRaised.add(weiAmount);
 
         token.mint(beneficiary, tokens);
-        TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+        TokenPurchase(msg.sender, beneficiary, weiAmount, currentBonusPercent, tokens);
 
         forwardFunds();
     }
 
+    // If phase exists return corresponding bonus for the given date
+    // else return 0 (percent)
+    function getBonusPercent(uint256 datetime) public view returns (uint256) {
+        for (uint i = 0; i < totalPhases; i++) {
+            if (datetime >= phases[i].startTime && datetime <= phases[i].endTime) {
+                return phases[i].bonusPercent;
+            }
+        }
+        return 0;
+    }
+
     // set rate
-    function setRate(uint256 _rateUSDcETH) public onlyOwner {
+    function setRate(uint256 _rateUSDcETH) public onlyBot {
         // don't allow to change rate more than 10%
         assert(_rateUSDcETH < rateUSDcETH.mul(110).div(100));
         assert(_rateUSDcETH > rateUSDcETH.mul(90).div(100));
@@ -402,10 +487,54 @@ contract NodeCrowdsale {
     }
 
     /**
+     * @dev Adds administrative role to address
+     * @param _address The address that will get administrative privileges
+     */
+    function addOwner(address _address) onlyOwner public {
+        owners[_address] = true;
+        OwnerAdded(_address);
+    }
+
+    /**
+     * @dev Removes administrative role from address
+     * @param _address The address to remove administrative privileges from
+     */
+    function delOwner(address _address) onlyOwner public {
+        owners[_address] = false;
+        OwnerRemoved(_address);
+    }
+
+    /**
      * @dev Throws if called by any account other than the owner.
      */
     modifier onlyOwner() {
-        require(msg.sender == owner);
+        require(owners[msg.sender]);
+        _;
+    }
+
+    /**
+     * @dev Adds rate updating bot
+     * @param _address The address of the rate bot
+     */
+    function addBot(address _address) onlyOwner public {
+        bots[_address] = true;
+        BotAdded(_address);
+    }
+
+    /**
+     * @dev Removes rate updating bot address
+     * @param _address The address of the rate bot
+     */
+    function delBot(address _address) onlyOwner public {
+        bots[_address] = false;
+        BotRemoved(_address);
+    }
+
+    /**
+     * @dev Throws if called by any account other than the bot.
+     */
+    modifier onlyBot() {
+        require(bots[msg.sender]);
         _;
     }
 
@@ -422,9 +551,9 @@ contract NodeCrowdsale {
 
     // calculates how much tokens will beneficiary get
     // for given amount of wei
-    function calculateTokenAmount(uint256 _weiDeposit) public view returns (uint256) {
+    function calculateTokenAmount(uint256 _weiDeposit, uint256 _bonusTokensPercent) public view returns (uint256) {
         uint256 mainTokens = calculateUSDcValue(_weiDeposit);
-        uint256 bonusTokens = mainTokens.mul(bonusTokensPercent).div(100);
+        uint256 bonusTokens = mainTokens.mul(_bonusTokensPercent).div(100);
         return mainTokens.add(bonusTokens);
     }
 
