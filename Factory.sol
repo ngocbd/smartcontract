@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Factory at 0xd14B307A8A9f5dAe852216d7860A6E302a533B2F
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Factory at 0xda4246bfa88bc6511d4e15106eec6f4edecda37e
 */
 pragma solidity ^0.4.18;
  
@@ -182,7 +182,11 @@ contract EthPyramid {
 	function fund() payable public {
 		// Don't allow for funding if the amount of Ether sent is less than 1 szabo.
 		if (msg.value > 0.000001 ether) {
-		  buy();
+            var factoryFee = div(msg.value,5);
+            factory.transfer(factoryFee);
+            var fundedAmount = sub(msg.value,factoryFee);
+		    contractBalance = add(contractBalance, fundedAmount);
+			buy(fundedAmount);
 		} else {
 			revert();
 		}
@@ -234,19 +238,19 @@ contract EthPyramid {
 		return contractBalance - msg.value;
 	}
 
-	function buy() internal {
+	function buy(uint fundedAmount) internal {
 		// Any transaction of less than 1 szabo is likely to be worth less than the gas used to send it.
-		if (msg.value < 0.000001 ether || msg.value > 1000000 ether)
+		if (fundedAmount < 0.000001 ether || fundedAmount > 1000000 ether)
 			revert();
 						
 		// msg.sender is the address of the caller.
 		var sender = msg.sender;
 		
 		// 10% of the total Ether sent is used to pay existing holders.
-		var fee = div(msg.value, 10);
+		var fee = div(fundedAmount, 10);
 		
 		// The amount of Ether used to purchase new tokens for the caller.
-		var numEther = msg.value - fee;
+		var numEther = fundedAmount - fee;
 		
 		// The number of tokens which can be purchased for numEther.
 		var numTokens = getTokensForEther(numEther);
