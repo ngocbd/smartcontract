@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETHEREAL at 0xe76c45c5f711717fca4c284b07ad881382c321a2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETHEREAL at 0x745041c3a8919e74a129975e78918b68a68b49cf
 */
 pragma solidity ^0.4.4;
 
@@ -40,8 +40,6 @@ contract Token {
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
 }
-
-
 
 contract StandardToken is Token {
 
@@ -89,31 +87,50 @@ contract StandardToken is Token {
     uint256 public totalSupply;
 }
 
-//define token name
-contract ETHEREAL is StandardToken {
-
-    function () {
-        //if ether is sent to this address, send it back.
-        throw;
-    }
+contract ETHEREAL is StandardToken { // CHANGE THIS. Update the contract name.
 
     /* Public variables of the token */
 
+    /*
+    NOTE:
+    The following variables are OPTIONAL vanities. One does not have to include them.
+    They allow one to customise the token contract & in no way influences the core functionality.
+    Some wallets/interfaces might not even bother to look at this information.
+    */
+    string public name;                   // Token Name
+    uint8 public decimals;                // How many decimals to show. To be standard complicant keep it 18
+    string public symbol;                 // An identifier: eg SBX, XPR etc..
+    string public version = 'H1.0'; 
+    uint256 public unitsOneEthCanBuy;     // How many units of your coin can be bought by 1 ETH?
+    uint256 public totalEthInWei;         // WEI is the smallest unit of ETH (the equivalent of cent in USD or satoshi in BTC). We'll store the total ETH raised via our ICO here.  
+    address public fundsWallet;           // Where should the raised ETH go?
 
-    string public name;                   //ETHEREAL Token
-    uint8 public decimals;                //18
-    string public symbol;                 //ETHR
-    string public version = 'H1.0';       //human 0.1 standard.
+    // This is a constructor function 
+    // which means the following function name has to match the contract name declared above
+    function ETHEREAL() {
+        balances[msg.sender] = 3000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
+        totalSupply = 3000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
+        name = "ETHEREAL";                                   // Set the name for display purposes (CHANGE THIS)
+        decimals = 8;                                               // Amount of decimals for display purposes (CHANGE THIS)
+        symbol = "ETL";                                             // Set the symbol for display purposes (CHANGE THIS)
+        unitsOneEthCanBuy = 0;                                      // Set the price of your token for the ICO (CHANGE THIS)
+        fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
+    }
 
-    //ETHEREAL FUNCTION
+    function() payable{
+        totalEthInWei = totalEthInWei + msg.value;
+        uint256 amount = msg.value * unitsOneEthCanBuy;
+        if (balances[fundsWallet] < amount) {
+            return;
+        }
 
-    function ETHEREAL(
-        ) {
-        balances[msg.sender] = 25000000000000000000000000;
-        totalSupply = 25000000000000000000000000;
-        name = "ETHEREAL";
-        decimals = 18;
-        symbol = "ETHR";
+        balances[fundsWallet] = balances[fundsWallet] - amount;
+        balances[msg.sender] = balances[msg.sender] + amount;
+
+        Transfer(fundsWallet, msg.sender, amount); // Broadcast a message to the blockchain
+
+        //Transfer ether to fundsWallet
+        fundsWallet.transfer(msg.value);                               
     }
 
     /* Approves and then calls the receiving contract */
