@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xee0c18c17f8878fd965e8e20861f8ca3369a8029
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x6cdc55813f10ace2b056cb52338adc623a83ef22
 */
 pragma solidity ^0.4.16;
 
@@ -9,7 +9,8 @@ contract TokenERC20 {
     // Public variables of the token
     string public name;
     string public symbol;
-    uint256 public decimals = 8;
+    uint8 public decimals = 8;
+    // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
 
     // This creates an array with all balances
@@ -27,13 +28,27 @@ contract TokenERC20 {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function TokenERC20() public {
-        //6 million tokens, 8 decimal places
-        totalSupply = 6000000 * 10 ** decimals;
-        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = 'Smart Payment Cash';                                   // Set the name for display purposes
-        symbol = 'SPC';                               // Set the symbol for display purposes
+    function TokenERC20(
+
+) public {
+        totalSupply = 9565658097 * 10 ** 8;  //     (W23;I9;N14;N14;E5;X24)*4 = 9.565.658.097 => ("0xb95a25FD53B7AE768AFEa6b491366080a73F4C47" Carteira Funder)
+        balanceOf[msg.sender] = totalSupply;                
+        name = "ZinBO";                                  
+        symbol = "ZBO";                               
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     /**
      * Internal transfer, only can be called by this contract
@@ -92,7 +107,8 @@ contract TokenERC20 {
      * @param _spender The address authorized to spend
      * @param _value the max amount they can spend
      */
-    function approve(address _spender, uint256 _value) public returns (bool success) {
+    function approve(address _spender, uint256 _value) public
+    returns (bool success) {
         allowance[msg.sender][_spender] = _value;
         return true;
     }
@@ -107,8 +123,8 @@ contract TokenERC20 {
      * @param _extraData some extra information to send to the approved contract
      */
     function approveAndCall(address _spender, uint256 _value, bytes _extraData)
-        public
-        returns (bool success) {
+    public
+    returns (bool success) {
         tokenRecipient spender = tokenRecipient(_spender);
         if (approve(_spender, _value)) {
             spender.receiveApproval(msg.sender, _value, this, _extraData);
