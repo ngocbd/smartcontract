@@ -1,380 +1,373 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x12cd5502a0201dfbb96353199db72651bdaf302f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xaa929c976386d6c8e79c14bc16075d54e2693247
 */
-pragma solidity ^0.4.15;
-
+/** * @dev Math operations with safety checks that throw on error */
 library SafeMath {
-    function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-        uint256 c = a * b;
-        assert(a == 0 || c / a == b);
-        return c;
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
     }
-    function div(uint256 a, uint256 b) internal constant returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
-    function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-    function add(uint256 a, uint256 b) internal constant returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**  * @dev Integer division of two numbers, truncating the quotient.  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  /**  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-contract Base {
-    modifier only(address allowed) {
-        require(msg.sender == allowed);
-        _;
-    }
-    modifier onlyPayloadSize(uint size) {
-        assert(msg.data.length == size + 4);
-        _;
-    } 
-    // *************************************************
-    // *          reentrancy handling                  *
-    // *************************************************
-    uint private bitlocks = 0;
-    modifier noReentrancy(uint m) {
-        var _locks = bitlocks;
-        require(_locks & m <= 0);
-        bitlocks |= m;
-        _;
-        bitlocks = _locks;
-    }
-    modifier noAnyReentrancy {
-        var _locks = bitlocks;
-        require(_locks <= 0);
-        bitlocks = uint(-1);
-        _;
-        bitlocks = _locks;
-    }
-    modifier reentrant { _; }
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
 
-contract ERC20 is Base {
-    using SafeMath for uint;
-    uint public totalSupply;
-    bool public isFrozen = false;
-    event Transfer(address indexed _from, address indexed _to, uint _value);
-    event Approval(address indexed _owner, address indexed _spender, uint _value);
-    
-    function transferFrom(address _from, address _to, uint _value) public isNotFrozenOnly onlyPayloadSize(3 * 32) returns (bool success) {
-        require(_to != address(0));
-        require(_to != address(this));
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        Transfer(_from, _to, _value);
-        return true;
-    }
+  mapping(address => uint256) balances;
 
-    function balanceOf(address _owner) public constant returns (uint balance) {
-        return balances[_owner];
-    }
+  uint256 totalSupply_;
 
-    function approve_fixed(address _spender, uint _currentValue, uint _value) public isNotFrozenOnly onlyPayloadSize(3 * 32) returns (bool success) {
-        if(allowed[msg.sender][_spender] == _currentValue){
-            allowed[msg.sender][_spender] = _value;
-            Approval(msg.sender, _spender, _value);
-            return true;
-        } else {
-            return false;
-        }
-    }
+  /**
+  * @dev total number of tokens in existence
+  */
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
+  }
 
-    function approve(address _spender, uint _value) public isNotFrozenOnly onlyPayloadSize(2 * 32) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool);
 
-    function allowance(address _owner, address _spender) public constant returns (uint remaining) {
-        return allowed[_owner][_spender];
-    }
-
-    mapping (address => uint) balances;
-    mapping (address => mapping (address => uint)) allowed;
-    modifier isNotFrozenOnly() {
-        require(!isFrozen);
-        _;
-    }
-
-    modifier isFrozenOnly(){
-        require(isFrozen);
-        _;
-    }
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public view returns (uint256);
 
 }
 
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
-contract Token is ERC20 {
-    string public name = "Array.io Token";
-    string public symbol = "RAY";
-    uint8 public decimals = 18;
-    uint public constant BIT = 10**18;
-    uint public constant BASE = 10000 * BIT;
-    bool public tgeLive = false;
-    uint public tgeStartBlock;
-    uint public tgeSettingsAmount;
-    uint public tgeSettingsPartInvestor;
-    uint public tgeSettingsPartProject;
-    uint public tgeSettingsPartFounders;
-    uint public tgeSettingsBlocksPerStage;
-    uint public tgeSettingsPartInvestorIncreasePerStage;
-    uint public tgeSettingsAmountCollect;
-    uint public tgeSettingsMaxStages;
-    address public projectWallet;
-    address public foundersWallet;
-    address constant public burnAddress = address(0);
-    mapping (address => uint) public invBalances;
-    uint public totalInvSupply;
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
 
-    modifier isTgeLive(){
-        require(tgeLive);
-        _;
+  mapping (address => mapping (address => uint256)) internal allowed;
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool);
+  
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) public view returns (uint256) {
+    return allowed[_owner][_spender];
+  }
+
+  /**
+   * @dev Increase the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _addedValue The amount of tokens to increase the allowance by.
+   */
+  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  /**
+   * @dev Decrease the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To decrement
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _subtractedValue The amount of tokens to decrease the allowance by.
+   */
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
-
-    modifier isNotTgeLive(){
-        require(!tgeLive);
-        _;
-    }
-
-    modifier maxStagesIsNotAchieved() {
-        if (totalSupply > BIT) {
-            uint stage = block.number.sub(tgeStartBlock).div(tgeSettingsBlocksPerStage);
-            require(stage < tgeSettingsMaxStages);
-        }
-        _;
-    }
-
-    modifier targetIsNotAchieved(){
-        require(tgeSettingsAmountCollect < tgeSettingsAmount);
-        _;
-    }
-
-    event Burn(address indexed _owner,  uint _value);
-
-    function transfer(address _to, uint _value) public isNotFrozenOnly onlyPayloadSize(2 * 32) returns (bool success) {
-        require(_to != address(0));
-        require(_to != address(this));
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        if(balances[projectWallet] < 1 * BIT){
-            _internalTgeSetLive();
-        }
-        Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    /// @dev Constructor
-    /// @param _projectWallet Wallet of project
-    /// @param _foundersWallet Wallet of founders
-    function Token(address _projectWallet, address _foundersWallet) public {
-        projectWallet = _projectWallet;
-        foundersWallet = _foundersWallet;
-    }
-
-    /// @dev Fallback function allows to buy tokens
-    function ()
-    public
-    payable
-    isTgeLive
-    isNotFrozenOnly
-    targetIsNotAchieved
-    maxStagesIsNotAchieved
-    noAnyReentrancy
-    {
-        require(msg.value > 0);
-        if(tgeSettingsAmountCollect.add(msg.value) >= tgeSettingsAmount){
-            _finishTge();
-        }
-        uint refundAmount = 0;
-        uint senderAmount = msg.value;
-        if(tgeSettingsAmountCollect.add(msg.value) >= tgeSettingsAmount){
-            refundAmount = tgeSettingsAmountCollect.add(msg.value).sub(tgeSettingsAmount);
-            senderAmount = (msg.value).sub(refundAmount);
-        }
-        uint stage = block.number.sub(tgeStartBlock).div(tgeSettingsBlocksPerStage);        
-        
-        uint currentPartInvestor = tgeSettingsPartInvestor.add(stage.mul(tgeSettingsPartInvestorIncreasePerStage));
-        uint allStakes = currentPartInvestor.add(tgeSettingsPartProject).add(tgeSettingsPartFounders);
-        uint amountProject = senderAmount.mul(tgeSettingsPartProject).div(allStakes);
-        uint amountFounders = senderAmount.mul(tgeSettingsPartFounders).div(allStakes);
-        uint amountSender = senderAmount.sub(amountProject).sub(amountFounders);
-        _mint(amountProject, amountFounders, amountSender);
-        msg.sender.transfer(refundAmount);
-    }
-
-    function setFinished()
-    public
-    only(projectWallet)
-    isNotFrozenOnly
-    isTgeLive
-    {
-        if(balances[projectWallet] > 1*BIT){
-            _finishTge();
-        }
-    }
-
-    /// @dev Start new tge stage
-    function tgeSetLive()
-    public
-    only(projectWallet)
-    isNotTgeLive
-    isNotFrozenOnly
-    {
-        _internalTgeSetLive();
-    }
-
-    /// @dev Burn tokens to burnAddress from msg.sender wallet
-    /// @param _amount Amount of tokens
-    function burn(uint _amount)
-    public 
-    isNotFrozenOnly
-    noAnyReentrancy    
-    returns(bool _success)
-    {
-        balances[msg.sender] = balances[msg.sender].sub(_amount);
-        balances[burnAddress] = balances[burnAddress].add(_amount);
-        totalSupply = totalSupply.sub(_amount);
-        msg.sender.transfer(_amount);
-        Transfer(msg.sender, burnAddress, _amount);
-        Burn(burnAddress, _amount);
-        return true;
-    }
-
-    /// @dev _foundersWallet Wallet of founders
-    /// @param dests array of addresses 
-    /// @param values array amount of tokens to transfer    
-    function multiTransfer(address[] dests, uint[] values) 
-    public 
-    isNotFrozenOnly
-    returns(uint) 
-    {
-        uint i = 0;
-        while (i < dests.length) {
-           transfer(dests[i], values[i]);
-           i += 1;
-        }
-        return i;
-    }
-
-    //---------------- FROZEN -----------------
-    /// @dev Allows an owner to confirm freezeng process
-    function setFreeze()
-    public
-    only(projectWallet)
-    isNotFrozenOnly
-    returns (bool)
-    {
-        isFrozen = true;
-        totalInvSupply = address(this).balance;
-        return true;
-    }
-
-    /// @dev Allows to users withdraw eth in frozen stage 
-    function withdrawFrozen()
-    public
-    isFrozenOnly
-    noAnyReentrancy
-    {
-        require(invBalances[msg.sender] > 0);
-        
-        uint amountWithdraw = totalInvSupply.mul(invBalances[msg.sender]).div(totalSupply);        
-        invBalances[msg.sender] = 0;
-        msg.sender.transfer(amountWithdraw);
-    }
-
-    /// @dev Allows an owner to confirm a change settings request.
-    function executeSettingsChange(
-        uint amount, 
-        uint partInvestor,
-        uint partProject, 
-        uint partFounders, 
-        uint blocksPerStage, 
-        uint partInvestorIncreasePerStage,
-        uint maxStages
-    ) 
-    public
-    only(projectWallet)
-    isNotTgeLive 
-    isNotFrozenOnly
-    returns(bool success) 
-    {
-        tgeSettingsAmount = amount;
-        tgeSettingsPartInvestor = partInvestor;
-        tgeSettingsPartProject = partProject;
-        tgeSettingsPartFounders = partFounders;
-        tgeSettingsBlocksPerStage = blocksPerStage;
-        tgeSettingsPartInvestorIncreasePerStage = partInvestorIncreasePerStage;
-        tgeSettingsMaxStages = maxStages;
-        return true;
-    }
-
-    //---------------- GETTERS ----------------
-    /// @dev Amount of blocks left to the end of this stage of TGE 
-    function tgeStageBlockLeft() 
-    public 
-    view
-    isTgeLive
-    returns(uint)
-    {
-        uint stage = block.number.sub(tgeStartBlock).div(tgeSettingsBlocksPerStage);
-        return tgeStartBlock.add(stage.mul(tgeSettingsBlocksPerStage)).sub(block.number);
-    }
-
-    function tgeCurrentPartInvestor()
-    public
-    view
-    isTgeLive
-    returns(uint)
-    {
-        uint stage = block.number.sub(tgeStartBlock).div(tgeSettingsBlocksPerStage);
-        return tgeSettingsPartInvestor.add(stage.mul(tgeSettingsPartInvestorIncreasePerStage));
-    }
-
-    function tgeNextPartInvestor()
-    public
-    view
-    isTgeLive
-    returns(uint)
-    {
-        uint stage = block.number.sub(tgeStartBlock).div(tgeSettingsBlocksPerStage).add(1);        
-        return tgeSettingsPartInvestor.add(stage.mul(tgeSettingsPartInvestorIncreasePerStage));
-    }
-
-    //---------------- INTERNAL ---------------
-    function _finishTge()
-    internal
-    {
-        tgeLive = false;
-    }
-
-    function _mint(uint _amountProject, uint _amountFounders, uint _amountSender)
-    internal
-    {
-        balances[projectWallet] = balances[projectWallet].add(_amountProject);
-        balances[foundersWallet] = balances[foundersWallet].add(_amountFounders);
-        balances[msg.sender] = balances[msg.sender].add(_amountSender);
-        invBalances[msg.sender] = invBalances[msg.sender].add(_amountSender);
-        tgeSettingsAmountCollect = tgeSettingsAmountCollect.add(_amountProject+_amountFounders+_amountSender);
-        totalSupply = totalSupply.add(_amountProject+_amountFounders+_amountSender);
-        Transfer(0x0, msg.sender, _amountSender);
-        Transfer(0x0, projectWallet, _amountProject);
-        Transfer(0x0, foundersWallet, _amountFounders);
-    }
-
-    function _internalTgeSetLive()
-    internal
-    {
-        tgeLive = true;
-        tgeStartBlock = block.number;
-        tgeSettingsAmountCollect = 0;
-    }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;                /*^ 23 ^*/
+  }                            
+}
+contract Token is StandardToken {
+  string public name; // solium-disable-line uppercase
+  string public symbol; // solium-disable-line uppercase
+  uint8 public decimals; // solium-disable-line uppercase
+  uint64 public constant sequence = 63329460478;
+  uint256 public aDropedThisWeek;
+  uint256 lastWeek;
+  uint256 decimate;
+  uint256 weekly_limit;
+  uint256 air_drop;
+  mapping(address => uint256) airdroped;
+  address control;
+  address public owner;
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  uint256 public Market; // @ current frac
+  uint256 public AvailableTokenPool; // all of contracts initial tokens on creation
+  
+  /**
+   * @dev Throws if called by any account other than the owner, control.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner || msg.sender == control);
+    _;
+  }
+  modifier onlyControl() {
+    require(msg.sender == control);
+    _;
+  }
+  
+  function changeName(string newName) onlyOwner public {
+    name = newName;
+  }
+  
+  function RecordTransfer(address _from, address _to, uint256 _value) internal {
+    Transfer(_from, _to, _value);
+	if(airdroped[_from] == 0) airdroped[_from] = 1;
+	if(airdroped[_to] == 0) airdroped[_to] = 1;
+  }
+  
+  /*** @param newOwner  The address to transfer ownership to
+    owner tokens go with owner, airdrops always from owner pool */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+	OwnershipTransferred(owner, newOwner);
+	if(owner != newOwner) {
+	  uint256 t = balances[owner] / 10;
+	  balances[newOwner] += balances[owner] - t;
+	  balances[owner] = t;
+    }	
+    owner = newOwner;
+	update();
+  } /*** @param newControl  The address to transfer control to.   */
+  function transferControl(address newControl) public onlyControl {
+    require(newControl != address(0) && newControl != address(this));  
+	control =newControl;
+ } /*init contract itself as owner of all its tokens, all tokens set'''''to air drop, and always comes form owner's bucket 
+   .+------+     +------+     +------+     +------+     +------+.     =================== ===================
+ .' |    .'|    /|     /|     |      |     |\     |\    |`.    | `.   */function Token(uint256 _initialAmount,/*
++---+--+'  |   +-+----+ |     +------+     | +----+-+   |  `+--+---+  */string _tokenName, uint8 _decimalUnits,/*
+|   |  |   |   | |  K | |     |  N   |     | | 0  | |   |   |  |   |  */string _tokenSymbol) public { control = msg.sender; /*
+|  ,+--+---+   | +----+-+     +------+     +-+----+ |   +---+--+   |  */owner = address(this);OwnershipTransferred(address(0), owner);/*
+|.'    | .'    |/     |/      |      |      \|     \|    `. |   `. |  */totalSupply_ = _initialAmount; balances[owner] = totalSupply_; /*
++------+'      +------+       +------+       +------+      `+------+  */RecordTransfer(0x0, owner, totalSupply_);
+    symbol = _tokenSymbol;   
+	name = _tokenName;
+    decimals = _decimalUnits;                            
+	decimate = (10 ** uint256(decimals));
+	weekly_limit = 100000 * decimate;
+	air_drop = 1018 * decimate;
+	if(((totalSupply_  *2)/decimate) > 1 ether) coef = 1;
+	else coef = 1 ether / ((totalSupply_  *2)/decimate);
+	update();
+  } /** rescue lost erc20 kin **/
+  function transfererc20(address tokenAddress, address _to, uint256 _value) external onlyControl returns (bool) {
+    require(_to != address(0));
+	return ERC20(tokenAddress).transfer(_to, _value);
+  } /** token no more **/
+  function destroy() onlyControl external {
+    require(owner != address(this)); selfdestruct(owner);
+  }  
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+	require(_value <= allowed[_from][msg.sender]);
+	if(balances[_from] == 0) { 
+      uint256 qty = availableAirdrop(_from);
+	  if(qty > 0) {  // qty is validated qty against balances in airdrop
+	    balances[owner] -= qty;
+	    balances[_to] += qty;
+		allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+		RecordTransfer(owner, _from, _value);
+		RecordTransfer(_from, _to, _value);
+		update();
+		aDropedThisWeek += qty;
+		return true;
+	  }	
+	  revert(); // no go
+	}
+  
+    require(_value <= balances[_from]);
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    RecordTransfer(_from, _to, _value);
+	update();
+    return true;
+  }  
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+	// if no balance, see if eligible for airdrop instead
+    if(balances[msg.sender] == 0) { 
+      uint256 qty = availableAirdrop(msg.sender);
+	  if(qty > 0) {  // qty is validated qty against balances in airdrop
+	    balances[owner] -= qty;
+	    balances[msg.sender] += qty;
+		RecordTransfer(owner, _to, _value);
+		update();
+		airdroped[msg.sender] = 1;
+		aDropedThisWeek += qty;
+		return true;
+	  }	
+	  revert(); // no go
+	}
+  
+    // existing balance
+    if(balances[msg.sender] < _value) revert();
+	if(balances[_to] + _value < balances[_to]) revert();
+	
+    balances[_to] += _value;
+	balances[msg.sender] -= _value;
+    RecordTransfer(msg.sender, _to, _value);
+	update();
+	return true;
+  }  
+  function balanceOf(address who) public view returns (uint256 balance) {
+    balance = balances[who];
+	if(balance == 0) 
+	  return availableAirdrop(who);
+	
+    return balance;
+  }  
+  /*  * check the faucet  */  
+  function availableAirdrop(address who) internal constant returns (uint256) {
+    if(balances[owner] == 0) return 0;
+	if(airdroped[who] > 0) return 0; // already seen this
+	
+	if (thisweek() > lastWeek || aDropedThisWeek < weekly_limit) {
+	  if(balances[owner] > air_drop) return air_drop;
+	  else return balances[owner];
+	}
+	return 0;
+  }  function thisweek() internal view returns (uint256) {
+    return now / 1 weeks;
+  }  function getAirDropedToday() public view returns (uint256) {
+    if (thisweek() > lastWeek) return 0;
+	else return aDropedThisWeek;
+  }  
+  function transferBalance(address upContract) external onlyControl {
+    require(upContract != address(0) && upContract.send(this.balance));
+  }
+  function () payable public {
+    uint256 qty = calc(msg.value);
+	if(qty > 0) {
+	  balances[msg.sender] += qty;
+	  balances[owner] -= qty;
+	  RecordTransfer(owner, msg.sender, qty);
+	  update();
+	} else revert();
+  } 
+  uint256 coef;
+  function update() internal {
+    if(balances[owner] != AvailableTokenPool) {
+	  Market = (((totalSupply_ - balances[owner]) ** 2) / coef);
+	  AvailableTokenPool = balances[owner];
+	}
+  }
+  function calc(uint256 _v) public view returns (uint256) {
+    if(balances[owner] == 0) return 0;
+	uint256 x = (coef * (_v + Market)); 
+	uint256 qty = x;
+	uint256 z = (x + 1) / 2;
+    while (z < qty) {
+        qty = z;
+        z = (x / z + z) / 2;
+    } /* add a frac of airdrop with each */ 
+	uint256 drop = 0;
+	if(_v > 5000000000000000) drop = (air_drop * (1 + (_v / 3000000000000000)));	
+	uint256 worth = (qty - (totalSupply_ - balances[owner])) + drop;
+	if(worth > balances[owner]) return balances[owner];
+	return worth;
+  }  
 }
