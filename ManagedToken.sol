@@ -1,26 +1,26 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ManagedToken at 0xf62baa1997f04f165edd100d78241e07617f6ce6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ManagedToken at 0xd3b964032fdc3941c2e62e32d6e6012500fbe304
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
 
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a / b;
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
@@ -28,13 +28,12 @@ library SafeMath {
 }
 
 interface TokenUpgraderInterface{
-    function hasUpgraded(address _for) public view returns (bool alreadyUpgraded);
     function upgradeFor(address _for, uint256 _value) public returns (bool success);
+    function upgradeFrom(address _by, address _for, uint256 _value) public returns (bool success);
 }
   
 contract ManagedToken {
     using SafeMath for uint256;
-
 
     address public owner = msg.sender;
     address public crowdsaleContractAddress;
@@ -48,11 +47,8 @@ contract ManagedToken {
     TokenUpgraderInterface public upgrader;
 
     bool public locked = true;
-        
+    bool public mintingAllowed = true;
     uint8 public decimals = 18;
-
-    uint256 public totalSupplyLimit = 1000000000*(10**18);  //  limit supply to 1 bln tokens
-    uint256 private newTotalSupply;
 
     modifier unlocked() {
         require(!locked);
@@ -175,6 +171,12 @@ contract ManagedToken {
         return true;
     }
 
+    function disableMinting() ownerOrCrowdsale public returns (bool success) {
+        require(mintingAllowed);
+        mintingAllowed = false;
+        return true;
+    }
+
     function setCrowdsale(address _newCrowdsale) onlyOwner public returns (bool success) {
         crowdsaleContractAddress = _newCrowdsale;
         return true;
@@ -186,17 +188,15 @@ contract ManagedToken {
     }
 
     function mint(address _for, uint256 _amount) onlyCrowdsale public returns (bool success) {
-        newTotalSupply = totalSupply.add(_amount);
-        if (newTotalSupply > totalSupplyLimit) {
-          revert();
-        }
+        require(mintingAllowed);
         balances[_for] = balances[_for].add(_amount);
-        totalSupply = newTotalSupply;
+        totalSupply = totalSupply.add(_amount);
         Transfer(0, _for, _amount);
         return true;
     }
 
     function demint(address _for, uint256 _amount) onlyCrowdsale public returns (bool success) {
+        require(mintingAllowed);
         balances[_for] = balances[_for].sub(_amount);
         totalSupply = totalSupply.sub(_amount);
         Transfer(_for, 0, _amount);
@@ -220,7 +220,6 @@ contract ManagedToken {
         require(upgradable);
         require(upgraderSet);
         require(upgrader != TokenUpgraderInterface(0));
-        require(!upgrader.hasUpgraded(msg.sender));
         uint256 value = balances[msg.sender];
         assert(value > 0);
         delete balances[msg.sender];
@@ -234,15 +233,16 @@ contract ManagedToken {
         require(upgraderSet);
         require(upgrader != TokenUpgraderInterface(0));
         var _allowance = allowed[_for][msg.sender];
-        assert(_allowance > 0);
+        require(_allowance > 0);
+        require(_allowance >= _value);
         balances[_for] = balances[_for].sub(_value);
         allowed[_for][msg.sender] = _allowance.sub(_value);
         totalSupply = totalSupply.sub(_value);
-        assert(upgrader.upgradeFor(_for, _value));
+        assert(upgrader.upgradeFrom(msg.sender, _for, _value));
         return true;
     }
 
-    function () external {
+    function () payable external {
         if (upgradable) {
             assert(upgrade());
             return;
