@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTCoE at 0x4f0D20468571d7b6a1045656dC110fbc73143fb3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTCoE at 0x3460f675d521b4c673D437E6525164E2c189DD49
 */
 pragma solidity ^0.4.8;
 
@@ -76,8 +76,10 @@ contract BTCoE is iBTCoE{
     uint256 public userCount = 0;
     
     address public satoeContract = 0x00;
-    uint256 constant minTxFee = 0.02 ether;
-    uint256 constant maxTxFee = 0.03 ether;
+    uint256 minTxFee = 0.02 ether;
+    uint256 maxTxFee = 0.03 ether;
+    uint256 minClaimFee = 0.003 ether;
+    uint256 maxClaimFee = 0.004 ether;
     uint256 public maxSupply;
     iSAToE satoe;
     bool public satoeLocked = false;
@@ -169,6 +171,18 @@ contract BTCoE is iBTCoE{
     {
         require (owner.send(this.balance));
     }
+    function SetTxFee(uint256 minfee, uint256 maxfee) forOwner
+    {
+        require (minfee < maxfee);
+        minTxFee = minfee;
+        maxTxFee = maxfee;
+    }
+    function SetClaimFee(uint256 minfee, uint256 maxfee) forOwner
+    {
+        require (minfee < maxfee);
+        minClaimFee = minfee;
+        maxClaimFee = maxfee;
+    }
     //------------------------------------------------------------------------
     event ClaimedSignature(address indexed ethAddress, string btcSignature);
     event DeliveredBTC(address indexed ethAddress, uint256 amount);
@@ -181,9 +195,9 @@ contract BTCoE is iBTCoE{
     function ClaimBTC(string fullSignature) payable
     {
         require (allowingClaimBTC);
-        require(!acceptedClaimers[msg.sender]);
-        require(msg.value >= minTxFee);
-        require(msg.value <= maxTxFee);
+        require (!acceptedClaimers[msg.sender]);
+        require (msg.value >= minClaimFee);
+        require (msg.value <= maxClaimFee);
         
         ClaimedSignature(msg.sender,fullSignature);
     }
