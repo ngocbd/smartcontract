@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorHandler at 0x15deb30754babe5c25f11b56d2e29aad19c9d4f8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorHandler at 0x64d7dafcb024d348ab5bf0aae31d9d7aedb87cc4
 */
 pragma solidity 0.4.21;
 
@@ -98,8 +98,6 @@ interface BancorConverter {
 }
 
 contract BancorHandler is ExchangeHandler {
-    uint256 constant MAX_UINT = 2**256 - 1;
-    mapping(address => bool) public tokenAllowanceSet;
 
     // Public functions
     function getAvailableAmount(
@@ -180,10 +178,7 @@ contract BancorHandler is ExchangeHandler {
     }
 
     function approveExchange(address exchange, address token, uint256 amount) internal {
-        if(!tokenAllowanceSet[token]) {
-            require(Token(token).approve(exchange, MAX_UINT));
-            tokenAllowanceSet[token] = true;
-        }
+        require(Token(token).approve(exchange, amount));
     }
 
     function() public payable {
