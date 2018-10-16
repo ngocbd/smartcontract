@@ -1,82 +1,112 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bithereum at 0x046D4E9d3c50AE1738504d91da01B14AAA19b564
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bithereum at 0x8756db667e7433d0aa666cfb9c3a08f3566866d5
 */
-pragma solidity ^ 0.4 .9;
-library SafeMath {
-    function mul(uint256 a, uint256 b) internal constant returns(uint256) {
-        uint256 c = a * b;
-        assert(a == 0 || c / a == b);
-        return c;
-    }
+pragma solidity ^0.4.16;
 
-    function div(uint256 a, uint256 b) internal constant returns(uint256) {
-        uint256 c = a / b;
-        return c;
-    }
+interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
-    function sub(uint256 a, uint256 b) internal constant returns(uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-
-    function add(uint256 a, uint256 b) internal constant returns(uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
-}
 contract Bithereum {
-    using SafeMath
-    for uint256;
-    mapping(address => mapping(address => uint256)) allowed;
-    mapping(address => uint256) balances;
+    string public name;
+    string public symbol;
+    uint8 public decimals = 18;
     uint256 public totalSupply;
-    uint256 public decimals;
-    address public owner;
-    bytes32 public symbol;
+
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
+
     event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed _owner, address indexed spender, uint256 value);
 
-    function Bithereum() {
-        totalSupply = 1000000000;
-        symbol = 'BITHEREUM';
-        owner = 0xf57d9ef28ecb304afc2b81f9ba9f54746b1b7a34;
-        balances[owner] = totalSupply;
-        decimals = 0;
+    event Burn(address indexed from, uint256 value);
+
+    /**
+     * Constrctor function
+     */
+    function Bithereum(
+        uint256 initialSupply,
+        string tokenName,
+        string tokenSymbol
+    ) public {
+        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
+        name = tokenName;                                   // Set the name for display purposes
+        symbol = tokenSymbol;                               // Set the symbol for display purposes
     }
 
-    function balanceOf(address _owner) constant returns(uint256 balance) {
-        return balances[_owner];
-    }
-
-    function allowance(address _owner, address _spender) constant returns(uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
-
-    function transfer(address _to, uint256 _value) returns(bool) {
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) returns(bool) {
-        var _allowance = allowed[_from][msg.sender];
-        balances[_to] = balances[_to].add(_value);
-        balances[_from] = balances[_from].sub(_value);
-        allowed[_from][msg.sender] = _allowance.sub(_value);
+    /**
+     * Internal transfer, only can be called by this contract
+     */
+    function _transfer(address _from, address _to, uint _value) internal {
+        // Prevent transfer to 0x0 address. Use burn() instead
+        require(_to != 0x0);
+        require(balanceOf[_from] >= _value);
+        require(balanceOf[_to] + _value > balanceOf[_to]);
+        uint previousBalances = balanceOf[_from] + balanceOf[_to];
+        balanceOf[_from] -= _value;
+        balanceOf[_to] += _value;
         Transfer(_from, _to, _value);
+        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+    }
+
+    /**
+     * Transfer tokens
+     */
+    function transfer(address _to, uint256 _value) public {
+        _transfer(msg.sender, _to, _value);
+    }
+
+    /**
+     * Transfer tokens from other address with allowance
+     */
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        require(_value <= allowance[_from][msg.sender]);     // Check allowance
+        allowance[_from][msg.sender] -= _value;
+        _transfer(_from, _to, _value);
         return true;
     }
 
-    function approve(address _spender, uint256 _value) returns(bool) {
-        require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+    /**
+     * Set allowance for other address
+     */
+    function approve(address _spender, uint256 _value) public
+        returns (bool success) {
+        allowance[msg.sender][_spender] = _value;
         return true;
     }
 
-    function() {
-        revert();
+    /**
+     * Set allowance for other address and notify
+     */
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
+        public
+        returns (bool success) {
+        tokenRecipient spender = tokenRecipient(_spender);
+        if (approve(_spender, _value)) {
+            spender.receiveApproval(msg.sender, _value, this, _extraData);
+            return true;
+        }
+    }
+
+    /**
+     * Destroy  own tokens
+     */
+    function burn(uint256 _value) public returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);   
+        balanceOf[msg.sender] -= _value;            
+        totalSupply -= _value;                              // Update totalSupply
+        Burn(msg.sender, _value);
+        return true;
+    }
+
+    /**
+     * Destroy tokens from other account with allowance
+     */
+    function burnFrom(address _from, uint256 _value) public returns (bool success) {
+        require(balanceOf[_from] >= _value);                
+        require(_value <= allowance[_from][msg.sender]);    // Check allowance
+        balanceOf[_from] -= _value;                         
+        allowance[_from][msg.sender] -= _value;             
+        totalSupply -= _value;                              // Update totalSupply
+        Burn(_from, _value);
+        return true;
     }
 }
