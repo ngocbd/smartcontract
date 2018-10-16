@@ -1,10 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LivroVisitas at 0xfd244d32ad243c47c5122ea1ebe7b56e36e188d8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LivroVisitas at 0x83fe844e85bf664d40ee93a58e07f80dc152999e
 */
 pragma solidity 0.4.23;
 
+
 contract Owned {
-    address contractOwner;
+    address public contractOwner;
 
     constructor() public { 
         contractOwner = msg.sender; 
@@ -37,6 +38,7 @@ contract LivroVisitas is Mortal {
     function recordVisit(address visitor, string message) public returns(bool) {
         require(visitor != address(0));
         livro[visitor] = message;
+        emit NewVisitor(visitor);
         return true;
     }
 
@@ -47,4 +49,6 @@ contract LivroVisitas is Mortal {
             return "";
         }
     }
+
+    event NewVisitor(address visitor);
 }
