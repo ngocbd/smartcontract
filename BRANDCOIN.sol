@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BRANDCOIN at 0xeb1825cdb0cc0c7d7392d1c233f7785b81ce915c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BRANDCOIN at 0xe73dc97b050e3b7afa5aea0b0ba192712162899b
 */
 pragma solidity ^0.4.19;
 
@@ -278,7 +278,6 @@ contract Ownable {
 
 }
 
-
 contract BRANDCOIN is StandardToken, BurnableToken, Ownable
 {
     // ERC20 token parameters
@@ -399,7 +398,7 @@ contract BRANDCOIN is StandardToken, BurnableToken, Ownable
         this.transfer(reserveWallet, totalSupply_*10/100);
     }
     
-    function destroyUnsoldTokens() external onlyOwner
+    function destroyUnsoldTokens() external
     {
         require(crowdsaleStarted() && crowdsaleFinished());
         
@@ -520,11 +519,6 @@ contract BRANDCOIN is StandardToken, BurnableToken, Ownable
             participantToEtherSpent[_participant] = 0;
             _participant.transfer(refundETH);
         }
-    }
-    
-    function distributeCrowdsaleTokens(address _to, uint256 _amount) external onlyOwner
-    {
-        this.transfer(_to, _amount);
     }
     
     function ownerWithdrawETH() external onlyOwner
