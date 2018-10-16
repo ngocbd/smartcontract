@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheMoveToken at 0xA5067621e5B934546279B2BDc69b2039B5a0EE9E
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheMoveToken at 0x180c288c2151200ad37d150308346b1be421d32c
 */
 /**
  * @title ERC20Basic
@@ -49,6 +49,13 @@ library SafeMath {
 }
 
 contract BasicToken is ERC20Basic {
+    // timestamps for PRE-ICO phase
+    uint public preicoStartDate;
+    uint public preicoEndDate;
+    // timestamps for ICO phase
+    uint public icoStartDate;
+    uint public icoEndDate;
+    
     using SafeMath for uint256;
 
     mapping(address => uint256) balances;
@@ -59,6 +66,7 @@ contract BasicToken is ERC20Basic {
     * @param _value The amount to be transferred.
     */
     function transfer(address _to, uint256 _value) public returns (bool) {
+        require(now > icoEndDate);
         balances[_to] = balances[_to].add(_value);
         balances[msg.sender] = balances[msg.sender].sub(_value);
         Transfer(msg.sender, _to, _value);
@@ -88,11 +96,8 @@ contract StandardToken is ERC20, BasicToken {
      * @param _value uint256 the amout of tokens to be transfered
      */
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        require(now > icoEndDate);
         var _allowance = allowed[_from][msg.sender];
-
-        // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-        // require (_value <= _allowance);
-
         balances[_to] = balances[_to].add(_value);
         balances[_from] = balances[_from].sub(_value);
         allowed[_from][msg.sender] = _allowance.sub(_value);
@@ -165,12 +170,6 @@ contract TheMoveToken is StandardToken, Ownable {
     string public constant symbol = "MOVE";
     uint public constant decimals = 18;
     using SafeMath for uint256;
-    // timestamps for PRE-ICO phase
-    uint public preicoStartDate;
-    uint public preicoEndDate;
-    // timestamps for ICO phase
-    uint public icoStartDate;
-    uint public icoEndDate;
     // address where funds are collected
     address public wallet;
     // how many token units a buyer gets per wei
