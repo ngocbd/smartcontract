@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumCore at 0xddaE012A9CA426EED65D0bcFD573Bd422c9F7128
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumCore at 0x94F832eBe56E42e196EF9874552212E7C467ea2b
 */
 contract EthereumCore {
     /* Public variables of the token */
@@ -20,7 +20,7 @@ contract EthereumCore {
 
          initialSupply = 314159265;
          name ="Ethereum Core";
-        decimals = 0;
+        decimals = 2;
          symbol = "ETO";
         
         balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
