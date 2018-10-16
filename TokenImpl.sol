@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenImpl at 0x7F5a7A6A25E06dDc94901cF596f9234f7D190BED
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenImpl at 0x48f50b053DB051C46149D5235ffFEc9A5102F7b5
 */
 pragma solidity ^0.4.18;
 
@@ -268,7 +268,6 @@ contract PausableToken is StandardToken, Pausable {
     }
 }
 
-
 contract TokenImpl is PausableToken {
     string public name;
     string public symbol;
@@ -287,6 +286,7 @@ contract TokenImpl is PausableToken {
 
     // the freeze token
     mapping(address => uint256) frozenTokens;
+    mapping(address => uint16) preFrozenRate;
     uint16 public frozenRate;
 
     bool public canBuy = true;
@@ -295,9 +295,9 @@ contract TokenImpl is PausableToken {
 
 
     event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value);
-    event UpdateTargetToken(address _target, uint16 _exchangeRate, uint16 _freezeRate);
-    event IncreaseCap(uint256 cap);
-    event ProjectFailed(uint16 _fee);
+    event UpdateTargetToken(address target, uint16 exchangeRate, uint16 freezeRate);
+    event IncreaseCap(uint256 cap, int256 cap_inc);
+    event ProjectFailed(uint16 fee);
     event PauseBuy();
     event UnPauseBuy();
 
@@ -322,16 +322,12 @@ contract TokenImpl is PausableToken {
 
         uint256 _amount = msg.value.mul(decimal_num).div(1 ether);
         totalSupply = totalSupply.add(_amount);
-        require(totalSupply <= cap);
+        require(totalSupply <= cap || projectFailed);
         balances[beneficiary] = balances[beneficiary].add(_amount);
         TokenPurchase(msg.sender, beneficiary, _amount);
 
-        forwardFunds();
-    }
-
-    // send ether to the fund collection wallet
-    function forwardFunds() internal {
-        if(!projectFailed){
+        // send ether to the fund collection wallet
+        if (!projectFailed) {
             owner.transfer(msg.value);
         }
     }
@@ -341,6 +337,7 @@ contract TokenImpl is PausableToken {
       * @dev exchange tokens of _exchanger.
       */
     function exchange(address _exchanger, uint256 _value) internal {
+        require(_value > 0);
         if (projectFailed) {
             _exchanger.transfer(_value.mul(1 ether).mul(backEthRatio).div(10000).div(decimal_num));
         } else {
@@ -350,25 +347,26 @@ contract TokenImpl is PausableToken {
         }
     }
 
+
     function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused
     returns (bool) {
-        updateFrozenToken(_from);
         require(_to != address(0));
+        updateFrozenToken(_from);
         require(_value.add(frozenTokens[_from]) <= balances[_from]);
         require(_value <= allowed[_from][msg.sender]);
-        updateFrozenToken(msg.sender);
         if (_to == address(this)) {
+            updateFrozenToken(msg.sender);
             if (frozenRate == 0 || projectFailed) {
                 exchange(msg.sender, _value);
                 return super.transferFrom(_from, _to, _value);
             }
             uint256 tokens = _value.mul(10000 - frozenRate).div(10000);
             uint256 fTokens = _value.sub(tokens);
+            allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
             balances[_from] = balances[_from].sub(_value);
             balances[_to] = balances[_to].add(tokens);
             balances[msg.sender] = balances[msg.sender].add(fTokens);
             frozenTokens[msg.sender] = frozenTokens[msg.sender].add(fTokens);
-            allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
             Transfer(_from, _to, _value);
             exchange(msg.sender, tokens);
             return true;
@@ -395,14 +393,32 @@ contract TokenImpl is PausableToken {
     }
 
     function updateFrozenToken(address _owner) internal {
-        if (frozenRate == 0 && frozenTokens[_owner] > 0) {
-            frozenTokens[_owner] = 0;
+        if (frozenRate == 0) {
+            if (frozenTokens[_owner] > 0) {
+                frozenTokens[_owner] = 0;
+            }
+            if (preFrozenRate[_owner] > 0) {
+                preFrozenRate[_owner] = 0;
+            }
         }
+        if (preFrozenRate[_owner] > frozenRate) {
+            uint16 preF = preFrozenRate[_owner];
+            frozenTokens[_owner] = frozenTokens[_owner] * frozenRate * (10000 - preF) /
+            preF / (10000 - frozenRate);
+            preFrozenRate[_owner] = frozenRate;
+        } else if (preFrozenRate[_owner] == 0) {
+            preFrozenRate[_owner] = frozenRate;
+        }
+
     }
 
     function balanceOfFrozen(address _owner) public view returns (uint256) {
         if (frozenRate == 0) {
             return 0;
+        }
+        if (preFrozenRate[_owner] > frozenRate) {
+            uint16 preF = preFrozenRate[_owner];
+            return frozenTokens[_owner] * frozenRate * (10000 - preF) / preF / (10000 - frozenRate);
         }
         return frozenTokens[_owner];
     }
@@ -443,6 +459,12 @@ contract TokenImpl is PausableToken {
         UnPauseBuy();
     }
 
+
+    function newName(string _name, string _symbol) public onlyOwner {
+        name = _name;
+        symbol = _symbol;
+    }
+
     // increase the amount of eth
     function increaseCap(int256 _cap_inc) onlyOwner public {
         require(_cap_inc != 0);
@@ -457,7 +479,7 @@ contract TokenImpl is PausableToken {
                 cap = cap.sub(cap_dec);
             }
         }
-        IncreaseCap(cap);
+        IncreaseCap(cap, _cap_inc);
     }
 
 
@@ -471,16 +493,12 @@ contract TokenImpl is PausableToken {
 
 
     function updateTargetToken(address _target, uint16 _exchangeRate, uint16 _freezeRate) onlyOwner public {
-        require(_freezeRate > 0 || _exchangeRate > 0);
-
         if (_exchangeRate > 0) {
             require(_target != address(0));
             exchangeRate = _exchangeRate;
             targetToken = ERC20Basic(_target);
         }
-        if (_freezeRate > 0) {
-            frozenRate = _freezeRate;
-        }
+        frozenRate = _freezeRate;
         UpdateTargetToken(_target, _exchangeRate, _freezeRate);
     }
 
