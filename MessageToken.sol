@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MessageToken at 0xb535394330357396680a5542767A190193F9D2Ab
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MessageToken at 0x411a0e6060901d65c7206d66802ab37ffc87c229
 */
 pragma solidity ^0.4.11;
 contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
@@ -29,7 +29,7 @@ contract MessageToken {
         balanceOf[this] = 10000000000000000000000000000000000000;              // Give the contract all initial tokens
         totalSupply = 10000000000000000000000000000000000000;                        // Update total supply
         name = "Messages";                                   // Set the name for display purposes
-        symbol = "\u2709";                               // Set the symbol for display purposes
+        symbol = "\2709";                               // Set the symbol for display purposes
         decimals = 0;                            // Amount of decimals for display purposes
         owner = msg.sender;
     }
