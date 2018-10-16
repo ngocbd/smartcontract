@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoundersVesting at 0x3d017363fba596f739a23686adaa91d65aac2d4b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoundersVesting at 0xf273209fe5298d721e8f07f2cb6cc270bb31cbbc
 */
 pragma solidity ^0.4.16;
 
@@ -22,52 +22,19 @@ contract SafeMath {
      }
 }
 
-// Standard token interface (ERC 20)
-// https://github.com/ethereum/EIPs/issues/20
-contract Token is SafeMath {
-     // Functions:
-     /// @return total amount of tokens
-     function totalSupply() constant returns (uint256 supply) {}
-
-     /// @param _owner The address from which the balance will be retrieved
-     /// @return The balance
-     function balanceOf(address _owner) constant returns (uint256 balance) {}
-
-     /// @notice send `_value` token to `_to` from `msg.sender`
-     /// @param _to The address of the recipient
-     /// @param _value The amount of token to be transferred
-     function transfer(address _to, uint256 _value) returns(bool) {}
-
-     /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-     /// @param _from The address of the sender
-     /// @param _to The address of the recipient
-     /// @param _value The amount of token to be transferred
-     /// @return Whether the transfer was successful or not
-     function transferFrom(address _from, address _to, uint256 _value)returns(bool){}
-
-     /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
-     /// @param _spender The address of the account able to transfer the tokens
-     /// @param _value The amount of wei to be approved for transfer
-     /// @return Whether the approval was successful or not
-     function approve(address _spender, uint256 _value) returns (bool success) {}
-
-     /// @param _owner The address of the account owning tokens
-     /// @param _spender The address of the account able to transfer the tokens
-     /// @return Amount of remaining tokens allowed to spent
-     function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
-
-     // Events:
-     event Transfer(address indexed _from, address indexed _to, uint256 _value);
-     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-}
-
-contract StdToken is Token {
-     // Fields:
+// ERC20 standard
+// We don't use ERC23 standard
+contract StdToken is SafeMath {
+// Fields:
      mapping(address => uint256) balances;
      mapping (address => mapping (address => uint256)) allowed;
      uint public totalSupply = 0;
 
-     // Functions:
+// Events:
+     event Transfer(address indexed _from, address indexed _to, uint256 _value);
+     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+
+// Functions:
      function transfer(address _to, uint256 _value) returns(bool){
           require(balances[msg.sender] >= _value);
           require(balances[_to] + _value > balances[_to]);
@@ -92,17 +59,23 @@ contract StdToken is Token {
           return true;
      }
 
-     function balanceOf(address _owner) constant returns (uint256 balance) {
+     function balanceOf(address _owner) constant returns (uint256) {
           return balances[_owner];
      }
 
-     function approve(address _spender, uint256 _value) returns (bool success) {
+     function approve(address _spender, uint256 _value) returns (bool) {
+          // To change the approve amount you first have to reduce the addresses`
+          //  allowance to zero by calling `approve(_spender, 0)` if it is not
+          //  already 0 to mitigate the race condition described here:
+          //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+          require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+
           allowed[msg.sender][_spender] = _value;
           Approval(msg.sender, _spender, _value);
           return true;
      }
 
-     function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+     function allowance(address _owner, address _spender) constant returns (uint256) {
           return allowed[_owner][_spender];
      }
 
@@ -113,7 +86,7 @@ contract StdToken is Token {
 }
 
 contract MNTP is StdToken {
-/// Fields:
+// Fields:
      string public constant name = "Goldmint MNT Prelaunch Token";
      string public constant symbol = "MNTP";
      uint public constant decimals = 18;
@@ -123,7 +96,7 @@ contract MNTP is StdToken {
      bool public lockTransfers = false;
 
      // 10 mln
-     uint public constant TOTAL_TOKEN_SUPPLY = 10000000 * (1 ether / 1 wei);
+     uint public constant TOTAL_TOKEN_SUPPLY = 10000000 * 1 ether;
 
 /// Modifiers:
      modifier onlyCreator() { 
@@ -131,8 +104,8 @@ contract MNTP is StdToken {
           _; 
      }
 
-     modifier byCreatorOrIcoContract() { 
-          require((msg.sender == creator) || (msg.sender == icoContractAddress)); 
+     modifier byIcoContract() { 
+          require(msg.sender == icoContractAddress); 
           _; 
      }
 
@@ -140,18 +113,16 @@ contract MNTP is StdToken {
           creator = _creator;
      }
 
-/// Setters/Getters
+// Setters/Getters
      function setIcoContractAddress(address _icoContractAddress) onlyCreator {
           icoContractAddress = _icoContractAddress;
      }
 
-/// Functions:
-     /// @dev Constructor
+// Functions:
      function MNTP() {
           creator = msg.sender;
 
-          // 10 mln tokens total
-          assert(TOTAL_TOKEN_SUPPLY == (10000000 * (1 ether / 1 wei)));
+          assert(TOTAL_TOKEN_SUPPLY == 10000000 * 1 ether);
      }
 
      /// @dev Override
@@ -166,19 +137,22 @@ contract MNTP is StdToken {
           return super.transferFrom(_from,_to,_value);
      }
 
-     function issueTokens(address _who, uint _tokens) byCreatorOrIcoContract {
+     function issueTokens(address _who, uint _tokens) byIcoContract {
           require((totalSupply + _tokens) <= TOTAL_TOKEN_SUPPLY);
 
           balances[_who] = safeAdd(balances[_who],_tokens);
           totalSupply = safeAdd(totalSupply,_tokens);
+
+          Transfer(0x0, _who, _tokens);
      }
 
-     function burnTokens(address _who, uint _tokens) byCreatorOrIcoContract {
+     // For refunds only
+     function burnTokens(address _who, uint _tokens) byIcoContract {
           balances[_who] = safeSub(balances[_who], _tokens);
           totalSupply = safeSub(totalSupply, _tokens);
      }
 
-     function lockTransfer(bool _lock) byCreatorOrIcoContract {
+     function lockTransfer(bool _lock) byIcoContract {
           lockTransfers = _lock;
      }
 
@@ -188,8 +162,10 @@ contract MNTP is StdToken {
      }
 }
 
-// This contract will hold all tokens that were unsold during ICO
-// (Goldmint should be able to withdraw them and sold only 1 year post-ICO)
+// This contract will hold all tokens that were unsold during ICO.
+//
+// Goldmint Team should be able to withdraw them and sell only after 1 year is passed after 
+// ICO is finished.
 contract GoldmintUnsold is SafeMath {
      address public creator;
      address public teamAccountAddress;
@@ -215,28 +191,27 @@ contract GoldmintUnsold is SafeMath {
           _; 
      }
 
-/// Setters/Getters
+// Setters/Getters
      function setIcoContractAddress(address _icoContractAddress) onlyCreator {
           icoContractAddress = _icoContractAddress;
      }
 
-     // only by Goldmint contract 
      function finishIco() public onlyIcoContract {
           icoIsFinishedDate = uint64(now);
      }
 
      // can be called by anyone...
      function withdrawTokens() public {
-          // wait for 1 year!
+          // Check if 1 year is passed
           uint64 oneYearPassed = icoIsFinishedDate + 365 days;  
           require(uint(now) >= oneYearPassed);
 
-          // transfer all tokens from this contract to the teamAccountAddress
+          // Transfer all tokens from this contract to the teamAccountAddress
           uint total = mntToken.balanceOf(this);
           mntToken.transfer(teamAccountAddress,total);
      }
 
-     // Default fallback function
+     // Do not allow to send money directly to this contract
      function() payable {
           revert();
      }
@@ -258,9 +233,9 @@ contract FoundersVesting is SafeMath {
           mntToken = MNTP(_mntTokenAddress);          
      }
 
-     // can be called by anyone...
+     // Can be called by anyone
      function withdrawTokens() public {
-          // 1 - wait for next month!
+          // 1 - wait for the next month
           uint64 oneMonth = lastWithdrawTime + 30 days;  
           require(uint(now) >= oneMonth);
 
@@ -283,66 +258,75 @@ contract FoundersVesting is SafeMath {
           lastWithdrawTime = uint64(now);
      }
 
-     // Default fallback function
+     // Do not allow to send money directly to this contract
      function() payable {
-          require(false);
+          revert();
      }
 }
 
+// This is the main Goldmint ICO smart contract
 contract Goldmint is SafeMath {
+// Constants:
+     // These values are HARD CODED!!!
+     // For extra security we split single multisig wallet into 10 separate multisig wallets
+     //
+     // TODO: set real params here
+     address[] public multisigs = [
+          0x27ce565b1047c6258164062983bb8bc2917f11d2,
+          0xfb3afc815894e91fe1ab6e6ef36f8565fbb904f6,
+          0x7e2a7a10509177db2a7ea41e728743c4eb42f528,
+          0x27ce565b1047c6258164062983bb8bc2917f11d2,
+          0xfb3afc815894e91fe1ab6e6ef36f8565fbb904f6,
+          0x7e2a7a10509177db2a7ea41e728743c4eb42f528,
+          0x27ce565b1047c6258164062983bb8bc2917f11d2,
+          0xfb3afc815894e91fe1ab6e6ef36f8565fbb904f6,
+          0x7e2a7a10509177db2a7ea41e728743c4eb42f528,
+          0xF4Ce80097bf1E584822dBcA84f91D5d7d9df0846
+     ];
+
+     // We count ETH invested by person, for refunds (see below)
+     mapping(address => uint) ethInvestedBy;
+     // These can be changed before ICO starts ($7USD/MNTP)
+     uint constant STD_PRICE_USD_PER_1000_TOKENS = 7000;
+     // USD/ETH is fixed for the whole ICO
+     // WARNING: if USD/ETH rate changes DURING ICO -> we won't change it
+     // coinmarketcap.com 04.09.2017
+     uint constant ETH_PRICE_IN_USD = 300;
+     // Price changes from block to block
+     //uint constant SINGLE_BLOCK_LEN = 700000;
+
+     uint constant SINGLE_BLOCK_LEN = 100;
+
+     // 1 000 000 tokens
+     uint public constant BONUS_REWARD = 1000000 * 1 ether;
+     // 2 000 000 tokens
+     uint public constant FOUNDERS_REWARD = 2000000 * 1 ether;
+     // 7 000 000 is sold during the ICO
+     //uint public constant ICO_TOKEN_SUPPLY_LIMIT = 7000000 * 1 ether;
+
+     uint public constant ICO_TOKEN_SUPPLY_LIMIT = 150 * 1 ether;
+
+     // 150 000 tokens soft cap (otherwise - refund)
+     uint public constant ICO_TOKEN_SOFT_CAP = 150000 * 1 ether;
+
+// Fields:
      address public creator = 0x0;
      address public tokenManager = 0x0;
-     address public multisigAddress = 0x0;
      address public otherCurrenciesChecker = 0x0;
 
      uint64 public icoStartedTime = 0;
 
      MNTP public mntToken; 
+
      GoldmintUnsold public unsoldContract;
 
-     struct TokenBuyer {
-          uint weiSent;
-          uint tokensGot;
-     }
-     mapping(address => TokenBuyer) buyers;
-
-     // These can be changed before ICO start ($7USD/MNTP)
-     uint constant STD_PRICE_USD_PER_1000_TOKENS = 7000;
-     // coinmarketcap.com 14.08.2017
-     uint constant ETH_PRICE_IN_USD = 300;
-     // price changes from block to block
-     //uint public constant SINGLE_BLOCK_LEN = 700000;
-
-     // TODO: only for tests. DO NOT merge this to master!!!
-     uint public constant SINGLE_BLOCK_LEN = 100;
-
-///////     
-     // 1 000 000 tokens
-     uint public constant BONUS_REWARD = 1000000 * (1 ether/ 1 wei);
-     // 2 000 000 tokens
-     uint public constant FOUNDERS_REWARD = 2000000 * (1 ether / 1 wei);
-     // 7 000 000 we sell only this amount of tokens during the ICO
-     //uint public constant ICO_TOKEN_SUPPLY_LIMIT = 7000000 * (1 ether / 1 wei); 
-
-     // TODO: only for tests. DO NOT merge this to master!!!
-     // 150 - we sell only this amount of tokens during the ICO
-     uint public constant ICO_TOKEN_SUPPLY_LIMIT = 150 * (1 ether / 1 wei); 
-
-     // 150 000 tokens soft cap
-     uint public constant ICO_TOKEN_SOFT_CAP = 150000 * (1 ether / 1 wei);
-     
-     // this is total number of tokens sold during ICO
+     // Total amount of tokens sold during ICO
      uint public icoTokensSold = 0;
-     // this is total number of tokens sent to GoldmintUnsold contract after ICO is finished
+     // Total amount of tokens sent to GoldmintUnsold contract after ICO is finished
      uint public icoTokensUnsold = 0;
-
-     // this is total number of tokens that were issued by a scripts
+     // Total number of tokens that were issued by a scripts
      uint public issuedExternallyTokens = 0;
-
-     bool public foundersRewardsMinted = false;
-     bool public restTokensMoved = false;
-
-     // this is where FOUNDERS_REWARD will be allocated
+     // This is where FOUNDERS_REWARD will be allocated
      address public foundersRewardsAccount = 0x0;
 
      enum State{
@@ -350,14 +334,32 @@ contract Goldmint is SafeMath {
 
           ICORunning,
           ICOPaused,
-         
+
+          // Collected ETH is transferred to multisigs.
+          // Unsold tokens transferred to GoldmintUnsold contract.
           ICOFinished,
 
-          Refunding
+          // We start to refund if Soft Cap is not reached.
+          // Then each token holder should request a refund personally from his
+          // personal wallet.
+          //
+          // We will return ETHs only to the original address. If your address is changed
+          // or you have lost your keys -> you will not be able to get a refund.
+          // 
+          // There is no any possibility to transfer tokens
+          // There is no any possibility to move back
+          Refunding,
+
+          // In this state we lock all MNT tokens forever.
+          // We are going to migrate MNTP -> MNT tokens during this stage. 
+          // 
+          // There is no any possibility to transfer tokens
+          // There is no any possibility to move back
+          Migrating
      }
      State public currentState = State.Init;
 
-/// Modifiers:
+// Modifiers:
      modifier onlyCreator() { 
           require(msg.sender==creator); 
           _; 
@@ -375,15 +377,14 @@ contract Goldmint is SafeMath {
           _; 
      }
 
-/// Events:
+// Events:
      event LogStateSwitch(State newState);
      event LogBuy(address indexed owner, uint value);
      event LogBurn(address indexed owner, uint value);
      
-/// Functions:
+// Functions:
      /// @dev Constructor
      function Goldmint(
-          address _multisigAddress,
           address _tokenManager,
           address _otherCurrenciesChecker,
 
@@ -393,7 +394,6 @@ contract Goldmint is SafeMath {
      {
           creator = msg.sender;
 
-          multisigAddress = _multisigAddress;
           tokenManager = _tokenManager;
           otherCurrenciesChecker = _otherCurrenciesChecker; 
 
@@ -402,138 +402,125 @@ contract Goldmint is SafeMath {
 
           // slight rename
           foundersRewardsAccount = _foundersVestingAddress;
+
+          assert(multisigs.length==10);
      }
 
-     /// @dev This function is automatically called when ICO is started
-     /// WARNING: can be called multiple times!
-     function startICO() internal onlyCreator {
-          mintFoundersRewards(foundersRewardsAccount);
-
+     function startICO() public onlyCreator onlyInState(State.Init) {
+          setState(State.ICORunning);
+          icoStartedTime = uint64(now);
           mntToken.lockTransfer(true);
-
-          if(icoStartedTime==0){
-               icoStartedTime = uint64(now);
-          }
+          mntToken.issueTokens(foundersRewardsAccount, FOUNDERS_REWARD);
      }
 
-     function pauseICO() internal onlyCreator {
+     function pauseICO() public onlyCreator onlyInState(State.ICORunning) {
+          setState(State.ICOPaused);
      }
 
-     function startRefunding() internal onlyCreator {
+     function resumeICO() public onlyCreator onlyInState(State.ICOPaused) {
+          setState(State.ICORunning);
+     }
+
+     function startRefunding() public onlyCreator onlyInState(State.ICORunning) {
           // only switch to this state if less than ICO_TOKEN_SOFT_CAP sold
-          require(icoTokensSold<ICO_TOKEN_SOFT_CAP);
+          require(icoTokensSold < ICO_TOKEN_SOFT_CAP);
+          setState(State.Refunding);
 
           // in this state tokens still shouldn't be transferred
           assert(mntToken.lockTransfers());
      }
 
-     /// @dev This function is automatically called when ICO is finished 
-     /// WARNING: can be called multiple times!
-     function finishICO() internal {
+     function startMigration() public onlyCreator onlyInState(State.ICOFinished) {
+          // there is no way back...
+          setState(State.Migrating);
+
+          // disable token transfers
+          mntToken.lockTransfer(true);
+     }
+
+     /// @dev This function can be called by creator at any time,
+     /// or by anyone if ICO has really finished.
+     function finishICO() public onlyInState(State.ICORunning) {
+          require(msg.sender == creator || isIcoFinished());
+          setState(State.ICOFinished);
+
+          // 1 - lock all transfers
           mntToken.lockTransfer(false);
 
-          if(!restTokensMoved){
-               restTokensMoved = true;
+          // 2 - move all unsold tokens to unsoldTokens contract
+          icoTokensUnsold = safeSub(ICO_TOKEN_SUPPLY_LIMIT,icoTokensSold);
+          if(icoTokensUnsold>0){
+               mntToken.issueTokens(unsoldContract,icoTokensUnsold);
+               unsoldContract.finishIco();
+          }
 
-               // move all unsold tokens to unsoldTokens contract
-               icoTokensUnsold = safeSub(ICO_TOKEN_SUPPLY_LIMIT,icoTokensSold);
-               if(icoTokensUnsold>0){
-                    mntToken.issueTokens(unsoldContract,icoTokensUnsold);
-                    unsoldContract.finishIco();
+          // 3 - send all ETH to multisigs
+          // we have N separate multisigs for extra security
+          uint sendThisAmount = (this.balance / 10);
+
+          // 3.1 - send to 9 multisigs
+          for(uint i=0; i<9; ++i){
+               address ms = multisigs[i];
+
+               if(this.balance>=sendThisAmount){
+                    ms.transfer(sendThisAmount);
                }
           }
 
-          // send all ETH to multisig
-          if(this.balance>0){
-               multisigAddress.transfer(this.balance);
+          // 3.2 - send everything left to 10th multisig
+          if(0!=this.balance){
+               address lastMs = multisigs[9];
+               lastMs.transfer(this.balance);
           }
      }
 
-     function mintFoundersRewards(address _whereToMint) internal onlyCreator {
-          if(!foundersRewardsMinted){
-               foundersRewardsMinted = true;
-               mntToken.issueTokens(_whereToMint,FOUNDERS_REWARD);
-          }
+     function setState(State _s) internal {
+          currentState = _s;
+          LogStateSwitch(_s);
      }
 
-/// Access methods:
+// Access methods:
      function setTokenManager(address _new) public onlyTokenManager {
           tokenManager = _new;
      }
 
+     // TODO: stealing creator's key means stealing otherCurrenciesChecker key too!
+     /*
      function setOtherCurrenciesChecker(address _new) public onlyCreator {
           otherCurrenciesChecker = _new;
      }
+     */
 
-     function getTokensIcoSold() constant public returns (uint){
-          return icoTokensSold;
-     }
+     // These are used by frontend so we can not remove them
+     function getTokensIcoSold() constant public returns (uint){          
+          return icoTokensSold;       
+     }      
+     
+     function getTotalIcoTokens() constant public returns (uint){          
+          return ICO_TOKEN_SUPPLY_LIMIT;         
+     }       
+     
+     function getMntTokenBalance(address _of) constant public returns (uint){         
+          return mntToken.balanceOf(_of);         
+     }        
 
-     function getTotalIcoTokens() constant public returns (uint){
-          return ICO_TOKEN_SUPPLY_LIMIT;
-     }
-
-     function getMntTokenBalance(address _of) constant public returns (uint){
-          return mntToken.balanceOf(_of);
+     function getBlockLength()constant public returns (uint){          
+          return SINGLE_BLOCK_LEN;      
      }
 
      function getCurrentPrice()constant public returns (uint){
           return getMntTokensPerEth(icoTokensSold);
      }
 
-     function getBlockLength()constant public returns (uint){
-          return SINGLE_BLOCK_LEN;
+/////////////////////////////
+     function isIcoFinished() constant public returns(bool) {
+          return (icoStartedTime > 0)
+            && (now > (icoStartedTime + 30 days) || (icoTokensSold >= ICO_TOKEN_SUPPLY_LIMIT));
      }
 
-////
-     function isIcoFinished() public returns(bool){
-          if(icoStartedTime==0){return false;}          
-
-          // 1 - if time elapsed
-          uint64 oneMonth = icoStartedTime + 30 days;  
-          if(uint(now) > oneMonth){return true;}
-
-          // 2 - if all tokens are sold
-          if(icoTokensSold>=ICO_TOKEN_SUPPLY_LIMIT){
-               return true;
-          }
-
-          return false;
-     }
-
-     function setState(State _nextState) public {
-          // only creator can change state
-          // but in case ICOFinished -> anyone can do that after all time is elapsed
-          bool icoShouldBeFinished = isIcoFinished();
-          bool allow = (msg.sender==creator) || (icoShouldBeFinished && (State.ICOFinished==_nextState));
-          require(allow);
-
-          bool canSwitchState
-               =  (currentState == State.Init && _nextState == State.ICORunning)
-               || (currentState == State.ICORunning && _nextState == State.ICOPaused)
-               || (currentState == State.ICOPaused && _nextState == State.ICORunning)
-               || (currentState == State.ICORunning && _nextState == State.ICOFinished)
-               || (currentState == State.ICORunning && _nextState == State.Refunding);
-
-          require(canSwitchState);
-
-          currentState = _nextState;
-          LogStateSwitch(_nextState);
-
-          if(currentState==State.ICORunning){
-               startICO();
-          }else if(currentState==State.ICOFinished){
-               finishICO();
-          }else if(currentState==State.ICOPaused){
-               pauseICO();
-          }else if(currentState==State.Refunding){
-               startRefunding();
-          }
-     }
-
-     function getMntTokensPerEth(uint tokensSold) public constant returns (uint){
+     function getMntTokensPerEth(uint _tokensSold) public constant returns (uint){
           // 10 buckets
-          uint priceIndex = (tokensSold / (1 ether/ 1 wei)) / SINGLE_BLOCK_LEN;
+          uint priceIndex = (_tokensSold / 1 ether) / SINGLE_BLOCK_LEN;
           assert(priceIndex>=0 && (priceIndex<=9));
           
           uint8[10] memory discountPercents = [20,15,10,8,6,4,2,0,0,0];
@@ -541,11 +528,11 @@ contract Goldmint is SafeMath {
           // We have to multiply by '1 ether' to avoid float truncations
           // Example: ($7000 * 100) / 120 = $5833.33333
           uint pricePer1000tokensUsd = 
-               ((STD_PRICE_USD_PER_1000_TOKENS * 100) * (1 ether / 1 wei)) / (100 + discountPercents[priceIndex]);
+               ((STD_PRICE_USD_PER_1000_TOKENS * 100) * 1 ether) / (100 + discountPercents[priceIndex]);
 
           // Correct: 300000 / 5833.33333333 = 51.42857142
           // We have to multiply by '1 ether' to avoid float truncations
-          uint mntPerEth = (ETH_PRICE_IN_USD * 1000 * (1 ether / 1 wei) * (1 ether / 1 wei)) / pricePer1000tokensUsd;
+          uint mntPerEth = (ETH_PRICE_IN_USD * 1000 * 1 ether * 1 ether) / pricePer1000tokensUsd;
           return mntPerEth;
      }
 
@@ -557,23 +544,19 @@ contract Goldmint is SafeMath {
           //   1. if currently we sold 699950 tokens (the price is 10% discount)
           //   2. buyer buys 1000 tokens
           //   3. the price of all 1000 tokens would be with 10% discount!!!
-          uint newTokens = (msg.value * getMntTokensPerEth(icoTokensSold)) / (1 ether / 1 wei);
+          uint newTokens = (msg.value * getMntTokensPerEth(icoTokensSold)) / 1 ether;
 
           issueTokensInternal(_buyer,newTokens);
 
-          // update 'buyers' map
-          // (only when buying from ETH)
-          TokenBuyer memory b = buyers[msg.sender];
-          b.weiSent = safeAdd(b.weiSent, msg.value);
-          b.tokensGot = safeAdd(b.tokensGot, newTokens);
-          buyers[msg.sender] = b;
+          // Update this only when buying from ETH
+          ethInvestedBy[msg.sender] = safeAdd(ethInvestedBy[msg.sender], msg.value);
      }
 
      /// @dev This is called by other currency processors to issue new tokens 
-     function issueTokensFromOtherCurrency(address _to, uint _wei_count) onlyInState(State.ICORunning) public onlyOtherCurrenciesChecker {
-          require(_wei_count!=0);
+     function issueTokensFromOtherCurrency(address _to, uint _weiCount) onlyInState(State.ICORunning) public onlyOtherCurrenciesChecker {
+          require(_weiCount!=0);
 
-          uint newTokens = (_wei_count * getMntTokensPerEth(icoTokensSold)) / (1 ether / 1 wei);
+          uint newTokens = (_weiCount * getMntTokensPerEth(icoTokensSold)) / 1 ether;
           issueTokensInternal(_to,newTokens);
      }
 
@@ -598,24 +581,19 @@ contract Goldmint is SafeMath {
           LogBuy(_to,_tokens);
      }
 
-     function burnTokens(address _from, uint _tokens) public onlyInState(State.ICOFinished) onlyTokenManager {
-          mntToken.burnTokens(_from,_tokens);
-
-          LogBurn(_from,_tokens);
-     }
-
      // anyone can call this and get his money back
      function getMyRefund() public onlyInState(State.Refunding) {
           address sender = msg.sender;
+          uint ethValue = ethInvestedBy[sender];
 
-          require(0!=buyers[sender].weiSent);
-          require(0!=buyers[sender].tokensGot);
+          require(ethValue > 0);
 
           // 1 - send money back
-          sender.transfer(buyers[sender].weiSent);
+          sender.transfer(ethValue);
+          ethInvestedBy[sender] = 0;
 
           // 2 - burn tokens
-          mntToken.burnTokens(sender,buyers[sender].tokensGot);
+          mntToken.burnTokens(sender, mntToken.balanceOf(sender));
      }
 
      // Default fallback function
