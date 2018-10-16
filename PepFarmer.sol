@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PepFarmer at 0x5c96dcb50aa675c712a2378e3ac1c901aadb427a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PepFarmer at 0x31718bcf61910b6760ec5fc6aaa8a6a0110af902
 */
 pragma solidity ^0.4.18;
 
@@ -57,30 +57,21 @@ library SafeMath {
 
 contract PepFarmer {
     using SafeMath for uint256;
-    
-    bool private reentrancy_lock = false;
-    
-    address public shop = 0x02e0d32837313d9a5b0f88db5f3ef8075f4afd1c;
-    address public object = 0x47c4632f78b347597fcf5f8114746733a04e58d8;
-    
+ 
+    address public shop = 0x5f277da6734Cb32e182C8252467dF39D6EC424B4;
+    address public object = 0x12105bd41f403e33d444049884B000CC8D438AcB;
+
     mapping(address => uint256) public workDone;
     
-    modifier nonReentrant() {
-        require(!reentrancy_lock);
-        reentrancy_lock = true;
-        _;
-        reentrancy_lock = false;
-    }
-    
-    function pepFarm() nonReentrant external {
-        for (uint8 i = 0; i < 2; i++) {
+    function pepFarm() external {
+        for (uint8 i = 0; i < 100; i++) {
             CornFarm(shop).buyObject(this);
         }
         
-        workDone[msg.sender] = workDone[msg.sender].add(uint256(2 ether));
+        workDone[msg.sender] = workDone[msg.sender].add(uint256(100 ether));
     }
     
-    function reapFarm() nonReentrant external {
+    function reapFarm() external {
         require(workDone[msg.sender] > 0);
         Corn(object).transfer(msg.sender, workDone[msg.sender]);
         workDone[msg.sender] = 0;
