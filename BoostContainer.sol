@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BoostContainer at 0x440713f4d21d54a2a5fd6f8d358df40c32a04fbd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BoostContainer at 0xbdb686ac471b374bdc844615c768c2595c2ff2fe
 */
 pragma solidity ^0.4.17;
 
