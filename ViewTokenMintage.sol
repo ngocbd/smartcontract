@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ViewTokenMintage at 0xf665069a0ee102ceadbd80690814473dbdd56ac8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ViewTokenMintage at 0xa40B712229ddeA8Fd841C5e6CB104fc15E7e3054
 */
 /// math.sol -- mixin for inline numerical wizardry
 
@@ -465,8 +465,7 @@ contract ViewTokenMintage is DSAuth, DSMath {
         require(add(tokens, category.amountMinted) <= category.mintLimit);
 
         categories[uint8(categoryId)].amountMinted += tokens;
-        viewToken.mint(this, tokens);
-        viewToken.transferFrom(this, recipient, tokens);
+        viewToken.mint(recipient, tokens);
         TokensMinted(recipient, tokens, categoryId);
     }
 
