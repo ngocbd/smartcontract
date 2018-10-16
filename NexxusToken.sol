@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NexxusToken at 0x5c6183d10A00CD747a6Dbb5F658aD514383e9419
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NexxusToken at 0x7627de4b93263a6a7570b8dafa64bae812e5c394
 */
 pragma solidity ^0.4.11;
 
@@ -50,7 +50,7 @@ contract StandardToken is Token {
 
 contract NexxusToken is StandardToken {
 
-    function () {throw;}
+    function () {return;}
 
     string public name = "Nexxus";
     uint8 public decimals = 8;
@@ -58,14 +58,14 @@ contract NexxusToken is StandardToken {
     address public owner;
 
     function NexxusToken() {
-        totalSupply = 31500000000000000;
+        totalSupply = 31800000000000000;
         owner = msg.sender;
         balances[owner] = totalSupply;
     }
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
-        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
+        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { return; }
         return true;
     }
 	function mintToken(uint256 _amount) {
