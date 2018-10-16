@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PollManagedFund at 0xe4972421f88c1f47986f54cbfd2d1e2e671680ac
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PollManagedFund at 0x113bc56e0a8164b71a6b44d44fd1ed4ab54ea204
 */
 pragma solidity ^0.4.21;
 
@@ -424,7 +424,7 @@ interface ITokenEventListener {
      * @param _to Receiver address
      * @param _value Amount of tokens
      */
-    function onTokenTransfer(address _from, address _to, uint256 _value) external;
+    function onTokenTransfer(address _from, address _to, uint256 _value) public;
 }
 
 // File: contracts/token/ManagedToken.sol
@@ -1098,14 +1098,14 @@ contract PollManagedFund is Fund, DateTime, ITokenEventListener {
     bool public isWithdrawEnabled = true;
 
     uint256[] public refundPollDates = [
-        1530403200, // 01.07.2018
-        1538352000, // 01.10.2018
-        1546300800, // 01.01.2019
-        1554076800, // 01.04.2019
-        1561939200, // 01.07.2019
-        1569888000, // 01.10.2019
-        1577836800, // 01.01.2020
-        1585699200  // 01.04.2020
+        1522540800, // 01.04.2018
+        1522540800, // 01.04.2018
+        1522540800, // 01.04.2018
+        1522540800, // 01.04.2018
+        1522540800, // 01.04.2018
+        1522540800, // 01.04.2018
+        1522540800, // 01.04.2018
+        1522540800  // 01.04.2018
     ];
 
     modifier onlyTokenHolder() {
@@ -1152,7 +1152,7 @@ contract PollManagedFund is Fund, DateTime, ITokenEventListener {
     /**
      * @dev ITokenEventListener implementation. Notify active poll contracts about token transfers
      */
-    function onTokenTransfer(address _from, address /*_to*/, uint256 _value) external {
+    function onTokenTransfer(address _from, address /*_to*/, uint256 _value) public {
         require(msg.sender == address(token));
         if(address(tapPoll) != address(0) && !tapPoll.finalized()) {
             tapPoll.onTokenTransfer(_from, _value);
@@ -1179,9 +1179,9 @@ contract PollManagedFund is Fund, DateTime, ITokenEventListener {
     function createTapPoll(uint8 tapIncPerc) public onlyOwner {
         require(state == FundState.TeamWithdraw);
         require(tapPoll == address(0));
-        require(getDay(now) == 10);
-        require(tapIncPerc <= 50);
-        uint256 _tap = safeAdd(tap, safeDiv(safeMul(tap, tapIncPerc), 100));
+        require(getDay(now) == 1);
+        require(tapIncPerc <= 100);
+        uint256 _tap = safeAdd(tap, safeDiv(safeMul(tap, tapIncPerc), 50));
         uint256 startTime = now;
         uint256 endTime = startTime + TAP_POLL_DURATION;
         tapPoll = new TapPoll(_tap, token, this, startTime, endTime, minVotedTokensPerc);
@@ -1205,7 +1205,7 @@ contract PollManagedFund is Fund, DateTime, ITokenEventListener {
         }
 
         for(uint i; i < refundPollDates.length; i++) {
-            if(now >= refundPollDates[i] && now <= safeAdd(refundPollDates[i], 1 days)) {
+            if(now >= refundPollDates[i] && now <= safeAdd(refundPollDates[i], 12 days)) {
                 return true;
             }
         }
@@ -1217,7 +1217,7 @@ contract PollManagedFund is Fund, DateTime, ITokenEventListener {
         require(address(refundPoll) == address(0));
         require(checkRefundPollDate());
 
-        if(secondRefundPollDate > 0 && now > safeAdd(secondRefundPollDate, 1 days)) {
+        if(secondRefundPollDate > 0 && now > safeAdd(secondRefundPollDate, 12 days)) {
             secondRefundPollDate = 0;
         }
 
@@ -1246,7 +1246,7 @@ contract PollManagedFund is Fund, DateTime, ITokenEventListener {
                 uint256 startTime = refundPoll.startTime();
                 secondRefundPollDate = toTimestamp(
                     getYear(startTime),
-                    getMonth(startTime) + 2,
+                    getMonth(startTime) + 1,
                     1
                 );
                 isWithdrawEnabled = false;
