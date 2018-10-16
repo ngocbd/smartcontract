@@ -1,163 +1,291 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DiceRoll at 0x93eeabbe86d19bda39ea2d1049baf2c0878ded23
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DiceRoll at 0xd6ad91e5626e76b4d4f8a3b2019294b29df58167
 */
-pragma solidity ^0.4.9;
+pragma solidity ^0.4.23;
 
-contract owned {
-    address public owner;
-
-    function owned() {
-        owner = msg.sender;
+contract SafeMath {
+    function safeToAdd(uint a, uint b) pure internal returns (bool) {
+        return (a + b >= a);
+    }
+    function safeAdd(uint a, uint b) pure internal returns (uint) {
+        require(safeToAdd(a, b));
+        return a + b;
     }
 
-    modifier onlyOwner {
-        if (msg.sender != owner) throw;
-        _;
+    function safeToSubtract(uint a, uint b) pure internal returns (bool) {
+        return (b <= a);
     }
 
-    function transferOwnership(address newOwner) onlyOwner {
-        owner = newOwner;
+    function safeSub(uint a, uint b) pure internal returns (uint) {
+        require(safeToSubtract(a, b));
+        return a - b;
     }
 }
 
-contract DiceRoll is owned {
-	uint public minBet = 10 finney;
-	uint public maxBet = 2 ether;
-	
-    enum GameState {
-		InProgress,
-		PlayerWon,
-		PlayerLose
-	}
-	
-	event logStr(
-        string str
-    );
-	event log8(
-        uint8 value
-    );
-	event log256(
-        uint value
-    );
-	event logClassic(
-        string str,
-        uint8 value
-    );
-	event logState(
-        string str,
-        GameState state
-    );
-	
-	struct Game {
-		address player;
-		uint bet;
-		uint8 chance;
-		GameState state;
-		uint8 seed;
-	}
+contract DiceRoll is SafeMath {
 
-	mapping (address => Game) public games;
-	
-	modifier gameIsNotInProgress() {
-		if (gameInProgress(games[msg.sender])) {
-			throw;
-		}
-		_;
-	}
-	
-	modifier betValueIsOk() {
-		if (msg.value < minBet || msg.value > maxBet) {
-			throw; // incorrect bet
-		}
-		_;
-	}
-	
-	function gameInProgress(Game game)
-		constant
-		private
-		returns (bool)
-	{
-		if (game.player == 0) {
-			return false;
-		}
-		if (game.state == GameState.InProgress) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-	
-	// starts a new game
-	function roll(uint8 chance) 
-	    public 
-	    payable 
-	    gameIsNotInProgress
-	    betValueIsOk 
-	{
-		if (gameInProgress(games[msg.sender])) {
-			throw;
-		}
-        
-		Game memory game = Game({
-			player: msg.sender,
-			bet: msg.value,
-			chance: chance,
-			state: GameState.InProgress,
-			seed: 3,
-		});
-        
-		games[msg.sender] = game;
-		
-		uint rnd = randomGen(msg.sender, games[msg.sender].seed);
-		uint valueMax = chance*100;
-		uint bet = msg.value;
-		uint payout = bet*100/games[msg.sender].chance;
-        uint profit = payout - bet;
-        log256(now);
-        log256(payout);
-        log256(profit);
-        log256(bet);
-        log8(chance);
-		
-		if(rnd > valueMax){
-		    log8(0);
-		    games[msg.sender].state = GameState.PlayerLose;
-        } else {
-            log8(1);
-		     games[msg.sender].state = GameState.PlayerWon;
-		     if(!msg.sender.send(payout)) {
-	            logStr("Money is not send.");
-	        }
+    address public owner;
+    uint constant public maxProfitDivisor = 1000000;
+    uint constant public houseEdgeDivisor = 1000;
+    uint constant public maxNumber = 99;
+    uint constant public minNumber = 1;
+
+    bool public gamePaused;
+    bool public recommendPaused;
+    bool public jackpotPaused;
+
+    uint public contractBalance;
+    uint public houseEdge;
+    uint public maxProfit;
+    uint public maxProfitAsPercentOfHouse;
+    uint public minBet;
+    uint public maxBet;
+    uint public jackpotOfHouseEdge;
+    uint public minJackpotBet;
+    uint public recommendProportion;
+    address public jackpotContract;
+    
+    uint public jackpot;
+    uint public totalWeiWon;
+    uint public totalWeiWagered;
+    uint public totalBets;
+
+    uint public betId;
+    uint public random;
+    uint public probability;
+    uint public playerProfit;
+    uint public playerTempReward;
+    uint256 seed;
+
+    modifier betIsValid(uint _betSize, uint _start, uint _end) {
+        require(_betSize >= minBet && _betSize <= maxBet && _start >= minNumber && _end <= maxNumber);
+        _;
+    }
+    
+    modifier oddEvenBetIsValid(uint _betSize, uint _oddeven) {
+        require(_betSize >= minBet && _betSize <= maxBet && (_oddeven == 1 || _oddeven == 0));
+        _;
+    }
+
+    modifier gameIsActive {
+        require(!gamePaused);
+        _;
+    }
+    
+    modifier recommendAreActive {
+        require(!recommendPaused);
+        _;
+    }
+
+    modifier jackpotAreActive {
+        require(!jackpotPaused);
+        _;
+    }
+
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+
+
+    event LogResult(uint indexed BetID, address indexed PlayerAddress, uint DiceResult, uint Value, uint Status, uint Start, uint End, uint oddeven, uint BetValue);
+    event LogJackpot(uint indexed BetID, address indexed PlayerAddress, uint jackpotValue);
+    event LogRecommendProfit(uint indexed BetID, address indexed PlayerAddress, uint Profit);
+    event LogOwnerTransfer(address SentToAddress, uint AmountTransferred);
+    
+
+    function() public payable{
+        contractBalance = safeAdd(contractBalance, msg.value);
+        setMaxProfit();
+    }
+
+    constructor() public {
+        owner = msg.sender;
+        ownerSetHouseEdge(20);
+        ownerSetMaxProfitAsPercentOfHouse(100000);
+        ownerSetMinBet(0.1 ether);
+        ownerSetMaxBet(1 ether);
+        ownerSetJackpotOfHouseEdge(500);
+        ownerSetRecommendProportion(100);
+        ownerSetMinJackpoBet(0.1 ether);
+    }
+
+    function playerRoll(uint start, uint end, address inviter) public payable gameIsActive betIsValid(msg.value, start, end) {
+        betId += 1;
+        probability = end - start + 1;
+        playerProfit = getDiceWinAmount(msg.value, probability);
+        if(playerProfit > maxProfit) playerProfit = maxProfit;
+        random = rand() % 100 + 1;
+        totalBets += 1;
+        totalWeiWagered += msg.value;
+        if(start <= random && random <= end){
+            contractBalance = safeSub(contractBalance, playerProfit); 
+            totalWeiWon = safeAdd(totalWeiWon, playerProfit);
+            playerTempReward = safeAdd(playerProfit, msg.value);
+            emit LogResult(betId, msg.sender, random, playerProfit, 1, start, end, 0, msg.value);
+            setMaxProfit();
+            uint playerHouseEdge = getHouseEdgeAmount(msg.value, probability);
+            increaseJackpot(getJackpotFee(playerHouseEdge),betId);
+            if(inviter != address(0)){
+                emit LogRecommendProfit(betId, msg.sender, playerProfit);
+                sendProportion(inviter, playerHouseEdge * recommendProportion / 1000);
+            }
+            msg.sender.transfer(playerTempReward);
+            return;
+        }else{
+            emit LogResult(betId, msg.sender, random, 0, 0, start, end, 0, msg.value);
+            contractBalance = safeAdd(contractBalance, (msg.value-1));                                                                      
+            setMaxProfit();          
+            msg.sender.transfer(1);
+            return;
+        }
+
+    }
+
+    function oddEven(uint oddeven, address inviter) public payable gameIsActive oddEvenBetIsValid(msg.value, oddeven) {
+        betId += 1;
+        probability = 50;
+        playerProfit = getDiceWinAmount(msg.value, probability);
+        if(playerProfit > maxProfit) playerProfit = maxProfit;
+        random = rand() % 100 + 1;
+        totalBets += 1;
+        totalWeiWagered += msg.value;
+        if(random % 2 == oddeven){
+            contractBalance = safeSub(contractBalance, playerProfit); 
+            totalWeiWon = safeAdd(totalWeiWon, playerProfit);
+            playerTempReward = safeAdd(playerProfit, msg.value); 
+            emit LogResult(betId, msg.sender, random, playerProfit, 1, 0, 0, oddeven, msg.value);
+            setMaxProfit();
+            uint playerHouseEdge = getHouseEdgeAmount(msg.value, probability);
+            increaseJackpot(getJackpotFee(playerHouseEdge),betId);
+            if(inviter != address(0)){
+                emit LogRecommendProfit(betId, msg.sender, playerProfit);
+                sendProportion(inviter, playerHouseEdge * recommendProportion / 1000);
+            }
+            msg.sender.transfer(playerTempReward);  
+            return;
+        }else{
+            emit LogResult(betId, msg.sender, random, playerProfit, 0, 0, 0, oddeven, msg.value); 
+            contractBalance = safeAdd(contractBalance, (msg.value-1));
+            setMaxProfit();         
+            msg.sender.transfer(1);
+            return;
+        }
+    }
+
+    function sendProportion(address inviter, uint amount) internal {
+        require(amount < contractBalance);
+        inviter.transfer(amount);
+    }
+
+
+    function increaseJackpot(uint increaseAmount, uint _betId) internal {
+        require (increaseAmount <= contractBalance);
+        emit LogJackpot(_betId, msg.sender, increaseAmount);
+        jackpot += increaseAmount;
+        jackpotContract.transfer(increaseAmount);
+        if(msg.value >= minJackpotBet){
+            bool result = jackpotContract.call(bytes4(keccak256("addPlayer(address)")),msg.sender);
+            require(result);
         }
         
-        //logState("state:", games[msg.sender].state);
-	}
-	
-	function randomGen(address player, uint8) internal returns (uint8) {
-		uint b = block.number;
-		uint timestamp = block.timestamp;
-		return uint8(uint256(keccak256(block.blockhash(b), player, timestamp)) % 10000);
-	}
-	
-	function getGameState() public constant returns (GameState) {
-		Game memory game = games[msg.sender];
-        
-		if (game.player == 0) {
-			// game doesn't exist
-			throw;
-		}
+    }
 
-		return game.state;
-	}
-	
-	function getGameChance() public constant returns (uint8) {
-		Game memory game = games[msg.sender];
-        
-		if (game.player == 0) {
-			// game doesn't exist
-			throw;
-		}
+    function getDiceWinAmount(uint _amount, uint _probability) view internal returns (uint) {
+        require(_probability > 0 && _probability < 100);
+        return ((_amount * (100 - _probability) / _probability + _amount) * (houseEdgeDivisor - houseEdge) / houseEdgeDivisor) - _amount;
+    }
 
-		return game.chance;
-	}
+    function getHouseEdgeAmount(uint _amount, uint _probability) view internal returns (uint) {
+        require(_probability > 0 && _probability < 100);
+        return (_amount * (100 - _probability) / _probability + _amount) * houseEdge / houseEdgeDivisor;
+    }
+
+    function getJackpotFee(uint houseEdgeAmount) view internal returns (uint) {
+        return houseEdgeAmount * jackpotOfHouseEdge / 1000;
+    }
+
+    function rand() internal returns (uint256) {
+        seed = uint256(keccak256(msg.sender, blockhash(block.number - 1), block.coinbase, block.difficulty));
+        return seed;
+    }
+
+    function OwnerSetPrizePool(address _addr) external onlyOwner {
+        require(_addr != address(0));
+        jackpotContract = _addr;
+    }
+
+    function ownerUpdateContractBalance(uint newContractBalanceInWei) public onlyOwner{
+        contractBalance = newContractBalanceInWei;
+    }
+
+    function ownerSetHouseEdge(uint newHouseEdge) public onlyOwner{
+        require(newHouseEdge <= 1000);
+        houseEdge = newHouseEdge;
+    }
+
+    function ownerSetMinJackpoBet(uint newVal) public onlyOwner{
+        require(newVal <= 10 ether);
+        minJackpotBet = newVal;
+    }
+
+    function ownerSetMaxProfitAsPercentOfHouse(uint newMaxProfitAsPercent) public onlyOwner{
+        require(newMaxProfitAsPercent <= 100000);
+        maxProfitAsPercentOfHouse = newMaxProfitAsPercent;
+        setMaxProfit();
+    }
+
+    function ownerSetMinBet(uint newMinimumBet) public onlyOwner{
+        minBet = newMinimumBet;
+    }
+
+    function ownerSetMaxBet(uint newMaxBet) public onlyOwner{
+        maxBet = newMaxBet;
+    }
+
+    function ownerSetJackpotOfHouseEdge(uint newProportion) public onlyOwner{
+        require(newProportion <= 1000);
+        jackpotOfHouseEdge = newProportion;
+    }
+
+    function ownerSetRecommendProportion(uint newRecommendProportion) public onlyOwner{
+        require(newRecommendProportion <= 1000);
+        recommendProportion = newRecommendProportion;
+    }
+    
+    function setMaxProfit() internal {
+        maxProfit = (contractBalance * maxProfitAsPercentOfHouse) / maxProfitDivisor;  
+    }
+    
+    function ownerSetjackpotContract(address newJackpotContract) public onlyOwner{
+        jackpotContract = newJackpotContract;
+    }
+
+
+    function ownerPauseGame(bool newStatus) public onlyOwner{
+        gamePaused = newStatus;
+    }
+
+    function ownerPauseJackpot(bool newStatus) public onlyOwner{
+        jackpotPaused = newStatus;
+    }
+
+    function ownerPauseRecommend(bool newStatus) public onlyOwner{
+        recommendPaused = newStatus;
+    }
+
+    function ownerTransferEther(address sendTo, uint amount) public onlyOwner{        
+        contractBalance = safeSub(contractBalance, amount);		
+        setMaxProfit();
+        sendTo.transfer(amount);
+        emit LogOwnerTransfer(sendTo, amount);
+    }
+
+    function ownerChangeOwner(address newOwner) public onlyOwner{
+        owner = newOwner;
+    }
+
+    function ownerkill() public onlyOwner{
+        selfdestruct(owner);
+    }
 }
