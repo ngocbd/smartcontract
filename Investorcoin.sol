@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Investorcoin at 0x0f03f2AFBe317a26a31439aF5a3E1d39d7F23091
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract InvestorCoin at 0x1Fd73dDb5d6a433bC9AFDd2505DA8442f9eDA4aa
 */
 pragma solidity ^ 0.4 .9;
 library SafeMath {
@@ -25,7 +25,7 @@ library SafeMath {
         return c;
     }
 }
-contract Investorcoin {
+contract InvestorCoin {
     using SafeMath
     for uint256;
     mapping(address => mapping(address => uint256)) allowed;
@@ -37,9 +37,9 @@ contract Investorcoin {
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed _owner, address indexed spender, uint256 value);
 
-    function Investorcoin() {
-        totalSupply = 1000000000;
-        symbol = 'Investor Token';
+    function InvestorCoin() {
+        totalSupply = 100000000;
+        symbol = 'INV';
         owner = 0x3ee8f2a4ad734cbebde350dbda28e0da56812830;
         balances[owner] = totalSupply;
         decimals = 0;
