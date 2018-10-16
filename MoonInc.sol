@@ -1,11 +1,21 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MoonInc at 0x21adea9cae9315b037dc6403af64f3d54fce3223
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MoonInc at 0x881ef8c83e612f8573cfcc9c8a078d6f17a52bd8
 */
 pragma solidity 0.4.20;
 
 /*
 * Team AppX presents - Moon, Inc. | Competitive Ethereum Idle Pyramid
+* Website: https://mooninc.io/
+* Backup: https://mooninc.surge.sh/
+* Discord: https://discord.gg/9Ab8Az3
 * 
+* There are 2 contracts:
+* 1. MoonInc: handle Cookie production, cookie price calulation and cookie selling
+*      - Reference: [Goo] https://etherscan.io/address/0x57b116da40f21f91aec57329ecb763d29c1b2355#code
+* 2. ProductionUnitToken: handle production units tokens buy, sell, reinvest and withdraw
+*      - Reference: [PoWTF] https://etherscan.io/address/0x702392282255f8c0993dbbbb148d80d2ef6795b1#code
+*
+* Features:
 * - You can buy workers with ETH to increase your cookies production.
 * - You can sell your cookies and claim a proportion of the cookie fund.
 * - You cannot sell cookies within the first hour of a new production unit launch.
@@ -13,6 +23,8 @@ pragma solidity 0.4.20;
 *   CookiePrice = CookieFund / TotalCookieSupply * Multiplier
 *   * Where Multiplier is a number from 0.5 to 1, which starts with 0.5 after a new production unit started, and reaches maximum value (1) after 5 days.
 * - You can sell your workers at any time like normal tokens
+*
+* Developed by by AppX Matthew, ft. MrBlobby | GOO
 *
 */
 
@@ -198,40 +210,55 @@ contract ProductionUnitToken {
         cookieProductionMultiplier = _cookieProductionMultiplier;
         startTime = _startTime;
 
-        // Set ambassadors' maximum one time pre-mine amount (Total 1.29 ETH pre-mine).
-        uint BETA_DIVISOR = 1000; // TODO: remove this in main launch contract
-
+        // Set ambassadors' maximum one time pre-mine amount (Total 1.47 ETH pre-mine including last 2 ambassadors from contest).
         // MA
-        ambassadorsMaxPremine[0xFEA0904ACc8Df0F3288b6583f60B86c36Ea52AcD] = 0.28 ether / BETA_DIVISOR;
+        ambassadorsMaxPremine[0xFEA0904ACc8Df0F3288b6583f60B86c36Ea52AcD] = 0.28 ether;
         ambassadorsPremined[address(0)] = true; // first ambassador don't need prerequisite
 
         // BL
-        ambassadorsMaxPremine[0xc951D3463EbBa4e9Ec8dDfe1f42bc5895C46eC8f] = 0.28 ether / BETA_DIVISOR;
+        ambassadorsMaxPremine[0xc951D3463EbBa4e9Ec8dDfe1f42bc5895C46eC8f] = 0.28 ether;
         ambassadorsPrerequisite[0xc951D3463EbBa4e9Ec8dDfe1f42bc5895C46eC8f] = 0xFEA0904ACc8Df0F3288b6583f60B86c36Ea52AcD;
 
         // PH
-        ambassadorsMaxPremine[0x183feBd8828a9ac6c70C0e27FbF441b93004fC05] = 0.28 ether / BETA_DIVISOR;
+        ambassadorsMaxPremine[0x183feBd8828a9ac6c70C0e27FbF441b93004fC05] = 0.28 ether;
         ambassadorsPrerequisite[0x183feBd8828a9ac6c70C0e27FbF441b93004fC05] = 0xc951D3463EbBa4e9Ec8dDfe1f42bc5895C46eC8f;
 
         // RS
-        ambassadorsMaxPremine[0x1fbc2Ca750E003A56d706C595b49a0A430EBA92d] = 0.09 ether / BETA_DIVISOR;
+        ambassadorsMaxPremine[0x1fbc2Ca750E003A56d706C595b49a0A430EBA92d] = 0.09 ether;
         ambassadorsPrerequisite[0x1fbc2Ca750E003A56d706C595b49a0A430EBA92d] = 0x183feBd8828a9ac6c70C0e27FbF441b93004fC05;
 
         // LN
-        ambassadorsMaxPremine[0x41F29054E7c0BC59a8AF10f3a6e7C0E53B334e05] = 0.09 ether / BETA_DIVISOR;
+        ambassadorsMaxPremine[0x41F29054E7c0BC59a8AF10f3a6e7C0E53B334e05] = 0.09 ether;
         ambassadorsPrerequisite[0x41F29054E7c0BC59a8AF10f3a6e7C0E53B334e05] = 0x1fbc2Ca750E003A56d706C595b49a0A430EBA92d;
 
         // LE
-        ambassadorsMaxPremine[0x15Fda64fCdbcA27a60Aa8c6ca882Aa3e1DE4Ea41] = 0.09 ether / BETA_DIVISOR;
+        ambassadorsMaxPremine[0x15Fda64fCdbcA27a60Aa8c6ca882Aa3e1DE4Ea41] = 0.09 ether;
         ambassadorsPrerequisite[0x15Fda64fCdbcA27a60Aa8c6ca882Aa3e1DE4Ea41] = 0x41F29054E7c0BC59a8AF10f3a6e7C0E53B334e05;
 
         // MI
-        ambassadorsMaxPremine[0x0a3239799518E7F7F339867A4739282014b97Dcf] = 0.09 ether / BETA_DIVISOR;
+        ambassadorsMaxPremine[0x0a3239799518E7F7F339867A4739282014b97Dcf] = 0.09 ether;
         ambassadorsPrerequisite[0x0a3239799518E7F7F339867A4739282014b97Dcf] = 0x15Fda64fCdbcA27a60Aa8c6ca882Aa3e1DE4Ea41;
 
         // PO
-        ambassadorsMaxPremine[0x31529d5Ab0D299D9b0594B7f2ef3515Be668AA87] = 0.09 ether / BETA_DIVISOR;
+        ambassadorsMaxPremine[0x31529d5Ab0D299D9b0594B7f2ef3515Be668AA87] = 0.09 ether;
         ambassadorsPrerequisite[0x31529d5Ab0D299D9b0594B7f2ef3515Be668AA87] = 0x0a3239799518E7F7F339867A4739282014b97Dcf;
+    }
+
+    bool public lastTwoAmbassadorsAdded;
+
+    /// @dev Add the last 2 ambassadors from the invite contest because they both offline in the time the contract is deployed.
+    function addLastTwoAmbassadors(address _address1, address _address2) public {
+        require(msg.sender == 0xFEA0904ACc8Df0F3288b6583f60B86c36Ea52AcD && !lastTwoAmbassadorsAdded);
+
+        lastTwoAmbassadorsAdded = true;
+
+        // KHAN
+        ambassadorsMaxPremine[_address1] = 0.09 ether;
+        ambassadorsPrerequisite[_address1] = 0x31529d5Ab0D299D9b0594B7f2ef3515Be668AA87;
+
+        // CRYPTOWHALE
+        ambassadorsMaxPremine[_address2] = 0.09 ether;
+        ambassadorsPrerequisite[_address2] = _address1;
     }
 
     /// @dev Converts all incoming ethereum to tokens for the caller, and passes down the referral addy (if any)
@@ -469,9 +496,6 @@ contract ProductionUnitToken {
 
     /// @dev Internal function to actually purchase the tokens.
     function purchaseTokens(uint256 _incomingEthereum, address _referredBy) internal returns (uint256) {
-        // Remove this on main launch
-        require(_incomingEthereum <= 1 finney);
-
         require(
             // auto start
             now >= startTime ||
@@ -609,8 +633,7 @@ contract MoonInc {
     string public constant symbol = "Cookie";
     uint8 public constant decimals = 18;
 
-    // Total balances
-    uint256 public totalEtherCookieResearchPool; // Eth dividends to be split between players' cookie production
+    // Global balances
     uint256 public totalCookieProduction;
     uint256 private roughSupply;
     uint256 private lastTotalCookieSaveTime; // Last time any player claimed their produced cookie
@@ -630,7 +653,8 @@ contract MoonInc {
     // Store the production unit start time to calculate sell price.
     uint256[] public tokenContractStartTime;
 
-    uint256 public constant firstUnitStartTime = 1526763600; // TODO: change this in main launch contract
+    // Public launch at: Wed, 23 May 2018, 21:00 GMT
+    uint256 public constant firstUnitStartTime = 1527109200;
     
     // ERC20 events
     event Transfer(address indexed from, address indexed to, uint tokens);
@@ -639,38 +663,54 @@ contract MoonInc {
     // Constructor
     function MoonInc() public payable {
         // Create first production unit (Space Kitty)
-        createProductionUnit1Beta();
-
-        // Create first production unit (Space Rabbit)
-        // createProductionUnit2Beta();
-
-        // Create first production unit (Space Hamster)
-        // createProductionUnit3Beta();
+        createProductionUnit1();
     }
 
-    function() public payable {
-        // Fallback will add to research pot
-        totalEtherCookieResearchPool += msg.value;
-    }
+    // No fallback function to avoid accidentally sending money to this contract instead of ProductionUnitToken contract.
+    // function() public payable {}
 
-    // TODO: Create 7 createProductionUnit functions in main launch contract
+    // Public function to create the ProductionUnitToken contracts.
 
-    function createProductionUnit1Beta() public {
+    function createProductionUnit1() public {
         require(productionUnitTokenContracts.length == 0);
 
-        createProductionUnitTokenContract(10, 10, 10, 0.0000001 ether / 1000, 0.00000001 ether / 1000, 1, firstUnitStartTime);
+        createProductionUnitTokenContract(10, 10, 10, 0.0000001 ether, 0.00000001 ether, 1, firstUnitStartTime);
     }
 
-    function createProductionUnit2Beta() public {
+    function createProductionUnit2() public {
         require(productionUnitTokenContracts.length == 1);
 
-        createProductionUnitTokenContract(15, 15, 15, 0.0000001 ether / 1000, 0.00000001 ether / 1000, 3, firstUnitStartTime + 1 days);
+        createProductionUnitTokenContract(15, 15, 15, 0.0000001 ether, 0.00000001 ether, 3, firstUnitStartTime + 2 days);
     }
 
-    function createProductionUnit3Beta() public {
+    function createProductionUnit3() public {
         require(productionUnitTokenContracts.length == 2);
 
-        createProductionUnitTokenContract(20, 20, 20, 0.0000001 ether / 1000, 0.00000001 ether / 1000, 9, firstUnitStartTime + 2 days);
+        createProductionUnitTokenContract(20, 20, 20, 0.0000001 ether, 0.00000001 ether, 9, firstUnitStartTime + 4 days);
+    }
+
+    function createProductionUnit4() public {
+        require(productionUnitTokenContracts.length == 3);
+
+        createProductionUnitTokenContract(25, 25, 25, 0.0000001 ether, 0.00000001 ether, 3**3, firstUnitStartTime + 7 days);
+    }
+
+    function createProductionUnit5() public {
+        require(productionUnitTokenContracts.length == 4);
+
+        createProductionUnitTokenContract(30, 30, 30, 0.0000001 ether, 0.00000001 ether, 3**4, firstUnitStartTime + 11 days);
+    }
+
+    function createProductionUnit6() public {
+        require(productionUnitTokenContracts.length == 5);
+
+        createProductionUnitTokenContract(30, 30, 30, 0.0000001 ether, 0.00000001 ether, 3**5, firstUnitStartTime + 16 days);
+    }
+
+    function createProductionUnit7() public {
+        require(productionUnitTokenContracts.length == 6);
+
+        createProductionUnitTokenContract(30, 30, 30, 0.0000001 ether, 0.00000001 ether, 3**6, firstUnitStartTime + 21 days);
     }
 
     function createProductionUnitTokenContract(
@@ -696,10 +736,6 @@ contract MoonInc {
 
         totalCookieProduction = SafeMath.add(totalCookieProduction, amount);
         cookieProduction[player] = SafeMath.add(cookieProduction[player], amount);
-
-        if (msg.value > 0) {
-            totalEtherCookieResearchPool += msg.value;
-        }
     }
 
     function handleProductionDecrease(address player, uint256 amount) public payable {
@@ -709,15 +745,11 @@ contract MoonInc {
 
         totalCookieProduction = SafeMath.sub(totalCookieProduction, amount);
         cookieProduction[player] = SafeMath.sub(cookieProduction[player], amount);
-
-        if (msg.value > 0) {
-            totalEtherCookieResearchPool += msg.value;
-        }
     }
 
     function getState() public view returns (uint256, uint256, uint256, uint256, uint256, uint256, uint256) {
         return (totalCookieProduction, cookieProduction[msg.sender], totalSupply(), balanceOf(msg.sender), 
-            totalEtherCookieResearchPool, lastTotalCookieSaveTime, computeSellPrice());
+            address(this).balance, lastTotalCookieSaveTime, computeSellPrice());
     }
 
     function totalSupply() public constant returns(uint256) {
@@ -783,11 +815,10 @@ contract MoonInc {
     }
 
     function updatePlayersCookie(address player) internal {
-        uint256 cookieGain = balanceOfUnclaimedCookie(player);
+        roughSupply += balanceOfTotalUnclaimedCookie();
+        cookieBalance[player] += balanceOfUnclaimedCookie(player);
         lastTotalCookieSaveTime = block.timestamp;
         lastCookieSaveTime[player] = block.timestamp;
-        roughSupply += cookieGain;
-        cookieBalance[player] += cookieGain;
     }
 
     // Sell all cookies, the eth earned is calculated by the proportion of cookies owned.
@@ -828,13 +859,13 @@ contract MoonInc {
             return 0;
         }
 
-        uint timeToMaxValue = 2 days; // TODO: change to 5 days in main launch contract
+        uint timeToMaxValue = 5 days;
 
         uint256 secondsPassed = now - lastTokenContractStartTime;
         secondsPassed = secondsPassed <= timeToMaxValue ? secondsPassed : timeToMaxValue;
         uint256 multiplier = 5000 + 5000 * secondsPassed / timeToMaxValue;
 
-        return 1 ether * totalEtherCookieResearchPool / supply * multiplier / 10000;
+        return 1 ether * address(this).balance / supply * multiplier / 10000;
     }
 
 }
