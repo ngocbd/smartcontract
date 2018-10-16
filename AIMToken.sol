@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AIMToken at 0xffc93820578fb6396eccef1c800c2ae654139085
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AIMToken at 0xe71c4b6bd34d751ff238c00bf2fff859e1f2fa81
 */
 pragma solidity ^0.4.18;
 
@@ -162,7 +162,7 @@ contract AIMToken is ERC20Interface, Owned {
 
         decimals = 18;
 
-        _totalSupply = 600000000 * 10**uint(decimals);
+        _totalSupply = 3000000000 * 10**uint(decimals);
 
         balances[owner] = _totalSupply;
 
