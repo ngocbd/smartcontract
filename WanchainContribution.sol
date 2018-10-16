@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WanchainContribution at 0x740650f830a0aec0f27821174d1b5737f9636017
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WanchainContribution at 0xaac3090257be280087d8bdc530265203d105b120
 */
 pragma solidity ^0.4.11;
 
@@ -50,9 +50,6 @@ library SafeMath {
 }
 
 
-pragma solidity ^0.4.11;
-
-
 /// @dev `Owned` is a base level contract that assigns an `owner` that can be
 ///  later changed
 contract Owned {
@@ -88,9 +85,6 @@ contract Owned {
     }
 }
 
-// Abstract contract for the full ERC 20 Token standard
-// https://github.com/ethereum/EIPs/issues/20
-pragma solidity ^0.4.11;
 
 contract ERC20Protocol {
     /* This is a slight change to the ERC20 base standard.
@@ -137,11 +131,6 @@ contract ERC20Protocol {
     event Approval(address indexed _owner, address indexed _spender, uint _value);
 }
 
-
-pragma solidity ^0.4.11;
-
-//import "./ERC20Protocol.sol";
-//import "./SafeMath.sol";
 
 contract StandardToken is ERC20Protocol {
     using SafeMath for uint;
@@ -203,44 +192,6 @@ contract StandardToken is ERC20Protocol {
     mapping (address => mapping (address => uint)) allowed;
 }
 
-
-
-
-pragma solidity ^0.4.11;
-
-
-/*
-
-  Copyright 2017 Wanchain Foundation.
-
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-
-*/
-
-//                            _           _           _
-//  __      ____ _ _ __   ___| |__   __ _(_)_ __   __| | _____   __
-//  \ \ /\ / / _` | '_ \ / __| '_ \ / _` | | '_ \@/ _` |/ _ \ \ / /
-//   \ V  V / (_| | | | | (__| | | | (_| | | | | | (_| |  __/\ V /
-//    \_/\_/ \__,_|_| |_|\___|_| |_|\__,_|_|_| |_|\__,_|\___| \_/
-//
-//  Code style according to: https://github.com/wanchain/wanchain-token/blob/master/style-guide.rst
-
-
-
-//import "./StandardToken.sol";
-//import "./SafeMath.sol";
-
-
 /// @title Wanchain Token Contract
 /// For more information about this token sale, please visit https://wanchain.org
 /// @author Cathy - <cathy@wanchain.org>
@@ -257,7 +208,7 @@ contract WanToken is StandardToken {
 
     /// Fields that are only changed in constructor
     /// Wanchain contribution contract
-    address public minter;
+    address public minter; 
     /// ICO start time
     uint public startTime;
     /// ICO end time
@@ -270,51 +221,52 @@ contract WanToken is StandardToken {
      */
 
     modifier onlyMinter {
-    	  assert(msg.sender == minter);
-    	  _;
+        assert(msg.sender == minter);
+        _;
     }
 
     modifier isLaterThan (uint x){
-    	  assert(now > x);
-    	  _;
+        assert(now > x);
+        _;
     }
 
     modifier maxWanTokenAmountNotReached (uint amount){
-    	  assert(totalSupply.add(amount) <= MAX_TOTAL_TOKEN_AMOUNT);
-    	  _;
+        assert(totalSupply.add(amount) <= MAX_TOTAL_TOKEN_AMOUNT);
+        _;
     }
 
     /**
-     * CONSTRUCTOR
-     *
+     * CONSTRUCTOR 
+     * 
      * @dev Initialize the Wanchain Token
-     * @param _minter The Wanchain Contribution Contract
+     * @param _minter The Wanchain Contribution Contract     
      * @param _startTime ICO start time
      * @param _endTime ICO End Time
      */
     function WanToken(address _minter, uint _startTime, uint _endTime){
-    	  minter = _minter;
-    	  startTime = _startTime;
-    	  endTime = _endTime;
+        minter = _minter;
+        startTime = _startTime;
+        endTime = _endTime;
     }
 
     /**
-     * EXTERNAL FUNCTION
-     *
+     * EXTERNAL FUNCTION 
+     * 
      * @dev Contribution contract instance mint token
-     * @param receipent The destination account owned mint tokens
+     * @param receipent The destination account owned mint tokens    
      * @param amount The amount of mint token
      * be sent to this address.
-     */
+     */    
     function mintToken(address receipent, uint amount)
         external
         onlyMinter
         maxWanTokenAmountNotReached(amount)
         returns (bool)
     {
-      	lockedBalances[receipent] = lockedBalances[receipent].add(amount);
-      	totalSupply = totalSupply.add(amount);
-      	return true;
+        require(now <= endTime);
+        lockedBalances[receipent] = lockedBalances[receipent].add(amount);
+        totalSupply = totalSupply.add(amount);
+        return true;
     }
 
     /*
@@ -327,8 +279,8 @@ contract WanToken is StandardToken {
         public
         onlyMinter
     {
-      	balances[receipent] = balances[receipent].add(lockedBalances[receipent]);
-      	lockedBalances[receipent] = 0;
+        balances[receipent] = balances[receipent].add(lockedBalances[receipent]);
+        lockedBalances[receipent] = 0;
     }
 
     /*
@@ -338,35 +290,6 @@ contract WanToken is StandardToken {
         return lockedBalances[_owner];
     }
 }
-
-
-pragma solidity ^0.4.11;
-
-/*
-
-  Copyright 2017 Wanchain Foundation.
-
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-
-*/
-
-//                            _           _           _
-//  __      ____ _ _ __   ___| |__   __ _(_)_ __   __| | _____   __
-//  \ \ /\ / / _` | '_ \ / __| '_ \ / _` | | '_ \@/ _` |/ _ \ \ / /
-//   \ V  V / (_| | | | | (__| | | | (_| | | | | | (_| |  __/\ V /
-//    \_/\_/ \__,_|_| |_|\___|_| |_|\__,_|_|_| |_|\__,_|\___| \_/
-//
-//  Code style according to: https://github.com/wanchain/wanchain-token/blob/master/style-guide.rst
 
 /// @title Wanchain Contribution Contract
 /// ICO Rules according: https://www.wanchain.org/crowdsale
@@ -378,7 +301,8 @@ contract WanchainContribution is Owned {
     /// Constant fields
     /// Wanchain total tokens supply
     uint public constant WAN_TOTAL_SUPPLY = 210000000 ether;
-    uint public constant MAX_CONTRIBUTION_DURATION = 3 days;
+    uint public constant EARLY_CONTRIBUTION_DURATION = 24 hours;
+    uint public constant MAX_CONTRIBUTION_DURATION = 3 weeks;
 
     /// Exchange rates for first phase
     uint public constant PRICE_RATE_FIRST = 880;
@@ -390,33 +314,36 @@ contract WanchainContribution is Owned {
     /// ----------------------------------------------------------------------------------------------------
     /// |                                                  |                    |                 |        |
     /// |        PUBLIC SALE (PRESALE + OPEN SALE)         |      DEV TEAM      |    FOUNDATION   |  MINER |
-    /// |                       51%                        |         20%        |       19%       |   10%  |
+    /// |                       51%                        |         20%        |       19%       |   10%  |    
     /// ----------------------------------------------------------------------------------------------------
       /// OPEN_SALE_STAKE + PRESALE_STAKE = 51; 51% sale for public
-      uint public constant OPEN_SALE_STAKE = 459;  // 45.9% for open sale
-      uint public constant PRESALE_STAKE = 51;     // 5.1%  for presale
+    uint public constant OPEN_SALE_STAKE = 510;  // 51% for open sale
 
-      // Reserved stakes
-      uint public constant DEV_TEAM_STAKE = 200;   // 20%
-      uint public constant FOUNDATION_STAKE = 190; // 19%
-      uint public constant MINERS_STAKE = 100;     // 10%
+    // Reserved stakes
+    uint public constant DEV_TEAM_STAKE = 200;   // 20%
+    uint public constant FOUNDATION_STAKE = 190; // 19%
+    uint public constant MINERS_STAKE = 100;     // 10%
 
-      uint public constant DIVISOR_STAKE = 1000;
+    uint public constant DIVISOR_STAKE = 1000;
 
-      /// Holder address for presale and reserved tokens
-      /// TODO: change addressed before deployed to main net
-      address public constant PRESALE_HOLDER = 0xca8f76fd9597e5c0ea5ef0f83381c0635271cd5d;
+    uint public constant PRESALE_RESERVERED_AMOUNT = 41506655 ether; //presale prize amount(40000*880)
+  
+    /// Holder address for presale and reserved tokens
+    /// TODO: change addressed before deployed to main net
 
-      // Addresses of Patrons
-      address public constant DEV_TEAM_HOLDER = 0x1631447d041f929595a9c7b0c9c0047de2e76186;
-      address public constant FOUNDATION_HOLDER = 0xe442408a5f2e224c92b34e251de48f5266fc38de;
-      address public constant MINERS_HOLDER = 0x38b195d2a18a4e60292868fa74fae619d566111e;
+    // Addresses of Patrons
+    address public constant DEV_TEAM_HOLDER = 0x0001cdC69b1eb8bCCE29311C01092Bdcc92f8f8F;
+    address public constant FOUNDATION_HOLDER = 0x00dB4023b32008C45E62Add57De256a9399752D4;
+    address public constant MINERS_HOLDER = 0x00f870D11eA43AA1c4C715c61dC045E32d232787;
+    address public constant PRESALE_HOLDER = 0x00577c25A81fA2401C5246F4a7D5ebaFfA4b00Aa;
+  
+    uint public MAX_OPEN_SOLD = WAN_TOTAL_SUPPLY * OPEN_SALE_STAKE / DIVISOR_STAKE - PRESALE_RESERVERED_AMOUNT;
 
-      uint public MAX_OPEN_SOLD = WAN_TOTAL_SUPPLY * OPEN_SALE_STAKE / DIVISOR_STAKE;
-
-    /// Fields that are only changed in constructor
+    /// Fields that are only changed in constructor    
     /// All deposited ETH will be instantly forwarded to this address.
     address public wanport;
+    /// Early Adopters reserved start time
+    uint public earlyReserveBeginTime;
     /// Contribution start time
     uint public startTime;
     /// Contribution end time
@@ -424,20 +351,16 @@ contract WanchainContribution is Owned {
 
     /// Fields that can be changed by functions
     /// Accumulator for open sold tokens
-    uint openSoldTokens;
-    /// Normal sold tokens
-    uint normalSoldTokens;
-    /// The sum of reserved tokens for ICO stage 1
-    uint public partnerReservedSum;
+    uint public openSoldTokens;
     /// Due to an emergency, set this to true to halt the contribution
-    bool public halted;
+    bool public halted; 
     /// ERC20 compilant wanchain token contact instance
-    WanToken public wanToken;
+    WanToken public wanToken; 
 
-    /// Quota for partners
-    mapping (address => uint256) public partnersLimit;
-    /// Accumulator for partner sold
-    mapping (address => uint256) public partnersBought;
+    /// Quota for early adopters sale, Quota
+    mapping (address => uint256) public earlyUserQuotas;
+    /// tags show address can join in open sale
+    mapping (address => uint256) public fullWhiteList;
 
     uint256 public normalBuyLimit = 65 ether;
 
@@ -446,7 +369,7 @@ contract WanchainContribution is Owned {
      */
 
     event NewSale(address indexed destAddress, uint ethCost, uint gotTokens);
-    event PartnerAddressQuota(address indexed partnerAddress, uint quota);
+    //event PartnerAddressQuota(address indexed partnerAddress, uint quota);
 
     /*
      * MODIFIERS
@@ -465,7 +388,7 @@ contract WanchainContribution is Owned {
     modifier initialized() {
         require(address(wanport) != 0x0);
         _;
-    }
+    }    
 
     modifier notEarlierThan(uint x) {
         require(now >= x);
@@ -480,7 +403,7 @@ contract WanchainContribution is Owned {
     modifier ceilingNotReached() {
         require(openSoldTokens < MAX_OPEN_SOLD);
         _;
-    }
+    }  
 
     modifier isSaleEnded() {
         require(now > endTime || openSoldTokens >= MAX_OPEN_SOLD);
@@ -489,48 +412,78 @@ contract WanchainContribution is Owned {
 
 
     /**
-     * CONSTRUCTOR
-     *
+     * CONSTRUCTOR 
+     * 
      * @dev Initialize the Wanchain contribution contract
      * @param _wanport The escrow account address, all ethers will be sent to this address.
-     * @param _startTime ICO start time
+     * @param _bootTime ICO boot time
      */
-    function WanchainContribution(address _wanport, uint _startTime){
-    	require(_wanport != 0x0);
+    function WanchainContribution(address _wanport, uint _bootTime){
+      require(_wanport != 0x0);
 
         halted = false;
-    	wanport = _wanport;
-    	startTime = _startTime;
-    	endTime = startTime + MAX_CONTRIBUTION_DURATION;
+      wanport = _wanport;
+        earlyReserveBeginTime = _bootTime;
+      startTime = earlyReserveBeginTime + EARLY_CONTRIBUTION_DURATION;
+      endTime = startTime + MAX_CONTRIBUTION_DURATION;
         openSoldTokens = 0;
-        partnerReservedSum = 0;
-        normalSoldTokens = 0;
         /// Create wanchain token contract instance
-    	wanToken = new WanToken(this,startTime, endTime);
+      wanToken = new WanToken(this,startTime, endTime);
 
         /// Reserve tokens according wanchain ICO rules
-    	uint stakeMultiplier = WAN_TOTAL_SUPPLY / DIVISOR_STAKE;
-
-    	wanToken.mintToken(PRESALE_HOLDER, PRESALE_STAKE * stakeMultiplier);
+      uint stakeMultiplier = WAN_TOTAL_SUPPLY / DIVISOR_STAKE;
+    
         wanToken.mintToken(DEV_TEAM_HOLDER, DEV_TEAM_STAKE * stakeMultiplier);
         wanToken.mintToken(FOUNDATION_HOLDER, FOUNDATION_STAKE * stakeMultiplier);
         wanToken.mintToken(MINERS_HOLDER, MINERS_STAKE * stakeMultiplier);
+    
+        wanToken.mintToken(PRESALE_HOLDER, PRESALE_RESERVERED_AMOUNT);    
+    
     }
 
     /**
-     * Fallback function
-     *
+     * Fallback function 
+     * 
      * @dev If anybody sends Ether directly to this  contract, consider he is getting wan token
      */
-    function () public payable notHalted ceilingNotReached{
-    	buyWanCoin(msg.sender);
+    function () public payable {
+      buyWanCoin(msg.sender);
     }
 
     /*
      * PUBLIC FUNCTIONS
      */
 
-   function setNormalBuyLimit(uint256 limit)
+    /// @dev Exchange msg.value ether to WAN for account recepient
+    /// @param receipient WAN tokens receiver
+    function buyWanCoin(address receipient) 
+        public 
+        payable 
+        notHalted 
+        initialized 
+        ceilingNotReached 
+        notEarlierThan(earlyReserveBeginTime)
+        earlierThan(endTime)
+        returns (bool) 
+    {
+        require(receipient != 0x0);
+        require(msg.value >= 0.1 ether);
+
+        // Do not allow contracts to game the system
+        require(!isContract(msg.sender));        
+
+        if( now < startTime && now >= earlyReserveBeginTime)
+            buyEarlyAdopters(receipient);
+        else {
+            require( tx.gasprice <= 50000000000 wei );
+            require(msg.value <= normalBuyLimit);
+            buyNormal(receipient);
+        }
+
+        return true;
+    }
+
+    function setNormalBuyLimit(uint256 limit)
         public
         initialized
         onlyOwner
@@ -539,48 +492,29 @@ contract WanchainContribution is Owned {
         normalBuyLimit = limit;
     }
 
-    /// @dev Sets the limit for a partner address. All the partner addresses
-    /// will be able to get wan token during the contribution period with his own
-    /// specific limit.
-    /// This method should be called by the owner after the initialization
-    /// and before the contribution end.
-    /// @param setPartnerAddress Partner address
-    /// @param limit Limit for the partner address,the limit is WANTOKEN, not ETHER
-    function setPartnerQuota(address setPartnerAddress, uint256 limit)
+
+    /// @dev batch set quota for early user quota
+    function setEarlyWhitelistQuotas(address[] users, uint earlyCap, uint openTag)
         public
-        initialized
+        onlyOwner
+        earlierThan(earlyReserveBeginTime)
+    {
+        for( uint i = 0; i < users.length; i++) {
+            earlyUserQuotas[users[i]] = earlyCap;
+            fullWhiteList[users[i]] = openTag;
+        }
+    }
+
+    /// @dev batch set quota for early user quota
+    function setLaterWhiteList(address[] users, uint openTag)
+        public
         onlyOwner
         earlierThan(endTime)
     {
-        require(limit > 0 && limit <= MAX_OPEN_SOLD);
-        partnersLimit[setPartnerAddress] = limit;
-        partnerReservedSum += limit;
-        PartnerAddressQuota(setPartnerAddress, limit);
-    }
-
-    /// @dev Exchange msg.value ether to WAN for account recepient
-    /// @param receipient WAN tokens receiver
-    function buyWanCoin(address receipient)
-        public
-        payable
-        notHalted
-        initialized
-        ceilingNotReached
-        notEarlierThan(startTime)
-        earlierThan(endTime)
-        returns (bool)
-    {
-    	require(receipient != 0x0);
-    	require(msg.value >= 0.1 ether);
-
-    	if (partnersLimit[receipient] > 0)
-    		buyFromPartner(receipient);
-    	else {
-    		require(msg.value <= normalBuyLimit);
-    		buyNormal(receipient);
-    	}
-
-    	return true;
+        require(saleNotEnd());
+        for( uint i = 0; i < users.length; i++) {
+            fullWhiteList[users[i]] = openTag;
+        }
     }
 
     /// @dev Emergency situation that requires contribution period to stop.
@@ -596,87 +530,65 @@ contract WanchainContribution is Owned {
     }
 
     /// @dev Emergency situation
-    function changeWalletAddress(address newAddress) onlyWallet {
-        wanport = newAddress;
+    function changeWalletAddress(address newAddress) onlyWallet { 
+        wanport = newAddress; 
     }
 
-    /// @return true if sale has started, false otherwise.
-    function saleStarted() constant returns (bool) {
-        return now >= startTime;
-    }
-
-    /// @return true if sale has ended, false otherwise.
-    function saleEnded() constant returns (bool) {
-        return now > endTime || openSoldTokens >= MAX_OPEN_SOLD;
+    /// @return true if sale not ended, false otherwise.
+    function saleNotEnd() constant returns (bool) {
+        return now < endTime && openSoldTokens < MAX_OPEN_SOLD;
     }
 
     /// CONSTANT METHODS
     /// @dev Get current exchange rate
     function priceRate() public constant returns (uint) {
         // Three price tiers
-        if (startTime <= now && now < startTime + 1 days)
+        if (earlyReserveBeginTime <= now && now < startTime + 1 weeks)
             return PRICE_RATE_FIRST;
-        if (startTime + 1 days <= now && now < startTime + 2 days)
+        if (startTime + 1 weeks <= now && now < startTime + 2 weeks)
             return PRICE_RATE_SECOND;
-        if (startTime + 2 days <= now && now < endTime)
+        if (startTime + 2 weeks <= now && now < endTime)
             return PRICE_RATE_LAST;
         // Should not be called before or after contribution period
         assert(false);
     }
 
-
     function claimTokens(address receipent)
-      public
-      isSaleEnded
+        public
+        isSaleEnded
     {
-
-      wanToken.claimTokens(receipent);
-
+        wanToken.claimTokens(receipent);
     }
 
     /*
      * INTERNAL FUNCTIONS
      */
 
-    /// @dev Buy wanchain tokens by partners
-    function buyFromPartner(address receipient) internal {
-    	uint partnerAvailable = partnersLimit[receipient].sub(partnersBought[receipient]);
-	    uint allAvailable = MAX_OPEN_SOLD.sub(openSoldTokens);
-      partnerAvailable = partnerAvailable.min256(allAvailable);
+    /// @dev Buy wanchain tokens for early adopters
+    function buyEarlyAdopters(address receipient) internal {
+      uint quotaAvailable = earlyUserQuotas[receipient];
+      require(quotaAvailable > 0);
 
-    	require(partnerAvailable > 0);
+        uint toFund = quotaAvailable.min256(msg.value);
+        uint tokenAvailable4Adopter = toFund.mul(PRICE_RATE_FIRST);
 
-    	uint toFund;
-    	uint toCollect;
-    	(toFund,  toCollect)= costAndBuyTokens(partnerAvailable);
-
-    	partnersBought[receipient] = partnersBought[receipient].add(toCollect);
-
-    	buyCommon(receipient, toFund, toCollect);
-
+      earlyUserQuotas[receipient] = earlyUserQuotas[receipient].sub(toFund);
+      buyCommon(receipient, toFund, tokenAvailable4Adopter);
     }
 
     /// @dev Buy wanchain token normally
     function buyNormal(address receipient) internal {
-        // Do not allow contracts to game the system
-        require(!isContract(msg.sender));
+        uint inWhiteListTag = fullWhiteList[receipient];
+        require(inWhiteListTag > 0);
 
         // protect partner quota in stage one
-        uint tokenAvailable;
-        if(startTime <= now && now < startTime + 1 days) {
-            uint totalNormalAvailable = MAX_OPEN_SOLD.sub(partnerReservedSum);
-            tokenAvailable = totalNormalAvailable.sub(normalSoldTokens);
-        } else {
-            tokenAvailable = MAX_OPEN_SOLD.sub(openSoldTokens);
-        }
-
+        uint tokenAvailable = MAX_OPEN_SOLD.sub(openSoldTokens);
         require(tokenAvailable > 0);
 
-    	uint toFund;
-    	uint toCollect;
-    	(toFund, toCollect) = costAndBuyTokens(tokenAvailable);
+      uint toFund;
+      uint toCollect;
+      (toFund, toCollect) = costAndBuyTokens(tokenAvailable);
         buyCommon(receipient, toFund, toCollect);
-        normalSoldTokens += toCollect;
     }
 
     /// @dev Utility function for bug wanchain token
@@ -684,10 +596,10 @@ contract WanchainContribution is Owned {
         require(msg.value >= toFund); // double check
 
         if(toFund > 0) {
-            require(wanToken.mintToken(receipient, wanTokenCollect));
+            require(wanToken.mintToken(receipient, wanTokenCollect));         
             wanport.transfer(toFund);
             openSoldTokens = openSoldTokens.add(wanTokenCollect);
-            NewSale(receipient, toFund, wanTokenCollect);
+            NewSale(receipient, toFund, wanTokenCollect);            
         }
 
         uint toReturn = msg.value.sub(toFund);
@@ -698,17 +610,16 @@ contract WanchainContribution is Owned {
 
     /// @dev Utility function for calculate available tokens and cost ethers
     function costAndBuyTokens(uint availableToken) constant internal returns (uint costValue, uint getTokens){
-    	// all conditions has checked in the caller functions
-    	uint exchangeRate = priceRate();
-    	getTokens = exchangeRate * msg.value;
+      // all conditions has checked in the caller functions
+      uint exchangeRate = priceRate();
+      getTokens = exchangeRate * msg.value;
 
-    	if(availableToken >= getTokens){
-    		costValue = msg.value;
-    	} else {
-    		costValue = availableToken / exchangeRate;
-    		getTokens = availableToken;
-    	}
-
+      if(availableToken >= getTokens){
+        costValue = msg.value;
+      } else {
+        costValue = availableToken / exchangeRate;
+        getTokens = availableToken;
+      }
     }
 
     /// @dev Internal function to determine if an address is a contract
