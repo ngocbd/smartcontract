@@ -1,98 +1,96 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SilentNotaryToken at 0x2df8286c9396f52e17DFeE75d2E41E52609CF897
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SilentNotaryToken at 0x2859021eE7F2Cb10162E67F33Af2D22764B31aFf
 */
-pragma solidity ^0.4.14;
-
-/// @title Ownable contract - base contract with an owner
-contract Ownable {
- address public owner;
-
- function Ownable() {
-   owner = msg.sender;
- }
-
- modifier onlyOwner() {
-   require(msg.sender == owner);
-   _;
- }
-
- function transferOwnership(address newOwner) onlyOwner {
-   if (newOwner != address(0)) {
-     owner = newOwner;
-   }
- }
-}
-
-/// @title Killable contract - base contract that can be killed by owner. All funds in contract will be sent to the owner.
-contract Killable is Ownable {
- function kill() onlyOwner {
-   selfdestruct(owner);
- }
-}
-
- /// @title ERC20 interface see https://github.com/ethereum/EIPs/issues/20
-contract ERC20 {
-  uint public totalSupply;
-  function balanceOf(address who) constant returns (uint);
-  function allowance(address owner, address spender) constant returns (uint);
-  function mint(address receiver, uint amount);
-  function transfer(address to, uint value) returns (bool ok);
-  function transferFrom(address from, address to, uint value) returns (bool ok);
-  function approve(address spender, uint value) returns (bool ok);
-  event Transfer(address indexed from, address indexed to, uint value);
-  event Approval(address indexed owner, address indexed spender, uint value);
-}
+pragma solidity ^0.4.18;
 
  /// @title SafeMath contract - math operations with safety checks
 contract SafeMath {
-  function safeMul(uint a, uint b) internal returns (uint) {
+  function safeMul(uint a, uint b) internal pure  returns (uint) {
     uint c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
 
-  function safeDiv(uint a, uint b) internal returns (uint) {
+  function safeDiv(uint a, uint b) internal pure returns (uint) {
     assert(b > 0);
     uint c = a / b;
     assert(a == b * c + a % b);
     return c;
   }
 
-  function safeSub(uint a, uint b) internal returns (uint) {
+  function safeSub(uint a, uint b) internal pure returns (uint) {
     assert(b <= a);
     return a - b;
   }
 
-  function safeAdd(uint a, uint b) internal returns (uint) {
+  function safeAdd(uint a, uint b) internal pure returns (uint) {
     uint c = a + b;
     assert(c>=a && c>=b);
     return c;
   }
 
-  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
+  function max64(uint64 a, uint64 b) internal pure returns (uint64) {
     return a >= b ? a : b;
   }
 
-  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
+  function min64(uint64 a, uint64 b) internal pure returns (uint64) {
     return a < b ? a : b;
   }
 
-  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
+  function max256(uint256 a, uint256 b) internal pure returns (uint256) {
     return a >= b ? a : b;
   }
 
-  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
+  function min256(uint256 a, uint256 b) internal pure returns (uint256) {
     return a < b ? a : b;
   }
+}
+
+ /// @title Ownable contract - base contract with an owner
+contract Ownable {
+  address public owner;
+
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  function transferOwnership(address newOwner) public onlyOwner {
+    if (newOwner != address(0)) {
+      owner = newOwner;
+    }
+  }
+}
+
+ /// @title Killable contract - base contract that can be killed by owner. All funds in contract will be sent to the owner.
+contract Killable is Ownable {
+  function kill() public onlyOwner {
+    selfdestruct(owner);
+  }
+}
+
+ /// @title ERC20 interface see https://github.com/ethereum/EIPs/issues/20
+contract ERC20 {
+  uint public totalSupply;
+  function balanceOf(address who) public constant returns (uint);
+  function allowance(address owner, address spender) public constant returns (uint);  
+  function transfer(address to, uint value) public returns (bool ok);
+  function transferFrom(address from, address to, uint value) public returns (bool ok);
+  function approve(address spender, uint value) public returns (bool ok);
+  function decimals() public constant returns (uint value);
+  event Transfer(address indexed from, address indexed to, uint value);
+  event Approval(address indexed owner, address indexed spender, uint value);
 }
 
  /// @title SilentNotaryToken contract - standard ERC20 token with Short Hand Attack and approve() race condition mitigation.
 contract SilentNotaryToken is SafeMath, ERC20, Killable {
   string constant public name = "Silent Notary Token";
   string constant public symbol = "SNTR";
-  uint constant public decimals = 4;
-  /// Buyout price
-  uint constant public BUYOUT_PRICE = 20e10;
+ 
   /// Holder list
   address[] public holders;
   /// Balance data
@@ -152,21 +150,17 @@ contract SilentNotaryToken is SafeMath, ERC20, Killable {
     _;
   }
 
-  /// Tokens burn event
-  event Burned(address indexed burner, address indexed holder, uint burnedAmount);
-  /// Tokens buyout event
-  event Pay(address indexed to, uint value);
-  /// Wei deposit event
-  event Deposit(address indexed from, uint value);
-
   /// @dev Constructor
-  function SilentNotaryToken() {
+  function SilentNotaryToken() public {
   }
 
   /// Fallback method
-  function() payable {
-    require(msg.value > 0);
-    Deposit(msg.sender, msg.value);
+  function() payable public {
+	  revert();
+  }
+
+  function decimals() public constant returns (uint value) {
+    return 4;
   }
   /// @dev Create new tokens and allocate them to an address. Only callably by a crowdsale contract
   /// @param receiver Address of receiver
@@ -191,7 +185,7 @@ contract SilentNotaryToken is SafeMath, ERC20, Killable {
   /// @param _to dest address
   /// @param _value tokens amount
   /// @return transfer result
-  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) canTransfer addIfNotExist(_to) returns (bool success) {
+  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) canTransfer addIfNotExist(_to) public returns (bool success) {
     balances[msg.sender].value = safeSub(balances[msg.sender].value, _value);
     balances[_to].value = safeAdd(balances[_to].value, _value);
     balances[_to].exist = true;
@@ -204,7 +198,7 @@ contract SilentNotaryToken is SafeMath, ERC20, Killable {
   /// @param _to dest address
   /// @param _value tokens amount
   /// @return transfer result
-  function transferFrom(address _from, address _to, uint _value) onlyPayloadSize(2 * 32) canTransfer addIfNotExist(_to) returns (bool success) {
+  function transferFrom(address _from, address _to, uint _value) onlyPayloadSize(2 * 32) canTransfer addIfNotExist(_to) public returns (bool success) {
     var _allowance = allowed[_from][msg.sender];
 
     balances[_to].value = safeAdd(balances[_to].value, _value);
@@ -218,7 +212,7 @@ contract SilentNotaryToken is SafeMath, ERC20, Killable {
   /// @dev Tokens balance
   /// @param _owner holder address
   /// @return balance amount
-  function balanceOf(address _owner) constant returns (uint balance) {
+  function balanceOf(address _owner) constant public returns (uint balance) {
     return balances[_owner].value;
   }
 
@@ -226,7 +220,7 @@ contract SilentNotaryToken is SafeMath, ERC20, Killable {
   /// @param _spender holder address
   /// @param _value tokens amount
   /// @return result
-  function approve(address _spender, uint _value) returns (bool success) {
+  function approve(address _spender, uint _value) public returns (bool success) {
     // To change the approve amount you first have to reduce the addresses`
     //  allowance to zero by calling `approve(_spender, 0)` if it is not
     //  already 0 to mitigate the race condition described here:
@@ -242,28 +236,7 @@ contract SilentNotaryToken is SafeMath, ERC20, Killable {
   /// @param _owner holder address
   /// @param _spender spender address
   /// @return remain amount
-  function allowance(address _owner, address _spender) constant returns (uint remaining) {
+  function allowance(address _owner, address _spender) constant public returns (uint remaining) {
     return allowed[_owner][_spender];
-  }
-
-  /// @dev buyout method
-  /// @param _holder holder address
-  /// @param _amount wei for buyout tokens
-  function buyout(address _holder, uint _amount) onlyOwner addIfNotExist(msg.sender) external  {
-    require(_holder != msg.sender);
-    require(this.balance >= _amount);
-    require(BUYOUT_PRICE <= _amount);
-
-    uint multiplier = 10 ** decimals;
-    uint buyoutTokens = safeDiv(safeMul(_amount, multiplier), BUYOUT_PRICE);
-
-    balances[msg.sender].value = safeAdd(balances[msg.sender].value, buyoutTokens);
-    balances[_holder].value = safeSub(balances[_holder].value, buyoutTokens);
-    balances[msg.sender].exist = true;
-
-    Transfer(_holder, msg.sender, buyoutTokens);
-
-    _holder.transfer(_amount);
-    Pay(_holder, _amount);
   }
 }
