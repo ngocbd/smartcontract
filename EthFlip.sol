@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthFlip at 0x25e41ae4b247baaae702cdc909d50fd14b2db7ea
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthFlip at 0x8cd448c5fdbf2c79f640a5326a6f86fbce03d3bb
 */
 // <ORACLIZE_API>
 /*
@@ -1053,6 +1053,7 @@ contract EthFlip is usingOraclize {
     uint timestamp;
     address playerAddress;
     uint randomNumber;
+    bool low;
   }
   
   // Player archival
@@ -1064,6 +1065,7 @@ contract EthFlip is usingOraclize {
   struct QueryMap {
     uint betValue;
     address playerAddress;
+    bool low;
   }
   
   // Game parameters
@@ -1090,7 +1092,7 @@ contract EthFlip is usingOraclize {
   mapping (uint => QueryMap) private queryIdMap;
   
   // Events
-  event BetComplete(bool _win, uint _betNumber, uint _betValue, uint _timestamp, address _playerAddress, uint _randomNumber);
+  event BetComplete(bool _win, uint _betNumber, uint _betValue, uint _timestamp, address _playerAddress, uint _randomNumber, bool _low);
   event GameStatusUpdate(bool _paused);
   event MinBetUpdate(uint _newMin);
   event MaxBetUpdate(uint _newMax);
@@ -1134,42 +1136,58 @@ contract EthFlip is usingOraclize {
     maxBet = 500000000000000000;
     houseFee = 29; // 2.9%
     oraclizeGas = 500000;
-    oraclizeGasPrice = 3010000000;
+    oraclizeGasPrice = 3011000000;
     oraclize_setCustomGasPrice(oraclizeGasPrice);
     oraclize_setProof(proofType_Ledger);
     owner = msg.sender;
     
     // Carry-over from old contract
-    totalPayouts = 1728380000000000000;
-    totalWins = 10;
-    totalLosses = 15;
+    totalPayouts = 14429060000000000000;
+    totalWins = 71;
+    totalLosses = 70;
   }
   
   // Fallback
   function() public payable {}
 
   // Placing a bet
-  function placeBet() public payable gameIsActive sentEnoughForBet didNotSendOverMaxBet {
-    secureGenerateNumber(msg.sender, msg.value);
+  function betLow() public payable gameIsActive sentEnoughForBet didNotSendOverMaxBet {
+    secureGenerateNumber(msg.sender, msg.value, true);
+  }
+  
+  function betHigh() public payable gameIsActive sentEnoughForBet didNotSendOverMaxBet {
+    secureGenerateNumber(msg.sender, msg.value, false);
   }
   
   // Securely generate number randomly
-  function secureGenerateNumber(address _playerAddress, uint _betValue) private {
+  function secureGenerateNumber(address _playerAddress, uint _betValue, bool _low) private {
     bytes32 queryId = oraclize_newRandomDSQuery(0, 1, oraclizeGas);
     uint convertedId = uint(keccak256(queryId));
+    newUnprocessedQuery(convertedId, queryId);
     queryIdMap[convertedId].betValue = _betValue;
     queryIdMap[convertedId].playerAddress = _playerAddress;
+    queryIdMap[convertedId].low = _low;
   }
   
   // Check if the player won or refund if randomness proof failed
   function checkIfWon() private {
     if (randomNumber != 101) {
-      if (randomNumber <= 50) {
-        win = true;
-        sendPayout(subtractHouseFee(queryIdMap[currentQueryId].betValue*2));
+      if (queryIdMap[currentQueryId].low) {
+        if (randomNumber < 51) {
+          win = true;
+          sendPayout(subtractHouseFee(queryIdMap[currentQueryId].betValue*2));
+        } else {
+          win = false;
+          sendOneWei();
+        }
       } else {
-        win = false;
-        sendOneWei();
+        if (randomNumber > 50) {
+          win = true;
+          sendPayout(subtractHouseFee(queryIdMap[currentQueryId].betValue*2));
+        } else {
+          win = false;
+          sendOneWei();
+        }
       }
     } else {
       win = false;
@@ -1213,13 +1231,13 @@ contract EthFlip is usingOraclize {
     }
     
     // Bets updates
-    pastBets[currentBetNumber] = Bet({win:win, betValue:queryIdMap[currentQueryId].betValue, timestamp:block.timestamp, playerAddress:queryIdMap[currentQueryId].playerAddress, randomNumber:randomNumber});
+    pastBets[currentBetNumber] = Bet({win:win, betValue:queryIdMap[currentQueryId].betValue, timestamp:block.timestamp, playerAddress:queryIdMap[currentQueryId].playerAddress, randomNumber:randomNumber, low:queryIdMap[currentQueryId].low});
     
     // // Player updates
     playerBetNumbers[queryIdMap[currentQueryId].playerAddress].betNumbers.push(currentBetNumber);
     
     // Emit complete event
-    BetComplete(win, currentBetNumber, queryIdMap[currentQueryId].betValue, block.timestamp, queryIdMap[currentQueryId].playerAddress, randomNumber);
+    BetComplete(win, currentBetNumber, queryIdMap[currentQueryId].betValue, block.timestamp, queryIdMap[currentQueryId].playerAddress, randomNumber, queryIdMap[currentQueryId].low);
     queryIdMap[currentQueryId].betValue = 0;
   }
   
@@ -1277,9 +1295,17 @@ contract EthFlip is usingOraclize {
     return (playerBetNumbers[_playerAddress].betNumbers);
   }
   
-  function getPastBet(uint _betNumber) constant public returns (bool _win, uint _betValue, uint _timestamp, address _playerAddress, uint _randomNumber) {
+  function getPastBet(uint _betNumber) constant public returns (bool _win, uint _betValue, uint _timestamp, address _playerAddress, uint _randomNumber, bool _low) {
     require(currentBetNumber >= _betNumber);
-    return (pastBets[_betNumber].win, pastBets[_betNumber].betValue, pastBets[_betNumber].timestamp, pastBets[_betNumber].playerAddress, pastBets[_betNumber].randomNumber);
+    return (pastBets[_betNumber].win, pastBets[_betNumber].betValue, pastBets[_betNumber].timestamp, pastBets[_betNumber].playerAddress, pastBets[_betNumber].randomNumber, pastBets[_betNumber].low);
+  }
+  
+  function getUnprocessedQueryList() constant public returns (uint[] _unprocessedQueryList) {
+    return unprocessedQueryList;
+  }
+  
+  function getUnprocessedQueryBytes32(uint _unprocessedQueryHash) constant public returns (bytes32 _unprocessedQueryBytes32) {
+    return unprocessedQueryBytes32s[_unprocessedQueryHash].unprocessedQueryBytes32;
   }
   
   // Owner only setters
@@ -1332,18 +1358,52 @@ contract EthFlip is usingOraclize {
     selfdestruct(owner);
   }
   
+  // Unprocessed QueryId data structure
+  struct UnprocessedQueryBytes32 {
+    bytes32 unprocessedQueryBytes32;
+    uint listPointer;
+  }
+    
+  mapping(uint => UnprocessedQueryBytes32) public unprocessedQueryBytes32s;
+  uint[] public unprocessedQueryList;
+    
+  function isUnprocessedQuery(uint unprocessedQueryUint) private constant returns(bool isIndeed) {
+    if(unprocessedQueryList.length == 0) return false;
+    return (unprocessedQueryList[unprocessedQueryBytes32s[unprocessedQueryUint].listPointer] == unprocessedQueryUint);
+  }
+    
+  function getUnprocessedQueryCount() private constant returns(uint unprocessedQueryCount) {
+    return unprocessedQueryList.length;
+  }
+    
+  function newUnprocessedQuery(uint unprocessedQueryUint, bytes32 unprocessedQueryBytes32) private {
+    if(isUnprocessedQuery(unprocessedQueryUint)) throw;
+    unprocessedQueryBytes32s[unprocessedQueryUint].unprocessedQueryBytes32 = unprocessedQueryBytes32;
+    unprocessedQueryBytes32s[unprocessedQueryUint].listPointer = unprocessedQueryList.push(unprocessedQueryUint) - 1;
+  }
+    
+  function deleteUnprocessedQuery(uint unprocessedQueryUint) private {
+    if(!isUnprocessedQuery(unprocessedQueryUint)) throw;
+    uint rowToDelete = unprocessedQueryBytes32s[unprocessedQueryUint].listPointer;
+    uint keyToMove   = unprocessedQueryList[unprocessedQueryList.length-1];
+    unprocessedQueryList[rowToDelete] = keyToMove;
+    unprocessedQueryBytes32s[keyToMove].listPointer = rowToDelete;
+    unprocessedQueryList.length--;
+  }
+  
   // Oraclize random number function
   // the callback function is called by Oraclize when the result is ready
   // the oraclize_randomDS_proofVerify modifier prevents an invalid proof to execute this function code:
   // the proof validity is fully verified on-chain
   function __callback(bytes32 _queryId, string _result, bytes _proof) public senderIsOraclize {
-     currentQueryId = uint(keccak256(_queryId));
+    currentQueryId = uint(keccak256(_queryId));
     if (oraclize_randomDS_proofVerify__returnCode(_queryId, _result, _proof) == 0) {
       randomNumber = (uint(keccak256(_result)) % 100) + 1;
     } else {
       randomNumber = 101;
     }
     if (queryIdMap[currentQueryId].betValue != 0) {
+      deleteUnprocessedQuery(currentQueryId);
       checkIfWon();
     }
   }
