@@ -1,216 +1,170 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x4efcbf4c53158808fd067f58e1c67d496ef6c9ff
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x3d9210f1cca179eb2a1fbab381e7ed09780a3942
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.13;
 
-
-contract Owned {
+contract Ownable {
     address public owner;
-    function Owned() public {
+
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
+     */
+    function Ownable() {
         owner = msg.sender;
     }
 
-    modifier onlyOwner {
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
 
+
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
     function transferOwnership(address newOwner) onlyOwner public {
+        require(newOwner != address(0));
+        OwnershipTransferred(owner, newOwner);
         owner = newOwner;
     }
+
 }
-
-
-interface tokenRecipient { function receiveApproval(address _from, uint _value, address _token, bytes _extraData) public; }
-
-
-contract TokenBase is Owned {
-    string public name;
-    string public symbol;
-    uint8 public decimals = 18;
-    uint public totalSupply;
-    uint public tokenUnit = 10 ** uint(decimals);
-    uint public wanUnit = 10000 * tokenUnit;
-    uint public foundingTime;
-
-    mapping (address => uint) public balanceOf;
-    mapping (address => mapping (address => uint)) public allowance;
-
-    event Transfer(address indexed _from, address indexed _to, uint _value);
-
-    function TokenBase() public {
-        foundingTime = now;
+/// @title Math operations with safety checks
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+        uint256 c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
     }
 
-    function _transfer(address _from, address _to, uint _value) internal {
-        require(_to != 0x0);
-        require(balanceOf[_from] >= _value);
-        require(balanceOf[_to] + _value > balanceOf[_to]);
-        uint previousBalances = balanceOf[_from] + balanceOf[_to];
-        balanceOf[_from] -= _value;
-        balanceOf[_to] += _value;
-        Transfer(_from, _to, _value);
-        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+    function div(uint256 a, uint256 b) internal constant returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
     }
 
-    function transfer(address _to, uint _value) public {
-        _transfer(msg.sender, _to, _value);
+    function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+        assert(b <= a);
+        return a - b;
     }
 
-    function transferFrom(address _from, address _to, uint _value) public returns (bool success) {
-        require(_value <= allowance[_from][msg.sender]);
-        allowance[_from][msg.sender] -= _value;
-        _transfer(_from, _to, _value);
-        return true;
+    function add(uint256 a, uint256 b) internal constant returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
     }
 
-    function approve(address _spender, uint _value) public returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
-        return true;
+    function max64(uint64 a, uint64 b) internal constant returns (uint64) {
+        return a >= b ? a : b;
     }
 
-    function approveAndCall(address _spender, uint _value, bytes _extraData) public returns (bool success) {
-        tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
-        }
-    }
-}
-
-
-contract WorkProff is TokenBase {
-    uint public oneYear = 1 years;
-    uint public minerTotalSupply = 3900 * wanUnit;
-    uint public minerTotalYears = 20;
-    uint public minerTotalTime = minerTotalYears * oneYear;
-    uint public minerPreSupply = minerTotalSupply / 5;
-    uint public minerPreTime = 30 days;
-    uint public minerTotalReward = 0;
-    uint public minerTimeOfLastProof;
-    uint public minerDifficulty = 10 ** 32;
-    bytes32 public minerCurrentChallenge;
-
-    function WorkProff() public {
-        minerTimeOfLastProof = now;
-    }
-    
-    function proofOfWork(uint nonce) public {
-        require(minerTotalReward < minerTotalSupply);
-        bytes8 n = bytes8(sha3(nonce, minerCurrentChallenge));
-        require(n >= bytes8(minerDifficulty));
-
-        uint timeSinceLastProof = (now - minerTimeOfLastProof);
-        require(timeSinceLastProof >= 5 seconds);
-        
-        uint reward = 0;
-        if (now - foundingTime < minerPreTime) {
-            reward = timeSinceLastProof * minerPreSupply / minerPreTime;
-        } else {
-            reward = timeSinceLastProof * (minerTotalSupply - minerPreSupply) / minerTotalTime;
-        }
-
-        balanceOf[msg.sender] += reward;
-        totalSupply += reward;
-        minerTotalReward += reward;
-        minerDifficulty = minerDifficulty * 10 minutes / timeSinceLastProof + 1;
-        minerTimeOfLastProof = now;
-        minerCurrentChallenge = sha3(nonce, minerCurrentChallenge, block.blockhash(block.number - 1));
-        Transfer(0, this, reward);
-        Transfer(this, msg.sender, reward);
-    }
-}
-
-
-contract Option is WorkProff {
-    uint public optionTotalSupply;
-    uint public optionInitialSupply = 6600 * wanUnit;
-    uint public optionTotalTimes = 5;
-    uint public optionExerciseSpan = 1 years;
-
-    mapping (address => uint) public optionOf;
-    mapping (address => uint) public optionExerciseOf;
-
-    event OptionTransfer(address indexed from, address indexed to, uint option, uint exercised);
-    event OptionExercise(address indexed addr, uint value);
-
-    function Option() public {
-        optionTotalSupply = optionInitialSupply;
-        optionOf[msg.sender] = optionInitialSupply;
-        optionExerciseOf[msg.sender] = 0;
-    }
-
-    function min(uint a, uint b) private returns (uint) {
+    function min64(uint64 a, uint64 b) internal constant returns (uint64) {
         return a < b ? a : b;
     }
 
-    function _checkOptionExercise(uint option, uint exercised) internal returns (bool) {
-        uint canExercisedTimes = min(optionTotalTimes, (now - foundingTime) / optionExerciseSpan + 1);
-        return exercised <= option * canExercisedTimes / optionTotalTimes;
+    function max256(uint256 a, uint256 b) internal constant returns (uint256) {
+        return a >= b ? a : b;
     }
 
-    function _optionTransfer(address _from, address _to, uint _option, uint _exercised) internal {
-        require(_to != 0x0);
-        require(optionOf[_from] >= _option);
-        require(optionOf[_to] + _option > optionOf[_to]);
-        require(optionExerciseOf[_from] >= _exercised);
-        require(optionExerciseOf[_to] + _exercised > optionExerciseOf[_to]);
-        require(_checkOptionExercise(_option, _exercised));
-        require(_checkOptionExercise(optionOf[_from] - _option, optionExerciseOf[_from] - _exercised));
-
-        uint previousOptions = optionOf[_from] + optionOf[_to];
-        uint previousExercised = optionExerciseOf[_from] + optionExerciseOf[_to];
-        optionOf[_from] -= _option;
-        optionOf[_to] += _option;
-        optionExerciseOf[_from] -= _exercised;
-        optionExerciseOf[_to] += _exercised;
-        OptionTransfer(_from, _to, _option, _exercised);
-        assert(optionOf[_from] + optionOf[_to] == previousOptions);
-        assert(optionExerciseOf[_from] + optionExerciseOf[_to] == previousExercised);
-    }
-
-    function optionTransfer(address _to, uint _option, uint _exercised) public {
-        _optionTransfer(msg.sender, _to, _option, _exercised);
-    }
-
-    function optionExercise(uint value) public {
-        require(_checkOptionExercise(optionOf[msg.sender], optionExerciseOf[msg.sender] + value));
-        optionExerciseOf[msg.sender] += value;
-        balanceOf[msg.sender] += value;
-        totalSupply += value;
-        Transfer(0, this, value);
-        Transfer(this, msg.sender, value);
-        OptionExercise(msg.sender, value);
+    function min256(uint256 a, uint256 b) internal constant returns (uint256) {
+        return a < b ? a : b;
     }
 }
 
-contract Token is Option {
-    uint public initialSupply = 0 * wanUnit;
-    uint public reserveSupply = 10500 * wanUnit;
-    uint public sellSupply = 9000 * wanUnit;
+contract BasicToken {
+    using SafeMath for uint;
 
-    function Token() public {
-        totalSupply = initialSupply;
-        balanceOf[msg.sender] = initialSupply;
-        name = "ZBC";
-        symbol = "ZBC";
+    uint public totalTokenSupply;
+
+    mapping(address => uint) balances;
+
+    event Approval(address indexed owner, address indexed spender, uint value);
+    event Transfer(address indexed from, address indexed to, uint value);
+
+    /*****
+        * @dev Tranfer the token balance to a specified address
+        * @param _to The address to transfer to
+        * @param _value The value to be transferred
+        */
+    function transfer(address _to, uint _value) returns (bool success) {
+        require(_value > 0);
+
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        Transfer(msg.sender, _to, _value);
+        return true;
     }
 
-    function releaseReserve(uint value) onlyOwner public {
-        require(reserveSupply >= value);
-        balanceOf[owner] += value;
-        totalSupply += value;
-        reserveSupply -= value;
-        Transfer(0, this, value);
-        Transfer(this, owner, value);
+    /*****
+        * @dev Gets the balances of the specified address
+        * @param _owner The address to query the balance of
+        * @return An uint representing the amount owned by the passed address
+        */
+    function balanceOf(address _owner) constant returns (uint balance){
+        return balances[_owner];
     }
 
-    function releaseSell(uint value) onlyOwner public {
-        require(sellSupply >= value);
-        balanceOf[owner] += value;
-        totalSupply += value;
-        sellSupply -= value;
-        Transfer(0, this, value);
-        Transfer(this, owner, value);
+    /*****
+        * @dev Gets the totalSupply of the tokens.
+        */
+    function totalSupply() constant returns (uint totalSupply) {
+        totalSupply = totalTokenSupply;
+    }
+}
+
+contract Token is BasicToken {
+    using SafeMath for uint256;
+
+    string public tokenName; // Defines the name of the token.
+    string public tokenSymbol; // Defines the symbol of the token.
+    uint256 public decimals; // Number of decimal places for the token.
+
+    /*****
+        * @dev Sets the variables related to the Token
+        * @param _name              string      The name of the Token
+        * @param _symbol            string      Defines the Token Symbol
+        * @param _initialSupply     uint256     The total number of the tokens available
+        * @param _decimals          uint256     Defines the number of decimals places of the token
+        */
+    function Token(string _name, string _symbol, uint256 _initialSupply, uint256 _decimals){
+        require(_initialSupply > 0);
+        tokenName = _name;
+        tokenSymbol = _symbol;
+        decimals = _decimals;
+      
+    }
+    /*****
+        * @dev Transfer the amount of money invested by the investor to his balance
+        * Also, keeps track of at what rate did they buy the token, keeps track of
+        * different rates of tokens at PreSale and ICO
+        * @param _recipient     address     The address of the investor
+        * @param _value         uint256     The number of the tokens bought
+        * @param _ratePerETH    uint256     The rate at which it was bought, different for Pre Sale/ICO
+        * @return               bool        Returns true, if all goes as expected
+        */
+    function transferTokens(address _recipient, uint256 _value, uint256 _ratePerETH) returns (bool) {
+        uint256 finalAmount = _value.mul(_ratePerETH);
+        return transfer(_recipient, finalAmount);
+    }
+    /*****
+        * @dev Used to remove the balance, when asking for refund
+        * @param _recipient address The beneficiary of the refund
+        * @return           bool    Returns true, if successful
+        */
+    function refundedAmount(address _recipient) returns (bool) {
+        require(balances[_recipient] != 0);
+        balances[_recipient] = 0;
+        return true;
     }
 }
