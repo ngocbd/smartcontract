@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShipBloc at 0xf5c4f7f62e2fd249d001e8e51d4e5b308832f924
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShipBloc at 0x457ca82795ae2e64337fea3196b237f54f3d9d17
 */
 pragma solidity ^ 0.4.18;
 
@@ -50,15 +50,16 @@ contract ShipBloc is ERC20 {
     using SafeMath
     for uint256;
     
-    
+    // string public constant name = "Abc Token";
     string public constant name = "ShipBloc Token";
 
+    // string public constant symbol = "ABCT";
     string public constant symbol = "SBLOC";
 
     uint8 public constant decimals = 18;
 
     uint256 public constant totalsupply = 82500000 * (10 ** 18);
-    uint256 public constant teamAllocated = 16500000 * (10 ** 18);
+    uint256 public constant teamAllocated = 14025000 * (10 ** 18);
     uint256 public constant maxPreSale1Token = 15000000 * (10 ** 18);
     uint256 public constant maxPreSale2Token = 30000000 * (10 ** 18);
     uint256 public totalUsedTokens = 0;
@@ -67,17 +68,18 @@ contract ShipBloc is ERC20 {
 
     mapping(address => mapping(address => uint256)) allowed;
     
-    address owner = 0x1067c593a9981eFF4a56056dD775627CBe9D9107;
-
+    address owner = 0xA7A58F56258F9a6540e4A8ebfde617F752A56094;
+    
     event supply(uint256 bnumber);
 
     event events(string _name);
     
-    uint256 no_of_tokens;
-    uint256 _price_tokn;
+    uint256 public no_of_tokens;
     
     uint preICO1Start;
+    uint preICO1End;
     uint preICO2Start;
+    uint preICO2End;
     uint ICOStart;
     uint ICOEnd;
     
@@ -98,23 +100,25 @@ contract ShipBloc is ERC20 {
         _;
     }
    
-    function ShipBloc(uint _preICO1Start,uint _preICO2Start,uint _ICOStart,uint _ICOEnd) public {
+    function ShipBloc(uint _preICO1Start,uint _preICO1End,uint _preICO2Start,uint _preICO2End,uint _ICOStart,uint _ICOEnd) public {
         balances[owner] = teamAllocated;      
         balances[address(this)] = SafeMath.sub(totalsupply,teamAllocated);
+        stage[0]=Stages.NOTSTARTED;
         stage[1667]=Stages.PREICO1;
         stage[1000]=Stages.PREICO2;
         stage[715]=Stages.ICO;
-        stage[0]=Stages.NOTSTARTED;
         stage[1]=Stages.ENDED;
         preICO1Start=_preICO1Start;
+        preICO1End=_preICO1End;
         preICO2Start=_preICO2Start;
+        preICO2End=_preICO2End;
         ICOStart=_ICOStart;
         ICOEnd=_ICOEnd;
     }
     
     function () public payable {
         require(msg.value != 0);
-        _price_tokn = checkStage();
+        uint256 _price_tokn = checkStage();
         if(stage[_price_tokn] != Stages.NOTSTARTED && stage[_price_tokn] != Stages.ENDED) {
             no_of_tokens = SafeMath.mul(msg.value , _price_tokn); 
             if(balances[address(this)] >= no_of_tokens ) {
@@ -122,13 +126,11 @@ contract ShipBloc is ERC20 {
                 balances[address(this)] =SafeMath.sub(balances[address(this)],no_of_tokens);
                 balances[msg.sender] = SafeMath.add(balances[msg.sender],no_of_tokens);
                 Transfer(address(this), msg.sender, no_of_tokens);
-                owner.transfer(this.balance); 
-            }
-            else {
+                owner.transfer(this.balance);
+            } else {
                 revert();
             }
-        }
-        else {
+        } else {
             revert();
         }
    }
@@ -143,6 +145,7 @@ contract ShipBloc is ERC20 {
 
     
     function transfer(address _to, uint256 _amount) public returns(bool success) {
+        require(stage[checkStage()] == Stages.ENDED);
         if (balances[msg.sender] >= _amount &&
             _amount > 0 &&
             balances[_to] + _amount > balances[_to]) {
@@ -161,16 +164,24 @@ contract ShipBloc is ERC20 {
         uint currentBlock = block.number;
         if (currentBlock < preICO1Start){
             return 0;    
-        } else if (currentBlock < preICO2Start) {
+        } else if (currentBlock < preICO1End) {
             require(maxPreSale1Token>totalUsedTokens);
             return 1667;    
-        } else if (currentBlock < ICOStart) {
+        } else if (currentBlock < preICO2Start) {
+            return 0;    
+        } else if (currentBlock < preICO2End) {
             require(maxPreSale2Token>totalUsedTokens);
             return 1000;    
+        } else if (currentBlock < ICOStart) {
+            return 0;
         } else if (currentBlock < ICOEnd) {
             return 715;    
         }
-        return 10;
+        return 1;
+    }
+    
+    function getStageandPrice() public view returns(uint,uint){
+        return (checkStage(),uint(stage[checkStage()]));
     }
    
     function transferFrom(
@@ -178,7 +189,7 @@ contract ShipBloc is ERC20 {
         address _to,
         uint256 _amount
     ) public returns(bool success) {
-            require(stage[_price_tokn] == Stages.ENDED);
+            require(stage[checkStage()] == Stages.ENDED);
             require(balances[_from] >= _amount && allowed[_from][msg.sender] >= _amount);    
                 
             balances[_from] = SafeMath.sub(balances[_from],_amount);
@@ -206,7 +217,7 @@ contract ShipBloc is ERC20 {
     }
 
     function drainToken() external onlyOwner {
-        require(stage[_price_tokn] == Stages.ENDED);
+        require(stage[checkStage()] == Stages.ENDED);
         balances[owner] = SafeMath.add(balances[owner],balances[address(this)]);
         Transfer(address(this), owner, balances[address(this)]);
         balances[address(this)] = 0;
