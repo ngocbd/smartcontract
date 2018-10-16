@@ -1,10 +1,16 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoolToken at 0x8cd3bac9875b1945d1d3469947236d8971bf3174
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoolToken at 0x82aeb952104e4b7e4fc7002112987ba1f69ae2c8
 */
+/*
+ * @title CoolToken Smart Contract
+ * @author CoolCrypto
+ * @description A Cool Token For Everyone
+ * 
+ */
 pragma solidity >=0.4.4;
 
 contract CoolToken {
-    string public standard = 'CoolToken';
+    string public standard = 'Cool Token';
     string public name = 'Cool';
     string public symbol = 'COOL';
     uint8 public decimals = 18;
