@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TBECrowdsale at 0xedeebaf43f17d90a2799aa21fef016efe472d411
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TBECrowdsale at 0xc39bd624909b35c8ce714f301b02917950ed5a17
 */
 pragma solidity ^0.4.16;
 
@@ -12,13 +12,14 @@ contract TBECrowdsale {
     Token public tokenReward;
     uint256 public price;
     address public creator;
-    address public owner = 0x0;
+    address public owner = 0x7a30DE07DC5469d7A5115b8b5F44305CDE9101D5;
     uint256 public startDate;
     uint256 public endDate;
     uint256 public bonusDate;
     uint256 public tokenCap;
 
     mapping (address => bool) public whitelist;
+    mapping (address => uint256) public whitelistedMax;
     mapping (address => bool) public categorie1;
     mapping (address => bool) public categorie2;
     mapping (address => bool) public tokenAddress;
@@ -40,7 +41,6 @@ contract TBECrowdsale {
         bonusDate = startDate + 5 days;
         tokenCap = 2400000000000000000000;
         tokenReward = Token(0x647972c6A5bD977Db85dC364d18cC05D3Db70378);
-        
     }
 
 
@@ -102,7 +102,7 @@ contract TBECrowdsale {
         require(whitelist[msg.sender]);
         
         if (categorie1[msg.sender] == false) {
-            // require(tokenAddress.balanceOf[msg.sender] <= tokenCap);
+            require((whitelistedMax[msg.sender] +  msg.value) <= 200000000000000000);
         }
 
         uint256 amount = msg.value * price;
@@ -114,6 +114,7 @@ contract TBECrowdsale {
 
         balanceOfEther[msg.sender] += msg.value / 1 ether;
         tokenReward.transfer(msg.sender, amount);
+        whitelistedMax[msg.sender] = whitelistedMax[msg.sender] + msg.value;
         FundTransfer(msg.sender, amount, true);
         owner.transfer(msg.value);
     }
