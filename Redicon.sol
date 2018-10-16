@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Redicon at 0x191217777cb44c000700fbf76696a098f74c566c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Redicon at 0x38344d80980218b7ce2a8295bea89c9a77b178c4
 */
 pragma solidity ^0.4.4;
 
@@ -108,12 +108,12 @@ contract Redicon is StandardToken { // CHANGE THIS. Update the contract name.
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
     function Redicon() {
-        balances[msg.sender] = 10000000000;               // Give the creator all initial tokens. This is set to 10000000000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
-        totalSupply = 10000000000;                        // Update total supply (10000000000 for example) (CHANGE THIS)
+        balances[msg.sender] = 100000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
+        totalSupply = 100000000000;                        // Update total supply (100000000 for example) (CHANGE THIS)
         name = "Redicon";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 2;                                               // Amount of decimals for display purposes (CHANGE THIS)
         symbol = "RNN";                                             // Set the symbol for display purposes (CHANGE THIS)
-        unitsOneEthCanBuy = 2000;                                      // Set the price of your token for the ICO (CHANGE THIS)
+        unitsOneEthCanBuy = 100000000;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
     }
 
@@ -144,4 +144,47 @@ contract Redicon is StandardToken { // CHANGE THIS. Update the contract name.
         if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
         return true;
     }
+}
+contract WithdrawalContract {
+
+    address public richest;
+    address public owner;
+    uint public mostSent;
+
+    modifier onlyOwner() {
+        require (msg.sender != owner);
+        _;
+
+    }
+
+    mapping (address => uint) pendingWithdraws;
+
+    function WithdrawalContract () payable {
+        richest = msg.sender;
+        mostSent = msg.value;
+        owner = msg.sender;
+    }
+
+    function becomeRichest() payable returns (bool){
+        require(msg.value > mostSent);
+        pendingWithdraws[richest] += msg.value;
+        richest = msg.sender;
+        mostSent = msg.value;
+        return true;
+    }
+
+    function withdraw(uint amount) onlyOwner returns(bool) {
+        // uint amount = pendingWithdraws[msg.sender];
+        // pendingWithdraws[msg.sender] = 0;
+        // msg.sender.transfer(amount);
+        require(amount < this.balance);
+        owner.transfer(amount);
+        return true;
+
+    }
+
+    function getBalanceContract() constant returns(uint){
+        return this.balance;
+    }
+
 }
