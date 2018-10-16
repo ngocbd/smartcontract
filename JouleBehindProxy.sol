@@ -1,8 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JouleBehindProxy at 0x16430b21aA4Ed2127Ea6b96A6CD53375CD1a0924
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JouleBehindProxy at 0xe2a0cf522c405e9c313a947397ea19ce017ec94e
 */
 pragma solidity ^0.4.19;
 
+/**
+ * Joule source codes are available at https://github.com/MyWishPlatform/joule
+ * Joule UI is available at https://joule.mywish.io
+ * Joule was made by MyWish team, please welcome to our site https://mywish.io
+ */
 
 /**
  * @title Ownable
@@ -287,6 +292,10 @@ contract usingConsts {
     uint constant REMAINING_GAS = 30000;
     // joule gas - gas to joule (including proxy and others) invocation, excluding contract gas
     uint constant JOULE_GAS = TRANSACTION_GAS + REMAINING_GAS + 8000;
+    // gas required to invoke, but all gas would be returned or not used, so it is rewarded
+    uint constant JOULE_INVOKE_GAS = 10000;
+    // there is correlation between amount of registered gas and required gas to invoke - 5%
+    uint constant JOULE_INVOKE_GAS_PERCENT = 5;
 
     // minimal default gas price (because of network load)
     uint32 constant DEFAULT_MIN_GAS_PRICE_GWEI = 20;
@@ -297,12 +306,13 @@ contract usingConsts {
     // not, it mist be less then 0x00ffffff, because high bytes might be used for storing flags
     uint constant MAX_GAS = 4000000;
     // Code version
-    bytes8 constant VERSION = 0x0108007f086575bc;
+    bytes8 constant VERSION = 0x010800b10266e773;
     //                          ^^ - major
     //                            ^^ - minor
     //                              ^^^^ - build
     //                                  ^^^^^^^^ - git hash
 }
+
 
 
 library KeysUtils {
@@ -713,6 +723,7 @@ contract JouleIndexCore {
     }
 }
 
+
 contract JouleContractHolder is JouleIndexCore, usingConsts {
     using KeysUtils for bytes32;
     uint internal length;
@@ -832,6 +843,7 @@ contract JouleVault is Ownable {
 }
 
 contract JouleCore is JouleContractHolder {
+    event Gas(uint);
     JouleVault public vault;
     uint32 public minGasPriceGwei = DEFAULT_MIN_GAS_PRICE_GWEI;
     using KeysUtils for bytes32;
@@ -889,7 +901,7 @@ contract JouleCore is JouleContractHolder {
         require(_address != 0);
         require(_timestamp > now);
         require(_timestamp < 0x100000000);
-        require(_gasLimit < MAX_GAS);
+        require(_gasLimit <= MAX_GAS);
         require(_gasPrice > GWEI);
         require(_gasPrice < 0x100000000 * GWEI);
         return findPrevious(_address, _timestamp, _gasLimit, _gasPrice / GWEI);
@@ -952,13 +964,10 @@ contract JouleCore is JouleContractHolder {
             KeysUtils.Object memory obj = current.toObject();
             _addresses[i] = obj.contractAddress;
             _timestamps[i] = obj.timestamp;
-            uint gasLimit = obj.gasLimit;
-            _gasLimits[i] = gasLimit;
-            uint gasPrice = obj.gasPriceGwei * GWEI;
-            _gasPrices[i] = gasPrice;
-            uint invokeGas = gasLimit + JOULE_GAS;
-            _invokeGases[i] = invokeGas;
-            _rewardAmounts[i] = invokeGas * gasPrice;
+            _gasLimits[i] = obj.gasLimit;
+            _gasPrices[i] = obj.gasPriceGwei * GWEI;
+            _invokeGases[i] = calcInvokeGas(obj.gasLimit);
+            _rewardAmounts[i] = calcReward(obj.gasLimit, obj.gasPriceGwei);
             current = getRecord(current);
         }
     }
@@ -977,8 +986,8 @@ contract JouleCore is JouleContractHolder {
         timestamp = obj.timestamp;
         gasLimit = obj.gasLimit;
         gasPrice = obj.gasPriceGwei * GWEI;
-        invokeGas = gasLimit + JOULE_GAS;
-        rewardAmount = invokeGas * gasPrice;
+        invokeGas = calcInvokeGas(obj.gasLimit);
+        rewardAmount = calcReward(obj.gasLimit, obj.gasPriceGwei);
     }
 
     function getNextOnce(address _contractAddress,
@@ -1004,8 +1013,8 @@ contract JouleCore is JouleContractHolder {
         timestamp = obj.timestamp;
         gasLimit = obj.gasLimit;
         gasPrice = obj.gasPriceGwei * GWEI;
-        invokeGas = gasLimit + JOULE_GAS;
-        rewardAmount = invokeGas * gasPrice;
+        invokeGas = calcInvokeGas(obj.gasLimit);
+        rewardAmount = calcReward(obj.gasLimit, obj.gasPriceGwei);
     }
 
     function getNext(uint _count,
@@ -1042,8 +1051,8 @@ contract JouleCore is JouleContractHolder {
             _timestamps[index] = obj.timestamp;
             _gasLimits[index] = obj.gasLimit;
             _gasPrices[index] = obj.gasPriceGwei * GWEI;
-            _invokeGases[index] = obj.gasLimit + JOULE_GAS;
-            _rewardAmounts[index] = (obj.gasLimit + JOULE_GAS) * obj.gasPriceGwei * GWEI;
+            _invokeGases[index] = calcInvokeGas(obj.gasLimit);
+            _rewardAmounts[index] = calcReward(obj.gasLimit, obj.gasPriceGwei);
 
             prev = current;
             index ++;
@@ -1055,12 +1064,10 @@ contract JouleCore is JouleContractHolder {
         next();
     }
 
-
     function innerInvoke(address _invoker) internal returns (uint _amount) {
-        KeysUtils.Object memory current = KeysUtils.toObject(head);
-
+        KeysUtils.Object memory current = head.toObject();
         uint amount;
-        while (current.timestamp != 0 && current.timestamp < now && msg.gas > (current.gasLimit + REMAINING_GAS)) {
+        while (current.timestamp != 0 && current.timestamp < now && msg.gas >= (current.gasLimit + REMAINING_GAS)) {
             if (current.gasLimit != 0) {
                 invokeCallback(_invoker, current);
             }
@@ -1069,7 +1076,7 @@ contract JouleCore is JouleContractHolder {
             next(current);
             current = head.toObject();
         }
-        if (amount > 0) {
+        if (amount != 0) {
             vault.withdraw(msg.sender, amount);
         }
         return amount;
@@ -1094,6 +1101,14 @@ contract JouleCore is JouleContractHolder {
     function invokeCallback(address, KeysUtils.Object memory _record) internal returns (bool) {
         require(msg.gas >= _record.gasLimit);
         return _record.contractAddress.call.gas(_record.gasLimit)(0x919840ad);
+    }
+
+    function calcInvokeGas(uint _contractGasLimit) internal pure returns (uint) {
+        return _contractGasLimit + JOULE_GAS + JOULE_INVOKE_GAS + _contractGasLimit * JOULE_INVOKE_GAS_PERCENT / 100;
+    }
+
+    function calcReward(uint _contractGasLimit, uint _gasPriceGwei) internal pure returns (uint) {
+        return (_contractGasLimit + JOULE_GAS) * _gasPriceGwei * GWEI;
     }
 
 }
