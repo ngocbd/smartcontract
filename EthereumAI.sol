@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumAI at 0x02b0cfdc2ce5775feb68be62a7df3bba56598817
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumAI at 0x8d659ea48305eaa375121d8dc15ecb15c2fec4c4
 */
 pragma solidity ^0.4.18;
 
@@ -197,7 +197,7 @@ contract EthereumAI is StandardToken {
     string public constant name = "Ethereum AI";
     string public constant symbol = "ETHAI";
     uint8 public constant decimals = 18;
-    uint256 public constant INITIAL_SUPPLY = 1 * 10**9 * (10**uint256(decimals));
+    uint256 public constant INITIAL_SUPPLY = 2 * 10**9 * (10**uint256(decimals));
     uint256 public weiRaised;
     uint256 public tokenAllocated;
     address public owner;
