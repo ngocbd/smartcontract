@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReporterToken at 0xf72f0aa44e4fab243e31528c048fd80144b387d3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReporterToken at 0xb49fa6abb77a978951dfc547dfb76be10c88cbf9
 */
-pragma solidity ^0.4.12;
+pragma solidity ^0.4.17;
 
 /**
  * @title Ownable
@@ -40,6 +40,52 @@ contract Ownable {
   }
 }
 
+
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+
+  /**
+   * @dev modifier to allow actions only when the contract IS paused
+   */
+  modifier whenNotPaused() {
+    require (!paused);
+    _;
+  }
+
+  /**
+   * @dev modifier to allow actions only when the contract IS NOT paused
+   */
+  modifier whenPaused {
+    require (paused) ;
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused  public returns (bool) {
+    paused = true;
+    Pause();
+    return true;
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public returns (bool) {
+    paused = false;
+    Unpause();
+    return true;
+  }
+}
 /**
  * @title ERC20Basic
  * @dev Simpler version of ERC20 interface
@@ -221,7 +267,7 @@ contract MintableToken is StandardToken, Ownable {
   }
 }
 
-contract ReporterToken is MintableToken {
+contract ReporterToken is MintableToken, Pausable{
   string public name = "Reporter Token";
   string public symbol = "NEWS";
   uint256 public decimals = 18;
@@ -244,21 +290,21 @@ contract ReporterToken is MintableToken {
   }
 
   /**
-   * @dev Allows anyone to transfer the Change tokens once trading has started
+   * @dev Allows anyone to transfer the Reporter tokens once trading has started
    * @param _to the recipient address of the tokens.
    * @param _value number of tokens to be transfered.
    */
-  function transfer(address _to, uint _value) hasStartedTrading public returns (bool) {
+  function transfer(address _to, uint _value) hasStartedTrading whenNotPaused public returns (bool) {
     return super.transfer(_to, _value);
   }
 
   /**
-  * @dev Allows anyone to transfer the Change tokens once trading has started
+  * @dev Allows anyone to transfer the Reporter tokens once trading has started
   * @param _from address The address which you want to send tokens from
   * @param _to address The address which you want to transfer to
   * @param _value uint the amout of tokens to be transfered
    */
-  function transferFrom(address _from, address _to, uint _value) hasStartedTrading public returns (bool) {
+  function transferFrom(address _from, address _to, uint _value) hasStartedTrading whenNotPaused public returns (bool) {
     return super.transferFrom(_from, _to, _value);
   }
 
@@ -267,7 +313,7 @@ contract ReporterToken is MintableToken {
   }
 }
 
-contract ReporterTokenSale is Ownable {
+contract ReporterTokenSale is Ownable, Pausable{
   using SafeMath for uint256;
 
   // The token being sold
@@ -312,6 +358,9 @@ contract ReporterTokenSale is Ownable {
   //  for whitelist
   address public cs;
 
+ //  for rate
+  uint public r;
+
 
   // switch on/off the authorisation , default: false
   bool    public freeForAll = false;
@@ -323,7 +372,7 @@ contract ReporterTokenSale is Ownable {
 
   function ReporterTokenSale() public {
     startTimestamp = 1508684400; // 22 Oct. 2017. 15:00 UTC
-    endTimestamp = 1519657200;   // 26 Febr. 2018. 15:00 UTC
+    endTimestamp = 1521126000;   // 15 Marc. 2018. 15:00 UTC  1521126000
     multiSig = 0xD00d085F125EAFEA9e8c5D3f4bc25e6D0c93Af0e;
 
     token = new ReporterToken();
@@ -336,18 +385,18 @@ contract ReporterTokenSale is Ownable {
   /**
   * @dev Calculates the amount of bonus coins the buyer gets
   */
-  function setTier() internal {
-    // first 25% tokens get extra 30% of tokens, next half get 15%
+  function setTier(uint newR) internal {
+    // first 9M tokens get extra 42% of tokens, next half get 17%
     if (tokenRaised <= 9000000 * oneCoin) {
-      rate = 1420;
+      rate = newR * 142/100;
       //minContribution = 100 ether;
       //maxContribution = 1000000 ether;
     } else if (tokenRaised <= 18000000 * oneCoin) {
-      rate = 1170;
+      rate = newR *117/100;
       //minContribution = 5 ether;
       //maxContribution = 1000000 ether;
     } else {
-      rate = 1000;
+      rate = newR * 1;
       //minContribution = 0.01 ether;
       //maxContribution = 100 ether;
     }
@@ -416,6 +465,15 @@ contract ReporterTokenSale is Ownable {
     cs = newCS;
   }
 
+   /**
+  * @dev set a newRate if have a big different in ether/dollar rate 
+  */
+  function setRate(uint newRate) onlyCSorOwner public {
+    require( 0 < newRate && newRate < 8000); 
+    r = newRate;
+  }
+
+
   function placeTokens(address beneficiary, uint256 _tokens) onlyCS public {
     //check minimum and maximum amount
     require(_tokens != 0);
@@ -430,9 +488,9 @@ contract ReporterTokenSale is Ownable {
   }
 
   // low level token purchase function
-  function buyTokens(address beneficiary, uint256 amount) onlyAuthorised internal {
+  function buyTokens(address beneficiary, uint256 amount) onlyAuthorised whenNotPaused internal {
 
-    setTier();
+    setTier(r);
 
     //check minimum and maximum amount
     require(amount >= minContribution);
