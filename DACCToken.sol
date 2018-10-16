@@ -1,98 +1,149 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DACCToken at 0xd6ab82d6eac69b7cdb5f900bf690e5f3fbe307aa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DACCToken at 0xf8c595d070d104377f58715ce2e6c93e49a87f3c
 */
-pragma solidity ^0.4.24;
+pragma solidity ^0.4.23;
 
-contract DACCToken {
 
-    string public name = "Decentralized Accessible Content Chain";
-    string public symbol = "DACC";
-    uint256 public decimals = 6;
-
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
-
-    uint256 public totalSupply = 30000000000000000;
-    bool public stopped = false;
-    address owner = 0x1e113613C889C76b792AdfdcbBd155904F3310a5;
-
-    modifier isOwner {
-        assert(owner == msg.sender);
-        _;
+//import "./ERC20.sol";
+//import "./ERC20Basic.sol";
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
     }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
 
-    modifier isRunning {
-        assert(!stopped);
-        _;
-    }
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
 
-    modifier isValidAddress {
-        assert(0x0 != msg.sender);
-        _;
-    }
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
 
-    constructor() public {
-        balanceOf[owner] = totalSupply;
-        emit Transfer(0x0, owner, totalSupply);
-    }
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
 
-    function transfer(address _to, uint256 _value) isRunning isValidAddress public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);
-        require(balanceOf[_to] + _value >= balanceOf[_to]);
-        balanceOf[msg.sender] -= _value;
-        balanceOf[_to] += _value;
-        emit Transfer(msg.sender, _to, _value);
-        return true;
-    }
 
-    function transferFrom(address _from, address _to, uint256 _value) isRunning isValidAddress public returns (bool success) {
-        require(balanceOf[_from] >= _value);
-        require(balanceOf[_to] + _value >= balanceOf[_to]);
-        require(allowance[_from][msg.sender] >= _value);
-        balanceOf[_to] += _value;
-        balanceOf[_from] -= _value;
-        allowance[_from][msg.sender] -= _value;
-        emit Transfer(_from, _to, _value);
-        return true;
-    }
+contract BasicToken  {
+  using SafeMath for uint256;
 
-    function approve(address _spender, uint256 _value) isRunning isValidAddress public returns (bool success) {
-        require(_value == 0 || allowance[msg.sender][_spender] == 0);
-        allowance[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
-        return true;
-    }
+  // public variables
+  string public name;
+  string public symbol;
+  uint8 public decimals = 18;
 
-    function stop() isOwner public {
-        stopped = true;
-    }
+  // internal variables
+  uint256 _totalSupply;
+  mapping(address => uint256) _balances;
+  event Transfer(address indexed from, address indexed to, uint256 value);
+  // events
 
-    function start() isOwner public {
-        stopped = false;
-    }
+  // public functions
+  function totalSupply() public view returns (uint256) {
+    return _totalSupply;
+  }
 
-    function setName(string _name) isOwner public {
-        name = _name;
-    }
+  function balanceOf(address addr) public view returns (uint256 balance) {
+    return _balances[addr];
+  }
 
-    function airdrop(address[] _DACusers,uint256[] _values) isRunning public {
-        require(_DACusers.length > 0);
-        require(_DACusers.length == _values.length);
-        uint256 amount = 0;
-        uint i = 0;
-        for (i = 0; i < _DACusers.length; i++) {
-            require(amount + _values[i] >= amount);
-            amount += _values[i];  
-        }
-        require(balanceOf[msg.sender] >= amount);
-        balanceOf[msg.sender] -= amount;
-        for (i = 0; i < _DACusers.length; i++) {
-            require(balanceOf[_DACusers[i]] + _values[i] >= balanceOf[_DACusers[i]]);
-            balanceOf[_DACusers[i]] += _values[i];
-            emit Transfer(msg.sender, _DACusers[i], _values[i]);
-        }
+  function transfer(address to, uint256 value) public returns (bool) {
+    require(to != address(0));
+    require(value <= _balances[msg.sender]);
+
+    _balances[msg.sender] = _balances[msg.sender].sub(value);
+    _balances[to] = _balances[to].add(value);
+    emit Transfer(msg.sender, to, value);
+    return true;
+  }
+
+  // internal functions
+
+}
+
+contract StandardToken is BasicToken {
+  // public variables
+
+  // internal variables
+  mapping (address => mapping (address => uint256)) _allowances;
+  event Approval(address indexed owner, address indexed agent, uint256 value);
+
+  // events
+
+  // public functions
+  function transferFrom(address from, address to, uint256 value) public returns (bool) {
+    require(to != address(0));
+    require(value <= _balances[from]);
+    require(value <= _allowances[from][msg.sender]);
+
+    _balances[from] = _balances[from].sub(value);
+    _balances[to] = _balances[to].add(value);
+    _allowances[from][msg.sender] = _allowances[from][msg.sender].sub(value);
+    emit Transfer(from, to, value);
+    return true;
+  }
+
+  function approve(address agent, uint256 value) public returns (bool) {
+    _allowances[msg.sender][agent] = value;
+    emit Approval(msg.sender, agent, value);
+    return true;
+  }
+
+  function allowance(address owner, address agent) public view returns (uint256) {
+    return _allowances[owner][agent];
+  }
+
+  function increaseApproval(address agent, uint value) public returns (bool) {
+    _allowances[msg.sender][agent] = _allowances[msg.sender][agent].add(value);
+    emit Approval(msg.sender, agent, _allowances[msg.sender][agent]);
+    return true;
+  }
+
+  function decreaseApproval(address agent, uint value) public returns (bool) {
+    uint allowanceValue = _allowances[msg.sender][agent];
+    if (value > allowanceValue) {
+      _allowances[msg.sender][agent] = 0;
+    } else {
+      _allowances[msg.sender][agent] = allowanceValue.sub(value);
     }
-    
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    emit Approval(msg.sender, agent, _allowances[msg.sender][agent]);
+    return true;
+  }
+  // internal functions
+}
+
+
+contract DACCToken is StandardToken {
+  // public variables
+  string public name = "Decentralized Accessible Content Chain";
+  string public symbol = "DACC";
+  uint8 public decimals = 6;
+
+  // internal variables
+
+  // events
+
+  // public functions
+  constructor() public {
+    //init _totalSupply
+    _totalSupply = 30 * (10 ** 9) * (10 ** uint256(decimals));
+
+    _balances[msg.sender] = _totalSupply;
+    emit Transfer(0x0, msg.sender, _totalSupply);
+  }
+
+
+  // internal functions
 }
