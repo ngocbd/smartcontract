@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChangeCoinCrowdsale at 0x451F0eC8b803AB3707970555Dda7b5Da69b5d026
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChangeCoinCrowdsale at 0x4E86721a4e00D7167c11D9CfD2480403Bb630378
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.16;
 
 /**
  * @title Ownable
@@ -182,6 +182,13 @@ contract ERC20 is ERC20Basic {
 
  }
 
+/**
+ * @title Mintable token
+ * @dev Simple ERC20 Token example, with mintable token creation
+ * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
+ * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
+ */
+
 contract MintableToken is StandardToken, Ownable {
   event Mint(address indexed to, uint256 amount);
   event MintFinished();
@@ -203,7 +210,7 @@ contract MintableToken is StandardToken, Ownable {
   function mint(address _to, uint256 _amount) onlyOwner canMint returns (bool) {
     totalSupply = totalSupply.add(_amount);
     balances[_to] = balances[_to].add(_amount);
-    Mint(_to, _amount);
+    Transfer(0X0, _to, _amount);
     return true;
   }
 
@@ -242,136 +249,134 @@ contract ChangeCoin is MintableToken {
 
 
   /**
-   * @dev Allows anyone to transfer the Simis tokens once trading has started
+   * @dev Allows anyone to transfer the Change tokens once trading has started
    * @param _to the recipient address of the tokens.
    * @param _value number of tokens to be transfered.
    */
   function transfer(address _to, uint _value) hasStartedTrading returns (bool){
-    super.transfer(_to, _value);
+    return super.transfer(_to, _value);
   }
 
   /**
-   * @dev Allows anyone to transfer the PAY tokens once trading has started
+   * @dev Allows anyone to transfer the Change tokens once trading has started
    * @param _from address The address which you want to send tokens from
    * @param _to address The address which you want to transfer to
    * @param _value uint the amout of tokens to be transfered
    */
   function transferFrom(address _from, address _to, uint _value) hasStartedTrading returns (bool){
-    super.transferFrom(_from, _to, _value);
+    return super.transferFrom(_from, _to, _value);
   }
 }
 
 contract ChangeCoinCrowdsale is Ownable {
-    using SafeMath for uint256;
+  using SafeMath for uint256;
 
-    // The token being sold
-    ChangeCoin public token;
+  // The token being sold
+  ChangeCoin public token;
 
-    // start and end block where investments are allowed (both inclusive)
-    uint256 public startBlock;
-    uint256 public endBlock;
+  // start and end block where investments are allowed (both inclusive)
+  uint256 public startTimestamp;
+  uint256 public endTimestamp;
 
-    // address where funds are collected
-    address public multiSigWallet;
+  // address where funds are collected
+  address public hardwareWallet;
 
-    // how many token units a buyer gets per wei
-    uint256 public rate;
+  // how many token units a buyer gets per wei
+  uint256 public rate;
 
-    // amount of raised money in wei
-    uint256 public weiRaised;
+  // amount of raised money in wei
+  uint256 public weiRaised;
 
-    uint256 public minContribution;
+  uint256 public minContribution;
 
-    uint256 public hardcap;
+  uint256 public hardcap;
 
-    event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
-    event MainSaleClosed();
+  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+  event MainSaleClosed();
 
-    uint256 public raisedInPresale = 0.5 ether;
+  uint256 public raisedInPresale = 36670.280302936701463815 ether;
 
-    function ChangeCoinCrowdsale() {
-      startBlock = 4204545;
-      endBlock = 4215000;
-      rate = 500;
-      multiSigWallet = 0xCe5574fF9d1fD16A411c09c488935F4fc613498c;
-      token = ChangeCoin(0x9C3386DeBA43A24B3653F35926D9DA8CBABC3FEC);
+  function ChangeCoinCrowdsale() {
+    startTimestamp = 1505568600;
+    endTimestamp = 1508162400;
+    rate = 500;
+    hardwareWallet = 0x71B1Ee0848c4F68df05429490fc4237089692e1e;
+    token = ChangeCoin(0x7d4b8Cce0591C9044a22ee543533b72E976E36C3);
 
-      minContribution = 0 ether;
-      hardcap = 2 ether;
-      //minContribution = 0.5 ether;
-      //hardcap = 250000 ether;
+    minContribution = 0.49 ether;
+    hardcap = 200000 ether;
 
-      require(startBlock >= block.number);
-      require(endBlock >= startBlock);
-    }
-
-    /**
-     * @dev Calculates the amount of bonus coins the buyer gets
-     * @param tokens uint the amount of tokens you get according to current rate
-     * @return uint the amount of bonus tokens the buyer gets
-     */
-    function bonusAmmount(uint256 tokens) internal returns(uint256) {
-      uint256 bonus5 = tokens.div(20);
-      // add bonus 20% in first 48hours, 15% in next 24h, 5% in next 24h
-      if (block.number < startBlock.add(10160)) { // 5080 is aprox 24h
-        return tokens.add(bonus5.mul(4));
-      } else if (block.number < startBlock.add(15240)) {
-        return tokens.add(bonus5.mul(3));
-      } else if (block.number < startBlock.add(20320)) {
-        return tokens.add(bonus5);
-      } else {
-        return 0;
-      }
-    }
-
-    // @return true if valid purchase
-    function validPurchase() internal constant returns (bool) {
-      uint256 current = block.number;
-      bool withinPeriod = current >= startBlock && current <= endBlock;
-      bool nonZeroPurchase = msg.value >= minContribution;
-      bool withinCap = weiRaised.add(msg.value).add(raisedInPresale) <= hardcap;
-      return withinPeriod && nonZeroPurchase && withinCap;
-    }
-
-    // @return true if crowdsale event has ended
-    function hasEnded() public constant returns (bool) {
-      bool timeLimitReached = block.number > endBlock;
-      bool capReached = weiRaised.add(raisedInPresale) >= hardcap;
-      return timeLimitReached || capReached;
-    }
-
-    // low level token purchase function
-    function buyTokens(address beneficiary) payable {
-      require(beneficiary != 0x0);
-      require(validPurchase());
-
-      uint256 weiAmount = msg.value;
-
-      // calculate token amount to be created
-      uint256 tokens = weiAmount.mul(rate);
-      tokens = tokens + bonusAmmount(tokens);
-
-      // update state
-      weiRaised = weiRaised.add(weiAmount);
-
-      token.mint(beneficiary, tokens);
-      TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
-      multiSigWallet.transfer(msg.value);
-    }
-
-    // finish mining coins and transfer ownership of Change coin to owner
-    function finishMinting() public onlyOwner {
-      uint issuedTokenSupply = token.totalSupply();
-      uint restrictedTokens = issuedTokenSupply.mul(60).div(40);
-      token.mint(multiSigWallet, restrictedTokens);
-      token.finishMinting();
-      token.transferOwnership(owner);
-      MainSaleClosed();
-    }
-
-    // fallback function can be used to buy tokens
-    function () payable {
-      buyTokens(msg.sender);
-    }
-
+    require(startTimestamp >= now);
+    require(endTimestamp >= startTimestamp);
   }
+
+  /**
+   * @dev Calculates the amount of bonus coins the buyer gets
+   * @param tokens uint the amount of tokens you get according to current rate
+   * @return uint the amount of bonus tokens the buyer gets
+   */
+  function bonusAmmount(uint256 tokens) internal returns(uint256) {
+    uint256 bonus5 = tokens /20;
+    // add bonus 20% in first 24hours, 15% in first week, 10% in 2nd week
+    if (now < startTimestamp + 24 hours) { // 5080 is aprox 24h
+      return bonus5 * 4;
+    } else if (now < startTimestamp + 1 weeks) {
+      return bonus5 * 3;
+    } else if (now < startTimestamp + 2 weeks) {
+      return bonus5 * 2;
+    } else {
+      return 0;
+    }
+  }
+
+  // check if valid purchase
+  modifier validPurchase {
+    require(now >= startTimestamp);
+    require(now <= endTimestamp);
+    require(msg.value >= minContribution);
+    require(weiRaised.add(msg.value).add(raisedInPresale) <= hardcap);
+    _;
+  }
+
+  // @return true if crowdsale event has ended
+  function hasEnded() public constant returns (bool) {
+    bool timeLimitReached = now > endTimestamp;
+    bool capReached = weiRaised.add(raisedInPresale) >= hardcap;
+    return timeLimitReached || capReached;
+  }
+
+  // low level token purchase function
+  function buyTokens(address beneficiary) payable validPurchase {
+    require(beneficiary != 0x0);
+
+    uint256 weiAmount = msg.value;
+
+    // calculate token amount to be created
+    uint256 tokens = weiAmount.mul(rate);
+    tokens = tokens + bonusAmmount(tokens);
+
+    // update state
+    weiRaised = weiRaised.add(weiAmount);
+
+    token.mint(beneficiary, tokens);
+    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+    hardwareWallet.transfer(msg.value);
+  }
+
+  // finish mining coins and transfer ownership of Change coin to owner
+  function finishMinting() public onlyOwner {
+    require(hasEnded());
+    uint issuedTokenSupply = token.totalSupply();
+    uint restrictedTokens = issuedTokenSupply.mul(60).div(40);
+    token.mint(hardwareWallet, restrictedTokens);
+    token.finishMinting();
+    token.transferOwnership(owner);
+    MainSaleClosed();
+  }
+
+  // fallback function can be used to buy tokens
+  function () payable {
+    buyTokens(msg.sender);
+  }
+
+}
