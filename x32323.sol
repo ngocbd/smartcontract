@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x32323 at 0x6f7ad850ef94320cb88f5ae66e5eb8244e81c949
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x32323 at 0x1e33f61ac34763f9146cbe37f9d038cc8e6279d3
 */
 pragma solidity ^0.4.16;
 
@@ -33,7 +33,7 @@ contract x32323 is owned{
     // Public variables of the token
     string public name;
     string public symbol;
-    uint8 public decimals = 0;
+    uint8 public decimals = 2;
     // 0 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
 
@@ -55,10 +55,10 @@ contract x32323 is owned{
         string tokenName,
         string tokenSymbol
     ) public {
-        totalSupply = 23000000;  // Update total supply with the decimal amount
+        totalSupply = 100000000;  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
         name = "???";                                   // Set the name for display purposes
-        symbol = "TW?";                               // Set the symbol for display purposes
+        symbol = "???";                               // Set the symbol for display purposes
     }
 
     /**
