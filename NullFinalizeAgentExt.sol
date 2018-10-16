@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NullFinalizeAgentExt at 0x1e9bBe171AeD395dB79312AF8A57F9265FFc9091
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NullFinalizeAgentExt at 0xD336E5e98F799a07eC531bbbFdd506c86bA741b7
 */
 // Created using Token Wizard https://github.com/poanetwork/token-wizard by POA Network 
 pragma solidity ^0.4.11;
