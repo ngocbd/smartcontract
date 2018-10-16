@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MossCoin at 0x86789b2DE83B9A93F89F8C2Cb14d622CD73515e9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MossCoin at 0xa4e2602390a09bf75fd7a591adc1ee4d2909f89b
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
 
 library SafeMath {
     function mul(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -47,7 +47,7 @@ contract Ownable {
 
     function transferOwnership(address newOwner) public onlyOwner {
         require(newOwner != address(0));
-        OwnershipTransferred(owner, newOwner);
+        emit OwnershipTransferred(owner, newOwner);
         owner = newOwner;
     }
 }
@@ -72,19 +72,20 @@ contract BasicToken is ERC20Basic {
     mapping(address => uint256) balances;
 
     function transfer(address _to, uint256 _value) public returns (bool) {
-      require(_to != address(0));
-      require(_value <= balances[msg.sender]);
+        require(_to != address(0));
+        require(_value <= balances[msg.sender]);
 
-      balances[msg.sender] = balances[msg.sender].sub(_value);
-      balances[_to] = balances[_to].add(_value);
-      Transfer(msg.sender, _to, _value);
-      return true;
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        emit Transfer(msg.sender, _to, _value);
+        return true;
     }
 
     function balanceOf(address _owner) public view returns (uint256 balance) {
-      return balances[_owner];
+        return balances[_owner];
     }
 }
+
 
 contract StandardToken is ERC20, BasicToken {
     mapping (address => mapping (address => uint256)) internal allowed;
@@ -97,13 +98,13 @@ contract StandardToken is ERC20, BasicToken {
         balances[_from] = balances[_from].sub(_value);
         balances[_to] = balances[_to].add(_value);
         allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        Transfer(_from, _to, _value);
+        emit Transfer(_from, _to, _value);
         return true;
     }
 
     function approve(address _spender, uint256 _value) public returns (bool) {
         allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
@@ -113,7 +114,7 @@ contract StandardToken is ERC20, BasicToken {
 
     function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
         allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
         return true;
     }
 
@@ -125,7 +126,7 @@ contract StandardToken is ERC20, BasicToken {
             allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
         }
         
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
         
         return true;
     }
@@ -142,7 +143,7 @@ contract FreezableToken is StandardToken, Ownable {
 
         freezeEnd[_who] = _end;
 
-        Freeze(_who, _end);
+        emit Freeze(_who, _end);
     }
 
     modifier notFrozen(address _who) {
@@ -180,7 +181,7 @@ contract UpgradableToken is StandardToken, Ownable {
         totalSupply = totalSupply.sub(_value);
         totalUpgraded = totalUpgraded.add(_value);
         UpgradeAgent(upgradeAgent).upgradeFrom(msg.sender, _value);
-        Upgrade(msg.sender, upgradeAgent, _value);
+        emit Upgrade(msg.sender, upgradeAgent, _value);
     }
 
     function setUpgradeAgent(address _agent) external onlyOwner {
@@ -188,60 +189,6 @@ contract UpgradableToken is StandardToken, Ownable {
         assert(upgradeAgent == address(0));
         
         upgradeAgent = _agent;
-    }
-}
-
-contract CrowdsaleToken is StandardToken, Ownable {
-    using SafeMath for uint256;
-    address public crowdsale;
-    mapping (address => uint256) public waiting;
-    uint256 public saled;
-
-    event Sale(address indexed to, uint256 value);
-    event Release(address indexed to);
-    event Reject(address indexed to);
-    event SetCrowdsale(address indexed addr);
-
-    function setCrowdsale(address _addr) onlyOwner public {
-        crowdsale = _addr;
-        SetCrowdsale(_addr);
-    }
-
-    modifier onlyCrowdsale() {
-        require(crowdsale != address(0));
-        require(crowdsale == msg.sender);
-        _;
-    }
-
-    function sale(address _to, uint256 _value) public onlyCrowdsale returns (bool) {
-        require(_to != address(0));
-        assert(saled.add(_value) <= balances[owner]);
-
-        saled = saled.add(_value);
-        waiting[_to] = waiting[_to].add(_value);
-        Sale(_to, _value);
-        return true;
-    }
-
-    // send waiting tokens to customer's balance
-    function release(address _to) external onlyOwner {
-        require(_to != address(0));
-
-        uint256 val = waiting[_to];
-        waiting[_to] = 0;
-        balances[owner] = balances[owner].sub(val);
-        balances[_to] = balances[_to].add(val);
-        Release(_to);
-    }
-
-    // reject waiting token
-    function reject(address _to) external onlyOwner {
-        require(_to != address(0));
-
-        saled = saled.sub(waiting[_to]);
-        waiting[_to] = 0;
-
-        Reject(_to);
     }
 }
 
@@ -253,11 +200,34 @@ contract BurnableToken is BasicToken, Ownable {
 
         balances[owner] = balances[owner].sub(_value);
         totalSupply = totalSupply.sub(_value);
-        Burn(_value);
+        emit Burn(_value);
     }
 }
 
-contract MossCoin is FreezableToken, UpgradableToken, CrowdsaleToken, BurnableToken {
+contract StoppableToken is FreezableToken {
+    event Stop();
+    event Start();
+
+    bool isStop;
+
+    function stop() onlyOwner public {
+        isStop = true;
+        emit Stop();
+    }
+
+    function start() onlyOwner public {
+        isStop = false;
+        emit Start();
+    }
+
+    modifier notFrozen(address _who) {
+        require(!isStop);
+        require(freezeEnd[_who] < now);
+        _;
+    }
+}
+
+contract MossCoin is StoppableToken, UpgradableToken, BurnableToken {
     string public constant name = "Moss Coin";
     string public constant symbol = "MOC";
     uint8 public constant decimals = 18;
