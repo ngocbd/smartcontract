@@ -1,17 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoundGameCoin at 0x8df358c41cbfd364d58e061b2ba1af350cd5147a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoundGameCoin at 0x61a9758686bf7a9c687444c7f0879f7ccdff2abe
 */
 pragma solidity ^0.4.16;
 
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
+interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
 
-contract FoundGameCoin {
+contract FoundGameCoin{
     // Public variables of the token
-    string public name;
-    string public symbol;
-    uint8 public decimals;
+    string public name='FoundGameCoin';
+    string public symbol='FGC';
+    uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
-    uint256 public totalSupply;
+    uint256 public totalSupply=1600000000* 10 ** uint256(decimals);
 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
@@ -24,22 +24,13 @@ contract FoundGameCoin {
     event Burn(address indexed from, uint256 value);
 
     /**
-     * Constrctor function
+     * Constructor function
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function FoundGameCoin(
-        uint256 initialSupply,
-        string tokenName,
-		uint8 decimalUnits,
-        string tokenSymbol
-    ) public {
-		
-		   balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
-        totalSupply = initialSupply;                        // Update total supply
-        name = tokenName;                                   // Set the name for display purposes
-        symbol = tokenSymbol;                               // Set the symbol for display purposes
-        decimals = decimalUnits;                            // Amount of decimals for display purposes
+    function FoundGameCoin() public {
+        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
+  
     }
 
     /**
@@ -51,7 +42,7 @@ contract FoundGameCoin {
         // Check if the sender has enough
         require(balanceOf[_from] >= _value);
         // Check for overflows
-        require(balanceOf[_to] + _value > balanceOf[_to]);
+        require(balanceOf[_to] + _value >= balanceOf[_to]);
         // Save this for an assertion in the future
         uint previousBalances = balanceOf[_from] + balanceOf[_to];
         // Subtract from the sender
