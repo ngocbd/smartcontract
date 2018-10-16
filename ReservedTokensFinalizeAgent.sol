@@ -1,8 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReservedTokensFinalizeAgent at 0x14c8AE92280BDc11EE281ba384eD99E5E2e5f6c7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReservedTokensFinalizeAgent at 0x30b313F0aEF971FDF11C02899B2Fa6339C4efe3c
 */
 // Created using ICO Wizard https://github.com/oraclesorg/ico-wizard by Oracles Network 
 pragma solidity ^0.4.11;
+
+
 /**
  * @title ERC20Basic
  * @dev Simpler version of ERC20 interface
@@ -15,6 +17,10 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 // Temporarily have SafeMath here until all contracts have been migrated to SafeMathLib version from OpenZeppelin
+
+
+
+
 /**
  * Math operations with safety checks
  */
@@ -24,34 +30,45 @@ contract SafeMath {
     assert(a == 0 || c / a == b);
     return c;
   }
+
   function safeDiv(uint a, uint b) internal returns (uint) {
     assert(b > 0);
     uint c = a / b;
     assert(a == b * c + a % b);
     return c;
   }
+
   function safeSub(uint a, uint b) internal returns (uint) {
     assert(b <= a);
     return a - b;
   }
+
   function safeAdd(uint a, uint b) internal returns (uint) {
     uint c = a + b;
     assert(c>=a && c>=b);
     return c;
   }
+
   function max64(uint64 a, uint64 b) internal constant returns (uint64) {
     return a >= b ? a : b;
   }
+
   function min64(uint64 a, uint64 b) internal constant returns (uint64) {
     return a < b ? a : b;
   }
+
   function max256(uint256 a, uint256 b) internal constant returns (uint256) {
     return a >= b ? a : b;
   }
+
   function min256(uint256 a, uint256 b) internal constant returns (uint256) {
     return a < b ? a : b;
   }
+
 }
+
+
+
 /**
  * @title Ownable
  * @dev The Ownable contract has an owner address, and provides basic authorization control
@@ -59,7 +76,11 @@ contract SafeMath {
  */
 contract Ownable {
   address public owner;
+
+
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
@@ -67,6 +88,8 @@ contract Ownable {
   function Ownable() {
     owner = msg.sender;
   }
+
+
   /**
    * @dev Throws if called by any account other than the owner.
    */
@@ -74,6 +97,8 @@ contract Ownable {
     require(msg.sender == owner);
     _;
   }
+
+
   /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param newOwner The address to transfer ownership to.
@@ -83,12 +108,24 @@ contract Ownable {
     OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
+
 }
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
  *
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
+
+
+
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
+
+
+
 /**
  * Safe unsigned safe math.
  *
@@ -100,42 +137,52 @@ contract Ownable {
  *
  */
 library SafeMathLibExt {
+
   function times(uint a, uint b) returns (uint) {
     uint c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
+
   function divides(uint a, uint b) returns (uint) {
     assert(b > 0);
     uint c = a / b;
     assert(a == b * c + a % b);
     return c;
   }
+
   function minus(uint a, uint b) returns (uint) {
     assert(b <= a);
     return a - b;
   }
+
   function plus(uint a, uint b) returns (uint) {
     uint c = a + b;
     assert(c>=a);
     return c;
   }
+
 }
+
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
  *
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
+
+
+
+
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
  *
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
+
+
+
+
+
 /*
  * Haltable
  *
@@ -147,40 +194,52 @@ library SafeMathLibExt {
  */
 contract Haltable is Ownable {
   bool public halted;
+
   modifier stopInEmergency {
     if (halted) throw;
     _;
   }
+
   modifier stopNonOwnersInEmergency {
     if (halted && msg.sender != owner) throw;
     _;
   }
+
   modifier onlyInEmergency {
     if (!halted) throw;
     _;
   }
+
   // called by the owner on emergency, triggers stopped state
   function halt() external onlyOwner {
     halted = true;
   }
+
   // called by the owner on end of emergency, returns to normal state
   function unhalt() external onlyOwner onlyInEmergency {
     halted = false;
   }
+
 }
+
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
  *
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
+
+
+
 /**
  * Interface for defining crowdsale pricing.
  */
 contract PricingStrategy {
+
   /** Interface declaration. */
   function isPricingStrategy() public constant returns (bool) {
     return true;
   }
+
   /** Self check if all references are correctly set.
    *
    * Checks that pricing strategy matches crowdsale parameters.
@@ -188,6 +247,7 @@ contract PricingStrategy {
   function isSane(address crowdsale) public constant returns (bool) {
     return true;
   }
+
   /**
    * @dev Pricing tells if this is a presale purchase or not.
      @param purchaser Address of the purchaser
@@ -196,6 +256,7 @@ contract PricingStrategy {
   function isPresalePurchase(address purchaser) public constant returns (bool) {
     return false;
   }
+
   /**
    * When somebody tries to buy tokens for X eth, calculate how many tokens they get.
    *
@@ -209,11 +270,15 @@ contract PricingStrategy {
    */
   function calculatePrice(uint value, uint weiRaised, uint tokensSold, address msgSender, uint decimals) public constant returns (uint tokenAmount);
 }
+
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
  *
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
+
+
+
 /**
  * Finalize agent defines what happens at the end of succeseful crowdsale.
  *
@@ -222,23 +287,37 @@ contract PricingStrategy {
  * - etc.
  */
 contract FinalizeAgent {
+
   function isFinalizeAgent() public constant returns(bool) {
     return true;
   }
+
   /** Return true if we can run finalizeCrowdsale() properly.
    *
    * This is a safety check function that doesn't allow crowdsale to begin
    * unless the finalizer has been set up properly.
    */
   function isSane() public constant returns (bool);
+
   /** Called once by crowdsale finalize() if the sale was success. */
   function finalizeCrowdsale();
+
 }
+
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
  *
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
+
+
+
+
+
+
+
+
+
 /**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
@@ -249,13 +328,20 @@ contract ERC20 is ERC20Basic {
   function approve(address spender, uint256 value) public returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
+
+
 /**
  * A token that defines fractional units as decimals.
  */
 contract FractionalERC20Ext is ERC20 {
+
   uint public decimals;
   uint public minCap;
+
 }
+
+
+
 /**
  * Abstract base contract for token sales.
  *
@@ -269,65 +355,94 @@ contract FractionalERC20Ext is ERC20 {
  *
  */
 contract CrowdsaleExt is Haltable {
+
   /* Max investment count when we are still allowed to change the multisig address */
   uint public MAX_INVESTMENTS_BEFORE_MULTISIG_CHANGE = 5;
+
   using SafeMathLibExt for uint;
+
   /* The token we are selling */
   FractionalERC20Ext public token;
+
   /* How we are going to price our offering */
   PricingStrategy public pricingStrategy;
+
   /* Post-success callback */
   FinalizeAgent public finalizeAgent;
+
   /* tokens will be transfered from this address */
   address public multisigWallet;
+
   /* if the funding goal is not reached, investors may withdraw their funds */
   uint public minimumFundingGoal;
+
   /* the UNIX timestamp start date of the crowdsale */
   uint public startsAt;
+
   /* the UNIX timestamp end date of the crowdsale */
   uint public endsAt;
+
   /* the number of tokens already sold through this contract*/
   uint public tokensSold = 0;
+
   /* How many wei of funding we have raised */
   uint public weiRaised = 0;
+
   /* Calculate incoming funds from presale contracts and addresses */
   uint public presaleWeiRaised = 0;
+
   /* How many distinct addresses have invested */
   uint public investorCount = 0;
+
   /* How much wei we have returned back to the contract after a failed crowdfund. */
   uint public loadedRefund = 0;
+
   /* How much wei we have given back to investors.*/
   uint public weiRefunded = 0;
+
   /* Has this crowdsale been finalized */
   bool public finalized;
+
   /* Do we need to have unique contributor id for each customer */
   bool public requireCustomerId;
+
   bool public isWhiteListed;
+
   address[] public joinedCrowdsales;
   uint public joinedCrowdsalesLen = 0;
+
   address public lastCrowdsale;
+
   /**
     * Do we verify that contributor has been cleared on the server side (accredited investors only).
     * This method was first used in FirstBlood crowdsale to ensure all contributors have accepted terms on sale (on the web).
     */
   bool public requiredSignedAddress;
+
   /* Server side address that signed allowed contributors (Ethereum addresses) that can participate the crowdsale */
   address public signerAddress;
+
   /** How much ETH each address has invested to this crowdsale */
   mapping (address => uint256) public investedAmountOf;
+
   /** How much tokens this crowdsale has credited for each investor address */
   mapping (address => uint256) public tokenAmountOf;
+
   struct WhiteListData {
     bool status;
     uint minCap;
     uint maxCap;
   }
+
   //is crowdsale updatable
   bool public isUpdatable;
+
   /** Addresses that are allowed to invest even before ICO offical opens. For testing, for ICO partners, etc. */
   mapping (address => WhiteListData) public earlyParticipantWhitelist;
+
   /** This is for manul testing for the interaction from owner wallet. You can set it to any value and inspect this in blockchain explorer to see that crowdsale interaction works. */
   uint public ownerTestValue;
+
   /** State machine
    *
    * - Preparing: All contract initialization calls and variables have not been set yet
@@ -339,49 +454,70 @@ contract CrowdsaleExt is Haltable {
    * - Refunding: Refunds are loaded on the contract for reclaim.
    */
   enum State{Unknown, Preparing, PreFunding, Funding, Success, Failure, Finalized, Refunding}
+
   // A new investment was made
   event Invested(address investor, uint weiAmount, uint tokenAmount, uint128 customerId);
+
   // Refund was processed for a contributor
   event Refund(address investor, uint weiAmount);
+
   // The rules were changed what kind of investments we accept
   event InvestmentPolicyChanged(bool newRequireCustomerId, bool newRequiredSignedAddress, address newSignerAddress);
+
   // Address early participation whitelist status changed
   event Whitelisted(address addr, bool status);
+
   // Crowdsale start time has been changed
   event StartsAtChanged(uint newStartsAt);
+
   // Crowdsale end time has been changed
   event EndsAtChanged(uint newEndsAt);
+
   function CrowdsaleExt(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal, bool _isUpdatable, bool _isWhiteListed) {
+
     owner = msg.sender;
+
     token = FractionalERC20Ext(_token);
+
     setPricingStrategy(_pricingStrategy);
+
     multisigWallet = _multisigWallet;
     if(multisigWallet == 0) {
         throw;
     }
+
     if(_start == 0) {
         throw;
     }
+
     startsAt = _start;
+
     if(_end == 0) {
         throw;
     }
+
     endsAt = _end;
+
     // Don't mess the dates
     if(startsAt >= endsAt) {
         throw;
     }
+
     // Minimum funding goal can be zero
     minimumFundingGoal = _minimumFundingGoal;
+
     isUpdatable = _isUpdatable;
+
     isWhiteListed = _isWhiteListed;
   }
+
   /**
    * Don't expect to just send in money and get tokens.
    */
   function() payable {
     throw;
   }
+
   /**
    * Make an investment.
    *
@@ -393,6 +529,7 @@ contract CrowdsaleExt is Haltable {
    *
    */
   function investInternal(address receiver, uint128 customerId) stopInEmergency private {
+
     // Determine if it's a good time to accept investment from this participant
     if(getState() == State.PreFunding) {
       // Are we whitelisted for early deposit
@@ -409,13 +546,17 @@ contract CrowdsaleExt is Haltable {
       // Unwanted state
       throw;
     }
+
     uint weiAmount = msg.value;
+
     // Account presale sales separately, so that they do not count against pricing tranches
     uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised - presaleWeiRaised, tokensSold, msg.sender, token.decimals());
+
     if(tokenAmount == 0) {
       // Dust transaction
       throw;
     }
+
     if(isWhiteListed) {
       if(tokenAmount < earlyParticipantWhitelist[receiver].minCap && tokenAmountOf[receiver] == 0) {
         // tokenAmount < minCap for investor
@@ -425,6 +566,7 @@ contract CrowdsaleExt is Haltable {
         // tokenAmount > maxCap for investor
         throw;
       }
+
       // Check that we did not bust the investor's cap
       if (isBreakingInvestorCap(receiver, tokenAmount)) {
         throw;
@@ -434,32 +576,41 @@ contract CrowdsaleExt is Haltable {
         throw;
       }
     }
-    // Check that we did not bust the cap
-    if(isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold)) {
-      throw;
-    }
+
     if(investedAmountOf[receiver] == 0) {
        // A new investor
        investorCount++;
     }
+
     // Update investor
     investedAmountOf[receiver] = investedAmountOf[receiver].plus(weiAmount);
     tokenAmountOf[receiver] = tokenAmountOf[receiver].plus(tokenAmount);
+
     // Update totals
     weiRaised = weiRaised.plus(weiAmount);
     tokensSold = tokensSold.plus(tokenAmount);
+
     if(pricingStrategy.isPresalePurchase(receiver)) {
         presaleWeiRaised = presaleWeiRaised.plus(weiAmount);
     }
+
+    // Check that we did not bust the cap
+    if(isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold)) {
+      throw;
+    }
+
     assignTokens(receiver, tokenAmount);
+
     // Pocket the money
     if(!multisigWallet.send(weiAmount)) throw;
+
     if (isWhiteListed) {
       uint num = 0;
       for (var i = 0; i < joinedCrowdsalesLen; i++) {
         if (this == joinedCrowdsales[i]) 
           num = i;
       }
+
       if (num + 1 < joinedCrowdsalesLen) {
         for (var j = num + 1; j < joinedCrowdsalesLen; j++) {
           CrowdsaleExt crowdsale = CrowdsaleExt(joinedCrowdsales[j]);
@@ -467,9 +618,11 @@ contract CrowdsaleExt is Haltable {
         }
       }
     }
+
     // Tell us invest was success
     Invested(receiver, weiAmount, tokenAmount, customerId);
   }
+
   /**
    * Preallocate tokens for the early investors.
    *
@@ -486,16 +639,22 @@ contract CrowdsaleExt is Haltable {
    *
    */
   function preallocate(address receiver, uint fullTokens, uint weiPrice) public onlyOwner {
+
     uint tokenAmount = fullTokens * 10**token.decimals();
     uint weiAmount = weiPrice * fullTokens; // This can be also 0, we give out tokens for free
+
     weiRaised = weiRaised.plus(weiAmount);
     tokensSold = tokensSold.plus(tokenAmount);
+
     investedAmountOf[receiver] = investedAmountOf[receiver].plus(weiAmount);
     tokenAmountOf[receiver] = tokenAmountOf[receiver].plus(tokenAmount);
+
     assignTokens(receiver, tokenAmount);
+
     // Tell us invest was success
     Invested(receiver, weiAmount, tokenAmount, 0);
   }
+
   /**
    * Allow anonymous contributions to this crowdsale.
    */
@@ -505,6 +664,7 @@ contract CrowdsaleExt is Haltable {
      if(customerId == 0) throw;  // UUIDv4 sanity check
      investInternal(addr, customerId);
   }
+
   /**
    * Track who is the customer making the payment so we can send thank you email.
    */
@@ -513,6 +673,7 @@ contract CrowdsaleExt is Haltable {
     if(customerId == 0) throw;  // UUIDv4 sanity check
     investInternal(addr, customerId);
   }
+
   /**
    * Allow anonymous contributions to this crowdsale.
    */
@@ -521,6 +682,7 @@ contract CrowdsaleExt is Haltable {
     if(requiredSignedAddress) throw; // Crowdsale allows only server-side signed participants
     investInternal(addr, 0);
   }
+
   /**
    * Invest to tokens, recognize the payer and clear his address.
    *
@@ -528,6 +690,7 @@ contract CrowdsaleExt is Haltable {
   function buyWithSignedAddress(uint128 customerId, uint8 v, bytes32 r, bytes32 s) public payable {
     investWithSignedAddress(msg.sender, customerId, v, r, s);
   }
+
   /**
    * Invest to tokens, recognize the payer.
    *
@@ -535,6 +698,7 @@ contract CrowdsaleExt is Haltable {
   function buyWithCustomerId(uint128 customerId) public payable {
     investWithCustomerId(msg.sender, customerId);
   }
+
   /**
    * The basic entry point to participate the crowdsale process.
    *
@@ -543,22 +707,27 @@ contract CrowdsaleExt is Haltable {
   function buy() public payable {
     invest(msg.sender);
   }
+
   /**
    * Finalize a succcesful crowdsale.
    *
    * The owner can triggre a call the contract that provides post-crowdsale actions, like releasing the tokens.
    */
   function finalize() public inState(State.Success) onlyOwner stopInEmergency {
+
     // Already finalized
     if(finalized) {
       throw;
     }
+
     // Finalizing is optional. We only call it if we are given a finalizing agent.
     if(address(finalizeAgent) != 0) {
       finalizeAgent.finalizeCrowdsale();
     }
+
     finalized = true;
   }
+
   /**
    * Allow to (re)set finalize agent.
    *
@@ -566,11 +735,13 @@ contract CrowdsaleExt is Haltable {
    */
   function setFinalizeAgent(FinalizeAgent addr) onlyOwner {
     finalizeAgent = addr;
+
     // Don't allow setting bad agent
     if(!finalizeAgent.isFinalizeAgent()) {
       throw;
     }
   }
+
   /**
    * Set policy do we need to have server-side customer ids for the investments.
    *
@@ -579,6 +750,7 @@ contract CrowdsaleExt is Haltable {
     requireCustomerId = value;
     InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, signerAddress);
   }
+
   /**
    * Set policy if all investors must be cleared on the server side first.
    *
@@ -590,6 +762,7 @@ contract CrowdsaleExt is Haltable {
     signerAddress = _signerAddress;
     InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, signerAddress);
   }
+
   /**
    * Allow addresses to do early participation.
    *
@@ -600,12 +773,14 @@ contract CrowdsaleExt is Haltable {
     earlyParticipantWhitelist[addr] = WhiteListData({status:status, minCap:minCap, maxCap:maxCap});
     Whitelisted(addr, status);
   }
+
   function setEarlyParicipantsWhitelist(address[] addrs, bool[] statuses, uint[] minCaps, uint[] maxCaps) onlyOwner {
     if (!isWhiteListed) throw;
     for (uint iterator = 0; iterator < addrs.length; iterator++) {
       setEarlyParicipantWhitelist(addrs[iterator], statuses[iterator], minCaps[iterator], maxCaps[iterator]);
     }
   }
+
   function updateEarlyParicipantWhitelist(address addr, address contractAddr, uint tokensBought) {
     if (tokensBought < earlyParticipantWhitelist[addr].minCap) throw;
     if (!isWhiteListed) throw;
@@ -614,15 +789,19 @@ contract CrowdsaleExt is Haltable {
     newMaxCap = newMaxCap.minus(tokensBought);
     earlyParticipantWhitelist[addr] = WhiteListData({status:earlyParticipantWhitelist[addr].status, minCap:0, maxCap:newMaxCap});
   }
+
   function updateJoinedCrowdsales(address addr) onlyOwner {
     joinedCrowdsales[joinedCrowdsalesLen++] = addr;
   }
+
   function setLastCrowdsale(address addr) onlyOwner {
     lastCrowdsale = addr;
   }
+
   function clearJoinedCrowdsales() onlyOwner {
     joinedCrowdsalesLen = 0;
   }
+
   function updateJoinedCrowdsalesMultiple(address[] addrs) onlyOwner {
     clearJoinedCrowdsales();
     for (uint iter = 0; iter < addrs.length; iter++) {
@@ -634,20 +813,27 @@ contract CrowdsaleExt is Haltable {
         setLastCrowdsale(addrs[iter]);
     }
   }
+
   function setStartsAt(uint time) onlyOwner {
     if (finalized) throw;
+
     if (!isUpdatable) throw;
+
     if(now > time) {
       throw; // Don't change past
     }
+
     if(time > endsAt) {
       throw;
     }
+
     CrowdsaleExt lastCrowdsaleCntrct = CrowdsaleExt(lastCrowdsale);
     if (lastCrowdsaleCntrct.finalized()) throw;
+
     startsAt = time;
     StartsAtChanged(startsAt);
   }
+
   /**
    * Allow crowdsale owner to close early or extend the crowdsale.
    *
@@ -660,29 +846,37 @@ contract CrowdsaleExt is Haltable {
    */
   function setEndsAt(uint time) onlyOwner {
     if (finalized) throw;
+
     if (!isUpdatable) throw;
+
     if(now > time) {
       throw; // Don't change past
     }
+
     if(startsAt > time) {
       throw;
     }
+
     CrowdsaleExt lastCrowdsaleCntrct = CrowdsaleExt(lastCrowdsale);
     if (lastCrowdsaleCntrct.finalized()) throw;
+
     uint num = 0;
     for (var i = 0; i < joinedCrowdsalesLen; i++) {
       if (this == joinedCrowdsales[i]) 
         num = i;
     }
+
     if (num + 1 < joinedCrowdsalesLen) {
       for (var j = num + 1; j < joinedCrowdsalesLen; j++) {
         CrowdsaleExt crowdsale = CrowdsaleExt(joinedCrowdsales[j]);
         if (time > crowdsale.startsAt()) throw;
       }
     }
+
     endsAt = time;
     EndsAtChanged(endsAt);
   }
+
   /**
    * Allow to (re)set pricing strategy.
    *
@@ -690,11 +884,13 @@ contract CrowdsaleExt is Haltable {
    */
   function setPricingStrategy(PricingStrategy _pricingStrategy) onlyOwner {
     pricingStrategy = _pricingStrategy;
+
     // Don't allow setting bad agent
     if(!pricingStrategy.isPricingStrategy()) {
       throw;
     }
   }
+
   /**
    * Allow to change the team multisig address in the case of emergency.
    *
@@ -703,12 +899,15 @@ contract CrowdsaleExt is Haltable {
    * then multisig address stays locked for the safety reasons.
    */
   function setMultisig(address addr) public onlyOwner {
+
     // Change
     if(investorCount > MAX_INVESTMENTS_BEFORE_MULTISIG_CHANGE) {
       throw;
     }
+
     multisigWallet = addr;
   }
+
   /**
    * Allow load refunds back on the contract for the refunding.
    *
@@ -718,6 +917,7 @@ contract CrowdsaleExt is Haltable {
     if(msg.value == 0) throw;
     loadedRefund = loadedRefund.plus(msg.value);
   }
+
   /**
    * Investors can claim refund.
    *
@@ -732,24 +932,28 @@ contract CrowdsaleExt is Haltable {
     Refund(msg.sender, weiValue);
     if (!msg.sender.send(weiValue)) throw;
   }
+
   /**
    * @return true if the crowdsale has raised enough money to be a successful.
    */
   function isMinimumGoalReached() public constant returns (bool reached) {
     return weiRaised >= minimumFundingGoal;
   }
+
   /**
    * Check if the contract relationship looks good.
    */
   function isFinalizerSane() public constant returns (bool sane) {
     return finalizeAgent.isSane();
   }
+
   /**
    * Check if the contract relationship looks good.
    */
   function isPricingSane() public constant returns (bool sane) {
     return pricingStrategy.isSane(address(this));
   }
+
   /**
    * Crowdfund state machine management.
    *
@@ -766,25 +970,32 @@ contract CrowdsaleExt is Haltable {
     else if (!isMinimumGoalReached() && weiRaised > 0 && loadedRefund >= weiRaised) return State.Refunding;
     else return State.Failure;
   }
+
   /** This is for manual testing of multisig wallet interaction */
   function setOwnerTestValue(uint val) onlyOwner {
     ownerTestValue = val;
   }
+
   /** Interface marker. */
   function isCrowdsale() public constant returns (bool) {
     return true;
   }
+
   //
   // Modifiers
   //
+
   /** Modified allowing execution only if the crowdsale is currently running.  */
   modifier inState(State state) {
     if(getState() != state) throw;
     _;
   }
+
+
   //
   // Abstract functions
   //
+
   /**
    * Check if the current invested breaks our cap rules.
    *
@@ -801,26 +1012,41 @@ contract CrowdsaleExt is Haltable {
    * @return true if taking this investment would break our cap rules
    */
   function isBreakingCap(uint weiAmount, uint tokenAmount, uint weiRaisedTotal, uint tokensSoldTotal) constant returns (bool limitBroken);
+
   function isBreakingInvestorCap(address receiver, uint tokenAmount) constant returns (bool limitBroken);
+
   /**
    * Check if the current crowdsale is full and we can no longer sell any tokens.
    */
   function isCrowdsaleFull() public constant returns (bool);
+
   /**
    * Create new tokens or transfer issued tokens to the investor depending on the cap model.
    */
   function assignTokens(address receiver, uint tokenAmount) private;
 }
+
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
  *
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
+
+
+
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
  *
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
+
+
+
+
+
+
+
+
 /**
  * Standard ERC20 token with Short Hand Attack and approve() race condition mitigation.
  *
@@ -828,57 +1054,79 @@ contract CrowdsaleExt is Haltable {
  * https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
 contract StandardToken is ERC20, SafeMath {
+
   /* Token supply got increased and a new owner received these tokens */
   event Minted(address receiver, uint amount);
+
   /* Actual balances of token holders */
   mapping(address => uint) balances;
+
   /* approve() allowances */
   mapping (address => mapping (address => uint)) allowed;
+
   /* Interface declaration */
   function isToken() public constant returns (bool weAre) {
     return true;
   }
+
   function transfer(address _to, uint _value) returns (bool success) {
     balances[msg.sender] = safeSub(balances[msg.sender], _value);
     balances[_to] = safeAdd(balances[_to], _value);
     Transfer(msg.sender, _to, _value);
     return true;
   }
+
   function transferFrom(address _from, address _to, uint _value) returns (bool success) {
     uint _allowance = allowed[_from][msg.sender];
+
     balances[_to] = safeAdd(balances[_to], _value);
     balances[_from] = safeSub(balances[_from], _value);
     allowed[_from][msg.sender] = safeSub(_allowance, _value);
     Transfer(_from, _to, _value);
     return true;
   }
+
   function balanceOf(address _owner) constant returns (uint balance) {
     return balances[_owner];
   }
+
   function approve(address _spender, uint _value) returns (bool success) {
+
     // To change the approve amount you first have to reduce the addresses`
     //  allowance to zero by calling `approve(_spender, 0)` if it is not
     //  already 0 to mitigate the race condition described here:
     //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
     if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) throw;
+
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
     return true;
   }
+
   function allowance(address _owner, address _spender) constant returns (uint remaining) {
     return allowed[_owner][_spender];
   }
+
 }
+
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
  *
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
+
+
+
+
+
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
  *
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
+
+
+
 /**
  * Upgrade agent interface inspired by Lunyr.
  *
@@ -886,25 +1134,35 @@ contract StandardToken is ERC20, SafeMath {
  * Upgrade agent itself can be the token contract, or just a middle man contract doing the heavy lifting.
  */
 contract UpgradeAgent {
+
   uint public originalSupply;
+
   /** Interface marker */
   function isUpgradeAgent() public constant returns (bool) {
     return true;
   }
+
   function upgradeFrom(address _from, uint256 _value) public;
+
 }
+
+
 /**
  * A token upgrade mechanism where users can opt-in amount of tokens to the next smart contract revision.
  *
  * First envisioned by Golem and Lunyr projects.
  */
 contract UpgradeableToken is StandardToken {
+
   /** Contract / person who can set the upgrade path. This can be the same as team multisig wallet, as what it is with its default value. */
   address public upgradeMaster;
+
   /** The next contract where the tokens will be migrated. */
   UpgradeAgent public upgradeAgent;
+
   /** How many tokens we have upgraded by now. */
   uint256 public totalUpgraded;
+
   /**
    * Upgrade states.
    *
@@ -915,59 +1173,75 @@ contract UpgradeableToken is StandardToken {
    *
    */
   enum UpgradeState {Unknown, NotAllowed, WaitingForAgent, ReadyToUpgrade, Upgrading}
+
   /**
    * Somebody has upgraded some of his tokens.
    */
   event Upgrade(address indexed _from, address indexed _to, uint256 _value);
+
   /**
    * New upgrade agent available.
    */
   event UpgradeAgentSet(address agent);
+
   /**
    * Do not allow construction without upgrade master set.
    */
   function UpgradeableToken(address _upgradeMaster) {
     upgradeMaster = _upgradeMaster;
   }
+
   /**
    * Allow the token holder to upgrade some of their tokens to a new contract.
    */
   function upgrade(uint256 value) public {
+
       UpgradeState state = getUpgradeState();
       if(!(state == UpgradeState.ReadyToUpgrade || state == UpgradeState.Upgrading)) {
         // Called in a bad state
         throw;
       }
+
       // Validate input value.
       if (value == 0) throw;
+
       balances[msg.sender] = safeSub(balances[msg.sender], value);
+
       // Take tokens out from circulation
       totalSupply = safeSub(totalSupply, value);
       totalUpgraded = safeAdd(totalUpgraded, value);
+
       // Upgrade agent reissues the tokens
       upgradeAgent.upgradeFrom(msg.sender, value);
       Upgrade(msg.sender, upgradeAgent, value);
   }
+
   /**
    * Set an upgrade agent that handles
    */
   function setUpgradeAgent(address agent) external {
+
       if(!canUpgrade()) {
         // The token is not yet in a state that we could think upgrading
         throw;
       }
+
       if (agent == 0x0) throw;
       // Only a master can designate the next agent
       if (msg.sender != upgradeMaster) throw;
       // Upgrade has already begun for an agent
       if (getUpgradeState() == UpgradeState.Upgrading) throw;
+
       upgradeAgent = UpgradeAgent(agent);
+
       // Bad interface
       if(!upgradeAgent.isUpgradeAgent()) throw;
       // Make sure that token supplies match in source and target
       if (upgradeAgent.originalSupply() != totalSupply) throw;
+
       UpgradeAgentSet(upgradeAgent);
   }
+
   /**
    * Get the state of the token upgrade.
    */
@@ -977,6 +1251,7 @@ contract UpgradeableToken is StandardToken {
     else if(totalUpgraded == 0) return UpgradeState.ReadyToUpgrade;
     else return UpgradeState.Upgrading;
   }
+
   /**
    * Change the upgrade master.
    *
@@ -987,55 +1262,75 @@ contract UpgradeableToken is StandardToken {
       if (msg.sender != upgradeMaster) throw;
       upgradeMaster = master;
   }
+
   /**
    * Child contract can enable to provide the condition when the upgrade can begun.
    */
   function canUpgrade() public constant returns(bool) {
      return true;
   }
+
 }
+
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
  *
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
+
+
+
+
+
+
+
 /**
  * Define interface for releasing the token transfer after a successful crowdsale.
  */
 contract ReleasableToken is ERC20, Ownable {
+
   /* The finalizer contract that allows unlift the transfer limits on this token */
   address public releaseAgent;
+
   /** A crowdsale contract can release us to the wild if ICO success. If false we are are in transfer lock up period.*/
   bool public released = false;
+
   /** Map of agents that are allowed to transfer tokens regardless of the lock down period. These are crowdsale contracts and possible the team multisig itself. */
   mapping (address => bool) public transferAgents;
+
   /**
    * Limit token transfer until the crowdsale is over.
    *
    */
   modifier canTransfer(address _sender) {
+
     if(!released) {
         if(!transferAgents[_sender]) {
             throw;
         }
     }
+
     _;
   }
+
   /**
    * Set the contract that can call release and make the token transferable.
    *
    * Design choice. Allow reset the release agent to fix fat finger mistakes.
    */
   function setReleaseAgent(address addr) onlyOwner inReleaseState(false) public {
+
     // We don't do interface check here as we might want to a normal wallet address to act as a release agent
     releaseAgent = addr;
   }
+
   /**
    * Owner can allow a particular address (a crowdsale contract) to transfer tokens despite the lock up period.
    */
   function setTransferAgent(address addr, bool state) onlyOwner inReleaseState(false) public {
     transferAgents[addr] = state;
   }
+
   /**
    * One way function to release the tokens to the wild.
    *
@@ -1044,6 +1339,7 @@ contract ReleasableToken is ERC20, Ownable {
   function releaseTokenTransfer() public onlyReleaseAgent {
     released = true;
   }
+
   /** The function can be called only before or after the tokens have been releasesd */
   modifier inReleaseState(bool releaseState) {
     if(releaseState != released) {
@@ -1051,6 +1347,7 @@ contract ReleasableToken is ERC20, Ownable {
     }
     _;
   }
+
   /** The function can be called only by a whitelisted release agent. */
   modifier onlyReleaseAgent() {
     if(msg.sender != releaseAgent) {
@@ -1058,20 +1355,32 @@ contract ReleasableToken is ERC20, Ownable {
     }
     _;
   }
+
   function transfer(address _to, uint _value) canTransfer(msg.sender) returns (bool success) {
     // Call StandardToken.transfer()
    return super.transfer(_to, _value);
   }
+
   function transferFrom(address _from, address _to, uint _value) canTransfer(_from) returns (bool success) {
     // Call StandardToken.transferForm()
     return super.transferFrom(_from, _to, _value);
   }
+
 }
+
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
  *
  * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
+
+
+
+
+
+
+
+
 /**
  * A token that can increase its supply by another contract.
  *
@@ -1080,34 +1389,55 @@ contract ReleasableToken is ERC20, Ownable {
  *
  */
 contract MintableTokenExt is StandardToken, Ownable {
+
   using SafeMathLibExt for uint;
+
   bool public mintingFinished = false;
+
   /** List of agents that are allowed to create new tokens */
   mapping (address => bool) public mintAgents;
+
   event MintingAgentChanged(address addr, bool state  );
+
+  /** inPercentageUnit is percents of tokens multiplied to 10 up to percents decimals.
+  * For example, for reserved tokens in percents 2.54%
+  * inPercentageUnit = 254
+  * inPercentageDecimals = 2
+  */
   struct ReservedTokensData {
     uint inTokens;
-    uint inPercentage;
+    uint inPercentageUnit;
+    uint inPercentageDecimals;
   }
+
   mapping (address => ReservedTokensData) public reservedTokensList;
   address[] public reservedTokensDestinations;
   uint public reservedTokensDestinationsLen = 0;
-  function setReservedTokensList(address addr, uint inTokens, uint inPercentage) onlyOwner {
+
+  function setReservedTokensList(address addr, uint inTokens, uint inPercentageUnit, uint inPercentageDecimals) onlyOwner {
     reservedTokensDestinations.push(addr);
     reservedTokensDestinationsLen++;
-    reservedTokensList[addr] = ReservedTokensData({inTokens:inTokens, inPercentage:inPercentage});
+    reservedTokensList[addr] = ReservedTokensData({inTokens:inTokens, inPercentageUnit:inPercentageUnit, inPercentageDecimals: inPercentageDecimals});
   }
+
   function getReservedTokensListValInTokens(address addr) constant returns (uint inTokens) {
     return reservedTokensList[addr].inTokens;
   }
-  function getReservedTokensListValInPercentage(address addr) constant returns (uint inPercentage) {
-    return reservedTokensList[addr].inPercentage;
+
+  function getReservedTokensListValInPercentageUnit(address addr) constant returns (uint inPercentageUnit) {
+    return reservedTokensList[addr].inPercentageUnit;
   }
-  function setReservedTokensListMultiple(address[] addrs, uint[] inTokens, uint[] inPercentage) onlyOwner {
+
+  function getReservedTokensListValInPercentageDecimals(address addr) constant returns (uint inPercentageDecimals) {
+    return reservedTokensList[addr].inPercentageDecimals;
+  }
+
+  function setReservedTokensListMultiple(address[] addrs, uint[] inTokens, uint[] inPercentageUnit, uint[] inPercentageDecimals) onlyOwner {
     for (uint iterator = 0; iterator < addrs.length; iterator++) {
-      setReservedTokensList(addrs[iterator], inTokens[iterator], inPercentage[iterator]);
+      setReservedTokensList(addrs[iterator], inTokens[iterator], inPercentageUnit[iterator], inPercentageDecimals[iterator]);
     }
   }
+
   /**
    * Create new tokens and allocate them to an address..
    *
@@ -1116,10 +1446,12 @@ contract MintableTokenExt is StandardToken, Ownable {
   function mint(address receiver, uint amount) onlyMintAgent canMint public {
     totalSupply = totalSupply.plus(amount);
     balances[receiver] = balances[receiver].plus(amount);
+
     // This will make the mint transaction apper in EtherScan.io
     // We can remove this after there is a standardized minting event
     Transfer(0, receiver, amount);
   }
+
   /**
    * Owner can allow a crowdsale contract to mint new tokens.
    */
@@ -1127,6 +1459,7 @@ contract MintableTokenExt is StandardToken, Ownable {
     mintAgents[addr] = state;
     MintingAgentChanged(addr, state);
   }
+
   modifier onlyMintAgent() {
     // Only crowdsale contracts are allowed to mint new tokens
     if(!mintAgents[msg.sender]) {
@@ -1134,12 +1467,16 @@ contract MintableTokenExt is StandardToken, Ownable {
     }
     _;
   }
+
   /** Make sure we are not done yet. */
   modifier canMint() {
     if(mintingFinished) throw;
     _;
   }
 }
+
+
+
 /**
  * A crowdsaled token.
  *
@@ -1152,13 +1489,19 @@ contract MintableTokenExt is StandardToken, Ownable {
  *
  */
 contract CrowdsaleTokenExt is ReleasableToken, MintableTokenExt, UpgradeableToken {
+
   /** Name and symbol were updated. */
   event UpdatedTokenInformation(string newName, string newSymbol);
+
   string public name;
+
   string public symbol;
+
   uint public decimals;
+
   /* Minimum ammount of tokens every buyer can buy. */
   uint public minCap;
+
   /**
    * Construct the token.
    *
@@ -1172,20 +1515,28 @@ contract CrowdsaleTokenExt is ReleasableToken, MintableTokenExt, UpgradeableToke
    */
   function CrowdsaleTokenExt(string _name, string _symbol, uint _initialSupply, uint _decimals, bool _mintable, uint _globalMinCap)
     UpgradeableToken(msg.sender) {
+
     // Create any address, can be transferred
     // to team multisig via changeOwner(),
     // also remember to call setUpgradeMaster()
     owner = msg.sender;
+
     name = _name;
     symbol = _symbol;
+
     totalSupply = _initialSupply;
+
     decimals = _decimals;
+
     minCap = _globalMinCap;
+
     // Create initially all balance on the team multisig
     balances[owner] = totalSupply;
+
     if(totalSupply > 0) {
       Minted(owner, totalSupply);
     }
+
     // No more new supply allowed after the token creation
     if(!_mintable) {
       mintingFinished = true;
@@ -1194,6 +1545,7 @@ contract CrowdsaleTokenExt is ReleasableToken, MintableTokenExt, UpgradeableToke
       }
     }
   }
+
   /**
    * When token is released to be transferable, enforce no new tokens can be created.
    */
@@ -1201,12 +1553,14 @@ contract CrowdsaleTokenExt is ReleasableToken, MintableTokenExt, UpgradeableToke
     mintingFinished = true;
     super.releaseTokenTransfer();
   }
+
   /**
    * Allow upgrade agent functionality kick in only if the crowdsale was success.
    */
   function canUpgrade() public constant returns(bool) {
     return released && super.canUpgrade();
   }
+
   /**
    * Owner can update token information here.
    *
@@ -1219,9 +1573,13 @@ contract CrowdsaleTokenExt is ReleasableToken, MintableTokenExt, UpgradeableToke
   function setTokenInformation(string _name, string _symbol) onlyOwner {
     name = _name;
     symbol = _symbol;
+
     UpdatedTokenInformation(name, symbol);
   }
+
 }
+
+
 /**
  * The default behavior for the crowdsale end.
  *
@@ -1231,39 +1589,48 @@ contract ReservedTokensFinalizeAgent is FinalizeAgent {
   using SafeMathLibExt for uint;
   CrowdsaleTokenExt public token;
   CrowdsaleExt public crowdsale;
+
   function ReservedTokensFinalizeAgent(CrowdsaleTokenExt _token, CrowdsaleExt _crowdsale) {
     token = _token;
     crowdsale = _crowdsale;
   }
+
   /** Check that we can release the token */
   function isSane() public constant returns (bool) {
     return (token.releaseAgent() == address(this));
   }
+
   /** Called once by crowdsale finalize() if the sale was success. */
   function finalizeCrowdsale() public {
     if(msg.sender != address(crowdsale)) {
       throw;
     }
+
     // How many % of tokens the founders and others get
     uint tokensSold = crowdsale.tokensSold();
+
     // move reserved tokens in percentage
     for (var j = 0; j < token.reservedTokensDestinationsLen(); j++) {
       uint allocatedBonusInPercentage;
-      if (token.getReservedTokensListValInPercentage(token.reservedTokensDestinations(j)) > 0) {
-        allocatedBonusInPercentage = tokensSold*token.getReservedTokensListValInPercentage(token.reservedTokensDestinations(j))/100;
+      uint percentsOfTokensUnit = token.getReservedTokensListValInPercentageUnit(token.reservedTokensDestinations(j));
+      uint percentsOfTokensDecimals = token.getReservedTokensListValInPercentageDecimals(token.reservedTokensDestinations(j));
+      if (percentsOfTokensUnit > 0) {
+        allocatedBonusInPercentage = tokensSold * percentsOfTokensUnit / 10**percentsOfTokensDecimals / 100;
         tokensSold = tokensSold.plus(allocatedBonusInPercentage);
         token.mint(token.reservedTokensDestinations(j), allocatedBonusInPercentage);
       }
     }
+
     // move reserved tokens in tokens
     for (var i = 0; i < token.reservedTokensDestinationsLen(); i++) {
-      uint allocatedBonusInTokens;
-      if (token.getReservedTokensListValInTokens(token.reservedTokensDestinations(i)) > 0) {
-        allocatedBonusInTokens = token.getReservedTokensListValInTokens(token.reservedTokensDestinations(i));
+      uint allocatedBonusInTokens = token.getReservedTokensListValInTokens(token.reservedTokensDestinations(i));
+      if (allocatedBonusInTokens > 0) {
         tokensSold = tokensSold.plus(allocatedBonusInTokens);
         token.mint(token.reservedTokensDestinations(i), allocatedBonusInTokens);
       }
     }
+
     token.releaseTokenTransfer();
   }
+
 }
