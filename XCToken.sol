@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XCToken at 0xb5df8cbca0208f61e2367b3148b0facac93d0af6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XCToken at 0xb8dd3ff9b542114a0822ac68f1829bebc5ebe803
 */
 pragma solidity ^0.4.19;
 
@@ -100,7 +100,7 @@ contract XCToken is StandardToken,SafeMath,Ownable {
 
     // metadata
     string public constant name = "XC.COM(XC Program)";
-    string public constant symbol = "XC";
+    string public constant symbol = "XCCOM";
     uint256 public constant decimals = 8;
     string public version = "1.0";
     
