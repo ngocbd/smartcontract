@@ -1,38 +1,100 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale at 0xb96e8de651f2e9056fb1f41b42a380fddbe4fea9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale at 0x9c7f5814d791235528661cdf67b9dc8ccfd51aa4
 */
-pragma solidity ^0.4.20;
+// Copyright New Alchemy Limited, 2017. All rights reserved.
 
-interface token {
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+pragma solidity >=0.4.10;
+
+// Just the bits of ERC20 that we need.
+contract Token {
+	function balanceOf(address addr) returns(uint);
+	function transfer(address to, uint amount) returns(bool);
 }
 
 contract Sale {
-    address private maintoken = 0x2054a15c6822a722378d13c4e4ea85365e46e50b;
-    address private owner = msg.sender;
-    uint256 private sendtoken;
-    uint256 public cost1token = 0.0032 ether;
-    token public tokenReward;
-    
-    function Sale() public {
-        tokenReward = token(maintoken);
-    }
-    
-    function() external payable {
-        sendtoken = (msg.value)/cost1token;
-        sendtoken = sendtoken*115/100;
+	address public owner;    // contract owner
+	address public newOwner; // new contract owner for two-way ownership handshake
+	string public notice;    // arbitrary public notice text
+	uint public start;       // start time of sale
+	uint public end;         // end time of sale
+	uint public cap;         // Ether hard cap
+	bool public live;        // sale is live right now
 
-        if (msg.value >= 45 ether) {
-            sendtoken = (msg.value)/cost1token;
-            sendtoken = sendtoken*2;
-        }
+	event StartSale();
+	event EndSale();
+	event EtherIn(address from, uint amount);
 
-        if (msg.value >= 100 ether) {
-            sendtoken = (msg.value)/cost1token;
-            sendtoken = sendtoken*3;
-        }
+	function Sale() {
+		owner = msg.sender;
+	}
 
-        tokenReward.transferFrom(owner, msg.sender, sendtoken);
-        owner.transfer(msg.value);
-    }
+	modifier onlyOwner() {
+		require(msg.sender == owner);
+		_;
+	}
+
+	function () payable {
+		require(block.timestamp >= start);
+
+		if (block.timestamp > end || this.balance > cap) {
+			require(live);
+			live = false;
+			EndSale();
+		} else if (!live) {
+			live = true;
+			StartSale();
+		}
+		EtherIn(msg.sender, msg.value);
+	}
+
+	function init(uint _start, uint _end, uint _cap) onlyOwner {
+		start = _start;
+		end = _end;
+		cap = _cap;
+	}
+
+	function softCap(uint _newend) onlyOwner {
+		require(_newend >= block.timestamp && _newend >= start && _newend <= end);
+		end = _newend;
+	}
+
+	// 1st half of ownership change
+	function changeOwner(address next) onlyOwner {
+		newOwner = next;
+	}
+
+	// 2nd half of ownership change
+	function acceptOwnership() {
+		require(msg.sender == newOwner);
+		owner = msg.sender;
+		newOwner = 0;
+	}
+
+	// put some text in the contract
+	function setNotice(string note) onlyOwner {
+		notice = note;
+	}
+
+	// withdraw all of the Ether
+	function withdraw() onlyOwner {
+		msg.sender.transfer(this.balance);
+	}
+
+	// withdraw some of the Ether
+	function withdrawSome(uint value) onlyOwner {
+		require(value <= this.balance);
+		msg.sender.transfer(value);
+	}
+
+	// withdraw tokens to owner
+	function withdrawToken(address token) onlyOwner {
+		Token t = Token(token);
+		require(t.transfer(msg.sender, t.balanceOf(this)));
+	}
+
+	// refund early/late tokens
+	function refundToken(address token, address sender, uint amount) onlyOwner {
+		Token t = Token(token);
+		require(t.transfer(sender, amount));
+	}
 }
