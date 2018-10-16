@@ -1,18 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0xadfaae1acc9db0440e43214ef5e7aba7e0a88eb8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0x0d61178ce25bf05c5b19dc56f30e0f10cbbe9f2b
 */
 pragma solidity ^0.4.20;
 
 /*
 
-Author : RNDM (Discord RNDM#3033)
+author : RNDM (Discord RNDM#3033)
 Write me if you need coding service
 My Ethereum address : 0x13373FEdb7f8dF156E5718303897Fae2d363Cc96
 
 Description tl;dr :
 Simple trustless lottery with entries
 After the contract reaches a certain amount of ethereum or when the owner calls "payWinnerManually()"
-a winner gets calculated/drawed and paid out (100%, no Dev or Owner fee).
+a winner gets calculated/drawed and paid out (10% fee for token giveaways).
 
 */
 
@@ -28,7 +28,7 @@ contract Ownable {
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     constructor() public {
-        owner = msg.sender;
+        owner = 0xc42559F88481e1Df90f64e5E9f7d7C6A34da5691;
     }
 
     modifier onlyOwner() {
@@ -56,12 +56,6 @@ contract Lottery is Ownable {
         _;
     }
 
-    // When this is active no one is able to participate
-    modifier restriction() {
-        require(!_restriction);
-        _;
-    }
-
     /**
     * Events
     */
@@ -79,7 +73,6 @@ contract Lottery is Ownable {
     uint256 entryCounter; // counter for the entries
     uint256 public automaticThreshold; // automatic Threshold to close the lottery and pay the winner
     uint256 public ticketPrice = 10 finney; // the price per lottery ticket (0.01 eth)
-    bool public _restriction; // check restriction modifier
     
 
 
@@ -87,18 +80,17 @@ contract Lottery is Ownable {
 
     constructor() public {
         contractCall = _Contract(0x05215FCE25902366480696F38C3093e31DBCE69A);
-        _restriction = true;
-        automaticThreshold = 100; // 100 tickets
-        ticketPrice = 10 finney; // 10 finney = 0.01 eth
+        automaticThreshold = 56; // 56 tickets 
+        ticketPrice = 10 finney; // 10finney = 0.01 eth
         entryCounter = 0;
     }
 
-    // If you send money directly to the contract its like a donation
+    // If you send money directly to the contract it gets treated like a donation
     function() payable public {
     }
 
 
-    function buyTickets() restriction() payable public {
+    function buyTickets() payable public {
         //You have to send at least ticketPrice to get one entry
         require(msg.value >= ticketPrice);
 
@@ -121,13 +113,26 @@ contract Lottery is Ownable {
         if(entryCounter >= automaticThreshold) {
             // withdraw + sell all tokens.
             contractCall.exit();
-
+            // 10% token giveaway fee
+            giveawayFee();
             //payout winner & start from beginning
             payWinner();
         }
     }
 
     // Other functions
+ 
+    /*
+    PRNG(Pseudorandom number generator) :
+    PRN can be 0 up to entrycounter-1. (equivalent to 1 up to entrycounter)
+    n := entrycounter
+
+    Let n be an arbitrary number 
+    and
+    y := uint256(keccak256(P)) where P is an arbitrary value.
+    The returned PRN % (n) is going to be between
+    0 and n-1 due to modular arithmetic.
+    */
     function PRNG() internal view returns (uint256) {
         uint256 initialize1 = block.timestamp;
         uint256 initialize2 = uint256(block.coinbase);
@@ -157,6 +162,12 @@ contract Lottery is Ownable {
         return winner;
     }
 
+    //
+    function giveawayFee() internal {   
+        uint256 balance = (address(this).balance / 10);
+        owner.transfer(balance);
+    }
+
     /*
         If you plan to use this contract for your projects
         be a man of honor and do not change or delete this function
@@ -180,11 +191,6 @@ contract Lottery is Ownable {
     /**
     * Administrator functions
     */
-
-    //Disable the buy restriction
-    function disableRestriction() onlyOwner() public {
-        _restriction = false;
-    }
 
     // change the Threshold
     function changeThreshold(uint newThreshold) onlyOwner() public {
