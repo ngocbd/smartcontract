@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x44eaa3f429a0ed46b6bc8d0dd6cbbe758ad41d8c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xae2ed6e1a3412a8cb569ef4bdc833df204c3cb46
 */
 pragma solidity ^0.4.4;
 
@@ -12,20 +12,20 @@ contract Token {
     /// @return The balance
     function balanceOf(address _owner) constant returns (uint256 balance) {}
 
-    /// @notice send `_value` token to `_to` from `msg.sender`
+    /// @notice send _value token to _to from msg.sender
     /// @param _to The address of the recipient
     /// @param _value The amount of token to be transferred
     /// @return Whether the transfer was successful or not
     function transfer(address _to, uint256 _value) returns (bool success) {}
 
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+    /// @notice send _value token to _to from _from on the condition it is approved by _from
     /// @param _from The address of the sender
     /// @param _to The address of the recipient
     /// @param _value The amount of token to be transferred
     /// @return Whether the transfer was successful or not
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
 
-    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
+    /// @notice msg.sender approves _addr to spend _value tokens
     /// @param _spender The address of the account able to transfer the tokens
     /// @param _value The amount of wei to be approved for transfer
     /// @return Whether the approval was successful or not
@@ -102,7 +102,8 @@ contract ERC20Token is StandardToken {
 
     /*
     NOTE:
-    The following variables are OPTIONAL vanities. One does not have to include them.
+    The followi
+ ng variables are OPTIONAL vanities. One does not have to include them.
     They allow one to customise the token contract & in no way influences the core functionality.
     Some wallets/interfaces might not even bother to look at this information.
     */
@@ -119,11 +120,11 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 1000000000000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 1000000000000000000000;                        // Update total supply (100000 for example)
-        name = "AnnoyingAsFuk";                                   // Set the name for display purposes
-        decimals = 12;                            // Amount of decimals for display purposes
-        symbol = "AAF";                               // Set the symbol for display purposes
+        balances[msg.sender] = 10000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 10000000000;                        // Update total supply (100000 for example)
+        name = "MY SAFE HOUSE";                                   // Set the name for display purposes
+        decimals = 2;                            // Amount of decimals for display purposes
+        symbol = "MSW";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
