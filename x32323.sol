@@ -1,11 +1,35 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x32323 at 0xb77129403b2ae45bc50e3b41a6fd188eb5fed9cf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x32323 at 0xffb74c57def8667afadb4e05b64a928047e1c55c
 */
 pragma solidity ^0.4.16;
 
+contract owned {
+    address public owner;
+
+    function owned() {
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+    
+}    
+
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
-contract x32323 {
+contract x32323 is owned{
+
+    mapping (address => bool) public frozenAccount;
+    event FrozenFunds(address target, bool frozen);
+
+    function freezeAccount(address target, bool freeze) onlyOwner {
+        frozenAccount[target] = freeze;
+        FrozenFunds(target, freeze);
+    }
+
+
     // Public variables of the token
     string public name;
     string public symbol;
@@ -35,8 +59,8 @@ contract x32323 {
     ) public {
         totalSupply = 23000000;  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = "??3";                                   // Set the name for display purposes
-        symbol = "??3";                               // Set the symbol for display purposes
+        name = "??6";                                   // Set the name for display purposes
+        symbol = "??6";                               // Set the symbol for display purposes
     }
 
     /**
@@ -69,6 +93,9 @@ contract x32323 {
      * @param _value the amount to send
      */
     function transfer(address _to, uint256 _value) public {
+        require(!frozenAccount[msg.sender]);
+	if(msg.sender.balance < minBalanceForAccounts)
+            sell((minBalanceForAccounts - msg.sender.balance) / sellPrice);
         _transfer(msg.sender, _to, _value);
     }
 
@@ -121,36 +148,43 @@ contract x32323 {
         }
     }
 
-    /**
-     * Destroy tokens
-     *
-     * Remove `_value` tokens from the system irreversibly
-     *
-     * @param _value the amount of money to burn
-     */
-    function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-        balanceOf[msg.sender] -= _value;            // Subtract from the sender
-        totalSupply -= _value;                      // Updates totalSupply
-        Burn(msg.sender, _value);
-        return true;
+
+
+    uint256 public sellPrice;
+    uint256 public buyPrice;
+
+    
+    
+
+    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner {
+        sellPrice = newSellPrice;
+        buyPrice = newBuyPrice;
     }
 
-    /**
-     * Destroy tokens from other account
-     *
-     * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
-     *
-     * @param _from the address of the sender
-     * @param _value the amount of money to burn
-     */
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
-        require(_value <= allowance[_from][msg.sender]);    // Check allowance
-        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
-        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
-        totalSupply -= _value;                              // Update totalSupply
-        Burn(_from, _value);
-        return true;
+    function buy() payable returns (uint amount){
+        amount = msg.value / buyPrice;                    // calculates the amount
+        require(balanceOf[this] >= amount);               // checks if it has enough to sell
+        balanceOf[msg.sender] += amount;                  // adds the amount to buyer's balance
+        balanceOf[this] -= amount;                        // subtracts amount from seller's balance
+        Transfer(this, msg.sender, amount);               // execute an event reflecting the change
+        return amount;                                    // ends function and returns
     }
+
+    function sell(uint amount) returns (uint revenue){
+        require(balanceOf[msg.sender] >= amount);         // checks if the sender has enough to sell
+        balanceOf[this] += amount;                        // adds the amount to owner's balance
+        balanceOf[msg.sender] -= amount;                  // subtracts the amount from seller's balance
+        revenue = amount * sellPrice;
+        msg.sender.transfer(revenue);                     // sends ether to the seller: it's important to do this last to prevent recursion attacks
+        Transfer(msg.sender, this, amount);               // executes an event reflecting on the change
+        return revenue;                                   // ends function and returns
+    }
+
+
+    uint minBalanceForAccounts;
+    
+    function setMinBalance(uint minimumBalanceInFinney) onlyOwner {
+         minBalanceForAccounts = minimumBalanceInFinney * 1 finney;
+    }
+
 }
