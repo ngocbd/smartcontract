@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorConverterFactory at 0xa96a30de17e57c8c2c9f10d83719260cf01f7448
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorConverterFactory at 0x3836688e867ca599c79a5cac45054256d53175cf
 */
 pragma solidity ^0.4.21;
 
@@ -12,37 +12,6 @@ contract IOwned {
 
     function transferOwnership(address _newOwner) public;
     function acceptOwnership() public;
-}
-
-/*
-    Bancor Formula interface
-*/
-contract IBancorFormula {
-    function calculatePurchaseReturn(uint256 _supply, uint256 _connectorBalance, uint32 _connectorWeight, uint256 _depositAmount) public view returns (uint256);
-    function calculateSaleReturn(uint256 _supply, uint256 _connectorBalance, uint32 _connectorWeight, uint256 _sellAmount) public view returns (uint256);
-    function calculateCrossConnectorReturn(uint256 _fromConnectorBalance, uint32 _fromConnectorWeight, uint256 _toConnectorBalance, uint32 _toConnectorWeight, uint256 _amount) public view returns (uint256);
-}
-
-/*
-    Contract Registry interface
-*/
-contract IContractRegistry {
-    function getAddress(bytes32 _contractName) public view returns (address);
-}
-
-/*
-    Contract Features interface
-*/
-contract IContractFeatures {
-    function isSupported(address _contract, uint256 _features) public view returns (bool);
-    function enableFeatures(uint256 _features, bool _enable) public;
-}
-
-/*
-    Whitelist interface
-*/
-contract IWhitelist {
-    function isWhitelisted(address _address) public view returns (bool);
 }
 
 /*
@@ -72,12 +41,75 @@ contract ISmartToken is IOwned, IERC20Token {
 }
 
 /*
+    Contract Registry interface
+*/
+contract IContractRegistry {
+    function getAddress(bytes32 _contractName) public view returns (address);
+}
+
+/*
+    Contract Features interface
+*/
+contract IContractFeatures {
+    function isSupported(address _contract, uint256 _features) public view returns (bool);
+    function enableFeatures(uint256 _features, bool _enable) public;
+}
+
+/*
+    Whitelist interface
+*/
+contract IWhitelist {
+    function isWhitelisted(address _address) public view returns (bool);
+}
+
+/*
+    Token Holder interface
+*/
+contract ITokenHolder is IOwned {
+    function withdrawTokens(IERC20Token _token, address _to, uint256 _amount) public;
+}
+
+/*
+    Bancor Formula interface
+*/
+contract IBancorFormula {
+    function calculatePurchaseReturn(uint256 _supply, uint256 _connectorBalance, uint32 _connectorWeight, uint256 _depositAmount) public view returns (uint256);
+    function calculateSaleReturn(uint256 _supply, uint256 _connectorBalance, uint32 _connectorWeight, uint256 _sellAmount) public view returns (uint256);
+    function calculateCrossConnectorReturn(uint256 _fromConnectorBalance, uint32 _fromConnectorWeight, uint256 _toConnectorBalance, uint32 _toConnectorWeight, uint256 _amount) public view returns (uint256);
+}
+
+/*
+    Bancor Converter interface
+*/
+contract IBancorConverter {
+    function getReturn(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount) public view returns (uint256);
+    function convert(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256);
+    function conversionWhitelist() public view returns (IWhitelist) {}
+    // deprecated, backward compatibility
+    function change(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256);
+}
+
+/*
+    Bancor Converter Factory interface
+*/
+contract IBancorConverterFactory {
+    function createConverter(
+        ISmartToken _token,
+        IContractRegistry _registry,
+        uint32 _maxConversionFee,
+        IERC20Token _connectorToken,
+        uint32 _connectorWeight
+    )
+    public returns (address);
+}
+
+/*
     Bancor Network interface
 */
 contract IBancorNetwork {
     function convert(IERC20Token[] _path, uint256 _amount, uint256 _minReturn) public payable returns (uint256);
     function convertFor(IERC20Token[] _path, uint256 _amount, uint256 _minReturn, address _for) public payable returns (uint256);
-    function convertForPrioritized(
+    function convertForPrioritized2(
         IERC20Token[] _path,
         uint256 _amount,
         uint256 _minReturn,
@@ -87,13 +119,19 @@ contract IBancorNetwork {
         bytes32 _r,
         bytes32 _s)
         public payable returns (uint256);
-}
 
-/*
-    Token Holder interface
-*/
-contract ITokenHolder is IOwned {
-    function withdrawTokens(IERC20Token _token, address _to, uint256 _amount) public;
+    // deprecated, backward compatibility
+    function convertForPrioritized(
+        IERC20Token[] _path,
+        uint256 _amount,
+        uint256 _minReturn,
+        address _for,
+        uint256 _block,
+        uint256 _nonce,
+        uint8 _v,
+        bytes32 _r,
+        bytes32 _s)
+        public payable returns (uint256);
 }
 
 /*
@@ -407,17 +445,6 @@ contract SmartTokenController is TokenHolder {
     {
         ITokenHolder(token).withdrawTokens(_token, _to, _amount);
     }
-}
-
-/*
-    Bancor Converter interface
-*/
-contract IBancorConverter {
-    function getReturn(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount) public view returns (uint256);
-    function convert(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256);
-    function conversionWhitelist() public view returns (IWhitelist) {}
-    // deprecated, backward compatibility
-    function change(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256);
 }
 
 /*
@@ -1073,7 +1100,7 @@ contract BancorConverter is IBancorConverter, SmartTokenController, Managed, Con
         }
 
         // execute the conversion and pass on the ETH with the call
-        return bancorNetwork.convertForPrioritized.value(msg.value)(_path, _amount, _minReturn, msg.sender, _block, _v, _r, _s);
+        return bancorNetwork.convertForPrioritized2.value(msg.value)(_path, _amount, _minReturn, msg.sender, _block, _v, _r, _s);
     }
 
     // deprecated, backward compatibility
@@ -1105,20 +1132,6 @@ contract BancorConverter is IBancorConverter, SmartTokenController, Managed, Con
     function() payable public {
         quickConvert(quickBuyPath, msg.value, 1);
     }
-}
-
-/*
-    Bancor Converter Factory interface
-*/
-contract IBancorConverterFactory {
-    function createConverter(
-        ISmartToken _token,
-        IContractRegistry _registry,
-        uint32 _maxConversionFee,
-        IERC20Token _connectorToken,
-        uint32 _connectorWeight
-    )
-    public returns (address);
 }
 
 /*
