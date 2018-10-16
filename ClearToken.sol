@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ClearToken at 0x52442275f6cd49bd2ce9a920ea13e2618a19b071
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ClearToken at 0x410af23334e26aa13c1f3e630bae006bdd313264
 */
 pragma solidity ^0.4.11;
 library SafeMath {
@@ -286,7 +286,7 @@ contract ClearToken is StandardToken {
 
     mapping(address => bool) public whitelist;
 
-    address public reserves; //30%
+    address public reserves;
 
     address public stateControl;
 
@@ -310,7 +310,7 @@ contract ClearToken is StandardToken {
 
     uint256 public constant maxTotalSupply = 102400000000 * pointMultiplier; //102.4B tokens
 
-    uint256 public constant percentForSale = 30;
+    uint256 public constant percentForSale = 50;
 
     event Mint(address indexed to, uint256 amount);
     event MintFinished();
@@ -324,8 +324,9 @@ contract ClearToken is StandardToken {
     , address _whitelistControl
     , address _withdrawControl
     , address _tokenAssignmentControl
-    , address _reserves //30%
-    ) {
+    , address _reserves
+    ) public
+    {
         stateControl = _stateControl;
         whitelistControl = _whitelistControl;
         withdrawControl = _withdrawControl;
