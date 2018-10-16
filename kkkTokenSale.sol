@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KkkTokenSale at 0x980f4331c1d4188d4cf876bef10fe946de70478d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KkkTokenSale at 0xD040C29b8aF036a502ef012Cc49E37a160f251EC
 */
 // Copyright (C) 2017 DappHub, LLC
 
