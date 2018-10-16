@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PixelsMain at 0x551d599a55b9080601c8f911e2327403014ca1ed
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PixelsMain at 0x05e2d7e3af7df59232d20e916751b9f5b66093b7
 */
 pragma solidity ^0.4.11;
 
@@ -130,7 +130,7 @@ contract PixelsData is Ownable {
     
     ColorsMain colorsMain;
     
-    uint256 startingPriceWei = 1000000000000000;
+    uint256 startingPriceWei = 5000000000000000;
 }
 
 contract PixelsApi is PixelsData {
