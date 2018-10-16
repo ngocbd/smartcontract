@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthTranchePricing at 0x293993ac7b6f8502b383ed7a1b784f5a49695e18
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthTranchePricing at 0x62b0d1de606a34a6d2bee1493481b015391005f0
 */
 /**
  * Interface for defining crowdsale pricing.
