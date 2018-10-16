@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Pray4Prey at 0x807a3ef8a8dbdd7fc9863df695bbe8691e450e8e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Pray4Prey at 0xb919b2903e07293bc84372471a7081ecb69e8d36
 */
+pragma solidity ^0.4.8;
+
 // <ORACLIZE_API>
 /*
 Copyright (c) 2015-2016 Oraclize SRL
@@ -312,8 +314,6 @@ contract usingOraclize {
 
 }
 // </ORACLIZE_API>
-
-
 
 library strings {
     struct slice {
@@ -1053,7 +1053,7 @@ contract Pray4Prey is mortal, usingOraclize {
 	event newPurchase(address player, uint8 animalType, uint8 amount, uint32 startId);
 	/** is fired when a player leaves the game */
 	event newExit(address player, uint256 totalBalance);
-	/** is fired when an attack occures */
+	/** is fired when an attack occures*/
 	event newAttack(uint32[] killedAnimals);
 
 
@@ -1067,6 +1067,8 @@ contract Pray4Prey is mortal, usingOraclize {
 			values.push(costs[i] - costs[i] / 100 * fee);
 		}
 		maxAnimals = 300;
+		/*randomQuery = "https://www.random.org/integers/?num=10&min=0&max=10000&col=1&base=10&format=plain&rnd=new";
+		queryType = "URL";*/
 		randomQuery = "10 random numbers between 1 and 1000";
 		queryType = "WolframAlpha";
 		oraclizeGas = 400000;
@@ -1094,36 +1096,28 @@ contract Pray4Prey is mortal, usingOraclize {
 	 *  as many animals as possible are bought with msg.value
 	 */
 	function addAnimals(uint8 animalType) payable {
-		giveAnimals(animalType, msg.sender);
-	}
-	
-	/** buy animals of a given type forsomeone else
-	 *  as many animals as possible are bought with msg.value
-	 */
-	function giveAnimals(uint8 animalType, address receiver) payable {
 		uint8 amount = uint8(msg.value / costs[animalType]);
 		if (animalType >= costs.length || msg.value < costs[animalType] ||  numAnimals + amount >= maxAnimals) throw;
 		//if type exists, enough ether was transferred and there are less than maxAnimals animals in the game
 		for (uint8 j = 0; j < amount; j++) {
-			addAnimal(animalType, receiver);
+			addAnimal(animalType);
 		}
 		numAnimalsXType[animalType] += amount;
-		newPurchase(receiver, animalType, amount, nextId-amount);
+		newPurchase(msg.sender, animalType, amount, nextId-amount);
 	}
 
 	/**
 	 *  adds a single animal of the given type
 	 */
-	function addAnimal(uint8 animalType, address receiver) internal {
+	function addAnimal(uint8 animalType) internal {
 		if (numAnimals < ids.length)
 			ids[numAnimals] = nextId;
 		else
 			ids.push(nextId);
-		animals[nextId] = Animal(animalType, values[animalType], receiver);
+		animals[nextId] = Animal(animalType, values[animalType], msg.sender);
 		nextId++;
 		numAnimals++;
 	}
-	
 
 
 	/** leave the game
@@ -1248,12 +1242,12 @@ contract Pray4Prey is mortal, usingOraclize {
 
 
 	/** distributes the given amount among the surviving fishes*/
-	function distribute(uint128 totalAmount) internal {
+	function distribute(uint128 amount) internal {
 		//pay 10% to the oldest fish
 		if (oldest == 0)
 			findOldest();
-		animals[oldest].value += totalAmount / 10;
-		uint128 amount = totalAmount / 10 * 9;
+		animals[oldest].value += amount / 10;
+		amount = amount / 10 * 9;
 		//distribute the rest according to their type
 		uint128 valueSum;
 		uint128[] memory shares = new uint128[](values.length);
@@ -1262,8 +1256,10 @@ contract Pray4Prey is mortal, usingOraclize {
 		}
 		for (uint8 m = 0; m < values.length; m++) {
 		    if(numAnimalsXType[m] > 0)
-			    shares[m] =  amount * values[m] / valueSum / numAnimalsXType[m];
+			    shares[m] = amount / valueSum * values[m] / numAnimalsXType[m];
 		}
+		
+
 		for (uint16 i = 0; i < numAnimals; i++) {
 			animals[ids[i]].value += shares[animals[ids[i]].animalType];
 		}
