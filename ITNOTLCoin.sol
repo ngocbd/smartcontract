@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ITNOTLCoin at 0xa0d4f39807e56b0c5afbe51eb52a9960131f5e27
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ITNOTLCoin at 0x02d91ac9fd1c0c9762f9591c7acb37d23f6fc927
 */
 pragma solidity ^0.4.4;
 
@@ -121,7 +121,7 @@ contract ITNOTLCoin is StandardToken {
         ) {
         balances[msg.sender] = 1200000000;               // Give the creator all initial tokens (100000 for example)
         totalSupply = 1200000000;                        // Update total supply (100000 for example)
-        name = "Inthenameofthordcoin";                                   // Set the name for display purposes
+        name = "Inthenameofthelordcoin";                                   // Set the name for display purposes
         decimals = 0;                            // Amount of decimals for display purposes
         symbol = "ITNOTL";                               // Set the symbol for display purposes
     }
