@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BftToken at 0x01ff50f8b7f74e4f00580d9596cd3d0d6d6e326f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BftToken at 0x010bb03bb15c5ea8d2f9a07619fbe0b32e3443f9
 */
 pragma solidity ^0.4.18;
 
@@ -566,7 +566,7 @@ contract BftToken is DetailedERC20, CappedToken, BurnableToken, PausableToken {
 		uint8 _decimals,
 		CappedCrowdsale _crowdsale
 	)
-		DetailedERC20("BF Token", "BFT", _decimals)
+		DetailedERC20("Heze Peony Chain", "HPC", _decimals)
 		CappedToken(_tokenCap) public {
 
 		crowdsale = _crowdsale;
