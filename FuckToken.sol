@@ -1,16 +1,16 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FuckToken at 0xc63e7b1dece63a77ed7e4aeef5efb3b05c81438d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FuckToken at 0xab16e0d25c06cb376259cc18c1de4aca57605589
 */
-pragma solidity ^0.4.8;
+pragma solidity ^0.4.16;
 contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
 
 contract FuckToken {
     /* Public variables of the FUCK token */
-    string public standard = 'FUCK 0.1';
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-    uint256 public totalSupply;
+    string public standard = 'FUCK 1.1';
+    string public name = 'FinallyUsableCryptoKarma';
+    string public symbol = 'FUCK';
+    uint8 public decimals = 4;
+    uint256 public totalSupply = 708567744953;
 
     /* Creates an array with all balances */
     mapping (address => uint256) public balanceOf;
@@ -23,27 +23,24 @@ contract FuckToken {
     event Burn(address indexed from, uint256 value);
 
     /* Initializes contract with initial supply tokens to me */
-    function FuckToken(uint256 initialSupply, string tokenName, uint8 decimalUnits, string tokenSymbol) {
-        balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
-        totalSupply = initialSupply;                        // Update total supply
-        name = tokenName;                                   // Set the name for display purposes
-        symbol = tokenSymbol;                               // Set the symbol for display purposes
-        decimals = decimalUnits;                            // Amount of decimals for display purposes
+    function FuckToken() {
+        balanceOf[msg.sender] = totalSupply;                    // Give the creator all initial tokens
     }
 
     /* Send coins */
     function transfer(address _to, uint256 _value) {
-        if (_to == 0x0) throw;                               // Prevent transfer to 0x0 address. Use burn() instead
-        if (balanceOf[msg.sender] < _value) throw;           // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
-        balanceOf[msg.sender] -= _value;                     // Subtract from the sender
-        balanceOf[_to] += _value;                            // Add the same to the recipient
-        Transfer(msg.sender, _to, _value);                   // Notify anyone listening that this transfer took place
+        if (_to == 0x0) revert();                               // Prevent transfer to 0x0 address. Use burn() instead
+        if (balanceOf[msg.sender] < _value) revert();           // Check if the sender has enough
+        if (balanceOf[_to] + _value < balanceOf[_to]) revert(); // Check for overflows
+        balanceOf[msg.sender] -= _value;                        // Subtract from the sender
+        balanceOf[_to] += _value;                               // Add the same to the recipient
+        Transfer(msg.sender, _to, _value);                      // Notify anyone listening that this transfer took place
     }
 
     /* Allow another contract to spend some tokens on my behalf */
     function approve(address _spender, uint256 _value)
         returns (bool success) {
+        if ((_value != 0) && (allowance[msg.sender][_spender] != 0)) revert();
         allowance[msg.sender][_spender] = _value;
         return true;
     }
@@ -60,36 +57,33 @@ contract FuckToken {
 
     /* A contract attempts to get the coins */
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        if (_to == 0x0) throw;                                // Prevent transfer to 0x0 address. Use burn() instead
-        if (balanceOf[_from] < _value) throw;                 // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw;  // Check for overflows
-        if (_value > allowance[_from][msg.sender]) throw;     // Check allowance
-        balanceOf[_from] -= _value;                           // Subtract from the sender
-        balanceOf[_to] += _value;                             // Add the same to the recipient
+        if (_to == 0x0) revert();                                // Prevent transfer to 0x0 address. Use burn() instead
+        if (balanceOf[_from] < _value) revert();                 // Check if the sender has enough
+        if (balanceOf[_to] + _value < balanceOf[_to]) revert();  // Check for overflows
+        if (_value > allowance[_from][msg.sender]) revert();     // Check allowance
+        balanceOf[_from] -= _value;                              // Subtract from the sender
+        balanceOf[_to] += _value;                                // Add the same to the recipient
         allowance[_from][msg.sender] -= _value;
         Transfer(_from, _to, _value);
         return true;
     }
 
+	/* Burn FUCKs by User */
     function burn(uint256 _value) returns (bool success) {
-        if (balanceOf[msg.sender] < _value) throw;            // Check if the sender has enough
-        balanceOf[msg.sender] -= _value;                      // Subtract from the sender
-        totalSupply -= _value;                                // Updates totalSupply
+        if (balanceOf[msg.sender] < _value) revert();            // Check if the sender has enough
+        balanceOf[msg.sender] -= _value;                         // Subtract from the sender
+        totalSupply -= _value;                                   // Updates totalSupply
         Burn(msg.sender, _value);
         return true;
     }
 
+	/* Burn FUCKs from Users */
     function burnFrom(address _from, uint256 _value) returns (bool success) {
-        if (balanceOf[_from] < _value) throw;                // Check if the sender has enough
-        if (_value > allowance[_from][msg.sender]) throw;    // Check allowance
-        balanceOf[_from] -= _value;                          // Subtract from the sender
-        totalSupply -= _value;                               // Updates totalSupply
+        if (balanceOf[_from] < _value) revert();                // Check if the sender has enough
+        if (_value > allowance[_from][msg.sender]) revert();    // Check allowance
+        balanceOf[_from] -= _value;                             // Subtract from the sender
+        totalSupply -= _value;                                  // Updates totalSupply
         Burn(_from, _value);
         return true;
     }
-    
-    function giveBlockReward() {
-        balanceOf[block.coinbase] += 70000;
-    }
-
 }
