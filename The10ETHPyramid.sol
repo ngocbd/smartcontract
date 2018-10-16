@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract The10ETHPyramid at 0x4668cd871eba35997e1fbe66d0eddf6612d018ce
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract The10ETHPyramid at 0x80D9C4F6209044De069c545f68644419b520a02F
 */
 contract The10ETHPyramid {
 
@@ -29,15 +29,15 @@ contract The10ETHPyramid {
   }
   
   function enter() {
-    if (msg.value < 1 ether) {
+    if (msg.value < 10 ether) {
         msg.sender.send(msg.value);
         return;
     }
 	
 		uint amount;
-		if (msg.value > 1 ether) {
-			msg.sender.send(msg.value - 1 ether);	
-			amount = 1 ether;
+		if (msg.value > 10 ether) {
+			msg.sender.send(msg.value - 10 ether);	
+			amount = 10 ether;
     }
 		else {
 			amount = msg.value;
