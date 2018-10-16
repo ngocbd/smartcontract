@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WYPToken at 0xd92134cdabcc812c816c7318c1a2605ad72cc5bb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WYPToken at 0x78Dee7AEBc3E135a9f65d743a1D1a4767d5c0BE4
 */
 pragma solidity ^0.4.4;
 
@@ -119,11 +119,11 @@ contract WYPToken is StandardToken {
 
     function WYPToken(
         ) {
-        balances[msg.sender] = 300000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 300000000;                        // Update total supply (100000 for example)
-        name = "090128310";                                   // Set the name for display purposes
+        balances[msg.sender] = 10000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 10000000000;                        // Update total supply (100000 for example)
+        name = "The World Iot Token";                                   // Set the name for display purposes
         decimals = 0;                            // Amount of decimals for display purposes
-        symbol = "G2G";                               // Set the symbol for display purposes
+        symbol = "IOTC";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
