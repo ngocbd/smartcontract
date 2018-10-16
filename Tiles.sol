@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tiles at 0xe9db9cff901ab53e869b1f8c8cceef0be60947b3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tiles at 0x103992432927f7ed1a5b3dc0e34186f80b16d93c
 */
 pragma solidity ^0.4.13;
 
@@ -122,14 +122,12 @@ contract Tiles {
         }
     }
 
-    // todo: optimize this
     function refundTiles() private {
         Tile memory currTile;
         for (uint i = 0; i < SIDE_LENGTH; i++) {
             for (uint j = 0; j < SIDE_LENGTH; j++) {
                 currTile = tiles[i][j];
                 if (currTile.gameClaimed == currentGameNumber) {
-                    // could accumulate transactions and pay less gas
                     if (currTile.claimedBy.send(currentGameCost)) {
                         tiles[i][j] = Tile(0, 0x0);
                     }
@@ -141,7 +139,7 @@ contract Tiles {
     function refundWinnings() private {
         address currAddress;
         uint currAmount;
-        for (uint i = STARTING_GAME_NUMBER; i <= currentGameNumber; i++) {
+        for (uint i = STARTING_GAME_NUMBER; i < currentGameNumber; i++) {
             currAddress = gameToWinner[i];
             currAmount = pendingWithdrawals[currAddress];
             if (currAmount != 0) {
@@ -164,9 +162,10 @@ contract Tiles {
     }
 
     function updateGameCost(uint newGameCost) onlyOwner returns (bool) {
-        // todo: should we validate something here?
-        nextGameCost = newGameCost;
-        willChangeCost = true;
+        if (newGameCost > 0) {
+            nextGameCost = newGameCost;
+            willChangeCost = true;
+        }
     }
 
     function claimOwnersEarnings() onlyOwner {
