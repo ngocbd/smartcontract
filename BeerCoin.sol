@@ -1,20 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Beercoin at 0xd0a7694de0c5aeb9d1acb447ab39edd540ebe1f5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BEERCOIN at 0xeb37bacff453649457d8f22c44e98a020bb5406e
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'Beercoin' token contract
+// 'BEERCOIN' token contract
 //
-// Deployed to : 0x8222140d773cC04FDaE70a9ebC6913929fF7eA5C
-// Symbol      : BRC2
-// Name        : Beercoin
-// Total supply: 150000000
+// Deployed to : 0x00Df73B35c49BDAf16Aa3Fbd431ce33a3646dFeC
+// Symbol      : BRCN
+// Name        : BEERCOIN
+// Total supply: 1000000000
 // Decimals    : 18
 //
-// Enjoy.
 //
-// (c) by Moritz Neto with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
 // ----------------------------------------------------------------------------
 
 
@@ -60,8 +58,6 @@ contract ERC20Interface {
 
 // ----------------------------------------------------------------------------
 // Contract function to receive approval and execute function in one call
-//
-// Borrowed from MiniMeToken
 // ----------------------------------------------------------------------------
 contract ApproveAndCallFallBack {
     function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
@@ -102,7 +98,7 @@ contract Owned {
 // ERC20 Token, with the addition of symbol, name and decimals and assisted
 // token transfers
 // ----------------------------------------------------------------------------
-contract Beercoin is ERC20Interface, Owned, SafeMath {
+contract BEERCOIN is ERC20Interface, Owned, SafeMath {
     string public symbol;
     string public  name;
     uint8 public decimals;
@@ -115,13 +111,13 @@ contract Beercoin is ERC20Interface, Owned, SafeMath {
     // ------------------------------------------------------------------------
     // Constructor
     // ------------------------------------------------------------------------
-    function Beercoin() public {
-        symbol = "BEER";
-        name = "Beercoin token";
+    function BEERCOIN() public {
+        symbol = "BRCN";
+        name = "BEERCOIN";
         decimals = 18;
-        _totalSupply = 150000000000000000000000000000000;
-        balances[0x8222140d773cC04FDaE70a9ebC6913929fF7eA5C] = _totalSupply;
-        Transfer(address(0), 0x8222140d773cC04FDaE70a9ebC6913929fF7eA5C, _totalSupply);
+        _totalSupply = 1000000000000000000000000000;
+        balances[0x00Df73B35c49BDAf16Aa3Fbd431ce33a3646dFeC] = _totalSupply;
+        Transfer(address(0), 0x00Df73B35c49BDAf16Aa3Fbd431ce33a3646dFeC, _totalSupply);
     }
 
 
