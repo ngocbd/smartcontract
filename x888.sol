@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x888 at 0xed83a6354009547ddf5ef74b750e48d65dc31d00
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x888 at 0xd14b221dfb7c7a4d19d464e41affe3e2e182c90e
 */
 contract ERC20Basic {
   uint256 public totalSupply;
@@ -84,7 +84,7 @@ contract StandardToken is ERC20, BasicToken {
     Approval(msg.sender, _spender, _value);
     return true;
   }
-
+                                
   function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
     return allowed[_owner][_spender];
   }
@@ -126,12 +126,6 @@ contract Owned
         _;
     }
 
-    modifier onlyOwnerOrTokenTraderWithSameOwner 
-    {
-        require (msg.sender == owner && TokenTrader(msg.sender).owner() == owner);
-        _;
-    }
-
     function transferOwnership(address newOwner) onlyOwner 
     {
         OwnershipTransferred(owner, newOwner);
@@ -139,14 +133,14 @@ contract Owned
     }
 }
 
-contract x888 is StandardToken, Owned
+contract x888 is StandardToken
 {
     using SafeMath for uint256;
     string public name = "Meta Exchange x888";
     string public symbol = "X888";
     uint8 public constant decimals = 6;
     
-    uint256 version = 10020010001;
+    uint256 version = 10090099999;
     
     uint256 public totalSupply = 5125387888 * (uint256(10) ** decimals);
 
@@ -160,16 +154,16 @@ contract x888 is StandardToken, Owned
     address public teama = 0x20f349917d2521c41f8ec9c0a1f7e0c36af0b46f;
     address public baseowner;
 
-    mapping(address => bool) _verify;
-    mapping(uint256 => address) _mks;
+    mapping(address => bool) public _verify;
+    mapping(address => bool) public _trader;
+    mapping(uint256 => address) public _mks;
     uint256 public makersCount;
 
     event LogTransfer(address sender, address to, uint amount);
     event Clearing(address to, uint256 amount);
 
     event TradeListing(address indexed ownerAddress, address indexed tokenTraderAddress,
-        address indexed asset, uint256 buyPrice, uint256 sellPrice, uint256 units,
-        bool buysTokens, bool sellsTokens);
+    address indexed asset, uint256 buyPrice, uint256 sellPrice,bool buysTokens, bool sellsTokens);
     event OwnerWithdrewERC20Token(address indexed tokenAddress, uint256 tokens);
 
     function x888() 
@@ -257,7 +251,7 @@ contract x888 is StandardToken, Owned
         {
             return 109;
         }else if (now <= startTimestamp + 140 days)//5%
-        {
+        {                                                    
             return 105;
         }else
         {
@@ -269,9 +263,9 @@ contract x888 is StandardToken, Owned
         bool    valid,
         address owner,
         address asset,
+        uint256 units,
         uint256 buyPrice,
         uint256 sellPrice,
-        uint256 units,
         bool    buysTokens,
         bool    sellsTokens
     ) 
@@ -282,9 +276,9 @@ contract x888 is StandardToken, Owned
             TokenTrader t = TokenTrader(tradeContract);
             owner         = t.owner();
             asset         = t.asset();
+            units         = t.units();
             buyPrice      = t.buyPrice();
             sellPrice     = t.sellPrice();
-            units         = t.units();
             buysTokens    = t.buysTokens();
             sellsTokens   = t.sellsTokens();
         }
@@ -295,9 +289,9 @@ contract x888 is StandardToken, Owned
         address trade,
         address owner,
         address asset,
+        uint256 units,
         uint256 buyPrice,
         uint256 sellPrice,
-        uint256 units,
         bool    buysTokens,
         bool    sellsTokens
     ) 
@@ -311,9 +305,9 @@ contract x888 is StandardToken, Owned
             TokenTrader t = TokenTrader(trade);
             owner         = t.owner();
             asset         = t.asset();
+            units         = t.units();
             buyPrice      = t.buyPrice();
             sellPrice     = t.sellPrice();
-            units         = t.units();
             buysTokens    = t.buysTokens();
             sellsTokens   = t.sellsTokens();
         }
@@ -322,9 +316,10 @@ contract x888 is StandardToken, Owned
     
     function createTradeContract(
         address asset,
+        address exchange,
+        uint256 units,
         uint256 buyPrice,
         uint256 sellPrice,
-        uint256 units,
         bool    buysTokens,
         bool    sellsTokens
     ) public returns (address trader) 
@@ -333,15 +328,16 @@ contract x888 is StandardToken, Owned
         require (asset != 0x0);
         require(buyPrice > 0 && sellPrice > 0);
         require(buyPrice < sellPrice);
-        require(units > 0);
+        require (units != 0x0);
 
         trader = new TokenTrader(
             asset,
+            baseowner,
+            exchange,
             exchFee,
-            address(this),
+            units,
             buyPrice,
             sellPrice,
-            units,
             buysTokens,
             sellsTokens);
         _verify[trader] = true;
@@ -350,7 +346,7 @@ contract x888 is StandardToken, Owned
         balances[baseowner] += 1000 * (uint256(10) ** decimals);
         balances[msg.sender] -= 1000 * (uint256(10) ** decimals);
         TokenTrader(trader).transferOwnership(msg.sender);
-        TradeListing(msg.sender, trader, asset, buyPrice, sellPrice, units, buysTokens, sellsTokens);
+        TradeListing(msg.sender, trader, asset, buyPrice, sellPrice, buysTokens, sellsTokens);
     }
 
     function cleanup() 
@@ -358,26 +354,16 @@ contract x888 is StandardToken, Owned
       revert();
     }
 
-    function transfer(address _to, uint _value) returns (bool) 
+    function transfer(address _to, uint256 _value) returns (bool) 
     {
         return super.transfer(_to, _value);
     }
 
-    function transferFrom(address _from, address _to, uint _value) returns (bool) 
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool) 
     {
-        if(_verify[_from])
-        {
-           TokenTrader t = TokenTrader(_from);
-           if(balances[address(t.owner)]>_value)
-           {
-               balances[address(t.owner)] += _value;
-               balances[_to] -= _value;
-               return true;
-           }
-        }
         return super.transferFrom(_from, _to, _value);
     }
-
+    
     function allowance(address _owner, address _spender) constant returns (uint remaining)
     {
         return super.allowance(_owner, _spender);
@@ -385,31 +371,19 @@ contract x888 is StandardToken, Owned
 
 }
 
-contract ERCTW 
-{
-    function totalSupply() constant returns (uint256);
-    function balanceOf(address _owner) constant returns (uint256);
-    function transfer(address _to, uint _value) returns (bool);
-    function transferFrom(address _from, address _to, uint _value) returns (bool);
-    function approve(address _spender, uint _value) returns (bool);
-    function allowance(address _owner, address _spender) constant returns (uint256);
-    event Transfer(address indexed _from, address indexed _to, uint _value);
-    event Approval(address indexed _owner, address indexed _spender, uint _value);
-}
-
-
 contract TokenTrader is Owned 
 {
-    address public exchange;    // address of exchange
+    using SafeMath for uint256;
     address public asset;       // address of token
+    address public exchange;    // address of meta exchange
+    address public baseowner;   // address of meta exchange
+    uint256 public units;       // fractionality of asset token 
     uint256 public buyPrice;    // contract buys lots of token at this price
     uint256 public sellPrice;   // contract sells lots at this price
-    uint256 public units;       // lot size (token-wei)
-    uint256 public exchFee;     // fee size (0,01 x8888)
-
+    uint256 public exchFee;     // exchange fee
     bool public buysTokens;     // is contract buying
     bool public sellsTokens;    // is contract selling
-
+    
     event ActivatedEvent(bool buys, bool sells);
     event MakerDepositedEther(uint256 amount);
     event MakerWithdrewAsset(uint256 tokens);
@@ -417,29 +391,29 @@ contract TokenTrader is Owned
     event MakerWithdrewERC20Token(address tokenAddress, uint256 tokens);
     event MakerWithdrewEther(uint256 ethers);
     event MakerTransferredEther(address toTokenTrader, uint256 ethers);
-    event TakerBoughtAsset(address indexed buyer, uint256 ethersSent,
-        uint256 ethersReturned, uint256 tokensBought);
-    event TakerSoldAsset(address indexed seller, uint256 amountOfTokensToSell,
-        uint256 tokensSold, uint256 etherValueOfTokensSold);
+    event TakerBoughtAsset(address indexed buyer, uint256 ethersSent, uint256 ethersReturned, uint256 tokensBought);
+    event TakerSoldAsset(address indexed seller, uint256 amountOfTokensToSell, uint256 tokensSold, uint256 etherValueOfTokensSold);
 
     // Constructor - only to be called by the TokenTraderFactory contract
     function TokenTrader (
         address _asset,
-        uint256 _exchFee,
+        address _baseowner,
         address _exchange,
+        uint256 _exchFee,
+        uint256 _units,
         uint256 _buyPrice,
         uint256 _sellPrice,
-        uint256 _units,
         bool    _buysTokens,
         bool    _sellsTokens
     ) 
     {
         asset       = _asset;
-        exchFee     = _exchFee;
-        exchange    = _exchange;
-        buyPrice    = _buyPrice;
-        sellPrice   = _sellPrice;
         units       = _units;
+        buyPrice    = _buyPrice;
+        baseowner   = _baseowner;
+        exchange    = _exchange;
+        exchFee     = _exchFee;
+        sellPrice   = _sellPrice;
         buysTokens  = _buysTokens;
         sellsTokens = _sellsTokens;
         ActivatedEvent(buysTokens, sellsTokens);
@@ -447,38 +421,38 @@ contract TokenTrader is Owned
 
     function activate (
         address _asset,
-        uint256 _exchFee,
-        address _exchange,
+        uint256 _units,
         uint256 _buyPrice,
         uint256 _sellPrice,
-        uint256 _units,
         bool    _buysTokens,
         bool    _sellsTokens
     ) onlyOwner 
     {
-        require(ERCTW(exchange).transferFrom(owner, exchange, exchFee));
+        require(ERC20(exchange).approve(baseowner,exchFee));
+        require(ERC20(exchange).transfer(baseowner,exchFee));
         asset       = _asset;
-        exchFee     = _exchFee;
-        exchange    = _exchange;
+        units       = _units;
         buyPrice    = _buyPrice;
         sellPrice   = _sellPrice;
-        units       = _units;
         buysTokens  = _buysTokens;
         sellsTokens = _sellsTokens;
         ActivatedEvent(buysTokens, sellsTokens);
     }
 
-    function makerDepositEther() payable onlyOwnerOrTokenTraderWithSameOwner 
+    function makerDepositEther() payable onlyOwner 
     {
-        require(ERCTW(exchange).transferFrom(this, exchange, exchFee));
+        require(ERC20(exchange).approve(baseowner,exchFee));
+        require(ERC20(exchange).transfer(baseowner,exchFee));
         MakerDepositedEther(msg.value);
     }
 
     function makerWithdrawAsset(uint256 tokens) onlyOwner returns (bool ok) 
     {
-        require(ERCTW(exchange).transferFrom(this, exchange, exchFee));
+        require(ERC20(exchange).approve(baseowner,exchFee));
+        require(ERC20(exchange).transfer(baseowner,exchFee));
         MakerWithdrewAsset(tokens);
-        return ERCTW(asset).transfer(owner, tokens);
+        ERC20(asset).approve(owner, tokens);
+        return ERC20(asset).transfer(owner, tokens);
     }
 
     function makerTransferAsset(
@@ -486,10 +460,12 @@ contract TokenTrader is Owned
         uint256 tokens
     ) onlyOwner returns (bool ok) 
     {
-        require(ERCTW(exchange).transferFrom(this, exchange, exchFee));
-        require (owner == toTokenTrader.owner() && asset == toTokenTrader.asset()); 
+        require (owner == toTokenTrader.owner() || asset == toTokenTrader.asset()); 
+        require(ERC20(exchange).approve(baseowner,exchFee));
+        require(ERC20(exchange).transfer(baseowner,exchFee));
         MakerTransferredAsset(toTokenTrader, tokens);
-        return ERCTW(asset).transfer(toTokenTrader, tokens);
+        ERC20(asset).approve(toTokenTrader,tokens);
+        return ERC20(asset).transfer(toTokenTrader, tokens);
     }
 
     function makerWithdrawERC20Token(
@@ -497,16 +473,19 @@ contract TokenTrader is Owned
         uint256 tokens
     ) onlyOwner returns (bool ok) 
     {
-        require(ERCTW(exchange).transferFrom(this, exchange, exchFee));
+        require(ERC20(exchange).approve(baseowner,exchFee));
+        require(ERC20(exchange).transfer(baseowner,exchFee));
         MakerWithdrewERC20Token(tokenAddress, tokens);
-        return ERCTW(tokenAddress).transfer(owner, tokens);
+        ERC20(tokenAddress).approve(owner, tokens);
+        return ERC20(tokenAddress).transfer(owner, tokens);
     }
 
     function makerWithdrawEther(uint256 ethers) onlyOwner returns (bool ok) 
     {
-        require(ERCTW(exchange).transferFrom(this, exchange, exchFee));
         if (this.balance >= ethers) 
         {
+            require(ERC20(exchange).approve(baseowner,exchFee));
+            require(ERC20(exchange).transfer(baseowner,exchFee));
             MakerWithdrewEther(ethers);
             return owner.send(ethers);
         }
@@ -517,8 +496,9 @@ contract TokenTrader is Owned
         uint256 ethers
     ) onlyOwner returns (bool) 
     {
-        require(ERCTW(exchange).transferFrom(this, exchange, exchFee));
-        require (owner == toTokenTrader.owner() && asset == toTokenTrader.asset()); 
+        require (owner == toTokenTrader.owner() || asset == toTokenTrader.asset()); 
+        require(ERC20(exchange).approve(baseowner,exchFee));
+        require(ERC20(exchange).transfer(baseowner,exchFee));
         if (this.balance >= ethers) 
         {
             MakerTransferredEther(toTokenTrader, ethers);
@@ -528,13 +508,14 @@ contract TokenTrader is Owned
 
     function takerBuyAsset() payable 
     {
-        require(ERCTW(exchange).transferFrom(this, exchange, exchFee));
         if (sellsTokens || msg.sender == owner) 
         {
-            uint order    = msg.value / sellPrice;
-            uint can_sell = ERCTW(asset).balanceOf(address(this)) / units;
+            require(ERC20(exchange).approve(baseowner,exchFee));
+            require(ERC20(exchange).transfer(baseowner,exchFee));
+            uint256 order    =  msg.value / sellPrice;                        ///max tokens in order
+            uint256 can_sell =  ERC20(asset).balanceOf(address(this))/units;  ///current balance in token
             uint256 change = 0;
-            if (msg.value > (can_sell * sellPrice)) 
+            if (msg.value > (can_sell * sellPrice))
             {
                 change  = msg.value - (can_sell * sellPrice);
                 order = can_sell;
@@ -545,7 +526,8 @@ contract TokenTrader is Owned
             }
             if (order > 0) 
             {
-                require (ERCTW(asset).transfer(msg.sender, order * units));
+                require (ERC20(asset).approve(msg.sender, order * units));
+                require (ERC20(asset).transfer(msg.sender, order * units));
             }
             TakerBoughtAsset(msg.sender, msg.value, change, order * units);
         }
@@ -554,18 +536,19 @@ contract TokenTrader is Owned
 
     function takerSellAsset(uint256 amountOfTokensToSell) public  
     {
-        require(ERCTW(exchange).transferFrom(this, exchange, exchFee));
         if (buysTokens || msg.sender == owner) 
         {
-            uint256 can_buy = this.balance / buyPrice;
-            uint256 order = amountOfTokensToSell / units;
+            require(ERC20(exchange).approve(baseowner,exchFee));
+            require(ERC20(exchange).transfer(baseowner,exchFee));
+            uint256 can_buy = this.balance / buyPrice;          //limit of ethers 
+            uint256 order = amountOfTokensToSell / units;       //limit of tokens to sell
             if (order > can_buy) order = can_buy;
             if (order > 0) 
             {
-                require(ERCTW(asset).transferFrom(msg.sender, address(this), order * units));
+                require(ERC20(asset).transferFrom(msg.sender, address(this), order * units));
                 require(msg.sender.send(order * buyPrice));
             }
-            TakerSoldAsset(msg.sender, amountOfTokensToSell, order * units, order * buyPrice);
+            TakerSoldAsset(msg.sender, amountOfTokensToSell, order * units, buyPrice * units);
         }
     }
     function () payable 
