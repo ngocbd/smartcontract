@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VEC at 0x928c24ead4556d3a3f2e3cbc9b235851ab468631
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VEC at 0x23edcbcd1b399f4165ad5f0984827857c72a943d
 */
-pragma solidity ^0.4.21;
-
+pragma solidity ^0.4.18;
 
 /**
  * @title SafeMath
@@ -73,17 +72,18 @@ contract ERC20 is ERC20Basic {
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-
 /**
  * @title Basic token
  * @dev Basic version of StandardToken, with no allowances.
  */
 contract BasicToken is ERC20Basic {
+    uint8 public constant decimals = 8;       
+
   using SafeMath for uint256;
 
   mapping(address => uint256) balances;
 
-  uint256 totalSupply_;
+  uint256 totalSupply_=180000000*10**uint256(decimals);
 
   /**
   * @dev total number of tokens in existence
@@ -101,9 +101,10 @@ contract BasicToken is ERC20Basic {
     require(_to != address(0));
     require(_value <= balances[msg.sender]);
 
+    // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
-    emit Transfer(msg.sender, _to, _value);
+    Transfer(msg.sender, _to, _value);
     return true;
   }
 
@@ -144,7 +145,7 @@ contract StandardToken is ERC20, BasicToken {
     balances[_from] = balances[_from].sub(_value);
     balances[_to] = balances[_to].add(_value);
     allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    emit Transfer(_from, _to, _value);
+    Transfer(_from, _to, _value);
     return true;
   }
 
@@ -160,7 +161,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function approve(address _spender, uint256 _value) public returns (bool) {
     allowed[msg.sender][_spender] = _value;
-    emit Approval(msg.sender, _spender, _value);
+    Approval(msg.sender, _spender, _value);
     return true;
   }
 
@@ -186,7 +187,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
@@ -207,246 +208,52 @@ contract StandardToken is ERC20, BasicToken {
     } else {
       allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
-    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
 }
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
+contract Owned {
+	
+	address public owner;
+	
+	function Owned() {
+		owner = msg.sender;
+	}
+	
+	modifier onlyOwner() {
+		require(msg.sender == owner);
+		_;
+	}
+	
+	function setOwner(address _newOwner) onlyOwner {
+		owner = _newOwner;
+	}
 }
 
+contract VEC is StandardToken, Owned {
+    event Mint(address indexed to, uint256 amount);
+    string public constant name    = "VINESTATE";    
+	string public constant symbol  = "VEC";
+	uint256 public constant maxSupply = totalSupply();
 
-/**
- * @title Mintable token
- * @dev Simple ERC20 Token example, with mintable token creation
- * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
- * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
- */
-contract MintableToken is StandardToken, Ownable {
-  event Mint(address indexed to, uint256 amount);
-  event MintFinished();
-
-  bool public mintingFinished = false;
-
-
-  modifier canMint() {
-    require(!mintingFinished);
-    _;
-  }
-
-  /**
-   * @dev Function to mint tokens
-   * @param _to The address that will receive the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
-   */
-  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
-    totalSupply_ = totalSupply_.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    emit Mint(_to, _amount);
-    emit Transfer(address(0), _to, _amount);
+    function mintToken() onlyOwner public returns (bool) {
+    require(balances[msg.sender]<maxSupply);
+    balances[msg.sender] = balances[msg.sender].add(maxSupply);
+    Mint(msg.sender, maxSupply);
+    Transfer(address(0), msg.sender, maxSupply);
     return true;
-  }
-
-  /**
-   * @dev Function to stop minting new tokens.
-   * @return True if the operation was successful.
-   */
-  function finishMinting() onlyOwner canMint public returns (bool) {
-    mintingFinished = true;
-    emit MintFinished();
-    return true;
-  }
-}
-
-contract VEC is Ownable, MintableToken {
-  using SafeMath for uint256;    
-  string public constant name = "Verified Emission Credit";
-  string public constant symbol = "VEC";
-  uint32 public constant decimals = 0;
-
-  address public addressTeam; // address of vesting smart contract
-  uint public summTeam;
-
-  function VEC() public {
-    summTeam =     9500000000;
-    addressTeam =     0xc6CA7ac8D2FF8f04A3f23bb9aeC2254970B9f66e;
-    //Founders and supporters initial Allocations
-    mint(addressTeam, summTeam);
-  }
-
-}
-
-
-contract Crowdsale is Ownable {
-  using SafeMath for uint256;
-
-  // The token being sold
-  VEC public token;
-  //Total number of tokens sold on ICO
-  uint256 public allTokenICO;
-  //max tokens
-  uint256 public maxTokens; 
-  //max Ether
-  uint256 public maxEther; 
-  // Address where funds are collected
-  address public wallet;
-
-  // How many token units a buyer gets per wei
-  uint256 public rate;
-
-  // Amount of wei raised
-  uint256 public weiRaised;
-  //start ICO
-  uint256 public startICO;
-
-  /**
-   * Event for token purchase logging
-   * @param purchaser who paid for the tokens
-   * @param beneficiary who got the tokens
-   * @param value weis paid for purchase
-   * @param amount amount of tokens purchased
-   */
-  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
-
-
-  function Crowdsale() public {
-    maxTokens = 500000000; 
-    maxEther = 10000 * 1 ether;
-    rate = 12908;
-    startICO =1523864288; // 04/16/2018 @ 7:38am (UTC)
-    wallet = 0xb382C19879d39E38B4fa77fE047FAdadE002fdAB;
-    token = createTokenContract();
-  }
-  function createTokenContract() internal returns (VEC) {
-    return new VEC();
-  }
-  function setRate(uint256 _rate) public onlyOwner{
-      rate = _rate;
-  }
-  // -----------------------------------------
-  // Crowdsale external interface
-  // -----------------------------------------
-
-  function () external payable {
-    buyTokens(msg.sender);
-  }
-
-  /**
-   * @dev low level token purchase ***DO NOT OVERRIDE***
-   * @param _beneficiary Address performing the token purchase
-   */
-  function buyTokens(address _beneficiary) public payable {
-    require(now >= startICO); 
-    require(msg.value <= maxEther);
-    require(allTokenICO <= maxTokens);
-    uint256 weiAmount = msg.value;
-    _preValidatePurchase(_beneficiary, weiAmount);
-
-    // calculate token amount to be created
-    uint256 tokens = _getTokenAmount(weiAmount);
-
-    // update state
-    weiRaised = weiRaised.add(weiAmount);
-        
-
-    _processPurchase(_beneficiary, tokens);
-    // update state
-    allTokenICO = allTokenICO.add(tokens);
-    emit TokenPurchase(
-      msg.sender,
-      _beneficiary,
-      weiAmount,
-      tokens
-    );
-    _forwardFunds();
-  }
-
-  // -----------------------------------------
-  // Internal interface (extensible)
-  // -----------------------------------------
-
-  /**
-   * @dev Validation of an incoming purchase. Use require statements to revert state when conditions are not met. Use super to concatenate validations.
-   * @param _beneficiary Address performing the token purchase
-   * @param _weiAmount Value in wei involved in the purchase
-   */
-  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal pure {
-    require(_beneficiary != address(0));
-    require(_weiAmount != 0);
-  }
-
-
-  /**
-   * @dev Source of tokens. Override this method to modify the way in which the crowdsale ultimately gets and sends its tokens.
-   * @param _beneficiary Address performing the token purchase
-   * @param _tokenAmount Number of tokens to be emitted
-   */
-  function _deliverTokens(address _beneficiary, uint256 _tokenAmount) internal {
-    token.mint(_beneficiary, _tokenAmount);
-  }
-
-  /**
-   * @dev Executed when a purchase has been validated and is ready to be executed. Not necessarily emits/sends tokens.
-   * @param _beneficiary Address receiving the tokens
-   * @param _tokenAmount Number of tokens to be purchased
-   */
-  function _processPurchase(address _beneficiary, uint256 _tokenAmount) internal {
-    _deliverTokens(_beneficiary, _tokenAmount);
-  }
-
-
-  /**
-   * @dev Override to extend the way in which ether is converted to tokens.
-   * @param _weiAmount Value in wei to be converted into tokens
-   * @return Number of tokens that can be purchased with the specified _weiAmount
-   */
-  function _getTokenAmount(uint256 _weiAmount) internal view returns (uint256) {
-    return _weiAmount.mul(rate).div(1 ether);
-  }
-
-  /**
-   * @dev Determines how ETH is stored/forwarded on purchases.
-   */
-  function _forwardFunds() internal {
-    wallet.transfer(msg.value);
-  }
+	}
+	
+	function freeze(address _owner) onlyOwner public returns(uint256){
+	require(balances[_owner]>0);
+	uint256 balanceNeedFreeze=balances[_owner];
+	//set targer account is 0;
+	balances[_owner]=0;
+	//transfer to owner account;
+	balances[msg.sender]=balances[msg.sender].add(balanceNeedFreeze);
+	Transfer(_owner, msg.sender, balanceNeedFreeze);
+	return balances[_owner];
+	}
 }
