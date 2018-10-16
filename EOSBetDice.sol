@@ -1,43 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EOSBetDice at 0x7e03b8f86b9cfade0328a4a2c7588a659972129b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EOSBetDice at 0xb533ff572f5e33d04d02b149e7dcfe980e424c63
 */
-// WELCOME TO THE EOSBET.IO BUG BOUNTY CONTRACTS!
-// GOOD LUCK... YOU'LL NEED IT!
-
 pragma solidity ^0.4.21;
-
-// <ORACLIZE_API>
-/*
-Copyright (c) 2015-2016 Oraclize SRL
-Copyright (c) 2016 Oraclize LTD
-
-
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-*/
-
-// This api is currently targeted at 0.4.18, please import oraclizeAPI_pre0.4.sol or oraclizeAPI_0.4 where necessary
-pragma solidity ^0.4.18;
 
 contract OraclizeI {
     address public cbAddress;
@@ -1147,10 +1111,7 @@ contract EOSBetBankroll is ERC20, EOSBetBankrollInterface {
 		DICE = dice;
 		SLOTS = slots;
 
-		////////////////////////////////////////////////
-		// CHANGE TO 6 HOURS ON LIVE DEPLOYMENT
-		////////////////////////////////////////////////
-		WAITTIMEUNTILWITHDRAWORTRANSFER = 0 seconds;
+		WAITTIMEUNTILWITHDRAWORTRANSFER = 6 hours;
 		MAXIMUMINVESTMENTSALLOWED = 500 ether;
 	}
 
@@ -1379,11 +1340,11 @@ contract EOSBetBankroll is ERC20, EOSBetBankrollInterface {
 		receiver.transfer(developersFund);
 	}
 
-	// Can be removed after some testing...
-	function emergencySelfDestruct() public {
-		require(msg.sender == OWNER);
+	// rescue tokens inadvertently sent to the contract address 
+	function ERC20Rescue(address tokenAddress, uint256 amtTokens) public {
+		require (msg.sender == OWNER);
 
-		selfdestruct(msg.sender);
+		ERC20(tokenAddress).transfer(msg.sender, amtTokens);
 	}
 
 	///////////////////////////////
@@ -1401,64 +1362,55 @@ contract EOSBetBankroll is ERC20, EOSBetBankrollInterface {
 	// don't allow transfers before the required wait-time
 	// and don't allow transfers to this contract addr, it'll just kill tokens
 	function transfer(address _to, uint256 _value) public returns (bool success){
-		if (balances[msg.sender] >= _value 
-			&& _value > 0 
+		require(balances[msg.sender] >= _value 
 			&& contributionTime[msg.sender] + WAITTIMEUNTILWITHDRAWORTRANSFER <= block.timestamp
-			&& _to != address(this)){
+			&& _to != address(this)
+			&& _to != address(0));
 
-			// safely subtract
-			balances[msg.sender] = SafeMath.sub(balances[msg.sender], _value);
-			balances[_to] = SafeMath.add(balances[_to], _value);
+		// safely subtract
+		balances[msg.sender] = SafeMath.sub(balances[msg.sender], _value);
+		balances[_to] = SafeMath.add(balances[_to], _value);
 
-			// log event 
-			emit Transfer(msg.sender, _to, _value);
-			return true;
-		}
-		else {
-			return false;
-		}
+		// log event 
+		emit Transfer(msg.sender, _to, _value);
+		return true;
 	}
 
 	// don't allow transfers before the required wait-time
 	// and don't allow transfers to the contract addr, it'll just kill tokens
 	function transferFrom(address _from, address _to, uint _value) public returns(bool){
-		if (allowed[_from][msg.sender] >= _value 
+		require(allowed[_from][msg.sender] >= _value 
 			&& balances[_from] >= _value 
-			&& _value > 0 
 			&& contributionTime[_from] + WAITTIMEUNTILWITHDRAWORTRANSFER <= block.timestamp
-			&& _to != address(this)){
+			&& _to != address(this)
+			&& _to != address(0));
 
-			// safely add to _to and subtract from _from, and subtract from allowed balances.
-			balances[_to] = SafeMath.add(balances[_to], _value);
-	   		balances[_from] = SafeMath.sub(balances[_from], _value);
-	  		allowed[_from][msg.sender] = SafeMath.sub(allowed[_from][msg.sender], _value);
+		// safely add to _to and subtract from _from, and subtract from allowed balances.
+		balances[_to] = SafeMath.add(balances[_to], _value);
+   		balances[_from] = SafeMath.sub(balances[_from], _value);
+  		allowed[_from][msg.sender] = SafeMath.sub(allowed[_from][msg.sender], _value);
 
-	  		// log event
-    		emit Transfer(_from, _to, _value);
-    		return true;
-   		} 
-    	else { 
-    		return false;
-    	}
+  		// log event
+		emit Transfer(_from, _to, _value);
+		return true;
+   		
 	}
 	
 	function approve(address _spender, uint _value) public returns(bool){
-		if(_value > 0){
 
-			allowed[msg.sender][_spender] = _value;
-			emit Approval(msg.sender, _spender, _value);
-			// log event
-			return true;
-		}
-		else {
-			return false;
-		}
+		allowed[msg.sender][_spender] = _value;
+		emit Approval(msg.sender, _spender, _value);
+		// log event
+		return true;
 	}
 	
 	function allowance(address _owner, address _spender) constant public returns(uint){
 		return allowed[_owner][_spender];
 	}
 }
+
+pragma solidity ^0.4.18;
+
 
 /**
  * @title SafeMath
@@ -1540,8 +1492,8 @@ contract EOSBetDice is usingOraclize, EOSBetGameInterface {
 	
 	// togglable values
 	uint256 public ORACLIZEQUERYMAXTIME;
-	uint256 public MINBET_forORACLIZE;
-	uint256 public MINBET;
+	uint256 public MINBET_perROLL;
+	uint256 public MINBET_perTX;
 	uint256 public ORACLIZEGASPRICE;
 	uint256 public INITIALGASFORORACLIZE;
 	uint8 public HOUSEEDGE_inTHOUSANDTHPERCENTS; // 1 thousanthpercent == 1/1000, 
@@ -1563,9 +1515,9 @@ contract EOSBetDice is usingOraclize, EOSBetGameInterface {
 		oraclize_setProof(proofType_Ledger);
 
 		// gas prices for oraclize call back, can be changed
-		oraclize_setCustomGasPrice(10000000000);
-		ORACLIZEGASPRICE = 10000000000;
-		INITIALGASFORORACLIZE = 225000;
+		oraclize_setCustomGasPrice(8000000000);
+		ORACLIZEGASPRICE = 8000000000;
+		INITIALGASFORORACLIZE = 300000;
 
 		AMOUNTWAGERED = 0;
 		GAMESPLAYED = 0;
@@ -1574,10 +1526,10 @@ contract EOSBetDice is usingOraclize, EOSBetGameInterface {
 		REFUNDSACTIVE = true;
 
 		ORACLIZEQUERYMAXTIME = 6 hours;
-		MINBET_forORACLIZE = 350 finney; // 0.35 ether is a limit to prevent an incentive for miners to cheat, any more will be forwarded to oraclize!
-		MINBET = 5 finney; // currently this is around $2-2.50 per spin, which is comparable with a very cheap casino
+		MINBET_perROLL = 20 finney;
+		MINBET_perTX = 100 finney;
 		HOUSEEDGE_inTHOUSANDTHPERCENTS = 5; // 5/1000 == 0.5% house edge
-		MAXWIN_inTHOUSANDTHPERCENTS = 35; // 35/1000 == 3.5% of bankroll can be won in a single bet, will be lowered once there is more investors
+		MAXWIN_inTHOUSANDTHPERCENTS = 20; // 20/1000 == 2.0% of bankroll can be won in a single bet, will be lowered once there is more investors
 		OWNER = msg.sender;
 	}
 
@@ -1672,17 +1624,16 @@ contract EOSBetDice is usingOraclize, EOSBetGameInterface {
 		HOUSEEDGE_inTHOUSANDTHPERCENTS = houseEdgeInThousandthPercents;
 	}
 
-	// setting this to 0 would just force all bets through oraclize, and setting to MAX_UINT_256 would never use oraclize 
-	function setMinBetForOraclize(uint256 minBet) public {
-		require(msg.sender == OWNER);
-
-		MINBET_forORACLIZE = minBet;
-	}
-
-	function setMinBet(uint256 minBet) public {
+	function setMinBetPerRoll(uint256 minBet) public {
 		require(msg.sender == OWNER && minBet > 1000);
 
-		MINBET = minBet;
+		MINBET_perROLL = minBet;
+	}
+
+	function setMinBetPerTx(uint256 minBet) public {
+		require(msg.sender == OWNER && minBet > 1000);
+
+		MINBET_perTX = minBet;
 	}
 
 	function setMaxWin(uint8 newMaxWinInThousandthPercents) public {
@@ -1692,11 +1643,11 @@ contract EOSBetDice is usingOraclize, EOSBetGameInterface {
 		MAXWIN_inTHOUSANDTHPERCENTS = newMaxWinInThousandthPercents;
 	}
 
-	// Can be removed after some testing...
-	function emergencySelfDestruct() public {
-		require(msg.sender == OWNER);
+	// rescue tokens inadvertently sent to the contract address 
+	function ERC20Rescue(address tokenAddress, uint256 amtTokens) public {
+		require (msg.sender == OWNER);
 
-		selfdestruct(msg.sender);
+		ERC20(tokenAddress).transfer(msg.sender, amtTokens);
 	}
 
 	// require that the query time is too slow, bet has not been paid out, and either contract owner or player is calling this function.
@@ -1727,134 +1678,47 @@ contract EOSBetDice is usingOraclize, EOSBetGameInterface {
 
 	function play(uint256 betPerRoll, uint16 rolls, uint8 rollUnder) public payable {
 
+		// store in memory for cheaper access
+		uint256 minBetPerTx = MINBET_perTX;
+
 		require(!GAMEPAUSED
-				&& msg.value > 0
-				&& betPerRoll >= MINBET
+				&& betPerRoll * rolls >= minBetPerTx
+				&& msg.value >= minBetPerTx
+				&& betPerRoll >= MINBET_perROLL
 				&& rolls > 0
 				&& rolls <= 1024
 				&& betPerRoll <= msg.value
 				&& rollUnder > 1
-				&& rollUnder < 100
+				&& rollUnder < 98
 				// make sure that the player cannot win more than the max win (forget about house edge here)
 				&& (SafeMath.mul(betPerRoll, 100) / (rollUnder - 1)) <= getMaxWin());
 
-		// if bets are relatively small, resolve the bet in-house
-		if (betPerRoll < MINBET_forORACLIZE) {
+		// equation for gas to oraclize is:
+		// gas = (some fixed gas amt) + 1005 * rolls
 
-			// randomness will be determined by keccak256(blockhash, nonce)
-			// store these in memory for cheap access.
-			bytes32 blockHash = block.blockhash(block.number);
-			uint8 houseEdgeInThousandthPercents = HOUSEEDGE_inTHOUSANDTHPERCENTS;
+		uint256 gasToSend = INITIALGASFORORACLIZE + (uint256(1005) * rolls);
 
-			// these are variables that will be modified when the game runs
-			// keep track of the amount to payout to the player
-			// this will actually start as the received amount of ether, and will be incremented
-			// or decremented based on whether each roll is winning or losing.
-			// when payout gets below the etherReceived/rolls amount, then the loop will terminate.
-			uint256 etherAvailable = msg.value;
+		EOSBetBankrollInterface(BANKROLLER).payOraclize(oraclize_getPrice('random', gasToSend));
 
-			// these are the logs for the frontend...
-			uint256[] memory logsData = new uint256[](4);
+		// oraclize_newRandomDSQuery(delay in seconds, bytes of random data, gas for callback function)
+		bytes32 oraclizeQueryId = oraclize_newRandomDSQuery(0, 30, gasToSend);
 
-			uint256 winnings;
-			uint16 gamesPlayed;
+		diceData[oraclizeQueryId] = DiceGameData({
+			player : msg.sender,
+			paidOut : false,
+			start : block.timestamp,
+			etherReceived : msg.value,
+			betPerRoll : betPerRoll,
+			rolls : rolls,
+			rollUnder : rollUnder
+		});
 
-			// get this value outside of the loop for gas costs sake
-			uint256 hypotheticalWinAmount = SafeMath.mul(SafeMath.mul(betPerRoll, 100), (1000 - houseEdgeInThousandthPercents)) / (rollUnder - 1) / 1000;
+		// add the sent value into liabilities. this should NOT go into the bankroll yet
+		// and must be quarantined here to prevent timing attacks
+		LIABILITIES = SafeMath.add(LIABILITIES, msg.value);
 
-			while (gamesPlayed < rolls && etherAvailable >= betPerRoll){
-				// this roll is keccak256(blockhash, nonce) + 1 so between 1-100 (inclusive)
-
-				if (uint8(uint256(keccak256(blockHash, gamesPlayed)) % 100) + 1 < rollUnder){
-					// winner!
-					// add the winnings to ether avail -> (betPerRoll * probability of hitting this number) * (house edge modifier)
-					winnings = hypotheticalWinAmount;
-
-					// now assemble logs for the front end...
-					// game 1 win == 1000000...
-					// games 1 & 2 win == 11000000...
-					// games 1 & 3 win == 1010000000....
-
-					if (gamesPlayed <= 255){
-						logsData[0] += uint256(2) ** (255 - gamesPlayed);
-					}
-					else if (gamesPlayed <= 511){
-						logsData[1] += uint256(2) ** (511 - gamesPlayed);
-					}
-					else if (gamesPlayed <= 767){
-						logsData[2] += uint256(2) ** (767 - gamesPlayed);
-					}
-					else {
-						// where i <= 1023
-						logsData[3] += uint256(2) ** (1023 - gamesPlayed);
-					}
-				}
-				else {
-					// loser, win 1 wei as a consolation prize :)
-					winnings = 1;
-					// we don't need to "place a zero" on this roll's spot in the logs, because they are init'ed to zero.
-				}
-				// add 1 to gamesPlayed, this is the nonce.
-				gamesPlayed++;
-
-				// add the winnings, and subtract the betPerRoll cost.
-				etherAvailable = SafeMath.sub(SafeMath.add(etherAvailable, winnings), betPerRoll);
-			}
-
-			// update the gamesPlayed with how many games were played 
-			GAMESPLAYED += gamesPlayed;
-			// update amount wagered with betPerRoll * i (the amount of times the roll loop was executed)
-			AMOUNTWAGERED = SafeMath.add(AMOUNTWAGERED, SafeMath.mul(betPerRoll, gamesPlayed));
-
-			// every roll, we will transfer 10% of the profit to the developers fund (profit per roll = house edge)
-			// that is: betPerRoll * (1%) * num rolls * (20%)
-			uint256 developersCut = SafeMath.mul(SafeMath.mul(betPerRoll, houseEdgeInThousandthPercents), gamesPlayed) / 5000;
-
-			// add to DEVELOPERSFUND
-			DEVELOPERSFUND = SafeMath.add(DEVELOPERSFUND, developersCut);
-
-			// transfer the (msg.value - developersCut) to the bankroll
-			EOSBetBankrollInterface(BANKROLLER).receiveEtherFromGameAddress.value(SafeMath.sub(msg.value, developersCut))();
-
-			// now payout ether
-			EOSBetBankrollInterface(BANKROLLER).payEtherToWinner(etherAvailable, msg.sender);
-
-			// log an event, with the outcome of the dice game, so that the frontend can parse it for the player.
-			emit DiceSmallBet(gamesPlayed, logsData[0], logsData[1], logsData[2], logsData[3]);
-		}
-
-		// // otherwise, we need to save the game data into storage, and call oraclize
-		// // to get the miner-interference-proof randomness for us.
-		// // when oraclize calls back, we will reinstantiate the game data and resolve 
-		// // the spins with the random number given by oraclize 
-		else {
-			// oraclize_newRandomDSQuery(delay in seconds, bytes of random data, gas for callback function)
-			bytes32 oraclizeQueryId;
-
-			// equation for gas to oraclize is:
-			// gas = (some fixed gas amt) + 1005 * rolls
-
-			EOSBetBankrollInterface(BANKROLLER).payOraclize(oraclize_getPrice('random', INITIALGASFORORACLIZE + (uint256(1005) * rolls)));
-
-			oraclizeQueryId = oraclize_newRandomDSQuery(0, 30, INITIALGASFORORACLIZE + (uint256(1005) * rolls));
-
-			diceData[oraclizeQueryId] = DiceGameData({
-				player : msg.sender,
-				paidOut : false,
-				start : block.timestamp,
-				etherReceived : msg.value,
-				betPerRoll : betPerRoll,
-				rolls : rolls,
-				rollUnder : rollUnder
-			});
-
-			// add the sent value into liabilities. this should NOT go into the bankroll yet
-			// and must be quarantined here to prevent timing attacks
-			LIABILITIES = SafeMath.add(LIABILITIES, msg.value);
-
-			// log an event
-			emit BuyRolls(oraclizeQueryId);
-		}
+		// log an event
+		emit BuyRolls(oraclizeQueryId);
 	}
 
 	// oraclize callback.
