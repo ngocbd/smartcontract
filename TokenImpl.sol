@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenImpl at 0x48f50b053DB051C46149D5235ffFEc9A5102F7b5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenImpl at 0x7c333b69021b3ad9288d3b0083f9bd27c6d4680a
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
 
 /**
@@ -275,29 +275,14 @@ contract TokenImpl is PausableToken {
     uint8 public decimals = 5;
     uint256 private decimal_num = 100000;
 
-
     // cap of money in eth * decimal_num
     uint256 public cap;
 
-    // the target token
-    ERC20Basic public targetToken;
-    // how many token units a buyer gets per ether
-    uint16 public exchangeRate;
-
-    // the freeze token
-    mapping(address => uint256) frozenTokens;
-    mapping(address => uint16) preFrozenRate;
-    uint16 public frozenRate;
-
     bool public canBuy = true;
-    bool public projectFailed = false;
-    uint16 public backEthRatio = 10000;
 
-
-    event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value);
-    event UpdateTargetToken(address target, uint16 exchangeRate, uint16 freezeRate);
+    event NewProject(string name, string symbol, uint256 cap);
+    event Mint(address indexed to, uint256 amount);
     event IncreaseCap(uint256 cap, int256 cap_inc);
-    event ProjectFailed(uint16 fee);
     event PauseBuy();
     event UnPauseBuy();
 
@@ -307,7 +292,14 @@ contract TokenImpl is PausableToken {
         name = _name;
         symbol = _symbol;
         cap = _cap.mul(decimal_num);
-        paused = true;
+    }
+
+    function newProject(string _name, string _symbol, uint256 _cap) public onlyOwner {
+        require(_cap > 0);
+        name = _name;
+        symbol = _symbol;
+        cap = _cap.mul(decimal_num);
+        NewProject(name, symbol, cap);
     }
 
     // fallback function can be used to buy tokens
@@ -322,113 +314,13 @@ contract TokenImpl is PausableToken {
 
         uint256 _amount = msg.value.mul(decimal_num).div(1 ether);
         totalSupply = totalSupply.add(_amount);
-        require(totalSupply <= cap || projectFailed);
+        require(totalSupply <= cap);
         balances[beneficiary] = balances[beneficiary].add(_amount);
-        TokenPurchase(msg.sender, beneficiary, _amount);
+        Mint(beneficiary, _amount);
+        Transfer(address(0), beneficiary, _amount);
 
         // send ether to the fund collection wallet
-        if (!projectFailed) {
-            owner.transfer(msg.value);
-        }
-    }
-
-
-    /**
-      * @dev exchange tokens of _exchanger.
-      */
-    function exchange(address _exchanger, uint256 _value) internal {
-        require(_value > 0);
-        if (projectFailed) {
-            _exchanger.transfer(_value.mul(1 ether).mul(backEthRatio).div(10000).div(decimal_num));
-        } else {
-            require(targetToken != address(0) && exchangeRate > 0);
-            uint256 _tokens = _value.mul(exchangeRate).div(decimal_num);
-            targetToken.transfer(_exchanger, _tokens);
-        }
-    }
-
-
-    function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused
-    returns (bool) {
-        require(_to != address(0));
-        updateFrozenToken(_from);
-        require(_value.add(frozenTokens[_from]) <= balances[_from]);
-        require(_value <= allowed[_from][msg.sender]);
-        if (_to == address(this)) {
-            updateFrozenToken(msg.sender);
-            if (frozenRate == 0 || projectFailed) {
-                exchange(msg.sender, _value);
-                return super.transferFrom(_from, _to, _value);
-            }
-            uint256 tokens = _value.mul(10000 - frozenRate).div(10000);
-            uint256 fTokens = _value.sub(tokens);
-            allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-            balances[_from] = balances[_from].sub(_value);
-            balances[_to] = balances[_to].add(tokens);
-            balances[msg.sender] = balances[msg.sender].add(fTokens);
-            frozenTokens[msg.sender] = frozenTokens[msg.sender].add(fTokens);
-            Transfer(_from, _to, _value);
-            exchange(msg.sender, tokens);
-            return true;
-        } else {
-            return super.transferFrom(_from, _to, _value);
-        }
-    }
-
-    function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
-        require(_to != address(0));
-        updateFrozenToken(msg.sender);
-        require(_value.add(frozenTokens[msg.sender]) <= balances[msg.sender]);
-
-        uint256 tokens = _value;
-        if (_to == address(this)) {
-            if (frozenRate > 0 && !projectFailed) {
-                tokens = _value.mul(10000 - frozenRate).div(10000);
-                uint256 fTokens = _value.sub(tokens);
-                frozenTokens[msg.sender] = frozenTokens[msg.sender].add(fTokens);
-            }
-            exchange(msg.sender, tokens);
-        }
-        return super.transfer(_to, tokens);
-    }
-
-    function updateFrozenToken(address _owner) internal {
-        if (frozenRate == 0) {
-            if (frozenTokens[_owner] > 0) {
-                frozenTokens[_owner] = 0;
-            }
-            if (preFrozenRate[_owner] > 0) {
-                preFrozenRate[_owner] = 0;
-            }
-        }
-        if (preFrozenRate[_owner] > frozenRate) {
-            uint16 preF = preFrozenRate[_owner];
-            frozenTokens[_owner] = frozenTokens[_owner] * frozenRate * (10000 - preF) /
-            preF / (10000 - frozenRate);
-            preFrozenRate[_owner] = frozenRate;
-        } else if (preFrozenRate[_owner] == 0) {
-            preFrozenRate[_owner] = frozenRate;
-        }
-
-    }
-
-    function balanceOfFrozen(address _owner) public view returns (uint256) {
-        if (frozenRate == 0) {
-            return 0;
-        }
-        if (preFrozenRate[_owner] > frozenRate) {
-            uint16 preF = preFrozenRate[_owner];
-            return frozenTokens[_owner] * frozenRate * (10000 - preF) / preF / (10000 - frozenRate);
-        }
-        return frozenTokens[_owner];
-    }
-
-    function balanceOfTarget(address _owner) public view returns (uint256) {
-        if (targetToken != address(0)) {
-            return targetToken.balanceOf(_owner);
-        } else {
-            return 0;
-        }
+        owner.transfer(msg.value);
     }
 
     function saleRatio() public view returns (uint256 ratio) {
@@ -436,16 +328,6 @@ contract TokenImpl is PausableToken {
             return 0;
         } else {
             return totalSupply.mul(10000).div(cap);
-        }
-    }
-
-
-    function canExchangeNum() public view returns (uint256) {
-        if (targetToken != address(0) && exchangeRate > 0) {
-            uint256 _tokens = targetToken.balanceOf(this);
-            return decimal_num.mul(_tokens).div(exchangeRate);
-        } else {
-            return 0;
         }
     }
 
@@ -457,12 +339,6 @@ contract TokenImpl is PausableToken {
     function unPauseBuy() onlyOwner public {
         canBuy = true;
         UnPauseBuy();
-    }
-
-
-    function newName(string _name, string _symbol) public onlyOwner {
-        name = _name;
-        symbol = _symbol;
     }
 
     // increase the amount of eth
@@ -481,27 +357,6 @@ contract TokenImpl is PausableToken {
         }
         IncreaseCap(cap, _cap_inc);
     }
-
-
-    function projectFailed(uint16 _fee) onlyOwner public {
-        require(!projectFailed && _fee >= 0 && _fee <= 10000);
-        projectFailed = true;
-        backEthRatio = 10000 - _fee;
-        frozenRate = 0;
-        ProjectFailed(_fee);
-    }
-
-
-    function updateTargetToken(address _target, uint16 _exchangeRate, uint16 _freezeRate) onlyOwner public {
-        if (_exchangeRate > 0) {
-            require(_target != address(0));
-            exchangeRate = _exchangeRate;
-            targetToken = ERC20Basic(_target);
-        }
-        frozenRate = _freezeRate;
-        UpdateTargetToken(_target, _exchangeRate, _freezeRate);
-    }
-
 
     function destroy() onlyOwner public {
         selfdestruct(owner);
