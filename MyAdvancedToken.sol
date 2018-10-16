@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xbf4a123c8124f995784f8af11f284a86b36b3a8c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x9289582fe88c9665c49cb8cf806a03a34bacf821
 */
-pragma solidity ^0.4.4;
+pragma solidity ^0.4.16;
 
 contract owned {
     address public owner;
@@ -24,11 +24,11 @@ interface tokenRecipient { function receiveApproval(address _from, uint256 _valu
 
 contract TokenERC20 {
     // Public variables of the token
-    string public name = "COTHAM1221";
-    string public symbol = "OH";
+    string public name;
+    string public symbol;
     uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
-    uint256 public totalSupply = 104867442475;
+    uint256 public totalSupply;
 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
