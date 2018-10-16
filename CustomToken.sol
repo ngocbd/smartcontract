@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x6435e117aed259a39cd5032773653c52c160a647
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xc5ed4bf44ef32d25688a5cca2f67d84156650b8d
 */
 pragma solidity ^0.4.19;
 
@@ -45,51 +45,13 @@ contract BaseToken {
     }
 }
 
-contract ICOToken is BaseToken {
-    // 1 ether = icoRatio token
-    uint256 public icoRatio;
-    uint256 public icoBegintime;
-    uint256 public icoEndtime;
-    address public icoSender;
-    address public icoHolder;
-
-    event ICO(address indexed from, uint256 indexed value, uint256 tokenValue);
-    event Withdraw(address indexed from, address indexed holder, uint256 value);
-
-    function ico() public payable {
-        require(now >= icoBegintime && now <= icoEndtime);
-        uint256 tokenValue = (msg.value * icoRatio * 10 ** uint256(decimals)) / (1 ether / 1 wei);
-        if (tokenValue == 0 || balanceOf[icoSender] < tokenValue) {
-            revert();
-        }
-        _transfer(icoSender, msg.sender, tokenValue);
-        ICO(msg.sender, msg.value, tokenValue);
-    }
-
-    function withdraw() public {
-        uint256 balance = this.balance;
-        icoHolder.transfer(balance);
-        Withdraw(msg.sender, icoHolder, balance);
-    }
-}
-
-contract CustomToken is BaseToken, ICOToken {
+contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 999999999000000000000000000;
-        name = 'LongChain';
-        symbol = 'LON';
+        totalSupply = 1000000000000000000000000000;
+        name = 'CYCCoin';
+        symbol = 'CYCC';
         decimals = 18;
-        balanceOf[0x8f1e8c7050d9bd74d7658cbf3b437826b9fb4bf8] = totalSupply;
-        Transfer(address(0), 0x8f1e8c7050d9bd74d7658cbf3b437826b9fb4bf8, totalSupply);
-
-        icoRatio = 6000;
-        icoBegintime = 1530374400;
-        icoEndtime = 1538236800;
-        icoSender = 0x21a22a62b7db045a327696105d9587badfb97c8e;
-        icoHolder = 0x21a22a62b7db045a327696105d9587badfb97c8e;
-    }
-
-    function() public payable {
-        ico();
+        balanceOf[0x57cad6a4c83286406fd0fc9218931b3b83853e65] = totalSupply;
+        Transfer(address(0), 0x57cad6a4c83286406fd0fc9218931b3b83853e65, totalSupply);
     }
 }
