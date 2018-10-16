@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0x3e2af2d1ab8f2d45e80052461cd4eabc3eb65117
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0x04ffbec205fa56fec4dd9bcb345fa04d1d98c8e4
 */
 pragma solidity ^0.4.18;
     
     // ----------------------------------------------------------------------------
-    // 'ACT473357' token contract
+    // 'ACT473334' token contract
     //
     // Deployed to : 0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187
-    // Symbol      : ACT473357
-    // Name        : ADZbuzz Hightimes.com Community Token
+    // Symbol      : ACT473334
+    // Name        : ADZbuzz Medicalmarijuanainc.com Community Token
     // Total supply: 2000000
     // Decimals    : 8
     //
@@ -117,8 +117,8 @@ pragma solidity ^0.4.18;
         // Constructor
         // ------------------------------------------------------------------------
         function ADZbuzzCommunityToken() public {
-            symbol = "ACT473357";
-            name = "ADZbuzz Hightimes.com Community Token";
+            symbol = "ACT473334";
+            name = "ADZbuzz Medicalmarijuanainc.com Community Token";
             decimals = 8;
             _totalSupply = 200000000000000;
             balances[0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187] = _totalSupply;
