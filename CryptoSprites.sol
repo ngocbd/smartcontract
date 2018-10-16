@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoSprites at 0x1b693a49a2fba5d5c814ffdf7f695c3ed9764534
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoSprites at 0x69294da06fe22d2e1bfe59467ba22e31c0953dcf
 */
 pragma solidity ^0.4.2;
 
@@ -16,7 +16,7 @@ interface SaleClockAuction {
     
     function getCurrentPrice (uint256 _tokenId) external view returns (uint256);
     
-    function getAuction(uint256 _tokenId) external view returns (address seller, uint256 startingPrice, uint256 endingPrice, uint256 duration, uint256 startedAt);
+    function getAuction (uint256 _tokenId) external view returns (address seller, uint256 startingPrice, uint256 endingPrice, uint256 duration, uint256 startedAt);
     
 }
 
@@ -31,6 +31,8 @@ contract ERC721 {
     function transferFrom(address _from, address _to, uint256 _tokenId) external;
     
     function allowance(address _owner, address _spender) view returns (uint remaining);
+    
+    function takeOwnership(uint256 _tokenId) external;
 
     // Events
     event Transfer(address indexed from, address indexed to, uint256 tokenId);
@@ -102,8 +104,9 @@ contract CryptoSprites is ERC721 {
     
     mapping (address => uint) public numberOfSpritesOwnedByUser;
     
-    // First address is the address of a Sprite owner, second address is an address having approval to move a token belonging to the first address, uint[] is the array of Sprites belonging to the first address that the second address has approval to transfer
-    mapping (address => mapping (address => uint[])) public allowed;
+    mapping (address => mapping(address => mapping(uint256 => bool))) public addressToReceiverToAllowedSprite;
+    
+    mapping (address => mapping(address => uint256)) public addressToReceiverToAmountAllowed;
     
     bytes4 constant InterfaceSignature_ERC165 = bytes4(keccak256('supportsInterface(bytes4)'));
     
@@ -116,7 +119,8 @@ contract CryptoSprites is ERC721 {
         bytes4(keccak256('transferFrom(address,address,uint256)'));
 
     function() payable {
-        
+        etherForOwner += msg.value / 2;
+        etherForCharity += msg.value / 2;
     }
     
     function adjustDefaultSpritePrice (uint _priceMultiplier, uint _priceDivider) onlyOwner {
@@ -142,6 +146,10 @@ contract CryptoSprites is ERC721 {
         charityAddress.transfer(etherForCharity);
         etherForOwner = 0;
         etherForCharity = 0;
+    }
+    
+    function changeOwner (address _owner) onlyOwner {
+        owner = _owner;
     }
     
     function featureSprite (uint spriteId) payable {
@@ -205,7 +213,7 @@ contract CryptoSprites is ERC721 {
                 allPurchasedSprites.push(spriteId);
             }
             
-            Transfer (msg.sender, broughtSprites[spriteId].owner, spriteId);
+            Transfer (broughtSprites[spriteId].owner, msg.sender, spriteId);
             
         } else {
             
@@ -222,9 +230,13 @@ contract CryptoSprites is ERC721 {
             _ownerCut = ((priceIfAny / 1000) * ownerCut) * priceMultiplier / priceDivider;
             _charityCut = ((priceIfAny / 1000) * charityCut) * priceMultiplier / priceDivider;
             
-            require (msg.value == (priceIfAny * priceMultiplier / priceDivider) + _ownerCut + _charityCut);
+            // Crypto Kitty prices decrease every few seconds by a fractional amount, so use >=
             
-            address kittyOwner = KittyCore(KittyCoreAddress).ownerOf(spriteId);
+            require (msg.value >= (priceIfAny * priceMultiplier / priceDivider) + _ownerCut + _charityCut);
+            
+            // Get the owner of the Kitty for sale
+            
+            var (kittyOwner,,,,) = SaleClockAuction(SaleClockAuctionAddress).getAuction(spriteId);
             
             kittyOwner.transfer(priceIfAny * priceMultiplier / priceDivider);
             
@@ -292,12 +304,12 @@ contract CryptoSprites is ERC721 {
         return (broughtSprites[spriteId].owner, broughtSprites[spriteId].spriteImageID, broughtSprites[spriteId].forSale, broughtSprites[spriteId].price, broughtSprites[spriteId].timesTraded, broughtSprites[spriteId].featured);
     }
     
-    function lookupFeaturedSprites (uint spriteId) view external returns (uint) {
-        return featuredSprites[spriteId];
+    function lookupFeaturedSprites (uint _index) view external returns (uint) {
+        return featuredSprites[_index];
     }
     
-    function lookupAllSprites (uint spriteId) view external returns (uint) {
-        return allPurchasedSprites[spriteId];
+    function lookupAllSprites (uint _index) view external returns (uint) {
+        return allPurchasedSprites[_index];
     }
     
     // Will call SaleClockAuction to get the owner of a kitten and check its price (if it's for sale). We're calling the getAuction() function in the SaleClockAuction to get the kitty owner (that function returns 5 variables, we only want the owner). ownerOf() in the KittyCore contract won't return the kitty owner if the kitty is for sale, and this probably won't be used (including it in case it's needed to lookup an owner of a kitty not for sale later for any reason)
@@ -360,8 +372,29 @@ contract CryptoSprites is ERC721 {
     
     function approve (address _to, uint256 _tokenId) external {
         require (broughtSprites[_tokenId].owner == msg.sender);
-        allowed [msg.sender][_to].push(_tokenId);
+        require (addressToReceiverToAllowedSprite[msg.sender][_to][_tokenId] == false);
+        addressToReceiverToAllowedSprite[msg.sender][_to][_tokenId] = true;
+        addressToReceiverToAmountAllowed[msg.sender][_to]++;
         Approval (msg.sender, _to, _tokenId);
+    }
+    
+    function disapprove (address _to, uint256 _tokenId) external {
+        require (broughtSprites[_tokenId].owner == msg.sender);
+        require (addressToReceiverToAllowedSprite[msg.sender][_to][_tokenId] == true); // Else the next line may be 0 - 1 and underflow
+        addressToReceiverToAmountAllowed[msg.sender][_to]--;
+        addressToReceiverToAllowedSprite[msg.sender][_to][_tokenId] = false;
+    }
+    
+    // Not strictly necessary - this can be done with transferFrom() as well
+    function takeOwnership (uint256 _tokenId) external {
+        require (addressToReceiverToAllowedSprite[broughtSprites[_tokenId].owner][msg.sender][_tokenId] == true);
+        addressToReceiverToAllowedSprite[broughtSprites[_tokenId].owner][msg.sender][_tokenId] = false;
+        addressToReceiverToAmountAllowed[broughtSprites[_tokenId].owner][msg.sender]--;
+        numberOfSpritesOwnedByUser[broughtSprites[_tokenId].owner]--;
+        numberOfSpritesOwnedByUser[msg.sender]++;
+        spriteOwningHistory[msg.sender].push(_tokenId);
+        Transfer (broughtSprites[_tokenId].owner, msg.sender, _tokenId);
+        broughtSprites[_tokenId].owner = msg.sender;
     }
     
     function transfer (address _to, uint _tokenId) external {
@@ -374,25 +407,22 @@ contract CryptoSprites is ERC721 {
     }
 
     function transferFrom (address _from, address _to, uint256 _tokenId) external {
-        // This array shouldn't be big at all (if it's even more than 1 item) unless someone owns a huge number of Sprites and has called approve() on each of their Sprites to allow a certain address to transfer each one of them
-        for (uint i = 0; i < allowed[_from][msg.sender].length; i++) {
-            if (allowed[_from][msg.sender][i] == _tokenId) {
-                require (broughtSprites[_tokenId].owner == _from);
-                numberOfSpritesOwnedByUser[broughtSprites[_tokenId].owner]--;
-                numberOfSpritesOwnedByUser[_to]++;
-                spriteOwningHistory[_to].push(_tokenId);
-                broughtSprites[_tokenId].owner = _to;
-                Transfer (broughtSprites[_tokenId].owner, _to, _tokenId);
-            } 
-        }
+        require (addressToReceiverToAllowedSprite[_from][msg.sender][_tokenId] == true);
+        require (broughtSprites[_tokenId].owner == _from);
+        addressToReceiverToAllowedSprite[_from][msg.sender][_tokenId] = false;
+        addressToReceiverToAmountAllowed[_from][msg.sender]--;
+        numberOfSpritesOwnedByUser[_from]--;
+        numberOfSpritesOwnedByUser[_to]++;
+        spriteOwningHistory[_to].push(_tokenId);
+        broughtSprites[_tokenId].owner = _to;
+        Transfer (_from, _to, _tokenId);
     }
     
     function allowance (address _owner, address _spender) view returns (uint) {
-        return allowed[_owner][_spender].length;
+        return addressToReceiverToAmountAllowed[_owner][_spender];
     }
     
     function supportsInterface (bytes4 _interfaceID) external view returns (bool) {
-
         return ((_interfaceID == InterfaceSignature_ERC165) || (_interfaceID == InterfaceSignature_ERC721));
     }
     
