@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x9704a9f123a40b8f2687d9353121f1a5aa0276bf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x799ea67fe4c2cbf5655727b53a291cab952b4c77
 */
 pragma solidity ^0.4.13;
 
@@ -232,72 +232,73 @@ contract MintableToken is StandardToken, Ownable {
   
 }
 
-contract TestEcoCoin is MintableToken {
+contract SimpleTokenCoin is MintableToken {
     
-    string public constant name = "Test Eco Coin";
+    string public constant name = "Just another Test token for AMICO 2.0";
     
-    string public constant symbol = "TEC";
+    string public constant symbol = "AMICOTEST20";
     
     uint32 public constant decimals = 18;
     
 }
 
-
 contract Crowdsale is Ownable {
     
-    using SafeMath for uint;
+    address owner;
     
-    address multisig;
-
-    uint restrictedPercent;
-
-    address restricted;
-
-    TestEcoCoin public token = new TestEcoCoin();
-
-    uint start;
+    enum State {
+        init,
+        pre_ico_w1,
+        pre_ico_w2,
+        pre_ico_w3,
+        pre_ico_w4,
+        ico,
+        paused,
+        finished
+    }
     
-    uint period;
-
-    uint hardcap;
-
-    uint rate;
-
+    State public currentState = State.paused;
+    
+    uint constant PRE_ICO_BONUS_W1 = 40;
+    uint constant RPE_ICO_BONUS_W2 = 30;
+    uint constant RPE_ICO_BONUS_W3 = 20;
+    uint constant RPE_ICO_BONUS_W4 = 10;
+    uint constant PRE_ICO_DEFAULT_BONUS = 10;
+    uint constant PRICE = 1000; // 750 for 1 eth
+    
+    SimpleTokenCoin public token = new SimpleTokenCoin();
+    
     function Crowdsale() {
-        multisig = 0xEff83189082e8c5f9698286eD860A30790E5D726;
-        restricted = 0xEff83189082e8c5f9698286eD860A30790E5D726;
-        restrictedPercent = 0;
-        rate = 3000000000000000000000;
-        start = 1509105600;
-        period = 28;
-        hardcap = 10000000000000000000000;
-    }
-
-    modifier saleIsOn() {
-    	require(now > start && now < start + period * 1 days);
-    	_;
-    }
-	
-    modifier isUnderHardCap() {
-        require(multisig.balance <= hardcap);
-        _;
-    }
-
-    function finishMinting() public onlyOwner {
-        uint issuedTokenSupply = token.totalSupply();
-        uint restrictedTokens = issuedTokenSupply.mul(restrictedPercent).div(100 - restrictedPercent);
-        token.mint(restricted, restrictedTokens);
-        token.finishMinting();
-    }
-
-    function createTokens() isUnderHardCap saleIsOn payable {
-        multisig.transfer(msg.value);
-        uint tokens = rate.mul(msg.value).div(1 ether);
-        token.mint(msg.sender, tokens);
-    }
-
-    function() external payable {
-        createTokens();
+        owner = msg.sender;
     }
     
+    function setIcoState(State _newState) onlyOwner {
+        currentState = _newState;
+    }
+    
+    function() external payable {
+        assert(msg.sender != 0x0);
+        require(msg.value > 0);
+        require(currentState <= State.ico);
+        
+        uint bonus = PRE_ICO_DEFAULT_BONUS;
+        if(currentState == State.pre_ico_w1) {
+            bonus = PRE_ICO_BONUS_W1;
+        }
+        if(currentState == State.pre_ico_w2) {
+            bonus = RPE_ICO_BONUS_W2;
+        }
+        if(currentState == State.pre_ico_w3) {
+            bonus = RPE_ICO_BONUS_W3;
+        }
+        
+        if(currentState == State.pre_ico_w4) {
+            bonus = RPE_ICO_BONUS_W4;
+        }
+        
+        uint tokensRevard = msg.value * PRICE + msg.value * PRICE * bonus / 100;
+        
+        owner.transfer(msg.value);
+        token.mint(msg.sender, tokensRevard);
+    }
 }
