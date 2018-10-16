@@ -1,59 +1,30 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BigToken at 0xe824ebd383959064ea47372182acf47e0311bbfb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract bigToken at 0xcaba23959e8a7db9c88cd6fb2d57d73141c8abcf
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.17;
 
-// File: contracts/ownership/Ownable.sol
 
 /**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
  */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
-
-// File: contracts/math/SafeMath.sol
 
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     if (a == 0) {
       return 0;
@@ -63,6 +34,9 @@ library SafeMath {
     return c;
   }
 
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
@@ -70,11 +44,17 @@ library SafeMath {
     return c;
   }
 
+  /**
+  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
   function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
@@ -82,21 +62,7 @@ library SafeMath {
   }
 }
 
-// File: contracts/token/ERC20Basic.sol
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-// File: contracts/token/BasicToken.sol
 
 /**
  * @title Basic token
@@ -106,6 +72,15 @@ contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
 
   mapping(address => uint256) balances;
+
+  uint256 totalSupply_;
+
+  /**
+  * @dev total number of tokens in existence
+  */
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
+  }
 
   /**
   * @dev transfer token for a specified address
@@ -134,7 +109,10 @@ contract BasicToken is ERC20Basic {
 
 }
 
-// File: contracts/token/ERC20.sol
+
+
+
+
 
 /**
  * @title ERC20 interface
@@ -147,7 +125,7 @@ contract ERC20 is ERC20Basic {
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-// File: contracts/token/StandardToken.sol
+
 
 /**
  * @title Standard ERC20 token
@@ -244,118 +222,17 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-// File: contracts/token/MintableToken.sol
 
-/**
- * @title Mintable token
- * @dev Simple ERC20 Token example, with mintable token creation
- * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
- * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
- */
+contract bigToken is StandardToken {
 
-contract MintableToken is StandardToken, Ownable {
-  event Mint(address indexed to, uint256 amount);
-  event MintFinished();
-
-  bool public mintingFinished = false;
-
-
-  modifier canMint() {
-    require(!mintingFinished);
-    _;
+  string public constant name =  "big token";
+  string public constant symbol = "BIG";
+  uint256 public constant decimals = 18;
+  uint256 public totalSupply = 21000000 * 1 ether;
+  
+/** Constructor big Token */
+  function bigToken() {
+    totalSupply_ = totalSupply;
+  	balances[msg.sender] = totalSupply_;
   }
-
-  /**
-   * @dev Function to mint tokens
-   * @param _to The address that will receive the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
-   */
-  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
-    totalSupply = totalSupply.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    Mint(_to, _amount);
-    Transfer(address(0), _to, _amount);
-    return true;
-  }
-
-  /**
-   * @dev Function to stop minting new tokens.
-   * @return True if the operation was successful.
-   */
-  function finishMinting() onlyOwner canMint public returns (bool) {
-    mintingFinished = true;
-    MintFinished();
-    return true;
-  }
-}
-
-// File: contracts/BigToken.sol
-
-contract BigToken is MintableToken {
-    string public constant name = "BigToken";
-
-    string public constant symbol = "BTK";
-
-    uint8 public decimals = 18;
-
-    bool public tradingStarted = false;
-
-    /**
-     * @dev modifier that throws if trading has not started yet
-     */
-    modifier hasStartedTrading() {
-        require(tradingStarted);
-        _;
-    }
-
-    /**
-     * @dev Allows the owner to enable the trading.
-     */
-    function startTrading() onlyOwner public {
-        tradingStarted = true;
-    }
-
-    /**
-     * @dev Allows anyone to transfer the tokens once trading has started
-     * @param _to the recipient address of the tokens.
-     * @param _value number of tokens to be transfered.
-     */
-    function transfer(address _to, uint _value) hasStartedTrading public returns (bool){
-        return super.transfer(_to, _value);
-    }
-
-    /**
-     * @dev Allows anyone to transfer the  tokens once trading has started
-     * @param _from address The address which you want to send tokens from
-     * @param _to address The address which you want to transfer to
-     * @param _value uint the amout of tokens to be transfered
-     */
-    function transferFrom(address _from, address _to, uint _value) hasStartedTrading public returns (bool){
-        return super.transferFrom(_from, _to, _value);
-    }
-
-    /**
-   * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender when not paused.
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-    function approve(address _spender, uint256 _value) public hasStartedTrading returns (bool) {
-        return super.approve(_spender, _value);
-    }
-
-    /**
-     * Adding whenNotPaused
-     */
-    function increaseApproval(address _spender, uint _addedValue) public hasStartedTrading returns (bool success) {
-        return super.increaseApproval(_spender, _addedValue);
-    }
-
-    /**
-     * Adding whenNotPaused
-     */
-    function decreaseApproval(address _spender, uint _subtractedValue) public hasStartedTrading returns (bool success) {
-        return super.decreaseApproval(_spender, _subtractedValue);
-    }
-
 }
