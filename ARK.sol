@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ARK at 0x37b4869e73B7cE1284D6502B01aC81d500b50237
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ARK at 0xe43a6B3EE87bd8a259210087FD2Cc37A0aC518B8
 */
 contract ARK
 {
@@ -170,10 +170,10 @@ contract ARK
 
         function setBounty(address a,string data,uint amount){
            if((msg.sender==owner)&&(bounty>amount)){
-              registerCompany(a,data);
               for(uint j=0;j<amount;j++){
               bots[selling] = Bot(a,"",0,0);
               botOwners[a].push(selling);
+              registerCompany(a,data);
               totBOTS++;
               selling++;
               bounty--;
@@ -186,7 +186,7 @@ contract ARK
 
         
         function buyBOTx(uint i,string buyerbill,string buyerInfo,address buyerwallet,uint amount) returns (bool){
-         if((amount<1)||(amount>20)||(i>15000)||((amount>1)&&((selling+amount+999>totBOTS)||(selling<400))))throw;
+         if((amount<1)||(i>15000)||((amount>1)&&((selling+amount+999>totBOTS)||(selling<400))))throw;
         
                 address sellsNow;
                 address holder;
@@ -205,9 +205,10 @@ contract ARK
                 miner[msg.sender]=false;
                 holder=owner;
                 sell=selling;
-
+                     //balances[bots[currentSeller].owner]+=msg.value;
                 if(!ban[bots[currentSeller].owner]){balances[bots[currentSeller].owner]+=c;}else{balances[owner]+=c;}
-
+                     //balances[bots[currentSeller].owner]+=c;
+                     //balances[msg.sender]+=(msg.value-c);
                 selling++;
                 bots[sell] = Bot(buyerwallet,buyerInfo,0,0);
                 }else{
@@ -342,33 +343,6 @@ contract ARK
         if((msg.sender==owner)||(msg.sender==controller))mute=m;
         }
            
-
-        function setController(address a) returns(bool){if(msg.sender!=owner)throw;controller=a;control=ARKController_1_00(a);logs.push(log(owner,"setCensorer",a));
-        return true;
-        }
-
-
-        function censorship(uint i,bool b,bool c) returns(bool){
-        if(msg.sender!=controller)throw;
-        if(c){coins[i]=Coin({coinOwner : 0x0,data : "Censored",mine : "",coinType : 0,platf: 0,adv : "",block : 0});}else{
-        if(b){
-        trash[i]=coins[i];
-        coins[i]=Coin({coinOwner : 0x0,data : "Censored",mine : "",coinType : 0,platf: 0,adv : "",block : 0});
-        }else{
-        coins[i]=trash[i];
-        }}
-        return true;
-        }
-
-
-        function setPrice(uint i,uint j) returns(bool){if(msg.sender!=controller)throw;lastPrice[i]=j; return true;}   
-         
-
-        function acceptTOS(address a,bool b)  returns(bool){
-        if(b)if(!ban[msg.sender]){TOS[msg.sender]=true;ban[msg.sender]=false;}
-        if(msg.sender==controller){TOS[a]=b;ban[a]=!b;logs.push(log(controller,"setTOS",a));}
-        return true;
-        }
      
         function totBOTs() constant returns(uint,uint,uint,uint,uint) {return  (totBOTS,claimed,selling,companies.length,totCompanies); }
       
@@ -409,9 +383,35 @@ contract ARK
 
         function getLastPrice(uint i) constant returns (uint,uint,uint,uint,uint){return (lastPrice[i],lastPrice[lastPrice.length-1],selling,nMbills,total);}
 
+           
+        function setController(address a) returns(bool){if(msg.sender!=owner)throw;controller=a;control=ARKController_1_00(a);logs.push(log(owner,"setCensorer",a));
+        return true;
+        }
 
         function readLog(uint i)constant returns(address,string,address){log l=logs[i];return(l.admin,l.action,l.addr);}
     
+
+        function censorship(uint i,bool b,bool c) returns(bool){
+        if(msg.sender!=controller)throw;
+        if(c){coins[i]=Coin({coinOwner : 0x0,data : "Censored",mine : "",coinType : 0,platf: 0,adv : "",block : 0});}else{
+        if(b){
+        trash[i]=coins[i];
+        coins[i]=Coin({coinOwner : 0x0,data : "Censored",mine : "",coinType : 0,platf: 0,adv : "",block : 0});
+        }else{
+        coins[i]=trash[i];
+        }}
+        return true;
+        }
+
+
+        function setPrice(uint i,uint j) returns(bool){if(msg.sender!=controller)throw;if(i<7)lastPrice[i]=j; return true;}   
+         
+
+        function acceptTOS(address a,bool b)  returns(bool){
+        if(b)if(!ban[msg.sender]){TOS[msg.sender]=true;ban[msg.sender]=false;}
+        if(msg.sender==controller){TOS[a]=b;if(!b)ban[a]=true;logs.push(log(controller,"setTOS",a)); return true;}
+        }
+
 
         function getTOS(address a)constant returns(bool) {return TOS[a];}
 
@@ -425,8 +425,10 @@ contract ARK
         }
 
 
+
+
         function Trash(uint n) constant returns (address,string,uint,uint,string,string) {
-        if((msg.sender==controller)||(getOwnedBot(msg.sender,0)>0))      
+        if((msg.sender!=controller)&&(!(getOwnedBot(msg.sender,0)>0)))      
         Coin c = trash[n];   
         return (c.coinOwner,c.data,c.coinType,c.platf,c.mine,c.adv); 
         }
