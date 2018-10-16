@@ -1,7 +1,28 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GozToken at 0x60c3dec97ceec639a83a5729835b577684287369
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GozToken at 0x2ea13316d1e54e6de5d4a7e167071477a1feb003
 */
 pragma solidity ^0.4.18;
+
+contract Ownable {
+  address public owner;
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+}
 
 contract ERC20Basic {
   uint public totalSupply;
@@ -34,6 +55,7 @@ library SafeMath {
     return c;
   }
 }
+
 
 contract BasicToken is ERC20Basic {
   using SafeMath for uint;
@@ -103,27 +125,6 @@ contract StandardToken is ERC20, BasicToken {
     }
     Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
-  }
-}
-
-contract Ownable {
-  address public owner;
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
   }
 }
 
@@ -207,11 +208,12 @@ contract TokenTimelock is StandardToken, Ownable {
   }
 }
 
+
 contract GozToken is TokenTimelock {
   string public constant name = 'GOZ';
   string public constant symbol = 'GOZ';
   uint32 public constant decimals = 18;
-  uint public constant initialSupply = 50E25;
+  uint public constant initialSupply = 80E25;
 
   function GozToken() public {
     totalSupply = initialSupply;
