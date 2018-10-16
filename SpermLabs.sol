@@ -1,10 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SpermLabs at 0xaa4898654357e503fbf9d761e7fc0b85ff3073e9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SpermLabs at 0x87e44796ce77e972149852cda66cfd1c403d5ec3
 */
-pragma solidity 0.4.24;
-
-//https://www.sperm.network/farm
-//https://discord.gg/AkaGFuE
+pragma solidity ^0.4.18; // solhint-disable-line
 
 // similar as shrimpfarmer, with three changes:
 // A. one third of your snails die when you sell eggs
@@ -13,14 +10,12 @@ pragma solidity 0.4.24;
 // bots should have a harder time, and whales can compete for the devfee
 
 contract SpermLabs{
-    string public name = "Sperm farm" ;
-	string public symbol = "Sperm";
     //uint256 EGGS_PER_SHRIMP_PER_SECOND=1;
     uint256 public EGGS_TO_HATCH_1SHRIMP=86400;//for final version should be seconds in a day
     uint256 public STARTING_SHRIMP=300;
     uint256 PSN=10000;
     uint256 PSNH=5000;
-    bool public initialized=true;
+    bool public initialized=false;
     address public ceoAddress;
     mapping (address => uint256) public hatcheryShrimp;
     mapping (address => uint256) public claimedEggs;
@@ -31,10 +26,6 @@ contract SpermLabs{
     function SpermLabs() public{
         ceoAddress=msg.sender;
     }
-    modifier onlyCEO(){
-	    require(msg.sender == ceoAddress );
-        _;
-	}
     function becomeSnailmaster() public{
         require(initialized);
         require(hatcheryShrimp[msg.sender]>=snailmasterReq);
@@ -69,7 +60,7 @@ contract SpermLabs{
         claimedEggs[msg.sender]=0;
         lastHatch[msg.sender]=now;
         marketEggs=SafeMath.add(marketEggs,hasEggs);
-        ceoAddress.transfer(eggValue);
+        ceoAddress.transfer(fee);
         msg.sender.transfer(SafeMath.sub(eggValue,fee));
     }
     function buyEggs() public payable{
@@ -128,12 +119,6 @@ contract SpermLabs{
     function min(uint256 a, uint256 b) private pure returns (uint256) {
         return a < b ? a : b;
     }
-    function transferOwnership(address newCEO) onlyCEO public {
-		uint256 etherBalance = this.balance;
-		ceoAddress.transfer(etherBalance);
-		ceoAddress = newCEO;
-	}
-
 }
 
 library SafeMath {
