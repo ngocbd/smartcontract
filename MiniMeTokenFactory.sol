@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MiniMeTokenFactory at 0x58474228ffeebf58758bb661a4280df6aa433371
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MiniMeTokenFactory at 0x596964ac32f690d34cac020545a63754251abacd
 */
 pragma solidity ^0.4.18;
 
 /*
-    Copyright 2017, Jordi Baylina
+    Copyright 2016, Jordi Baylina
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,14 +20,14 @@ pragma solidity ^0.4.18;
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/// @title MyEtherWallet Campaign Contract
-/// @author Jordi Baylina and Arthur Lunn
-/// @dev This contract controls the issuance of tokens for the MiniMe Token
-///  Contract. This version specifically acts as a Campaign manager for raising
-///  funds for non-profit causes, but it can be customized for any variety of
-///  purposes.
+/// @title MiniMeToken Contract
+/// @author Jordi Baylina
+/// @dev This token contract's goal is to make it easy for anyone to clone this
+///  token using the token distribution at a given block, this will allow DAO's
+///  and DApps to upgrade their features in a decentralized manner without
+///  affecting the original token
 
-/// @dev Basic contract to indivate whether another contract is controlled
+/// @dev It is ERC20 compliant, but still needs to under go further testing.
 contract Controlled {
     /// @notice The address of the controller is the only address that can call
     ///  a function with this modifier
@@ -70,12 +70,7 @@ contract TokenController {
 }
 
 contract ApproveAndCallFallBack {
-    function receiveApproval(
-        address from,
-        uint256 _amount,
-        address _token,
-        bytes _data
-    ) public;
+    function receiveApproval(address from, uint256 _amount, address _token, bytes _data) public;
 }
 
 /// @dev The actual token contract, the default controller is the msg.sender
@@ -606,330 +601,4 @@ contract MiniMeTokenFactory {
         newToken.changeController(msg.sender);
         return newToken;
     }
-}
-
-/// @title Owned
-/// @author Adrià Massanet <adria@codecontext.io>
-/// @notice The Owned contract has an owner address, and provides basic 
-///  authorization control functions, this simplifies & the implementation of
-///  user permissions; this contract has three work flows for a change in
-///  ownership, the first requires the new owner to validate that they have the
-///  ability to accept ownership, the second allows the ownership to be
-///  directly transfered without requiring acceptance, and the third allows for
-///  the ownership to be removed to allow for decentralization 
-contract Owned {
-
-    address public owner;
-    address public newOwnerCandidate;
-
-    event OwnershipRequested(address indexed by, address indexed to);
-    event OwnershipTransferred(address indexed from, address indexed to);
-    event OwnershipRemoved();
-
-    /// @dev The constructor sets the `msg.sender` as the`owner` of the contract
-    function Owned() {
-        owner = msg.sender;
-    }
-
-    /// @dev `owner` is the only address that can call a function with this
-    /// modifier
-    modifier onlyOwner() {
-        require (msg.sender == owner);
-        _;
-    }
-    
-    /// @dev In this 1st option for ownership transfer `proposeOwnership()` must
-    ///  be called first by the current `owner` then `acceptOwnership()` must be
-    ///  called by the `newOwnerCandidate`
-    /// @notice `onlyOwner` Proposes to transfer control of the contract to a
-    ///  new owner
-    /// @param _newOwnerCandidate The address being proposed as the new owner
-    function proposeOwnership(address _newOwnerCandidate) onlyOwner {
-        newOwnerCandidate = _newOwnerCandidate;
-        OwnershipRequested(msg.sender, newOwnerCandidate);
-    }
-
-    /// @notice Can only be called by the `newOwnerCandidate`, accepts the
-    ///  transfer of ownership
-    function acceptOwnership() {
-        require(msg.sender == newOwnerCandidate);
-
-        address oldOwner = owner;
-        owner = newOwnerCandidate;
-        newOwnerCandidate = 0x0;
-
-        OwnershipTransferred(oldOwner, owner);
-    }
-
-    /// @dev In this 2nd option for ownership transfer `changeOwnership()` can
-    ///  be called and it will immediately assign ownership to the `newOwner`
-    /// @notice `owner` can step down and assign some other address to this role
-    /// @param _newOwner The address of the new owner
-    function changeOwnership(address _newOwner) onlyOwner {
-        require(_newOwner != 0x0);
-
-        address oldOwner = owner;
-        owner = _newOwner;
-        newOwnerCandidate = 0x0;
-
-        OwnershipTransferred(oldOwner, owner);
-    }
-
-    /// @dev In this 3rd option for ownership transfer `removeOwnership()` can
-    ///  be called and it will immediately assign ownership to the 0x0 address;
-    ///  it requires a 0xdece be input as a parameter to prevent accidental use
-    /// @notice Decentralizes the contract, this operation cannot be undone 
-    /// @param _dac `0xdac` has to be entered for this function to work
-    function removeOwnership(uint _dac) onlyOwner {
-        require(_dac == 0xdac);
-        owner = 0x0;
-        newOwnerCandidate = 0x0;
-        OwnershipRemoved();     
-    }
-} 
-
-
-/// @dev `Escapable` is a base level contract built off of the `Owned`
-///  contract; it creates an escape hatch function that can be called in an
-///  emergency that will allow designated addresses to send any ether or tokens
-///  held in the contract to an `escapeHatchDestination` as long as they were
-///  not blacklisted
-contract Escapable is Owned {
-    address public escapeHatchCaller;
-    address public escapeHatchDestination;
-    mapping (address=>bool) private escapeBlacklist; // Token contract addresses
-
-    /// @notice The Constructor assigns the `escapeHatchDestination` and the
-    ///  `escapeHatchCaller`
-    /// @param _escapeHatchCaller The address of a trusted account or contract
-    ///  to call `escapeHatch()` to send the ether in this contract to the
-    ///  `escapeHatchDestination` it would be ideal that `escapeHatchCaller`
-    ///  cannot move funds out of `escapeHatchDestination`
-    /// @param _escapeHatchDestination The address of a safe location (usu a
-    ///  Multisig) to send the ether held in this contract; if a neutral address
-    ///  is required, the WHG Multisig is an option:
-    ///  0x8Ff920020c8AD673661c8117f2855C384758C572 
-    function Escapable(address _escapeHatchCaller, address _escapeHatchDestination) {
-        escapeHatchCaller = _escapeHatchCaller;
-        escapeHatchDestination = _escapeHatchDestination;
-    }
-
-    /// @dev The addresses preassigned as `escapeHatchCaller` or `owner`
-    ///  are the only addresses that can call a function with this modifier
-    modifier onlyEscapeHatchCallerOrOwner {
-        require ((msg.sender == escapeHatchCaller)||(msg.sender == owner));
-        _;
-    }
-
-    /// @notice Creates the blacklist of tokens that are not able to be taken
-    ///  out of the contract; can only be done at the deployment, and the logic
-    ///  to add to the blacklist will be in the constructor of a child contract
-    /// @param _token the token contract address that is to be blacklisted 
-    function blacklistEscapeToken(address _token) internal {
-        escapeBlacklist[_token] = true;
-        EscapeHatchBlackistedToken(_token);
-    }
-
-    /// @notice Checks to see if `_token` is in the blacklist of tokens
-    /// @param _token the token address being queried
-    /// @return False if `_token` is in the blacklist and can't be taken out of
-    ///  the contract via the `escapeHatch()`
-    function isTokenEscapable(address _token) constant public returns (bool) {
-        return !escapeBlacklist[_token];
-    }
-
-    /// @notice The `escapeHatch()` should only be called as a last resort if a
-    /// security issue is uncovered or something unexpected happened
-    /// @param _token to transfer, use 0x0 for ether
-    function escapeHatch(address _token) public onlyEscapeHatchCallerOrOwner {   
-        require(escapeBlacklist[_token]==false);
-
-        uint256 balance;
-
-        /// @dev Logic for ether
-        if (_token == 0x0) {
-            balance = this.balance;
-            escapeHatchDestination.transfer(balance);
-            EscapeHatchCalled(_token, balance);
-            return;
-        }
-        /// @dev Logic for tokens
-        ERC20 token = ERC20(_token);
-        balance = token.balanceOf(this);
-        token.transfer(escapeHatchDestination, balance);
-        EscapeHatchCalled(_token, balance);
-    }
-
-    /// @notice Changes the address assigned to call `escapeHatch()`
-    /// @param _newEscapeHatchCaller The address of a trusted account or
-    ///  contract to call `escapeHatch()` to send the value in this contract to
-    ///  the `escapeHatchDestination`; it would be ideal that `escapeHatchCaller`
-    ///  cannot move funds out of `escapeHatchDestination`
-    function changeHatchEscapeCaller(address _newEscapeHatchCaller) onlyEscapeHatchCallerOrOwner {
-        escapeHatchCaller = _newEscapeHatchCaller;
-    }
-
-    event EscapeHatchBlackistedToken(address token);
-    event EscapeHatchCalled(address token, uint amount);
-}
-
-/// @dev This is designed to control the issuance of a MiniMe Token for a
-///  non-profit Campaign. This contract effectively dictates the terms of the
-///  funding round.
-contract GivethCampaign is TokenController, Owned, Escapable {
-
-    uint public startFundingTime;       // In UNIX Time Format
-    uint public endFundingTime;         // In UNIX Time Format
-    uint public maximumFunding;         // In wei
-    uint public totalCollected;         // In wei
-    MiniMeToken public tokenContract;   // The new token for this Campaign
-    address public vaultAddress;        // The address to hold the funds donated
-
-/// @notice 'GivethCampaign()' initiates the Campaign by setting its funding
-/// parameters
-/// @dev There are several checks to make sure the parameters are acceptable
-/// @param _startFundingTime The UNIX time that the Campaign will be able to
-/// start receiving funds
-/// @param _endFundingTime The UNIX time that the Campaign will stop being able
-/// to receive funds
-/// @param _maximumFunding In wei, the Maximum amount that the Campaign can
-/// receive (currently the max is set at 10,000 ETH for the beta)
-/// @param _vaultAddress The address that will store the donated funds
-/// @param _tokenAddress Address of the token contract this contract controls
-    function GivethCampaign(
-        address _escapeHatchCaller,
-        address _escapeHatchDestination,        
-        uint _startFundingTime,
-        uint _endFundingTime,
-        uint _maximumFunding,
-        address _vaultAddress,
-        address _tokenAddress
-    ) Escapable(_escapeHatchCaller, _escapeHatchDestination) {
-        require(_endFundingTime > now);                // Cannot end in the past
-        require(_endFundingTime > _startFundingTime);
-        require(_maximumFunding <= 10000 ether);        // The Beta is limited
-        require(_vaultAddress != 0);                     // To prevent burning ETH
-        startFundingTime = _startFundingTime;
-        endFundingTime = _endFundingTime;
-        maximumFunding = _maximumFunding;
-        tokenContract = MiniMeToken(_tokenAddress);// The deployed Token Contract
-        vaultAddress = _vaultAddress;
-    }
-
-/// @dev The fallback function is called when ether is sent to the contract, it
-/// simply calls `doPayment()` with the address that sent the ether as the
-/// `_owner`. Payable is a required solidity modifier for functions to receive
-/// ether, without this modifier functions will throw if ether is sent to them
-    function ()  payable {
-        doPayment(msg.sender);
-    }
-
-/////////////////
-// TokenController interface
-/////////////////
-
-/// @notice `proxyPayment()` allows the caller to send ether to the Campaign and
-/// have the tokens created in an address of their choosing
-/// @param _owner The address that will hold the newly created tokens
-    function proxyPayment(address _owner) payable returns(bool) {
-        doPayment(_owner);
-        return true;
-    }
-
-/// @notice Notifies the controller about a transfer, for this Campaign all
-///  transfers are allowed by default and no extra notifications are needed
-/// @param _from The origin of the transfer
-/// @param _to The destination of the transfer
-/// @param _amount The amount of the transfer
-/// @return False if the controller does not authorize the transfer
-    function onTransfer(address _from, address _to, uint _amount) returns(bool) {
-        return true;
-    }
-
-/// @notice Notifies the controller about an approval, for this Campaign all
-///  approvals are allowed by default and no extra notifications are needed
-/// @param _owner The address that calls `approve()`
-/// @param _spender The spender in the `approve()` call
-/// @param _amount The amount in the `approve()` call
-/// @return False if the controller does not authorize the approval
-    function onApprove(address _owner, address _spender, uint _amount)
-        returns(bool)
-    {
-        return true;
-    }
-
-
-/// @dev `doPayment()` is an internal function that sends the ether that this
-///  contract receives to the `vault` and creates tokens in the address of the
-///  `_owner` assuming the Campaign is still accepting funds
-/// @param _owner The address that will hold the newly created tokens
-    function doPayment(address _owner) internal {
-
-// First check that the Campaign is allowed to receive this donation
-        require(now>=startFundingTime);
-        require(now<=endFundingTime);
-        require(tokenContract.controller() != 0);           // Extra check
-        require(msg.value != 0);
-        require(totalCollected + msg.value <= maximumFunding);
-
-//Track how much the Campaign has collected
-        totalCollected += msg.value;
-
-//Send the ether to the vault
-        require(vaultAddress.send(msg.value));
-
-// Creates an equal amount of tokens as ether sent. The new tokens are created
-//  in the `_owner` address
-        require(tokenContract.generateTokens(_owner, msg.value));
-
-        return;
-    }
-
-/// @notice `finalizeFunding()` ends the Campaign by calling setting the
-///  controller to 0, thereby ending the issuance of new tokens and stopping the
-///  Campaign from receiving more ether
-/// @dev `finalizeFunding()` can only be called after the end of the funding period.
-    function finalizeFunding() {
-        require (now >= endFundingTime);
-        tokenContract.changeController(0);
-    }
-
-
-/// @notice `onlyOwner` changes the location that ether is sent
-/// @param _newVaultAddress The address that will receive the ether sent to this
-///  Campaign
-    function setVault(address _newVaultAddress) onlyOwner {
-        vaultAddress = _newVaultAddress;
-    }
-
-}
-
-/**
- * @title ERC20
- * @dev A standard interface for tokens.
- * @dev https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
- */
-contract ERC20 {
-  
-    /// @dev Returns the total token supply
-    function totalSupply() public constant returns (uint256 supply);
-
-    /// @dev Returns the account balance of the account with address _owner
-    function balanceOf(address _owner) public constant returns (uint256 balance);
-
-    /// @dev Transfers _value number of tokens to address _to
-    function transfer(address _to, uint256 _value) public returns (bool success);
-
-    /// @dev Transfers _value number of tokens from address _from to address _to
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-
-    /// @dev Allows _spender to withdraw from the msg.sender's account up to the _value amount
-    function approve(address _spender, uint256 _value) public returns (bool success);
-
-    /// @dev Returns the amount which _spender is still allowed to withdraw from _owner
-    function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
 }
