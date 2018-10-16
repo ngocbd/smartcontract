@@ -1,18 +1,19 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MainSale at 0x469cac3cae51d3fb5ad2699f9e2494feb44d5662
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MainSale at 0x052d01d58729839b0fb9e321c63caf4f7a3de7fe
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.16;
+
 
 /**
  * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
+ * @dev The Ownable contract has an owner address, and provides basic authorization control 
+ * functions, this simplifies the implementation of "user permissions". 
  */
 contract Ownable {
   address public owner;
 
 
-  /**
+  /** 
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
@@ -22,66 +23,205 @@ contract Ownable {
 
 
   /**
-   * @dev Throws if called by any account other than the owner.
+   * @dev Throws if called by any account other than the owner. 
    */
   modifier onlyOwner() {
-    require(msg.sender == owner);
+    if (msg.sender != owner) {
+      revert();
+    }
     _;
   }
 
 
   /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
+   * @param newOwner The address to transfer ownership to. 
    */
   function transferOwnership(address newOwner) onlyOwner {
-    require(newOwner != address(0));
-    owner = newOwner;
+    if (newOwner != address(0)) {
+      owner = newOwner;
+    }
   }
+
+}
+
+
+
+/**
+ * @title Authorizable
+ * @dev Allows to authorize access to certain function calls
+ * 
+ * ABI
+ * [{"constant":true,"inputs":[{"name":"authorizerIndex","type":"uint256"}],"name":"getAuthorizer","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_addr","type":"address"}],"name":"addAuthorized","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_addr","type":"address"}],"name":"isAuthorized","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"inputs":[],"payable":false,"type":"constructor"}]
+ */
+contract Authorizable {
+
+  address[] authorizers;
+  mapping(address => uint) authorizerIndex;
+
+  /**
+   * @dev Throws if called by any account tat is not authorized. 
+   */
+  modifier onlyAuthorized {
+    require(isAuthorized(msg.sender));
+    _;
+  }
+
+  /**
+   * @dev Contructor that authorizes the msg.sender. 
+   */
+  function Authorizable() {
+    authorizers.length = 2;
+    authorizers[1] = msg.sender;
+    authorizerIndex[msg.sender] = 1;
+  }
+
+  /**
+   * @dev Function to get a specific authorizer
+   * @param authorizerIndex index of the authorizer to be retrieved.
+   * @return The address of the authorizer.
+   */
+/*
+  function getAuthorizer(uint authorizerIndex) external constant returns(address) {
+    return address(authorizers[authorizerIndex + 1]);
+  }
+*/
+  /**
+   * @dev Function to check if an address is authorized
+   * @param _addr the address to check if it is authorized.
+   * @return boolean flag if address is authorized.
+   */
+  function isAuthorized(address _addr) constant returns(bool) {
+    return authorizerIndex[_addr] > 0;
+  }
+
+  /**
+   * @dev Function to add a new authorizer
+   * @param _addr the address to add as a new authorizer.
+   */
+  function addAuthorized(address _addr) external onlyAuthorized {
+    authorizerIndex[_addr] = authorizers.length;
+    authorizers.length++;
+    authorizers[authorizers.length - 1] = _addr;
+  }
+
 }
 
 /**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
+ * @title ExchangeRate
+ * @dev Allows updating and retrieveing of Conversion Rates for PAY tokens
+ *
+ * ABI
+ * [{"constant":false,"inputs":[{"name":"_symbol","type":"string"},{"name":"_rate","type":"uint256"}],"name":"updateRate","outputs":[],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"data","type":"uint256[]"}],"name":"updateRates","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_symbol","type":"string"}],"name":"getRate","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"","type":"bytes32"}],"name":"rates","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"payable":false,"type":"function"},{"anonymous":false,"inputs":[{"indexed":false,"name":"timestamp","type":"uint256"},{"indexed":false,"name":"symbol","type":"bytes32"},{"indexed":false,"name":"rate","type":"uint256"}],"name":"RateUpdated","type":"event"}]
+ */
+contract ExchangeRate is Ownable {
+
+  event RateUpdated(uint timestamp, bytes32 symbol, uint rate);
+
+  mapping(bytes32 => uint) public rates;
+
+  /**
+   * @dev Allows the current owner to update a single rate.
+   * @param _symbol The symbol to be updated. 
+   * @param _rate the rate for the symbol. 
+   */
+  function updateRate(string _symbol, uint _rate) public onlyOwner {
+    rates[sha3(_symbol)] = _rate;
+    RateUpdated(now, sha3(_symbol), _rate);
+  }
+
+  /**
+   * @dev Allows the current owner to update multiple rates.
+   * @param data an array that alternates sha3 hashes of the symbol and the corresponding rate . 
+   */
+  function updateRates(uint[] data) public onlyOwner {
+    if (data.length % 2 > 0)
+      revert();
+    uint i = 0;
+    while (i < data.length / 2) {
+      bytes32 symbol = bytes32(data[i * 2]);
+      uint rate = data[i * 2 + 1];
+      rates[symbol] = rate;
+      RateUpdated(now, symbol, rate);
+      i++;
+    }
+  }
+
+  /**
+   * @dev Allows the anyone to read the current rate.
+   * @param _symbol the symbol to be retrieved. 
+   */
+  function getRate(string _symbol) public constant returns(uint) {
+    return rates[sha3(_symbol)];
+  }
+
+}
+
+/**
+ * Math operations with safety checks
  */
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
+  function mul(uint a, uint b) internal returns (uint) {
+    uint c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
+  function div(uint a, uint b) internal returns (uint) {
+    // assert(b > 0); // Solidity automatically revert()s when dividing by 0
+    uint c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+  function sub(uint a, uint b) internal returns (uint) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
+  function add(uint a, uint b) internal returns (uint) {
+    uint c = a + b;
     assert(c >= a);
     return c;
   }
+
+  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a >= b ? a : b;
+  }
+
+  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a < b ? a : b;
+  }
+
+  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a >= b ? a : b;
+  }
+
+  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a < b ? a : b;
+  }
+
+/* function assert(bool assertion) internal { */
+    /*   if (!assertion) { */
+    /*     throw; */
+    /*   } */
+    /* }      // assert no longer needed once solidity is on 0.4.10 */
 }
 
 
 /**
  * @title ERC20Basic
  * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
+ * @dev see https://github.com/ethereum/EIPs/issues/20
  */
 contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+  uint public totalSupply;
+  function balanceOf(address who) constant returns (uint);
+  function transfer(address to, uint value);
+  event Transfer(address indexed from, address indexed to, uint value);
 }
+
+
 
 
 /**
@@ -89,104 +229,121 @@ contract ERC20Basic {
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
 contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
+  function allowance(address owner, address spender) constant returns (uint);
+  function transferFrom(address from, address to, uint value);
+  function approve(address spender, uint value);
+  event Approval(address indexed owner, address indexed spender, uint value);
 }
+
+
 
 
 /**
  * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
+ * @dev Basic version of StandardToken, with no allowances. 
  */
 contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
+  using SafeMath for uint;
 
-  mapping(address => uint256) balances;
+  mapping(address => uint) balances;
+
+  /**
+   * @dev Fix for the ERC20 short address attack.
+   */
+  modifier onlyPayloadSize(uint size) {
+     if(msg.data.length < size + 4) {
+       revert();
+     }
+     _;
+  }
 
   /**
   * @dev transfer token for a specified address
   * @param _to The address to transfer to.
   * @param _value The amount to be transferred.
   */
-  function transfer(address _to, uint256 _value) returns (bool) {
+  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) {
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
     Transfer(msg.sender, _to, _value);
-    return true;
   }
 
   /**
   * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
+  * @param _owner The address to query the the balance of. 
+  * @return An uint representing the amount owned by the passed address.
   */
-  function balanceOf(address _owner) constant returns (uint256 balance) {
+  function balanceOf(address _owner) constant returns (uint balance) {
     return balances[_owner];
   }
+
 }
+
+
 
 
 /**
  * @title Standard ERC20 token
  *
- * @dev Implementation of the basic standard token.
+ * @dev Implemantation of the basic standart token.
  * @dev https://github.com/ethereum/EIPs/issues/20
  * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
-contract StandardToken is ERC20, BasicToken {
+contract StandardToken is BasicToken, ERC20 {
 
-  mapping (address => mapping (address => uint256)) allowed;
+  mapping (address => mapping (address => uint)) allowed;
 
 
   /**
    * @dev Transfer tokens from one address to another
    * @param _from address The address which you want to send tokens from
    * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amout of tokens to be transfered
+   * @param _value uint the amout of tokens to be transfered
    */
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
+  function transferFrom(address _from, address _to, uint _value) onlyPayloadSize(3 * 32) {
     var _allowance = allowed[_from][msg.sender];
 
-    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-    // require (_value <= _allowance);
+    // Check is not needed because sub(_allowance, _value) will already revert() if this condition is not met
+    // if (_value > _allowance) revert();
 
     balances[_to] = balances[_to].add(_value);
     balances[_from] = balances[_from].sub(_value);
     allowed[_from][msg.sender] = _allowance.sub(_value);
     Transfer(_from, _to, _value);
-    return true;
   }
 
   /**
-   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   * @dev Aprove the passed address to spend the specified amount of tokens on beahlf of msg.sender.
    * @param _spender The address which will spend the funds.
    * @param _value The amount of tokens to be spent.
    */
-  function approve(address _spender, uint256 _value) returns (bool) {
+  function approve(address _spender, uint _value) {
 
     // To change the approve amount you first have to reduce the addresses`
     //  allowance to zero by calling `approve(_spender, 0)` if it is not
     //  already 0 to mitigate the race condition described here:
     //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+    if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) revert();
 
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
-    return true;
   }
 
   /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @dev Function to check the amount of tokens than an owner allowed to a spender.
    * @param _owner address The address which owns the funds.
    * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifing the amount of tokens still available for the spender.
+   * @return A uint specifing the amount of tokens still avaible for the spender.
    */
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+  function allowance(address _owner, address _spender) constant returns (uint remaining) {
     return allowed[_owner][_spender];
   }
+
 }
+
+
+
+
 
 
 /**
@@ -197,14 +354,15 @@ contract StandardToken is ERC20, BasicToken {
  */
 
 contract MintableToken is StandardToken, Ownable {
-  event Mint(address indexed to, uint256 amount);
+  event Mint(address indexed to, uint value);
   event MintFinished();
 
   bool public mintingFinished = false;
+  uint public totalSupply = 0;
 
 
   modifier canMint() {
-    require(!mintingFinished);
+    if(mintingFinished) revert();
     _;
   }
 
@@ -214,7 +372,7 @@ contract MintableToken is StandardToken, Ownable {
    * @param _amount The amount of tokens to mint.
    * @return A boolean that indicates if the operation was successful.
    */
-  function mint(address _to, uint256 _amount) onlyOwner canMint returns (bool) {
+  function mint(address _to, uint _amount) onlyOwner canMint returns (bool) {
     totalSupply = totalSupply.add(_amount);
     balances[_to] = balances[_to].add(_amount);
     Mint(_to, _amount);
@@ -232,118 +390,24 @@ contract MintableToken is StandardToken, Ownable {
   }
 }
 
-contract DisbursableToken is MintableToken {
-  using SafeMath for uint256;
-
-  struct Account {
-    uint claimedPoints;
-    uint allowedPoints;
-    uint lastPointsPerToken;
-  }
-
-  event Disburse(address _source, uint _amount);
-  event ClaimDisbursement(address _account, uint _amount);
-  // The disbursement multiplier exists to correct rounding errors
-  // One disbursed wei = 1e18 disbursement points
-  uint pointMultiplier = 1e18;
-  uint totalPointsPerToken;
-  uint unclaimedDisbursement;
-  uint totalDisbursement;
-
-  mapping(address => Account) accounts;
-
-  /**
-   * @dev Function to send eth to owners of this token.
-   */
-  function disburse() public payable {
-    totalPointsPerToken = totalPointsPerToken.add(msg.value.mul(pointMultiplier).div(totalSupply));
-    unclaimedDisbursement = unclaimedDisbursement.add(msg.value);
-    totalDisbursement = totalDisbursement.add(msg.value);
-    Disburse(msg.sender, msg.value);
-  }
-
-  /**
-   * @dev Function to update the claimable disbursements whenever tokens change hands
-   * @param _account address The address whose claimable disbursements should be updated
-   * @return A uint256 specifing the amount of wei still available for the owner.
-   */
-  function updatePoints(address _account) internal {
-    uint newPointsPerToken = totalPointsPerToken.sub(accounts[_account].lastPointsPerToken);
-    accounts[_account].allowedPoints = accounts[_account].allowedPoints.add(balances[_account].mul(newPointsPerToken));
-    accounts[_account].lastPointsPerToken = totalPointsPerToken;
-  }
-
-  /**
-   * @dev Function to check the amount of wei that a token owner can claim.
-   * @param _owner address The address which owns the funds.
-   * @return A uint256 specifing the amount of wei still available for the owner.
-   */
-  function claimable(address _owner) constant returns (uint256 remaining) {
-    updatePoints(_owner);
-    return accounts[_owner].allowedPoints.sub(accounts[_owner].claimedPoints).div(pointMultiplier);
-  }
-
-  /**
-   * @dev Function to claim the wei that a token owner is entitled to
-   * @param _amount uint256 How much of the wei the user will take
-   */
-  function claim(uint _amount) public {
-    require(_amount > 0);
-    updatePoints(msg.sender);
-    uint claimingPoints = _amount.mul(pointMultiplier);
-    require(accounts[msg.sender].claimedPoints.add(claimingPoints) <= accounts[msg.sender].allowedPoints);
-    accounts[msg.sender].claimedPoints = accounts[msg.sender].claimedPoints.add(claimingPoints);
-    ClaimDisbursement(msg.sender, _amount);
-    require(msg.sender.send(_amount));
-  }
-
-  /**
-   * @dev Function to mint tokens. We need to modify this to update points.
-   * @param _to The address that will recieve the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
-   */
-  function mint(address _to, uint256 _amount) onlyOwner canMint returns (bool) {
-    updatePoints(_to);
-    super.mint(_to, _amount);
-  }
-
-  function transfer(address _to, uint _value) returns(bool) {
-    updatePoints(msg.sender);
-    updatePoints(_to);
-    super.transfer(_to, _value);
-  }
-
-  /**
-   * @dev Transfer tokens from one address to another while ensuring that claims remain where they are
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amout of tokens to be transfered
-   */
-  function transferFrom(address _from, address _to, uint _value) returns(bool) {
-    updatePoints(_from);
-    updatePoints(_to);
-    super.transferFrom(_from, _to, _value);
-  }
-}
-
 
 /**
- * @title Hero token
- * @dev This is the token being sold
- *
- * ABI
- * [{"constant":true,"inputs":[],"name":"mintingFinished","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"name","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_from","type":"address"},{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transferFrom","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"startTrading","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_amount","type":"uint256"}],"name":"claim","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"claimable","outputs":[{"name":"remaining","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_amount","type":"uint256"}],"name":"mint","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"tradingStarted","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"finishMinting","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transfer","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"disburse","outputs":[],"payable":true,"type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"},{"name":"_spender","type":"address"}],"name":"allowance","outputs":[{"name":"remaining","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"payable":false,"type":"function"},{"payable":true,"type":"fallback"},{"anonymous":false,"inputs":[{"indexed":false,"name":"_source","type":"address"},{"indexed":false,"name":"_amount","type":"uint256"}],"name":"Disburse","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"_account","type":"address"},{"indexed":false,"name":"_amount","type":"uint256"}],"name":"ClaimDisbursement","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"amount","type":"uint256"}],"name":"Mint","type":"event"},{"anonymous":false,"inputs":[],"name":"MintFinished","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"owner","type":"address"},{"indexed":true,"name":"spender","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"from","type":"address"},{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Transfer","type":"event"}]
+ * @title PayToken
+ * @dev The main PAY token contract
+ * 
+ * ABI 
+ * [{"constant":true,"inputs":[],"name":"mintingFinished","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"name","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_from","type":"address"},{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transferFrom","outputs":[],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"startTrading","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_amount","type":"uint256"}],"name":"mint","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"tradingStarted","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"finishMinting","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transfer","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"},{"name":"_spender","type":"address"}],"name":"allowance","outputs":[{"name":"remaining","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"payable":false,"type":"function"},{"anonymous":false,"inputs":[{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Mint","type":"event"},{"anonymous":false,"inputs":[],"name":"MintFinished","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"owner","type":"address"},{"indexed":true,"name":"spender","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"from","type":"address"},{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Transfer","type":"event"}]
  */
+contract JobcoinToken is MintableToken {
 
-contract HeroToken is DisbursableToken {
-  string public name = "Hero Token";
-  string public symbol = "HERO";
+  string public name = "Jobcoin Token";
+  string public symbol = "JCT";
   uint public decimals = 18;
 
   bool public tradingStarted = false;
+
   /**
-   * @dev modifier that throws if trading has not started yet
+   * @dev modifier that revert()s if trading has not started yet
    */
   modifier hasStartedTrading() {
     require(tradingStarted);
@@ -358,110 +422,103 @@ contract HeroToken is DisbursableToken {
   }
 
   /**
-   * @dev Allows anyone to transfer the DEVE tokens once trading has started
-   * @param _to the recipient address of the tokens.
-   * @param _value number of tokens to be transfered.
+   * @dev Allows anyone to transfer the PAY tokens once trading has started
+   * @param _to the recipient address of the tokens. 
+   * @param _value number of tokens to be transfered. 
    */
-  function transfer(address _to, uint _value) hasStartedTrading returns(bool) {
+  function transfer(address _to, uint _value) hasStartedTrading {
     super.transfer(_to, _value);
   }
 
    /**
-   * @dev Allows anyone to transfer the DEVE tokens once trading has started
+   * @dev Allows anyone to transfer the PAY tokens once trading has started
    * @param _from address The address which you want to send tokens from
    * @param _to address The address which you want to transfer to
    * @param _value uint the amout of tokens to be transfered
    */
-  function transferFrom(address _from, address _to, uint _value) hasStartedTrading returns(bool) {
+  function transferFrom(address _from, address _to, uint _value) hasStartedTrading {
     super.transferFrom(_from, _to, _value);
   }
 
-  function() external payable {
-    disburse();
-  }
 }
+
 
 /**
  * @title MainSale
- * @dev The main HERO token sale contract
- *
+ * @dev The main PAY token sale contract
+ * 
  * ABI
- * [{"constant":false,"inputs":[{"name":"_multisigVault","type":"address"}],"name":"setMultisigVault","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"saleOngoing","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"exchangeRate","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"base","type":"uint256"}],"name":"bonusTokens","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"altDeposits","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"recipient","type":"address"},{"name":"tokens","type":"uint256"}],"name":"authorizedCreateTokens","outputs":[],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_saleOngoing","type":"bool"}],"name":"setSaleOngoing","outputs":[],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"finishMinting","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"totalAltDeposits","type":"uint256"}],"name":"setAltDeposits","outputs":[],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_token","type":"address"}],"name":"retrieveTokens","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"hardcap","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"start","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"recipient","type":"address"}],"name":"createTokens","outputs":[],"payable":true,"type":"function"},{"constant":true,"inputs":[],"name":"multisigVault","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_exchangeRate","type":"uint256"}],"name":"setExchangeRate","outputs":[],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_hardcap","type":"uint256"}],"name":"setHardcap","outputs":[],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_start","type":"uint256"}],"name":"setStart","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"token","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"payable":true,"type":"fallback"},{"anonymous":false,"inputs":[{"indexed":false,"name":"recipient","type":"address"},{"indexed":false,"name":"ether_amount","type":"uint256"},{"indexed":false,"name":"token_amount","type":"uint256"},{"indexed":false,"name":"exchangerate","type":"uint256"}],"name":"TokenSold","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"recipient","type":"address"},{"indexed":false,"name":"token_amount","type":"uint256"}],"name":"AuthorizedCreate","type":"event"},{"anonymous":false,"inputs":[],"name":"MainSaleClosed","type":"event"}]
+ * [{"constant":false,"inputs":[{"name":"_multisigVault","type":"address"}],"name":"setMultisigVault","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"authorizerIndex","type":"uint256"}],"name":"getAuthorizer","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"exchangeRate","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"altDeposits","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"recipient","type":"address"},{"name":"tokens","type":"uint256"}],"name":"authorizedCreateTokens","outputs":[],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"finishMinting","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_exchangeRate","type":"address"}],"name":"setExchangeRate","outputs":[],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_token","type":"address"}],"name":"retrieveTokens","outputs":[],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"totalAltDeposits","type":"uint256"}],"name":"setAltDeposit","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"start","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"recipient","type":"address"}],"name":"createTokens","outputs":[],"payable":true,"type":"function"},{"constant":false,"inputs":[{"name":"_addr","type":"address"}],"name":"addAuthorized","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"multisigVault","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_hardcap","type":"uint256"}],"name":"setHardCap","outputs":[],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_start","type":"uint256"}],"name":"setStart","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"token","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_addr","type":"address"}],"name":"isAuthorized","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"payable":true,"type":"fallback"},{"anonymous":false,"inputs":[{"indexed":false,"name":"recipient","type":"address"},{"indexed":false,"name":"ether_amount","type":"uint256"},{"indexed":false,"name":"pay_amount","type":"uint256"},{"indexed":false,"name":"exchangerate","type":"uint256"}],"name":"TokenSold","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"recipient","type":"address"},{"indexed":false,"name":"pay_amount","type":"uint256"}],"name":"AuthorizedCreate","type":"event"},{"anonymous":false,"inputs":[],"name":"MainSaleClosed","type":"event"}]
  */
-contract MainSale is Ownable {
+contract MainSale is Ownable, Authorizable {
   using SafeMath for uint;
-  event TokenSold(address recipient, uint ether_amount, uint token_amount, uint exchangerate);
-  event AuthorizedCreate(address recipient, uint token_amount);
+  event TokenSold(address recipient, uint ether_amount, uint pay_amount, uint exchangerate);
+  event AuthorizedCreate(address recipient, uint pay_amount);
   event MainSaleClosed();
 
-  HeroToken public token = new HeroToken();
+  JobcoinToken public token = new JobcoinToken();
 
   address public multisigVault;
 
-  uint public hardcap = 250000 ether;
-  uint public exchangeRate = 200;
+  uint hardcap = 200000 ether;
+  ExchangeRate public exchangeRate;
 
   uint public altDeposits = 0;
-  uint public start = 1609372800; //new Date("December 31, 2020 00:00:00").getTime() / 1000
-  bool public saleOngoing = true;
+  uint public start = 1498302000; //new Date("Jun 24 2017 11:00:00 GMT").getTime() / 1000
 
   /**
    * @dev modifier to allow token creation only when the sale IS ON
    */
-  modifier isSaleOn() {
-    require(start < now && saleOngoing && !token.mintingFinished());
+  modifier saleIsOn() {
+    require(now > start && now < start + 28 days);
     _;
   }
 
   /**
    * @dev modifier to allow token creation only when the hardcap has not been reached
    */
-  modifier isUnderHardcap() {
+  modifier isUnderHardCap() {
     require(multisigVault.balance + altDeposits <= hardcap);
     _;
   }
 
-  /*
+  /**
    * @dev Allows anyone to create tokens by depositing ether.
-   * @param recipient the recipient to receive tokens.
+   * @param recipient the recipient to receive tokens. 
    */
-  function createTokens(address recipient) public isUnderHardcap isSaleOn payable {
-    uint base = exchangeRate.mul(msg.value).mul(10**token.decimals()).div(1 ether);
-    uint bonus = bonusTokens(base);
-    uint tokens = base.add(bonus);
+  function createTokens(address recipient) public isUnderHardCap saleIsOn payable {
+    uint rate = exchangeRate.getRate("ETH");
+    uint tokens = rate.mul(msg.value).div(1 ether);
     token.mint(recipient, tokens);
     require(multisigVault.send(msg.value));
-    TokenSold(recipient, msg.value, tokens, exchangeRate);
+    TokenSold(recipient, msg.value, tokens, rate);
   }
 
+
   /**
-   * @dev Computes the number of bonus tokens awarded based on the current time.
-   * @param base the original number of tokens made without counting the bonus
+   * @dev Allows to set the toal alt deposit measured in ETH to make sure the hardcap includes other deposits
+   * @param totalAltDeposits total amount ETH equivalent
    */
-  function bonusTokens(uint base) constant returns(uint) {
-    uint bonus = 0;
-    if (now <= start + 3 hours) {
-      bonus = base.mul(3).div(10);
-    } else if (now <= start + 24 hours) {
-      bonus = base.mul(2).div(10);
-    } else if (now <= start + 3 days) {
-      bonus = base.div(10);
-    } else if (now <= start + 7 days) {
-      bonus = base.div(20);
-    } else if (now <= start + 14 days) {
-      bonus = base.div(40);
-    }
-    return bonus;
+  function setAltDeposit(uint totalAltDeposits) public onlyOwner {
+    altDeposits = totalAltDeposits;
   }
 
   /**
    * @dev Allows authorized acces to create tokens. This is used for Bitcoin and ERC20 deposits
    * @param recipient the recipient to receive tokens.
-   * @param tokens number of tokens to be created.
+   * @param tokens number of tokens to be created. 
    */
-  function authorizedCreateTokens(address recipient, uint tokens) public onlyOwner {
+  function authorizedCreateTokens(address recipient, uint tokens) public onlyAuthorized {
     token.mint(recipient, tokens);
     AuthorizedCreate(recipient, tokens);
+  }
+
+  /**
+   * @dev Allows the owner to set the hardcap.
+   * @param _hardcap the new hardcap
+   */
+  function setHardCap(uint _hardcap) public onlyOwner {
+    hardcap = _hardcap;
   }
 
   /**
@@ -470,22 +527,6 @@ contract MainSale is Ownable {
    */
   function setStart(uint _start) public onlyOwner {
     start = _start;
-  }
-
-  /**
-   * @dev Allows the owner to set the hardcap.
-   * @param _hardcap the new hardcap
-   */
-  function setHardcap(uint _hardcap) public onlyOwner {
-    hardcap = _hardcap;
-  }
-
-  /**
-   * @dev Allows to set the toal alt deposit measured in ETH to make sure the hardcap includes other deposits
-   * @param totalAltDeposits total amount ETH equivalent
-   */
-  function setAltDeposits(uint totalAltDeposits) public onlyOwner {
-    altDeposits = totalAltDeposits;
   }
 
   /**
@@ -499,27 +540,23 @@ contract MainSale is Ownable {
   }
 
   /**
-   * @dev Allows the owner to set the exchange rate
+   * @dev Allows the owner to set the exchangerate contract.
    * @param _exchangeRate the exchangerate address
    */
-  function setExchangeRate(uint _exchangeRate) public onlyOwner {
-    exchangeRate = _exchangeRate;
+  function setExchangeRate(address _exchangeRate) public onlyOwner {
+    exchangeRate = ExchangeRate(_exchangeRate);
   }
 
   /**
-   * @dev Allows the owner to stop the sale
-   * @param _saleOngoing whether the sale is ongoing or not
-   */
-  function setSaleOngoing(bool _saleOngoing) public onlyOwner {
-    saleOngoing = _saleOngoing;
-  }
-
-  /**
-   * @dev Allows the owner to finish the minting.
-   * The ownership of the token contract is transfered
+   * @dev Allows the owner to finish the minting. This will create the 
+   * restricted tokens and then close the minting.
+   * Then the ownership of the PAY token contract is transfered 
    * to this owner.
    */
   function finishMinting() public onlyOwner {
+    uint issuedTokenSupply = token.totalSupply();
+    uint restrictedTokens = issuedTokenSupply.mul(49).div(51);
+    token.mint(multisigVault, restrictedTokens);
     token.finishMinting();
     token.transferOwnership(owner);
     MainSaleClosed();
@@ -529,16 +566,19 @@ contract MainSale is Ownable {
    * @dev Allows the owner to transfer ERC20 tokens to the multi sig vault
    * @param _token the contract address of the ERC20 contract
    */
+/*
   function retrieveTokens(address _token) public onlyOwner {
-    ERC20 foreignToken = ERC20(_token);
-    foreignToken.transfer(multisigVault, foreignToken.balanceOf(this));
+    ERC20 token = ERC20(_token);
+    token.transfer(multisigVault, token.balanceOf(this));
   }
+*/
 
   /**
-   * @dev Fallback function which receives ether and created the appropriate number of tokens for the
+   * @dev Fallback function which receives ether and created the appropriate number of tokens for the 
    * msg.sender.
    */
   function() external payable {
     createTokens(msg.sender);
   }
+
 }
