@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleToken at 0x5af2be193a6abca9c8817001f45744777db30756
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleToken at 0xb63b606ac810a52cca15e44bb630fd42d8d1d83d
 */
 /*
  * ERC20 interface
@@ -524,7 +524,6 @@ contract MintableToken is StandardToken, Ownable {
  */
 contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
 
-  /** Name and symbol were updated. */
   event UpdatedTokenInformation(string newName, string newSymbol);
 
   string public name;
@@ -591,13 +590,7 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
   }
 
   /**
-   * Owner can update token information here.
-   *
-   * It is often useful to conceal the actual token association, until
-   * the token operations, like central issuance or reissuance have been completed.
-   *
-   * This function allows the token owner to rename the token after the operations
-   * have been completed and then point the audience to use the token contract.
+   * Owner can update token information here
    */
   function setTokenInformation(string _name, string _symbol) onlyOwner {
     name = _name;
