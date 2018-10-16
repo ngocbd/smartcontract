@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenPAD at 0x4977c46f3cf3d6b82d0908feb333515847d0552d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenPAD at 0x42b64737900f1162396178be69eae3485fd804b4
 */
 pragma solidity ^0.4.16;
 
@@ -57,8 +57,8 @@ interface tokenRecipient { function receiveApproval(address _from, uint256 _valu
 
 contract TokenPAD is owned, SafeMath {
     // Public variables of the token
-    string public name = "Platform for Air Drops";
-    string public symbol = "PAD";
+    string public name = "PIG";
+    string public symbol = "PIG";
     uint8 public decimals = 18;
     uint256 public totalSupply = 15000000000000000000000000;
     
@@ -102,7 +102,7 @@ contract TokenPAD is owned, SafeMath {
         // Add the same to the recipient
         balanceOf[_to] =add(balanceOf[_to],_value);
         Transfer(_from, _to, _value);
-        // Asserts are used to use static analysis to find bugs in code. 
+        // Asserts are used to use static analysis to find bugs in your code. They should never fail
         assert(add(balanceOf[_from],balanceOf[_to]) == previousBalances);
     }
 
