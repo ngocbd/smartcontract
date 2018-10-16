@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dice at 0x110C11dE11ccE962604C28BB05bbc399cBAa7BDa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dice at 0x50739060a2C32dc076E507aE1A893aAB28eCFe68
 */
 // <ORACLIZE_API>
 /*
