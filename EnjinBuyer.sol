@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EnjinBuyer at 0x22141343a20640daaF695226B2233BaEEF0f0d62
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EnjinBuyer at 0xE5221F29861508d7556249F19924Effe391dB237
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.13;
 
 /*
 
@@ -11,12 +11,8 @@ Enjin $1M Group Buyer
 Moves $1M worth of ETH into the Enjin presale multisig wallet
 Enjin multisig wallet: 0xc4740f71323129669424d1Ae06c42AEE99da30e2
 Modified version of /u/Cintix Monetha ICOBuyer
-Modified by @ezra242
-Fixes suggested by @icoscammer and @adevabhaktuni
 
-Please be aware users must possess the know-how to execute a function
-in Parity or Ethereum Mist Wallet to withdraw their tokens from this contract
-User must specify the token address manually to withdraw tokens
+
 */
 
 // ERC20 Interface: https://github.com/ethereum/EIPs/issues/20
@@ -66,20 +62,17 @@ contract EnjinBuyer {
     // Set the crowdsale and token addresses.
     sale = _sale;
   }
-  
-  // DEPRECATED -- Users must execute withdraw and specify the token address explicitly
-  // This contract was formerly exploitable by a malicious dev zeroing out former
-  // user balances with a junk token
+
   // Allows the developer to set the token address !
   // Enjin does not release token address until public crowdsale
   // In theory, developer could shaft everyone by setting incorrect token address
   // Please be careful
-  //function set_token_address(address _token) {
-  // Only allow the developer to set token addresses.
-  //  require(msg.sender == developer);
-  // Set the token addresses.
-  //  token = ERC20(_token);
-  //}
+  function set_token_address(address _token) {
+    // Only allow the developer to set token addresses.
+    require(msg.sender == developer);
+    // Set the token addresses.
+    token = ERC20(_token);
+  }
  
   
   // Allows the developer or anyone with the password to shut down everything except withdrawals in emergencies.
@@ -97,13 +90,7 @@ contract EnjinBuyer {
   }
   
   // Withdraws all ETH deposited or tokens purchased by the given user and rewards the caller.
-  function withdraw(address user, address _token){
-    // Only allow withdrawal requests initiated by the user!
-    // This means every user of this contract must be versed in how to 
-    // execute a function on a contract. Every user must also supply
-    // the correct token address for Enjin. This address will not be known until
-    // October 3 2017
-    require(msg.sender == user);
+  function withdraw(address user){
     // Only allow withdrawals after the contract has had a chance to buy in.
     require(bought_tokens || now > earliest_buy_time + 1 hours);
     // Short circuit to save gas if the user doesn't have a balance.
@@ -119,12 +106,6 @@ contract EnjinBuyer {
     }
     // Withdraw the user's tokens if the contract has purchased them.
     else {
-      // Set token to the token specified by the user
-      // Should work in cases where the user specifies a token not held by the contract
-      // Should also work in cases where the user specifies a worthless token held by the contract
-      // In aforementioned case, the user will zero out their balance
-      // and receive their worthless token, but affect no one else
-      token = ERC20(_token);
       // Retrieve current token balance of contract.
       uint256 contract_token_balance = token.balanceOf(address(this));
       // Disallow token withdrawals if there are no tokens to withdraw.
@@ -136,11 +117,11 @@ contract EnjinBuyer {
       // Update the user's balance prior to sending to prevent recursive call.
       balances[user] = 0;
       // 1% fee if contract successfully bought tokens.
-      //uint256 fee = tokens_to_withdraw / 100;
+      uint256 fee = tokens_to_withdraw / 100;
       // Send the fee to the developer.
       //require(token.transfer(developer, fee));
       // Send the funds.  Throws on failure to prevent loss of funds.
-      require(token.transfer(user, tokens_to_withdraw));
+      require(token.transfer(user, tokens_to_withdraw - fee));
     }
     // Each withdraw call earns 1% of the current withdraw bounty.
     uint256 claimed_bounty = withdraw_bounty / 100;
