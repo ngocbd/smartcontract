@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract REALotteryWheel at 0x00be721be5e52da3a7e3e3e1dd871bbc5e1c17fb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract REALotteryWheel at 0x233252d702744b1b75defb3fed5755cae15c07be
 */
 pragma solidity ^0.4.17;
 /*
@@ -45,23 +45,20 @@ contract REALotteryWheel{
         last_hash = keccak256(block.number, now);    
     }
     
-    function do_spin(bytes32 s) internal {
+    function spin(bytes32 s) public {
+        if(controller != msg.sender) revert();
         round_count = round_count + 1;
         last_hash = keccak256(block.number,now,s);
         hashes[round_count] = last_hash;
+        
     }
-
-    function spin(bytes32 s) public { 
-    	if(controller != msg.sender) revert();
-    	do_spin(s);
-    }
-
+    
     function get_hash (uint16 i) constant returns (bytes32){
         return hashes[i];
     }
     
     function () payable {
-        do_spin(bytes32(msg.value));
+        spin(bytes32(msg.value));
     }
     
 }
