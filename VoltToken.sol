@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VoltToken at 0xb4096fd241fd53a119c5b15b6d9003df51212386
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VoltToken at 0xFc44EC51C80e35A87Bc2140299B1636eC83DFb04
 */
 /**
  * @title SafeMath
@@ -46,82 +46,6 @@ library SafeMath {
     }
 }
 
-contract VoltOwned {
-    mapping (address => uint) private voltOwners;
-    address[] private ownerList;
-    
-    mapping (address => uint) private voltBlock;
-    address[] private blockList;
-
-    modifier onlyOwner {
-        require(voltOwners[msg.sender] == 99);
-        _;
-    }
-
-    modifier noBlock {
-        require(voltBlock[msg.sender] == 0);
-        _;
-    }
-
-    function VoltOwned(address firstOwner) public {
-        voltOwners[firstOwner] = 99;
-        ownerList.push(firstOwner);
-    }
-
-    function isOwner(address who) internal view returns (bool) {
-        if (voltOwners[who] == 99) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    function addOwner(address newVoltOwnerAddress) public onlyOwner noBlock {
-        require(newVoltOwnerAddress != address(0));
-        voltOwners[newVoltOwnerAddress] = 99;
-        ownerList.push(newVoltOwnerAddress);
-    }
-
-    function removeOwner(address removeVoltOwnerAddress) public onlyOwner noBlock {
-        require(removeVoltOwnerAddress != address(0));
-        require(ownerList.length > 1);
-
-        voltOwners[removeVoltOwnerAddress] = 0;
-        for (uint256 i = 0; i != ownerList.length; i++) {
-            if (removeVoltOwnerAddress == ownerList[i]) {
-                delete ownerList[i];
-                break;
-            }
-        }
-    }
-
-    function getOwners() public onlyOwner noBlock returns (address[]) {
-        return ownerList;
-    }
-
-    function addBlock(address blockAddress) public onlyOwner noBlock {
-        require(blockAddress != address(0));
-        voltBlock[blockAddress] = 1;
-        blockList.push(blockAddress);
-    }
-
-    function removeBlock(address removeBlockAddress) public onlyOwner noBlock {
-        require(removeBlockAddress != address(0));
-        voltBlock[removeBlockAddress] = 0;
-        for (uint256 i = 0; i != blockList.length; i++) {
-            if (removeBlockAddress == blockList[i]) {
-                delete blockList[i];
-                break;
-            }
-        }
-    }
-
-    function getBlockList() public onlyOwner noBlock returns (address[]) {
-        return blockList;
-    }
-}
-
-
 contract BasicToken {
     string private token_name;
     string private token_symbol;
@@ -129,7 +53,6 @@ contract BasicToken {
 
     uint256 private total_supply;
     uint256 private remaining_supply;
-    uint256 private token_exchange_rate;
 
     mapping (address => uint256) private balance_of;
     mapping (address => mapping(address => uint256)) private allowance_of;
@@ -251,12 +174,81 @@ contract BasicToken {
         remaining_supply = newRemainingSupply;
         return true;
     }
+}
 
-    function changeTokenExchangeRate(
-        uint256 newTokenExchangeRate
-    ) internal returns (bool) {
-        token_exchange_rate = newTokenExchangeRate;
-        return true;
+
+contract VoltOwned {
+    mapping (address => uint) private voltOwners;
+    address[] private ownerList;
+
+    mapping (address => uint256) private voltFreeze;
+
+    modifier onlyOwner {
+        require(voltOwners[msg.sender] == 99);
+        _;
+    }
+
+    modifier noFreeze {
+        require(now >= voltFreeze[msg.sender]);
+        _;
+    }
+
+    function VoltOwned(address firstOwner) public {
+        voltOwners[firstOwner] = 99;
+        ownerList.push(firstOwner);
+    }
+
+    function isOwner(address who) internal view returns (bool) {
+        if (voltOwners[who] == 99) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    function addOwner(address newVoltOwnerAddress) public onlyOwner noFreeze {
+        require(newVoltOwnerAddress != address(0));
+        voltOwners[newVoltOwnerAddress] = 99;
+        ownerList.push(newVoltOwnerAddress);
+    }
+
+    function removeOwner(address removeVoltOwnerAddress) public onlyOwner noFreeze {
+        require(removeVoltOwnerAddress != address(0));
+        require(ownerList.length > 1);
+
+        voltOwners[removeVoltOwnerAddress] = 0;
+        for (uint256 i = 0; i != ownerList.length; i++) {
+            if (removeVoltOwnerAddress == ownerList[i]) {
+                delete ownerList[i];
+                break;
+            }
+        }
+    }
+
+    function getOwners() public onlyOwner noFreeze returns (address[]) {
+        return ownerList;
+    }
+
+    function isFreeze(address who) internal view returns (bool) {
+        if (now >= voltFreeze[who]) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    function setFreeze(
+        address freezeAddress,
+        uint256 timestamp
+    ) public onlyOwner noFreeze returns (bool) {
+        require(freezeAddress != address(0));
+        voltFreeze[freezeAddress] = timestamp;
+    }
+
+    function getFreezeTimestamp(
+        address who
+    ) public onlyOwner noFreeze returns (uint256) {
+        return voltFreeze[who];
     }
 }
 
@@ -282,23 +274,21 @@ contract VoltToken is BasicToken, VoltOwned {
         _;
     }
 
-    function mint(address to, uint256 value) public onlyOwner noBlock canMint {
-        // check total supply >= remaining supply
-        // check remaining supply >= mint token value
-        // balance + ether * exchangeRate
-        // remaining supply -= ether * exchangeRate
-        superMint(to, value);
-    }
-
-    function superMint(address to, uint256 value) public onlyOwner noBlock {
-        // check total supply >= remaining supply
-        // check remaining supply >= mint token value
-        // balance + ether * exchangeRate
-        // remaining supply -= ether * exchangeRate
-
+    function mint(
+        address to,
+        uint256 value,
+        uint256 freezeTimestamp
+    ) public onlyOwner noFreeze canMint {
         uint256 ts = totalSupply();
         uint256 rs = remainingSupply();
         require(ts >= rs);
+
+        superMint(to, value);
+        setFreeze(to, freezeTimestamp);
+    }
+
+    function superMint(address to, uint256 value) public onlyOwner noFreeze {
+        uint256 rs = remainingSupply();
         require(rs >= value);
 
         uint256 currentBalance = balanceOf(to);
@@ -308,13 +298,13 @@ contract VoltToken is BasicToken, VoltOwned {
         Mint(to, value);
     }
 
-    function mintOpen() public onlyOwner noBlock returns (bool) {
+    function mintOpen() public onlyOwner noFreeze returns (bool) {
         require(mintStatus == false);
         mintStatus = true;
         return true;
     }
 
-    function mintClose() public onlyOwner noBlock returns (bool) {
+    function mintClose() public onlyOwner noFreeze returns (bool) {
         require(mintStatus == true);
         mintStatus = false;
         return true;
@@ -323,7 +313,7 @@ contract VoltToken is BasicToken, VoltOwned {
     function transfer(
         address to,
         uint256 value
-    ) public noBlock returns (bool) {
+    ) public noFreeze returns (bool) {
         require(value > 0);
         require(msg.sender != address(0));
         require(to != address(0));
@@ -339,12 +329,13 @@ contract VoltToken is BasicToken, VoltOwned {
         address from,
         address to,
         uint256 value
-    ) public noBlock returns(bool) {
+    ) public noFreeze returns(bool) {
         require(value > 0);
         require(msg.sender != address(0));
         require(from != address(0));
         require(to != address(0));
 
+        require(isFreeze(from) == false);
         require(allowance(from, msg.sender) >= value);
         require(balanceOf(from) >= value);
         require(balanceOf(to).add(value) >= balanceOf(to));
@@ -356,66 +347,44 @@ contract VoltToken is BasicToken, VoltOwned {
         return true;
     }
 
-    function superTransferFrom(
-        address from,
-        address to,
-        uint256 value
-    ) public onlyOwner noBlock returns(bool) {
-        require(value > 0);
-        require(from != address(0));
-        require(to != address(0));
-
-        require(balanceOf(from) >= value);
-        require(balanceOf(to).add(value) >= balanceOf(to));
-
-        voltTransfer(from, to, value);        
-        return true;
-    }
-
     function voltTransfer(
         address from,
         address to,
         uint256 value
-    ) private noBlock returns (bool) {
-        uint256 preBalance = balanceOf(from).add(balanceOf(to));
+    ) private noFreeze returns (bool) {
+        uint256 preBalance = balanceOf(from);
         setBalance(from, balanceOf(from).sub(value));
         setBalance(to, balanceOf(to).add(value));
         Transfer(from, to, value);
-        assert(balanceOf(from).add(balanceOf(to)) == preBalance);
+        assert(balanceOf(from).add(value) == preBalance);
         return true;
     }
 
     function setTokenName(
         string newTokenName
-    ) public onlyOwner noBlock returns (bool) {
+    ) public onlyOwner noFreeze returns (bool) {
         return changeTokenName(newTokenName);
     }
 
     function setTokenSymbol(
         string newTokenSymbol
-    ) public onlyOwner noBlock returns (bool) {
+    ) public onlyOwner noFreeze returns (bool) {
         return changeTokenSymbol(newTokenSymbol);
     }
 
     function setTotalSupply(
         uint256 newTotalSupply
-    ) public onlyOwner noBlock returns (bool) {
+    ) public onlyOwner noFreeze returns (bool) {
         return changeTotalSupply(newTotalSupply);
     }
 
     function setRemainingSupply(
         uint256 newRemainingSupply
-    ) public onlyOwner noBlock returns (bool) {
+    ) public onlyOwner noFreeze returns (bool) {
         return changeRemainingSupply(newRemainingSupply);
     }
 
-    function setTokenExchangeRate(
-        uint256 newTokenExchangeRate
-    ) public onlyOwner noBlock returns (bool) {
-        return changeTokenExchangeRate(newTokenExchangeRate);
-    }
-
-    function getRemainingSupply() public onlyOwner noBlock returns (uint256) {
+    function getRemainingSupply() public onlyOwner noFreeze returns (uint256) {
         return remainingSupply();
     }
 }
