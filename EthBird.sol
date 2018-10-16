@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthBird at 0xa5b99587151ea5e63c642c474c6ce375812e5627
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthBird at 0x0e57dd440090561c3c72df021dcc3d3bab3da5ab
 */
 pragma solidity ^0.4.0;
 
@@ -9,6 +9,7 @@ contract EthBird {
     address highScoreUser;
     
     uint currentHighScore = 0;
+    uint256 ownerCommision = 0;
     uint contestStartTime = now;
     
     mapping(address => bool) paidUsers;
@@ -25,6 +26,12 @@ contract EthBird {
     function payEntryFee() public payable  {
         if (msg.value >= 0.001 ether) {
             paidUsers[msg.sender] = true;
+            ownerCommision = msg.value / 5;
+            address(owner).transfer(ownerCommision);
+        }
+        
+        if(now >= contestEndTime()){
+            awardHighScore();   
         }
     }
 
@@ -40,27 +47,31 @@ contract EthBird {
         return address(this).balance;
     }
     
-    function getNextPayoutEstimation() public constant returns (uint) {
-        return (contestStartTime + 1 days) - now;
+    function contestEndTime() public constant returns (uint) {
+        return contestStartTime + 3 hours;
     }
     
-    function recordHighScore(uint score, address userToScore)  public onlyOwner returns (address) {
+    function getNextPayoutEstimation() public constant returns (uint) {
+        if(contestEndTime() > now){
+            return contestEndTime() - now;
+        } else {
+            return 0;
+        }
+    }
+    
+    function recordHighScore(uint score, address userToScore)  public onlyOwner {
         if(paidUsers[userToScore]){
             if(score > 0 && score >= currentHighScore){
                 highScoreUser = userToScore;
                 currentHighScore = score;
             }
-            if(now >= contestStartTime + 1 days){
-                awardHighScore();   
-            }
         }
-        return userToScore;
     }
     
-    function awardHighScore() public onlyOwner {
-        uint256 ownerCommision = address(this).balance / 10;
-        address(owner).transfer(ownerCommision);
+    function awardHighScore() internal {
         address(highScoreUser).transfer(address(this).balance);
         contestStartTime = now;
+        currentHighScore = 0;
+        highScoreUser = 0;
     }
 }
