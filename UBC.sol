@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UBC at 0xf920a1bb338194bc379524744a1e699174fbb53a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UBC at 0x41b47419284a0d88fc65152b96ac79451c079ac1
 */
 pragma solidity ^0.4.13;
 
@@ -101,7 +101,7 @@ contract UBC is ERC20,Ownable{
 	mapping (address => mapping (address => uint256)) allowed;
 	
 
-	function UNIT(){
+	function UBC(){
 		totalSupply = 0 ;
 		rate=10000;
 	}
