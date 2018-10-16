@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IdeaCoin at 0x092aad771c9000dd4340bf9f1e59d77766595588
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IdeaCoin at 0x6d808d3e9175b316c0ecf2c3a35b55a8ddb10ad1
 */
 pragma solidity ^0.4.18;
 /**
@@ -340,10 +340,11 @@ library SafeERC20 {
  * @title Basic token
  * @dev Basic version of StandardToken, with no allowances.
  */
-contract BasicToken is ERC20Basic {
+contract BasicToken is ERC20Basic, Ownable {
   using SafeMath for uint256;
 
-  mapping(address => uint256) balances;
+ mapping (address => bool) public frozenAccount;
+ event FrozenFunds(address target, bool frozen);
 
   uint256 totalSupply_;
 
@@ -353,6 +354,11 @@ contract BasicToken is ERC20Basic {
   function totalSupply() public view returns (uint256) {
     return totalSupply_;
   }
+  
+   function freezeAccount(address target, bool freeze) onlyOwner external {
+         frozenAccount[target] = freeze;
+         emit FrozenFunds(target, freeze);
+         }
 
   /**
   * @dev transfer token for a specified address
@@ -360,12 +366,13 @@ contract BasicToken is ERC20Basic {
   * @param _value The amount to be transferred.
   */
   function transfer(address _to, uint256 _value) public returns (bool) {
+      require(!frozenAccount[msg.sender]);
     require(_to != address(0));
-    require(_value <= balances[msg.sender]);
+    require(_value <= _balanceOf[msg.sender]);
 
     // SafeMath.sub will throw if there is not enough balance.
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
+    _balanceOf[msg.sender] = _balanceOf[msg.sender].sub(_value);
+    _balanceOf[_to] = _balanceOf[_to].add(_value);
     emit Transfer(msg.sender, _to, _value);
     return true;
   }
@@ -376,7 +383,7 @@ contract BasicToken is ERC20Basic {
   * @return An uint256 representing the amount owned by the passed address.
   */
   function balanceOf(address _owner) public view returns (uint256 balance) {
-    return balances[_owner];
+    return _balanceOf[_owner];
   }
 
 }
@@ -400,12 +407,13 @@ contract StandardToken is ERC20, BasicToken {
    * @param _value uint256 the amount of tokens to be transferred
    */
   function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(!frozenAccount[_from] && !frozenAccount[_to] && !frozenAccount[msg.sender]);
     require(_to != address(0));
-    require(_value <= balances[_from]);
+    require(_value <= _balanceOf[_from]);
     require(_value <= allowed[_from][msg.sender]);
 
-    balances[_from] = balances[_from].sub(_value);
-    balances[_to] = balances[_to].add(_value);
+    _balanceOf[_from] = _balanceOf[_from].sub(_value);
+    _balanceOf[_to] = _balanceOf[_to].add(_value);
     allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
     emit Transfer(_from, _to, _value);
     return true;
@@ -544,6 +552,7 @@ contract ERC827Token is ERC827, StandardToken {
      @return true if the call function was executed successfully
    */
   function approve(address _spender, uint256 _value, bytes _data) public returns (bool) {
+    require(!frozenAccount[msg.sender] && !frozenAccount[_spender]);
     require(_spender != address(this));
 
     super.approve(_spender, _value);
@@ -639,10 +648,7 @@ contract ERC827Token is ERC827, StandardToken {
 }
 
 
-/////////////////////////////////////////////////////////////////////////////////////////////
-contract ERC223ContractInterface {
-  function tokenFallback(address _from, uint256 _value, bytes _data) external;
-}
+
 /////////////////////////////////////////////////////////////////////////////////////////////
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
 
@@ -651,8 +657,7 @@ contract IdeaCoin is ERC20Basic("IDC", "IdeaCoin", 18, 1000000000000000000000000
 
     using SafeMath for uint;
 
-    mapping (address => bool) public frozenAccount;
-    event FrozenFunds(address target, bool frozen);
+   
     event Burn(address _from, uint256 _value);
     event Mint(address _to, uint _value);
 
@@ -661,11 +666,7 @@ contract IdeaCoin is ERC20Basic("IDC", "IdeaCoin", 18, 1000000000000000000000000
             _balanceOf[msg.sender] = _totalSupply;
         }
 
-       function freezeAccount(address target, bool freeze) onlyOwner public {
-         frozenAccount[target] = freeze;
-         emit FrozenFunds(target, freeze);
-         }
-
+      
        function totalSupply() public constant returns (uint) {
            return _totalSupply;
        }
@@ -675,56 +676,7 @@ contract IdeaCoin is ERC20Basic("IDC", "IdeaCoin", 18, 1000000000000000000000000
        }
 
 
- function transfer(address _to, uint256 _value, bytes _data) public
-    returns (bool success)
-  {
-      require(!frozenAccount[msg.sender]);
-    transfer(_to, _value);
-    bool is_contract = false;
-    assembly {
-      is_contract := not(iszero(extcodesize(_to)))
-    }
-    if (is_contract) {
-      ERC223ContractInterface receiver = ERC223ContractInterface(_to);
-      receiver.tokenFallback(msg.sender, _value, _data);
-    }
-    return true;
-  }
-
-
-        function transferFrom(address _from, address _to, uint _value) public returns (bool) {
-           require(!frozenAccount[_from] && !frozenAccount[_to] && !frozenAccount[msg.sender]);
-            if (_allowances[_from][msg.sender] > 0 &&
-                _value > 0 &&
-                _allowances[_from][msg.sender] >= _value &&
-                _balanceOf[_from] >= _value) {
-                _balanceOf[_from] = _balanceOf[_from].sub(_value);
-                _balanceOf[_to] = _balanceOf[_to].add(_value);
-                _allowances[_from][msg.sender] = _allowances[_from][msg.sender].sub(_value);
-                emit Transfer(_from, _to, _value);
-                return true;
-            }
-            return false;
-        }
-
-
-
-
-        function approve(address _spender, uint _value) public returns (bool) {
-           require(!frozenAccount[msg.sender] && !frozenAccount[_spender]);
-            _allowances[msg.sender][_spender] = _allowances[msg.sender][_spender].add(_value);
-            emit Approval(msg.sender, _spender, _value);
-            return true;
-        }
-
-        function allowance(address _owner, address _spender) public constant returns (uint) {
-            return _allowances[_owner][_spender];
-        }
-
-
-
-
-      function burn(address _from, uint256 _value) onlyOwner public {
+        function burn(address _from, uint256 _value) onlyOwner external {
               require(_balanceOf[_from] >= 0);
               _balanceOf[_from] =  _balanceOf[_from].sub(_value);
               _totalSupply = _totalSupply.sub(_value);
@@ -732,20 +684,13 @@ contract IdeaCoin is ERC20Basic("IDC", "IdeaCoin", 18, 1000000000000000000000000
             }
 
 
-       function mintToken(address _to, uint256 _value) onlyOwner public  {
+        function mintToken(address _to, uint256 _value) onlyOwner external  {
                 require(!frozenAccount[msg.sender] && !frozenAccount[_to]);
                _balanceOf[_to] = _balanceOf[_to].add(_value);
                _totalSupply = _totalSupply.add(_value);
                emit Mint(_to,_value);
-               
-               
-
              }
 
 }
-
-////////////////////////////////////////////////////////////////////////////////////////////
-
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////
