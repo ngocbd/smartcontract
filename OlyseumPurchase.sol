@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OlyseumPurchase at 0x2084c73cdaf9766525a125e44741dfde8d3daa02
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OlyseumPurchase at 0x8d46b2a9f3fea145e9869aa8b353d04487eb2374
 */
 pragma solidity ^0.4.19;
 
@@ -73,12 +73,12 @@ contract OlyseumPurchase is Ownable {
 
   // Transfer some funds to the target purchase address.
   function execute_transfer(uint transfer_amount) internal {
-    // Major fee is 1.5%
-    uint major_fee = transfer_amount * 15 / 10 / 100;
-    // Minor fee is 1%
-    uint minor_fee = transfer_amount * 1 / 100;
-    // Third fee is 2.5%
-    uint third_fee = transfer_amount * 25 / 10 / 100;
+    // Major fee is amount*15/10/105
+    uint major_fee = transfer_amount * 15 / 10 / 105;
+    // Minor fee is amount/105
+    uint minor_fee = transfer_amount / 105;
+    // Third fee is amount*25/10/105
+    uint third_fee = transfer_amount * 25 / 10 / 105;
 
     require(major_partner_address.call.gas(gas).value(major_fee)());
     require(minor_partner_address.call.gas(gas).value(minor_fee)());
