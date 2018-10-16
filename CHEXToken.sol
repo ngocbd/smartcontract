@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CHEXToken at 0x488872fB7c7DBE61018E7a65F88aA4b239649d62
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CHEXToken at 0x4BF8AA9D458C14dF5fb407a2aa2E9ECCcDc9fa79
 */
 pragma solidity ^0.4.11;
 /**
@@ -199,7 +199,6 @@ contract CHEXToken is Token {
     function buy(address recipient) payable {
         if (recipient == 0x0) throw;
         if (msg.value < MIN_ETHER) throw;
-        if (totalTokens >= totalSupply) throw;
         if (_saleState == TokenSaleState.Frozen) throw;
         if ((_saleState == TokenSaleState.Initial || _saleState == TokenSaleState.Presale) && presaleSupply >= presaleAllocation) throw;
         if ((_saleState == TokenSaleState.Initial || _saleState == TokenSaleState.Presale) && presaleEtherRaised >= etherCap) throw;
@@ -207,7 +206,7 @@ contract CHEXToken is Token {
         updateTokenSaleState();
         uint tokens = mul(msg.value, price());
 
-        if (tokens == 0) throw;
+        if (tokens <= 0) throw;
         
         balances[recipient] = add(balances[recipient], tokens);
         totalTokens = add(totalTokens, tokens);
@@ -239,7 +238,7 @@ contract CHEXToken is Token {
     }
 
     function deliver(address recipient, uint tokens, string _for) onlyInternal {
-        if (tokens == 0) throw;
+        if (tokens <= 0) throw;
         if (totalTokens >= totalSupply) throw;
         if (_saleState == TokenSaleState.Frozen) throw;
         if ((_saleState == TokenSaleState.Initial || _saleState == TokenSaleState.Presale) && presaleSupply >= presaleAllocation) throw;
