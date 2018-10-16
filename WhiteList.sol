@@ -1,6 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Whitelist at 0x16643b4deaafa493a07f5b73a5b68f1b1ae1f327
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Whitelist at 0x73fe1d0c5909a83beaf278cfbfe008c25650c327
 */
+pragma solidity 0.4.19;
+
+// File: zeppelin-solidity/contracts/ownership/Ownable.sol
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
   address public owner;
 
@@ -38,68 +47,28 @@ contract Ownable {
 
 }
 
+// File: contracts/Whitelist.sol
 
+contract Whitelist is Ownable {
+    mapping(address => bool) public allowedAddresses;
 
-contract Curatable is Ownable {
-  address public curator;
+    event WhitelistUpdated(uint256 timestamp, string operation, address indexed member);
 
-
-  event CurationRightsTransferred(address indexed previousCurator, address indexed newCurator);
-
-
-  /**
-   * @dev The Curatable constructor sets the original `curator` of the contract to the sender
-   * account.
-   */
-  function Curatable() public {
-    owner = msg.sender;
-    curator = owner;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the curator.
-   */
-  modifier onlyCurator() {
-    require(msg.sender == curator);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newCurator The address to transfer ownership to.
-   */
-  function transferCurationRights(address newCurator) public onlyOwner {
-    require(newCurator != address(0));
-    CurationRightsTransferred(curator, newCurator);
-    curator = newCurator;
-  }
-
-}
-
-contract Whitelist is Curatable {
-    mapping (address => bool) public whitelist;
-
-
-    function Whitelist() public {
+    function addToWhitelist(address[] _addresses) public onlyOwner {
+        for (uint256 i = 0; i < _addresses.length; i++) {
+            allowedAddresses[_addresses[i]] = true;
+            WhitelistUpdated(now, "Added", _addresses[i]);
+        }
     }
 
-
-    function addInvestor(address investor) external onlyCurator {
-        require(investor != 0x0 && !whitelist[investor]);
-        whitelist[investor] = true;
+    function removeFromWhitelist(address[] _addresses) public onlyOwner {
+        for (uint256 i = 0; i < _addresses.length; i++) {
+            allowedAddresses[_addresses[i]] = false;
+            WhitelistUpdated(now, "Removed", _addresses[i]);
+        }
     }
 
-
-    function removeInvestor(address investor) external onlyCurator {
-        require(investor != 0x0 && whitelist[investor]);
-        whitelist[investor] = false;
+    function isWhitelisted(address _address) public view returns (bool) {
+        return allowedAddresses[_address];
     }
-
-
-    function isWhitelisted(address investor) constant external returns (bool result) {
-        return whitelist[investor];
-    }
-
 }
