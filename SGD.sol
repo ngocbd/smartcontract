@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SGD at 0x3b1a38899491d9031cfe6f1d2ff08aaed3ff9211
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SGD at 0xdcc8a0ec9747ab32f336db0d5412d481bb450837
 */
 pragma solidity ^0.4.4;
 
@@ -107,7 +107,7 @@ contract SGD is StandardToken {
     Some wallets/interfaces might not even bother to look at this information.
     */
     string public name = "Singapore Dollar";                   //
-    uint8 public decimals = 2;                //
+    uint8 public decimals = 0;                //
     string public symbol = "SGD";                 //
     string public version = 'H1.0';       //
 
@@ -119,10 +119,10 @@ contract SGD is StandardToken {
 
     function SGD(
         ) {
-        balances[msg.sender] = 220000000000;               // 
-        totalSupply = 220000000000;                        // 
+        balances[msg.sender] = 2200000000;               // 
+        totalSupply = 2200000000;                        // 
         name = "Singapore Dollar";                                   // 
-        decimals = 2;                            // 
+        decimals = 0;                            // 
         symbol = "SGD";                               // 
     }
 
