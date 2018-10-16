@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PO8PrivateSale at 0x3b069fdeb5a874eebac6f446d1e71687a7753da2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PO8PrivateSale at 0x345de4023f9afdabe4927fbdbfd45e1e9b0c66ec
 */
 pragma solidity^0.4.21;
 
@@ -34,7 +34,7 @@ contract Ownable {
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     constructor() public {
-        owner = msg.sender;
+        owner = address(0x072F140DcCCE18F9966Aeb6D71ffcD0b42748683);
     }
 
     modifier onlyOwner() {
@@ -62,7 +62,7 @@ contract ERC20 {
     event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-contract KTBaseToken is ERC20 {
+contract PO8BaseToken is ERC20 {
     using SafeMath for uint256;
     
     string public name;
@@ -150,20 +150,23 @@ contract KTBaseToken is ERC20 {
 
 }
 
-contract PO8Token is KTBaseToken("PO8 Token", "PO8", 18, 10000000000000000000000000000), Ownable {
+contract PO8Token is PO8BaseToken("PO8 Token", "PO8", 18, 10000000000000000000000000000), Ownable {
 
-    uint256 internal privateToken = 1250000000000000000000000000;
+    uint256 internal privateToken;
     uint256 internal preSaleToken;
     uint256 internal crowdSaleToken;
     uint256 internal bountyToken;
     uint256 internal foundationToken;
     address public founderAddress;
+    bool public unlockAllTokens;
 
     mapping (address => bool) public approvedAccount;
+
     event UnFrozenFunds(address target, bool unfrozen);
+    event UnLockAllTokens(bool unlock);
 
     constructor() public {
-        founderAddress = address(0xF84476284887028a7d5341f8f1127154718652B5);
+        founderAddress = address(0x072F140DcCCE18F9966Aeb6D71ffcD0b42748683);
         balances[founderAddress] = totalSupply_;
         emit Transfer(address(0), founderAddress, totalSupply_);
     }
@@ -172,11 +175,16 @@ contract PO8Token is KTBaseToken("PO8 Token", "PO8", 18, 10000000000000000000000
         require (_to != address(0));                               
         require (balances[_from] >= _value);               
         require (balances[_to].add(_value) >= balances[_to]); 
-        require(approvedAccount[_from]);
+        require(approvedAccount[_from] || unlockAllTokens);
 
         balances[_from] = balances[_from].sub(_value);                  
         balances[_to] = balances[_to].add(_value);                  
         emit Transfer(_from, _to, _value);
+    }
+
+    function unlockAllTokens(bool _unlock) public onlyOwner {
+        unlockAllTokens = _unlock;
+        emit UnLockAllTokens(_unlock);
     }
 
     function approvedAccount(address target, bool approval) public onlyOwner {
@@ -194,12 +202,13 @@ contract PO8PrivateSale is Ownable{
     uint256 public limitTokenForSale;
 
     event ChangeRate(address indexed who, uint256 newrate);
+    event FinishPrivateSale();
 
     constructor() public {
         currentRate = 75000;
-        wallet = address(0xF84476284887028a7d5341f8f1127154718652B5); //address of founder
-        limitTokenForSale = 1250000000;
-        token = PO8Token(0x7a00F353C4117f28fE50A1C2a43856B73Cc60e4D);// address of PO8 Token
+        wallet = address(0x072F140DcCCE18F9966Aeb6D71ffcD0b42748683); //address of founder
+        limitTokenForSale = 1250000000000000000000000000;
+        token = PO8Token(0x8744a672D5a2df51Da92B4BAb608CE7ff4Ddd804);// address of PO8 Token
     }
 
     function changeRate(uint256 newrate) public onlyOwner{
@@ -207,6 +216,17 @@ contract PO8PrivateSale is Ownable{
         currentRate = newrate;
 
         emit ChangeRate(msg.sender, newrate);
+    }
+
+    function remainTokens() view public returns(uint256) {
+        return token.balanceOf(this);
+    }
+
+    function finish() public onlyOwner {
+        uint256 reTokens = remainTokens();
+        token.transfer(owner, reTokens);
+        
+        emit FinishPrivateSale();
     }
 
     function () public payable {
