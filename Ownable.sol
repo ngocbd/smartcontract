@@ -1,170 +1,146 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ownable at 0x8df7365b98c2da1221fbb7c236c55d035f74b42b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ownable at 0x18680671947ddb610b4d5a85279527b1aea9d6df
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
+    }
 
-//Base class of token-owner
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
+
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
+
+    function max64(uint64 a, uint64 b) internal pure returns (uint64) {
+        return a >= b ? a : b;
+    }
+
+    function min64(uint64 a, uint64 b) internal pure returns (uint64) {
+        return a < b ? a : b;
+    }
+
+    function max256(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a >= b ? a : b;
+    }
+
+    function min256(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a < b ? a : b;
+    }
+}
+
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
-	address public owner;														//owner's address
+    address public owner;
+    event OwnerChanged(address indexed previousOwner, address indexed newOwner);
 
-	function Ownable() public 
-	{
-		owner = msg.sender;
-	}
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
+     */
+    function Ownable() public {
+    }
 
-	modifier onlyOwner() {
-		require(msg.sender == owner);
-		_;
-	}
-	/*
-	*	Funtion: Transfer owner's authority 
-	*	Type:Public and onlyOwner
-	*	Parameters:
-			@newOwner:	address of newOwner
-	*/
-	function transferOwnership(address newOwner) onlyOwner public{
-		if (newOwner != address(0)) {
-		owner = newOwner;
-		}
-	}
-	
-	function kill() onlyOwner public{
-		selfdestruct(owner);
-	}
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param _newOwner The address to transfer ownership to.
+     */
+    function changeOwner(address _newOwner) onlyOwner public {
+        require(_newOwner != address(0));
+        OwnerChanged(owner, _newOwner);
+        owner = _newOwner;
+    }
+
 }
 
-//Announcement of an interface for recipient approving
-interface tokenRecipient { 
-	function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData)public; 
+interface Token {
+    function transfer(address _to, uint256 _value) public;
+    function balanceOf(address _owner) public constant returns (uint256 balance);
+    //function transfer(address _to, uint256 _value) public returns (bool success);
+    //event Transfer(address indexed _from, address indexed _to, uint256 _value);
 }
 
 
-contract XiaoMuBiaoERC20 is Ownable{
-	
-	//===================public variables definition start==================
-    string public name;															//Name of your Token
-    string public symbol;														//Symbol of your Token
-    uint8 public decimals;														//Decimals of your Token
-    uint256 public totalSupply;													//Maximum amount of Token supplies
+contract Batchdrop is Ownable {
+    using SafeMath for uint256;
+    event TransferToken(address indexed from, address indexed to, uint256 value);
+    Token public standardToken;
+    // List of admins
+    mapping (address => bool) public contractAdmins;
+    mapping (address => bool) public userTransfered;
+    uint256 public totalUserTransfered;
 
-    //define dictionaries of balance
-    mapping (address => uint256) public balanceOf;								//Announce the dictionary of account's balance
-    mapping (address => mapping (address => uint256)) public allowance;			//Announce the dictionary of account's available balance
-	//===================public variables definition end==================
-
-	
-	//===================events definition start==================    
-    event Transfer(address indexed from, address indexed to, uint256 value);	//Event on blockchain which notify client
-	//===================events definition end==================
-	
-	
-	//===================Contract Initialization Sequence Definition start===================
-    function XiaoMuBiaoERC20 () public {
-		decimals=7;															//Assignment of Token's decimals
-		totalSupply = 500000000000 * 10 ** uint256(decimals);  				//Assignment of Token's total supply with decimals
-        balanceOf[owner] = totalSupply;                					//Assignment of Token's creator initial tokens
-        name = "XiaoMuBiao";                                   					//Set the name of Token
-        symbol = "XMB";                               					//Set the symbol of  Token
-        
+    function Batchdrop(address _owner) public {
+        require(_owner != address(0));
+        owner = _owner;
+        owner = msg.sender; //for test
     }
-	//===================Contract Initialization Sequence definition end===================
-	
-	//===================Contract behavior & funtions definition start===================
-	
-	/*
-	*	Funtion: Transfer funtions
-	*	Type:Internal
-	*	Parameters:
-			@_from:	address of sender's account
-			@_to:	address of recipient's account
-			@_value:transaction amount
-	*/
-    function _transfer(address _from, address _to, uint _value) internal {
-		//Fault-tolerant processing
-		require(_to != 0x0);						//
-        require(balanceOf[_from] >= _value);
-        require(balanceOf[_to] + _value > balanceOf[_to]);
 
-        //Execute transaction
-		uint previousBalances = balanceOf[_from] + balanceOf[_to];
-        balanceOf[_from] -= _value;
-        balanceOf[_to] += _value;
-        Transfer(_from, _to, _value);
-		
-		//Verify transaction
-        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+    function setContractToken (address _addressContract) public onlyOwner {
+        require(_addressContract != address(0));
+        standardToken = Token(_addressContract);
+        totalUserTransfered = 0;
     }
-	
-	
-	/*
-	*	Funtion: Transfer tokens
-	*	Type:Public
-	*	Parameters:
-			@_to:	address of recipient's account
-			@_value:transaction amount
-	*/
-    function transfer(address _to, uint256 _value) public {
-		
-        _transfer(msg.sender, _to, _value);
-    }	
-	
-	/*
-	*	Funtion: Transfer tokens from other address
-	*	Type:Public
-	*	Parameters:
-			@_from:	address of sender's account
-			@_to:	address of recipient's account
-			@_value:transaction amount
-	*/
 
-    function transferFrom(address _from, address _to, uint256 _value) public 
-	returns (bool success) {
-        require(_value <= allowance[_from][msg.sender]);     					//Allowance verification
-        allowance[_from][msg.sender] -= _value;
-        _transfer(_from, _to, _value);
+    function balanceOf(address _owner) public constant returns (uint256 balance) {
+        return standardToken.balanceOf(_owner);
+    }
+
+    modifier onlyOwnerOrAdmin() {
+        require(msg.sender == owner || contractAdmins[msg.sender]);
+        _;
+    }
+
+    /**
+    * @dev Add an contract admin
+    */
+    function setContractAdmin(address _admin, bool _isAdmin) public onlyOwner {
+        contractAdmins[_admin] = _isAdmin;
+    }
+
+    /* Batch token transfer. Used by contract creator to distribute initial tokens to holders */
+    function batchdrop(address[] _recipients, uint256[] _values) external onlyOwnerOrAdmin returns (bool) {
+        require( _recipients.length > 0 && _recipients.length == _values.length);
+        uint256 total = 0;
+        for(uint i = 0; i < _values.length; i++){
+            total = total.add(_values[i]);
+        }
+        require(total <= standardToken.balanceOf(msg.sender));
+        for(uint j = 0; j < _recipients.length; j++){
+            standardToken.transfer(_recipients[j], _values[j]);
+            totalUserTransfered = totalUserTransfered.add(1);
+            userTransfered[_recipients[j]] = true;
+            TransferToken(msg.sender, _recipients[j], _values[j]);
+        }
         return true;
     }
-    
-	/*
-	*	Funtion: Approve usable amount for an account
-	*	Type:Public
-	*	Parameters:
-			@_spender:	address of spender's account
-			@_value:	approve amount
-	*/
-    function approve(address _spender, uint256 _value) public 
-        returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
-        return true;
-        }
-
-	/*
-	*	Funtion: Approve usable amount for other address and then notify the contract
-	*	Type:Public
-	*	Parameters:
-			@_spender:	address of other account
-			@_value:	approve amount
-			@_extraData:additional information to send to the approved contract
-	*/
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) public 
-        returns (bool success) {
-        tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
-        }
-    }
-    /*
-	*	Funtion: Transfer owner's authority and account balance
-	*	Type:Public and onlyOwner
-	*	Parameters:
-			@newOwner:	address of newOwner
-	*/
-    function transferOwnershipWithBalance(address newOwner) onlyOwner public{
-		if (newOwner != address(0)) {
-		    _transfer(owner,newOwner,balanceOf[owner]);
-		    owner = newOwner;
-		}
-	}
-   //===================Contract behavior & funtions definition end===================
 }
