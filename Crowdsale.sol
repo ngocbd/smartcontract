@@ -1,304 +1,176 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x799ea67fe4c2cbf5655727b53a291cab952b4c77
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x890e82707313e18e3a1e40387d4fdb000f7fa7b3
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.11;
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+contract token {
+    function transferFrom(address, address, uint) returns(bool){}
+    function burn() {}
 }
 
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
+contract SafeMath {
+    //internals
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-    
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-  
-}
-
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances. 
- */
-contract BasicToken is ERC20Basic {
-    
-  using SafeMath for uint256;
-
-  mapping(address => uint256) balances;
-
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) returns (bool) {
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of. 
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) constant returns (uint256 balance) {
-    return balances[_owner];
-  }
-
-}
-
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
-contract StandardToken is ERC20, BasicToken {
-
-  mapping (address => mapping (address => uint256)) allowed;
-
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amout of tokens to be transfered
-   */
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
-    var _allowance = allowed[_from][msg.sender];
-
-    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-    // require (_value <= _allowance);
-
-    balances[_to] = balances[_to].add(_value);
-    balances[_from] = balances[_from].sub(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  /**
-   * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) returns (bool) {
-
-    // To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifing the amount of tokens still available for the spender.
-   */
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
-
-}
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-    
-  address public owner;
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner {
-    require(newOwner != address(0));      
-    owner = newOwner;
-  }
-
-}
-
-/**
- * @title Mintable token
- * @dev Simple ERC20 Token example, with mintable token creation
- * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
- * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
- */
-
-contract MintableToken is StandardToken, Ownable {
-    
-  event Mint(address indexed to, uint256 amount);
-  
-  event MintFinished();
-
-  bool public mintingFinished = false;
-
-  modifier canMint() {
-    require(!mintingFinished);
-    _;
-  }
-
-  /**
-   * @dev Function to mint tokens
-   * @param _to The address that will recieve the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
-   */
-  function mint(address _to, uint256 _amount) onlyOwner canMint returns (bool) {
-    totalSupply = totalSupply.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    Mint(_to, _amount);
-    return true;
-  }
-
-  /**
-   * @dev Function to stop minting new tokens.
-   * @return True if the operation was successful.
-   */
-  function finishMinting() onlyOwner returns (bool) {
-    mintingFinished = true;
-    MintFinished();
-    return true;
-  }
-  
-}
-
-contract SimpleTokenCoin is MintableToken {
-    
-    string public constant name = "Just another Test token for AMICO 2.0";
-    
-    string public constant symbol = "AMICOTEST20";
-    
-    uint32 public constant decimals = 18;
-    
-}
-
-contract Crowdsale is Ownable {
-    
-    address owner;
-    
-    enum State {
-        init,
-        pre_ico_w1,
-        pre_ico_w2,
-        pre_ico_w3,
-        pre_ico_w4,
-        ico,
-        paused,
-        finished
+    function safeMul(uint a, uint b) internal returns (uint) {
+        uint c = a * b;
+        Assert(a == 0 || c / a == b);
+        return c;
     }
-    
-    State public currentState = State.paused;
-    
-    uint constant PRE_ICO_BONUS_W1 = 40;
-    uint constant RPE_ICO_BONUS_W2 = 30;
-    uint constant RPE_ICO_BONUS_W3 = 20;
-    uint constant RPE_ICO_BONUS_W4 = 10;
-    uint constant PRE_ICO_DEFAULT_BONUS = 10;
-    uint constant PRICE = 1000; // 750 for 1 eth
-    
-    SimpleTokenCoin public token = new SimpleTokenCoin();
-    
+
+    function safeSub(uint a, uint b) internal returns (uint) {
+        Assert(b <= a);
+        return a - b;
+    }
+
+    function safeAdd(uint a, uint b) internal returns (uint) {
+        uint c = a + b;
+        Assert(c >= a && c >= b);
+        return c;
+    }
+
+    function Assert(bool assertion) internal {
+        if (!assertion) {
+            revert();
+        }
+    }
+}
+
+
+contract Crowdsale is SafeMath {
+    /*Owner's address*/
+    address public owner;
+    /* tokens will be transferred from BAP's address */
+    address public initialTokensHolder = 0xB27590b9d328bA0396271303e24db44132531411;
+    /* if the funding goal is not reached, investors may withdraw their funds */
+    uint public fundingGoal =      10000;
+    /* the maximum amount of tokens to be sold */
+    uint public maxGoal     = 2100000000;
+    /* how much has been raised by crowdale (in ETH) */
+    uint public amountRaised;
+    /* the start date of the crowdsale 12:00 am 31/11/2017 */
+    uint public start = 1508986800;
+    /* the start date of the crowdsale 11:59 pm 10/11/2017*/
+    uint public end =   1509008400;
+    /*token's price  1ETH = 15000 KRB*/
+    uint public tokenPrice = 15000;
+    /* the number of tokens already sold */
+    uint public tokensSold;
+    /* the address of the token contract */
+    token public tokenReward;
+    /* the balances (in ETH) of all investors */
+    mapping(address => uint256) public balanceOf;
+    /*this mapping tracking allowed specific investor to invest and their referral */
+    mapping(address => address) public permittedInvestors;
+    /* indicated if the funding goal has been reached. */
+    bool public fundingGoalReached = false;
+    /* indicates if the crowdsale has been closed already */
+    bool public crowdsaleClosed = false;
+    /* this wallet will store all the fund made by ICO after ICO success*/
+    address beneficiary = 0x12bF8E198A6474FC65cEe0e1C6f1C7f23324C8D5;
+    /* notifying transfers and the success of the crowdsale*/
+    event GoalReached(address TokensHolderAddr, uint amountETHRaised);
+    event FundTransfer(address backer, uint amount, uint amountRaisedInICO, uint amountTokenSold, uint tokensHaveSold);
+    event TransferToReferrer(address indexed backer, address indexed referrerAddress, uint commission, uint amountReferralHasInvested, uint tokensReferralHasBought);
+    event AllowSuccess(address indexed investorAddr, address referralAddr);
+    event Withdraw(address indexed recieve, uint amount);
+
+    /*  initialization, set the token address */
     function Crowdsale() {
+        tokenReward = token(0xa7101e696dc6334ca8dbe8176a85a1c545feb6e2);
         owner = msg.sender;
     }
-    
-    function setIcoState(State _newState) onlyOwner {
-        currentState = _newState;
+
+    /* invest by sending ether to the contract. */
+    function () payable {
+        invest();
     }
-    
-    function() external payable {
-        assert(msg.sender != 0x0);
-        require(msg.value > 0);
-        require(currentState <= State.ico);
-        
-        uint bonus = PRE_ICO_DEFAULT_BONUS;
-        if(currentState == State.pre_ico_w1) {
-            bonus = PRE_ICO_BONUS_W1;
+
+    function invest() payable {
+        if(permittedInvestors[msg.sender] == 0x0) {
+            revert();
         }
-        if(currentState == State.pre_ico_w2) {
-            bonus = RPE_ICO_BONUS_W2;
+        uint amount = msg.value;
+        uint numTokens = safeMul(amount, tokenPrice) / 1000000000000000000; // 1 ETH
+        if (now < start || now > end || safeAdd(tokensSold, numTokens) > maxGoal) {
+            revert();
         }
-        if(currentState == State.pre_ico_w3) {
-            bonus = RPE_ICO_BONUS_W3;
+        balanceOf[msg.sender] = safeAdd(balanceOf[msg.sender], amount);
+        amountRaised = safeAdd(amountRaised, amount);
+        tokensSold += numTokens;
+        if (!tokenReward.transferFrom(initialTokensHolder, msg.sender, numTokens)) {
+            revert();
         }
-        
-        if(currentState == State.pre_ico_w4) {
-            bonus = RPE_ICO_BONUS_W4;
+        if(permittedInvestors[msg.sender] != initialTokensHolder) {
+            uint commission = safeMul(numTokens, 5) / 100;
+            if(commission != 0){
+                /* we plus maxGoal for referrer in value param to distinguish between tokens for investors and tokens for referrer.
+                This value will be subtracted in token contract */
+                if (!tokenReward.transferFrom(initialTokensHolder, permittedInvestors[msg.sender], safeAdd(commission, maxGoal))) {
+                    revert();
+                }
+                TransferToReferrer(msg.sender, permittedInvestors[msg.sender], commission, amount, numTokens);
+            }
         }
-        
-        uint tokensRevard = msg.value * PRICE + msg.value * PRICE * bonus / 100;
-        
-        owner.transfer(msg.value);
-        token.mint(msg.sender, tokensRevard);
+
+        FundTransfer(msg.sender, amount, amountRaised, tokensSold, numTokens);
+    }
+
+    modifier afterDeadline() {
+        if (now < end) {
+            revert();
+        }
+        _;
+
+    }
+    modifier onlyOwner {
+        if (msg.sender != owner) {
+            revert();
+        }
+        _;
+    }
+
+    /* checks if the goal or time limit has been reached and ends the campaign */
+    function checkGoalReached() {
+        if((tokensSold >= fundingGoal && now >= end) || (tokensSold >= maxGoal)) {
+            fundingGoalReached = true;
+            crowdsaleClosed = true;
+            tokenReward.burn();
+            sendToBeneficiary();
+            GoalReached(initialTokensHolder, amountRaised);
+        }
+        if(now >= end) {
+            crowdsaleClosed = true;
+        }
+    }
+
+    function allowInvest(address investorAddress, address referralAddress) onlyOwner external {
+        require(permittedInvestors[investorAddress] == 0x0);
+        if(referralAddress != 0x0 && permittedInvestors[referralAddress] == 0x0) revert();
+        permittedInvestors[investorAddress] = referralAddress == 0x0 ? initialTokensHolder : referralAddress;
+        AllowSuccess(investorAddress, referralAddress);
+    }
+
+    /* send money to beneficiary */
+    function sendToBeneficiary() internal {
+        beneficiary.transfer(this.balance);
+    }
+
+
+    /*if the ICO is fail, investors will call this function to get their money back */
+    function safeWithdrawal() afterDeadline {
+        require(this.balance != 0);
+        if(!crowdsaleClosed) revert();
+        uint amount = balanceOf[msg.sender];
+        if(address(this).balance >= amount) {
+            balanceOf[msg.sender] = 0;
+            if (amount > 0) {
+                msg.sender.transfer(amount);
+                Withdraw(msg.sender, amount);
+            }
+        }
+    }
+
+    function kill() onlyOwner {
+        selfdestruct(beneficiary);
     }
 }
