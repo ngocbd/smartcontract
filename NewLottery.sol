@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NewLottery at 0x26B5962250B779ab0F33970738A46FcFb00a70b9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NewLottery at 0xB11E0464CBCf0A06BBE29d8882c9FC7a96CcA9FB
 */
 pragma solidity ^0.4.20;
 
@@ -43,19 +43,20 @@ contract NewLottery is Owned {
     /// Create a new Lotto
     function LottoCount() public payable
     {
-        owner = msg.sender;
-
         ticketPrice = 0.101 * 10**18;
-        minimumBounty = 1 * 10**18;
-        maxTickets = 10;
+        minimumBounty = 1 ether;
+        totalBounty = msg.value;
+        if (totalBounty <= minimumBounty)
+            return;
+
+        owner = msg.sender;
 
         _direction = 0;
         lottoIndex = 1;
         lastTicketTime = 0;
 
         numtickets = 0;
-        totalBounty = msg.value;
-        require(totalBounty >= minimumBounty);
+        maxTickets = 10;
     }
 
 
