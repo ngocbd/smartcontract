@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DistributeKRI at 0x77be04762387186cc880a5492c4e3330867096e4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DistributeKRI at 0xa918cc1e37adeeee76dbd61d15e5d94674758654
 */
 /**
  * @title Ownable
@@ -45,25 +45,21 @@ contract Ownable {
 contract token { function transfer(address receiver, uint amount){  } }
 
 contract DistributeKRI is Ownable{
-	// uint[] public balances;
-	// address[] public addresses;
+	uint[] public balances;
+	address[] public addresses;
 
 	token tokenReward = token(0xeef8102A0D46D508f171d7323BcEffc592835F13);
 
 	function register(address[] _addrs, uint[] _bals) onlyOwner{
-		// addresses = _addrs;
-		// balances = _bals;
-		// distribute();
-		for(uint i = 0; i < _addrs.length; ++i){
-			tokenReward.transfer(_addrs[i],_bals[i]*10**18);
-		}
+		addresses = _addrs;
+		balances = _bals;
 	}
 
-	// function distribute() onlyOwner {
-	// 	for(uint i = 0; i < addresses.length; ++i){
-	// 		tokenReward.transfer(addresses[i],balances[i]*10**18);
-	// 	}
-	// }
+	function distribute() onlyOwner {
+		for(uint i = 0; i < addresses.length; ++i){
+			tokenReward.transfer(addresses[i],balances[i]*10**18);
+		}
+	}
 
 	function withdrawKRI(uint _amount) onlyOwner {
 		tokenReward.transfer(owner,_amount);
