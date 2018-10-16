@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Seed at 0xe058f7c39c7540dd0ad8f5080b437028f945d3ea
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Seed at 0x631a4ae8642636c69446b79b1ab2a6dd2add1d92
 */
 pragma solidity ^0.4.18;
 
@@ -275,7 +275,6 @@ contract StandardToken is ERC20, BasicToken {
 contract Seed is StandardToken, Ownable {
     string public name = "Seed";
     string public sybmol = "Seed";
-    uint8 public decimals = 18;
     address public flowerContract;
 
     function Seed(uint initSupply) public {
