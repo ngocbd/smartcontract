@@ -1,8 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MarriageContract at 0xc4261fb59f8b790185135be45033223921319e51
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MarriageContract at 0x62d15757de645ffeb37813e1187965e57c751839
 */
-pragma solidity ^0.4.21;
-
 contract MarriageContract {
 
     address a;
@@ -42,7 +40,7 @@ contract MarriageContract {
     }
 
     function married() constant returns (bool) {
-        return coupleConfirmations[a] && coupleConfirmations[b] && till >= now;
+        return coupleConfirmations[a] && coupleConfirmations[b] && till <= now;
     }
 
     function signContract() onlyCouple() {
