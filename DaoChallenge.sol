@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DaoChallenge at 0x66230ca3603e071c942f9c1c8824be91c91f3a90
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DaoChallenge at 0xb5232102E71a7ff376EBdEaE59E19D031CBE30Af
 */
 contract SellOrder {
   /**************************
@@ -67,11 +67,10 @@ contract SellOrder {
   }
 
   function execute () {
-    if (msg.value != tokens * price) throw;
+    // ... transfer tokens to buyer
 
-    // Tokens are sent to the buyer in DaoAccount.executeSellOrder()
     // Send ether to seller:
-    suicide(owner);
+    // suicide(owner);
   }
 
   // The owner of the challenge can terminate it. Don't use this in a real DAO.
@@ -79,6 +78,7 @@ contract SellOrder {
     suicide(challengeOwner);
   }
 }
+
 contract AbstractDaoChallenge {
 	function isMember (DaoAccount account, address allegedOwnerAddress) returns (bool);
 	function tokenPrice() returns (uint256);
@@ -210,12 +210,6 @@ contract DaoAccount
     order.cancel();
   }
 
-  function executeSellOrder(SellOrder order) onlyDaoChallenge {
-    uint256 tokens = order.tokens();
-    tokenBalance += tokens;
-    order.execute.value(msg.value)();
-  }
-
 	// The owner of the challenge can terminate it. Don't use this in a real DAO.
 	function terminate() noEther onlyChallengeOwner {
 		suicide(challengeOwner);
@@ -241,7 +235,6 @@ contract DaoChallenge
 	event notifyTransfer(address owner, address recipient, uint256 tokens);
   event notifyPlaceSellOrder(uint256 tokens, uint256 price);
   event notifyCancelSellOrder();
-  event notifyExecuteSellOrder(uint256 tokens, uint256 price);
 
 	/**************************
 	     Public variables
@@ -315,12 +308,6 @@ contract DaoChallenge
 		if (daoAccounts[allegedOwnerAddress] != account) return false;
 		return true;
 	}
-
-  function getBalance () constant noEther returns (uint256) {
-    DaoAccount account = accountFor(msg.sender, false);
-    if (account == DaoAccount(0x00)) return 0;
-    return account.balance;
-  }
 
 	function getTokenBalance () constant noEther returns (uint256 tokens) {
 		DaoAccount account = accountFor(msg.sender, false);
@@ -404,29 +391,6 @@ contract DaoChallenge
     account.cancelSellOrder(order);
 
     notifyCancelSellOrder();
-  }
-
-  function executeSellOrder(address addr) {
-    // Fefuse if no ether is sent. SellOrder checks the exact amount.
-    if (msg.value == 0) throw;
-
-    DaoAccount account = accountFor(msg.sender, true);
-
-    SellOrder order = sellOrders[addr];
-    if (order == SellOrder(0x00)) throw;
-
-    // Don't execute your own oder:
-    if (order.owner() == address(account)) throw;
-
-    uint256 tokens = order.tokens();
-    uint256 price = order.price();
-
-    // If order is successful, forget it (might not be necessary)
-    sellOrders[addr] = SellOrder(0x00);
-
-    account.executeSellOrder.value(msg.value)(order);
-
-    notifyExecuteSellOrder(tokens, price);
   }
 
 	// The owner of the challenge can terminate it. Don't use this in a real DAO.
