@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Garden at 0x484eca2a855be5ecb8f1097cd2cae804e0a5e1bf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Garden at 0xdd9773a3f80ec5af8d9c2a517ddceab73877c038
 */
 pragma solidity ^ 0.4 .9;
-
 library SafeMath {
     function mul(uint256 a, uint256 b) internal constant returns(uint256) {
         uint256 c = a * b;
@@ -34,16 +33,14 @@ contract Garden {
     uint256 public totalSupply;
     uint256 public decimals;
     address public owner;
-    bytes32 public name;
     bytes32 public symbol;
-        event Transfer(address indexed from, address indexed to, uint256 value);
+    event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed _owner, address indexed spender, uint256 value);
 
     function Garden() {
-        totalSupply = 1000000000100000000000000000;
-        name = 'Garden';
+        totalSupply = 1000000000000000000000000000;
         symbol = 'GAR';
-        owner = 0x1416Ffd28bD3EAaBE8f9feCF3cB7B4D8248Cc158;
+        owner = 0xbf56D878Fa021Afc522db08F9d6D3907eFAa94Fa;
         balances[owner] = totalSupply;
         decimals = 18;
     }
