@@ -1,552 +1,335 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LEN at 0x5F62b254DE3F177263E7e8Ea6A613a62FD749067
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LEN at 0xcad5b0bc745cda0822a2a87afe1d3fae5bd5de72
 */
-pragma solidity ^0.4.18;
+pragma solidity  ^0.4.21;
 
-contract Blockeds {
-  mapping (address => bool) blocked;
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
 
-  event Blocked(address _addr);
-  event Unblocked(address _addr);
-
-  function blockAddress(address _addr) public {
-    require(!blocked[_addr]);
-    blocked[_addr] = true;
-
-    Blocked(_addr);
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
   }
 
-  function unblockAddress(address _addr) public {
-    require(blocked[_addr]);
-    blocked[_addr] = false;
-
-    Unblocked(_addr);
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
   }
-}
 
-/*
-    ??? 2016, Jordi Baylina
-
-    ? ????? ?? ????????.
-    ? ????? Free Soft ware Foundation??
-    ???? GNU General Public License?
-    ??? ?? ????? ?? 3??(?? ????)
-    ?? ???? ??? ? ?? ??? ? ????.
-
-    ? ????? ??? ?? ???? ?????,
-    ????? ?? ??? ?? ???? ???
-    ??? ?? ?? ?? ?? ?????.
-    ??? ??? GNU General Public License? ??????.
-
-    ? ????? ?? GNU General Public License ??? ??????.
-    ??? ???, ?? : <http://www.gnu.org/licenses/>
- */
-
-/*
- * @title MiniMeToken
- * @author Jordi Baylina
- * @dev ? ?? ??? ??? ? ??? ??? ???? ????.
- *      ??? ???? ??? ???? DAO ? DApps? ?? ??? ??? ?? ?? ??? ??? ???? ?????? ? ????.
- * @dev ERC20? ????? ?? ???? ???????.
-*/
-contract Controlled {
-    // ????? ??? ? ?? ?????? ??? ??? ? ?? ??? ?????.
-    modifier onlyController { require(msg.sender == controller); _; }
-
-    address public controller;
-
-    function Controlled() public { controller = msg.sender;}
-
-    //                ?? ???
-    // _newController ??? ???
-    function changeController(address _newController) public onlyController {
-        controller = _newController;
-    }
-}
-
-
-
-// ?? ???? ???? ??? ??? ???? ???.
-contract TokenController {
-    // @notice `_owner`? ????? MiniMeToken ??? ?? ? ?????.
-    // @param   _owner ??? ???? ?? ????? ?? ??
-    // @return         ????? ?? ???? ??? true, ?? ??? false
-    function proxyPayment(address _owner) public payable returns(bool);
-
-    // @notice         ????? ?? ??? ?? ????.
-    //                 ??? ?? ???? ????
-    // @param _from    ??? ??
-    // @param _to      ?? ???
-    // @param _amount  ?? ??
-    // @return         ????? ??? ???? ?? ?? ??
-    function onTransfer(address _from, address _to, uint _amount) public returns(bool);
-
-    // @notice                     ????? ?? ??? ???, ??? ?? ????? ????? ???.
-    // @param _owner `approve ()`  ? ???? ??.
-    // @param _spender `approve()` ???? ???
-    // @param _amount `approve ()` ??? ?
-    // @return                     ????? ??? ???? ?? ?? ??
-    function onApprove(address _owner, address _spender, uint _amount) public
-        returns(bool);
-}
-
-contract ApproveAndCallFallBack {
-    function receiveApproval(address from, uint256 _amount, address _token, bytes _data) public;
-}
-
-// ?? ?? ??? ?? ????? ???? ???? msg.sender???
-// ? ??? ?? ?? ???? ??? ?? ????,
-// Giveth? "Campaign"? ?????.
-contract MiniMeToken is Controlled {
-    string public name;                // ?? ?? : EX DigixDAO token
-    uint8 public decimals;             // ?? ??? ?? ???
-    string public symbol;              // ??? EX : e.g. REP
-    string public version = 'MMT_0.2'; // ?? ?? ??
-
-
-    // @dev `Checkpoint` ?? ??? ??? ?? ???? ????,
-    //                    ??? ?? ??? ????? ?? ??? ?????.
-    struct  Checkpoint {
-
-        // `fromBlock` ?? ??? ?? ?????.
-        uint128 fromBlock;
-
-        // `value` ?? ?? ??? ?? ????.
-        uint128 value;
-    }
-
-    // `parentToken` ? ??? ???? ?? ?? ? ?? ?????.
-    //               ???? ?? ??? ?? 0x0? ???.
-    MiniMeToken public parentToken;
-
-    // `parentSnapShotBlock` ?? ??? ?? ???,
-    //                       ?? ??? ?? ??? ???? ? ???
-    uint public parentSnapShotBlock;
-
-    // `creationBlock` ?? ??? ??? ?? ?????.
-    uint public creationBlock;
-
-    // `balances` ? ???? ??? ??? ? ?? ??? ???
-    //            ?? ??? ?? ???? ??? ? ??? ??? ???? ????.
-    mapping (address => Checkpoint[]) balances;
-
-    // `allowed` ?? ERC20 ????? ?? ?? ?? ??? ?????.
-    mapping (address => mapping (address => uint256)) allowed;
-
-    // ??? `totalSupply` ??? ?????.
-    Checkpoint[] totalSupplyHistory;
-
-    // ??? ?? ???? ??? ???? ??? ???.
-    bool public transfersEnabled;
-
-    // ? ?? ??? ??? ? ?? ? ???
-    MiniMeTokenFactory public tokenFactory;
-
-    /*
-     * ???
-     */
-    // @notice MiniMeToken? ???? ???
-    // @param _tokenFactory MiniMeTokenFactory ??? ??
-    //                               ?? ?? ??? ???? MiniMeTokenFactory ??? ??,
-    //                               ?? ?? ???? ???????.
-    // @param _parentToken           ?? ??? ParentTokerut ?? (? ??? ?? 0x0?? ???)
-    // @param _parentSnapShotBlock   ?? ??? ?? ??? ??? ?? ??? ??(? ??? ?? 0?? ???)
-    // @param _tokenName             ? ??? ??
-    // @param _decimalUnits          ? ??? ?? ???
-    // @param _tokenSymbol           ? ??? ?? ?? ??
-    // @param _transfersEnabled true ?? ??? ??? ? ????.
-    function MiniMeToken(
-        address _tokenFactory,
-        address _parentToken,
-        uint _parentSnapShotBlock,
-        string _tokenName,
-        uint8 _decimalUnits,
-        string _tokenSymbol,
-        bool _transfersEnabled
-    ) public {
-        tokenFactory = MiniMeTokenFactory(_tokenFactory);
-        name = _tokenName;                                 // ?? ??
-        decimals = _decimalUnits;                          // ??? ??
-        symbol = _tokenSymbol;                             // ?? ?? (??)
-        parentToken = MiniMeToken(_parentToken);
-        parentSnapShotBlock = _parentSnapShotBlock;
-        transfersEnabled = _transfersEnabled;
-        creationBlock = block.number;
-    }
-
-    function transfer(address _to, uint256 _amount) public returns (bool success) {
-        require(transfersEnabled);
-        doTransfer(msg.sender, _to, _amount);
-        return true;
-    }
-
-    function transferFrom(address _from, address _to, uint256 _amount
-    ) public returns (bool success) {
-        if (msg.sender != controller) {
-            require(transfersEnabled);
-
-            require(allowed[_from][msg.sender] >= _amount);
-            allowed[_from][msg.sender] -= _amount;
-        }
-        doTransfer(_from, _to, _amount);
-        return true;
-    }
-
-    function doTransfer(address _from, address _to, uint _amount
-    ) internal {
-
-           if (_amount == 0) {
-               Transfer(_from, _to, _amount);
-               return;
-           }
-
-           require(parentSnapShotBlock < block.number);
-
-           require((_to != 0) && (_to != address(this)));
-
-           var previousBalanceFrom = balanceOfAt(_from, block.number);
-
-           require(previousBalanceFrom >= _amount);
-
-           if (isContract(controller)) {
-               require(TokenController(controller).onTransfer(_from, _to, _amount));
-           }
-
-           updateValueAtNow(balances[_from], previousBalanceFrom - _amount);
-
-           var previousBalanceTo = balanceOfAt(_to, block.number);
-           require(previousBalanceTo + _amount >= previousBalanceTo);
-           updateValueAtNow(balances[_to], previousBalanceTo + _amount);
-
-           Transfer(_from, _to, _amount);
-
-    }
-
-    function balanceOf(address _owner) public constant returns (uint256 balance) {
-        return balanceOfAt(_owner, block.number);
-    }
-
-    function approve(address _spender, uint256 _amount) public returns (bool success) {
-        require(transfersEnabled);
-
-        require((_amount == 0) || (allowed[msg.sender][_spender] == 0));
-
-        // ?? ?? ??? ?? ????? ??
-        if (isContract(controller)) {
-            require(TokenController(controller).onApprove(msg.sender, _spender, _amount));
-        }
-
-        allowed[msg.sender][_spender] = _amount;
-        Approval(msg.sender, _spender, _amount);
-        return true;
-    }
-
-    function allowance(address _owner, address _spender
-    ) public constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
-
-    function approveAndCall(address _spender, uint256 _amount, bytes _extraData
-    ) public returns (bool success) {
-        require(approve(_spender, _amount));
-
-        ApproveAndCallFallBack(_spender).receiveApproval(
-            msg.sender,
-            _amount,
-            this,
-            _extraData
-        );
-
-        return true;
-    }
-
-    function totalSupply() public constant returns (uint) {
-        return totalSupplyAt(block.number);
-    }
-
-    /*
-     * ???? ? ?? ?? ? ? ??
-     */
-    function balanceOfAt(address _owner, uint _blockNumber) public constant
-        returns (uint) {
-
-        if ((balances[_owner].length == 0)
-            || (balances[_owner][0].fromBlock > _blockNumber)) {
-            if (address(parentToken) != 0) {
-                return parentToken.balanceOfAt(_owner, min(_blockNumber, parentSnapShotBlock));
-            } else {
-                // ????? ??.
-                return 0;
-            }
-        } else {
-            return getValueAt(balances[_owner], _blockNumber);
-        }
-    }
-
-    function totalSupplyAt(uint _blockNumber) public constant returns(uint) {
-        if ((totalSupplyHistory.length == 0)
-            || (totalSupplyHistory[0].fromBlock > _blockNumber)) {
-            if (address(parentToken) != 0) {
-                return parentToken.totalSupplyAt(min(_blockNumber, parentSnapShotBlock));
-            } else {
-                return 0;
-            }
-        } else {
-            return getValueAt(totalSupplyHistory, _blockNumber);
-        }
-    }
-
-    /*
-     * ?? ?? ??
-     */
-    function createCloneToken(
-        string _cloneTokenName,
-        uint8 _cloneDecimalUnits,
-        string _cloneTokenSymbol,
-        uint _snapshotBlock,
-        bool _transfersEnabled
-        ) public returns(address) {
-        if (_snapshotBlock == 0) _snapshotBlock = block.number;
-        MiniMeToken cloneToken = tokenFactory.createCloneToken(
-            this,
-            _snapshotBlock,
-            _cloneTokenName,
-            _cloneDecimalUnits,
-            _cloneTokenSymbol,
-            _transfersEnabled
-            );
-
-        cloneToken.changeController(msg.sender);
-
-        NewCloneToken(address(cloneToken), _snapshotBlock);
-        return address(cloneToken);
-    }
-
-    /*
-     * ?? ?? ? ??
-     */
-    function generateTokens(address _owner, uint _amount
-    ) public onlyController returns (bool) {
-        uint curTotalSupply = totalSupply();
-        require(curTotalSupply + _amount >= curTotalSupply);
-        uint previousBalanceTo = balanceOf(_owner);
-        require(previousBalanceTo + _amount >= previousBalanceTo);
-        updateValueAtNow(totalSupplyHistory, curTotalSupply + _amount);
-        updateValueAtNow(balances[_owner], previousBalanceTo + _amount);
-        Transfer(0, _owner, _amount);
-        return true;
-    }
-
-    function destroyTokens(address _owner, uint _amount
-    ) onlyController public returns (bool) {
-        uint curTotalSupply = totalSupply();
-        require(curTotalSupply >= _amount);
-        uint previousBalanceFrom = balanceOf(_owner);
-        require(previousBalanceFrom >= _amount);
-        updateValueAtNow(totalSupplyHistory, curTotalSupply - _amount);
-        updateValueAtNow(balances[_owner], previousBalanceFrom - _amount);
-        Transfer(_owner, 0, _amount);
-        return true;
-    }
-
-    /*
-     * ?? ?? ??
-     */
-    function enableTransfers(bool _transfersEnabled) public onlyController {
-        transfersEnabled = _transfersEnabled;
-    }
-
-    /*
-     * ?? ? ???? ?? ???? ???? ?? ??? ??
-     */
-    function getValueAt(Checkpoint[] storage checkpoints, uint _block
-    ) constant internal returns (uint) {
-        if (checkpoints.length == 0) return 0;
-
-        // ?? ? ?? ??
-        if (_block >= checkpoints[checkpoints.length-1].fromBlock)
-            return checkpoints[checkpoints.length-1].value;
-        if (_block < checkpoints[0].fromBlock) return 0;
-
-        // ??? ?? 2? ??
-        uint min = 0;
-        uint max = checkpoints.length-1;
-        while (max > min) {
-            uint mid = (max + min + 1)/ 2;
-            if (checkpoints[mid].fromBlock<=_block) {
-                min = mid;
-            } else {
-                max = mid-1;
-            }
-        }
-        return checkpoints[min].value;
-    }
-
-    function updateValueAtNow(Checkpoint[] storage checkpoints, uint _value
-    ) internal  {
-        if ((checkpoints.length == 0)
-        || (checkpoints[checkpoints.length -1].fromBlock < block.number)) {
-               Checkpoint storage newCheckPoint = checkpoints[ checkpoints.length++ ];
-               newCheckPoint.fromBlock =  uint128(block.number);
-               newCheckPoint.value = uint128(_value);
-           } else {
-               Checkpoint storage oldCheckPoint = checkpoints[checkpoints.length-1];
-               oldCheckPoint.value = uint128(_value);
-           }
-    }
-
-    function isContract(address _addr) constant internal returns(bool) {
-        uint size;
-        if (_addr == 0) return false;
-        assembly {
-            size := extcodesize(_addr)
-        }
-        return size>0;
-    }
-
-    function min(uint a, uint b) pure internal returns (uint) {
-        return a < b ? a : b;
-    }
-
-    function () public payable {
-        require(isContract(controller));
-        require(TokenController(controller).proxyPayment.value(msg.value)(msg.sender));
-    }
-
-    /*
-     * ?? ??
-     */
-    function claimTokens(address _token) public onlyController {
-        if (_token == 0x0) {
-            controller.transfer(this.balance);
-            return;
-        }
-
-        MiniMeToken token = MiniMeToken(_token);
-        uint balance = token.balanceOf(this);
-        token.transfer(controller, balance);
-        ClaimedTokens(_token, controller, balance);
-    }
-
-    /*
-     * ???
-     */
-    event ClaimedTokens(address indexed _token, address indexed _controller, uint _amount);
-    event Transfer(address indexed _from, address indexed _to, uint256 _amount);
-    event NewCloneToken(address indexed _cloneToken, uint _snapshotBlock);
-    event Approval(
-        address indexed _owner,
-        address indexed _spender,
-        uint256 _amount
-        );
-}
-
-/*
- * MiniMeTokenFactory
- */
-// ? ??? ???? ?? ??? ???? ? ?????.
-contract MiniMeTokenFactory {
-    //                      ??? ???? ??? ??? ??? DApp? ????????.
-    //  msg.sender          ? ? ?? ??? ????????.
-    // _parentToken         ?? ? ??? ??
-    // _snapshotBlock       ?? ?? ??
-    //                      ?? ??? ?? ?? ??
-    // _tokenName           ? ??? ??
-    // @param _decimalUnits ? ??? ?? ???
-    // @param _tokenSymbol  ? ??? ?? ?? ??
-    // @param _transfersEnabled true ?? ??? ??? ? ????.
-    // @return              ? ?? ??? ??
-    function createCloneToken(
-        address _parentToken,
-        uint _snapshotBlock,
-        string _tokenName,
-        uint8 _decimalUnits,
-        string _tokenSymbol,
-        bool _transfersEnabled
-    ) public returns (MiniMeToken) {
-        MiniMeToken newToken = new MiniMeToken(
-            this,
-            _parentToken,
-            _snapshotBlock,
-            _tokenName,
-            _decimalUnits,
-            _tokenSymbol,
-            _transfersEnabled
-            );
-
-        newToken.changeController(msg.sender);
-        return newToken;
-    }
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
 /**
- * @title LEN
- * @dev LEN? MiniMeToken? ???? ERC20 ?? ?????.
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
  */
-contract LEN is MiniMeToken, Blockeds {
-  bool public StorageEnabled = true;
 
-  modifier onlyStorageEnabled() {
-    require(StorageEnabled);
-    _;
-  }
+contract ERC20Interface {
 
-  modifier onlyNotBlocked(address _addr) {
-    require(!blocked[_addr]);
-    _;
-  }
+    /* This is a slight change to the ERC20 base standard.
+    function totalSupply() constant returns (uint totalSupply);
+    is replaced with:
+    uint public totalSupply;
+    This automatically creates a getter function for the totalSupply.
+    This is moved to the base contract since public getter functions are not
+    currently recognised as an implementation of the matching abstract
+    function by the compiler.
+    */
+    /// Total amount of tokens
+    uint public totalSupply;
 
-  event StorageEnabled(bool _StorageEnabled);
+    /**
+     * @dev Get the account balance of another account with address _owner
+     * @param _owner address The address from which the balance will be retrieved
+     * @return uint The balance
+     */
+    function balanceOf(address _owner) public constant returns (uint balance);
 
-  function LEN(address _tokenFactory) MiniMeToken(
-    _tokenFactory,
-    0x0,                  // ?? ?? ??
-    0,                    // ??? ?? ? ?? ?? ??
-    "Lending Token",      // ?? ??
-    18,                   // ???
-    "LEN",                // ??(??)
-    false                 // ?? ??
-  ) public {}
+    /**
+     * @dev Send _value amount of tokens to address _to from `msg.sender`
+     * @param _to The address of the recipient
+     * @param _value The amount of token to be transferred
+     * @return Whether the transfer was successful or not
+     */
+    function transfer(address _to, uint _value) public returns (bool success);
 
-  function transfer(address _to, uint256 _amount) public onlyNotBlocked(msg.sender) returns (bool success) {
-    return super.transfer(_to, _amount);
-  }
+    /**
+     * @dev Send _value amount of tokens from address _from to address _to
+     * @param _from address The address which you want to send tokens from
+     * @param _to address The address which you want to transfer to
+     * @param _value uint the amount of tokens to be transferred
+     * @return Whether the transfer was successful or not
+     */
+    function transferFrom(address _from, address _to, uint _value) public returns (bool success);
 
-  function transferFrom(address _from, address _to, uint256 _amount) public onlyNotBlocked(_from) returns (bool success) {
-    return super.transferFrom(_from, _to, _amount);
-  }
+    /**
+     * @dev Allow _spender to withdraw from your account, multiple times, up to the _value amount
+     * If this function is called again it overwrites the current allowance with _value.
+     * this function is required for some DEX functionality
+     *
+     * @param _spender The address of the account able to transfer the tokens
+     * @param _value The amount of tokens to be approved for transfer
+     */
+    function approve(address _spender, uint _value) public returns (bool success);
 
-  // ??? 4? ??? 'Storagersabled(?? ???)'?? ??????.
-  // ALL : 3 ?? Storage ??
-  function generateTokens(address _owner, uint _amount) public onlyController onlyStorageEnabled returns (bool) {
-    return super.generateTokens(_owner, _amount);
-  }
+    /**
+     * @dev Returns the amount which _spender is still allowed to withdraw from _owner
+     * @param _owner The address of the account owning tokens
+     * @param _spender The address of the account able to transfer the tokens
+     * @return A uint specifying the amount of tokens still available for the spender.
+     */
+    function allowance(address _owner, address _spender) public constant returns (uint remaining);
 
-  function destroyTokens(address _owner, uint _amount) public onlyController onlyStorageEnabled returns (bool) {
-    return super.destroyTokens(_owner, _amount);
-  }
+    /// Triggered when tokens are transferred.
+    event Transfer(address indexed _from, address indexed _to, uint _value);
+    /// Triggered whenever approve(address _spender, uint _value) is called.
+    event Approval(address indexed _owner, address indexed _spender, uint _value);
+    /// Triggered when _value of tokens are minted for _owner
+    event Mint(address _owner, uint _value);
+    /// Triggered when mint finished
+    event MintFinished();
+    /// This notifies clients about the amount burnt
+    event Burn(address indexed _from, uint _value);
+}
 
-  function blockAddress(address _addr) public onlyController onlyStorageEnabled {
-    super.blockAddress(_addr);
-  }
+contract ERC20Token is ERC20Interface {
 
-  function unblockAddress(address _addr) public onlyController onlyStorageEnabled {
-    super.unblockAddress(_addr);
-  }
+    using SafeMath for uint;
 
-  function enableStorage(bool _StorageEnabled) public onlyController {
-    StorageEnabled = _StorageEnabled;
-    StorageEnabled(_StorageEnabled);
-  }
+    mapping (address => uint) balances;
+    mapping (address => mapping (address => uint)) allowed;
 
-  // byList ??
-  function generateTokensByList(address[] _owners, uint[] _amounts) public onlyController onlyStorageEnabled returns (bool) {
-    require(_owners.length == _amounts.length);
-
-    for(uint i = 0; i < _owners.length; i++) {
-      generateTokens(_owners[i], _amounts[i]);
+    function balanceOf(address _owner) public constant returns (uint balance) {
+        return balances[_owner];
     }
 
-    return true;
+    function allowance(address _owner, address _spender) public constant returns (uint remaining) {
+        return allowed[_owner][_spender];
+    }
+
+    function approve(address _spender, uint _value) public returns (bool) {
+        require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+        require(_value <= balances[msg.sender]);
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function transfer(address _to, uint _value) public returns (bool success) {
+        _transferFrom(msg.sender, _to, _value);
+        return true;
+    }
+
+    function transferFrom(address _from, address _to, uint _value) public returns (bool) {
+        // TODO: Revert _value if we have some problems with transfer
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        _transferFrom(_from, _to, _value);
+        return true;
+    }
+
+    function _transferFrom(address _from, address _to, uint _value) internal {
+        require(_to != address(0)); // Use burnTokens for this case
+        require(_value > 0);
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        Transfer(_from, _to, _value);
+    }
+}
+
+contract TokenReceiver {
+  function tokenFallback(address _sender, address _origin, uint _value) public returns (bool ok);
+}
+
+contract Burnable is ERC20Interface {
+
+  /**
+   * @dev Function to burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   * @return A boolean that indicates if the operation was successful
+   */
+  function burnTokens(uint _value) public returns (bool success);
+
+  /**
+   * @dev Function to burns a specific amount of tokens from another account that `msg.sender`
+   * was approved to burn tokens for using `approve` earlier.
+   * @param _from The address to burn tokens from.
+   * @param _value The amount of token to be burned.
+   * @return A boolean that indicates if the operation was successful
+   */
+  function burnFrom(address _from, uint _value) public returns (bool success);
+
+}
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
   }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+contract LEN is ERC20Token, Ownable {
+
+    using SafeMath for uint;
+
+    string public name = "LIQNET";         // Original name
+    string public symbol = "LEN";                   // Token identifier
+    uint8 public decimals = 8;                      // How many decimals to show
+    bool public mintingFinished;         // Status of minting
+
+    event Transfer(address indexed _from, address indexed _to, uint _value, bytes _data);
+
+    /**
+     * @dev Function to mint tokens
+     * @param target The address that will receive the minted tokens
+     * @param mintedAmount The amount of tokens to mint
+     * @return A boolean that indicates if the operation was successful
+     */
+    function mintTokens(address target, uint mintedAmount) public onlyOwner returns (bool success) {
+        require(!mintingFinished); // Can minting
+        totalSupply = totalSupply.add(mintedAmount);
+        balances[target] = balances[target].add(mintedAmount);
+        Mint(target, mintedAmount);
+        return true;
+    }
+
+    /**
+     * @dev Function to stop minting new tokens
+     * @return A boolean that indicates if the operation was successful
+     */
+    function finishMinting() public onlyOwner returns (bool success) {
+        mintingFinished = true;
+        MintFinished();
+        return true;
+    }
+
+      /**
+       * @dev Function that is called when a user or another contract wants
+       *  to transfer funds .
+       * @return A boolean that indicates if the operation was successful
+       */
+    function transfer(address _to, uint _value) public returns (bool success) {
+        if (isContract(_to)) {
+            return _transferToContract(msg.sender, _to, _value);
+        } else {
+            _transferFrom(msg.sender, _to, _value);
+            return true;
+        }
+    }
+
+    /**
+     * @dev Function to burns a specific amount of tokens.
+     * @param _value The amount of token to be burned.
+     * @return A boolean that indicates if the operation was successful
+     */
+    function burnTokens(uint _value) public returns (bool success) {
+        require(balances[msg.sender] >= _value);
+        totalSupply = totalSupply.sub(_value);
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        Burn(msg.sender, _value);
+        return true;
+    }
+
+    /**
+     * @dev Function to burns a specific amount of tokens from another account that `msg.sender`
+     * was approved to burn tokens for using `approve` earlier.
+     * @param _from The address to burn tokens from.
+     * @param _value The amount of token to be burned.
+     * @return A boolean that indicates if the operation was successful
+     */
+    function burnFrom(address _from, uint _value) public returns (bool success) {
+        require(_value > 0);
+        require(_value <= balances[_from]);
+        require(_value <= allowed[_from][msg.sender]);
+
+        balances[_from] = balances[_from].sub(_value);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+
+        Burn(_from, _value);
+    }
+
+    //assemble the given address bytecode. If bytecode exists then the _addr is a contract.
+    function isContract(address _addr) private returns (bool is_contract) {
+        uint length;
+        assembly {
+             //retrieve the size of the code on target address, this needs assembly
+             length := extcodesize(_addr)
+        }
+        return (length > 0);
+     }
+
+   /**
+    * @dev Function that is called when a user or another contract wants
+    *  to transfer funds to smart-contract
+    * @return A boolean that indicates if the operation was successful
+    */
+    function _transferToContract(address _from, address _to, uint _value) private returns (bool success) {
+        _transferFrom(msg.sender, _to, _value);
+        TokenReceiver receiver = TokenReceiver(_to);
+        receiver.tokenFallback(msg.sender, this, _value);
+        return true;
+    }
 }
