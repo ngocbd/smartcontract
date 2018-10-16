@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTBToken at 0x0Ef009AD1899f1f3228073d1Bff8f3Db67d1061a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTBToken at 0xb3e5380B68dA46CfEBB2a8ff9c3F68E58758f204
 */
 pragma solidity ^0.4.21;
 
@@ -123,16 +123,16 @@ contract BTBToken is SafeMath {
     }
 	
     function freeze() external returns (bool success) {
-        assert(!isContractFrozen);
         assert(msg.sender == owner);
+        assert(!isContractFrozen);
         isContractFrozen = true;
         emit Freeze(msg.sender, "contract is frozen");
         return true;
     }
 	
     function unfreeze() external returns (bool success) {
-        assert(isContractFrozen);
         assert(msg.sender == owner);
+        assert(isContractFrozen);
         isContractFrozen = false;
         emit Unfreeze(msg.sender, "contract is unfrozen");
         return true;
