@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreICOProxyBuyer at 0xbdd813fbbde7821128037f1ffb2cc33400e05a95
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreICOProxyBuyer at 0x5e87ede65d71218d710c6f94b9bfcd9017fb292a
 */
 /**
  * Math operations with safety checks
