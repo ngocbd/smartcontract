@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WLMCrowdsale at 0xbd33a26cbbf7895e18e22115efedde194bc3beba
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WLMCrowdsale at 0xdc54aed35a1ccab9a5c09c5dfc5f78c422705ecf
 */
 pragma solidity ^0.4.19;
 
@@ -59,8 +59,8 @@ contract WLMCrowdsale {
     uint256 public totalBonusTokensIssued = 0;
     uint    public MINfinney    = 0;
     uint    public MAXfinney    = 100000;
-    uint    public AIRDROPBounce    = 288;
-    uint    public ICORatio     = 0;
+    uint    public AIRDROPBounce    = 0;
+    uint    public ICORatio     = 36000;
     uint256 public totalSupply = 0;
 
   // The token being sold
@@ -114,7 +114,7 @@ contract WLMCrowdsale {
   }
 
   function calculateObtained(uint256 amountEtherInWei) public view returns (uint256) {
-    return amountEtherInWei.mul(ICORatio).div(10 ** 8) + AIRDROPBounce * 10 ** 6;
+    return amountEtherInWei.mul(ICORatio).div(10 ** 12) + AIRDROPBounce * 10 ** 6;
   } 
 
 	
@@ -222,6 +222,11 @@ contract WLMCrowdsale {
         ICORatio = _newPrice;
     }
 
+    function setAIRDROPPrice(uint _newPrice)  {
+        if (msg.sender != owner) { throw; }
+        AIRDROPBounce = _newPrice;
+    }
+
     function setMINfinney(uint _newPrice)  {
         if (msg.sender != owner) { throw; }
         MINfinney = _newPrice;
@@ -237,6 +242,4 @@ contract WLMCrowdsale {
         owner.transfer(etherBalance);
     }
 
-
-    
 }
