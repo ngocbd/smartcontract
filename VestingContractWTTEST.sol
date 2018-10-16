@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VestingContractWTTEST at 0x71aaf9dc418e9dde76aee42e431fc203d9cfd0c2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VestingContractWTTEST at 0xa27f262391913a5e21216c70de5358a1e887de25
 */
 pragma solidity ^0.4.21;
 
@@ -60,7 +60,7 @@ contract VestingContractWTTEST
     owner = msg.sender;
     we_test_token = _we_test_token;
     
-    periods.push(1527003300);  //Tuesday, 22 May 2018 ?., 14:00:00
+    periods.push(1526997600);  //Tuesday, 22 May 2018 ?., 14:00:00
     periods.push(2**256 - 1);  //very far future
     current_period = 0;
 
