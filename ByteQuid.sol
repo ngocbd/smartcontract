@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ByteQuid at 0x96114f9b22060e203dfb327c36bd3c1378590ef5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ByteQuid at 0x3df0c635946fde2785528fd32803ea1bd59c9d80
 */
 pragma solidity ^0.4.17;
 contract OtherToken {
@@ -7,7 +7,43 @@ contract OtherToken {
     function transfer(address _to, uint256 _value) returns (bool);
 }
 
-contract ByteQuid {
+/**
+ * Overflow aware uint math functions.
+ */
+contract SafeMath {
+
+    function mul(uint256 a, uint256 b) constant internal returns (uint256) {
+        uint256 c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
+    }
+
+    function div(uint256 a, uint256 b) constant internal returns (uint256) {
+        assert(b != 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
+
+    function sub(uint256 a, uint256 b) constant internal returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    function add(uint256 a, uint256 b) constant internal returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
+
+    function mulByFraction(uint256 number, uint256 numerator, uint256 denominator) internal returns (uint256) {
+        return div(mul(number, numerator), denominator);
+    }
+
+    
+}
+
+contract ByteQuid is SafeMath{
     address owner = msg.sender;
 
     bool public purchasingAllowed = true;
