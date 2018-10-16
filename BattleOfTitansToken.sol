@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BattleOfTitansToken at 0xc70709c6e3ec79d2965958ec79c36ea7f1077539
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BattleOfTitansToken at 0x65018a41058b406412118a9be2d112fc15e4d727
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.17;
 
 /**
  * @title SafeMath
@@ -40,8 +40,8 @@ library SafeMath {
  */
 contract ERC20Basic {
   uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
+  function balanceOf(address who) public constant returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
@@ -50,9 +50,9 @@ contract ERC20Basic {
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
 contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
+  function allowance(address owner, address spender) public constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
@@ -70,7 +70,7 @@ contract BasicToken is ERC20Basic {
   * @param _to The address to transfer to.
   * @param _value The amount to be transferred.
   */
-  function transfer(address _to, uint256 _value) returns (bool) {
+  function transfer(address _to, uint256 _value) public returns (bool) {
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
     Transfer(msg.sender, _to, _value);
@@ -82,7 +82,7 @@ contract BasicToken is ERC20Basic {
   * @param _owner The address to query the the balance of. 
   * @return An uint256 representing the amount owned by the passed address.
   */
-  function balanceOf(address _owner) constant returns (uint256 balance) {
+  function balanceOf(address _owner) public constant returns (uint256 balance) {
     return balances[_owner];
   }
 
@@ -106,7 +106,7 @@ contract StandardToken is ERC20, BasicToken {
    * @param _to address The address which you want to transfer to
    * @param _value uint256 the amout of tokens to be transfered
    */
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
     var _allowance = allowed[_from][msg.sender];
 
     // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
@@ -124,7 +124,7 @@ contract StandardToken is ERC20, BasicToken {
    * @param _spender The address which will spend the funds.
    * @param _value The amount of tokens to be spent.
    */
-  function approve(address _spender, uint256 _value) returns (bool) {
+  function approve(address _spender, uint256 _value) public returns (bool) {
 
     // To change the approve amount you first have to reduce the addresses`
     //  allowance to zero by calling `approve(_spender, 0)` if it is not
@@ -143,7 +143,7 @@ contract StandardToken is ERC20, BasicToken {
    * @param _spender address The address which will spend the funds.
    * @return A uint256 specifing the amount of tokens still avaible for the spender.
    */
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
     return allowed[_owner][_spender];
   }
 
@@ -162,7 +162,7 @@ contract Ownable {
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() {
+  function Ownable() public {
     owner = msg.sender;
   }
 
@@ -180,7 +180,7 @@ contract Ownable {
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) onlyOwner {
+  function transferOwnership(address newOwner) public onlyOwner {
     if (newOwner != address(0)) {
       owner = newOwner;
     }
@@ -218,7 +218,7 @@ contract Pausable is Ownable {
   /**
    * @dev called by the owner to pause, triggers stopped state
    */
-  function pause() onlyOwner whenNotPaused returns (bool) {
+  function pause() public onlyOwner whenNotPaused returns (bool) {
     paused = true;
     Pause();
     return true;
@@ -227,7 +227,7 @@ contract Pausable is Ownable {
   /**
    * @dev called by the owner to unpause, returns to normal state
    */
-  function unpause() onlyOwner whenPaused returns (bool) {
+  function unpause() public onlyOwner whenPaused returns (bool) {
     paused = false;
     Unpause();
     return true;
@@ -255,12 +255,13 @@ contract BattleOfTitansToken is StandardToken, Pausable {
   string public constant name = 'BattleOfTitans';                       // Set the token name for display
   string public constant symbol = 'BTT';                                       // Set the token symbol for display
   uint8 public constant decimals = 8;                                          // Set the number of decimals for display
+  
   uint256 public constant INITIAL_SUPPLY = 360000000 * 10**uint256(decimals);
-  uint256 public constant launch_date = 1541980800;
-  uint public constant unfreeze_start_date = 1523059200;
-  uint public constant unfreeze_periods = 150;
-  uint public constant unfreeze_period_time = 86400;
-  uint public constant unfreeze_end_date = (unfreeze_start_date + (unfreeze_period_time * unfreeze_periods));
+  uint256 public constant launch_date = 1506970800;
+  uint256 public constant unfreeze_start_date = 1506970800;
+  uint256 public constant unfreeze_periods = 60;
+  uint256 public constant unfreeze_period_time = 60;
+  uint256 public constant unfreeze_end_date = (unfreeze_start_date + (unfreeze_period_time * unfreeze_periods));
 
   mapping (address => uint256) public frozenAccount;
   
@@ -271,7 +272,7 @@ contract BattleOfTitansToken is StandardToken, Pausable {
    * @dev BattleOfTitansToken Constructor
    * Runs only on initial contract creation.
    */
-  function BattleOfTitansToken() {
+  function BattleOfTitansToken() public {
     totalSupply = INITIAL_SUPPLY;                               // Set the total supply
     balances[msg.sender] = INITIAL_SUPPLY;                      // Creator address is assigned all
   }
@@ -281,9 +282,9 @@ contract BattleOfTitansToken is StandardToken, Pausable {
    * @param _to The address to transfer to.
    * @param _value The amount to be transferred.
    */
-  function transfer(address _to, uint256 _value) whenNotPaused returns (bool) {
+  function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
     freezeCheck(msg.sender, _value);
-
+    
     return super.transfer(_to, _value);
   }
 
@@ -293,7 +294,7 @@ contract BattleOfTitansToken is StandardToken, Pausable {
    * @param _to address The address which you want to transfer to
    * @param _value uint256 the amount of tokens to be transferred
    */
-  function transferFrom(address _from, address _to, uint256 _value) whenNotPaused returns (bool) {
+  function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
     freezeCheck(msg.sender, _value);
 
     return super.transferFrom(_from, _to, _value);
@@ -304,27 +305,33 @@ contract BattleOfTitansToken is StandardToken, Pausable {
    * @param _spender The address which will spend the funds.
    * @param _value The amount of tokens to be spent.
    */
-  function approve(address _spender, uint256 _value) whenNotPaused returns (bool) {
+  function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
     return super.approve(_spender, _value);
   }
 
   
-  function freezeAccount(address target, uint256 freeze)  onlyOwner  {
-        require(block.timestamp < launch_date);
-        frozenAccount[target] = freeze;
-        FrozenFunds(target, freeze);
+  function freezeAccount(address target, uint256 freeze) public onlyOwner {
+    require(now < launch_date);
+    frozenAccount[target] = freeze;
+    FrozenFunds(target, freeze);
   }
   
-  function freezeCheck(address _from, uint256 _value)  returns (bool) {
-  	if (block.timestamp < unfreeze_start_date) {
-  		require(balances[_from].sub(frozenAccount[_from]) >= _value );
-  	} else if(block.timestamp < unfreeze_end_date) {
-      require(balances[_from].sub((frozenAccount[_from] / unfreeze_periods) * ((unfreeze_end_date -  block.timestamp) / unfreeze_period_time)) >= _value);
-  	}
+  function freezeCheck(address _from, uint256 _value) public constant returns (bool) {
+    if(now < unfreeze_start_date) {
+      require(balances[_from].sub(frozenAccount[_from]) >= _value );
+    } else if(now < unfreeze_end_date) {
+        
+      uint256 tokens_per_pereiod = frozenAccount[_from] / unfreeze_periods;
+      uint256 diff = (unfreeze_end_date -  now);
+      uint256 left_periods = diff / unfreeze_period_time;
+      uint256 freeze_tokens = left_periods * tokens_per_pereiod;
+      
+      require(balances[_from].sub(freeze_tokens) >= _value);
+    }
     return true;
   }
   
-   function burn(uint256 _value) onlyOwner public {
+   function burn(uint256 _value) public onlyOwner {
     require(_value > 0);
 
     address burner = msg.sender;
