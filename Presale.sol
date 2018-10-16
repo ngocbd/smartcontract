@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0x60f0ee673e413e1c134d1497eeecce8ddd2fdd74
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0x8b807cf49ca593c4678811211df2992e64f2f3ef
 */
 pragma solidity ^0.4.6;
 
@@ -27,9 +27,9 @@ contract Presale {
 
 	/* ====== configuration START ====== */
 
-	uint public constant PRESALE_START  = 3044895;    /* approx. 22.01.2017 21:15 CET */
-	uint public constant PRESALE_END    = 3048975;    /* approx. 23.01.2017 14:15 CET */
-	uint public constant WITHDRAWAL_END = 3049935;    /* approx. 23.01.2017 18:15 CET */
+	uint public constant PRESALE_START  = 3044593;    /* approx. 22.01.2017 20:00 CET */
+	uint public constant PRESALE_END    = 3048913;    /* approx. 23.01.2017 14:00 CET */
+	uint public constant WITHDRAWAL_END = 3049873;    /* approx. 23.01.2017 18:00 CET */
 
 	address public constant OWNER = 0x45d5426471D12b21C3326dD0cF96f6656F7d14b1;
 	
