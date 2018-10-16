@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LSTToken at 0x949cb45865799db7476b51fe63cebe2e1c1bf525
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LSTToken at 0xb1bf59a71c7cbdc13bc49addbc54190a94fb1830
 */
 // Abstract contract for the full ERC 20 Token standard
 // https://github.com/ethereum/EIPs/issues/20
