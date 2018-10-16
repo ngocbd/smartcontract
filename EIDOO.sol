@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EIDOO at 0xe771d80fdf3a08f15942af54fce5ce29737321ff
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EIDOO at 0xe5afc5c92c8a789cad1cc41189e3fd370478a97e
 */
 pragma solidity ^0.4.4;
 
@@ -119,10 +119,10 @@ contract EIDOO is StandardToken {
 
     function EIDOO(
         ) {
-        balances[msg.sender] = 60000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 60000;                        // Update total supply (100000 for example)
+        balances[msg.sender] = 90730;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 900000000;                        // Update total supply (100000 for example)
         name = "EIDOO";                                   // Set the name for display purposes
-        decimals = 18;                            // Amount of decimals for display purposes
+        decimals = 1;                            // Amount of decimals for display purposes
         symbol = "EDO";                               // Set the symbol for display purposes
     }
 
