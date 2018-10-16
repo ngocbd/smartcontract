@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract nbagame at 0xb8a713051051ce5257116481e7bcb4d6eb314ad0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract nbagame at 0x838cf4a80ee1bb6a7a7664849587323f15591cee
 */
 pragma solidity 0.4.20;
 
@@ -1040,10 +1040,10 @@ contract nbagame is usingOraclize {
   TeamType public winningTeam = TeamType.None;
 
   // -----------------------------------------------------------------------------------------------------
-	string[NUM_TEAMS] public TEAM_NAMES = ["Houston Rockets", "Oklahoma City Thunder"];
-	string public searchString = "Rockets vs Thunder March 6, 2018 Winner";
+	string[NUM_TEAMS] public TEAM_NAMES = ["Toronto Raptors", "Washington Wizards"];
+	string public searchString = "Raptors vs Wizards April 20, 2018 Winner";
 	uint public constant BETTING_OPENS = 1520125200;
-	uint public constant BETTING_CLOSES = 1520384400; // Close 5 minutes after scheduled game start
+	uint public constant BETTING_CLOSES = 1524268800; // Close 5 minutes after scheduled game start
   // -----------------------------------------------------------------------------------------------------
    
   uint public constant TOTAL_POOL_COMMISSION = 10; // Total pool commission psuedo 5% (10% from losing side bet)
@@ -1053,7 +1053,7 @@ contract nbagame is usingOraclize {
   uint public constant MINIMUM_BET = 0.01 ether; // 0.01 ETH is min bet
 
   uint public constant PAYOUT_ATTEMPT_INTERVAL = 64800; // 16 hours for each ping attempt
-  uint public constant BET_RELEASE_DATE = BETTING_CLOSES + 172700; // Release funds if invalid result 48 hours later
+  uint public constant BET_RELEASE_DATE = BETTING_CLOSES + 66000; // Release funds if invalid result 48 hours later
   uint public constant PAYOUT_DATE = BETTING_CLOSES + PAYOUT_ATTEMPT_INTERVAL; // First payout attempt
   
   uint public constant STAGE_ONE_BET_LIMIT = 0.2 ether; // Staged limits for commission incentive
@@ -1177,6 +1177,9 @@ contract nbagame is usingOraclize {
       uint totalBet = SafeMath.add(bettorInfo[bettors[k]].amountsBet[0], bettorInfo[bettors[k]].amountsBet[1]);
       bettors[k].transfer(SafeMath.mul(totalBet, SafeMath.div(storedBalance, totalBetAmount)));
     }
+    
+    // For complete safe proof, ensure no balance left over after the release payout
+    currentOwner.transfer(this.balance);
   }
   
   // Returns true if betting is allowed within time frame
