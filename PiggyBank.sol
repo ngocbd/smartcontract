@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PiggyBank at 0x0AFC9430e3C5B0949A58f49Bc9d134DEe87c74D1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PiggyBank at 0xF7A1a5eeD7DaB1a7bCdA127B43DfAa1FF1800888
 */
 pragma solidity ^0.4.11;
 
@@ -13,11 +13,6 @@ contract PiggyBank
     {
         creator = msg.sender;
         deposits = 0;
-    }
-
-    function() payable
-    {
-        deposit();
     }
 
     function deposit() payable returns (uint)
