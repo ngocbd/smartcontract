@@ -1,20 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CTest1 at 0x4117912440d279aabfa20d10bf517c1ff9fe6c8f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CTest1 at 0x8e817690779f4be99253d52601393c03eee8f06e
 */
-pragma solidity ^0.4.16;
-
-
+/**
+ * Overflow aware uint math functions.
+ *
+ * Inspired by https://github.com/MakerDAO/maker-otc/blob/master/contracts/simple_market.sol
+ */
 contract SafeMath {
+  //internals
+
   function safeMul(uint a, uint b) internal returns (uint) {
     uint c = a * b;
     assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function safeDiv(uint a, uint b) internal returns (uint) {
-    assert(b > 0);
-    uint c = a / b;
-    assert(a == b * c + a % b);
     return c;
   }
 
@@ -29,121 +26,123 @@ contract SafeMath {
     return c;
   }
 
-  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a >= b ? a : b;
-  }
-
-  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a < b ? a : b;
-  }
-
-  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a >= b ? a : b;
-  }
-
-  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a < b ? a : b;
-  }
-
   function assert(bool assertion) internal {
-    if (!assertion) {
-      throw;
+    if (!assertion) throw;
+  }
+}
+
+/**
+ * ERC 20 token
+ *
+ * https://github.com/ethereum/EIPs/issues/20
+ */
+contract Token {
+
+    /// @return total amount of tokens
+    function totalSupply() constant returns (uint256 supply) {}
+
+    /// @param _owner The address from which the balance will be retrieved
+    /// @return The balance
+    function balanceOf(address _owner) constant returns (uint256 balance) {}
+
+    /// @notice send `_value` token to `_to` from `msg.sender`
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transfer(address _to, uint256 _value) returns (bool success) {}
+
+    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+    /// @param _from The address of the sender
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
+
+    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @param _value The amount of wei to be approved for transfer
+    /// @return Whether the approval was successful or not
+    function approve(address _spender, uint256 _value) returns (bool success) {}
+
+    /// @param _owner The address of the account owning tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @return Amount of remaining tokens allowed to spent
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+
+}
+
+/**
+ * ERC 20 token
+ *
+ * https://github.com/ethereum/EIPs/issues/20
+ */
+contract StandardToken is Token {
+
+    /**
+     * Reviewed:
+     * - Interger overflow = OK, checked
+     */
+    function transfer(address _to, uint256 _value) returns (bool success) {
+        if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+            balances[msg.sender] -= _value;
+            balances[_to] += _value;
+            Transfer(msg.sender, _to, _value);
+            return true;
+        } else { return false; }
     }
-  }
-}
 
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+            balances[_to] += _value;
+            balances[_from] -= _value;
+            allowed[_from][msg.sender] -= _value;
+            Transfer(_from, _to, _value);
+            return true;
+        } else { return false; }
+    }
 
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
+    }
 
+    function approve(address _spender, uint256 _value) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
 
-contract ERC20 {
-  uint public totalSupply = 1000000;
-  function balanceOf(address who) constant returns (uint);
-  function allowance(address owner, address spender) constant returns (uint);
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+      return allowed[_owner][_spender];
+    }
 
-  function transfer(address to, uint value) returns (bool ok);
-  function transferFrom(address from, address to, uint value) returns (bool ok);
-  function approve(address spender, uint value) returns (bool ok);
-  event Transfer(address indexed from, address indexed to, uint value);
-  event Approval(address indexed owner, address indexed spender, uint value);
-}
+    mapping(address => uint256) balances;
 
+    mapping (address => mapping (address => uint256)) allowed;
 
-
-
-contract StandardToken is ERC20, SafeMath {
-
-  /* Token supply got increased and a new owner received these tokens */
-  event Minted(address receiver, uint amount);
-
-  /* Actual balances of token holders */
-  mapping(address => uint) balances;
-
-  /* approve() allowances */
-  mapping (address => mapping (address => uint)) allowed;
-
-  /* Interface declaration */
-  function isToken() public constant returns (bool weAre) {
-    return true;
-  }
-
-  function transfer(address _to, uint _value) returns (bool success) {
-      
-      if (_value < 0) {
-          revert();
-      }
-      
-    balances[msg.sender] = safeSub(balances[msg.sender], _value);
-    balances[_to] = safeAdd(balances[_to], _value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  function transferFrom(address _from, address _to, uint _value) returns (bool success) {
-      
-      if (_value < 0) {
-          revert();
-      }
-      
-    uint _allowance = allowed[_from][msg.sender];
-
-    balances[_to] = safeAdd(balances[_to], _value);
-    balances[_from] = safeSub(balances[_from], _value);
-    allowed[_from][msg.sender] = safeSub(_allowance, _value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  function balanceOf(address _owner) constant returns (uint balance) {
-    return balances[_owner];
-  }
-
-  function approve(address _spender, uint _value) returns (bool success) {
-
-    // To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) throw;
-
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  function allowance(address _owner, address _spender) constant returns (uint remaining) {
-    return allowed[_owner][_spender];
-  }
+    uint256 public totalSupply;
 
 }
 
 
+/**
+ * CTest1 crowdsale contract.
+ *
+ * Security criteria evaluated against http://ethereum.stackexchange.com/questions/8551/methodological-security-review-of-a-smart-contract
+ *
+ *
+ */
+contract CTest1 is StandardToken, SafeMath {
+
+    string public name = "CTest1 Token";
+    string public symbol = "CTest1";
+    uint public decimals = 18;
+    
+    uint256 public totalSupply = 1000000;
 
 
-
-
-
-contract CTest1 is StandardToken {
-  
     // Set the contract controller address
     // Set the 3 Founder addresses
     address public owner = msg.sender;
@@ -151,11 +150,30 @@ contract CTest1 is StandardToken {
     address public Founder2 = 0x00A591199F53907480E1f5A00958b93B43200Fe4;
     address public Founder3 = 0x0d19C131400e73c71bBB2bC1666dBa8Fe22d242D;
 
-  
-    function name() constant returns (string) { return "CTest1 Token"; }
-    function symbol() constant returns (string) { return "CTest1"; }
-    function decimals() constant returns (uint) { return 18; }
+
+    event Buy(address indexed sender, uint eth, uint fbt);
+
+
+    /**
+     * ERC 20 Standard Token interface transfer function
+     */
+    function transfer(address _to, uint256 _value) returns (bool success) {
+        return super.transfer(_to, _value);
+    }
+    /**
+     * ERC 20 Standard Token interface transfer function
+     *
+     */
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        return super.transferFrom(_from, _to, _value);
+    }
     
+    
+   
+// CTest1 TOKEN FOUNDER ETH ADDRESSES 
+// 0xB5D39A8Ea30005f9114Bf936025De2D6f353813E
+// 0x00A591199F53907480E1f5A00958b93B43200Fe4
+// 0x0d19C131400e73c71bBB2bC1666dBa8Fe22d242D
     
     
     function () payable {
@@ -169,7 +187,7 @@ contract CTest1 is StandardToken {
         
         
         uint256 rate = 0;
-        address receiver = msg.sender;
+        address recipient = msg.sender;
         
         
         //Set the price to 0.0003 ETH/CTest1
@@ -243,23 +261,22 @@ contract CTest1 is StandardToken {
         
         
         //Prevent any ETH address from buying more than 50 CTest1 during the pre-sale
-        if ((balances[receiver] + tokens) > 50 && totalSupply > 975000)
+        if ((balances[recipient] + tokens) > 50 && totalSupply > 975000)
         {
             throw;
         }
         
         
-        balances[receiver] = safeAdd(balances[receiver], tokens);
+        balances[recipient] = safeAdd(balances[recipient], tokens);
         
         totalSupply = safeSub(totalSupply, tokens);
-        
-        Transfer(0, receiver, tokens);
 
-
-
+    
 	    Founder1.transfer((msg.value/3));					//Send the ETH
 	    Founder2.transfer((msg.value/3));					//Send the ETH
 	    Founder3.transfer((msg.value/3));					//Send the ETH
+
+        Buy(recipient, msg.value, tokens);
         
     }
     
@@ -275,7 +292,7 @@ contract CTest1 is StandardToken {
         } else {throw;}
 
     }
-  
-  
-  
+    
+    
+
 }
