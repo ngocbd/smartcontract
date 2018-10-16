@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GECToken at 0xcc75ee371d9e3375d433bf7e3a456746300c2963
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GECToken at 0x8413428357b3e3842666c36502c3ddef4eb3fc74
 */
 pragma solidity 0.4.11;
 
@@ -102,7 +102,7 @@ contract GECToken is StandardToken {
 	// Can only be called if the `crowdfunder` is allowed to mint tokens. Any
 	// time before `endMintingTime`.
 	modifier when_mintable {
-		if (now > icoEndTime + 5 days) throw;
+		if (now > icoEndTime + 10 days) throw;
 		_;
 	}
 
