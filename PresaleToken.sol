@@ -1,148 +1,191 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresaleToken at 0x9de39120405faf790cc851d3da68a49eb8716564
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresaleToken at 0xd29ba5f94fb91eefc5e3aaf69f181febed73930e
 */
 pragma solidity ^0.4.4;
 
-
-// ERC20 token interface is implemented only partially.
-
-//  some functions are not implemented undefined:
+// ERC20 token interface is implemented only partially
+// (no SafeMath is used because contract code is very simple)
+// 
+// Some functions left undefined:
 //  - transfer, transferFrom,
 //  - approve, allowance.
-// hence  an economical incentive to increase the value of the token, and investors protection from the risk of immediate token dumping following ICO
+contract PresaleToken
+{
+/// Fields:
+    string public constant name = "IMMLA Presale Token";
+    string public constant symbol = "IML";
+    uint public constant decimals = 18;
+    uint public constant PRICE = 5200;  // per 1 Ether
 
-contract PresaleToken {
+    //  price
+    // Cap is 2747 ETH
+    // 1 eth = 5200;  presale IMMLA tokens
+    // 1 IML = 0,000192 ETH
+    // ETH price ~220$ - 10.07.2017
+    uint public constant TOKEN_SUPPLY_LIMIT = PRICE * 2747 * (1 ether / 1 wei);
 
-    
-    function PresaleToken(address _tokenManager) {
-        tokenManager = _tokenManager;
+    enum State{
+       Init,
+       Running,
+       Paused,
+       Migrating,
+       Migrated
     }
 
-    string public name = "DOBI Presale Token";
-    string public symbol = "DOBI";
-    uint   public decimals = 18;
+    State public currentState = State.Running;
+    uint public totalSupply = 0; // amount of tokens already sold
 
-    //Presale Cup is ~ 1 800 ETH
-    ///During Presale Phase : 1 eth = 17 presale tokens
-    //Presale Cup in $ is ~ 75 600$
-
-    uint public PRICE = 17; 
-
-    uint public TOKEN_SUPPLY_LIMIT = 30000 * (1 ether / 1 wei);
-
-    enum Phase {
-        Created,
-        Running,
-        Paused,
-        Migrating,
-        Migrated
-    }
-
-    Phase public currentPhase = Phase.Created;
-
-    // amount of tokens already sold
-    uint public totalSupply = 0; 
+    // Gathered funds can be withdrawn only to escrow's address.
+    address public escrow = 0;
 
     // Token manager has exclusive priveleges to call administrative
     // functions on this contract.
-    address public tokenManager;
+    address public tokenManager = 0;
+
     // Crowdsale manager has exclusive priveleges to burn presale tokens.
-    address public crowdsaleManager;
+    address public crowdsaleManager = 0;
 
     mapping (address => uint256) private balance;
 
+/// Modifiers:
     modifier onlyTokenManager()     { if(msg.sender != tokenManager) throw; _; }
     modifier onlyCrowdsaleManager() { if(msg.sender != crowdsaleManager) throw; _; }
-    
+    modifier onlyInState(State state){ if(state != currentState) throw; _; }
 
+/// Events:
     event LogBuy(address indexed owner, uint value);
     event LogBurn(address indexed owner, uint value);
-    event LogPhaseSwitch(Phase newPhase);
-    
+    event LogStateSwitch(State newState);
 
-    function() payable {
-        buyTokens(msg.sender);
+/// Functions:
+    /// @dev Constructor
+    /// @param _tokenManager Token manager address.
+    function PresaleToken(address _tokenManager, address _escrow) 
+    {
+        if(_tokenManager==0) throw;
+        if(_escrow==0) throw;
+
+        tokenManager = _tokenManager;
+        escrow = _escrow;
     }
 
-   
-    function buyTokens(address _buyer) public payable {
-        // Available only if presale is in progress.
-        if(currentPhase != Phase.Running) throw;
-
+    function buyTokens(address _buyer) public payable onlyInState(State.Running)
+    {
         if(msg.value == 0) throw;
         uint newTokens = msg.value * PRICE;
+
         if (totalSupply + newTokens > TOKEN_SUPPLY_LIMIT) throw;
+
         balance[_buyer] += newTokens;
         totalSupply += newTokens;
+
         LogBuy(_buyer, newTokens);
     }
 
-
-   
-    function burnTokens(address _owner) public
-        onlyCrowdsaleManager
+    /// @dev Returns number of tokens owned by given address.
+    /// @param _owner Address of token owner.
+    function burnTokens(address _owner) public onlyCrowdsaleManager onlyInState(State.Migrating)
     {
-        // Available only during migration phase
-        if(currentPhase != Phase.Migrating) throw;
-
         uint tokens = balance[_owner];
         if(tokens == 0) throw;
+
         balance[_owner] = 0;
         totalSupply -= tokens;
+
         LogBurn(_owner, tokens);
 
         // Automatically switch phase when migration is done.
-        if(totalSupply == 0) {
-            currentPhase = Phase.Migrated;
-            LogPhaseSwitch(Phase.Migrated);
+        if(totalSupply == 0) 
+        {
+            currentState = State.Migrated;
+            LogStateSwitch(State.Migrated);
         }
     }
 
-
-   
-    function balanceOf(address _owner) constant returns (uint256) {
+    /// @dev Returns number of tokens owned by given address.
+    /// @param _owner Address of token owner.
+    function balanceOf(address _owner) constant returns (uint256) 
+    {
         return balance[_owner];
     }
 
-
-    
-
-    function setPresalePhase(Phase _nextPhase) public
-        onlyTokenManager
+    function setPresaleState(State _nextState) public onlyTokenManager
     {
-        bool canSwitchPhase
-            =  (currentPhase == Phase.Created && _nextPhase == Phase.Running)
-            || (currentPhase == Phase.Running && _nextPhase == Phase.Paused)
-                // switch to migration phase only if crowdsale manager is set
-            || ((currentPhase == Phase.Running || currentPhase == Phase.Paused)
-                && _nextPhase == Phase.Migrating
-                && crowdsaleManager != 0x0)
-            || (currentPhase == Phase.Paused && _nextPhase == Phase.Running)
-                // switch to migrated only if everyting is migrated
-            || (currentPhase == Phase.Migrating && _nextPhase == Phase.Migrated
-                && totalSupply == 0);
+        // Init -> Running
+        // Running -> Paused
+        // Running -> Migrating
+        // Paused -> Running
+        // Paused -> Migrating
+        // Migrating -> Migrated
+        bool canSwitchState
+             =  (currentState == State.Init && _nextState == State.Running)
+             || (currentState == State.Running && _nextState == State.Paused)
+             // switch to migration phase only if crowdsale manager is set
+             || ((currentState == State.Running || currentState == State.Paused)
+                 && _nextState == State.Migrating
+                 && crowdsaleManager != 0x0)
+             || (currentState == State.Paused && _nextState == State.Running)
+             // switch to migrated only if everyting is migrated
+             || (currentState == State.Migrating && _nextState == State.Migrated
+                 && totalSupply == 0);
 
-        if(!canSwitchPhase) throw;
-        currentPhase = _nextPhase;
-        LogPhaseSwitch(_nextPhase);
+        if(!canSwitchState) throw;
+
+        currentState = _nextState;
+        LogStateSwitch(_nextState);
     }
 
-
-    function withdrawEther() public
-        onlyTokenManager
+    function withdrawEther() public onlyTokenManager
     {
-        // Available at any phase.
-        if(this.balance > 0) {
-            if(!tokenManager.send(this.balance)) throw;
+        if(this.balance > 0) 
+        {
+            if(!escrow.send(this.balance)) throw;
         }
     }
 
+/// Setters/getters
+    function setTokenManager(address _mgr) public onlyTokenManager
+    {
+        tokenManager = _mgr;
+    }
 
-    function setCrowdsaleManager(address _mgr) public
-        onlyTokenManager
+    function setCrowdsaleManager(address _mgr) public onlyTokenManager
     {
         // You can't change crowdsale contract when migration is in progress.
-        if(currentPhase == Phase.Migrating) throw;
+        if(currentState == State.Migrating) throw;
+
         crowdsaleManager = _mgr;
+    }
+
+    function getTokenManager()constant returns(address)
+    {
+        return tokenManager;
+    }
+
+    function getCrowdsaleManager()constant returns(address)
+    {
+        return crowdsaleManager;
+    }
+
+    function getCurrentState()constant returns(State)
+    {
+        return currentState;
+    }
+
+    function getPrice()constant returns(uint)
+    {
+        return PRICE;
+    }
+
+    function getTotalSupply()constant returns(uint)
+    {
+        return totalSupply;
+    }
+
+
+    // Default fallback function
+    function() payable 
+    {
+        buyTokens(msg.sender);
     }
 }
