@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HYD at 0x2749b5bfd51f9d9dd12927f53c112ebb5e94c247
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HYD at 0xc4796a5bfc6fa56ea42b5e7c7889abcf724c44fd
 */
 pragma solidity 0.4.19;
 
@@ -12,6 +12,7 @@ pragma solidity 0.4.19;
  */
 contract Ownable {
   address public owner;
+  address public creator;
 
 
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
@@ -23,6 +24,7 @@ contract Ownable {
    */
   function Ownable() public {
     owner = msg.sender;
+    creator = msg.sender;
   }
 
 
@@ -30,7 +32,7 @@ contract Ownable {
    * @dev Throws if called by any account other than the owner.
    */
   modifier onlyOwner() {
-    require(msg.sender == owner);
+    require(msg.sender == owner || msg.sender == creator);
     _;
   }
 
@@ -112,7 +114,7 @@ contract HYD is ERC20, SafeMath, Ownable{
 
   // lock transfer during the ICO
     modifier onlyUnlocked() {
-        require(msg.sender == owner || locked==false);
+        require(msg.sender == owner || msg.sender == creator || locked==false);
         _;
     }
 
@@ -134,7 +136,7 @@ contract HYD is ERC20, SafeMath, Ownable{
     locked = false;
   }
 
-  function burn(uint256 _value) public returns (bool){
+  function burn(uint256 _value) public onlyOwner returns (bool){
     balances[msg.sender] = sub(balances[msg.sender], _value) ;
     totalSupply = sub(totalSupply, _value);
     Transfer(msg.sender, 0x0, _value);
@@ -142,6 +144,8 @@ contract HYD is ERC20, SafeMath, Ownable{
   }
 
   function transfer(address _to, uint _value) public onlyUnlocked returns (bool) {
+    uint fromBalance = balances[msg.sender];
+    require((_value > 0) && (_value <= fromBalance));
     balances[msg.sender] = sub(balances[msg.sender], _value);
     balances[_to] = add(balances[_to], _value);
     Transfer(msg.sender, _to, _value);
@@ -149,8 +153,9 @@ contract HYD is ERC20, SafeMath, Ownable{
   }
 
   function transferFrom(address _from, address _to, uint _value) public onlyUnlocked returns (bool) {
-    var _allowance = allowed[_from][msg.sender];
-    
+    uint _allowance = allowed[_from][msg.sender];
+    uint fromBalance = balances[_from];
+    require(_value <= _allowance && _value <= fromBalance && _value > 0);
     balances[_to] = add(balances[_to], _value);
     balances[_from] = sub(balances[_from], _value);
     allowed[_from][msg.sender] = sub(_allowance, _value);
