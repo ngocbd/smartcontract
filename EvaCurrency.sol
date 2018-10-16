@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EvaCurrency at 0x230a83ae51be8b6393f545214fbd39d7a8d3d4ee
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EvaCurrency at 0xa4cc7d5056c4f89ce2634f71757832ddeb9db8c9
 */
 pragma solidity ^0.4.23;
 
@@ -178,7 +178,7 @@ contract ERC20 is ERC20Basic {
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
 
-  mapping(address => uint256) public balances;
+  mapping(address => uint256) balances;
 
   uint256 totalSupply_;
 
@@ -517,7 +517,7 @@ contract EvaCurrency is PausableToken, BurnableToken {
 
     balances[sender] = balances[sender].sub(_amount);
     balances[staker] = balances[staker].add(fee);
-    totalSupply_ =totalSupply_.sub(resultAmount);
+    totalSupply_.sub(resultAmount);
 
     Burn(sender, resultAmount);
     return true;
@@ -534,7 +534,7 @@ contract EvaCurrency is PausableToken, BurnableToken {
 
       balances[_to] = balances[staker].add(resultAmount);
       balances[staker] = balances[staker].add(fee);
-      totalSupply_ = totalSupply_.add(_amount);
+      totalSupply_.add(_amount);
 
       Mint(_to, resultAmount);
       return true;
