@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GenerationDecreaseEffect at 0xed3c00a6c0da9a64c307719da5ce629c6ee66dfc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GenerationDecreaseEffect at 0x3f80d082998a23ed4edee025b6df7c4f3a1c7958
 */
 pragma solidity ^0.4.20;
 
@@ -152,7 +152,7 @@ contract CutieCoreInterface
         uint16 generation
     );
 
-     function getGenes(uint40 _id)
+    function getGenes(uint40 _id)
         public
         view
         returns (
