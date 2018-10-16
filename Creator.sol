@@ -1,538 +1,94 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Creator at 0xc4b8728caa7a17f34fc1ad4acb2ef080b2085c8d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Creator at 0x96e3064730281f3ec19cff8b8c5be89b1a6c13c1
 */
-// Project: BUZcoin.io (original)
-// v11, 2018-04-17
-// This code is the property of CryptoB2B.io
-// Copying in whole or in part is prohibited.
+// Project: Proof of Toss - https://toss.pro
+// v12, 2018-04-23
 // Authors: Ivan Fedorov and Dmitry Borodin
-// Do you want the same TokenSale platform? www.cryptob2b.io
+// Copying in whole or in part is prohibited.
 
-// *.sol in 1 file - https://cryptob2b.io/solidity/buzcoin/
+pragma solidity ^0.4.21;
 
-pragma solidity ^0.4.13;
-
-contract IFinancialStrategy{
-
-    enum State { Active, Refunding, Closed }
-    State public state = State.Active;
-
-    event Deposited(address indexed beneficiary, uint256 weiAmount);
-    event Receive(address indexed beneficiary, uint256 weiAmount);
-
-    function deposit(address _beneficiary) external payable;
-    function setup(address _beneficiary, uint256 _arg1, uint256 _arg2, uint8 _state) external;
-    function calc(uint256 _allValue) external;
-    function getBeneficiaryCash(address _beneficiary) external;
-    function getPartnerCash(uint8 _user, bool _isAdmin, address _msgsender, bool _calc, uint256 _weiTotalRaised) external;
-}
-
-contract Ownable {
-    address public owner;
-
-
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-    /**
-     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-     * account.
-     */
-    function Ownable() public {
-        owner = msg.sender;
-    }
-
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
-    /**
-     * @dev Allows the current owner to transfer control of the contract to a newOwner.
-     * @param newOwner The address to transfer ownership to.
-     */
-    function transferOwnership(address newOwner) public onlyOwner {
-        require(newOwner != address(0));
-        emit OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-    }
-
-}
-
-library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        assert(c / a == b);
-        return c;
-    }
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a / b;
-        return c;
-    }
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
-    function minus(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (b>=a) return 0;
-        return a - b;
-    }
-}
-
-contract MigrationAgent
-{
-    function migrateFrom(address _from, uint256 _value) public;
-}
-
-contract IToken{
-    function setUnpausedWallet(address _wallet, bool mode) public;
-    function mint(address _to, uint256 _amount) public returns (bool);
-    function totalSupply() public view returns (uint256);
-    function setPause(bool mode) public;
-    function setMigrationAgent(address _migrationAgent) public;
-    function migrateAll(address[] _holders) public;
-    function burn(address _beneficiary, uint256 _value) public;
-    function freezedTokenOf(address _beneficiary) public view returns (uint256 amount);
-    function defrostDate(address _beneficiary) public view returns (uint256 Date);
-    function freezeTokens(address _beneficiary, uint256 _amount, uint256 _when) public;
-}
-
-contract ERC223ReceivingContract {
-    function tokenFallback(address _from, uint _value, bytes memory _data) public;
-}
-
-contract ERC20Basic {
-    function totalSupply() public view returns (uint256);
-    function balanceOf(address who) public view returns (uint256);
-    function transfer(address to, uint256 value) public returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-contract BasicToken is ERC20Basic {
-    using SafeMath for uint256;
-
-    mapping(address => uint256) balances;
-
-    uint256 totalSupply_;
-
-    /**
-    * @dev total number of tokens in existence
-    */
-    function totalSupply() public view returns (uint256) {
-        return totalSupply_;
-    }
-
-    /**
-    * @dev transfer token for a specified address
-    * @param _to The address to transfer to.
-    * @param _value The amount to be transferred.
-    */
-    function transfer(address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-        require(_value <= balances[msg.sender]);
-
-        // SafeMath.sub will throw if there is not enough balance.
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        emit Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    /**
-    * @dev Gets the balance of the specified address.
-    * @param _owner The address to query the the balance of.
-    * @return An uint256 representing the amount owned by the passed address.
-    */
-    function balanceOf(address _owner) public view returns (uint256 balance) {
-        return balances[_owner];
-    }
-
-}
-
-contract ERC20 is ERC20Basic {
-    function allowance(address owner, address spender) public view returns (uint256);
-    function transferFrom(address from, address to, uint256 value) public returns (bool);
-    function approve(address spender, uint256 value) public returns (bool);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-contract StandardToken is ERC20, BasicToken {
-
-    mapping (address => mapping (address => uint256)) internal allowed;
-
-
-    /**
-     * @dev Transfer tokens from one address to another
-     * @param _from address The address which you want to send tokens from
-     * @param _to address The address which you want to transfer to
-     * @param _value uint256 the amount of tokens to be transferred
-     */
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-        require(_value <= balances[_from]);
-        require(_value <= allowed[_from][msg.sender]);
-
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        emit Transfer(_from, _to, _value);
-        return true;
-    }
-
-    /**
-     * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-     *
-     * Beware that changing an allowance with this method brings the risk that someone may use both the old
-     * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-     * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-     * @param _spender The address which will spend the funds.
-     * @param _value The amount of tokens to be spent.
-     */
-    function approve(address _spender, uint256 _value) public returns (bool) {
-        allowed[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    /**
-     * @dev Function to check the amount of tokens that an owner allowed to a spender.
-     * @param _owner address The address which owns the funds.
-     * @param _spender address The address which will spend the funds.
-     * @return A uint256 specifying the amount of tokens still available for the spender.
-     */
-    function allowance(address _owner, address _spender) public view returns (uint256) {
-        return allowed[_owner][_spender];
-    }
-
-    /**
-     * @dev Increase the amount of tokens that an owner allowed to a spender.
-     *
-     * approve should be called when allowed[_spender] == 0. To increment
-     * allowed value is better to use this function to avoid 2 calls (and wait until
-     * the first transaction is mined)
-     * From MonolithDAO Token.sol
-     * @param _spender The address which will spend the funds.
-     * @param _addedValue The amount of tokens to increase the allowance by.
-     */
-    function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
-
-    /**
-     * @dev Decrease the amount of tokens that an owner allowed to a spender.
-     *
-     * approve should be called when allowed[_spender] == 0. To decrement
-     * allowed value is better to use this function to avoid 2 calls (and wait until
-     * the first transaction is mined)
-     * From MonolithDAO Token.sol
-     * @param _spender The address which will spend the funds.
-     * @param _subtractedValue The amount of tokens to decrease the allowance by.
-     */
-    function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
-        uint oldValue = allowed[msg.sender][_spender];
-        if (_subtractedValue > oldValue) {
-            allowed[msg.sender][_spender] = 0;
-        } else {
-            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-        }
-        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
-
-}
-
-contract MintableToken is StandardToken, Ownable {
-    event Mint(address indexed to, uint256 amount);
-    event MintFinished();
-
-    /**
-     * @dev Function to mint tokens
-     * @param _to The address that will receive the minted tokens.
-     * @param _amount The amount of tokens to mint.
-     * @return A boolean that indicates if the operation was successful.
-     */
-    function mint(address _to, uint256 _amount) onlyOwner public returns (bool) {
-        totalSupply_ = totalSupply_.add(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        emit Mint(_to, _amount);
-        emit Transfer(address(0), _to, _amount);
-        return true;
-    }
-}
-
-contract ICreator{
-    function createToken() external returns (IToken);
-    function createFinancialStrategy() external returns(IFinancialStrategy);
-}
-
-contract BuzFinancialStrategy is IFinancialStrategy, Ownable{
-    using SafeMath for uint256;
-
-                             // Partner 0   Partner 1    Partner 2
-    uint256[3] public percent = [20,        2,           3            ];
-    uint256[3] public cap     = [200 ether, 1800 ether,  9999999 ether]; // QUINTILLIONS
-    uint256[3] public debt1   = [0,0,0];
-    uint256[3] public debt2   = [0,0,0];
-    uint256[3] public total   = [0,0,0];                                 // QUINTILLIONS
-    uint256[3] public took    = [0,0,0];
-    uint256[3] public ready   = [0,0,0];
-
-    address[3] public wallets= [
-        0x356608b672fdB01C5077d1A2cb6a7b38fDdcd8A5,
-        0xf1F3D1Dc1E5cEA08f127cad3B7Dbd29b299c88C8,
-        0x55ecFbD0111ab365b6De98A01E9305EfD4a78FAA
-    ];
-
-    uint256 public benTook=0;
-    uint256 public benReady=0;
-    uint256 public newCash=0;
-    uint256 public cashHistory=0;
-    uint256 public prcSum=0;
-
-    address public benWallet=0;
-
-    function BuzFinancialStrategy() public {
-        initialize();
-    }
-
-    function balance() external view returns(uint256){
-        return address(this).balance;
-    }
-
-    function initialize() internal {
-        for (uint8 i=0; i<percent.length; i++ ) prcSum+=percent[i];
-    }
-    
-    function deposit(address _beneficiary) external onlyOwner payable {
-        require(state == State.Active);
-        newCash = newCash.add(msg.value);
-        cashHistory += msg.value;
-        emit Deposited(_beneficiary,msg.value);
-    }
-
-
-    // 0 - destruct
-    // 1 - close
-    // 2 - restart
-    // 3 - refund
-    // 4 - test
-    // 5 - update Exchange                                                                      
-    function setup(address _beneficiary, uint256 _arg1, uint256 _arg2, uint8 _state) external onlyOwner {
-
-        if (_state == 0)  {
-            
-            // call from Crowdsale.distructVault(true) for exit
-            // arg1 - nothing
-            // arg2 - nothing
-            selfdestruct(_beneficiary);
-
-        }
-        else if (_state == 1 || _state == 3) {
-            // Call from Crowdsale.finalization()
-            //   [1] - successfull round (goalReach)
-            //   [3] - failed round (not enough money)
-            // arg1 = weiTotalRaised();
-            // arg2 = nothing;
-        
-            require(state == State.Active);
-            //internalCalc(_arg1);
-            state = State.Closed;
-            benWallet=_beneficiary;
-        
-        }
-        else if (_state == 2) {
-            // Call from Crowdsale.initialization()
-            // arg1 = weiTotalRaised();
-            // arg2 = nothing;
-            
-            require(state == State.Closed);
-            state = State.Active;
-            benWallet=_beneficiary;
-        
-        }
-        else if (_state == 4) {
-            // call from Crowdsale.distructVault(false) for test
-            // arg1 = nothing;
-            // arg2 = nothing;
-            benWallet=_beneficiary;
-        
-        }
-        else if (_state == 5) {
-            // arg1 = old ETH/USD (exchange)
-            // arg2 = new ETH/USD (_ETHUSD)
-
-            for (uint8 user=0; user<cap.length; user++) cap[user]=cap[user].mul(_arg1).div(_arg2);
-            benWallet=_beneficiary;
-
-        }
-
-    }
-
-    function calc(uint256 _allValue) external onlyOwner {
-        internalCalc(_allValue);
-    }
-
-    function internalCalc(uint256 _allValue) internal {
-
-        uint256 free=newCash+benReady;
-        uint256 common1=0;
-        uint256 common2=0;
-        uint256 spent=0;
-        uint256 plan=0;
-        uint8   user=0;
-
-        if (free==0) return;
-
-        for (user=0; user<percent.length; user++) {
-
-            plan=_allValue*percent[user]/100;
-            if (total[user]>=plan || total[user]>=cap[user]) {
-                debt1[user]=0;
-                debt2[user]=0;
-                continue;
-            }
-
-            debt1[user]=plan.minus(total[user]);
-            if (debt1[user]+total[user] > cap[user]) debt1[user]=cap[user].minus(total[user]);
-
-            common1+=debt1[user];
-
-            plan=free.mul(percent[user]).div(prcSum);
-            debt2[user]=plan;
-            if (debt2[user]+total[user] > cap[user]) debt2[user]=cap[user].minus(total[user]);
-            
-            common2+=debt2[user];
-
-        }
-
-        if (common1>0 && common1<=free) {
-    
-            for (user=0; user<percent.length; user++) {
-
-                if (debt1[user]==0) continue;
-                
-                plan=free.mul(debt1[user]).div(common1);
-                
-                if (plan>debt1[user]) plan=debt1[user];
-                ready[user]+=plan;
-                total[user]+=plan;
-                spent+=plan;
-            }
-        } 
-
-        if (common2>0 && common1>free) {
-        
-            for (user=0; user<percent.length; user++) {
-                
-                if (debt2[user]==0) continue;
-
-                plan=free.mul(debt2[user]).div(common2);
-
-                if (plan>debt1[user]) plan=debt1[user]; // debt1, not 2
-                ready[user]+=plan;
-                total[user]+=plan;
-                spent+=plan;
-            }
-        }
-
-        if (spent>newCash+benReady) benReady=0;
-        else benReady=newCash.add(benReady).minus(spent);
-        newCash=0;
-
-    }
-
-    // Call from Crowdsale:
-    function getBeneficiaryCash(address _beneficiary) external onlyOwner {
-
-        uint256 move=benReady;
-        benWallet=_beneficiary;
-        if (move == 0) return;
-
-        emit Receive(_beneficiary, move);
-        benReady = 0;
-        benTook += move;
-        
-        _beneficiary.transfer(move);
-    
-    }
-
-
-    // Call from Crowdsale:
-    function getPartnerCash(uint8 _user, bool _isAdmin, address _msgsender, bool _calc, uint256 _weiTotalRaised) external onlyOwner {
-
-        require(_user<percent.length && _user<wallets.length);
-
-        if (!_isAdmin) {
-            for (uint8 i=0; i<wallets.length; i++) {
-                if (wallets[i]==_msgsender) break;
-            }
-            if (i>=wallets.length) {
-                return;
-            }
-        }
-
-        if (_calc) internalCalc(_weiTotalRaised);
-
-        uint256 move=ready[_user];
-        if (move==0) return;
-
-        emit Receive(wallets[_user], move);
-        ready[_user]=0;
-        took[_user]+=move;
-
-        wallets[_user].transfer(move);
-    
-    }
-}
-
-contract ICrowdsale {
-    //              0             1         2        3        4        5      6       
-    enum Roles {beneficiary, accountant, manager, observer, bounty, company, team}
-    address[8] public wallets;
-}
-
-contract Crowdsale is ICrowdsale{
 // (A1)
 // The main contract for the sale and management of rounds.
 // 0000000000000000000000000000000000000000000000000000000000000000
+contract Crowdsale{
 
-    uint256 constant USER_UNPAUSE_TOKEN_TIMEOUT =  90 days;
-    uint256 constant FORCED_REFUND_TIMEOUT1     = 300 days;
-    uint256 constant FORCED_REFUND_TIMEOUT2     = 400 days;
-    uint256 constant ROUND_PROLONGATE           =  90 days;
-    uint256 constant BURN_TOKENS_TIME           =  60 days;
+    uint256 constant USER_UNPAUSE_TOKEN_TIMEOUT =  60 days;
+    uint256 constant FORCED_REFUND_TIMEOUT1     = 400 days;
+    uint256 constant FORCED_REFUND_TIMEOUT2     = 600 days;
+    uint256 constant ROUND_PROLONGATE           =   0 days;
+    uint256 constant BURN_TOKENS_TIME           =  90 days;
 
     using SafeMath for uint256;
 
     enum TokenSaleType {round1, round2}
+    TokenSaleType public TokenSale = TokenSaleType.round2;
 
-    TokenSaleType public TokenSale = TokenSaleType.round1;
+    //              0             1         2        3        4        5      6       7        8     9
+    enum Roles {beneficiary, accountant, manager, observer, bounty, company, team, founders, fund, fees}
 
-    ICreator public creator;
+    Creator public creator;
+    bool creator2;
     bool isBegin=false;
+    Token public token;
+    RefundVault public vault;
+    AllocationTOSS public allocation;
 
-    IToken public token;
-    //Allocation public allocation;
-    IFinancialStrategy public financialStrategy;
     bool public isFinalized;
     bool public isInitialized;
     bool public isPausedCrowdsale;
     bool public chargeBonuses;
     bool public canFirstMint=true;
+
+    // Initially, all next 7+ roles/wallets are given to the Manager. The Manager is an employee of the company
+    // with knowledge of IT, who publishes the contract and sets it up. However, money and tokens require
+    // a Beneficiary and other roles (Accountant, Team, etc.). The Manager will not have the right
+    // to receive them. To enable this, the Manager must either enter specific wallets here, or perform
+    // this via method changeWallet. In the finalization methods it is written which wallet and
+    // what percentage of tokens are received.
+    address[10] public wallets = [
+
+        // Beneficiary
+        // Receives all the money (when finalizing Round1 & Round2)
+        0xAa951F7c52055B89d3F281c73d557275070cBBfb,
+
+        // Accountant
+        // Receives all the tokens for non-ETH investors (when finalizing Round1 & Round2)
+        0xD29f0aE1621F4Be48C4DF438038E38af546DA498,
+
+        // Manager
+        // All rights except the rights to receive tokens or money. Has the right to change any other
+        // wallets (Beneficiary, Accountant, ...), but only if the round has not started. Once the
+        // round is initialized, the Manager has lost all rights to change the wallets.
+        // If the TokenSale is conducted by one person, then nothing needs to be changed. Permit all 7 roles
+        // point to a single wallet.
+        msg.sender,
+
+        // Observer
+        // Has only the right to call paymentsInOtherCurrency (please read the document)
+        0x8a91aC199440Da0B45B2E278f3fE616b1bCcC494,
+
+        // Bounty - 7% tokens
+        0xd7AC0393e2B29D8aC6221CF69c27171aba6278c4,
+
+        // Company, White list 1%
+        0x765f60E314766Bc25eb2a9F66991Fe867D42A449,
+
+        // Team, 6%, freeze 1+1 year
+        0xF9f0c53c07803a2670a354F3de88482393ABdBac,
+
+        // Founders, 10% freeze 1+1 year
+        0x61628D884b5F137c3D3e0b04b90DaE4402f32510,
+
+        // Fund, 6%
+        0xd833899Ea1b84E980daA13553CE13D1512bF0774,
+
+        // Fees, 7% money
+        0xEB29e654AFF7658394C9d413dDC66711ADD44F59
+
+    ];
+
+
 
     struct Bonus {
         uint256 value;
@@ -554,27 +110,27 @@ contract Crowdsale is ICrowdsale{
     Profit[] public profits;
 
 
-    uint256 public startTime= 1524009600;
-    uint256 public endTime  = 1526601599;
+    uint256 public startTime= 1524560400;
+    uint256 public endTime  = 1529830799;
     uint256 public renewal;
 
     // How many tokens (excluding the bonus) are transferred to the investor in exchange for 1 ETH
-    // **THOUSANDS** 10^18 for human, *10**18 for Solidity, 1e18 for MyEtherWallet (MEW).
+    // **QUINTILLIONS** 10^18 for human, *10**18 for Solidity, 1e18 for MyEtherWallet (MEW).
     // Example: if 1ETH = 40.5 Token ==> use 40500 finney
-    uint256 public rate = 5000 ether; // $0.1 (ETH/USD=$500)
+    uint256 public rate = 10000 ether;
 
     // ETH/USD rate in US$
     // **QUINTILLIONS** 10^18 / *10**18 / 1e18. Example: ETH/USD=$1000 ==> use 1000*10**18 (Solidity) or 1000 ether or 1000e18 (MEW)
-    uint256 public exchange  = 500 ether;
+    uint256 public exchange  = 700 ether; // not in use
 
     // If the round does not attain this value before the closing date, the round is recognized as a
     // failure and investors take the money back (the founders will not interfere in any way).
     // **QUINTILLIONS** 10^18 / *10**18 / 1e18. Example: softcap=15ETH ==> use 15*10**18 (Solidity) or 15e18 (MEW)
-    uint256 public softCap = 0;
+    uint256 public softCap = 8500 ether;
 
     // The maximum possible amount of income
     // **QUINTILLIONS** 10^18 / *10**18 / 1e18. Example: hardcap=123.45ETH ==> use 123450*10**15 (Solidity) or 12345e15 (MEW)
-    uint256 public hardCap = 62000 ether; // $31M (ETH/USD=$500)
+    uint256 public hardCap = 71500 ether;
 
     // If the last payment is slightly higher than the hardcap, then the usual contracts do
     // not accept it, because it goes beyond the hardcap. However it is more reasonable to accept the
@@ -587,9 +143,9 @@ contract Crowdsale is ICrowdsale{
 
     // The minimum possible payment from an investor in ETH. Payments below this value will be rejected.
     // **QUINTILLIONS** 10^18 / *10**18 / 1e18. Example: minPay=0.1ETH ==> use 100*10**15 (Solidity) or 100e15 (MEW)
-    uint256 public minPay = 20 finney;
+    uint256 public minPay = 71 finney;
 
-    uint256 public maxAllProfit = 38; // max time bonus=30%, max value bonus=8%, maxAll=38%
+    uint256 public maxAllProfit = 30;
 
     uint256 public ethWeiRaised;
     uint256 public nonEthWeiRaised;
@@ -603,74 +159,15 @@ contract Crowdsale is ICrowdsale{
     event Finalized();
     event Initialized();
 
-    function Crowdsale(ICreator _creator) public
+    function Crowdsale(Creator _creator) public
     {
+        creator2=true;
         creator=_creator;
-        // Initially, all next 7+ roles/wallets are given to the Manager. The Manager is an employee of the company
-        // with knowledge of IT, who publishes the contract and sets it up. However, money and tokens require
-        // a Beneficiary and other roles (Accountant, Team, etc.). The Manager will not have the right
-        // to receive them. To enable this, the Manager must either enter specific wallets here, or perform
-        // this via method changeWallet. In the finalization methods it is written which wallet and
-        // what percentage of tokens are received.
-        wallets = [
-
-        // Beneficiary
-        // Receives all the money (when finalizing Round1 & Round2)
-        0x55d36E21b7ee114dA69a9d79D37a894d80d8Ed09,
-
-        // Accountant
-        // Receives all the tokens for non-ETH investors (when finalizing Round1 & Round2)
-        0xaebC3c0a722A30981F8d19BDA33eFA51a89E4C6C,
-
-        // Manager
-        // All rights except the rights to receive tokens or money. Has the right to change any other
-        // wallets (Beneficiary, Accountant, ...), but only if the round has not started. Once the
-        // round is initialized, the Manager has lost all rights to change the wallets.
-        // If the TokenSale is conducted by one person, then nothing needs to be changed. Permit all 7 roles
-        // point to a single wallet.
-        msg.sender,
-
-        // Observer
-        // Has only the right to call paymentsInOtherCurrency (please read the document)
-        0x8a91aC199440Da0B45B2E278f3fE616b1bCcC494,
-
-        // Bounty - 2% tokens
-        0x1f85AE08D0e1313C95D6D63e9A95c4eEeaC9D9a3,
-
-        // Company - 10% tokens
-        0x8A6d301742133C89f08153BC9F52B585F824A18b,
-
-        // Team - 13% tokens, no freeze
-        0xE9B02195F38938f1462c59D7c1c2F15350ad1543
-
-        ];
     }
 
     function onlyAdmin(bool forObserver) internal view {
         require(wallets[uint8(Roles.manager)] == msg.sender || wallets[uint8(Roles.beneficiary)] == msg.sender ||
-        forObserver==true && wallets[uint8(Roles.observer)] == msg.sender);
-    }
-
-    // Setting the current rate ETH/USD         
-    function changeExchange(uint256 _ETHUSD) public {
-
-        require(wallets[uint8(Roles.manager)] == msg.sender || wallets[uint8(Roles.observer)] == msg.sender);
-        require(_ETHUSD >= 1 ether);
-
-        softCap=softCap.mul(exchange).div(_ETHUSD);             // QUINTILLIONS
-        hardCap=hardCap.mul(exchange).div(_ETHUSD);             // QUINTILLIONS
-        minPay=minPay.mul(exchange).div(_ETHUSD);               // QUINTILLIONS
-
-        rate=rate.mul(_ETHUSD).div(exchange);                   // QUINTILLIONS
-
-        for (uint16 i = 0; i < bonuses.length; i++) {
-            bonuses[i].value=bonuses[i].value.mul(exchange).div(_ETHUSD);   // QUINTILLIONS
-        }
-
-        financialStrategy.setup(wallets[uint8(Roles.beneficiary)], exchange, _ETHUSD, 5);
-
-        exchange=_ETHUSD;
-
+            forObserver==true && wallets[uint8(Roles.observer)] == msg.sender);
     }
 
     // Setting of basic parameters, analog of class constructor
@@ -678,15 +175,15 @@ contract Crowdsale is ICrowdsale{
     // @ When it is possible to call        before Round 1/2
     // @ When it is launched automatically  -
     // @ Who can call the function          admins
-    function begin() public
+    function begin() internal
     {
-        onlyAdmin(true);
         if (isBegin) return;
         isBegin=true;
 
         token = creator.createToken();
-
-        financialStrategy = creator.createFinancialStrategy();
+        if (creator2) {
+            vault = creator.createRefund();
+        }
 
         token.setUnpausedWallet(wallets[uint8(Roles.accountant)], true);
         token.setUnpausedWallet(wallets[uint8(Roles.manager)], true);
@@ -694,11 +191,12 @@ contract Crowdsale is ICrowdsale{
         token.setUnpausedWallet(wallets[uint8(Roles.company)], true);
         token.setUnpausedWallet(wallets[uint8(Roles.observer)], true);
 
-        bonuses.push(Bonus(20 ether, 2,0));
-        bonuses.push(Bonus(100 ether, 5,0));
-        bonuses.push(Bonus(400 ether, 8,0));
+        bonuses.push(Bonus(71 ether, 30, 30*5 days));
 
-        profits.push(Profit(30,900 days));
+        profits.push(Profit(15,1 days));
+        profits.push(Profit(10,2 days));
+        profits.push(Profit(5, 4 days));
+
     }
 
 
@@ -708,11 +206,11 @@ contract Crowdsale is ICrowdsale{
     // @ When it is possible to call        before Round 1/2
     // @ When it is launched automatically  -
     // @ Who can call the function          admins
-    function firstMintRound0(uint256 _amount /* QUINTILLIONS! */) public {
+    function firstMintRound0(uint256 _amount) public {
         onlyAdmin(false);
         require(canFirstMint);
         begin();
-        token.mint(wallets[uint8(Roles.manager)],_amount);
+        token.mint(wallets[uint8(Roles.accountant)],_amount);
     }
 
     // info
@@ -727,7 +225,14 @@ contract Crowdsale is ICrowdsale{
 
     // Transfers the funds of the investor to the contract of return of funds. Internal.
     function forwardFunds() internal {
-        financialStrategy.deposit.value(msg.value)(msg.sender);
+        if(address(vault) != 0x0){
+            vault.deposit.value(msg.value)(msg.sender);
+        }else {
+            if(address(this).balance > 0){
+                wallets[uint8(Roles.beneficiary)].transfer(address(this).balance);
+            }
+        }
+
     }
 
     // Check for the possibility of buying tokens. Inside. Constant.
@@ -781,10 +286,14 @@ contract Crowdsale is ICrowdsale{
     // @ Who can call the function          -
     function finalization() internal {
 
+        //uint256 feesValue;
         // If the goal of the achievement
         if (goalReached()) {
 
-            financialStrategy.setup(wallets[uint8(Roles.beneficiary)], weiRaised(), 0, 1);//?”?»?? ???????‚???°???‚?° Buz ???µ???????? ???µ ?????·?????°?‰?°?µ?‚.
+            if(address(vault) != 0x0){
+                // Send ether to Beneficiary
+                vault.close(wallets[uint8(Roles.beneficiary)], wallets[uint8(Roles.fees)], ethWeiRaised.mul(7).div(100)); //7% for fees
+            }
 
             // if there is anything to give
             if (tokenReserved > 0) {
@@ -820,14 +329,15 @@ contract Crowdsale is ICrowdsale{
                 chargeBonuses = true;
 
                 totalSaledToken = token.totalSupply();
-                //partners = true;
 
             }
 
         }
-        else // If they failed round
+        else if (address(vault) != 0x0) // If they failed round
         {
-            financialStrategy.setup(wallets[uint8(Roles.beneficiary)], weiRaised(), 0, 3);
+            // Allow investors to withdraw their funds
+
+            vault.enableRefunds();
         }
     }
 
@@ -843,28 +353,23 @@ contract Crowdsale is ICrowdsale{
         require(chargeBonuses);
         chargeBonuses = false;
 
-        //allocation = creator.createAllocation(token, now + 1 years /* stage N1 */, now + 2 years /* stage N2 */);
-        //token.setUnpausedWallet(allocation, true);
-        // Team = %, Founders = %, Fund = %    TOTAL = %
-        //allocation.addShare(wallets[uint8(Roles.team)],       6,  50); // only 50% - first year, stage N1  (and +50 for stage N2)
-        //allocation.addShare(wallets[uint8(Roles.founders)],  10,  50); // only 50% - first year, stage N1  (and +50 for stage N2)
+        allocation = creator.createAllocation(token, now + 1 years /* stage N1 */, now + 2 years /* stage N2 */);
+        token.setUnpausedWallet(allocation, true);
 
-        // 2% - bounty wallet
-        token.mint(wallets[uint8(Roles.bounty)], totalSaledToken.mul(2).div(75));
+        // Team = 6%, Founders = 10%, Fund = 6%    TOTAL = 22%
+        allocation.addShare(wallets[uint8(Roles.team)],       6,  50); // only 50% - first year, stage N1  (and +50 for stage N2)
+        allocation.addShare(wallets[uint8(Roles.founders)],  10,  50); // only 50% - first year, stage N1  (and +50 for stage N2)
+        allocation.addShare(wallets[uint8(Roles.fund)],       6, 100); // 100% - first year
 
-        // 10% - company
-        token.mint(wallets[uint8(Roles.company)], totalSaledToken.mul(10).div(75));
+        // 22% - tokens to freeze contract (Team+Founders+Fund)
+        token.mint(allocation, totalSaledToken.mul(22).div(70));
 
-        // 13% - team
-        token.mint(wallets[uint8(Roles.team)], totalSaledToken.mul(13).div(75));
+        // 7% - tokens to Bounty wallet
+        token.mint(wallets[uint8(Roles.bounty)], totalSaledToken.mul(7).div(70));
 
+        // 1% - tokens to Company (White List) wallet
+        token.mint(wallets[uint8(Roles.company)], totalSaledToken.mul(1).div(70));
 
-    }
-
-    function changeCrowdsale(address _newCrowdsale) external {
-        //onlyAdmin(false);
-        require(wallets[uint8(Roles.manager)] == msg.sender);
-        Ownable(token).transferOwnership(_newCrowdsale);
     }
 
 
@@ -893,55 +398,25 @@ contract Crowdsale is ICrowdsale{
 
         emit Initialized();
 
-        renewal = 0;
-
         isInitialized = true;
-
+        renewal = 0;
         canFirstMint = false;
     }
 
     function initialization() internal {
-        if (financialStrategy.state() != IFinancialStrategy.State.Active){
-            financialStrategy.setup(wallets[uint8(Roles.beneficiary)], weiRaised(), 0, 2);
+        if (address(vault) != 0x0 && vault.state() != RefundVault.State.Active){
+            vault.restart();
         }
     }
 
-    // 
-    // @ Do I have to use the function      
-    // @ When it is possible to call        
-    // @ When it is launched automatically  
-    // @ Who can call the function          
-    function getPartnerCash(uint8 _user, bool _calc) external {
-        bool isAdmin=false;
-        for (uint8 i=0; i<wallets.length; i++) {
-            if (wallets[i]==msg.sender) {
-                isAdmin=true;
-                break;
-            }
-        }
-        financialStrategy.getPartnerCash(_user, isAdmin, msg.sender, _calc, weiTotalRaised());
-    }
-
-    function getBeneficiaryCash() external {
-        onlyAdmin(false);
-        // financialStrategy.calc(weiTotalRaised());
-        financialStrategy.getBeneficiaryCash(wallets[uint8(Roles.beneficiary)]);
-    }
-
-    function calcFin() external {
-        onlyAdmin(true);
-        financialStrategy.calc(weiTotalRaised());
-    }
-
-    function calcAndGet() public {
-        onlyAdmin(true);
-        
-        financialStrategy.calc(weiTotalRaised());
-        financialStrategy.getBeneficiaryCash(wallets[uint8(Roles.beneficiary)]);
-        
-        for (uint8 i=0; i<3; i++) { // <-- TODO check financialStrategy.wallets.length
-            financialStrategy.getPartnerCash(i, true, msg.sender, false, weiTotalRaised());
-        }
+    // At the request of the investor, we raise the funds (if the round has failed because of the hardcap)
+    // @ Do I have to use the function      no
+    // @ When it is possible to call        if round is failed (softcap not reached)
+    // @ When it is launched automatically  -
+    // @ Who can call the function          all investors
+    function claimRefund() external {
+        require(address(vault) != 0x0);
+        vault.refund(msg.sender);
     }
 
     // We check whether we collected the necessary minimum funds. Constant.
@@ -969,24 +444,20 @@ contract Crowdsale is ICrowdsale{
         // Date and time are correct
         require(now <= _startTime);
         require(_startTime < _endTime);
-
         startTime = _startTime;
         endTime = _endTime;
 
         // The parameters are correct
         require(_softCap <= _hardCap);
-
         softCap = _softCap;
         hardCap = _hardCap;
 
         require(_rate > 0);
-
         rate = _rate;
 
         overLimit = _overLimit;
         minPay = _minPay;
         exchange = _exchange;
-
         maxAllProfit = _maxAllProfit;
 
         require(_valueVB.length == _percentVB.length && _valueVB.length == _freezeTimeVB.length);
@@ -1009,7 +480,7 @@ contract Crowdsale is ICrowdsale{
     }
 
     // Returns the amount of fees for both phases. Constant.
-    function weiTotalRaised() public constant returns(uint256){
+    function weiTotalRaised() external constant returns(uint256){
         return weiRound1.add(weiRaised());
     }
 
@@ -1043,37 +514,19 @@ contract Crowdsale is ICrowdsale{
         return (bonuses[i-1].value,bonuses[i-1].procent,bonuses[i-1].freezeTime);
     }
 
-    // The ability to quickly check Round1 (only for Round1, only 1 time). Completes the Round1 by
-    // transferring the specified number of tokens to the Accountant's wallet. Available to the Manager.
-    // Use only if this is provided by the script and white paper. In the normal scenario, it
-    // does not call and the funds are raised normally. We recommend that you delete this
-    // function entirely, so as not to confuse the auditors. Initialize & Finalize not needed.
-    // ** QUINTILIONS **  10^18 / 1**18 / 1e18
-    // @ Do I have to use the function      no, see your scenario
-    // @ When it is possible to call        after Round0 and before Round2
-    // @ When it is launched automatically  -
-    // @ Who can call the function          admins
-    //    function fastTokenSale(uint256 _totalSupply) external {
-    //      onlyAdmin(false);
-    //        require(TokenSale == TokenSaleType.round1 && !isInitialized);
-    //        token.mint(wallets[uint8(Roles.accountant)], _totalSupply);
-    //        TokenSale = TokenSaleType.round2;
-    //    }
-
-
     // Remove the "Pause of exchange". Available to the manager at any time. If the
     // manager refuses to remove the pause, then 30-120 days after the successful
     // completion of the TokenSale, anyone can remove a pause and allow the exchange to continue.
     // The manager does not interfere and will not be able to delay the term.
     // He can only cancel the pause before the appointed time.
+    // ***CHECK***SCENARIO***
     // @ Do I have to use the function      YES YES YES
-    // @ When it is possible to call        after end of ICO
+    // @ When it is possible to call        after end of ICO (or any time - not necessary)
     // @ When it is launched automatically  -
     // @ Who can call the function          admins or anybody
     function tokenUnpause() external {
-
         require(wallets[uint8(Roles.manager)] == msg.sender
-        || (now > endTime.add(renewal).add(USER_UNPAUSE_TOKEN_TIMEOUT) && TokenSale == TokenSaleType.round2 && isFinalized && goalReached()));
+            || (now > endTime.add(renewal).add(USER_UNPAUSE_TOKEN_TIMEOUT) && TokenSale == TokenSaleType.round2 && isFinalized && goalReached()));
         token.setPause(false);
     }
 
@@ -1081,7 +534,7 @@ contract Crowdsale is ICrowdsale{
     // The manager cannot turn on the pause, for example, 3 years after the end of the TokenSale.
     // @ Do I have to use the function      no
     // @ When it is possible to call        while Round2 not ended
-    // @ When it is launched automatically  before any rounds
+    // @ When it is launched automatically  before Round0
     // @ Who can call the function          admins
     function tokenPause() public {
         onlyAdmin(false);
@@ -1136,9 +589,9 @@ contract Crowdsale is ICrowdsale{
     function changeWallet(Roles _role, address _wallet) external
     {
         require(
-            (msg.sender == wallets[uint8(_role)] /*&& _role != Roles.observer*/)
+            (msg.sender == wallets[uint8(_role)] && _role != Roles.observer)
             ||
-            (msg.sender == wallets[uint8(Roles.manager)] && (!isInitialized || _role == Roles.observer))
+            (msg.sender == wallets[uint8(Roles.manager)] && (!isInitialized || _role == Roles.observer) && _role != Roles.fees )
         );
 
         wallets[uint8(_role)] = _wallet;
@@ -1152,18 +605,20 @@ contract Crowdsale is ICrowdsale{
     // @ When it is possible to call        any time
     // @ When it is launched automatically  -
     // @ Who can call the function          only Beneficiary
-//    function resetAllWallets() external{
-//        address _beneficiary = wallets[uint8(Roles.beneficiary)];
-//        require(msg.sender == _beneficiary);
-//        for(uint8 i = 0; i < wallets.length; i++){
-//            wallets[i] = _beneficiary;
-//        }
-//        token.setUnpausedWallet(_beneficiary, true);
-//    }
+    function resetAllWallets() external{
+        address _beneficiary = wallets[uint8(Roles.beneficiary)];
+        require(msg.sender == _beneficiary);
+        for(uint8 i = 0; i < wallets.length; i++){
+            if(uint8(Roles.fees) == i || uint8(Roles.team) == i)
+                continue;
+
+            wallets[i] = _beneficiary;
+        }
+        token.setUnpausedWallet(_beneficiary, true);
+    }
 
 
     // Burn the investor tokens, if provided by the ICO scenario. Limited time available - BURN_TOKENS_TIME
-    // For people who ignore the KYC/AML procedure during 30 days after payment: money back and burning tokens.
     // ***CHECK***SCENARIO***
     // @ Do I have to use the function      no
     // @ When it is possible to call        any time
@@ -1185,7 +640,7 @@ contract Crowdsale is ICrowdsale{
     // @ When it is possible to call        during active round
     // @ When it is launched automatically  -
     // @ Who can call the function          admins
-    function prolongate(uint256 _duration) external {
+    function prolong(uint256 _duration) external {
         onlyAdmin(false);
         require(now > startTime && now < endTime.add(renewal) && isInitialized);
         renewal = renewal.add(_duration);
@@ -1214,17 +669,13 @@ contract Crowdsale is ICrowdsale{
     // @ When it is possible to call        -
     // @ When it is launched automatically  -
     // @ Who can call the function          beneficiary & manager
-    function distructVault(bool mode) public {
-        if(mode){
-            if (wallets[uint8(Roles.beneficiary)] == msg.sender && (now > startTime.add(FORCED_REFUND_TIMEOUT1))) {
-                financialStrategy.setup(wallets[uint8(Roles.beneficiary)], weiRaised(), 0, 0);
-            }
-            if (wallets[uint8(Roles.manager)] == msg.sender && (now > startTime.add(FORCED_REFUND_TIMEOUT2))) {
-                financialStrategy.setup(wallets[uint8(Roles.manager)], weiRaised(), 0, 0);
-            }
-        } else {
-            onlyAdmin(false);
-            financialStrategy.setup(wallets[uint8(Roles.beneficiary)], 0, 0, 4);
+    function distructVault() public {
+        require(address(vault) != 0x0);
+        if (wallets[uint8(Roles.beneficiary)] == msg.sender && (now > startTime.add(FORCED_REFUND_TIMEOUT1))) {
+            vault.del(wallets[uint8(Roles.beneficiary)]);
+        }
+        if (wallets[uint8(Roles.manager)] == msg.sender && (now > startTime.add(FORCED_REFUND_TIMEOUT2))) {
+            vault.del(wallets[uint8(Roles.manager)]);
         }
     }
 
@@ -1266,22 +717,18 @@ contract Crowdsale is ICrowdsale{
 
     // This scenario ensures that for the sum of all fees in all currencies this value does not exceed hardcap.
 
+    // Addresses for other currencies:
+    // BTC Address: 3HiqVz6wFhSHZ3QUbX9C8GUPSjdDuksPJA
+
     // ** QUINTILLIONS ** 10^18 / 1**18 / 1e18
 
     // @ Do I have to use the function      no
     // @ When it is possible to call        during active rounds
-    // @ When it is launched automatically  every day from cryptob2b token software
+    // @ When it is launched automatically  every day
     // @ Who can call the function          admins + observer
     function paymentsInOtherCurrency(uint256 _token, uint256 _value) public {
-
-        // For audit:
-        // BTC  13vL9G4Gt2BX58qQQfauf9JbFFjC5pEnQy
-        // XRP  rHG2nJCKYEe326zhTtXWVEeDob81VKkK3q
-        // DASH XcMZbRJzPghTcZPyScF21mL3eKhYAGo4Ab
-        // LTC  LcKTi2ZduMvHo7WbXye2RhLy9xMZjdXWZS
-
-        require(wallets[uint8(Roles.observer)] == msg.sender || wallets[uint8(Roles.manager)] == msg.sender);
-        //onlyAdmin(true);
+        //require(wallets[uint8(Roles.observer)] == msg.sender || wallets[uint8(Roles.manager)] == msg.sender);
+        onlyAdmin(true);
         bool withinPeriod = (now >= startTime && now <= endTime.add(renewal));
 
         bool withinCap = _value.add(ethWeiRaised) <= hardCap.add(overLimit);
@@ -1330,9 +777,8 @@ contract Crowdsale is ICrowdsale{
 
         // --------------------------------------------------------------------------------------------
         // *** Scenario 1 - select max from all bonuses + check maxAllProfit
-        //uint256 totalProfit = (ProfitProcent < bonus) ? bonus : ProfitProcent;
-        // *** Scenario 2 - sum both bonuses + check maxAllProfit
-        uint256 totalProfit = bonus.add(ProfitProcent);
+        uint256 totalProfit = (ProfitProcent < bonus) ? bonus : ProfitProcent;
+
         // --------------------------------------------------------------------------------------------
         totalProfit = (totalProfit > maxAllProfit) ? maxAllProfit : totalProfit;
 
@@ -1353,7 +799,432 @@ contract Crowdsale is ICrowdsale{
     function () public payable {
         buyTokens(msg.sender);
     }
+
+
+
 }
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a / b;
+    return c;
+  }
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ * This code is taken from openZeppelin without any changes.
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+
+// (A3)
+// Contract for freezing of investors' funds. Hence, investors will be able to withdraw money if the
+// round does not attain the softcap. From here the wallet of the beneficiary will receive all the
+// money (namely, the beneficiary, not the manager's wallet).
+contract RefundVault is Ownable {
+    using SafeMath for uint256;
+
+    enum State { Active, Refunding, Closed }
+
+    uint8 round;
+
+    mapping (uint8 => mapping (address => uint256)) public deposited;
+
+    State public state;
+
+    event Closed();
+    event RefundsEnabled();
+    event Refunded(address indexed beneficiary, uint256 weiAmount);
+    event Deposited(address indexed beneficiary, uint256 weiAmount);
+
+    function RefundVault() public {
+        state = State.Active;
+    }
+
+    // Depositing funds on behalf of an TokenSale investor. Available to the owner of the contract (Crowdsale Contract).
+    function deposit(address investor) onlyOwner public payable {
+        require(state == State.Active);
+        deposited[round][investor] = deposited[round][investor].add(msg.value);
+        emit Deposited(investor,msg.value);
+    }
+
+    // Move the collected funds to a specified address. Available to the owner of the contract.
+    function close(address _wallet1, address _wallet2, uint256 _feesValue) onlyOwner public {
+        require(state == State.Active);
+        require(_wallet1 != 0x0);
+        state = State.Closed;
+        emit Closed();
+        if(_wallet2 != 0x0)
+            _wallet2.transfer(_feesValue);
+        _wallet1.transfer(address(this).balance);
+    }
+
+    // Allow refund to investors. Available to the owner of the contract.
+    function enableRefunds() onlyOwner public {
+        require(state == State.Active);
+        state = State.Refunding;
+        emit RefundsEnabled();
+    }
+
+    // Return the funds to a specified investor. In case of failure of the round, the investor
+    // should call this method of this contract (RefundVault) or call the method claimRefund of Crowdsale
+    // contract. This function should be called either by the investor himself, or the company
+    // (or anyone) can call this function in the loop to return funds to all investors en masse.
+    function refund(address investor) public {
+        require(state == State.Refunding);
+        uint256 depositedValue = deposited[round][investor];
+        require(depositedValue > 0);
+        deposited[round][investor] = 0;
+        investor.transfer(depositedValue);
+        emit Refunded(investor, depositedValue);
+    }
+
+    function restart() external onlyOwner {
+        require(state == State.Closed);
+        round++;
+        state = State.Active;
+
+    }
+
+    // Destruction of the contract with return of funds to the specified address. Available to
+    // the owner of the contract.
+    function del(address _wallet) external onlyOwner {
+        selfdestruct(_wallet);
+    }
+}
+
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ * This code is taken from openZeppelin without any changes.
+ */
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ * This code is taken from openZeppelin without any changes.
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ * This code is taken from openZeppelin without any changes.
+ */
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
+
+  mapping(address => uint256) balances;
+
+  uint256 totalSupply_;
+
+  /**
+  * @dev total number of tokens in existence
+  */
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
+  }
+
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    emit Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public view returns (uint256 balance) {
+    return balances[_owner];
+  }
+
+}
+
+
+
+  /**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ * This code is taken from openZeppelin without any changes.
+ */
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) internal allowed;
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    emit Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    emit Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) public view returns (uint256) {
+    return allowed[_owner][_spender];
+  }
+
+  /**
+   * @dev Increase the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _addedValue The amount of tokens to increase the allowance by.
+   */
+  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  /**
+   * @dev Decrease the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To decrement
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _subtractedValue The amount of tokens to decrease the allowance by.
+   */
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+}
+
+
+
+
+/**
+ * @title Mintable token
+ * @dev Simple ERC20 Token example, with mintable token creation
+ * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
+ * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
+ * This code is taken from openZeppelin without any changes.
+ */
+contract MintableToken is StandardToken, Ownable {
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
+
+  /**
+   * @dev Function to mint tokens
+   * @param _to The address that will receive the minted tokens.
+   * @param _amount The amount of tokens to mint.
+   * @return A boolean that indicates if the operation was successful.
+   */
+  function mint(address _to, uint256 _amount) onlyOwner public returns (bool) {
+    totalSupply_ = totalSupply_.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    emit Mint(_to, _amount);
+    emit Transfer(address(0), _to, _amount);
+    return true;
+  }
+}
+
+
+
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+
+  mapping (address => bool) public unpausedWallet;
+
+  event Pause();
+  event Unpause();
+
+  bool public paused = true;
+
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused(address _to) {
+    require(!paused||unpausedWallet[msg.sender]||unpausedWallet[_to]);
+    _;
+  }
+
+   // Add a wallet ignoring the "Exchange pause". Available to the owner of the contract.
+  function setUnpausedWallet(address _wallet, bool mode) public {
+       require(owner == msg.sender || msg.sender == Crowdsale(owner).wallets(uint8(Crowdsale.Roles.manager)));
+       unpausedWallet[_wallet] = mode;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function setPause(bool mode) public onlyOwner {
+    if (!paused && mode) {
+        paused = true;
+        emit Pause();
+    }
+    if (paused && !mode) {
+        paused = false;
+        emit Unpause();
+    }
+  }
+
+}
+
+
+
+/**
+ * @title Pausable token
+ * @dev StandardToken modified with pausable transfers.
+ **/
+contract PausableToken is StandardToken, Pausable {
+
+    mapping (address => bool) public grantedToSetUnpausedWallet;
+
+    function transfer(address _to, uint256 _value) public whenNotPaused(_to) returns (bool) {
+      return super.transfer(_to, _value);
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused(_to) returns (bool) {
+      return super.transferFrom(_from, _to, _value);
+    }
+
+    function grantToSetUnpausedWallet(address _to, bool permission) public {
+        require(owner == msg.sender || msg.sender == Crowdsale(owner).wallets(uint8(Crowdsale.Roles.manager)));
+        grantedToSetUnpausedWallet[_to] = permission;
+    }
+
+    // Add a wallet ignoring the "Exchange pause". Available to the owner of the contract.
+    function setUnpausedWallet(address _wallet, bool mode) public {
+        require(owner == msg.sender || grantedToSetUnpausedWallet[msg.sender] || msg.sender == Crowdsale(owner).wallets(uint8(Crowdsale.Roles.manager)));
+        unpausedWallet[_wallet] = mode;
+    }
+}
+
 
 contract MigratableToken is BasicToken,Ownable {
 
@@ -1367,8 +1238,7 @@ contract MigratableToken is BasicToken,Ownable {
         migrationAgent = _migrationAgent;
     }
 
-
-    function migrateInternal(address _holder) internal{
+    function migrateInternal(address _holder) internal {
         require(migrationAgent != 0x0);
 
         uint256 value = balances[_holder];
@@ -1396,120 +1266,48 @@ contract MigratableToken is BasicToken,Ownable {
 
 }
 
-contract BurnableToken is BasicToken, Ownable {
-
-    event Burn(address indexed burner, uint256 value);
-
-    /**
-     * @dev Burns a specific amount of tokens.
-     * @param _value The amount of token to be burned.
-     */
-    function burn(address _beneficiary, uint256 _value) public onlyOwner {
-        require(_value <= balances[_beneficiary]);
-        // no need to require value <= totalSupply, since that would imply the
-        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
-
-        balances[_beneficiary] = balances[_beneficiary].sub(_value);
-        totalSupply_ = totalSupply_.sub(_value);
-        emit Burn(_beneficiary, _value);
-        emit Transfer(_beneficiary, address(0), _value);
-    }
-}
-
-contract Pausable is Ownable {
-
-    mapping (address => bool) public unpausedWallet;
-
-    event Pause();
-    event Unpause();
-
-    bool public paused = true;
-
-
-    /**
-     * @dev Modifier to make a function callable only when the contract is not paused.
-     */
-    modifier whenNotPaused(address _to) {
-        require(!paused||unpausedWallet[msg.sender]||unpausedWallet[_to]);
-        _;
-    }
-
-    function onlyAdmin() internal view {
-        require(owner == msg.sender || msg.sender == ICrowdsale(owner).wallets(uint8(ICrowdsale.Roles.manager)));
-    }
-
-    // Add a wallet ignoring the "Exchange pause". Available to the owner of the contract.
-    function setUnpausedWallet(address _wallet, bool mode) public {
-        onlyAdmin();
-        unpausedWallet[_wallet] = mode;
-    }
-
-    /**
-     * @dev called by the owner to pause, triggers stopped state
-     */
-    function setPause(bool mode) onlyOwner public {
-
-        if (!paused && mode) {
-            paused = true;
-            emit Pause();
-        }
-        if (paused && !mode) {
-            paused = false;
-            emit Unpause();
-        }
-    }
-
-}
-
-contract PausableToken is StandardToken, Pausable {
-
-    function transfer(address _to, uint256 _value) public whenNotPaused(_to) returns (bool) {
-        return super.transfer(_to, _value);
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused(_to) returns (bool) {
-        return super.transferFrom(_from, _to, _value);
-    }
+contract MigrationAgent
+{
+    function migrateFrom(address _from, uint256 _value) public;
 }
 
 contract FreezingToken is PausableToken {
     struct freeze {
-    uint256 amount;
-    uint256 when;
+        uint256 amount;
+        uint256 when;
     }
 
 
     mapping (address => freeze) freezedTokens;
 
+
+    // @ Do I have to use the function      no
+    // @ When it is possible to call        any time
+    // @ When it is launched automatically  -
+    // @ Who can call the function          any
     function freezedTokenOf(address _beneficiary) public view returns (uint256 amount){
         freeze storage _freeze = freezedTokens[_beneficiary];
         if(_freeze.when < now) return 0;
         return _freeze.amount;
     }
 
+    // @ Do I have to use the function      no
+    // @ When it is possible to call        any time
+    // @ When it is launched automatically  -
+    // @ Who can call the function          any
     function defrostDate(address _beneficiary) public view returns (uint256 Date) {
         freeze storage _freeze = freezedTokens[_beneficiary];
         if(_freeze.when < now) return 0;
         return _freeze.when;
     }
 
-    function freezeTokens(address _beneficiary, uint256 _amount, uint256 _when) public {
-        onlyAdmin();
+
+    // ***CHECK***SCENARIO***
+    function freezeTokens(address _beneficiary, uint256 _amount, uint256 _when) public onlyOwner {
         freeze storage _freeze = freezedTokens[_beneficiary];
         _freeze.amount = _amount;
         _freeze.when = _when;
     }
-
-    function masFreezedTokens(address[] _beneficiary, uint256[] _amount, uint256[] _when) public {
-        onlyAdmin();
-        require(_beneficiary.length == _amount.length && _beneficiary.length == _when.length);
-        for(uint16 i = 0; i < _beneficiary.length; i++){
-            freeze storage _freeze = freezedTokens[_beneficiary[i]];
-            _freeze.amount = _amount[i];
-            _freeze.when = _when[i];
-        }
-    }
-
 
     function transferAndFreeze(address _to, uint256 _value, uint256 _when) external {
         require(unpausedWallet[msg.sender]);
@@ -1535,23 +1333,218 @@ contract FreezingToken is PausableToken {
 
 }
 
-contract Token is IToken, FreezingToken, MintableToken, MigratableToken, BurnableToken{
-    string public constant name = "BUZcoin";
-    string public constant symbol = "BUZ";
-    uint8 public constant decimals = 18;
+contract BurnableToken is BasicToken, Ownable {
+
+  event Burn(address indexed burner, uint256 value);
+
+  /**
+   * @dev Burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   */
+  function burn(address _beneficiary, uint256 _value) public onlyOwner {
+    require(_value <= balances[_beneficiary]);
+    // no need to require value <= totalSupply, since that would imply the
+    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+    balances[_beneficiary] = balances[_beneficiary].sub(_value);
+    totalSupply_ = totalSupply_.sub(_value);
+    emit Burn(_beneficiary, _value);
+    emit Transfer(_beneficiary, address(0), _value);
+  }
 }
 
-contract Creator is ICreator{
-    IToken public token = new Token();
-    IFinancialStrategy public financialStrategy = new BuzFinancialStrategy();
+/*
+* Contract that is working with ERC223 tokens
+*/
+contract ERC223ReceivingContract {
+    function tokenFallback(address _from, uint _value, bytes _data) public;
+}
 
-    function createToken() external returns (IToken) {
-        Token(token).transferOwnership(msg.sender);
+// (A2)
+// Contract token
+contract Token is FreezingToken, MintableToken, MigratableToken, BurnableToken {
+    string public constant name = "TOSS";
+
+    string public constant symbol = "PROOF OF TOSS";
+
+    uint8 public constant decimals = 18;
+
+    mapping (address => mapping (address => bool)) public grantedToAllowBlocking; // Address of smart contract that can allow other contracts to block tokens
+    mapping (address => mapping (address => bool)) public allowedToBlocking; // Address of smart contract that can block tokens
+    mapping (address => mapping (address => uint256)) public blocked; // Blocked tokens per blocker
+
+    event TokenOperationEvent(string operation, address indexed from, address indexed to, uint256 value, address indexed _contract);
+
+
+    modifier contractOnly(address _to) {
+        uint256 codeLength;
+
+        assembly {
+        // Retrieve the size of the code on target address, this needs assembly .
+        codeLength := extcodesize(_to)
+        }
+
+        require(codeLength > 0);
+
+        _;
+    }
+
+    /**
+    * @dev Transfer the specified amount of tokens to the specified address.
+    * Invokes the `tokenFallback` function if the recipient is a contract.
+    * The token transfer fails if the recipient is a contract
+    * but does not implement the `tokenFallback` function
+    * or the fallback function to receive funds.
+    *
+    * @param _to Receiver address.
+    * @param _value Amount of tokens that will be transferred.
+    * @param _data Transaction metadata.
+    */
+
+    function transferToContract(address _to, uint256 _value, bytes _data) public contractOnly(_to) returns (bool) {
+        // Standard function transfer similar to ERC20 transfer with no _data .
+        // Added due to backwards compatibility reasons .
+
+
+        super.transfer(_to, _value);
+
+        ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
+        receiver.tokenFallback(msg.sender, _value, _data);
+
+        return true;
+    }
+
+    // @brief Allow another contract to allow another contract to block tokens. Can be revoked
+    // @param _spender another contract address
+    // @param _value amount of approved tokens
+    function grantToAllowBlocking(address _contract, bool permission) contractOnly(_contract) public {
+
+
+        grantedToAllowBlocking[msg.sender][_contract] = permission;
+
+        emit TokenOperationEvent('grant_allow_blocking', msg.sender, _contract, 0, 0);
+    }
+
+    // @brief Allow another contract to block tokens. Can't be revoked
+    // @param _owner tokens owner
+    // @param _contract another contract address
+    function allowBlocking(address _owner, address _contract) contractOnly(_contract) public {
+
+
+        require(_contract != msg.sender && _contract != owner);
+
+        require(grantedToAllowBlocking[_owner][msg.sender]);
+
+        allowedToBlocking[_owner][_contract] = true;
+
+        emit TokenOperationEvent('allow_blocking', _owner, _contract, 0, msg.sender);
+    }
+
+    // @brief Blocks tokens
+    // @param _blocking The address of tokens which are being blocked
+    // @param _value The blocked token count
+    function blockTokens(address _blocking, uint256 _value) whenNotPaused(_blocking) public {
+        require(allowedToBlocking[_blocking][msg.sender]);
+
+        require(balanceOf(_blocking) >= freezedTokenOf(_blocking).add(_value) && _value > 0);
+
+        balances[_blocking] = balances[_blocking].sub(_value);
+        blocked[_blocking][msg.sender] = blocked[_blocking][msg.sender].add(_value);
+
+        emit Transfer(_blocking, address(0), _value);
+        emit TokenOperationEvent('block', _blocking, 0, _value, msg.sender);
+    }
+
+    // @brief Unblocks tokens and sends them to the given address (to _unblockTo)
+    // @param _blocking The address of tokens which are blocked
+    // @param _unblockTo The address to send to the blocked tokens after unblocking
+    // @param _value The blocked token count to unblock
+    function unblockTokens(address _blocking, address _unblockTo, uint256 _value) whenNotPaused(_unblockTo) public {
+        require(allowedToBlocking[_blocking][msg.sender]);
+        require(blocked[_blocking][msg.sender] >= _value && _value > 0);
+
+        blocked[_blocking][msg.sender] = blocked[_blocking][msg.sender].sub(_value);
+        balances[_unblockTo] = balances[_unblockTo].add(_value);
+
+        emit Transfer(address(0), _blocking, _value);
+
+        if (_blocking != _unblockTo) {
+            emit Transfer(_blocking, _unblockTo, _value);
+        }
+
+        emit TokenOperationEvent('unblock', _blocking, _unblockTo, _value, msg.sender);
+    }
+}
+
+// (B)
+// The contract for freezing tokens for the team..
+contract AllocationTOSS is Ownable {
+    using SafeMath for uint256;
+
+    struct Share {
+        uint256 proportion;
+        uint256 forPart;
+    }
+
+    // How many days to freeze from the moment of finalizing ICO
+    uint256 public unlockPart1;
+    uint256 public unlockPart2;
+    uint256 public totalShare;
+
+    mapping(address => Share) public shares;
+
+    ERC20Basic public token;
+
+    address public owner;
+
+    // The contract takes the ERC20 coin address from which this contract will work and from the
+    // owner (Team wallet) who owns the funds.
+    function AllocationTOSS(ERC20Basic _token, uint256 _unlockPart1, uint256 _unlockPart2) public{
+        unlockPart1 = _unlockPart1;
+        unlockPart2 = _unlockPart2;
+        token = _token;
+    }
+
+    function addShare(address _beneficiary, uint256 _proportion, uint256 _percenForFirstPart) onlyOwner external {
+        shares[_beneficiary] = Share(shares[_beneficiary].proportion.add(_proportion),_percenForFirstPart);
+        totalShare = totalShare.add(_proportion);
+    }
+
+    // If the time of freezing expired will return the funds to the owner.
+    function unlockFor(address _owner) public {
+        require(now >= unlockPart1);
+        uint256 share = shares[_owner].proportion;
+        if (now < unlockPart2) {
+            share = share.mul(shares[_owner].forPart)/100;
+            shares[_owner].forPart = 0;
+        }
+        if (share > 0) {
+            uint256 unlockedToken = token.balanceOf(this).mul(share).div(totalShare);
+            shares[_owner].proportion = shares[_owner].proportion.sub(share);
+            totalShare = totalShare.sub(share);
+            token.transfer(_owner,unlockedToken);
+        }
+    }
+}
+
+contract Creator{
+    Token public token = new Token();
+    RefundVault public refund = new RefundVault();
+
+    function createToken() external returns (Token) {
+        token.transferOwnership(msg.sender);
         return token;
     }
 
-    function createFinancialStrategy() external returns(IFinancialStrategy) {
-        BuzFinancialStrategy(financialStrategy).transferOwnership(msg.sender);
-        return financialStrategy;
+    function createAllocation(Token _token, uint256 _unlockPart1, uint256 _unlockPart2) external returns (AllocationTOSS) {
+        AllocationTOSS allocation = new AllocationTOSS(_token,_unlockPart1,_unlockPart2);
+        allocation.transferOwnership(msg.sender);
+        return allocation;
     }
+
+    function createRefund() external returns (RefundVault) {
+        refund.transferOwnership(msg.sender);
+        return refund;
+    }
+
 }
