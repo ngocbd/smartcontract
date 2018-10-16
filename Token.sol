@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x2f9b6779c37df5707249eeb3734bbfc94763fbe2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x4ce6b8c58df45b2d3976737ffb98d942f82300b4
 */
 pragma solidity ^0.4.15;
 
@@ -161,7 +161,7 @@ contract Token is ERC20 {
     }
 
     function Token(){
-        crowdsaleMinter = 0xc46c275695edc95c645133124eb13601507863e4;
+        crowdsaleMinter = 0x4544e57470f7211a65c050c259922c89e0b41240;
     }
 
     function getTotalSupply()
