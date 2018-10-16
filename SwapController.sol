@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SwapController at 0x29E8c6541Ce50Cbd1b52f719926aE805f99535F9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SwapController at 0xbccfe34a2c6c59e396d2873d0d5bcb4736c8e2e7
 */
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -131,21 +131,18 @@ contract TokenTransferGuard {
 }
 
 contract SwapController is DSAuth, TokenController {
-    Controlled public controlled;
+    TokenTransferGuard[] public guards;
 
-    TokenTransferGuard[] guards;
-
-    function SwapController(address _token, address[] _guards)
+    // Each Swap Controller has its own token, each token should set their own controller.
+    function SwapController(address[] _guards)
     {
-        controlled = Controlled(_token);
-
         for (uint i=0; i<_guards.length; i++) {
             addGuard(_guards[i]);
         }
     }
 
-    function changeController(address _newController) public auth {
-        controlled.changeController(_newController);
+    function changeController(address _token, address _newController) public auth {
+        Controlled(_token).changeController(_newController);
     }
 
     function proxyPayment(address _owner) payable public returns (bool)
