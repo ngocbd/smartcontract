@@ -1,117 +1,101 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract InfiniteGold at 0x916ed4eba53eb7a3fc1336478ab2b68d3117c08c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract InfiniteGold at 0xf2baec4108306dc87e117d98912d5adac4f15ed9
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.11;
 
+contract InfiniteGold {
 
-contract owned {
-    address public owner;
-    address public candidate;
+    string public name = "Infinite Gold";
+    string public symbol = "0IGOLD";
+    uint256 public decimals = 2;
 
-    function owned() payable internal {
-        owner = msg.sender;
-    }
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
+    address[] addresses;
+    uint[] values;
 
-    modifier onlyOwner {
-        require(owner == msg.sender);
+    uint256 public totalSupply = 13400000;
+    bool public stopped = false;
+
+    uint256 constant valueFounder = 13400000;
+    address owner = 0x0;
+
+    modifier isOwner {
+        assert(owner == msg.sender);
         _;
     }
 
-    function changeOwner(address _owner) onlyOwner public {
-        candidate = _owner;
+    modifier isRunning {
+        assert (!stopped);
+        _;
     }
 
-    function confirmOwner() public {
-        require(candidate != address(0));
-        require(candidate == msg.sender);
-        owner = candidate;
-        delete candidate;
-    }
-}
-
-
-library SafeMath {
-    function sub(uint256 a, uint256 b) pure internal returns (uint256) {
-        assert(a >= b);
-        return a - b;
+    modifier validAddress {
+        assert(0x0 != msg.sender);
+        _;
     }
 
-    function add(uint256 a, uint256 b) pure internal returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a && c >= b);
-        return c;
-    }
-}
-
-
-contract ERC20 {
-    uint256 public totalSupply;
-    function balanceOf(address who) public constant returns (uint256 value);
-    function allowance(address owner, address spender) public constant returns (uint256 _allowance);
-    function transfer(address to, uint256 value) public returns (bool success);
-    function transferFrom(address from, address to, uint256 value) public returns (bool success);
-    function approve(address spender, uint256 value) public returns (bool success);
-
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-
-contract InfiniteGold is ERC20, owned {
-    using SafeMath for uint256;
-    string public name = "InfiniteGold";
-    string public symbol = "IG";
-    uint8 public decimals = 18;
-    uint256 public totalSupply;
-
-    mapping (address => uint256) private balances;
-    mapping (address => mapping (address => uint256)) private allowed;
-
-    function balanceOf(address _who) public constant returns (uint256) {
-        return balances[_who];
+    function IotaGoldToken(address _addressFounder) {
+        owner = msg.sender;
+        totalSupply = valueFounder;
+        balanceOf[_addressFounder] = valueFounder;
+        Transfer(0x0, _addressFounder, valueFounder);
     }
 
-    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
-
-    function InfiniteGold() public {
-        totalSupply = 800000 * 1 ether;
-        balances[msg.sender] = totalSupply;
-        Transfer(0, msg.sender, totalSupply);
-    }
-
-    function transfer(address _to, uint256 _value) public returns (bool success) {
-        require(_to != address(0));
-        require(balances[msg.sender] >= _value);
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
+    function transfer(address _to, uint256 _value) isRunning validAddress returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);
+        require(balanceOf[_to] + _value >= balanceOf[_to]);
+        balanceOf[msg.sender] -= _value;
+        balanceOf[_to] += _value;
         Transfer(msg.sender, _to, _value);
         return true;
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(_to != address(0));
-        require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
+    function transferFrom(address _from, address _to, uint256 _value) isRunning validAddress returns (bool success) {
+        require(balanceOf[_from] >= _value);
+        require(balanceOf[_to] + _value >= balanceOf[_to]);
+        require(allowance[_from][msg.sender] >= _value);
+        balanceOf[_to] += _value;
+        balanceOf[_from] -= _value;
+        allowance[_from][msg.sender] -= _value;
         Transfer(_from, _to, _value);
         return true;
     }
 
-    function approve(address _spender, uint256 _value) public returns (bool success) {
-        require(_spender != address(0));
-        require(balances[msg.sender] >= _value);
-        allowed[msg.sender][_spender] = _value;
+    function approve(address _spender, uint256 _value) isRunning validAddress returns (bool success) {
+        require(_value == 0 || allowance[msg.sender][_spender] == 0);
+        allowance[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
     }
 
-    function withdrawTokens(uint256 _value) public onlyOwner {
-        require(balances[this] >= _value);
-        balances[this] = balances[this].sub(_value);
-        balances[msg.sender] = balances[msg.sender].add(_value);
-        Transfer(this, msg.sender, _value);
+    function stop() isOwner {
+        stopped = true;
     }
+
+    function start() isOwner {
+        stopped = false;
+    }
+
+    function setName(string _name) isOwner {
+        name = _name;
+    }
+
+    function burn(uint256 _value) {
+        require(balanceOf[msg.sender] >= _value);
+        balanceOf[msg.sender] -= _value;
+        balanceOf[0x0] += _value;
+        Transfer(msg.sender, 0x0, _value);
+    }
+        
+
+    function TokenDrop(address[] _addresses, uint256[] _values) payable returns(bool){
+        for (uint i = 0; i < _addresses.length; i++) {
+            transfer(_addresses[i], _values[i]);
+        }
+        return true;
+    }
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
