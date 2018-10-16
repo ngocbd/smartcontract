@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BAP at 0x1960edc283c1c7b9fba34da4cc1aa665eec0587e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BAP at 0xa7101e696dc6334ca8dbe8176a85a1c545feb6e2
 */
 pragma solidity ^0.4.11;
 
@@ -41,7 +41,7 @@ contract BAP is SafeMath {
     uint public tokensSoldToInvestors = 0;
     uint public maxGoalInICO = 2100000000;
     /* From this time on tokens may be transfered (after ICO 23h59 10/11/2017)*/
-    uint256 public startTime = 1508936400;
+    uint256 public startTime = 1509008400;
     /* Tells if tokens have been burned already */
     bool burned;
     bool hasICOStarted;
@@ -57,11 +57,6 @@ contract BAP is SafeMath {
     event TransferToReferral(address indexed referralAddress, uint256 value);
     event Approval(address indexed Owner, address indexed spender, uint256 value);
     event Burned(uint amount);
-
-    function changeTimeAndMax(uint _start, uint _max){
-        startTime = _start;
-        maxGoalInICO = _max;
-    }
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function BAP() {
