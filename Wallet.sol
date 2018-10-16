@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Wallet at 0x369587824c77812c8292029fc2860e56b586ced9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Wallet at 0x6122ec9afd332356460f40f215ee81d3e5fa3b96
 */
 /**
  * This is a multisig wallet based on Gav's original implementation, daily withdraw limits removed.
