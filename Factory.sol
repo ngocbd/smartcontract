@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Factory at 0xe5c67eaa5b7d17f8418d097ad6ac6cac184f6bfb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Factory at 0xa3c0a687a6665b9f2f7e718215fbb9cb588283a9
 */
 pragma solidity ^0.4.11;
 
@@ -8,15 +8,16 @@ contract Factory {
   
   event ContractCreated(address creator, address newcontract, uint timestamp, string contract_type);
     
-  function setDeveloper(address _dev) {
+  function setDeveloper (address _dev) public {
     if(developer==address(0) || developer==msg.sender){
        developer = _dev;
     }
   }
   
-  function createContract (bool isbroker, string contract_type) {
-    address newContract = new Broker(isbroker, developer, msg.sender);
-    ContractCreated(msg.sender, newContract, block.timestamp, contract_type);
+  function createContract (bool isbroker, string contract_type, bool _brokerrequired) 
+  public {
+    address newContract = new Broker(isbroker, developer, msg.sender, _brokerrequired);
+    emit ContractCreated(msg.sender, newContract, block.timestamp, contract_type);
   } 
 }
 
@@ -52,9 +53,8 @@ contract Broker {
   }
 
   Item public item;
-  address public seller;
-  address public buyer;
-  address public broker;
+  address public seller = address(0);
+  address public broker = address(0);
   uint    public brokerFee;
   // Minimum 0.1 Finney (0.0001 eth ~ 25Cent) to 0.01% of the price.
   uint    public developerfee = 0.1 finney;
@@ -63,12 +63,10 @@ contract Broker {
   // bool public validated;
   address creator = 0x0;
   address factory = 0x0;
+  
+  bool bBrokerRequired = true;
+  address[] public buyers;
 
-
-  modifier onlyBuyer() {
-    require(msg.sender == buyer);
-    _;
-  }
 
   modifier onlySeller() {
     require(msg.sender == seller);
@@ -97,7 +95,7 @@ contract Broker {
 
   event AbortedBySeller();
   event AbortedByBroker();
-  event PurchaseConfirmed();
+  event PurchaseConfirmed(address buyer);
   event ItemReceived();
   event Validated();
   event ItemInfoChanged(string name, uint price, string detail, uint developerfee);
@@ -106,7 +104,10 @@ contract Broker {
   event BrokerFeeChanged(uint fee);
 
   // The constructor
-  function Broker(bool isbroker, address _dev, address _creator) {
+  constructor(bool isbroker, address _dev, address _creator, bool _brokerrequired) 
+    public 
+  {
+    bBrokerRequired = _brokerrequired;
     if(creator==address(0)){
       //storedData = initialValue;
       if(isbroker)
@@ -129,19 +130,14 @@ contract Broker {
     }
   }
 
-  function joinAsBuyer(){
-    if(buyer==address(0)){
-      buyer = msg.sender;
-    }
-  }
-
-  function joinAsBroker(){
+  function joinAsBroker() public {
     if(broker==address(0)){
       broker = msg.sender;
     }
   }
 
   function createOrSet(string name, uint price, string detail)
+    public 
     inState(State.Created)
     onlyCreator
   {
@@ -150,43 +146,55 @@ contract Broker {
     item.price = price;
     item.detail = detail;
     developerfee = (price/1000)<minimumdeveloperfee ? minimumdeveloperfee : (price/1000);
-    ItemInfoChanged(name, price, detail, developerfee);
+    emit ItemInfoChanged(name, price, detail, developerfee);
   }
 
   function getBroker()
+    public 
     constant returns(address, uint)
   {
     return (broker, brokerFee);
   }
 
   function getSeller()
+    public 
     constant returns(address)
   {
     return (seller);
   }
+  
+  function getBuyers()
+    public 
+    constant returns(address[])
+  {
+    return (buyers);
+  }
 
   function setBroker(address _address)
+    public 
     onlySeller
     inState(State.Created)
   {
     broker = _address;
-    BrokerChanged(broker);
+    emit BrokerChanged(broker);
   }
 
   function setBrokerFee(uint fee)
+    public 
     onlyCreator
     inState(State.Created)
   {
     brokerFee = fee;
-    BrokerFeeChanged(fee);
+    emit BrokerFeeChanged(fee);
   }
 
   function setSeller(address _address)
+    public 
     onlyBroker
     inState(State.Created)
   {
     seller = _address;
-    SellerChanged(seller);
+    emit SellerChanged(seller);
   }
 
   // We will have some 'peculiar' list of documents
@@ -197,6 +205,7 @@ contract Broker {
   // So we can make a template for each differene kind of deals.
   // Deals for a house, deals for a Car, etc.
   function addDocument(bytes32 _purpose, string _name, string _ipfshash)
+    public 
   {
     require(state != State.Finished);
     require(state != State.Locked);
@@ -208,6 +217,7 @@ contract Broker {
 
   // deleting actual file on the IPFS network is very hard.
   function deleteDocument(uint index)
+    public 
   {
     require(state != State.Finished);
     require(state != State.Locked);
@@ -217,13 +227,14 @@ contract Broker {
   }
 
   function validate()
+    public 
     onlyBroker
     inState(State.Created)
   {
     // if(index<item.documents.length){
     //   item.documents[index].state = FileState.Confirmed;
     // }
-    Validated();
+    emit Validated();
     // validated = true;
     state = State.Validated;
   }
@@ -232,42 +243,66 @@ contract Broker {
   /// Can only be called by the seller before
   /// the contract is locked.
   function abort()
-      onlySeller
-      inState(State.Created)
+    public 
+    onlySeller
+    inState(State.Created)
   {
-      AbortedBySeller();
+      emit AbortedBySeller();
       state = State.Finished;
       // validated = false;
-      seller.transfer(this.balance);
+      seller.transfer(address(this).balance);
   }
 
   function abortByBroker()
-      onlyBroker
+    public 
+    onlyBroker
   {
+      if(!bBrokerRequired)
+        return;
+        
       require(state != State.Finished);
       state = State.Finished;
-      AbortedByBroker();
-      buyer.transfer(this.balance);
+      emit AbortedByBroker();
+      
+      if(buyers.length>0){
+          uint val = address(this).balance / buyers.length;
+          for (uint256 x = 0; x < buyers.length; x++) {
+              buyers[x].transfer(val);
+          }
+      }
   }
 
   /// Confirm the purchase as buyer.
   /// The ether will be locked until confirmReceived
   /// is called.
   function confirmPurchase()
-      inState(State.Validated)
-      condition(msg.value == item.price)
-      payable
+    public 
+    condition(msg.value == item.price)
+    payable
   {
+      if(bBrokerRequired){
+        if(state != State.Validated){
+          return;
+        }
+      }
+      
       state = State.Locked;
-      buyer = msg.sender;
-      PurchaseConfirmed();
+      buyers.push(msg.sender);
+      emit PurchaseConfirmed(msg.sender);
+      
+      if(!bBrokerRequired){
+		// send money right away
+        seller.transfer(item.price-developerfee);
+        developer.transfer(developerfee);
+      }
   }
 
   /// Confirm that you (the buyer) received the item.
   /// This will release the locked ether.
   function confirmReceived()
-      onlyBroker
-      inState(State.Locked)
+    public 
+    onlyBroker
+    inState(State.Locked)
   {
       // It is important to change the state first because
       // otherwise, the contracts called using `send` below
@@ -276,18 +311,25 @@ contract Broker {
 
       // NOTE: This actually allows both the buyer and the seller to
       // block the refund - the withdraw pattern should be used.
-      seller.transfer(this.balance-brokerFee-developerfee);
+      seller.transfer(address(this).balance-brokerFee-developerfee);
       broker.transfer(brokerFee);
       developer.transfer(developerfee);
 
-      ItemReceived();
+      emit ItemReceived();
   }
 
-  function getInfo() constant returns (State, string, uint, string, uint, uint){
-    return (state, item.name, item.price, item.detail, item.documents.length, developerfee);
+  function getInfo() constant 
+    public 
+    returns (State, string, uint, string, uint, uint, address, address, bool)
+  {
+    return (state, item.name, item.price, item.detail, item.documents.length, 
+        developerfee, seller, broker, bBrokerRequired);
   }
 
-  function getFileAt(uint index) constant returns(uint, bytes32, string, string, FileState){
+  function getFileAt(uint index) 
+    public 
+    constant returns(uint, bytes32, string, string, FileState)
+  {
     return (index,
       item.documents[index].purpose,
       item.documents[index].name,
