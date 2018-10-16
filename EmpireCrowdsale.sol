@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EmpireCrowdsale at 0x1389d3485a6d440F23855e538E3656230cF25D0f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EmpireCrowdsale at 0xc936a131b1f1576ccadb8196d91ecbf108d11d01
 */
 pragma solidity ^0.4.13;
 
@@ -385,12 +385,12 @@ contract EmpireCrowdsale is Ownable, Pausable {
     require(_softCap > 0);
     require(_graceCap > 0);
 
-    token = new EmpireToken();
     start = _start;
     end = _end;
     wallet = _wallet;
+    token = new EmpireToken();
     presaleCap = _presaleCap;   // in Ether
-    softCap = _softCap;     // in Ether
+    softCap = _softCap;         // in Ether
     gracePeriodCap = _graceCap; // in Ether
   }
 
