@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ANWTokenCoin at 0x48abb37ee5a6bcf220f046aca6f6f3217ae60ecc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ANWTokenCoin at 0x9657E332A70863b89B74471c8A732CB4D947D96a
 */
 /**
  * @title ERC20Basic
@@ -233,7 +233,7 @@ contract MintableToken is StandardToken, Ownable {
 
 contract ANWTokenCoin is MintableToken {
     
-    string public constant name = "Animal Walfare Token Contract";
+    string public constant name = "Animal Welfare Token Contract";
     
     string public constant symbol = "ANW";
     
