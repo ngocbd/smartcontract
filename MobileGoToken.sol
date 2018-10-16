@@ -1,21 +1,21 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MobileGoToken at 0xa4cbc38dfc34acf188deadea6eeadbb44ff2e530
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MobileGoToken at 0x35993257c1e9800b8c8a888c27fac0c36e44a51f
 */
 pragma solidity ^0.4.8;
 
 // ----------------------------------------------------------------------------------------------
-// The ETVX ETHVINEX Token contract
+// The MGO MobileGo token contract
 //
 // Enjoy. (c) MobileGo, Incent Loyalty Pty Ltd and Bok Consulting Pty Ltd 2017. The MIT Licence.
 // ----------------------------------------------------------------------------------------------
 
 // Contract configuration
 contract TokenConfig {
-    string public constant symbol = "STVX";
-    string public constant name = "STHVINEX TOKEN";
+    string public constant symbol = "MGO";
+    string public constant name = "MobileGo";
     uint8 public constant decimals = 18;  // 8 decimal places, the same as tokens on Wave
     // TODO: Work out the totalSupply when the MobileGo crowdsale ends
-    uint256 _totalSupply = 500000000000000000000000000; // 10,000,000
+    uint256 _totalSupply = 50000000000000000; // 10,000,000
 }
 
 // ERC Token Standard #20 Interface
