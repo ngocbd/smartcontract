@@ -1,442 +1,224 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TGCToken at 0xf528d0e1e11edee40ca3724bd9fd923bb0235cc3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TGCToken at 0x31041f1b393c46e324d9a23406e39a13705eb204
 */
-/*
+pragma solidity ^0.4.18;
 
-  Copyright 2017 TGC Foundation.
+// -----------------------------------------------------------------------
+// TGC Token by D-Run Foundation.
+// An ERC20 standard
+contract ERC20 {
+    // the total token supply
+    uint256 public totalSupply;
+ 
+    // Get the account balance of another account with address _owner
+    function balanceOf(address _owner) public constant returns (uint256 balance);
+ 
+    // Send _value amount of tokens to address _to
+    function transfer(address _to, uint256 _value) public returns (bool success);
+    
+    // transfer _value amount of token approved by address _from
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
 
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
+    // approve an address with _value amount of tokens
+    function approve(address _spender, uint256 _value) public returns (bool success);
 
-  http://www.apache.org/licenses/LICENSE-2.0
-
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-
-*/
-pragma solidity ^0.4.11;
-/**
- * Math operations with safety checks
- */
-library SafeMath {
-  function mul(uint a, uint b) internal returns (uint) {
-    uint c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint a, uint b) internal returns (uint) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint a, uint b) internal returns (uint) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint a, uint b) internal returns (uint) {
-    uint c = a + b;
-    assert(c >= a);
-    return c;
-  }
-
-  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a >= b ? a : b;
-  }
-
-  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a < b ? a : b;
-  }
-
-  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a >= b ? a : b;
-  }
-
-  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a < b ? a : b;
-  }
-
-  function assert(bool assertion) internal {
-    if (!assertion) {
-      throw;
-    }
-  }
-}
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20Basic {
-  uint public totalSupply;
-  function balanceOf(address who) constant returns (uint);
-  function transfer(address to, uint value);
-  event Transfer(address indexed from, address indexed to, uint value);
-}
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint);
-  function transferFrom(address from, address to, uint value);
-  function approve(address spender, uint value);
-  event Approval(address indexed owner, address indexed spender, uint value);
-}
-
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances. 
- */
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint;
-
-  mapping(address => uint) balances;
-
-  /**
-   * @dev Fix for the ERC20 short address attack.
-   */
-  modifier onlyPayloadSize(uint size) {
-     if(msg.data.length < size + 4) {
-       throw;
-     }
-     _;
-  }
-
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) {
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of. 
-  * @return An uint representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) constant returns (uint balance) {
-    return balances[_owner];
-  }
-
-}
-
-/**
- * @title Standard ERC20 token
- *
- * @dev Implemantation of the basic standart token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
-contract StandardToken is BasicToken, ERC20 {
-
-  mapping (address => mapping (address => uint)) allowed;
-
-
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint the amout of tokens to be transfered
-   */
-  function transferFrom(address _from, address _to, uint _value) onlyPayloadSize(3 * 32) {
-    var _allowance = allowed[_from][msg.sender];
-
-    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-    // if (_value > _allowance) throw;
-
-    balances[_to] = balances[_to].add(_value);
-    balances[_from] = balances[_from].sub(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
-    Transfer(_from, _to, _value);
-  }
-
-  /**
-   * @dev Aprove the passed address to spend the specified amount of tokens on beahlf of msg.sender.
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint _value) {
-
-    // To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) throw;
-
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-  }
-
-  /**
-   * @dev Function to check the amount of tokens than an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint specifing the amount of tokens still avaible for the spender.
-   */
-  function allowance(address _owner, address _spender) constant returns (uint remaining) {
-    return allowed[_owner][_spender];
-  }
-
-}
-
-
-/// @title TGC Protocol Token.
-/// For more information about this token sale, please visit http://mijunyun.com
-/// @author lengfeng - <lengfeng@mijunyun.com>, tianlong - <tianlong@mijunyun.com>.
-contract TGCToken is StandardToken {
-    string public constant NAME = "Tigercoin";
-    string public constant SYMBOL = "TGC";
-    uint public constant DECIMALS = 18;
-
-    /// During token sale, we use one consistent price: 1000 TGC/ETH.
-    /// We split the entire token sale period into 3 phases, each
-    /// phase has a different bonus setting as specified in `bonusPercentages`.
-    /// The real price for phase i is `(1 + bonusPercentages[i]/100.0) * BASE_RATE`.
-    /// The first phase or early-bird phase has a much higher bonus.
-    uint8[10] public bonusPercentages = [
-        20,
-        10,
-        0
-    ];
-
-    uint public constant NUM_OF_PHASE = 3;
+    // get remaining token approved by _owner to _spender
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
   
-    /// Each phase contains exactly 29000 Ethereum blocks, which is roughly 7 days,
-    /// which makes this 3-phase sale period roughly 21 days.
-    /// See https://www.ethereum.org/crowdsale#scheduling-a-call
-    uint16 public constant BLOCKS_PER_PHASE = 29000;
+    // Triggered when tokens are transferred.
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+ 
+    // Triggered whenever approve(address _spender, uint256 _value) is called.
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);}
 
-    /// This is where we hold ETH during this token sale. We will not transfer any Ether
-    /// out of this address before we invocate the `close` function to finalize the sale. 
-    /// This promise is not guanranteed by smart contract by can be verified with public
-    /// Ethereum transactions data available on several blockchain browsers.
-    /// This is the only address from which `start` and `close` can be invocated.
-    ///
-    /// Note: this will be initialized during the contract deployment.
-    address public target;
+interface TokenRecipient {
+    function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public;
+}
 
-    /// `firstblock` specifies from which block our token sale starts.
-    /// This can only be modified once by the owner of `target` address.
-    uint public firstblock = 0;
+contract TGCTokenBase is ERC20 {
+    // Public variables of the token
+    string public name;
+    string public symbol;
+    uint8  public decimals = 18;
+    // 18 decimals is the strongly suggested default, avoid changing it
 
-    /// Indicates whether unsold token have been issued. This part of TGC token
-    /// is managed by the project team and is issued directly to `target`.
-    bool public unsoldTokenIssued = false;
+    // Balances
+    mapping (address => uint256) balances;
+    // Allowances
+    mapping (address => mapping (address => uint256)) allowances;
 
-    /// Minimum amount of funds to be raised for the sale to succeed. 
-    uint256 public constant GOAL = 3000 ether;
 
-    /// Maximum amount of fund to be raised, the sale ends on reaching this amount.
-    uint256 public constant HARD_CAP = 4500 ether;
+    // ----- Events -----
+    event Burn(address indexed from, uint256 value);
 
-    /// Base exchange rate is set to 1 ETH = 10000 TGC.
-    uint256 public constant BASE_RATE = 10000;
 
-    /// A simple stat for emitting events.
-    uint public totalEthReceived = 0;
-
-    /// Issue event index starting from 0.
-    uint public issueIndex = 0;
-
-    /* 
-     * EVENTS
+    /**
+     * Constructor function
      */
+    function TGCTokenBase(uint256 _initialSupply, string _tokenName, string _tokenSymbol, uint8 _decimals) public {
+        name = _tokenName;                                   // Set the name for display purposes
+        symbol = _tokenSymbol;                               // Set the symbol for display purposes
+        decimals = _decimals;
 
-    /// Emitted only once after token sale starts.
-    event SaleStarted();
-
-    /// Emitted only once after token sale ended (all token issued).
-    event SaleEnded();
-
-    /// Emitted when a function is invocated by unauthorized addresses.
-    event InvalidCaller(address caller);
-
-    /// Emitted when a function is invocated without the specified preconditions.
-    /// This event will not come alone with an exception.
-    event InvalidState(bytes msg);
-
-    /// Emitted for each sucuessful token purchase.
-    event Issue(uint issueIndex, address addr, uint ethAmount, uint tokenAmount);
-
-    /// Emitted if the token sale succeeded.
-    event SaleSucceeded();
-
-    /// Emitted if the token sale failed.
-    /// When token sale failed, all Ether will be return to the original purchasing
-    /// address with a minor deduction of transaction fee?gas)
-    event SaleFailed();
-
-    /*
-     * MODIFIERS
-     */
-
-    modifier onlyOwner {
-        if (target == msg.sender) {
-            _;
-        } else {
-            InvalidCaller(msg.sender);
-            throw;
-        }
+        totalSupply = _initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        balances[msg.sender] = totalSupply;                // Give the creator all initial tokens
     }
 
-    modifier beforeStart {
-        if (!saleStarted()) {
-            _;
-        } else {
-            InvalidState("Sale has not started yet");
-            throw;
-        }
+    function balanceOf(address _owner) public view returns(uint256) {
+        return balances[_owner];
     }
 
-    modifier inProgress {
-        if (saleStarted() && !saleEnded()) {
-            _;
-        } else {
-            InvalidState("Sale is not in progress");
-            throw;
-        }
-    }
-
-    modifier afterEnd {
-        if (saleEnded()) {
-            _;
-        } else {
-            InvalidState("Sale is not ended yet");
-            throw;
-        }
+    function allowance(address _owner, address _spender) public view returns (uint256) {
+        return allowances[_owner][_spender];
     }
 
     /**
-     * CONSTRUCTOR 
-     * 
-     * @dev Initialize the TGC Token
-     * @param _target The escrow account address, all ethers will
-     * be sent to this address.
-     * This address will be : 0x778b80a5A63ff096274073B0Eb4d2DAEE7b05967
+     * Internal transfer, only can be called by this contract
      */
-    function TGCToken(address _target) {
-        target = _target;
-        totalSupply = 10 ** 26;
-        balances[target] = totalSupply;
+    function _transfer(address _from, address _to, uint _value) internal returns(bool) {
+        // Prevent transfer to 0x0 address. Use burn() instead
+        require(_to != 0x0);
+        // Check if the sender has enough
+        require(balances[_from] >= _value);
+        // Check for overflows
+        require(balances[_to] + _value > balances[_to]);
+        // Save this for an assertion in the future
+        uint previousBalances = balances[_from] + balances[_to];
+        // Subtract from the sender
+        balances[_from] -= _value;
+        // Add the same to the recipient
+        balances[_to] += _value;
+        Transfer(_from, _to, _value);
+        // Asserts are used to use static analysis to find bugs in your code. They should never fail
+        assert(balances[_from] + balances[_to] == previousBalances);
+
+        return true;
     }
 
-    /*
-     * PUBLIC FUNCTIONS
+    /**
+     * Transfer tokens
+     *
+     * Send `_value` tokens to `_to` from your account
+     *
+     * @param _to The address of the recipient
+     * @param _value the amount to send
      */
+    function transfer(address _to, uint256 _value) public returns(bool) {
+        return _transfer(msg.sender, _to, _value);
+    }
 
-    /// @dev Start the token sale.
-    /// @param _firstblock The block from which the sale will start.
-    function start(uint _firstblock) public onlyOwner beforeStart {
-        if (_firstblock <= block.number) {
-            // Must specify a block in the future.
-            throw;
+    /**
+     * Transfer tokens from other address
+     *
+     * Send `_value` tokens to `_to` in behalf of `_from`
+     *
+     * @param _from The address of the sender
+     * @param _to The address of the recipient
+     * @param _value the amount to send
+     */
+    function transferFrom(address _from, address _to, uint256 _value) public returns(bool) {
+        require(_value <= allowances[_from][msg.sender]);     // Check allowance
+        allowances[_from][msg.sender] -= _value;
+        return _transfer(_from, _to, _value);
+    }
+
+    /**
+     * Set allowance for other address
+     *
+     * Allows `_spender` to spend no more than `_value` tokens in your behalf
+     *
+     * @param _spender The address authorized to spend
+     * @param _value the max amount they can spend
+     */
+    function approve(address _spender, uint256 _value) public returns(bool) {
+        allowances[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    /**
+     * Set allowance for other address and notify
+     *
+     * Allows `_spender` to spend no more than `_value` tokens in your behalf, and then ping the contract about it
+     *
+     * @param _spender The address authorized to spend
+     * @param _value the max amount they can spend
+     * @param _extraData some extra information to send to the approved contract
+     */
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) public returns(bool) {
+        if (approve(_spender, _value)) {
+            TokenRecipient spender = TokenRecipient(_spender);
+            spender.receiveApproval(msg.sender, _value, this, _extraData);
+            return true;
         }
-
-        firstblock = _firstblock;
-        SaleStarted();
+        return false;
     }
 
-    /// @dev Triggers unsold tokens to be issued to `target` address.
-    function close() public onlyOwner afterEnd {
-        if (totalEthReceived < GOAL) {
-            SaleFailed();
+    /**
+     * Destroy tokens
+     *
+     * Remove `_value` tokens from the system irreversibly
+     *
+     * @param _value the amount of money to burn
+     */
+    function burn(uint256 _value) public returns(bool) {
+        require(balances[msg.sender] >= _value);   // Check if the sender has enough
+        balances[msg.sender] -= _value;            // Subtract from the sender
+        totalSupply -= _value;                      // Updates totalSupply
+        Burn(msg.sender, _value);
+        return true;
+    }
+
+    /**
+     * Destroy tokens from other account
+     *
+     * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
+     *
+     * @param _from the address of the sender
+     * @param _value the amount of money to burn
+     */
+    function burnFrom(address _from, uint256 _value) public returns(bool) {
+        require(balances[_from] >= _value);                // Check if the targeted balance is enough
+        require(_value <= allowances[_from][msg.sender]);    // Check allowance
+        balances[_from] -= _value;                         // Subtract from the targeted balance
+        allowances[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
+        totalSupply -= _value;                              // Update totalSupply
+        Burn(_from, _value);
+        return true;
+    }
+
+    /**
+     * approve should be called when allowances[_spender] == 0. To increment
+     * allowances value is better to use this function to avoid 2 calls (and wait until
+     * the first transaction is mined)
+     * From MonolithDAO Token.sol
+     */
+    function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+        // Check for overflows
+        require(allowances[msg.sender][_spender] + _addedValue > allowances[msg.sender][_spender]);
+
+        allowances[msg.sender][_spender] += _addedValue;
+        Approval(msg.sender, _spender, allowances[msg.sender][_spender]);
+        return true;
+    }
+
+    function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+        uint oldValue = allowances[msg.sender][_spender];
+        if (_subtractedValue > oldValue) {
+            allowances[msg.sender][_spender] = 0;
         } else {
-            SaleSucceeded();
+            allowances[msg.sender][_spender] = oldValue - _subtractedValue;
         }
+        Approval(msg.sender, _spender, allowances[msg.sender][_spender]);
+        return true;
     }
 
-    /// @dev Returns the current price.
-    function price() public constant returns (uint tokens) {
-        return computeTokenAmount(1 ether);
-    }
+}
 
-    /// @dev This default function allows token to be purchased by directly
-    /// sending ether to this smart contract.
-    function () payable {
-        issueToken(msg.sender);
-    }
 
-    /// @dev Issue token based on Ether received.
-    /// @param recipient Address that newly issued token will be sent to.
-    function issueToken(address recipient) payable inProgress {
-        // We only accept minimum purchase of 0.01 ETH.
-        assert(msg.value >= 0.01 ether);
+contract TGCToken is TGCTokenBase {
 
-        // We only accept maximum purchase of 35 ETH.
-        assert(msg.value <= 35 ether);
+    function TGCToken() TGCTokenBase(100000000000, "TGCToken", "TGC", 18) public {
 
-        // We only accept totalEthReceived < HARD_CAP
-        uint ethReceived = totalEthReceived + msg.value;
-        assert(ethReceived <= HARD_CAP);
-
-        uint tokens = computeTokenAmount(msg.value);
-        totalEthReceived = totalEthReceived.add(msg.value);
-        
-        balances[msg.sender] = balances[msg.sender].add(tokens);
-        balances[target] = balances[target].sub(tokens);
-
-        Issue(
-            issueIndex++,
-            recipient,
-            msg.value,
-            tokens
-        );
-
-        if (!target.send(msg.value)) {
-            throw;
-        }
-    }
-
-    /*
-     * INTERNAL FUNCTIONS
-     */
-  
-    /// @dev Compute the amount of TGC token that can be purchased.
-    /// @param ethAmount Amount of Ether to purchase TGC.
-    /// @return Amount of TGC token to purchase
-    function computeTokenAmount(uint ethAmount) internal constant returns (uint tokens) {
-        uint phase = (block.number - firstblock).div(BLOCKS_PER_PHASE);
-
-        // A safe check
-        if (phase >= bonusPercentages.length) {
-            phase = bonusPercentages.length - 1;
-        }
-
-        uint tokenBase = ethAmount.mul(BASE_RATE);
-        uint tokenBonus = tokenBase.mul(bonusPercentages[phase]).div(100);
-
-        tokens = tokenBase.add(tokenBonus);
-    }
-
-    /// @return true if sale has started, false otherwise.
-    function saleStarted() constant returns (bool) {
-        return (firstblock > 0 && block.number >= firstblock);
-    }
-
-    /// @return true if sale has ended, false otherwise.
-    function saleEnded() constant returns (bool) {
-        return firstblock > 0 && (saleDue() || hardCapReached());
-    }
-
-    /// @return true if sale is due when the last phase is finished.
-    function saleDue() constant returns (bool) {
-        return block.number >= firstblock + BLOCKS_PER_PHASE * NUM_OF_PHASE;
-    }
-
-    /// @return true if the hard cap is reached.
-    function hardCapReached() constant returns (bool) {
-        return totalEthReceived >= HARD_CAP;
     }
 }
