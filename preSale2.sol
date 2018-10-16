@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract preSale2 at 0x84e4b751cd0b552af022227e336edaeacad029f1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract preSale2 at 0xfafbb19945fc2d79828e4c5813a619d5683074ba
 */
 pragma solidity ^0.4.18;
  
@@ -267,12 +267,12 @@ contract preSale2 is Ownable {
 	uint public restrictedPercent;
 
     function preSale2() public {        
-	    token = AgroTechFarmToken(0x40293F239A410AeCc3A2Aee0548b43254721f548); 
+	    token = AgroTechFarmToken(0xa55ffAeA5c8cf32B550F663bf17d4F7b739534ff); 
 		multisig = 0x227917ac3C1F192874d43031cF4D40fd40Ae6127;
 		rate = 83333333333000000000; 
 		tokenCap =  25000000000000000000000; 
-		start = 1518739200; // ? 16.02.2018
-		period = 8; //???? ???????? ?????????
+		start = 1518739200; 
+		period = 8; 
 	    hardcap = 500000000000000000000;
 	    restricted = 0xbcCd749ecCCee5B4898d0E38D2a536fa84Ea9Ef6;   
 	    restrictedPercent = 35;
