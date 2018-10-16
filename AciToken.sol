@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AciToken at 0x936d118702aD19Aa39D6e0aeD5eFd434A577f6Bf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AciToken at 0x8207BcaaCD247A03fBD68e1A941092FA678cF492
 */
 pragma solidity ^0.4.18;
 
@@ -177,13 +177,13 @@ contract AciToken is SafeMath, StandardToken, Pausable {
     string public constant name = "ACI Token";
     string public constant symbol = "ACI";
     uint256 public constant decimals = 18;
-    uint256 public constant maxTokens = 20000000;
+    uint256 public constant maxTokens = 20000000*10**decimals;
 
     uint256 public oneTokenInWei = 700*10**12; //-30%
     //uint256 public oneTokenInWei = 850*10**12; //-15%
     //uint256 public oneTokenInWei = 1000*10**12; //startICO
 
-    uint public totalEthRecieved;
+    uint public totalWeiRecieved;
 
     event CreateACI(address indexed _to, uint256 _value);
     event PriceChanged(string _text, uint _newPrice);
@@ -199,7 +199,8 @@ contract AciToken is SafeMath, StandardToken, Pausable {
 
 
     function createTokens() internal whenNotPaused {
-        uint256 tokens = safeDiv(msg.value, oneTokenInWei);
+        uint multiplier = 10 ** 10;
+        uint256 tokens = safeDiv(msg.value*100000000, oneTokenInWei) * multiplier;
         uint256 checkedSupply = safeAdd(totalSupply, tokens);
 
         if ( checkedSupply <= maxTokens ) {
@@ -213,7 +214,7 @@ contract AciToken is SafeMath, StandardToken, Pausable {
         if (msg.value <= 0) revert();
         balances[msg.sender] += tokens;
         totalSupply = safeAdd(totalSupply, tokens);
-        totalEthRecieved += msg.value;
+        totalWeiRecieved += msg.value;
         CreateACI(msg.sender, tokens);
     }
 
