@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xb51088f5f37286b5c3462043200a0ce9aee71459
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x368D8E25353920A7bf78596CBc1137Ba5C2BE637
 */
 pragma solidity ^0.4.15;
 contract Base {
@@ -248,7 +248,6 @@ contract Crowdsale is Owned {
 
     function burn(uint256 _amount, address _address) only(owner) {
         require(token.burn(_amount, _address));
-	totalSaleSupply = totalSaleSupply.sub(_amount);
     }
 
     function _finish()
