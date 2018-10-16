@@ -1,43 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0xe15877e748ff8b920bfb3bfdaf8470e78a574399
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x5965dd104226784cc6fd383ae36df6e6e39a95e4
 */
-pragma solidity ^0.4.20;
+pragma solidity ^0.4.21;
 
 /*
-* Team JUST presents..
-* ====================================*
-* _____     _ _ _ _____    ___ ____   * 
-*|  _  |___| | | |  |  |  |_  |    \  *
-*|   __| . | | | |     |  |_  |  |  | * 
-*|__|  |___|_____|__|__|  |___|____/  *
-*                                     *
-* ====================================*
-* -> What?
-* The original autonomous pyramid, improved:
-* [x] More stable than ever, having withstood severe testnet abuse and attack attempts from our community!.
-* [x] Audited, tested, and approved by known community security specialists such as tocsick and Arc.
-* [X] New functionality; you can now perform partial sell orders. If you succumb to weak hands, you don't have to dump all of your bags!
-* [x] New functionality; you can now transfer tokens between wallets. Trading is now possible from within the contract!
-* [x] New Feature: PoS Masternodes! The first implementation of Ethereum Staking in the world! Vitalik is mad.
-* [x] Masternodes: Holding 100 PoWH3D Tokens allow you to generate a Masternode link, Masternode links are used as unique entry points to the contract!
-* [x] Masternodes: All players who enter the contract through your Masternode have 30% of their 10% dividends fee rerouted from the master-node, to the node-master!
+* BeNow
 *
-* -> What about the last projects?
-* Every programming member of the old dev team has been fired and/or killed by 232.
-* The new dev team consists of seasoned, professional developers and has been audited by veteran solidity experts.
-* Additionally, two independent testnet iterations have been used by hundreds of people; not a single point of failure was found.
-* 
-* -> Who worked on this project?
-* - PonziBot (math/memes/main site/master)
-* - Mantso (lead solidity dev/lead web3 dev)
-* - swagg (concept design/feedback/management)
-* - Anonymous#1 (main site/web3/test cases)
-* - Anonymous#2 (math formulae/whitepaper)
+* You are 100% responsible for auditing this contract code. 
+* If there's a flaw in this code and you lose ETH, you are 100% responsible.
 *
-* -> Who has audited & approved the projected:
-* - Arc
-* - tocisck
-* - sumpunk
 */
 
 contract Hourglass {
@@ -49,13 +20,13 @@ contract Hourglass {
         require(myTokens() > 0);
         _;
     }
-    
+
     // only people with profits
     modifier onlyStronghands() {
-        require(myDividends(true) > 0);
+        require(myDividends() > 0);
         _;
     }
-    
+
     // administrators can:
     // -> change the name of the contract
     // -> change the name of the token
@@ -67,43 +38,42 @@ contract Hourglass {
     // -> change the price of tokens
     modifier onlyAdministrator(){
         address _customerAddress = msg.sender;
-        require(administrators[keccak256(_customerAddress)]);
+        require(administrators[_customerAddress]);
         _;
     }
-    
-    
+
+
     // ensures that the first tokens in the contract will be equally distributed
     // meaning, no divine dump will be ever possible
     // result: healthy longevity.
     modifier antiEarlyWhale(uint256 _amountOfEthereum){
         address _customerAddress = msg.sender;
-        
+
         // are we still in the vulnerable phase?
-        // if so, enact anti early whale protocol 
+        // if so, enact anti early whale protocol
         if( onlyAmbassadors && ((totalEthereumBalance() - _amountOfEthereum) <= ambassadorQuota_ )){
             require(
                 // is the customer in the ambassador list?
                 ambassadors_[_customerAddress] == true &&
-                
+
                 // does the customer purchase exceed the max ambassador quota?
                 (ambassadorAccumulatedQuota_[_customerAddress] + _amountOfEthereum) <= ambassadorMaxPurchase_
-                
+
             );
-            
-            // updated the accumulated quota    
+
+            // updated the accumulated quota
             ambassadorAccumulatedQuota_[_customerAddress] = SafeMath.add(ambassadorAccumulatedQuota_[_customerAddress], _amountOfEthereum);
-        
+
             // execute
             _;
         } else {
             // in case the ether count drops low, the ambassador phase won't reinitiate
             onlyAmbassadors = false;
-            _;    
+            _;
         }
-        
+
     }
-    
-    
+
     /*==============================
     =            EVENTS            =
     ==============================*/
@@ -113,53 +83,66 @@ contract Hourglass {
         uint256 tokensMinted,
         address indexed referredBy
     );
-    
+
     event onTokenSell(
         address indexed customerAddress,
         uint256 tokensBurned,
         uint256 ethereumEarned
     );
-    
+
     event onReinvestment(
         address indexed customerAddress,
         uint256 ethereumReinvested,
         uint256 tokensMinted
     );
-    
+
     event onWithdraw(
         address indexed customerAddress,
         uint256 ethereumWithdrawn
     );
-    
+
     // ERC20
     event Transfer(
         address indexed from,
         address indexed to,
         uint256 tokens
     );
-    
-    
+
+
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "PowH3DRU";
-    string public symbol = "P3DRU";
+    string public name = "BeNOW";
+    string public symbol = "NOW";
     uint8 constant public decimals = 18;
-    uint8 constant internal dividendFee_ = 10;
+    uint8 constant internal dividendFee_ = 20;
+    uint8 constant internal developerFee_ = 2;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
     uint256 constant internal magnitude = 2**64;
+
+    address constant public developerFundAddress = 0xc22388e302ac17c7a2b87a9a3e7325febd4e2458;
+    uint256 public totalDevelopmentFundBalance;
+    uint256 public totalDevelopmentFundEarned;
     
+    bool firstBuy = true;
+
     // proof of stake (defaults at 100 tokens)
-    uint256 public stakingRequirement = 5e18;
-    
+    uint256 public stakingRequirement = 100e18;
+
     // ambassador program
     mapping(address => bool) internal ambassadors_;
-    uint256 constant internal ambassadorMaxPurchase_ = 1 ether;
-    uint256 constant internal ambassadorQuota_ = 20 ether;
+    uint256 constant internal ambassadorMaxPurchase_ = 3 ether;
+    uint256 constant internal ambassadorQuota_ = 40 ether;
     
+    // saved savedReferrals
+    mapping(address => address) internal savedReferrals_;
     
-    
+    // total earned for referrals
+    mapping(address => uint256) internal totalEarned_;
+
+
+
    /*================================
     =            DATASETS            =
     ================================*/
@@ -170,84 +153,57 @@ contract Hourglass {
     mapping(address => uint256) internal ambassadorAccumulatedQuota_;
     uint256 internal tokenSupply_ = 0;
     uint256 internal profitPerShare_;
-    
-    // administrator list (see above on what they can do)
-    mapping(bytes32 => bool) public administrators;
-    
-    // when this is set to true, only ambassadors can purchase tokens (this prevents a whale premine, it ensures a fairly distributed upper pyramid)
-    bool public onlyAmbassadors = false;
-    
 
+    // administrator list (see above on what they can do)
+    mapping(address => bool) public administrators;
+
+    // when this is set to true, only ambassadors can purchase tokens (this prevents a whale premine, it ensures a fairly distributed upper pyramid)
+    bool public onlyAmbassadors = true;
 
     /*=======================================
     =            PUBLIC FUNCTIONS            =
     =======================================*/
     /*
-    * -- APPLICATION ENTRY POINTS --  
+    * -- APPLICATION ENTRY POINTS --
     */
     function Hourglass()
         public
     {
         // add administrators here
-        administrators[0x996231d78d5775d42cd68e121f6e4b9c8b0d633e56c9bdb32aff3c1d6e89f8ee] = true;
-        
-        // // add the ambassadors here.
-        // // mantso - lead solidity dev & lead web dev. 
-        // ambassadors_[0x8b4DA1827932D71759687f925D17F81Fc94e3A9D] = true;
-        
-        // // ponzibot - mathematics & website, and undisputed meme god.
-        // ambassadors_[0x8e0d985f3Ec1857BEc39B76aAabDEa6B31B67d53] = true;
-        
-        // // swagg - concept design, feedback, management.
-        // ambassadors_[0x7563A35d5610eE7c9CD330E255Da0e779a644C19] = true;
-        
-        // // k-dawgz - shilling machine, meme maestro, bizman.
-        // ambassadors_[0x215e3C713BADb158A457e61f99325bBB5d278E57] = true;
-        
-        // // elmojo - all those pretty .GIFs & memes you see? you can thank this man for that.
-        // ambassadors_[0xaFF8B5CDCB339eEf5e1100597740a394C7B9c6cA] = true;
-        
-        // // capex - community moderator.
-        // ambassadors_[0x8dc6569c28521560EAF1890bC41b2F3FC2010E1b] = true;
-        
-        // // jörmungandr - pentests & twitter trendsetter.
-        // ambassadors_[0xf14BE3662FE4c9215c27698166759Db6967De94f] = true;
-        
-        // // inventor - the source behind the non-intrusive referral model.
-        // ambassadors_[0x18E90Fc6F70344f53EBd4f6070bf6Aa23e2D748C] = true;
-        
-        // // tocsick - pentesting, contract auditing.
-        // ambassadors_[0x49Aae4D923207e80Fc91E626BCb6532502264dfC] = true;
-        
-        // // arc - pentesting, contract auditing.
-        // ambassadors_[0x3a0cca1A832644B60730E5D4c27947C5De609d62] = true;
-        
-        // // sumpunk - contract auditing.
-        // ambassadors_[0x7ac74Fcc1a71b106F12c55ee8F802C9F672Ce40C] = true;
-        
-        // // randall - charts & sheets, data dissector, advisor.
-        // ambassadors_[0x2b219C2178f099dE4E9A3667d5cCc2cc64da0763] = true;
-        
-        // // ambius - 3d chart visualization.
-        // ambassadors_[0x2A04C7335f90a6bd4e9c4F713DD792200e27F2E6] = true;
-        
-        // // contributors that need to remain private out of security concerns.
-        // ambassadors_[0x35668818ba8F768D4C21787a6f45C86C69394dfD] = true; //dp
-        // ambassadors_[0xa3120da52e604aC3Fc80A63813Ef15476e0B6AbD] = true; //tc
-        // ambassadors_[0x924E71bA600372e2410285423F1Fe66799b717EC] = true; //ja
-        // ambassadors_[0x6Ed450e062C20F929CB7Ee72fCc53e9697980a18] = true; //sf
-        // ambassadors_[0x18864A6682c8EB79EEA5B899F11bC94ef9a85ADb] = true; //tb
-        // ambassadors_[0x9cC1BdC994b7a847705D19106287C0BF94EF04B5] = true; //sm
-        // ambassadors_[0x6926572813ec1438088963f208C61847df435a74] = true; //mc
-        // ambassadors_[0xE16Ab764a02Ae03681E351Ac58FE79717c0eE8C6] = true; //et
-        // ambassadors_[0x276F4a79F22D1BfC51Bd8dc5b27Bfd934C823932] = true; //sn
-        // ambassadors_[0xA2b4ed3E2f4beF09FB35101B76Ef4cB9D3eeCaCf] = true; //bt
-        // ambassadors_[0x147fc6b04c95BCE47D013c8d7a200ee434323669] = true; //al
-        
+        administrators[developerFundAddress] = true;
 
+        ambassadors_[0xA36f907BE1FBf75e2495Cc87F8f4D201c1b634Af] = true;
+        ambassadors_[0x5Ec92834A6bc25Fe70DE9483F6F4B1051fcc0C96] = true;
+        ambassadors_[0xe8B1C589e86DEf7563aD43BebDDB7B1677beC9A9] = true;
+        ambassadors_[0x4da6fc68499FB3753e77DD6871F2A0e4DC02fEbE] = true;
+        ambassadors_[0x8E2a227eC573dd2Ef11c5B0B7985cb3d9ADf06b3] = true;
+        ambassadors_[0xD795b28e43a14d395DDF608eaC6906018e3AF0fC] = true;
+        ambassadors_[0xD01167b13444E3A75c415d644C832Ab8FC3fc742] = true;
+        ambassadors_[0x46091f77b224576E224796de5c50e8120Ad7D764] = true;
+        ambassadors_[0x871A93B4046545CCff4F1e41EedFC52A6acCbc42] = true;
+        ambassadors_[0xcbbcf632C87D3dF7342642525Cc5F30090E390a6] = true;
+        ambassadors_[0x025fb7cad32448571150de24ac254fe8d9c10c50] = true;
+        ambassadors_[0xe196F7c242dE1F42B10c262558712e6268834008] = true;
+        ambassadors_[0x4ffe17a2a72bc7422cb176bc71c04ee6d87ce329] = true;
+        ambassadors_[0x867e1996C36f57545C365B33edd48923873792F6] = true;
+        ambassadors_[0x1ef88e2858fb1052180e2a372d94f24bcb8cc5b0] = true;
+        ambassadors_[0x642e0Ce9AE8c0D8007e0ACAF82C8D716FF8c74c1] = true;
+        ambassadors_[0x26d8627dbFF586A3B769f34DaAd6085Ef13B2978] = true;
+        ambassadors_[0x9abcf6b5ae277c1a4a14f3db48c89b59d831dc8f] = true;
+        ambassadors_[0x847c5b4024C19547BCa7EFD503EbbB97f500f4C0] = true;
+        ambassadors_[0x19e361e3CF55bAD433Ed107997728849b172a139] = true;
+        ambassadors_[0x008ca4F1bA79D1A265617c6206d7884ee8108a78] = true;
+        ambassadors_[0xE7F53CE9421670AC2f11C5035E6f6f13d9829aa6] = true;
+        ambassadors_[0x63913b8B5C6438f23c986aD6FdF103523B17fb90] = true;
+        ambassadors_[0x43593BCFC24301da0763ED18845A120FaEC1EAfE] = true;
+        ambassadors_[0x87A7e71D145187eE9aAdc86954d39cf0e9446751] = true;
+        ambassadors_[0x7c76A64AC61D1eeaFE2B8AF6F7f0a6a1890418F3] = true;
+        ambassadors_[0xb0eF8673E22849bB45B3c97226C11a33394eEec1] = true;
+        ambassadors_[0xc585ca6a9B9C0d99457B401f8e2FD12048713cbc] = true;
+        
     }
-    
-     
+
+
     /**
      * Converts all incoming ethereum to tokens for the caller, and passes down the referral addy (if any)
      */
@@ -256,9 +212,18 @@ contract Hourglass {
         payable
         returns(uint256)
     {
-        purchaseTokens(msg.value, _referredBy);
+        
+        require(msg.value >= .1 ether);
+        
+        if(savedReferrals_[msg.sender] == 0x0000000000000000000000000000000000000000){
+            savedReferrals_[msg.sender] = _referredBy;
+        }else{
+            _referredBy = savedReferrals_[msg.sender];
+        }
+        
+        purchaseTokens(msg.value, savedReferrals_[msg.sender]);
     }
-    
+
     /**
      * Fallback function to handle ethereum that was send straight to the contract
      * Unfortunately we cannot use a referral address this way.
@@ -267,9 +232,9 @@ contract Hourglass {
         payable
         public
     {
-        purchaseTokens(msg.value, 0x0);
+        purchaseTokens(msg.value, savedReferrals_[msg.sender]);
     }
-    
+
     /**
      * Converts all of caller's dividends to tokens.
      */
@@ -278,23 +243,41 @@ contract Hourglass {
         public
     {
         // fetch dividends
-        uint256 _dividends = myDividends(false); // retrieve ref. bonus later in the code
-        
+        uint256 _dividends = myDividends(); // retrieve ref. bonus later in the code
+
         // pay out the dividends virtually
         address _customerAddress = msg.sender;
         payoutsTo_[_customerAddress] +=  (int256) (_dividends * magnitude);
-        
-        // retrieve ref. bonus
-        _dividends += referralBalance_[_customerAddress];
-        referralBalance_[_customerAddress] = 0;
-        
+
         // dispatch a buy order with the virtualized "withdrawn dividends"
-        uint256 _tokens = purchaseTokens(_dividends, 0x0);
-        
+        uint256 _tokens = purchaseTokensWithoutDevelopmentFund(_dividends, savedReferrals_[msg.sender]);
+
         // fire event
         onReinvestment(_customerAddress, _dividends, _tokens);
     }
     
+    /**
+     * Converts all of caller's affiliate rewards to tokens.
+     */
+    function reinvestAffiliate()
+        public
+    {
+        
+        require(referralBalance_[msg.sender] > 0);
+        
+        // fetch rewards
+        uint256 _dividends = referralBalance_[msg.sender];
+        referralBalance_[msg.sender] = 0;
+        
+        address _customerAddress = msg.sender;
+
+        // dispatch a buy order with the virtualized "withdrawn dividends"
+        uint256 _tokens = purchaseTokensWithoutDevelopmentFund(_dividends, savedReferrals_[msg.sender]);
+
+        // fire event
+        onReinvestment(_customerAddress, _dividends, _tokens);
+    }
+
     /**
      * Alias of sell() and withdraw().
      */
@@ -305,10 +288,55 @@ contract Hourglass {
         address _customerAddress = msg.sender;
         uint256 _tokens = tokenBalanceLedger_[_customerAddress];
         if(_tokens > 0) sell(_tokens);
-        
+
         // lambo delivery service
         withdraw();
     }
+    
+    /**
+     *  Returns the saved referral.
+     */ 
+     function getSavedReferral(address customer) public view returns (address) {
+         return savedReferrals_[customer];
+     }
+     
+     /**
+     *  Returns the total referral commision earned.
+     */ 
+     function getTotalComission(address customer) public view returns (uint256) {
+         return totalEarned_[customer];
+     }
+     
+     /**
+     *  Returns the development fund balance.
+     */ 
+     function getDevelopmentFundBalance() public view returns (uint256) {
+         return totalDevelopmentFundBalance;
+     }
+     
+     /**
+     *  Returns the total amount development fund has earned.
+     */ 
+     function getTotalDevelopmentFundEarned() public view returns (uint256) {
+         return totalDevelopmentFundEarned;
+     }
+     
+     /**
+     *  Returns affiliate commision.
+     */ 
+     function getReferralBalance() public view returns (uint256) {
+         return referralBalance_[msg.sender];
+     }
+    
+     
+     /**
+     *  Withdraw development fund.
+     */ 
+     function withdrawTotalDevEarned() public {
+         require(msg.sender == developerFundAddress);
+         developerFundAddress.transfer(totalDevelopmentFundBalance);
+         totalDevelopmentFundBalance = 0;
+     }
 
     /**
      * Withdraws all of the callers earnings.
@@ -317,15 +345,37 @@ contract Hourglass {
         onlyStronghands()
         public
     {
+        
+        require(!onlyAmbassadors);
+        
         // setup data
         address _customerAddress = msg.sender;
-        uint256 _dividends = myDividends(false); // get ref. bonus later in the code
-        
+        uint256 _dividends = myDividends(); // get ref. bonus later in the code
+
         // update dividend tracker
         payoutsTo_[_customerAddress] +=  (int256) (_dividends * magnitude);
+
+        // lambo delivery service
+        _customerAddress.transfer(_dividends);
+
+        // fire event
+        onWithdraw(_customerAddress, _dividends);
+    }
+    
+    /**
+     * Withdraws affiliate earnings
+     */
+    function withdrawAffiliateRewards()
+        onlyStronghands()
+        public
+    {
         
-        // add ref. bonus
-        _dividends += referralBalance_[_customerAddress];
+        require(!onlyAmbassadors);
+        
+        // setup data
+        address _customerAddress = msg.sender;
+        uint256 _dividends = referralBalance_[_customerAddress];
+        
         referralBalance_[_customerAddress] = 0;
         
         // lambo delivery service
@@ -334,7 +384,7 @@ contract Hourglass {
         // fire event
         onWithdraw(_customerAddress, _dividends);
     }
-    
+
     /**
      * Liquifies tokens to ethereum.
      */
@@ -342,82 +392,87 @@ contract Hourglass {
         onlyBagholders()
         public
     {
+        
+        require(_amountOfTokens >= 40 && !onlyAmbassadors);
+        
+        if(ambassadors_[msg.sender] == true){
+            require(1529260200 < now);
+        }
+        
         // setup data
         address _customerAddress = msg.sender;
         // russian hackers BTFO
         require(_amountOfTokens <= tokenBalanceLedger_[_customerAddress]);
         uint256 _tokens = _amountOfTokens;
         uint256 _ethereum = tokensToEthereum_(_tokens);
-        uint256 _dividends = SafeMath.div(_ethereum, dividendFee_);
-        uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
-        
+
+        uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereum, dividendFee_), 100);
+        uint256 _devFund = SafeMath.div(SafeMath.mul(_ethereum, developerFee_), 100);
+
+        uint256 _taxedEthereum =  SafeMath.sub(SafeMath.sub(_ethereum, _dividends), _devFund);
+
+        totalDevelopmentFundBalance = SafeMath.add(totalDevelopmentFundBalance, _devFund);
+        totalDevelopmentFundEarned = SafeMath.add(totalDevelopmentFundEarned, _devFund);
+
         // burn the sold tokens
         tokenSupply_ = SafeMath.sub(tokenSupply_, _tokens);
         tokenBalanceLedger_[_customerAddress] = SafeMath.sub(tokenBalanceLedger_[_customerAddress], _tokens);
-        
+
         // update dividends tracker
         int256 _updatedPayouts = (int256) (profitPerShare_ * _tokens + (_taxedEthereum * magnitude));
-        payoutsTo_[_customerAddress] -= _updatedPayouts;       
-        
+        payoutsTo_[_customerAddress] -= _updatedPayouts;
+
         // dividing by zero is a bad idea
         if (tokenSupply_ > 0) {
             // update the amount of dividends per token
             profitPerShare_ = SafeMath.add(profitPerShare_, (_dividends * magnitude) / tokenSupply_);
         }
-        
+
         // fire event
         onTokenSell(_customerAddress, _tokens, _taxedEthereum);
     }
-    
-    
+
+
     /**
      * Transfer tokens from the caller to a new holder.
-     * Remember, there's a 10% fee here as well.
      */
     function transfer(address _toAddress, uint256 _amountOfTokens)
         onlyBagholders()
         public
         returns(bool)
     {
+        
+        if(ambassadors_[msg.sender] == true){
+            require(1529260200 < now);
+        }
+        
         // setup
         address _customerAddress = msg.sender;
-        
+
         // make sure we have the requested tokens
         // also disables transfers until ambassador phase is over
         // ( we dont want whale premines )
-        require(!onlyAmbassadors && _amountOfTokens <= tokenBalanceLedger_[_customerAddress]);
-        
+        require(_amountOfTokens <= tokenBalanceLedger_[_customerAddress]);
+
         // withdraw all outstanding dividends first
-        if(myDividends(true) > 0) withdraw();
-        
-        // liquify 10% of the tokens that are transfered
-        // these are dispersed to shareholders
-        uint256 _tokenFee = SafeMath.div(_amountOfTokens, dividendFee_);
-        uint256 _taxedTokens = SafeMath.sub(_amountOfTokens, _tokenFee);
-        uint256 _dividends = tokensToEthereum_(_tokenFee);
-  
-        // burn the fee tokens
-        tokenSupply_ = SafeMath.sub(tokenSupply_, _tokenFee);
+        if(myDividends() > 0) withdraw();
 
         // exchange tokens
         tokenBalanceLedger_[_customerAddress] = SafeMath.sub(tokenBalanceLedger_[_customerAddress], _amountOfTokens);
-        tokenBalanceLedger_[_toAddress] = SafeMath.add(tokenBalanceLedger_[_toAddress], _taxedTokens);
-        
+        tokenBalanceLedger_[_toAddress] = SafeMath.add(tokenBalanceLedger_[_toAddress], _amountOfTokens);
+
         // update dividend trackers
         payoutsTo_[_customerAddress] -= (int256) (profitPerShare_ * _amountOfTokens);
-        payoutsTo_[_toAddress] += (int256) (profitPerShare_ * _taxedTokens);
-        
-        // disperse dividends among holders
-        profitPerShare_ = SafeMath.add(profitPerShare_, (_dividends * magnitude) / tokenSupply_);
-        
+        payoutsTo_[_toAddress] += (int256) (profitPerShare_ * _amountOfTokens);
+
+
         // fire event
-        Transfer(_customerAddress, _toAddress, _taxedTokens);
-        
+        Transfer(_customerAddress, _toAddress, _amountOfTokens);
+
         // ERC20
         return true;
-       
     }
-    
+
     /*----------  ADMINISTRATOR ONLY FUNCTIONS  ----------*/
     /**
      * In case the amassador quota is not met, the administrator can manually disable the ambassador phase.
@@ -428,17 +483,17 @@ contract Hourglass {
     {
         onlyAmbassadors = false;
     }
-    
+
     /**
      * In case one of us dies, we need to replace ourselves.
      */
-    function setAdministrator(bytes32 _identifier, bool _status)
+    function setAdministrator(address _identifier, bool _status)
         onlyAdministrator()
         public
     {
         administrators[_identifier] = _status;
     }
-    
+
     /**
      * Precautionary measures in case we need to adjust the masternode rate.
      */
@@ -448,7 +503,7 @@ contract Hourglass {
     {
         stakingRequirement = _amountOfTokens;
     }
-    
+
     /**
      * If we want to rebrand, we can.
      */
@@ -458,7 +513,7 @@ contract Hourglass {
     {
         name = _name;
     }
-    
+
     /**
      * If we want to rebrand, we can.
      */
@@ -469,7 +524,7 @@ contract Hourglass {
         symbol = _symbol;
     }
 
-    
+
     /*----------  HELPERS AND CALCULATORS  ----------*/
     /**
      * Method to view the current Ethereum stored in the contract
@@ -482,7 +537,7 @@ contract Hourglass {
     {
         return this.balance;
     }
-    
+
     /**
      * Retrieve the total token supply.
      */
@@ -493,7 +548,7 @@ contract Hourglass {
     {
         return tokenSupply_;
     }
-    
+
     /**
      * Retrieve the tokens owned by the caller.
      */
@@ -505,22 +560,19 @@ contract Hourglass {
         address _customerAddress = msg.sender;
         return balanceOf(_customerAddress);
     }
-    
+
     /**
      * Retrieve the dividends owned by the caller.
-     * If `_includeReferralBonus` is to to 1/true, the referral bonus will be included in the calculations.
-     * The reason for this, is that in the frontend, we will want to get the total divs (global + ref)
-     * But in the internal calculations, we want them separate. 
-     */ 
-    function myDividends(bool _includeReferralBonus) 
-        public 
-        view 
+     */
+    function myDividends()
+        public
+        view
         returns(uint256)
     {
         address _customerAddress = msg.sender;
-        return _includeReferralBonus ? dividendsOf(_customerAddress) + referralBalance_[_customerAddress] : dividendsOf(_customerAddress) ;
+        return dividendsOf(_customerAddress) ;
     }
-    
+
     /**
      * Retrieve the token balance of any single address.
      */
@@ -531,7 +583,7 @@ contract Hourglass {
     {
         return tokenBalanceLedger_[_customerAddress];
     }
-    
+
     /**
      * Retrieve the dividend balance of any single address.
      */
@@ -542,13 +594,13 @@ contract Hourglass {
     {
         return (uint256) ((int256)(profitPerShare_ * tokenBalanceLedger_[_customerAddress]) - payoutsTo_[_customerAddress]) / magnitude;
     }
-    
+
     /**
      * Return the buy price of 1 individual token.
      */
-    function sellPrice() 
-        public 
-        view 
+    function sellPrice()
+        public
+        view
         returns(uint256)
     {
         // our calculation relies on the token supply, so we need supply. Doh.
@@ -556,18 +608,19 @@ contract Hourglass {
             return tokenPriceInitial_ - tokenPriceIncremental_;
         } else {
             uint256 _ethereum = tokensToEthereum_(1e18);
-            uint256 _dividends = SafeMath.div(_ethereum, dividendFee_  );
-            uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
+            uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereum, dividendFee_), 100);
+            uint256 _devFund = SafeMath.div(SafeMath.mul(_ethereum, developerFee_), 100);
+            uint256 _taxedEthereum = SafeMath.sub(SafeMath.sub(_ethereum, _dividends), _devFund);
             return _taxedEthereum;
         }
     }
-    
+
     /**
      * Return the sell price of 1 individual token.
      */
-    function buyPrice() 
-        public 
-        view 
+    function buyPrice()
+        public
+        view
         returns(uint256)
     {
         // our calculation relies on the token supply, so we need supply. Doh.
@@ -575,115 +628,205 @@ contract Hourglass {
             return tokenPriceInitial_ + tokenPriceIncremental_;
         } else {
             uint256 _ethereum = tokensToEthereum_(1e18);
-            uint256 _dividends = SafeMath.div(_ethereum, dividendFee_  );
-            uint256 _taxedEthereum = SafeMath.add(_ethereum, _dividends);
+            uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereum, dividendFee_), 100);
+            uint256 _devFund = SafeMath.div(SafeMath.mul(_ethereum, developerFee_), 100);
+            uint256 _taxedEthereum =  SafeMath.add(SafeMath.add(_ethereum, _dividends), _devFund);
             return _taxedEthereum;
         }
     }
-    
+
     /**
      * Function for the frontend to dynamically retrieve the price scaling of buy orders.
      */
-    function calculateTokensReceived(uint256 _ethereumToSpend) 
-        public 
-        view 
+    function calculateTokensReceived(uint256 _ethereumToSpend)
+        public
+        view
         returns(uint256)
     {
-        uint256 _dividends = SafeMath.div(_ethereumToSpend, dividendFee_);
-        uint256 _taxedEthereum = SafeMath.sub(_ethereumToSpend, _dividends);
+        uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereumToSpend, dividendFee_), 100);
+        uint256 _devFund = SafeMath.div(SafeMath.mul(_ethereumToSpend, developerFee_), 100);
+        uint256 _taxedEthereum = SafeMath.sub(SafeMath.sub(_ethereumToSpend, _dividends), _devFund);
         uint256 _amountOfTokens = ethereumToTokens_(_taxedEthereum);
-        
         return _amountOfTokens;
     }
-    
+
     /**
      * Function for the frontend to dynamically retrieve the price scaling of sell orders.
      */
-    function calculateEthereumReceived(uint256 _tokensToSell) 
-        public 
-        view 
+    function calculateEthereumReceived(uint256 _tokensToSell)
+        public
+        view
         returns(uint256)
     {
         require(_tokensToSell <= tokenSupply_);
         uint256 _ethereum = tokensToEthereum_(_tokensToSell);
-        uint256 _dividends = SafeMath.div(_ethereum, dividendFee_);
-        uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
+        uint256 _dividends = SafeMath.div(SafeMath.mul(_ethereum, dividendFee_), 100);
+        uint256 _devFund = SafeMath.div(SafeMath.mul(_ethereum, developerFee_), 100);
+        uint256 _taxedEthereum = SafeMath.sub(SafeMath.sub(_ethereum, _dividends), _devFund);
         return _taxedEthereum;
     }
-    
-    
+
     /*==========================================
     =            INTERNAL FUNCTIONS            =
     ==========================================*/
+
     function purchaseTokens(uint256 _incomingEthereum, address _referredBy)
         antiEarlyWhale(_incomingEthereum)
         internal
         returns(uint256)
     {
+        
+        if(firstBuy == true){
+            require(msg.sender == 0xc585ca6a9B9C0d99457B401f8e2FD12048713cbc);
+            firstBuy = false;
+        }
+        
         // data setup
-        address _customerAddress = msg.sender;
-        uint256 _undividedDividends = SafeMath.div(_incomingEthereum, dividendFee_);
-        uint256 _referralBonus = SafeMath.div(_undividedDividends, 3);
+        uint256 _undividedDividends = SafeMath.div(SafeMath.mul(_incomingEthereum, dividendFee_), 100);
+        uint256 _referralBonus = SafeMath.div(_undividedDividends, 5);
+        uint256 _devFund = SafeMath.div(SafeMath.mul(_incomingEthereum, developerFee_), 100);
         uint256 _dividends = SafeMath.sub(_undividedDividends, _referralBonus);
-        uint256 _taxedEthereum = SafeMath.sub(_incomingEthereum, _undividedDividends);
+        uint256 _taxedEthereum = SafeMath.sub(SafeMath.sub(_incomingEthereum, _undividedDividends), _devFund);
+
+        totalDevelopmentFundBalance = SafeMath.add(totalDevelopmentFundBalance, _devFund);
+        totalDevelopmentFundEarned = SafeMath.add(totalDevelopmentFundEarned, _devFund);
+
         uint256 _amountOfTokens = ethereumToTokens_(_taxedEthereum);
         uint256 _fee = _dividends * magnitude;
- 
+
         // no point in continuing execution if OP is a poorfag russian hacker
         // prevents overflow in the case that the pyramid somehow magically starts being used by everyone in the world
         // (or hackers)
         // and yes we know that the safemath function automatically rules out the "greater then" equasion.
         require(_amountOfTokens > 0 && (SafeMath.add(_amountOfTokens,tokenSupply_) > tokenSupply_));
-        
+
         // is the user referred by a masternode?
         if(
             // is this a referred purchase?
             _referredBy != 0x0000000000000000000000000000000000000000 &&
 
             // no cheating!
-            _referredBy != _customerAddress &&
-            
+            _referredBy != msg.sender &&
+
             // does the referrer have at least X whole tokens?
             // i.e is the referrer a godly chad masternode
             tokenBalanceLedger_[_referredBy] >= stakingRequirement
         ){
             // wealth redistribution
             referralBalance_[_referredBy] = SafeMath.add(referralBalance_[_referredBy], _referralBonus);
+            
+            // add to stats
+            totalEarned_[_referredBy] = SafeMath.add(totalEarned_[_referredBy], _referralBonus);
         } else {
             // no ref purchase
             // add the referral bonus back to the global dividends cake
             _dividends = SafeMath.add(_dividends, _referralBonus);
             _fee = _dividends * magnitude;
         }
-        
+
         // we can't give people infinite ethereum
         if(tokenSupply_ > 0){
-            
+
             // add tokens to the pool
             tokenSupply_ = SafeMath.add(tokenSupply_, _amountOfTokens);
- 
+
             // take the amount of dividends gained through this transaction, and allocates them evenly to each shareholder
             profitPerShare_ += (_dividends * magnitude / (tokenSupply_));
-            
-            // calculate the amount of tokens the customer receives over his purchase 
+
+            // calculate the amount of tokens the customer receives over his purchase
             _fee = _fee - (_fee-(_amountOfTokens * (_dividends * magnitude / (tokenSupply_))));
-        
+
         } else {
             // add tokens to the pool
             tokenSupply_ = _amountOfTokens;
         }
-        
+
         // update circulating supply & the ledger address for the customer
-        tokenBalanceLedger_[_customerAddress] = SafeMath.add(tokenBalanceLedger_[_customerAddress], _amountOfTokens);
-        
+        tokenBalanceLedger_[msg.sender] = SafeMath.add(tokenBalanceLedger_[msg.sender], _amountOfTokens);
+
         // Tells the contract that the buyer doesn't deserve dividends for the tokens before they owned them;
         //really i know you think you do but you don't
         int256 _updatedPayouts = (int256) ((profitPerShare_ * _amountOfTokens) - _fee);
-        payoutsTo_[_customerAddress] += _updatedPayouts;
-        
+        payoutsTo_[msg.sender] += _updatedPayouts;
+
         // fire event
-        onTokenPurchase(_customerAddress, _incomingEthereum, _amountOfTokens, _referredBy);
-        
+        onTokenPurchase(msg.sender, _incomingEthereum, _amountOfTokens, _referredBy);
+
+        return _amountOfTokens;
+    }
+    
+    function purchaseTokensWithoutDevelopmentFund(uint256 _incomingEthereum, address _referredBy)
+        antiEarlyWhale(_incomingEthereum)
+        internal
+        returns(uint256)
+    {
+        // data setup
+        uint256 _undividedDividends = SafeMath.div(SafeMath.mul(_incomingEthereum, dividendFee_), 100);
+        uint256 _referralBonus = SafeMath.div(_undividedDividends, 5);
+        uint256 _dividends = SafeMath.sub(_undividedDividends, _referralBonus);
+        uint256 _taxedEthereum = SafeMath.sub(_incomingEthereum, _undividedDividends);
+
+        uint256 _amountOfTokens = ethereumToTokens_(_taxedEthereum);
+        uint256 _fee = _dividends * magnitude;
+
+        // no point in continuing execution if OP is a poorfag russian hacker
+        // prevents overflow in the case that the pyramid somehow magically starts being used by everyone in the world
+        // (or hackers)
+        // and yes we know that the safemath function automatically rules out the "greater then" equasion.
+        require(_amountOfTokens > 0 && (SafeMath.add(_amountOfTokens,tokenSupply_) > tokenSupply_));
+
+        // is the user referred by a masternode?
+        if(
+            // is this a referred purchase?
+            _referredBy != 0x0000000000000000000000000000000000000000 &&
+
+            // no cheating!
+            _referredBy != msg.sender &&
+
+            // does the referrer have at least X whole tokens?
+            // i.e is the referrer a godly chad masternode
+            tokenBalanceLedger_[_referredBy] >= stakingRequirement
+        ){
+            // wealth redistribution
+            referralBalance_[_referredBy] = SafeMath.add(referralBalance_[_referredBy], _referralBonus);
+            
+            // add to stats
+            totalEarned_[_referredBy] = SafeMath.add(totalEarned_[_referredBy], _referralBonus);
+        } else {
+            // no ref purchase
+            // add the referral bonus back to the global dividends cake
+            _dividends = SafeMath.add(_dividends, _referralBonus);
+            _fee = _dividends * magnitude;
+        }
+
+        // we can't give people infinite ethereum
+        if(tokenSupply_ > 0){
+
+            // add tokens to the pool
+            tokenSupply_ = SafeMath.add(tokenSupply_, _amountOfTokens);
+
+            // take the amount of dividends gained through this transaction, and allocates them evenly to each shareholder
+            profitPerShare_ += (_dividends * magnitude / (tokenSupply_));
+
+            // calculate the amount of tokens the customer receives over his purchase
+            _fee = _fee - (_fee-(_amountOfTokens * (_dividends * magnitude / (tokenSupply_))));
+
+        } else {
+            // add tokens to the pool
+            tokenSupply_ = _amountOfTokens;
+        }
+
+        // update circulating supply & the ledger address for the customer
+        tokenBalanceLedger_[msg.sender] = SafeMath.add(tokenBalanceLedger_[msg.sender], _amountOfTokens);
+
+        // Tells the contract that the buyer doesn't deserve dividends for the tokens before they owned them;
+        //really i know you think you do but you don't
+        int256 _updatedPayouts = (int256) ((profitPerShare_ * _amountOfTokens) - _fee);
+        payoutsTo_[msg.sender] += _updatedPayouts;
+
+        // fire event
+        onTokenPurchase(msg.sender, _incomingEthereum, _amountOfTokens, _referredBy);
+
         return _amountOfTokens;
     }
 
@@ -698,7 +841,7 @@ contract Hourglass {
         returns(uint256)
     {
         uint256 _tokenPriceInitial = tokenPriceInitial_ * 1e18;
-        uint256 _tokensReceived = 
+        uint256 _tokensReceived =
          (
             (
                 // underflow attempts BTFO
@@ -718,10 +861,10 @@ contract Hourglass {
             )/(tokenPriceIncremental_)
         )-(tokenSupply_)
         ;
-  
+
         return _tokensReceived;
     }
-    
+
     /**
      * Calculate token sell value.
      * It's an algorithm, hopefully we gave you the whitepaper with it in scientific notation;
@@ -750,8 +893,8 @@ contract Hourglass {
         /1e18);
         return _etherReceived;
     }
-    
-    
+
+
     //This is where all your gas goes, sorry
     //Not sorry, you probably only paid 1 gwei
     function sqrt(uint x) internal pure returns (uint y) {
