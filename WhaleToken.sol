@@ -1,280 +1,454 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WhaleToken at 0x88eded244d147c6a96b2565a3831020462fed555
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WhaleToken at 0x64124cbc849de65469c7dc84cc6ab68aefe42aaf
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.18; // solhint-disable-line
 
 
 
+/// @title Interface for contracts conforming to ERC-721: Non-Fungible Tokens
+/// @author Dieter Shirley <dete@axiomzen.co> (https://github.com/dete)
+contract ERC721 {
+  // Required methods
+  function approve(address _to, uint256 _tokenId) public;
+  function balanceOf(address _owner) public view returns (uint256 balance);
+  function implementsERC721() public pure returns (bool);
+  function ownerOf(uint256 _tokenId) public view returns (address addr);
+  function takeOwnership(uint256 _tokenId) public;
+  function totalSupply() public view returns (uint256 total);
+  function transferFrom(address _from, address _to, uint256 _tokenId) public;
+  function transfer(address _to, uint256 _tokenId) public;
+
+  event Transfer(address indexed from, address indexed to, uint256 tokenId);
+  event Approval(address indexed owner, address indexed approved, uint256 tokenId);
+
+  // Optional
+  // function name() public view returns (string name);
+  // function symbol() public view returns (string symbol);
+  // function tokenOfOwnerByIndex(address _owner, uint256 _index) external view returns (uint256 tokenId);
+  // function tokenMetadata(uint256 _tokenId) public view returns (string infoUrl);
+}
+
+
+contract WhaleToken is ERC721 {
+
+  /*** EVENTS ***/
+
+  /// @dev The Birth event is fired whenever a new whale comes into existence.
+  event Birth(uint256 tokenId, string name, address owner);
+
+  /// @dev The TokenSold event is fired whenever a token is sold.
+  event TokenSold(uint256 tokenId, uint256 oldPrice, uint256 newPrice, address prevOwner, address winner, string name);
+
+  /// @dev Transfer event as defined in current draft of ERC721. 
+  ///  ownership is assigned, including births.
+  event Transfer(address from, address to, uint256 tokenId);
+
+  /*** CONSTANTS ***/
+
+  /// @notice Name and symbol of the non fungible token, as defined in ERC721.
+  string public constant NAME = "CryptoWhale"; // solhint-disable-line
+  string public constant SYMBOL = "WhaleToken"; // solhint-disable-line
+
+  uint256 private startingPrice = 0.001 ether;
+  uint256 private constant PROMO_CREATION_LIMIT = 5000;
+  uint256 private firstStepLimit =  0.05 ether;
+  uint256 private secondStepLimit = 0.5 ether;
+
+  /*** STORAGE ***/
+
+  /// @dev A mapping from whale IDs to the address that owns them. All whales have
+  ///  some valid owner address.
+  mapping (uint256 => address) public whaleIndexToOwner;
+
+  // @dev A mapping from owner address to count of tokens that address owns.
+  //  Used internally inside balanceOf() to resolve ownership count.
+  mapping (address => uint256) private ownershipTokenCount;
+
+  /// @dev A mapping from WhaleIDs to an address that has been approved to call
+  ///  transferFrom(). Each Whale can only have one approved address for transfer
+  ///  at any time. A zero value means no approval is outstanding.
+  mapping (uint256 => address) public whaleIndexToApproved;
+
+  // @dev A mapping from WhaleIDs to the price of the token.
+  mapping (uint256 => uint256) private whaleIndexToPrice;
+
+  // The addresses of the accounts (or contracts) that can execute actions within each roles.
+  address public ceoAddress;
+  address public cooAddress;
+
+  uint256 public promoCreatedCount;
+
+  /*** DATATYPES ***/
+  struct Whale {
+    string name;
+  }
+
+  Whale[] private whales;
+
+  /*** ACCESS MODIFIERS ***/
+  /// @dev Access modifier for CEO-only functionality
+  modifier onlyCEO() {
+    require(msg.sender == ceoAddress);
+    _;
+  }
+
+  /// @dev Access modifier for COO-only functionality
+  modifier onlyCOO() {
+    require(msg.sender == cooAddress);
+    _;
+  }
+
+  /// Access modifier for contract owner only functionality
+  modifier onlyCLevel() {
+    require(
+      msg.sender == ceoAddress ||
+      msg.sender == cooAddress
+    );
+    _;
+  }
+
+  /*** CONSTRUCTOR ***/
+  function WhaleToken() public {
+    ceoAddress = msg.sender;
+    cooAddress = msg.sender;
+  }
+
+  /*** PUBLIC FUNCTIONS ***/
+  /// @notice Grant another address the right to transfer token via takeOwnership() and transferFrom().
+  /// @param _to The address to be granted transfer approval. Pass address(0) to
+  ///  clear all approvals.
+  /// @param _tokenId The ID of the Token that can be transferred if this call succeeds.
+  /// @dev Required for ERC-721 compliance.
+  function approve(
+    address _to,
+    uint256 _tokenId
+  ) public {
+    // Caller must own token.
+    require(_owns(msg.sender, _tokenId));
+
+    whaleIndexToApproved[_tokenId] = _to;
+
+    Approval(msg.sender, _to, _tokenId);
+  }
+
+  /// For querying balance of a particular account
+  /// @param _owner The address for balance query
+  /// @dev Required for ERC-721 compliance.
+  function balanceOf(address _owner) public view returns (uint256 balance) {
+    return ownershipTokenCount[_owner];
+  }
+
+  /// @dev Creates a new promo Whale with the given name, with given _price and assignes it to an address.
+  function createPromoWhale(address _owner, string _name, uint256 _price) public onlyCOO {
+    require(promoCreatedCount < PROMO_CREATION_LIMIT);
+
+    address whaleOwner = _owner;
+    if (whaleOwner == address(0)) {
+      whaleOwner = cooAddress;
+    }
+
+    if (_price <= 0) {
+      _price = startingPrice;
+    }
+
+    promoCreatedCount++;
+    _createWhale(_name, whaleOwner, _price);
+  }
+
+  /// @dev Creates a new Whale with the given name.
+  function createContractWhale(string _name) public onlyCOO {
+    _createWhale(_name, address(this), startingPrice);
+  }
+
+  /// @notice Returns all the relevant information about a specific whale.
+  /// @param _tokenId The tokenId of the whale of interest.
+  function getWhale(uint256 _tokenId) public view returns (
+    uint256 Id,
+    string whaleName,
+    uint256 sellingPrice,
+    address owner
+  ) {
+    Whale storage whale = whales[_tokenId];
+    Id = _tokenId;
+    whaleName = whale.name;
+    sellingPrice = whaleIndexToPrice[_tokenId];
+    owner = whaleIndexToOwner[_tokenId];
+  }
+
+  function implementsERC721() public pure returns (bool) {
+    return true;
+  }
+
+  /// @dev Required for ERC-721 compliance.
+  function name() public pure returns (string) {
+    return NAME;
+  }
+
+  /// For querying owner of token
+  /// @param _tokenId The tokenID for owner inquiry
+  /// @dev Required for ERC-721 compliance.
+  function ownerOf(uint256 _tokenId)
+    public
+    view
+    returns (address owner)
+  {
+    owner = whaleIndexToOwner[_tokenId];
+    require(owner != address(0));
+  }
+
+  function payout(address _to) public onlyCLevel {
+    _payout(_to);
+  }
+
+  // Allows someone to send ether and obtain the token
+  function purchase(uint256 _tokenId) public payable {
+    address oldOwner = whaleIndexToOwner[_tokenId];
+    address newOwner = msg.sender;
+
+    uint256 sellingPrice = whaleIndexToPrice[_tokenId];
+
+    // Making sure token owner is not sending to self
+    require(oldOwner != newOwner);
+
+    // Safety check to prevent against an unexpected 0x0 default.
+    require(_addressNotNull(newOwner));
+
+    // Making sure sent amount is greater than or equal to the sellingPrice
+    require(msg.value >= sellingPrice);
+
+    uint256 payment = uint256(SafeMath.div(SafeMath.mul(sellingPrice, 94), 100));
+    uint256 purchaseExcess = SafeMath.sub(msg.value, sellingPrice);
+
+    // Update prices
+    if (sellingPrice < firstStepLimit) {
+      // first stage
+      whaleIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 200), 94);
+    } else if (sellingPrice < secondStepLimit) {
+      // second stage
+      whaleIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 120), 94);
+    } else {
+      // third stage
+      whaleIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 115), 94);
+    }
+
+    _transfer(oldOwner, newOwner, _tokenId);
+
+    // Pay previous tokenOwner if owner is not contract
+    if (oldOwner != address(this)) {
+      oldOwner.transfer(payment); //(1-0.06)
+    }
+
+    TokenSold(_tokenId, sellingPrice, whaleIndexToPrice[_tokenId], oldOwner, newOwner, whales[_tokenId].name);
+
+    msg.sender.transfer(purchaseExcess);
+  }
+
+  function priceOf(uint256 _tokenId) public view returns (uint256 price) {
+    return whaleIndexToPrice[_tokenId];
+  }
+
+  /// @dev Assigns a new address to act as the CEO. Only available to the current CEO.
+  /// @param _newCEO The address of the new CEO
+  function setCEO(address _newCEO) public onlyCEO {
+    require(_newCEO != address(0));
+
+    ceoAddress = _newCEO;
+  }
+
+  /// @dev Assigns a new address to act as the COO. Only available to the current COO.
+  /// @param _newCOO The address of the new COO
+  function setCOO(address _newCOO) public onlyCEO {
+    require(_newCOO != address(0));
+
+    cooAddress = _newCOO;
+  }
+
+  /// @dev Required for ERC-721 compliance.
+  function symbol() public pure returns (string) {
+    return SYMBOL;
+  }
+
+  /// @notice Allow pre-approved user to take ownership of a token
+  /// @param _tokenId The ID of the Token that can be transferred if this call succeeds.
+  /// @dev Required for ERC-721 compliance.
+  function takeOwnership(uint256 _tokenId) public {
+    address newOwner = msg.sender;
+    address oldOwner = whaleIndexToOwner[_tokenId];
+
+    // Safety check to prevent against an unexpected 0x0 default.
+    require(_addressNotNull(newOwner));
+
+    // Making sure transfer is approved
+    require(_approved(newOwner, _tokenId));
+
+    _transfer(oldOwner, newOwner, _tokenId);
+  }
+
+  /// @param _owner The owner whose whale tokens we are interested in.
+  /// @dev This method MUST NEVER be called by smart contract code. First, it's fairly
+  ///  expensive (it walks the entire whales array looking for whales belonging to owner),
+  ///  but it also returns a dynamic array, which is only supported for web3 calls, and
+  ///  not contract-to-contract calls.
+  function tokensOfOwner(address _owner) public view returns(uint256[] ownerTokens) {
+    uint256 tokenCount = balanceOf(_owner);
+    if (tokenCount == 0) {
+        // Return an empty array
+      return new uint256[](0);
+    } else {
+      uint256[] memory result = new uint256[](tokenCount);
+      uint256 totalWhales = totalSupply();
+      uint256 resultIndex = 0;
+
+      uint256 whaleId;
+      for (whaleId = 0; whaleId <= totalWhales; whaleId++) {
+        if (whaleIndexToOwner[whaleId] == _owner) {
+          result[resultIndex] = whaleId;
+          resultIndex++;
+        }
+      }
+      return result;
+    }
+  }
+
+  /// For querying totalSupply of token
+  /// @dev Required for ERC-721 compliance.
+  function totalSupply() public view returns (uint256 total) {
+    return whales.length;
+  }
+
+  /// Owner initates the transfer of the token to another account
+  /// @param _to The address for the token to be transferred to.
+  /// @param _tokenId The ID of the Token that can be transferred if this call succeeds.
+  /// @dev Required for ERC-721 compliance.
+  function transfer(
+    address _to,
+    uint256 _tokenId
+  ) public {
+    require(_owns(msg.sender, _tokenId));
+    require(_addressNotNull(_to));
+
+    _transfer(msg.sender, _to, _tokenId);
+  }
+
+  /// Third-party initiates transfer of token from address _from to address _to
+  /// @param _from The address for the token to be transferred from.
+  /// @param _to The address for the token to be transferred to.
+  /// @param _tokenId The ID of the Token that can be transferred if this call succeeds.
+  /// @dev Required for ERC-721 compliance.
+  function transferFrom(
+    address _from,
+    address _to,
+    uint256 _tokenId
+  ) public {
+    require(_owns(_from, _tokenId));
+    require(_approved(_to, _tokenId));
+    require(_addressNotNull(_to));
+
+    _transfer(_from, _to, _tokenId);
+  }
+
+  /*** PRIVATE FUNCTIONS ***/
+  /// Safety check on _to address to prevent against an unexpected 0x0 default.
+  function _addressNotNull(address _to) private pure returns (bool) {
+    return _to != address(0);
+  }
+
+  /// For checking approval of transfer for address _to
+  function _approved(address _to, uint256 _tokenId) private view returns (bool) {
+    return whaleIndexToApproved[_tokenId] == _to;
+  }
+
+  /// For creating whale
+  function _createWhale(string _name, address _owner, uint256 _price) private {
+    Whale memory _whale = Whale({
+      name: _name
+    });
+    uint256 newWhaleId = whales.push(_whale) - 1;
+
+    // It's probably never going to happen, 4 billion tokens are A LOT, but
+    // let's just be 100% sure we never let this happen.
+    require(newWhaleId == uint256(uint32(newWhaleId)));
+
+    Birth(newWhaleId, _name, _owner);
+
+    whaleIndexToPrice[newWhaleId] = _price;
+
+    // This will assign ownership, and also emit the Transfer event as
+    // per ERC721 draft
+    _transfer(address(0), _owner, newWhaleId);
+  }
+
+  /// Check for token ownership
+  function _owns(address claimant, uint256 _tokenId) private view returns (bool) {
+    return claimant == whaleIndexToOwner[_tokenId];
+  }
+
+  /// For paying out balance on contract
+  function _payout(address _to) private {
+    if (_to == address(0)) {
+      ceoAddress.transfer(this.balance);
+    } else {
+      _to.transfer(this.balance);
+    }
+  }
+
+  /// @dev Assigns ownership of a specific whale to an address.
+  function _transfer(address _from, address _to, uint256 _tokenId) private {
+    // Since the number of whales is capped to 2^32 we can't overflow this
+    ownershipTokenCount[_to]++;
+    //transfer ownership
+    whaleIndexToOwner[_tokenId] = _to;
+
+    // When creating new whales _from is 0x0, but we can't account that address.
+    if (_from != address(0)) {
+      ownershipTokenCount[_from]--;
+      // clear any previously approved ownership exchange
+      delete whaleIndexToApproved[_tokenId];
+    }
+
+    // Emit the transfer event.
+    Transfer(_from, _to, _tokenId);
+  }
+
+}
 library SafeMath {
 
-    function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-        if (a == 0) {
-			return 0;
-		}
-		uint256 c = a * b;
-        assert(c / a == b);
-        return c;
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
     }
-
-    function div(uint256 a, uint256 b) internal constant returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
-
-    function add(uint256 a, uint256 b) internal constant returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a && c >= b);
-        return c;
-    }
-	
-	function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-		assert(b <= a);
-		return a - b;
-	}
-
-}
-
-
-
-contract Token {
-
-    uint256 public totalSupply;
-
-    function balanceOf(address _owner) constant returns (uint256 balance);
-    function transfer(address _to, uint256 _value) returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
-    function approve(address _spender, uint256 _value) returns (bool success);
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
-}
-
-
-
-contract StandardToken is Token {
-
-    function transfer(address _to, uint256 _value) returns (bool success) {
-		require( msg.data.length >= (2 * 32) + 4 );
-		require( _value > 0 );
-		require( balances[msg.sender] >= _value );
-		require( balances[_to] + _value > balances[_to] );
-
-        balances[msg.sender] -= _value;
-        balances[_to] += _value;
-        Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-		require( msg.data.length >= (3 * 32) + 4 );
-		require( _value > 0 );
-		require( balances[_from] >= _value );
-		require( allowed[_from][msg.sender] >= _value );
-		require( balances[_to] + _value > balances[_to] );
-
-        balances[_from] -= _value;
-		allowed[_from][msg.sender] -= _value;
-		balances[_to] += _value;
-        Transfer(_from, _to, _value);
-        return true;
-    }
-
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
-    }
-
-    function approve(address _spender, uint256 _value) returns (bool success) {
-		require( _value == 0 || allowed[msg.sender][_spender] == 0 );
-
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
-
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-
-}
-
-
-
-contract WhaleToken is StandardToken {
-
-    using SafeMath for uint256;
-
-	string public constant name = "WhaleFUND";								// WHALE tokens name
-    string public constant symbol = "WHALE";								// WHALE tokens ticker
-    uint256 public constant decimals = 18;									// WHALE tokens decimals
-	string public version = "1.0";											// WHALE version
-
-	uint256 public constant maximumSupply =  800 * (10**3) * 10**decimals;	// Maximum 800k Whale tokens
-	uint256 public constant operatingFund = 152 * (10**3) * 10**decimals;	// 19% - 152k WHALE reserved for operating expenses
-	uint256 public constant teamFund = 120 * (10**3) * 10**decimals;		// 15% - 120k WHALE reserved for WhaleFUND team
-	uint256 public constant partnersFund = 24 * (10**3) * 10**decimals;		// 3% - 24k WHALE reserved for partner program
-	uint256 public constant bountyFund = 24 * (10**3) * 10**decimals;		// 3% - 24k WHALE reserved for bounty program
-	
-	uint256 public constant whaleExchangeRate = 100;						// 100 WHALE tokens per 1 ETH
-	
-	uint256 public constant preIcoBonus = 15;								// PreICO bonus 15%
-	uint256 public constant icoThreshold1 = 420 * (10**3) * 10**decimals;	// <100k sold WHALE tokens, without 152k+120k+24k+24k=320k reserved tokens
-	uint256 public constant icoThreshold2 = 520 * (10**3) * 10**decimals;	// >100k && <200k sold WHALE tokens, without 152k+120k+24k+24k=320k reserved tokens
-	uint256 public constant icoThreshold3 = 620 * (10**3) * 10**decimals;	// >200k && <300k sold WHALE tokens, without 152k+120k+24k+24k=320k reserved tokens
-	uint256 public constant icoThresholdBonus1 = 10;						// ICO threshold bonus 10%
-	uint256 public constant icoThresholdBonus2 = 5;							// ICO threshold bonus 5%
-	uint256 public constant icoThresholdBonus3 = 3;							// ICO threshold bonus 3%
-	uint256 public constant icoAmountBonus1 = 2;							// ICO amount bonus 2%
-	uint256 public constant icoAmountBonus2 = 3;							// ICO amount bonus 3%
-	uint256 public constant icoAmountBonus3 = 5;							// ICO amount bonus 5%
-
-    address public etherAddress;
-    address public operatingFundAddress;
-	address public teamFundAddress;
-	address public partnersFundAddress;
-	address public bountyFundAddress;
-	address public dividendFundAddress;
-
-    bool public isFinalized;
-	uint256 public constant crowdsaleStart = 1511136000;					// Monday, 20 November 2017, 00:00:00 UTC
-	uint256 public constant crowdsaleEnd = 1513555200;						// Monday, 18 December 2017, 00:00:00 UTC
-
-    event createWhaleTokens(address indexed _to, uint256 _value);
-
-
-    function WhaleToken(
-        address _etherAddress,
-        address _operatingFundAddress,
-		address _teamFundAddress,
-		address _partnersFundAddress,
-		address _bountyFundAddress,
-		address _dividendFundAddress
-	)
-    {
-
-        isFinalized = false;
-
-        etherAddress = _etherAddress;
-        operatingFundAddress = _operatingFundAddress;
-		teamFundAddress = _teamFundAddress;
-	    partnersFundAddress = _partnersFundAddress;
-		bountyFundAddress = _bountyFundAddress;
-		dividendFundAddress = _dividendFundAddress;
-		
-		totalSupply = totalSupply.add(operatingFund).add(teamFund).add(partnersFund).add(bountyFund);
-
-		balances[operatingFundAddress] = operatingFund;						// Update operating funds balance
-		createWhaleTokens(operatingFundAddress, operatingFund);				// Create operating funds tokens
-
-		balances[teamFundAddress] = teamFund;								// Update team funds balance
-		createWhaleTokens(teamFundAddress, teamFund);						// Create team funds tokens
-
-		balances[partnersFundAddress] = partnersFund;						// Update partner program funds balance
-		createWhaleTokens(partnersFundAddress, partnersFund);				// Create partner program funds tokens
-		
-		balances[bountyFundAddress] = bountyFund;							// Update bounty program funds balance
-		createWhaleTokens(bountyFundAddress, bountyFund);					// Create bounty program funds tokens
-
-	}
-
-
-    function makeTokens() payable  {
-
-		require( !isFinalized );
-		require( now >= crowdsaleStart );
-		require( now < crowdsaleEnd );
-		
-		if (now < crowdsaleStart + 7 days) {
-			require( msg.value >= 3000 finney );
-		} else if (now >= crowdsaleStart + 7 days) {
-			require( msg.value >= 10 finney );
-		}
-
-
-		uint256 buyedTokens = 0;
-		uint256 bonusTokens = 0;
-		uint256 bonusThresholdTokens = 0;
-		uint256 bonusAmountTokens = 0;
-		uint256 tokens = 0;
-
-
-		if (now < crowdsaleStart + 7 days) {
-
-			buyedTokens = msg.value.mul(whaleExchangeRate);								// Buyed WHALE tokens without bonuses
-			bonusTokens = buyedTokens.mul(preIcoBonus).div(100);						// preICO bonus 15%
-			tokens = buyedTokens.add(bonusTokens);										// Buyed WHALE tokens with bonuses
-	
-		} else {
-		
-			buyedTokens = msg.value.mul(whaleExchangeRate);								// Buyed WHALE tokens without bonuses
-
-			if (totalSupply <= icoThreshold1) {
-				bonusThresholdTokens = buyedTokens.mul(icoThresholdBonus1).div(100);	// ICO threshold bonus 10%
-			} else if (totalSupply > icoThreshold1 && totalSupply <= icoThreshold2) {
-				bonusThresholdTokens = buyedTokens.mul(icoThresholdBonus2).div(100);	// ICO threshold bonus 5%
-			} else if (totalSupply > icoThreshold2 && totalSupply <= icoThreshold3) {
-				bonusThresholdTokens = buyedTokens.mul(icoThresholdBonus3).div(100);	// ICO threshold bonus 3%
-			} else if (totalSupply > icoThreshold3) {
-				bonusThresholdTokens = 0;												// ICO threshold bonus 0%
-			}
-
-			if (msg.value < 10000 finney) {
-				bonusAmountTokens = 0;													// ICO amount bonus 0%
-			} else if (msg.value >= 10000 finney && msg.value < 100010 finney) {
-				bonusAmountTokens = buyedTokens.mul(icoAmountBonus1).div(100);			// ICO amount bonus 2%
-			} else if (msg.value >= 100010 finney && msg.value < 300010 finney) {
-				bonusAmountTokens = buyedTokens.mul(icoAmountBonus2).div(100);			// ICO amount bonus 3%
-			} else if (msg.value >= 300010 finney) {
-				bonusAmountTokens = buyedTokens.mul(icoAmountBonus3).div(100);			// ICO amount bonus 5%
-			}
-
-			tokens = buyedTokens.add(bonusThresholdTokens).add(bonusAmountTokens);		// Buyed WHALE tokens with bonuses
-
-		}
-
-	    uint256 currentSupply = totalSupply.add(tokens);
-
-		require( maximumSupply >= currentSupply );
-
-        totalSupply = currentSupply;
-
-        balances[msg.sender] += tokens;										// Update buyer balance 
-        createWhaleTokens(msg.sender, tokens);								// Create buyed tokens
-		
-		etherAddress.transfer(msg.value);									// Transfer ETH to MultiSig Address
-
-    }
-
-
-    function() payable {
-
-        makeTokens();
-
-    }
-
-
-    function finalizeCrowdsale() external {
-
-		require( !isFinalized );											// Required crowdsale state FALSE
-		require( msg.sender == teamFundAddress );							// Required call from team fund address
-		require( now > crowdsaleEnd || totalSupply == maximumSupply );		// Required crowdsale ended or maximum supply reached
-		
-		uint256 remainingSupply = maximumSupply.sub(totalSupply);			// Remaining tokens to reach maximum supply
-		if (remainingSupply > 0) {
-			uint256 updatedSupply = totalSupply.add(remainingSupply);		// New total supply
-			totalSupply = updatedSupply;									// Update total supply
-			balances[dividendFundAddress] += remainingSupply;				// Update dividend funds balance
-			createWhaleTokens(dividendFundAddress, remainingSupply);		// Create dividend funds tokens
-		}
-
-        isFinalized = true;													// Set crowdsale state TRUE
-
-    }
-
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  /**
+  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
