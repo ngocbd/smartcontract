@@ -1,34 +1,34 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoreContract at 0xca82cfcfbe9eed35f7afee9c17755c679be13241
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoreContract at 0x1135053a937e422c27a834642288304e35bb1340
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
 library SafeMath {
 
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
+        }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
     }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a / b;
-    return c;
-  }
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a / b;
+        return c;
+    }
 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
 
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
 }
 
 contract ERC721 {
@@ -49,24 +49,24 @@ contract ERC721 {
 }
 
 contract Ownable {
-  address public owner;
+    address public owner;
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-  function Ownable() public {
-    owner = msg.sender;
-  }
+    function Ownable() public {
+        owner = msg.sender;
+    }
 
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
 
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0));
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
 }
 
 contract Manageable is Ownable {
@@ -130,7 +130,7 @@ contract TokenLayer is ERC721, Manageable {
 
     using SafeMath for uint256;
 
-/********************************************** EVENTS **********************************************/
+    /********************************************** EVENTS **********************************************/
     event TokenCreated(uint256 tokenId, bytes32 name, uint256 parentId, address owner);
     event TokenDeleted(uint256 tokenId);
 
@@ -145,9 +145,8 @@ contract TokenLayer is ERC721, Manageable {
     event ParentChanged(uint256 tokenId, uint256 oldParentId, uint256 newParentId);
     event NameChanged(uint256 tokenId, bytes32 oldName, bytes32 newName);
     event MetaDataChanged(uint256 tokenId, bytes32 oldMeta, bytes32 newMeta);
-/****************************************************************************************************/
 
-/******************************************** STORAGE ***********************************************/
+    /******************************************** STORAGE ***********************************************/
     uint256 private constant DEFAULTPARENT = 123456789;
 
     mapping (uint256 => Token)   private tokenIndexToToken;
@@ -171,23 +170,20 @@ contract TokenLayer is ERC721, Manageable {
         uint256 parentId;
         uint256 price;
     }
-/****************************************************************************************************/
 
-/******************************************* MODIFIERS **********************************************/
+    /******************************************* MODIFIERS **********************************************/
     modifier onlySystem() {
         require((msg.sender == gameAddress) || (msg.sender == manager));
         _;
     }
-/****************************************************************************************************/
 
-/****************************************** CONSTRUCTOR *********************************************/
+    /****************************************** CONSTRUCTOR *********************************************/
     function TokenLayer(address _gameAddress, address _parentAddr) public {
         gameAddress = _gameAddress;
         parentAddr = _parentAddr;
     }
-/****************************************************************************************************/
 
-/********************************************** PUBLIC **********************************************/
+    /********************************************** PUBLIC **********************************************/
     function implementsERC721() public pure returns (bool) {
         return true;
     }
@@ -362,9 +358,8 @@ contract TokenLayer is ERC721, Manageable {
     function exists(uint256 _tokenId) public view returns(bool) {
         return (tokenIndexToToken[_tokenId].exists);
     }
-/****************************************************************************************************/
 
-/********************************************** SETTERS *********************************************/
+    /********************************************** SETTERS *********************************************/
     function setLayerParent(address _parent) public onlyAdmin {
         parentAddr = _parent;
     }
@@ -412,9 +407,8 @@ contract TokenLayer is ERC721, Manageable {
     function setChainFees(uint256[10] _chainFees) public onlyAdmin {
         chainFees = _chainFees;
     }
-/****************************************************************************************************/
 
-/********************************************** GETTERS *********************************************/
+    /********************************************** GETTERS *********************************************/
     function getToken(uint256 _tokenId) public view returns
     (
         bytes32 tokenName, uint256 parentId, uint256 price,
@@ -492,9 +486,8 @@ contract TokenLayer is ERC721, Manageable {
             return(result);
         }
     }
-/****************************************************************************************************/
 
-/******************************************** PRIVATE ***********************************************/
+    /******************************************** PRIVATE ***********************************************/
     function _addressNotNull(address _to) private pure returns (bool) {
         return _to != address(0);
     }
@@ -591,7 +584,7 @@ contract CoreContract is Manageable {
 
     using SafeMath for uint256;
 
-/******************************************** STORAGE ***********************************************/
+    /******************************************** STORAGE ***********************************************/
 
     bool public priceLocked = true;
     uint256 private constant DEFAULTPARENT = 123456789;
@@ -604,8 +597,9 @@ contract CoreContract is Manageable {
     bool public blackListActive;
     bool public blockLockActive;
 
+    mapping(address => address) public referrers;
 
-/********************************************** PUBLIC **********************************************/
+    /********************************************** PUBLIC **********************************************/
     function approve(address _to, uint256 _tokenId, uint256 layerId) public isUnlocked {
         address layerAddr = getLayerFromId[layerId];
         TokenLayer layer = TokenLayer(layerAddr);
@@ -637,7 +631,7 @@ contract CoreContract is Manageable {
         layer.transferFrom(_from, msg.sender, _tokenId);
     }
 
-    function purchase(uint256 _tokenId, uint256 layerId) public payable isUnlocked {
+    function purchase(uint256 _tokenId, uint256 layerId, address ref) public payable isUnlocked {
         if (!_blackListed(msg.sender)) {
             address layerAddr = getLayerFromId[layerId];
             TokenLayer layer = TokenLayer(layerAddr);
@@ -664,7 +658,20 @@ contract CoreContract is Manageable {
             _payChain(_tokenId, layerAddr, price);
 
             msg.sender.transfer(excess);
-            owner.transfer(this.balance);
+
+            _setReferrer(msg.sender, ref);
+
+            address referrer = referrers[msg.sender];
+
+            uint256 devFee = this.balance;
+
+            if (_addressNotNull(referrer)) {
+                uint256 referrerFee = devFee.div(10);
+                devFee = devFee.sub(referrerFee);
+                referrer.transfer(referrerFee);
+            }
+
+            owner.transfer(devFee);
         }
     }
 
@@ -722,9 +729,15 @@ contract CoreContract is Manageable {
     function removeFromBlacklist(address _to) public onlyAdmin {
         blacklisted[_to] = false;
     }
-/****************************************************************************************************/
 
-/******************************************** PRIVATE ***********************************************/
+    /******************************************** PRIVATE ***********************************************/
+    function _setReferrer(address sender, address ref) private {
+        // If we have a referrer, no referrer is set yet, and address is not referring itself
+        if (_addressNotNull(ref) && !_addressNotNull(referrers[sender]) && sender != ref) {
+            referrers[sender] = ref;
+        }
+    }
+
     function _payChain(uint256 _tokenId, address layerAddr, uint256 _price) public
     {
         TokenLayer mainLayer = TokenLayer(layerAddr);
