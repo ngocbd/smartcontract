@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DopamemePresale at 0x9bc018c9e3e75afcb826320338927973839d0528
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DopamemePresale at 0xcdE056e20843346590dB4dC536535F4192e9b531
 */
 pragma solidity ^0.4.18;
 
@@ -109,7 +109,7 @@ contract DopamemePresale is Claimable {
     uint256 public minimum_investment = 15000000000000000; // 0.015 ETH
     uint256 public totalInvestedInWei;
     uint8 public exchangeRate = 230;  // ICO rate 200 + 15% Presale Bonus
-    uint256 public DMT_TotalSuply = 100000000;
+    uint256 public DMT_TotalSuply = 1e26;
     uint256 public startBlock = 4597180;  // 21Nov2017_23_gmt
     uint256 public endBlock;
     uint256 public end_Dec_21_2017 = 1513897200;
@@ -188,7 +188,7 @@ contract DopamemePresale is Claimable {
         whitelistInvestor(msg.sender);
         address investor = msg.sender;
         investorBalances[investor] += msg.value;
-        uint256 tokens = msg.value.mul(exchangeRate).div(1e18);
+        uint256 tokens = msg.value.mul(exchangeRate);
         investorToken[investor] += tokens;
         tokensGenerated += tokens;
         totalInvestedInWei += msg.value;
