@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QUIZ_GAME at 0xcaa7b8aa3BC78Dda98af8FeE1390F34e756A5F55
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QUIZ_GAME at 0xb5c424cd005cd1ccc155654b551c4453346e0718
 */
 pragma solidity ^0.4.19;
 
@@ -42,15 +42,15 @@ contract QUIZ_GAME
        msg.sender.transfer(this.balance);
     }
     
-    function() public payable{}
-    
     function NewQuestion(string _question, bytes32 _responseHash)
     public
     payable
     {
         require(msg.sender==questionSender);
-        responseHash = _responseHash;
         question = _question;
+        responseHash = _responseHash;
     }
+    
+    function() public payable{}
     
 }
