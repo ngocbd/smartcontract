@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AMICoin at 0xC24edCd9581B47BC64102db78807d0FB0C296761
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AMICoin at 0x279f9f9b73bfdbe14e4912a6d5f7442ecdf97b37
 */
 /**
  * @title Ownable
@@ -266,7 +266,7 @@ contract StandardToken is ERC20, BasicToken {
 
 
 contract AMICoin is StandardToken, Destructible {
-    string public constant name = "USAGE TOKEN";
+    string public constant name = "AMI TOKEN";
     uint public constant decimals = 18;
     string public constant symbol = "AMI";
      using SafeMath for uint256;
@@ -276,7 +276,7 @@ contract AMICoin is StandardToken, Destructible {
     function AMICoin()  public {
        totalSupply = 50000000 * (10**decimals);  
        owner = msg.sender;
-       depositWalletAddress = 0x6f0EA2d0bd5312ab56e1d4108360e557bb38425f; //TODO change with your multiseg or any account address where you want to receive balance
+       depositWalletAddress = 0x6f0EA2d0bd5312ab56e1d4108360e557bb38425f; 
        companyReserve = 0x899004f864AAcd954A252A7E9D3d70d4594d4851;
        marketingReserve = 0x955eD316F49878EeE10A3dEBaD4E5Ab72A3F8624;
        advisorReserve = 0x4bfd13D8BCFBA3288043654053Ae13C752d193Eb;
