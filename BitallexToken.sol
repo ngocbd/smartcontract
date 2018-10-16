@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitallexToken at 0x59655dfe5300e7603700d213e2e0afae3255f264
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitallexToken at 0x4482ba5324e6847309b1d505e16d7987c9d91aa9
 */
 pragma solidity ^0.4.18;
 
@@ -225,7 +225,7 @@ contract PausableToken is StandardToken, Pausable {
 /**
  * Bitallex Token contract
  */
-contract BitallexToken is PausableToken, BurnableToken {
+contract BitallexToken is PausableToken {
   string public name;
   string public symbol;
   uint public decimals = 18;
