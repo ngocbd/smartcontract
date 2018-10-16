@@ -1,277 +1,185 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x08fa47c50bc9c05ec1a16d310d08f9c40beedf94
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x4689a4e169eb39cc9078c0940e21ff1aa8a39b9c
 */
 pragma solidity ^0.4.18;
 
-interface ERC223
-{
-	function transfer(address _to, uint _value, bytes _data) public returns(bool);
-    event Transfer(address indexed _from, address indexed _to, uint _value, bytes indexed data);
+/*PTT final suggested version*/
+
+contract SafeMath {
+  function safeMul(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function safeDiv(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b > 0);
+    uint256 c = a / b;
+    assert(a == b * c + a % b);
+    return c;
+  }
+
+  function safeSub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function safeAdd(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c>=a && c>=b);
+    return c;
+  }
 }
 
-interface ERC20
-{
-	function transferFrom(address _from, address _to, uint _value) public returns(bool);
-	function approve(address _spender, uint _value) public returns (bool);
-	function allowance(address _owner, address _spender) public constant returns(uint);
-	event Approval(address indexed _owner, address indexed _spender, uint _value);
-}
-contract ERC223ReceivingContract
-{
-	function tokenFallBack(address _from, uint _value, bytes _data)public;	 
-}
+contract owned {
+    address public owner;
 
-contract Token
-{
-	string internal _symbol;
-	string internal _name;
-	uint8 internal _decimals;	
-    uint internal _totalSupply;
-   	mapping(address =>uint) internal _balanceOf;
-	mapping(address => mapping(address => uint)) internal _allowances;
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-    function Token(string symbol, string name, uint8 decimals, uint totalSupply) public{
-	    _symbol = symbol;
-		_name = name;
-		_decimals = decimals;
-		_totalSupply = totalSupply;
+    function owned() public {
+        owner = msg.sender;
     }
 
-	function name() public constant returns (string){
-        	return _name;    
-	}
-
-	function symbol() public constant returns (string){
-        	return _symbol;    
-	}
-
-	function decimals() public constant returns (uint8){
-		return _decimals;
-	}
-
-	function totalSupply() public constant returns (uint){
-        	return _totalSupply;
-	}
-            	
-	event Transfer(address indexed _from, address indexed _to, uint _value);	
-}
-
-
-contract Multiownable {
-    uint256 public howManyOwnersDecide;
-    address[] public owners;
-    bytes32[] public allOperations;
-    address insideOnlyManyOwners;
-    
-    // Reverse lookup tables for owners and allOperations
-    mapping(address => uint) ownersIndices; // Starts from 1
-    mapping(bytes32 => uint) allOperationsIndicies;
-    
-    // Owners voting mask per operations
-    mapping(bytes32 => uint256) public votesMaskByOperation;
-    mapping(bytes32 => uint256) public votesCountByOperation;
-    event OwnershipTransferred(address[] previousOwners, address[] newOwners);
-    function isOwner(address wallet) public constant returns(bool) {
-        return ownersIndices[wallet] > 0;
-    }
-
-    function ownersCount() public constant returns(uint) {
-        return owners.length;
-    }
-
-    function allOperationsCount() public constant returns(uint) {
-        return allOperations.length;
-    }
-
-    // MODIFIERS
-
-    /**
-    * @dev Allows to perform method by any of the owners
-    */
-    modifier onlyAnyOwner {
-        require(isOwner(msg.sender));
+    modifier onlyOwner {
+        require(msg.sender == owner);
         _;
     }
 
-    /**
-    * @dev Allows to perform method only after all owners call it with the same arguments
-    */
-    modifier onlyManyOwners {
-        if (insideOnlyManyOwners == msg.sender) {
-            _;
-            return;
-        }
-        require(isOwner(msg.sender));
-
-        uint ownerIndex = ownersIndices[msg.sender] - 1;
-        bytes32 operation = keccak256(msg.data);
-        
-        if (votesMaskByOperation[operation] == 0) {
-            allOperationsIndicies[operation] = allOperations.length;
-            allOperations.push(operation);
-        }
-        require((votesMaskByOperation[operation] & (2 ** ownerIndex)) == 0);
-        votesMaskByOperation[operation] |= (2 ** ownerIndex);
-        votesCountByOperation[operation] += 1;
-
-        // If all owners confirm same operation
-        if (votesCountByOperation[operation] == howManyOwnersDecide) {
-            deleteOperation(operation);
-            insideOnlyManyOwners = msg.sender;
-            _;
-            insideOnlyManyOwners = address(0);
-        }
-    }
-
-    // CONSTRUCTOR
-
-    function Multiownable() public {
-        owners.push(msg.sender);
-        ownersIndices[msg.sender] = 1;
-        howManyOwnersDecide = 1;
-    }
-
-    // INTERNAL METHODS
-
-    /**
-    * @dev Used to delete cancelled or performed operation
-    * @param operation defines which operation to delete
-    */
-    function deleteOperation(bytes32 operation) internal {
-        uint index = allOperationsIndicies[operation];
-        if (allOperations.length > 1) {
-            allOperations[index] = allOperations[allOperations.length - 1];
-            allOperationsIndicies[allOperations[index]] = index;
-        }
-        allOperations.length--;
-        
-        delete votesMaskByOperation[operation];
-        delete votesCountByOperation[operation];
-        delete allOperationsIndicies[operation];
-    }
-
-    // PUBLIC METHODS
-
-    /**
-    * @dev Allows owners to change ownership
-    * @param newOwners defines array of addresses of new owners
-    */
-    function transferOwnership(address[] newOwners) public {
-        transferOwnershipWithHowMany(newOwners, newOwners.length);
-    }
-
-    /**
-    * @dev Allows owners to change ownership
-    * @param newOwners defines array of addresses of new owners
-    * @param newHowManyOwnersDecide defines how many owners can decide
-    */
-    function transferOwnershipWithHowMany(address[] newOwners, uint256 newHowManyOwnersDecide) public onlyManyOwners {
-        require(newOwners.length > 0);
-        require(newOwners.length <= 256);
-        require(newHowManyOwnersDecide > 0);
-        require(newHowManyOwnersDecide <= newOwners.length);
-        for (uint i = 0; i < newOwners.length; i++) {
-            require(newOwners[i] != address(0));
-        }
-
-        OwnershipTransferred(owners, newOwners);
-
-        // Reset owners array and index reverse lookup table
-        for (i = 0; i < owners.length; i++) {
-            delete ownersIndices[owners[i]];
-        }
-        for (i = 0; i < newOwners.length; i++) {
-            require(ownersIndices[newOwners[i]] == 0);
-            ownersIndices[newOwners[i]] = i + 1;
-        }
-        owners = newOwners;
-        howManyOwnersDecide = newHowManyOwnersDecide;
-
-        // Discard all pendign operations
-        for (i = 0; i < allOperations.length; i++) {
-            delete votesMaskByOperation[allOperations[i]];
-            delete votesCountByOperation[allOperations[i]];
-            delete allOperationsIndicies[allOperations[i]];
-        }
-        allOperations.length = 0;
+    function transferOwnership(address newOwner) onlyOwner public {
+       require(newOwner != address(0));
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
     }
 }
 
-contract MyToken is Token("TLT","Talent Coin",18,50000000000000000000000000),ERC20,ERC223,Multiownable
-{    		
-	uint256 internal sellPrice;
-	uint256 internal buyPrice;
-    function MyToken() public payable
-    {
-    	_balanceOf[msg.sender]=_totalSupply;       		
+interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
+
+contract TokenERC20 is SafeMath {
+
+    string public name;
+    string public symbol;
+    uint8 public decimals = 18;
+    uint256 public totalSupply;
+
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
+
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+
+
+    function TokenERC20(uint256 initialSupply, string tokenName, string tokenSymbol) public {
+        totalSupply = initialSupply * 10 ** uint256(decimals); 
+        balanceOf[msg.sender] = totalSupply;                
+        name = tokenName;                                   
+        symbol = tokenSymbol;  
+    }                             
+
+
+    function _transfer(address _from, address _to, uint _value) internal {
+        require(_to != 0x0); 
+        require(balanceOf[_from] >= _value); 
+        require(balanceOf[_to] + _value > balanceOf[_to]); 
+        uint previousBalances = SafeMath.safeAdd(balanceOf[_from],balanceOf[_to]); 
+        balanceOf[_from] = SafeMath.safeSub(balanceOf[_from], _value); 
+        balanceOf[_to] = SafeMath.safeAdd(balanceOf[_to], _value); 
+        Transfer(_from, _to, _value);
+        assert(balanceOf[_from] + balanceOf[_to] == previousBalances); 
     }
 
-    function totalSupply() public constant returns (uint){
-    	return _totalSupply;  
+    function transfer(address _to, uint256 _value) public {
+        _transfer(msg.sender, _to, _value);
+    }
+
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        require(_value <= allowance[_from][msg.sender]);     
+        allowance[_from][msg.sender] = SafeMath.safeSub(allowance[_from][msg.sender],_value);
+        _transfer(_from, _to, _value);
+        return true;
+    }
+
+
+    function approve(address _spender, uint256 _value) public
+        returns (bool success) {
+        allowance[msg.sender][_spender] = _value;
+        return true;
+    }
+
+
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
+        public
+        returns (bool success) {
+        tokenRecipient spender = tokenRecipient(_spender);
+        if (approve(_spender, _value)) {
+            spender.receiveApproval(msg.sender, _value, this, _extraData);
+            return true;
+        }
+    }
+
+}
+
+contract MyToken is owned, TokenERC20 {
+
+ 
+    mapping (address => bool) public frozenAccount;
+    mapping (address => uint256) public freezeOf;
+
+    event FrozenFunds(address target, bool frozen);
+    event Burn(address indexed from, uint256 value);
+    
+
+    function MyToken(
+        uint256 initialSupply,
+        string tokenName,
+        string tokenSymbol
+    ) TokenERC20(initialSupply, tokenName, tokenSymbol) public {}
+
+    function _transfer(address _from, address _to, uint _value) internal {
+        require (_to != 0x0);                               
+        require (balanceOf[_from] >= _value);              
+        require (balanceOf[_to] + _value > balanceOf[_to]); 
+        require(!frozenAccount[_from]);                     
+        require(!frozenAccount[_to]);                       
+        balanceOf[_from] = SafeMath.safeSub(balanceOf[_from], _value);                         
+        balanceOf[_to] = SafeMath.safeAdd(balanceOf[_to], _value);                           
+        Transfer(_from, _to, _value);
+    }
+    
+        function burnFrom(address _from, uint256 _value) onlyOwner public returns (bool success) {
+        require(balanceOf[_from] >= _value);                
+        require(_value <= allowance[_from][msg.sender]);    
+        balanceOf[_from] = SafeMath.safeSub(balanceOf[_from], _value);         
+        allowance[_from][msg.sender] = SafeMath.safeSub(allowance[_from][msg.sender], _value);   
+        totalSupply = SafeMath.safeSub(totalSupply, _value);                             
+        Burn(_from, _value);
+        return true;
+    }
+    
+        function burn(uint256 _value) onlyOwner public returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);  
+        balanceOf[msg.sender] = SafeMath.safeSub(balanceOf[msg.sender], _value);          
+        totalSupply = SafeMath.safeSub(totalSupply, _value);                     
+        Burn(msg.sender, _value);
+        return true;
+    }
+ 
+       function freezeAccount(address target, bool freeze) onlyOwner public {
+        frozenAccount[target] = freeze;
+        FrozenFunds(target, freeze);
+    }
+    
+    	// in case someone transfer ether to smart contract, delete if no one do this
+	    function() payable public{}
+	    
+        // transfer ether balance to owner
+	    function withdrawEther(uint256 amount) onlyOwner public {
+		msg.sender.transfer(amount);
 	}
 	
-    function balanceOf(address _addr)public constant returns (uint){
-      	return _balanceOf[_addr];
-	}
-
-	function transfer(address _to, uint _value)public onlyManyOwners returns (bool){
-    	require(_value>0 && _value <= balanceOf(msg.sender));
-    	if(!isContract(_to))
-    	{
-    		_balanceOf[msg.sender]-= _value;
-        	_balanceOf[_to]+=_value;
-		    Transfer(msg.sender, _to, _value); 
- 			return true;
-	    }
-    	return false;
-	}
-
-	function transfer(address _to, uint _value, bytes _data)public returns(bool)
-	{
-	    require(_value>0 && _value <= balanceOf(msg.sender));
-		if(isContract(_to))
-		{
-			_balanceOf[msg.sender]-= _value;
-	       	_balanceOf[_to]+=_value;
-			ERC223ReceivingContract _contract = ERC223ReceivingContract(_to);
-			_contract.tokenFallBack(msg.sender,_value,_data);
-			Transfer(msg.sender, _to, _value, _data); 
-    		return true;
-		}
-		return false;
-	}
-
-	function isContract(address _addr) internal view returns(bool){
-		uint codeLength;
-		assembly
-		{
-		    codeLength := extcodesize(_addr)
-	    }
-		return codeLength > 0;
-	}	
-    
-	function transferFrom(address _from, address _to, uint _value)public onlyManyOwners returns(bool){
-    	require(_allowances[_from][msg.sender] > 0 && _value > 0 && _allowances[_from][msg.sender] >= _value && _balanceOf[_from] >= _value);
-    	{
-			_balanceOf[_from]-=_value;
-    		_balanceOf[_to]+=_value;
-			_allowances[_from][msg.sender] -= _value;
-			Transfer(_from, _to, _value);            
-			return true;
-    	}
-    	return false;
-   }
-
-	function approve(address _spender, uint _value) public returns (bool)
-	{
-    	_allowances[msg.sender][_spender] = _value;
-    	Approval(msg.sender, _spender, _value);	
-    	return true;
-    }
-    
-    function allowance(address _owner, address _spender) public constant returns(uint)
-    {
-    	return _allowances[_owner][_spender];
-    }
-    
+	    // transfer token to owner
+        function withdrawMytoken(uint256 amount) onlyOwner public {
+        _transfer(this, msg.sender, amount); 
+        }
+        
 }
