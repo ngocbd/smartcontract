@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract tokensale at 0x6994699c731dd7e389c209201ec51e8aff283bf9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract tokensale at 0x97be2ff809b93c02f370da97b72fb3673b160708
 */
 pragma solidity ^0.4.10;
 
@@ -213,25 +213,27 @@ contract tokensale {
     
     mapping (uint256 => uint256) public dates;
     mapping (uint256 => uint256) public percents;
-    uint256 public numberOfDates = 7;
+    uint256 public numberOfDates = 8;
     
     tokensale pts = tokensale(0xED6c0654cD61De5b1355Ae4e9d9C786005e9D5BD);
     
     function tokensale(address tokenAddress, uint256 noOfTokens, uint256 prPerToken) {
         dates[0] = 1505520000;
-        dates[1] = 1506470400;
-        dates[2] = 1507161600;
-        dates[3] = 1507852800;
-        dates[4] = 1508544000;
-        dates[5] = 1508630400;
-        dates[6] = 1508803200;
+        dates[1] = 1506038400;
+        dates[2] = 1506124800;
+        dates[3] = 1506816000;
+        dates[4] = 1507420800;
+        dates[5] = 1508112000;
+        dates[6] = 1508630400;
+        dates[7] = 1508803200;
         percents[0] = 70000;
         percents[1] = 40000;
         percents[2] = 20000;
         percents[3] = 10000;
         percents[4] = 5000;
-        percents[5] = 9001;
+        percents[5] = 0;
         percents[6] = 9001;
+        percents[7] = 9001;
         token = Token(tokenAddress);
         numberOfTokens = noOfTokens * 100;
         totalSupply = noOfTokens * 100;
