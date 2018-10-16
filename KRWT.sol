@@ -1,7 +1,55 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KRWT at 0xf1b5190801ad2ba004650692489a41a405bf2d47
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KRWT at 0xec8410317bb2b477fc44c4de92e58d6e6f33453a
 */
-pragma solidity 0.4.18;
+pragma solidity 0.4.21;
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+/**
+ * A token that can increase its supply by another contract.
+ *
+ * This allows uncapped crowdsale by dynamically increasing the supply when money pours in.
+ * Only mint agents, contracts whitelisted by owner, can mint new tokens.
+ *
+ */
 
 /**
  * @title ERC20Basic
@@ -57,6 +105,9 @@ library SafeMath {
  * @title Basic token
  * @dev Basic version of StandardToken, with no allowances.
  */
+ 
+
+
 contract BasicToken is ERC20Basic {
     using SafeMath for uint256;
 
@@ -209,13 +260,88 @@ contract StandardToken is ERC20, BasicToken {
 }
 
 
-contract KRWT is StandardToken {
+contract BurnableToken is StandardToken, Ownable {
+
+    event Burn(address indexed burner, uint256 value);
+
+    /**
+     * @dev Burns a specific amount of tokens.
+     * @param _value The amount of token to be burned.
+     */
+    function burn(uint256 _value) public {
+        require(_value > 0);
+        require(_value <= balances[msg.sender]);
+        address burner = msg.sender;
+        balances[burner] = balances[burner].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        Burn(burner, _value);
+    }
+}
+
+contract MintableToken is StandardToken, Ownable {
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
+
+  bool public mintingFinished = false;
+
+
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
+
+  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+    totalSupply = totalSupply.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    emit Mint(_to, _amount);
+    emit Transfer(address(0), _to, _amount);
+    return true;
+  }
+
+  function finishMinting() onlyOwner canMint public returns (bool) {
+    mintingFinished = true;
+    emit MintFinished();
+    return true;
+  }
+}
+
+
+contract KRWT is StandardToken, BurnableToken {
     string constant public name = "Korean Won";
     string constant public symbol = "KRWT";
-    uint8 constant public decimals = 0;
-    uint public totalSupply = 10000000000 * 10**18;
+    uint8 constant public decimals = 8;
+    uint public totalSupply = 100000000000 * 10**uint(decimals);
+        // This creates an array with all balances
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
+
+    // This generates a public event on the blockchain that will notify clients
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    // This notifies clients about the amount burnt
+    event Burn(address indexed from, uint256 value);
 
     function KRWT() public {
         balances[msg.sender] = totalSupply;
+    }
+        
+
+
+    /**
+     * Destroy tokens from other account
+     *
+     * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
+     *
+     * @param _from the address of the sender
+     * @param _value the amount of money to burn
+     */
+    function burnFrom(address _from, uint256 _value) public returns (bool success) {
+        require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
+        require(_value <= allowance[_from][msg.sender]);    // Check allowance
+        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
+        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
+        totalSupply -= _value;                              // Update totalSupply
+        Burn(_from, _value);
+        return true;
     }
 }
