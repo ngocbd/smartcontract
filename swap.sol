@@ -1,257 +1,297 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Swap at 0xef188cb6cb0e98ad580e5efe69f18b423d76a1e0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Swap at 0xda32d3814b10aee35dcba4de4f6b2259916f9cbb
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.18;
+library SafeMath {
 
-    /****************************************************************
-     *
-     * Name of the project: Genevieve VC Token Swapper
-     * Contract name: Swap
-     * Author: Juan Livingston @ Ethernity.live
-     * Developed for: Genevieve Co.
-     * GXVC is an ERC223 Token Swapper
-     *
-     * This swapper has 2 main functions: 
-     * - makeSwapInternal will send new tokens when ether are received
-     * - makeSwap will send new tokens when old tokens are received
-     *  
-     * makeSwap is called by a javascript through an authorized address
-     *
-     ****************************************************************/
+    /**
+    * @dev Multiplies two numbers, throws on overflow.
+    */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
+        }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
+    }
 
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+    /**
+    * @dev Integer division of two numbers, truncating the quotient.
+    */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
+
+    /**
+    * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+    */
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    /**
+    * @dev Adds two numbers, throws on overflow.
+    */
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
 }
 
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
-  function burn(address spender, uint256 value) returns (bool); // Optional 
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-contract ERC223 {
-  uint public totalSupply;
-  function balanceOf(address who) constant returns (uint);
-  
-  function name() constant returns (string _name);
-  function symbol() constant returns (string _symbol);
-  function decimals() constant returns (uint8 _decimals);
-  function totalSupply() constant returns (uint256 _supply);
-
-  function transfer(address to, uint value) returns (bool ok);
-  function transfer(address to, uint value, bytes data) returns (bool ok);
-  function transfer(address to, uint value, bytes data, string custom_fallback) returns (bool ok);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
-}
+contract Ownable {
+    address public owner;
 
 
-contract Swap {
-
-    address authorizedCaller;
-    address collectorAddress;
-    address collectorTokens;
-
-    address oldTokenAdd;
-    address newTokenAdd; 
-    address tokenSpender;
-
-    uint Etherrate;
-    uint Tokenrate;
-
-    bool pausedSwap;
-
-    uint public lastBlock;
-
-    // Constructor function with main constants and variables 
- 
- 	function Swap() {
-	    authorizedCaller = msg.sender;
-
-	    oldTokenAdd = 0x58ca3065C0F24C7c96Aee8d6056b5B5deCf9c2f8;
-	    newTokenAdd = 0x22f0af8d78851b72ee799e05f54a77001586b18a; 
-
-	    Etherrate = 3000;
-	    Tokenrate = 10;
-
-	    authorized[authorizedCaller] = 1;
-
-	    lastBlock = 0;
-	}
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
 
-	// Mapping to store swaps made and authorized callers
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
+     */
+    function Ownable() public {
+        owner = msg.sender;
+    }
 
-    mapping(bytes32 => uint) internal payments;
-    mapping(address => uint8) internal authorized;
-
-    // Event definitions
-
-    event EtherReceived(uint _n , address _address , uint _value);
-    event GXVCSentByEther(uint _n , address _address , uint _value);
-
-    event GXVCReplay(uint _n , address _address);
-    event GXVCNoToken(uint _n , address _address);
-
-    event TokensReceived(uint _n , address _address , uint _value);
-    event GXVCSentByToken(uint _n , address _address , uint _value );
-
-    event SwapPaused(uint _n);
-    event SwapResumed(uint _n);
-
-    event EtherrateUpd(uint _n , uint _rate);
-    event TokenrateUpd(uint _n , uint _rate);
-
-    // Modifier for authorized calls
-
-    modifier isAuthorized() {
-        if ( authorized[msg.sender] != 1 ) revert();
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(msg.sender == owner);
         _;
     }
 
-    modifier isNotPaused() {
-    	if (pausedSwap) revert();
-    	_;
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0));
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
     }
 
-    // Function borrowed from ds-math.
+}
 
-    function mul(uint x, uint y) internal returns (uint z) {
-        require(y == 0 || (z = x * y) / y == x);
+contract ERC20Basic {
+    function totalSupply() public view returns (uint256);
+    function balanceOf(address who) public view returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+contract BasicToken is ERC20Basic {
+    using SafeMath for uint256;
+
+    mapping(address => uint256) balances;
+
+    uint256 totalSupply_;
+
+    /**
+    * @dev total number of tokens in existence
+    */
+    function totalSupply() public view returns (uint256) {
+        return totalSupply_;
     }
 
-    // Falback function, invoked each time ethers are received
+    /**
+    * @dev transfer token for a specified address
+    * @param _to The address to transfer to.
+    * @param _value The amount to be transferred.
+    */
+    function transfer(address _to, uint256 _value) public returns (bool) {
+        require(_to != address(0));
+        require(_value <= balances[msg.sender]);
 
-    function () payable { 
-        makeSwapInternal ();
+        // SafeMath.sub will throw if there is not enough balance.
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        Transfer(msg.sender, _to, _value);
+        return true;
     }
 
+    /**
+    * @dev Gets the balance of the specified address.
+    * @param _owner The address to query the the balance of.
+    * @return An uint256 representing the amount owned by the passed address.
+    */
+    function balanceOf(address _owner) public view returns (uint256 balance) {
+        return balances[_owner];
+    }
 
-    // Ether swap, activated by the fallback function after receiving ethers
+}
 
-   function makeSwapInternal () private isNotPaused { // Main function, called internally when ethers are received
+contract BurnableToken is BasicToken {
 
-     ERC223 newTok = ERC223 ( newTokenAdd );
+    event Burn(address indexed burner, uint256 value);
 
-     address _address = msg.sender;
-     uint _value = msg.value;
+    /**
+     * @dev Burns a specific amount of tokens.
+     * @param _value The amount of token to be burned.
+     */
+    function burn(uint256 _value) public {
+        require(_value <= balances[msg.sender]);
+        // no need to require value <= totalSupply, since that would imply the
+        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
 
-     // Calculate the amount to send based on the rates supplied
+        address burner = msg.sender;
+        balances[burner] = balances[burner].sub(_value);
+        totalSupply_ = totalSupply_.sub(_value);
+        Burn(burner, _value);
+    }
+}
 
-     uint etherstosend = mul( _value , Etherrate ) / 100000000; // Division to equipare 18 decimals to 10
+contract ERC20 is ERC20Basic {
+    function allowance(address owner, address spender) public view returns (uint256);
+    function transferFrom(address from, address to, uint256 value) public returns (bool);
+    function approve(address spender, uint256 value) public returns (bool);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
-     // ---------------------------------------- Ether exchange --------------------------------------------
+library SafeERC20 {
+    function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
+        assert(token.transfer(to, value));
+    }
 
-    if ( etherstosend > 0 ) {   
+    function safeTransferFrom(ERC20 token, address from, address to, uint256 value) internal {
+        assert(token.transferFrom(from, to, value));
+    }
 
-        // Log Ether received
-        EtherReceived ( 1, _address , _value);
+    function safeApprove(ERC20 token, address spender, uint256 value) internal {
+        assert(token.approve(spender, value));
+    }
+}
 
-        //Send new tokens
-        require( newTok.transferFrom( tokenSpender , _address , etherstosend ) );
-		// Log tokens sent for ethers;
-        GXVCSentByEther ( 2, _address , etherstosend) ;
-        // Send ethers to collector
-        require( collectorAddress.send( _value ) );
+contract StandardToken is ERC20, BasicToken {
+
+    mapping (address => mapping (address => uint256)) internal allowed;
+
+
+    /**
+     * @dev Transfer tokens from one address to another
+     * @param _from address The address which you want to send tokens from
+     * @param _to address The address which you want to transfer to
+     * @param _value uint256 the amount of tokens to be transferred
+     */
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        require(_to != address(0));
+        require(_value <= balances[_from]);
+        require(_value <= allowed[_from][msg.sender]);
+
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        Transfer(_from, _to, _value);
+        return true;
+    }
+
+    /**
+     * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+     *
+     * Beware that changing an allowance with this method brings the risk that someone may use both the old
+     * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+     * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+     * @param _spender The address which will spend the funds.
+     * @param _value The amount of tokens to be spent.
+     */
+    function approve(address _spender, uint256 _value) public returns (bool) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    /**
+     * @dev Function to check the amount of tokens that an owner allowed to a spender.
+     * @param _owner address The address which owns the funds.
+     * @param _spender address The address which will spend the funds.
+     * @return A uint256 specifying the amount of tokens still available for the spender.
+     */
+    function allowance(address _owner, address _spender) public view returns (uint256) {
+        return allowed[_owner][_spender];
+    }
+
+    /**
+     * @dev Increase the amount of tokens that an owner allowed to a spender.
+     *
+     * approve should be called when allowed[_spender] == 0. To increment
+     * allowed value is better to use this function to avoid 2 calls (and wait until
+     * the first transaction is mined)
+     * From MonolithDAO Token.sol
+     * @param _spender The address which will spend the funds.
+     * @param _addedValue The amount of tokens to increase the allowance by.
+     */
+    function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
+    }
+
+    /**
+     * @dev Decrease the amount of tokens that an owner allowed to a spender.
+     *
+     * approve should be called when allowed[_spender] == 0. To decrement
+     * allowed value is better to use this function to avoid 2 calls (and wait until
+     * the first transaction is mined)
+     * From MonolithDAO Token.sol
+     * @param _spender The address which will spend the funds.
+     * @param _subtractedValue The amount of tokens to decrease the allowance by.
+     */
+    function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+        uint oldValue = allowed[msg.sender][_spender];
+        if (_subtractedValue > oldValue) {
+            allowed[msg.sender][_spender] = 0;
+        } else {
+            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
         }
+        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
+    }
+
+}
+
+contract Swap is StandardToken, BurnableToken, Ownable {
+    using SafeMath for uint;
+
+    string constant public symbol = "SWAP";
+    string constant public name = "Swap";
+
+    uint8 constant public decimals = 18;
+    uint256 INITIAL_SUPPLY = 1000000000e18;
+
+    address initialWallet = 0x41AA4bF6c87F5323214333c8885C5Fb660B00A57;
+
+    function Swap() public {
+
+        totalSupply_ = INITIAL_SUPPLY;
+        
+        // initialFunding
+        initialFunding(initialWallet, totalSupply_);
 
     }
 
-    // This function is called from a javascript through an authorized address to inform of a transfer 
-    // of old token.
-    // Parameters are trusted, but they may be accidentally replayed (specially if a rescan is made) 
-    // so we store them in a mapping to avoid reprocessing
-    // We store the tx_hash, to allow many different swappings per address
-
-    function makeSwap (address _address , uint _value , bytes32 _hash) public isAuthorized isNotPaused {
-
-    ERC223 newTok = ERC223 ( newTokenAdd );
-
-	// Calculate the amount to send based on the rates supplied
-
-    uint gpxtosend = mul( _value , Tokenrate ); 
-
-     // ----------------------------------- No tokens or already used -------------------------------------
-
-    if ( payments[_hash] > 0 ) { // Check for accidental replay
-        GXVCReplay( 3, _address ); // Log "Done before";
-        return;
-     }
-
-     if ( gpxtosend == 0 ) {
-        GXVCNoToken( 4, _address ); // Log "No GXC tokens found";
-        return;
-     }
-      // ---------------------------------------- GPX exchange --------------------------------------------
-              
-     TokensReceived( 5, _address , _value ); // Log balance detected
-
-     payments[_hash] = gpxtosend; // To avoid future accidental replays
-
-      // Transfer new tokens to caller
-     require( newTok.transferFrom( tokenSpender , _address , gpxtosend ) );
-
-     GXVCSentByToken( 6, _address , gpxtosend ); // Log "New token sent";
-
-     lastBlock = block.number + 1;
-
+    function initialFunding(address _address, uint _amount) internal returns (bool) {
+        balances[_address] = _amount;
+        Transfer(address(0x0), _address, _amount);
     }
 
-function pauseSwap () public isAuthorized {
-	pausedSwap = true;
-	SwapPaused(7);
-}
 
-function resumeSwap () public isAuthorized {
-	pausedSwap = false;
-	SwapResumed(8);
-}
+    function transfer(address _to, uint256 _value) public returns (bool) {
+        super.transfer(_to, _value);
+    }
 
-function updateOldToken (address _address) public isAuthorized {
-    oldTokenAdd = _address;
-}
-
-function updateNewToken (address _address , address _spender) public isAuthorized {
-    newTokenAdd = _address;
-    tokenSpender = _spender;   
-}
-
-
-function updateEthRate (uint _rate) public isAuthorized {
-    Etherrate = _rate;
-    EtherrateUpd(9,_rate);
-}
-
-
-function updateTokenRate (uint _rate) public isAuthorized {
-    Tokenrate = _rate;
-    TokenrateUpd(10,_rate);
-}
-
-
-function flushEthers () public isAuthorized { // Send ether to collector
-    require( collectorAddress.send( this.balance ) );
-}
-
-function flushTokens () public isAuthorized {
-	ERC20 oldTok = ERC20 ( oldTokenAdd );
-	require( oldTok.transfer(collectorTokens , oldTok.balanceOf(this) ) );
-}
-
-function addAuthorized(address _address) public isAuthorized {
-	authorized[_address] = 1;
-
-}
-
-function removeAuthorized(address _address) public isAuthorized {
-	authorized[_address] = 0;
-
-}
-
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        super.transferFrom(_from, _to, _value);
+    }
+    // Don't accept ETH
+    function () public payable {
+        revert();
+    }
 
 }
