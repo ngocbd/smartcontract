@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GoldmintVote1 at 0xeb4e41143aaa24d57fdd9d2f94de01f8a98849d5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GoldmintVote1 at 0x7ccfe64e02e378c2ba6fab17e5c8b9c404e5a8d7
 */
 pragma solidity ^0.4.16;
 
@@ -56,7 +56,7 @@ contract GoldmintVote1 {
           // 1 - should be Goldmint MNTP token holder 
           // with >1 MNTP token balance
           uint256 balance = mntpToken.balanceOf(msg.sender);
-          require(balance>=1 ether);
+          require(balance>=10 ether);
 
           // 2 - can vote only once 
           require(isVoted[msg.sender]==false);
