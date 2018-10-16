@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CottageToken at 0x5a353355d259d67835d555d7950dbe96d9839f97
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CottageToken at 0xfe4332fc6b2ae399439e017f5019e9086e591f71
 */
 pragma solidity ^0.4.11;
 
