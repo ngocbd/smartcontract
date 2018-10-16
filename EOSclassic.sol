@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EOSclassic at 0x020ddc98365d0199b4c7a2d769d685480789f67e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EOSclassic at 0xce3ad07c9c7a5f89d39eb1449913d3feecabcf8d
 */
 pragma solidity ^0.4.21;
 
@@ -333,17 +333,17 @@ contract EOSContractInterface
 contract EOSclassic is StandardToken, HasNoEther 
 {
     // Welcome to EOSclassic
-    string public constant NAME = "EOSclassic";
-    string public constant SYMBOL = "EOSC";
-    uint8 public constant DECIMALS = 18;
+    string public constant name = "EOSclassic";
+    string public constant symbol = "EOSC";
+    uint8 public constant decimals = 18;
 
     // Total amount minted
-    uint public constant TOTAL_SUPPLY = 1000000000 * (10 ** uint(DECIMALS));
+    uint public constant TOTAL_SUPPLY = 1000000000 * (10 ** uint(decimals));
     
     // Amount given to founders
-    uint public constant foundersAllocation = 100000000 * (10 ** uint(DECIMALS));   
+    uint public constant foundersAllocation = 100000000 * (10 ** uint(decimals));   
 
-    // Contract address of the original EOS contracts    
+    // Contract address of the original EOS contracts
     address public constant eosTokenAddress = 0x86Fa049857E0209aa7D9e616F7eb3b3B78ECfdb0;
     address public constant eosCrowdsaleAddress = 0xd0a6E6C54DbC68Db5db3A091B171A77407Ff7ccf;
     
@@ -404,8 +404,11 @@ contract EOSclassic is StandardToken, HasNoEther
     {
         // Ensure that an address has been passed
         require (_toAddress != address(0));
+        // Ensure that the address isn't unrecoverable
+        require (_toAddress != 0x00000000000000000000000000000000000000B1);
         // Ensure this address has not already been claimed
         require (isClaimed(_toAddress) == false);
+
         
         // Query the original EOS Crowdsale for address balance
         uint _eosContractBalance = queryEOSTokenBalance(_toAddress);
