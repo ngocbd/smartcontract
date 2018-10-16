@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GivethCampaign at 0x98cdcf8cd44c216fe370cf5c420d9630ae916fc4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GivethCampaign at 0x486681bb877703e4385c8fe9688bff776cbc11c4
 */
 pragma solidity ^0.4.18;
 
@@ -27,8 +27,9 @@ pragma solidity ^0.4.18;
 ///  funds for non-profit causes, but it can be customized for any variety of
 ///  purposes.
 
-/// @dev Basic contract to indivate whether another contract is controlled
+/// @dev Basic contract to allow a contract to be controlled by a `controller`
 contract Controlled {
+
     /// @notice The address of the controller is the only address that can call
     ///  a function with this modifier
     modifier onlyController { require(msg.sender == controller); _; }
@@ -44,8 +45,11 @@ contract Controlled {
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 /// @dev The token controller contract must implement these functions
 contract TokenController {
+
     /// @notice Called when `_owner` sends ether to the MiniMe Token contract
     /// @param _owner The address that sent the ether to create tokens
     /// @return True if the ether is accepted, false if it throws
@@ -69,6 +73,10 @@ contract TokenController {
         returns(bool);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
+/// @dev A simple contract to allow data to be properly attached in the 
+///  `approveAndCall()`
 contract ApproveAndCallFallBack {
     function receiveApproval(
         address from,
@@ -77,6 +85,8 @@ contract ApproveAndCallFallBack {
         bytes _data
     ) public;
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 /// @dev The actual token contract, the default controller is the msg.sender
 ///  that deploys the contract, so usually this token will be deployed by a
@@ -554,7 +564,11 @@ contract MiniMeToken is Controlled {
 ////////////////
 // Events
 ////////////////
-    event ClaimedTokens(address indexed _token, address indexed _controller, uint _amount);
+    event ClaimedTokens(
+        address indexed _token,
+        address indexed _controller, 
+        uint _amount
+        );
     event Transfer(address indexed _from, address indexed _to, uint256 _amount);
     event NewCloneToken(address indexed _cloneToken, uint _snapshotBlock);
     event Approval(
@@ -562,9 +576,9 @@ contract MiniMeToken is Controlled {
         address indexed _spender,
         uint256 _amount
         );
-
 }
 
+////////////////////////////////////////////////////////////////////////////////
 
 ////////////////
 // MiniMeTokenFactory
@@ -607,6 +621,42 @@ contract MiniMeTokenFactory {
         return newToken;
     }
 }
+
+////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * @title ERC20
+ * @dev A standard interface for tokens.
+ * @dev https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+ */
+contract ERC20 {
+  
+    /// @dev Returns the total token supply
+    function totalSupply() public constant returns (uint256 supply);
+
+    /// @dev Returns the account balance of the account with address _owner
+    function balanceOf(address _owner) public constant returns (uint256 balance);
+
+    /// @dev Transfers _value number of tokens to address _to
+    function transfer(address _to, uint256 _value) public returns (bool success);
+
+    /// @dev Transfers _value number of tokens from address _from to address _to
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+
+    /// @dev Allows _spender to withdraw from the msg.sender's account up to the _value amount
+    function approve(address _spender, uint256 _value) public returns (bool success);
+
+    /// @dev Returns the amount which _spender is still allowed to withdraw from _owner
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/////// The Campaign Contracts
+////////////////////////////////////////////////////////////////////////////////
 
 /// @title Owned
 /// @author Adrià Massanet <adria@codecontext.io>
@@ -686,7 +736,9 @@ contract Owned {
         newOwnerCandidate = 0x0;
         OwnershipRemoved();     
     }
-} 
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 
 /// @dev `Escapable` is a base level contract built off of the `Owned`
@@ -708,7 +760,7 @@ contract Escapable is Owned {
     /// @param _escapeHatchDestination The address of a safe location (usu a
     ///  Multisig) to send the ether held in this contract; if a neutral address
     ///  is required, the WHG Multisig is an option:
-    ///  <a title="See this address on the blockchain explorer" href="https://etherscan.io/address/0x8Ff920020c8AD673661c8117f2855C384758C572" class="ext-etheraddresslookup-link" target="_self">0x8Ff920020c8AD673661c8117f2855C384758C572</a>
+    ///  0x8Ff920020c8AD673661c8117f2855C384758C572 
     function Escapable(address _escapeHatchCaller, address _escapeHatchDestination) {
         escapeHatchCaller = _escapeHatchCaller;
         escapeHatchDestination = _escapeHatchDestination;
@@ -773,6 +825,8 @@ contract Escapable is Owned {
     event EscapeHatchCalled(address token, uint amount);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+
 /// @dev This is designed to control the issuance of a MiniMe Token for a
 ///  non-profit Campaign. This contract effectively dictates the terms of the
 ///  funding round.
@@ -785,17 +839,17 @@ contract GivethCampaign is TokenController, Owned, Escapable {
     MiniMeToken public tokenContract;   // The new token for this Campaign
     address public vaultAddress;        // The address to hold the funds donated
 
-/// @notice 'GivethCampaign()' initiates the Campaign by setting its funding
-/// parameters
-/// @dev There are several checks to make sure the parameters are acceptable
-/// @param _startFundingTime The UNIX time that the Campaign will be able to
-/// start receiving funds
-/// @param _endFundingTime The UNIX time that the Campaign will stop being able
-/// to receive funds
-/// @param _maximumFunding In wei, the Maximum amount that the Campaign can
-/// receive (currently the max is set at 10,000 ETH for the beta)
-/// @param _vaultAddress The address that will store the donated funds
-/// @param _tokenAddress Address of the token contract this contract controls
+    /// @notice 'GivethCampaign()' initiates the Campaign by setting its funding
+    ///  parameters; there are several checks to make sure the parameters are 
+    ///  acceptable
+    /// @param _startFundingTime The UNIX time that the Campaign will be able to
+    ///  start receiving funds
+    /// @param _endFundingTime The UNIX time that the Campaign will stop being
+    ///  able to receive funds
+    /// @param _maximumFunding In wei, the Maximum amount that the Campaign can
+    ///  receive (currently the max is set at 10,000 ETH for the beta)
+    /// @param _vaultAddress The address that will store the donated funds
+    /// @param _tokenAddress The token contract address this contract controls
     function GivethCampaign(
         address _escapeHatchCaller,
         address _escapeHatchDestination,        
@@ -807,8 +861,8 @@ contract GivethCampaign is TokenController, Owned, Escapable {
     ) Escapable(_escapeHatchCaller, _escapeHatchDestination) {
         require(_endFundingTime > now);                // Cannot end in the past
         require(_endFundingTime > _startFundingTime);
-        require(_maximumFunding <= 1000000 ether);        // The Beta is limited
-        require(_vaultAddress != 0);                     // To prevent burning ETH
+        require(_maximumFunding <= 1000000 ether);    // The Beta is limited
+        require(_vaultAddress != 0);                // To prevent burning ETH
         startFundingTime = _startFundingTime;
         endFundingTime = _endFundingTime;
         maximumFunding = _maximumFunding;
@@ -816,120 +870,88 @@ contract GivethCampaign is TokenController, Owned, Escapable {
         vaultAddress = _vaultAddress;
     }
 
-/// @dev The fallback function is called when ether is sent to the contract, it
-/// simply calls `doPayment()` with the address that sent the ether as the
-/// `_owner`. Payable is a required solidity modifier for functions to receive
-/// ether, without this modifier functions will throw if ether is sent to them
+    /// @notice `finalizeFunding()` ends the Campaign by setting the controller
+    ///  to 0, thereby ending the issuance of new tokens and stopping the
+    ///  Campaign from receiving more ether; can only be called after the end of
+    ///  the funding period.
+    function finalizeFunding() {
+        require (now >= endFundingTime);
+        tokenContract.changeController(0);
+    }
+
+    /// @notice `onlyOwner` changes the location that ether is sent
+    /// @param _newVaultAddress The address that will receive the ether sent to
+    ///  the Campaign
+    function setVault(address _newVaultAddress) onlyOwner {
+        vaultAddress = _newVaultAddress;
+    }
+
+    /// @dev The fallback function is called when ether is sent to the contract,
+    ///  it calls `doPayment()` with the address that sent the ether as the
+    ///  `_owner`; `payable` is a required solidity modifier for functions to 
+    ///  receive ether, without this modifier functions will throw when ether is
+    ///  sent to them
     function ()  payable {
         doPayment(msg.sender);
+    }
+
+    /// @dev `doPayment()` is an internal function that sends the ether this
+    ///  contract receives to the `vault` and creates tokens in the address of
+    ///  the `_owner` as long as the Campaign is still accepting funds
+    /// @param _owner The address that will hold the newly created tokens
+    function doPayment(address _owner) internal {
+
+        // First check that the Campaign is allowed to receive this donation
+        require(now>=startFundingTime);
+        require(now<=endFundingTime);               // Extra check
+        require(tokenContract.controller() != 0);   // Extra check
+        require(msg.value != 0);
+        require(totalCollected + msg.value <= maximumFunding);
+
+        //Track how much the Campaign has collected
+        totalCollected += msg.value;
+
+        //Send the ether to the vault
+        require(vaultAddress.send(msg.value));
+
+        // Creates an equal amount of tokens as ether sent; the new tokens are
+        //  created in the `_owner` address
+        require(tokenContract.generateTokens(_owner, msg.value));
+
+        return;
     }
 
 /////////////////
 // TokenController interface
 /////////////////
 
-/// @notice `proxyPayment()` allows the caller to send ether to the Campaign and
-/// have the tokens created in an address of their choosing
-/// @param _owner The address that will hold the newly created tokens
+    /// @notice `proxyPayment()` allows the caller to send ether to the Campaign
+    ///  and have the tokens created in an address of their choosing
+    /// @param _owner The address that will hold the newly created tokens
     function proxyPayment(address _owner) payable returns(bool) {
         doPayment(_owner);
         return true;
     }
 
-/// @notice Notifies the controller about a transfer, for this Campaign all
-///  transfers are allowed by default and no extra notifications are needed
-/// @param _from The origin of the transfer
-/// @param _to The destination of the transfer
-/// @param _amount The amount of the transfer
-/// @return False if the controller does not authorize the transfer
+    /// @notice Notifies the controller about a transfer, for this Campaign all
+    ///  transfers are allowed by default and no extra notifications are needed
+    /// @param _from The origin of the transfer
+    /// @param _to The destination of the transfer
+    /// @param _amount The amount of the transfer
+    /// @return False if the controller does not authorize the transfer
     function onTransfer(address _from, address _to, uint _amount) returns(bool) {
         return true;
     }
 
-/// @notice Notifies the controller about an approval, for this Campaign all
-///  approvals are allowed by default and no extra notifications are needed
-/// @param _owner The address that calls `approve()`
-/// @param _spender The spender in the `approve()` call
-/// @param _amount The amount in the `approve()` call
-/// @return False if the controller does not authorize the approval
+    /// @notice Notifies the controller about an approval, for this Campaign all
+    ///  approvals are allowed by default and no extra notifications are needed
+    /// @param _owner The address that calls `approve()`
+    /// @param _spender The spender in the `approve()` call
+    /// @param _amount The amount in the `approve()` call
+    /// @return False if the controller does not authorize the approval
     function onApprove(address _owner, address _spender, uint _amount)
         returns(bool)
     {
         return true;
     }
-
-
-/// @dev `doPayment()` is an internal function that sends the ether that this
-///  contract receives to the `vault` and creates tokens in the address of the
-///  `_owner` assuming the Campaign is still accepting funds
-/// @param _owner The address that will hold the newly created tokens
-    function doPayment(address _owner) internal {
-
-// First check that the Campaign is allowed to receive this donation
-        require(now>=startFundingTime);
-        require(now<=endFundingTime);
-        require(tokenContract.controller() != 0);           // Extra check
-        require(msg.value != 0);
-        require(totalCollected + msg.value <= maximumFunding);
-
-//Track how much the Campaign has collected
-        totalCollected += msg.value;
-
-//Send the ether to the vault
-        require(vaultAddress.send(msg.value));
-
-// Creates an equal amount of tokens as ether sent. The new tokens are created
-//  in the `_owner` address
-        require(tokenContract.generateTokens(_owner, msg.value));
-
-        return;
-    }
-
-/// @notice `finalizeFunding()` ends the Campaign by calling setting the
-///  controller to 0, thereby ending the issuance of new tokens and stopping the
-///  Campaign from receiving more ether
-/// @dev `finalizeFunding()` can only be called after the end of the funding period.
-    function finalizeFunding() {
-        require (now >= endFundingTime);
-        tokenContract.changeController(0);
-    }
-
-
-/// @notice `onlyOwner` changes the location that ether is sent
-/// @param _newVaultAddress The address that will receive the ether sent to this
-///  Campaign
-    function setVault(address _newVaultAddress) onlyOwner {
-        vaultAddress = _newVaultAddress;
-    }
-
-}
-
-/**
- * @title ERC20
- * @dev A standard interface for tokens.
- * @dev https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
- */
-contract ERC20 {
-  
-    /// @dev Returns the total token supply
-    function totalSupply() public constant returns (uint256 supply);
-
-    /// @dev Returns the account balance of the account with address _owner
-    function balanceOf(address _owner) public constant returns (uint256 balance);
-
-    /// @dev Transfers _value number of tokens to address _to
-    function transfer(address _to, uint256 _value) public returns (bool success);
-
-    /// @dev Transfers _value number of tokens from address _from to address _to
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-
-    /// @dev Allows _spender to withdraw from the msg.sender's account up to the _value amount
-    function approve(address _spender, uint256 _value) public returns (bool success);
-
-    /// @dev Returns the amount which _spender is still allowed to withdraw from _owner
-    function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
 }
