@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KUYOOToken at 0xdcf0caf5101030c293d91843d650a6b60622e3dc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KUYOOToken at 0x0a78dc8fe765ab979df1fb202bef47166647696c
 */
 pragma solidity ^0.4.18;
 
@@ -241,7 +241,7 @@ contract ParameterizedToken is CappedToken {
 
 contract KUYOOToken is ParameterizedToken {
 
-    function KUYOOToken() public ParameterizedToken("KUYOO", "KU", 18, 1000000000) {
+    function KUYOOToken() public ParameterizedToken("KUYOO", "KUYOO", 18, 1000000000) {
     }
 
 }
