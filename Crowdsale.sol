@@ -1,152 +1,228 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xa11d166e592926e4e60a83f688a0757b2738d218
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x039EDb0D0613c58F45A777Ab5DBf7CAfCc7dE9cd
 */
-pragma solidity ^0.4.11;
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0 uint256 c = a / b;
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+pragma solidity ^0.4.15;
+contract ERC20Basic {
+ uint256 public totalSupply;
+ function balanceOf(address who) constant returns (uint256);
+ function transfer(address to, uint256 value) returns (bool);
+ event Transfer(address indexed from, address indexed to, uint256 value);
 }
-
-/**
- * @title Crowdsale
- * @dev Crowdsale is a base contract for managing a token crowdsale.
- * Crowdsales have a start and end timestamps, where investors can make
- * token purchases and the crowdsale will assign them tokens based
- * on a token per ETH rate. Funds collected are forwarded to a wallet
- * as they arrive.
- */
-contract token { function transfer(address receiver, uint amount){  } }
-contract Crowdsale {
-  using SafeMath for uint256;
-
-  // uint256 durationInMinutes;
-  // address where funds are collected
-  address public wallet;
-  // token address
-  address public addressOfTokenUsedAsReward;
-
-  uint256 public price = 350;
-
-  token tokenReward;
-
-  mapping (address => uint) public contributions;
-  
-
-
-  // start and end timestamps where investments are allowed (both inclusive)
-  // uint256 public startTime;
-  // uint256 public endTime;
-  // amount of raised money in wei
-  uint256 public weiRaised;
-
-  /**
-   * event for token purchase logging
-   * @param purchaser who paid for the tokens
-   * @param beneficiary who got the tokens
-   * @param value weis paid for purchase
-   * @param amount amount of tokens purchased
-   */
-  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
-
-
-  function Crowdsale() {
-    //You will change this to your wallet where you need the ETH 
-    wallet = 0xd0af9888cFb401083ad5944c6a046C831e7d8b20;//eth address here
-    // durationInMinutes = _durationInMinutes;
-    //Here will come the checksum address we got
-    addressOfTokenUsedAsReward = 0xa7A05Cf8d6D8e4e73dB47fE4de4Cbd5b63D15cfA;
-
-
-    tokenReward = token(addressOfTokenUsedAsReward);
-  }
-
-  bool public started = false;
-
-  function startSale(){
-    if (msg.sender != wallet) throw;
-    started = true;
-  }
-
-  function stopSale(){
-    if(msg.sender != wallet) throw;
-    started = false;
-  }
-
-  function setPrice(uint256 _price){
-    if(msg.sender != wallet) throw;
-    price = _price;
-  }
-
-  // fallback function can be used to buy tokens
-  function () payable {
-    buyTokens(msg.sender);
-  }
-
-  // low level token purchase function
-  function buyTokens(address beneficiary) payable {
-    require(beneficiary != 0x0);
-    require(validPurchase());
-
-    uint256 weiAmount = msg.value;
-
-    // calculate token amount to be sent
-    uint256 tokens = (weiAmount) * price;//weiamount * price 
-
-    // update state
-    weiRaised = weiRaised.add(weiAmount);
-    
-    if(contributions[msg.sender].add(weiAmount)>10*10**18) throw;
-    contributions[msg.sender] = contributions[msg.sender].add(weiAmount);
-
-    tokenReward.transfer(beneficiary, tokens);
-    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
-    forwardFunds();
-  }
-
-  // send ether to the fund collection wallet
-  // override to create custom fund forwarding mechanisms
-  function forwardFunds() internal {
-    // wallet.transfer(msg.value);
-    if (!wallet.send(msg.value)) {
-      throw;
-    }
-  }
-
-  // @return true if the transaction can buy tokens
-  function validPurchase() internal constant returns (bool) {
-    bool withinPeriod = started;
-    bool nonZeroPurchase = msg.value != 0;
-    return withinPeriod && nonZeroPurchase;
-  }
-
-  function withdrawTokens(uint256 _amount) {
-    if(msg.sender!=wallet) throw;
-    tokenReward.transfer(wallet,_amount);
-  }
+contract ERC20 is ERC20Basic {
+ function allowance(address owner, address spender) constant returns (uint256);
+ function transferFrom(address from, address to, uint256 value) returns (bool);
+ function approve(address spender, uint256 value) returns (bool);
+ event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+library SafeMath {
+ function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+   uint256 c = a * b;
+   assert(a == 0 || c / a == b);
+   return c;
+ }
+ function div(uint256 a, uint256 b) internal constant returns (uint256) {
+   uint256 c = a / b;
+   return c;
+ }
+ function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+   assert(b <= a);
+   return a - b;
+ }
+ function add(uint256 a, uint256 b) internal constant returns (uint256) {
+   uint256 c = a + b;
+   assert(c >= a);
+   return c;
+ }
+}
+contract BasicToken is ERC20Basic {
+ using SafeMath for uint256;
+ mapping(address => uint256) balances;
+ function transfer(address _to, uint256 _value) returns (bool) {
+   balances[msg.sender] = balances[msg.sender].sub(_value);
+   balances[_to] = balances[_to].add(_value);
+   Transfer(msg.sender, _to, _value);
+   return true;
+ }
+ function balanceOf(address _owner) constant returns (uint256 balance) {
+   return balances[_owner];
+ }
+}
+contract StandardToken is ERC20, BasicToken {
+ mapping (address => mapping (address => uint256)) allowed;
+ function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
+   var _allowance = allowed[_from][msg.sender];
+   balances[_to] = balances[_to].add(_value);
+   balances[_from] = balances[_from].sub(_value);
+   allowed[_from][msg.sender] = _allowance.sub(_value);
+   Transfer(_from, _to, _value);
+   return true;
+ }
+ function approve(address _spender, uint256 _value) returns (bool) {
+   require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+   allowed[msg.sender][_spender] = _value;
+   Approval(msg.sender, _spender, _value);
+   return true;
+ }
+ function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+   return allowed[_owner][_spender];
+ }
+}
+contract Ownable {
+ address public owner;
+ function Ownable() {
+   owner = msg.sender;
+ }
+ modifier onlyOwner() {
+   require(msg.sender == owner);
+   _;
+ }
+ function transferOwnership(address newOwner) onlyOwner {
+   require(newOwner != address(0));
+   owner = newOwner;
+ }
+}
+contract MintableToken is StandardToken, Ownable {
+ event Mint(address indexed to, uint256 amount);
+ event MintFinished();
+ bool public mintingFinished = false;
+ modifier canMint() {
+   require(!mintingFinished);
+   _;
+ }
+ function mint(address _to, uint256 _amount) onlyOwner canMint returns (bool) {
+   totalSupply = totalSupply.add(_amount);
+   balances[_to] = balances[_to].add(_amount);
+   Mint(_to, _amount);
+   return true;
+ }
+ function finishMinting() onlyOwner returns (bool) {
+   mintingFinished = true;
+   MintFinished();
+   return true;
+ }
+}
+contract GlobalCryptoBank is MintableToken {
+   string public constant name = "Global Crypto Bank";
+   string public constant symbol = "BANK";
+   uint32 public constant decimals = 18;
+   uint public INITIAL_SUPPLY = 50000000 * 1 ether;
+   function GlobalCryptoBank() {
+       mint(owner, INITIAL_SUPPLY);
+       transfer(0x0e2Bec7F14F244c5D1b4Ce14f48dcDb88fB61690, 2000000 * 1 ether);
+       finishMinting();
+   }
+}
+contract Crowdsale is Ownable {
+   using SafeMath for uint;
+   address founderAddress;
+   address bountyAddress;
+   uint preIsoTokenLimit;
+   uint isoTokenLimit;
+   uint preIsoStartDate;
+   uint preIsoEndDate;
+   uint isoStartDate;
+   uint isoEndDate;
+   uint rate;
+   uint founderPercent;
+   uint bountyPercent;
+   uint public soldTokens = 0;
+   GlobalCryptoBank public token = new GlobalCryptoBank();
+   function Crowdsale () payable {
+       founderAddress = 0xF12B75857E56727c90fc473Fe18C790B364468eD;
+       bountyAddress = 0x0e2Bec7F14F244c5D1b4Ce14f48dcDb88fB61690;
+       founderPercent = 90;
+       bountyPercent = 10;
+       rate = 300 * 1 ether;
+       preIsoStartDate = 1509321600;
+       preIsoEndDate = 1511049600;
+       isoStartDate = 1511568000;
+       isoEndDate = 1514678399;
+       preIsoTokenLimit = 775000 * 1 ether;
+       isoTokenLimit = 47225000 * 1 ether;
+   }
+   modifier isUnderPreIsoLimit(uint value) {
+       require((soldTokens+rate.mul(value).div(1 ether)+rate.mul(value).div(1 ether).mul(getPreIsoBonusPercent(value).div(100))) <= preIsoTokenLimit);
+       _;
+   }
+   modifier isUnderIsoLimit(uint value) {
+       require((soldTokens+rate.mul(value).div(1 ether)+rate.mul(value).div(1 ether).mul(getIsoBonusPercent(value).div(100))) <= isoTokenLimit);
+       _;
+   }
+   function getPreIsoBonusPercent(uint value) private returns (uint) {
+       uint eth = value.div(1 ether);
+       uint bonusPercent = 0;
+       if (now >= preIsoStartDate && now <= preIsoStartDate + 2 days) {
+           bonusPercent += 35;
+       } else if (now >= preIsoStartDate + 2 days && now <= preIsoStartDate + 7 days) {
+           bonusPercent += 33;
+       } else if (now >= preIsoStartDate + 7 days && now <= preIsoStartDate + 14 days) {
+           bonusPercent += 31;
+       } else if (now >= preIsoStartDate + 14 days && now <= preIsoStartDate + 21 days) {
+           bonusPercent += 30;
+       }
+       
+       
+       if (eth >= 1 && eth < 10) {
+           bonusPercent += 2;
+       } else if (eth >= 10 && eth < 50) {
+           bonusPercent += 4;
+       } else if (eth >= 50 && eth < 100) {
+           bonusPercent += 8;
+       } else if (eth >= 100) {
+           bonusPercent += 10;
+       }
+       return bonusPercent;
+   }
+   function getIsoBonusPercent(uint value) private returns (uint) {
+       uint eth = value.div(1 ether);
+       uint bonusPercent = 0;
+       if (now >= isoStartDate && now <= isoStartDate + 2 days) {
+           bonusPercent += 20;
+       } else if (now >= isoStartDate + 2 days && now <= isoStartDate + 7 days) {
+           bonusPercent += 18;
+       } else if (now >= isoStartDate + 7 days && now <= isoStartDate + 14 days) {
+           bonusPercent += 15;
+       } else if (now >= isoStartDate + 14 days && now <= isoStartDate + 21 days) {
+           bonusPercent += 10;
+       }
+       if (eth >= 1 && eth < 10) {
+           bonusPercent += 2;
+       } else if (eth >= 10 && eth < 50) {
+           bonusPercent += 4;
+       } else if (eth >= 50 && eth < 100) {
+           bonusPercent += 8;
+       } else if (eth >= 100) {
+           bonusPercent += 10;
+       }
+       return bonusPercent;
+   }
+   function buyPreICOTokens(uint value, address sender) private isUnderPreIsoLimit(value) {
+       founderAddress.transfer(value.div(100).mul(founderPercent));
+       bountyAddress.transfer(value.div(100).mul(bountyPercent));
+       uint tokens = rate.mul(value).div(1 ether);
+       uint bonusTokens = 0;
+       uint bonusPercent = getPreIsoBonusPercent(value);
+       bonusTokens = tokens.mul(bonusPercent).div(100);
+       tokens += bonusTokens;
+       soldTokens += tokens;
+       token.transfer(sender, tokens);
+   }
+   function buyICOTokens(uint value, address sender) private isUnderIsoLimit(value) {
+       founderAddress.transfer(value.div(100).mul(founderPercent));
+       bountyAddress.transfer(value.div(100).mul(bountyPercent));
+       uint tokens = rate.mul(value).div(1 ether);
+       uint bonusTokens = 0;
+       uint bonusPercent = getIsoBonusPercent(value);
+       bonusTokens = tokens.mul(bonusPercent).div(100);
+       tokens += bonusTokens;
+       soldTokens += tokens;
+       token.transfer(sender, tokens);
+   }
+   function() external payable {
+       if (now >= preIsoStartDate && now < preIsoEndDate) {
+           buyPreICOTokens(msg.value, msg.sender);
+       } else if (now >= isoStartDate && now < isoEndDate) {
+           buyICOTokens(msg.value, msg.sender);
+       }
+   }
 }
