@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ticket at 0x2e4a87cbfe2ffa21c8196fd884640be3c7eaf207
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ticket at 0x75031ec38fa67370f7bcf0c173af241b321c62c5
 */
 pragma solidity ^0.4.19;
 
@@ -195,11 +195,11 @@ contract StandardToken is ERC20, BasicToken {
 
 
 contract Ticket is StandardToken {
-    string constant public name = "BlockCity";
-    string constant public symbol = "BCITY";
+    string constant public name = "BlockCity Premium";
+    string constant public symbol = "BCITYP";
     uint8 constant public decimals = 0;
-    uint256 constant public price = 0.25 ether;
-    uint256 constant public MAX = 300;
+    uint256 constant public price = 1.25 ether;
+    uint256 constant public MAX = 50;
     bool public isEnd = false;
     address public wallet;
 
