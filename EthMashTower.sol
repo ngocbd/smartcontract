@@ -1,18 +1,16 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthMashTower at 0x00eaa60fd31df3cd294ca88838e58293d8d6e861
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthMashTower at 0x53ba7a2a139cc58d7411834a8cd23e5e3e59f429
 */
-pragma solidity ^0.4.22;
+pragma solidity ^0.4.23;
 
 contract EthMashTower {
 
     address public owner;
     mapping (address => uint) public withdrawals;
 
-    uint round;
+    int round;
     uint registered;
-    mapping (uint => address[15]) participants;
-
-    event Log(address indexed user, uint action, uint price);
+    mapping (int => address[7]) public participants;
 
     constructor() public {
         owner = msg.sender;
@@ -20,29 +18,15 @@ contract EthMashTower {
         registered = 0;
     }
 
-    modifier whenOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
-    function ownerWithdraw(uint amount) external whenOwner {
-        owner.transfer(amount);
-    }
-
-    function ownerDestroy() external whenOwner {
-        selfdestruct(owner);
-    }
-
-    function publicGetRound() view public returns (uint) {
-        return round;
-    }
-
-    function publicGetParticipants(uint index) view public returns (address[15]) {
-        return participants[index];
-    }
-
     function publicGetBalance(address player) view public returns (uint) {
         return withdrawals[player];
+    }
+
+    function publicGetState() view public returns (address[7][2]) {
+        return [
+            participants[round - 1],
+            participants[round]
+        ];
     }
 
     function userWithdraw() public {
@@ -50,31 +34,23 @@ contract EthMashTower {
         uint amount = withdrawals[msg.sender];
         withdrawals[msg.sender] = 0;
         msg.sender.transfer(amount);
-        emit Log(msg.sender, 0, amount);
     }
 
     function userRegister() public payable {
         require(msg.value == 105 finney);
-        require(registered < 8);
+        require(registered < 4);
 
-        emit Log(msg.sender, 1, msg.value);
-
+        withdrawals[owner] += 5 finney;
         participants[round][registered] = msg.sender;
 
         if (registered == 1) {
-            calcWinner(0, 1, 8, 150 finney);
+            calcWinner(0, 1, 4, 150 finney);
         } else if (registered == 3) {
-            calcWinner(2, 3, 9, 150 finney);
-            calcWinner(8, 9, 12, 50 finney);
-        } else if (registered == 5) {
-            calcWinner(4, 5, 10, 150 finney);
-        }  else if (registered == 7) {
-            calcWinner(6, 7, 11, 150 finney);
-            calcWinner(10, 11, 13, 50 finney);
-            calcWinner(12, 13, 14, 100 finney); 
+            calcWinner(2, 3, 5, 150 finney);
+            calcWinner(4, 5, 6, 100 finney);
         }
 
-        if (registered < 7) {
+        if (registered < 3) {
             registered++;
         } else {
             round++;
@@ -88,11 +64,9 @@ contract EthMashTower {
         if (random % 2 == 0) {
             participants[round][winner] = participants[round][first];
             withdrawals[participants[round][first]] += reward;
-            emit Log(participants[round][first], 2, reward);
         } else {
             participants[round][winner] = participants[round][second];
             withdrawals[participants[round][second]] += reward;
-            emit Log(participants[round][second], 2, reward);
         }
     }
 }
