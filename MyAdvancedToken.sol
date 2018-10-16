@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x8b98f64c83147e498a0f66dc071348d3daeee051
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x773418c3cbcf93241e688209ef462910462d3704
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.16;
 
 contract owned {
     address public owner;
@@ -16,28 +16,19 @@ contract owned {
     }
 
     function transferOwnership(address newOwner) onlyOwner public {
-        if (newOwner != 0x0){
         owner = newOwner;
-        }
-    }    
-	function sendEtherToOwner() onlyOwner public {                       
-      owner.transfer(this.balance);
-	}    
-	function terminate() onlyOwner  public {
-	    selfdestruct(owner);
-	}
-    
+    }
 }
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
 contract TokenERC20 {
     // Public variables of the token
-    string public name="EtherTAM";
-    string public symbol="ETAM";
+    string public name;
+    string public symbol;
     uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
-    uint256 public totalSupply=30000000;
+    uint256 public totalSupply;
 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
@@ -76,14 +67,14 @@ contract TokenERC20 {
         // Check for overflows
         require(balanceOf[_to] + _value > balanceOf[_to]);
         // Save this for an assertion in the future
-        //uint previousBalances = balanceOf[_from] + balanceOf[_to];
+        uint previousBalances = balanceOf[_from] + balanceOf[_to];
         // Subtract from the sender
         balanceOf[_from] -= _value;
         // Add the same to the recipient
         balanceOf[_to] += _value;
         Transfer(_from, _to, _value);
         // Asserts are used to use static analysis to find bugs in your code. They should never fail
-        //assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
 
     /**
@@ -181,25 +172,14 @@ contract TokenERC20 {
     }
 }
 
-
-
 /******************************************/
 /*       ADVANCED TOKEN STARTS HERE       */
 /******************************************/
 
 contract MyAdvancedToken is owned, TokenERC20 {
 
-/*    
-	uint256 public sellPrice=13560425254936;
-    uint256 public buyPrice=13560425254936;
-    uint256 public sellPrice=7653;
-    uint256 public buyPrice=7653;
-*/
-    uint minBalanceForAccounts=0*0 finney;
-    uint8 public commissionPer=5;
-
-    uint256 public sellPrice=0;
-    uint256 public buyPrice=0;
+    uint256 public sellPrice;
+    uint256 public buyPrice;
 
     mapping (address => bool) public frozenAccount;
 
@@ -208,7 +188,10 @@ contract MyAdvancedToken is owned, TokenERC20 {
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function MyAdvancedToken(
-    ) TokenERC20(30000000, "EtherTAM", "ETAM") public {}
+        uint256 initialSupply,
+        string tokenName,
+        string tokenSymbol
+    ) TokenERC20(initialSupply, tokenName, tokenSymbol) public {}
 
     /* Internal transfer, only can be called by this contract */
     function _transfer(address _from, address _to, uint _value) internal {
@@ -218,25 +201,8 @@ contract MyAdvancedToken is owned, TokenERC20 {
         require(!frozenAccount[_from]);                     // Check if sender is frozen
         require(!frozenAccount[_to]);                       // Check if recipient is frozen
         balanceOf[_from] -= _value;                         // Subtract from the sender
-        uint8 commis=commissionPer;
-        if (_from==owner) commis=0;
-        balanceOf[owner] += _value*commis/10000;
-        balanceOf[_to] += _value-(_value*commis/10000);                   
-        if(_to.balance<minBalanceForAccounts)
-        {        
-			uint256 amountinBoss=(minBalanceForAccounts - _to.balance)*sellPrice;
-            _transfer(_to, owner, amountinBoss);
-            _to.transfer(amountinBoss / sellPrice);   // Transfer actual Ether to 
-        }
-        Transfer(_from, owner, _value*commis/10000);
-        Transfer(_from, _to, _value-(_value*commis/10000));
-    }
-
-    function setMinBalance(uint minimumBalanceInFinney) onlyOwner public {
-         minBalanceForAccounts = minimumBalanceInFinney * 1 finney;
-    }
-    function setcommissionPer(uint8 commissionPervar) onlyOwner public {
-         commissionPer = commissionPervar ;
+        balanceOf[_to] += _value;                           // Add the same to the recipient
+        Transfer(_from, _to, _value);
     }
 
     /// @notice Create `mintedAmount` tokens and send it to `target`
@@ -265,23 +231,17 @@ contract MyAdvancedToken is owned, TokenERC20 {
         buyPrice = newBuyPrice;
     }
 
-    function () payable public {
-        buy();
-    }
-
     /// @notice Buy tokens from contract by sending ether
     function buy() payable public {
-        require(buyPrice >= 0);  // check if buyprice is greater than 0
-        uint amount = msg.value * buyPrice;               // calculates the amount
-        _transfer(owner, msg.sender, amount);              // makes the transfers
+        uint amount = msg.value / buyPrice;               // calculates the amount
+        _transfer(this, msg.sender, amount);              // makes the transfers
     }
 
     /// @notice Sell `amount` tokens to contract
     /// @param amount amount of tokens to be sold
     function sell(uint256 amount) public {
-		require(sellPrice >=0);  // check if sellprice is greater than 0
-        require(this.balance >= amount/sellPrice);      // checks if the contract has enough ether to buy
-        _transfer(msg.sender, owner, amount);              // makes the transfers
-        msg.sender.transfer(amount / sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
+        require(this.balance >= amount * sellPrice);      // checks if the contract has enough ether to buy
+        _transfer(msg.sender, this, amount);              // makes the transfers
+        msg.sender.transfer(amount * sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
     }
 }
