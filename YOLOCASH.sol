@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YOLOCASH at 0x75073ce1612ff385028b6781866dfd6c5ce43a09
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YOLOCASH at 0x4f411afeea9ebb9bd6a821adc105078e7bd5e688
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.18;
 
 interface IERC20 {
     function totalSupply() constant returns (uint256 totalSupply);
@@ -62,10 +62,10 @@ library SafeMath {
 
 contract YOLOCASH is IERC20 {
     
-    uint public constant _totalSupply = 38888888000000000000000000;
+    uint public constant _totalSupply = 43888888000000000000000000;
 
     string public constant symbol = "YLC";
-    string public constant name = "YOLO CASH";
+    string public constant name = "YOLOCASH";
     uint8 public constant decimals = 18;
     
     mapping(address => uint256) balances;
