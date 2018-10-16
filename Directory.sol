@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Directory at 0x23724a2abb24bee745a6148246bd8de1a56fc56f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Directory at 0x04eadaa51c080391bf0c415420e2324b9a006848
 */
 pragma solidity ^0.4.15;
 
@@ -9,7 +9,6 @@ contract Directory {
         string company;
         string description;
         string category;
-        string contact;
         address ethAddress;
         uint256 timestamp;
         bool deprecated;
@@ -39,9 +38,9 @@ contract Directory {
         return true;
     }
 
-    function addEntry(string name, string company, string description, string category, string contact, address ethAddress) onlyOwner public returns (bool) {
+    function addEntry(string name, string company, string description, string category, address ethAddress) onlyOwner public returns (bool) {
         require(directory[ethAddress].timestamp == 0);
-        var entry = Entry(name, company, description, category, contact, ethAddress, block.timestamp, false);
+        var entry = Entry(name, company, description, category, ethAddress, block.timestamp, false);
         directory[ethAddress] = entry;
         entries.push(entry);
         return true;
@@ -75,16 +74,6 @@ contract Directory {
     function modifyDescriptionManual(uint256 index, address ethAddress, string description) onlyOwner indexMatches(index, ethAddress) public returns (bool) {
         entries[index].description = description;
         directory[ethAddress].description = description;
-        return true;
-    }
-
-    function modifyContact(address ethAddress, string contact) public returns (bool) {
-        return modifyDescriptionManual(findCurrentIndex(ethAddress), ethAddress, contact);
-    }
-
-    function modifyContactManual(uint256 index, address ethAddress, string contact) onlyOwner indexMatches(index, ethAddress) public returns (bool) {
-        entries[index].contact = contact;
-        directory[ethAddress].contact = contact;
         return true;
     }
 
