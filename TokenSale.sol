@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract tokensale at 0xed6c0654cd61de5b1355ae4e9d9c786005e9d5bd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract tokensale at 0x6994699c731dd7e389c209201ec51e8aff283bf9
 */
 pragma solidity ^0.4.10;
 
@@ -195,7 +195,9 @@ contract tokensale {
     uint256 public numberOfTokensLeft;
     uint256 public pricePerToken;
     uint256 public tokensFromPresale = 0;
+    uint256 public tokensFromPreviousTokensale = 0;
     uint8 public decimals = 2;
+    uint256 public withdrawLimit = 200000000000000000000;
     
     address public owner;
     string public name;
@@ -211,27 +213,25 @@ contract tokensale {
     
     mapping (uint256 => uint256) public dates;
     mapping (uint256 => uint256) public percents;
-    uint256 public numberOfDates = 8;
+    uint256 public numberOfDates = 7;
     
-    tokensale ps = tokensale(0xa67d97d75eE175e05BB1FB17529FD772eE8E9030);
+    tokensale pts = tokensale(0xED6c0654cD61De5b1355Ae4e9d9C786005e9D5BD);
     
     function tokensale(address tokenAddress, uint256 noOfTokens, uint256 prPerToken) {
         dates[0] = 1505520000;
-        dates[1] = 1506038400;
-        dates[2] = 1506124800;
-        dates[3] = 1506816000;
-        dates[4] = 1507420800;
-        dates[5] = 1508112000;
-        dates[6] = 1508630400;
-        dates[7] = 1508803200;
-        percents[0] = 35000;
-        percents[1] = 20000;
-        percents[2] = 10000;
-        percents[3] = 5000;
-        percents[4] = 2500;
-        percents[5] = 0;
+        dates[1] = 1506470400;
+        dates[2] = 1507161600;
+        dates[3] = 1507852800;
+        dates[4] = 1508544000;
+        dates[5] = 1508630400;
+        dates[6] = 1508803200;
+        percents[0] = 70000;
+        percents[1] = 40000;
+        percents[2] = 20000;
+        percents[3] = 10000;
+        percents[4] = 5000;
+        percents[5] = 9001;
         percents[6] = 9001;
-        percents[7] = 9001;
         token = Token(tokenAddress);
         numberOfTokens = noOfTokens * 100;
         totalSupply = noOfTokens * 100;
@@ -271,22 +271,38 @@ contract tokensale {
         }
     }
     
+    function withdraw(uint256 amount) {
+        if(msg.sender == owner) {
+            if(amount <= withdrawLimit) {
+                withdrawLimit-=amount;
+                if(!finalAddress.send(amount)) {
+                    throw;
+                }
+            } else {
+                throw;
+            }
+        } else {
+            throw;
+        }
+    }
+    
     function updatePresaleNumbers() {
         if(msg.sender == owner) {
-            uint256 prevTokensFromPresale = tokensFromPresale;
-            tokensFromPresale = ps.numberOfTokens() - ps.numberOfTokensLeft();
-            uint256 dif = tokensFromPresale - prevTokensFromPresale;
-            numberOfTokensLeft -= dif * 100;
+            uint256 prevTokensFromPreviousTokensale = tokensFromPreviousTokensale;
+            tokensFromPreviousTokensale = pts.numberOfTokens() - pts.numberOfTokensLeft();
+            uint256 diff = tokensFromPreviousTokensale - prevTokensFromPreviousTokensale;
+            numberOfTokensLeft -= diff * 2;
         } else {
             throw;
         }
     }
     
     function () payable {
-        uint256 prevTokensFromPresale = tokensFromPresale;
-        tokensFromPresale = ps.numberOfTokens() - ps.numberOfTokensLeft();
-        uint256 dif = tokensFromPresale - prevTokensFromPresale;
-        numberOfTokensLeft -= dif * 100;
+        uint256 prevTokensFromPreviousTokensale = tokensFromPreviousTokensale;
+        tokensFromPreviousTokensale = pts.numberOfTokens() - pts.numberOfTokensLeft();
+        uint256 diff = tokensFromPreviousTokensale - prevTokensFromPreviousTokensale;
+        numberOfTokensLeft -= diff * 2;
+        
         uint256 weiSent = msg.value * 100;
         if(weiSent==0) {
             throw;
