@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DigitizeCoin at 0xfa1ba7dbb7b20439e75ca45173cf45c95a9301ea
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DigitizeCoin at 0x664e6db4044f23c95de63ec299aaa9b39c59328d
 */
-pragma solidity ^0.4.21;
+pragma solidity 0.4.21;
 
 // ----------------------------------------------------------------------------
-// 'Digitize Coin - DTZ' token contract
+// 'Digitize Coin - DTZ' token contract: https://digitizecoin.com 
 //
 // Symbol      : DTZ
 // Name        : Digitize Coin
@@ -102,16 +102,16 @@ contract Ownable {
  * @dev Some ERC20 interface methods used in this contract
  */
 contract CutdownToken {
-    function balanceOf(address _who) public view returns (uint256);
-    function transfer(address _to, uint256 _value) public returns (bool);
-    function allowance(address _owner, address _spender) public view returns (uint256);
+  	function balanceOf(address _who) public view returns (uint256);
+  	function transfer(address _to, uint256 _value) public returns (bool);
+  	function allowance(address _owner, address _spender) public view returns (uint256);
 }
 
 /**
- * @title ApproveAndCallFallBack
+ * @title ApproveAndCallFallback
  * @dev Interface function called from `approveAndCall` notifying that the approval happened
  */
-contract ApproveAndCallFallBack {
+contract ApproveAndCallFallback {
     function receiveApproval(address _from, uint256 _amount, address _tokenContract, bytes _data) public returns (bool);
 }
 
@@ -285,13 +285,13 @@ contract DigitizeCoin is Ownable {
    * @param _value The amount of tokens to send
    * @param _data Extra data to be sent to the recipient contract function
    */
-  function approveAndCall(address _recipient, uint _value, bytes _data) public returns (bool) {
+  function approveAndCall(address _recipient, uint _value, bytes _data) canTransfer public returns (bool) {
     allowed[msg.sender][_recipient] = _value;
-    ApproveAndCallFallBack(_recipient).receiveApproval(msg.sender, _value, address(this), _data);
     emit ApproveAndCall(msg.sender, _recipient, _value, _data);
+    ApproveAndCallFallback(_recipient).receiveApproval(msg.sender, _value, address(this), _data);
     return true;
   }
-  
+
   /**
    * @dev Burns a specific amount of tokens.
    * @param _value The amount of token to be burned.
@@ -338,19 +338,19 @@ contract DigitizeCoin is Ownable {
 
   /**
    * @dev Allows to transfer out the balance of arbitrary ERC20 tokens from the contract.
-   * @param _tokenContract The contract address of the ERC20 token.
+   * @param _token The contract address of the ERC20 token.
    */
-  function withdrawERC20Tokens(address _tokenContract) onlyOwner public {
-    CutdownToken token = CutdownToken(_tokenContract);
-    uint256 totalBalance = token.balanceOf(address(this));
-    token.transfer(owner, totalBalance);
-    emit WithdrawnERC20Tokens(_tokenContract, owner, totalBalance);
+  function withdrawERC20Tokens(CutdownToken _token) onlyOwner public {
+    uint256 totalBalance = _token.balanceOf(address(this));
+    require(totalBalance > 0);
+    _token.transfer(owner, totalBalance);
+    emit WithdrawnERC20Tokens(address(_token), owner, totalBalance);
   }
 
   /**
    * @dev Allows to transfer out the ether balance that was forced into this contract, e.g with `selfdestruct`
    */
-  function withdrawEther() public onlyOwner {
+  function withdrawEther() onlyOwner public {
     uint256 totalBalance = address(this).balance;
     require(totalBalance > 0);
     owner.transfer(totalBalance);
