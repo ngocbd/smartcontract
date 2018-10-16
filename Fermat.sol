@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fermat at 0xdfab9f43f279bd8bd87026b84105c5d1543ae99e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fermat at 0x21b7637f29e2476c3d540219d8ab8b85b114c2b1
 */
 pragma solidity ^0.4.18;
 
@@ -61,7 +61,7 @@ contract Fermat {
      * If the caller is able to provide satisfying values for a,b,c and n
      * the balance of the contract (the bounty) is transferred to the caller
     */
-    function claim(int256 a, int256 b, int256 c, int256 n) public {
+    function claim(uint256 a, uint256 b, uint256 c, uint256 n) public {
         uint256 value = solve(a, b, c, n);
         if (value == 0) {
             msg.sender.transfer(this.balance);
@@ -75,7 +75,7 @@ contract Fermat {
      * Calculates the equation with provided values for Fermat's last theorem.
      * Returns the value of a^n + b^n - c^n, n > 2
      */
-    function solve(int256 a, int256 b, int256 c, int256 n) pure public returns (uint256) {
+    function solve(uint256 a, uint256 b, uint256 c, uint256 n) pure public returns (uint256) {
         assert(n > 2);
         assert(a > 0);
         assert(b > 0);
@@ -92,16 +92,18 @@ contract Fermat {
     /*
      A safe way to handle exponentiation. Throws error on overflow.
     */
-    function power(int256 a, int256 pow)  pure public returns (uint256) {
-        assert(a >= 0);
-        assert(pow >= 0);
-        int256 result = 1;
-        if(a == 0) {
+    function power(uint256 a, uint256 pow) pure public returns (uint256) {
+        assert(a > 0);
+        assert(pow > 0);
+        uint256 result = 1;
+        if (a == 0) {
             return 1;
         }
-        for (int256 i = 0; i < pow; i++) {
-            result = result * a;
-            assert(result >= a);
+        uint256 temp;
+        for (uint256 i = 0; i < pow; i++) {
+            temp = result * a;
+            assert((temp / a) == result);
+            result = temp;
         }
         return uint256(result);
     }
