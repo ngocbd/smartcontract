@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SingularDTVToken at 0xe8c881422ca4c2ab9a9bc9d58e75178e0e28eed5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SingularDTVToken at 0x2beb8f4e07fba87f36ffd05c301ff29a3e380311
 */
 pragma solidity ^0.4.15;
 
