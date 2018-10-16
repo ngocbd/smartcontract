@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x4289c043A12392F1027307fB58272D8EBd853912
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x55345ba1CF943ccf7eD988D42b1c309BB80c112E
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
@@ -9,7 +9,7 @@ contract TokenERC20 {
     // Public variables of the token
     string public name;
     string public symbol;
-    uint8 public decimals = 18;
+    uint8 public decimals = 0;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
 
