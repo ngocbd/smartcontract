@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BNTToken at 0x736695bdc678c2a661109a61b8c57b333103d035
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BNTToken at 0x912e73f5886edc24657d245ab7608cebcf40d1dc
 */
 pragma solidity ^0.4.16;
 contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
@@ -9,7 +9,7 @@ contract BNTToken {
     string public standard = 'Token 1.1';
     string public name = 'BeniNiciThomasToken';
     string public symbol = 'BNTT';
-    uint8 public decimals = 0;
+    uint8 public decimals = 4;
     uint256 public totalSupply = 10000;
 
     /* Creates an array with all balances */
