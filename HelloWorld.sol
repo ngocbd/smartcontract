@@ -1,10 +1,23 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HelloWorld at 0x7aaf7d5de5ce40b27b4ba8b4dab461b89509bec3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HelloWorld at 0xc4c89dd46524c6f704e92a9cd012a3ebadadff36
 */
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.0;
 
 contract HelloWorld {
-
-  string public helloWorld = "Matthieu HOURDEBAIGT";
-
+    address public owner;
+    
+    modifier onlyOwner() { require(msg.sender == owner); _; }
+    
+    constructor() public {
+        owner = msg.sender;
+    }
+    
+    function salutaAndonio() public pure returns(bytes32 hw) {
+        hw = "HelloWorld";
+    }
+    
+    function killMe() public onlyOwner {
+        selfdestruct(owner);
+    }
+    
 }
