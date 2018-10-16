@@ -1,64 +1,137 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hodl at 0xE5b340F7E4b11eAE96D7047e8Bc9322f96093402
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hodl at 0xf157f2232909106744caea2c3ddc8f0208be3e16
 */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+pragma solidity ^0.4.11;
+
+pragma solidity ^0.4.11;
+
+interface IERC20 {
+    function totalSupply() constant returns (uint256 totalSupply);
+    function balanceOf(address _owner) constant returns (uint256 balance);
+    function transfer(address _to, uint256 _value) returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+    function approve(address _spender, uint256 _value) returns (bool success);
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
+pragma solidity ^0.4.11;
 
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
-
-contract Hodl {
-
-    mapping(address => mapping(address => uint)) private amounts;
-    mapping(address => mapping(address => uint)) private timestamps;
-
-    event Hodling(address indexed sender, address indexed tokenAddress, uint256 amount);
-    event TokenReturn(address indexed sender, address indexed tokenAddress, uint256 amount);
-
-    function hodlTokens(address tokenAddress, uint256 amount, uint timestamp) public {
-        assert(tokenAddress != address(0));
-        assert(amount != uint256(0));
-        assert(timestamp != uint(0));
-        assert(amounts[msg.sender][tokenAddress] == 0);
-
-        amounts[msg.sender][tokenAddress] = amount;
-        timestamps[msg.sender][tokenAddress] = timestamp;
-
-        ERC20 erc20 = ERC20(tokenAddress);
-        assert(erc20.transferFrom(msg.sender, this, amount) == true);
-
-        Hodling(msg.sender, tokenAddress, amount);
+contract Hodl is IERC20 {
+    
+    using SafeMath for uint256;
+    
+    uint public _totalSupply = 0;
+    
+    string public constant symbol = "HODL";
+    string public constant name = "Hodl";
+    uint8 public constant decimals = 18;
+    
+    uint256 public constant RATE = 500;
+    
+    address public owner;
+    
+    mapping(address => uint256) balances;
+    mapping(address => mapping(address =>uint256)) allowed;
+    
+    function () payable {
+        createTokens();
+    }
+    
+   function Hodl() {
+       owner = msg.sender;
+   }
+    
+    function createTokens() payable {
+        require(msg.value > 0);
+        
+        uint256 tokens = msg.value.mul(RATE);
+        balances[msg.sender] = balances [msg.sender].add(tokens);
+        _totalSupply = _totalSupply.add(tokens);
+        owner.transfer(msg.value);
+    }
+    
+    function totalSupply() constant returns (uint256 totalSupply) {
+        return _totalSupply;
     }
 
-    function getTokens(address tokenAddress) public {
-        assert(tokenAddress != address(0));
-        assert(amounts[msg.sender][tokenAddress] > 0);
-        assert(now >= timestamps[msg.sender][tokenAddress]);
+    function balanceOf(address _owner) constant returns (uint256 balance) {
 
-        ERC20 erc20 = ERC20(tokenAddress);
-        uint256 amount = amounts[msg.sender][tokenAddress];
+        return balances[_owner];
+        
+    }
+    
+     function transfer(address _to, uint256 _value) returns (bool success) {
+        
+        require(
+            balances[msg.sender] >= _value
+            && _value > 0
+            ); 
+            
+            balances[msg.sender] = balances[msg.sender].sub(_value);
+            balances[_to] = balances[_to].add(_value);
+            Transfer(msg.sender, _to, _value);
+            return true;
+        }
+     
 
-        delete amounts[msg.sender][tokenAddress];
-        delete timestamps[msg.sender][tokenAddress];
-        assert(erc20.transfer(msg.sender, amount) == true);
-
-        TokenReturn(msg.sender, tokenAddress, amount);
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success){
+        require(
+            allowed[_from][msg.sender] >= _value
+            && balances[_from] >= _value
+            && _value > 0
+        );
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        Transfer(_from, _to, _value);
+        return true;
+    }     
+              
+    function approve(address _spender, uint256 _value) returns (bool success) {
+     
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+        
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining){
+        return allowed [_owner][_spender];
+        
     }
 
-    function getTimestamp(address tokenAddress) public view returns (uint) {
-        return timestamps[msg.sender][tokenAddress];
-    }
 
-    function getAmount(address tokenAddress) public view returns (uint256) {
-        return amounts[msg.sender][tokenAddress];
-    }
-
+    
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
