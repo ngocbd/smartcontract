@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GetDecimals at 0xb4acba572fd7e69955dabb1ba4bfff89931fb0b6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GetDecimals at 0x7bfd2c0b917c1154aa3af1e85e1632f038950fd5
 */
 pragma solidity ^0.4.23;
 
@@ -16,23 +16,6 @@ contract GetDecimals {
         }
         else {
             return token.decimals();
-        }
-    }
-    
-    function getDecimalsBetter(ERC20 token) external view returns(uint) {
-        bytes memory data = abi.encodeWithSignature("decimals()");
-        uint[1] memory value;
-        if(!address(token).call(data)) {
-            // call failed
-            return 18;
-        }
-        else {
-            assembly {
-                returndatacopy(value,0,returndatasize)
-                
-            }
-            
-            return value[0];
         }
     }
     
