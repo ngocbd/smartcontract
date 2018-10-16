@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReimburseToken at 0xb939c757bdfc75e28e1ae2b8c1a4640180b6087e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReimburseToken at 0xcc3f8d66bedA1aDd3EFAFd81715308c2E54fB68D
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.16;
 
 contract owned {
     address public owner;
@@ -22,20 +22,20 @@ contract owned {
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
-contract ReimburseToken is owned{
-    // Public variables
+contract ReimburseToken {
+    // Public variables of the token
     string public name;
     string public symbol;
     uint8 public decimals = 18;
+    // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
 
-    // Balances array
+    // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
 
-    //ERC20 events
+    // This generates a public event on the blockchain that will notify clients
     event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
     /**
      * Constrctor function
@@ -43,28 +43,20 @@ contract ReimburseToken is owned{
      * Initializes contract with initial supply tokens to the creator of the contract
      */
     function ReimburseToken(
-        uint256 initialSupply
+        uint256 initialSupply,
+        string tokenName,
+        string tokenSymbol
     ) public {
-        totalSupply = initialSupply * 10 ** uint256(decimals);
-        balanceOf[msg.sender] = totalSupply;
-        name = "Reimburse Token"; 
-        symbol = "REIM";
-        decimals = 18;
-    }
-
-    /**
-     * ERC20 balance function
-     */
-    function balanceOf(address _owner) public constant returns (uint256 balance) {
-        return balanceOf[_owner];
+        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
+        name = tokenName;                                   // Set the name for display purposes
+        symbol = tokenSymbol;                               // Set the symbol for display purposes
     }
 
     /**
      * Internal transfer, only can be called by this contract
      */
     function _transfer(address _from, address _to, uint _value) internal {
-        // Check if the sender has enough
-        require(balanceOf[_from] >= _value);
         // Prevent transfer to 0x0 address. Use burn() instead
         require(_to != 0x0);
         // Check if the sender has enough
@@ -79,8 +71,6 @@ contract ReimburseToken is owned{
         balanceOf[_to] += _value;
         Transfer(_from, _to, _value);
         // Asserts are used to use static analysis to find bugs in your code. They should never fail
-        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
-        // Failsafe logic that should never be false
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
 
@@ -112,53 +102,29 @@ contract ReimburseToken is owned{
         return true;
     }
 
-    /**
-     * Set allowance for other address
-     *
-     * Allows `_spender` to spend no more than `_value` tokens on your behalf
-     *
-     * @param _spender the address authorized to spend
-     * @param _value the max amount they can spend
-     */
-    function approve(address _spender, uint256 _value) public returns (bool success) {
-        
-        allowance[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    /**
-     * Set allowance for other address and notify
-     *
-     * Allows `_spender` to spend no more than `_value` tokens on your behalf, and then ping the contract about it
-     *
-     * @param _spender the address authorized to spend
-     * @param _value the max amount they can spend
-     * @param _extraData some extra information to send to the approved contract
-     */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) public returns (bool success) {
-        tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
-        }
-    }
-
 }
 
-contract AdvReimburseToken is owned, ReimburseToken {
+contract MyAdvancedReimburseToken is owned, ReimburseToken {
 
+    mapping (address => bool) public frozenAccount;
+
+    /* This generates a public event on the blockchain that will notify clients */
+    event FrozenFunds(address target, bool frozen);
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function AdvReimburseToken(
-        uint256 initialSupply
-    ) ReimburseToken(initialSupply) public {}
+    function MyAdvancedReimburseToken(
+        uint256 initialSupply,
+        string tokenName,
+        string tokenSymbol
+    ) ReimburseToken(initialSupply, tokenName, tokenSymbol) public {}
 
     /* Internal transfer, only can be called by this contract */
     function _transfer(address _from, address _to, uint _value) internal {
         require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
         require (balanceOf[_from] >= _value);               // Check if the sender has enough
         require (balanceOf[_to] + _value > balanceOf[_to]); // Check for overflows
+        require(!frozenAccount[_from]);                     // Check if sender is frozen
+        require(!frozenAccount[_to]);                       // Check if recipient is frozen
         balanceOf[_from] -= _value;                         // Subtract from the sender
         balanceOf[_to] += _value;                           // Add the same to the recipient
         Transfer(_from, _to, _value);
@@ -173,5 +139,6 @@ contract AdvReimburseToken is owned, ReimburseToken {
         Transfer(0, this, mintedAmount);
         Transfer(this, target, mintedAmount);
     }
+
 
 }
