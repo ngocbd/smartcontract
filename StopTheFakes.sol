@@ -1,12 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StopTheFakes at 0x64be6b77cc723e5518687a04b4e62824e89fd8bb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StopTheFakes at 0x8c765ca0d33f5812d03a30c424edac013bd0e406
 */
 pragma solidity ^0.4.18;
 
 /**
  * Welcome to the Telegram chat https://devsolidity.io/
  */
-
 
 /**
  * @title SafeMath
@@ -39,63 +38,15 @@ library SafeMath {
   }
 }
 
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
- */
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
-
-  mapping(address => uint256) balances;
-
-  uint256 totalSupply_;
-
-  /**
-  * @dev total number of tokens in existence
-  */
-  function totalSupply() public view returns (uint256) {
-    return totalSupply_;
-  }
-
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[msg.sender]);
-
-    // SafeMath.sub will throw if there is not enough balance.
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) public view returns (uint256 balance) {
-    return balances[_owner];
-  }
-
+contract Token {
+    uint256 public totalSupply;
+    function balanceOf(address who) public constant returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+    function allowance(address owner, address spender) public constant returns (uint256);
+    function transferFrom(address from, address to, uint256 value) public returns (bool);
+    function approve(address spender, uint256 value) public returns (bool);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 /**
@@ -149,10 +100,33 @@ contract Pausable is Ownable {
 
 }
 
+contract StandardToken is Token, Pausable {
+    using SafeMath for uint256;
+    mapping (address => mapping (address => uint256)) internal allowed;
 
-contract StandardToken is ERC20, BasicToken {
- using SafeMath for uint256;
- mapping (address => mapping (address => uint256)) internal allowed;
+  mapping(address => uint256) balances;
+
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
+    require(_to != address(0));
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public constant returns (uint256 balance) {
+    return balances[_owner];
+  }
 
 
   /**
@@ -161,9 +135,8 @@ contract StandardToken is ERC20, BasicToken {
    * @param _to address The address which you want to transfer to
    * @param _value uint256 the amount of tokens to be transferred
    */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+  function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
     require(_to != address(0));
-    require(_value <= balances[_from]);
     require(_value <= allowed[_from][msg.sender]);
 
     balances[_from] = balances[_from].sub(_value);
@@ -195,37 +168,23 @@ contract StandardToken is ERC20, BasicToken {
    * @param _spender address The address which will spend the funds.
    * @return A uint256 specifying the amount of tokens still available for the spender.
    */
-  function allowance(address _owner, address _spender) public view returns (uint256) {
+  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
     return allowed[_owner][_spender];
   }
 
   /**
-   * @dev Increase the amount of tokens that an owner allowed to a spender.
-   *
    * approve should be called when allowed[_spender] == 0. To increment
    * allowed value is better to use this function to avoid 2 calls (and wait until
    * the first transaction is mined)
    * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _addedValue The amount of tokens to increase the allowance by.
    */
-  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+  function increaseApproval (address _spender, uint _addedValue) public returns (bool success) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
     Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
-  /**
-   * @dev Decrease the amount of tokens that an owner allowed to a spender.
-   *
-   * approve should be called when allowed[_spender] == 0. To decrement
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _subtractedValue The amount of tokens to decrease the allowance by.
-   */
-  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+  function decreaseApproval (address _spender, uint _subtractedValue) public returns (bool success) {
     uint oldValue = allowed[msg.sender][_spender];
     if (_subtractedValue > oldValue) {
       allowed[msg.sender][_spender] = 0;
@@ -238,34 +197,7 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-/**
- * @title Pausable token
- * @dev StandardToken modified with pausable transfers.
- **/
-contract PausableToken is StandardToken, Pausable {
-
-  function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
-    return super.transfer(_to, _value);
-  }
-
-  function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
-    return super.transferFrom(_from, _to, _value);
-  }
-
-  function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
-    return super.approve(_spender, _value);
-  }
-
-  function increaseApproval(address _spender, uint _addedValue) public whenNotPaused returns (bool success) {
-    return super.increaseApproval(_spender, _addedValue);
-  }
-
-  function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool success) {
-    return super.decreaseApproval(_spender, _subtractedValue);
-  }
-}
-
-contract StopTheFakes is PausableToken {
+contract StopTheFakes is StandardToken {
 
     string public constant name = "STFCoin";
     string public constant symbol = "STF";
@@ -276,7 +208,7 @@ contract StopTheFakes is PausableToken {
     uint256 public constant INITIAL_SUPPLY = 29000000 ether;
 
     function StopTheFakes(address tokenOwner, uint _endDate) {
-        totalSupply_ = INITIAL_SUPPLY;
+        totalSupply = INITIAL_SUPPLY;
         balances[teamWallet] = 7424000 ether;
         balances[tokenOwner] = INITIAL_SUPPLY - balances[teamWallet];
         endDate = _endDate;
@@ -285,12 +217,11 @@ contract StopTheFakes is PausableToken {
         Transfer(0x0, tokenOwner, balances[tokenOwner]);
     }
 
-    function sendTokens(address _to, uint _value) public onlyOwner {
-        require(_to != address(0));
-        require(_value <= balances[tokenWallet]);
-        balances[tokenWallet] = balances[tokenWallet].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        Transfer(tokenWallet, _to, _value);
+    function sendTokens(address _to, uint _amount) external onlyOwner {
+        require(_amount <= balances[tokenWallet]);
+        balances[tokenWallet] -= _amount;
+        balances[_to] += _amount;
+        Transfer(tokenWallet, msg.sender, _amount);
     }
 
 }
