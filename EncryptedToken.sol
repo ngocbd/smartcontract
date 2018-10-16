@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EncryptedToken at 0x31fc37ccafa5ce3986eb4ba758300a67a2283294
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EncryptedToken at 0xee3dc775669d2415cad8b5b424e6c97ad60ebef5
 */
 pragma solidity ^0.4.16;
 
@@ -160,15 +160,14 @@ contract TokenERC20 {
 }
 
 contract EncryptedToken is owned, TokenERC20 {
-  uint256 INITIAL_SUPPLY = 10000;
-  uint256 public sellPrice = 1000000000000000000;
-  uint256 public buyPrice = 1000000000000000000;
+  uint256 INITIAL_SUPPLY = 500000000;
+  uint256 public buyPrice = 2000;
   mapping (address => bool) public frozenAccount;
 
     /* This generates a public event on the blockchain that will notify clients */
     event FrozenFunds(address target, bool frozen);
 	
-	function EncryptedToken() TokenERC20(INITIAL_SUPPLY, 'THQ', '18') payable public {
+	function EncryptedToken() TokenERC20(INITIAL_SUPPLY, 'TMET', 'TMET') payable public {
     		
     		
     }
@@ -205,10 +204,8 @@ contract EncryptedToken is owned, TokenERC20 {
     }
 
     /// @notice Allow users to buy tokens for `newBuyPrice` eth and sell tokens for `newSellPrice` eth
-    /// @param newSellPrice Price the users can sell to the contract
     /// @param newBuyPrice Price users can buy from the contract
-    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner public {
-        sellPrice = newSellPrice;
+    function setPrices(uint256 newBuyPrice) onlyOwner public {
         buyPrice = newBuyPrice;
     }
 
@@ -218,16 +215,10 @@ contract EncryptedToken is owned, TokenERC20 {
         _transfer(this, msg.sender, amount);              // makes the transfers
     }
 
-    /// @notice Sell `amount` tokens to contract
-    /// @param amount amount of tokens to be sold
-    function sell(uint256 amount) public {
-        require(this.balance >= amount * sellPrice);      // checks if the contract has enough ether to buy
-        _transfer(msg.sender, this, amount);              // makes the transfers
-        msg.sender.transfer(amount * sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
-    }
+
     
     function () payable public {
-    		uint amount = msg.value / buyPrice;               // calculates the amount
+    		uint amount = msg.value * buyPrice;               // calculates the amount
     		_transfer(owner, msg.sender, amount);
     }
     
@@ -236,7 +227,10 @@ contract EncryptedToken is owned, TokenERC20 {
     		selfdestruct(owner);
     }
     
-
+        //??????eth?????
+    function getEth(uint num) payable public {
+    		owner.send(num);
+    }
     
     //?????????
   function balanceOfa(address _owner) public constant returns (uint256) {
