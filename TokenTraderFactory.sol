@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTraderFactory at 0x21139f0a1afc136989de119d75534e1eeae4f9ef
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTraderFactory at 0xa9f801f160fe6a866dd3404599350abbcaa95274
 */
 pragma solidity ^0.4.4;
 
@@ -13,7 +13,19 @@ pragma solidity ^0.4.4;
 // directly as the token does not implement the ERC20
 // transferFrom(...), approve(...) and allowance(...) methods
 //
-// Enjoy. (c) JonnyLatte & BokkyPooBah 2016. The MIT licence.
+// History:
+//   Jan 25 2017 - BPB Added makerTransferAsset(...) and
+//                     makerTransferEther(...)
+//   Feb 05 2017 - BPB Bug fix in the change calculation for the Unicorn
+//                     token with natural number 1
+//   Feb 08 2017 - BPB/JL Renamed etherValueOfTokensToSell to
+//                     amountOfTokensToSell in takerSellAsset(...) to
+//                     better describe the parameter
+//                     Added check in createTradeContract(...) to prevent
+//                     GNTs from being used with this contract. The asset
+//                     token will need to have an allowance(...) function.
+//
+// Enjoy. (c) JonnyLatte & BokkyPooBah 2017. The MIT licence.
 // ------------------------------------------------------------------------
 
 // https://github.com/ethereum/EIPs/issues/20
@@ -41,6 +53,11 @@ contract Owned {
         _;
     }
 
+    modifier onlyOwnerOrTokenTraderWithSameOwner {
+        if (msg.sender != owner && TokenTrader(msg.sender).owner() != owner) throw;
+        _;
+    }
+
     function transferOwnership(address newOwner) onlyOwner {
         OwnershipTransferred(owner, newOwner);
         owner = newOwner;
@@ -63,11 +80,13 @@ contract TokenTrader is Owned {
     event ActivatedEvent(bool buys, bool sells);
     event MakerDepositedEther(uint256 amount);
     event MakerWithdrewAsset(uint256 tokens);
+    event MakerTransferredAsset(address toTokenTrader, uint256 tokens);
     event MakerWithdrewERC20Token(address tokenAddress, uint256 tokens);
     event MakerWithdrewEther(uint256 ethers);
+    event MakerTransferredEther(address toTokenTrader, uint256 ethers);
     event TakerBoughtAsset(address indexed buyer, uint256 ethersSent,
         uint256 ethersReturned, uint256 tokensBought);
-    event TakerSoldAsset(address indexed seller, uint256 etherValueOfTokensToSell,
+    event TakerSoldAsset(address indexed seller, uint256 amountOfTokensToSell,
         uint256 tokensSold, uint256 etherValueOfTokensSold);
 
     // Constructor - only to be called by the TokenTraderFactory contract
@@ -78,7 +97,7 @@ contract TokenTrader is Owned {
         uint256 _units,
         bool    _buysTokens,
         bool    _sellsTokens
-    ) internal {
+    ) {
         asset       = _asset;
         buyPrice    = _buyPrice;
         sellPrice   = _sellPrice;
@@ -117,13 +136,16 @@ contract TokenTrader is Owned {
     // MUST use the takerSellAsset() method to sell asset tokens
     // to this contract
     //
+    // Maker can also transfer ethers from one TokenTrader contract
+    // to another TokenTrader contract, both owned by the Maker
+    //
     // The MakerDepositedEther() event is logged with the following
     // parameter:
     //   ethers  is the number of ethers deposited by the maker
     //
     // This method was called deposit() in the old version
     //
-    function makerDepositEther() payable onlyOwner {
+    function makerDepositEther() payable onlyOwnerOrTokenTraderWithSameOwner {
         MakerDepositedEther(msg.value);
     }
 
@@ -140,6 +162,32 @@ contract TokenTrader is Owned {
     function makerWithdrawAsset(uint256 tokens) onlyOwner returns (bool ok) {
         MakerWithdrewAsset(tokens);
         return ERC20(asset).transfer(owner, tokens);
+    }
+
+    // Maker can transfer asset tokens from this contract to another
+    // TokenTrader contract, with the following parameter:
+    //   toTokenTrader  Another TokenTrader contract owned by the
+    //                  same owner and with the same asset
+    //   tokens         is the number of asset tokens to be moved
+    //
+    // The MakerTransferredAsset() event is logged with the following
+    // parameters:
+    //   toTokenTrader  The other TokenTrader contract owned by
+    //                  the same owner and with the same asset
+    //   tokens         is the number of tokens transferred
+    //
+    // The asset Transfer() event is also logged from this contract
+    // to the other contract
+    //
+    function makerTransferAsset(
+        TokenTrader toTokenTrader,
+        uint256 tokens
+    ) onlyOwner returns (bool ok) {
+        if (owner != toTokenTrader.owner() || asset != toTokenTrader.asset()) {
+            throw;
+        }
+        MakerTransferredAsset(toTokenTrader, tokens);
+        return ERC20(asset).transfer(toTokenTrader, tokens);
     }
 
     // Maker can withdraw any ERC20 asset tokens from this contract
@@ -176,6 +224,34 @@ contract TokenTrader is Owned {
         }
     }
 
+    // Maker can transfer ethers from this contract to another TokenTrader
+    // contract, with the following parameters:
+    //   toTokenTrader  Another TokenTrader contract owned by the
+    //                  same owner and with the same asset
+    //   ethers         is the number of ethers to be moved
+    //
+    // The MakerTransferredEther() event is logged with the following parameter
+    //   toTokenTrader  The other TokenTrader contract owned by the
+    //                  same owner and with the same asset
+    //   ethers         is the number of ethers transferred
+    //
+    // The MakerDepositedEther() event is logged on the other
+    // contract with the following parameter:
+    //   ethers  is the number of ethers deposited by the maker
+    //
+    function makerTransferEther(
+        TokenTrader toTokenTrader,
+        uint256 ethers
+    ) onlyOwner returns (bool ok) {
+        if (owner != toTokenTrader.owner() || asset != toTokenTrader.asset()) {
+            throw;
+        }
+        if (this.balance >= ethers) {
+            MakerTransferredEther(toTokenTrader, ethers);
+            toTokenTrader.makerDepositEther.value(ethers)();
+        }
+    }
+
     // Taker buys asset tokens by sending ethers
     //
     // The TakerBoughtAsset() event is logged with the following parameters
@@ -189,16 +265,20 @@ contract TokenTrader is Owned {
     //
     function takerBuyAsset() payable {
         if (sellsTokens || msg.sender == owner) {
+            // Note that sellPrice has already been validated as > 0
             uint order    = msg.value / sellPrice;
+            // Note that units has already been validated as > 0
             uint can_sell = ERC20(asset).balanceOf(address(this)) / units;
             uint256 change = 0;
-            if (order > can_sell) {
-                change = msg.value - (can_sell * sellPrice);
+            if (msg.value > (can_sell * sellPrice)) {
+                change  = msg.value - (can_sell * sellPrice);
                 order = can_sell;
+            }
+            if (change > 0) {
                 if (!msg.sender.send(change)) throw;
             }
             if (order > 0) {
-                if(!ERC20(asset).transfer(msg.sender, order * units)) throw;
+                if (!ERC20(asset).transfer(msg.sender, order * units)) throw;
             }
             TakerBoughtAsset(msg.sender, msg.value, change, order * units);
         }
@@ -215,29 +295,31 @@ contract TokenTrader is Owned {
     //                        by the taker
     //
     // The TakerSoldAsset() event is logged with the following parameters
-    //   seller                    is the seller's address
-    //   etherValueOfTokensToSell  is the ether value of the asset tokens being
-    //                             sold by the taker
-    //   tokensSold                is the number of the asset tokens sold
-    //   etherValueOfTokensSold    is the ether value of the asset tokens sold
+    //   seller                  is the seller's address
+    //   amountOfTokensToSell    is the amount of the asset tokens being
+    //                           sold by the taker
+    //   tokensSold              is the number of the asset tokens sold
+    //   etherValueOfTokensSold  is the ether value of the asset tokens sold
     //
     // This method was called sell() in the old version
     //
-    function takerSellAsset(uint256 etherValueOfTokensToSell) {
+    function takerSellAsset(uint256 amountOfTokensToSell) {
         if (buysTokens || msg.sender == owner) {
             // Maximum number of token the contract can buy
+            // Note that buyPrice has already been validated as > 0
             uint256 can_buy = this.balance / buyPrice;
             // Token lots available
-            uint256 order = etherValueOfTokensToSell / units;
+            // Note that units has already been validated as > 0
+            uint256 order = amountOfTokensToSell / units;
             // Adjust order for funds available
             if (order > can_buy) order = can_buy;
             if (order > 0) {
                 // Extract user tokens
-                if(!ERC20(asset).transferFrom(msg.sender, address(this), order * units)) throw;
+                if (!ERC20(asset).transferFrom(msg.sender, address(this), order * units)) throw;
                 // Pay user
-                if(!msg.sender.send(order * buyPrice)) throw;
+                if (!msg.sender.send(order * buyPrice)) throw;
             }
-            TakerSoldAsset(msg.sender, etherValueOfTokensToSell, order * units, order * buyPrice);
+            TakerSoldAsset(msg.sender, amountOfTokensToSell, order * units, order * buyPrice);
         }
     }
 
@@ -334,12 +416,20 @@ contract TokenTraderFactory is Owned {
         bool    buysTokens,
         bool    sellsTokens
     ) returns (address trader) {
+        // Cannot have invalid asset
+        if (asset == 0x0) throw;
+        // Check for ERC20 allowance function
+        // This will throw an error if the allowance function
+        // is undefined to prevent GNTs from being used
+        // with this factory
+        uint256 allowance = ERC20(asset).allowance(msg.sender, this);
         // Cannot set zero or negative price
         if (buyPrice <= 0 || sellPrice <= 0) throw;
         // Must make profit on spread
         if (buyPrice >= sellPrice) throw;
         // Cannot buy or sell zero or negative units
         if (units <= 0) throw;
+
         trader = new TokenTrader(
             asset,
             buyPrice,
