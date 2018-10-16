@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RepuX at 0x53fe31c819e26923195c31f2f476ba7b13988198
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RepuX at 0x35516eddadb9a3b88e43ebcd271a56c130ea41b6
 */
 pragma solidity ^0.4.8;
 
@@ -185,7 +185,7 @@ contract StandardToken is ERC20, BasicToken {
 // Smart contract for the RepuX token & the first crowdsale
 contract RepuX is StandardToken, Ownable {
     string public constant name = "RepuX";
-    string public constant symbol = "REPUX";
+    string public constant symbol = "RPX";
     uint256 public constant decimals = 18;
     address public multisig; //multisig wallet, to which all contributions will be sent
 
