@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICOBuyer at 0x8D8Ff7EA7015326d7fef637e4e9461207c8ff412
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICOBuyer at 0x18d70bd7bdfa7e424271fe25b527ee0250db5c90
 */
 pragma solidity ^0.4.11;
 
@@ -68,6 +68,7 @@ contract ICOBuyer is Ownable {
 
   // Contract allows Ether to be paid into it
   // Contract allows tokens / Ether to be extracted only to owner account
+  // Contract allows executor address or owner address to trigger ICO purtchase
 
   //Notify on economic events
   event EtherReceived(address indexed _contributor, uint256 _amount);
@@ -111,7 +112,7 @@ contract ICOBuyer is Ownable {
     purchaseCap = _purchaseCap;
   }
 
-  function changeCrowdSale(address _crowdSale) onlyExecutorOrOwner {
+  function changeCrowdSale(address _crowdSale) onlyOwner {
     crowdSale = _crowdSale;
     CrowdSaleChanged(crowdSale);
   }
@@ -131,7 +132,7 @@ contract ICOBuyer is Ownable {
     ICOStartTimeChanged(icoStartTime);
   }
 
-  function changePurchaseCap(uint256 _purchaseCap) onlyExecutorOrOwner {
+  function changePurchaseCap(uint256 _purchaseCap) onlyOwner {
     purchaseCap = _purchaseCap;
     PurchaseCapChanged(purchaseCap);
   }
