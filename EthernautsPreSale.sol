@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthernautsPreSale at 0xcc37c96cd50b4ceaecc9fcea880d545f093ad3ef
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthernautsPreSale at 0xf0a45032fa69c968489f219d732cc6bacbaf7e55
 */
 pragma solidity ^0.4.19;
 
@@ -1074,6 +1074,14 @@ contract EthernautsPreSale is EthernautsLogic {
         bonus = _bonus;
     }
 
+    function setBuyer(uint256 _tokenId, address _buyer) public onlyCLevel whenPaused {
+        tokenToBuyer[_tokenId] = _buyer;
+    }
+
+    function setLastPrice(uint256 _tokenId, uint256 _lastPrice) public onlyCLevel whenPaused {
+        tokenToLastPrice[_tokenId] = _lastPrice;
+    }
+
     function setTokensWave(uint256 _wave, uint256[10] _tokens) public onlyCLevel {
         for (uint256 i = 0; i < _tokens.length; i++) {
             if (_tokens[i] > 0) {
@@ -1132,13 +1140,14 @@ contract EthernautsPreSale is EthernautsLogic {
         uint256 newPrice = SafeMath.div(SafeMath.mul(sellingPrice, bonus[_wave]), percBase);
 
         // set new price and owner after confirmed transaction
+        uint256 lastPrice = tokenToLastPrice[_tokenId];
         tokenToLastPrice[_tokenId] = sellingPrice;
         ethernautsStorage.setPrice(_tokenId, newPrice);
         tokenToBuyer[_tokenId] = msg.sender;
 
         // pay back previous buyer and apply percentage return
         if (oldBuyer != address(0)) {
-            oldBuyer.transfer(tokenToLastPrice[_tokenId]);
+            oldBuyer.transfer(lastPrice);
         }
 
         Bid(_tokenId, sellingPrice, newPrice, oldBuyer, msg.sender);
