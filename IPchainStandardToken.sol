@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IPchainStandardToken at 0x622CD54dEb2bB7A051515192417109bcF3fe098f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IPchainStandardToken at 0xb545456Ae3d5bA5a88BEd898C093A6DcC994a73D
 */
 // Abstract contract for the full ERC 20 Token standard
 // https://github.com/ethereum/EIPs/issues/20
