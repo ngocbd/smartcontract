@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract InvestyToken at 0xde4979ffe5c5c154f1b736960f60ccf0cd51f8ad
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract InvestyToken at 0xf382CCBd3D203C10706059fFDCfe053308955792
 */
 pragma solidity ^0.4.16;
 
@@ -44,63 +44,7 @@ contract Ownable {
 
 }
 
-/**
- * @title Authorizable
- * @dev Allows to authorize access to certain function calls
- *
- * ABI
- * [{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"authorizers","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_addr","type":"address"}],"name":"addAuthorized","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"_addr","type":"address"}],"name":"isAuthorized","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"view","type":"function"},{"inputs":[],"payable":false,"stateMutability":"nonpayable","type":"constructor"}]
- */
-contract Authorizable {
-
-    address[] public authorizers;
-    mapping(address => uint) authorizerIndex;
-
-    /**
-     * @dev Throws if called by any account tat is not authorized.
-     */
-    modifier onlyAuthorized {
-        require(isAuthorized(msg.sender));
-        _;
-    }
-
-    /**
-     * @dev Contructor that authorizes the msg.sender.
-     */
-    function Authorizable() public {
-        authorizers.length = 2;
-        authorizers[1] = msg.sender;
-        authorizerIndex[msg.sender] = 1;
-    }
-
-    /**
-     * @dev Function to check if an address is authorized
-     * @param _addr the address to check if it is authorized.
-     * @return boolean flag if address is authorized.
-     */
-    function isAuthorized(address _addr) public view returns(bool) {
-        return authorizerIndex[_addr] > 0;
-    }
-
-    /**
-     * @dev Function to add a new authorizer
-     * @param _addr the address to add as a new authorizer.
-     */
-    function addAuthorized(address _addr) external onlyAuthorized {
-        authorizerIndex[_addr] = authorizers.length;
-        authorizers.length++;
-        authorizers[authorizers.length - 1] = _addr;
-    }
-}
-
-/**
- * @title Investors
- * @dev Allows to get investors
- *
- * ABI
- * [{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"authorizers","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"investors","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_addr","type":"address"}],"name":"addAuthorized","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"_inv","type":"address"}],"name":"addInvestor","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"_addr","type":"address"}],"name":"isAuthorized","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"view","type":"function"},{"inputs":[],"payable":false,"stateMutability":"nonpayable","type":"constructor"}]
- */
-contract Investors is Authorizable {
+contract Investors {
 
     address[] public investors;
     mapping(address => uint) investorIndex;
@@ -129,95 +73,46 @@ contract Investors is Authorizable {
 }
 
 /**
- * @title ExchangeRate
- * @dev Allows updating and retrieveing of Conversion Rates for PAY tokens
- *
- * ABI
- * [{"constant":false,"inputs":[{"name":"_symbol","type":"string"},{"name":"_rate","type":"uint256"}],"name":"updateRate","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"data","type":"uint256[]"}],"name":"updateRates","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"_symbol","type":"string"}],"name":"getRate","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"name":"","type":"bytes32"}],"name":"rates","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"anonymous":false,"inputs":[{"indexed":false,"name":"timestamp","type":"uint256"},{"indexed":false,"name":"symbol","type":"bytes32"},{"indexed":false,"name":"rate","type":"uint256"}],"name":"RateUpdated","type":"event"}]
- */
-contract ExchangeRate is Ownable {
-
-    event RateUpdated(uint timestamp, bytes32 symbol, uint rate);
-
-    mapping(bytes32 => uint) public rates;
-
-    /**
-     * @dev Allows the current owner to update a single rate.
-     * @param _symbol The symbol to be updated.
-     * @param _rate the rate for the symbol.
-     */
-    function updateRate(string _symbol, uint _rate) public onlyOwner {
-        rates[keccak256(_symbol)] = _rate;
-        RateUpdated(now, keccak256(_symbol), _rate);
-    }
-
-    /**
-     * @dev Allows the current owner to update multiple rates.
-     * @param data an array that alternates keccak256 hashes of the symbol and the corresponding rate .
-     */
-    function updateRates(uint[] data) public onlyOwner {
-        if (data.length % 2 > 0)
-        revert();
-        uint i = 0;
-        while (i < data.length / 2) {
-            bytes32 symbol = bytes32(data[i * 2]);
-            uint rate = data[i * 2 + 1];
-            rates[symbol] = rate;
-            RateUpdated(now, symbol, rate);
-            i++;
-        }
-    }
-
-    /**
-     * @dev Allows the anyone to read the current rate.
-     * @param _symbol the symbol to be retrieved.
-     */
-    function getRate(string _symbol) public view returns(uint) {
-        return rates[keccak256(_symbol)];
-    }
-}
-
-/**
  * Math operations with safety checks
  */
 library SafeMath {
-    function mul(uint a, uint b) internal returns (uint) {
+    function mul(uint a, uint b) pure internal returns (uint) {
         uint c = a * b;
         assert(a == 0 || c / a == b);
         return c;
     }
 
-    function div(uint a, uint b) internal returns (uint) {
+    function div(uint a, uint b) pure internal returns (uint) {
         // assert(b > 0); // Solidity automatically throws when dividing by 0
         uint c = a / b;
         // assert(a == b * c + a % b); // There is no case in which this doesn't hold
         return c;
     }
 
-    function sub(uint a, uint b) internal returns (uint) {
+    function sub(uint a, uint b) pure internal returns (uint) {
         assert(b <= a);
         return a - b;
     }
 
-    function add(uint a, uint b) internal returns (uint) {
+    function add(uint a, uint b) pure internal returns (uint) {
         uint c = a + b;
         assert(c >= a);
         return c;
     }
 
-    function max64(uint64 a, uint64 b) internal view returns (uint64) {
+    function max64(uint64 a, uint64 b) internal pure returns (uint64) {
         return a >= b ? a : b;
     }
 
-    function min64(uint64 a, uint64 b) internal view returns (uint64) {
+    function min64(uint64 a, uint64 b) internal pure returns (uint64) {
         return a < b ? a : b;
     }
 
-    function max256(uint256 a, uint256 b) internal view returns (uint256) {
+    function max256(uint256 a, uint256 b) internal pure returns (uint256) {
         return a >= b ? a : b;
     }
 
-    function min256(uint256 a, uint256 b) internal view returns (uint256) {
+    function min256(uint256 a, uint256 b) internal pure returns (uint256) {
         return a < b ? a : b;
     }
 }
@@ -272,7 +167,7 @@ contract BasicToken is ERC20Basic {
     * @param _to The address to transfer to.
     * @param _value The amount to be transferred.
     */
-    function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) {
+    function transfer(address _to, uint _value) public onlyPayloadSize(2 * 32) {
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
         Transfer(msg.sender, _to, _value);
@@ -283,7 +178,7 @@ contract BasicToken is ERC20Basic {
     * @param _owner The address to query the the balance of.
     * @return An uint representing the amount owned by the passed address.
     */
-    function balanceOf(address _owner) view returns (uint balance) {
+    function balanceOf(address _owner) public view returns (uint balance) {
         return balances[_owner];
     }
 
@@ -307,7 +202,7 @@ contract StandardToken is BasicToken, ERC20 {
      * @param _to address The address which you want to transfer to
      * @param _value uint the amout of tokens to be transfered
      */
-    function transferFrom(address _from, address _to, uint _value) onlyPayloadSize(3 * 32) {
+    function transferFrom(address _from, address _to, uint _value) public onlyPayloadSize(3 * 32) {
         var _allowance = allowed[_from][msg.sender];
 
         // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
@@ -324,7 +219,7 @@ contract StandardToken is BasicToken, ERC20 {
      * @param _spender The address which will spend the funds.
      * @param _value The amount of tokens to be spent.
      */
-    function approve(address _spender, uint _value) {
+    function approve(address _spender, uint _value) public {
 
         // To change the approve amount you first have to reduce the addresses`
         //  allowance to zero by calling `approve(_spender, 0)` if it is not
@@ -342,7 +237,7 @@ contract StandardToken is BasicToken, ERC20 {
      * @param _spender address The address which will spend the funds.
      * @return A uint specifing the amount of tokens still avaible for the spender.
      */
-    function allowance(address _owner, address _spender) view returns (uint remaining) {
+    function allowance(address _owner, address _spender) public view returns (uint remaining) {
         return allowed[_owner][_spender];
     }
 
@@ -356,13 +251,11 @@ contract StandardToken is BasicToken, ERC20 {
  */
 
 contract MintableToken is StandardToken, Ownable {
-    event Mint(address indexed to, uint value);
     event MintFinished();
-    event MintRestarted();
 
     bool public mintingFinished = false;
-    uint public totalSupply = 0;
-
+    uint public totalSupply = 349308401e18;
+    uint public currentSupply = 0;
 
     modifier canMint() {
         if(mintingFinished) revert();
@@ -375,10 +268,11 @@ contract MintableToken is StandardToken, Ownable {
      * @param _amount The amount of tokens to mint.
      * @return A boolean that indicates if the operation was successful.
      */
-    function mint(address _to, uint _amount) onlyOwner canMint returns (bool) {
-        totalSupply = totalSupply.add(_amount);
+    function mint(address _to, uint _amount) public onlyOwner canMint returns (bool) {
+        require(currentSupply.add(_amount) <= totalSupply);
+        currentSupply = currentSupply.add(_amount);
         balances[_to] = balances[_to].add(_amount);
-        Mint(_to, _amount);
+        Transfer(0x0, _to, _amount);
         return true;
     }
 
@@ -386,19 +280,9 @@ contract MintableToken is StandardToken, Ownable {
      * @dev Function to stop minting new tokens.
      * @return True if the operation was successful.
      */
-    function finishMinting() onlyOwner returns (bool) {
+    function finishMinting() public onlyOwner returns (bool) {
         mintingFinished = true;
         MintFinished();
-        return true;
-    }
-
-    /**
-     * @dev Function to restart minting new tokens.
-     * @return True if the operation was successful.
-     */
-    function restartMinting() onlyOwner returns (bool) {
-        mintingFinished = false;
-        MintRestarted();
         return true;
     }
 }
@@ -407,156 +291,65 @@ contract MintableToken is StandardToken, Ownable {
 /**
  * @title InvestyToken
  * @dev The main PAY token contract
- *
+ * 
  * ABI
- * [{"constant":true,"inputs":[],"name":"mintingFinished","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"name","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_from","type":"address"},{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transferFrom","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[],"name":"startTrading","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_amount","type":"uint256"}],"name":"mint","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"tradingStarted","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[],"name":"finishMinting","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transfer","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[],"name":"restartMinting","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"},{"name":"_spender","type":"address"}],"name":"allowance","outputs":[{"name":"remaining","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"anonymous":false,"inputs":[{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Mint","type":"event"},{"anonymous":false,"inputs":[],"name":"MintFinished","type":"event"},{"anonymous":false,"inputs":[],"name":"MintRestarted","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"owner","type":"address"},{"indexed":true,"name":"spender","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"from","type":"address"},{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Transfer","type":"event"}]
+ * [{"constant":true,"inputs":[],"name":"mintingFinished","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"name","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_value","type":"uint256"}],"name":"approve","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_from","type":"address"},{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transferFrom","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"decimals","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_amount","type":"uint256"}],"name":"mint","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"currentSupply","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[],"name":"finishMinting","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"symbol","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_value","type":"uint256"}],"name":"transfer","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"},{"name":"_spender","type":"address"}],"name":"allowance","outputs":[{"name":"remaining","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"anonymous":false,"inputs":[],"name":"MintFinished","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"owner","type":"address"},{"indexed":true,"name":"spender","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"from","type":"address"},{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"value","type":"uint256"}],"name":"Transfer","type":"event"}]
  */
 contract InvestyToken is MintableToken {
 
     string public name = "Investy Coin";
-    string public symbol = "IVC66";
+    string public symbol = "IVC";
     uint public decimals = 18;
+}
 
-    bool public tradingStarted = false;
 
-    /**
-     * @dev modifier that throws if trading has not started yet
-     */
-    modifier hasStartedTrading() {
-        require(tradingStarted);
-        _;
-    }
-
-    /**
-     * @dev Allows the owner to enable the trading. This can not be undone
-     */
-    function startTrading() onlyOwner {
-        tradingStarted = true;
-    }
-
-    /**
-     * @dev Allows anyone to transfer the PAY tokens once trading has started
-     * @param _to the recipient address of the tokens.
-     * @param _value number of tokens to be transfered.
-     */
-    function transfer(address _to, uint _value) hasStartedTrading {
-        super.transfer(_to, _value);
-    }
-
-    /**
-    * @dev Allows anyone to transfer the PAY tokens once trading has started
-    * @param _from address The address which you want to send tokens from
-    * @param _to address The address which you want to transfer to
-    * @param _value uint the amout of tokens to be transfered
-    */
-    function transferFrom(address _from, address _to, uint _value) hasStartedTrading {
-        super.transferFrom(_from, _to, _value);
-    }
-
+/*
+ * @title InvestyPresale
+ * @dev Interface of presale contract
+ */
+contract InvestyPresale is Ownable, Investors {
+    InvestyToken public token;
 }
 
 /**
- * @title MainSale
+ * @title InvestyContract
  * @dev The main PAY token sale contract
- *
- * ABI
- * [{"constant":false,"inputs":[{"name":"_multisigVault","type":"address"}],"name":"setMultisigVault","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"authorizerIndex","type":"uint256"}],"name":"getAuthorizer","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"exchangeRate","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"investors","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"recipient","type":"address"},{"name":"tokens","type":"uint256"}],"name":"authorizedCreateTokens","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"presaleActive","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[],"name":"transferToken","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[],"name":"finishPresale","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"_exchangeRate","type":"address"}],"name":"setExchangeRate","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"_token","type":"address"}],"name":"retrieveTokens","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"investorIndex","type":"uint256"}],"name":"getInvestor","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"recipient","type":"address"}],"name":"createTokens","outputs":[],"payable":true,"stateMutability":"payable","type":"function"},{"constant":false,"inputs":[{"name":"_addr","type":"address"}],"name":"addAuthorized","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"multisigVault","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[],"name":"restartPresale","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"_inv","type":"address"}],"name":"addInvestor","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":false,"inputs":[{"name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"token","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"name":"_addr","type":"address"}],"name":"isAuthorized","outputs":[{"name":"","type":"bool"}],"payable":false,"stateMutability":"view","type":"function"},{"inputs":[],"payable":false,"stateMutability":"nonpayable","type":"constructor"},{"payable":true,"stateMutability":"payable","type":"fallback"},{"anonymous":false,"inputs":[{"indexed":false,"name":"recipient","type":"address"},{"indexed":false,"name":"ether_amount","type":"uint256"},{"indexed":false,"name":"pay_amount","type":"uint256"},{"indexed":false,"name":"exchangerate","type":"uint256"}],"name":"TokenSold","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"recipient","type":"address"},{"indexed":false,"name":"pay_amount","type":"uint256"}],"name":"AuthorizedCreate","type":"event"},{"anonymous":false,"inputs":[],"name":"PresaleFinished","type":"event"},{"anonymous":false,"inputs":[],"name":"PresaleReStarted","type":"event"}]
  */
-contract InvestyPresale is Ownable, Authorizable, Investors {
+contract InvestyContract is Ownable {
     using SafeMath for uint;
-    event TokenSold(address recipient, uint ether_amount, uint pay_amount, uint exchangerate);
-    event AuthorizedCreate(address recipient, uint pay_amount);
-    event PresaleFinished();
-    event PresaleReStarted();
 
     InvestyToken public token = new InvestyToken();
 
-    address public multisigVault;
-    uint constant MILLI_USD_TO_IVC_RATE = 34;//presale fixed IVC coin cost
-
-    ExchangeRate public exchangeRate;
-
-    bool public presaleActive = true;
-    modifier isPresaleActive() {
-        if(!presaleActive) revert();
-        _;
-    }
+    uint importIndex = 1; // the 0th address is a zero, iterating is started from 1
 
     /**
      * constructor
      */
-    function InvestyPresale() {
+    function InvestyContract() public{
     }
+    
+    /*
+     * @dev Function to import balances from presale contract.
+     * @parm number of balances to import
+     * @return true
+     */ 
+    function importBalances(uint n, address presaleContractAddress) public onlyOwner returns (bool) {
+       require(n > 0);
 
-    /**
-     * @dev Function to stop minting new tokens.
-     * @return True if the operation was successful.
-     */
-    function finishPresale() public onlyOwner returns (bool) {
-        presaleActive = false;
-        PresaleFinished();
-        return true;
-    }
+       InvestyPresale presaleContract = InvestyPresale(presaleContractAddress);
+       InvestyToken presaleToken = presaleContract.token();
 
-    /**
-     * @dev Function to stop minting new tokens.
-     * @return True if the operation was successful.
-     */
-    function restartPresale() public onlyOwner returns (bool) {
-        presaleActive = true;
-        PresaleReStarted();
-        return true;
-    }
+       while (n > 0) {
+            address recipient = presaleContract.investors(importIndex);
 
-    /**
-     * @dev Allows anyone to create tokens by depositing ether.
-     * @param recipient the recipient to receive tokens.
-     */
-    function createTokens(address recipient) public isPresaleActive payable {
-        var einsteinToUsdRate = exchangeRate.getRate("EinsteinToUSD");
-        uint ivc = (einsteinToUsdRate.mul(msg.value).div(MILLI_USD_TO_IVC_RATE));// 18 signs after comma
-        token.mint(recipient, ivc);
-        addInvestor(recipient);
-        require(multisigVault.send(msg.value));
-        TokenSold(recipient, msg.value, ivc, einsteinToUsdRate / 1000);
-    }
-
-    /**
-   * @dev Allows authorized acces to create tokens. This is used for Bitcoin and ERC20 deposits
-   * @param recipient the recipient to receive tokens.
-   * @param tokens number of tokens to be created.
-   */
-    function authorizedCreateTokens(address recipient, uint tokens) public onlyAuthorized {
-        token.mint(recipient, tokens);
-        addInvestor(recipient);
-        AuthorizedCreate(recipient, tokens);
-    }
-
-    /**
-   * @dev Allows the owner to set the exchangerate contract.
-   * @param _exchangeRate the exchangerate address
-   */
-    function setExchangeRate(address _exchangeRate) public onlyOwner {
-        exchangeRate = ExchangeRate(_exchangeRate);
-    }
-
-    /**
-   * @dev Allows the owner to transfer ERC20 tokens to the multi sig vault
-   * @param _token the contract address of the ERC20 contract
-   */
-    function retrieveTokens(address _token) public onlyOwner {
-        ERC20 outerToken = ERC20(_token);
-        token.transfer(multisigVault, outerToken.balanceOf(this));
-    }
-
-    /**
-     * @dev Allows the owner to set the multisig contract.
-     * @param _multisigVault the multisig contract address
-     */
-    function setMultisigVault(address _multisigVault) public onlyOwner {
-        if (_multisigVault != address(0)) {
-            multisigVault = _multisigVault;
-        }
+            uint recipientTokens = presaleToken.balanceOf(recipient);
+            token.mint(recipient, recipientTokens);
+            
+            n = n.sub(1);
+            importIndex = importIndex.add(1);
+       }
+        
+       return true;
     }
 
     /**
@@ -564,13 +357,5 @@ contract InvestyPresale is Ownable, Authorizable, Investors {
      */
     function transferToken() public onlyOwner {
         token.transferOwnership(owner);
-    }
-
-    /**
-     * @dev Fallback function which receives ether and created the appropriate number of tokens for the
-     * msg.sender.
-     */
-    function() external payable {
-        createTokens(msg.sender);
     }
 }
