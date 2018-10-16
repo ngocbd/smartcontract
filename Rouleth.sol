@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Rouleth at 0x7fd022cc8b6e019260627fafa1d9c3afece18cef
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Rouleth at 0x05240da139d30034eaae15737610bfbe68b97910
 */
 //                       , ; ,   .-'"""'-.   , ; ,
 //                       \\|/  .'          '.  \|//
@@ -17,8 +17,20 @@
 //  (or become an investor in the Casino and share the profits/losses.) 
 //
 //
-//   website : www.WhySoS3rious.com/Rouleth
-//               with a flashy roulette :) !
+//   Full GUI on website with all info to play : 
+//                   
+//                  www.Rouleth.com
+//
+//
+//   All documentation on playing and investing are on the website.
+//
+//   News : www.reddit.com/r/Rouleth
+//   twitter : https://twitter.com/TheRouleth
+//
+//   Github : https://github.com/Bunjin/Rouleth
+//
+//   check latest contract version on website
+//   V 1.2
 //
 // *** coded by WhySoS3rious, 2016.                                       ***//
 // *** please do not copy without authorization                          ***//
@@ -26,79 +38,7 @@
 //
 //
 //  Stake : Variable, check on website for the max bet.
-//  At launch the max stake is 0.05 ETH
-//
-//
-//  How to play ?
-//  1) Simplest (via transactions from your wallet, not an exchange) : 
-//  Just send the value you want to bet to the contract and add enough gas 
-//  (you can enter the max gas amount of ~4,5Million, any excess is refunded anyways)
-//  This will by default place a bet on number 7
-//  Wait 2 minutes (6 blocks) and send (with enough gas) 1 wei (or any amount, it will be refunded)
-//  This will spin the wheel and you will receive * 35 your bet if you win.
-//  Don't wait more than 200 blocks before you spin the wheel or your bet will expire.
-//
-//  2) Advanced (via contract functions, e.g. Mist, cf. tutorial on my website for more details) :
-//  Import the contract in Mist wallet using the code of the ABI (link on my website)
-//  Use the functions (betOnNumber, betOnColor ...) to place any type of bet you want
-//  Provide the appropriate input (ex: check box Red or Black)
-//  add the amount you want to bet.
-//  wait 6 blocks, then use the function spinTheWheel, this will solve the bet.
-//  You can only place one bet at a time before you spin the wheel.
-//  Don't wait more than 200 blocks before you spin the wheel or your bet will expire.
-//
-//
-//
-//  Use the website to track your bets and the results of the spins
-//
-//
-//   How to invest ?
-//   Import the contract in Mist Wallet using the code of the ABI (link on my website)
-//   Use the Invest function with an amount >10 Ether (can change, check on my website)
-//   You will become an investor and share the profits and losses of the roulette
-//   proportionally to your investment. There is a 2% fee on investment to help with the server/website
-//   cost and also 2% on profit that go to the developper.
-//   The rest of your investment goes directly to the payroll and 98% of profits are shared between 
-//   investors relatively to their share of total. Losses are split similarly.
-//   You can withdraw your funds at any time after the initial lock period (set to 1 week)
-//   To withdraw use the function withdraw and specify the amoutn you want to withdraw in Wei.
-//   If your withdraw brings your investment under 10 eth (the min invest, subject to change)
-//   then you will execute a full withdraw and stop being an investor.
-//   Check your current investor balance in Mist by using the information functions on the left side
-//   If you want to update the balances to the last state (otherwise they are automatically
-//   updated after each invest or withdraw), you can use the function manualUpdateBalances in Mist.
-//   
-//   The casino should be profitable in the long run (with 99% confidence). 
-//   The maximum bet allowed has been computed through statistical analysis to yield high confidence 
-//   in the long run survival of the casino. The maximum bet is always smaller than the current payroll 
-//   of the casino * 35 (max pay multiplier) * casinoStatisticalLimit (statistical sample size that allows 
-//   to have enough confidence in survival, set at 20 at start, should increase to 200 when we have more 
-//   investors to increase the safety).
-//   
-//   At start there is a limit of 50 investors (can be changed via settings up to 150)
-//   If there is no open position and you want to invest, you can try to buyout a current investor.
-//   To buyout, you have to invest more than any investor whose funds are unlocked (after 1 week grace lock period)
-//   If there are no remaining open position and all investors are under grace period, it is not possible to 
-//   become a new investor in the casino.
-//
-//   At any time an investor can add funds to his investment with the withdraw function.
-//   Doing so will refresh the lock period and secure your position.
-//
-//
-//   A provably fair roulette :  note on Random Number Generation.
-//   The roulette result is based on the hash of the 6th block after the player commits his bet.
-//   This guarantees a provably fair roulette with equiprobable results and non predictable
-//   unless someone has more computing power than all the Ethereum Network.
-//   Yet Miners could try to exploit their position in 2 ways.
-//   First they could try to mine 7 blocks in a row (to commit their bet based on result for a sure win),
-//   but this is highly improbable and not predictible.
-//   Second they could commit a bet, then wait 6 blocks and hope that they will be the one forming the 
-//   block on which their commited bet depends. If this is the case and the hash they find is not a
-//   winning one, they could decide to not share the block with the network but would lose 5 ether.
-//   To counter this potential miner edge (=base win proba + (miner proba to find block)*base win proba )
-//   we keep wager amounts far smaller than 5 Eth so that the miner prefers to get his block reward than cheat.
-//   Note that a miner could place several bets on the same block to increase his potential profit from dropping a block
-//   For this reason we limit the number of bets per block to 2 at start (configurable later if needed).
+
 contract Rouleth
 {
 
@@ -110,15 +50,17 @@ contract Rouleth
     uint maxBetsPerBlock; //limits the number of bets per blocks to prevent miner cheating
     uint nbBetsCurrentBlock; //counts the nb of bets in the block
     uint casinoStatisticalLimit;
-    //Current gamble value possibly lower than config (<payroll/(20*35))
+    //Current gamble value possibly lower than config (<payroll/(casinoStatisticalLimit*35))
     uint256 currentMaxGamble; 
     //Gambles
+    enum BetTypes{number, color, parity, dozen, column, lowhigh} 
     struct Gamble
     {
 	address player;
         bool spinned; //Was the rouleth spinned ?
 	bool win;
-	BetTypes betType; //number/color/dozen/oddeven
+	//Possible bet types
+        BetTypes betType;
 	uint8 input; //stores number, color, dozen or oddeven
 	uint256 wager;
 	uint256 blockNumber; //block of bet -1
@@ -128,68 +70,69 @@ contract Rouleth
     uint firstActiveGamble; //pointer to track the first non spinned and non expired gamble.
     //Tracking progress of players
     mapping (address=>uint) gambleIndex; //current gamble index of the player
-    enum Status {waitingForBet, waitingForSpin} Status status; //gamble status
-    mapping (address=>Status) playerStatus; //progress of the player's gamble
+    enum Status {waitingForBet, waitingForSpin} mapping (address=>Status) playerStatus; //records current status of player
 
     //**********************************************
     //        Management & Config FUNCTIONS        //
     //**********************************************
-	function  Rouleth() private //creation settings
+    function  Rouleth() private //creation settings
     { 
         developer = msg.sender;
-        blockDelay=6; //delay to wait between bet and spin
+        blockDelay=2; //delay to wait between bet and spin
 	blockExpiration=200; //delay after which gamble expires
-        maxGamble=50 finney; //0.05 ether as max bet to start (payroll of 35 eth)
-        maxBetsPerBlock=2; // limit of 2 bets per block, to prevent multiple bets per miners (to keep max reward<5ETH)
+        maxGamble=500 finney; //configurable max bet
+        maxBetsPerBlock=5; // limit of bets per block, to prevent multiple bets per miners
         casinoStatisticalLimit=20;
     }
 	
-    modifier onlyDeveloper() {
-	    if (msg.sender!=developer) throw;
-	    _
+    modifier onlyDeveloper() 
+    {
+	if (msg.sender!=developer) throw;
+	_
     }
 	
-	function changeDeveloper(address new_dev)
-        noEthSent
-	    onlyDeveloper
-	{
-		developer=new_dev;
-	}
+    function changeDeveloper(address new_dev)
+    noEthSent
+    onlyDeveloper
+    {
+	developer=new_dev;
+    }
 
 
     //Activate, Deactivate Betting
     enum States{active, inactive} States private state;
-	function disableBetting()
+	
+    function disableBetting()
     noEthSent
-	onlyDeveloper
-	{
-            state=States.inactive;
-	}
-	function enableBetting()
-	onlyDeveloper
-        noEthSent
-	{
-            state=States.active;
-	}
+    onlyDeveloper
+    {
+        state=States.inactive;
+    }
+    function enableBetting()
+    onlyDeveloper
+    noEthSent
+    {
+        state=States.active;
+    }
     
-	modifier onlyActive
+    modifier onlyActive
     {
         if (state==States.inactive) throw;
         _
     }
 
-         //Change some settings within safety bounds
-	function changeSettings(uint newCasinoStatLimit, uint newMaxBetsBlock, uint256 newMaxGamble, uint8 newMaxInvestor, uint256 newMinInvestment, uint256 newLockPeriod, uint8 newBlockDelay, uint8 newBlockExpiration)
-	noEthSent
-	onlyDeveloper
+    //Change some settings within safety bounds
+    function changeSettings(uint newCasinoStatLimit, uint newMaxBetsBlock, uint256 newMaxGamble, uint8 newMaxInvestor, uint256 newMinInvestment, uint256 newLockPeriod, uint8 newBlockDelay, uint8 newBlockExpiration)
+    noEthSent
+    onlyDeveloper
 	{
 	        // changes the statistical multiplier that guarantees the long run casino survival
-	        if (newCasinoStatLimit<20) throw;
+	        if (newCasinoStatLimit<10) throw;
 	        casinoStatisticalLimit=newCasinoStatLimit;
 	        //Max number of bets per block to prevent miner cheating
 	        maxBetsPerBlock=newMaxBetsBlock;
                 //MAX BET : limited by payroll/(casinoStatisticalLimit*35) for statiscal confidence in longevity of casino
-		if (newMaxGamble<=0 || newMaxGamble>=this.balance/(20*35)) throw; 
+		if (newMaxGamble<=0) throw; 
 		else { maxGamble=newMaxGamble; }
                 //MAX NB of INVESTORS (can only increase and max of 149)
                 if (newMaxInvestor<setting_maxInvestors || newMaxInvestor>149) throw;
@@ -197,13 +140,13 @@ contract Rouleth
                 //MIN INVEST : 
                 setting_minInvestment=newMinInvestment;
                 //Invest LOCK PERIOD
-                if (setting_lockPeriod>5184000) throw; //2 months max
+                if (setting_lockPeriod>90 days) throw; //3 months max
                 setting_lockPeriod=newLockPeriod;
-		        //Delay before roll :
+		//Delay before roll :
 		if (blockDelay<1) throw;
-		        blockDelay=newBlockDelay;
+		blockDelay=newBlockDelay;
                 updateMaxBet();
-		if (newBlockExpiration<100) throw;
+		if (newBlockExpiration<50) throw;
 		blockExpiration=newBlockExpiration;
 	}
  
@@ -217,8 +160,8 @@ contract Rouleth
     //without specifying any type of bet.
     function () 
    {
-       //if player is not playing : bet on 7
-       if (playerStatus[msg.sender]==Status.waitingForBet)  betOnNumber(7);
+       //if player is not playing : bet on Red
+       if (playerStatus[msg.sender]==Status.waitingForBet)  betOnColor(true,false);
        //if player is already playing, spin the wheel
        else spinTheWheel();
     } 
@@ -232,7 +175,7 @@ contract Rouleth
                 }
 	else
 		{ 
-			currentMaxGamble = payroll/(20*35);
+			currentMaxGamble = payroll/(casinoStatisticalLimit*35);
 		}
      }
 
@@ -242,15 +185,16 @@ contract Rouleth
         updateMaxBet();
 		if (msg.value > currentMaxGamble) //if above max, send difference back
 		{
-		    msg.sender.send(msg.value-currentMaxGamble);
+			if (msg.sender.send(msg.value-currentMaxGamble)==false) throw;
 		    playerBetValue=currentMaxGamble;
 		}
                 else
                 { playerBetValue=msg.value; }
+         return;
        }
 
 
-    //check number of bets in block (to prevent miner cheating and keep max reward per block <5ETH)
+    //check number of bets in block (to prevent miner cheating)
     modifier checkNbBetsCurrentBlock()
     {
         if (gambles.length!=0 && block.number==gambles[gambles.length-1].blockNumber) nbBetsCurrentBlock+=1;
@@ -276,14 +220,11 @@ contract Rouleth
 	_
 	}
 
-    //Possible bet types
-    enum BetTypes{ number, color, parity, dozen, column, lowhigh} BetTypes private initbetTypes;
-
     function updateStatusPlayer() private
     expireGambles
     {
 	playerStatus[msg.sender]=Status.waitingForSpin;
-	gambleIndex[msg.sender]=gambles.length-1;
+	gambleIndex[msg.sender]=gambles.length;
      }
 
 //***//bet on Number	
@@ -292,12 +233,12 @@ contract Rouleth
     onlyActive
     checkNbBetsCurrentBlock
     {
+        updateStatusPlayer();
         //check that number chosen is valid and records bet
         if (numberChosen>36) throw;
-		//check that wager is under limit
+        //adapts wager to casino limits
         uint256 betValue= checkBetValue();
-	    gambles.push(Gamble(msg.sender, false, false, BetTypes.number, numberChosen, betValue, block.number, 37));
-        updateStatusPlayer();
+	gambles.push(Gamble(msg.sender, false, false, BetTypes.number, numberChosen, betValue, block.number, 37));
     }
 
 //***// function betOnColor
@@ -309,6 +250,7 @@ contract Rouleth
     onlyActive
     checkNbBetsCurrentBlock
     {
+        updateStatusPlayer();
         uint8 count;
         uint8 input;
         if (Red) 
@@ -324,8 +266,7 @@ contract Rouleth
         if (count!=1) throw;
 	//check that wager is under limit
         uint256 betValue= checkBetValue();
-	    gambles.push(Gamble(msg.sender, false, false, BetTypes.color, input, betValue, block.number, 37));
-        updateStatusPlayer();
+	gambles.push(Gamble(msg.sender, false, false, BetTypes.color, input, betValue, block.number, 37));
     }
 
 //***// function betOnLow_High
@@ -337,6 +278,7 @@ contract Rouleth
     onlyActive
     checkNbBetsCurrentBlock
     {
+        updateStatusPlayer();
         uint8 count;
         uint8 input;
         if (Low) 
@@ -353,7 +295,6 @@ contract Rouleth
 	//check that wager is under limit
         uint256 betValue= checkBetValue();
 	gambles.push(Gamble(msg.sender, false, false, BetTypes.lowhigh, input, betValue, block.number, 37));
-        updateStatusPlayer();
     }
 
 //***// function betOnOdd_Even
@@ -365,6 +306,7 @@ contract Rouleth
     onlyActive
     checkNbBetsCurrentBlock
     {
+        updateStatusPlayer();
         uint8 count;
         uint8 input;
         if (Even) 
@@ -381,7 +323,6 @@ contract Rouleth
 	//check that wager is under limit
         uint256 betValue= checkBetValue();
 	gambles.push(Gamble(msg.sender, false, false, BetTypes.parity, input, betValue, block.number, 37));
-        updateStatusPlayer();
     }
 
 
@@ -391,9 +332,6 @@ contract Rouleth
 //     //input : 1 for second dozen
 //     //input : 2 for third dozen
     function betOnDozen(bool First, bool Second, bool Third)
-    checkWaitingForBet
-    onlyActive
-    checkNbBetsCurrentBlock
     {
          betOnColumnOrDozen(First,Second,Third, BetTypes.dozen);
     }
@@ -405,15 +343,16 @@ contract Rouleth
 //     //input : 1 for second column
 //     //input : 2 for third column
     function betOnColumn(bool First, bool Second, bool Third)
-    checkWaitingForBet
-    onlyActive
-    checkNbBetsCurrentBlock
     {
          betOnColumnOrDozen(First, Second, Third, BetTypes.column);
      }
 
     function betOnColumnOrDozen(bool First, bool Second, bool Third, BetTypes bet) private
+    checkWaitingForBet
+    onlyActive
+    checkNbBetsCurrentBlock
     { 
+        updateStatusPlayer();
         uint8 count;
         uint8 input;
         if (First) 
@@ -434,8 +373,7 @@ contract Rouleth
         if (count!=1) throw;
 	//check that wager is under limit
         uint256 betValue= checkBetValue();
-	    gambles.push(Gamble(msg.sender, false, false, bet, input, betValue, block.number, 37));
-        updateStatusPlayer();
+	gambles.push(Gamble(msg.sender, false, false, bet, input, betValue, block.number, 37));
     }
 
     //**********************************************
@@ -453,56 +391,57 @@ contract Rouleth
     //Prevents accidental sending of Eth when you shouldn't
     modifier noEthSent()
     {
-        if (msg.value>0) msg.sender.send(msg.value);
+        if (msg.value>0) 
+		{
+				if (msg.sender.send(msg.value)==false) throw;
+		}
         _
     }
 
 //***//function to spin
     function spinTheWheel()
-    checkWaitingForSpin
     noEthSent
+    checkWaitingForSpin
     {
         //check that the player waited for the delay before spin
-        //and also that the bet is not expired (200 blocks limit)
+        //and also that the bet is not expired
 	uint playerblock = gambles[gambleIndex[msg.sender]].blockNumber;
 	if (block.number<playerblock+blockDelay || block.number>playerblock+blockExpiration) throw;
-    else
+        else
 	{
 	    uint8 wheelResult;
-        //Spin the wheel, Reset player status and record result
-		wheelResult = uint8(uint256(block.blockhash(playerblock+blockDelay))%37);
-		updateFirstActiveGamble(gambleIndex[msg.sender]);
-		gambles[gambleIndex[msg.sender]].wheelResult=wheelResult;
-        //check result against bet and pay if win
-		checkBetResult(wheelResult, gambles[gambleIndex[msg.sender]].betType);
+            //Spin the wheel, Reset player status and record result
+	    wheelResult = uint8(uint256(block.blockhash(playerblock+blockDelay))%37);
+	    gambles[gambleIndex[msg.sender]].wheelResult=wheelResult;
+            //check result against bet and pay if win
+	    checkBetResult(wheelResult, gambles[gambleIndex[msg.sender]].betType);
+	    updateFirstActiveGamble();
 	}
     }
 
-function updateFirstActiveGamble(uint bet_id) private
+//update pointer of first gamble not spinned
+function updateFirstActiveGamble() private
      {
-         if (bet_id==firstActiveGamble)
-         {   
-              uint index=firstActiveGamble;
-              while (true)
+              for (uint k=firstActiveGamble; k<=firstActiveGamble+50; k++) 
+              //limit the update to 50 to cap the gas cost and share the work among users
               {
-                 if (index<gambles.length && gambles[index].spinned){
-                     index=index+1;
+                 if (k>=gambles.length || !gambles[k].spinned)
+                 {
+                    firstActiveGamble=k;
+                    break; 
                  }
-                 else {break; }
-               }
-              firstActiveGamble=index;
-              return;
-          }
+              }
  }
 	
 //checks if there are expired gambles
 modifier expireGambles{
-    if (  (gambles.length!=0 && gambles.length-1>=firstActiveGamble ) 
-          && gambles[firstActiveGamble].blockNumber + blockExpiration <= block.number && !gambles[firstActiveGamble].spinned )  
+    if (  gambles.length!=0 && gambles.length-1>=firstActiveGamble 
+          && gambles[firstActiveGamble].blockNumber + blockExpiration <= block.number 
+          && !gambles[firstActiveGamble].spinned )  
     { 
-	solveBet(gambles[firstActiveGamble].player, 255, false, 0);
-        updateFirstActiveGamble(firstActiveGamble);
+	solveBet(gambles[firstActiveGamble].player, 255, false, 0); //expires
     }
+        updateFirstActiveGamble(); //update pointer
         _
 }
 	
@@ -523,16 +462,17 @@ modifier expireGambles{
      // function solve Bet once result is determined : sends to winner, adds loss to profit
      function solveBet(address player, uint8 result, bool win, uint8 multiplier) private
      {
-        playerStatus[msg.sender]=Status.waitingForBet;
+        playerStatus[player]=Status.waitingForBet;
         gambles[gambleIndex[player]].spinned=true;
 	uint bet_v = gambles[gambleIndex[player]].wager;
             if (win)
             {
+                  if (player!=gambles[gambleIndex[player]].player) throw; //security failcheck
 		  gambles[gambleIndex[player]].win=true;
 		  uint win_v = multiplier*bet_v;
-                  player.send(win_v);
                   lossSinceChange+=win_v-bet_v;
 		  Win(player, result, win_v);
+				if (player.send(win_v)==false) throw;
              }
             else
             {
@@ -554,7 +494,7 @@ modifier expireGambles{
 	    {
                   win=true;  
              }
-             solveBet(msg.sender, result,win,35);
+             solveBet(msg.sender, result,win,36);
      }
 
 
@@ -668,13 +608,14 @@ modifier expireGambles{
 	    address investor;
 	    uint256 time;
     }	
-	Investor[150] private investors ;
+	
+    Investor[250] private investors ;
     //Balances of the investors
     mapping (address=>uint256) balance; 
     //Investor lockPeriod
     //lock time to avoid invest and withdraw for refresh only
     //also time during which you cannot be outbet by a new investor if it is full
-    uint256 setting_lockPeriod=604800 ; //1 week in sec
+    uint256 setting_lockPeriod=30 days ;
     uint256 setting_minInvestment=10 ether; //min amount to send when using invest()
     //if full and unlocked position, indicates the cheapest amount to outbid
     //otherwise cheapestUnlockedPosition=255
@@ -696,7 +637,7 @@ modifier expireGambles{
           // reset the position counters to values out of bounds
           openPosition=255;
           cheapestUnlockedPosition=255;
-          minCurrentInvest=10000000000000000000000000;//
+          minCurrentInvest=1000000000 ether;
           // update balances before altering the investor shares
           updateBalances();
           // loop over investor's array to find if already investor, 
@@ -732,9 +673,9 @@ modifier expireGambles{
                          else
                          {
                               address previous = investors[cheapestUnlockedPosition].investor;
-                              if (previous.send(balance[previous])==false) throw;
                               balance[previous]=0;
                               investors[cheapestUnlockedPosition]=Investor(msg.sender, now);
+                              if (previous.send(balance[previous])==false) throw;
                           }
                      }
             }
@@ -793,9 +734,9 @@ modifier expireGambles{
                uint256 fullAmount=balance[msg.sender];
                payroll-=fullAmount;
                balance[msg.sender]=0;
-               if (msg.sender.send(fullAmount)==false) throw;
                //delete investor
                delete investors[investorID];
+               if (msg.sender.send(fullAmount)==false) throw;
    	       withdraw(msg.sender, fullAmount);
             }
           updateMaxBet();
@@ -806,6 +747,7 @@ modifier expireGambles{
 	function manualUpdateBalances()
 	expireGambles
 	noEthSent
+	onlyDeveloper
 	{
 	    updateBalances();
 	}
@@ -877,10 +819,10 @@ modifier expireGambles{
      
      //INFORMATION FUNCTIONS
      
-     function checkProfitLossSinceInvestorChange() constant returns(uint profit, uint loss)
+     function checkProfitLossSinceInvestorChange() constant returns(uint profit_since_update_balances, uint loss_since_update_balances)
      {
-        profit=profitSinceChange;
-        loss=lossSinceChange;
+        profit_since_update_balances=profitSinceChange;
+        loss_since_update_balances=lossSinceChange;
         return;
      }
 
@@ -916,6 +858,19 @@ modifier expireGambles{
 	    blockDelayBeforeSpin=blockDelay;
 	    return ;
 	}
+
+	function getFirstActiveGamble() constant returns(uint _firstActiveGamble)
+	{
+            _firstActiveGamble=firstActiveGamble;
+	    return ;
+	}
+	
+	function getPayroll() constant returns(uint payroll_at_last_update_balances)
+	{
+            payroll_at_last_update_balances=payroll;
+	    return ;
+	}
+
 	
     function checkMyBet(address player) constant returns(Status player_status, BetTypes bettype, uint8 input, uint value, uint8 result, bool wheelspinned, bool win, uint blockNb)
     {
@@ -926,8 +881,21 @@ modifier expireGambles{
           result=gambles[gambleIndex[player]].wheelResult;
           wheelspinned=gambles[gambleIndex[player]].spinned;
           win=gambles[gambleIndex[player]].win;
-		blockNb=gambles[gambleIndex[player]].blockNumber;
-		  return;
+          blockNb=gambles[gambleIndex[player]].blockNumber;
+	  return;
+     }
+     
+         function getGamblesList(uint256 index) constant returns(address player, BetTypes bettype, uint8 input, uint value, uint8 result, bool wheelspinned, bool win, uint blockNb)
+    {
+          player=gambles[index].player;
+          bettype=gambles[index].betType;
+          input=gambles[index].input;
+          value=gambles[index].wager;
+          result=gambles[index].wheelResult;
+          wheelspinned=gambles[index].spinned;
+          win=gambles[index].win;
+	  blockNb=gambles[index].blockNumber;
+	  return;
      }
 
 } //end of contract
