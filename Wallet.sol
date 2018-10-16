@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Wallet at 0xd4eb8e0bb87c1630c34b7d39a5fa74b67bcce3d1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Wallet at 0x0465028899f4a56b13eef1725f95998a1b73a4f3
 */
 /**
  * This is a multisig wallet based on Gav's original implementation, daily withdraw limits removed.
@@ -278,7 +278,7 @@ contract daylimit is multiowned {
             return true;
         }
         return false;*/
-        return true; //Villetest
+        return false;
     }
     // determines today's index.
     function today() private constant returns (uint) { return now / 1 days; }
