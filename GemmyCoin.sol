@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GemmyCoin at 0x35db74dace83b7beb378c1a68525a45305ce4da7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GemmyCoin at 0xf30aead79ddf74e8b5438f247a36f2b58b5a8c6d
 */
 pragma solidity ^0.4.23;
 // Made By PinkCherry - insanityskan@gmail.com - https://blog.naver.com/soolmini
@@ -158,6 +158,7 @@ contract GemmyCoin is ERC20Interface, OwnerHelper
     event WithdrawMkt(address _who, uint _value);
     event ChangeWallet(address _who);
     event BurnCoin(uint _value);
+    event RefundCoin(address _who, uint _value);
 
     constructor() public
     {
@@ -524,5 +525,16 @@ contract GemmyCoin is ERC20Interface, OwnerHelper
         wallet = _who;
         
         emit ChangeWallet(_who);
+    }
+    
+    function refundCoin(address _who) onlyOwner public
+    {
+        require(totalCoinLock == true);
+        
+        uint coins = balances[_who];
+        
+        balances[wallet] = balances[wallet].add(coins);
+
+        emit RefundCoin(_who, coins);
     }
 }
