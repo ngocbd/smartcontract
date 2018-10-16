@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NomadPreICO at 0xd8caa142e1f0ddf4086d43dd07e05eecef2a90b1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NomadPreICO at 0xcc824479571ca84b564fffab423a956d705674ab
 */
 pragma solidity ^0.4.23;
 
@@ -516,7 +516,7 @@ contract MultiSigWallet {
     /// @return Confirmation status.
     function isConfirmed(uint transactionId)
         public
-        constant
+        view
         returns (bool)
     {
         uint count = 0;
@@ -652,9 +652,9 @@ contract NomadPreICO is
     //TODO ?????????, ??? ?? ????? ?????????? ? ?????? ??????????
     uint256 public StartDate     = 1527811200;       // 01 June 2018 00:00:00 UTC
     uint256 public EndDate       = 1538351999;       // 30 September 2018 ?., 23:59:59
-    uint256 public ExchangeRate  = 762000000000000000000; // 762*10*10^18
-    uint256 public hardCap       = 5000000*ExchangeRate; // $5M
-    uint256 public softCap       = 1000000*ExchangeRate; // $1M
+    uint256 public ExchangeRate  = 575;
+    uint256 public hardCap       = 5000000*10**18; // $5M
+    uint256 public softCap       = 1000000*10**18; // $1M
 
     //TODO Check test comment
     //uint256 public onlyTestTimestamp = 0;
@@ -665,7 +665,7 @@ contract NomadPreICO is
     //TODO Check test comment
     function getTimestamp() public view returns (uint256) {
         return block.timestamp;
-    //    if (onlyTestTimestamp!=0) {return onlyTestTimestamp; } else {return block.timestamp;}
+        //if (onlyTestTimestamp!=0) {return onlyTestTimestamp; } else {return block.timestamp;}
     }
 
     function setExchangeRate(uint256 newExchangeRate) 
@@ -674,8 +674,6 @@ contract NomadPreICO is
     {
         require(getTimestamp() < StartDate);
         ExchangeRate = newExchangeRate;
-        hardCap      = 5000000*ExchangeRate;
-        softCap      = 1000000*ExchangeRate;
     }
 
     address[] senders;
@@ -690,7 +688,7 @@ contract NomadPreICO is
         require(msg.value > 0); 
         require(getTimestamp() >= StartDate);
         require(getTimestamp() <= EndDate);
-        require(Eth2USD(address(this).balance) <= hardCap);
+        require(Eth2USD_power18(address(this).balance) <= hardCap);
         
         sendersEth[msg.sender] = sendersEth[msg.sender].add(msg.value);
         sendersCalcTokens[msg.sender] = sendersCalcTokens[msg.sender].add( Eth2preNSP(msg.value) );
@@ -710,10 +708,10 @@ contract NomadPreICO is
     
     function checkSoftCapOk() public { 
         require(!softCapOk);
-        if( softCap <= Eth2USD(address(this).balance) ) softCapOk = true;
+        if( softCap <= Eth2USD_power18(address(this).balance) ) softCapOk = true;
     }
 
-    address withdrawalAddress;
+    address public withdrawalAddress;
     function setWithdrawalAddress (address _withdrawalAddress) public onlyWallet { 
         withdrawalAddress = _withdrawalAddress;
     }
@@ -779,11 +777,11 @@ contract NomadPreICO is
         else revert();
     }
 
-    function Eth2USD(uint256 _wei) public view returns (uint256) {
+    function Eth2USD_power18(uint256 _wei) public view returns (uint256) {
         return _wei*ExchangeRate;
     }
 
     function Eth2preNSP(uint256 _wei) public view returns (uint256) {
-        return Eth2USD(_wei)*100/GetTokenPriceCents();
+        return Eth2USD_power18(_wei)*100/GetTokenPriceCents();
     }
 }
