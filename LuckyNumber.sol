@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LuckyNumber at 0x62cdc9baaf02e846611660782b12ba714f1ff038
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LuckyNumber at 0xbb4b221bfe7ea28119337859ffc672efe13e9912
 */
 pragma solidity ^0.4.18;
 
@@ -37,9 +37,10 @@ contract LuckyNumber {
 
     //allows the owner to abort the contract and retrieve all funds
     function kill() external live { 
-        if (msg.sender == owner)           // only allow this action if the account sending the signal is the creator
+        if (msg.sender == owner) {        
             owner.transfer(this.balance);
-            contractIsAlive = false;       // kills this contract and sends remaining funds back to creator
+            contractIsAlive = false;
+            }
     }
 
     /**
