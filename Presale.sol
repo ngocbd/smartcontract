@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0x498e950892260b0e9dfd5895d7501f340e92d263
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0xf9735dc96a98f68ac8fe6fccf1e7b9876ddb6b47
 */
-pragma solidity ^0.4.6;
+pragma solidity ^0.4.2;
 
 contract Presale {
     mapping (address => uint) public balances;
@@ -19,7 +19,7 @@ contract Presale {
     // est. of blocks count in 1 month
     // Based on 1 block every 17 seconds, 30 days would produce ~152,471
     // Just for allowing for some additional time round to 153,000
-    uint constant blocks_in_one_months = 100;
+    uint constant blocks_in_one_months = 153000;
     
     // block number of the end of refund window, 
     // which will occur in the end of 1 month after presale
