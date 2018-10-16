@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleTokenExt at 0x37482AF232c829FD91Ad1094F600e380a2fa294a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleTokenExt at 0x52F8a931863CC8bfD2b7c00d1ff488E7D3E9825D
 */
-// Created to call it what it is, and what it is TATTI. The goal here is simply to have a giggle every once in a while when the whole world talks about Tatti
+// Created using Token Wizard https://github.com/poanetwork/token-wizard by POA Network 
 pragma solidity ^0.4.11;
 
 
