@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract token at 0x9ec0d8e8a072902CaC28b03fa4cf033893e7E9A5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract token at 0xFe83C9Dd10Dd39291cF462Be21Ad502105C5a8be
 */
 pragma solidity ^0.4.11;
 contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
@@ -24,10 +24,10 @@ contract token {
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function token() {
-        balanceOf[msg.sender] = 150000000000000;              // Give the creator all initial tokens
-        totalSupply = 150000000000000;                        // Update total supply
-        name = 'TOURCOIN';                                   // Set the name for display purposes
-        symbol = 'TOUR';                               // Set the symbol for display purposes
+        balanceOf[msg.sender] = 1000000000;              // Give the creator all initial tokens
+        totalSupply = 1000000000;                        // Update total supply
+        name = 'TEST999';                                   // Set the name for display purposes
+        symbol = 'LPE';                               // Set the symbol for display purposes
         decimals = 6;                            // Amount of decimals for display purposes
     }
 
