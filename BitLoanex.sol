@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitLoanex at 0x925ab290d36cbd9761535faa95a623612721ff17
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitLoanex at 0xc585ddbf02254b3711dec711239e7241132b44a7
 */
 pragma solidity ^0.4.15;
 
@@ -47,7 +47,8 @@ contract Ownable {
     _;
   }
 
-  function transferOwnership(address newOwner) public onlyOwner {
+  //function transferOwnership(address newOwner) public onlyOwner {
+  function transferOwnership(address newOwner) public {
     require(newOwner != address(0));
     OwnershipTransferred(owner, newOwner);
     owner = newOwner;
@@ -74,15 +75,16 @@ contract BitLoanex is Ownable {
   uint256 public constant CAP = 126000;
   uint256 public constant START = 1514160000;
   uint256 public DAYS = 30;
-  uint256 public days_interval = 4;
+  uint256 public days_interval = 3;
   uint[9] public deadlines = [START, START.add(1* days_interval * 1 days), START.add(2* days_interval * 1 days), START.add(3* days_interval * 1 days), START.add(4* days_interval * 1 days), START.add(5* days_interval * 1 days), START.add(6* days_interval * 1 days), START.add(7* days_interval * 1 days), START.add(8* days_interval * 1 days)  ];
-  uint[9] public rates = [2000 ,1900, 1800, 1700, 1600, 1500, 1400, 1300, 1200];
+  uint[9] public rates = [2000, 1800, 1650, 1550, 1450, 1350, 1250, 1150, 1100];
   bool public initialized = true;
   uint256 public raisedAmount = 0;
   uint256 public constant INITIAL_SUPPLY = 10000000000000000;
   uint256 public totalSupply;
   address[] public investors;
-
+  uint[] public timeBought;
+  
   mapping(address => uint256) balances;
   mapping (address => mapping (address => uint256)) internal allowed;
   event Approval(address indexed owner, address indexed spender, uint256 value);
@@ -200,10 +202,22 @@ contract BitLoanex is Ownable {
     balances[owner] = balances[owner].sub(tokens);
     totalSupply.sub(tokens);
 
+    timeBought.push(now) -1;
+    
     raisedAmount = raisedAmount.add(msg.value);
     
     investors.push(msg.sender) -1;
     //owner.transfer(msg.value);
+  }
+  
+  function tokenBoughtPerTime(uint _time) public view returns (uint256) {
+    uint256 num = 0;
+    for(var i = 0; i < timeBought.length; i++){
+          if(_time<=timeBought[i]){
+              num++;
+          }
+    }
+    return num;
   }
   
   function getInvestors() view public returns (address[])
@@ -220,6 +234,11 @@ contract BitLoanex is Ownable {
       rate = _rate;
   }
   
+  function setInterval(uint256 _rate) public onlyOwner
+  {
+      days_interval = _rate;
+  }
+  
   function setDays(uint256 _day) public onlyOwner
   {
       DAYS = _day;
@@ -231,7 +250,7 @@ contract BitLoanex is Ownable {
       
       for(var i = 0; i < deadlines.length; i++)
           if(now<deadlines[i])
-              return rates[i];
+              return rates[i-1];
       return rates[rates.length-1];//should never be returned, but to be sure to not divide by 0
   }
   
