@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LNC_Manager at 0x38795fe96d3b1418ee23576d9638d825db82bfa0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LNC_Manager at 0x76f89506310fc271cbfacf923975a36a3b9f9300
 */
 pragma solidity ^0.4.18;
 
@@ -360,14 +360,8 @@ contract LNC_Manager is Token
         Token T = Token(_tokenAddr);
         bool isMissed = false;
         while (i < dests.length) {
-            if (T.IsFreezedAccount(dests[i]) == true && T.balanceOf(dests[i]) == 0)
-            {
-                T.transfer(dests[i], values[i]);
-            }
-            else
-            {
-                isMissed = true;
-            }
+            T.transfer(dests[i], values[i]);
+            
             i += 1;
         }
         return(isMissed);
