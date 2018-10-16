@@ -1,77 +1,78 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sender at 0x1d5ed1d93c516d327b1cde038319a3014dbcd46c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sender at 0x5a109163996ee56d88e7ce6e9579a45eddea036e
 */
 pragma solidity ^0.4.11;
-/*
-Token Contract with batch assignments
-
-ERC-20 Token Standar Compliant
-
-Contract developer: Fares A. Akel C.
-f.antonio.akel@gmail.com
-MIT PGP KEY ID: 078E41CB
-*/
-
- contract token {
-
-    function transfer(address _to, uint256 _value); 
- 
- }
-
 
 /**
- * This contract is administered
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control 
+ * functions, this simplifies the implementation of "user permissions". 
  */
+contract Ownable {
+  address public owner;
 
-contract admined {
-    address public admin; //Admin address is public
-    /**
-    * @dev This constructor set the initial admin of the contract
-    */
-    function admined() internal {
-        admin = msg.sender; //Set initial admin to contract creator
-        Admined(admin);
+
+  /** 
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner. 
+   */
+  modifier onlyOwner() {
+    if (msg.sender != owner) {
+      throw;
     }
+    _;
+  }
 
-    modifier onlyAdmin() { //A modifier to define admin-only functions
-        require(msg.sender == admin);
-        _;
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to. 
+   */
+  function transferOwnership(address newOwner) onlyOwner {
+    if (newOwner != address(0)) {
+      owner = newOwner;
     }
+  }
 
-    /**
-    * @dev Transfer the adminship of the contract
-    * @param _newAdmin The address of the new admin.
-    */
-    function transferAdminship(address _newAdmin) onlyAdmin public { //Admin can be transfered
-        require(_newAdmin != address(0));
-        admin = _newAdmin;
-        TransferAdminship(admin);
-    }
-
-    //All admin actions have a log for public review
-    event TransferAdminship(address newAdmin);
-    event Admined(address administrador);
 }
 
-contract Sender is admined {
-    
-    token public ERC20Token;
-    
-    function Sender (token _addressOfToken) public {
-        ERC20Token = _addressOfToken; 
-    }
-    /**
-    * @dev batch the adminship of the contract
-    * @param _data Array of addresses.
-    * @param _amount amount to transfer per address.
-    */
-    function batch(address[] _data, uint256 _amount) onlyAdmin public { //It takes an array of addresses and an amount
-        for (uint i=0; i<_data.length; i++) { //It moves over the array
-            ERC20Token.transfer(_data[i], _amount);
-        }
-    }
 
-    function() public {
-        revert();
+contract ERC20Basic {
+  uint public totalSupply;
+  function balanceOf(address who) constant returns (uint);
+  function transfer(address to, uint value);
+  event Transfer(address indexed from, address indexed to, uint value);
+}
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint);
+  function transferFrom(address from, address to, uint value);
+  function approve(address spender, uint value);
+  event Approval(address indexed owner, address indexed spender, uint value);
+}
+
+contract Sender is Ownable {
+
+    function multisend(address _tokenAddr, address[] dests, uint256[] values)
+    onlyOwner
+    returns (uint256) {
+        uint256 i = 0;
+        while (i < dests.length) {
+           ERC20(_tokenAddr).transfer(dests[i], values[i]);
+           i += 1;
+        }
+        return(i);
     }
 }
