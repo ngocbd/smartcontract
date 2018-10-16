@@ -1,38 +1,75 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnableCrowdsaleToken at 0xa10da6ff4102e07bda38df1cecb5d806387655f8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnableCrowdsaleToken at 0xe0efd668c950e6d286bc1c5b9304f31632708656
 */
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
+pragma solidity ^0.4.13;
+
+contract UpgradeAgent {
+
+  uint public originalSupply;
+
+  /** Interface marker */
+  function isUpgradeAgent() public constant returns (bool) {
+    return true;
+  }
+
+  function upgradeFrom(address _from, uint256 _value) public;
+
+}
+
+contract Ownable {
+  address public owner;
 
 
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() {
+    owner = msg.sender;
+  }
 
 
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
 
 
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner {
+    require(newOwner != address(0));      
+    owner = newOwner;
+  }
 
+}
 
+library SafeMathLib {
 
+  function times(uint a, uint b) returns (uint) {
+    uint c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
+  function minus(uint a, uint b) returns (uint) {
+    assert(b <= a);
+    return a - b;
+  }
 
+  function plus(uint a, uint b) returns (uint) {
+    uint c = a + b;
+    assert(c>=a);
+    return c;
+  }
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
+}
+
 contract ERC20Basic {
   uint256 public totalSupply;
   function balanceOf(address who) constant returns (uint256);
@@ -40,12 +77,94 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) returns (bool);
+  function approve(address spender, uint256 value) returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
+contract ReleasableToken is ERC20, Ownable {
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
+  /* The finalizer contract that allows unlift the transfer limits on this token */
+  address public releaseAgent;
+
+  /** A crowdsale contract can release us to the wild if ICO success. If false we are are in transfer lock up period.*/
+  bool public released = false;
+
+  /** Map of agents that are allowed to transfer tokens regardless of the lock down period. These are crowdsale contracts and possible the team multisig itself. */
+  mapping (address => bool) public transferAgents;
+
+  /**
+   * Limit token transfer until the crowdsale is over.
+   *
+   */
+  modifier canTransfer(address _sender) {
+
+    if(!released) {
+        if(!transferAgents[_sender]) {
+            throw;
+        }
+    }
+
+    _;
+  }
+
+  /**
+   * Set the contract that can call release and make the token transferable.
+   *
+   * Design choice. Allow reset the release agent to fix fat finger mistakes.
+   */
+  function setReleaseAgent(address addr) onlyOwner inReleaseState(false) public {
+
+    // We don't do interface check here as we might want to a normal wallet address to act as a release agent
+    releaseAgent = addr;
+  }
+
+  /**
+   * Owner can allow a particular address (a crowdsale contract) to transfer tokens despite the lock up period.
+   */
+  function setTransferAgent(address addr, bool state) onlyOwner inReleaseState(false) public {
+    transferAgents[addr] = state;
+  }
+
+  /**
+   * One way function to release the tokens to the wild.
+   *
+   * Can be called only from the release agent that is the final ICO contract. It is only called if the crowdsale has been success (first milestone reached).
+   */
+  function releaseTokenTransfer() public onlyReleaseAgent {
+    released = true;
+  }
+
+  /** The function can be called only before or after the tokens have been releasesd */
+  modifier inReleaseState(bool releaseState) {
+    if(releaseState != released) {
+        throw;
+    }
+    _;
+  }
+
+  /** The function can be called only by a whitelisted release agent. */
+  modifier onlyReleaseAgent() {
+    if(msg.sender != releaseAgent) {
+        throw;
+    }
+    _;
+  }
+
+  function transfer(address _to, uint _value) canTransfer(msg.sender) returns (bool success) {
+    // Call StandardToken.transfer()
+   return super.transfer(_to, _value);
+  }
+
+  function transferFrom(address _from, address _to, uint _value) canTransfer(_from) returns (bool success) {
+    // Call StandardToken.transferForm()
+    return super.transferFrom(_from, _to, _value);
+  }
+
+}
+
 library SafeMath {
   function mul(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a * b;
@@ -72,12 +191,6 @@ library SafeMath {
   }
 }
 
-
-
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances. 
- */
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
 
@@ -106,31 +219,6 @@ contract BasicToken is ERC20Basic {
 
 }
 
-
-
-
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-
-
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
 contract StandardToken is ERC20, BasicToken {
 
   mapping (address => mapping (address => uint256)) allowed;
@@ -185,14 +273,6 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-
-
-/**
- * Standard EIP-20 token with an interface marker.
- *
- * @notice Interface marker is used by crowdsale contracts to validate that addresses point a good token contract.
- *
- */
 contract StandardTokenExt is StandardToken {
 
   /* Interface declaration */
@@ -201,80 +281,55 @@ contract StandardTokenExt is StandardToken {
   }
 }
 
+contract MintableToken is StandardTokenExt, Ownable {
 
-contract BurnableToken is StandardTokenExt {
+  using SafeMathLib for uint;
 
-  // @notice An address for the transfer event where the burned tokens are transferred in a faux Transfer event
-  address public constant BURN_ADDRESS = 0;
+  bool public mintingFinished = false;
 
-  /** How many tokens we burned */
-  event Burned(address burner, uint burnedAmount);
+  /** List of agents that are allowed to create new tokens */
+  mapping (address => bool) public mintAgents;
+
+  event MintingAgentChanged(address addr, bool state);
+  event Minted(address receiver, uint amount);
 
   /**
-   * Burn extra tokens from a balance.
+   * Create new tokens and allocate them to an address..
    *
+   * Only callably by a crowdsale contract (mint agent).
    */
-  function burn(uint burnAmount) {
-    address burner = msg.sender;
-    balances[burner] = balances[burner].sub(burnAmount);
-    totalSupply = totalSupply.sub(burnAmount);
-    Burned(burner, burnAmount);
+  function mint(address receiver, uint amount) onlyMintAgent canMint public {
+    totalSupply = totalSupply.plus(amount);
+    balances[receiver] = balances[receiver].plus(amount);
 
-    // Inform the blockchain explores that track the
-    // balances only by a transfer event that the balance in this
-    // address has decreased
-    Transfer(burner, BURN_ADDRESS, burnAmount);
+    // This will make the mint transaction apper in EtherScan.io
+    // We can remove this after there is a standardized minting event
+    Transfer(0, receiver, amount);
+  }
+
+  /**
+   * Owner can allow a crowdsale contract to mint new tokens.
+   */
+  function setMintAgent(address addr, bool state) onlyOwner canMint public {
+    mintAgents[addr] = state;
+    MintingAgentChanged(addr, state);
+  }
+
+  modifier onlyMintAgent() {
+    // Only crowdsale contracts are allowed to mint new tokens
+    if(!mintAgents[msg.sender]) {
+        throw;
+    }
+    _;
+  }
+
+  /** Make sure we are not done yet. */
+  modifier canMint() {
+    if(mintingFinished) throw;
+    _;
   }
 }
 
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-
-
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-/**
- * Upgrade agent interface inspired by Lunyr.
- *
- * Upgrade agent transfers tokens to a new contract.
- * Upgrade agent itself can be the token contract, or just a middle man contract doing the heavy lifting.
- */
-contract UpgradeAgent {
-
-  uint public originalSupply;
-
-  /** Interface marker */
-  function isUpgradeAgent() public constant returns (bool) {
-    return true;
-  }
-
-  function upgradeFrom(address _from, uint256 _value) public;
-
-}
-
-
-/**
- * A token upgrade mechanism where users can opt-in amount of tokens to the next smart contract revision.
- *
- * First envisioned by Golem and Lunyr projects.
- */
 contract UpgradeableToken is StandardTokenExt {
 
   /** Contract / person who can set the upgrade path. This can be the same as team multisig wallet, as what it is with its default value. */
@@ -395,258 +450,6 @@ contract UpgradeableToken is StandardTokenExt {
 
 }
 
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner {
-    require(newOwner != address(0));      
-    owner = newOwner;
-  }
-
-}
-
-
-
-
-/**
- * Define interface for releasing the token transfer after a successful crowdsale.
- */
-contract ReleasableToken is ERC20, Ownable {
-
-  /* The finalizer contract that allows unlift the transfer limits on this token */
-  address public releaseAgent;
-
-  /** A crowdsale contract can release us to the wild if ICO success. If false we are are in transfer lock up period.*/
-  bool public released = false;
-
-  /** Map of agents that are allowed to transfer tokens regardless of the lock down period. These are crowdsale contracts and possible the team multisig itself. */
-  mapping (address => bool) public transferAgents;
-
-  /**
-   * Limit token transfer until the crowdsale is over.
-   *
-   */
-  modifier canTransfer(address _sender) {
-
-    if(!released) {
-        if(!transferAgents[_sender]) {
-            throw;
-        }
-    }
-
-    _;
-  }
-
-  /**
-   * Set the contract that can call release and make the token transferable.
-   *
-   * Design choice. Allow reset the release agent to fix fat finger mistakes.
-   */
-  function setReleaseAgent(address addr) onlyOwner inReleaseState(false) public {
-
-    // We don't do interface check here as we might want to a normal wallet address to act as a release agent
-    releaseAgent = addr;
-  }
-
-  /**
-   * Owner can allow a particular address (a crowdsale contract) to transfer tokens despite the lock up period.
-   */
-  function setTransferAgent(address addr, bool state) onlyOwner inReleaseState(false) public {
-    transferAgents[addr] = state;
-  }
-
-  /**
-   * One way function to release the tokens to the wild.
-   *
-   * Can be called only from the release agent that is the final ICO contract. It is only called if the crowdsale has been success (first milestone reached).
-   */
-  function releaseTokenTransfer() public onlyReleaseAgent {
-    released = true;
-  }
-
-  /** The function can be called only before or after the tokens have been releasesd */
-  modifier inReleaseState(bool releaseState) {
-    if(releaseState != released) {
-        throw;
-    }
-    _;
-  }
-
-  /** The function can be called only by a whitelisted release agent. */
-  modifier onlyReleaseAgent() {
-    if(msg.sender != releaseAgent) {
-        throw;
-    }
-    _;
-  }
-
-  function transfer(address _to, uint _value) canTransfer(msg.sender) returns (bool success) {
-    // Call StandardToken.transfer()
-   return super.transfer(_to, _value);
-  }
-
-  function transferFrom(address _from, address _to, uint _value) canTransfer(_from) returns (bool success) {
-    // Call StandardToken.transferForm()
-    return super.transferFrom(_from, _to, _value);
-  }
-
-}
-
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-
-
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-/**
- * Safe unsigned safe math.
- *
- * https://blog.aragon.one/library-driven-development-in-solidity-2bebcaf88736#.750gwtwli
- *
- * Originally from https://raw.githubusercontent.com/AragonOne/zeppelin-solidity/master/contracts/SafeMathLib.sol
- *
- * Maintained here until merged to mainline zeppelin-solidity.
- *
- */
-library SafeMathLib {
-
-  function times(uint a, uint b) returns (uint) {
-    uint c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function minus(uint a, uint b) returns (uint) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function plus(uint a, uint b) returns (uint) {
-    uint c = a + b;
-    assert(c>=a);
-    return c;
-  }
-
-}
-
-
-
-/**
- * A token that can increase its supply by another contract.
- *
- * This allows uncapped crowdsale by dynamically increasing the supply when money pours in.
- * Only mint agents, contracts whitelisted by owner, can mint new tokens.
- *
- */
-contract MintableToken is StandardTokenExt, Ownable {
-
-  using SafeMathLib for uint;
-
-  bool public mintingFinished = false;
-
-  /** List of agents that are allowed to create new tokens */
-  mapping (address => bool) public mintAgents;
-
-  event MintingAgentChanged(address addr, bool state);
-  event Minted(address receiver, uint amount);
-
-  /**
-   * Create new tokens and allocate them to an address..
-   *
-   * Only callably by a crowdsale contract (mint agent).
-   */
-  function mint(address receiver, uint amount) onlyMintAgent canMint public {
-    totalSupply = totalSupply.plus(amount);
-    balances[receiver] = balances[receiver].plus(amount);
-
-    // This will make the mint transaction apper in EtherScan.io
-    // We can remove this after there is a standardized minting event
-    Transfer(0, receiver, amount);
-  }
-
-  /**
-   * Owner can allow a crowdsale contract to mint new tokens.
-   */
-  function setMintAgent(address addr, bool state) onlyOwner canMint public {
-    mintAgents[addr] = state;
-    MintingAgentChanged(addr, state);
-  }
-
-  modifier onlyMintAgent() {
-    // Only crowdsale contracts are allowed to mint new tokens
-    if(!mintAgents[msg.sender]) {
-        throw;
-    }
-    _;
-  }
-
-  /** Make sure we are not done yet. */
-  modifier canMint() {
-    if(mintingFinished) throw;
-    _;
-  }
-}
-
-
-
-/**
- * A crowdsaled token.
- *
- * An ERC-20 token designed specifically for crowdsales with investor protection and further development path.
- *
- * - The token transfer() is disabled until the crowdsale is over
- * - The token contract gives an opt-in upgrade path to a new contract
- * - The same token can be part of several crowdsales through approve() mechanism
- * - The token can be capped (supply set in the constructor) or uncapped (crowdsale contract can mint new tokens)
- *
- */
 contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
 
   /** Name and symbol were updated. */
@@ -733,11 +536,31 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
 
 }
 
+contract BurnableToken is StandardTokenExt {
 
-/**
- * A crowdsaled token that you can also burn.
- *
- */
+  // @notice An address for the transfer event where the burned tokens are transferred in a faux Transfer event
+  address public constant BURN_ADDRESS = 0;
+
+  /** How many tokens we burned */
+  event Burned(address burner, uint burnedAmount);
+
+  /**
+   * Burn extra tokens from a balance.
+   *
+   */
+  function burn(uint burnAmount) {
+    address burner = msg.sender;
+    balances[burner] = balances[burner].sub(burnAmount);
+    totalSupply = totalSupply.sub(burnAmount);
+    Burned(burner, burnAmount);
+
+    // Inform the blockchain explores that track the
+    // balances only by a transfer event that the balance in this
+    // address has decreased
+    Transfer(burner, BURN_ADDRESS, burnAmount);
+  }
+}
+
 contract BurnableCrowdsaleToken is BurnableToken, CrowdsaleToken {
 
   function BurnableCrowdsaleToken(string _name, string _symbol, uint _initialSupply, uint _decimals, bool _mintable)
