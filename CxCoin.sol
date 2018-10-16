@@ -1,140 +1,154 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CxCoin at 0x406a19e0edb6061a8156718117a46350b9938ad1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CXCoin at 0x3fd50278a2257623cf718d4f2997921a5d34c81e
 */
-pragma solidity ^0.4.4;
+pragma solidity ^0.4.16;
 
-contract Token {
 
-    /// @return total amount of tokens
-    function totalSupply() constant returns (uint256 supply) {}
+contract Ownable {
+    address public owner;
 
-    /// @param _owner The address from which the balance will be retrieved
-    /// @return The balance
-    function balanceOf(address _owner) constant returns (uint256 balance) {}
+    function Ownable() public {
+        owner = msg.sender;
+    }
 
-    /// @notice send `_value` token to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _value) returns (bool success) {}
+    modifier onlyOwner()  {
+        require(msg.sender == owner);
+        _;
+    }
 
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
+    function transferOwnership(address newOwner) public onlyOwner {
+        if (newOwner != address(0)) {
+            owner = newOwner;
+        }
+    }
 
-    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of wei to be approved for transfer
-    /// @return Whether the approval was successful or not
-    function approve(address _spender, uint256 _value) returns (bool success) {}
+}
 
-    /// @param _owner The address of the account owning tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
+contract SafeMath {
+    function safeSub(uint a, uint b) pure internal returns (uint) {
+        sAssert(b <= a);
+        return a - b;
+    }
 
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    
+    function safeAdd(uint a, uint b) pure internal returns (uint) {
+        uint c = a + b;
+        sAssert(c>=a && c>=b);
+        return c;
+    }
+
+    function sAssert(bool assertion) internal pure {
+        if (!assertion) {
+            revert();
+        }
+    }
 }
 
 
+contract ERC20 {
+    uint public totalSupply;
+    function balanceOf(address who) public constant returns (uint);
+    function allowance(address owner, address spender) public constant returns (uint);
 
-contract StandardToken is Token {
+    function transfer(address toAcct, uint value) public returns (bool ok);
+    function transferFrom(address fromAcct, address toAcct, uint value) public returns (bool ok);
+    function approve(address spender, uint value) public returns (bool ok);
+    event Transfer(address indexed fromAcct, address indexed toAcct, uint value);
+    event Approval(address indexed owner, address indexed spender, uint value);
+}
 
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        //Default assumes totalSupply can't be over max (2^256 - 1).
-        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
-        //Replace the if with this one instead.
-        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[msg.sender] >= _value && _value > 0) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
-            return true;
-        } else { return false; }
+contract StandardToken is ERC20, SafeMath {
+
+    mapping(address => uint) balances;
+    mapping (address => mapping (address => uint)) allowed;
+    mapping (address => bool) public frozenAccount;
+    event FrozenFunds(address target, bool frozen);
+    event Burn(address indexed fromAcct, uint256 value);
+
+    function transfer(address _toAcct, uint _value) public returns (bool success) {
+        balances[msg.sender] = safeSub(balances[msg.sender], _value);
+        balances[_toAcct] = safeAdd(balances[_toAcct], _value);
+        Transfer(msg.sender, _toAcct, _value);
+        return true;
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        //same as above. Replace this line with the following if you want to protect against wrapping uints.
-        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
-            return true;
-        } else { return false; }
+    function transferFrom(address _fromAcct, address _toAcct, uint _value) public returns (bool success) {
+        var _allowance = allowed[_fromAcct][msg.sender];
+        balances[_toAcct] = safeAdd(balances[_toAcct], _value);
+        balances[_fromAcct] = safeSub(balances[_fromAcct], _value);
+        allowed[_fromAcct][msg.sender] = safeSub(_allowance, _value);
+        Transfer(_fromAcct, _toAcct, _value);
+        return true;
     }
 
-    function balanceOf(address _owner) constant returns (uint256 balance) {
+    function balanceOf(address _owner) public constant returns (uint balance) {
         return balances[_owner];
     }
 
-    function approve(address _spender, uint256 _value) returns (bool success) {
+    function approve(address _spender, uint _value) public  returns (bool success) {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
     }
 
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
+    function allowance(address _owner, address _spender) public constant returns (uint remaining) {
+        return allowed[_owner][_spender];
     }
+    
+    function burn(uint256 _value) public returns (bool success) {
+        balances[msg.sender] = safeSub(balances[msg.sender], _value); // Subtract from the sender
+        totalSupply = safeSub(totalSupply,_value); // Updates totalSupply
+        Burn(msg.sender, _value);
+        return true;
+    }
+    
+    
 
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-    uint256 public totalSupply;
 }
 
+contract CXCoin is Ownable, StandardToken {
 
-//name this contract whatever you'd like
-contract CxCoin is StandardToken {
+    string public name;
+    string public symbol;
+    uint public decimals;                  
+    uint public totalSupply;  
 
-    function () {
-        //if ether is sent to this address, send it back.
-        throw;
+
+    /// @notice Initializes the contract and allocates all initial tokens to the owner and agreement account
+    function CXCoin() public {
+    totalSupply = 100 * (10**6) * (10**6);
+        balances[msg.sender] = totalSupply;
+        name = "CX";
+        symbol = "CX";
+        decimals = 6;
     }
 
-    /* Public variables of the token */
-
-    /*
-    NOTE:
-    The following variables are OPTIONAL vanities. One does not have to include them.
-    They allow one to customize the token contract & in no way influences the core functionality.
-    Some wallets/interfaces might not even bother to look at this information.
-    */
-    string public name;                   //fancy name: eg Simon Bucks
-    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol;                 //An identifier: eg SBX
-    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
-
-//
-// CHANGE THESE VALUES FOR YOUR TOKEN
-//
-
-//make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of BIG
-
-    function CxCoin(
-        ) {
-        balances[msg.sender] = 50000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 50000000;                        // Update total supply (100000 for example)
-        name = "Cx Coin";                        // Set the name for display purposes
-        decimals = 0;                                // Amount of decimals for display purposes
-        symbol = "Cx";                              // Set the symbol for display purposes
+    function () payable public{
     }
 
-    /* Approves and then calls the receiving contract */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-
-        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
-        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
-        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
-        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
-        return true;
+    /// @notice To transfer token contract ownership
+    /// @param _newOwner The address of the new owner of this contract
+    function transferOwnership(address _newOwner) public onlyOwner {
+        balances[_newOwner] = safeAdd(balances[owner], balances[_newOwner]);
+        balances[owner] = 0;
+        Ownable.transferOwnership(_newOwner);
     }
+
+    // Owner can transfer out any ERC20 tokens sent in by mistake
+    function transferAnyERC20Token(address tokenAddress, uint amount) public onlyOwner returns (bool success)
+    {
+        return ERC20(tokenAddress).transfer(owner, amount);
+    }
+    
+    function freezeAccount(address target, bool freeze) public onlyOwner  {
+        frozenAccount[target] = freeze;
+        FrozenFunds(target, freeze);
+    }
+    
+    function mintToken(address _toAcct, uint256 _value) public onlyOwner  {
+        balances[_toAcct] = safeAdd(balances[_toAcct], _value);
+        totalSupply = safeAdd(totalSupply, _value);
+        Transfer(0, this, _value);
+        Transfer(this, _toAcct, _value);
+    }
+
 }
