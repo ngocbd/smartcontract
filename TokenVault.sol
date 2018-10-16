@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVault at 0x0605b8eca9fb798cba00f87970a62e90448eedb5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVault at 0xadfb36ce9ff4e514dbd8d1760599fddcfc568921
 */
 /*
  * ERC20 interface
@@ -80,11 +80,19 @@ contract SafeMath {
  */
 contract StandardToken is ERC20, SafeMath {
 
+  /* Token supply got increased and a new owner received these tokens */
+  event Minted(address receiver, uint amount);
+
+  /* Actual balances of token holders */
   mapping(address => uint) balances;
+
+  /* approve() allowances */
   mapping (address => mapping (address => uint)) allowed;
 
-  // Interface marker
-  bool public constant isToken = true;
+  /* Interface declaration */
+  function isToken() public constant returns (bool weAre) {
+    return true;
+  }
 
   /**
    *
@@ -106,11 +114,8 @@ contract StandardToken is ERC20, SafeMath {
     return true;
   }
 
-  function transferFrom(address _from, address _to, uint _value)  returns (bool success) {
-    var _allowance = allowed[_from][msg.sender];
-
-    // Check is not needed because safeSub(_allowance, _value) will already throw if this condition is not met
-    // if (_value > _allowance) throw;
+  function transferFrom(address _from, address _to, uint _value) returns (bool success) {
+    uint _allowance = allowed[_from][msg.sender];
 
     balances[_to] = safeAdd(balances[_to], _value);
     balances[_from] = safeSub(balances[_from], _value);
@@ -183,7 +188,7 @@ contract Ownable {
  * - Prepare a spreadsheet for token allocation
  * - Deploy this contract, with the sum to tokens to be distributed, from the owner account
  * - Call setInvestor for all investors from the owner account using a local script and CSV input
- * - Move tokensToBeAllocated in this contract usign StandardToken.transfer()
+ * - Move tokensToBeAllocated in this contract using StandardToken.transfer()
  * - Call lock from the owner account
  * - Wait until the freeze period is over
  * - After the freeze time is over investors can call claim() from their address to get their tokens
@@ -264,13 +269,16 @@ contract TokenVault is Ownable {
       throw;
     }
 
+    // Sanity check on _tokensToBeAllocated
+    if(_tokensToBeAllocated == 0) {
+      throw;
+    }
+
     freezeEndsAt = _freezeEndsAt;
     tokensToBeAllocated = _tokensToBeAllocated;
   }
 
-  /**
-   * Add a presale participatin allocation.
-   */
+  /// @dev Add a presale participating allocation
   function setInvestor(address investor, uint amount) public onlyOwner {
 
     if(lockedAt > 0) {
@@ -281,8 +289,7 @@ contract TokenVault is Ownable {
     if(amount == 0) throw; // No empty buys
 
     // Don't allow reset
-    bool existing = balances[investor] > 0;
-    if(existing) {
+    if(balances[investor] > 0) {
       throw;
     }
 
@@ -295,16 +302,10 @@ contract TokenVault is Ownable {
     Allocated(investor, amount);
   }
 
-  /**
-   * Lock the vault.
-   *
-   *
-   * - All balances have been loaded in correctly
-   * - Tokens are transferred on this vault correctly
-   *
-   * Checks are in place to prevent creating a vault that is locked with incorrect token balances.
-   *
-   */
+  /// @dev Lock the vault
+  ///      - All balances have been loaded in correctly
+  ///      - Tokens are transferred on this vault correctly
+  ///      - Checks are in place to prevent creating a vault that is locked with incorrect token balances.
   function lock() onlyOwner {
 
     if(lockedAt > 0) {
@@ -316,8 +317,7 @@ contract TokenVault is Ownable {
       throw;
     }
 
-    // Do not lock the vault if the given tokens on this contract
-    //
+    // Do not lock the vault if the given tokens are not on this contract
     if(token.balanceOf(address(this)) != tokensAllocatedTotal) {
       throw;
     }
@@ -327,9 +327,7 @@ contract TokenVault is Ownable {
     Locked();
   }
 
-  /**
-   * In the case locking failed, then allow the owner to reclaim the tokens on the contract.
-   */
+  /// @dev In the case locking failed, then allow the owner to reclaim the tokens on the contract.
   function recoverFailedLock() onlyOwner {
     if(lockedAt > 0) {
       throw;
@@ -339,17 +337,13 @@ contract TokenVault is Ownable {
     token.transfer(owner, token.balanceOf(address(this)));
   }
 
-  /**
-   * Get the current balance of tokens in the vault.
-   */
+  /// @dev Get the current balance of tokens in the vault
+  /// @return uint How many tokens there are currently in vault
   function getBalance() public constant returns (uint howManyTokensCurrentlyInVault) {
     return token.balanceOf(address(this));
   }
 
-  /**
-   * Claim N bought tokens to the investor as the msg sender.
-   *
-   */
+  /// @dev Claim N bought tokens to the investor as the msg sender
   function claim() {
 
     address investor = msg.sender;
@@ -382,9 +376,7 @@ contract TokenVault is Ownable {
     Distributed(investor, amount);
   }
 
-  /**
-   * Resolve the contract umambigious state.
-   */
+  /// @dev Resolve the contract umambigious state
   function getState() public constant returns(State) {
     if(lockedAt == 0) {
       return State.Loading;
