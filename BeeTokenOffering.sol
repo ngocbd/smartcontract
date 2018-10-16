@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BeeTokenOffering at 0x33cc43e3264127f839ac7073e1e413fd1468ea35
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BeeTokenOffering at 0x62caf75a67252f7be236a7335fed1410c7434b7f
 */
 pragma solidity ^0.4.18;
 
@@ -474,6 +474,9 @@ contract BeeTokenOffering is Pausable {
     // Funding cap in ETH. Change to equal $5M at time of token offering
     uint256 public constant FUNDING_ETH_HARD_CAP = 5000 * 1 ether;
 
+    // Min contribution is 0.1 ether
+    uint256 public constant MINIMUM_CONTRIBUTION = 10**17;
+
     // The current stage of the offering
     Stages public stage;
 
@@ -520,7 +523,7 @@ contract BeeTokenOffering is Pausable {
 
         uint256 contributionInWei = msg.value;
         address participant = msg.sender;
-        require(participant != address(0) && contributionInWei > 100000000000000000);
+        require(participant != address(0) && contributionInWei >= MINIMUM_CONTRIBUTION);
         require(weiRaised.add(contributionInWei) <= FUNDING_ETH_HARD_CAP);
 
         uint256 initialCapInWei = tierCaps[tier];
@@ -554,6 +557,7 @@ contract BeeTokenOffering is Pausable {
         require(beeToEtherRate > 0);
         require(beneficiaryAddr != address(0));
         require(tokenAddress != address(0));
+        require(baseContributionCapInWei >= MINIMUM_CONTRIBUTION);
 
         token = BeeToken(tokenAddress);
         rate = beeToEtherRate;
