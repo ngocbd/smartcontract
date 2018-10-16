@@ -1,8 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IconomiToken at 0x888666ca69e0f178ded6d75b5726cee99a87d698
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IconomiToken at 0x354b10083a2d6b8bd18ddd390fac7bcdede8a839
 */
-pragma solidity ^0.4.0;
-
 contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
 
 contract IconomiToken {
