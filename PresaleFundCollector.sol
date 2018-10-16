@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresaleFundCollector at 0x78c6b7f1f5259406be3bc73eca1eaa859471b9f3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresaleFundCollector at 0xd3fa03c67cfba062325cb6f4f4b5c1e642f1cffe
 */
 /**
  * Safe unsigned safe math.
@@ -200,6 +200,7 @@ contract FractionalERC20 is ERC20 {
  * - minimum funding goal and refund
  * - various statistics during the crowdfund
  * - different pricing strategies
+ * - different investment policies (require server side customer id, allow only whitelisted addresses)
  *
  */
 contract Crowdsale is Haltable {
@@ -245,11 +246,26 @@ contract Crowdsale is Haltable {
   /* Has this crowdsale been finalized */
   bool public finalized;
 
+  /* Do we need to have unique contributor id for each customer */
+  bool public requireCustomerId;
+
+  /**
+    * Do we verify that contributor has been cleared on the server side (accredited investors only).
+    * This method was first used in FirstBlood crowdsale to ensure all contributors have accepted terms on sale (on the web).
+    */
+  bool public requiredSignedAddress;
+
+  /* Server side address that signed allowed contributors (Ethereum addresses) that can participate the crowdsale */
+  address public signerAddress;
+
   /** How much ETH each address has invested to this crowdsale */
   mapping (address => uint256) public investedAmountOf;
 
   /** How much tokens this crowdsale has credited for each investor address */
   mapping (address => uint256) public tokenAmountOf;
+
+  /** Addresses that are allowed to invest even before ICO offical opens. For testing, for ICO partners, etc. */
+  mapping (address => bool) public earlyParticipantWhitelist;
 
   /** This is for manul testing for the interaction from owner wallet. You can set it to any value and inspect this in blockchain explorer to see that crowdsale interaction works. */
   uint public ownerTestValue;
@@ -266,8 +282,20 @@ contract Crowdsale is Haltable {
    */
   enum State{Unknown, Preparing, PreFunding, Funding, Success, Failure, Finalized, Refunding}
 
-  event Invested(address investor, uint weiAmount, uint tokenAmount);
+  // A new investment was made
+  event Invested(address investor, uint weiAmount, uint tokenAmount, uint128 customerId);
+
+  // Refund was processed for a contributor
   event Refund(address investor, uint weiAmount);
+
+  // The rules were changed what kind of investments we accept
+  event InvestmentPolicyChanged(bool requireCustomerId, bool requiredSignedAddress, address signerAddress);
+
+  // Address early participation whitelist status changed
+  event Whitelisted(address addr, bool status);
+
+  // Crowdsale end time has been changed
+  event EndsAtChanged(uint endsAt);
 
   function Crowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal) {
 
@@ -316,9 +344,25 @@ contract Crowdsale is Haltable {
    * Crowdsale must be running for one to invest.
    * We must have not pressed the emergency brake.
    *
+   * @param receiver The Ethereum address who receives the tokens
+   * @param customerId (optional) UUID v4 to track the successful payments on the server side
    *
    */
-  function invest(address receiver) inState(State.Funding) stopInEmergency payable public {
+  function investInternal(address receiver, uint128 customerId) stopInEmergency private {
+
+    // Determine if it's a good time to accept investment from this participant
+    if(getState() == State.PreFunding) {
+      // Are we whitelisted for early deposit
+      if(!earlyParticipantWhitelist[receiver]) {
+        throw;
+      }
+    } else if(getState() == State.Funding) {
+      // Retail participants can only come in when the crowdsale is running
+      // pass
+    } else {
+      // Unwanted state
+      throw;
+    }
 
     uint weiAmount = msg.value;
     uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised, tokensSold, msg.sender, token.decimals());
@@ -352,7 +396,83 @@ contract Crowdsale is Haltable {
     if(!multisigWallet.send(weiAmount)) throw;
 
     // Tell us invest was success
-    Invested(receiver, weiAmount, tokenAmount);
+    Invested(receiver, weiAmount, tokenAmount, customerId);
+  }
+
+  /**
+   * Preallocate tokens for the early investors.
+   *
+   * Preallocated tokens have been sold before the actual crowdsale opens.
+   * This function mints the tokens and moves the crowdsale needle.
+   *
+   * Investor count is not handled; it is assumed this goes for multiple investors
+   * and the token distribution happens outside the smart contract flow.
+   *
+   * No money is exchanged, as the crowdsale team already have received the payment.
+   *
+   * @param fullTokens tokens as full tokens - decimal places added internally
+   * @param weiPrice Price of a single full token in wei
+   *
+   */
+  function preallocate(address receiver, uint fullTokens, uint weiPrice) public onlyOwner {
+
+    uint tokenAmount = fullTokens * 10**token.decimals();
+    uint weiAmount = weiPrice * tokenAmount; // This can be also 0, we give out tokens for free
+
+    weiRaised = weiRaised.plus(weiAmount);
+    tokensSold = tokensSold.plus(tokenAmount);
+
+    investedAmountOf[receiver] = investedAmountOf[receiver].plus(weiAmount);
+    tokenAmountOf[receiver] = tokenAmountOf[receiver].plus(tokenAmount);
+
+    assignTokens(receiver, tokenAmount);
+
+    // Tell us invest was success
+    Invested(receiver, weiAmount, tokenAmount, 0);
+  }
+
+  /**
+   * Allow anonymous contributions to this crowdsale.
+   */
+  function investWithSignedAddress(address addr, uint128 customerId, uint8 v, bytes32 r, bytes32 s) public payable {
+     bytes32 hash = sha256(addr);
+     if (ecrecover(hash, v, r, s) != signerAddress) throw;
+     if(customerId == 0) throw;  // UUIDv4 sanity check
+     investInternal(addr, customerId);
+  }
+
+  /**
+   * Track who is the customer making the payment so we can send thank you email.
+   */
+  function investWithCustomerId(address addr, uint128 customerId) public payable {
+    if(requiredSignedAddress) throw; // Crowdsale allows only server-side signed participants
+    if(customerId == 0) throw;  // UUIDv4 sanity check
+    investInternal(addr, customerId);
+  }
+
+  /**
+   * Allow anonymous contributions to this crowdsale.
+   */
+  function invest(address addr) public payable {
+    if(requireCustomerId) throw; // Crowdsale needs to track partipants for thank you email
+    if(requiredSignedAddress) throw; // Crowdsale allows only server-side signed participants
+    investInternal(addr, 0);
+  }
+
+  /**
+   * Invest to tokens, recognize the payer and clear his address.
+   *
+   */
+  function buyWithSignedAddress(uint128 customerId, uint8 v, bytes32 r, bytes32 s) public payable {
+    investWithSignedAddress(msg.sender, customerId, v, r, s);
+  }
+
+  /**
+   * Invest to tokens, recognize the payer.
+   *
+   */
+  function buyWithCustomerId(uint128 customerId) public payable {
+    investWithCustomerId(msg.sender, customerId);
   }
 
   /**
@@ -387,7 +507,7 @@ contract Crowdsale is Haltable {
   /**
    * Allow to (re)set finalize agent.
    *
-   * Design choice: no state restrictions on the set, so that we can fix fat finger mistakes.
+   * Design choice: no state restrictions on setting this, so that we can fix fat finger mistakes.
    */
   function setFinalizeAgent(FinalizeAgent addr) onlyOwner {
     finalizeAgent = addr;
@@ -396,6 +516,57 @@ contract Crowdsale is Haltable {
     if(!finalizeAgent.isFinalizeAgent()) {
       throw;
     }
+  }
+
+  /**
+   * Set policy do we need to have server-side customer ids for the investments.
+   *
+   */
+  function setRequireCustomerId(bool value) onlyOwner {
+    requireCustomerId = value;
+    InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, signerAddress);
+  }
+
+  /**
+   * Set policy if all investors must be cleared on the server side first.
+   *
+   * This is e.g. for the accredited investor clearing.
+   *
+   */
+  function setRequireSignedAddress(bool value, address _signerAddress) onlyOwner {
+    requiredSignedAddress = value;
+    signerAddress = _signerAddress;
+    InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, signerAddress);
+  }
+
+  /**
+   * Allow addresses to do early participation.
+   *
+   * TODO: Fix spelling error in the name
+   */
+  function setEarlyParicipantWhitelist(address addr, bool status) onlyOwner {
+    earlyParticipantWhitelist[addr] = status;
+    Whitelisted(addr, status);
+  }
+
+  /**
+   * Allow crowdsale owner to close early or extend the crowdsale.
+   *
+   * This is useful e.g. for a manual soft cap implementation:
+   * - after X amount is reached determine manual closing
+   *
+   * This may put the crowdsale to an invalid state,
+   * but we trust owners know what they are doing.
+   *
+   */
+  function setEndsAt(uint time) onlyOwner {
+
+    if(now > time) {
+      throw; // Don't change past
+    }
+
+    endsAt = time;
+    EndsAtChanged(endsAt);
   }
 
   /**
@@ -411,8 +582,6 @@ contract Crowdsale is Haltable {
       throw;
     }
   }
-
-
 
   /**
    * Allow load refunds back on the contract for the refunding.
