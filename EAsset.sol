@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EAsset at 0x1bd7435464b479a70323686fec97ae669f4ed303
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EAsset at 0xb41c3c13999985e9448c02795e39961455cb184a
 */
 pragma solidity ^0.4.4;
 
@@ -111,7 +111,7 @@ contract EAsset is StandardToken { // CHANGE THIS. Update the contract name.
         balances[msg.sender] = 200000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to 20000000 * 1000000. (CHANGE THIS)
         totalSupply = 200000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
         name = "E-Asset";                                   // Set the name for display purposes (CHANGE THIS)
-        decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
+        decimals = 8;                                               // Amount of decimals for display purposes (CHANGE THIS)
         symbol = "ASSET";                                             // Set the symbol for display purposes (CHANGE THIS)
         unitsOneEthCanBuy = 20000;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
