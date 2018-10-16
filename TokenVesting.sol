@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVesting at 0x922729d66e5ab074aff382edc25fb39a02bbf578
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVesting at 0x77e01450fd870dafa3a545bdfc2b6e13c879f645
 */
 //File: node_modules/zeppelin-solidity/contracts/token/ERC20Basic.sol
 pragma solidity ^0.4.18;
