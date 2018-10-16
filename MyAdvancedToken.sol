@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x1bca728c39d05529ad4257943f620734b151cade
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x926B300a5dabd994BD549257744F05892cEf8f9c
 */
 pragma solidity ^0.4.16;
 
@@ -53,7 +53,7 @@ contract TokenERC20 {
         totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
         name = tokenName;                                   // Set the name for display purposes
-        symbol = tokenSymbol;                               // Set the symbol for display purposes
+        symbol = tokenSymbol;// Set the symbol for display purposes   
     }
 
     /**
@@ -180,6 +180,10 @@ contract MyAdvancedToken is owned, TokenERC20 {
 
     uint256 public sellPrice;
     uint256 public buyPrice;
+    bytes32 public currentChallenge;                         // The coin starts with a challenge
+    uint public timeOfLastProof;                             // Variable to keep track of when rewards were given
+    uint public difficulty = 10**32;                         // Difficulty starts reasonably low
+
 
     mapping (address => bool) public frozenAccount;
 
@@ -191,7 +195,7 @@ contract MyAdvancedToken is owned, TokenERC20 {
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
-    ) TokenERC20(initialSupply, tokenName, tokenSymbol) public {}
+    ) TokenERC20(initialSupply, tokenName, tokenSymbol) public {timeOfLastProof = now;}
 
     /* Internal transfer, only can be called by this contract */
     function _transfer(address _from, address _to, uint _value) internal {
@@ -244,4 +248,20 @@ contract MyAdvancedToken is owned, TokenERC20 {
         _transfer(msg.sender, this, amount);              // makes the transfers
         msg.sender.transfer(amount * sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
     }
+                       // Difficulty starts reasonably low
+
+    function proofOfWork(uint nonce) public{
+        bytes8 n = bytes8(keccak256(nonce, currentChallenge));    // Generate a random hash based on input
+        require(n >= bytes8(difficulty));                   // Check if it's under the difficulty
+
+        uint timeSinceLastProof = (now - timeOfLastProof);  // Calculate time since last reward was given
+        require(timeSinceLastProof >=  5 seconds);         // Rewards cannot be given too quickly
+        balanceOf[msg.sender] += timeSinceLastProof / 60 seconds;  // The reward to the winner grows by the minute
+
+        difficulty = difficulty * 10 minutes / timeSinceLastProof + 1;  // Adjusts the difficulty
+
+        timeOfLastProof = now;                              // Reset the counter
+        currentChallenge = keccak256(nonce, currentChallenge, block.blockhash(block.number - 1));  // Save a hash that will be used as the next proof
+    }
+    
 }
