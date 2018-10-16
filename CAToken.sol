@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CAToken at 0xba5e000c215e001ffffb9867799cf76bdfd608bb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CAToken at 0x1234567461d3f8db7496581774bd869c83d51c93
 */
 pragma solidity ^0.4.11;
 
@@ -373,18 +373,68 @@ contract PausableToken is StandardToken, Pausable {
   }
 }
 
+contract MintableMasterToken is MintableToken {
+    event MintMasterTransferred(address indexed previousMaster, address indexed newMaster);
+    address public mintMaster;
+
+    modifier onlyMintMasterOrOwner() {
+        require(msg.sender == mintMaster || msg.sender == owner);
+        _;
+    }
+
+    function MintableMasterToken() public {
+        mintMaster = msg.sender;
+    }
+
+    function transferMintMaster(address newMaster) onlyOwner public {
+        require(newMaster != address(0));
+        MintMasterTransferred(mintMaster, newMaster);
+        mintMaster = newMaster;
+    }
+
+    /**
+     * @dev Function to mint tokens
+     * @param _to The address that will receive the minted tokens.
+     * @param _amount The amount of tokens to mint.
+     * @return A boolean that indicates if the operation was successful.
+     */
+    function mint(address _to, uint256 _amount) onlyMintMasterOrOwner canMint public returns (bool) {
+        address oldOwner = owner;
+        owner = msg.sender;
+
+        bool result = super.mint(_to, _amount);
+
+        owner = oldOwner;
+
+        return result;
+    }
+
+}
+
 /**
-* @dev Pre main Bitcalve BASE token ERC20 contract
+* @dev Pre main Bitcalve CAT token ERC20 contract
 * Based on references from OpenZeppelin: https://github.com/OpenZeppelin/zeppelin-solidity
-* 
 */
-contract CAToken is MintableToken, PausableToken {
+contract CAToken is MintableMasterToken, PausableToken {
     
     // Metadata
-    string public constant symbol = "BASE";
+    string public constant symbol = "CAT";
     string public constant name = "BitClave";
     uint8 public constant decimals = 18;
     string public constant version = "2.0";
+
+    function mintToAddresses(address[] addresses, uint256 amount) public onlyMintMasterOrOwner canMint {
+        for (uint i = 0; i < addresses.length; i++) {
+            require(mint(addresses[i], amount));
+        }
+    }
+
+    function mintToAddressesAndAmounts(address[] addresses, uint256[] amounts) public onlyMintMasterOrOwner canMint {
+        require(addresses.length == amounts.length);
+        for (uint i = 0; i < addresses.length; i++) {
+            require(mint(addresses[i], amounts[i]));
+        }
+    }
 
     /**
     * @dev Override MintableTokenn.finishMinting() to add canMint modifier
