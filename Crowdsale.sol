@@ -1,273 +1,354 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x6f89544bc460f15315086f411b9c1fe5c8cfb1f1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x3b1bcee51d853d6a2a9bc955b94c005f44892bdb
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.21;
 
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
 library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    if (a == 0) {
-      return 0;
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
+        }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
     }
-    c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
-  }
-
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
-    assert(c >= a);
-    return c;
-  }
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a / b;
+        return c;
+    }
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
 }
 
-/**
- * @title token
- * @dev token function singnature
- */
-contract token { function transfer(address receiver, uint amount){ receiver; amount; } }
 
-/**
- * @title Crowdsale
- * @dev Crowdsale is a base contract for managing a token crowdsale,
- * allowing investors to purchase tokens with ether. This contract implements
- * such functionality in its most fundamental form and can be extended to provide additional
- * functionality and/or custom behavior.
- * The external interface represents the basic interface for purchasing tokens, and conform
- * the base architecture for crowdsales. They are *not* intended to be modified / overriden.
- * The internal interface conforms the extensible and modifiable surface of crowdsales. Override
- * the methods to add functionality. Consider using 'super' where appropiate to concatenate
- * behavior.
- */
-contract Crowdsale {
-  using SafeMath for uint256;
-
-  // The token being sold
-  token public vppToken;
-
-  // Owner address
-  address public owner;
-
-  // Address where funds are collected
-  address public wallet;
-
-  // How many token units a buyer gets per wei
-  uint256 public rate;
-
-  // Amount of wei raised
-  uint256 public weiRaised;
-
-  modifier onlyOwner() { 
-    require (msg.sender == owner); 
-    _;
-  }
-  
-  /**
-   * Event for token purchase logging
-   * @param purchaser who paid for the tokens
-   * @param beneficiary who got the tokens
-   * @param value weis paid for purchase
-   * @param amount amount of tokens purchased
-   */
-  event TokenPurchase(
-    address indexed purchaser,
-    address indexed beneficiary,
-    uint256 value,
-    uint256 amount
-  );
-
-  /**
-   * @param _rate Number of token units a buyer gets per wei
-   * @param _wallet Address where collected funds will be forwarded to
-   * @param _vppToken Address of the token being sold
-   */
-  constructor(uint256 _rate, address _wallet, token _vppToken) public {
-    require(_rate > 0);
-    require(_wallet != address(0));
-    require(_vppToken != address(0));
-
-    owner = msg.sender;
-    rate = _rate;
-    wallet = _wallet;
-    vppToken = _vppToken;
-  }
-
-  // -----------------------------------------
-  // Crowdsale external interface
-  // -----------------------------------------
-
-  /**
-   * @dev fallback function ***DO NOT OVERRIDE***
-   */
-  function () external payable {
-    buyTokens(msg.sender);
-  }
-
-  /**
-   * @dev low level token purchase ***DO NOT OVERRIDE***
-   * @param _beneficiary Address performing the token purchase
-   */
-  function buyTokens(address _beneficiary) public payable {
-
-    uint256 weiAmount = msg.value;
-    _preValidatePurchase(_beneficiary, weiAmount);
-
-    // calculate token amount to be created
-    uint256 tokens = _getTokenAmount(weiAmount);
-
-    // update state
-    weiRaised = weiRaised.add(weiAmount);
-
-    _processPurchase(_beneficiary, tokens);
-    emit TokenPurchase(
-      msg.sender,
-      _beneficiary,
-      weiAmount,
-      tokens
-    );
-
-    _forwardFunds();
-
-  }
-
-  // -----------------------------------------
-  // owner only function
-  // -----------------------------------------
-   /**
-   * @dev owner transfer token to specific address, directly
-   * @param _beneficiary Address
-   * @param _tokenAmount to _beneficiary address
-   */
-  function ownerTokenTransfer(address _beneficiary, uint _tokenAmount) public onlyOwner {
-    _deliverTokens(_beneficiary, _tokenAmount);
-  }
-
-  /*
-   * @dev owner set owner
-   * @param new owner address
-   */ 
-  function ownerSetOwner(address _newOwner) public onlyOwner {
-    owner = _newOwner;
-  }
-
-  /*
-   * @dev owner set new wallet
-   * @param new wallet to collect funds
-   */ 
-  function ownerSetWallet(address _newWallet) public onlyOwner {
-    wallet = _newWallet;
-  }
-
-  /*
-   * @dev owner set new wallet
-   * @param new wallet to collect funds
-   */ 
-  function ownerSetRate(uint256 _newRate) public onlyOwner {
-    rate = _newRate;
-  }
-
-  /*
-   * @dev owner selfdestruct contract ***BE CAREFUL! EMERGENCY ONLY*** 
-   * before self destruct, execute ownerTokenTransfer() to GET TOKEN OUT.
-   */ 
-  function ownerSelfDestruct() public onlyOwner {
-    selfdestruct(owner);
-  }
+interface ERC20 {
+    function transfer (address _beneficiary, uint256 _tokenAmount) external returns (bool);
+    function mint (address _to, uint256 _amount) external returns (bool);
+}
 
 
-
-  // -----------------------------------------
-  // Internal interface (extensible)
-  // -----------------------------------------
-
-  /**
-   * @dev Validation of an incoming purchase. Use require statements to revert state when conditions are not met. Use super to concatenate validations.
-   * @param _beneficiary Address performing the token purchase
-   * @param _weiAmount Value in wei involved in the purchase
-   */
-  function _preValidatePurchase(
-    address _beneficiary,
-    uint256 _weiAmount
-  )
-    internal pure
-  {
-    require(_beneficiary != address(0));
-    require(_weiAmount != 0);
-  }
+contract Ownable {
+    address public owner;
+    function Ownable() public {
+        owner = msg.sender;
+    }
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+}
 
 
-  /**
-   * @dev Source of tokens. Override this method to modify the way in which the crowdsale ultimately gets and sends its tokens.
-   * @param _beneficiary Address performing the token purchase
-   * @param _tokenAmount Number of tokens to be emitted
-   */
-  function _deliverTokens(
-    address _beneficiary,
-    uint256 _tokenAmount
-  )
-    internal
-  {
-    vppToken.transfer(_beneficiary, _tokenAmount);
-  }
+contract Crowdsale is Ownable {
+    using SafeMath for uint256;
 
-  /**
-   * @dev Executed when a purchase has been validated and is ready to be executed. Not necessarily emits/sends tokens.
-   * @param _beneficiary Address receiving the tokens
-   * @param _tokenAmount Number of tokens to be purchased
-   */
-  function _processPurchase(
-    address _beneficiary,
-    uint256 _tokenAmount
-  )
-    internal
-  {
-    _deliverTokens(_beneficiary, _tokenAmount);
-  }
+    modifier onlyWhileOpen {
+        require(
+            (now >= preICOStartDate && now < preICOEndDate) ||
+            (now >= ICOStartDate && now < ICOEndDate)
+        );
+        _;
+    }
 
-  /**
-   * @dev Override to extend the way in which ether is converted to tokens.
-   * @param _weiAmount Value in wei to be converted into tokens
-   * @return Number of tokens that can be purchased with the specified _weiAmount
-   */
-  function _getTokenAmount(uint256 _weiAmount)
-    internal view returns (uint256)
-  {
-    return _weiAmount.mul(rate);
-  }
+    modifier onlyWhileICOOpen {
+        require(now >= ICOStartDate && now < ICOEndDate);
+        _;
+    }
 
-  /**
-   * @dev Determines how ETH is stored/forwarded on purchases.
-   */
-  function _forwardFunds() internal {
-    wallet.transfer(msg.value);
-  }
+    // The token being sold
+    ERC20 public token;
+
+    // Address where funds are collected
+    address public wallet;
+
+    // ????? ????????? ??????? ??? ?????????? ??????????
+    address public backendOperator = 0xd2420C5fDdA15B26AC3E13522e5cCD62CEB50e5F;
+
+    // ??????? ??????? ?????????? ???????? ?? 1 ????
+    uint256 public rate = 100;
+
+    // ??????? ?????? ?????????? ? ???? PreICO, wei
+    uint256 public preICOWeiRaised = 1850570000000000000000;
+
+    // ??????? ?????? ?????????? ? ???? ICO, wei
+    uint256 public ICOWeiRaised;
+
+    // ???? ETH ? ??????
+    uint256 public ETHUSD;
+
+    // ???? ?????? PreICO
+    uint256 public preICOStartDate;
+
+    // ???? ????????? PreICO
+    uint256 public preICOEndDate;
+
+    // ???? ?????? ICO
+    uint256 public ICOStartDate;
+
+    // ???? ????????? ICO
+    uint256 public ICOEndDate;
+
+    // ??????????? ????? ??????????? ??????? ? ???? ICO ? ??????
+    uint256 public softcap = 300000000;
+
+    // ??????? ??????????? ??????? ? ???? ICO ? ??????
+    uint256 public hardcap = 2500000000;
+
+    // ????? ????????, %
+    uint8 public referalBonus = 3;
+
+    // ????? ????????????? ?????????, %
+    uint8 public invitedByReferalBonus = 2;
+
+    // Whitelist
+    mapping(address => bool) public whitelist;
+
+    // ?????????, ??????? ?????? ?????
+    mapping (address => uint256) public investors;
+
+    event TokenPurchase(address indexed buyer, uint256 value, uint256 amount);
+
+    function Crowdsale(
+        address _wallet,
+        uint256 _preICOStartDate,
+        uint256 _preICOEndDate,
+        uint256 _ICOStartDate,
+        uint256 _ICOEndDate,
+        uint256 _ETHUSD
+    ) public {
+        require(_preICOEndDate > _preICOStartDate);
+        require(_ICOStartDate > _preICOEndDate);
+        require(_ICOEndDate > _ICOStartDate);
+
+        wallet = _wallet;
+        preICOStartDate = _preICOStartDate;
+        preICOEndDate = _preICOEndDate;
+        ICOStartDate = _ICOStartDate;
+        ICOEndDate = _ICOEndDate;
+        ETHUSD = _ETHUSD;
+    }
+
+    modifier backEnd() {
+        require(msg.sender == backendOperator || msg.sender == owner);
+        _;
+    }
+
+    /* ????????? ?????? */
+
+    // ?????????? ????????? ??????
+    function setRate (uint16 _rate) public onlyOwner {
+        require(_rate > 0);
+        rate = _rate;
+    }
+
+    // ?????????? ????? ???????? ??? ????? ???????
+    function setWallet (address _wallet) public onlyOwner {
+        require (_wallet != 0x0);
+        wallet = _wallet;
+    }
+
+    // ?????????? ????????? ?????
+    function setToken (ERC20 _token) public onlyOwner {
+        token = _token;
+    }
+
+    // ?????????? ???? ?????? PreICO
+    function setPreICOStartDate (uint256 _preICOStartDate) public onlyOwner {
+        require(_preICOStartDate < preICOEndDate);
+        preICOStartDate = _preICOStartDate;
+    }
+
+    // ?????????? ???? ????????? PreICO
+    function setPreICOEndDate (uint256 _preICOEndDate) public onlyOwner {
+        require(_preICOEndDate > preICOStartDate);
+        preICOEndDate = _preICOEndDate;
+    }
+
+    // ?????????? ???? ?????? ICO
+    function setICOStartDate (uint256 _ICOStartDate) public onlyOwner {
+        require(_ICOStartDate < ICOEndDate);
+        ICOStartDate = _ICOStartDate;
+    }
+
+    // ?????????? ???? ????????? PreICO
+    function setICOEndDate (uint256 _ICOEndDate) public onlyOwner {
+        require(_ICOEndDate > ICOStartDate);
+        ICOEndDate = _ICOEndDate;
+    }
+
+    // ?????????? ????????? ????? ? ??????
+    function setETHUSD (uint256 _ETHUSD) public onlyOwner {
+        ETHUSD = _ETHUSD;
+    }
+
+    // ?????????? ????????? ??????? ??? ?????????? ??????????
+    function setBackendOperator(address newOperator) public onlyOwner {
+        backendOperator = newOperator;
+    }
+
+    function () external payable {
+        address beneficiary = msg.sender;
+        uint256 weiAmount = msg.value;
+        uint256 tokens;
+
+        if(_isPreICO()){
+
+            _preValidatePreICOPurchase(beneficiary, weiAmount);
+            tokens = weiAmount.mul(rate.add(rate.mul(30).div(100)));
+            preICOWeiRaised = preICOWeiRaised.add(weiAmount);
+            wallet.transfer(weiAmount);
+            investors[beneficiary] = weiAmount;
+            _deliverTokens(beneficiary, tokens);
+            emit TokenPurchase(beneficiary, weiAmount, tokens);
+
+        } else if(_isICO()){
+
+            _preValidateICOPurchase(beneficiary, weiAmount);
+            tokens = _getTokenAmountWithBonus(weiAmount);
+            ICOWeiRaised = ICOWeiRaised.add(weiAmount);
+            investors[beneficiary] = weiAmount;
+            _deliverTokens(beneficiary, tokens);
+            emit TokenPurchase(beneficiary, weiAmount, tokens);
+
+        }
+    }
+
+    // ??????? ??????? ? ??????????? ???????
+    function buyTokensWithReferal(address _referal) public onlyWhileICOOpen payable {
+        address beneficiary = msg.sender;
+        uint256 weiAmount = msg.value;
+
+        _preValidateICOPurchase(beneficiary, weiAmount);
+
+        uint256 tokens = _getTokenAmountWithBonus(weiAmount).add(_getTokenAmountWithReferal(weiAmount, 2));
+        uint256 referalTokens = _getTokenAmountWithReferal(weiAmount, 3);
+
+        ICOWeiRaised = ICOWeiRaised.add(weiAmount);
+        investors[beneficiary] = weiAmount;
+
+        _deliverTokens(beneficiary, tokens);
+        _deliverTokens(_referal, referalTokens);
+
+        emit TokenPurchase(beneficiary, weiAmount, tokens);
+    }
+
+    // ???????? ????? ? whitelist
+    function addToWhitelist(address _beneficiary) public backEnd {
+        whitelist[_beneficiary] = true;
+    }
+
+    // ???????? ????????? ??????? ? whitelist
+    function addManyToWhitelist(address[] _beneficiaries) public backEnd {
+        for (uint256 i = 0; i < _beneficiaries.length; i++) {
+            whitelist[_beneficiaries[i]] = true;
+        }
+    }
+
+    // ????????? ????? ?? whitelist
+    function removeFromWhitelist(address _beneficiary) public backEnd {
+        whitelist[_beneficiary] = false;
+    }
+
+    // ?????? ????? ?? ???? ?????????? PreICO
+    function hasPreICOClosed() public view returns (bool) {
+        return now > preICOEndDate;
+    }
+
+    // ?????? ????? ?? ???? ?????????? ICO
+    function hasICOClosed() public view returns (bool) {
+        return now > ICOEndDate;
+    }
+
+    // ????????? ????????? ???????? ?? ??????? ??? ?????
+    function forwardFunds () public onlyOwner {
+        require(now > ICOEndDate);
+        require((preICOWeiRaised.add(ICOWeiRaised)).mul(ETHUSD).div(10**18) >= softcap);
+
+        wallet.transfer(ICOWeiRaised);
+    }
+
+    // ??????? ?????????????????? ????????, ???? ?? ??? ????????? softcap
+    function refund() public {
+        require(now > ICOEndDate);
+        require(preICOWeiRaised.add(ICOWeiRaised).mul(ETHUSD).div(10**18) < softcap);
+        require(investors[msg.sender] > 0);
+
+        address investor = msg.sender;
+        investor.transfer(investors[investor]);
+    }
+
+
+    /* ?????????? ?????? */
+
+    // ???????? ???????????? PreICO
+    function _isPreICO() internal view returns(bool) {
+        return now >= preICOStartDate && now < preICOEndDate;
+    }
+
+    // ???????? ???????????? ICO
+    function _isICO() internal view returns(bool) {
+        return now >= ICOStartDate && now < ICOEndDate;
+    }
+
+    // ????????? ????? ???????? ???????
+
+    function _preValidatePreICOPurchase(address _beneficiary, uint256 _weiAmount) internal view {
+        require(_weiAmount != 0);
+        require(whitelist[_beneficiary]);
+        require(now >= preICOStartDate && now <= preICOEndDate);
+    }
+
+    function _preValidateICOPurchase(address _beneficiary, uint256 _weiAmount) internal view {
+        require(_weiAmount != 0);
+        require(whitelist[_beneficiary]);
+        require((preICOWeiRaised + ICOWeiRaised + _weiAmount).mul(ETHUSD).div(10**18) <= hardcap);
+        require(now >= ICOStartDate && now <= ICOEndDate);
+    }
+
+    // ??????? ??????? ? ?????? ??????? ?? ???? ICO ? ????? ??????????
+    function _getTokenAmountWithBonus(uint256 _weiAmount) internal view returns(uint256) {
+        uint256 baseTokenAmount = _weiAmount.mul(rate);
+        uint256 tokenAmount = baseTokenAmount;
+        uint256 usdAmount = _weiAmount.mul(ETHUSD).div(10**18);
+
+        // ??????? ?????? ?? ????? ??????????
+        if(usdAmount >= 10000000){
+            tokenAmount = tokenAmount.add(baseTokenAmount.mul(7).div(100));
+        } else if(usdAmount >= 5000000){
+            tokenAmount = tokenAmount.add(baseTokenAmount.mul(5).div(100));
+        } else if(usdAmount >= 1000000){
+            tokenAmount = tokenAmount.add(baseTokenAmount.mul(3).div(100));
+        }
+
+        // ??????? ?????? ?? ???? ICO
+        if(now < ICOStartDate + 30 days) {
+            tokenAmount = tokenAmount.add(baseTokenAmount.mul(20).div(100));
+        } else if(now < ICOStartDate + 60 days) {
+            tokenAmount = tokenAmount.add(baseTokenAmount.mul(15).div(100));
+        } else if(now < ICOStartDate + 90 days) {
+            tokenAmount = tokenAmount.add(baseTokenAmount.mul(10).div(100));
+        } else {
+            tokenAmount = tokenAmount.add(baseTokenAmount.mul(5).div(100));
+        }
+
+        return tokenAmount;
+    }
+
+    // ??????? ??????? ? ?????? ??????? ??????????? ???????
+    function _getTokenAmountWithReferal(uint256 _weiAmount, uint8 _percent) internal view returns(uint256) {
+        return _weiAmount.mul(rate).mul(_percent).div(100);
+    }
+
+    // ??????? ???????
+    function _deliverTokens(address _beneficiary, uint256 _tokenAmount) internal {
+        token.mint(_beneficiary, _tokenAmount);
+    }
 }
