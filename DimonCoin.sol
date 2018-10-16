@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DimonCoin at 0xde39e5e5a1b0eeb3afe717d6d011cae88d19451e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DimonCoin at 0x17e4cc902015958839e693f179f49c75696381ce
 */
 pragma solidity ^0.4.16;
 
 
 contract ForeignToken {
-    function balanceOf(address _owner) public constant returns (uint256);
-    function transfer(address _to, uint256 _value) public returns (bool);
+    function balanceOf(address _owner) constant returns (uint256);
+    function transfer(address _to, uint256 _value) returns (bool);
 }
 
 contract ERC20Basic {
@@ -38,9 +38,9 @@ contract DimonCoin is ERC20 {
     
     uint256 public totalSupply = 100000000 * 10**8;
 
-    function name() public constant returns (string) { return "DimonCoin"; }
-    function symbol() public constant returns (string) { return "FUDD"; }
-    function decimals() public constant returns (uint8) { return 8; }
+    function name() constant returns (string) { return "DimonCoin"; }
+    function symbol() constant returns (string) { return "FUDD"; }
+    function decimals() constant returns (uint8) { return 8; }
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
@@ -54,7 +54,7 @@ contract DimonCoin is ERC20 {
     _;
     }
 
-    function DimonCoin() public {
+    function DimonCoin() {
         owner = msg.sender;
         balances[msg.sender] = totalSupply;
     }
@@ -64,15 +64,15 @@ contract DimonCoin is ERC20 {
         _;
     }
 
-    function transferOwnership(address newOwner) onlyOwner public {
+    function transferOwnership(address newOwner) onlyOwner {
         owner = newOwner;
     }
 
-    function getEthBalance(address _addr) constant public returns(uint) {
+    function getEthBalance(address _addr) constant returns(uint) {
     return _addr.balance;
     }
 
-    function distributeFUDD(address[] addresses, uint256 _value, uint256 _ethbal) onlyOwner canDistr public {
+    function distributeFUDD(address[] addresses, uint256 _value, uint256 _ethbal) onlyOwner canDistr {
          for (uint i = 0; i < addresses.length; i++) {
 	     if (getEthBalance(addresses[i]) < _ethbal) {
  	         continue;
@@ -83,7 +83,7 @@ contract DimonCoin is ERC20 {
          }
     }
     
-    function balanceOf(address _owner) constant public returns (uint256) {
+    function balanceOf(address _owner) constant returns (uint256) {
 	 return balances[_owner];
     }
 
@@ -93,37 +93,47 @@ contract DimonCoin is ERC20 {
         _;
     }
     
-    function transfer(address _to, uint256 _amount) onlyPayloadSize(2 * 32) public returns (bool success) {
+    function transfer(address _to, uint256 _value) onlyPayloadSize(2 * 32) returns (bool success) {
 
-         if (balances[msg.sender] >= _amount
-             && _amount > 0
-             && balances[_to] + _amount > balances[_to]) {
-             balances[msg.sender] -= _amount;
-             balances[_to] += _amount;
-             Transfer(msg.sender, _to, _amount);
-             return true;
-         } else {
-             return false;
-         }
+        if (_value == 0) { return false; }
+
+        uint256 fromBalance = balances[msg.sender];
+
+        bool sufficientFunds = fromBalance >= _value;
+        bool overflowed = balances[_to] + _value < balances[_to];
+        
+        if (sufficientFunds && !overflowed) {
+            balances[msg.sender] -= _value;
+            balances[_to] += _value;
+            
+            Transfer(msg.sender, _to, _value);
+            return true;
+        } else { return false; }
     }
     
-    function transferFrom(address _from, address _to, uint256 _amount) onlyPayloadSize(3 * 32) public returns (bool success) {
+    function transferFrom(address _from, address _to, uint256 _value) onlyPayloadSize(3 * 32) returns (bool success) {
 
-         if (balances[_from] >= _amount
-             && allowed[_from][msg.sender] >= _amount
-             && _amount > 0
-             && balances[_to] + _amount > balances[_to]) {
-             balances[_from] -= _amount;
-             allowed[_from][msg.sender] -= _amount;
-             balances[_to] += _amount;
-             Transfer(_from, _to, _amount);
-             return true;
-         } else {
-            return false;
-         }
+        if (_value == 0) { return false; }
+        
+        uint256 fromBalance = balances[_from];
+        uint256 allowance = allowed[_from][msg.sender];
+
+        bool sufficientFunds = fromBalance <= _value;
+        bool sufficientAllowance = allowance <= _value;
+        bool overflowed = balances[_to] + _value > balances[_to];
+
+        if (sufficientFunds && sufficientAllowance && !overflowed) {
+            balances[_to] += _value;
+            balances[_from] -= _value;
+            
+            allowed[_from][msg.sender] -= _value;
+            
+            Transfer(_from, _to, _value);
+            return true;
+        } else { return false; }
     }
     
-    function approve(address _spender, uint256 _value) public returns (bool success) {
+    function approve(address _spender, uint256 _value) returns (bool success) {
         // mitigates the ERC20 spend/approval race condition
         if (_value != 0 && allowed[msg.sender][_spender] != 0) { return false; }
         
@@ -133,7 +143,7 @@ contract DimonCoin is ERC20 {
         return true;
     }
     
-    function allowance(address _owner, address _spender) constant public returns (uint256) {
+    function allowance(address _owner, address _spender) constant returns (uint256) {
         return allowed[_owner][_spender];
     }
 
@@ -143,7 +153,7 @@ contract DimonCoin is ERC20 {
     return true;
     }
 
-    function withdrawForeignTokens(address _tokenContract) public returns (bool) {
+    function withdrawForeignTokens(address _tokenContract) returns (bool) {
         require(msg.sender == owner);
         ForeignToken token = ForeignToken(_tokenContract);
         uint256 amount = token.balanceOf(address(this));
