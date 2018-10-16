@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TRONCLASSIC at 0xad5fe5b0b8ec8ff4565204990e4405b2da117d8e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TRONCLASSIC at 0xfb0d6e9e2c8d90b7de13cbb013d6b9e5fc6c9a95
 */
 pragma solidity ^0.4.4;
 
@@ -113,10 +113,10 @@ contract TRONCLASSIC is StandardToken {
 
     function TRONCLASSIC(
         ) {
-        balances[msg.sender] = 1000000000000;               // Give the creator all initial tokens (10000000 for example)
-        totalSupply = 1000000000000;                        // Update total supply (10000000 for example)
+        balances[msg.sender] = 100000000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 100000000000000000000;                        // Update total supply (100000 for example)
         name = "TRONCLASSIC";                                   // Set the name for display purposes
-        decimals = 0;                            // Amount of decimals for display purposes
+        decimals = 18;                            // Amount of decimals for display purposes
         symbol = "TRXC";                               // Set the symbol for display purposes
     }
 
