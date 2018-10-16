@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LotteryRound at 0xd86b0549fbcd5e5355b6299699a9cf2f54170258
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LotteryRound at 0x1dfa9bde6b5bf21536b903ff06d9bd0b64fdff90
 */
 pragma solidity ^0.4.8;
 
@@ -88,7 +88,7 @@ contract LotteryRound is LotteryRoundInterface, Owned {
     Constants
    */
   // public version string
-  string constant VERSION = '0.1.2';
+  string constant VERSION = '0.1.1';
 
   // round length
   uint256 constant ROUND_LENGTH = 43200;  // approximately a week
@@ -238,12 +238,10 @@ contract LotteryRound is LotteryRoundInterface, Owned {
    *
    * Then advances the interal entropy by rehashing it with the chosen number.
    */
-  function generatePseudoRand(bytes32 seed) internal returns(bytes32) {
+  function generatePseudoRand() internal returns(bytes32) {
     uint8 pseudoRandomOffset = uint8(uint256(sha256(
-      seed,
-      block.difficulty,
-      block.coinbase,
-      block.timestamp,
+      msg.sender,
+      block.number,
       accumulatedEntropy
     )) & 0xff);
     // WARNING: This assumes block.number > 256... If block.number < 256, the below block.blockhash could return 0
@@ -252,8 +250,7 @@ contract LotteryRound is LotteryRoundInterface, Owned {
     bytes32 pseudoRand = sha3(
       block.number,
       block.blockhash(pseudoRandomBlock),
-      block.difficulty,
-      block.timestamp,
+      msg.sender,
       accumulatedEntropy
     );
     accumulatedEntropy = sha3(accumulatedEntropy, pseudoRand);
@@ -276,7 +273,7 @@ contract LotteryRound is LotteryRoundInterface, Owned {
     }
     tickets[picks].push(msg.sender);
     nTickets++;
-    generatePseudoRand(bytes32(picks)); // advance the accumulated entropy
+    generatePseudoRand(); // advance the accumulated entropy
     LotteryRoundDraw(msg.sender, picks);
   }
 
@@ -311,7 +308,7 @@ contract LotteryRound is LotteryRoundInterface, Owned {
     if (msg.value != TICKET_PRICE) {
       throw;
     }
-    bytes32 pseudoRand = generatePseudoRand(bytes32(msg.sender));
+    bytes32 pseudoRand = generatePseudoRand();
     bytes4 picks = pickValues(pseudoRand);
     tickets[picks].push(msg.sender);
     nTickets++;
