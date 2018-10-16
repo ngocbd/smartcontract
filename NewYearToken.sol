@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NewYearToken at 0x47ca7dc9336c0fb403f18b39ff29f5c5532744b0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NewYearToken at 0xca985e81bd10f92b9777ca75f80a3688a69392b3
 */
 pragma solidity 0.4.18;
 //signature - 9927A75EF7C89D3C028C8BA7A1B48CDD515ACED7A2BC564A099D452D3B3FFE89
@@ -9,7 +9,7 @@ contract NewYearToken{
 	uint8 public constant decimals = 8;
 	uint256 _totalSupply = 0;
 	address contract_owner;
-	uint256 current_remaining = 0; //to check for left over tokens after mining period
+	uint256 current_remaining = 0;
 	uint256 _contractStart = 1514782800; // 01/01/2018 12:00AM EST
 	uint256 _maxTotalSupply = 10000000000000000; //one hundred million
 	uint256 _miningReward = 10000000000; //100 NYT rewarded on successful mine halved every 5 years 
@@ -25,11 +25,9 @@ contract NewYearToken{
     mapping(address => mapping (address => uint256)) allowed;
 
     //initialize contract - set owner and give owner 20,000 tokens
-    function NewYearToken(){
-    	_totalSupply += 2000000000000;	
+    function NewYearToken(){	
     	contract_owner = msg.sender;
-    	balances[msg.sender] += 2000000000000;
-    	Transfer(this,msg.sender,2000000000000);
+    	balances[msg.sender] += 20000;
     }
 
 	function totalSupply() constant returns (uint256) {        
@@ -137,10 +135,7 @@ contract NewYearToken{
 			current_remaining = _maxMiningReward - _currentMined; 
 			if((current_remaining >= 0) && (_currentMined != 0)){
 				_currentMined += current_remaining;
-				balances[contract_owner] += current_remaining;
 				Transfer(this, contract_owner, current_remaining);	//sends unmined coins for the year to _owner
-				current_remaining = 0;
-				return false;
 			}
 		}
 		return false;
