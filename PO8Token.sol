@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PO8Token at 0x7a00f353c4117f28fe50a1c2a43856b73cc60e4d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PO8Token at 0x8744a672d5a2df51da92b4bab608ce7ff4ddd804
 */
 pragma solidity^0.4.21;
 
@@ -62,7 +62,7 @@ contract ERC20 {
     event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-contract KTBaseToken is ERC20 {
+contract PO8BaseToken is ERC20 {
     using SafeMath for uint256;
     
     string public name;
@@ -150,7 +150,7 @@ contract KTBaseToken is ERC20 {
 
 }
 
-contract PO8Token is KTBaseToken("PO8 Token", "PO8", 18, 10000000000000000000000000000), Ownable {
+contract PO8Token is PO8BaseToken("PO8 Token", "PO8", 18, 10000000000000000000000000000), Ownable {
 
     uint256 internal privateToken;
     uint256 internal preSaleToken;
@@ -158,12 +158,15 @@ contract PO8Token is KTBaseToken("PO8 Token", "PO8", 18, 10000000000000000000000
     uint256 internal bountyToken;
     uint256 internal foundationToken;
     address public founderAddress;
+    bool public unlockAllTokens;
 
     mapping (address => bool) public approvedAccount;
+
     event UnFrozenFunds(address target, bool unfrozen);
+    event UnLockAllTokens(bool unlock);
 
     constructor() public {
-        founderAddress = address(0xF84476284887028a7d5341f8f1127154718652B5);
+        founderAddress = address(0x072F140DcCCE18F9966Aeb6D71ffcD0b42748683);
         balances[founderAddress] = totalSupply_;
         emit Transfer(address(0), founderAddress, totalSupply_);
     }
@@ -172,11 +175,16 @@ contract PO8Token is KTBaseToken("PO8 Token", "PO8", 18, 10000000000000000000000
         require (_to != address(0));                               
         require (balances[_from] >= _value);               
         require (balances[_to].add(_value) >= balances[_to]); 
-        require(approvedAccount[_from]);
+        require(approvedAccount[_from] || unlockAllTokens);
 
         balances[_from] = balances[_from].sub(_value);                  
         balances[_to] = balances[_to].add(_value);                  
         emit Transfer(_from, _to, _value);
+    }
+
+    function unlockAllTokens(bool _unlock) public onlyOwner {
+        unlockAllTokens = _unlock;
+        emit UnLockAllTokens(_unlock);
     }
 
     function approvedAccount(address target, bool approval) public onlyOwner {
