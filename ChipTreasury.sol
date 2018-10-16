@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChipTreasury at 0xe6c071cb6c179172afd9e4219ac7d93a70713da6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChipTreasury at 0xdc1d53dc4f8e44c2fabe22e76236bcdffab77124
 */
-pragma solidity 0.4.21;
+pragma solidity 0.4.23;
 
 // File: zeppelin-solidity/contracts/ownership/Ownable.sol
 
@@ -39,7 +39,7 @@ contract Ownable {
    */
   function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
+    emit OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
 
@@ -79,7 +79,7 @@ contract Pausable is Ownable {
    */
   function pause() onlyOwner whenNotPaused public {
     paused = true;
-    Pause();
+    emit Pause();
   }
 
   /**
@@ -87,7 +87,7 @@ contract Pausable is Ownable {
    */
   function unpause() onlyOwner whenPaused public {
     paused = false;
-    Unpause();
+    emit Unpause();
   }
 }
 
@@ -102,11 +102,11 @@ library SafeMath {
   /**
   * @dev Multiplies two numbers, throws on overflow.
   */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
     if (a == 0) {
       return 0;
     }
-    uint256 c = a * b;
+    c = a * b;
     assert(c / a == b);
     return c;
   }
@@ -116,9 +116,9 @@ library SafeMath {
   */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
+    // uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
+    return a / b;
   }
 
   /**
@@ -132,8 +132,8 @@ library SafeMath {
   /**
   * @dev Adds two numbers, throws on overflow.
   */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
     assert(c >= a);
     return c;
   }
@@ -182,10 +182,9 @@ contract BasicToken is ERC20Basic {
     require(_to != address(0));
     require(_value <= balances[msg.sender]);
 
-    // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
+    emit Transfer(msg.sender, _to, _value);
     return true;
   }
 
@@ -194,7 +193,7 @@ contract BasicToken is ERC20Basic {
   * @param _owner The address to query the the balance of.
   * @return An uint256 representing the amount owned by the passed address.
   */
-  function balanceOf(address _owner) public view returns (uint256 balance) {
+  function balanceOf(address _owner) public view returns (uint256) {
     return balances[_owner];
   }
 
@@ -241,7 +240,7 @@ contract StandardToken is ERC20, BasicToken {
     balances[_from] = balances[_from].sub(_value);
     balances[_to] = balances[_to].add(_value);
     allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
+    emit Transfer(_from, _to, _value);
     return true;
   }
 
@@ -257,7 +256,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function approve(address _spender, uint256 _value) public returns (bool) {
     allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
+    emit Approval(msg.sender, _spender, _value);
     return true;
   }
 
@@ -283,7 +282,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
@@ -304,7 +303,7 @@ contract StandardToken is ERC20, BasicToken {
     } else {
       allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
@@ -312,7 +311,6 @@ contract StandardToken is ERC20, BasicToken {
 
 // File: contracts/ChipTreasury.sol
 
-// TODO: Explore possibility of retiring unclaimed chips
 contract ChipTreasury is Pausable {
   using SafeMath for uint256;
 
@@ -330,10 +328,11 @@ contract ChipTreasury is Pausable {
   event TokenWithdrawal(address indexed to, address indexed token, uint value);
 
   event ChipMinted(uint indexed chipId);
+  event ChipHashReplaced(uint indexed chipId, bytes32 newHash, bytes32 oldhash);
   event ChipClaimAttempt(address indexed sender, uint indexed chipId);
   event ChipClaimSuccess(address indexed sender, uint indexed chipId);
 
-  function ChipTreasury () public {
+  constructor () public {
     paused = true;
   }
 
@@ -364,6 +363,25 @@ contract ChipTreasury is Pausable {
     numChipsMinted = numChipsMinted.add(1);
   }
 
+  // Mint function that allows for transactions to come in out-of-order
+  // However it is unsafe because a mistakenly high chipId could throw off numChipsMinted permanently
+  // NOTE: You must prefix hashes with '0x'
+  function mintChipUnsafely (uint chipId, bytes32 hash) public onlyOwner whenPaused {
+    require(chips[chipId].hash == ""); // chip hash must initially be unset
+    chips[chipId].hash = hash;
+    emit ChipMinted(chipId);
+    numChipsMinted = numChipsMinted.add(1);
+  }
+
+  // In case you mess something up during minting (?°?°??? ???
+  // NOTE: You must prefix hashes with '0x'
+  function replaceChiphash (uint chipId, bytes32 newHash) public onlyOwner whenPaused {
+    require(chips[chipId].hash != ""); // chip hash must not be unset
+    bytes32 oldHash = chips[chipId].hash;
+    chips[chipId].hash = newHash;
+    emit ChipHashReplaced(chipId, newHash, oldHash);
+  }
+
   function withdrawFunds (uint value) public onlyOwner {
     owner.transfer(value);
     emit Withdrawal(owner, value);
@@ -374,15 +392,15 @@ contract ChipTreasury is Pausable {
     emit TokenWithdrawal(owner, token, value);
   }
 
-  function isClaimed (uint chipId) public constant returns(bool) {
+  function isClaimed (uint chipId) public view returns(bool) {
     return chips[chipId].claimed;
   }
 
-  function getNumChips () public constant returns(uint) {
+  function getNumChips () public view returns(uint) {
     return numChipsMinted.sub(numChipsClaimed);
   }
 
-  function getChipIds (bool isChipClaimed) public constant returns(uint[]) {
+  function getChipIds (bool isChipClaimed) public view returns(uint[]) {
     uint[] memory chipIdsTemp = new uint[](numChipsMinted);
     uint count = 0;
     uint i;
@@ -401,13 +419,13 @@ contract ChipTreasury is Pausable {
     return _chipIds;
   }
 
-  function getChipValue () public constant returns(uint) {
+  function getChipValue () public view returns(uint) {
     uint numChips = getNumChips();
     if (numChips > 0) return address(this).balance.div(numChips);
     return 0;
   }
 
-  function isChipPassword (uint chipId, string password) internal constant returns(bool) {
+  function isChipPassword (uint chipId, string password) internal view returns(bool) {
     return chips[chipId].hash == keccak256(password);
   }
 
