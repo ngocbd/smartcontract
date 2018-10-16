@@ -1,6 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWalletWithDailyLimit at 0xcb631c6f9a968e3858da70a15e380b7965edfd84
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWalletWithDailyLimit at 0x94e0ad4b2edf353ef83f8cd6d4709ee4155515ed
 */
+// https://etherscan.io/address/0x6e95c8e8557abc08b46f3c347ba06f8dc012763f#code
+// Solidity v0.4.19+commit.c4cbbb05
+
 contract Factory {
 
     /*
