@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RealtyCoin at 0xb8595127620e4b9b5a11cda75766ab87a0e2cd7f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RealtyCoin at 0x557b586211235459bcbb7632de2e5d88eec5005b
 */
 pragma solidity ^0.4.18;
 
@@ -117,7 +117,7 @@ contract RealtyCoin is RTC {
     
   function RealtyCoin () { 
      totalSupply = 500000000 * 10 ** decimals;
-      balances[0x4D489874546e9e0568E586617abe0BBF5180c0ca] = totalSupply;
+      balances[msg.sender] = totalSupply;
       initialSupply = totalSupply; 
         Transfer(0, this, totalSupply);
         Transfer(this, msg.sender, totalSupply);
