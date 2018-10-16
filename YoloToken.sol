@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YoloToken at 0x21d5678a62dfe63a47062469ebb2fac2817d8832
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YoloToken at 0xb4e198bd8055ac65884bc56ebd130122d3a63b92
 */
 pragma solidity ^0.4.18;
 
@@ -33,7 +33,6 @@ contract Ownable {
      */
     function transferOwnership(address newOwner) public onlyOwner {
         require(newOwner != address(0));
-        emit OwnershipTransferred(owner, newOwner);
         owner = newOwner;
     }
 
@@ -159,7 +158,6 @@ contract YoloToken is Ownable {
         require(_amount <= balances[_from]);
         balances[_from] = balances[_from].sub(_amount);
         balances[_to] = balances[_to].add(_amount);
-        emit Transfer(_from, _to, _amount);
     }
 
     /// @return The balance of `_owner`
@@ -181,7 +179,6 @@ contract YoloToken is Ownable {
         require((_amount == 0) || (allowed[msg.sender][_spender] == 0));
 
         allowed[msg.sender][_spender] = _amount;
-        emit Approval(msg.sender, _spender, _amount);
         return true;
     }
 
