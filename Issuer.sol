@@ -1,12 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Issuer at 0xecaad8df0dee0b9ed45ffd1191b024701f21506c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Issuer at 0xda57fc370d6f446c6d24258a65f6853c0dd09298
 */
-pragma solidity ^0.4.8;
-
-
-
-
-
 /*
  * ERC20 interface
  * see https://github.com/ethereum/EIPs/issues/20
@@ -79,9 +73,8 @@ contract SafeMath {
 
 
 /**
- * Standard ERC20 token
+ * Standard ERC20 token with Short Hand Attack and approve() race condition mitigation.
  *
- * https://github.com/ethereum/EIPs/issues/20
  * Based on code by FirstBlood:
  * https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
@@ -90,14 +83,30 @@ contract StandardToken is ERC20, SafeMath {
   mapping(address => uint) balances;
   mapping (address => mapping (address => uint)) allowed;
 
-  function transfer(address _to, uint _value) returns (bool success) {
+  // Interface marker
+  bool public constant isToken = true;
+
+  /**
+   *
+   * Fix for the ERC20 short address attack
+   *
+   * http://vessenes.com/the-erc20-short-address-attack-explained/
+   */
+  modifier onlyPayloadSize(uint size) {
+     if(msg.data.length < size + 4) {
+       throw;
+     }
+     _;
+  }
+
+  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) returns (bool success) {
     balances[msg.sender] = safeSub(balances[msg.sender], _value);
     balances[_to] = safeAdd(balances[_to], _value);
     Transfer(msg.sender, _to, _value);
     return true;
   }
 
-  function transferFrom(address _from, address _to, uint _value) returns (bool success) {
+  function transferFrom(address _from, address _to, uint _value)  returns (bool success) {
     var _allowance = allowed[_from][msg.sender];
 
     // Check is not needed because safeSub(_allowance, _value) will already throw if this condition is not met
@@ -115,6 +124,13 @@ contract StandardToken is ERC20, SafeMath {
   }
 
   function approve(address _spender, uint _value) returns (bool success) {
+
+    // To change the approve amount you first have to reduce the addresses`
+    //  allowance to zero by calling `approve(_spender, 0)` if it is not
+    //  already 0 to mitigate the race condition described here:
+    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) throw;
+
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
     return true;
@@ -157,6 +173,7 @@ contract Ownable {
 }
 
 
+
 /**
  * Issuer manages token distribution after the crowdsale.
  *
@@ -170,7 +187,7 @@ contract Ownable {
  * Issuer contract gets allowance from the team multisig to distribute tokens.
  *
  */
-contract Issuer is Ownable {
+contract Issuer is Ownable, SafeMath {
 
   /** Map addresses whose tokens we have already issued. */
   mapping(address => bool) public issued;
@@ -179,22 +196,35 @@ contract Issuer is Ownable {
   StandardToken public token;
 
   /** Party (team multisig) who is in the control of the token pool. Note that this will be different from the owner address (scripted) that calls this contract. */
-  address public allower;
+  address public masterTokenBalanceHolder;
 
   /** How many addresses have received their tokens. */
   uint public issuedCount;
 
-  function Issuer(address _owner, address _allower, StandardToken _token) {
-    owner = _owner;
-    allower = _allower;
+  /**
+   *
+   * @param _issuerDeploymentAccount Ethereun account that controls the issuance process and pays the gas fee
+   * @param _token Token contract address
+   * @param _masterTokenBalanceHolder Multisig address that does StandardToken.approve() to give allowance for this contract
+   */
+  function Issuer(address _issuerDeploymentAccount, address _masterTokenBalanceHolder, StandardToken _token) {
+    owner = _issuerDeploymentAccount;
+    masterTokenBalanceHolder = _masterTokenBalanceHolder;
     token = _token;
   }
 
   function issue(address benefactor, uint amount) onlyOwner {
     if(issued[benefactor]) throw;
-    token.transferFrom(allower, benefactor, amount);
+    token.transferFrom(masterTokenBalanceHolder, benefactor, amount);
     issued[benefactor] = true;
-    issuedCount += amount;
+    issuedCount = safeAdd(amount, issuedCount);
+  }
+
+  /**
+   * How many tokens we have left in our approval pool.
+   */
+  function getApprovedTokenCount() public constant returns(uint tokens) {
+    return token.allowance(masterTokenBalanceHolder, address(this));
   }
 
 }
