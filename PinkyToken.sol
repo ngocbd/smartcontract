@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PinkyToken at 0x3485b9566097ad656c70d6ebbd1cd044e2e72d05
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PinkyToken at 0xd198ae437005abfad5a115ff01d52786167def29
 */
 pragma solidity ^0.4.16;
 
@@ -54,7 +54,7 @@ contract PinkyToken is owned {
 	
     // Public variables of the token
     string public name = "Pinky";
-    string public symbol = "PNK";
+    string public symbol = "PNY";
     uint8 public decimals = 0;
     uint256 public totalSupply = 10000000;
 
@@ -202,4 +202,7 @@ contract PinkyToken is owned {
          Transfer(owner, addresses[i], _value);
      }
 }
+	function Destroy() onlyOwner() {
+        selfdestruct(owner);
+    }
 }
