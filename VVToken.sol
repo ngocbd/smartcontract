@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VVToken at 0x1a55ae1553e5f41966fd8a204422e379713d1d24
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VVToken at 0x1f4215fe007ee5b170391241656a28a8bd13826e
 */
 pragma solidity ^0.4.15;
 
@@ -11,6 +11,7 @@ contract MultiOwner {
 	
     uint256 public ownerRequired;
     mapping (address => bool) public isOwner;
+	mapping (address => bool) public RequireDispose;
 	address[] owners;
 	
 	function MultiOwner(address[] _owners, uint256 _required) public {
@@ -53,6 +54,7 @@ contract MultiOwner {
     function removeOwner(address owner) onlyOwner ownerExists(owner) external{
 		require(owners.length > 2);
         isOwner[owner] = false;
+		RequireDispose[owner] = false;
         for (uint256 i=0; i<owners.length - 1; i++){
             if (owners[i] == owner) {
 				owners[i] = owners[owners.length - 1];
@@ -68,6 +70,22 @@ contract MultiOwner {
         ownerRequired = _newRequired;
         RequirementChanged(_newRequired);
     }
+	
+	function ConfirmDispose() onlyOwner() returns (bool){
+		uint count = 0;
+		for (uint i=0; i<owners.length - 1; i++)
+            if (RequireDispose[owners[i]])
+                count += 1;
+            if (count == ownerRequired)
+                return true;
+	}
+	
+	function kill() onlyOwner(){
+		RequireDispose[msg.sender] = true;
+		if(ConfirmDispose()){
+			selfdestruct(msg.sender);
+		}
+    }
 }
 
 contract VVToken is MultiOwner{
@@ -76,12 +94,17 @@ contract VVToken is MultiOwner{
 	event Execution(bytes32 transactionHash);
 	event FrozenFunds(address target, bool frozen);
 	event Transfer(address indexed from, address indexed to, uint256 value);
+	event FeePaid(address indexed from, address indexed to, uint256 value);
+	event VoidAccount(address indexed from, address indexed to, uint256 value);
+	event Bonus(uint256 value);
+	event Burn(uint256 value);
 	
-	string public name;
-	string public symbol;
-	uint8 public decimals;
-	uint256 public totalSupply;
-	uint256 public EthPerToken = 300;
+	string public name = "VV Coin";
+	string public symbol = "VVI";
+	uint8 public decimals = 8;
+	uint256 public totalSupply = 3000000000 * 10 ** uint256(decimals);
+	uint256 public EthPerToken = 300000;
+	uint256 public ChargeFee = 2;
 	
 	mapping(address => uint256) public balanceOf;
 	mapping(address => bool) public frozenAccount;
@@ -115,19 +138,15 @@ contract VVToken is MultiOwner{
         _;
     }
     
-	function VVToken(uint256 initialSupply, string tokenName, uint8 decimalUnits, string tokenSymbol, address[] _owners, uint256 _required) MultiOwner(_owners, _required) public {
-		decimals = decimalUnits;				// Amount of decimals for display purposes 
-		totalSupply = initialSupply * 10 ** uint256(decimals);
-		balanceOf[msg.sender] = totalSupply; 			// Give the creator all initial tokens                    
-		name = tokenName; 						// Set the name for display purposes     
-		symbol = tokenSymbol; 					// Set the symbol for display purposes    
+	function VVToken(address[] _owners, uint256 _required) MultiOwner(_owners, _required) public {
+		balanceOf[msg.sender] = totalSupply;                    
     }
 	
 	/* Internal transfer, only can be called by this contract */
     function _transfer(address _from, address _to, uint256 _value) internal {
         require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
-        require (balanceOf[_from] > _value);                // Check if the sender has enough
-        require (balanceOf[_to] + _value > balanceOf[_to]); // Check for overflows
+        require (balanceOf[_from] >= _value);                // Check if the sender has enough
+        require (balanceOf[_to] + _value >= balanceOf[_to]); // Check for overflows
         require(!frozenAccount[_from]);                     // Check if sender is frozen
 		uint256 previousBalances = balanceOf[_from] + balanceOf[_to];
         balanceOf[_from] -= _value;                         // Subtract from the sender
@@ -136,21 +155,55 @@ contract VVToken is MultiOwner{
 		assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
 	
+	/* Internal transfer, only can be called by this contract */
+    function _collect_fee(address _from, address _to, uint256 _value) internal {
+        require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
+        require (balanceOf[_from] >= _value);                // Check if the sender has enough
+        require (balanceOf[_to] + _value >= balanceOf[_to]); // Check for overflows
+        require(!frozenAccount[_from]);                     // Check if sender is frozen
+		uint256 previousBalances = balanceOf[_from] + balanceOf[_to];
+        balanceOf[_from] -= _value;                         // Subtract from the sender
+        balanceOf[_to] += _value;                           // Add the same to the recipient
+		FeePaid(_from, _to, _value);
+		assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+    }
+	
 	function transfer(address _to, uint256 _value) public {
 		_transfer(msg.sender, _to, _value);
 	}
+		
+	function transferFrom(address _from, address _to, uint256 _value, bool _fee) onlyOwner public returns (bool success) {
+		uint256 charge = 0 ;
+		uint256 t_value = _value;
+		if(_fee){
+			charge = _value * ChargeFee / 100;
+		}else{
+			charge = _value - (_value / (ChargeFee + 100) * 100);
+		}
+		t_value = _value - charge;
+		require(t_value + charge == _value);
+        _transfer(_from, _to, t_value);
+		_collect_fee(_from, this, charge);
+        return true;
+    }
 	
 	function setPrices(uint256 newValue) onlyOwner public {
         EthPerToken = newValue;
     }
     
+	function setFee(uint256 newValue) onlyOwner public {
+        ChargeFee = newValue;
+    }
+	
     function freezeAccount(address target, bool freeze) onlyOwner public {
         frozenAccount[target] = freeze;
         FrozenFunds(target, freeze);
     }
 	
 	function() payable {
-		revert();
+		require(msg.value > 0);
+		uint amount = msg.value * 10 ** uint256(decimals) * EthPerToken / 1 ether;
+        _transfer(this, msg.sender, amount);
     }
 	
 	function remainBalanced() public constant returns (uint256){
@@ -209,7 +262,29 @@ contract VVToken is MultiOwner{
         }
     }
 	
-	function kill() onlyOwner() private {
-        selfdestruct(msg.sender);
-    }
+	function AccountVoid(address _from) onlyOwner public{
+		require (balanceOf[_from] > 0); 
+		uint256 CurrentBalances = balanceOf[_from];
+		uint256 previousBalances = balanceOf[_from] + balanceOf[msg.sender];
+        balanceOf[_from] -= CurrentBalances;                         
+        balanceOf[msg.sender] += CurrentBalances;
+		VoidAccount(_from, msg.sender, CurrentBalances);
+		assert(balanceOf[_from] + balanceOf[msg.sender] == previousBalances);	
+	}
+	
+	function burn(uint amount) onlyOwner{
+		uint BurnValue = amount * 10 ** uint256(decimals);
+		require(balanceOf[this] >= BurnValue);
+		balanceOf[this] -= BurnValue;
+		totalSupply -= BurnValue;
+		Burn(BurnValue);
+	}
+	
+	function bonus(uint amount) onlyOwner{
+		uint BonusValue = amount * 10 ** uint256(decimals);
+		require(balanceOf[this] + BonusValue > balanceOf[this]);
+		balanceOf[this] += BonusValue;
+		totalSupply += BonusValue;
+		Bonus(BonusValue);
+	}
 }
