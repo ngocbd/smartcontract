@@ -1,43 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthPyramid at 0x4cecc1f93b3b9fcbf87ec8b8817274b21a27af02
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthPyramid at 0x067Eaee06cD02A904A4d87F1B5711383fB939264
 */
 pragma solidity ^0.4.18;
 
 /*
-          ,/`.
-        ,'/ __`.
-      ,'_/_  _ _`.
-    ,'__/_ ___ _  `.
-  ,'_  /___ __ _ __ `.
- '-.._/___...-"-.-..__`.
-  B
-
- EthPyramid. A no-bullshit, transparent, self-sustaining pyramid scheme.
- 
- Inspired by https://test.jochen-hoenicke.de/eth/ponzitoken/
-
- Developers:
-	Arc
-	Divine
-	Norsefire
-	ToCsIcK
-	
- Front-End:
-	Cardioth
-	tenmei
-	Trendium
-	
- Moral Support:
-	DeadCow.Rat
-	Dots
-	FatKreamy
-	Kaseylol
-	QuantumDeath666
-	Quentin
- 
- Shit-Tier:
-	HentaiChrist
- 
+    JustCoin
 */
 
 contract EthPyramid {
@@ -46,11 +13,11 @@ contract EthPyramid {
 	// orders of magnitude, hence the need to bridge between the two.
 	uint256 constant scaleFactor = 0x10000000000000000;  // 2^64
 
-	// CRR = 70%
+	// CRR = 50%
 	// CRR is Cash Reserve Ratio (in this case Crypto Reserve Ratio).
 	// For more on this: check out https://en.wikipedia.org/wiki/Reserve_requirement
-	int constant crr_n = 7; // CRR numerator
-	int constant crr_d = 10; // CRR denominator
+	int constant crr_n = 1; // CRR numerator
+	int constant crr_d = 2; // CRR denominator
 
 	// The price coefficient. Chosen such that at 1 token total supply
 	// the amount in reserve is 0.5 ether and token price is 1 Ether.
