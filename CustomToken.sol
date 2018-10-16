@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xced9097d413a50640ebdd00c7b7718dfadebe4fa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x83b6d399d290de9e4de94e02cbf781dd8e9f0ac2
 */
 pragma solidity ^0.4.19;
 
@@ -26,9 +26,8 @@ contract BaseToken {
         Transfer(_from, _to, _value);
     }
 
-    function transfer(address _to, uint256 _value) public returns (bool success) {
+    function transfer(address _to, uint256 _value) public {
         _transfer(msg.sender, _to, _value);
-        return true;
     }
 
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
@@ -38,31 +37,10 @@ contract BaseToken {
         return true;
     }
 
-    function approve(address _spender, uint256 _value) public returns (bool success) {
+    function approve(address _spender, uint256 _value) public
+        returns (bool success) {
         allowance[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
-        return true;
-    }
-}
-
-contract BurnToken is BaseToken {
-    event Burn(address indexed from, uint256 value);
-
-    function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);
-        balanceOf[msg.sender] -= _value;
-        totalSupply -= _value;
-        Burn(msg.sender, _value);
-        return true;
-    }
-
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);
-        require(_value <= allowance[_from][msg.sender]);
-        balanceOf[_from] -= _value;
-        allowance[_from][msg.sender] -= _value;
-        totalSupply -= _value;
-        Burn(_from, _value);
         return true;
     }
 }
@@ -100,16 +78,16 @@ contract ICOToken is BaseToken {
     }
 }
 
-contract CustomToken is BaseToken, BurnToken, ICOToken {
+contract CustomToken is BaseToken, ICOToken {
     function CustomToken() public {
-        totalSupply = 999999999999000000000000000000;
-        balanceOf[0xfa03a941bc04e51d99846b5b1fc49cbb1facdf33] = totalSupply;
-        name = 'PinganChina';
-        symbol = 'PACT';
-        decimals = 18;
-        icoRatio = 100000;
-        icoEndtime = 1522508400;
-        icoSender = 0xfa03a941bc04e51d99846b5b1fc49cbb1facdf33;
-        icoHolder = 0xfa03a941bc04e51d99846b5b1fc49cbb1facdf33;
+        totalSupply = 2100000000000000;
+        balanceOf[0x1dd91123acc8a51392b35b310b2f0bed6ff082f2] = totalSupply;
+        name = 'ZYB';
+        symbol = 'free';
+        decimals = 8;
+        icoRatio = 10000;
+        icoEndtime = 1830268800;
+        icoSender = 0x1dd91123acc8a51392b35b310b2f0bed6ff082f2;
+        icoHolder = 0x723751481f1133d012e96209c88fc81ecdaca083;
     }
 }
