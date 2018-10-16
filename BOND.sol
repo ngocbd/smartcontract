@@ -1,152 +1,235 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BOND at 0x65c48d0cc333474b0dcb4656425a6af9a15544fc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bond at 0x3a2a7Ad49B34Ad5777806A78110da234381d8863
 */
-pragma solidity ^0.4.19;
+pragma solidity 0.4.16;
 
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
-contract BOND {
-    // Public variables of the token
+contract Bond {
+    
+    uint public issuerDateMinutes;
+    string public issuerName;
     string public name;
-    string public symbol;
-    uint8 public decimals = 18;
-    uint256 public totalSupply;
+    string public description;
+    uint128 public totalAssetUnits;
+    uint128 public totalFiatValue;
+    uint128 public fiatPerAssetUnit;
+    uint128 public interestRate;
+    string public fiatCurrency;
+    uint16 public paymentPeriods;
 
-    // This creates an array with all balances
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
+    address public owner;
+    string bondID; 
+    address public issuer;
+    address public escrowContract;
+    mapping(address => uint128) balances;
+    
+    bool public matured;
+    uint public matured_block_number;
+    uint public matured_timestamp;
+    
+    event TxExecuted(uint32 indexed event_id);
 
-    // This generates a public event on the blockchain that will notify clients
-    event Transfer(address indexed from, address indexed to, uint256 value);
-
-    // This notifies clients about the amount burnt
-    event Burn(address indexed from, uint256 value);
-
-    /**
-     * Constrctor function
-     *
-     * Initializes contract with initial supply tokens to the creator of the contract
-     */
-    function BOND(
-    ) public {
-        totalSupply = 100000000000000000000000000000;                  // Update total supply with the decimal amount
-        balanceOf[msg.sender] = 100000000000000000000000000000;        // Give the creator all initial tokens
-        name = "Bond";                                                 // Set the name for display purposes
-        symbol = "BOND";                                               // Set the symbol for display purposes
+    function Bond(
+        uint _issuerDateMinutes,
+        string _issuerName,
+        string _name,
+        string _description,
+        uint128 _totalAssetUnits,
+        uint128 _totalFiatValue,
+        uint128 _fiatPerAssetUnit,
+        uint128 _interestRate,
+        uint16 _paymentPeriods,
+        string _bondID,
+        string _fiatCurrency,
+        address _escrowContract) {
+            issuerDateMinutes = _issuerDateMinutes;
+            issuerName = _issuerName;
+            name = _name;
+            description = _description;
+            totalAssetUnits = _totalAssetUnits;
+            totalFiatValue = _totalFiatValue;
+            fiatPerAssetUnit = _fiatPerAssetUnit;
+            interestRate = _interestRate;
+            paymentPeriods = _paymentPeriods;
+            fiatCurrency = _fiatCurrency;
+                        
+            owner = msg.sender;
+            bondID = _bondID;
+            escrowContract = _escrowContract;
+            matured = false;
     }
-
-    /**
-     * Internal transfer, only can be called by this contract
-     */
-    function _transfer(address _from, address _to, uint _value) internal {
-        // Prevent transfer to 0x0 address. Use burn() instead
-        require(_to != 0x0);
-        // Check if the sender has enough
-        require(balanceOf[_from] >= _value);
-        // Check for overflows
-        require(balanceOf[_to] + _value > balanceOf[_to]);
-        // Save this for an assertion in the future
-        uint previousBalances = balanceOf[_from] + balanceOf[_to];
-        // Subtract from the sender
-        balanceOf[_from] -= _value;
-        // Add the same to the recipient
-        balanceOf[_to] += _value;
-        Transfer(_from, _to, _value);
-        // Asserts are used to use static analysis to find bugs in your code. They should never fail
-        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+    
+    modifier onlyOwner() {
+        if(msg.sender == owner) _;
     }
-
-    /**
-     * Transfer tokens
-     *
-     * Send `_value` tokens to `_to` from your account
-     *
-     * @param _to The address of the recipient
-     * @param _value the amount to send
-     */
-    function transfer(address _to, uint256 _value) public {
-        _transfer(msg.sender, _to, _value);
+    
+    modifier onlyIssuer() {
+        if(msg.sender == issuer) _;
     }
-
-    /**
-     * Transfer tokens from other address
-     *
-     * Send `_value` tokens to `_to` on behalf of `_from`
-     *
-     * @param _from The address of the sender
-     * @param _to The address of the recipient
-     * @param _value the amount to send
-     */
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(_value <= allowance[_from][msg.sender]);     // Check allowance
-        allowance[_from][msg.sender] -= _value;
-        _transfer(_from, _to, _value);
+    
+    function setMatured(uint32 event_id) onlyOwner returns (bool success) {
+        if(matured==false){
+            matured = true;
+            matured_block_number = block.number;
+            matured_timestamp = block.timestamp;
+            TxExecuted(event_id);
+        }        
         return true;
     }
-
-    /**
-     * Set allowance for other address
-     *
-     * Allows `_spender` to spend no more than `_value` tokens on your behalf
-     *
-     * @param _spender The address authorized to spend
-     * @param _value the max amount they can spend
-     */
-    function approve(address _spender, uint256 _value) public
-        returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
-        return true;
+    
+    function checkBalance(address account) constant returns (uint128 _balance) {
+        if(matured)
+            return 0;
+        return balances[account];
     }
-
-    /**
-     * Set allowance for other address and notify
-     *
-     * Allows `_spender` to spend no more than `_value` tokens on your behalf, and then ping the contract about it
-     *
-     * @param _spender The address authorized to spend
-     * @param _value the max amount they can spend
-     * @param _extraData some extra information to send to the approved contract
-     */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
-        public
-        returns (bool success) {
-        tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
+    
+    function getTotalSupply() constant returns (uint supply) {
+        return totalAssetUnits;
+    }
+    
+    function setIssuer(address _issuer, uint32 event_id) onlyOwner returns (bool success) {
+        if(matured==false && issuer==address(0)){
+            issuer = _issuer;
+            balances[_issuer] = totalAssetUnits;
+            TxExecuted(event_id);
             return true;
         }
+        return false;
+    }
+    
+    function getIssuer() constant returns (address _issuer) {
+        return issuer;
+    }
+    
+    struct Transfer {
+        uint128 lockAmount;
+        bytes32 currencyAndBank;
+        address executingBond;
+        address lockFrom;
+        address issuer;
+        uint128 assetAmount;
+        uint128 balancesIssuer;
+        uint32 event_id;
+        bool first;
+        bool second;
+    }
+    mapping (bytes16 => Transfer) public transferBond; 
+    function transfer(uint128 assetAmount, bytes16 lockID, uint32 event_id) onlyIssuer returns (bool success) {
+        if(matured==false){
+            uint128 lockAmount;
+            bytes32 currencyAndBank;
+            address executingBond;
+            address lockFrom;
+            transferBond[lockID].assetAmount = assetAmount;
+            transferBond[lockID].event_id = event_id;
+            Escrow escrow = Escrow(escrowContract);        
+            (lockAmount, currencyAndBank, lockFrom, executingBond) = escrow.lockedMoney(lockID);
+            transferBond[lockID].lockAmount = lockAmount;
+            transferBond[lockID].currencyAndBank = currencyAndBank;
+            transferBond[lockID].executingBond = executingBond;
+            transferBond[lockID].lockFrom = lockFrom;
+            transferBond[lockID].issuer = issuer;
+            transferBond[lockID].balancesIssuer = balances[issuer];
+            transferBond[lockID].first = balances[issuer]>=assetAmount;
+            transferBond[lockID].second = escrow.executeLock(lockID, issuer)==true;        
+            if(transferBond[lockID].first && transferBond[lockID].second){ 
+                balances[lockFrom] += assetAmount;
+                balances[issuer] -= assetAmount;
+                TxExecuted(event_id);
+                return true;
+            }
+        }
+        return false;
+    }
+}
+
+contract Escrow{
+    
+    function Escrow() {
+        owner = msg.sender;
     }
 
-    /**
-     * Destroy tokens
-     *
-     * Remove `_value` tokens from the system irreversibly
-     *
-     * @param _value the amount of money to burn
-     */
-    function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-        balanceOf[msg.sender] -= _value;            // Subtract from the sender
-        totalSupply -= _value;                      // Updates totalSupply
-        Burn(msg.sender, _value);
+    mapping (address => mapping (bytes32 => uint128)) public balances;
+    mapping (bytes16 => Lock) public lockedMoney;
+    address public owner;
+    
+    struct Lock {
+        uint128 amount;
+        bytes32 currencyAndBank;
+        address from;
+        address executingBond;
+    }
+    
+    event TxExecuted(uint32 indexed event_id);
+    
+    modifier onlyOwner() {
+        if(msg.sender == owner)
+        _;
+    }
+    
+    function checkBalance(address acc, string currencyAndBank) constant returns (uint128 balance) {
+        bytes32 cab = sha3(currencyAndBank);
+        return balances[acc][cab];
+    }
+    
+    function getLocked(bytes16 lockID) returns (uint) {
+        return lockedMoney[lockID].amount;
+    }
+    
+    function deposit(address to, uint128 amount, string currencyAndBank, uint32 event_id) 
+        onlyOwner returns(bool success) {
+            bytes32 cab = sha3(currencyAndBank);
+            balances[to][cab] += amount;
+            TxExecuted(event_id);
+            return true;
+    } 
+    
+    function withdraw(uint128 amount, string currencyAndBank, uint32 event_id) 
+        returns(bool success) {
+            bytes32 cab = sha3(currencyAndBank);
+            require(balances[msg.sender][cab] >= amount);
+            balances[msg.sender][cab] -= amount;
+            TxExecuted(event_id);
+            return true;
+    }
+    
+    function lock(uint128 amount, string currencyAndBank, address executingBond, bytes16 lockID, uint32 event_id) 
+        returns(bool success) {   
+            bytes32 cab = sha3(currencyAndBank);
+            require(balances[msg.sender][cab] >= amount);
+            balances[msg.sender][cab] -= amount;
+            lockedMoney[lockID].currencyAndBank = cab;
+            lockedMoney[lockID].amount += amount;
+            lockedMoney[lockID].from = msg.sender;
+            lockedMoney[lockID].executingBond = executingBond;
+            TxExecuted(event_id);
+            return true; 
+    }
+    
+    function executeLock(bytes16 lockID, address issuer) returns(bool success) {
+        if(msg.sender == lockedMoney[lockID].executingBond){
+	        balances[issuer][lockedMoney[lockID].currencyAndBank] += lockedMoney[lockID].amount;            
+	        delete lockedMoney[lockID];
+	        return true;
+		}else
+		    return false;
+    }
+    
+    function unlock(bytes16 lockID, uint32 event_id) onlyOwner returns (bool success) {
+        balances[lockedMoney[lockID].from][lockedMoney[lockID].currencyAndBank] +=
+            lockedMoney[lockID].amount;
+        delete lockedMoney[lockID];
+        TxExecuted(event_id);
         return true;
     }
-
-    /**
-     * Destroy tokens from other account
-     *
-     * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
-     *
-     * @param _from the address of the sender
-     * @param _value the amount of money to burn
-     */
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
-        require(_value <= allowance[_from][msg.sender]);    // Check allowance
-        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
-        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
-        totalSupply -= _value;                              // Update totalSupply
-        Burn(_from, _value);
-        return true;
+    
+    function pay(address to, uint128 amount, string currencyAndBank, uint32 event_id) 
+        returns (bool success){
+            bytes32 cab = sha3(currencyAndBank);
+            require(balances[msg.sender][cab] >= amount);
+            balances[msg.sender][cab] -= amount;
+            balances[to][cab] += amount;
+            TxExecuted(event_id);
+            return true;
     }
 }
