@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract iCashweb at 0x99e01d2ff5bb229207566584f4efb2e7c9c28570
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract iCashweb at 0xa0d537762cb98c7fd0a8439661a0ee5eb88b4152
 */
 pragma solidity ^0.4.23;
 ///////////////////////////////////////////////////
@@ -8,7 +8,7 @@ pragma solidity ^0.4.23;
 //
 //  Total Tokens: 300,000,000.000000000000000000
 //  Name: iCashweb
-//  Symbol: ICW
+//  Symbol: ICWeb
 //  Decimal Scheme: 18
 //  
 //  by Nishad Vadgama
@@ -47,6 +47,7 @@ contract ERC01Basic {
   function changeOwnerShip(address toWhom) public returns(bool);
   function transferTokens() public payable;
   function releaseIcoTokens() public returns(bool);
+  function transferICOTokens(address to, uint256 value) public returns(bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
@@ -81,12 +82,17 @@ contract ICWToken is ERC01Basic {
   function getReleased() public view returns(bool) {
     return _released;
   }
+  
   function getOwner() public view returns(address) {
     return contractModifierAddress;
   }
   
   function getICOStatus() public view returns(bool) {
     return _status;
+  }
+  
+  function getRate() public view returns(uint256) {
+    return RATE;
   }
 
   function totalSupply() public view returns(uint256) {
@@ -141,6 +147,14 @@ contract ICWToken is ERC01Basic {
     balances[msg.sender] = balances[msg.sender].add(tokens);
     _totalICOSupply = _totalICOSupply.add(tokens);
     contractModifierAddress.transfer(msg.value);
+  }
+  
+  function transferICOTokens(address _to, uint256 _value) public onlyByOwned returns(bool) {
+    uint totalToken = _totalICOSupply.add(_value);
+    require(_maxICOSupply >= totalToken);
+    balances[_to] = balances[_to].add(_value);
+    _totalICOSupply = _totalICOSupply.add(_value);
+    return true;
   }
 
   function transfer(address _to, uint256 _value) public returns(bool) {
@@ -203,7 +217,7 @@ contract iCashwebToken is ERC20, ICWToken {
 contract iCashweb is iCashwebToken {
 
   string public constant name = "iCashweb";
-  string public constant symbol = "ICW";
+  string public constant symbol = "ICWeb";
 
   constructor() public {
     _status = false;
