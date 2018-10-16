@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WhitelistSale at 0x3c337fa1bf8725f59f73db6db719c792c5e8ae74
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WhitelistSale at 0xc4837c8d8ba13644d877112ab148dc8b526a7ad2
 */
 pragma solidity ^0.4.11;
 
@@ -71,8 +71,7 @@ contract WhitelistSale is Owned {
     // Sales start at this timestamp
     uint256 public initialTimestamp;
 
-    // The sale goes on through 6 days.
-    // Each day, users are allowed to buy up to a certain (cummulative) limit of MANA.
+    // The sale goes on through 6 days. Each day, users are allowed to buy up to a certain amount of MANA.
 
     // This mapping stores the addresses for whitelisted users
     mapping(address => bool) public whitelisted;
@@ -86,10 +85,15 @@ contract WhitelistSale is Owned {
     // Forwarding address
     address public receiver;
 
+    // The sale does not continue if this flag is set to true -- in case of emergency 
+    bool public handbreak;
+
     event LogWithdrawal(uint256 _value);
     event LogBought(uint orderInMana);
     event LogUserAdded(address user);
     event LogUserRemoved(address user);
+    event LogUpdatedLimitPerDay(uint8 _day, uint256 amount);
+    event LogUpdatedInitialTimestamp(uint256 _initialTimestamp);
 
     function WhitelistSale (
         ERC20 _manaToken,
@@ -109,6 +113,13 @@ contract WhitelistSale is Owned {
         limitPerDay[3]   = 90 ether   + limitPerDay[2];
         limitPerDay[4]   = 450 ether  + limitPerDay[3];
         limitPerDay[5]   = 1500 ether + limitPerDay[4];
+
+        handbreak        = false;
+    }
+
+    // Pause the sale
+    function activateHandbreak() onlyOwner {
+        handbreak = true;
     }
 
     // Withdraw Mana (only owner)
@@ -122,6 +133,13 @@ contract WhitelistSale is Owned {
         LogWithdrawal(_value);
     }
 
+    // Withdraw proceeds
+    function withdraw(uint256 _value) onlyOwner {
+        require(this.balance >= _value);
+        owner.transfer(_value);
+        LogWithdrawal(_value);
+    }
+
     // Change address where funds are received
     function changeReceiver(address _receiver) onlyOwner {
         require(_receiver != 0);
@@ -129,11 +147,12 @@ contract WhitelistSale is Owned {
     }
 
     // Calculate which day into the sale are we.
-    function getDay() constant returns (uint256) {
+    function getDay() public returns (uint256) {
         return SafeMath.sub(block.timestamp, initialTimestamp) / 1 days;
     }
 
     modifier onlyIfActive {
+        require(!handbreak);
         require(getDay() >= 0);
         require(getDay() < 6);
         _;
@@ -154,8 +173,8 @@ contract WhitelistSale is Owned {
         if (orderInMana > balanceInMana) revert();
 
         bought[msg.sender] = SafeMath.add(bought[msg.sender], msg.value);
-        manaToken.transfer(beneficiary, orderInMana);
         receiver.transfer(msg.value);
+        manaToken.transfer(beneficiary, orderInMana);
 
         LogBought(orderInMana);
     }
