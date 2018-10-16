@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DHANACOIN at 0x2fdd5095ecf5f563a80826bd4b381532e7d43c9e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DHANACOIN at 0xbaa73b83d42c524e7073e50cca2160ed9b12d725
 */
 pragma solidity ^0.4.18;
 
@@ -7,7 +7,7 @@ pragma solidity ^0.4.18;
 // 'DHANACOIN' token contract
 //
 // Deployed to : 0xa8ec2e3E55f3ed24350fB5e2BE515ca2C61EDa86
-// Symbol      : DHX
+// Symbol      : XDXC
 // Name        : DHANA COIN
 // Total supply: 1000000000
 // Decimals    : 18
@@ -116,7 +116,7 @@ contract DHANACOIN is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function DHANACOIN() public {
-        symbol = "DHX";
+        symbol = "XDXC";
         name = "DHANA COIN";
         decimals = 18;
         _totalSupply = 1000000000000000000000000000;
