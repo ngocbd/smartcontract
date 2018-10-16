@@ -1,372 +1,373 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xc6e095f5fB53339D8F4C7f576ccD37bE05E5B67E
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x4d1173036fd005eae29b68bece414848af4c0e20
 */
-pragma solidity ^0.4.13;
- 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20 {
-    uint256 public totalSupply;
-    function balanceOf(address who) constant public returns (uint256);
-    function transfer(address to, uint256 value)public returns (bool);
-    function allowance(address owner, address spender)public constant returns (uint256);
-    function transferFrom(address from, address to, uint256 value)public returns (bool);
-    function approve(address spender, uint256 value)public returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
- 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
+/*! gbcoin.sol | (c) 2017 Develop by BelovITLab, autor my.life.cookie | License: MIT */
+
+/*
+
+    Russian
+
+    ??? ????? GB Systems:
+    ??? Geo Blockchain ???????, ??????? ?? ????????????? ?? ? ????? ?????? ? ??????. ? ??? ???? ???? 
+    ?????????????? ?????, ????????? ? ????????? ??????? GBPay - ?????? Visa, MasterCard, UnionPay. 
+    ??? ?????????? ??????? ????? ????????? ?????? ??????? ? ?????? ????????? ???????????. ??? ??, 
+    ?????????????? ???????? ????????? ? ?????, ????? ??????????? ???????????? ??? ??????? ??? ?????? 
+    ???????, ????? ?????????? API ???? ? ???????????? ??? ??????????? ????? ??????? ??? ????? ????????. 
+    ??????? ???????? ??????? ???????????? ? ????? ????????, ??? ????????? ????????? ?????????? ???????? 
+    ?? ???? ????. ? ????? ??????? ????? ????? ???????? ??????? GB Wallet, ??? ????? ??????? ???????????? 
+    ? ???????????? ?????? ????? ??????. ???????? GB Network ???????? ??????? ??????? ?????????? ??????????? 
+    ????, ??? ????? ??????? ????????, ? ????????? ??????? ????? ?????????? NFC, ????? ???????? ? ???? 
+    ?????????, ? ????? ???????? ? ?????????? ?????? ? ?????? ????? ?????? ???????. ??? ?? ???????? ???? 
+    ??????????? ???????????? ?? ??????????? ?????????. ?? ?? ?????? ? ? ????????????????? ?????, ??????? 
+    ????? ????????????? ? ?? ????????????? ? ????? ??????. ????? ??????? ?? ????? ??????? ????? ????????? 
+    ? ???? ????.
     
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    ?????? ????????? ??????????? ?? ???? ????? ???????, ??????????? ??????????? ????? ??? ????? ? ????? 
+    ????????  ???? ???????, ? ???????????? ??????, ? ??????????? ????? ????????? ???????? ? ????? ????????? 
+    GBPay, ? ? ??????????????  ????? ????????? Blockchain, ???? ?????? ?????????, ?????????????? ????? ? 
+    ????????? ???????, ??? ??? ?? 1,2%. ?????? ????? ???????? ? ????? ??????? ???, ??? ????????? ????????? 
+    ??????? ? ???????? ?? ??????? ? ????? ????? ??????? ????. ??? ?????? ? ???????, ?? ??????? ????? GBCoin, 
+    ??????? ????? ???????? ?? ???? ?????????? ?????????? ??????? GB Systems, ??? ?????????? ????????????? 
+    ?????????????? ?????? ???????, ??????? ????? ????????? ??? ???? ???????? ? ?????. 
+    
+    ? ????? ??????? GB Systems ??????????: Grande Bank, Grande Finance, GB Network, GBMarkets, GB Wallet, 
+    Charity Foundation, GBPay.
+    
+    ?? ??? ?? ????? ????????????? ??????????????? ???????, ????????????????, ????????? ????????????, 
+    ??? ??????????? ????????, ?????????? ?????????? ? ?????????????? ??????, ?????? ?? ????????????? 
+    ??????????, ??????????? ? ???????? ?????????????, ???????? ?????, ????????? ???????, ??? ?? ????? 
+    ?????  ?????????? ????? ????????????? GBCoin ?????? ????? ? ?????? ???????, ?????????? ?? 
+    ????????????? ??????? ? ?????????????,  ?? ??????? ?????????? ????? ??????????? ???????? ?????? 
+    ? cash back ? ??????????? ????????? ????????? ? ?????? ??????. 
+    
+    ? ???? ?? ?????? ????? ??? ? ????? ??????? ? ?? ????? ????? ?????????? ? ????????? ?????????. 
+    ???????? ? ???????? ??? ???? ????????.
+
+
+
+    English
+
+    What is GB Systems:
+    It is Geo Blockchain system which does not become attached to one country and banks. 
+    We have the processing center, acquiring and GBPay payment provider - this analog  Visa, MasterCard, 
+    UnionPay. All transactions which will take place in system and banks of partners instantly. Also, 
+    the connected partner companies and banks, have an opportunity to use all system for the business, 
+    by integration of an API code and to use all opportunities of our system for the clients. It is 
+    profitable to each partner to cooperate with our system what to allow to increase the number of 
+    clients around the world. In our system there will be soon a cold purse of GB Wallet where it is 
+    possible to keep cryptocurrency and national currency of any country. The GB Network company will 
+    allow each client to purchase the virtual account where it is possible to store means and to make 
+    purchase by the application NFC, one contact to the Post to the Terminal and also to buy and pay 
+    services and goods through online system. Also the company gives the chance to earn on the partner 
+    program. We did not forget also about charity foundation which will be mezhudnarodny and not to 
+    become attached to one country. A part of means from our system will come to this fund. To partners 
+    it is allowed to banks on by our system, to imitate plastic cards for the and our clients of all 
+    system, in national currency, using our payment service provider with our GBPay logo, and with use 
+    of our Blockchain platform where acquiring, a processing center and a payment service provider, 
+    all this for 1,2% enters. There are no borders between the countries in our system that allows 
+    to make payments and transfers for second in any a globe point. For work in system, we created 
+    a token of GBCoin which will be responsible for all functionality of the GB Systems financial 
+    system as internal world transactional currency of system which will attach all our companies 
+    and banks.
+
+    Our system is already connected Grande Bank, Grande Finance, GB Network, GBMarkets, GB Wallet, 
+    Charity Foundation, GBPay.
+
+*/
+
+pragma solidity 0.4.18;
+
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal constant returns(uint256) {
         uint256 c = a * b;
         assert(a == 0 || c / a == b);
         return c;
     }
- 
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
+
+    function div(uint256 a, uint256 b) internal constant returns(uint256) {
         uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
         return c;
     }
- 
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+
+    function sub(uint256 a, uint256 b) internal constant returns(uint256) {
         assert(b <= a);
         return a - b;
     }
- 
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+
+    function add(uint256 a, uint256 b) internal constant returns(uint256) {
         uint256 c = a + b;
         assert(c >= a);
         return c;
     }
-  
 }
- 
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances. 
- */
-contract BasicToken is ERC20 {
-    
-    using SafeMath for uint256;
-    mapping(address => uint256) balances;
-  
-    /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-    function transfer(address _to, uint256 _value)public returns (bool) {
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
-        return true;
-    }
- 
-    /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of. 
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-    function balanceOf(address _owner)public constant returns (uint256 balance) {
-        return balances[_owner];
-    }
- 
-}
- 
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
-contract StandardToken is BasicToken {
- 
-    mapping (address => mapping (address => uint256)) allowed;
- 
-    /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amout of tokens to be transfered
-   */
-    function transferFrom(address _from, address _to, uint256 _value)public returns (bool) {
-        uint _allowance = allowed[_from][msg.sender];
- 
-    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-    // require (_value <= _allowance);
- 
-        balances[_to] = balances[_to].add(_value);
-        balances[_from] = balances[_from].sub(_value);
-        allowed[_from][msg.sender] = _allowance.sub(_value);
-        Transfer(_from, _to, _value);
-        return true;
-    }
- 
-    /**
-   * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-    function approve(address _spender, uint256 _value)public returns (bool) {
- 
-        // To change the approve amount you first have to reduce the addresses`
-        //  allowance to zero by calling `approve(_spender, 0)` if it is not
-        //  already 0 to mitigate the race condition described here:
-        //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-        require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
- 
-    /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifing the amount of tokens still available for the spender.
-   */
-    function allowance(address _owner, address _spender)public constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
-    
-}
- 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
+
 contract Ownable {
-    
     address public owner;
- 
-    /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-    function Ownable()public {
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    modifier onlyOwner() { require(msg.sender == owner); _; }
+
+    function Ownable() {
         owner = msg.sender;
     }
- 
-    /**
-   * @dev Throws if called by any account other than the owner.
-   */
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
- 
-    /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-    function transferOwnership(address newOwner)public onlyOwner {
-        require(newOwner != address(0));      
+
+    function transferOwnership(address newOwner) onlyOwner {
+        require(newOwner != address(0));
+        OwnershipTransferred(owner, newOwner);
         owner = newOwner;
     }
- 
 }
- 
-/**
- * @title Mintable token
- * @dev Simple ERC20 Token example, with mintable token creation
- * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
- * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
- */
-contract MintableToken is StandardToken, Ownable {
+
+contract Pausable is Ownable {
+    bool public paused = false;
+
+    event Pause();
+    event Unpause();
+
+    modifier whenNotPaused() { require(!paused); _; }
+    modifier whenPaused() { require(paused); _; }
+
+    function pause() onlyOwner whenNotPaused {
+        paused = true;
+        Pause();
+    }
     
+    function unpause() onlyOwner whenPaused {
+        paused = false;
+        Unpause();
+    }
+}
+
+contract ERC20 {
+    uint256 public totalSupply;
+
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+
+    function balanceOf(address who) constant returns (uint256);
+    function transfer(address to, uint256 value) returns (bool);
+    function transferFrom(address from, address to, uint256 value) returns (bool);
+    function allowance(address owner, address spender) constant returns (uint256);
+    function approve(address spender, uint256 value) returns (bool);
+}
+
+contract StandardToken is ERC20 {
+    using SafeMath for uint256;
+
+    mapping(address => uint256) balances;
+    mapping(address => mapping(address => uint256)) allowed;
+
+    function balanceOf(address _owner) constant returns(uint256 balance) {
+        return balances[_owner];
+    }
+
+    function transfer(address _to, uint256 _value) returns(bool success) {
+        require(_to != address(0));
+
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+
+        Transfer(msg.sender, _to, _value);
+
+        return true;
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) returns(bool success) {
+        require(_to != address(0));
+
+        var _allowance = allowed[_from][msg.sender];
+
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        allowed[_from][msg.sender] = _allowance.sub(_value);
+
+        Transfer(_from, _to, _value);
+
+        return true;
+    }
+
+    function allowance(address _owner, address _spender) constant returns(uint256 remaining) {
+        return allowed[_owner][_spender];
+    }
+
+    function approve(address _spender, uint256 _value) returns(bool success) {
+        require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+
+        allowed[msg.sender][_spender] = _value;
+
+        Approval(msg.sender, _spender, _value);
+
+        return true;
+    }
+
+    function increaseApproval(address _spender, uint _addedValue) returns(bool success) {
+        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+
+        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+
+        return true;
+    }
+
+    function decreaseApproval(address _spender, uint _subtractedValue) returns(bool success) {
+        uint oldValue = allowed[msg.sender][_spender];
+
+        if(_subtractedValue > oldValue) {
+            allowed[msg.sender][_spender] = 0;
+        } else {
+            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+        }
+
+        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        
+        return true;
+    }
+}
+
+contract BurnableToken is StandardToken {
+    event Burn(address indexed burner, uint256 value);
+
+    function burn(uint256 _value) public {
+        require(_value > 0);
+
+        address burner = msg.sender;
+
+        balances[burner] = balances[burner].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+
+        Burn(burner, _value);
+    }
+}
+
+contract MintableToken is StandardToken, Ownable {
     event Mint(address indexed to, uint256 amount);
     event MintFinished();
- 
+
     bool public mintingFinished = false;
- 
-    modifier canMint() {
-        require(!mintingFinished);
-        _;
-    }
- 
-    /**
-   * @dev Function to mint tokens
-   * @param _to The address that will recieve the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
-   */
-    function mint(address _to, uint256 _amount)public onlyOwner canMint returns (bool) {
+    uint public MAX_SUPPLY;
+
+    modifier canMint() { require(!mintingFinished); _; }
+
+    function mint(address _to, uint256 _amount) onlyOwner canMint public returns(bool success) {
+        require(totalSupply.add(_amount) <= MAX_SUPPLY);
+
         totalSupply = totalSupply.add(_amount);
         balances[_to] = balances[_to].add(_amount);
-        Mint(_to, _amount);
-        Transfer(0, _to, _amount);
-        return true;
-    }
- 
-    /**
-   * @dev Function to stop minting new tokens.
-   * @return True if the operation was successful.
-   */
-    function finishMinting()public onlyOwner returns (bool) {
-        mintingFinished = true;
-        MintFinished();
-        return true;
-    }
-    /*function approveAndCall(address spender, uint skolko) public returns (bool success) {
-        balances[msg.sender] = balances[msg.sender].sub(skolko.mul(1000000000000000000));
-        allowed[msg.sender][spender] = skolko;
-        Approval(msg.sender, spender, skolko);
-        Crowdsale(spender).receiveApproval(msg.sender, skolko, address(this));
-        return true;
-    }
-  */
 
-}
- 
-contract MultiLevelToken is MintableToken {
-    
-    string public constant name = "Multi-level token";
-    string public constant symbol = "MLT";
-    uint32 public constant decimals = 18;
-    
-}
- 
-contract Crowdsale is Ownable{
-    
-    using SafeMath for uint;
-    
-    address multisig;
-    uint multisigPercent;
-    address bounty;
-    uint bountyPercent;
- 
-    MultiLevelToken public token = new MultiLevelToken();
-    uint rate;
-    uint tokens;
-    uint value;
-    
-    uint tier;
-    uint i;
-    uint a=1;
-    uint b=1;
-    uint c=1;
-    uint d=1;
-    uint e=1;
-    uint parent;
-    uint256 parentMoney;
-    address whom;
-    mapping (uint => mapping(address => uint))tree;
-    mapping (uint => mapping(uint => address)) order;
- 
-    function Crowdsale()public {
-        multisig = 0xB52E296b76e7Da83ADE05C1458AED51D3911603f;
-        multisigPercent = 5;
-        bounty = 0x1F2D3767D70FA59550f0BC608607c30AAb9fDa06;
-        bountyPercent = 5;
-        rate = 100000000000000000000;
-        
-    }
- 
-    function finishMinting() public onlyOwner returns(bool)  {
-        token.finishMinting();
+        Mint(_to, _amount);
+        Transfer(address(0), _to, _amount);
+
         return true;
     }
-    
-    function distribute() public{
-        
-        for (i=1;i<=10;i++){
-            while (parent >1){
-                if (parent%3==0){
-                            parent=parent.div(3);
-                            whom = order[tier][parent];
-                            token.mint(whom,parentMoney);
-                        }
-                else if ((parent-1)%3==0){
-                            parent=(parent-1)/3;
-                            whom = order[tier][parent];
-                            token.mint(whom,parentMoney); 
-                        }
-                else{
-                            parent=(parent+1)/3;
-                            whom = order[tier][parent];
-                            token.mint(whom,parentMoney);
-                        }
-            }
-        }
-        
-    }    
-    
-    function createTokens()public  payable {
-        
-        uint _multisig = msg.value.mul(multisigPercent).div(100);
-        uint _bounty = msg.value.mul(bountyPercent).div(100);
-        tokens = rate.mul(msg.value).div(1 ether);
-        tokens = tokens.mul(55).div(100);
-        parentMoney = msg.value.mul(35).div(10);
-        
-        if (msg.value >= 50000000000000000 && msg.value < 100000000000000000){
-            tier=1;
-            tree[tier][msg.sender]=a;
-            order[tier][a]=msg.sender;
-            parent = a;
-            a+=1;
-            distribute();
-        }
-        else if (msg.value >= 100000000000000000 && msg.value < 200000000000000000){
-            tier=2;
-            tree[tier][msg.sender]=b;
-            order[tier][b]=msg.sender;
-            parent = b;
-            b+=1;
-            distribute();
-        }    
-        else if (msg.value >= 200000000000000000 && msg.value < 500000000000000000){
-            tier=3;
-            tree[tier][msg.sender]=c;
-            order[tier][c]=msg.sender;
-            parent = c;
-            c+=1;
-            distribute();
-        }
-        else if(msg.value >= 500000000000000000 && msg.value < 1000000000000000000){
-            tier=4;
-            tree[tier][msg.sender]=d;
-            order[tier][d]=msg.sender;
-            parent = d;
-            d+=1;
-            distribute();
-        }
-        else if(msg.value >= 1000000000000000000){
-            tier=5;
-            tree[tier][msg.sender]=e;
-            order[tier][e]=msg.sender;
-            parent = e;
-            e+=1;
-            distribute();
-        }
-        token.mint(msg.sender, tokens);
-        multisig.transfer(_multisig);
-        bounty.transfer(_bounty);
+
+    function finishMinting() onlyOwner public returns(bool success) {
+        mintingFinished = true;
+
+        MintFinished();
+
+        return true;
+    }
+}
+
+/*
+    ICO GBCoin
+    - ??????? ??????? ?????????? (????? 40 000 000 ???????, ?????? ??????????? ?? ????? Crowdsale)
+    - ???? ?????? ?? ????? ??????: 1 ETH = 20 ??????? (1 Eth (~500$) / 20 = ~25$) (???? ????? ???????? ?? ????? ICO)
+    - ??????????? ? ???????????? ????? ???????: 1 ETH ? 10 000 ETH
+    - ??????? ?? ??????? 20 000 000 (50%)
+    - 20 000 000 (50%) ??????? ?????????? ??????????? ?? ????? ???????? ??????
+    - ???????? ?? ??????? ??????? ?????????? ???????????
+    - ???????? Crowdsale ?????????? ? ??????? ??????? `withdraw()`:?????????????? ?????? ? ?????????? ??????? ?????????? ???????????, ?????? ??????? ???????????
+    - ??????? ???? ?????? ?????????? ???????? `setTokenPrice(_value)`, ??? `_value` - ???-?? ??????? ?????????? ?? 1 Ether, ????? ????????? ?????? ???????? ?????? ?? ????? ????? ??????????????, ????? ?????????? Crowdsale ??????? ?????????? ???????????
+*/
+
+contract Token is BurnableToken, MintableToken {
+    string public name = "GBCoin";
+    string public symbol = "GBCN";
+    uint256 public decimals = 18;
+
+    function Token() {
+        MAX_SUPPLY = 40000000 * 1 ether;                                            // Maximum amount tokens
+        mint(0xb942E28245d39ab4482e7C9972E07325B5653642, 20000000 * 1 ether);       
+    }
+}
+
+contract Crowdsale is Pausable {
+    using SafeMath for uint;
+
+    Token public token;
+    address public beneficiary = 0xb942E28245d39ab4482e7C9972E07325B5653642;        
+
+    uint public collectedWei;
+    uint public tokensSold;
+
+    uint public tokensForSale = 20000000 * 1 ether;                                 // Amount tokens for sale
+    uint public priceTokenWei = 1 ether / 25;                                       // 1 Eth (~875$) / 25 = ~35$
+
+    bool public crowdsaleFinished = false;
+
+    event NewContribution(address indexed holder, uint256 tokenAmount, uint256 etherAmount);
+    event Withdraw();
+
+    function Crowdsale() {
+        token = new Token();
+    }
+
+    function() payable {
+        purchase();
+    }
+
+    function setTokenPrice(uint _value) onlyOwner whenPaused {
+        require(!crowdsaleFinished);
+        priceTokenWei = 1 ether / _value;
     }
     
-    /*address _tokenAddress;
-    function GetTokenAddress (address Get) public onlyOwner{
-        _tokenAddress=Get;
-    }*/
-    
-    function receiveApproval(address from, uint skolko /*, address tokenAddress*/) public payable onlyOwner{
-     //   require (tokenAddress == _tokenAddress);
-        from.transfer(skolko.mul(1000000000000));
+    function purchase() whenNotPaused payable {
+        require(!crowdsaleFinished);
+        require(tokensSold < tokensForSale);
+        require(msg.value >= 0.01 ether && msg.value <= 10000 * 1 ether);
+
+        uint sum = msg.value;
+        uint amount = sum.div(priceTokenWei).mul(1 ether);
+        uint retSum = 0;
+        
+        if(tokensSold.add(amount) > tokensForSale) {
+            uint retAmount = tokensSold.add(amount).sub(tokensForSale);
+            retSum = retAmount.mul(priceTokenWei).div(1 ether);
+
+            amount = amount.sub(retAmount);
+            sum = sum.sub(retSum);
+        }
+
+        tokensSold = tokensSold.add(amount);
+        collectedWei = collectedWei.add(sum);
+
+        beneficiary.transfer(sum);
+        token.mint(msg.sender, amount);
+
+        if(retSum > 0) {
+            msg.sender.transfer(retSum);
+        }
+
+        NewContribution(msg.sender, amount, sum);
     }
-    
-    function() external payable {
-        createTokens();
+
+    function withdraw() onlyOwner {
+        require(!crowdsaleFinished);
+        
+        if(tokensForSale.sub(tokensSold) > 0) {
+            token.mint(beneficiary, tokensForSale.sub(tokensSold));
+        }
+
+        token.finishMinting();
+        token.transferOwnership(beneficiary);
+
+        crowdsaleFinished = true;
+
+        Withdraw();
+    }
+
+    function balanceOf(address _owner) constant returns(uint256 balance) {
+        return token.balanceOf(_owner);
     }
 }
