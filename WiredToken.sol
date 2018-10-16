@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WiredToken at 0x5ed817b8d8beecaff347d9626714f4aa67524bf0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WiredToken at 0x39fbdd3068ea0b89f65018679d4b7f44e1f99a7e
 */
 pragma solidity ^0.4.23;
 
@@ -146,20 +146,13 @@ contract WiredToken is ERC20Interface, Ownable {
     string constant public name = "WiredToken";
     string constant public symbol = "WRD";
     uint8 constant public decimals = 5;
-    uint256 public totalSupply = 41e11 * 1e5;
-    uint256 public distributeAmount = 0;
+    uint256 public totalSupply = 57e22 * 1e5;
     bool public mintingFinished = false;
-
-    address public founder = 0x01B7ECa9Af127aCbA03aB84E88B0e56132CFb62D;
-    address public preSeasonGame = 0x01B7ECa9Af127aCbA03aB84E88B0e56132CFb62D;
-    address public activityFunds = 0x01B7ECa9Af127aCbA03aB84E88B0e56132CFb62D;
-    address public lockedFundsForthefuture = 0x01B7ECa9Af127aCbA03aB84E88B0e56132CFb62D;
 
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
     mapping (address => uint256) public unlockUnixTime;
 
-    event FrozenFunds(address indexed target, bool frozen);
     event LockedFunds(address indexed target, uint256 locked);
     event Burn(address indexed from, uint256 amount);
     event Mint(address indexed to, uint256 amount);
@@ -169,12 +162,8 @@ contract WiredToken is ERC20Interface, Ownable {
      * @dev Constructor is called only once and can not be called again
      */
     constructor() public {
-        owner = activityFunds;
-
-        balanceOf[founder] = totalSupply.mul(25).div(100);
-        balanceOf[preSeasonGame] = totalSupply.mul(55).div(100);
-        balanceOf[activityFunds] = totalSupply.mul(10).div(100);
-        balanceOf[lockedFundsForthefuture] = totalSupply.mul(10).div(100);
+        balanceOf[owner] = totalSupply;
+        emit Transfer(address(0), owner, totalSupply);
     }
 
     function totalSupply() public view returns (uint256 _totalSupply) {
