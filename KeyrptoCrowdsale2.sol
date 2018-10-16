@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KeyrptoCrowdsale2 at 0x2c26994e27238b383a7de0e55159c6c720043530
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KeyrptoCrowdsale2 at 0xbfa6624c69ce4ba1de5aeffdf7d03259c70f9043
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.21;
 
 // File: node_modules/zeppelin-solidity/contracts/math/SafeMath.sol
 
@@ -34,7 +34,7 @@ library SafeMath {
   }
 
   /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
   */
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
@@ -172,7 +172,7 @@ contract Crowdsale {
   // -----------------------------------------
 
   /**
-   * @dev Validation of an incoming purchase. Use require statemens to revert state when conditions are not met. Use super to concatenate validations.
+   * @dev Validation of an incoming purchase. Use require statements to revert state when conditions are not met. Use super to concatenate validations.
    * @param _beneficiary Address performing the token purchase
    * @param _weiAmount Value in wei involved in the purchase
    */
@@ -324,10 +324,101 @@ contract TimedCrowdsale is Crowdsale {
 
 }
 
+// File: node_modules/zeppelin-solidity/contracts/ownership/Ownable.sol
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+// File: node_modules/zeppelin-solidity/contracts/lifecycle/Pausable.sol
+
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    Pause();
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    Unpause();
+  }
+}
+
 // File: contracts/KeyrptoCrowdsale2.sol
 
-contract KeyrptoCrowdsale2 is TimedCrowdsale, AllowanceCrowdsale {
+contract KeyrptoCrowdsale2 is TimedCrowdsale, AllowanceCrowdsale, Ownable {
+  uint256 public startTime;
+  
   function KeyrptoCrowdsale2(
+                  uint256 _startTime,
                   uint256 _openingTime,
                   uint256 _closingTime,
                   uint256 _rate,
@@ -337,7 +428,18 @@ contract KeyrptoCrowdsale2 is TimedCrowdsale, AllowanceCrowdsale {
     TimedCrowdsale(_openingTime, _closingTime)
     AllowanceCrowdsale(_wallet)
   {
-      // Empty constructor
+    startTime = _startTime;
+  }
+
+  /**
+   * @dev Overrides parent behavior by transferring tokens from wallet.
+   * @param _beneficiary Token purchaser
+   * @param _tokenAmount Amount of tokens purchased
+   */
+  function _deliverTokens(address _beneficiary, uint256 _tokenAmount) internal {
+    Pausable(token).unpause();
+    token.transferFrom(tokenWallet, _beneficiary, _tokenAmount);
+    Pausable(token).pause();
   }
 
   /**
@@ -349,16 +451,20 @@ contract KeyrptoCrowdsale2 is TimedCrowdsale, AllowanceCrowdsale {
   }
   
   function getRateIncludingBonus() internal view returns (uint256) {
-    if (now < openingTime + 1 weeks) {
+    if (now < startTime + 1 weeks) {
       return rate.mul(125).div(100);
-    } else if (now < openingTime + 3 weeks) {
+    } else if (now < startTime + 3 weeks) {
       return rate.mul(115).div(100);
-    } else if (now < openingTime + 5 weeks) {
+    } else if (now < startTime + 5 weeks) {
       return rate.mul(110).div(100);
-    } else if (now < openingTime + 7 weeks) {
+    } else if (now < startTime + 7 weeks) {
       return rate.mul(105).div(100);
     } else {
       return rate;
     }
+  }
+  
+  function transferTokenOwnership() external onlyOwner {
+    Ownable(token).transferOwnership(owner);
   }
 }
