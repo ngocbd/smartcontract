@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract USDBCoin at 0x2f05e1c76549f09670fe0a163fc6332caab6c022
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract USDBCoin at 0xBFC215E7174e83A4FFc137565Ce2670d8883f5b3
 */
 pragma solidity ^0.4.16;
 
