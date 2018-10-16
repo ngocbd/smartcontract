@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RealLandCrowdSale at 0x1c91e4136b8c33cfd24344e0dbc6a4a9dde999b9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RealLandCrowdSale at 0xedc1936bbe9fee2abc523ad237aa62a3a3722177
 */
 pragma solidity ^0.4.17;
 
@@ -682,17 +682,18 @@ contract RealLandCrowdSale is TokenController, Ownable {
   uint public decimals = 8;
   uint etherRatio = SafeMath.div(1 ether, 10**decimals);
 
-  uint256 public saleStartTime = 1512129600;
-  uint256 public saleEndTime = 1517400000;
+  uint256 public saleStartTime = 1512475200;
+  uint256 public saleEndTime = 1517832000;
 
   uint256 public totalSupply = 70000000 * 10**decimals;
 
   address public team = 0x03c3CD159170Ab0912Cd00d7cACba79694A32127;
   address public marketting = 0x135B6526943e15fD68EaA05be73f24d641c332D8;
   address public ipoPlatform = 0x8A8eCFDf0eb6f8406C0AD344a6435D6BAf3110e4;
-  uint256 public teamPercentage = 38461538461538500000; //% * 10**18
-  uint256 public markettingPercentage = 19230769230769200000; //% * 10**18
-  uint256 public ipoPlatformPercentage = 42307692307692300000; //% * 10**18
+  uint256 public teamPercentage = 25000000000000000000; //% * 10**18
+  uint256 public markettingPercentage = 25000000000000000000; //% * 10**18
+  uint256 public ipoPlatformPercentage = 50000000000000000000; //% * 10**18
+                                         
   bool public tokensAllocated = false;
 
   modifier saleOpen {
