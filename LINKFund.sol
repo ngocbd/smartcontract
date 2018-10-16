@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LINKFund at 0x2880f03f181ee0967a00bac5346574f58f91b615
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LINKFund at 0xe64287516518eda9f7092a0626cba00baf21a301
 */
 pragma solidity ^0.4.13;
 
@@ -33,7 +33,7 @@ contract LINKFund {
   uint256 constant public min_required_amount = 100 ether;
   
   // The maximum amount of ETH that can be deposited into the contract.
-  uint256 constant public max_raised_amount = 300 ether;
+  uint256 constant public max_raised_amount = 500 ether;
   
   // The first block after which buy-in is allowed. Set in the contract constructor.
   uint256 public min_buy_block;
@@ -41,13 +41,13 @@ contract LINKFund {
   // The first block after which a refund is allowed. Set in the contract constructor.
   uint256 public min_refund_block;
   
-  // The crowdsale address. Address can be verified at: https://link.smartcontract.com/presales/39eb2b34-2dbf-4104-807d-12b9e3179cba
-  address constant public sale = 0x7093128612a02e32F1C1aa44cCD7411d84EE09Ac;
+  // The crowdsale address. Address can be verified at: https://link.smartcontract.com/presales/7e3ad6bc-1d32-4676-86a8-aa04bf63f50b
+  address constant public sale = 0x6E6c083f8425b896d82C2b4c2bc7955AA5F8a534;
   
   // Constructor. 
   function LINKFund() {
-    // Buy-in allowed 3456 blocks (approx. 24 hours) after the contract is deployed.
-    min_buy_block = block.number + 3456;
+    // Buy-in allowed 5184 blocks (approx. 36 hours) after the contract is deployed.
+    min_buy_block = block.number + 5184;
     
     // ETH refund allowed 86400 blocks (approx. 24 days) after the contract is deployed.
     min_refund_block = block.number + 86400;
@@ -119,8 +119,8 @@ contract LINKFund {
   
   // A helper function for the default function, allowing contracts to interact.
   function default_helper() payable {
-    // Throw if the balance is larger than the maximum allowed amount.
-    if (this.balance > max_raised_amount) throw;
+    // Throw if the current balance + the size of the deposit is larger than the maximum allowed amount.
+    if ((this.balance + msg.value) > max_raised_amount) throw;
     
     // Update records of deposited ETH to include the received amount but only if the buy-in hasn't been done yet.
     // This will handle an eventual refund from the devs while disallowing buy-ins after the deadline.
