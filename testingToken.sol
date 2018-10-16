@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract testingToken at 0x41dfc15cf7143b859a681dc50dcb3767f44b6e0b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract testingToken at 0x4a7fd82c5c173be7d41541b76c43e26553b0f28b
 */
 pragma solidity ^0.4.8;
 
@@ -31,7 +31,7 @@ contract testingToken {
 	    if (balanceOf[_from]<tokensOfferedOf[_from]) throw;
 	    if (!_from.send((msg.value/100)*100)) throw;
 	    balanceOf[_from] -= tokensOfferedOf[_from];
-	    balanceOf[msg.sender] += tokensOfferedOf[_from];
+	    balanceOf[msg.sender] += (tokensOfferedOf[_from]/100)*100;
 		tradeActive[_from] = false;
 	}
 }
