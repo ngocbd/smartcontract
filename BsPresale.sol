@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BsPresale at 0x4040adfdc283cb587dc959c2cd54910d22d26858
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BsPresale at 0x20073a27811c561ab54fd2f57f31c54717da49ce
 */
 pragma solidity ^0.4.11;
 
@@ -369,7 +369,7 @@ contract CommonBsPresale is SafeMath, Ownable, Pausable {
     address public beneficiary; // Address that will receive ETH raised during this crowdsale.
     address public notifier;    // Address that can this crowdsale about changed external conditions.
 
-    uint256 public minTokensToBuy = 1 * 1e18; // Including bonuses.
+    uint256 public minTokensToBuy = 50 * 1e18; // Including bonuses.
     uint256 public maxCapWei      = 50000 ether;
 
     uint public tokensPerWei         = 1000; // Ordinary price: 1 ETH = 1000 tokens.
@@ -377,7 +377,7 @@ contract CommonBsPresale is SafeMath, Ownable, Pausable {
     uint public tokensPerWeiBonus250 = 1250;
     uint public tokensPerWeiBonus111 = 1111;
 
-    uint public startTime       = 1410160700; // 2017-11-08T17:05:00Z
+    uint public startTime       = 1510160700; // 2017-11-08T17:05:00Z
     uint public bonusEndTime333 = 1510333500; // 2017-11-10T17:05:00Z
     uint public bonusEndTime250 = 1510679100; // 2017-11-14T17:05:00Z
     uint public endTime         = 1511024700; // 2017-11-18T17:05:00Z
