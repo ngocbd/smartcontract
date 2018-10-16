@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedEthCappedCrowdsale at 0xB000908B63cC6e92671483241B5c03376EAe9cD2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedEthCappedCrowdsale at 0xe702e16d904f191ab75b8dbb5504960eae5af950
 */
 pragma solidity ^0.4.18;
 
@@ -103,6 +103,8 @@ contract ERC20 is ERC20Basic {
 contract FractionalERC20 is ERC20 {
   uint8 public decimals;
 }
+
+
 
 /**
  * Standard ERC20 token with Short Hand Attack and approve() race condition mitigation.
@@ -217,6 +219,30 @@ contract StandardToken is ERC20, SafeMathLib {
     return true;
   }
 
+}
+
+/**
+ * @title Burnable Token
+ * @dev Token that can be irreversibly burned (destroyed).
+ */
+contract BurnableToken is StandardToken {
+
+  event Burn(address indexed burner, uint256 value);
+
+  /**
+   * @dev Burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   */
+  function burn(uint256 _value) public {
+    require(_value <= balances[msg.sender]);
+    // no need to require value <= totalSupply, since that would imply the
+    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+    address burner = msg.sender;
+    balances[burner] = safeSub(balances[burner],_value);
+    totalSupply = safeSub(totalSupply,_value);
+    Burn(burner, _value);
+  }
 }
 
 /**
@@ -495,7 +521,7 @@ contract MintableToken is StandardToken, Ownable {
  * - The token can be capped (supply set in the constructor) or uncapped (crowdsale contract can mint new tokens)
  *
  */
-contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
+contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken, BurnableToken {
 
   event UpdatedTokenInformation(string newName, string newSymbol);
 
@@ -705,6 +731,9 @@ contract Crowdsale is Allocatable, Haltable, SafeMathLib {
   /* The token we are selling */
   FractionalERC20 public token;
 
+  /* Token Vesting Contract */
+  address public tokenVestingAddress;
+
   /* How we are going to price our offering */
   PricingStrategy public pricingStrategy;
 
@@ -765,6 +794,13 @@ contract Crowdsale is Allocatable, Haltable, SafeMathLib {
   /** This is for manul testing for the interaction from owner wallet. You can set it to any value and inspect this in blockchain explorer to see that crowdsale interaction works. */
   uint256 public ownerTestValue;
 
+  uint256 public earlyPariticipantWeiPrice =82815734989648;
+
+  uint256 public whitelistBonusPercentage = 15;
+  uint256 public whitelistPrincipleLockPercentage = 50;
+  uint256 public whitelistBonusLockPeriod = 7776000;
+  uint256 public whitelistPrincipleLockPeriod = 7776000;
+
   /** State machine
    *
    * - Preparing: All contract initialization calls and variables have not been set yet
@@ -792,12 +828,18 @@ contract Crowdsale is Allocatable, Haltable, SafeMathLib {
   // Crowdsale end time has been changed
   event EndsAtChanged(uint256 endAt);
 
+  // Crowdsale start time has been changed
+  event StartAtChanged(uint256 endsAt);
+
   function Crowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, 
-  uint256 _start, uint256 _end, uint256 _minimumFundingGoal) public {
+  uint256 _start, uint256 _end, uint256 _minimumFundingGoal, address _tokenVestingAddress) public 
+  {
 
     owner = msg.sender;
 
     token = FractionalERC20(_token);
+
+    tokenVestingAddress = _tokenVestingAddress;
 
     setPricingStrategy(_pricingStrategy);
 
@@ -817,14 +859,25 @@ contract Crowdsale is Allocatable, Haltable, SafeMathLib {
 
     // Minimum funding goal can be zero
     minimumFundingGoal = _minimumFundingGoal;
+
   }
 
   /**
    * Don't expect to just send in money and get tokens.
    */
   function() payable public {
-    require(false);
+    invest(msg.sender);
   }
+
+  /** Function to set default vesting schedule parameters. */
+    function setDefaultWhitelistVestingParameters(uint256 _bonusPercentage, uint256 _principleLockPercentage, uint256 _bonusLockPeriod, uint256 _principleLockPeriod, uint256 _earlyPariticipantWeiPrice) onlyAllocateAgent public {
+
+        whitelistBonusPercentage = _bonusPercentage;
+        whitelistPrincipleLockPercentage = _principleLockPercentage;
+        whitelistBonusLockPeriod = _bonusLockPeriod;
+        whitelistPrincipleLockPeriod = _principleLockPeriod;
+        earlyPariticipantWeiPrice = _earlyPariticipantWeiPrice;
+    }
 
   /**
    * Make an investment.
@@ -838,50 +891,96 @@ contract Crowdsale is Allocatable, Haltable, SafeMathLib {
    */
   function investInternal(address receiver, uint128 customerId) stopInEmergency private {
 
+    uint256 tokenAmount;
+    uint256 weiAmount = msg.value;
     // Determine if it's a good time to accept investment from this participant
-    if(getState() == State.PreFunding) {
-      // Are we whitelisted for early deposit
-      require(earlyParticipantWhitelist[receiver]);
+    if (getState() == State.PreFunding) {
+        // Are we whitelisted for early deposit
+        require(earlyParticipantWhitelist[receiver]);
+        require(weiAmount >= safeMul(15, uint(10 ** 18)));
+        require(weiAmount <= safeMul(50, uint(10 ** 18)));
+        tokenAmount = safeDiv(safeMul(weiAmount, uint(10) ** token.decimals()), earlyPariticipantWeiPrice);
+        
+        if (investedAmountOf[receiver] == 0) {
+          // A new investor
+          investorCount++;
+        }
+
+        // Update investor
+        investedAmountOf[receiver] = safeAdd(investedAmountOf[receiver],weiAmount);
+        tokenAmountOf[receiver] = safeAdd(tokenAmountOf[receiver],tokenAmount);
+
+        // Update totals
+        weiRaised = safeAdd(weiRaised,weiAmount);
+        tokensSold = safeAdd(tokensSold,tokenAmount);
+
+        // Check that we did not bust the cap
+        require(!isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold));
+
+        if (safeAdd(whitelistPrincipleLockPercentage,whitelistBonusPercentage) > 0) {
+
+            uint256 principleAmount = safeDiv(safeMul(tokenAmount, 100), safeAdd(whitelistBonusPercentage, 100));
+            uint256 bonusLockAmount = safeDiv(safeMul(whitelistBonusPercentage, principleAmount), 100);
+            uint256 principleLockAmount = safeDiv(safeMul(whitelistPrincipleLockPercentage, principleAmount), 100);
+
+            uint256 totalLockAmount = safeAdd(principleLockAmount, bonusLockAmount);
+            TokenVesting tokenVesting = TokenVesting(tokenVestingAddress);
+            
+            // to prevent minting of tokens which will be useless as vesting amount cannot be updated
+            require(!tokenVesting.isVestingSet(receiver));
+            require(totalLockAmount <= tokenAmount);
+            assignTokens(tokenVestingAddress,totalLockAmount);
+            
+            // set vesting with default schedule
+            tokenVesting.setVesting(receiver, principleLockAmount, whitelistPrincipleLockPeriod, bonusLockAmount, whitelistBonusLockPeriod); 
+        }
+
+        // assign remaining tokens to contributor
+        if (tokenAmount - totalLockAmount > 0) {
+            assignTokens(receiver, tokenAmount - totalLockAmount);
+        }
+
+        // Pocket the money
+        require(multisigWallet.send(weiAmount));
+
+        // Tell us invest was success
+        Invested(receiver, weiAmount, tokenAmount, customerId);       
+
     
     } else if(getState() == State.Funding) {
-      // Retail participants can only come in when the crowdsale is running
+        // Retail participants can only come in when the crowdsale is running
+        tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised, tokensSold, msg.sender, token.decimals());
+        require(tokenAmount != 0);
+
+
+        if(investedAmountOf[receiver] == 0) {
+          // A new investor
+          investorCount++;
+        }
+
+        // Update investor
+        investedAmountOf[receiver] = safeAdd(investedAmountOf[receiver],weiAmount);
+        tokenAmountOf[receiver] = safeAdd(tokenAmountOf[receiver],tokenAmount);
+
+        // Update totals
+        weiRaised = safeAdd(weiRaised,weiAmount);
+        tokensSold = safeAdd(tokensSold,tokenAmount);
+
+        // Check that we did not bust the cap
+        require(!isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold));
+
+        assignTokens(receiver, tokenAmount);
+
+        // Pocket the money
+        require(multisigWallet.send(weiAmount));
+
+        // Tell us invest was success
+        Invested(receiver, weiAmount, tokenAmount, customerId);
+
     } else {
       // Unwanted state
       require(false);
     }
-
-    uint weiAmount = msg.value;
-    uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised, tokensSold, msg.sender, token.decimals());
-
-    require(tokenAmount != 0);
-
-
-    if(investedAmountOf[receiver] == 0) {
-       // A new investor
-       investorCount++;
-    }
-
-    // Update investor
-    investedAmountOf[receiver] = safeAdd(investedAmountOf[receiver],weiAmount);
-    tokenAmountOf[receiver] = safeAdd(tokenAmountOf[receiver],tokenAmount);
-
-    // Update totals
-    weiRaised = safeAdd(weiRaised,weiAmount);
-    tokensSold = safeAdd(tokensSold,tokenAmount);
-
-    // Check that we did not bust the cap
-    require(!isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold));
-    // if(isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold)) {
-    //   throw;
-    // }
-
-    assignTokens(receiver, tokenAmount);
-
-    // Pocket the money
-    require(multisigWallet.send(weiAmount));
-
-    // Tell us invest was success
-    Invested(receiver, weiAmount, tokenAmount, customerId);
   }
 
   /**
@@ -898,17 +997,38 @@ contract Crowdsale is Allocatable, Haltable, SafeMathLib {
    * @param weiPrice Price of a single full token in wei
    *
    */
-  function preallocate(address receiver, uint256 tokenAmount, uint256 weiPrice) public onlyAllocateAgent {
+  function preallocate(address receiver, uint256 tokenAmount, uint256 weiPrice, uint256 principleLockAmount, uint256 principleLockPeriod, uint256 bonusLockAmount, uint256 bonusLockPeriod) public onlyAllocateAgent {
+
 
     uint256 weiAmount = (weiPrice * tokenAmount)/10**uint256(token.decimals()); // This can be also 0, we give out tokens for free
-
+    uint256 totalLockAmount = 0;
     weiRaised = safeAdd(weiRaised,weiAmount);
     tokensSold = safeAdd(tokensSold,tokenAmount);
 
     investedAmountOf[receiver] = safeAdd(investedAmountOf[receiver],weiAmount);
     tokenAmountOf[receiver] = safeAdd(tokenAmountOf[receiver],tokenAmount);
 
-    assignTokens(receiver, tokenAmount);
+    // cannot lock more than total tokens
+    totalLockAmount = safeAdd(principleLockAmount, bonusLockAmount);
+    require(totalLockAmount <= tokenAmount);
+
+    // assign locked token to Vesting contract
+    if (totalLockAmount > 0) {
+
+      TokenVesting tokenVesting = TokenVesting(tokenVestingAddress);
+      
+      // to prevent minting of tokens which will be useless as vesting amount cannot be updated
+      require(!tokenVesting.isVestingSet(receiver));
+      assignTokens(tokenVestingAddress,totalLockAmount);
+      
+      // set vesting with default schedule
+      tokenVesting.setVesting(receiver, principleLockAmount, principleLockPeriod, bonusLockAmount, bonusLockPeriod); 
+    }
+
+    // assign remaining tokens to contributor
+    if (tokenAmount - totalLockAmount > 0) {
+      assignTokens(receiver, tokenAmount - totalLockAmount);
+    }
 
     // Tell us invest was success
     Invested(receiver, weiAmount, tokenAmount, 0);
@@ -919,9 +1039,7 @@ contract Crowdsale is Allocatable, Haltable, SafeMathLib {
    */
   function investWithCustomerId(address addr, uint128 customerId) public payable {
     require(!requiredSignedAddress);
-    //if(requiredSignedAddress) throw; // Crowdsale allows only server-side signed participants
     require(customerId != 0);
-    //if(customerId == 0) throw;  // UUIDv4 sanity check
     investInternal(addr, customerId);
   }
 
@@ -1005,9 +1123,22 @@ contract Crowdsale is Allocatable, Haltable, SafeMathLib {
    *
    * TODO: Fix spelling error in the name
    */
-  function setEarlyParicipantWhitelist(address addr, bool status) public onlyOwner {
+  function setEarlyParicipantWhitelist(address addr, bool status) public onlyAllocateAgent {
     earlyParticipantWhitelist[addr] = status;
     Whitelisted(addr, status);
+  }
+
+  function setWhiteList(address[] _participants) public onlyAllocateAgent {
+      
+      require(_participants.length > 0);
+      uint256 participants = _participants.length;
+
+      for (uint256 j=0; j<participants; j++) {
+      require(_participants[j] != 0);
+      earlyParticipantWhitelist[_participants[j]] = true;
+      Whitelisted(_participants[j], true);
+    }
+
   }
 
   /**
@@ -1026,6 +1157,22 @@ contract Crowdsale is Allocatable, Haltable, SafeMathLib {
 
     endsAt = time;
     EndsAtChanged(endsAt);
+  }
+
+  /**
+   * Allow crowdsale owner to begin early or extend the crowdsale.
+   *
+   * This is useful e.g. for a manual soft cap implementation:
+   * - after X amount is reached determine manual closing
+   *
+   * This may put the crowdsale to an invalid state,
+   * but we trust owners know what they are doing.
+   *
+   */
+  function setStartAt(uint time) public onlyOwner {
+
+    startsAt = time;
+    StartAtChanged(endsAt);
   }
 
   /**
@@ -1179,41 +1326,20 @@ contract BonusFinalizeAgent is FinalizeAgent, SafeMathLib {
 
   CrowdsaleToken public token;
   Crowdsale public crowdsale;
-
-  /** Total percent of tokens minted to the team at the end of the sale as base points (0.0001) */
-  uint256 public totalMembers;
-  // Per address % of total token raised to be assigned to the member Ex 1% is passed as 100
-  uint256 public allocatedBonus;
-  mapping (address=>uint256) bonusOf;
-  /** Where we move the tokens at the end of the sale. */
-  address[] public teamAddresses;
+  uint256 public allocatedTokens;
+  uint256 tokenCap;
+  address walletAddress;
 
 
-  function BonusFinalizeAgent(CrowdsaleToken _token, Crowdsale _crowdsale, uint256[] _bonusBasePoints, address[] _teamAddresses) public {
+  function BonusFinalizeAgent(CrowdsaleToken _token, Crowdsale _crowdsale, uint256 _tokenCap, address _walletAddress) public {
     token = _token;
     crowdsale = _crowdsale;
 
     //crowdsale address must not be 0
     require(address(crowdsale) != 0);
 
-    //bonus & team address array size must match
-    require(_bonusBasePoints.length == _teamAddresses.length);
-
-    totalMembers = _teamAddresses.length;
-    teamAddresses = _teamAddresses;
-    
-    //if any of the bonus is 0 throw
-    // otherwise sum it up in totalAllocatedBonus
-    for (uint256 i=0;i<totalMembers;i++) {
-      require(_bonusBasePoints[i] != 0);
-    }
-
-    //if any of the address is 0 or invalid throw
-    //otherwise initialize the bonusOf array
-    for (uint256 j=0;j<totalMembers;j++) {
-      require(_teamAddresses[j] != 0);
-      bonusOf[_teamAddresses[j]] = _bonusBasePoints[j];
-    }
+    tokenCap = _tokenCap;
+    walletAddress = _walletAddress;
   }
 
   /* Can we run finalize properly */
@@ -1226,15 +1352,15 @@ contract BonusFinalizeAgent is FinalizeAgent, SafeMathLib {
 
     // if finalized is not being called from the crowdsale 
     // contract then throw
-    require(msg.sender == address(crowdsale));
+    require (msg.sender == address(crowdsale));
 
     // get the total sold tokens count.
-    uint tokensSold = crowdsale.tokensSold();
+    uint256 tokenSupply = token.totalSupply();
 
-    for (uint256 i=0;i<totalMembers;i++) {
-      allocatedBonus = safeMul(tokensSold, bonusOf[teamAddresses[i]]) / 10000;
-      // move tokens to the team multisig wallet
-      token.mint(teamAddresses[i], allocatedBonus);
+    allocatedTokens = safeSub(tokenCap,tokenSupply);
+    
+    if ( allocatedTokens > 0) {
+      token.mint(walletAddress, allocatedTokens);
     }
 
     token.releaseTokenTransfer();
@@ -1255,8 +1381,8 @@ contract MintedEthCappedCrowdsale is Crowdsale {
   uint public weiCap;
 
   function MintedEthCappedCrowdsale(address _token, PricingStrategy _pricingStrategy, 
-    address _multisigWallet, uint256 _start, uint256 _end, uint256 _minimumFundingGoal, uint256 _weiCap) 
-    Crowdsale(_token, _pricingStrategy, _multisigWallet, _start, _end, _minimumFundingGoal) public
+    address _multisigWallet, uint256 _start, uint256 _end, uint256 _minimumFundingGoal, uint256 _weiCap, address _tokenVestingAddress) 
+    Crowdsale(_token, _pricingStrategy, _multisigWallet, _start, _end, _minimumFundingGoal,_tokenVestingAddress) public
     { 
       weiCap = _weiCap;
     }
@@ -1280,6 +1406,7 @@ contract MintedEthCappedCrowdsale is Crowdsale {
     mintableToken.mint(receiver, tokenAmount);
   }
 }
+
 
 /// @dev Tranche based pricing with special support for pre-ico deals.
 ///      Implementing "first price" tranches, meaning, that if byers order is
@@ -1413,5 +1540,109 @@ contract EthTranchePricing is PricingStrategy, Ownable, SafeMathLib {
   function() payable public {
     revert(); // No money on this contract
   }
+
+}
+
+/**
+ * Contract to enforce Token Vesting
+ */
+contract TokenVesting is Allocatable, SafeMathLib {
+
+    address public TokenAddress;
+
+    /** keep track of total tokens yet to be released, 
+     * this should be less than or equal to tokens held by this contract. 
+     */
+    uint256 public totalUnreleasedTokens;
+
+
+    struct VestingSchedule {
+        uint256 startAt;
+        uint256 principleLockAmount;
+        uint256 principleLockPeriod;
+        uint256 bonusLockAmount;
+        uint256 bonusLockPeriod;
+        uint256 amountReleased;
+        bool isPrincipleReleased;
+        bool isBonusReleased;
+    }
+
+    mapping (address => VestingSchedule) public vestingMap;
+
+    event VestedTokensReleased(address _adr, uint256 _amount);
+
+
+    function TokenVesting(address _TokenAddress) public {
+        TokenAddress = _TokenAddress;
+    }
+
+
+
+    /** Function to set/update vesting schedule. PS - Amount cannot be changed once set */
+    function setVesting(address _adr, uint256 _principleLockAmount, uint256 _principleLockPeriod, uint256 _bonusLockAmount, uint256 _bonuslockPeriod) public onlyAllocateAgent {
+
+        VestingSchedule storage vestingSchedule = vestingMap[_adr];
+
+        // data validation
+        require(safeAdd(_principleLockAmount, _bonusLockAmount) > 0);
+
+        //startAt is set current time as start time.
+
+        vestingSchedule.startAt = block.timestamp;
+        vestingSchedule.bonusLockPeriod = safeAdd(block.timestamp,_bonuslockPeriod);
+        vestingSchedule.principleLockPeriod = safeAdd(block.timestamp,_principleLockPeriod);
+
+        // check if enough tokens are held by this contract
+        ERC20 token = ERC20(TokenAddress);
+        uint256 _totalAmount = safeAdd(_principleLockAmount, _bonusLockAmount);
+        require(token.balanceOf(this) >= safeAdd(totalUnreleasedTokens, _totalAmount));
+        vestingSchedule.principleLockAmount = _principleLockAmount;
+        vestingSchedule.bonusLockAmount = _bonusLockAmount;
+        vestingSchedule.isPrincipleReleased = false;
+        vestingSchedule.isBonusReleased = false;
+        totalUnreleasedTokens = safeAdd(totalUnreleasedTokens, _totalAmount);
+        vestingSchedule.amountReleased = 0;
+    }
+
+    function isVestingSet(address adr) public constant returns (bool isSet) {
+        return vestingMap[adr].principleLockAmount != 0 || vestingMap[adr].bonusLockAmount != 0;
+    }
+
+
+    /** Release tokens as per vesting schedule, called by contributor  */
+    function releaseMyVestedTokens() public {
+        releaseVestedTokens(msg.sender);
+    }
+
+    /** Release tokens as per vesting schedule, called by anyone  */
+    function releaseVestedTokens(address _adr) public {
+        VestingSchedule storage vestingSchedule = vestingMap[_adr];
+        
+        uint256 _totalTokens = safeAdd(vestingSchedule.principleLockAmount, vestingSchedule.bonusLockAmount);
+        // check if all tokens are not vested
+        require(safeSub(_totalTokens, vestingSchedule.amountReleased) > 0);
+        
+        // calculate total vested tokens till now        
+        uint256 amountToRelease = 0;
+
+        if (block.timestamp >= vestingSchedule.principleLockPeriod && !vestingSchedule.isPrincipleReleased) {
+            amountToRelease = safeAdd(amountToRelease,vestingSchedule.principleLockAmount);
+            vestingSchedule.amountReleased = safeAdd(vestingSchedule.amountReleased, amountToRelease);
+            vestingSchedule.isPrincipleReleased = true;
+        }
+        if (block.timestamp >= vestingSchedule.bonusLockPeriod && !vestingSchedule.isBonusReleased) {
+            amountToRelease = safeAdd(amountToRelease,vestingSchedule.bonusLockAmount);
+            vestingSchedule.amountReleased = safeAdd(vestingSchedule.amountReleased, amountToRelease);
+            vestingSchedule.isBonusReleased = true;
+        }
+
+        // transfer vested tokens
+        require(amountToRelease > 0);
+        ERC20 token = ERC20(TokenAddress);
+        token.transfer(_adr, amountToRelease);
+        // decrement overall unreleased token count
+        totalUnreleasedTokens = safeSub(totalUnreleasedTokens, amountToRelease);
+        VestedTokensReleased(_adr, amountToRelease);
+    }
 
 }
