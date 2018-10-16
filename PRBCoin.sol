@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PRBCoin at 0x7a976a6c065a15db87bf64919a6112ae9035c867
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PRBCoin at 0xa4498450465ae8d7a11ef3ff2aa033fd595d3d23
 */
 pragma solidity ^0.4.4;
 
@@ -150,8 +150,8 @@ contract PRBCoin is StandardToken { // CHANGE THIS. Update the contract name.
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
     function PRBCoin() {
-        balances[msg.sender] = 1000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
-        totalSupply = 10000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
+        balances[msg.sender] = 500000000000000000000000000;          // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
+        totalSupply = 500000000000000000000000000;                      // Update total supply (1000 for example) (CHANGE THIS)
         name = "PRBCoin";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
         symbol = "PRB";                                             // Set the symbol for display purposes (CHANGE THIS)
