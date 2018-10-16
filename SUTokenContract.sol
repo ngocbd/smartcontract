@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SUTokenContract at 0x1360bc11e4f62fceb8598d760105fe0d85a38aef
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SUTokenContract at 0xf867a9bc367416f58845ac5ccb35e6bd93be2087
 */
 pragma solidity ^0.4.21;
  
@@ -274,16 +274,15 @@ contract SUCoin is MintableToken {
 contract SUTokenContract is Ownable  {
     using SafeMath for uint;
     
+    event doiVerificationEvent(bytes32 _doiHash, bytes32 _hash);
+    
     SUCoin public token = new SUCoin();
-    bool ifInit = false;
+    bool ifInit = true; 
     uint public tokenDec = 1000000000000000000; //18
     address manager;
-    //uint public lastPeriod;
     
     
     mapping (address => mapping (uint => bool)) idMap;
-    //mapping (address => mapping (bytes32 => bool)) hashMap;
-    //mapping(uint => bool) idMap;
     mapping(bytes32 => bool) hashMap;
     mapping (uint => uint) mintInPeriod;
     uint public mintLimit = tokenDec.mul(10000);
@@ -294,18 +293,17 @@ contract SUTokenContract is Ownable  {
     function SUTokenContract(){
         owner = msg.sender;
         manager = msg.sender;
+        token = SUCoin(0x64734D2FEDCD1A208375b5Ea6dC14F4482b47D52);
     }
     
     function initMinting() onlyOwner returns (bool) {
         require(!ifInit);
-        require(token.mint(0x8f89FE2362C769B472F0e9496F5Ca86850BeE8D4, tokenDec.mul(50000)));
         require(token.mint(address(this), tokenDec.mul(50000)));
-
         ifInit = true;
         return true;
     } 
     
-    // ?????? ??????? ?? ???????? ??????. ????????? ???????? ????? ?? ????? ????????
+
     function transferTokenOwnership(address _newOwner) onlyOwner {   
         token.transferOwnership(_newOwner);
     }
@@ -324,8 +322,7 @@ contract SUTokenContract is Ownable  {
     function tokenTotalSupply() constant returns (uint256) {
         return token.totalSupply();
     }
-    
-    //?????? ??????? ?? ?????? ?????????    
+      
     function tokenContractBalance() constant returns (uint256) {
         return token.balanceOf(address(this));
     }   
@@ -374,6 +371,11 @@ contract SUTokenContract is Ownable  {
   function storeHash(bytes32 _hash) onlyOwner {
     hashMap[_hash] = true;
   } 
+  
+  function storeDoi(bytes32 _doiHash, bytes32 _hash) onlyOwner {
+    doiVerificationEvent( _doiHash, _hash);
+    storeHash(_hash);
+  }  
      
     
   function idVerification(address _address, uint _id) constant returns (bool) {
