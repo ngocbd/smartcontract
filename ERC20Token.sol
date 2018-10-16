@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x7434aa793a5e913eabe458bd163b0eaa9e84a688
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x7eb177fe168822403c1ba77c06452fcaf8e00a10
 */
 pragma solidity ^0.4.4;
  
@@ -123,7 +123,7 @@ contract ERC20Token is StandardToken {
         totalSupply = 10000000;                        // Update total supply (100000 for example)
         name = "etherBoss";                                   // Set the name for display purposes
         decimals = 0;                            // Amount of decimals for display purposes
-        symbol = "ethBS";                               // Set the symbol for display purposes
+        symbol = "ethB";                               // Set the symbol for display purposes
     }
  
     /* Approves and then calls the receiving contract */
