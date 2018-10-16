@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestCrypteriumToken at 0x5a5b5018f1423bdaeb281144412f763a379806c6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestCrypteriumToken at 0x7932656bd0dd943b80c8d42c9cc80d5994779feb
 */
 pragma solidity ^0.4.16;
 
@@ -81,7 +81,7 @@ contract TestCrypteriumToken is Ownable {
         
         balances[msg.sender] = balances[msg.sender] - _value;
         balances[_to] = balances[_to] + _value;
-        assert(balances[_to] >= _value);
+        //assert(balances[_to] >= _value); no need to check, since mint has limited hardcap
         Transfer(msg.sender, _to, _value);
         return true;
     }
@@ -90,27 +90,25 @@ contract TestCrypteriumToken is Ownable {
         return balances[_owner];
     }
     
-    function transferFrom(address _from, address _to, uint256 _value) whenTransferAllowed public  returns (bool) {
+    function transferFrom(address _from, address _to, uint256 _value) whenTransferAllowed public returns (bool) {
         require(_to != address(0));
         require(_value <= balances[_from]);
         require(_value <= allowed[_from][msg.sender]);
         
         balances[_from] = balances[_from] - _value;
         balances[_to] = balances[_to] + _value;
-        assert(balances[_to] >= _value);
+        //assert(balances[_to] >= _value); no need to check, since mint has limited hardcap
         allowed[_from][msg.sender] = allowed[_from][msg.sender] - _value;
         Transfer(_from, _to, _value);
         return true;
     }
 
     function approve(address _spender, uint256 _value) public returns (bool) {
+        //NOTE: To prevent attack vectors like the one discussed here: 
+        //https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729,
+        //clients SHOULD make sure to create user interfaces in such a way 
+        //that they set the allowance first to 0 before setting it to another value for the same spender. 
     
-        // To change the approve amount you first have to reduce the addresses`
-        //  allowance to zero by calling `approve(_spender, 0)` if it is not
-        //  already 0 to mitigate the race condition described here:
-        //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-        
-        require((_value == 0) || (allowed[msg.sender][_spender] == 0));
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
@@ -123,7 +121,7 @@ contract TestCrypteriumToken is Ownable {
     function allowTransfer() onlyOwner public {
         transferAllowed = true;
     }
-  
+    
     function mint(address _to, uint256 _value) onlyOwner saleIsOn canMint public returns (bool) {
         require(_to != address(0));
         
@@ -168,11 +166,11 @@ contract TestCrypteriumToken is Ownable {
     }
     
     function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(_value <= balances[_from]);                // Check if the targeted balance is enough
-        require(_value <= allowed[_from][msg.sender]);    // Check allowance
-        balances[_from] = balances[_from] - _value;                         // Subtract from the targeted balance
-        allowed[_from][msg.sender] = allowed[_from][msg.sender] - _value;             // Subtract from the sender's allowance
-        totalSupply = totalSupply - _value;                              // Update totalSupply
+        require(_value <= balances[_from]);
+        require(_value <= allowed[_from][msg.sender]);
+        balances[_from] = balances[_from] - _value;
+        allowed[_from][msg.sender] = allowed[_from][msg.sender] - _value;
+        totalSupply = totalSupply - _value;
         Burn(_from, _value);
         return true;
     }
