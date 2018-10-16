@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZenyCoins at 0x2C1BBd9b5A708F4fc79204E1B3FFB5d2F0B14e60
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZENYCOINS at 0x450F783FD73cCAA6a8278180456c9cB2a3648548
 */
 pragma solidity ^ 0.4 .9;
 library SafeMath {
@@ -25,7 +25,7 @@ library SafeMath {
         return c;
     }
 }
-contract ZenyCoins {
+contract ZENYCOINS {
     using SafeMath
     for uint256;
     mapping(address => mapping(address => uint256)) allowed;
@@ -37,9 +37,9 @@ contract ZenyCoins {
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed _owner, address indexed spender, uint256 value);
 
-    function ZenyCoins() {
+    function ZENYCOINS() {
         totalSupply = 112200000;
-        symbol = 'ZNC';
+        symbol = 'ZENY';
         owner = 0xc77b9d420266089ab236cd656361b1c7e3dfb4cb;
         balances[owner] = totalSupply;
         decimals = 0;
