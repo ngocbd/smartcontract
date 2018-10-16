@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Silver at 0x404a639086eda1b9c8aba3e34a5f8145b4b04ea5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Silver at 0x9cf9653e007c04c0fc21ada5de817010626c9f87
 */
 pragma solidity ^0.4.12;
 
@@ -242,17 +242,19 @@ contract BurnableToken is StandardToken {
         balances[burner] = balances[burner].sub(_value);
         totalSupply = totalSupply.sub(_value);
         Burn(burner, _value);
+        Transfer(burner, address(0), _value);
     }
 }
 
-contract Silver  is BurnableToken, Ownable {
+contract Silver is BurnableToken, Ownable {
 
     string public constant name = "Silver";
-    string public constant symbol = "AG";
+    string public constant symbol = "SILVER";
     uint public constant decimals = 8;
+    // there is no problem in using * here instead of .mul()
     uint256 public constant initialSupply = 100000000000 * (10 ** uint256(decimals));
 
-    // Constructor
+    // Constructors
     function Silver () {
         totalSupply = initialSupply;
         balances[msg.sender] = initialSupply; // Send all tokens to owner
