@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FairGameCrowdSale at 0xf64dc764c733a62b4461a7b66386862f92705aab
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FairGameCrowdSale at 0xcd9ded80a31cf28ad079743ec869be47aff98d45
 */
 pragma solidity ^0.4.16;
 
@@ -301,15 +301,15 @@ contract FairGameCrowdSale is CrowdSale {
     function _initStages() internal {
         delete icoStages;
 
-        icoStages.push(Stage({rate: 20, duration: 1 days}));
-        icoStages.push(Stage({rate: 10, duration: 1 days}));
-        icoStages.push(Stage({rate: 0,  duration: 1 days}));
+        icoStages.push(Stage({rate: 20, duration: 1 hours}));
+        icoStages.push(Stage({rate: 10, duration: 1 hours}));
+        icoStages.push(Stage({rate: 0,  duration: 1 hours}));
 
 
         delete lockStages;
 
-        lockStages.push(Stage({rate: 33, duration: 30 days}));
-        lockStages.push(Stage({rate: 33, duration: 30 days}));
-        lockStages.push(Stage({rate: 34, duration: 30 days}));
+        lockStages.push(Stage({rate: 33, duration: 30 seconds}));
+        lockStages.push(Stage({rate: 33, duration: 30 seconds}));
+        lockStages.push(Stage({rate: 34, duration: 30 seconds}));
     }
 }
