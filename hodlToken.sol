@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract hodlToken at 0xadb18359290cd9d751ed13f3360d226307b1a19e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract hodlToken at 0xf6962cfe3b9618374097d51bc6691efb3974d06f
 */
 /**
 *
@@ -85,8 +85,10 @@ contract Pausable is Ownable {
 	bool public paused = true;
 	bool public refundPaused = true;
 	// Deadline set to December 29th, 2017 at 11:59pm PST
-	uint256 durationInMinutes = 60*24*29+60*6;
+	uint256 public durationInMinutes = 60*24*29+60*3+10;
+	uint256 public dayAfterInMinutes = 60*24*30+60*3+10;
 	uint256 public deadline = now + durationInMinutes * 1 minutes;
+	uint256 public dayAfterDeadline = now + dayAfterInMinutes * 1 minutes;
 
 	/**
 	* @dev modifier to allow actions only when the contract IS NOT paused
@@ -306,8 +308,8 @@ contract hodlToken is Pausable, StandardToken {
 	uint256 public purchasableTokens = 112000 * 10**18;
 	uint256 public founderAllocation = 28000 * 10**18;
 
-	string public name = "HODL Token";
-	string public symbol = "HOLD";
+	string public name = "TeamHODL Token";
+	string public symbol = "THODL";
 	uint256 public decimals = 18;
 	uint256 public INITIAL_SUPPLY = 140000 * 10**18;
 
@@ -358,9 +360,11 @@ contract hodlToken is Pausable, StandardToken {
 	function cashOut() onlyOwner whenCrowdsaleEnded {
 		
 		/**
-		* Transfer money from escrow wallet
+		* Transfer money from escrow wallet up to 1 day after ICO end.
 		**/
-		owner.transfer(escrow.balance);
+		if (dayAfterDeadline >= now) {
+			owner.transfer(escrow.balance);
+		}
 	}
   
 	/**
@@ -438,23 +442,23 @@ contract hodlToken is Pausable, StandardToken {
 	function refund(uint256 _amount) payable whenNotPaused whenCrowdsaleEnded {
 
 		/**
-		* Calculate amount of HOLD to refund
+		* Calculate amount of THODL to refund
 		**/
-		uint256 refundHOLD = _amount.mul(10**18);
-		require(balances[msg.sender] >= refundHOLD);
+		uint256 refundTHODL = _amount.mul(10**18);
+		require(balances[msg.sender] >= refundTHODL);
 
 		/**
 		* Calculate refund in wei
 		**/
-		uint256 weiAmount = refundHOLD.div(REFUND_RATE);
+		uint256 weiAmount = refundTHODL.div(REFUND_RATE);
 		require(this.balance >= weiAmount);
 
-		balances[msg.sender] = balances[msg.sender].sub(refundHOLD);
+		balances[msg.sender] = balances[msg.sender].sub(refundTHODL);
 		
 		/**
 		* The tokens are burned
 		**/
-		totalSupply = totalSupply.sub(refundHOLD);
+		totalSupply = totalSupply.sub(refundTHODL);
 
 		msg.sender.transfer(weiAmount);
 	}
