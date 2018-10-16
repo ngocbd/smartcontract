@@ -1,7 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMath at 0x8a636d434ec5d15cd97976bbbe889d7fcd81119f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMath at 0xbe2c72cc0d41b2d6b7d7b5e831bab16fc44af8ef
 */
-pragma solidity ^0.4.11;
 library SafeMath {
   function mul(uint a, uint b) internal returns (uint) {
     uint c = a * b;
