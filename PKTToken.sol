@@ -1,11 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PKTToken at 0x473319898464ca640af692a0534175981ab78aa1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PKTToken at 0xa6dba1f11ce9091682a443277a4d951bba39c723
 */
 pragma solidity ^0.4.13;
 // -------------------------------------------------
 // 0.4.13+commit.0fb4cb1a
 // EthPoker.io ERC20 PKT token contract
 // Contact admin@ethpoker.io for any query
+// GET READY FOR LIFT OFF 03/January/17 (Bitcoin's Anniversary)
 // -------------------------------------------------
 // ERC Token Standard #20 Interface https://github.com/ethereum/EIPs/issues/20
 // -------------------------------------------------
