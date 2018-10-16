@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DiXiEnergy at 0x07ea9852141ac3046de25bfda0ea6d2a26cc7d32
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DiXiEnergy at 0x6d7a655ddc6bc6b1a0bf4b61be2c9f914e34026f
 */
 pragma solidity ^0.4.18;
  
@@ -41,8 +41,8 @@ contract Limitedsale is miningrealmoney{
     
     event Transfer(address indexed from, address indexed to, uint256 value);
 function Limitedsale() payable miningrealmoney() {
-    totalSupply = 100000000;
-balanceOf[this] = 25000000;
+    totalSupply = 10000000000;
+balanceOf[this] = 2500000000;
 balanceOf[owner] = totalSupply - balanceOf[this];
 Transfer(this, owner, balanceOf[owner]);
 }
