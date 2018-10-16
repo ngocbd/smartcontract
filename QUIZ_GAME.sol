@@ -1,10 +1,21 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QUIZ_GAME at 0xa48a36d94024f861b453267468b9096e4a3eb8be
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QUIZ_GAME at 0xF0344800bd3Ffa687e4D780357961B28995a5F46
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.21;
 
 contract QUIZ_GAME
 {
+    function Play(string _response)
+    external
+    payable
+    {
+        require(msg.sender == tx.origin);
+        if(responseHash == keccak256(_response) && msg.value>1 ether)
+        {
+            msg.sender.transfer(this.balance);
+        }
+    }
+    
     string public question;
  
     address questionSender;
@@ -15,22 +26,11 @@ contract QUIZ_GAME
     public
     payable
     {
-        if(responseHash==0x00)
+        if(responseHash==0x0)
         {
             responseHash = keccak256(_response);
             question = _question;
             questionSender = msg.sender;
-        }
-    }
-    
-    function Play(string _response)
-    external
-    payable
-    {
-        require(msg.sender == tx.origin);
-        if(responseHash == keccak256(_response) && msg.value>1 ether)
-        {
-            msg.sender.transfer(this.balance);
         }
     }
     
@@ -52,5 +52,4 @@ contract QUIZ_GAME
     }
     
     function() public payable{}
-    
 }
