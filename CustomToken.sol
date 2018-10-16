@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x6d026901a557ae0309c15594176a8203fc95e23e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xeb247c925222732aa1df3a4cd76025bfa3a54ff6
 */
 pragma solidity ^0.4.19;
 
@@ -47,9 +47,9 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 1000000000000000000000000000;
-        name = 'UTelecomToken';
-        symbol = 'umt';
+        totalSupply = 68000000000000000000000000;
+        name = 'Valuechain';
+        symbol = 'VIC';
         decimals = 18;
         balanceOf[0xa5791f4e7bf0ec01620317cf9f135325a5b47404] = totalSupply;
         Transfer(address(0), 0xa5791f4e7bf0ec01620317cf9f135325a5b47404, totalSupply);
