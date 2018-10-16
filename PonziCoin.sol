@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PonziCoin at 0xe3f64dc522a66405c51d96aae234217a03502bb4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PonziCoin at 0x28cf9af3aca6aea0b802df31629ce1b7aa243dc2
 */
 pragma solidity ^0.4.2;
 
@@ -143,7 +143,7 @@ contract PonziCoin is StandardToken, SafeMath {
     uint public tierBudget = 100000;
 
     // Address of the founder of PonziCoin.
-    address public founder = 0x506A24fBCb8eDa2EC7d757c943723cFB32a0682E;
+    address public founder = 0x9AfD4F7aD03A03d306B41a4604Ea2928cFf78fd1;
 
     /*
      * Contract functions
@@ -196,7 +196,7 @@ contract PonziCoin is StandardToken, SafeMath {
     /// @dev Contract constructor function sets initial token balances.
     function PonziCoin()
     {   
-        // It's not a good scam unless it's pre-mined
+        // It's not a good scam unless it's pre-mined. No I'm not going to dump on you, don't worry. This isn't a scam (at least not entirely). If I feel like maintaining the website is too much I'll give the keys to someone else.
         balances[founder] = 200000;
         totalSupply += 200000;
     }
