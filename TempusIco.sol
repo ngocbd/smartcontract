@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TempusIco at 0x066e86ed7cf56ee96b7c7d4301bfbb7cbf8515c6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TempusIco at 0x0f466a0b3900f786f2d71134730b26a4bd7e3bbb
 */
 pragma solidity ^0.4.18;
 
@@ -85,7 +85,9 @@ contract TempusToken {
 contract TempusIco is Ownable {
     using SafeMath for uint256;
 
-    uint public startTime = 1519894800; //1 March 2018 09:00:00 GMT
+    // start and end timestamps where investments are allowed (both inclusive)
+//    uint public startTime = 1519894800; //1 March 2018 09:00:00 GMT
+    uint public startTime = 1519635600; //26 Feb 2018 09:00:00 GMT
 
     //initial token price
     uint public price0 = 0.005 ether / 1000;
