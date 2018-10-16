@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DistributeTokens at 0x7f58a73fdc40a5be5a65b3462d4bff37ad97adcd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DistributeTokens at 0x56f11a201e1d75913ea0ac4565a1457ddc2e5a21
 */
 /**
  * @title Ownable
@@ -45,25 +45,26 @@ contract Ownable {
 contract token { function transfer(address receiver, uint amount){  } }
 
 contract DistributeTokens is Ownable{
-	// uint[] public balances;
-	// address[] public addresses;
+  
+	token tokenReward;
+  address public addressOfTokenUsedAsReward;
 
-	token tokenReward = token(0xd62e9252F1615F5c1133F060CF091aCb4b0faa2b);
+  function setTokenReward(address _addr) onlyOwner {
+    tokenReward = token(_addr);
+    addressOfTokenUsedAsReward = _addr;
+  }
 
-	function register(address[] _addrs, uint[] _bals) onlyOwner{
-		// addresses = _addrs;
-		// balances = _bals;
-		// distribute();
+	function distributeVariable(address[] _addrs, uint[] _bals) onlyOwner{
 		for(uint i = 0; i < _addrs.length; ++i){
-			tokenReward.transfer(_addrs[i],_bals[i]*10**18);
+			tokenReward.transfer(_addrs[i],_bals[i]);
 		}
 	}
 
-	// function distribute() onlyOwner {
-	// 	for(uint i = 0; i < addresses.length; ++i){
-	// 		tokenReward.transfer(addresses[i],balances[i]*10**18);
-	// 	}
-	// }
+  function distributeFixed(address[] _addrs, uint _amoutToEach) onlyOwner{
+    for(uint i = 0; i < _addrs.length; ++i){
+      tokenReward.transfer(_addrs[i],_amoutToEach);
+    }
+  }
 
 	function withdrawTokens(uint _amount) onlyOwner {
 		tokenReward.transfer(owner,_amount);
