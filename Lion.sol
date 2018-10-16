@@ -1,117 +1,78 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lion at 0x008a8d41c2cb3054504a61e1d54a06fd83560254
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LION at 0x7930a6660e4982e6e773d8d5cb64339a77974960
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.4;
 
+contract Token {
+    function totalSupply() constant returns (uint256 supply) {}
+    function balanceOf(address _owner) constant returns (uint256 balance) {}
+    function transfer(address _to, uint256 _value) returns (bool success) {}
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
+    function approve(address _spender, uint256 _value) returns (bool success) {}
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
+    
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);}
 
-contract owned {
-    address public owner;
-    address public candidate;
+contract StandardToken is Token {
 
-    function owned() payable internal {
-        owner = msg.sender;
-    }
+    function transfer(address _to, uint256 _value) returns (bool success) {
+        if (balances[msg.sender] >= _value && _value > 0) {
+            balances[msg.sender] -= _value;
+            balances[_to] += _value;
+            Transfer(msg.sender, _to, _value);
+            return true;
+        } else { return false; } }
 
-    modifier onlyOwner {
-        require(owner == msg.sender);
-        _;
-    }
-
-    function changeOwner(address _owner) onlyOwner public {
-        candidate = _owner;
-    }
-
-    function confirmOwner() public {
-        require(candidate != address(0));
-        require(candidate == msg.sender);
-        owner = candidate;
-        delete candidate;
-    }
-}
-
-
-library SafeMath {
-    function sub(uint256 a, uint256 b) pure internal returns (uint256) {
-        assert(a >= b);
-        return a - b;
-    }
-
-    function add(uint256 a, uint256 b) pure internal returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a && c >= b);
-        return c;
-    }
-}
-
-
-contract ERC20 {
-    uint256 public totalSupply;
-    function balanceOf(address who) public constant returns (uint256 value);
-    function allowance(address owner, address spender) public constant returns (uint256 _allowance);
-    function transfer(address to, uint256 value) public returns (bool success);
-    function transferFrom(address from, address to, uint256 value) public returns (bool success);
-    function approve(address spender, uint256 value) public returns (bool success);
-
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-
-contract Lion is ERC20, owned {
-    using SafeMath for uint256;
-    string public name = "Lion";
-    string public symbol = "Lion";
-    uint8 public decimals = 18;
-    uint256 public totalSupply;
-
-    mapping (address => uint256) private balances;
-    mapping (address => mapping (address => uint256)) private allowed;
-
-    function balanceOf(address _who) public constant returns (uint256) {
-        return balances[_who];
-    }
-
-    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
-
-    function Lion() public {
-        totalSupply = 1000000 * 1 ether;
-        balances[msg.sender] = totalSupply;
-        Transfer(0, msg.sender, totalSupply);
-    }
-
-    function transfer(address _to, uint256 _value) public returns (bool success) {
-        require(_to != address(0));
-        require(balances[msg.sender] >= _value);
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(_to != address(0));
-        require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        Transfer(_from, _to, _value);
-        return true;
-    }
-
-    function approve(address _spender, uint256 _value) public returns (bool success) {
-        require(_spender != address(0));
-        require(balances[msg.sender] >= _value);
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
+            balances[_to] += _value;
+            balances[_from] -= _value;
+            allowed[_from][msg.sender] -= _value;
+            Transfer(_from, _to, _value);
+            return true;
+        } else { return false; } }
+ function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner]; }
+ function approve(address _spender, uint256 _value) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
-        return true;
+        return true; }
+ function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+      return allowed[_owner][_spender]; }
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+    uint256 public totalSupply;}
+
+
+
+contract LION is StandardToken {
+
+    function () {
+        throw;
     }
 
-    function withdrawTokens(uint256 _value) public onlyOwner {
-        require(balances[this] >= _value);
-        balances[this] = balances[this].sub(_value);
-        balances[msg.sender] = balances[msg.sender].add(_value);
-        Transfer(this, msg.sender, _value);
+    string public name;                   
+    uint8 public decimals;                
+    string public symbol;                
+    string public version = 'H1.0';     
+
+//
+    function LION(
+        ) {
+        balances[msg.sender] = 1000000;            
+        totalSupply = 1000000;                     
+        name = "Lioncoin";                               
+        decimals = 0;                         
+        symbol = "LION";                           
+    }
+
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+
+      
+        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
+        return true;
     }
 }
