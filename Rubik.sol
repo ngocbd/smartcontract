@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Rubik at 0xca7b9121bd8fb33dce0706ba99b063242a6cf8ac
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Rubik at 0xd4438f6fbe013e2acabb3d2bf93f9457e21f2059
 */
 pragma solidity ^0.4.8;
 
@@ -38,7 +38,7 @@ contract Rubik {
 
       The the end time to 30 days after the contract has been deployed.
     */
-    uint contestEndTime = now + 2592000;
+    uint contestEndTime = now + 108000;
 
     uint8 constant FRONT = 0;
     uint8 constant LEFT = 1;
