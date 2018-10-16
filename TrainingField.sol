@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TrainingField at 0x333b63f5c455f381bc2a13b1b8aa7da31fd1fc02
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TrainingField at 0x545123c9b719cc37d098168742ca21748adc0060
 */
 pragma solidity ^0.4.17;
 
@@ -225,7 +225,7 @@ contract TrainingField is AccessControl{
      //can't train with someone else's pets. 
      if ((angel.owner != msg.sender) || (pet1.owner != msg.sender) || (pet2.owner!= msg.sender)) {revert();}
      //check that you haven't trained for 24 hours 24 *60 * 60 
-     if ((now < (pet1.lastTrainingTime+86400)) || (now < (pet1.lastTrainingTime+86400))) {revert();}
+     if ((now < (pet1.lastTrainingTime+86400)) || (now < (pet1.lastTrainingTime+60))) {revert();}
     
     //AngelRed is a 0 when the angel?s aura isnt? compatible with Red and 1 when it is. 
  
