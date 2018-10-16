@@ -1,7 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x00DEa398a2D404a19f665E90C64B44C6409bc7d1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xa4A6C92Eb83966Fedd8f88c673f73E18C7192b69
 */
-pragma solidity ^0.4.13;
 contract Token {
     
 	/* Public variables of the token */
@@ -17,10 +16,10 @@ contract Token {
 	event Transfer(address indexed from, address indexed to, uint256 value);
 
 	function Token() {
-	    totalSupply = 8400*(10**4)*(10**18);
-		balanceOf[msg.sender] = 8400*(10**4)*(10**18);              // Give the creator all initial tokens
-		name = "EthereumCryptoKitties";                                   // Set the name for display purposes
-		symbol = "ETHCK";                               // Set the symbol for display purposes
+	    totalSupply = 10*(10**8)*(10**18);
+		balanceOf[msg.sender] = 10*(10**8)*(10**18);              // Give the creator all initial tokens
+		name = "LockCoin";                                   // Set the name for display purposes
+		symbol = "LOCK";                               // Set the symbol for display purposes
 		decimals = 18;                            // Amount of decimals for display purposes
 	}
 
