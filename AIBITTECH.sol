@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AIBITTECH at 0x416605974bb7ad803ea61904e0c7a5a4d02e69bf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AIBITTECH at 0x1580d3167a6e4be655ff218a7efe39837f23b317
 */
 pragma solidity ^0.4.4;
 
@@ -108,12 +108,12 @@ contract AIBITTECH is StandardToken { // CHANGE THIS. Update the contract name.
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
     function AIBITTECH() {
-        balances[msg.sender] = 1000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
+        balances[msg.sender] = 380000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
         totalSupply = 380000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
-        name = "AIBITTECH";                                   // Set the name for display purposes (CHANGE THIS)
+        name = "AIBIT TECH";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
-        symbol = "ABI";                                             // Set the symbol for display purposes (CHANGE THIS)
-        unitsOneEthCanBuy = 51700;                                      // Set the price of your token for the ICO (CHANGE THIS)
+        symbol = "Abi";                                             // Set the symbol for display purposes (CHANGE THIS)
+        unitsOneEthCanBuy = 50000;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
     }
 
