@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BokkyPooBahsEtherRefundablePrize at 0xed7da010027967365e0a7c370c1dde2f9fe4477f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BokkyPooBahsEtherRefundablePrize at 0x4d8fe567cea1eaae8a9b108047103b55f7fee235
 */
 pragma solidity ^0.4.8;
 
@@ -139,7 +139,7 @@ contract BokkyPooBahsEtherRefundablePrize is ERC20Token {
     // Token information
     // ------------------------------------------------------------------------
     string public constant symbol = "BERP";
-    string public constant name = "BokkyPooBah´s Ether Refundable Prize";
+    string public constant name = "BokkyPooBah Ether Refundable Prize";
     uint8 public constant decimals = 18;
 
     uint256 public deployedAt;
