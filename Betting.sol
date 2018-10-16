@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Betting at 0x4b2b6ee9271cca9f12b81f94a70dd41cbad50d01
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Betting at 0x716d8d76baa029479df0f0604169950153b8f268
 */
 pragma solidity ^0.4.20;
 
@@ -1092,7 +1092,9 @@ contract Betting is usingOraclize {
         uint256 post; // ending price
         uint160 total; // total coin pool
         uint32 count; // number of bets
-        bool price_check; // boolean: differentiating pre and post prices
+        bool price_check;
+        bytes32 preOraclizeId;
+        bytes32 postOraclizeId;
     }
     struct voter_info {
         uint160 total_bet; //total amount of bet placed
@@ -1161,24 +1163,35 @@ contract Betting is usingOraclize {
     //oraclize callback method
     function __callback(bytes32 myid, string result, bytes proof) public {
         require (msg.sender == oraclize_cbAddress());
+        require (!chronus.race_end);
         bytes32 coin_pointer; // variable to differentiate different callbacks
-        if (!chronus.race_start || chronus.betting_open) {
-            chronus.race_start = true;
-            chronus.betting_open = false;
-            bettingControllerInstance.remoteBettingClose();
-        }
+        chronus.race_start = true;
+        chronus.betting_open = false;
+        bettingControllerInstance.remoteBettingClose();
         coin_pointer = oraclizeIndex[myid];
 
-        if (!coinIndex[coin_pointer].price_check) {
-            coinIndex[coin_pointer].pre = stringToUintNormalize(result);
-            coinIndex[coin_pointer].price_check = true;
-            emit newPriceTicker(coinIndex[coin_pointer].pre);
-        } else if (coinIndex[coin_pointer].price_check){
-            coinIndex[coin_pointer].post = stringToUintNormalize(result);
-            emit newPriceTicker(coinIndex[coin_pointer].post);
-            countdown = countdown - 1;
-            if (countdown == 0) {
-                reward();
+        if (myid == coinIndex[coin_pointer].preOraclizeId) {
+            if (now >= chronus.starting_time+chronus.betting_duration+ 5 minutes) {
+                forceVoidRace();
+            } else {
+                coinIndex[coin_pointer].pre = stringToUintNormalize(result);
+                emit newPriceTicker(coinIndex[coin_pointer].pre);
+            }
+        } else if (myid == coinIndex[coin_pointer].postOraclizeId){
+            if (coinIndex[coin_pointer].pre > 0 ){
+                if (now >= chronus.starting_time+chronus.race_duration+ 5 minutes) {
+                    forceVoidRace();
+                } else {
+                    coinIndex[coin_pointer].post = stringToUintNormalize(result);
+                    coinIndex[coin_pointer].price_check = true;
+                    emit newPriceTicker(coinIndex[coin_pointer].post);
+                    
+                    if (coinIndex[horses.ETH].price_check && coinIndex[horses.BTC].price_check && coinIndex[horses.LTC].price_check) {
+                        reward();
+                    }
+                }
+            } else {
+                forceVoidRace();
             }
         }
     }
@@ -1214,28 +1227,33 @@ contract Betting is usingOraclize {
             bytes32 temp_ID; // temp variable to store oraclize IDs
             emit newOraclizeQuery("Oraclize query was sent, standing by for the answer..");
             // bets open price query
-            delay = delay.add(60); //slack time 1 minute
             chronus.betting_duration = uint32(delay);
             temp_ID = oraclize_query(delay, "URL", "json(https://api.coinmarketcap.com/v1/ticker/ethereum/).0.price_usd");
             oraclizeIndex[temp_ID] = horses.ETH;
+            coinIndex[horses.ETH].preOraclizeId = temp_ID;
 
             temp_ID = oraclize_query(delay, "URL", "json(https://api.coinmarketcap.com/v1/ticker/litecoin/).0.price_usd");
             oraclizeIndex[temp_ID] = horses.LTC;
+            coinIndex[horses.LTC].preOraclizeId = temp_ID;
 
             temp_ID = oraclize_query(delay, "URL", "json(https://api.coinmarketcap.com/v1/ticker/bitcoin/).0.price_usd");
             oraclizeIndex[temp_ID] = horses.BTC;
+            coinIndex[horses.BTC].preOraclizeId = temp_ID;
 
             //bets closing price query
             delay = delay.add(locking_duration);
 
             temp_ID = oraclize_query(delay, "URL", "json(https://api.coinmarketcap.com/v1/ticker/ethereum/).0.price_usd",horses.customGasLimit);
             oraclizeIndex[temp_ID] = horses.ETH;
+            coinIndex[horses.ETH].postOraclizeId = temp_ID;
 
             temp_ID = oraclize_query(delay, "URL", "json(https://api.coinmarketcap.com/v1/ticker/litecoin/).0.price_usd",horses.customGasLimit);
             oraclizeIndex[temp_ID] = horses.LTC;
+            coinIndex[horses.LTC].postOraclizeId = temp_ID;
 
             temp_ID = oraclize_query(delay, "URL", "json(https://api.coinmarketcap.com/v1/ticker/bitcoin/).0.price_usd",horses.customGasLimit);
             oraclizeIndex[temp_ID] = horses.BTC;
+            coinIndex[horses.BTC].postOraclizeId = temp_ID;
 
             chronus.race_duration = uint32(delay);
             return true;
@@ -1254,9 +1272,7 @@ contract Betting is usingOraclize {
         
         total_reward = (coinIndex[horses.BTC].total) + (coinIndex[horses.ETH].total) + (coinIndex[horses.LTC].total);
         if (total_bettors <= 1) {
-            chronus.voided_bet=true;
-            chronus.race_end = true;
-            chronus.voided_timestamp=uint32(now);
+            forceVoidRace();
         } else {
             uint house_fee = total_reward.mul(5).div(100);
             require(house_fee < address(this).balance);
@@ -1340,6 +1356,12 @@ contract Betting is usingOraclize {
         voterIndex[msg.sender].rewarded = true;
         msg.sender.transfer(transfer_amount);
         emit Withdraw(msg.sender, transfer_amount);
+    }
+    
+    function forceVoidRace() internal {
+        chronus.voided_bet=true;
+        chronus.race_end = true;
+        chronus.voided_timestamp=uint32(now);
     }
 
     // utility function to convert string to integer with precision consideration
