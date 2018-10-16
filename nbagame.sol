@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract nbagame at 0x53e61d54469eae9f5487f1e61e0cda3d566e2f86
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract nbagame at 0x1e02f2293a67bc57700c542d7ca135394193c038
 */
 pragma solidity 0.4.20;
 
@@ -1036,8 +1036,8 @@ contract nbagame is usingOraclize {
   address public currentOwner = 0x0161C8d35f0B603c7552017fe9642523f70d7B6A;
 
   uint8 public constant NUM_TEAMS = 2;
-  string[NUM_TEAMS] public TEAM_NAMES = ["Golden State Warriors", "Washington Wizards"];
-  enum TeamType { GSWarriors, WWizards, None }
+  string[NUM_TEAMS] public TEAM_NAMES = ["Cleveland Cavaliers", "Philadelphia 76ers"];
+  enum TeamType { Cavs, Philly, None }
   TeamType public winningTeam = TeamType.None;
 
   uint public constant TOTAL_POOL_COMMISSION = 10; // Total pool commission psuedo 5% (10% from losing side bet)
@@ -1047,9 +1047,9 @@ contract nbagame is usingOraclize {
   uint public constant MINIMUM_BET = 0.01 ether; // 0.01 ETH is min bet
 
   uint public constant BETTING_OPENS = 1519599600; // This wave of contracts opens on Feb 25, 6:00EST
-  uint public constant BETTING_CLOSES = 1519866300; // Close 5 minutes after scheduled game start (3:53am)
+  uint public constant BETTING_CLOSES = 1519862700; // Close 5 minutes after scheduled game start (8:35pm EST)
   uint public constant PAYOUT_ATTEMPT_INTERVAL = 64800; // 16 hours for each ping attempt
-  uint public constant BET_RELEASE_DATE = 1520039100; // Release funds if invalid result 48 hours later
+  uint public constant BET_RELEASE_DATE = 1520035500; // Release funds if invalid result 48 hours later
   uint public constant PAYOUT_DATE = BETTING_CLOSES + PAYOUT_ATTEMPT_INTERVAL; // First payout attempt
   
   uint public constant STAGE_ONE_BET_LIMIT = 0.2 ether; // Staged limits for commission incentive
@@ -1133,7 +1133,7 @@ contract nbagame is usingOraclize {
   
   function pingOracle(uint pingDelay) private {
     // Ping oracle after pingDelay time to query result
-    oraclize_query(pingDelay, "WolframAlpha", "Warriors vs Wizards February 28, 2018 Winner");
+    oraclize_query(pingDelay, "WolframAlpha", "Cavaliers vs 76ers March 1, 2018 Winner");
     //numberOfPingsAttempted++;
   }
 
@@ -1194,7 +1194,7 @@ contract nbagame is usingOraclize {
   // Function for user to bet on team idx,
   function bet(uint teamIdx) public payable {
     require(canBet() == true);
-    require(TeamType(teamIdx) == TeamType.GSWarriors || TeamType(teamIdx) == TeamType.WWizards);
+    require(TeamType(teamIdx) == TeamType.Cavs || TeamType(teamIdx) == TeamType.Philly);
     require(msg.value >= MINIMUM_BET);
 
     // Add bettor to bettor list if they are not on it
