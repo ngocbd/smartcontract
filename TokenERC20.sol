@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x9d5fe0ebb989bec0249fab6d85cab0b931b42fb4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xb0c81081e1e0ad9a4382365e9cc8e1cb29989632
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
@@ -24,7 +24,7 @@ contract TokenERC20 {
     event Burn(address indexed from, uint256 value);
 
     /**
-     * Constrctor function
+     * Constructor function
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
