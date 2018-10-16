@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract T20coin at 0x662bd4ee8f90edf7f41834fc2e53307ad2b8d96e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract T20coin at 0x6bbbea61f293befef8e6d540bc1636ef54e3a82d
 */
 contract T20coin {
   
-    string public standard = '0.1';
+    string public standard = 'Token 0.1';
     string public name;
     string public symbol;
     uint8 public decimals;
@@ -18,10 +18,10 @@ contract T20coin {
     
     function T20coin() {
 
-         initialSupply = 10000000000;
+         initialSupply = 1000000000;
          name ="T20coin";
         decimals = 1;
-         symbol = "T20coin";
+         symbol = "T20";
         
         balanceOf[msg.sender] = initialSupply;              
         totalSupply = initialSupply;                        
