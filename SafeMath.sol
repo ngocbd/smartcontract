@@ -1,5 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMath at 0xbe2c72cc0d41b2d6b7d7b5e831bab16fc44af8ef
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMath at 0x5b14871408d70cba0d9e35c72b0b8ccc8b0f8f02
+*/
+pragma solidity ^0.4.13;
+/**
+* Math operations with safety checks
 */
 library SafeMath {
   function mul(uint a, uint b) internal returns (uint) {
@@ -7,33 +11,41 @@ library SafeMath {
     assert(a == 0 || c / a == b);
     return c;
   }
+
   function div(uint a, uint b) internal returns (uint) {
-    assert(b > 0);
+     assert(b > 0); // Solidity automatically throws when dividing by 0
     uint c = a / b;
-    assert(a == b * c + a % b);
+    assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
+
   function sub(uint a, uint b) internal returns (uint) {
     assert(b <= a);
     return a - b;
   }
+
   function add(uint a, uint b) internal returns (uint) {
     uint c = a + b;
     assert(c >= a);
     return c;
   }
+
   function max64(uint64 a, uint64 b) internal constant returns (uint64) {
     return a >= b ? a : b;
   }
+
   function min64(uint64 a, uint64 b) internal constant returns (uint64) {
     return a < b ? a : b;
   }
+
   function max256(uint256 a, uint256 b) internal constant returns (uint256) {
     return a >= b ? a : b;
   }
+
   function min256(uint256 a, uint256 b) internal constant returns (uint256) {
     return a < b ? a : b;
   }
+
   function assert(bool assertion) internal {
     if (!assertion) {
       throw;
