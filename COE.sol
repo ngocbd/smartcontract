@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COE at 0x77562e7c5cedf35d3264fd13469b9e9d9fee90cc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COE at 0xb8a9cd26ebb5468f65cabe94cda6181c5f75e858
 */
 contract Partner {
     function exchangeTokensFromOtherContract(address _source, address _recipient, uint256 _RequestedTokens);
@@ -16,22 +16,21 @@ contract COE {
     string public symbol = "COE";
 
     address public owner;
-    address public devFeesAddr = 0xF772464393Ac87a1b7C628bF79090e014d931A23;
+    address public devFeesAddr = 0x36Bdc3B60dC5491fbc7d74a05709E94d5b554321;
     address tierAdmin;
 
     uint256 public totalSupply = 100000000000000000000000;
-    uint tierLevel = 1;
-    uint fiatPerEth = 385000000000000000000000;
-    uint256 circulatingSupply = 0;
+    uint public tierLevel = 1;
+    uint256 public fiatPerEth = 58332000000000000000000;
+    uint256 public circulatingSupply = 0;
     uint maxTier = 132;
     uint256 public devFees = 0;
     uint256 fees = 10000;  // the calculation expects % * 100 (so 10% is 1000)
 
-    // flags
     bool public receiveEth = false;
     bool payFees = true;
     bool distributionDone = false;
-    bool canExchange = false;
+    bool public canExchange = false;
     bool addTiers = true;
     bool public initialTiers = false;
 
@@ -103,16 +102,6 @@ contract COE {
         scheduleTokens[38] = 7.5E19;
         scheduleTokens[39] = 7.5E19;
         scheduleTokens[40] = 7.5E19;
-        scheduleTokens[41] = 7.5E19;
-        scheduleTokens[42] = 7.5E19;
-        scheduleTokens[43] = 7.5E19;
-        scheduleTokens[44] = 7.5E19;
-        scheduleTokens[45] = 7.5E19;
-        scheduleTokens[46] = 7.5E19;
-        scheduleTokens[47] = 7.5E19;
-        scheduleTokens[48] = 7.5E19;
-        scheduleTokens[49] = 7.5E19;
-        scheduleTokens[50] = 7.5E19;
     }
 
     function populateTierRates() public {
@@ -158,16 +147,6 @@ contract COE {
         scheduleRates[38] = 1.175E24;
         scheduleRates[39] = 1.146E24;
         scheduleRates[40] = 1.098E24;
-        scheduleRates[41] = 1.058E24;
-        scheduleRates[42] = 9.97E23;
-        scheduleRates[43] = 9.32E23;
-        scheduleRates[44] = 8.44E23;
-        scheduleRates[45] = 8.33E23;
-        scheduleRates[46] = 7.8E23;
-        scheduleRates[47] = 7.67E23;
-        scheduleRates[48] = 8.37E23;
-        scheduleRates[49] = 1.011E24;
-        scheduleRates[50] = 9.79E23;
         initialTiers = true;
     }
 
@@ -177,39 +156,44 @@ contract COE {
         if(payFees) {
             devFees = add(devFees, ((msg.value * fees) / 10000));
         }
-        allocateTokens(convertEthToCents(msg.value));
+        allocateTokens(convertEthToCents(msg.value), 0);
     }
 
     function convertEthToCents(uint256 _incoming) internal returns (uint256) {
         return mul(_incoming, fiatPerEth);
     }
 
-    function allocateTokens(uint256 _submitted) internal {
-        uint256 _availableInTier = mul(scheduleTokens[tierLevel], scheduleRates[tierLevel]);
-        uint256 _allocation = 0;
-
-        if(_submitted >= _availableInTier) {
-            _allocation = scheduleTokens[tierLevel];
-            scheduleTokens[tierLevel] = 0;
-            tierLevel++;
-            _submitted = sub(_submitted, _availableInTier);
-        }
-        else {
-            uint256 _tokens = div(div(mul(_submitted, 1 ether), scheduleRates[tierLevel]), 1 ether);
-            _allocation = add(_allocation, _tokens);
-            scheduleTokens[tierLevel] = sub(scheduleTokens[tierLevel], _tokens);
-            _submitted = sub(_submitted, mul(_tokens, scheduleRates[tierLevel]));
-        }
-
-        balances[msg.sender] = add(balances[msg.sender],_allocation);
-        circulatingSupply = add(circulatingSupply, _allocation);
-        totalSupply = sub(totalSupply, _allocation);
-
+    function allocateTokens(uint256 _submitted, uint256 tokenCount) internal {
+        uint256 _tokensAfforded = 0;
         if((_submitted != 0) && (tierLevel <= maxTier)) {
-            allocateTokens(_submitted);
+            _tokensAfforded = div(_submitted, scheduleRates[tierLevel]);
+        }
+
+        if(scheduleTokens[tierLevel] <= _tokensAfforded) {
+            scheduleTokens[tierLevel] = sub(scheduleTokens[tierLevel], _tokensAfforded);
+            tokenCount = add(tokenCount, _tokensAfforded);
+            circulatingSupply = add(circulatingSupply, _tokensAfforded);
+            totalSupply = sub(totalSupply, _tokensAfforded);
+        }
+        else if(_tokensAfforded > 0) {
+            scheduleTokens[tierLevel] = sub(scheduleTokens[tierLevel], _tokensAfforded);
+            tokenCount = add(tokenCount, _tokensAfforded);
+            circulatingSupply = add(circulatingSupply, _tokensAfforded);
+            totalSupply = sub(totalSupply, _tokensAfforded);
+            tierLevel++;
+            uint256 stepOne = _submitted;
+            uint256 stepTwo = mul(_tokensAfforded, scheduleRates[tierLevel]);
+
+            if(stepTwo <= stepOne) {
+                _submitted = sub(stepOne, stepTwo);
+            }
+            else _submitted = 0;
+
+            allocateTokens(_submitted, tokenCount);
         }
         else {
-            Transfer(this, msg.sender, balances[msg.sender]);
+            balances[msg.sender] = add(balances[msg.sender], tokenCount);
+            Transfer(this, msg.sender, tokenCount);
         }
     }
 
@@ -277,10 +261,6 @@ contract COE {
         return scheduleTokens[tierLevel];
     }
 
-    function currentTier() public constant returns (uint256) {
-        return tierLevel;
-    }
-
     function balanceInSpecificTier(uint256 _tier) public constant returns (uint256) {
         return scheduleTokens[_tier];
     }
@@ -331,7 +311,6 @@ contract COE {
 
     function safeWithdrawal(address _receiver, uint256 _value) public {
         require(msg.sender == owner);
-        // check balance before transferring
         withdrawDevFees();
         require(_value <= this.balance);
         _receiver.transfer(_value);
@@ -344,7 +323,7 @@ contract COE {
         fees = _newFee * 100;
     }
 
-    function handleTokensFromOtherContracts(address _contract, address _recipient, uint256 _tokens) {
+    function handleTokensFromOtherContracts(address _contract, address _recipient, uint256 _tokens) public {
         require(msg.sender == owner);
         Target t;
         t = Target(_contract);
@@ -383,32 +362,33 @@ contract COE {
         scheduleRates[_level] = _rate;
     }
 
-    // not really needed as we fix the max tiers on contract creation but just for completeness' sake
+    // not really needed as we fix the max tiers on contract creation but just for completeness' sake we'll call this
+    // when all tiers have been added to the contract (not possible to deploy with all of them)
     function closeTierAddition() public {
         require(msg.sender == owner);
         addTiers = false;
     }
 
 
-    function mul(uint a, uint b) internal pure returns (uint) {
+    function mul(uint256 a, uint256 b) internal pure returns (uint) {
         uint c = a * b;
         require(a == 0 || c / a == b);
         return c;
     }
 
-    function div(uint a, uint b) internal pure returns (uint) {
+    function div(uint256 a, uint256 b) internal pure returns (uint) {
         // assert(b > 0); // Solidity automatically throws when dividing by 0
         uint c = a / b;
         // assert(a == b * c + a % b); // There is no case in which this doesn't hold
         return c;
     }
 
-    function sub(uint a, uint b) internal pure returns (uint) {
+    function sub(uint256 a, uint256 b) internal pure returns (uint) {
         require(b <= a);
         return a - b;
     }
 
-    function add(uint a, uint b) internal pure returns (uint) {
+    function add(uint256 a, uint256 b) internal pure returns (uint) {
         uint c = a + b;
         require(c >= a);
         return c;
