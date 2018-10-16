@@ -1,234 +1,140 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Coin at 0x88b36B3cE66E0855e9862FBe418675F30729D706
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COIN at 0x4520d37fefd6aacbea789ddb721ba07f4b289af6
 */
-pragma solidity ^0.4.15;
-/* @file
- * @title Coin
- * @version 1.2.0
-*/
-contract Coin {
-  string public constant symbol = "BTRC";
-  string public constant name = "BiTUBER";
-  uint8 public constant decimals = 18;
-  uint256 public _totalSupply = 0;
-  uint256 public price = 100;
-  bool private workingState = false;
-  bool private transferAllowed = false;
-  bool private generationState = true;
-  address public owner;
-  address private cur_coin;
-  mapping (address => uint256) balances;
-  mapping (address => mapping (address => uint256)) allowed;
-  mapping (address => uint256) private etherClients;
-  event FundsGot(address indexed _sender, uint256 _value);
-  event Transfer(address indexed _from, address indexed _to, uint256 _value);
-  event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-  event TokenGenerationEnabled();
-  event TokenGenerationDisabled();
-  event ContractEnabled();
-  event ContractDisabled();
-  event TransferEnabled();
-  event TransferDisabled();
-  event CurrentCoin(address coin);
-  event Refund(address client, uint256 amount, uint256 tokens);
-  event TokensSent(address client, uint256 amount);
-  event PaymentGot(bool result);
-  modifier onlyOwner {
-    require(msg.sender == owner);
-    _;
-  }
-  modifier ownerAndCoin {
-    require((msg.sender == owner)||(msg.sender == cur_coin));
-    _;
-  }
-  modifier workingFlag {
-    require(workingState == true);
-    _;
-  }
-  modifier transferFlag {
-    require(transferAllowed == true);
-    _;
-  }
-
-  function Coin() public payable {
-    owner = msg.sender;
-    enableContract();
-  }
-  function refund(address _client, uint256 _amount, uint256 _tokens) public workingFlag ownerAndCoin {
-    balances[_client] -= _tokens;
-    balances[address(this)] += _tokens;
-    _client.transfer(_amount);
-    Refund(_client, _amount, _tokens);
-  }
-  function kill() public onlyOwner {
-    require(workingState == false);
-    selfdestruct(owner);
-  }
-  function setCurrentCoin(address current) public onlyOwner workingFlag {
-    cur_coin = current;
-    CurrentCoin(cur_coin);
-  }
-
-  //work controller functions
-  function enableContract() public onlyOwner {
-    workingState = true;
-    ContractEnabled();
-  }
-  function disableContract() public onlyOwner {
-    workingState = false;
-    ContractDisabled();
-  }
-  function contractState() public view returns (string state) {
-    if (workingState) {
-      state = "Working";
+pragma solidity ^0.4.16;
+contract SafeMath {
+    function safeMul(uint a, uint b) internal returns (uint) {
+        uint c = a * b;
+        safeassert(a == 0 || c / a == b);
+        return c;
     }
-    else {
-      state = "Stopped";
+    
+    function safeSub(uint a, uint b) internal returns (uint) {
+        safeassert(b <= a);
+        return a - b;
     }
-  }
-  function enableGeneration() public onlyOwner {
-    generationState = true;
-    TokenGenerationEnabled();
-  }
-  function disableGeneration() public onlyOwner {
-    generationState = false;
-    TokenGenerationDisabled();
-  }
-  function tokenGenerationState() public view returns (string state) {
-    if (generationState) {
-      state = "Working";
+    
+    function safeAdd(uint a, uint b) internal returns (uint) {
+        uint c = a + b;
+        safeassert(c>=a && c>=b);
+        return c;
     }
-    else {
-      state = "Stopped";
+    
+    function safeassert(bool assertion) internal {
+        require(assertion);
     }
-  }
-  //transfer controller functions
-  function enableTransfer() public onlyOwner {
-    transferAllowed = true;
-    TransferEnabled();
-  }
-  function disableTransfer() public onlyOwner {
-    transferAllowed = false;
-    TransferDisabled();
-  }
-  function transferState() public view returns (string state) {
-    if (transferAllowed) {
-      state = "Working";
+}
+contract COIN is SafeMath {
+    string public symbol;
+    string public name;
+    uint256 public decimals;
+    uint preicoEnd = 1517356799; // Pre ICO Expiry 30 Jan 2018 23:59:59
+    
+    uint256 rate;
+    uint256 public tokenSold;
+    uint256 _totalSupply;
+    address public owner;
+    
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    
+    mapping(address => uint256) balances;
+    mapping(address => mapping (address => uint256)) allowed;
+    
+    /**
+    * @dev Fix for the ERC20 short address attack.
+    */
+    modifier onlyPayloadSize(uint size) {
+        require(msg.data.length >= size + 4) ;
+        _;
     }
-    else {
-      state = "Stopped";
+    
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
     }
-  }
-  //token controller functions
-  function generateTokens(address _client, uint256 _amount) public ownerAndCoin workingFlag {
-    if (_client == address(this))
-    {
-      balances[address(this)] += _amount;
-		  _totalSupply += _amount;
+      
+    function transferOwnership(address __newOwner) public onlyOwner {
+        require(__newOwner != 0x0);
+        owner = __newOwner;
     }
-    else
-    {
-      if (balances[address(this)] >= _amount)
-      {
-        transferFrom(address(this), _client, _amount);
-      }
-      else
-      {
-        uint256 de = _amount - balances[address(this)];
-        transferFrom(address(this), _client, balances[address(this)]);
-        _totalSupply += de;
-        balances[_client] += de;
-      }
+    
+    function totalSupply() constant returns (uint256) {
+        return _totalSupply;
     }
-    TokensSent(_client, _amount);
-  }
-  function setPrice(uint256 _price) public onlyOwner {
-    price = _price;
-  }
-  function getPrice() public view returns (uint256 _price) {
-    _price = price;
-  }
-  //send ether function (working)
-  function () public workingFlag payable {
-    bool ret = false;
-    if (generationState) {
-       ret = cur_coin.call(bytes4(keccak256("pay(address,uint256,uint256)")), msg.sender, msg.value, price);
+ 
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
     }
-    PaymentGot(ret);
-  }
-  function totalSupply() public constant workingFlag returns (uint256 totalsupply) {
-    totalsupply = _totalSupply;
-  }
-  //ERC20 Interface
-  function balanceOf(address _owner) public constant workingFlag returns (uint256 balance) {
-    return balances[_owner];
-  }
-  function transfer(address _to, uint256 _value) public workingFlag returns (bool success) {
-    if (balances[msg.sender] >= _value
-      && _value > 0
-      && balances[_to] + _value > balances[_to])
-      {
-        if ((msg.sender == address(this))||(_to == address(this))) {
-          balances[msg.sender] -= _value;
-          balances[_to] += _value;
-          Transfer(msg.sender, _to, _value);
-          return true;
-        }
-        else {
-          if (transferAllowed == true) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
+    
+    function COIN(
+        string _name,
+        uint256 _supply,
+        uint256 _rate,
+        string _symbol,
+        uint256 _decimals
+    ) {
+        tokenSold = safeMul(2000000, (10 ** _decimals));
+        _totalSupply = safeMul(_supply, safeMul(1000000, (10 ** _decimals)));
+        name = _name;
+        symbol = _symbol;
+        rate = _rate;
+        decimals = _decimals;
+        owner = msg.sender;
+        balances[msg.sender] = tokenSold;
+        Transfer(address(this), msg.sender, tokenSold);
+    }
+    
+    function () payable {
+        require(preicoEnd > now);
+        uint256 token_amount = safeMul(msg.value, rate);
+        require(safeAdd(tokenSold, token_amount) <= _totalSupply);
+        
+        tokenSold = safeAdd(tokenSold, token_amount);
+        balances[msg.sender] = safeAdd(balances[msg.sender], token_amount);
+        owner.transfer(msg.value);
+        Transfer(address(this), msg.sender, token_amount);
+    }
+ 
+    function transfer(address _to, uint256 _amount) onlyPayloadSize(2 * 32) public returns (bool success) {
+        if (balances[msg.sender] >= _amount
+            && _amount > 0
+            && safeAdd(balances[_to], _amount) > balances[_to]) {
+            balances[msg.sender] = safeSub(balances[msg.sender], _amount);
+            balances[_to] = safeAdd(balances[_to], _amount);
+            Transfer(msg.sender, _to, _amount);
             return true;
-          }
-          else {
+        } else {
             return false;
-          }
         }
-      }
-      else {
-        return false;
-      }
-  }
-  function transferFrom(address _from, address _to, uint256 _value) public workingFlag returns (bool success) {
-    if ((msg.sender == cur_coin)||(msg.sender == owner)) {
-      allowed[_from][_to] = _value;
     }
-    if (balances[_from] >= _value
-      && allowed[_from][_to] >= _value
-      && _value > 0
-      && balances[_to] + _value > balances[_to])
-      {
-        if ((_from == address(this))||(_to == address(this))) {
-          balances[_from] -= _value;
-          allowed[_from][_to] -= _value;
-          balances[_to] += _value;
-          Transfer(_from, _to, _value);
-          return true;
-        }
-        else {
-          if (transferAllowed == true) {
-            balances[_from] -= _value;
-            allowed[_from][_to] -= _value;
-            balances[_to] += _value;
-            Transfer(_from, _to, _value);
+    
+    function transferFrom(
+        address _from,
+        address _to,
+        uint256 _amount
+    ) onlyPayloadSize(2 * 32) public returns (bool success) {
+        if (balances[_from] >= _amount
+        && allowed[_from][msg.sender] >= _amount
+        && _amount > 0
+        && safeAdd(balances[_to], _amount) > balances[_to]) {
+            balances[_from] = safeSub(balances[_from], _amount);
+            allowed[_from][msg.sender] = safeSub(allowed[_from][msg.sender], _amount);
+            balances[_to] = safeAdd(balances[_to], _amount);
+            Transfer(_from, _to, _amount);
             return true;
-          }
-          else {
+        } else {
             return false;
-          }
         }
-      }
-      else {
-        return false;
-      }
-  }
-  function approve(address _spender, uint256 _value) public returns (bool success) {
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
+    }
+ 
+    function approve(address _spender, uint256 _amount) public returns (bool success) {
+        allowed[msg.sender][_spender] = _amount;
+        Approval(msg.sender, _spender, _amount);
+        return true;
+    }
+ 
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+        return allowed[_owner][_spender];
+    }
 }
