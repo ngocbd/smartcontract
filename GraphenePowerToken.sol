@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GraphenePowerToken at 0x30795a541aea7f76ceccae7dc5146682f6b04cd7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GraphenePowerToken at 0xF8DFaC6CAe56736FD2a05e45108490C6Cb40147D
 */
 pragma solidity ^0.4.18;
 
@@ -35,11 +35,27 @@ contract owned {
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
+//*** Utils ***//
+contract Utils {
+    
+	// validates an address - currently only checks that it isn't null
+	modifier validAddress(address _address) {
+		require(_address != 0x0);
+		_;
+	}
+
+	// verifies that the address is different than this contract address
+	modifier notThis(address _address) {
+		require(_address != address(this));
+		_;
+	}
+}
+
 //*** GraphenePowerToken ***//
-contract GraphenePowerToken is owned{
+contract GraphenePowerToken is owned,Utils{
     
     //************** Token ************//
-	string public standard = 'Token 1';
+	string public standard = 'Token 0.1';
 
 	string public name = 'Graphene Power';
 
@@ -47,7 +63,7 @@ contract GraphenePowerToken is owned{
 
 	uint8 public decimals = 18;
 
-	uint256 public totalSupply =0;
+	uint256 _totalSupply =0;
 	
 	//*** Pre-sale ***//
     uint preSaleStart=1513771200;
@@ -55,13 +71,13 @@ contract GraphenePowerToken is owned{
     uint256 preSaleTotalTokens=30000000;
     uint256 preSaleTokenCost=6000;
     address preSaleAddress;
-    bool public enablePreSale=false;
+    bool enablePreSale=false;
     
     //*** ICO ***//
     uint icoStart;
     uint256 icoSaleTotalTokens=400000000;
     address icoAddress;
-    bool public enableIco=false;
+    bool enableIco=false;
     
     //*** Advisers,Consultants ***//
     uint256 advisersConsultantTokens=15000000;
@@ -78,11 +94,14 @@ contract GraphenePowerToken is owned{
     //*** Walet ***//
     address public wallet;
     
+    //*** Mint ***//
+    bool enableMintTokens=true;
+    
     //*** TranferCoin ***//
     bool public transfersEnabled = false;
     
      //*** Balance ***//
-    mapping (address => uint256) public balanceOf;
+    mapping (address => uint256) balanceOf;
     
     //*** Alowed ***//
     mapping (address => mapping (address => uint256)) allowed;
@@ -108,15 +127,38 @@ contract GraphenePowerToken is owned{
         advisersConsultantsAddress=0xe8B6dA1B801b7F57e3061C1c53a011b31C9315C7;
         bountyAddress=0xD53E82Aea770feED8e57433D3D61674caEC1D1Be;
         founderAddress=0xDA0D3Dad39165EA2d7386f18F96664Ee2e9FD8db;
-        totalSupply =500000000;
-        balanceOf[msg.sender]=totalSupply;
+        _totalSupply =500000000;
+        balanceOf[this]=_totalSupply;
+	}
+	
+	 //*** Check Transfer ***//
+    modifier transfersAllowed {
+		assert(transfersEnabled);
+		_;
+	}
+	
+	//*** ValidAddress ***//
+	modifier validAddress(address _address) {
+		require(_address != 0x0);
+		_;
 	}
 
-	//*** Payable ***//
+	//*** Not This ***//
+	modifier notThis(address _address) {
+		require(_address != address(this));
+		_;
+	}
+	
+	   //*** Payable ***//
     function() payable public {
         require(msg.value>0);
-        require(msg.sender != 0x0);
-        
+        buyTokens(msg.sender);
+	}
+	
+	//*** Buy Tokens ***//
+	function buyTokens(address beneficiary) payable public {
+        require(beneficiary != 0x0);
+
         uint256 weiAmount;
         uint256 tokens;
         wallet=owner;
@@ -148,67 +190,58 @@ contract GraphenePowerToken is owned{
             }
         }
         else{
-            weiAmount=4000;
+            weiAmount=6000;
         }
         
+        forwardFunds();
         tokens=msg.value*weiAmount/1000000000000000000;
-        Transfer(this, msg.sender, tokens);
-        balanceOf[msg.sender]+=tokens;
-        totalSupply=(totalSupply-tokens);
+        mintToken(beneficiary, tokens);
+        Transfer(this, beneficiary, tokens);
+     }
+    
+    //*** ForwardFunds ***//
+    function forwardFunds() internal {
         wallet.transfer(msg.value);
-        balanceOf[this]+=msg.value;
-	}
-	
-	/* Send coins */
-	function transfer(address _to, uint256 _value) public returns (bool success) {
-	    if(transfersEnabled){
-		    require(balanceOf[_to] >= _value);
-		    // Subtract from the sender
-		    balanceOf[msg.sender] = (balanceOf[msg.sender] -_value);
-	        balanceOf[_to] =(balanceOf[_to] + _value);
-		    Transfer(msg.sender, _to, _value);
-		    return true;
-	    }
-	    else{
-	        return false;
-	    }
-	
-	}
-
-	//*** Transfer From ***//
-	function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-	    if(transfersEnabled){
-	        // Check if the sender has enough
-		    require(balanceOf[_from] >= _value);
-		    // Check allowed
-		    require(_value <= allowed[_from][msg.sender]);
-
-		    // Subtract from the sender
-		    balanceOf[_from] = (balanceOf[_from] - _value);
-		    // Add the same to the recipient
-		    balanceOf[_to] = (balanceOf[_to] + _value);
-
-		    allowed[_from][msg.sender] = (allowed[_from][msg.sender] - _value);
-		    Transfer(_from, _to, _value);
-		    return true;
-	    }
-	    else{
-	        return false;
-	    }
-	}
-	
-	//*** Transfer OnlyOwner ***//
-	function transferOwner(address _to,uint256 _value) public onlyOwner returns(bool success){
-	    // Subtract from the sender
-	    totalSupply=(totalSupply-_value);
-		// Add the same to the recipient
-		balanceOf[_to] = (balanceOf[_to] + _value);
-		Transfer(this, _to, _value);
+    }
+    
+    //*** GetTokensForGraphenePower ***//
+	function getTokensForGraphenePower() onlyOwner public returns(bool result){
+	    require(enableMintTokens);
+	    mintToken(bountyAddress, bountyTokens);
+	    Transfer(this, bountyAddress, bountyTokens);
+	    mintToken(founderAddress, founderTokens);
+	    Transfer(this, founderAddress, founderTokens);
+	    mintToken(advisersConsultantsAddress, advisersConsultantTokens);
+        Transfer(this, advisersConsultantsAddress, advisersConsultantTokens);
+	    return true;
 	}
 	
 	//*** Allowance ***//
 	function allowance(address _owner, address _spender) constant public returns (uint256 remaining) {
 		return allowed[_owner][_spender];
+	}
+	
+	/* Send coins */
+	function transfer(address _to, uint256 _value) transfersAllowed public returns (bool success) {
+		require(balanceOf[_to] >= _value);
+		// Subtract from the sender
+		balanceOf[msg.sender] = (balanceOf[msg.sender] -_value);
+		balanceOf[_to] =(balanceOf[_to] + _value);
+		Transfer(msg.sender, _to, _value);
+		return true;
+	}
+	
+	//*** MintToken ***//
+	function mintToken(address target, uint256 mintedAmount) onlyOwner public returns(bool result) {
+	    if(enableMintTokens){
+	        balanceOf[target] += mintedAmount;
+		    _totalSupply =(_totalSupply-mintedAmount);
+		    Transfer(this, target, mintedAmount);
+		    return true;
+	    }
+	    else{
+	        return false;
+	    }
 	}
 	
 	//*** Approve ***//
@@ -218,52 +251,61 @@ contract GraphenePowerToken is owned{
 		return true;
 	}
 	
-	//*** Burn Owner***//
-	function burnOwner(uint256 _value) public onlyOwner returns (bool success) {
-		destroyOwner(msg.sender, _value);
+	//*** Transfer From ***//
+	function transferFrom(address _from, address _to, uint256 _value) transfersAllowed public returns (bool success) {
+	    require(transfersEnabled);
+		// Check if the sender has enough
+		require(balanceOf[_from] >= _value);
+		// Check allowed
+		require(_value <= allowed[_from][msg.sender]);
+
+		// Subtract from the sender
+		balanceOf[_from] = (balanceOf[_from] - _value);
+		// Add the same to the recipient
+		balanceOf[_to] = (balanceOf[_to] + _value);
+
+		allowed[_from][msg.sender] = (allowed[_from][msg.sender] - _value);
+		Transfer(_from, _to, _value);
+		return true;
+	}
+	
+	//*** Issue ***//
+	function issue(address _to, uint256 _amount) public onlyOwner validAddress(_to) notThis(_to) {
+		_totalSupply = (_totalSupply - _amount);
+		balanceOf[_to] = (balanceOf[_to] + _amount);
+		Issuance(_amount);
+		Transfer(this, _to, _amount);
+	}
+	
+	//*** Burn ***//
+	function burn(uint256 _value) public returns (bool success) {
+		destroy(msg.sender, _value);
 		Burn(msg.sender, _value);
 		return true;
 	}
 	
-	//*** Destroy Owner ***//
-	function destroyOwner(address _from, uint256 _amount) public onlyOwner{
-	    balanceOf[_from] =(balanceOf[_from] - _amount);
-		totalSupply = (totalSupply - _amount);
+	//*** Destroy ***//
+	function destroy(address _from, uint256 _amount) public {
+	    require(msg.sender == _from);
+	    require(balanceOf[_from] >= _amount);
+		balanceOf[_from] =(balanceOf[_from] - _amount);
+		_totalSupply = (_totalSupply - _amount);
 		Transfer(_from, this, _amount);
 		Destruction(_amount);
 	}
 	
-	//*** Kill Balance ***//
-	function killBalance(uint256 _value) onlyOwner public {
+	//Kill
+	function killBalance() onlyOwner public {
+		require(!enablePreSale && !enableIco);
 		if(this.balance > 0) {
-		    if(_value==1){
-		        preSaleAddress.transfer(this.balance);
-		        balanceOf[this]=0;
-		    }
-		    else if(_value==2){
-		        icoAddress.transfer(this.balance);
-		         balanceOf[this]=0;
-		    }
-		    else{
-		        owner.transfer(this.balance);
-		         balanceOf[this]=0;
-		    }
-		}
-		else{
-		    owner.transfer(this.balance);
-		     balanceOf[this]=0;
+			owner.transfer(this.balance);
 		}
 	}
 	
-	//*** Kill Tokens ***//
-	function killTokens() onlyOwner public{
-	    Transfer(this, bountyAddress, bountyTokens);
-	    Transfer(this, founderAddress, founderTokens);
-	    Transfer(this, advisersConsultantsAddress, advisersConsultantTokens);
-	    totalSupply=totalSupply-(bountyTokens+founderTokens+advisersConsultantTokens);
-	    bountyTokens=0;
-	    founderTokens=0;
-	    advisersConsultantTokens=0;
+	//Mint tokens
+	function enabledMintTokens(bool value) onlyOwner public returns(bool result) {
+		enableMintTokens = value;
+		return enableMintTokens;
 	}
 	
 	//*** Contract Balance ***//
@@ -271,23 +313,32 @@ contract GraphenePowerToken is owned{
 		return balanceOf[this];
 	}
 	
-	//*** Set ParamsTransfer ***//
-	function setParamsTransfer(bool _value) public onlyOwner{
-	    transfersEnabled=_value;
+	//Satart PreSale
+	function startPreSale() onlyOwner public returns(bool result){
+	    enablePreSale=true;
+	    return enablePreSale;
 	}
 	
-	//*** Set ParamsICO ***//
-    function setParamsIco(bool _value) public onlyOwner returns(bool result){
-        enableIco=_value;
-    }
-    
-	//*** Set ParamsPreSale ***//
-    function setParamsPreSale(bool _value) public onlyOwner returns(bool result){
-        enablePreSale=_value;
-    }
+	//End PreSale
+	function endPreSale() onlyOwner public returns(bool result){
+	     enablePreSale=false;
+	    return enablePreSale;
+	}
 	
-	//*** Is ico ***//
-    function isIco() constant public returns (bool ico) {
+	//Start ICO
+	function startIco() onlyOwner public returns(bool result){
+	    enableIco=true;
+	    return enableIco;
+	}
+	
+	//End ICO
+	function endIco() onlyOwner public returns(bool result){
+	     enableIco=false;
+	     return enableIco;
+	}
+	
+	//*** Is ico closed ***//
+    function isIco() constant public returns (bool closed) {
 		 bool result=((icoStart+(35*24*60*60)) >= now);
 		 if(enableIco){
 		     return true;
@@ -297,8 +348,8 @@ contract GraphenePowerToken is owned{
 		 }
 	}
     
-    //*** Is PreSale ***//
-    function isPreSale() constant public returns (bool preSale) {
+    //*** Is preSale closed ***//
+    function isPreSale() constant public returns (bool closed) {
 		bool result=(preSaleEnd >= now);
 		if(enablePreSale){
 		    return true;
