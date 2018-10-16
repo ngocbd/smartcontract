@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeikhosBounty at 0xd7c6d542f3dcdceda845112b8fd567b8f8655805
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeikhosBounty at 0xfd645ad26d3cca2a65ef36877b55b84fda7b9012
 */
 contract TeikhosBounty {
 
@@ -40,7 +40,4 @@ contract TeikhosBounty {
         if(ecrecover(msgHash, 27, r, s) == signer) suicide(msg.sender);
         if(ecrecover(msgHash, 28, r, s) == signer) suicide(msg.sender);
     }
-    
-    function() payable {}
-    
 }
