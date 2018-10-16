@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GMPToken at 0x18B64C3537cd861EdBd54f62b83B99b942A66dF3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GMPToken at 0x416dd1d4fb22f6ae73651d5c2c5475087df4ea26
 */
 pragma solidity ^0.4.15;
 
@@ -8,25 +8,25 @@ pragma solidity ^0.4.15;
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal returns (uint256) {
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal returns (uint256) {
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal returns (uint256) {
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
@@ -36,29 +36,29 @@ library SafeMath {
 contract Ownable {
 
   address public owner;
-  function Ownable() { owner = msg.sender; }
+  function Ownable() public { owner = msg.sender; }
 
   modifier onlyOwner {
     require(msg.sender == owner);
     _;
   }
 
-  function transferOwnership(address newOwner) onlyOwner {owner = newOwner;}
+  function transferOwnership(address newOwner) public onlyOwner {owner = newOwner;}
 }
 
 contract ERC20Interface {
 
-  function totalSupply() constant returns (uint256);
+  function totalSupply() public constant returns (uint256);
 
-  function balanceOf(address _owner) constant returns (uint256);
+  function balanceOf(address _owner) public constant returns (uint256);
 
-  function transfer(address _to, uint256 _value) returns (bool);
+  function transfer(address _to, uint256 _value) public returns (bool);
 
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool);
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool);
 
-  function approve(address _spender, uint256 _value) returns (bool);
+  function approve(address _spender, uint256 _value) public returns (bool);
 
-  function allowance(address _owner, address _spender) constant returns (uint256);
+  function allowance(address _owner, address _spender) public constant returns (uint256);
 
   event Transfer(address indexed _from, address indexed _to, uint256 _value);
 
@@ -86,7 +86,7 @@ contract GMPToken is Ownable, ERC20Interface {
   event Mint(address indexed to, uint256 amount);
 
   /* Constuctor: Initializes contract with initial supply tokens to the creator of the contract */
-  function GMPToken() {
+  function GMPToken() public {
       balances[msg.sender] = initialSupply;              // Give the creator all initial tokens
       totalSupply = initialSupply;                        // Update total supply
   }
@@ -94,50 +94,50 @@ contract GMPToken is Ownable, ERC20Interface {
 
   /* Implementation of ERC20Interface */
 
-  function totalSupply() constant returns (uint256) { return totalSupply; }
+  function totalSupply() public constant returns (uint256) { return totalSupply; }
 
-  function balanceOf(address _owner) constant returns (uint256) { return balances[_owner]; }
+  function balanceOf(address _owner) public constant returns (uint256) { return balances[_owner]; }
 
   /* Internal transfer, only can be called by this contract */
   function _transfer(address _from, address _to, uint _amount) internal {
       require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
-      require (balances[_from] > _amount);                // Check if the sender has enough
+      require (balances[_from] >= _amount);                // Check if the sender has enough
       balances[_from] = balances[_from].sub(_amount);
       balances[_to] = balances[_to].add(_amount);
       Transfer(_from, _to, _amount);
 
   }
 
-  function transfer(address _to, uint256 _amount) returns (bool) {
+  function transfer(address _to, uint256 _amount) public returns (bool) {
     _transfer(msg.sender, _to, _amount);
     return true;
   }
 
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
-    require (_value < allowed[_from][msg.sender]);     // Check allowance
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require (_value <= allowed[_from][msg.sender]);     // Check allowance
     allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
     _transfer(_from, _to, _value);
     return true;
   }
 
-  function approve(address _spender, uint256 _amount) returns (bool) {
+  function approve(address _spender, uint256 _amount) public returns (bool) {
     allowed[msg.sender][_spender] = _amount;
     Approval(msg.sender, _spender, _amount);
     return true;
   }
 
-  function allowance(address _owner, address _spender) constant returns (uint256) {
+  function allowance(address _owner, address _spender) public constant returns (uint256) {
     return allowed[_owner][_spender];
   }
 
-  function mintToken(uint256 _mintedAmount) onlyOwner {
+  function mintToken(uint256 _mintedAmount) public onlyOwner {
     balances[Ownable.owner] = balances[Ownable.owner].add(_mintedAmount);
     totalSupply = totalSupply.add(_mintedAmount);
     Mint(Ownable.owner, _mintedAmount);
   }
 
   //For refund only
-  function burnToken(address _burner, uint256 _value) onlyOwner {
+  function burnToken(address _burner, uint256 _value) public onlyOwner {
     require(_value > 0);
     require(_value <= balances[_burner]);
 
@@ -181,7 +181,7 @@ contract Crowdsale is Ownable {
 
   /* -----------   A D M I N        F U N C T I O N S    ----------- */
 
-  function Crowdsale(uint256 _initialRate, address _targetWallet) {
+  function Crowdsale(uint256 _initialRate, address _targetWallet) public {
 
     //Checks
     require(_initialRate > 0);
@@ -195,31 +195,31 @@ contract Crowdsale is Ownable {
 
   }
 
-  function close() onlyOwner {
+  function close() public onlyOwner {
     selfdestruct(owner);
   }
 
   //Transfer token to
-  function transferToAddress(address _targetWallet, uint256 _tokenAmount) onlyOwner {
+  function transferToAddress(address _targetWallet, uint256 _tokenAmount) public onlyOwner {
     token.transfer(_targetWallet, _tokenAmount * 1 ether);
   }
 
 
   //Setters
-  function enableSale() onlyOwner {
+  function enableSale() public onlyOwner {
     saleIsActive = true;
   }
 
-  function disableSale() onlyOwner {
+  function disableSale() public onlyOwner {
     saleIsActive = false;
   }
 
-  function setRate(uint256 _newRate)  onlyOwner {
+  function setRate(uint256 _newRate) public onlyOwner {
     rate = _newRate;
   }
 
   //Mint new tokens
-  function mintToken(uint256 _mintedAmount) onlyOwner {
+  function mintToken(uint256 _mintedAmount) public onlyOwner {
     token.mintToken(_mintedAmount);
   }
 
@@ -227,11 +227,11 @@ contract Crowdsale is Ownable {
 
   /* -----------   P U B L I C      C A L L B A C K       F U N C T I O N     ----------- */
 
-  function () payable {
+  function () public payable {
 
     require(msg.sender != 0x0);
     require(saleIsActive);
-    require(msg.value > 0.01 * 1 ether);
+    require(msg.value >= 0.01 * 1 ether);
 
     uint256 weiAmount = msg.value;
 
