@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract antonCoin at 0x93e8dd6ddfbd7d08daafba15bafcb6f0ef3080e8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract antonCoin at 0xa8b75fb9c1a157298281040e05c468fd3da60913
 */
 pragma solidity ^0.4.8;
 
 contract antonCoin {
     
-    uint public decimals = 18;
+    uint public decimals = 0;
     uint public totalSupply = 1000000;
     string public name = 'AntonCoin';
     string public symbol = 'TONKA';
@@ -22,6 +22,7 @@ contract antonCoin {
         if (balances[msg.sender] >= _value && _value > 0) {
             balances[msg.sender] -= _value;
             balances[_to] += _value;
+            Transfer(msg.sender, _to, _value);
             return true;
         } else { return false; }
     }
@@ -33,6 +34,7 @@ contract antonCoin {
             balances[_to] += _value;
             balances[_from] -= _value;
             allowed[_from][msg.sender] -= _value;
+            Transfer(_from, _to, _value);
             return true;
         } else { return false; }
     }
@@ -43,7 +45,6 @@ contract antonCoin {
 
     function approve(address _spender, uint256 _value) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
-
         return true;
     }
 
@@ -51,6 +52,7 @@ contract antonCoin {
         return allowed[_owner][_spender];
     }
 
+    event Transfer(address indexed from, address indexed to, uint256 value);
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
 }
