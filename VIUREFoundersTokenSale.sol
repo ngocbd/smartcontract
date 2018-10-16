@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VIUREFoundersTokenSale at 0xab7c49a95ba2f8c1ad95d18c8541cba650870618
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VIUREFoundersTokenSale at 0x2e1cff135ca6bbc0012a01fa246a0a39aeb10d2d
 */
 // VIURE Founders Token Sale Smart Contract for VR Arcades
 
@@ -12,7 +12,7 @@ contract VIUREFoundersTokenSale {
   uint public transferred_total = 0;
 
   // Minimum and Maximum Goals for Token Sale
-  uint public constant min_goal_amount = 3000 ether;
+  uint public constant min_goal_amount = 4000 ether;
   uint public constant max_goal_amount = 9000 ether;
 
   // loftVR Offline Project Wallet
