@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlatPricingExt at 0x85e9d590b629107a7a07ffdfd70ffa1afb29b4b5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlatPricingExt at 0x74355BC542A2b6ceBc75F5bC2ad00E7f70b64A2b
 */
-// Created using Token Wizard https://github.com/poanetwork/token-wizard by POA Network 
+// MeNet.IO 
 pragma solidity ^0.4.11;
 
 
