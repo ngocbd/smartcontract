@@ -1,10 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirdropToken at 0xf7761a110b4397ae743ed4185ef070ae02c4148a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirdropToken at 0x430d220d752beb34be73ccb303b5ae36686b8598
 */
-//Your current Solidity version is 0.4.19+commit.c4cbbb05.Emscripten.clang
-// original donot edit.
-
-
 pragma solidity ^0.4.4;
 
 contract Token {
@@ -125,7 +121,7 @@ contract AirdropToken is StandardToken {
         totalSupply = 200000000000000000;                        // Update total supply (100000 for example)
         name = "Airdrop";                                   // Set the name for display purposes
         decimals = 6;                            // Amount of decimals for display purposes
-        symbol = "AIR";                               // Set the symbol for display purposes
+        symbol = "XAD";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
