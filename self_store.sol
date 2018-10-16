@@ -1,13 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract self_store at 0x0318179601a70085aeb488f178b081295b65ecc9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract self_store at 0xfd39bd49ab3df4eda75a23807dab186d4902f924
 */
+/* A contract to store only messages approved by owner */
 contract self_store {
 
     address owner;
 
-    uint public contentCount = 0;
+    uint16 public contentCount = 0;
     
-    event content(string datainfo, uint indexed version);
+    event content(string datainfo);
     modifier onlyowner { if (msg.sender == owner) _ }
     
     function self_store() public { owner = msg.sender; }
@@ -19,8 +20,8 @@ contract self_store {
         owner.send(this.balance);
     }
 
-    function add(string datainfo, uint version) onlyowner {
+    function add(string datainfo) onlyowner {
         contentCount++;
-        content(datainfo, version);
+        content(datainfo);
     }
 }
