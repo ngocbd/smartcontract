@@ -1,7 +1,117 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Marketplace at 0xcd2de7fd530269feaf6075c8bca940526fd7c4de
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Marketplace at 0xb3bca6f5052c7e24726b44da7403b56a8a1b98f8
 */
 pragma solidity 0.4.21;
+
+// File: zeppelin-solidity/contracts/ownership/Ownable.sol
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+// File: zeppelin-solidity/contracts/lifecycle/Destructible.sol
+
+/**
+ * @title Destructible
+ * @dev Base contract that can be destroyed by owner. All funds in contract will be sent to the owner.
+ */
+contract Destructible is Ownable {
+
+  function Destructible() public payable { }
+
+  /**
+   * @dev Transfers the current balance to the owner and terminates the contract.
+   */
+  function destroy() onlyOwner public {
+    selfdestruct(owner);
+  }
+
+  function destroyAndSend(address _recipient) onlyOwner public {
+    selfdestruct(_recipient);
+  }
+}
+
+// File: zeppelin-solidity/contracts/lifecycle/Pausable.sol
+
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    Pause();
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    Unpause();
+  }
+}
 
 // File: zeppelin-solidity/contracts/math/SafeMath.sol
 
@@ -51,48 +161,6 @@ library SafeMath {
   }
 }
 
-// File: zeppelin-solidity/contracts/ownership/Ownable.sol
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
 // File: contracts/marketplace/Marketplace.sol
 
 /**
@@ -111,7 +179,7 @@ contract ERC721Interface {
     function isAuthorized(address operator, uint256 assetId) public view returns (bool);
 }
 
-contract Marketplace is Ownable {
+contract Marketplace is Ownable, Pausable, Destructible {
     using SafeMath for uint256;
 
     ERC20Interface public acceptedToken;
@@ -197,7 +265,7 @@ contract Marketplace is Ownable {
      * @param priceInWei - Price in Wei for the supported coin.
      * @param expiresAt - Duration of the auction (in hours)
      */
-    function createOrder(uint256 assetId, uint256 priceInWei, uint256 expiresAt) public {
+    function createOrder(uint256 assetId, uint256 priceInWei, uint256 expiresAt) public whenNotPaused {
         address assetOwner = nonFungibleRegistry.ownerOf(assetId);
         require(msg.sender == assetOwner);
         require(nonFungibleRegistry.isAuthorized(address(this), assetId));
@@ -242,7 +310,7 @@ contract Marketplace is Ownable {
      *  can only be canceled by seller or the contract owner.
      * @param assetId - ID of the published NFT
      */
-    function cancelOrder(uint256 assetId) public {
+    function cancelOrder(uint256 assetId) public whenNotPaused {
         require(auctionByAssetId[assetId].seller == msg.sender || msg.sender == owner);
 
         bytes32 auctionId = auctionByAssetId[assetId].id;
@@ -256,7 +324,7 @@ contract Marketplace is Ownable {
      * @dev Executes the sale for a published NTF
      * @param assetId - ID of the published NFT
      */
-    function executeOrder(uint256 assetId, uint256 price) public {
+    function executeOrder(uint256 assetId, uint256 price) public whenNotPaused {
         address seller = auctionByAssetId[assetId].seller;
 
         require(seller != address(0));
