@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Goldpiecescash at 0x67007879f4caefd6405f5c25676D20f2D40ef7b6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GoldPiecesCash at 0xFdf408FA7D49D5e5dC67B85FA11f43B6Db78b2Aa
 */
 pragma solidity ^ 0.4 .9;
 library SafeMath {
@@ -25,7 +25,7 @@ library SafeMath {
         return c;
     }
 }
-contract Goldpiecescash {
+contract GoldPiecesCash {
     using SafeMath
     for uint256;
     mapping(address => mapping(address => uint256)) allowed;
@@ -37,7 +37,7 @@ contract Goldpiecescash {
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed _owner, address indexed spender, uint256 value);
 
-    function Goldpiecescash() {
+    function GoldPiecesCash() {
         totalSupply = 40000000;
         symbol = 'G';
         owner = 0x11606e7d782775b7dd5500c0828f7b3b8fc44984;
