@@ -1,42 +1,57 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BirthdayGift at 0xdca091bafaf1608268f283f13e78751d78f754dc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BirthDayGift at 0x8D4EB49f0eD7EE6d6E00fc76eA3E9C3898bf219D
 */
-contract BirthdayGift {
+pragma solidity ^0.4.19;
+
+contract BirthDayGift
+{
+    address sender;
     
-    address public owner = 0x770F34Fdd214b36f2494ed57bb827B4c319E5BaA;
-    address public recipient = 0x6A93e96E999326eB02f759EaF5d4e71d0a8653e8;
+    address reciver;
     
-    // 5 Apr 2023 00:00:00 PST | 5 Apr 2023 08:00:00 GMT
-    uint256 public unlockTime = 1680681600; 
+    bool closed = false;
     
-    function BirthdayGift () public {
-    }
-    
-    function DaysTillUnlock () public constant returns (uint256 _days) {
-        if (now > unlockTime) {
-            return 0;
+    uint unlockTime;
+ 
+    function PutGift(address _reciver)
+    public
+    payable
+    {
+        if( (!closed&&(msg.value > 1 ether)) || sender==0x00 )
+        {
+            sender = msg.sender;
+            reciver = _reciver;
+            unlockTime = now;
         }
-        return (unlockTime - now) / 60 / 60 / 24;
     }
     
-    function SetOwner (address _newOwner) public {
-        require (msg.sender == owner);
-        owner = _newOwner; 
-    }  
-    
-    function SetUnlockTime (uint256 _time) public {
-        require (msg.sender == owner);
-        unlockTime = _time;
+    function SetGiftTime(uint _unixTime)
+    public
+    {
+        if(msg.sender==sender)
+        {
+            unlockTime = _unixTime;
+        }
     }
     
-    function SetRecipient (address _recipient) public {
-        require (msg.sender == owner);
-        recipient = _recipient;
+    function GetGift()
+    public
+    payable
+    {
+        if(reciver==msg.sender&&now>unlockTime)
+        {
+            msg.sender.transfer(this.balance);
+        }
     }
     
-    function OpenGift () public {
-        require (msg.sender == recipient);
-        require (now >= unlockTime);
-        selfdestruct (recipient);
+    function CloseGift()
+    public
+    {
+        if(sender == msg.sender && reciver != 0x0 )
+        {
+           closed=true;
+        }
     }
+    
+    function() public payable{}
 }
