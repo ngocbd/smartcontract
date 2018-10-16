@@ -1,92 +1,132 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreSale at 0xea68d87ae3a55ba91c1a8e6488627a175be81588
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0xef0578df7bd762b19c3c7d3b6aeebb7d8ba6cdf8
 */
-pragma solidity 0.4.17;
+pragma solidity ^0.4.18;
 
-// import "./FunderSmartToken.sol";
+// Bravo Coin (BRV)
+// Presale Contract
+// 1 ETH = 15000 BRV
 
-contract PreSale {
+// -----------------
 
-  address private deployer;
+// Ownable
 
-  // for performing allowed transfer
-  address private FunderSmartTokenAddress = 0x0;
-  address private FundersTokenCentral = 0x0;
+contract Ownable {
+  address public owner;
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-  // 1 eth = 150 fst
-  uint256 public oneEtherIsHowMuchFST = 150;
+  function Ownable() public {
+    owner = msg.sender;}
 
-  // uint256 public startTime = 0;
-  uint256 public startTime = 1506052800; // 2017/09/22
-  uint256 public endTime   = 1508731200; // 2017/10/22
+  modifier onlyOwner() {
+    require(msg.sender == owner); _; } }
 
-  uint256 public soldTokenValue = 0;
-  uint256 public preSaleHardCap = 330000000 * (10 ** 18) * 2 / 100; // presale 2% hard cap amount
+// Presale
 
-  event BuyEvent (address buyer, string email, uint256 etherValue, uint256 tokenValue);
+contract Presale is Ownable {
+  using SafeMath for uint256;
 
-  function PreSale () public {
-    deployer = msg.sender;
-  }
+  ERC20 public token;
+  address public wallet;
+  uint256 public rate;
+  uint256 public weiRaised;
 
-  // PreSale Contract ???? Funder Smart Token approve ?
-  function buyFunderSmartToken (string _email, string _code) payable public returns (bool) {
-    require(FunderSmartTokenAddress != 0x0); // ????? token contract ??
-    require(FundersTokenCentral != 0x0); // ????? fstk ????
-    require(msg.value >= 1 ether); // ?????? 1 ether ? token
-    require(now >= startTime && now <= endTime); // presale ????
-    require(soldTokenValue <= preSaleHardCap); // ?? presale ????? fst ???? 2%
+  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
 
-    uint256 _tokenValue = msg.value * oneEtherIsHowMuchFST;
+  function Presale (uint256 _rate, address _wallet, ERC20 _token) public {
+    require(_rate > 0);
+    require(_wallet != address(0));
+    require(_token != address(0));
 
-    // 35%
-    if (keccak256(_code) == 0xde7683d6497212fbd59b6a6f902a01c91a09d9a070bba7506dcc0b309b358eed) {
-      _tokenValue = _tokenValue * 135 / 100;
-    }
+    rate = _rate;
+    wallet = _wallet;
+    token = _token; }
 
-    // 30%
-    if (keccak256(_code) == 0x65b236bfb931f493eb9e6f3db8d461f1f547f2f3a19e33a7aeb24c7e297c926a) {
-      _tokenValue = _tokenValue * 130 / 100;
-    }
+  function () external payable {
+    buyTokens(msg.sender);}
 
-    // 25%
-    if (keccak256(_code) == 0x274125681e11c33f71574f123a20cfd59ed25e64d634078679014fa3a872575c) {
-      _tokenValue = _tokenValue * 125 / 100;
-    }
 
-    // ? FST ? FundersTokenCentral ?? msg.sender
-    if (FunderSmartTokenAddress.call(bytes4(keccak256("transferFrom(address,address,uint256)")), FundersTokenCentral, msg.sender, _tokenValue) != true) {
-      revert();
-    }
+  function buyTokens(address _beneficiary) public payable {
+    uint256 weiAmount = msg.value;
+    _preValidatePurchase(_beneficiary, weiAmount);
+    uint256 tokens = _getTokenAmount(weiAmount);
+    weiRaised = weiRaised.add(weiAmount);
+    _processPurchase(_beneficiary, tokens);
+    TokenPurchase(msg.sender, _beneficiary, weiAmount, tokens);
+    _updatePurchasingState(_beneficiary, weiAmount);
+    _forwardFunds();
+    _postValidatePurchase(_beneficiary, weiAmount); }
 
-    BuyEvent(msg.sender, _email, msg.value, _tokenValue);
+  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal {
+    require(_beneficiary != address(0));
+    require(_weiAmount != 0); }
 
-    soldTokenValue = soldTokenValue + _tokenValue;
+  function _postValidatePurchase(address _beneficiary, uint256 _weiAmount) internal { }
 
-    return true;
-  }
+  function _deliverTokens(address _beneficiary, uint256 _tokenAmount) internal {
+    token.transfer(_beneficiary, _tokenAmount); }
 
-  // ???????
-  function transferOut (address _to, uint256 _etherValue) public returns (bool) {
-    require(msg.sender == deployer);
-    _to.transfer(_etherValue);
-    return true;
-  }
+  function _processPurchase(address _beneficiary, uint256 _tokenAmount) internal {
+    _deliverTokens(_beneficiary, _tokenAmount); }
 
-  // ?? FST Token Contract (FunderSmartTokenAddress)
-  function setFSTAddress (address _funderSmartTokenAddress) public returns (bool) {
-    require(msg.sender == deployer);
-    FunderSmartTokenAddress = _funderSmartTokenAddress;
-    return true;
-  }
+  function _updatePurchasingState(address _beneficiary, uint256 _weiAmount) internal { }
 
-  // ?? FSTK ?? (FundersTokenCentral)
-  function setFSTKCentral (address _fundersTokenCentral) public returns (bool) {
-    require(msg.sender == deployer);
-    FundersTokenCentral = _fundersTokenCentral;
-    return true;
-  }
+  function _getTokenAmount(uint256 _weiAmount) internal view returns (uint256) {
+    return _weiAmount.mul(rate); }
 
-  function () public {}
+  function _forwardFunds() internal {
+    wallet.transfer(msg.value); }
+   
+// Used to end the Presale
 
-}
+  function TokenDestructible() public payable { }
+  function destroy(address[] tokens) onlyOwner public {
+
+// Transfer tokens to owner
+
+    for (uint256 i = 0; i < tokens.length; i++) {
+      ERC20Basic token = ERC20Basic(tokens[i]);
+      uint256 balance = token.balanceOf(this);
+      token.transfer(owner, balance);} 
+    selfdestruct(owner); }}
+    
+  
+  
+// SafeMath    
+
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0; }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c; }
+    
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a / b;
+    return c; }
+    
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b; }
+    
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;}}
+    
+// ERC20Basic    
+    
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);}
+
+// ERC20
+
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);}
