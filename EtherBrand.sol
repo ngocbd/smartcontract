@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherBrand at 0x3ccd3f8531f1cc5d9075e8a5bb2e09f688644300
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherBrand at 0xd3a6967214a24de0a230c66afe0a47fb2ee1bd83
 */
 pragma solidity ^0.4.18;
 
@@ -51,7 +51,7 @@ contract EtherBrand is ERC721 {
   /*** STORAGE ***/
   mapping (address => uint256) private ownerCount;
   mapping (uint256 => TopOwner) private topOwner;
-  mapping (uint256 => address) private lastBuyer;
+  mapping (uint256 => address) public lastBuyer;
 
   address public ceoAddress;
   address public cooAddress;
@@ -86,6 +86,14 @@ contract EtherBrand is ERC721 {
     // failsave :3 require(_id <= 2); // 3 = 1 ETH, 4 = 2.5 ETH, 5 = 5 ETH
     extra[_id] = _newExtra;
   }
+  function setTop(uint256 _id, address _newExtra, uint256 _price) public onlyCXX {
+    require(_newExtra != address(0));
+    topOwner[_id] = TopOwner(_newExtra, _price);
+  }
+  function setLast(uint256 _id, address _newExtra) public onlyCXX {
+    require(_newExtra != address(0));
+    lastBuyer[_id] = _newExtra;
+  }
 
   /*** DEFAULT METHODS ***/
   function symbol() public pure returns (string) { return SYMBOL; }
@@ -97,9 +105,9 @@ contract EtherBrand is ERC721 {
     ceoAddress = msg.sender;
     cooAddress = msg.sender;
     cfoAddress = msg.sender;
-    topOwner[1] = TopOwner(msg.sender, 500000000000000000); // 0.5
-    topOwner[2] = TopOwner(msg.sender, 100000000000000000); // 0.1
-    topOwner[3] = TopOwner(msg.sender, 50000000000000000); // 0.05
+    topOwner[1] = TopOwner(msg.sender, 0); // 0.5
+    topOwner[2] = TopOwner(msg.sender, 0); // 0.1
+    topOwner[3] = TopOwner(msg.sender, 0); // 0.05
     topOwner[4] = TopOwner(msg.sender, 0);
     topOwner[5] = TopOwner(msg.sender, 0);
     lastBuyer[1] = msg.sender;
@@ -116,13 +124,13 @@ contract EtherBrand is ERC721 {
 
   function createBrand(bytes32 _name, uint256 _price) public onlyCXX {
     require(msg.sender != address(0));
-    _create_brand(_name, address(this), _price);
+    _create_brand(_name, address(this), _price, 0);
   }
 
-  function createPromoBrand(bytes32 _name, address _owner, uint256 _price) public onlyCXX {
+  function createPromoBrand(bytes32 _name, address _owner, uint256 _price, uint256 _last_price) public onlyCXX {
     require(msg.sender != address(0));
     require(_owner != address(0));
-    _create_brand(_name, _owner, _price);
+    _create_brand(_name, _owner, _price, _last_price);
   }
 
   function openGame() public onlyCXX {
@@ -207,12 +215,12 @@ contract EtherBrand is ERC721 {
     }
     
     if(brand.price > topOwner[5].price){
-        for(uint8 i = 1; i <= 5; i++){
-            if(brand.price > topOwner[(i+1)].price){
-                if(i <= 1){ topOwner[2] = topOwner[1]; }
-                if(i <= 2){ topOwner[3] = topOwner[2]; }
-                if(i <= 3){ topOwner[4] = topOwner[3]; }
+        for(uint8 i = 5; i >= 1; i--){
+            if(brand.price > topOwner[i].price){
                 if(i <= 4){ topOwner[5] = topOwner[4]; }
+                if(i <= 3){ topOwner[4] = topOwner[3]; }
+                if(i <= 2){ topOwner[3] = topOwner[2]; }
+                if(i <= 1){ topOwner[2] = topOwner[1]; }
                 topOwner[i] = TopOwner(msg.sender, brand.price);
                 break;
             }
@@ -295,15 +303,31 @@ contract EtherBrand is ERC721 {
 
   /*** PRIVATE METHODS ***/
 
-  function _create_brand(bytes32 _name, address _owner, uint256 _price) private {
+  function _create_brand(bytes32 _name, address _owner, uint256 _price, uint256 _last_price) private {
     // Params: name, owner, price, is_for_sale, is_public, share_price, increase, fee, share_count,
     brands[brand_count] = Brand({
       name: _name,
       owner: _owner,
       price: _price,
-      last_price: 0,
+      last_price: _last_price,
       approve_transfer_to: address(0)
     });
+    
+    Brand storage brand = brands[brand_count];
+    
+    if(brand.price > topOwner[5].price){
+        for(uint8 i = 5; i >= 1; i--){
+            if(brand.price > topOwner[i].price){
+                if(i <= 4){ topOwner[5] = topOwner[4]; }
+                if(i <= 3){ topOwner[4] = topOwner[3]; }
+                if(i <= 2){ topOwner[3] = topOwner[2]; }
+                if(i <= 1){ topOwner[2] = topOwner[1]; }
+                topOwner[i] = TopOwner(msg.sender, brand.price);
+                break;
+            }
+        }
+    }
+    
     Birth(brand_count, _name, _owner);
     Transfer(address(this), _owner, brand_count);
     brand_count++;
