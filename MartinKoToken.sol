@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MartinKoToken at 0x53cac713da6ff654550eb0067d8ee5ed29f2b344
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MartinKoToken at 0xe4849c7a1b56d0771138a01509e6f135f82144b6
 */
 pragma solidity 0.4.21;
 
@@ -153,7 +153,7 @@ contract Crowdsale {
 
   function Crowdsale() public {
     rate = 100;
-    wallet = 0x0046A4dB3D8F49d514093234924aFA75AA8aA990;
+    wallet = msg.sender;
     token = new MartinKoToken();
   }
 
