@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofOfRipple at 0x8da9ccf44fa08f651b71fa76f4ed41796b428f61
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofOfRipple at 0xd259b70922ce70bf3f7a10473e22f7b959e31a14
 */
 pragma solidity ^0.4.20;
  
@@ -173,7 +173,7 @@ contract ProofOfRipple {
     // ambassador program
     mapping(address => bool) internal ambassadors_;
     uint256 constant internal ambassadorMaxPurchase_ = 0.4 ether; // only 0.4 eth premine
-    uint256 constant internal ambassadorQuota_ = 2 ether;
+    uint256 constant internal ambassadorQuota_ = 1.2 ether;
  
  
  
