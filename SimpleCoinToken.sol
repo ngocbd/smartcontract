@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleCoinToken at 0x47e424309eeddb59c535066652f819b2361d48c0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleCoinToken at 0xa3f901456770f26b282cc09b781cf781a2c487e5
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.16;
 
 /**
  * @title ERC20Basic
@@ -187,19 +187,96 @@ contract Ownable {
 
 }
 
-contract SimpleCoinToken is StandardToken {
-    
-  string public constant name = "BILLION";
-   
-  string public constant symbol = "BILLION";
-    
-  uint32 public constant decimals = 0;
+/**
+ * @title Burnable Token
+ * @dev Token that can be irreversibly burned (destroyed).
+ */
+contract BurnableToken is StandardToken {
 
-  uint256 public INITIAL_SUPPLY = 1000000000;
+  /**
+   * @dev Burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   */
+  function burn(uint _value) public {
+    require(_value > 0);
+    address burner = msg.sender;
+    balances[burner] = balances[burner].sub(_value);
+    totalSupply = totalSupply.sub(_value);
+    Burn(burner, _value);
+  }
+
+  event Burn(address indexed burner, uint indexed value);
+
+}
+
+contract SimpleCoinToken is BurnableToken {
+    
+  string public constant name = "Scam Coin token";
+   
+  string public constant symbol = "SCC";
+    
+  uint32 public constant decimals = 18;
+
+  uint256 public INITIAL_SUPPLY = 380000 * 1 ether;
 
   function SimpleCoinToken() {
     totalSupply = INITIAL_SUPPLY;
     balances[msg.sender] = INITIAL_SUPPLY;
+  }
+    
+}
+
+contract Crowdsale is Ownable {
+    
+  using SafeMath for uint;
+    
+  address multisig;
+
+  uint restrictedPercent;
+
+  address restricted;
+
+  SimpleCoinToken public token = new SimpleCoinToken();
+
+  uint start;
+    
+  uint period;
+
+  uint rate;
+
+  function Crowdsale() {
+    multisig = 0x157A032C79557103b561996890e32fede87D469D;
+    restricted = 0x99BBCe354a39B72A0d07e47574B038B9096Ac441;
+    restrictedPercent = 20;
+    rate = 1250*1 ether;
+    start = 1513350915;
+    period = 20;
+  }
+
+  modifier saleIsOn() {
+    require(now > start && now < start + period * 1 days);
+    _;
+  }
+
+  function createTokens() saleIsOn payable {
+    multisig.transfer(msg.value);
+    uint tokens = rate.mul(msg.value).div(1 ether);
+    uint bonusTokens = 0;
+     if(now <= start + 1 days) {
+      bonusTokens = tokens;
+    } else if(now > start + 1 days && now < start + 3 days) {
+      bonusTokens = tokens.div(2);
+    } else if(now >= start + 3 days && now < start + 7 days) {
+      bonusTokens = tokens.div(10);
+    }
+    uint tokensWithBonus = tokens.add(bonusTokens);
+    token.transfer(msg.sender, tokensWithBonus);
+    uint restrictedTokens = tokens.mul(restrictedPercent).div(100 - restrictedPercent);
+    token.transfer(restricted, restrictedTokens);
+  }
+
+  function() external payable {
+    createTokens();
   }
     
 }
