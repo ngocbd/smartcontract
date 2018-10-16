@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Moongang at 0x75009ba0e084973d9c42fa81862d7076fae4500d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Moongang at 0xa3c230e94d733b2f96503c9452c95cf9e74910e0
 */
 // Author : shift
 
@@ -72,8 +72,10 @@ contract Moongang {
   uint256 constant FEE = 100;    //1% fee
   //SafeMath.div(20, 3) = 6
   uint256 constant FEE_DEV = 6; //15% on the 1% fee
+  uint256 constant FEE_AUDIT = 12; //7.5% on the 1% fee
   address public owner;
   address constant public developer = 0xEE06BdDafFA56a303718DE53A5bc347EfbE4C68f;
+  address constant public auditor = 0x63F7547Ac277ea0B52A0B060Be6af8C5904953aa;
   uint256 public individual_cap;
 
   //Variables subject to changes
@@ -83,6 +85,8 @@ contract Moongang {
   //Store the amount of ETH deposited by each account.
   mapping (address => uint256) public balances;
   mapping (address => uint256) public balances_bonus;
+  //whitelist
+  mapping (address => bool) public whitelist;
   // Track whether the contract has bought the tokens yet.
   bool public bought_tokens;
   // Record ETH value of tokens currently held by contract.
@@ -100,6 +104,8 @@ contract Moongang {
   bool public allow_refunds;
   //The reduction of the allocation in % | example : 40 -> 40% reduction
   uint256 public percent_reduction;
+  //flag controlled by owner to enable/disable whitelists
+  bool public whitelist_enabled;
 
   //Internal functions
   function Moongang(uint256 max, uint256 min, uint256 cap) {
@@ -110,6 +116,8 @@ contract Moongang {
     max_amount = SafeMath.div(SafeMath.mul(max, 100), 99);
     min_amount = min;
     individual_cap = cap;
+    //enable whitelist by default
+    whitelist_enabled = true;
   }
 
   //Functions for the owner
@@ -122,8 +130,10 @@ contract Moongang {
     bought_tokens = true;
     //Sends the fee before so the contract_eth_value contains the correct balance
     uint256 dev_fee = SafeMath.div(fees, FEE_DEV);
-    owner.transfer(SafeMath.sub(fees, dev_fee));
+    uint256 audit_fee = SafeMath.div(fees, FEE_AUDIT);
+    owner.transfer(SafeMath.sub(SafeMath.sub(fees, dev_fee), audit_fee));
     developer.transfer(dev_fee);
+    auditor.transfer(audit_fee);
     //Record the amount of ETH sent as the contract's current value.
     contract_eth_value = this.balance;
     contract_eth_value_bonus = this.balance;
@@ -141,7 +151,7 @@ contract Moongang {
   }
 
   function force_partial_refund(address _to_refund) onlyOwner {
-    require(allow_refunds && percent_reduction > 0);
+    require(percent_reduction > 0);
     //Amount to refund is the amount minus the X% of the reduction
     //amount_to_refund = balance*X
     uint256 basic_amount = SafeMath.div(SafeMath.mul(balances[_to_refund], percent_reduction), 100);
@@ -154,6 +164,18 @@ contract Moongang {
     balances[_to_refund] = SafeMath.sub(balances[_to_refund], eth_to_withdraw);
     balances_bonus[_to_refund] = balances[_to_refund];
     _to_refund.transfer(eth_to_withdraw);
+  }
+
+  function whitelist_addys(address[] _addys) onlyOwner {
+    for (uint256 i = 0; i < _addys.length; i++) {
+      whitelist[_addys[i]] = true;
+    }
+  }
+
+  function blacklist_addys(address[] _addys) onlyOwner {
+    for (uint256 i = 0; i < _addys.length; i++) {
+      whitelist[_addys[i]] = false;
+    }
   }
 
   function set_sale_address(address _sale) onlyOwner {
@@ -181,6 +203,10 @@ contract Moongang {
   function set_percent_reduction(uint256 _reduction) onlyOwner {
     require(_reduction <= 100);
     percent_reduction = _reduction;
+  }
+
+  function set_whitelist_enabled(bool _boolean) onlyOwner {
+    whitelist_enabled = _boolean;
   }
 
   function change_individual_cap(uint256 _cap) onlyOwner {
@@ -273,6 +299,9 @@ contract Moongang {
   // Default function.  Called when a user sends ETH to the contract.
   function () payable underMaxAmount {
     require(!bought_tokens);
+    if (whitelist_enabled) {
+      require(whitelist[msg.sender]);
+    }
     //1% fee is taken on the ETH
     uint256 fee = SafeMath.div(msg.value, FEE);
     fees = SafeMath.add(fees, fee);
