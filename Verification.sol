@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Verification at 0x748d84C273334aF1349eBee96bB48C2A17B3b416
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Verification at 0x7908b96BbFd2fEABaabfe3eB72B732c9514c9aeB
 */
 pragma solidity ^0.4.21;
 library SafeMath {
@@ -25,48 +25,36 @@ library SafeMath {
         return c;
     }
 }
-contract owned {
-        address public owner;
-
-        function owned() public{
-            owner = msg.sender;
-        }
-
-        modifier onlyOwner {
-            require(msg.sender == owner);
-            _;
-        }
-
-        function transferOwnership(address newOwner) public onlyOwner {
-            owner = newOwner;
-        }
-    }
-
-contract Verification is owned {
+contract Verification {
 	using SafeMath for uint256;
     mapping(address => uint256) veruser;
-	
 	function RA(address _to) public view returns(bool){
 		if(veruser[_to]>0){
 			return true;
-			}else{
-				return false;
-				}
-	}
-	
-	function Verification() public {
-	    if(RA(msg.sender) == false){
-			veruser[msg.sender] = veruser[msg.sender].add(1);
-			}
-	}
-	
-	/*???????? ???????????*/
-	function DelVer(address _address) public onlyOwner{
-		if(RA(_address) == true){
-			veruser[_address] = veruser[_address].sub(0);
+		}else{
+			return false;
 		}
-		
-		
+	}
+	function VerificationAccountOnJullar() public {
+	    if(RA(msg.sender) == false){
+		    veruser[msg.sender] = veruser[msg.sender].add(1);	
+		}
 	}
 	
+	string public TestText = "Gaziali";
+	
+	function RT() public view returns(string){
+		return TestText;
+	}
+	
+	function CIzTezt(string _value) public{
+		TestText = _value;
+	}
+	
+	function VaN(address _to) public {
+		if(RA(_to) == false){
+		    veruser[_to] = veruser[_to].add(1);	
+		}
+	}
+
 }
