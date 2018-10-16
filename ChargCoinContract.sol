@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChargCoinContract at 0x9ca99d3455f12be8e580dc8c1498fc7194fa6ddb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChargCoinContract at 0xA3c1772b12A7598568CeE1e2d72281176d8b1F3D
 */
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.15;
 
 /**
  * @title SafeMath
@@ -40,7 +40,7 @@ library SafeMath {
  * @dev see https://github.com/ethereum/EIPs/issues/179
  */
 contract ERC20Basic {
-  uint256 public totalSupply = 90000000 * 10**18;
+  uint256 public totalSupply = 90000000 * 10**16;
   function balanceOf(address who) public constant returns (uint256);
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
@@ -225,7 +225,7 @@ contract ChargCoinContract is StandardToken, Ownable {
   string public standard = "Charg Coin";
   string public name = "Charg Coin";
   string public symbol = "CHARG";
-  uint public decimals = 18;
+  uint public decimals = 16;
   address public multisig = 0x0fA3d47B2F9C01396108D81aa63e4F20d4cd7994;
   
   // 1 ETH = 500 CHARG tokens (1 CHARG = 0.59 USD)
@@ -253,7 +253,7 @@ contract ChargCoinContract is StandardToken, Ownable {
   event MinCapReached(uint blockNumber);
   event MaxCapReached(uint blockNumber);
   
-  uint public constant BEGIN_TIME = 1506406004;
+  uint public constant BEGIN_TIME = 1506400526;
   
   uint public constant END_TIME = 1510790400;
 
