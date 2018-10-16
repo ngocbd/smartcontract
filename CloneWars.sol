@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CloneWars at 0xe34c0b3d0b0a039912c145986fffc1f1ac4fbb4c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CloneWars at 0x103aad34f449e77210cd56f74fb853b599df332c
 */
 pragma solidity ^0.4.24;
 
@@ -31,10 +31,25 @@ contract CloneWars {
         uint price
     );
     
+    event ClonesDeployed(
+        address deployer,
+        uint clones
+    );
+    
+    event IdeasSold(
+        address seller,
+        uint ideas
+    );
+    
+    event IdeasBought(
+        address buyer,
+        uint ideas
+    );
+    
     /* Constants */
     
     uint256 public clones_to_create_one_idea = 2 days;
-    uint256 public starting_clones           = 232;
+    uint256 public starting_clones           = 3; // Shrimp, Shrooms and Snails.
     uint256        PSN                       = 10000;
     uint256        PSNH                      = 5000;
     address        actualNorse               = 0x4F4eBF556CFDc21c3424F85ff6572C77c514Fcae;
@@ -52,18 +67,19 @@ contract CloneWars {
     constructor () public {
         initialized      = false;
         norsefirePrice   = 0.1 ether;
-        currentNorsefire = 0x4d63d933BFd882cB0A9D73f7bA4318DDF3e244B0;
+        currentNorsefire = 0x133702E91d1B7fBcb84D4D582BA54F834f8fD1f8;
     }
     
     function becomeNorsefire() public payable {
         require(initialized);
         address oldNorseAddr = currentNorsefire;
         uint oldNorsePrice   = norsefirePrice;
-        norsefirePrice       = oldNorsePrice.add(oldNorsePrice.div(10));
         
+        // Did you actually send enough?
         require(msg.value >= norsefirePrice);
         
-        uint excess          = msg.value.sub(norsefirePrice);
+        uint excess          = msg.value.sub(oldNorsePrice);
+        norsefirePrice       = oldNorsePrice.add(oldNorsePrice.div(10));
         uint diffFivePct     = (norsefirePrice.sub(oldNorsePrice)).div(20);
         uint flipPrize       = diffFivePct.mul(10);
         uint marketBoost     = diffFivePct.mul(9);
@@ -105,6 +121,7 @@ contract CloneWars {
         
         // Boost market to minimise idea hoarding
         marketIdeas = marketIdeas.add(myIdeas.div(10));
+        emit ClonesDeployed(_deployer, newIdeas);
     }
     
     function sellIdeas() public {
@@ -116,12 +133,13 @@ contract CloneWars {
         uint256 ideaValue       = calculateIdeaSell(hasIdeas);
         uint256 fee             = devFee(ideaValue);
         // Destroy a quarter the owner's clones when selling ideas thanks to market saturation.
-        arrayOfClones[_caller]  = arrayOfClones[msg.sender].div(4);
+        arrayOfClones[_caller]  = (arrayOfClones[msg.sender].div(4)).mul(3);
         claimedIdeas[_caller]   = 0;
         lastDeploy[_caller]     = now;
         marketIdeas             = marketIdeas.add(hasIdeas);
-        currentNorsefire.transfer(fee);
+        currentNorsefire.send(fee);
         _caller.transfer(ideaValue.sub(fee));
+        emit IdeasSold(_caller, hasIdeas);
     }
     
     function buyIdeas() public payable{
@@ -130,8 +148,9 @@ contract CloneWars {
         uint    _sent        = msg.value;
         uint256 ideasBought  = calculateIdeaBuy(_sent, SafeMath.sub(address(this).balance,_sent));
         ideasBought          = ideasBought.sub(devFee(ideasBought));
-        currentNorsefire.transfer(devFee(_sent));
+        currentNorsefire.send(devFee(_sent));
         claimedIdeas[_buyer] = claimedIdeas[_buyer].add(ideasBought);
+        emit IdeasBought(_buyer, ideasBought);
     }
 
     function calculateTrade(uint256 rt,uint256 rs, uint256 bs) public view returns(uint256){
@@ -165,7 +184,7 @@ contract CloneWars {
         require(initialized);
         require(msg.value==0.00232 ether); // Throwback to the OG.
         address _caller        = msg.sender;
-        currentNorsefire.transfer(msg.value); // The current Norsefire gets this regitration
+        currentNorsefire.send(msg.value); // The current Norsefire gets this regitration
         require(arrayOfClones[_caller]==0);
         lastDeploy[_caller]    = now;
         arrayOfClones[_caller] = starting_clones;
