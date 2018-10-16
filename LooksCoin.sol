@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LooksCoin at 0x61645fba94c7443f5c29577a20670128d573ab87
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LooksCoin at 0x5be015eb0be828742b1e9ff9f784ea51e540b6e8
 */
 pragma solidity ^0.4.11;
 
 /*
 * 'LOOK' token sale contract
 *
-* Refer to https://lookscoin.com/ for more information.
+* Refer to https://lookscoin.com/ for further information.
 * 
 * Developer: LookRev
 *
@@ -43,9 +43,7 @@ contract SafeMath {
      */
     function safeAdd(uint256 a, uint256 b) internal returns (uint256) {
         require (a <= MAX_UINT256 - b);
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
+        return a + b;
     }
 
     /**
@@ -289,7 +287,8 @@ contract LooksCoin is StandardToken {
     uint256 public constant TOKEN_PRICE_N = 1e13;
     // initial price in wei (denominator)
     uint256 public constant TOKEN_PRICE_D = 1;
-    // 1 ETH = 100000 LOOK coins
+    // 1 ETH = 100000 LOOK tokens
+    // 200000 ETH = 20000000000 LOOK tokens
 
     /**
      * Create new LOOK token Smart Contract, make message sender to be the
@@ -326,8 +325,8 @@ contract LooksCoin is StandardToken {
      *
      * @return number of decimals for this token
      */
-    function decimals() constant returns (uint8 decimals) {
-      return 0;
+    function decimals () constant returns (uint8 decimals) {
+      return 6;
     }
 
     /**
