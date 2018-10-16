@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EchoChainToken at 0x7a79d08a980a681e42988f80ffd991e7d286266f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EchoChainToken at 0xd39a13a504ac8f91d4c0c6b60a431ba2f893aa0f
 */
 pragma solidity ^0.4.21;
 
@@ -319,7 +319,7 @@ contract EchoChainToken is BurnableToken, MintableToken, PausableToken {
 
     function EchoChainToken() public {
         name = "EchoChain";
-        symbol = "ECO";
+        symbol = "ECHO";
         decimals = 18;
         totalSupply = 1000000000 * 10 ** uint256(decimals);
 
