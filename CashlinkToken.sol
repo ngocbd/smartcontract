@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CashlinkToken at 0x93a5a3d0f3cf4e8e4a69e821a2de1b1272c52007
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CashlinkToken at 0xa2efe1cdac1ab6ce1eca2ed3f278322c965926c9
 */
 pragma solidity ^0.4.19;
 
@@ -214,39 +214,18 @@ contract StandardToken is ERC20, BasicToken {
 
 
 contract CashlinkToken is StandardToken{
-  
-  event Mint(address indexed to, uint256 amount);
-  
+
   string public symbol;
   string public  name;
   uint8 public decimals;
-  
-  address public owner;
-  
-  modifier onlyOwner {
-      require(msg.sender == owner);
-      _;
-  }
 
   function CashlinkToken() public {
-    owner = msg.sender;
     name = "Cashlink Token";
     symbol = "CL";
-    decimals = 5;
-  }
-  
-  /**
-   * @dev Function to mint tokens
-   * @param _to The address that will receive the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
-   */
-  function mint(address _to, uint256 _amount) onlyOwner public returns (bool) {
-    totalSupply_ = totalSupply_.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    Mint(_to, _amount);
-    Transfer(address(0), _to, _amount);
-    return true;
+    decimals = 18;
+    totalSupply_ = 100000000000000000000000000;
+    balances[msg.sender] = totalSupply_;
+    Transfer(address(0), msg.sender, totalSupply_);
   }
 
   function () public payable {
