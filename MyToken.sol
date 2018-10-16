@@ -1,64 +1,81 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0xb20bb2780a6ae9e399e805ce4f60321245f7a0db
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x91fAaD742B9F829423491B286814CD609f121cD4
 */
 pragma solidity ^0.4.2;
 
-contract owned {
+contract Owner {
+    //For storing the owner address
     address public owner;
-
-    function owned() {
+    //Constructor for assign a address for owner property(It will be address who deploy the contract) 
+    function Owner() {
         owner = msg.sender;
     }
-
-    modifier onlyOwner {
-        if (msg.sender != owner) throw;
+    //This is modifier (a special function) which will execute before the function execution on which it applied 
+    modifier onlyOwner() {
+        if(msg.sender != owner) throw;
+        //This statement replace with the code of fucntion on which modifier is applied
         _;
     }
-
-    function transferOwnership(address newOwner) onlyOwner {
-        owner = newOwner;
+    //Here is the example of modifier this function code replace _; statement of modifier 
+    function transferOwnership(address new_owner) onlyOwner {
+        owner = new_owner;
     }
 }
 
-contract MyToken is owned {
-    /* This creates an array with all balances */
-    mapping (address => uint256) public balanceOf;
-
-    /* Public variables of the token */
-    string public standard = 'Token 0.1';
-    string public name = 'TrekMiles';
-    string public symbol = 'TMC';
-    uint8 public decimals = 0;
+contract MyToken is Owner {
+    //Common information about coin
+    string public name;
+    string public symbol;
+    uint8  public decimal;
     uint256 public totalSupply;
-
-    /* Initializes contract with initial supply tokens to the creator of the contract */
-    function MyToken() {
-        uint256 initialSupply = 10;
-        balanceOf[msg.sender] = initialSupply;
-        totalSupply = initialSupply;
-    }
-
+    
+    //Balance property which should be always associate with an address
+    mapping (address => uint256) public balanceOf;
+    //frozenAccount property which should be associate with an address
+    mapping (address => bool) public frozenAccount;
+    
+    //These generates a public event on the blockchain that will notify clients
     event Transfer(address indexed from, address indexed to, uint256 value);
-
-    /* Send coins */
-    function transfer(address _to, uint256 _value) {
-        if (balanceOf[msg.sender] < _value) throw;           // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
-        balanceOf[msg.sender] -= _value;                     // Subtract from the sender
-        balanceOf[_to] += _value;                            // Add the same to the recipient
-        Transfer(msg.sender, _to, _value);        // Notify anyone listening that this transfer took place
+    event FrozenFunds(address target, bool frozen);
+    
+    //Construtor for initial supply (The address who deployed the contract will get it) and important information
+    function MyToken(uint256 initial_supply, string _name, string _symbol, uint8 _decimal) {
+        balanceOf[msg.sender] = initial_supply;
+        name = _name;
+        symbol = _symbol;
+        decimal = _decimal;
+        totalSupply = initial_supply;
     }
-
-    /* Mint coins */
-    function mintToken(address target, uint256 mintedAmount) onlyOwner {
+    
+    //Function for transer the coin from one address to another
+    function transfer(address to, uint value) {
+        //checking account is freeze or not
+        if (frozenAccount[msg.sender]) throw;
+        //checking the sender should have enough coins
+        if(balanceOf[msg.sender] < value) throw;
+        //checking for overflows
+        if(balanceOf[to] + value < balanceOf[to]) throw;
+        
+        //substracting the sender balance
+        balanceOf[msg.sender] -= value;
+        //adding the reciever balance
+        balanceOf[to] += value;
+        
+        // Notify anyone listening that this transfer took place
+        Transfer(msg.sender, to, value);
+    }
+    
+    function mintToken(address target, uint256 mintedAmount) onlyOwner{
         balanceOf[target] += mintedAmount;
         totalSupply += mintedAmount;
-        Transfer(0, owner, mintedAmount);
-        Transfer(owner, target, mintedAmount);
+        
+        Transfer(0,owner,mintedAmount);
+        Transfer(owner,target,mintedAmount);
     }
 
-    function () {
-        //if ether is sent to this address, send it back.
-        throw;
+    function freezeAccount(address target, bool freeze) onlyOwner {
+        frozenAccount[target] = freeze;
+        FrozenFunds(target, freeze);
     }
+    
 }
