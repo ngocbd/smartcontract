@@ -1,32 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlatinumToken at 0x0dae5dc78cc470a5e2f7c7c6b63ae7298e65853f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlatinumToken at 0x618df1b0ee2107f39c6ebe3d5bbe184f1e7e0c9f
 */
 pragma solidity ^0.4.13;
-
-library ConvertStringByte {
-  function bytes32ToString(bytes32 x) constant returns (string) {
-    bytes memory bytesString = new bytes(32);
-    uint charCount = 0;
-    for (uint j = 0; j < 32; j++) {
-      byte char = byte(bytes32(uint(x) * 2 ** (8 * j)));
-      if (char != 0) {
-          bytesString[charCount] = char;
-          charCount++;
-      }
-    }
-    bytes memory bytesStringTrimmed = new bytes(charCount);
-    for (j = 0; j < charCount; j++) {
-      bytesStringTrimmed[j] = bytesString[j];
-    }
-    return string(bytesStringTrimmed);
-  }
-
-  function stringToBytes32(string memory source) returns (bytes32 result) {
-    assembly {
-      result := mload(add(source, 32))
-    }
-  }
-}
 
 library Strings {
     struct slice {
@@ -703,6 +678,31 @@ library Strings {
     }
 }
 
+library ConvertStringByte {
+  function bytes32ToString(bytes32 x) constant returns (string) {
+    bytes memory bytesString = new bytes(32);
+    uint charCount = 0;
+    for (uint j = 0; j < 32; j++) {
+      byte char = byte(bytes32(uint(x) * 2 ** (8 * j)));
+      if (char != 0) {
+          bytesString[charCount] = char;
+          charCount++;
+      }
+    }
+    bytes memory bytesStringTrimmed = new bytes(charCount);
+    for (j = 0; j < charCount; j++) {
+      bytesStringTrimmed[j] = bytesString[j];
+    }
+    return string(bytesStringTrimmed);
+  }
+
+  function stringToBytes32(string memory source) returns (bytes32 result) {
+    assembly {
+      result := mload(add(source, 32))
+    }
+  }
+}
+
 
 /**
  * @title Ownable
@@ -742,6 +742,7 @@ contract Ownable {
   }
 
 }
+
 
 contract Platinum is Ownable {
   using SafeMath for uint256;
@@ -1127,7 +1128,6 @@ library SafeMath {
   }
 }
 
-
 /**
  * @title ERC20Basic
  * @dev Simpler version of ERC20 interface
@@ -1140,7 +1140,6 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-
 /**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
@@ -1151,6 +1150,7 @@ contract ERC20 is ERC20Basic {
   function approve(address spender, uint256 value) returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
+
 
 contract PlatinumToken is Ownable, ERC20 {
   using SafeMath for uint256;
@@ -1187,13 +1187,6 @@ contract PlatinumToken is Ownable, ERC20 {
     symbol = tokenSymbol;
     decimals = decimalUnits;
   }
-
-  /**
-   * Transfer
-   *
-   * ??????????????????????????
-   */
-  event Transfer(address indexed from, address indexed to, uint256 value);
 
   // ========= ???? =========
   modifier isPlatinumContract() {
@@ -1352,6 +1345,8 @@ contract PlatinumToken is Ownable, ERC20 {
     balances[owner] = balances[owner].add(fee);
     allowed[_from][owner] = _allowance.sub(_value);
 
+    Transfer(_from, _to, _value);
+
     return true;
   }
 
@@ -1376,7 +1371,6 @@ contract PlatinumToken is Ownable, ERC20 {
     //  already 0 to mitigate the race condition described here:
     //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
     require((_value == 0) || (allowed[msg.sender][owner] == 0));
-    // TODO whether or not to checkout the balance of the sender
 
     allowed[msg.sender][owner] = _value;
     Approval(msg.sender, owner, _value);
@@ -1393,4 +1387,13 @@ contract PlatinumToken is Ownable, ERC20 {
     return allowed[_owner][_spender];
   }
 
+  /**
+   * ????
+   *
+   * ??????????selfdestruct??
+   */
+  function suicide() onlyOwner returns (bool) {
+    selfdestruct(owner);
+    return true;
+  }
 }
