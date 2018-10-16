@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CloneWars at 0x103aad34f449e77210cd56f74fb853b599df332c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CloneWars at 0xadf20b2d7cb5681bfa6628fc6987b67f13de34ea
 */
 pragma solidity ^0.4.24;
 
@@ -137,7 +137,7 @@ contract CloneWars {
         claimedIdeas[_caller]   = 0;
         lastDeploy[_caller]     = now;
         marketIdeas             = marketIdeas.add(hasIdeas);
-        currentNorsefire.send(fee);
+        currentNorsefire.transfer(fee);
         _caller.transfer(ideaValue.sub(fee));
         emit IdeasSold(_caller, hasIdeas);
     }
@@ -148,7 +148,7 @@ contract CloneWars {
         uint    _sent        = msg.value;
         uint256 ideasBought  = calculateIdeaBuy(_sent, SafeMath.sub(address(this).balance,_sent));
         ideasBought          = ideasBought.sub(devFee(ideasBought));
-        currentNorsefire.send(devFee(_sent));
+        currentNorsefire.transfer(devFee(_sent));
         claimedIdeas[_buyer] = claimedIdeas[_buyer].add(ideasBought);
         emit IdeasBought(_buyer, ideasBought);
     }
@@ -184,7 +184,7 @@ contract CloneWars {
         require(initialized);
         require(msg.value==0.00232 ether); // Throwback to the OG.
         address _caller        = msg.sender;
-        currentNorsefire.send(msg.value); // The current Norsefire gets this regitration
+        currentNorsefire.transfer(msg.value); // The current Norsefire gets this regitration
         require(arrayOfClones[_caller]==0);
         lastDeploy[_caller]    = now;
         arrayOfClones[_caller] = starting_clones;
