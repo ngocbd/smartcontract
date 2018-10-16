@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CZRLocker at 0x6C508B8AaCC804A9a359892A28081d25B3612123
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CZRLocker at 0xa57e6d3b29e754700ccb750cc245e973f6af5e1a
 */
 pragma solidity ^0.4.16;
 
@@ -24,18 +24,12 @@ interface token { function transferFrom(address _from, address _to, uint256 _val
 
 contract CZRLocker is owned {
     
-    uint constant public START_TIME = 1515427200;
-    uint constant public GOAL = 60000 ether;
-
-    bool isPaused = false;
-    uint public totalReceived;
-    uint public goalCompletedBlock;
-    address public tokenAddr;
-    address public unlocker;
-    
     event AddLock(address addr, uint index, uint startLockTime, uint lockMonth, uint lockedAmount);
     event RemoveLock(address addr, uint index);
     event Unlock(address addr, uint index, uint unlockAmount);
+
+    address public tokenAddr;
+    address public unlocker;
     
     struct LockedCZR {
         uint startLockTime;
@@ -49,14 +43,6 @@ contract CZRLocker is owned {
     function CZRLocker(address _tokenAddr, address _unlocker) public {
         tokenAddr = _tokenAddr;
         unlocker = _unlocker;
-    }
-    
-    function start() onlyOwner public {
-        isPaused = false;
-    }
-    
-    function pause() onlyOwner public {
-        isPaused = true;
     }
 
     /// @notice remove CZR lock (only set all field to 0)
@@ -137,10 +123,5 @@ contract CZRLocker is owned {
     
     /// record total received eth and check whether goal completed
     function() payable public {
-        require(!isPaused);
-        require(now > START_TIME);
-        totalReceived += msg.value;
-        if (goalCompletedBlock == 0 && totalReceived >= GOAL)
-            goalCompletedBlock = block.number;
     }
 }
