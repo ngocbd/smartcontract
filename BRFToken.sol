@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BRFToken at 0xf7b3fe1296b092d5ff241858a53723d92cd76642
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BRFToken at 0x86616f32078cac9b70c6f1c45c28fa668d68fc2d
 */
 pragma solidity ^0.4.18;
 
@@ -338,7 +338,7 @@ contract StandardToken is ERC20, BasicToken {
 // File: contracts/BRFToken/BRFToken.sol
 
 contract BRFToken is StandardToken, ReleasableToken {
-  string public constant name = "BRF Token";
+  string public constant name = "Bitrace Token";
   string public constant symbol = "BRF";
   uint8 public constant decimals = 18;
 
