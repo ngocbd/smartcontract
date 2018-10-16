@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HawalaToken at 0xc3972ac283b3a7a56125674631a5c254f7f373cf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HawalaToken at 0x05a0ea0e87d273e6a1fe04ca8b5a795422d7507b
 */
 pragma solidity ^0.4.4;
 
