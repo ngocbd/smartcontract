@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DoggyEthPics at 0xa828476505d3b4db07aca0b69726eca39e5dea50
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DoggyEthPics at 0x0fde319e9d98f84993723cd3408d32be2251761e
 */
 pragma solidity ^0.4.19;
 
@@ -139,14 +139,17 @@ contract DoggyEthPics is ERC721, Ownable {
     _createDoggy(_name, msg.sender, _price);
   }
 
-  function create3DoggiesTokens() public onlyContractOwner {
-     uint256 totalDoggies = totalSupply();
-	 
-	 require (totalDoggies<1); // only 3 tokens for start
-	 
-	 for (uint8 i=1; i<=3; i++)
-		_createDoggy("EthDoggy", address(this), startingPrice);
-	
+  function create3DoggiesTokens() public onlyContractOwner { //migration
+	  _createDoggy("EthDoggy", 0x4844928357e83855b1b9fbacf65947fe1ff48e26, 170859375000000000);
+	  _createDoggy("EthDoggy", 0x5632ca98e5788eddb2397757aa82d1ed6171e5ad, 384433593750000000);
+	  _createDoggy("EthDoggy", 0x28d02f67316123dc0293849a0d254ad86b379b34, 113906250000000000);
+	  _createDoggy("EthDoggy", 0x28d02f67316123dc0293849a0d254ad86b379b34, 172995117187500000);
+	  _createDoggy("EthDoggy", 0x7cd84443027d2e19473c3657f167ada34417654f, 113906250000000000);
+	  _createDoggy("EthDoggy", 0x7cd84443027d2e19473c3657f167ada34417654f, 172995117187500000);
+	  _createDoggy("EthDoggy", 0x7cd84443027d2e19473c3657f167ada34417654f, 403655273437500000);
+	  _createDoggy("EthDoggy", 0xe6c58f8e459fe570afff5b4622990ea1744f0e28, 181644873046875000);
+	  _createDoggy("EthDoggy", 0xe6c58f8e459fe570afff5b4622990ea1744f0e28, 423838037109375000);
+	  
   }
   
   function getDoggy(uint256 _tokenId) public view returns (string doggyName, uint256 sellingPrice, address owner) {
@@ -209,7 +212,7 @@ contract DoggyEthPics is ERC721, Ownable {
   }
   
   function changeDoggy(uint256 _tokenId) public payable { //
-    require(doggyIdToPrice[_tokenId] >= 1 ether);
+    require(doggyIdToPrice[_tokenId] >= 300 finney);
 	
     require(doggyIdToOwner[_tokenId] == msg.sender && msg.value == 20 finney); //tax 0.02eth for change
 	
@@ -336,7 +339,17 @@ contract DoggyEthPics is ERC721, Ownable {
     DoggyCreated(newDoggyId, _name, _owner);
 
     doggyIdToPrice[newDoggyId] = _price;
-	doggyIdToDivs[newDoggyId] = _owner; //dividents address;
+	
+	if (newDoggyId<3) //migration
+		doggyIdToDivs[newDoggyId] = address(this); //dividents address;
+	else if (newDoggyId>2 && newDoggyId<=4) 
+		doggyIdToDivs[newDoggyId] = address(0x28d02f67316123dc0293849a0d254ad86b379b34); //dividents address;
+	else if (newDoggyId>4 && newDoggyId<=6) 
+		doggyIdToDivs[newDoggyId] = address(0x7cd84443027d2e19473c3657f167ada34417654f); //dividents address;
+	else if (newDoggyId>6 && newDoggyId<=8) 
+		doggyIdToDivs[newDoggyId] = address(0xe6c58f8e459fe570afff5b4622990ea1744f0e28); //dividents address;
+	else 
+		doggyIdToDivs[newDoggyId] = _owner; //dividents address;
 
     _transfer(address(0), _owner, newDoggyId);
   }
