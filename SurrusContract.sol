@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SurrusContract at 0x52c11fa425af4987a09fe3cfa6a585733beaa416
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SurrusContract at 0xb9cbc9b054d439842d823e031c1c9a04d083d592
 */
 pragma solidity ^0.4.18;
 
@@ -126,13 +126,15 @@ contract SurrusContract is StandardToken {
 
     address owner;
 
-    string public constant name = "Surrus";
+    string public constant name = "SurruS";
 
-    string public constant symbol = "SURS";
+    string public constant symbol = "SURR";
 
-    uint32 public constant decimals = 9;
+    uint32 public constant decimals = 18;
+    
+    string public description="tokens for ico";
 
-    uint256 public INITIAL_SUPPLY = 10000000000000000;//10 000 000, 000 000 000
+    uint256 public INITIAL_SUPPLY = 860000000000000000000000000; //860 000 000, 000 000 000 000 000 000
 
     event Burn(address indexed burner, uint256 value);
 
@@ -148,12 +150,12 @@ contract SurrusContract is StandardToken {
 
     /**
      * @dev Function is called at the end of an ICO.
-     *It sums number of sold tokens and sends 40 percent to separate address. Burns the rest tokens
-     *
+     *cIt sums number of sold tokens and sends 40 percent to separate address. Burns the rest tokens
+     *c40% of tokens are sent to the team
      */
     function burnByOwner(address _comandWallet) onlyOwner()  public {
         uint256 soldTokens =totalSupply.sub(balanceOf(owner));
-        if(soldTokens>=6000000000000000)
+        if(soldTokens>=520000000000000000000000000)
             transfer( _comandWallet, balances[owner]);
         else{
             uint256 tmp = soldTokens.mul(40);
@@ -163,7 +165,7 @@ contract SurrusContract is StandardToken {
         }
     }
 
-    function burn(uint256 _value) public {
+    function burn(uint256 _value) internal {
         require(_value <= balances[msg.sender]);
         address burner = msg.sender;
         balances[burner] = balances[burner].sub(_value);
@@ -175,4 +177,9 @@ contract SurrusContract is StandardToken {
         require(msg.sender == owner);
         _;
     }
+    
+    function setDescription(string _description) onlyOwner() public{
+        description = _description;
+    }
+    
 }
