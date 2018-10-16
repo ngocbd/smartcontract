@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FidgetSpinner at 0xddb02d5917faacae0ac80cb91ca7f47fa84a55a0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FidgetSpinner at 0xabdc7cee215ae1e708ac0ac8ead6eddc0a5c2616
 */
 pragma solidity ^0.4.8;
 
@@ -60,6 +60,10 @@ contract FidgetSpinner is Owned {
    * Returns the velocity of the spinner during this specific block in the chain
    */
   function getCurrentVelocity() constant returns(int) {
+    if(decayRate == 0) {
+      return omega;
+    }
+
     int dir = -1;
     if(omega == 0) {
       return 0;
@@ -85,6 +89,10 @@ contract FidgetSpinner is Owned {
   function getCurrentDisplacement() constant returns(int) {
     // integrates omega over time
     int timeElapsed = int(deltaTime());
+
+    if(decayRate == 0) {
+      return theta + (timeElapsed * omega);
+    }
 
     // find max time elapsed before v=0 (becomes max-height of trapezoid)
     int maxTime = omega / int(decayRate);
