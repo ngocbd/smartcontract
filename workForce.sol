@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract workForce at 0xea10e348a32d0e8984c4fec3735813777bc0cb5b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract workForce at 0x0a2e310409f7589c9e8640abf98ca2b7b35f938c
 */
 pragma solidity ^0.4.11;
 
@@ -207,17 +207,16 @@ contract workForce
         workcrew[x].usdEthAntTokenDistribution[2] = _antTokens;
     }
 
-    /* Eventually change this so that a missed payday will carry owed pay over to next payperiod */
     function payday(uint _employeeId) public onlyEmployee
     {
         uint x = employeeIdIndex[_employeeId];
 
         /* Change to 4 weeks for monthly pay period */
-        if( now < workcrew[x].lastPayday + 15 minutes ){ revert; }
+        if( now < workcrew[x].lastPayday + 5 minutes ){ revert; }
         if( msg.sender != workcrew[x].employeeAddress ){ revert; }
         workcrew[x].lastPayday = now;
 
-        /* 7680 is for 15min pay periods. Change to 12 for monthly pay period */
+        /* 7680 is for 5min pay periods. Change to 12 for monthly pay period */
         uint paycheck = workcrew[x].yearlySalaryUSD / 7680;
         uint usdTransferAmount = paycheck * workcrew[x].usdEthAntTokenDistribution[0] / 100;
         uint ethTransferAmount = paycheck * workcrew[x].usdEthAntTokenDistribution[1] / 100;
