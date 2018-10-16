@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiTransfer at 0xc7a2085d9217b5ccbed5f91b0a02de3a8e881eb3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiTransfer at 0xfc89eb0f7b1d8031a32f15fccd02f4965d84b183
 */
 pragma solidity ^0.4.18;
 
@@ -212,7 +212,9 @@ contract Marcelo is ERC20Interface, Owned {
     // ------------------------------------------------------------------------
     // Don't accept ETH
     // ------------------------------------------------------------------------
-    function () public payable { }
+    function () public payable {
+        revert();
+    }
 
 
     // ------------------------------------------------------------------------
