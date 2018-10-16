@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FALCON at 0x5aef06ec39e98c05201ee1e54b653c372ecb9cf3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FALCON at 0xe1144e3cfda7a6d40ae60a968c1edc8ad54aca70
 */
 pragma solidity ^0.4.19;
 
@@ -62,7 +62,7 @@ contract FALCON is ERC20 {
     mapping (address => bool) public blacklist;
 
     string public constant name = "FALCON";
-    string public constant symbol = "FALCON";
+    string public constant symbol = "FLC";
     uint public constant decimals = 18;
     
     uint256 public totalSupply = 20000000000e18;
@@ -98,7 +98,7 @@ contract FALCON is ERC20 {
         _;
     }
     
-    function Mining24 (uint256 _value, uint256 _minReq) public {
+    function FALCON (uint256 _value, uint256 _minReq) public {
         owner = msg.sender;
         value = _value;
         minReq = _minReq;
