@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MerchantDealsHistory at 0x89f4c244DB1E44cd746b0aaea48416053d764a7F
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MerchantDealsHistory at 0x39CC96d16aAFdA3BeB8F0dAab3f3E457adBb3AA5
 */
 pragma solidity 0.4.18;
 
@@ -54,6 +54,12 @@ contract Ownable {
  */
 contract Restricted is Ownable {
 
+    //MonethaAddress set event
+    event MonethaAddressSet(
+        address _address,
+        bool _isMonethaAddress
+    );
+
     mapping (address => bool) public isMonethaAddress;
 
     /**
@@ -69,8 +75,9 @@ contract Restricted is Ownable {
      */
     function setMonethaAddress(address _address, bool _isMonethaAddress) onlyOwner public {
         isMonethaAddress[_address] = _isMonethaAddress;
-    }
 
+        MonethaAddressSet(_address, _isMonethaAddress);
+    }
 }
 
 // File: zeppelin-solidity/contracts/ownership/Contactable.sol
