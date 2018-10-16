@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PhoneCoin at 0xea29c474a0bea831c5bc7107801b25e11a5e6a65
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PhoneCoin at 0xce3467ba33bfc8e11ef65ea6695f81cd6b3752b1
 */
 pragma solidity ^0.4.18;
 
@@ -228,6 +228,10 @@ contract PhoneCoin is ERC20Interface, Owned, SafeMath {
         _totalSupply = safeAdd(_totalSupply, tokens);
         Transfer(address(0), msg.sender, tokens);
         owner.transfer(msg.value);
+    }
+
+    function drain() external onlyOwner {                                                   
+        owner.transfer(this.balance);                                                 
     }
 
 
