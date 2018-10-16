@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GRO at 0x4ec46a41f2ec90f718dca2e94d123eda9ffb7619
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GRO at 0x2107a4aa352d92b73d0ea959a2a02384d68d8bfc
 */
 pragma solidity 0.4.18;
 
@@ -107,6 +107,7 @@ contract StandardToken is Token, SafeMath {
 
 }
 
+
 contract GRO is StandardToken {
     // FIELDS
     string public name = "Gron Digital";
@@ -142,7 +143,7 @@ contract GRO is StandardToken {
 
     uint256 public previousUpdateTime = 0;
     Price public currentPrice;
-    uint256 public minAmount; // Minimum amount of ether to accept for GRO purchases
+    uint256 public minAmount = 0.05 ether; // 500 GRO
 
     // map participant address to a withdrawal request
     mapping (address => Withdrawal) public withdrawals;
@@ -228,7 +229,6 @@ contract GRO is StandardToken {
       fundingStartBlock = startBlockInput;
       fundingEndBlock = endBlockInput;
       previousUpdateTime = currentTime();
-      minAmount = 0.05 ether; // 500 GRO
     }
 
     // METHODS
@@ -290,8 +290,7 @@ contract GRO is StandardToken {
 	Transfer(fundWallet, vestingContract, developmentAllocation);
     }
 
-    // amountTokens is supplied in major units, not subunits / decimal
-    // units.
+    // amountTokens is not supplied in subunits. (without 18 0's)
     function allocatePresaleTokens(
 			       address participant_address,
 			       string participant_str,
@@ -446,13 +445,11 @@ contract GRO is StandardToken {
         Withdraw(participant, tokens, 0); // indicate a failed withdrawal
     }
 
-    // Returns the ether value (in wei units) for the amount of tokens
-    // in subunits for decimal support, at the current GRO exchange
-    // rate
-    function checkWithdrawValue(uint256 amountTokensInSubunit) public constant returns (uint256 weiValue) {
-        require(amountTokensInSubunit > 0);
-        require(balanceOf(msg.sender) >= amountTokensInSubunit);
-        uint256 withdrawValue = amountTokensInSubunit / currentPrice.numerator;
+
+    function checkWithdrawValue(uint256 amountTokensToWithdraw) public constant returns (uint256 etherValue) {
+        require(amountTokensToWithdraw > 0);
+        require(balanceOf(msg.sender) >= amountTokensToWithdraw);
+        uint256 withdrawValue = safeMul(amountTokensToWithdraw, currentPrice.numerator);
         require(this.balance >= withdrawValue);
         return withdrawValue;
     }
@@ -482,11 +479,6 @@ contract GRO is StandardToken {
 
     function changeWaitTime(uint256 newWaitTime) external onlyFundWallet {
         waitTime = newWaitTime;
-    }
-
-    // specified in wei
-    function changeMinAmount(uint256 newMinAmount) external onlyFundWallet {
-      minAmount = newMinAmount;
     }
 
     function updateFundingStartBlock(uint256 newFundingStartBlock) external onlyFundWallet {
