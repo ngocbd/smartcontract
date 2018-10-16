@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheKitCoin at 0x21cbdf83206bf75573cc3833515802a6d89f9335
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheKitCoin at 0x24e208f1eb611167284c2c7c9338a2b7a2dcca12
 */
 pragma solidity ^0.4.4;
 
@@ -100,7 +100,7 @@ contract TheKitCoin is StandardToken { // CHANGE THIS. Update the contract name.
     string public name;                   // Token Name
     uint8 public decimals;                // How many decimals to show. To be standard complicant keep it 18
     string public symbol;                 // An identifier: eg SBX, XPR etc..
-    string public version = 'TKC1.0'; 
+    string public version = 'H1.0'; 
     uint256 public unitsOneEthCanBuy;     // How many units of your coin can be bought by 1 ETH?
     uint256 public totalEthInWei;         // WEI is the smallest unit of ETH (the equivalent of cent in USD or satoshi in BTC). We'll store the total ETH raised via our ICO here.  
     address public fundsWallet;           // Where should the raised ETH go?
@@ -113,7 +113,7 @@ contract TheKitCoin is StandardToken { // CHANGE THIS. Update the contract name.
         name = "TheKitCoin";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
         symbol = "TKC";                                             // Set the symbol for display purposes (CHANGE THIS)
-        unitsOneEthCanBuy = 4000;                                      // Set the price of your token for the ICO (CHANGE THIS)
+        unitsOneEthCanBuy = 10;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
     }
 
