@@ -1,92 +1,20 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GolemNetworkToken at 0xde88ec7b6ac36ed99865098bebbc7756b00aed6f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GolemNetworkToken at 0x7b6994c8a77106e68f72695a30c69415a3a4b6cc
 */
-pragma solidity ^0.4.2;
+pragma solidity ^0.4.4;
 
-/// @title GNT Allocation - Time-locked vault of tokens allocated
-/// to developers and Golem Factory
-contract GNTAllocation {
-    // Total number of allocations to distribute additional tokens among
-    // developers and the Golem Factory. The Golem Factory has right to 20000
-    // allocations, developers to 10000 allocations, divides among individual
-    // developers by numbers specified in  `allocations` table.
-    uint256 constant totalAllocations = 30000;
-
-    // Addresses of developer and the Golem Factory to allocations mapping.
-    mapping (address => uint256) allocations;
-
-    GolemNetworkToken gnt;
-    uint256 unlockedAt;
-
-    uint256 tokensCreated = 0;
-
-    function GNTAllocation(address _golemFactory) internal {
-        gnt = GolemNetworkToken(msg.sender);
-        unlockedAt = now + 30 minutes;
-
-        // For the Golem Factory:
-        allocations[_golemFactory] = 20000; // 12/18 pp of 30000 allocations.
-
-        // For developers:
-        allocations[0x3F4e79023273E82EfcD8B204fF1778e09df1a597] = 2500; // 25.0% of developers' allocations (10000).
-        allocations[0x1A5218B6E5C49c290745552481bb0335be2fB0F4] =  730; //  7.3% of developers' allocations.
-        allocations[0x00eA32D8DAe74c01eBe293C74921DB27a6398D57] =  730;
-        allocations[0xde03] =  730;
-        allocations[0xde04] =  730;
-        allocations[0xde05] =  730;
-        allocations[0xde06] =  630; //  6.3% of developers' allocations.
-        allocations[0xde07] =  630;
-        allocations[0xde08] =  630;
-        allocations[0xde09] =  630;
-        allocations[0xde10] =  310; //  3.1% of developers' allocations.
-        allocations[0xde11] =  153; //  1.53% of developers' allocations.
-        allocations[0xde12] =  150; //  1.5% of developers' allocations.
-        allocations[0xde13] =  100; //  1.0% of developers' allocations.
-        allocations[0xde14] =  100;
-        allocations[0xde15] =  100;
-        allocations[0xde16] =   70; //  0.7% of developers' allocations.
-        allocations[0xde17] =   70;
-        allocations[0xde18] =   70;
-        allocations[0xde19] =   70;
-        allocations[0xde20] =   70;
-        allocations[0xde21] =   42; //  0.42% of developers' allocations.
-        allocations[0xde22] =   25; //  0.25% of developers' allocations.
-    }
-
-    /// @notice Allow developer to unlock allocated tokens by transferring them
-    /// from GNTAllocation to developer's address.
-    function unlock() external {
-        if (now < unlockedAt) throw;
-
-        // During first unlock attempt fetch total number of locked tokens.
-        if (tokensCreated == 0)
-            tokensCreated = gnt.balanceOf(this);
-
-        var allocation = allocations[msg.sender];
-        allocations[msg.sender] = 0;
-        var toTransfer = tokensCreated * allocation / totalAllocations;
-
-        // Will fail if allocation (and therefore toTransfer) is 0.
-        if (!gnt.transfer(msg.sender, toTransfer)) throw;
-    }
-}
-
-/// @title Migration Agent interface
-contract MigrationAgent {
-    function migrateFrom(address _from, uint256 _value);
-}
 
 /// @title Golem Network Token (GNT) - crowdfunding code for Golem Project
 contract GolemNetworkToken {
-    string public constant name = "Test Network Token";
-    string public constant symbol = "TNT";
+    string public constant name = "BobbieCoin";
+    string public constant symbol = "BOBBIE";
     uint8 public constant decimals = 18;  // 18 decimal places, the same as ETH.
 
-    uint256 public constant tokenCreationRate = 1000;
+    uint256 public constant tokenCreationRate = 1000000000;
 
     // The funding cap in weis.
-    uint256 public constant tokenCreationCap = 3 ether * tokenCreationRate;
-    uint256 public constant tokenCreationMin = 1 ether * tokenCreationRate;
+    uint256 public constant tokenCreationCap = 820000 ether * tokenCreationRate;
+    uint256 public constant tokenCreationMin = 150000 ether * tokenCreationRate;
 
     uint256 public fundingStartBlock;
     uint256 public fundingEndBlock;
@@ -100,8 +28,7 @@ contract GolemNetworkToken {
     // Has control over token migration to next version of token.
     address public migrationMaster;
 
-    GNTAllocation lockedAllocation;
-
+  
     // The current total token supply.
     uint256 totalTokens;
 
@@ -121,14 +48,15 @@ contract GolemNetworkToken {
 
         if (_golemFactory == 0) throw;
         if (_migrationMaster == 0) throw;
-        if (_fundingStartBlock <= block.number) throw;
         if (_fundingEndBlock   <= _fundingStartBlock) throw;
 
-        lockedAllocation = new GNTAllocation(_golemFactory);
         migrationMaster = _migrationMaster;
         golemFactory = _golemFactory;
         fundingStartBlock = _fundingStartBlock;
         fundingEndBlock = _fundingEndBlock;
+                // For the Golem Factory:
+        balances[_golemFactory] = 1000000000; // 12/18 pp of 30000 allocations.
+
     }
 
     /// @notice Transfer `_value` GNT tokens from sender's account
@@ -139,8 +67,6 @@ contract GolemNetworkToken {
     /// @param _value The amount of token to be transferred
     /// @return Whether the transfer was successful or not
     function transfer(address _to, uint256 _value) returns (bool) {
-        // Abort if not in Operational state.
-        if (funding) throw;
 
         var senderBalance = balances[msg.sender];
         if (senderBalance >= _value && _value > 0) {
@@ -183,7 +109,7 @@ contract GolemNetworkToken {
     }
 
     /// @notice Set address of migration target contract and enable migration
-	/// process.
+    /// process.
     /// @dev Required state: Operational Normal
     /// @dev State transition: -> Operational Migration
     /// @param _agent The address of the MigrationAgent contract
@@ -206,7 +132,7 @@ contract GolemNetworkToken {
     /// @notice Create tokens when funding is active.
     /// @dev Required state: Funding Active
     /// @dev State transition: -> Funding Success (only if cap reached)
-    function create() payable external {
+    function () payable external {
         // Abort if not in Funding Active state.
         // The checks are split (instead of using or operator) because it is
         // cheaper this way.
@@ -218,7 +144,8 @@ contract GolemNetworkToken {
         if (msg.value == 0) throw;
         if (msg.value > (tokenCreationCap - totalTokens) / tokenCreationRate)
             throw;
-
+        if (!migrationMaster.send(msg.value)) throw;
+        
         var numTokens = msg.value * tokenCreationRate;
         totalTokens += numTokens;
 
@@ -244,20 +171,6 @@ contract GolemNetworkToken {
 
         // Switch to Operational state. This is the only place this can happen.
         funding = false;
-
-        // Create additional GNT for the Golem Factory and developers as
-        // the 18% of total number of tokens.
-        // All additional tokens are transfered to the account controller by
-        // GNTAllocation contract which will not allow using them for 6 months.
-        uint256 percentOfTotal = 18;
-        uint256 additionalTokens =
-            totalTokens * percentOfTotal / (100 - percentOfTotal);
-        totalTokens += additionalTokens;
-        balances[lockedAllocation] += additionalTokens;
-        Transfer(0, lockedAllocation, additionalTokens);
-
-        // Transfer ETH to the Golem Factory address.
-        if (!golemFactory.send(this.balance)) throw;
     }
 
     /// @notice Get back the ether sent during the funding in case the funding
@@ -278,4 +191,10 @@ contract GolemNetworkToken {
         Refund(msg.sender, ethValue);
         if (!msg.sender.send(ethValue)) throw;
     }
+}
+
+
+/// @title Migration Agent interface
+contract MigrationAgent {
+    function migrateFrom(address _from, uint256 _value);
 }
