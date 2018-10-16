@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0xc5d229c179bc8926dd53765b8c4fab2ee2457d38
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0x64fd65e594cac4a59da0cfa4924df899d83bf758
 */
 pragma solidity ^0.4.13;
 
@@ -153,16 +153,16 @@ contract StandardToken is ERC20, BasicToken {
  * Created specifically for TokenDone.io
  */
 contract ApprovedTokenDone is StandardToken {
-	string public name = 'VISA';
-	string public symbol = 'VISA';
-	uint public decimals = 3;
-	uint public initialSupply = 99999999999;
+	string public name = 'OUT';
+	string public symbol = 'OUT';
+	uint public decimals = 0;
+	uint public initialSupply = 123456789;
 	string public publishier = 'TokenDone.io';
-	uint public creationTime;
+	uint public CreationTime;
 	
 	function ApprovedTokenDone() {
 		totalSupply = initialSupply;
     	balances[0xe90fFFd34aEcFE44db61a6efD85663296094A09c] = initialSupply;
-		creationTime = now;
+		CreationTime = now;
 	}
 }
