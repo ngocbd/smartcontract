@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SZETOKEN at 0xfe131c21ac78996dbce22a2dade59f657f8df4db
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SZETOKEN at 0x61524de92c2f798861a07d9d02deeff3890b17d6
 */
 pragma solidity ^0.4.11;
 
@@ -12,11 +12,11 @@ contract SZETOKEN {
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
 
-    uint256 public totalSupply = 100000000000000000;
+    uint256 public totalSupply = 0;
     bool public stopped = false;
 
     uint256 constant valueFounder = 100000000000000000;
-    address owner = 0x10cCD0cC3eAfB3E9AcB36AE04f02A58d86F5c3a3;
+    address owner = 0x0;
 
     modifier isOwner {
         assert(owner == msg.sender);
