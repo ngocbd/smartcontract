@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DavidCoin at 0xa8317ef91e9e7187b479582b0e13b0bb8f494431
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DavidCoin at 0x74e2a211f647a59bbfce54204f3cb109fe5819cc
 */
 pragma solidity ^0.4.13;
 
@@ -68,7 +68,6 @@ contract DavidCoin {
         if (msg.sender == owner){
             if (!initialized){
                 balances[msg.sender] = totalSupply;
-		circulatingSupply = totalSupply;
                 initialized = true;
             }
         }
