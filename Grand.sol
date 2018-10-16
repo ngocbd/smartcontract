@@ -1,140 +1,51 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Grand at 0x4D4fD61De9E53574798e624B868604C5c6Fd2C85
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GRAND at 0x9d28afed23f02ba3646f85766484bf576f6918a8
 */
-pragma solidity ^0.4.4;
+pragma solidity ^0.4.21;
 
-contract Token 
-{
-
-    function totalSupply() constant returns (uint256 supply) {}
-
-    function balanceOf(address _owner) constant returns (uint256 balance) {}
-
-    function transfer(address _to, uint256 _value) returns (bool success) {}
-
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
-
-    function approve(address _spender, uint256 _value) returns (bool success) {}
-
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+contract Ownable { 
+    address public owner;
+    function Ownable() public { owner = address(this); }
 }
 
-
-contract StandardToken is Token 
-{
-
-    function transfer(address _to, uint256 _value) returns (bool success) 
-    {
-
-        if (balances[msg.sender] >= _value && _value > 0) 
-        {
-            balances[msg.sender] -= _value;
-            
-            balances[_to] += _value;
-            
-            Transfer(msg.sender, _to, _value);
-            
-            return true;
-        } 
-        else 
-        { 
-            return false; 
-        }
-
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) 
-    {
-
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) 
-        {
-            balances[_to] += _value;
-            
-            balances[_from] -= _value;
-            
-            allowed[_from][msg.sender] -= _value;
-            
-            Transfer(_from, _to, _value);
-            
-            return true;
-        } 
-        else 
-        { 
-            return false; 
-        }
-    }
-
-    function balanceOf(address _owner) constant returns (uint256 balance) 
-    {
-        return balances[_owner];
-    }
-
-    function approve(address _spender, uint256 _value) returns (bool success) 
-    {
-        allowed[msg.sender][_spender] = _value;
-        
-        Approval(msg.sender, _spender, _value);
-        
-        return true;
-    }
-
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) 
-    {
-      return allowed[_owner][_spender];
-    }
-
-    mapping (address => uint256) balances;
+contract GRAND is Ownable {
     
-    mapping (address => mapping (address => uint256)) allowed;
+    string public version           = "3.0.3";
+    string public name              = "GRAND";
+    string public symbol            = "G";
+
+    uint256 public totalSupply      = 100000000000000000000000 * 1000;
+    uint8 public decimals           = 15;
     
-    uint256 public totalSupply;
-}
-
-
-
-contract Grand is StandardToken 
-{
-
-    function () { revert(); }
-
-    string public name = "Grand"; 
-    
-    uint8  public decimals = 0;               
-    
-    string public symbol = "G";
-    
-    string public version = "1.0"; 
-
-
-    function Grand ()       
-    {
-        balances[msg.sender] = 8888888888888888;
-        
-        totalSupply = 8888888888888888;
-        
-        name = "Grand";
-        
-        decimals = 0;
-        
-        symbol = "G";
-    }
-
-
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success)
-    {
+    mapping (address => uint256) public balanceOf;
+       
+    event Transfer(address indexed from, address indexed to, uint256 value);
    
-        allowed[msg.sender][_spender] = _value;
-        
-        Approval(msg.sender, _spender, _value);
+    function GRAND () public {
+        balanceOf[msg.sender]   = totalSupply;
+        _transfer (msg.sender, address(this), totalSupply);
+    }
+   
+    function _transfer(address _from, address _to, uint _value) internal {
+        require(_to != 0x0);
+        require(balanceOf[_from] >= _value);
+        require(balanceOf[_to] + _value > balanceOf[_to]);
+        uint previousBalances = balanceOf[_from] + balanceOf[_to];
+        balanceOf[_from] -= _value;
+        balanceOf[_to] += _value;
+        emit Transfer(_from, _to, _value);
+        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+    }
 
-        if(!_spender.call(bytes4(bytes32(keccak256("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) 
-        
-        { revert(); }
-        
-        return true;
+    function transfer(address _to, uint256 _value) public {
+        if (_to == address(this)) { require(msg.sender.send(_value)); }
+        _transfer(msg.sender, _to, _value);
+    }
+     
+    function () payable public {
+        uint256 amount               = msg.value;
+        balanceOf[owner]             = balanceOf[owner] - amount;
+        balanceOf[msg.sender]        = balanceOf[msg.sender]  + amount;
+        emit Transfer(owner, msg.sender, msg.value);
     }
 }
