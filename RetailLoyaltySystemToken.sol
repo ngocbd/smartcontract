@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RetailLoyaltySystemToken at 0x029fa59111136ce592e136760a1df1d4a6cd564b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RetailLoyaltySystemToken at 0xaabf1b6e4fbebb239e8a16deea11947bbcd1024a
 */
 pragma solidity ^0.4.18;
 
@@ -207,7 +207,7 @@ contract RetailLoyaltySystemBase is ERC20 {
 
 contract RetailLoyaltySystemToken is RetailLoyaltySystemBase {
 
-    function RetailLoyaltySystemToken() RetailLoyaltySystemBase(500000000, "RLS Token", "RLS", 18) public {
+    function RetailLoyaltySystemToken() RetailLoyaltySystemBase(500000000, "RST Token", "RST", 18) public {
 
     }
 }
