@@ -1,11 +1,47 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiVesting at 0x66e9aeedc17558cfc97b6734600b7a835f8e7ceb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiVesting at 0x1d86a854da490ff74dedc7abe281fb468f8c19ee
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
 /**
  * Changes by https://www.docademic.com/
  */
 
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+}
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
@@ -38,39 +74,6 @@ library SafeMath {
     return c;
   }
 }
-
-contract Ownable {
-  address public owner;
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-}
-
 contract Destroyable is Ownable{
     /**
      * @notice Allows to destroy the contract and return the tokens to the owner.
@@ -79,11 +82,10 @@ contract Destroyable is Ownable{
         selfdestruct(owner);
     }
 }
-
 interface Token {
-    function transfer(address _to, uint256 _value) public;
+    function transfer(address _to, uint256 _value) external;
 
-    function balanceOf(address who) public returns (uint256);
+    function balanceOf(address who) view external returns (uint256);
 }
 
 contract MultiVesting is Ownable, Destroyable {
@@ -91,8 +93,9 @@ contract MultiVesting is Ownable, Destroyable {
 
     // beneficiary of tokens
     struct Beneficiary {
-        uint256 released;
+        string description;
         uint256 vested;
+        uint256 released;
         uint256 start;
         uint256 cliff;
         uint256 duration;
@@ -108,6 +111,7 @@ contract MultiVesting is Ownable, Destroyable {
 
 
     mapping(address => Beneficiary) public beneficiaries;
+    address[] public addresses;
     Token public token;
     uint256 public totalVested;
     uint256 public totalReleased;
@@ -140,7 +144,7 @@ contract MultiVesting is Ownable, Destroyable {
      * of the balance will have vested.
      * @param _token address of the token of vested tokens
      */
-    function MultiVesting(address _token) public {
+    function MultiVesting (address _token) public {
         require(_token != address(0));
         token = Token(_token);
     }
@@ -175,11 +179,11 @@ contract MultiVesting is Ownable, Destroyable {
 
         token.transfer(_beneficiary, unreleased);
 
-        if((beneficiary.vested - beneficiary.released) == 0){
+        if ((beneficiary.vested - beneficiary.released) == 0) {
             beneficiary.isBeneficiary = false;
         }
 
-        Released(_beneficiary, unreleased);
+        emit Released(_beneficiary, unreleased);
     }
 
     /**
@@ -198,7 +202,7 @@ contract MultiVesting is Ownable, Destroyable {
      * @param _duration duration in seconds of the period in which the tokens will vest
      * @param _revocable whether the vesting is revocable or not
      */
-    function addBeneficiary(address _beneficiary, uint256 _vested, uint256 _start, uint256 _cliff, uint256 _duration, bool _revocable)
+    function addBeneficiary(address _beneficiary, uint256 _vested, uint256 _start, uint256 _cliff, uint256 _duration, bool _revocable, string _description)
     onlyOwner
     isNotBeneficiary(_beneficiary)
     public {
@@ -213,10 +217,12 @@ contract MultiVesting is Ownable, Destroyable {
             duration : _duration,
             revoked : false,
             revocable : _revocable,
-            isBeneficiary : true
+            isBeneficiary : true,
+            description : _description
             });
         totalVested = totalVested.add(_vested);
-        NewBeneficiary(_beneficiary);
+        addresses.push(_beneficiary);
+        emit NewBeneficiary(_beneficiary);
     }
 
     /**
@@ -241,7 +247,7 @@ contract MultiVesting is Ownable, Destroyable {
         beneficiary.revoked = true;
         beneficiary.released = beneficiary.released.add(refund);
 
-        Revoked(_beneficiary);
+        emit Revoked(_beneficiary);
     }
 
     /**
@@ -260,7 +266,38 @@ contract MultiVesting is Ownable, Destroyable {
         beneficiary.isBeneficiary = false;
         beneficiary.released = beneficiary.released.add(balance);
 
-        BeneficiaryDestroyed(_beneficiary);
+        for (uint i = 0; i < addresses.length - 1; i++)
+            if (addresses[i] == _beneficiary) {
+                addresses[i] = addresses[addresses.length - 1];
+                break;
+            }
+
+        addresses.length -= 1;
+
+        emit BeneficiaryDestroyed(_beneficiary);
+    }
+
+    /**
+     * @notice Allows the owner to clear the contract. Remain tokens are returned to the owner.
+     */
+    function clearAll() public onlyOwner {
+
+        token.transfer(owner, token.balanceOf(this));
+
+        for (uint i = 0; i < addresses.length; i++) {
+            Beneficiary storage beneficiary = beneficiaries[addresses[i]];
+            beneficiary.isBeneficiary = false;
+            beneficiary.released = 0;
+            beneficiary.vested = 0;
+            beneficiary.start = 0;
+            beneficiary.cliff = 0;
+            beneficiary.duration = 0;
+            beneficiary.revoked = false;
+            beneficiary.revocable = false;
+            beneficiary.description = "";
+        }
+        addresses.length = 0;
+
     }
 
     /**
@@ -289,10 +326,24 @@ contract MultiVesting is Ownable, Destroyable {
     }
 
     /**
+     * @dev Get the remain MTC on the contract.
+     */
+    function Balance() view public returns (uint256) {
+        return token.balanceOf(address(this));
+    }
+
+    /**
+     * @dev Get the numbers of beneficiaries in the vesting contract.
+     */
+    function beneficiariesLength() view public returns (uint256) {
+        return addresses.length;
+    }
+
+    /**
      * @notice Allows the owner to flush the eth.
      */
     function flushEth() public onlyOwner {
-        owner.transfer(this.balance);
+        owner.transfer(address(this).balance);
     }
 
     /**
