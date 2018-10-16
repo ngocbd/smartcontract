@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReservedTokensFinalizeAgent at 0x95f1B8e1e33D15b41d4449Fc6F6bFE25Dcc9b64b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReservedTokensFinalizeAgent at 0x1Bc664A069c690DFeD7C8dFF65aC700e6D725E54
 */
 // Created using Token Wizard https://github.com/poanetwork/token-wizard by POA Network 
 pragma solidity ^0.4.11;
@@ -1581,13 +1581,8 @@ contract ReservedTokensFinalizeAgent is FinalizeAgent {
     assert(!reservedTokensAreDistributed);
     assert(distributedReservedTokensDestinationsLen < token.reservedTokensDestinationsLen());
 
-
     // How many % of tokens the founders and others get
-    uint tokensSold = 0;
-    for (uint8 i = 0; i < crowdsale.joinedCrowdsalesLen(); i++) {
-      CrowdsaleExt tier = CrowdsaleExt(crowdsale.joinedCrowdsales(i));
-      tokensSold = tokensSold.plus(tier.tokensSold());
-    }
+    uint tokensSold = crowdsale.tokensSold();
 
     uint startLooping = distributedReservedTokensDestinationsLen;
     uint batch = token.reservedTokensDestinationsLen().minus(distributedReservedTokensDestinationsLen);
