@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StatiCoin at 0xbf298b1dd6992895de3ece37ba0a1b65483f7742
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StatiCoin at 0x1831887fbabf783910db128e60c41bfa016059d8
 */
 pragma solidity ^0.4.16;
 //https://github.com/genkifs/staticoin
@@ -346,27 +346,18 @@ contract Coin is StandardToken, mortal{
     I_minter public mint;				  //Minter interface  
     event EventClear();
 
-    function Coin(string _tokenName, string _tokenSymbol) { 
+    function Coin(string _tokenName, string _tokenSymbol, address _minter) { 
         name = _tokenName;                                   // Set the name for display purposes
         symbol = _tokenSymbol;                               // Set the symbol for display purposes
-    }
-
-    function setMinter(address _minter) external onlyOwner {
-		/**
-		* @dev Transfer tokens from one address to another.  Requires allowance to be set.
-		* once set this can't be changed (the minter contract doesn't have a changeOwner function)
-		* @param _minter Address of the minter contract
-		*/
-	
         changeOwner(_minter);
-        mint=I_minter(_minter);    
-    }   
+        mint=I_minter(_minter); 
+	}
 }
 
 /** @title RiskCoin. */
 contract RiskCoin is Coin{
-    function RiskCoin(string _tokenName, string _tokenSymbol) 
-	Coin(_tokenName,_tokenSymbol) {} 
+    function RiskCoin(string _tokenName, string _tokenSymbol, address _minter) 
+	Coin(_tokenName,_tokenSymbol,_minter) {} 
 	
     function() payable {
 		/** @dev direct any ETH sent to this RiskCoin address to the minter.NewRisk function
@@ -377,8 +368,8 @@ contract RiskCoin is Coin{
 
 /** @title StatiCoin. */
 contract StatiCoin is Coin{
-    function StatiCoin(string _tokenName, string _tokenSymbol) 
-	Coin(_tokenName,_tokenSymbol) {} 
+    function StatiCoin(string _tokenName, string _tokenSymbol, address _minter) 
+	Coin(_tokenName,_tokenSymbol,_minter) {} 
 
     function() payable {        
 		/** @dev direct any ETH sent to this StatiCoin address to the minter.NewStatic function
