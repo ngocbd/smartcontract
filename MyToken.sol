@@ -1,147 +1,114 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x24f32ab937b6dff4e8cfc2d2018802755f965550
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x1f21d8395655fb262251897df7cb3c9358bec6a2
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.18;
 
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
+contract SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+       return 0;
+     }
+     uint256 c = a * b;
+     assert(c / a == b);
+     return c;
+   }
 
-contract MyToken {
-    // Public variables of the token
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-    uint256 public totalSupply;
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+     uint256 c = a / b;
+     return c;
+  }
 
-    // This creates an array with all balances
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+     return a - b;
+   }
 
-    // This generates a public event on the blockchain that will notify clients
-    event Transfer(address indexed from, address indexed to, uint256 value);
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+     uint256 c = a + b;
+    assert(c >= a);
+     return c;
+   }
+}
 
-    // This notifies clients about the amount burnt
-    event Burn(address indexed from, uint256 value);
+contract ERC20 {
+   uint256 public totalSupply;
+   function balanceOf(address who) public view returns (uint256);
+   function transfer(address to, uint256 value) public returns (bool);
+   event Transfer(address indexed from, address indexed to, uint256 value);
+   function allowance(address owner, address spender) public view returns (uint256);
+   function transferFrom(address from, address to, uint256 value) public returns (bool);
+   function approve(address spender, uint256 value) public returns (bool);
+   event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
-    /**
-     * Constrctor function
-     *
-     * Initializes contract with initial supply tokens to the creator of the contract
-     */
-    function MyToken(
-        uint256 initialSupply,
-        string tokenName,
-        uint8 decimalUnits,
-        string tokenSymbol
-    ) {
-        balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
-        totalSupply = initialSupply;                        // Update total supply
-        name = tokenName;                                   // Set the name for display purposes
-        symbol = tokenSymbol;                               // Set the symbol for display purposes
-        decimals = decimalUnits;                            // Amount of decimals for display purposes
+
+contract StandardToken is ERC20, SafeMath {
+
+   mapping(address => uint256) balances;
+   mapping (address => mapping (address => uint256)) internal allowed;
+
+   function transfer(address _to, uint256 _value) public returns (bool) {
+     require(_to != address(0));
+     require(_value <= balances[msg.sender]);
+     balances[msg.sender] = sub(balances[msg.sender], _value);
+     balances[_to] = add(balances[_to], _value);
+     Transfer(msg.sender, _to, _value);
+     return true;
+   }
+
+  function balanceOf(address _owner) public view returns (uint256 balance) {
+    return balances[_owner];
+   }
+
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+     require(_value <= balances[_from]);
+     require(_value <= allowed[_from][msg.sender]);
+
+    balances[_from] = sub(balances[_from], _value);
+     balances[_to] = add(balances[_to], _value);
+     allowed[_from][msg.sender] = sub(allowed[_from][msg.sender], _value);
+    Transfer(_from, _to, _value);
+     return true;
+   }
+
+   function approve(address _spender, uint256 _value) public returns (bool) {
+     allowed[msg.sender][_spender] = _value;
+     Approval(msg.sender, _spender, _value);
+     return true;
+   }
+
+  function allowance(address _owner, address _spender) public view returns (uint256) {
+     return allowed[_owner][_spender];
+   }
+
+   function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+     allowed[msg.sender][_spender] = add(allowed[msg.sender][_spender], _addedValue);
+     Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+     return true;
+   }
+
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+     uint oldValue = allowed[msg.sender][_spender];
+     if (_subtractedValue > oldValue) {
+       allowed[msg.sender][_spender] = 0;
+     } else {
+       allowed[msg.sender][_spender] = sub(oldValue, _subtractedValue);
     }
+     Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+     return true;
+   }
 
-    /**
-     * Internal transfer, only can be called by this contract
-     */
-    function _transfer(address _from, address _to, uint _value) internal {
-        require(_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
-        require(balanceOf[_from] >= _value);                // Check if the sender has enough
-        require(balanceOf[_to] + _value > balanceOf[_to]); // Check for overflows
-        balanceOf[_from] -= _value;                         // Subtract from the sender
-        balanceOf[_to] += _value;                           // Add the same to the recipient
-        Transfer(_from, _to, _value);
-    }
+}
 
-    /**
-     * Transfer tokens
-     *
-     * Send `_value` tokens to `_to` from your account
-     *
-     * @param _to The address of the recipient
-     * @param _value the amount to send
-     */
-    function transfer(address _to, uint256 _value) {
-        _transfer(msg.sender, _to, _value);
-    }
+contract MyToken is StandardToken {
+   string public name = 'IRONCOIN';
+   string public symbol = 'IRC';
+   uint public decimals = 8;
+   uint public INITIAL_SUPPLY = 3000000000* 10**8;
 
-    /**
-     * Transfer tokens from other address
-     *
-     * Send `_value` tokens to `_to` in behalf of `_from`
-     *
-     * @param _from The address of the sender
-     * @param _to The address of the recipient
-     * @param _value the amount to send
-     */
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        require(_value <= allowance[_from][msg.sender]);     // Check allowance
-        allowance[_from][msg.sender] -= _value;
-        _transfer(_from, _to, _value);
-        return true;
-    }
-
-    /**
-     * Set allowance for other address
-     *
-     * Allows `_spender` to spend no more than `_value` tokens in your behalf
-     *
-     * @param _spender The address authorized to spend
-     * @param _value the max amount they can spend
-     */
-    function approve(address _spender, uint256 _value)
-        returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
-        return true;
-    }
-
-    /**
-     * Set allowance for other address and notify
-     *
-     * Allows `_spender` to spend no more than `_value` tokens in your behalf, and then ping the contract about it
-     *
-     * @param _spender The address authorized to spend
-     * @param _value the max amount they can spend
-     * @param _extraData some extra information to send to the approved contract
-     */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
-        returns (bool success) {
-        tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
-        }
-    }
-
-    /**
-     * Destroy tokens
-     *
-     * Remove `_value` tokens from the system irreversibly
-     *
-     * @param _value the amount of money to burn
-     */
-    function burn(uint256 _value) returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-        balanceOf[msg.sender] -= _value;            // Subtract from the sender
-        totalSupply -= _value;                      // Updates totalSupply
-        Burn(msg.sender, _value);
-        return true;
-    }
-
-    /**
-     * Destroy tokens from other ccount
-     *
-     * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
-     *
-     * @param _from the address of the sender
-     * @param _value the amount of money to burn
-     */
-    function burnFrom(address _from, uint256 _value) returns (bool success) {
-        require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
-        require(_value <= allowance[_from][msg.sender]);    // Check allowance
-        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
-        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
-        totalSupply -= _value;                              // Update totalSupply
-        Burn(_from, _value);
-        return true;
-    }
+   function MyToken() {
+     totalSupply = INITIAL_SUPPLY;
+     balances[msg.sender] = INITIAL_SUPPLY;
+   }
 }
