@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnableToken at 0xc16c28d110697b1ad7a0f640eee2e343febea43b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnableToken at 0x0edde4b6f91dbd2efd075ace85ec2e52d0696d44
 */
 pragma solidity ^0.4.15;
 
@@ -7,7 +7,7 @@ pragma solidity ^0.4.15;
  *
  * @author  <newtwist@protonmail.com>
  *
- * Version C
+ * Version D
  *
  * Overview:
  * This is an implimentation of a `burnable` token. The tokens do not pay any dividends; however if/when tokens
@@ -18,7 +18,8 @@ pragma solidity ^0.4.15;
  * useful, for example, if the sale-contract/owner wants to reduce the supply of tokens.
  *
  */
-pragma solidity ^0.4.11;
+//import './SafeMath.sol';
+pragma solidity ^0.4.18;
 
 /*
     Overflow protected math functions
@@ -72,9 +73,12 @@ contract SafeMath {
     }
 }
 
+//import './iBurnableToken.sol';
 pragma solidity ^0.4.15;
 
 //Burnable Token interface
+
+//import './iERC20Token.sol';
 
 pragma solidity ^0.4.15;
 
@@ -94,11 +98,11 @@ contract iERC20Token {
   event Approval( address indexed owner, address indexed spender, uint value);
 }
 
-
 contract iBurnableToken is iERC20Token {
   function burnTokens(uint _burnCount) public;
   function unPaidBurnTokens(uint _burnCount) public;
 }
+
 
 contract BurnableToken is iBurnableToken, SafeMath {
 
@@ -228,19 +232,19 @@ contract BurnableToken is iBurnableToken, SafeMath {
     restrictUntil = _restrictUntil;
   }
 
-  function tokenValue() constant public returns (uint value) {
-    value = this.balance / tokenSupply;
+  function tokenValue() constant public returns (uint _value) {
+    _value = this.balance / tokenSupply;
   }
 
-  function valueOf(address _owner) constant public returns (uint value) {
-    value = this.balance * balances[_owner] / tokenSupply;
+  function valueOf(address _owner) constant public returns (uint _value) {
+    _value = (this.balance * balances[_owner]) / tokenSupply;
   }
 
   function burnTokens(uint _burnCount) public preventRestricted {
     if (balances[msg.sender] >= _burnCount && _burnCount > 0) {
-      uint _value = this.balance * _burnCount / tokenSupply;
-      tokenSupply -= _burnCount;
-      balances[msg.sender] -= _burnCount;
+      uint _value = safeMul(this.balance, _burnCount) / tokenSupply;
+      tokenSupply = safeSub(tokenSupply, _burnCount);
+      balances[msg.sender] = safeSub(balances[msg.sender], _burnCount);
       msg.sender.transfer(_value);
       BurnEvent(msg.sender, _burnCount, _value);
     }
@@ -248,8 +252,8 @@ contract BurnableToken is iBurnableToken, SafeMath {
 
   function unPaidBurnTokens(uint _burnCount) public preventRestricted {
     if (balances[msg.sender] >= _burnCount && _burnCount > 0) {
-      tokenSupply -= _burnCount;
-      balances[msg.sender] -= _burnCount;
+      tokenSupply = safeSub(tokenSupply, _burnCount);
+      balances[msg.sender] = safeSub(balances[msg.sender], _burnCount);
       BurnEvent(msg.sender, _burnCount, 0);
     }
   }
