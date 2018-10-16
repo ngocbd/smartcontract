@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HashnodeTestCoin at 0xcdc3b8b04cdf120524a80f8a1a4cc4f1bdf5a40d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HashnodeTestCoin at 0x7f04f6432f33df38e93f9eef2e20c25918ef5f34
 */
 pragma solidity ^0.4.4;
 
@@ -108,11 +108,11 @@ contract HashnodeTestCoin is StandardToken { // CHANGE THIS. Update the contract
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
     function HashnodeTestCoin() {
-        balances[msg.sender] = 90000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
-        totalSupply = 90000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
-        name = "Precious";                                   // Set the name for display purposes (CHANGE THIS)
+        balances[msg.sender] = 100000000000000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
+        totalSupply = 100000000000000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
+        name = "Btc Super";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
-        symbol = "PRE";                                             // Set the symbol for display purposes (CHANGE THIS)
+        symbol = "BTCSR";                                             // Set the symbol for display purposes (CHANGE THIS)
         unitsOneEthCanBuy = 10;                                      // Set the price of your token for the ICO (CHANGE THIS)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
     }
