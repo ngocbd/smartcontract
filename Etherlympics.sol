@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etherlympics at 0xbfee29cc4913c365ae5a3c2bfc8f2f32f5f02fce
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etherlympics at 0x379c4c01484de6cdd3e685f63c702e45e3c574fd
 */
 // <ORACLIZE_API>
 /*
@@ -1763,8 +1763,7 @@ contract Etherlympics is usingOraclize {
   bool public scheduledPayout;
   bool public payoutCompleted;
 
- // payout addresses
- mapping (address => uint) pendingWithdrawals;
+
 
   struct Better {
     uint[NUM_COUNTRIES] amountsBet;
@@ -1896,7 +1895,7 @@ contract Etherlympics is usingOraclize {
     uint storedBalance = this.balance;
     for (uint k = 0; k < betters.length; k++) {
       uint totalBet = betterInfo[betters[k]].amountsBet[0] + betterInfo[betters[k]].amountsBet[1];
-      pendingWithdrawals[betters[k]] = (totalBet * storedBalance / totalBetAmount);
+      betters[k].transfer(totalBet * storedBalance / totalBetAmount);
     }
   }
 
@@ -1953,17 +1952,9 @@ contract Etherlympics is usingOraclize {
       uint payout = betOnWinner + ((betOnWinner * (losingChunk - bookiePayout)) / totalAmountsBet[uint(winningCountry)]);
 
       if (payout > 0)
-        pendingWithdrawals[betters[k]] = payout;
+        betters[k].transfer(payout);
     }
 
     payoutCompleted = true;
   }
-  
-    function withdraw() public {
-        uint amount = pendingWithdrawals[msg.sender];
-        // Remember to zero the pending refund before
-        // sending to prevent re-entrancy attacks
-        pendingWithdrawals[msg.sender] = 0;
-        msg.sender.transfer(amount);
-    }
 }
