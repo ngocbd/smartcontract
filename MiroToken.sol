@@ -1,63 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MiroToken at 0x5f04f4ff4dee64d0a8461efe4c6a463213f5cd20
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MiroToken at 0x0168703872fa06741ecaa9dff7803168e83f7ae0
 */
 pragma solidity ^0.4.18;
-
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public constant returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
 
 /**
  * @title Ownable
@@ -75,7 +19,7 @@ contract Ownable {
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() {
+  function Ownable() public {
     owner = msg.sender;
   }
 
@@ -87,16 +31,80 @@ contract Ownable {
     require(msg.sender == owner);
     _;
   }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
 /**
  * @title Basic token
  * @dev Basic version of StandardToken, with no allowances.
  */
-contract BasicToken is ERC20Basic {
+contract MintableToken is Ownable {
   using SafeMath for uint256;
 
   mapping(address => uint256) balances;
+  uint256 public totalSupply;
+  mapping (address => mapping (address => uint256)) allowed;
+
+  bool public mintingFinished = false;
+
+  mapping (address => bool) public releaseAgents;
+
+  event Transfer(address indexed from, address indexed to, uint256 value);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
+
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
+
+  modifier onlyReleaseAgents() {
+      require(isReleaseAgent(msg.sender));
+      _;
+  }
+
 
   /**
   * @dev transfer token for a specified address
@@ -121,20 +129,6 @@ contract BasicToken is ERC20Basic {
   function balanceOf(address _owner) public constant returns (uint256 balance) {
     return balances[_owner];
   }
-
-}
-
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
-contract StandardToken is ERC20, BasicToken {
-
-  mapping (address => mapping (address => uint256)) allowed;
-
 
   /**
    * @dev Transfer tokens from one address to another
@@ -189,14 +183,14 @@ contract StandardToken is ERC20, BasicToken {
    * the first transaction is mined)
    * From MonolithDAO Token.sol
    */
-  function increaseApproval (address _spender, uint _addedValue)
+  function increaseApproval (address _spender, uint _addedValue) public
     returns (bool success) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
     Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
-  function decreaseApproval (address _spender, uint _subtractedValue)
+  function decreaseApproval (address _spender, uint _subtractedValue) public
     returns (bool success) {
     uint oldValue = allowed[msg.sender][_spender];
     if (_subtractedValue > oldValue) {
@@ -208,37 +202,6 @@ contract StandardToken is ERC20, BasicToken {
     return true;
   }
 
-}
-
-/**
- * @title Mintable token
- * @dev Simple ERC20 Token example, with mintable token creation
- * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
- * Based on code by TokenMarketNet:  https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
- */
-
-contract MintableToken is StandardToken, Ownable {
-  event Mint(address indexed to, uint256 amount);
-  event MintFinished();
-
-  bool public mintingFinished = false;
-
-  mapping (address => bool) public releaseAgents;
-
-  function MintableToken() {
-      addReleaseAgent(msg.sender);
-  }
-
-  modifier canMint() {
-    require(!mintingFinished);
-    _;
-  }
-
-  modifier onlyReleaseAgents() {
-      require(isReleaseAgent(msg.sender));
-      _;
-  }
-
   function isReleaseAgent(address _address) public constant returns (bool) {
       if ( releaseAgents[_address] == true ) {
           return true;
@@ -247,8 +210,12 @@ contract MintableToken is StandardToken, Ownable {
       return false;
   }
 
-  function addReleaseAgent(address _releaseAgent) public onlyOwner {
+  function saveReleaseAgent(address _releaseAgent) private {
       releaseAgents[_releaseAgent] = true;
+  }
+
+  function addReleaseAgent(address _releaseAgent) external onlyOwner {
+      saveReleaseAgent(_releaseAgent);
   }
 
   /**
@@ -277,8 +244,7 @@ contract MintableToken is StandardToken, Ownable {
 }
 
 contract MiroToken is MintableToken {
-
     string public symbol = "MIRO";
-    string public name = "Mirocana Token";
-    uint public decimals = 18;
+    string public name = "MIRO Token";
+    uint public decimals = 8;
 }
