@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CelebrityBreederToken at 0xdab64dc4a02225f76fccce35ab9ba53b3735c684
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CelebrityBreederToken at 0xa33ab4b0c9905ebc4e0df5eb2f915bee728b8253
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
@@ -470,7 +470,8 @@ contract CelebrityBreederToken is ERC721 {
   event GenesInitialisedEvent(address caller, uint256 tokenId, bool generation, uint genes);
   
   CelebrityToken private CelGen0=CelebrityToken(0xbb5Ed1EdeB5149AF3ab43ea9c7a6963b3C1374F7); //@Artyom Pointing to original CC
-  
+  CelebrityBreederToken private CelBetta=CelebrityBreederToken(0xdab64dc4a02225f76fccce35ab9ba53b3735c684); //@Artyom Pointing to betta 
+ 
   string public constant NAME = "CryptoCelebrityBreederCards"; 
   string public constant SYMBOL = "CeleBreedCard"; 
 
@@ -535,6 +536,14 @@ contract CelebrityBreederToken is ERC721 {
     _;
   }
   */
+  function masscreate(uint256 fromindex, uint256 toindex) external onlyCEO{ 
+      string memory name; string memory surname; uint64 genes;  bool gender;
+      for(uint256 i=fromindex;i<=toindex;i++)
+      {
+          ( name, surname, genes, , ,  , , ,  gender)=CelBetta.getPerson(i,false);
+         _birthPerson(name, surname ,genes, gender, false);
+      }
+  }
   function CelebrityBreederToken() public { 
       CeoAddress= msg.sender;
       DevAddress= msg.sender;
@@ -1014,12 +1023,7 @@ return false;
            _genes2=_genes2/10;
            _rand=uint64(keccak256(block.blockhash(block.number), i, now,_mypersonid,_withpersonid))%10000;
            
-           if(_gene1>=_gene2) {
-               _gene=_gene1-_gene2;
-           }
-           else {
-               _gene=_gene2-_gene1;
-           }
+          _gene=(_gene1+_gene2)/2;
            
            if(_rand<26) {
                _gene-=3;
@@ -1039,7 +1043,7 @@ return false;
             else if(_rand<9974) {
                 _gene+=2;
            }
-            else if(_rand<1000) {
+            else if(_rand<10000) {
                 _gene+=3;
            }
            
