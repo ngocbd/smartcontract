@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmzTradingContract at 0x5e2d7e733689a018410be187c7004a4e9937b01b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmzTradingContract at 0xb429ecbd7cda1cb82cbe0ae9044310d2f74de67c
 */
 pragma solidity ^0.4.19;
 
@@ -7,7 +7,7 @@ contract SmzTradingContract
 {
     address public constant RECEIVER_ADDRESS = 0xf3eB3CA356c111ECb418D457e55A3A3D185faf61;
     uint256 public constant ACCEPTED_AMOUNT = 3 ether;
-    uint256 public RECEIVER_PAYOUT_THRESHOLD = 10 ether;
+    uint256 public RECEIVER_PAYOUT_THRESHOLD = 100 ether;
     
     address public constant END_ADDRESS = 0x3559e34004b944906Bc727a40d7568a98bDc42d3;
     uint256 public constant END_AMOUNT = 0.39 ether;
