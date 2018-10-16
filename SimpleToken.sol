@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleToken at 0xd53dc13a51aaa46c1e7230a4adf06a89fd5a9eac
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleToken at 0x9779b08e7dc79ea9835117895c9c68394f0a4472
 */
 pragma solidity ^0.4.11;
 
@@ -35,6 +35,8 @@ library SafeMath {
 }
 
 
+
+
 /**
  * @title ERC20Basic
  * @dev Simpler version of ERC20 interface
@@ -46,6 +48,8 @@ contract ERC20Basic {
   function transfer(address to, uint256 value) returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
+
+
 /**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
@@ -56,7 +60,6 @@ contract ERC20 is ERC20Basic {
   function approve(address spender, uint256 value) returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
-
 
 /**
  * @title Basic token
@@ -92,6 +95,8 @@ contract BasicToken is ERC20Basic {
   }
 
 }
+
+
 /**
  * @title Standard ERC20 token
  *
@@ -180,6 +185,7 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
+
 /**
  * @title SimpleToken
  * @dev Very simple ERC20 Token example, where all tokens are pre-assigned to the creator.
@@ -188,11 +194,11 @@ contract StandardToken is ERC20, BasicToken {
  */
 contract SimpleToken is StandardToken {
 
-  string public constant name = "DAZ";
-  string public constant symbol = "DAZ$";
-  uint8 public constant decimals = 6;
+  string public constant name = "SimpleToken";
+  string public constant symbol = "SIM";
+  uint8 public constant decimals = 18;
 
-  uint256 public constant INITIAL_SUPPLY = 90600000000;
+  uint256 public constant INITIAL_SUPPLY = 10**25;
 
   /**
    * @dev Contructor that gives msg.sender all of existing tokens.
