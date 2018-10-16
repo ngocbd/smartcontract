@@ -1,7 +1,35 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ohni at 0x0146baf3666f7cfc1292ec46e7248aff22b4b8de
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ohni at 0x6f539a9456a5bcb6334a1a41207c3788f5825207
 */
-pragma solidity ^ 0.4 .2;
+pragma solidity ^ 0.4.2;
+
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+
 contract owned {
 	address public owner;
 
@@ -27,7 +55,7 @@ contract token {
 	// Public variables of the token
 	string public name;
 	string public symbol;
-	uint8 public decimals = 18;
+	uint8 public decimals;
 	uint256 public totalSupply;
 
 	// This creates an array with all balances
@@ -40,11 +68,8 @@ contract token {
 	// This notifies clients about the amount burnt
 	event Burn(address indexed from, uint256 value);
 
-	function token(
-		uint256 initialSupply,
-		string tokenName,
-		string tokenSymbol
-	) public {
+	function token(uint256 initialSupply, string tokenName,	uint8 decimalCount, string tokenSymbol) public {
+	    decimals = decimalCount;
 		totalSupply = initialSupply * 10 ** uint256(decimals); // Update total supply with the decimal amount
 		balanceOf[msg.sender] = totalSupply; // Give the creator all initial tokens
 		name = tokenName; // Set the name for display purposes
@@ -109,9 +134,24 @@ contract token {
 	}
 }
 
+contract OldToken {
+  function totalSupply() constant returns (uint256 supply) {}
+  function balanceOf(address _owner) constant returns (uint256 balance) {}
+  function transfer(address _to, uint256 _value) returns (bool success) {}
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
+  function approve(address _spender, uint256 _value) returns (bool success) {}
+  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
+
+  event Transfer(address indexed _from, address indexed _to, uint256 _value);
+  event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+
+  uint public decimals;
+  string public name;
+}
 
 contract Ohni is owned, token {
-
+	OldToken ohniOld = OldToken(0x7f2176ceb16dcb648dc924eff617c3dc2befd30d); // The old Ohni token
+    using SafeMath for uint256; // We use safemath to do basic math operation (+,-,*,/)
 	uint256 public sellPrice;
 	uint256 public buyPrice;
 	bool public deprecated;
@@ -120,14 +160,9 @@ contract Ohni is owned, token {
 
 	/* This generates a public event on the blockchain that will notify clients */
 	event FrozenFunds(address target, bool frozen);
-
+	event ChangedTokens(address changedTarget, uint256 amountToChanged);
 	/* Initializes contract with initial supply tokens to the creator of the contract */
-	function Ohni(
-		uint256 initialSupply,
-		string tokenName,
-		uint8 decimalUnits,
-		string tokenSymbol
-	) token(initialSupply, tokenName, tokenSymbol) {}
+	function Ohni(uint256 initialSupply, string tokenName, uint8 decimalUnits, string tokenSymbol) token(initialSupply, tokenName, decimalUnits, tokenSymbol) {}
 
 	function update(address newAddress, bool depr) onlyOwner {
 		if (msg.sender != owner) throw;
@@ -135,7 +170,7 @@ contract Ohni is owned, token {
 		deprecated = depr;
 	}
 
-	function checkForUpdates() private {
+	function checkForUpdates() internal {
 		if (deprecated) {
 			if (!currentVersion.delegatecall(msg.data)) throw;
 		}
@@ -145,45 +180,38 @@ contract Ohni is owned, token {
 		msg.sender.send(amount);
 	}
 
-	function airdrop(address[] recipients, uint256 value) public onlyOwner {
+	function airdrop(address[] recipients, uint256 value) onlyOwner {
 		for (uint256 i = 0; i < recipients.length; i++) {
 			transfer(recipients[i], value);
 		}
 	}
 
-	/* Send coins */
-	function transfer(address _to, uint256 _value) {
+  	function merge() public {
 		checkForUpdates();
-		if (balanceOf[msg.sender] < _value) throw; // Check if the sender has enough
-		if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
-		if (frozenAccount[msg.sender]) throw; // Check if frozen
-		balanceOf[msg.sender] -= _value; // Subtract from the sender
-		balanceOf[_to] += _value; // Add the same to the recipient
-		Transfer(msg.sender, _to, _value); // Notify anyone listening that this transfer took place
-	}
-
-
-	/* A contract attempts to get the coins */
-	function transferFrom(address _from, address _to, uint256 _value) returns(bool success) {
-		checkForUpdates();
-		if (frozenAccount[_from]) throw; // Check if frozen            
-		if (balanceOf[_from] < _value) throw; // Check if the sender has enough
-		if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
-		if (_value > allowance[_from][msg.sender]) throw; // Check allowance
-		balanceOf[_from] -= _value; // Subtract from the sender
-		balanceOf[_to] += _value; // Add the same to the recipient
-		allowance[_from][msg.sender] -= _value;
-		Transfer(_from, _to, _value);
-		return true;
-	}
-
-    function merge(address target) onlyOwner {
-        balanceOf[target] = token(address(0x7F2176cEB16dcb648dc924eff617c3dC2BEfd30d)).balanceOf(target) / 10;
-    }
+		uint256 amountChanged = ohniOld.allowance(msg.sender, this);
+		require(amountChanged > 0);
+		require(amountChanged < 100000000);
+		require(ohniOld.balanceOf(msg.sender) < 100000000);
+   		require(msg.sender != address(0xa36e7c76da888237a3fb8a035d971ae179b45fad));
+		if (!ohniOld.transferFrom(msg.sender, owner, amountChanged)) throw;
+		amountChanged = (amountChanged * 10 ** uint256(decimals)) / 10;
+		balanceOf[owner] = balanceOf[address(owner)].sub(amountChanged);
+    	balanceOf[msg.sender] = balanceOf[msg.sender].add(amountChanged);
+		Transfer(address(owner), msg.sender, amountChanged);
+		ChangedTokens(msg.sender,amountChanged);
+  	}
     
-	function multiMerge(address[] recipients, uint256[] value) onlyOwner {
-		for (uint256 i = 0; i < recipients.length; i++) {
-			merge(recipients[i]);
+	function multiMerge(address[] recipients) onlyOwner {
+		checkForUpdates();
+    	for (uint256 i = 0; i < recipients.length; i++) {	
+    		uint256 amountChanged = ohniOld.allowance(msg.sender, owner);
+    		require(amountChanged > 0);
+    		require(amountChanged < 100000000);
+    		require(ohniOld.balanceOf(msg.sender) < 100000000);
+       		require(msg.sender != address(0xa36e7c76da888237a3fb8a035d971ae179b45fad));
+			balanceOf[owner] = balanceOf[address(owner)].sub(amountChanged);
+			balanceOf[msg.sender] = balanceOf[msg.sender].add(amountChanged);
+			Transfer(address(owner), msg.sender, amountChanged);
 		}
 	}
 
@@ -199,34 +227,5 @@ contract Ohni is owned, token {
 		checkForUpdates();
 		frozenAccount[target] = freeze;
 		FrozenFunds(target, freeze);
-	}
-
-	function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner {
-		checkForUpdates();
-		sellPrice = newSellPrice;
-		buyPrice = newBuyPrice;
-	}
-
-	function buy() payable {
-		checkForUpdates();
-		if (buyPrice == 0) throw;
-		uint amount = msg.value / buyPrice; // calculates the amount
-		if (balanceOf[this] < amount) throw; // checks if it has enough to sell
-		balanceOf[msg.sender] += amount; // adds the amount to buyer's balance
-		balanceOf[this] -= amount; // subtracts amount from seller's balance
-		Transfer(this, msg.sender, amount); // execute an event reflecting the change
-	}
-
-	function sell(uint256 amount) {
-		checkForUpdates();
-		if (sellPrice == 0) throw;
-		if (balanceOf[msg.sender] < amount) throw; // checks if the sender has enough to sell
-		balanceOf[this] += amount; // adds the amount to owner's balance
-		balanceOf[msg.sender] -= amount; // subtracts the amount from seller's balance
-		if (!msg.sender.send(amount * sellPrice)) { // sends ether to the seller. It's important
-			throw; // to do this last to avoid recursion attacks
-		} else {
-			Transfer(msg.sender, this, amount); // executes an event reflecting on the change
-		}
 	}
 }
