@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StandardToken at 0xa4e9d20f2bd49e75784a5ed11f61eff912b3eaf5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StandardToken at 0xe3d1b730ffc44a6cb993196c1e1d32d13e4ed978
 */
 pragma solidity ^0.4.19;
 
@@ -119,8 +119,8 @@ contract BitcoinUnicorn is StandardToken {
 
     function BitcoinUnicorn(
         ) {
-        balances[msg.sender] = 21000000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 21000000000000000;                        // Update total supply (100000 for example)
+        balances[msg.sender] = 210000000000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 2100000000000000000000000;                        // Update total supply (100000 for example)
         name = "Satoshi Token";                                   // Set the name for display purposes
         decimals = 8;                            // Amount of decimals for display purposes
         symbol = "SAT";                               // Set the symbol for display purposes
