@@ -1,31 +1,28 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OpenPoWH at 0xf7d724304d99a29305d36bc073a89d44fd401e39
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OpenPoWH at 0xcb1d41f5278ffad015419ab6c524751444c35385
 */
 pragma solidity ^0.4.18;
 
 /*
+Proof of Weak Hands - New Open Edition!
+-------------------   
 
-Proof of Weak Hands  -  New Open Edition!
- _____             _____     _ _ _ _____ 
-|     |___ ___ ___|  _  |___| | | |  |  |
-|  |  | . | -_|   |   __| . | | | |     |
-|_____|  _|___|_|_|__|  |___|_____|__|__|
-      |_|              
-      
-Proof of Weak Hands  -  New Open Edition!
+PoWH started as a fun coding excersize using the Ethereum Smart Contract by https://test.jochen-hoenicke.de/eth/ponzitoken/
 
-OpenPoWH was made to be a decentralized clone of PoWH with an even start for all. 
+First there was PoWH Coin, wildly successful but vulnerable to drain attack which saw 800 ETH vanish.
+Then there was Shadow, the buggy alternative to PoWH which locked up 858 ETH and was drained.
+Eventually there was a EthPyramid which was a rewrite of PoWH with better testing and security, removing any exploits. This run was a success, but the original devs made off with 25 ETH Pre Mine.
+In attempt to help those who lost out to EthPy botched releaase, EthPy2 was released with a flawed contract (null) which led to 30 ETH being lost to an empty contract. 
+
+All of these events have killed all motivation to get involved with this awesome smart contract. We're trying to fix that, by releasing a new version based on the code tocksIck created to limit prebuys. 
 
 It's simple:
 - The first 50 transactions can only buy in for 0.1 ETH max. Anything more gets refunded. 
-- The contract address is released roughly 7 days prior to the game starting (based on block number), alowing time for review and preparation.
+- The contract address is released roughly 7 days prior to the game starting, alowing time for review and preparation.
 
-Credits:
-
-Based on original PoWH concept: https://test.jochen-hoenicke.de/eth/ponzitoken/
-EthPy Secure Rewrite and Audit: divine, tocksick, arc
-Limitation of Buyin Amount: tocksick
-Delayed Public Start Time: Common Sense / https://solidity.readthedocs.io/ / The People
+Credit for EthPy rewrite: tocksick, arc, divine; 
+Credit for Buyin Limit: tocksIck;
+Credit for Start Delay: https://solidity.readthedocs.io/
 
 */
 
@@ -36,7 +33,7 @@ contract OpenPoWH {
 	uint256 constant scaleFactor = 0x10000000000000000;  // 2^64
 
 	// Number of first buyers that are limited
-	uint8 constant limitedFirstBuyers = 50;    // Limit 50 buyers to 0.1
+	uint8 constant limitedFirstBuyers = 25;    // Limit 50 buyers to 0.1
 	uint256 constant firstBuyerLimit = 0.1 ether;
 	
 	// CRR = 50%
