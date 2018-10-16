@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoinStocker at 0xe154561093f7eeaf698bf77f324b4c0483102c9d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoinStocker at 0x7798b7b5d99eda999bd0e7223250c2e736b09850
 */
 pragma solidity ^0.4.19;
 
@@ -334,7 +334,6 @@ contract CoinStocker is DetailedERC20, StandardToken, BurnableToken, Ownable  {
 
     function CoinStocker() DetailedERC20("CoinStocker", "CSR", 18) Ownable public {
       balances[this] = 1000000000 * 10 ** 18;
-      totalSupply_ =  1000000000 * 10 ** 18;
     }
 
     function transfer(address _to, uint _value)  public returns (bool) {
