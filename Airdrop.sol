@@ -1,56 +1,76 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdrop at 0x220348263aab5a038845483f6096895aa59f3977
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDrop at 0x66ab72953a529a79d5e4f275108a0854a880eecf
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.19;
 
-contract token { function preallocate(address receiver, uint fullTokens, uint weiPrice) public;
-                function transferOwnership(address _newOwner) public;
-                function acceptOwnership() public;
-                }
-contract Airdrop {
-    token public tokenReward;
-    
-    function Airdrop(token _addressOfTokenUsedAsTransfer) public{
-         tokenReward = token(_addressOfTokenUsedAsTransfer);
-    }
+/**
+ * @title Token
+ * @dev Simpler version of ERC20 interface
+ */
+contract Token {
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
-   /* TransferToken function for send token to many accound
-        @param _to address array hold the receiver address
-        @param _value send token value 
-        @param weiPrice Price of a single full token in wei
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
    */
+  function Ownable() {
+    owner = msg.sender;
+  }
 
-    function TransferToken (address[] _to, uint _value, uint _weiPrice) public
-    {   for (uint i=0; i< _to.length; i++)
-        {
-        tokenReward.preallocate(_to[i], _value, _weiPrice);
-        }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+contract AirDrop is Ownable {
+
+  // This declares a state variable that would store the contract address
+  Token public tokenInstance;
+
+  /*
+    constructor function to set token address
+   */
+  function AirDrop(address _tokenAddress){
+    tokenInstance = Token(_tokenAddress);
+  }
+
+  /*
+    Airdrop function which take up a array of address and amount and call the
+    transfer function to send the token
+   */
+  function doAirDrop(address[] _address, uint256 _amount) onlyOwner public returns (bool) {
+    uint256 count = _address.length;
+    for (uint256 i = 0; i < count; i++)
+    {
+      /* calling transfer function from contract */
+      tokenInstance.transfer(_address [i],_amount);
     }
-
-    /* TransferOwner function for Transfer the owner ship to address
-        @param _owner address of owner
-    */
-
-
-    function TransferOwner (address _owner) public {
-        tokenReward.transferOwnership(_owner);
-    }
-
-    /* 
-        acceptOwner function for accept owner ship of account
-    */
-
-    function acceptOwner () public {
-        tokenReward.acceptOwnership();
-    }
-
-    /* 
-        removeContract function for destroy the contract on network
-    */
-
-    function removeContract() public
-        {
-            selfdestruct(msg.sender);
-            
-        }   
+  }
 }
