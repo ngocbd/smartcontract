@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WithDrawChildDAO at 0x669dcf45bddfe4f8f5a15984461e4fab939af1f8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WithDrawChildDAO at 0x56aef5f4529bca12cbfa7055d7d917c347a14ad1
 */
 contract DAO {
     function balanceOf(address addr) returns (uint);
@@ -89,8 +89,8 @@ contract WithDrawChildDAO {
             throw;
        }
 
-    function checkMyWithdraw(DAO _childDAO, address msg_sender) constant returns(uint) {        
-        return _childDAO.balanceOf(msg_sender) * childDAOs[_childDAO].totalSupply / childDAOs[_childDAO].balance;
+    function checkMyWithdraw(DAO _childDAO) constant returns(uint) {        
+        return _childDAO.balanceOf(msg.sender) * childDAOs[_childDAO].totalSupply / childDAOs[_childDAO].balance;
     }
 
     address constant curator = 0xda4a4626d3e16e094de3225a751aab7128e96526;
