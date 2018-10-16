@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnableCrowdsaleToken at 0xc9bf6dacf0849ecbef4a6adffbc717c7fa0f7724
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnableCrowdsaleToken at 0xa4d9170f44ea9e14424843b713361c7e2fac672f
 */
 // (C) 2017 TokenMarket Ltd. (https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt) Commit: d9e308ff22556a8f40909b1f89ec0f759d1337e0
 /**
