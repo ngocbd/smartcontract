@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x629c09f80348350216f45934ed9713ed969ce570
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xcc3698b05432ee854e62f1aa034c689c451cb08f
 */
 pragma solidity ^0.4.16;
 
@@ -7,11 +7,10 @@ interface tokenRecipient { function receiveApproval(address _from, uint256 _valu
 
 contract TokenERC20 {
     // Public variables of the token
-    string public name = "KALIFORCOIN";
-    string public symbol = "KFRC";
-    uint8 public decimals = 18;
-    // 3 decimals is the strongly suggested default, avoid changing it
-    uint256 public totalSupply = 100000000;
+    string public name;
+    string public symbol;
+    uint256 public decimals = 8;
+    uint256 public totalSupply;
 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
@@ -29,10 +28,11 @@ contract TokenERC20 {
      * Initializes contract with initial supply tokens to the creator of the contract
      */
     function TokenERC20() public {
-        totalSupply = totalSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        //6 million tokens, 8 decimal places
+        totalSupply = 30000000 * 10 ** decimals;
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = name;                                   // Set the name for display purposes
-        symbol = symbol;                               // Set the symbol for display purposes
+        name = 'Smart Payment Cash';                                   // Set the name for display purposes
+        symbol = 'SPC';                               // Set the symbol for display purposes
     }
 
     /**
@@ -92,8 +92,7 @@ contract TokenERC20 {
      * @param _spender The address authorized to spend
      * @param _value the max amount they can spend
      */
-    function approve(address _spender, uint256 _value) public
-        returns (bool success) {
+    function approve(address _spender, uint256 _value) public returns (bool success) {
         allowance[msg.sender][_spender] = _value;
         return true;
     }
