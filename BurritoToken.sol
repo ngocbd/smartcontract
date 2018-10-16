@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurritoToken at 0x3fab1c4216e401de80cef4ac5387452d16314c6e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurritoToken at 0x0604db7ebf0004ddf450020e0d8b0f0354b1345f
 */
 pragma solidity ^0.4.18;
 
@@ -61,6 +61,50 @@ contract Ownable {
 }
 
 /**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    Pause();
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    Unpause();
+  }
+}
+
+/**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
  */
@@ -94,18 +138,20 @@ library SafeMath {
  * @title ERC721Token
  * Generic implementation for the required functionality of the ERC721 standard
  */
-contract BurritoToken is ERC721, Ownable {
+contract BurritoToken is ERC721, Ownable, Pausable {
   using SafeMath for uint256;
 
   // Total amount of tokens
   uint256 private totalTokens;
   uint256[] private listed;
   uint256 public devOwed;
-  uint256 public poolTotal;
+  uint256 public burritoPoolTotal;
+  uint256 public tacoPoolTotal;
+  uint256 public saucePoolTotal;
   uint256 public lastPurchase;
 
   // Burrito Data
-  mapping (uint256 => Burrito) public burritoData;
+  mapping (uint256 => Token) private tokens;
 
   // Mapping from token ID to owner
   mapping (uint256 => address) private tokenOwner;
@@ -123,7 +169,7 @@ contract BurritoToken is ERC721, Ownable {
   mapping (address => uint256) private payoutBalances; 
 
   // Events
-  event BurritoPurchased(uint256 indexed _tokenId, address indexed _owner, uint256 _purchasePrice);
+  event Purchased(uint256 indexed _tokenId, address indexed _owner, uint256 _purchasePrice);
 
   // Purchasing Caps for Determining Next Pool Cut
   uint256 private firstCap  = 0.5 ether;
@@ -131,41 +177,58 @@ contract BurritoToken is ERC721, Ownable {
   uint256 private thirdCap  = 3.0 ether;
   uint256 private finalCap  = 5.0 ether;
 
-  // Dev
-  uint256 public devCutPercentage = 4;
+  // Percentages
+  uint256 public feePercentage = 5;
+  uint256 public dividendCutPercentage = 100; // 100 / 10000
+  uint256 public dividendDecreaseFactor = 2;
+  uint256 public megabossCutPercentage = 1;
+  uint256 public bossCutPercentage = 1;
+  uint256 public mainPoolCutPercentage = 15;
+
+  // Bosses
+  uint256 private megabossTokenId = 10000000;
+
+  uint256 private BURRITO_KIND = 1;
+  uint256 private TACO_KIND = 2;
+  uint256 private SAUCE_KIND = 3;
 
   // Struct to store Burrito Data
-  struct Burrito {
-      uint256 startingPrice; // Price the item started at.
+  struct Token {
       uint256 price;         // Current price of the item.
       uint256 lastPrice;     // lastPrice this was sold for, used for adding to pool.
       uint256 payout;        // The percent of the pool rewarded.
-      uint256 withdrawn;     // The amount of Eth this burrito has withdrawn from the pool.
+      uint256 withdrawn;     // The amount of Eth this token has withdrawn from the pool.
       address owner;         // Current owner of the item.
+      uint256 bossTokenId;   // Current boss of the token - 1% bossCut
+      uint8   kind;          // 1 - burrito, 2 - taco, 3 - sauce
+      address[5] previousOwners;
   }
 
   /**
   * @dev createListing Adds new ERC721 Token
   * @param _tokenId uint256 ID of new token
-  * @param _startingPrice uint256 starting price in wei
+  * @param _price uint256 starting price in wei
   * @param _payoutPercentage uint256 payout percentage (divisible by 10)
   * @param _owner address of new owner
   */
-  function createListing(uint256 _tokenId, uint256 _startingPrice, uint256 _payoutPercentage, address _owner) onlyOwner() public {
-
-    // make sure price > 0
-    require(_startingPrice > 0);
+  function createToken(uint256 _tokenId, uint256 _price, uint256 _lastPrice, uint256 _payoutPercentage, uint8 _kind, uint256 _bossTokenId, address _owner) onlyOwner() public {
+    require(_price > 0);
+    require(_lastPrice < _price);
     // make sure token hasn't been used yet
-    require(burritoData[_tokenId].price == 0);
+    require(tokens[_tokenId].price == 0);
+    // check for kinds
+    require(_kind > 0 && _kind <= 3);
     
     // create new token
-    Burrito storage newBurrito = burritoData[_tokenId];
+    Token storage newToken = tokens[_tokenId];
 
-    newBurrito.owner = _owner;
-    newBurrito.price = getNextPrice(_startingPrice);
-    newBurrito.lastPrice = _startingPrice;
-    newBurrito.payout = _payoutPercentage;
-    newBurrito.startingPrice = _startingPrice;
+    newToken.owner = _owner;
+    newToken.price = _price;
+    newToken.lastPrice = _lastPrice;
+    newToken.payout = _payoutPercentage;
+    newToken.kind = _kind;
+    newToken.bossTokenId = _bossTokenId;
+    newToken.previousOwners = [address(this), address(this), address(this), address(this), address(this)];
 
     // store burrito in storage
     listed.push(_tokenId);
@@ -174,9 +237,9 @@ contract BurritoToken is ERC721, Ownable {
     _mint(_owner, _tokenId);
   }
 
-  function createMultiple (uint256[] _itemIds, uint256[] _prices, uint256[] _payouts, address[] _owners) onlyOwner() external {
+  function createMultiple (uint256[] _itemIds, uint256[] _prices, uint256[] _lastPrices, uint256[] _payouts, uint8[] _kinds, uint256[] _bossTokenIds, address[] _owners) onlyOwner() external {
     for (uint256 i = 0; i < _itemIds.length; i++) {
-      createListing(_itemIds[i], _prices[i], _payouts[i], _owners[i]);
+      createToken(_itemIds[i], _prices[i], _lastPrices[i], _payouts[i], _kinds[i], _bossTokenIds[i], _owners[i]);
     }
   }
 
@@ -184,31 +247,31 @@ contract BurritoToken is ERC721, Ownable {
   * @dev Determines next price of token
   * @param _price uint256 ID of current price
   */
-  function getNextPrice (uint256 _price) private view returns (uint256 _nextPrice) {
+  function getNextPrice (uint256 _price) public view returns (uint256 _nextPrice) {
     if (_price < firstCap) {
-      return _price.mul(200).div(95);
+      return _price.mul(200).div(100 - feePercentage);
     } else if (_price < secondCap) {
-      return _price.mul(135).div(96);
+      return _price.mul(135).div(100 - feePercentage);
     } else if (_price < thirdCap) {
-      return _price.mul(125).div(97);
+      return _price.mul(125).div(100 - feePercentage);
     } else if (_price < finalCap) {
-      return _price.mul(117).div(97);
+      return _price.mul(117).div(100 - feePercentage);
     } else {
-      return _price.mul(115).div(98);
+      return _price.mul(115).div(100 - feePercentage);
     }
   }
 
   function calculatePoolCut (uint256 _price) public view returns (uint256 _poolCut) {
     if (_price < firstCap) {
-      return _price.mul(10).div(100); // 5%
+      return _price.mul(10).div(100);
     } else if (_price < secondCap) {
-      return _price.mul(9).div(100); // 4%
+      return _price.mul(9).div(100);
     } else if (_price < thirdCap) {
-      return _price.mul(8).div(100); // 3%
+      return _price.mul(8).div(100);
     } else if (_price < finalCap) {
-      return _price.mul(7).div(100); // 3%
+      return _price.mul(7).div(100);
     } else {
-      return _price.mul(5).div(100); // 2%
+      return _price.mul(5).div(100);
     }
   }
 
@@ -220,13 +283,12 @@ contract BurritoToken is ERC721, Ownable {
     payable
     isNotContract(msg.sender)
   {
+    require(!paused);
 
     // get data from storage
-    Burrito storage burrito = burritoData[_tokenId];
-    uint256 price = burrito.price;
-    address oldOwner = burrito.owner;
-    address newOwner = msg.sender;
-    uint256 excess = msg.value.sub(price);
+    Token storage token = tokens[_tokenId];
+    uint256 price = token.price;
+    address oldOwner = token.owner;
 
     // revert checks
     require(price > 0);
@@ -234,49 +296,117 @@ contract BurritoToken is ERC721, Ownable {
     require(oldOwner != msg.sender);
 
     // Calculate pool cut for taxes.
-    uint256 profit = price.sub(burrito.lastPrice);
-    uint256 poolCut = calculatePoolCut(profit);
-    poolTotal += poolCut;
+    uint256 priceDelta = price.sub(token.lastPrice);
+    uint256 poolCut = calculatePoolCut(priceDelta);
     
-    // % goes to developers
-    uint256 devCut = price.mul(devCutPercentage).div(100);
-    devOwed = devOwed.add(devCut);
+    _updatePools(token.kind, poolCut);
+    
+    uint256 fee = price.mul(feePercentage).div(100);
+    devOwed = devOwed.add(fee);
 
-    transferBurrito(oldOwner, newOwner, _tokenId);
+    // Dividends
+    uint256 taxesPaid = _payDividendsAndBosses(token, price);
 
-    // set new prices
-    burrito.lastPrice = price;
-    burrito.price = getNextPrice(price);
+    _shiftPreviousOwners(token, msg.sender);
 
-    // raise event
-    BurritoPurchased(_tokenId, newOwner, price);
+    transferToken(oldOwner, msg.sender, _tokenId);
 
     // Transfer payment to old owner minus the developer's and pool's cut.
-    oldOwner.transfer(price.sub(devCut.add(poolCut)));
+    // Calculate the winnings for the previous owner.
+    uint256 finalPayout = price.sub(fee).sub(poolCut).sub(taxesPaid);
 
-    // Send refund to owner if needed
+    // set new prices
+    token.lastPrice = price;
+    token.price = getNextPrice(price);
+
+    // raise event
+    Purchased(_tokenId, msg.sender, price);
+
+    if (oldOwner != address(this)) {
+      oldOwner.transfer(finalPayout);
+    }
+
+    // Calculate overspending
+    uint256 excess = msg.value - price;
+    
     if (excess > 0) {
-      newOwner.transfer(excess);
+        // Refund overspending
+        msg.sender.transfer(excess);
     }
     
     // set last purchase price to storage
     lastPurchase = now;
+  }
 
+    /// @dev Shift the 6 most recent buyers, and add the new buyer
+  /// to the front.
+  /// @param _newOwner The buyer to add to the front of the recent
+  /// buyers list.
+  function _shiftPreviousOwners(Token storage _token, address _newOwner) private {
+      _token.previousOwners[4] = _token.previousOwners[3];
+      _token.previousOwners[3] = _token.previousOwners[2];
+      _token.previousOwners[2] = _token.previousOwners[1];
+      _token.previousOwners[1] = _token.previousOwners[0];
+      _token.previousOwners[0] = _newOwner;
+  }
+
+  function _updatePools(uint8 _kind, uint256 _poolCut) internal {
+    uint256 poolCutToMain = _poolCut.mul(mainPoolCutPercentage).div(100);
+
+    if (_kind == BURRITO_KIND) {
+      burritoPoolTotal += _poolCut;
+    } else if (_kind == TACO_KIND) {
+      burritoPoolTotal += poolCutToMain;
+
+      tacoPoolTotal += _poolCut.sub(poolCutToMain);
+    } else if (_kind == SAUCE_KIND) {
+      burritoPoolTotal += poolCutToMain;
+
+      saucePoolTotal += _poolCut.sub(poolCutToMain);
+    }
+  }
+
+  // 1%, 0.5%, 0.25%, 0.125%, 0.0625%
+  function _payDividendsAndBosses(Token _token, uint256 _price) private returns (uint256 paid) {
+    uint256 dividend0 = _price.mul(dividendCutPercentage).div(10000);
+    uint256 dividend1 = dividend0.div(dividendDecreaseFactor);
+    uint256 dividend2 = dividend1.div(dividendDecreaseFactor);
+    uint256 dividend3 = dividend2.div(dividendDecreaseFactor);
+    uint256 dividend4 = dividend3.div(dividendDecreaseFactor);
+
+    // Pay first dividend.
+    if (_token.previousOwners[0] != address(this)) {_token.previousOwners[0].transfer(dividend0); paid = paid.add(dividend0);}
+    if (_token.previousOwners[1] != address(this)) {_token.previousOwners[1].transfer(dividend1); paid = paid.add(dividend1);}
+    if (_token.previousOwners[2] != address(this)) {_token.previousOwners[2].transfer(dividend2); paid = paid.add(dividend2);}
+    if (_token.previousOwners[3] != address(this)) {_token.previousOwners[3].transfer(dividend3); paid = paid.add(dividend3);}
+    if (_token.previousOwners[4] != address(this)) {_token.previousOwners[4].transfer(dividend4); paid = paid.add(dividend4);}
+
+    uint256 tax = _price.mul(1).div(100);
+
+    if (tokens[megabossTokenId].owner != address(0)) {
+      tokens[megabossTokenId].owner.transfer(tax);
+      paid = paid.add(tax);
+    }
+
+    if (tokens[_token.bossTokenId].owner != address(0)) { 
+      tokens[_token.bossTokenId].owner.transfer(tax);
+      paid = paid.add(tax);
+    }
   }
 
   /**
-  * @dev Transfer Burrito from Previous Owner to New Owner
+  * @dev Transfer Token from Previous Owner to New Owner
   * @param _from previous owner address
   * @param _to new owner address
   * @param _tokenId uint256 ID of token
   */
-  function transferBurrito(address _from, address _to, uint256 _tokenId) internal {
+  function transferToken(address _from, address _to, uint256 _tokenId) internal {
 
     // check token exists
     require(tokenExists(_tokenId));
 
     // make sure previous owner is correct
-    require(burritoData[_tokenId].owner == _from);
+    require(tokens[_tokenId].owner == _from);
 
     require(_to != address(0));
     require(_to != address(this));
@@ -291,7 +421,7 @@ contract BurritoToken is ERC721, Ownable {
     removeToken(_from, _tokenId);
 
     // update owner and add token to new owner
-    burritoData[_tokenId].owner = _to;
+    tokens[_tokenId].owner = _to;
     addToken(_to, _tokenId);
 
    //raise event
@@ -310,30 +440,62 @@ contract BurritoToken is ERC721, Ownable {
   * @dev Updates the payout for the burritos the owner has
   * @param _owner address of token owner
   */
+  // function updatePayout(address _owner) public {
+  //   uint256[] memory ownerTokens = ownedTokens[_owner];
+  //   uint256 owed;
+  //   for (uint256 i = 0; i < ownerTokens.length; i++) {
+  //     owed += _calculateOnePayout(ownerTokens[i]);
+  //   }
+
+  //   payoutBalances[_owner] += owed;
+  // }
+
   function updatePayout(address _owner) public {
-    uint256[] memory burritos = ownedTokens[_owner];
+    uint256[] memory ownerTokens = ownedTokens[_owner];
     uint256 owed;
-    for (uint256 i = 0; i < burritos.length; i++) {
-        uint256 totalBurritoOwed = poolTotal * burritoData[burritos[i]].payout / 10000;
-        uint256 burritoOwed = totalBurritoOwed.sub(burritoData[burritos[i]].withdrawn);
-        owed += burritoOwed;
+    for (uint256 i = 0; i < ownerTokens.length; i++) {
+        uint256 totalOwed;
         
-        burritoData[burritos[i]].withdrawn += burritoOwed;
+        if (tokens[ownerTokens[i]].kind == BURRITO_KIND) {
+          totalOwed = burritoPoolTotal * tokens[ownerTokens[i]].payout / 10000;
+        } else if (tokens[ownerTokens[i]].kind == TACO_KIND) {
+          totalOwed = tacoPoolTotal * tokens[ownerTokens[i]].payout / 10000;
+        } else if (tokens[ownerTokens[i]].kind == SAUCE_KIND) {
+          totalOwed = saucePoolTotal * tokens[ownerTokens[i]].payout / 10000;
+        }
+
+        uint256 totalTokenOwed = totalOwed.sub(tokens[ownerTokens[i]].withdrawn);
+        owed += totalTokenOwed;
+        
+        tokens[ownerTokens[i]].withdrawn += totalTokenOwed;
     }
     payoutBalances[_owner] += owed;
+  }
+
+  function priceOf(uint256 _tokenId) public view returns (uint256) {
+    return tokens[_tokenId].price;
   }
 
   /**
    * @dev Update a single burrito payout for transfers.
    * @param _owner Address of the owner of the burrito.
-   * @param _itemId Unique Id of the token.
+   * @param _tokenId Unique Id of the token.
   **/
-  function updateSinglePayout(address _owner, uint256 _itemId) internal {
-    uint256 totalBurritoOwed = poolTotal * burritoData[_itemId].payout / 10000;
-    uint256 burritoOwed = totalBurritoOwed.sub(burritoData[_itemId].withdrawn);
+  function updateSinglePayout(address _owner, uint256 _tokenId) internal {
+    uint256 totalOwed;
         
-    burritoData[_itemId].withdrawn += burritoOwed;
-    payoutBalances[_owner] += burritoOwed;
+    if (tokens[_tokenId].kind == BURRITO_KIND) {
+      totalOwed = burritoPoolTotal * tokens[_tokenId].payout / 10000;
+    } else if (tokens[_tokenId].kind == TACO_KIND) {
+      totalOwed = tacoPoolTotal * tokens[_tokenId].payout / 10000;
+    } else if (tokens[_tokenId].kind == SAUCE_KIND) {
+      totalOwed = saucePoolTotal * tokens[_tokenId].payout / 10000;
+    }
+
+    uint256 totalTokenOwed = totalOwed.sub(tokens[_tokenId].withdrawn);
+        
+    tokens[_tokenId].withdrawn += totalTokenOwed;
+    payoutBalances[_owner] += totalTokenOwed;
   }
 
   /**
@@ -341,13 +503,15 @@ contract BurritoToken is ERC721, Ownable {
   * @param _owner address of token owner
   */
   function withdrawRent(address _owner) public {
-      updatePayout(_owner);
-      uint256 payout = payoutBalances[_owner];
-      payoutBalances[_owner] = 0;
-      _owner.transfer(payout);
+    require(_owner != address(0));
+    updatePayout(_owner);
+    uint256 payout = payoutBalances[_owner];
+    payoutBalances[_owner] = 0;
+    _owner.transfer(payout);
   }
 
   function getRentOwed(address _owner) public view returns (uint256 owed) {
+    require(_owner != address(0));
     updatePayout(_owner);
     return payoutBalances[_owner];
   }
@@ -356,11 +520,11 @@ contract BurritoToken is ERC721, Ownable {
   * @dev Return all burrito data
   * @param _tokenId uint256 of token
   */
-  function getBurritoData (uint256 _tokenId) external view 
-  returns (address _owner, uint256 _startingPrice, uint256 _price, uint256 _nextPrice, uint256 _payout) 
+  function getToken (uint256 _tokenId) external view 
+  returns (address _owner, uint256 _price, uint256 _lastPrice, uint256 _nextPrice, uint256 _payout, uint8 _kind, uint256 _bossTokenId, address[5] _previosOwners) 
   {
-    Burrito memory burrito = burritoData[_tokenId];
-    return (burrito.owner, burrito.startingPrice, burrito.price, getNextPrice(burrito.price), burrito.payout);
+    Token memory token = tokens[_tokenId];
+    return (token.owner, token.price, token.lastPrice, getNextPrice(token.price), token.payout, token.kind, token.bossTokenId, token.previousOwners);
   }
 
   /**
@@ -368,7 +532,7 @@ contract BurritoToken is ERC721, Ownable {
   * @param _tokenId uint256 ID of token
   */
   function tokenExists (uint256 _tokenId) public view returns (bool _exists) {
-    return burritoData[_tokenId].price > 0;
+    return tokens[_tokenId].price > 0;
   }
 
   /**
@@ -529,7 +693,7 @@ contract BurritoToken is ERC721, Ownable {
   function addToken(address _to, uint256 _tokenId) private {
     require(tokenOwner[_tokenId] == address(0));
     tokenOwner[_tokenId] = _to;
-    burritoData[_tokenId].owner = _to;
+    tokens[_tokenId].owner = _to;
     uint256 length = balanceOf(_to);
     ownedTokens[_to].push(_tokenId);
     ownedTokensIndex[_tokenId] = length;
@@ -562,17 +726,62 @@ contract BurritoToken is ERC721, Ownable {
   }
 
   function name() public pure returns (string _name) {
-    return "CryptoBurrito.co Burrito";
+    return "CryptoBurrito.co";
   }
 
   function symbol() public pure returns (string _symbol) {
-    return "BURRITO";
+    return "MBT";
   }
 
-  function setDevCutPercentage(uint256 _newCut) onlyOwner public {
-    require(_newCut <= 6);
-    require(_newCut >= 3);
+  function setFeePercentage(uint256 _newFee) onlyOwner public {
+    require(_newFee <= 5);
+    require(_newFee >= 3);
 
-    devCutPercentage = _newCut;
+    feePercentage = _newFee;
   }
+  
+  function setMainPoolCutPercentage(uint256 _newFee) onlyOwner public {
+    require(_newFee <= 30);
+    require(_newFee >= 5);
+
+    mainPoolCutPercentage = _newFee;
+  }
+
+  function setDividendCutPercentage(uint256 _newFee) onlyOwner public {
+    require(_newFee <= 200);
+    require(_newFee >= 50);
+
+    dividendCutPercentage = _newFee;
+  }
+
+  // Migration
+  OldContract oldContract;
+
+  function setOldContract(address _addr) onlyOwner public {
+    oldContract = OldContract(_addr);
+  }
+
+  function populateFromOldContract(uint256[] _ids) onlyOwner public {
+    for (uint256 i = 0; i < _ids.length; i++) {
+      // Can't rewrite tokens
+      if (tokens[_ids[i]].price == 0) {
+        address _owner;
+        uint256 _price;
+        uint256 _lastPrice;
+        uint256 _nextPrice;
+        uint256 _payout;
+        uint8 _kind;
+        uint256 _bossTokenId;
+
+        (_owner, _price, _lastPrice, _nextPrice, _payout, _kind, _bossTokenId) = oldContract.getToken(_ids[i]);
+
+        createToken(_ids[i], _price, _lastPrice, _payout, _kind, _bossTokenId, _owner);
+      }
+    }
+  }
+}
+
+interface OldContract {
+  function getToken (uint256 _tokenId) external view 
+  returns (address _owner, uint256 _price, uint256 _lastPrice, uint256 _nextPrice, uint256 _payout, uint8 _kind, uint256 _bossTokenId);
 }
