@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SwapToken at 0x3a09769f27a6e4b01bc58b1273bcaa8159033ec5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SwapToken at 0x9220d625bd6bea95c865b3c4faf273bfbd6bc48a
 */
 pragma solidity ^0.4.6;
 contract owned {
@@ -42,7 +42,6 @@ contract SwapToken is owned {
     uint256 public buyPrice;
     uint256 public issuePrice;
     uint256 public cPT;
-    uint256 public premium;
     bool public creditStatus;
     address public project_wallet;
     address public collectionFunds;
@@ -98,7 +97,7 @@ contract SwapToken is owned {
     /* Check if contract has started */
     /*function has_contract_started() private constant returns (bool) {
 	    return block.number >= startBlock;
-    }
+    }*/
     
     /* Check if contract has ended */
     /*function has_contract_ended() private constant returns (bool) {
@@ -222,6 +221,7 @@ contract SwapToken is owned {
         Transfer(this, msg.sender, amount);
     }
     
+    
     /* Credit Status Event */
     function setCreditStatus(bool _status) onlyOwner {
         creditStatus = _status;
@@ -241,26 +241,6 @@ contract SwapToken is owned {
         } else {
             Transfer(msg.sender, this, amount);             // executes an event reflecting on the change
             return revenue;                                 // ends function and returns
-        }
-    }
-    
-    // get premium, note not tested yet
-    function getPremium() private constant returns (uint256 premium) {
-        premium = (issuePrice - cPT) * 98/100;
-        return premium;
-    }
-    
-    // issuer collection sale
-    function sellIssuerTokens(uint amount) returns (uint revenue){
-        if (balanceOfIssuer[msg.sender] < amount ) throw;
-        balanceOfIssuer[this] += amount;
-        balanceOfIssuer[msg.sender] -= amount;
-        revenue = amount * getPremium();
-        if (!msg.sender.send(revenue)) {
-            throw;
-        } else {
-            Transfer(msg.sender, this, amount);
-            return revenue;
         }
     }
     
