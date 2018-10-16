@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MilitaryPay at 0x7288c72Af505E3a6FF2712699e2A695465D353B3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MilitaryPay at 0x9F46d4fAF6158c90B48B8D731faF1BE0e8eEa78E
 */
 pragma solidity ^0.4.13;
 
@@ -201,8 +201,8 @@ contract MilitaryPay is StandardToken {
 	function MTPToken() {
 		require(msg.sender == ownerAddress);
 
-		totalSupply = 631*1000000*1000000000000000000; 										// MAX TOTAL MTP 631 million
-		uint256 totalMTPReserved = totalSupply.mul(55).div(100);							// 55% reserved for MTP
+		totalSupply = 99631*1000000*1000000000000000000; 										// MAX TOTAL MTP 
+		uint256 totalMTPReserved = totalSupply.mul(99).div(100);							//  reserved for MTP
 		maxPresaleSupply = totalSupply*8/1000 + totalMTPReserved; 						// MAX TOTAL DURING PRESALE (0.8% of MAXTOTALSUPPLY)
 
 		balances[msg.sender] = totalMTPReserved;
