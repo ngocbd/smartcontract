@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x46d19b2d282494c0b6f95db564f17cee7f799312
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xe9bfedb98211b3f0393e62a9a4c342b32757f38b
 */
 pragma solidity ^0.4.4;
 
@@ -73,11 +73,11 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 80000000000;              
-        totalSupply = 80000000000;                        
-        name = "Synexcoin";                                   
-        decimals = 4;                            
-        symbol = "SYC";                              
+        balances[msg.sender] = 50000000000000;              
+        totalSupply = 50000000000000;                        
+        name = "LenusChain";                                   
+        decimals = 6;                            
+        symbol = "BPM";                              
     }
 
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
