@@ -1,78 +1,57 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distributor at 0xd3805b301fbc30e73a2d0ac549f5989b55d88246
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distributor at 0x1987a7e3379c9f963a4d8c717342dae7dbe51b55
 */
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.18;
 
-contract Owned {
-    address public owner;
-    address public newOwner;
+contract Distributor {
 
-    /**
-     * Events
-     */
-    event ChangedOwner(address indexed new_owner);
+  address public owner;
 
-    /**
-     * Functionality
-     */
+  mapping (address => uint) public received;
+    
+  mapping (address => uint) public balances;
 
-    function Owned() {
-        owner = msg.sender;
+  address[] public receivers;
+  
+  uint public index;
+  
+  uint public total;
+
+  modifier onlyOwner() {
+    require(owner == msg.sender);
+    _;
+  }
+  
+  function Distributor() public {
+      owner = msg.sender;
+  }
+  
+  function addReceivers(address[] _receivers, uint[] _balances) public onlyOwner {
+    for(uint i = 0; i < _receivers.length; i++) {
+      address receiver = _receivers[i];
+      require(balances[receiver] == 0);
+      balances[receiver] = _balances[i];
+      total += _balances[i];
+      receivers.push(receiver);
     }
+  }
 
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
+  function process(uint count) public onlyOwner {
+    for(uint i = 0; index < receivers.length && i < count; i++) {
+      address receiver = receivers[index];
+      require(received[receiver] == 0);
+      uint value = balances[receiver];
+      received[receiver] = balances[receiver];
+      receiver.transfer(value);
+      index++;
     }
+  }
 
-    function changeOwner(address _newOwner) onlyOwner external {
-        newOwner = _newOwner;
-    }
-
-    function acceptOwnership() external {
-        if (msg.sender == newOwner) {
-            owner = newOwner;
-            newOwner = 0x0;
-            ChangedOwner(owner);
-        }
-    }
-}
-
-contract IOwned {
-    function owner() returns (address);
-    function changeOwner(address);
-    function acceptOwnership();
-}
-
-// interface with what we need to withdraw
-contract Withdrawable {
-	function withdrawTo(address) returns (bool);
-}
-
-// responsible for 
-contract Distributor is Owned {
-
-	uint256 public nonce;
-	Withdrawable public w;
-
-	event BatchComplete(uint256 nonce);
-
-	event Complete();
-
-	function setWithdrawable(address w_addr) onlyOwner {
-		w = Withdrawable(w_addr);
-	}
-	
-	function distribute(address[] addrs) {
-		for (uint256 i = 0; i <  addrs.length; i++) {
-			w.withdrawTo(addrs[i]);
-		}
-		BatchComplete(nonce);
-		nonce = nonce + 1;
-	}
-
-	function complete() {
-		nonce = 0;
-		Complete();
-	}
+  function () public payable {
+  }
+  
+  function retreive() public onlyOwner {
+    owner.transfer(this.balance);
+  }
+    
 }
