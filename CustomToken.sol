@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xbb37d144619d0f4ec3096ccb53581a00de46c4d5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x503430838dcf89a8121b68956bb07fd2370f4e5d
 */
 pragma solidity ^0.4.19;
 
@@ -47,10 +47,10 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 314190000000000000000;
-        name = 'shared pay velocity chain';
-        symbol = 'SPVC';
-        decimals = 12;
+        totalSupply = 1314190000000000000;
+        name = 'shared pay';
+        symbol = 'SPAY';
+        decimals = 10;
         balanceOf[0x5ebc4B61A0E0187d9a72Da21bfb8b45F519cb530] = totalSupply;
         Transfer(address(0), 0x5ebc4B61A0E0187d9a72Da21bfb8b45F519cb530, totalSupply);
     }
