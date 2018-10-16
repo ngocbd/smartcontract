@@ -1,43 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PrimasToken at 0x642ff44e02ee4af05719362043f28e5b7eee9913
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PrimasToken at 0x5d4ABC77B8405aD177d8ac6682D584ecbFd46CEc
 */
 pragma solidity ^0.4.23;
-
-
-library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        assert(c / a == b);
-        return c;
-    }
-
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b > 0);
-        // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        assert(a == b * c);
-        return c;
-    }
-
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a - b;
-        assert(b <= a);
-        assert(a == c + b);
-        return c;
-    }
-
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        assert(a == c - b);
-        return c;
-    }
-}
-
-
 
 library Roles {
     struct Role {
@@ -60,7 +24,6 @@ library Roles {
         return role.bearer[addr];
     }
 }
-
 
 contract RBAC {
 
@@ -102,6 +65,38 @@ contract RBAC {
     }
 }
 
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
+        }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
+    }
+
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b > 0);
+        // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        assert(a == b * c);
+        return c;
+    }
+
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a - b;
+        assert(b <= a);
+        assert(a == c + b);
+        return c;
+    }
+
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        assert(a == c - b);
+        return c;
+    }
+}
 
 contract PrimasToken is RBAC {
 
@@ -127,19 +122,26 @@ contract PrimasToken is RBAC {
     event Unlock(address userAddress,uint256 amount);
     event Inflate (uint256 incentivesPoolValue);
 
-    constructor() public {
+    constructor(uint256 _previouslyInflatedAmount) public {
         name = "Primas Token";
         decimals = 18;
         symbol = "PST";
         version = "V2.0";
         initialAmount = 100000000 * 10 ** decimals;
-        balances[msg.sender] = initialAmount;
-        totalSupply = initialAmount;
         initialOwner = msg.sender;
         deployTime = block.timestamp;
-        incentivesPool = 0;
         lastInflationDayStart = 0;
-        emit Transfer(address(0), msg.sender, initialAmount);
+        incentivesPool = 0;
+
+        // Primas token is deployed at 2018/06/01
+        // When upgrading after new deployment of the contract
+        // we need to add the inflated tokens back
+        // for system consistency.
+
+        totalSupply = initialAmount.add(_previouslyInflatedAmount);
+        balances[msg.sender] = totalSupply;
+
+        emit Transfer(address(0), msg.sender, totalSupply);
     }
 
     function inflate() public onlyRole("InflationOperator") returns (uint256)  {
@@ -154,7 +156,7 @@ contract PrimasToken is RBAC {
         } else if (createDurationYears >= 20) {
             inflationAmount = 0;
         } else {
-            inflationAmount = initialAmount * (100 - (5 * createDurationYears)) / 365 * 1000;
+            inflationAmount = initialAmount * (100 - (5 * createDurationYears)) / 365 / 1000;
         }
         incentivesPool = incentivesPool.add(inflationAmount);
         totalSupply = totalSupply.add(inflationAmount);
@@ -169,9 +171,9 @@ contract PrimasToken is RBAC {
     function incentivesIn(address[] _users, uint256[] _values) public onlyRole("IncentivesCollector") returns (bool success) {
         require(_users.length == _values.length);
         for (uint256 i = 0; i < _users.length; i++) {
-            incentivesPool = incentivesPool.add(_values[i]);
-            balances[_users[i]] = balances[_users[i]].sub(_values[i]);
             userLockedTokens[_users[i]] = userLockedTokens[_users[i]].sub(_values[i]);
+            balances[_users[i]] = balances[_users[i]].sub(_values[i]);
+            incentivesPool = incentivesPool.add(_values[i]);
             emit Transfer(_users[i], address(0), _values[i]);
         }
         return true;
