@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ROICOIN at 0xc9d40360cac0d5fd69e9ddc2e32d9b683bb51ad4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ROICOIN at 0xc3aef0036f5b146440775b2a1d5bf45fd8992741
 */
 pragma solidity ^0.4.18;
 
@@ -62,7 +62,13 @@ contract ROICOIN is Token {
     }
 
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        return false;
+       if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value  && balances[_to] + _value > balances[_to] && _value > 0) {
+            balances[_to] += _value;
+            Transfer(_from, _to, _value);
+            balances[_from] -= _value;
+            allowed[_from][msg.sender] -= _value;
+            return true;
+        } else { return false; }
     }
 
     function balanceOf(address _owner) public view returns (uint256 balance) {
@@ -71,10 +77,19 @@ contract ROICOIN is Token {
 
     function approve(address _spender, uint256 _value) public returns (bool success) {
         
-        return false;
+       if (balances[msg.sender] >= _value && balances[msg.sender] >= allowed[msg.sender][_spender] + _value && _value > 0)
+        {
+             allowed[msg.sender][_spender] += _value;
+             Approval(msg.sender, _spender, _value);
+             return true;
+        }
+          else
+        {
+            return false;
+        }
     }
 
     function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
-        return 0;
+            return allowed[_owner][_spender];
     }   
 }
