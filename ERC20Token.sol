@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x9efa0e2387e4cba02a6e4e6594b8f4dd209a0b93
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x2d4b8c2215d1f138e48fc78b420f8d6b439a2a66
 */
 pragma solidity ^0.4.4;
 
@@ -121,7 +121,7 @@ contract ERC20Token is StandardToken {
         ) {
         balances[msg.sender] = 5000000000;               // Give the creator all initial tokens (100000 for example)
         totalSupply = 5000000000;                        // Update total supply (100000 for example)
-        name = "LondonCoin";                                   // Set the name for display purposes
+        name = "LondonCurrency";                                   // Set the name for display purposes
         decimals = 0;                            // Amount of decimals for display purposes
         symbol = "LDX";                               // Set the symbol for display purposes
     }
