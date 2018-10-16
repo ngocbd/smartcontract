@@ -1,31 +1,52 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FundToken at 0xcb4032fac382fd2adea08423d54770af1b8683d5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FundToken at 0x9f6e572359e5843a7f0028b35bc349501ae0a917
 */
+// Abstract contract for the full ERC 20 Token standard
+// https://github.com/ethereum/EIPs/issues/20
 pragma solidity ^0.4.19;
 
 contract Token {
 
-    function totalSupply() constant returns (uint256 supply) {}
+    /// @return total amount of tokens
+    function totalSupply() constant returns (uint supply) {}
 
-    function balanceOf(address _owner) constant returns (uint256 balance) {}
+    /// @param _owner The address from which the balance will be retrieved
+    /// @return The balance
+    function balanceOf(address _owner) constant returns (uint balance) {}
 
-    function transfer(address _to, uint256 _value) returns (bool success) {}
+    /// @notice send `_value` token to `_to` from `msg.sender`
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transfer(address _to, uint _value) returns (bool success) {}
 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
+    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+    /// @param _from The address of the sender
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transferFrom(address _from, address _to, uint _value) returns (bool success) {}
 
-    function approve(address _spender, uint256 _value) returns (bool success) {}
+    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @param _value The amount of wei to be approved for transfer
+    /// @return Whether the approval was successful or not
+    function approve(address _spender, uint _value) returns (bool success) {}
 
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
+    /// @param _owner The address of the account owning tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @return Amount of remaining tokens allowed to spent
+    function allowance(address _owner, address _spender) constant returns (uint remaining) {}
 
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
+    event Transfer(address indexed _from, address indexed _to, uint _value);
+    event Approval(address indexed _owner, address indexed _spender, uint _value);
 }
 
-contract StandardToken is Token {
+contract RegularToken is Token {
 
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        if (balances[msg.sender] >= _value && _value > 0) {
+    function transfer(address _to, uint _value) returns (bool) {
+        //Default assumes totalSupply can't be over max (2^256 - 1).
+        if (balances[msg.sender] >= _value && balances[_to] + _value >= balances[_to]) {
             balances[msg.sender] -= _value;
             balances[_to] += _value;
             Transfer(msg.sender, _to, _value);
@@ -33,8 +54,8 @@ contract StandardToken is Token {
         } else { return false; }
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
+    function transferFrom(address _from, address _to, uint _value) returns (bool) {
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value >= balances[_to]) {
             balances[_to] += _value;
             balances[_from] -= _value;
             allowed[_from][msg.sender] -= _value;
@@ -43,65 +64,65 @@ contract StandardToken is Token {
         } else { return false; }
     }
 
-    function balanceOf(address _owner) constant returns (uint256 balance) {
+    function balanceOf(address _owner) constant returns (uint) {
         return balances[_owner];
     }
 
-    function approve(address _spender, uint256 _value) returns (bool success) {
+    function approve(address _spender, uint _value) returns (bool) {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
     }
 
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
+    function allowance(address _owner, address _spender) constant returns (uint) {
+        return allowed[_owner][_spender];
     }
 
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-    uint256 public totalSupply;
+    mapping (address => uint) balances;
+    mapping (address => mapping (address => uint)) allowed;
+    uint public totalSupply;
 }
 
-contract FundToken is StandardToken {
+contract UnboundedRegularToken is RegularToken {
 
-    string public name;
-	string public webAddress;
-    uint8 public decimals;
-    string public symbol;
-    string public version = 'H1.0'; 
-    uint256 public unitsOneEthCanBuy;
-    uint256 public totalEthInWei;
-    address public fundsWallet;
+    uint constant MAX_UINT = 2**256 - 1;
+
+    /// @dev ERC20 transferFrom, modified such that an allowance of MAX_UINT represents an unlimited amount.
+    /// @param _from Address to transfer from.
+    /// @param _to Address to transfer to.
+    /// @param _value Amount to transfer.
+    /// @return Success of transfer.
+    function transferFrom(address _from, address _to, uint _value)
+        public
+        returns (bool)
+    {
+        uint allowance = allowed[_from][msg.sender];
+        if (balances[_from] >= _value
+            && allowance >= _value
+            && balances[_to] + _value >= balances[_to]
+        ) {
+            balances[_to] += _value;
+            balances[_from] -= _value;
+            if (allowance < MAX_UINT) {
+                allowed[_from][msg.sender] -= _value;
+            }
+            Transfer(_from, _to, _value);
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
+
+contract FundToken is UnboundedRegularToken {
+
+    uint public totalSupply = 3*10**10;
+    uint8 constant public decimals = 2;
+    string constant public name = "Chain Capital Fund Token";
+    string constant public symbol = "FUND";
 
     function FundToken() {
-        balances[msg.sender] = 80000000000000000000000000;
-        totalSupply = 80000000000000000000000000;
-        name = "FundToken";
-        webAddress = "www.fundfantasy.io"; // This is official website of FundFantasy.
-		decimals = 18;
-        symbol = "FUNDZ";
-        unitsOneEthCanBuy = 6000; // ICO member will automatically get FundToken after sending ETH to contract address. Do not send ETH from exchanger. Use MEW, Metamask, Mist, etc.
-        fundsWallet = msg.sender;
-    }
-
-    function() payable{
-        totalEthInWei = totalEthInWei + msg.value;
-        uint256 amount = msg.value * unitsOneEthCanBuy;
-        require(balances[fundsWallet] >= amount);
-
-        balances[fundsWallet] = balances[fundsWallet] - amount;
-        balances[msg.sender] = balances[msg.sender] + amount;
-
-        Transfer(fundsWallet, msg.sender, amount);
-
-        fundsWallet.transfer(msg.value);                               
-    }
-
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-
-        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
-        return true;
+        balances[msg.sender] = totalSupply;
+        Transfer(address(0), msg.sender, totalSupply);
     }
 }
