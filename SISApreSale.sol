@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SISApreSale at 0x80Cf8165Eed72D154306e2422Af577C48c29C9f9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SISApreSale at 0x6d5d2755d75d816085a70d0ec5ec7c57eea2015f
 */
 contract Math {
   function mul(uint a, uint b) internal returns (uint) {
@@ -78,6 +78,7 @@ contract Token {
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
 }
+
 contract StandardToken is Token {
 
     struct Account {
@@ -138,6 +139,7 @@ contract StandardToken is Token {
 
     function transfer(address _to, uint256 _value) 
     updateAccount(msg.sender)
+    updateAccount(_to)
     voteUpdater(_to, msg.sender)
     returns (bool success) 
     {
@@ -154,7 +156,8 @@ contract StandardToken is Token {
     }
 
     function transferFrom(address _from, address _to, uint256 _value)
-    updateAccount(msg.sender) 
+    updateAccount(_from)
+    updateAccount(_to)  
     voteUpdater(_to, _from)
     returns (bool success) 
     {
@@ -173,6 +176,7 @@ contract StandardToken is Token {
     mapping (address => Account) accounts;
     mapping (address => uint ) votes;
 }
+
 contract SISA is StandardToken, Math {
 
 
