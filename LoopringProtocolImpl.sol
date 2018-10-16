@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LoopringProtocolImpl at 0x8d8812b72d1e4ffcec158d25f56748b7d67c1e78
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LoopringProtocolImpl at 0x210d6d375fa699a04be90d1a1bb1844504fb7ae5
 */
 /*
   Copyright 2017 Loopring Project Ltd (Loopring Foundation).
@@ -208,7 +208,6 @@ contract LoopringProtocol {
         uint            _ringIndex,
         bytes32 indexed _ringHash,
         address         _miner,
-        address         _feeRecipient,
         bytes32[]       _orderInfoList
     );
     event OrderCancelled(
@@ -289,7 +288,7 @@ contract LoopringProtocol {
     /// @param sList        List of s for each order. This list is 1-larger than
     ///                     the previous lists, with the last element being the
     ///                     s value of the ring signature.
-    /// @param feeRecipient Miner address.
+    /// @param miner        Miner address.
     /// @param feeSelections -
     ///                     Bits to indicate fee selections. `1` represents margin
     ///                     split and `0` represents LRC as fee.
@@ -301,7 +300,7 @@ contract LoopringProtocol {
         uint8[]         vList,
         bytes32[]       rList,
         bytes32[]       sList,
-        address         feeRecipient,
+        address         miner,
         uint16          feeSelections
         )
         public;
@@ -332,6 +331,11 @@ contract TokenRegistry {
         string          symbol
     );
     function registerToken(
+        address addr,
+        string  symbol
+        )
+        external;
+    function registerMintedToken(
         address addr,
         string  symbol
         )
@@ -439,7 +443,6 @@ contract TokenTransferDelegate {
         external;
     function batchTransferToken(
         address lrcTokenAddress,
-        address miner,
         address minerFeeRecipient,
         uint8 walletSplitPercentage,
         bytes32[] batch
@@ -540,7 +543,7 @@ contract LoopringProtocolImpl is LoopringProtocol {
         uint8[]       vList;
         bytes32[]     rList;
         bytes32[]     sList;
-        address       feeRecipient;
+        address       miner;
         uint16        feeSelections;
         uint          ringSize;         // computed
         bytes32       ringHash;         // computed
@@ -641,7 +644,7 @@ contract LoopringProtocolImpl is LoopringProtocol {
         uint8[]       vList,
         bytes32[]     rList,
         bytes32[]     sList,
-        address       feeRecipient,
+        address       miner,
         uint16        feeSelections
         )
         public
@@ -655,7 +658,7 @@ contract LoopringProtocolImpl is LoopringProtocol {
             vList,
             rList,
             sList,
-            feeRecipient,
+            miner,
             feeSelections,
             addressList.length,
             0x0 // ringHash
@@ -769,6 +772,7 @@ contract LoopringProtocolImpl is LoopringProtocol {
             delegate,
             params.ringSize,
             orders,
+            params.miner,
             _lrcTokenAddress
         );
         /// Make transfers.
@@ -776,14 +780,13 @@ contract LoopringProtocolImpl is LoopringProtocol {
             delegate,
             params.ringSize,
             orders,
-            params.feeRecipient,
+            params.miner,
             _lrcTokenAddress
         );
         emit RingMined(
             _ringIndex,
             params.ringHash,
-            tx.origin,
-            params.feeRecipient,
+            params.miner,
             orderInfoList
         );
     }
@@ -791,7 +794,7 @@ contract LoopringProtocolImpl is LoopringProtocol {
         TokenTransferDelegate delegate,
         uint          ringSize,
         OrderState[]  orders,
-        address       feeRecipient,
+        address       miner,
         address       _lrcTokenAddress
         )
         private
@@ -837,8 +840,7 @@ contract LoopringProtocolImpl is LoopringProtocol {
         // Do all transactions
         delegate.batchTransferToken(
             _lrcTokenAddress,
-            tx.origin,
-            feeRecipient,
+            miner,
             walletSplitPercentage,
             batch
         );
@@ -868,6 +870,7 @@ contract LoopringProtocolImpl is LoopringProtocol {
         TokenTransferDelegate delegate,
         uint            ringSize,
         OrderState[]    orders,
+        address         miner,
         address         _lrcTokenAddress
         )
         private
@@ -925,7 +928,7 @@ contract LoopringProtocolImpl is LoopringProtocol {
                 // Only check the available miner balance when absolutely needed
                 if (!checkedMinerLrcSpendable && minerLrcSpendable < state.lrcFeeState) {
                     checkedMinerLrcSpendable = true;
-                    minerLrcSpendable = getSpendable(delegate, _lrcTokenAddress, tx.origin);
+                    minerLrcSpendable = getSpendable(delegate, _lrcTokenAddress, miner);
                 }
                 // Only calculate split when miner has enough LRC;
                 // otherwise all splits are 0.
@@ -1106,7 +1109,7 @@ contract LoopringProtocolImpl is LoopringProtocol {
         private
         pure
     {
-        require(params.feeRecipient != 0x0);
+        require(params.miner != 0x0);
         require(params.ringSize == addressList.length);
         require(params.ringSize == uintArgsList.length);
         require(params.ringSize == uint8ArgsList.length);
@@ -1178,7 +1181,7 @@ contract LoopringProtocolImpl is LoopringProtocol {
         validateOrdersCutoffs(orders, delegate);
         params.ringHash = keccak256(
             params.ringHash,
-            params.feeRecipient,
+            params.miner,
             params.feeSelections
         );
     }
