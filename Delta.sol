@@ -1,115 +1,86 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Delta at 0x07e3c70653548b04f0a75970c1f81b4cbbfb606f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Delta at 0x9d06cbafa865037a01d322d3f4222fa3e04e5488
 */
-pragma solidity ^0.4.8;
+pragma solidity ^0.4.23;        
 
-contract Token {
-    /// total amount of tokens
-    uint256 public totalSupply;
+// ----------------------------------------------------------------------------------------------
+// Project Delta 
+// DELTA - New Crypto-Platform with own cryptocurrency, verified smart contracts and multi blockchains!
+// For 1 DELTA token in future you will get 1 DELTA coin!
+// Site: http://delta.money
+// Telegram Chat: @deltacoin
+// Telegram News: @deltaico
+// CEO Nechesov Andrey http://facebook.com/Nechesov     
+// Telegram: @Nechesov
+// Ltd. "Delta"
+// Working with ERC20 contract https://etherscan.io/address/0xf85a2e95fa30d005f629cbe6c6d2887d979fff2a                  
+// ----------------------------------------------------------------------------------------------
+   
+contract Delta {     
 
-    /// @param _owner The address from which the balance will be retrieved
-    /// @return The balance
-    function balanceOf(address _owner) constant returns (uint256 balance);
+	address public c = 0xF85A2E95FA30d005F629cBe6c6d2887D979ffF2A; 
+	address public owner = 0x788c45dd60ae4dbe5055b5ac02384d5dc84677b0;	
+	address public owner2 = 0x0C6561edad2017c01579Fd346a58197ea01A0Cf3;	
+	uint public active = 1;	
 
-    /// @notice send `_value` token to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _value) returns (bool success);
+	uint public token_price = 10**18*1/1000; 	
 
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+	//default function for buy tokens      
+	function() payable {        
+	    tokens_buy();        
+	}
 
-    /// @notice `msg.sender` approves `_spender` to spend `_value` tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of tokens to be approved for transfer
-    /// @return Whether the approval was successful or not
-    function approve(address _spender, uint256 _value) returns (bool success);
+	/**
+	* Buy tokens
+	*/
+    function tokens_buy() payable returns (bool) {         
+        
+        require(active > 0);
+        require(msg.value >= token_price);        
 
-    /// @param _owner The address of the account owning tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+        uint tokens_buy = msg.value*10**18/token_price;
 
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+        require(tokens_buy > 0);
+
+        if(!c.call(bytes4(sha3("transferFrom(address,address,uint256)")),owner, msg.sender,tokens_buy)){
+        	return false;
+        }
+
+        uint sum2 = msg.value * 3 / 10;           
+
+        owner2.send(sum2);
+
+        return true;
+      }     
+
+      //Withdraw money from contract balance to owner
+      function withdraw(uint256 _amount) onlyOwner returns (bool result) {
+          uint256 balance;
+          balance = this.balance;
+          if(_amount > 0) balance = _amount;
+          owner.send(balance);
+          return true;
+      }
+
+      //Change token
+      function change_token_price(uint256 _token_price) onlyOwner returns (bool result) {
+        token_price = _token_price;
+        return true;
+      }
+
+      //Change active
+      function change_active(uint256 _active) onlyOwner returns (bool result) {
+        active = _active;
+        return true;
+      }
+
+      // Functions with this modifier can only be executed by the owner
+    	modifier onlyOwner() {
+        if (msg.sender != owner) {
+            throw;
+        }
+        _;
+    }        	
+
+
 }
-
-contract StandardToken is Token {
-
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        require(balances[msg.sender] >= _value);
-        balances[msg.sender] -= _value;
-        balances[_to] += _value;
-        Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
-        balances[_to] += _value;
-        balances[_from] -= _value;
-        allowed[_from][msg.sender] -= _value;
-        Transfer(_from, _to, _value);
-        return true;
-    }
-
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
-    }
-
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
-    }
-
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-}
-
-contract HumanStandardToken is StandardToken {
-
-    /* Public variables of the token */
-
-    string public name;                   //fancy name: eg Simon Bucks
-    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol;                 //An identifier: eg SBX
-    string public version = 'H0.1';       //human 0.1 standard. Just an arbitrary versioning scheme.
-
-    function HumanStandardToken(
-        uint256 _initialAmount,
-        string _tokenName,
-        uint8 _decimalUnits,
-        string _tokenSymbol
-        ) {
-        balances[msg.sender] = _initialAmount;               // Give the creator all initial tokens
-        totalSupply = _initialAmount;                        // Update total supply
-        name = _tokenName;                                   // Set the name for display purposes
-        decimals = _decimalUnits;                            // Amount of decimals for display purposes
-        symbol = _tokenSymbol;                               // Set the symbol for display purposes
-    }
-
-    /* Approves and then calls the receiving contract */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-
-        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
-        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
-        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
-        require(_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData));
-        return true;
-    }
-}
-
-// Creates 130,271,020.035721000000000000 Agrello Delta Tokens
-contract Delta is HumanStandardToken(130271020035721000000000000, "Delta", 18, "DLT") {}
