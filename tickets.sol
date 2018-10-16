@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract tickets at 0x7c3090e68f9653f91eec674f738957ee6c9e128a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract tickets at 0xf5f4a0b0a2153028d518a3f887e0028688351029
 */
 pragma solidity ^0.4.15;
 
@@ -36,16 +36,13 @@ contract tickets {
     
     address public owner;
     
-    uint256 eventDate;
-    
-    function tickets(uint256[] ticks, uint256 nOfSeats, string n, uint256 eD) {
+    function tickets(uint256[] ticks, uint256 nOfSeats, string n) {
         for(uint256 i=0;i<nOfSeats;i++) {
             ticketPrices[i] = ticks[i];
         }
         noOfSeats = nOfSeats;
         name = n;
         owner = msg.sender;
-        eventDate = eD;
     }
     
     function reserveSeats(uint256[] seats, uint256 nOfSeats) {
@@ -184,19 +181,15 @@ contract tickets {
     }
     
     function returnTickets(uint256 ticketID) {
-        if(now < eventDate) {
-            if(ticketsOwned[ticketID] == msg.sender) {
-                for(uint256 i=0;i<noOfTicketsOwned[msg.sender];i++) {
-                    if(ticketsOwners[msg.sender][i] == ticketID) {
-                        ticketsOwners[msg.sender][i] = 100000000000000000;
-                    }
+        if(ticketsOwned[ticketID] == msg.sender) {
+            for(uint256 i=0;i<noOfTicketsOwned[msg.sender];i++) {
+                if(ticketsOwners[msg.sender][i] == ticketID) {
+                    ticketsOwners[msg.sender][i] = 100000000000000000;
                 }
-                ticketsOwned[ticketID] = 0x0;
-                noOfTicketsOwned[msg.sender]--;
-                msg.sender.send(ticketPrices[ticketID]);
-            } else {
-                revert();
             }
+            ticketsOwned[ticketID] = 0x0;
+            noOfTicketsOwned[msg.sender]--;
+            msg.sender.send(ticketPrices[ticketID]);
         } else {
             revert();
         }
@@ -220,22 +213,13 @@ contract tickets {
         return hashes[a]!="" && hashes[a] == sha3(password);
     }
     
-    function end() {
-        if(msg.sender == owner) {
-            if(now > eventDate) {
-                owner.send(this.balance);
-            }
-        } else {
-            revert();
-        }
-    }
-    
     function() payable {
         if(msg.value == priceOfreservations[msg.sender] && !banned[msg.sender]) {
             for(uint256 i=0;i<noOfreservations[msg.sender];i++) {
                 ticketsOwners[msg.sender].push(reservations[msg.sender][i]);
             }
             resetReservations(msg.sender, false);
+            owner.send(msg.value);
             Confirmed(msg.sender);
         } else {
             revert();
