@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShortOrder at 0x2268003d92FF03Be6ca6dA029F8D8127FD2F617e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShortOrder at 0xf2cdf0A92075eD6DA179a2AD142021936673651b
 */
 pragma solidity ^0.4.18;
 
@@ -183,7 +183,9 @@ contract ShortOrder is SafeMath {
         sellerShort[0],
         amountNonceExpiryDM[0],
         amountNonceExpiryDM[1],
-        amountNonceExpiryDM[2]
+        amountNonceExpiryDM[2],
+        amountNonceExpiryDM[3],
+        amountNonceExpiryDM[4]
     );
     require(
       ecrecover(keccak256("\x19Ethereum Signed Message:\n32",longTransferHash),v,hashRS[1],hashRS[2]) == sellerShort[1] &&
@@ -229,7 +231,7 @@ contract ShortOrder is SafeMath {
       orderRecord[tokenUser[1]][orderHash].longBalance[msg.sender] = uint(0);
       TokenLongExercised(tokenUser,minMaxDMWCPNonce,v,rs,couponAmount,amount);
     }
-    else if(!orderRecord[msg.sender][orderHash].tokenDeposit){
+    else {
       couponAmount = safeMul(orderRecord[tokenUser[1]][orderHash].coupon,couponProportion);
       msg.sender.transfer(safeAdd(couponAmount,orderRecord[tokenUser[1]][orderHash].longBalance[msg.sender]));
       orderRecord[tokenUser[1]][orderHash].coupon = safeSub(orderRecord[tokenUser[1]][orderHash].coupon,couponAmount);
