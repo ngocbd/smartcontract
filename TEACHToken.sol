@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TEACHToken at 0x380ae93a6efe8ceb317828218492aca4c370f640
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TEACHToken at 0x6866a58440d12361db0cd94aa751be8f1ec7a4ca
 */
 pragma solidity ^0.4.18;
 
@@ -115,7 +115,7 @@ contract TEACHToken is ERC20Interface, Owned, SafeMath {
     // ------------------------------------------------------------------------
     // Constructor
     // ------------------------------------------------------------------------
-    function TEACHToken() public {
+    function TEACHTokenToken() public {
         symbol = "TEACH" ;
         name = "TeachCoin Token";
         decimals = 18;
