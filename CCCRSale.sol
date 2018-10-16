@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CCCRSale at 0xe2fe80062dce049caae1e89966d0856cbbb77626
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CCCRSale at 0xa245b449bd43ad363f81f18fd3c2b33f47c6baaf
 */
 pragma solidity ^0.4.16;
 
@@ -125,11 +125,11 @@ contract CCCRSale is Pausable {
     }
 
     function getRate() constant internal returns (uint256) {
-        if      (block.timestamp < startline + 19 days) return tokenPrice.mul(138).div(100); // 15.11.17-4.12.17 38%
-        else if (block.timestamp <= startline + 46 days) return tokenPrice.mul(123).div(100); // 4.12.17-31.12.17 23%
-        else if (block.timestamp <= startline + 60 days) return tokenPrice.mul(115).div(100); // 1.01.18-14.01.18 15%
-        else if (block.timestamp <= startline + 74 days) return tokenPrice.mul(109).div(100); // 15.01.18-28.01.18 9%
-        return tokenPrice; // 29.01.18-31.03.18 
+        if      (block.timestamp < startline + 19 days) return tokenPrice.mul(138).div(100);
+        else if (block.timestamp <= startline + 46 days) return tokenPrice.mul(123).div(100);
+        else if (block.timestamp <= startline + 60 days) return tokenPrice.mul(115).div(100);
+        else if (block.timestamp <= startline + 74 days) return tokenPrice.mul(109).div(100);
+        return tokenPrice;
     }
 
     function buy(address buyer, uint256 _amount) whenNotPaused payable {
