@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TemplateCrowdsale at 0x7ae48b0fcda6866b1d3ecce130765e339c74fad8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TemplateCrowdsale at 0xf1a3dc9de80f17a22b43acecaae62f5480063111
 */
 pragma solidity ^0.4.18;
 
@@ -767,12 +767,12 @@ contract usingConsts {
     uint8 constant TOKEN_DECIMALS_UINT8 = 18;
     uint constant TOKEN_DECIMAL_MULTIPLIER = 10 ** TOKEN_DECIMALS;
 
-    string constant TOKEN_NAME = "PharmaToken";
-    string constant TOKEN_SYMBOL = "RxT";
+    string constant TOKEN_NAME = "PandroytyToken";
+    string constant TOKEN_SYMBOL = "PDRY";
     bool constant PAUSED = true;
-    address constant TARGET_USER = 0x03FbdA50876F9b2Be94AA9d2Cdbe5BE84f34E851;
-    uint constant START_TIME = 1521832620;
-    bool constant CONTINUE_MINTING = false;
+    address constant TARGET_USER = 0x8f302c391b2b6fd064ae8257d09a13d9fedde207;
+    uint constant START_TIME = 1520730000;
+    bool constant CONTINUE_MINTING = true;
 }
 
 
@@ -1019,33 +1019,7 @@ contract BonusableCrowdsale is usingConsts, Crowdsale {
         uint256 bonusRate = rate;
 
         
-        // apply bonus for time & weiRaised
-        uint[4] memory weiRaisedStartsBoundaries = [uint(0),uint(2500000000000000000000),uint(7500000000000000000000),uint(32500000000000000000000)];
-        uint[4] memory weiRaisedEndsBoundaries = [uint(2500000000000000000000),uint(7500000000000000000000),uint(32500000000000000000000),uint(90000000000000000000000)];
-        uint64[4] memory timeStartsBoundaries = [uint64(1521832620),uint64(1521832620),uint64(1521832620),uint64(1521832620)];
-        uint64[4] memory timeEndsBoundaries = [uint64(1524511020),uint64(1527189415),uint64(1527189415),uint64(1527189415)];
-        uint[4] memory weiRaisedAndTimeRates = [uint(1000),uint(750),uint(500),uint(250)];
 
-        for (uint i = 0; i < 4; i++) {
-            bool weiRaisedInBound = (weiRaisedStartsBoundaries[i] <= weiRaised) && (weiRaised < weiRaisedEndsBoundaries[i]);
-            bool timeInBound = (timeStartsBoundaries[i] <= now) && (now < timeEndsBoundaries[i]);
-            if (weiRaisedInBound && timeInBound) {
-                bonusRate += bonusRate * weiRaisedAndTimeRates[i] / 1000;
-            }
-        }
-        
-
-        
-        // apply amount
-        uint[3] memory weiAmountBoundaries = [uint(10000000000000000000),uint(10000000000000000000),uint(1000000000000000000)];
-        uint[3] memory weiAmountRates = [uint(250),uint(0),uint(50)];
-
-        for (uint j = 0; j < 3; j++) {
-            if (weiAmount >= weiAmountBoundaries[j]) {
-                bonusRate += bonusRate * weiAmountRates[j] / 1000;
-                break;
-            }
-        }
         
 
         return bonusRate;
@@ -1056,20 +1030,16 @@ contract BonusableCrowdsale is usingConsts, Crowdsale {
 
 contract TemplateCrowdsale is usingConsts, MainCrowdsale
     
-    , BonusableCrowdsale
-    
     
     , CappedCrowdsale
-    
-    , Checkable
     
 {
     event Initialized();
     bool public initialized = false;
 
     function TemplateCrowdsale(MintableToken _token)
-        Crowdsale(START_TIME > now ? START_TIME : now, 1527189420, 1000 * TOKEN_DECIMAL_MULTIPLIER, 0x0359C1772783caEf5887fbe120dE7c0a6238c10A)
-        CappedCrowdsale(100000000000000000000000)
+        Crowdsale(START_TIME > now ? START_TIME : now, 1524236400, 20000 * TOKEN_DECIMAL_MULTIPLIER, 0x8f302c391b2b6fd064ae8257d09a13d9fedde207)
+        CappedCrowdsale(1500000000000000000000)
         
     {
         token = _token;
@@ -1084,9 +1054,9 @@ contract TemplateCrowdsale is usingConsts, MainCrowdsale
         }
 
         
-        address[2] memory addresses = [address(0x3ce9f379b5113f7fd6106ab1d8ef93dacb3dcdaf),address(0xbd419a9cd904b6610f300158fe39ac26098b0cc5)];
-        uint[2] memory amounts = [uint(25000000000000000000000000),uint(25000000000000000000000000)];
-        uint64[2] memory freezes = [uint64(0),uint64(0)];
+        address[1] memory addresses = [address(0xd03d4529efbef18770d725e9cea045cd8e5a0997)];
+        uint[1] memory amounts = [uint(50000000000000000000000000)];
+        uint64[1] memory freezes = [uint64(0)];
 
         for (uint i = 0; i < addresses.length; i ++) {
             if (freezes[i] == 0) {
@@ -1109,23 +1079,5 @@ contract TemplateCrowdsale is usingConsts, MainCrowdsale
         return MintableToken(0);
     }
 
-    
-    /**
-     * @dev Do inner check.
-     * @return bool true of accident triggered, false otherwise.
-     */
-    function internalCheck() internal returns (bool) {
-        return !isFinalized && hasEnded();
-    }
-
-    /**
-     * @dev Do inner action if check was success.
-     */
-    function internalAction() internal {
-        finalization();
-        Finalized();
-
-        isFinalized = true;
-    }
     
 }
