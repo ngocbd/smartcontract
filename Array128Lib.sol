@@ -1,23 +1,24 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Array128Lib at 0xc78c0c443c84518ec6a14e63a994b329ac19024d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Array128Lib at 0xaaed720C987B25E8CC0f4C0d1827F8b0C8545B41
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.18;
 
 /**
  * @title Array128 Library
  * @author Majoolr.io
  *
- * version 1.0.0
+ * version 1.1.0
  * Copyright (c) 2017 Majoolr, LLC
  * The MIT License (MIT)
  * https://github.com/Majoolr/ethereum-libraries/blob/master/LICENSE
  *
- * The Array128 Library provides a few utility functions to work with
- * storage uint128[] types in place. Majoolr works on open source projects in
- * the Ethereum community with the purpose of testing, documenting, and deploying
- * reusable code onto the blockchain to improve security and usability of smart
- * contracts. Majoolr also strives to educate non-profits, schools, and other
- * community members about the application of blockchain technology.
+ *  The Array128 Library provides a few utility functions to work with
+ * storage uint128[] types in place. Majoolr provides smart contract services
+ * and security reviews for contract deployments in addition to working on open
+ * source projects in the Ethereum community. Our purpose is to test, document,
+ * and deploy reusable code onto the blockchain and improve both security and
+ * usability. We also educate non-profits, schools, and other community members
+ * about the application of blockchain technology.
  * For further information: majoolr.io
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
@@ -34,20 +35,20 @@ library Array128Lib {
   /// @dev Sum vector
   /// @param self Storage array containing uint256 type variables
   /// @return sum The sum of all elements, does not check for overflow
-  function sumElements(uint128[] storage self) constant returns(uint128 sum) {
+  function sumElements(uint128[] storage self) public view returns(uint256 sum) {
     uint256 term;
+    uint8 remainder;
+
     assembly {
       mstore(0x60,self_slot)
 
       for { let i := 0 } lt(i, sload(self_slot)) { i := add(i, 1) } {
         term := sload(add(sha3(0x60,0x20),div(i,2)))
 
-        switch mod(i,2)
-        case 1 {
-          for { let j := 0 } lt(j, 4) { j := add(j, 1) } {
-            term := div(term,4294967296)
-          }
+        remainder := mod(i,2)
 
+        for { let j := 0 } lt(j, mul(remainder, 4)) { j := add(j, 1) } {
+          term := div(term,4294967296)
         }
 
         term := and(0x00000000000000000000000000000000ffffffffffffffffffffffffffffffff,term)
@@ -60,8 +61,10 @@ library Array128Lib {
   /// @dev Returns the max value in an array.
   /// @param self Storage array containing uint256 type variables
   /// @return maxValue The highest value in the array
-  function getMax(uint128[] storage self) constant returns(uint128 maxValue) {
+  function getMax(uint128[] storage self) public view returns(uint128 maxValue) {
     uint256 term;
+    uint8 remainder;
+
     assembly {
       mstore(0x60,self_slot)
       maxValue := 0
@@ -69,11 +72,10 @@ library Array128Lib {
       for { let i := 0 } lt(i, sload(self_slot)) { i := add(i, 1) } {
         term := sload(add(sha3(0x60,0x20),div(i,2)))
 
-        switch mod(i,2)
-        case 1 {
-          for { let j := 0 } lt(j, 4) { j := add(j, 1) } {
-            term := div(term,4294967296)
-          }
+        remainder := mod(i,2)
+
+        for { let j := 0 } lt(j, mul(remainder, 4)) { j := add(j, 1) } {
+          term := div(term,4294967296)
         }
 
         term := and(0x00000000000000000000000000000000ffffffffffffffffffffffffffffffff,term)
@@ -88,19 +90,20 @@ library Array128Lib {
   /// @dev Returns the minimum value in an array.
   /// @param self Storage array containing uint256 type variables
   /// @return minValue The highest value in the array
-  function getMin(uint128[] storage self) constant returns(uint128 minValue) {
+  function getMin(uint128[] storage self) public view returns(uint128 minValue) {
     uint256 term;
+    uint8 remainder;
+
     assembly {
       mstore(0x60,self_slot)
 
       for { let i := 0 } lt(i, sload(self_slot)) { i := add(i, 1) } {
         term := sload(add(sha3(0x60,0x20),div(i,2)))
 
-        switch mod(i,2)
-        case 1 {
-          for { let j := 0 } lt(j, 4) { j := add(j, 1) } {
-            term := div(term,4294967296)
-          }
+        remainder := mod(i,2)
+
+        for { let j := 0 } lt(j, mul(remainder, 4)) { j := add(j, 1) } {
+          term := div(term,4294967296)
         }
 
         term := and(0x00000000000000000000000000000000ffffffffffffffffffffffffffffffff,term)
@@ -122,7 +125,9 @@ library Array128Lib {
   /// @param isSorted True if the array is sorted, false otherwise
   /// @return found True if the value was found, false otherwise
   /// @return index The index of the given value, returns 0 if found is false
-  function indexOf(uint128[] storage self, uint128 value, bool isSorted) constant
+  function indexOf(uint128[] storage self, uint128 value, bool isSorted)
+           public
+           view
            returns(bool found, uint256 index) {
     uint256 term;
     assembly{
@@ -188,7 +193,7 @@ library Array128Lib {
   /// @dev Utility function for heapSort
   /// @param index The index of child node
   /// @return pI The parent node index
-  function getParentI(uint256 index) constant private returns (uint256 pI) {
+  function getParentI(uint256 index) private pure returns (uint256 pI) {
     uint256 i = index - 1;
     pI = i/2;
   }
@@ -196,14 +201,14 @@ library Array128Lib {
   /// @dev Utility function for heapSort
   /// @param index The index of parent node
   /// @return lcI The index of left child
-  function getLeftChildI(uint256 index) constant private returns (uint256 lcI) {
+  function getLeftChildI(uint256 index) private pure returns (uint256 lcI) {
     uint256 i = index * 2;
     lcI = i + 1;
   }
 
   /// @dev Sorts given array in place
   /// @param self Storage array containing uint256 type variables
-  function heapSort(uint128[] storage self) {
+  function heapSort(uint128[] storage self) public {
     uint256 end = self.length - 1;
     uint256 start = getParentI(end);
     uint256 root = start;
@@ -261,5 +266,28 @@ library Array128Lib {
         }
       }
     }
+  }
+
+  /// @dev Removes duplicates from a given array.
+  /// @param self Storage array containing uint256 type variables
+  function uniq(uint128[] storage self) public returns (uint256 length) {
+    bool contains;
+    uint256 index;
+
+    for (uint256 i = 0; i < self.length; i++) {
+      (contains, index) = indexOf(self, self[i], false);
+
+      if (i > index) {
+        for (uint256 j = i; j < self.length - 1; j++){
+          self[j] = self[j + 1];
+        }
+
+        delete self[self.length - 1];
+        self.length--;
+        i--;
+      }
+    }
+
+    length = self.length;
   }
 }
