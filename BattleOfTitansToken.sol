@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BattleOfTitansToken at 0x65018a41058b406412118a9be2d112fc15e4d727
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BattleOfTitansToken at 0xcbb5d3718ae8476e641095938120d71b42132e61
 */
 pragma solidity ^0.4.17;
 
@@ -257,10 +257,10 @@ contract BattleOfTitansToken is StandardToken, Pausable {
   uint8 public constant decimals = 8;                                          // Set the number of decimals for display
   
   uint256 public constant INITIAL_SUPPLY = 360000000 * 10**uint256(decimals);
-  uint256 public constant launch_date = 1506970800;
-  uint256 public constant unfreeze_start_date = 1506970800;
-  uint256 public constant unfreeze_periods = 60;
-  uint256 public constant unfreeze_period_time = 60;
+  uint256 public constant launch_date = 1516579200;
+  uint256 public constant unfreeze_start_date = 1526947200;
+  uint256 public constant unfreeze_periods = 150;
+  uint256 public constant unfreeze_period_time = 86400;
   uint256 public constant unfreeze_end_date = (unfreeze_start_date + (unfreeze_period_time * unfreeze_periods));
 
   mapping (address => uint256) public frozenAccount;
