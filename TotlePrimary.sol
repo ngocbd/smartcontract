@@ -1,71 +1,70 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TotlePrimary at 0x10927c6089eb19afaad24c8e3b89e0626d7a017a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TotlePrimary at 0xd94c60e2793ad587400d86e4d6fd9c874f0f79ef
 */
-pragma solidity ^0.4.24;
+pragma solidity 0.4.21;
 
-library Math {
-  function max64(uint64 a, uint64 b) internal pure returns (uint64) {
-    return a >= b ? a : b;
-  }
+// File: contracts/ExchangeHandler.sol
 
-  function min64(uint64 a, uint64 b) internal pure returns (uint64) {
-    return a < b ? a : b;
-  }
+/// @title Interface for all exchange handler contracts
+interface ExchangeHandler {
 
-  function max256(uint256 a, uint256 b) internal pure returns (uint256) {
-    return a >= b ? a : b;
-  }
+    /// @dev Get the available amount left to fill for an order
+    /// @param orderAddresses Array of address values needed for this DEX order
+    /// @param orderValues Array of uint values needed for this DEX order
+    /// @param exchangeFee Value indicating the fee for this DEX order
+    /// @param v ECDSA signature parameter v
+    /// @param r ECDSA signature parameter r
+    /// @param s ECDSA signature parameter s
+    /// @return Available amount left to fill for this order
+    function getAvailableAmount(
+        address[8] orderAddresses,
+        uint256[6] orderValues,
+        uint256 exchangeFee,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external returns (uint256);
 
-  function min256(uint256 a, uint256 b) internal pure returns (uint256) {
-    return a < b ? a : b;
-  }
+    /// @dev Perform a buy order at the exchange
+    /// @param orderAddresses Array of address values needed for each DEX order
+    /// @param orderValues Array of uint values needed for each DEX order
+    /// @param exchangeFee Value indicating the fee for this DEX order
+    /// @param amountToFill Amount to fill in this order
+    /// @param v ECDSA signature parameter v
+    /// @param r ECDSA signature parameter r
+    /// @param s ECDSA signature parameter s
+    /// @return Amount filled in this order
+    function performBuy(
+        address[8] orderAddresses,
+        uint256[6] orderValues,
+        uint256 exchangeFee,
+        uint256 amountToFill,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external payable returns (uint256);
+
+    /// @dev Perform a sell order at the exchange
+    /// @param orderAddresses Array of address values needed for each DEX order
+    /// @param orderValues Array of uint values needed for each DEX order
+    /// @param exchangeFee Value indicating the fee for this DEX order
+    /// @param amountToFill Amount to fill in this order
+    /// @param v ECDSA signature parameter v
+    /// @param r ECDSA signature parameter r
+    /// @param s ECDSA signature parameter s
+    /// @return Amount filled in this order
+    function performSell(
+        address[8] orderAddresses,
+        uint256[6] orderValues,
+        uint256 exchangeFee,
+        uint256 amountToFill,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external returns (uint256);
 }
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    if (a == 0) {
-      return 0;
-    }
-    c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
-  }
-
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
+// File: openzeppelin-solidity/contracts/ownership/Ownable.sol
 
 /**
  * @title Ownable
@@ -106,6 +105,40 @@ contract Ownable {
   }
 
 }
+
+// File: openzeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+// File: openzeppelin-solidity/contracts/token/ERC20/ERC20.sol
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract Token is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+// File: contracts/TokenTransferProxy.sol
+
+/*
+    Notice - This code is copyright 2017 ZeroEx Intl and licensed
+    under the Apache License, Version 2.0;
+*/
 
 contract TokenTransferProxy is Ownable {
 
@@ -198,82 +231,83 @@ contract TokenTransferProxy is Ownable {
     }
 }
 
+// File: openzeppelin-solidity/contracts/math/Math.sol
 
-/// @title Interface for all exchange handler contracts
-interface ExchangeHandler {
+/**
+ * @title Math
+ * @dev Assorted math operations
+ */
+library Math {
+  function max64(uint64 a, uint64 b) internal pure returns (uint64) {
+    return a >= b ? a : b;
+  }
 
-    /// @dev Get the available amount left to fill for an order
-    /// @param orderAddresses Array of address values needed for this DEX order
-    /// @param orderValues Array of uint values needed for this DEX order
-    /// @param exchangeFee Value indicating the fee for this DEX order
-    /// @param v ECDSA signature parameter v
-    /// @param r ECDSA signature parameter r
-    /// @param s ECDSA signature parameter s
-    /// @return Available amount left to fill for this order
-    function getAvailableAmount(
-        address[8] orderAddresses,
-        uint256[6] orderValues,
-        uint256 exchangeFee,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external returns (uint256);
+  function min64(uint64 a, uint64 b) internal pure returns (uint64) {
+    return a < b ? a : b;
+  }
 
-    /// @dev Perform a buy order at the exchange
-    /// @param orderAddresses Array of address values needed for each DEX order
-    /// @param orderValues Array of uint values needed for each DEX order
-    /// @param exchangeFee Value indicating the fee for this DEX order
-    /// @param amountToFill Amount to fill in this order
-    /// @param v ECDSA signature parameter v
-    /// @param r ECDSA signature parameter r
-    /// @param s ECDSA signature parameter s
-    /// @return Amount filled in this order
-    function performBuy(
-        address[8] orderAddresses,
-        uint256[6] orderValues,
-        uint256 exchangeFee,
-        uint256 amountToFill,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external payable returns (uint256);
+  function max256(uint256 a, uint256 b) internal pure returns (uint256) {
+    return a >= b ? a : b;
+  }
 
-    /// @dev Perform a sell order at the exchange
-    /// @param orderAddresses Array of address values needed for each DEX order
-    /// @param orderValues Array of uint values needed for each DEX order
-    /// @param exchangeFee Value indicating the fee for this DEX order
-    /// @param amountToFill Amount to fill in this order
-    /// @param v ECDSA signature parameter v
-    /// @param r ECDSA signature parameter r
-    /// @param s ECDSA signature parameter s
-    /// @return Amount filled in this order
-    function performSell(
-        address[8] orderAddresses,
-        uint256[6] orderValues,
-        uint256 exchangeFee,
-        uint256 amountToFill,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external returns (uint256);
+  function min256(uint256 a, uint256 b) internal pure returns (uint256) {
+    return a < b ? a : b;
+  }
 }
 
-contract Token {
-    function totalSupply() public constant returns (uint);
-    function balanceOf(address tokenOwner) public constant returns (uint balance);
-    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
-    function transfer(address to, uint tokens) public returns (bool success);
-    function approve(address spender, uint tokens) public returns (bool success);
-    function transferFrom(address from, address to, uint tokens) public returns (bool success);
+// File: openzeppelin-solidity/contracts/math/SafeMath.sol
 
-    event Transfer(address indexed from, address indexed to, uint tokens);
-    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    if (a == 0) {
+      return 0;
+    }
+    c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
+
+// File: contracts/TotlePrimary.sol
 
 /// @title The primary contract for Totle Inc
 contract TotlePrimary is Ownable {
     // Constants
-    string public constant CONTRACT_VERSION = "0";
     uint256 public constant MAX_EXCHANGE_FEE_PERCENTAGE = 0.01 * 10**18; // 1%
     bool constant BUY = false;
     bool constant SELL = true;
@@ -303,7 +337,7 @@ contract TotlePrimary is Ownable {
 
     /// @dev Constructor
     /// @param proxy Address of the TokenTransferProxy
-    constructor(address proxy) public {
+    function TotlePrimary(address proxy) public {
         tokenTransferProxy = proxy;
     }
 
@@ -428,7 +462,7 @@ contract TotlePrimary is Ownable {
 
                 orderIndex = SafeMath.add(orderIndex, 1);
                 // If this is the last order for this token
-                if(orderIndex == ordersLength || orders.tokenForOrder[SafeMath.sub(orderIndex, 1)] != orders.tokenForOrder[orderIndex]) {
+                if(orderIndex == ordersLength || orders.tokenForOrder[SafeMath.sub(orderIndex, 1)] != orders.tokenForOrder[orderIndex]){
                     break;
                 }
             }
