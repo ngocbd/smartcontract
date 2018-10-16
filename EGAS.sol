@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EGAS at 0xb53a96bcbdd9cf78dff20bab6c2be7baec8f00f8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EGAS at 0x59baf65547d0ead60168ac116be82d6d296ac6a9
 */
 /**
  * @First Smart Airdrop eGAS Token
@@ -213,7 +213,7 @@ contract BurnableToken is StandardToken {
     }
 }
 
-contract EGAS is BurnableToken, Owned {
+contract EGAS is StandardToken, Owned {
 
   string public constant name = "ETHGAS";
   string public constant symbol = "eGAS";
