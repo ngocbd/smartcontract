@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LongevityCrowdsale at 0xec807912f908e4cd044e147dac2a1aededea6900
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LongevityCrowdsale at 0x2f09a5ea600a54a61bb9937478219f58f58c2174
 */
-pragma solidity 0.4.20;
-
+pragma solidity ^0.4.18;
 
 /**
  * @title SafeMath
@@ -200,7 +199,6 @@ contract LongevityToken is StandardToken {
     string public name = "Longevity";
     string public symbol = "LTY";
     uint8 public decimals = 2;
-    uint256 public cap = 2**256 - 1; // maximum possible uint256. Decreased on finalization
     bool public mintingFinished = false;
     mapping (address => bool) owners;
     mapping (address => bool) minters;
@@ -211,7 +209,6 @@ contract LongevityToken is StandardToken {
         uint256 mintSpeed; // token fractions per second
     }
     Tap public mintTap;
-    bool public capFinalized = false;
 
     event Mint(address indexed to, uint256 amount);
     event MintFinished();
@@ -221,7 +218,6 @@ contract LongevityToken is StandardToken {
     event MinterRemoved(address indexed removedMinter);
     event Burn(address indexed burner, uint256 value);
     event MintTapSet(uint256 startTime, uint256 mintSpeed);
-    event SetCap(uint256 currectTotalSupply, uint256 cap);
 
     function LongevityToken() public {
         owners[msg.sender] = true;
@@ -235,7 +231,6 @@ contract LongevityToken is StandardToken {
      */
     function mint(address _to, uint256 _amount) onlyMinter public returns (bool) {
         require(!mintingFinished);
-        require(totalSupply.add(_amount) <= cap);
         passThroughTap(_amount);
         totalSupply = totalSupply.add(_amount);
         balances[_to] = balances[_to].add(_amount);
@@ -351,17 +346,6 @@ contract LongevityToken is StandardToken {
         mintTap.mintSpeed = _mintSpeed;
         MintTapSet(mintTap.startTime, mintTap.mintSpeed);
     }
-    /**
-     * @dev sets token Cap (maximum possible totalSupply) on Crowdsale finalization
-     * Cap will be set to (sold tokens + team tokens) * 2
-     */
-    function setCap() onlyOwner public {
-        require(!capFinalized);
-        require(cap == 2**256 - 1);
-        cap = totalSupply.mul(2);
-        capFinalized = true;
-        SetCap(totalSupply, cap);
-    }
 }
 
 
@@ -379,14 +363,14 @@ contract LongevityCrowdsale {
     // The token being sold
     LongevityToken public token;
 
+    // External wallet where funds get forwarded
+    address public wallet;
+
     // Crowdsale administrators
     mapping (address => bool) public owners;
 
     // External bots updating rates
     mapping (address => bool) public bots;
-
-    // Cashiers responsible for manual token issuance
-    mapping (address => bool) public cashiers;
 
     // USD cents per ETH exchange rate
     uint256 public rateUSDcETH;
@@ -407,16 +391,9 @@ contract LongevityCrowdsale {
     // Minimum Deposit in USD cents
     uint256 public constant minContributionUSDc = 1000;
 
-    bool public finalized = false;
 
     // Amount of raised Ethers (in wei).
-    // And raised Dollars in cents
     uint256 public weiRaised;
-    uint256 public USDcRaised;
-
-    // Wallets management
-    address[] public wallets;
-    mapping (address => bool) inList;
 
     /**
      * event for token purchase logging
@@ -427,14 +404,12 @@ contract LongevityCrowdsale {
      * @param amount amount of tokens purchased
      */
     event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 bonusPercent, uint256 amount);
-    event OffChainTokenPurchase(address indexed beneficiary, uint256 tokensSold, uint256 USDcAmount);
 
     // event for rate update logging
     event RateUpdate(uint256 rate);
 
     // event for wallet update
-    event WalletAdded(address indexed wallet);
-    event WalletRemoved(address indexed wallet);
+    event WalletSet(address indexed wallet);
 
     // owners management events
     event OwnerAdded(address indexed newOwner);
@@ -443,10 +418,6 @@ contract LongevityCrowdsale {
     // bot management events
     event BotAdded(address indexed newBot);
     event BotRemoved(address indexed removedBot);
-
-    // cashier management events
-    event CashierAdded(address indexed newBot);
-    event CashierRemoved(address indexed removedBot);
 
     // Phase edit events
     event TotalPhasesChanged(uint value);
@@ -457,14 +428,23 @@ contract LongevityCrowdsale {
         require(_tokenAddress != address(0));
         token = LongevityToken(_tokenAddress);
         rateUSDcETH = _initialRate;
+        wallet = msg.sender;
         owners[msg.sender] = true;
         bots[msg.sender] = true;
         phases[0].bonusPercent = 40;
         phases[0].startTime = 1520453700;
         phases[0].endTime = 1520460000;
-
-        addWallet(msg.sender);
     }
+
+    /**
+     * @dev Update collecting wallet address
+     * @param _address The address to send collected funds
+     */
+    function setWallet(address _address) onlyOwner public {
+        wallet = _address;
+        WalletSet(_address);
+    }
+
 
     // fallback function can be used to buy tokens
     function () external payable {
@@ -485,22 +465,14 @@ contract LongevityCrowdsale {
 
         // calculate token amount to be created
         uint256 tokens = calculateTokenAmount(weiAmount, currentBonusPercent);
-        
+
+        // update state
         weiRaised = weiRaised.add(weiAmount);
-        USDcRaised = USDcRaised.add(calculateUSDcValue(weiRaised));
 
         token.mint(beneficiary, tokens);
         TokenPurchase(msg.sender, beneficiary, weiAmount, currentBonusPercent, tokens);
 
         forwardFunds();
-    }
-
-    // Sell any amount of tokens for cash or CryptoCurrency
-    function offChainPurchase(address beneficiary, uint256 tokensSold, uint256 USDcAmount) onlyCashier public {
-        require(beneficiary != address(0));
-        USDcRaised = USDcRaised.add(USDcAmount);
-        token.mint(beneficiary, tokensSold);
-        OffChainTokenPurchase(beneficiary, tokensSold, USDcAmount);
     }
 
     // If phase exists return corresponding bonus for the given date
@@ -512,6 +484,7 @@ contract LongevityCrowdsale {
                 return phases[i].bonusPercent;
             }
         }
+        return 0;
     }
 
     // If phase exists for the given date return true
@@ -584,32 +557,6 @@ contract LongevityCrowdsale {
         _;
     }
 
-    /**
-     * @dev Adds cashier account responsible for manual token issuance
-     * @param _address The address of the Cashier
-     */
-    function addCashier(address _address) onlyOwner public {
-        cashiers[_address] = true;
-        CashierAdded(_address);
-    }
-
-    /**
-     * @dev Removes cashier account responsible for manual token issuance
-     * @param _address The address of the Cashier
-     */
-    function delCashier(address _address) onlyOwner public {
-        cashiers[_address] = false;
-        CashierRemoved(_address);
-    }
-
-    /**
-     * @dev Throws if called by any account other than Cashier.
-     */
-    modifier onlyCashier() {
-        require(cashiers[msg.sender]);
-        _;
-    }
-
     // calculate deposit value in USD Cents
     function calculateUSDcValue(uint256 _weiDeposit) public view returns (uint256) {
 
@@ -630,21 +577,9 @@ contract LongevityCrowdsale {
     }
 
     // send ether to the fund collection wallet
+    // override to create custom fund forwarding mechanisms
     function forwardFunds() internal {
-        uint256 value = msg.value / wallets.length;
-        uint256 rest = msg.value - (value * wallets.length);
-        for (uint i = 0; i < wallets.length - 1; i++) {
-            wallets[i].transfer(value);
-        }
-        wallets[wallets.length - 1].transfer(value + rest);
-    }
-
-    // Add wallet address to wallets list
-    function addWallet(address _address) onlyOwner public {
-        require(!inList[_address]);
-        wallets.push(_address);
-        inList[_address] = true;
-        WalletAdded(_address);
+        wallet.transfer(msg.value);
     }
 
     //Change number of phases
@@ -665,37 +600,5 @@ contract LongevityCrowdsale {
         require(index <= totalPhases);
         delete phases[index];
         DelPhase(index);
-    }
-
-    // Delete wallet from wallets list
-    function delWallet(uint index) onlyOwner public {
-        require(index < wallets.length);
-        address remove = wallets[index];
-        inList[remove] = false;
-        for (uint i = index; i < wallets.length-1; i++) {
-            wallets[i] = wallets[i+1];
-        }
-        wallets.length--;
-        WalletRemoved(remove);
-    }
-
-    // Return wallets array size
-    function getWalletsCount() public view returns (uint256) {
-        return wallets.length;
-    }
-
-    // finalizeCrowdsale issues tokens for the Team.
-    // Team gets 30/70 of harvested funds then token gets capped (upper emission boundary locked) to totalSupply * 2
-    // The token split after finalization will be in % of total token cap:
-    // 1. Tokens issued and distributed during pre-ICO and ICO = 35%
-    // 2. Tokens issued for the team on ICO finalization = 30%
-    // 3. Tokens for future in-app emission = 35%
-    function finalizeCrowdsale(address _teamAccount) onlyOwner public {
-        require(!finalized);
-        uint256 soldTokens = token.totalSupply();
-        uint256 teamTokens = soldTokens.div(70).mul(30);
-        token.mint(_teamAccount, teamTokens);
-        token.setCap();
-        finalized = true;
     }
 }
