@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleTokenExt at 0x4045Fc5D5885A12D17A0401b42E99Cd69D3D93e5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleTokenExt at 0xd48f07D942a075FBbA9836a2898Dda2702c7FFdA
 */
 // Created using ICO Wizard https://github.com/poanetwork/ico-wizard by POA Network 
 pragma solidity ^0.4.11;
@@ -559,9 +559,13 @@ contract MintableTokenExt is StandardToken, Ownable {
   address[] public reservedTokensDestinations;
   uint public reservedTokensDestinationsLen = 0;
 
-  function setReservedTokensList(address addr, uint inTokens, uint inPercentageUnit, uint inPercentageDecimals) onlyOwner {
-    reservedTokensDestinations.push(addr);
-    reservedTokensDestinationsLen++;
+  function setReservedTokensList(address addr, uint inTokens, uint inPercentageUnit, uint inPercentageDecimals) canMint onlyOwner {
+    assert(addr != address(0));
+    if (reservedTokensList[addr].inTokens == 0 && reservedTokensList[addr].inPercentageUnit == 0) {
+      reservedTokensDestinations.push(addr);
+      reservedTokensDestinationsLen++;
+    }
+
     reservedTokensList[addr] = ReservedTokensData({inTokens:inTokens, inPercentageUnit:inPercentageUnit, inPercentageDecimals: inPercentageDecimals});
   }
 
@@ -577,9 +581,11 @@ contract MintableTokenExt is StandardToken, Ownable {
     return reservedTokensList[addr].inPercentageDecimals;
   }
 
-  function setReservedTokensListMultiple(address[] addrs, uint[] inTokens, uint[] inPercentageUnit, uint[] inPercentageDecimals) onlyOwner {
+  function setReservedTokensListMultiple(address[] addrs, uint[] inTokens, uint[] inPercentageUnit, uint[] inPercentageDecimals) canMint onlyOwner {
     for (uint iterator = 0; iterator < addrs.length; iterator++) {
-      setReservedTokensList(addrs[iterator], inTokens[iterator], inPercentageUnit[iterator], inPercentageDecimals[iterator]);
+      if (addrs[iterator] != address(0)) {
+        setReservedTokensList(addrs[iterator], inTokens[iterator], inPercentageUnit[iterator], inPercentageDecimals[iterator]);
+      }
     }
   }
 
