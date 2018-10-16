@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract newCrowdsale at 0x4fcd3023fedf38e105efb150a1e280b7fbc1b950
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract newCrowdsale at 0xe8433116974b18a50636f030f6635e3870220d5c
 */
 /**
  * Investors relations: partners@xrpconnect.co
@@ -8,7 +8,7 @@
  * Contact: ken@xrpconnect.co
 **/
 
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.18;
 
 /**
  * @title Crowdsale
@@ -95,10 +95,10 @@ contract Ownable {
 }
 
 interface XRPCToken {
-    function transfer(address receiver, uint amount) public;
-    function balanceOf(address _owner) public returns (uint256 balance);
-    function mint(address wallet, address buyer, uint256 tokenAmount) public;
-    function showMyTokenBalance(address addr) public;
+    function transfer(address receiver, uint amount) external;
+    function balanceOf(address _owner) external returns (uint256 balance);
+    function mint(address wallet, address buyer, uint256 tokenAmount) external;
+    function showMyTokenBalance(address addr) external;
 }
 
 contract newCrowdsale is Ownable {
