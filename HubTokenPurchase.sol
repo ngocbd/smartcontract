@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HubTokenPurchase at 0xe14eac83b3bb1bb7b265bf298c348264f8399834
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HubTokenPurchase at 0x56968ed69c4269eaad419af20a22c4c16f2f5005
 */
 pragma solidity ^0.4.21;
 
@@ -71,10 +71,10 @@ contract HubTokenPurchase is Ownable {
 
   // Transfer some funds to the target purchase address.
   function execute_transfer(uint transfer_amount) internal {
-    // Major fee is 1.4 for each 1035
-    uint major_fee = transfer_amount * 21 / 1035;
-    // Minor fee is 2.1 for each 1035
-    uint minor_fee = transfer_amount * 14 / 1035;
+    // Major fee is 3 for each 105
+    uint major_fee = transfer_amount * 3 / 105;
+    // Minor fee is 2 for each 105
+    uint minor_fee = transfer_amount * 2 / 105;
 
     require(major_partner_address.call.gas(gas).value(major_fee)());
     require(minor_partner_address.call.gas(gas).value(minor_fee)());
