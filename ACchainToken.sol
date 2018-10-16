@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ACchainToken at 0xb6a1cbe33607baf30eebcdb3cb73db032beac54c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ACchainToken at 0xdd039c88effc4ccc1477e7c10ab5e23f6871d1cf
 */
 pragma solidity ^0.4.18;
 
@@ -9,7 +9,7 @@ pragma solidity ^0.4.18;
 // Deployed to : 0x00D1B2487D4Eab17D9171f9f3dFaE92427BdB5EC
 // Symbol      : ACCT
 // Name        : ACchainToken
-// Total supply: Gazillion
+// Total supply: 1000000000
 // Decimals    : 18
 //
 // Enjoy.
@@ -212,7 +212,7 @@ contract ACchainToken is ERC20Interface, Owned, SafeMath {
     }
 
     // ------------------------------------------------------------------------
-    // 20,000 FWD Tokens per 1 ETH
+    // 20,000 ACCT Tokens per 1 ETH
     // ------------------------------------------------------------------------
     function () public payable {
         require(now >= startDate && now <= endDate);
