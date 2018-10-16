@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Audit at 0x713df989ecd9c5bb5942b23e7386d473b5620b66
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Audit at 0xb5124ab26c97be4975b242bfc26de88e22e6d644
 */
 pragma solidity ^0.4.24;
 
@@ -23,16 +23,12 @@ contract Audit {
   
   // Returns code audit level, 0 if not present
   function isVerifiedAddress(address _auditorAddr, address _contractAddr) public view returns(uint) {
-    bytes32 codeHash = getCodeHash(_contractAddr);
+    bytes32 codeHash = keccak256(codeAt(_contractAddr));
     return auditedContracts[_auditorAddr][codeHash].level;
   }
 
   function isVerifiedCode(address _auditorAddr, bytes32 _codeHash) public view returns(uint) {
     return auditedContracts[_auditorAddr][_codeHash].level;
-  }
-  
-  function getCodeHash(address _contractAddr) public view returns(bytes32) {
-      return keccak256(codeAt(_contractAddr));
   }
   
   // Add audit information
@@ -73,48 +69,5 @@ contract Audit {
       // actually retrieve the code, this needs assembly
       extcodecopy(_addr, add(code, 0x20), 0, size)
     }
-  }
-}
-
-contract MonteLabsMS {
-  // MonteLabs owners
-  mapping (address => bool) public owners;
-  uint8 constant quorum = 2;
-  Audit public auditContract;
-
-  constructor(address[] _owners, Audit _auditContract) public {
-    auditContract = _auditContract;
-    require(_owners.length == 3);
-    for (uint i = 0; i < _owners.length; ++i) {
-      owners[_owners[i]] = true;
-    }
-  }
-
-  function addAuditOrEvidence(bool audit, bytes32 _codeHash, uint _level,
-                              bytes32 _ipfsHash, uint8 _v, bytes32 _r, 
-                              bytes32 _s) internal {
-    address sender = msg.sender;
-    require(owners[sender]);
-
-    bytes32 prefixedHash = keccak256("\x19Ethereum Signed Message:\n32",
-                           keccak256(audit, _codeHash, _level, _ipfsHash));
-
-    address other = ecrecover(prefixedHash, _v, _r, _s);
-    // At least 2 different owners
-    assert(other != sender);
-    if (audit)
-      auditContract.addAudit(_codeHash, _level, _ipfsHash);
-    else
-      auditContract.addEvidence(_codeHash, _level, _ipfsHash);
-  }
-
-  function addAudit(bytes32 _codeHash, uint _level, bytes32 _ipfsHash,
-                    uint8 _v, bytes32 _r, bytes32 _s) public {
-    addAuditOrEvidence(true, _codeHash, _level, _ipfsHash, _v, _r, _s);
-  }
-
-  function addEvidence(bytes32 _codeHash, uint _version, bytes32 _ipfsHash,
-                    uint8 _v, bytes32 _r, bytes32 _s) public {
-    addAuditOrEvidence(false, _codeHash, _version, _ipfsHash, _v, _r, _s);
   }
 }
