@@ -1,24 +1,22 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PODH at 0x33259c14a28c89af457c9dbac9743f3efb651f09
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PODH at 0x813d59a260b09b797252adcae90a8d01ce1f6b06
 */
 pragma solidity ^0.4.20;
 
 /*
 * 
 * ====================================*
-*  ____     ___       _      _____    *
-* |  _ \   / _ \     / \    | ____|   *
-* | |_) | | | | |   / _ \   |  _|     *
-* |  __/  | |_| |  / ___ \  | |___    *
-* |_|      \___/  /_/   \_\ |_____|   *
-*                                     *
-*      PROOF OF ALBERT EINSTEIN       *
-*               E=mc²                 *
+*  ____     ___    ____    _   _      *
+* |  _ \   / _ \  |  _ \  | | | |     *
+* | |_) | | | | | | | | | | |_| |     *
+* |  __/  | |_| | | |_| | |  _  |     *
+* |_|      \___/  |____/  |_| |_|     *
+*                REV2                 *
 * ====================================*
 * -> What?
 * This source code is copy of a copy of a copy of Proof of Weak Hands (POWH3D)
 * If POWL, POOH, POWM can do it, shit, why can't we?
-* Call us dickheads, because we love POAE :)
+* Call us dickheads, because we love PODH :)
 */
 
 contract PODH {
@@ -123,17 +121,14 @@ contract PODH {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "ProofOfAlbertEinstein";
-    string public symbol = "POAE";
+    string public name = "PODH:RE";
+    string public symbol = "PODH";
     uint8 constant public decimals = 18;
     uint8 constant internal dividendFee_ = 10;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
     uint256 constant internal magnitude = 2**64;
     
-    
-     
-        
     // proof of stake (defaults at 100 tokens)
     uint256 public stakingRequirement = 5e18;
     
@@ -166,11 +161,9 @@ contract PODH {
     /*=======================================
     =            PUBLIC FUNCTIONS            =
     =======================================*/
-    /* balanceOf[0xd8fa9C65623129Fa4abAf44B7e21655d1eF835ce] = 1000000000000000000000;
-        Transfer(address(0), 0xd8fa9C65623129Fa4abAf44B7e21655d1eF835ce, 1000000000000000000000);
+    /*
     * -- APPLICATION ENTRY POINTS --  
     */
-    
     function PODH()
         public
     {
@@ -182,14 +175,6 @@ contract PODH {
 
     }
     
-     
-    
-    
-    
-    
-    
-    
-
      
     /**
      * Converts all incoming ethereum to tokens for the caller, and passes down the referral addy (if any)
