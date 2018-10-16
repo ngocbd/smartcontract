@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LedgerRandomProofVerifier at 0xfdbcaf6cc7a4b7be8f862668b4c2bd6b979b5ce0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LedgerRandomProofVerifier at 0xb0dfef33474de3411a8ba0595062af1189702166
 */
 pragma solidity ^0.4.11;
 
@@ -1047,7 +1047,7 @@ contract LedgerRandomProofVerifier is usingOraclize, Owned {
     
     function LedgerRandomProofVerifier() {
         // Change here if we expect different code hash
-        expectedCodeHash = hex"f5557abbf544c3db784d84e777d3ca2894372d5ae761c74aa9266231225f156c";
+        expectedCodeHash = hex"fd94fa71bc0ba10d39d464d0d8f465efeef0a2764e3887fcc9df41ded20f505c";
     }
 
     modifier onlyWhitelisted {
