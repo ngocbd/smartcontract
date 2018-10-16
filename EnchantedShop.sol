@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EnchantedShop at 0x65c0a4c7be4ca3657b223ac5031b5ba1f686aed9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EnchantedShop at 0x70C22B17f5917534fd86F742C53e6a4515feABA8
 */
 pragma solidity ^0.4.18;
 
-// zeppelin-solidity: 1.5.0
+
 
 /**
  * @title Ownable
@@ -254,7 +254,7 @@ contract Object is StandardToken, Ownable {
         symbol = _symbol;
     }
 
-    function burn(uint _value) public {
+    function burn(uint _value) onlyOwner public { // changed to onlyOwner, AKA the shop contract
         require(_value <= balances[msg.sender]);
         address burner = msg.sender;
         balances[burner] = balances[burner].sub(_value);
@@ -401,7 +401,7 @@ contract EnchantedShop is Shop {
     uint public runningDebt; // total of individually amortized debts owed by this shop
     uint public additionalDebt; // general debt not yet accounted for due to amortization
     uint public debtPaid; // total debt paid by this shop
-    uint public constant devFee = 125; // 125 represents 12.5%
+    uint public constant devFee = 250; // 125 represents 12.5%, 250 25%
     uint public originalPrice;
 
     uint public totalExcessEth; // total of individually amortized excess eth transfers, analogous to runningDebt
