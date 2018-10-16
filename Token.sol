@@ -1,189 +1,127 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract token at 0xf45ee2519203fe8b77c1f05de75cf5f405bf9011
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x85924fdcccb75c47c3d2155ae0a519018164cac0
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.21;
 
-interface tokenRecipient { 
-    function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public;
+
+/*
+
+BASIC ERC20 Crowdsale ICO ERC20 Token
+
+Create this Token contract AFTER you already have the Sale contract created.
+
+   Token(address sale_address)   // creates token and links the Sale contract
+
+@author Hunter Long, Jun Kawasaki
+@repo https://github.com/hunterlong/ethereum-ico-contract
+
+Thank you.
+
+*/
+
+
+contract TelomereCoin {
+    uint256 public totalSupply;
+    bool public allowTransfer;
+
+    function balanceOf(address _owner) constant returns (uint256 balance);
+    function transfer(address _to, uint256 _value) returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+    function approve(address _spender, uint256 _value) returns (bool success);
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+}
+
+contract StandardToken is TelomereCoin {
+
+    function transfer(address _to, uint256 _value) returns (bool success) {
+        require(allowTransfer);
+        require(balances[msg.sender] >= _value);
+        balances[msg.sender] -= _value;
+        balances[_to] += _value;
+        Transfer(msg.sender, _to, _value);
+        return true;
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        require(allowTransfer);
+        require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
+        balances[_to] += _value;
+        balances[_from] -= _value;
+        allowed[_from][msg.sender] -= _value;
+        Transfer(_from, _to, _value);
+        return true;
+    }
+
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
+    }
+
+    function approve(address _spender, uint256 _value) returns (bool success) {
+        require(allowTransfer);
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+      return allowed[_owner][_spender];
+    }
+
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
 }
 
 
-/**
- * @title ????????
- */
-contract token {
-    /* ???? */
-    string public standard = 'https://mshk.top';
-    string public name; //????
-    string public symbol; //??????'$'
-    uint8 public decimals = 18;  //????????????????0,??????????18?0
-    uint256 public totalSupply; //????
+contract Token is StandardToken {
 
-    /*?????????*/
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
+    string public name = "Telomere Coin";
+    uint8 public decimals = 0;
+    string public symbol = "TXY";
+    string public version = 'TXY 1.0';
+    address public mintableAddress;
 
-    /* ???????????????????*/
-    event Transfer(address indexed from, address indexed to, uint256 value);  //??????
-    event Burn(address indexed from, uint256 value);  //????????
-
-    /* ?????????????????????????
-     * @param initialSupply ?????
-     * @param tokenName ????
-     * @param tokenSymbol ????
-     */
-    function token(uint256 initialSupply, string tokenName, string tokenSymbol) {
-
-        //?????
-        totalSupply = initialSupply * 10 ** uint256(decimals);    //????10^18???18?0?????decimals?18
-
-        //?????????????????????????
-        balanceOf[msg.sender] = totalSupply;
-
-        name = tokenName;
-        symbol = tokenSymbol;
-
+    function Token(address sale_address) {
+        balances[msg.sender] = 0;
+        totalSupply = 0;
+        name = name;
+        decimals = decimals;
+        symbol = symbol;
+        mintableAddress = sale_address;
+        allowTransfer = true;
+        createTokens();
     }
 
-
-    /**
-     * ???????????????????
-     * @param  _from address ???????
-     * @param  _to address ???????
-     * @param  _value uint256 ???????
-     */
-    function _transfer(address _from, address _to, uint256 _value) internal {
-
-      //????????0x0
-      require(_to != 0x0);
-
-      //?????????????
-      require(balanceOf[_from] >= _value);
-
-      //??????
-      require(balanceOf[_to] + _value > balanceOf[_to]);
-
-      //???????????
-      uint previousBalances = balanceOf[_from] + balanceOf[_to];
-
-      //?????????
-      balanceOf[_from] -= _value;
-
-      //??????????
-      balanceOf[_to] += _value;
-
-      //?????????????
-      Transfer(_from, _to, _value);
-
-      //??????????????????
-      assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
-
+    // creates all tokens 5 million
+    // this address will hold all tokens
+    // all community contrubutions coins will be taken from this address
+    function createTokens() internal {
+        uint256 total = 116000000;
+        balances[this] = total;
+        totalSupply = total;
     }
 
-    /**
-     * ????????????????
-     * @param  _to address ???????
-     * @param  _value uint256 ???????
-     */
-    function transfer(address _to, uint256 _value) public {
-        _transfer(msg.sender, _to, _value);
+    function changeTransfer(bool allowed) external {
+        require(msg.sender == mintableAddress);
+        allowTransfer = allowed;
     }
 
-    /**
-     * ????????????????????
-     *
-     * ??????????????????
-     *
-     * @param  _from address ?????
-     * @param  _to address ?????
-     * @param  _value uint256 ????????
-     * @return success        ??????
-     */
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        //?????????????
-        require(_value <= allowance[_from][msg.sender]);   // Check allowance
-
-        allowance[_from][msg.sender] -= _value;
-
-        _transfer(_from, _to, _value);
-
+    function mintToken(address to, uint256 amount) external returns (bool success) {
+        require(msg.sender == mintableAddress);
+        require(balances[this] >= amount);
+        balances[this] -= amount;
+        balances[to] += amount;
+        Transfer(this, to, amount);
         return true;
     }
 
-    /**
-     * ?????????????
-     *
-     * ??????????????????????
-     *
-     * @param _spender ????
-     * @param _value ??
-     */
-    function approve(address _spender, uint256 _value) public returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
-        return true;
-    }
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
 
-    /**
-     * ?????????????
-     *
-     * ????????????????????????????????? tokenRecipient ??????
-     *
-     * @param _spender ????
-     * @param _value ??
-     * @param _extraData ?????
-     */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) public returns (bool success) {
-        tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
-        }
-    }
-
-    /**
-     * ??????????
-     *
-     * ?????????
-     *
-     * @param _value ??????
-     */
-    function burn(uint256 _value) public returns (bool success) {
-        //???????????????
-        require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-
-        //?????????
-        balanceOf[msg.sender] -= _value;
-
-        //?????????
-        totalSupply -= _value;
-
-        Burn(msg.sender, _value);
-        return true;
-    }
-
-    /**
-     * ??????????????
-     *
-     * ?????????
-     *
-     * @param _from ????????
-     * @param _value ??????
-     */
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-
-        //???????????????
-        require(balanceOf[_from] >= _value);
-
-        //?? ???? ????????
-        require(_value <= allowance[_from][msg.sender]);
-
-        //????
-        balanceOf[_from] -= _value;
-        allowance[_from][msg.sender] -= _value;
-
-        //????
-        totalSupply -= _value;
-        Burn(_from, _value);
+        require(_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData));
         return true;
     }
 }
