@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xa1877c74562821ff59ffc0bc999e6a2e164f4d87
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x3B6B74df081BC0E2c4776b3Ceb3D4Bc61C20ad32
 */
 pragma solidity ^0.4.8;
 
@@ -15,11 +15,11 @@ contract Crowdsale {
     bool public minimumTargetReached = false;
 
     // initialization
-    address public beneficiary = 0xC1fa2C60Ea649A477e40c0510744f2881C0486D9;/*ifSuccessfulSendTo*/
+    address public beneficiary = 0x35A9dd5a6b59eE5e28FC519802A468379573af39;/*ifSuccessfulSendTo*/
     uint public price = 0.0015 ether;/*costOfEachToken*/
-    uint public minimumTarget = 1500000 * price;/*minimumTargetInTokens*/
-    uint public maximumTarget = 9803020 * price;/*maximumTargetInTokens*/
-    uint public deadline =  now + 43200 * 1 minutes;/*durationInMinutes*/
+    uint public minimumTarget = 10 * price;/*minimumTargetInTokens*/
+    uint public maximumTarget = 1000 * price;/*maximumTargetInTokens*/
+    uint public deadline =  now + 1440 * 1 minutes;/*durationInMinutes*/
     token public tokenReward = token(0x2Fd8019ce2AAc3bf9DB18D851A57EFe1a6151BBF);/*addressOfTokenUsedAsReward*/
 
 
@@ -48,7 +48,7 @@ contract Crowdsale {
         }
     }
 
-    // dev function for withdraw any amount from amountRaised (active only if minimumTarget is reached)
+    // dev function for withdraw any amount from raised funds (activate only if minimumTarget is reached)
     function devWithdrawal(uint num, uint den) {
         if (!minimumTargetReached || !(beneficiary == msg.sender)) throw;
         uint wAmount = num / den;
@@ -58,7 +58,7 @@ contract Crowdsale {
         }
     }
 
-    // dev function for withdraw resAmount (active only if minimumTarget is reached)
+    // dev function for withdraw amount, which be reserved by minimumTarget (activate only if minimumTarget is reached)
     function devResWithdrawal() {
         if (!minimumTargetReached || !(beneficiary == msg.sender)) throw;
         if (beneficiary.send(resAmount)) {
@@ -92,7 +92,7 @@ contract Crowdsale {
         }
     }
 
-    // return your funds after deadline if minimumTarget is not reached (active if crowdsale close)
+    // return your funds after deadline if minimumTarget is not reached (activate if crowdsale close)
     function safeWithdrawal() afterDeadline {
         if (!crowdsaleClosed) throw;
         if (!minimumTargetReached && crowdsaleClosed) {
