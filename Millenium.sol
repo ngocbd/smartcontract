@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Millenium at 0x37a5bb09f4d7613803f6bdd52d261c01ec2a7540
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Millenium at 0x85c157c32a49b707f2dd3be2469456b6546bfc2e
 */
 pragma solidity ^0.4.4;
 
@@ -119,9 +119,9 @@ contract Millenium is StandardToken {
 
     function Millenium(
         ) {
-        balances[msg.sender] = 10000000;               // Give the creator all initial tokens (100000 for example)
+        balances[msg.sender] = 50000000;               // Give the creator all initial tokens (100000 for example)
         totalSupply = 50000000;                        // Update total supply (100000 for example)
-        name = "Millenium";                                   // Set the name for display purposes
+        name = "Milleniuim";                                   // Set the name for display purposes
         decimals = 0;                            // Amount of decimals for display purposes
         symbol = "MLL";                               // Set the symbol for display purposes
     }
