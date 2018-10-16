@@ -1,11 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Asset at 0x1e09bd8cadb441632e441db3e1d79909ee0a2256
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Asset at 0xdd668617758fd3966825f0b58d5381c24794f9e5
 */
 pragma solidity ^0.4.18;
 /**
-* Digital Safe Coin
-* ERC-20 Token Standar Compliant
-* @author Fares A. Akel C. f.antonio.akel@gmail.com
+* TOKEN Contract
 */
 
 /**
@@ -26,6 +24,7 @@ library SafeMath {
     }
 
 }
+
 /**
  * Token contract interface for external use
  */
@@ -46,7 +45,6 @@ contract ERC20TokenInterface {
 */
 contract admined { //This token contract is administered
     address public admin; //Admin address is public
-    bool public lockSupply; //Mint and Burn Lock flag
     bool public lockTransfer; //Transfer Lock flag
     address public allowedAddress; //an address that can override lock condition
 
@@ -73,11 +71,6 @@ contract admined { //This token contract is administered
         _;
     }
 
-    modifier supplyLock() { //A modifier to lock mint and burn transactions
-        require(lockSupply == false);
-        _;
-    }
-
     modifier transferLock() { //A modifier to lock transactions
         require(lockTransfer == false || allowedAddress == msg.sender);
         _;
@@ -92,14 +85,6 @@ contract admined { //This token contract is administered
         TransferAdminship(admin);
     }
 
-   /**
-    * @dev Function to set mint and burn locks
-    * @param _set boolean flag (true | false)
-    */
-    function setSupplyLock(bool _set) onlyAdmin public { //Only the admin can set a lock on supply
-        lockSupply = _set;
-        SetSupplyLock(_set);
-    }
 
    /**
     * @dev Function to set transfer lock
@@ -112,7 +97,6 @@ contract admined { //This token contract is administered
 
     //All admin actions have a log for public review
     event AllowedSet(address _to);
-    event SetSupplyLock(bool _set);
     event SetTransferLock(bool _set);
     event TransferAdminship(address newAdminister);
     event Admined(address administer);
@@ -191,29 +175,6 @@ contract ERC20Token is ERC20TokenInterface, admined { //Standar definition of a 
     }
 
     /**
-    * @dev Mint token to an specified address.
-    * @param _target The address of the receiver of the tokens.
-    * @param _mintedAmount amount to mint.
-    */
-    function mintToken(address _target, uint256 _mintedAmount) onlyAdmin supplyLock public {
-        balances[_target] = SafeMath.add(balances[_target], _mintedAmount);
-        totalSupply = SafeMath.add(totalSupply, _mintedAmount);
-        Transfer(0, this, _mintedAmount);
-        Transfer(this, _target, _mintedAmount);
-    }
-
-    /**
-    * @dev Burn token of an specified address.
-    * @param _target The address of the holder of the tokens.
-    * @param _burnedAmount amount to burn.
-    */
-    function burnToken(address _target, uint256 _burnedAmount) onlyAdmin supplyLock public {
-        balances[_target] = SafeMath.sub(balances[_target], _burnedAmount);
-        totalSupply = SafeMath.sub(totalSupply, _burnedAmount);
-        Burned(_target, _burnedAmount);
-    }
-
-    /**
     * @dev Frozen account.
     * @param _target The address to being frozen.
     * @param _flag The status of the frozen
@@ -229,7 +190,6 @@ contract ERC20Token is ERC20TokenInterface, admined { //Standar definition of a 
     */
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    event Burned(address indexed _target, uint256 _value);
     event FrozenStatus(address _target,bool _flag);
 }
 
@@ -238,31 +198,15 @@ contract ERC20Token is ERC20TokenInterface, admined { //Standar definition of a 
 * @dev Initial supply creation
 */
 contract Asset is ERC20Token {
-    string public name = 'Digital Safe Coin';
-    uint8 public decimals = 1;
-    string public symbol = 'DSC';
+    string public name = 'EasyExchanger token';
+    uint8 public decimals = 18;
+    string public symbol = 'ECE';
     string public version = '1';
 
     function Asset() public {
-
-        totalSupply = 500000000 * (10**uint256(decimals));          //500 million initial token creation
-        //Initial Token Distribution
-        //Tokens to creator wallet - For distribution        
-        balances[msg.sender] = 300000000 * (10**uint256(decimals)); //60% for public distribution
-        //Tokens to reserve fund wallet
-        balances[0x9caC17210aAc675E39b7fd6B9182eF5eBe724EC8] = 100000000 * (10**uint256(decimals));//20% for reserve fund
-        //Tokens to team members
-        balances[0x3B41bFA39241CDF7afeF807087774e27fd01a1b2] = 50000000 * (10**uint256(decimals));//10% for team members
-        //Tokens for advisors and others ---------------------------------------------------------//10% For advisors and others* */
-        balances[0xBa52E579C7296A6B45D724CD8163966eEdC5997a] = 49500000 * (10**uint256(decimals));// |---> *9.9% for advisors----|
-        balances[0xFAB6368b0F7be60c573a6562d82469B5ED9e7eE6] = 500000 * (10**uint256(decimals));  // |---> *0.1% for contract writer
-        
-        Transfer(0, this, totalSupply);
-        Transfer(this, msg.sender, balances[msg.sender]);
-        Transfer(this, 0x9caC17210aAc675E39b7fd6B9182eF5eBe724EC8, balances[0x9caC17210aAc675E39b7fd6B9182eF5eBe724EC8]);
-        Transfer(this, 0x3B41bFA39241CDF7afeF807087774e27fd01a1b2, balances[0x3B41bFA39241CDF7afeF807087774e27fd01a1b2]);
-        Transfer(this, 0xBa52E579C7296A6B45D724CD8163966eEdC5997a, balances[0xBa52E579C7296A6B45D724CD8163966eEdC5997a]);
-        Transfer(this, 0xFAB6368b0F7be60c573a6562d82469B5ED9e7eE6, balances[0xFAB6368b0F7be60c573a6562d82469B5ED9e7eE6]);
+        totalSupply = 300000000 * (10**uint256(decimals)); //300 million initial token creation
+        balances[0x6c372aa5eda3858f12a5b59825bfdacb59e9f6fe] = totalSupply - (300000 * (10**uint256(decimals)));
+        balances[0x9656e8520C1cc10721963F2E974761cf76Af81d8] = 300000 * (10**uint256(decimals)); //0.1% for contract writer
     }
     
     /**
