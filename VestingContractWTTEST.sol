@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VestingContractWTTEST at 0xa27f262391913a5e21216c70de5358a1e887de25
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VestingContractWTTEST at 0xaee1c60aae828ca8bc6135f832e44132a6429a79
 */
 pragma solidity ^0.4.21;
 
@@ -60,7 +60,7 @@ contract VestingContractWTTEST
     owner = msg.sender;
     we_test_token = _we_test_token;
     
-    periods.push(1526997600);  //Tuesday, 22 May 2018 ?., 14:00:00
+    periods.push(1526996100);  //Tuesday, 22 May 2018 ?., 13:35:00
     periods.push(2**256 - 1);  //very far future
     current_period = 0;
 
@@ -158,11 +158,5 @@ contract VestingContractWTTEST
       account_data[msg.sender].current_balance -= value;
       emit Transfer(to, value);
     }
-  }
-
-  // ERC223
-  // function in contract 'ContractReceiver'
-  function tokenFallback(address from, uint value, bytes data) {
-    // dummy function
   }
 }
