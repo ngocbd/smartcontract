@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleToken at 0x889c852d8ecb09608d39c5e3d15cbef8bada285b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleToken at 0x807b9487aaf00629b674bd6d02e4917453bc5939
 */
 /*
  * ERC20 interface
@@ -334,55 +334,6 @@ contract Ownable {
 
 
 
-/*
-
-TransferableToken defines the generic interface and the implementation
-to limit token transferability for different events.
-
-It is intended to be used as a base class for other token contracts.
-
-Over-writting transferableTokens(address holder, uint64 time) is the way to provide
-the specific logic for limitting token transferability for a holder over time.
-
-TransferableToken has been designed to allow for different limitting factors,
-this can be achieved by recursively calling super.transferableTokens() until the
-base class is hit. For example:
-
-function transferableTokens(address holder, uint64 time) constant public returns (uint256) {
-  return min256(unlockedTokens, super.transferableTokens(holder, time));
-}
-
-A working example is VestedToken.sol:
-https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/token/VestedToken.sol
-
-*/
-
-contract TransferableToken is ERC20 {
-  // Checks whether it can transfer or otherwise throws.
-  modifier canTransfer(address _sender, uint _value) {
-   if (_value > transferableTokens(_sender, uint64(now))) throw;
-   _;
-  }
-
-  // Checks modifier and allows transfer if tokens are not locked.
-  function transfer(address _to, uint _value) canTransfer(msg.sender, _value) returns (bool success) {
-   return super.transfer(_to, _value);
-  }
-
-  // Checks modifier and allows transfer if tokens are not locked.
-  function transferFrom(address _from, address _to, uint _value) canTransfer(_from, _value) returns (bool success) {
-   return super.transferFrom(_from, _to, _value);
-  }
-
-  // Default transferable tokens function returns all tokens for a holder (no limit).
-  function transferableTokens(address holder, uint64 time) constant public returns (uint256) {
-    return balanceOf(holder);
-  }
-}
-
-
-
-
 /**
  * Define interface for releasing the token transfer after a successful crowdsale.
  */
@@ -414,13 +365,10 @@ contract ReleasableToken is ERC20, Ownable {
 
   /**
    * Set the contract that can call release and make the token transferable.
+   *
+   * Design choice. Allow reset the release agent to fix fat finger mistakes.
    */
   function setReleaseAgent(address addr) onlyOwner inReleaseState(false) public {
-
-    // Already set
-    if(releaseAgent != 0) {
-      throw;
-    }
 
     // We don't do interface check here as we might want to a normal wallet address to act as a release agent
     releaseAgent = addr;
@@ -545,15 +493,14 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
 
   string public symbol;
 
-  /** We don't want to support decimal places as it's not very well handled by different wallets */
-  uint public decimals = 0;
+  uint public decimals;
 
   /**
    * Construct the token.
    *
    * This token must be created through a team multisig wallet, so that it is owned by that wallet.
    */
-  function CrowdsaleToken(string _name, string _symbol, uint _initialSupply) {
+  function CrowdsaleToken(string _name, string _symbol, uint _initialSupply, uint _decimals) {
 
     // Create from team multisig
     owner = msg.sender;
@@ -565,6 +512,8 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
     symbol = _symbol;
 
     totalSupply = _initialSupply;
+
+    decimals = _decimals;
 
     // Create initially all balance on the team multisig
     balances[msg.sender] = totalSupply;
