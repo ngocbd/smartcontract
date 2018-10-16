@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x19665204d72d5c63a592206fd47bab868a9da747
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x3e55859759e5a969622bf21fc91d9723f73023d2
 */
 pragma solidity ^0.4.18;
 
@@ -111,10 +111,10 @@ contract Token is Pausable, ERC20 {
   bool manualUnlock;
   address public crowdsaleAddress = 0;
 
-  function Token() ERC20("SphereCoin", "SPH", 18) public {
+  function Token() ERC20("HIKICK", "KICK1", 18) public {
     manualUnlock = false;
     unlocktime = 1525017600;
-    totalSupply = 10000000000 * 10 ** uint(decimals);
+    totalSupply = 10000 * 10 ** uint(decimals);
     balances[msg.sender] = totalSupply;
   }
 
