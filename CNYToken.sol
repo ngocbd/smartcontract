@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CNYToken at 0x49c10c1b10b584298b7036244d8c311d66934058
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CNYToken at 0x9e88770da20ebea0df87ad874c2f5cf8ab92f605
 */
 // Abstract contract for the full ERC 20 Token standard
 // https://github.com/ethereum/EIPs/issues/20
@@ -50,23 +50,11 @@ contract Token {
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
-/*
-You should inherit from StandardToken or, for a token like you would want to
-deploy in something like Mist, see HumanStandardToken.sol.
-(This implements ONLY the standard functions and NOTHING else.
-If you deploy this, you won't have anything useful.)
-
-Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20
-.*/
 
 contract StandardToken is Token {
 
     function transfer(address _to, uint256 _value) returns (bool success) {
-        //Default assumes totalSupply can't be over max (2^256 - 1).
-        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
-        //Replace the if with this one instead.
-        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[msg.sender] >= _value && _value > 0) {
+        if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
             balances[msg.sender] -= _value;
             balances[_to] += _value;
             Transfer(msg.sender, _to, _value);
@@ -75,9 +63,7 @@ contract StandardToken is Token {
     }
 
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        //same as above. Replace this line with the following if you want to protect against wrapping uints.
-        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
             balances[_to] += _value;
             balances[_from] -= _value;
             allowed[_from][msg.sender] -= _value;
@@ -111,30 +97,152 @@ contract CNYToken is StandardToken {
         throw;
     }
 
-    /* Public variables of the token */
+    address public founder;               // The address of the founder
+    string public name;                   // fancy name: eg Simon Bucks
+    uint8 public decimals;                // How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
+    string public symbol;                 // An identifier: eg SBX
+    string public version = 'CNY0.1';     // CNY 0.1 standard. Just an arbitrary versioning scheme.
+    
 
-    /*
-    NOTE:
-    The following variables are OPTIONAL vanities. One does not have to include them.
-    They allow one to customise the token contract & in no way influences the core functionality.
-    Some wallets/interfaces might not even bother to look at this information.
-    */
-    string public name;                   //fancy name: eg Simon Bucks
-    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol;                 //An identifier: eg SBX
-    string public version = 'C0.1';       //human 0.1 standard. Just an arbitrary versioning scheme.
+    // The nonce for avoid transfer replay attacks
+    mapping(address => uint256) nonces;
+
+    // The last comment for address
+    mapping(address => string) lastComment;
+
+    // The comments for transfers per address
+    mapping (address => mapping (uint256 => string)) comments;
 
     function CNYToken(
         uint256 _initialAmount,
         string _tokenName,
         uint8 _decimalUnits,
-        string _tokenSymbol
-        ) {
+        string _tokenSymbol) {
+        founder = msg.sender;                                // Save the creator address
         balances[msg.sender] = _initialAmount;               // Give the creator all initial tokens
         totalSupply = _initialAmount;                        // Update total supply
         name = _tokenName;                                   // Set the name for display purposes
         decimals = _decimalUnits;                            // Amount of decimals for display purposes
-        symbol = _tokenSymbol;                               // Set the symbol for display purposes
+        symbol = _tokenSymbol;                               // Set the symbol for display purposes  
+    }
+
+   function transferWithComment(address _to, uint256 _value, string _comment) returns (bool success) {
+        if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+            balances[msg.sender] -= _value;
+            balances[_to] += _value;
+            lastComment[msg.sender] = _comment;
+            Transfer(msg.sender, _to, _value);
+            return true;
+        } else { return false; }
+    }
+
+    function transferFromWithComment(address _from, address _to, uint256 _value, string _comment) returns (bool success) {
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+            balances[_to] += _value;
+            balances[_from] -= _value;
+            allowed[_from][msg.sender] -= _value;
+            lastComment[_from] = _comment;
+            Transfer(_from, _to, _value);
+            return true;
+        } else { return false; }
+    }
+
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
+    }
+
+    function approve(address _spender, uint256 _value) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    /*
+     * Proxy transfer CNY token. When some users of the ethereum account has no ether,
+     * he or she can authorize the agent for broadcast transactions, and agents may charge agency fees
+     * @param _from
+     * @param _to
+     * @param _value
+     * @param fee
+     * @param _v
+     * @param _r
+     * @param _s
+     * @param _comment
+     */
+    function transferProxy(address _from, address _to, uint256 _value, uint256 _fee,
+        uint8 _v,bytes32 _r, bytes32 _s, string _comment) returns (bool){
+
+        if(balances[_from] < _fee + _value) throw;
+
+        uint256 nonce = nonces[_from];
+        bytes32 h = sha3(_from,_to,_value,_fee,nonce);
+        if(_from != ecrecover(h,_v,_r,_s)) throw;
+
+        if(balances[_to] + _value < balances[_to]
+            || balances[msg.sender] + _fee < balances[msg.sender]) throw;
+        balances[_to] += _value;
+        Transfer(_from, _to, _value);
+
+        balances[msg.sender] += _fee;
+        Transfer(_from, msg.sender, _fee);
+
+        balances[_from] -= _value + _fee;
+        lastComment[_from] = _comment;
+        comments[_from][nonce] = _comment;
+        nonces[_from] = nonce + 1;
+        
+        return true;
+    }
+
+    /*
+     * Proxy approve that some one can authorize the agent for broadcast transaction
+     * which call approve method, and agents may charge agency fees
+     * @param _from The  address which should tranfer CNY to others
+     * @param _spender The spender who allowed by _from
+     * @param _value The value that should be tranfered.
+     * @param _v
+     * @param _r
+     * @param _s
+     * @param _comment
+     */
+    function approveProxy(address _from, address _spender, uint256 _value,
+        uint8 _v,bytes32 _r, bytes32 _s, string _comment) returns (bool success) {
+
+        uint256 nonce = nonces[_from];
+        bytes32 hash = sha3(_from,_spender,_value,nonce);
+        if(_from != ecrecover(hash,_v,_r,_s)) throw;
+        allowed[_from][_spender] = _value;
+        Approval(_from, _spender, _value);
+        lastComment[_from] = _comment;
+        comments[_from][nonce] = _comment;
+        nonces[_from] = nonce + 1;
+        return true;
+    }
+
+
+    /*
+     * Get the nonce
+     * @param _addr
+     */
+    function getNonce(address _addr) constant returns (uint256){
+        return nonces[_addr];
+    }
+
+    /*
+     * Get last comment
+     * @param _addr
+     */
+    function getLastComment(address _addr) constant returns (string){
+        return lastComment[_addr];
+    }
+
+    /*
+     * Get specified comment
+     * @param _addr
+     */
+    function getSpecifiedComment(address _addr, uint256 _nonce) constant returns (string){
+        if (nonces[_addr] < _nonce) throw;
+        return comments[_addr][_nonce];
     }
 
     /* Approves and then calls the receiving contract */
@@ -146,6 +254,16 @@ contract CNYToken is StandardToken {
         //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
         //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
         if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
+        return true;
+    }
+
+    /* Approves and then calls the contract code*/
+    function approveAndCallcode(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+
+        //Call the contract code
+        if(!_spender.call(_extraData)) { throw; }
         return true;
     }
 
@@ -167,5 +285,19 @@ contract CNYToken is StandardToken {
         totalSupply -= _value;                               // Updates totalSupply
         Burn(_from, _value);
         return true;
+    }
+
+    /* This notifies clients about the amount increament */
+    event Increase(address _to, uint256 _value);
+
+    // Allocate tokens to the users
+    // @param _to The owner of the token
+    // @param _value The value of the token
+    function allocateTokens(address _to, uint256 _value) {
+        if(msg.sender != founder) throw;            // only the founder have the authority
+        if(totalSupply + _value <= totalSupply || balances[_to] + _value <= balances[_to]) throw;
+        totalSupply += _value;
+        balances[_to] += _value;
+        Increase(_to,_value);
     }
 }
