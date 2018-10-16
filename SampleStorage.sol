@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SampleStorage at 0xd2ba43d14753586a059f76157aab5e59ffb72f78
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SampleStorage at 0xddcab0ece1816a517683d858be471e377d421300
 */
 contract Ownable {
   address public owner;
@@ -23,6 +23,18 @@ contract Ownable {
 
 }
 
+contract ERC721 {
+    function implementsERC721() public pure returns (bool);
+    function totalSupply() public view returns (uint256 total);
+    function balanceOf(address _owner) public view returns (uint256 balance);
+    function ownerOf(uint256 _tokenId) public view returns (address owner);
+    function approve(address _to, uint256 _tokenId) public;
+    function transferFrom(address _from, address _to, uint256 _tokenId) public;
+    function transfer(address _to, uint256 _tokenId) public;
+    event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
+    event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
+}
+
 contract SampleStorage is Ownable {
     
     struct Sample {
@@ -30,15 +42,15 @@ contract SampleStorage is Ownable {
         uint rarity;
     }
     
-    mapping (uint => Sample) sampleTypes;
+    mapping (uint32 => Sample) public sampleTypes;
     
-    uint public numOfSampleTypes;
+    uint32 public numOfSampleTypes;
     
-    uint public numOfCommon;
-    uint public numOfRare;
-    uint public numOfLegendary;
-    uint public numOfMythical;
-    
+    uint32 public numOfCommon;
+    uint32 public numOfRare;
+    uint32 public numOfLegendary;
+
+    // The mythical sample is a type common that appears only once in a 1000
     function addNewSampleType(string _ipfsHash, uint _rarityType) public onlyOwner {
         
         if (_rarityType == 0) {
@@ -48,7 +60,7 @@ contract SampleStorage is Ownable {
         } else if(_rarityType == 2) {
             numOfLegendary++;
         } else if(_rarityType == 3) {
-            numOfMythical++;
+            numOfCommon++;
         }
         
         sampleTypes[numOfSampleTypes] = Sample({
@@ -59,19 +71,19 @@ contract SampleStorage is Ownable {
         numOfSampleTypes++;
     }
     
-    function getType(uint _randomNum) public view returns (uint) {
-        uint range = 0;
+    function getType(uint _randomNum) public view returns (uint32) {
+        uint32 range = 0;
         
         if (_randomNum > 0 && _randomNum < 600) {
             range = 600 / numOfCommon;
-            return _randomNum / range;
+            return uint32(_randomNum) / range;
             
         } else if(_randomNum >= 600 && _randomNum < 900) {
             range = 300 / numOfRare;
-            return _randomNum / range;
+            return uint32(_randomNum) / range;
         } else {
             range = 100 / numOfLegendary;
-            return _randomNum / range;
+            return uint32(_randomNum) / range;
         }
     }
     
