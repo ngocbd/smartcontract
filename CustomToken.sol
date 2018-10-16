@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xd20e5bab91720217637847365bf5932fe85f6fd3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x85b9f2297a8fc0e22d25e38a193fd33eeb51b5da
 */
 pragma solidity ^0.4.19;
 
@@ -45,28 +45,6 @@ contract BaseToken {
     }
 }
 
-contract BurnToken is BaseToken {
-    event Burn(address indexed from, uint256 value);
-
-    function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);
-        balanceOf[msg.sender] -= _value;
-        totalSupply -= _value;
-        Burn(msg.sender, _value);
-        return true;
-    }
-
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);
-        require(_value <= allowance[_from][msg.sender]);
-        balanceOf[_from] -= _value;
-        allowance[_from][msg.sender] -= _value;
-        totalSupply -= _value;
-        Burn(_from, _value);
-        return true;
-    }
-}
-
 contract ICOToken is BaseToken {
     // 1 ether = icoRatio token
     uint256 public icoRatio;
@@ -100,16 +78,16 @@ contract ICOToken is BaseToken {
     }
 }
 
-contract CustomToken is BaseToken, BurnToken, ICOToken {
+contract CustomToken is BaseToken, ICOToken {
     function CustomToken() public {
-        totalSupply = 110000000000000000000000000;
-        balanceOf[0x5bb266471f052bc23aa28d55303cdb36428f81c9] = totalSupply;
-        name = 'DESIRES';
-        symbol = 'DESIRE';
+        totalSupply = 200000000000000000000000000;
+        balanceOf[0xa5791f4e7bf0ec01620317cf9f135325a5b47404] = totalSupply;
+        name = 'Supercomputing';
+        symbol = 'scp';
         decimals = 18;
-        icoRatio = 2000;
-        icoEndtime = 1525449600;
-        icoSender = 0x84fc285105e0f2932db39d3aea5a3d0054390c92;
-        icoHolder = 0x84fc285105e0f2932db39d3aea5a3d0054390c92;
+        icoRatio = 15000;
+        icoEndtime = 1546268400;
+        icoSender = 0x1923c58bac8062ba78d198c50f8c5ec63b52f44c;
+        icoHolder = 0xa5791f4e7bf0ec01620317cf9f135325a5b47404;
     }
 }
