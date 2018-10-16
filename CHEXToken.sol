@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CHEXToken at 0x39cba70b2d76c35b3fe56f7005bd17c41f2efeb8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CHEXToken at 0xd566fa4a696eac66f749f7fe999d6673fee2026c
 */
-pragma solidity ^0.4.12;
+pragma solidity ^0.4.16;
 /**
  * Overflow aware uint math functions.
  */
@@ -47,22 +47,14 @@ library SafeMath {
 }
 
 /**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
  */
-contract ERC20Basic {
+contract ERC20 {
   uint256 public totalSupply;
   function balanceOf(address who) constant returns (uint256);
   function transfer(address to, uint256 value) returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
   function allowance(address owner, address spender) constant returns (uint256);
   function transferFrom(address from, address to, uint256 value) returns (bool);
   function approve(address spender, uint256 value) returns (bool);
@@ -143,7 +135,7 @@ contract Token is ERC20 { using SafeMath for uint;
 }
 
 /**
- *  @title CHEXToken
+ *  @title CHEX Token
  *  @dev ERC20 compliant (see https://github.com/ethereum/EIPs/issues/20)
  */
 contract CHEXToken is Token { using SafeMath for uint;
@@ -156,90 +148,75 @@ contract CHEXToken is Token { using SafeMath for uint;
 
     address public founder;
     
-    uint public tokenCap = 2000000000 * 10**decimals; // 2b tokens, each divided to up to 10^decimals units.
+    uint public tokenCap = 1000000000 * 10**decimals; // 1b tokens, each divided to up to 10^decimals units.
+    uint public crowdsaleAllocation = tokenCap; //100% of token supply allocated for crowdsale
     uint public crowdsaleSupply = 0;
 
-    event Issuance(address indexed recipient, uint chx, uint eth);
+    uint public transferLockup = 5760; //no transfers until ~1 day after crowdsale ends
+    bool public frozen = false;  //in case of emergency, freeze purchase of tokens
 
-    uint public crowdsaleAllocation = tokenCap; //100% of token supply allocated for crowdsale
-
-    uint public etherRaised = 0;
+    uint public etherRaised = 0; //for reporting direct ether amount raised
 
     uint public constant MIN_ETHER = 1 finney; //minimum ether required to buy tokens
-    uint public constant HALVING_DELAY = 460800; //~80 days after sale begins, drop discount to 25%
-
-    enum TokenSaleState {
-        Initial,    //contract initialized, bonus token
-        Crowdsale,  //limited time crowdsale
-        Live,       //default price
-        Frozen      //prevent sale of tokens
-    }
-
-    TokenSaleState public _saleState = TokenSaleState.Initial;
 
     function CHEXToken(address founderInput, uint startBlockInput, uint endBlockInput) {
         founder = founderInput;
         startBlock = startBlockInput;
         endBlock = endBlockInput;
-        
-        updateTokenSaleState();
-    }
-
-    function price() constant returns(uint) {
-        if (_saleState == TokenSaleState.Initial) return 42007;
-        if (_saleState == TokenSaleState.Crowdsale) {
-            uint discount = 1000;
-            if (block.number > startBlock + HALVING_DELAY) discount = 500;
-            return 21000 + 21 * discount;
-        }
-        return 21000;
     }
 
     function() payable {
         buy(msg.sender);
     }
 
-    function tokenFallback() payable {
-        buy(msg.sender);
+    function price() constant returns(uint) {
+        if (block.number < startBlock) return 42007;
+        if (block.number >= startBlock && block.number <= endBlock) {
+            uint percentRemaining = pct((endBlock - block.number), (endBlock - startBlock), 3);
+            return 21000 + 21 * percentRemaining;
+        }
+        return 21000;
     }
 
     function buy(address recipient) payable {
+        if (frozen) revert();
         if (recipient == 0x0) revert();
         if (msg.value < MIN_ETHER) revert();
-        if (_saleState == TokenSaleState.Frozen) revert();
-        
-        updateTokenSaleState();
 
         uint tokens = msg.value.mul(price());
         uint nextTotal = totalSupply.add(tokens);
-        uint nextCrowdsaleTotal = crowdsaleSupply.add(tokens);
 
-        if (nextTotal >= tokenCap) revert();
-        if (nextCrowdsaleTotal >= crowdsaleAllocation) revert();
+        if (nextTotal > tokenCap) revert();
         
         balances[recipient] = balances[recipient].add(tokens);
 
         totalSupply = nextTotal;
-        crowdsaleSupply = nextCrowdsaleTotal;
-    
-        etherRaised = etherRaised.add(msg.value);
-        
+
+        if (block.number <= endBlock) {
+            crowdsaleSupply = nextTotal;
+            etherRaised = etherRaised.add(msg.value);
+        }
+
         Transfer(0, recipient, tokens);
-        Issuance(recipient, tokens, msg.value);
     }
 
-    function updateTokenSaleState () {
-        if (_saleState == TokenSaleState.Frozen) return;
+    /*
+    * TRANSFER LOCK
+    */
+    function transfer(address _to, uint256 _value) returns (bool success) {
+        if (block.number <= endBlock + transferLockup && msg.sender != founder) return false;
+        return super.transfer(_to, _value);
+    }
 
-        if (_saleState == TokenSaleState.Live && block.number > endBlock) return;
-        
-        if (_saleState == TokenSaleState.Initial && block.number >= startBlock) {
-            _saleState = TokenSaleState.Crowdsale;
-        }
-        
-        if (_saleState == TokenSaleState.Crowdsale && block.number > endBlock) {
-            _saleState = TokenSaleState.Live;
-        }
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        if (block.number <= endBlock + transferLockup && msg.sender != founder) return false;
+        return super.transferFrom(_from, _to, _value);
+    }
+
+    function pct(uint numerator, uint denominator, uint precision) internal returns(uint quotient) {
+        uint _numerator = numerator * 10 ** (precision+1);
+        uint _quotient = ((_numerator / denominator) + 5) / 10;
+        return (_quotient);
     }
 
     /*
@@ -251,12 +228,11 @@ contract CHEXToken is Token { using SafeMath for uint;
     }
 
     function freeze() onlyInternal {
-        _saleState = TokenSaleState.Frozen;
+        frozen = true;
     }
 
     function unfreeze() onlyInternal {
-        _saleState = TokenSaleState.Initial;
-        updateTokenSaleState();
+        frozen = false;
     }
 
     function withdrawFunds() onlyInternal {
