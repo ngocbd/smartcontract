@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ScamCoin at 0xc29da757ed787d535958ff98c8e41eded06c1e9e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ScamCoin at 0x821cc0b6817ea2b23c87b591d72328a821edf694
 */
 pragma solidity ^0.4.2;
 
@@ -195,8 +195,8 @@ contract ScamCoin is StandardToken, SafeMath {
     /// @dev Contract constructor function sets initial token balances.
     function ScamCoin()
     {   
-        // Absolutely no premining
-        balances[founder] = 0;
-        totalSupply += 0;
+        // It's not a good scam unless it's pre-mined
+        balances[founder] = 1000000;
+        totalSupply += 1000000;
     }
 }
