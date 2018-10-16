@@ -1,7 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HardcodedCrowdsale at 0x2f32087aa2474dd84ae973d216de2bc8669003ee
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HardcodedCrowdsale at 0x36995d4e1ab6ee76aa55f16736fc85ec6e7b6c1d
 */
 pragma solidity ^0.4.18;
+
+// Created by LLC "Uinkey" bearchik@gmail.com
 
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -46,41 +48,37 @@ contract HardcodedCrowdsale {
     address public owner = msg.sender;
     ManagedToken public managedTokenLedger;
 
-    string public name = "Tokensale of CPL";
+    string public name = "Coinplace";
     string public symbol = "CPL";
 
     bool public halted = false;
      
-    uint256 public minTokensToBuy = 10;
+    uint256 public minTokensToBuy = 100;
     
-    uint256 public preICOcontributors = 0;
+    uint256 public ICOcontributors = 0;
 
-    uint256 public preICOstart;
-    uint256 public preICOend;
-    uint256 public preICOgoal;
-    uint256 public preICOcollected = 0;
-    uint256 public preICOcap = 0 ether;
-    uint256 public preICOtokensSold = 0;
-    ICOStateEnum public preICOstate = ICOStateEnum.NotStarted;
+    uint256 public ICOstart = 1521518400; //20 Mar 2018 13:00:00 GMT+9
+    uint256 public ICOend = 1526857200; // 20 May 2018 13:00:00 GMT+9
+    uint256 public Hardcap = 20000 ether; 
+    uint256 public ICOcollected = 0;
+    uint256 public Softcap = 200 ether;
+    uint256 public ICOtokensSold = 0;
+    uint256 public TakedFunds = 0;
+    ICOStateEnum public ICOstate = ICOStateEnum.NotStarted;
     
     uint8 public decimals = 9;
     uint256 public DECIMAL_MULTIPLIER = 10**uint256(decimals);
-
-    uint8 public saleIndex = 0;
  
-    uint256 public preICOprice = uint256(1 ether).div(1000);
-    uint256[3] public preICObonusMultipiersInPercent = [150, 145, 140];
-    uint256[3] public preICOcoinsLeft = [1000000*DECIMAL_MULTIPLIER, 1000000*DECIMAL_MULTIPLIER, 1000000*DECIMAL_MULTIPLIER];
-    uint256 public totalPreICOavailibleWithBonus = 4350000*DECIMAL_MULTIPLIER; 
-    uint256 public maxIssuedWithAmountBasedBonus = 4650000*DECIMAL_MULTIPLIER; 
-    uint256[4] public preICOamountBonusLimits = [5 ether, 20 ether, 50 ether, 300 ether];
-    uint256[4] public preICOamountBonusMultipierInPercent = [103, 105, 107, 110];
+    uint256 public ICOprice = uint256(1 ether).div(1000);
+    uint256[4] public ICOamountBonusLimits = [5 ether, 20 ether, 50 ether, 200 ether];
+    uint256[4] public ICOamountBonusMultipierInPercent = [103, 105, 107, 110]; // count bonus
+    uint256[5] public ICOweekBonus = [130, 125, 120, 115, 110]; // time bonus
 
-    mapping(address => uint256) public weiForRefundPreICO;
+    mapping(address => uint256) public weiForRefundICO;
 
-    mapping(address => uint256) public weiToRecoverPreICO;
+    mapping(address => uint256) public weiToRecoverICO;
 
-    mapping(address => uint256) public balancesForPreICO;
+    mapping(address => uint256) public balancesForICO;
 
     event Purchased(address indexed _from, uint256 _value);
 
@@ -90,22 +88,19 @@ contract HardcodedCrowdsale {
     }
 
     function transitionState() internal {
-        if (now >= preICOstart) {
-            if (preICOstate == ICOStateEnum.NotStarted) {
-                preICOstate = ICOStateEnum.Started;
+        if (now >= ICOstart) {
+            if (ICOstate == ICOStateEnum.NotStarted) {
+                ICOstate = ICOStateEnum.Started;
             }
-            if (preICOcap > 0 && preICOcollected >= preICOcap) {
-                preICOstate = ICOStateEnum.Successful;
+            if (Hardcap > 0 && ICOcollected >= Hardcap) {
+                ICOstate = ICOStateEnum.Successful;
             }
-            if ( (saleIndex == preICOcoinsLeft.length) && (preICOcoinsLeft[saleIndex-1] == 0) ) {
-                preICOstate = ICOStateEnum.Successful;
-            }
-        } if (now >= preICOend) {
-            if (preICOstate == ICOStateEnum.Started) {
-                if (preICOcollected >= preICOgoal) {
-                    preICOstate = ICOStateEnum.Successful;
+        } if (now >= ICOend) {
+            if (ICOstate == ICOStateEnum.Started) {
+                if (ICOcollected >= Softcap) {
+                    ICOstate = ICOStateEnum.Successful;
                 } else {
-                    preICOstate = ICOStateEnum.Refunded;
+                    ICOstate = ICOStateEnum.Refunded;
                 }
             }
         } 
@@ -124,7 +119,7 @@ contract HardcodedCrowdsale {
 
     // Ownership
 
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event OwnershipTransferred(address indexed viousOwner, address indexed newOwner);
 
     modifier onlyOwner() {
         require(msg.sender == owner);
@@ -146,15 +141,8 @@ contract HardcodedCrowdsale {
     }
 
 
-    function HardcodedCrowdsale (uint _preICOstart, uint _preICOend, uint _preICOgoal, uint _preICOcap, address _newLedgerAddress) public {
-        require(_preICOstart > now);
-        require(_preICOend > _preICOstart);
-        require(_preICOgoal > 0);
+    function HardcodedCrowdsale (address _newLedgerAddress) public {
         require(_newLedgerAddress != address(0));
-        preICOstart = _preICOstart;
-        preICOend = _preICOend;
-        preICOgoal = _preICOgoal;
-        preICOcap = _preICOcap;
         managedTokenLedger = ManagedToken(_newLedgerAddress);
         assert(managedTokenLedger.decimals() == decimals);
     }
@@ -176,14 +164,14 @@ contract HardcodedCrowdsale {
 
     function () payable stateTransition notHalted external {
         require(msg.value > 0);
-        require(preICOstate == ICOStateEnum.Started);
-        assert(preICOBuy());
+        require(ICOstate == ICOStateEnum.Started);
+        assert(ICOBuy());
     }
 
     
     function finalize() stateTransition public returns (bool success) {
-        require(preICOstate == ICOStateEnum.Successful);
-        owner.transfer(preICOcollected);
+        require(ICOstate == ICOStateEnum.Successful);
+        owner.transfer(ICOcollected - TakedFunds);
         return true;
     }
 
@@ -192,89 +180,108 @@ contract HardcodedCrowdsale {
         return true;
     }
 
-    function calculateAmountBoughtPreICO(uint256 _weisSentScaled, uint256 _amountBonusMultiplier) 
+    function calculateAmountBoughtICO(uint256 _weisSentScaled, uint256 _amountBonusMultiplier) 
         internal returns (uint256 _tokensToBuyScaled, uint256 _weisLeftScaled) {
         uint256 value = _weisSentScaled;
         uint256 totalPurchased = 0;
-        for (uint8 i = saleIndex; i < preICOcoinsLeft.length; i++) {
-            if (preICOcoinsLeft[i] == 0) {
-                continue;
-            }
-            uint256 forThisRate = value.div(preICOprice);
-            if (forThisRate == 0) {
-                break;
-            }
-            if (forThisRate >= preICOcoinsLeft[i]) {
-                forThisRate = preICOcoinsLeft[i];
-                preICOcoinsLeft[i] = 0;
-                saleIndex = i+1;
-            } else {
-                preICOcoinsLeft[i] = preICOcoinsLeft[i].sub(forThisRate);
-            }
-            uint256 consumed = forThisRate.mul(preICOprice);
-            value = value.sub(consumed);
-            forThisRate = forThisRate.mul(_amountBonusMultiplier.add(preICObonusMultipiersInPercent[i]).sub(100)).div(100);
-            totalPurchased = totalPurchased.add(forThisRate);
-        }
+        
+        totalPurchased = value.div(ICOprice);
+	    uint256 weekbonus = getWeekBonus(totalPurchased).sub(totalPurchased);
+	    uint256 forThisRate = totalPurchased.mul(_amountBonusMultiplier).div(100).sub(totalPurchased);
+	    value = _weisSentScaled.sub(totalPurchased.mul(ICOprice));
+        totalPurchased = totalPurchased.add(forThisRate).add(weekbonus);
+        
+        
         return (totalPurchased, value);
     }
 
     function getBonusMultipierInPercents(uint256 _sentAmount) public view returns (uint256 _multi) {
         uint256 bonusMultiplier = 100;
-        for (uint8 i = 0; i < preICOamountBonusLimits.length; i++) {
-            if (_sentAmount < preICOamountBonusLimits[i]) {
+        for (uint8 i = 0; i < ICOamountBonusLimits.length; i++) {
+            if (_sentAmount < ICOamountBonusLimits[i]) {
                 break;
             } else {
-                bonusMultiplier = preICOamountBonusMultipierInPercent[i];
+                bonusMultiplier = ICOamountBonusMultipierInPercent[i];
             }
         }
         return bonusMultiplier;
     }
+    
+    function getWeekBonus(uint256 amountTokens) internal view returns(uint256 count) {
+        uint256 countCoints = 0;
+        uint256 bonusMultiplier = 100;
+        if(block.timestamp <= (ICOstart + 1 weeks)) {
+            countCoints = amountTokens.mul(ICOweekBonus[0] );
+        } else if (block.timestamp <= (ICOstart + 2 weeks) && block.timestamp <= (ICOstart + 3 weeks)) {
+            countCoints = amountTokens.mul(ICOweekBonus[1] );
+        } else if (block.timestamp <= (ICOstart + 4 weeks) && block.timestamp <= (ICOstart + 5 weeks)) {
+            countCoints = amountTokens.mul(ICOweekBonus[2] );
+        } else if (block.timestamp <= (ICOstart + 6 weeks) && block.timestamp <= (ICOstart + 7 weeks)) {
+            countCoints = amountTokens.mul(ICOweekBonus[3] );
+        } else {
+            countCoints = amountTokens.mul(ICOweekBonus[4] );
+        }
+        return countCoints.div(bonusMultiplier);
+    }
 
-    function preICOBuy() internal notHalted returns (bool success) {
+    function ICOBuy() internal notHalted returns (bool success) {
         uint256 weisSentScaled = msg.value.mul(DECIMAL_MULTIPLIER);
         address _for = msg.sender;
         uint256 amountBonus = getBonusMultipierInPercents(msg.value);
-        var (tokensBought, fundsLeftScaled) = calculateAmountBoughtPreICO(weisSentScaled, amountBonus);
+        var (tokensBought, fundsLeftScaled) = calculateAmountBoughtICO(weisSentScaled, amountBonus);
         if (tokensBought < minTokensToBuy.mul(DECIMAL_MULTIPLIER)) {
             revert();
         }
         uint256 fundsLeft = fundsLeftScaled.div(DECIMAL_MULTIPLIER);
         uint256 totalSpent = msg.value.sub(fundsLeft);
         if (balanceOf(_for) == 0) {
-            preICOcontributors = preICOcontributors + 1;
+            ICOcontributors = ICOcontributors + 1;
         }
         managedTokenLedger.mint(_for, tokensBought);
-        balancesForPreICO[_for] = balancesForPreICO[_for].add(tokensBought);
-        weiForRefundPreICO[_for] = weiForRefundPreICO[_for].add(totalSpent);
-        weiToRecoverPreICO[_for] = weiToRecoverPreICO[_for].add(fundsLeft);
+        balancesForICO[_for] = balancesForICO[_for].add(tokensBought);
+        weiForRefundICO[_for] = weiForRefundICO[_for].add(totalSpent);
+        weiToRecoverICO[_for] = weiToRecoverICO[_for].add(fundsLeft);
         Purchased(_for, tokensBought);
-        preICOcollected = preICOcollected.add(totalSpent);
-        preICOtokensSold = preICOtokensSold.add(tokensBought);
+        ICOcollected = ICOcollected.add(totalSpent);
+        ICOtokensSold = ICOtokensSold.add(tokensBought);
         return true;
     }
 
-    function recoverLeftoversPreICO() stateTransition notHalted public returns (bool success) {
-        require(preICOstate != ICOStateEnum.NotStarted);
-        uint256 value = weiToRecoverPreICO[msg.sender];
-        delete weiToRecoverPreICO[msg.sender];
+    function recoverLeftoversICO() stateTransition notHalted public returns (bool success) {
+        require(ICOstate != ICOStateEnum.NotStarted);
+        uint256 value = weiToRecoverICO[msg.sender];
+        delete weiToRecoverICO[msg.sender];
         msg.sender.transfer(value);
         return true;
     }
 
-    function refundPreICO() stateTransition notHalted public returns (bool success) {
-        require(preICOstate == ICOStateEnum.Refunded);
-        uint256 value = weiForRefundPreICO[msg.sender];
-        delete weiForRefundPreICO[msg.sender];
-        uint256 tokenValue = balancesForPreICO[msg.sender];
-        delete balancesForPreICO[msg.sender];
+    function refundICO() stateTransition notHalted public returns (bool success) {
+        require(ICOstate == ICOStateEnum.Refunded);
+        uint256 value = weiForRefundICO[msg.sender];
+        delete weiForRefundICO[msg.sender];
+        uint256 tokenValue = balancesForICO[msg.sender];
+        delete balancesForICO[msg.sender];
         managedTokenLedger.demint(msg.sender, tokenValue);
         msg.sender.transfer(value);
         return true;
     }
+    
+    function withdrawFunds() onlyOwner public returns (bool success) {
+        require(Softcap <= ICOcollected);
+        owner.transfer(ICOcollected - TakedFunds);
+        TakedFunds = ICOcollected;
+        return true;
+    }
+    
+    function manualSendTokens(address rAddress, uint256 amount) onlyOwner public returns (bool success) {
+        managedTokenLedger.mint(rAddress, amount);
+        balancesForICO[rAddress] = balancesForICO[rAddress].add(amount);
+        Purchased(rAddress, amount);
+        ICOtokensSold = ICOtokensSold.add(amount);
+        return true;
+    } 
 
     function cleanup() onlyOwner public {
-        require(preICOstate == ICOStateEnum.Successful);
         selfdestruct(owner);
     }
 
