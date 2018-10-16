@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0xe1043f10c3d0bdd321805d8a9517a0bf649379be
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0x63c2a584e35f5d4a4e43f03d452a45db3b88d215
 */
 pragma solidity ^0.4.18;
 
@@ -7,8 +7,8 @@ pragma solidity ^0.4.18;
 // 'ACT135172' token contract
 //
 // Deployed to : 0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187
-// Symbol      : ACT159792
-// Name        : ADZbuzz A-cointechnologies.com Community Token
+// Symbol      : ACT105328
+// Name        : ADZbuzz Engadget.com Community Token
 // Total supply: 2000000
 // Decimals    : 8
 //
@@ -117,8 +117,8 @@ contract ADZbuzzCommunityToken is ERC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     function ADZbuzzCommunityToken() public {
-        symbol = "ACT159792";
-        name = "ADZbuzz A-cointechnologies.com Community Token";
+        symbol = "ACT105328";
+        name = "ADZbuzz Engadget.com Community Token";
         decimals = 8;
         _totalSupply = 200000000000000;
         balances[0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187] = _totalSupply;
