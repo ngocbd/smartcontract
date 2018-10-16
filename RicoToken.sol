@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RicoToken at 0xc2d06c17a83a58f8d83207b4bb58bb614314a93a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RicoToken at 0x2924ebdb422b7780af5541c25016da38a70d1a16
 */
 pragma solidity ^0.4.18;
 
