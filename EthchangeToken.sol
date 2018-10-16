@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthchangeToken at 0x7c833af22bd7da8ad29541c35230d1c822e23889
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthchangeToken at 0x4733612f9eb257c386cc2a2ac2207f1060725cfd
 */
 pragma solidity ^0.4.11;
 
@@ -17,7 +17,7 @@ contract EthchangeToken {
     uint256 public totalSupply = 0;
     bool public stopped = false;
 
-    uint256 constant valueFounder = 10000000000;
+    uint256 constant valueFounder = 100000000;
     address owner = 0x0;
 
     modifier isOwner {
