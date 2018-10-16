@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SLAB at 0x6ce2ddb4ca0fec61506b7aac2d8b00e21c79d2f9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SLAB at 0x91130abca77c5115e9df526380504d1bd1f69b2b
 */
 ///Indica que el codigo fuente esta escrito para una version de Solidity 0.4.0 o superior.
 pragma solidity ^0.4.4;
@@ -119,8 +119,8 @@ contract SLABToken is SLAB {
 
 function SLABToken(
         ) {
-        balances[msg.sender] = 40666999000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 4066699900000;                        // Update total supply (100000 for example)
+        balances[msg.sender] = 40666999;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 40666999;                        // Update total supply (100000 for example)
         name = "Scrotal Labs";                   // Set the name for display purposes
         decimals = 5;                            // Amount of decimals for display purposes
         symbol = "SLAB";                               // Set the symbol for display purposes
@@ -137,7 +137,4 @@ function approveAndCall(address _spender, uint256 _value, bytes _extraData) retu
         if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
         return true;
     }
-    
-
-
 }
