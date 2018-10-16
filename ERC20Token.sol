@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x87c8d6da29c030aae4d8ecb77b2f488f529de1f5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x05e75b895d04b4026ec5567296790d63c917323a
 */
+pragma solidity ^0.4.4;
+
 contract Token {
 
     /// @return total amount of tokens
@@ -117,11 +119,11 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 20000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 20000000000000000000000000;                        // Update total supply (100000 for example)
-        name = "HunterCoin";                                   // Set the name for display purposes
-        decimals = 18;                            // Amount of decimals for display purposes
-        symbol = "HTC";                               // Set the symbol for display purposes
+        balances[msg.sender] = 8888888800000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 8888888800000000;                        // Update total supply (100000 for example)
+        name = "DojoCoin";                                   // Set the name for display purposes
+        decimals = 8;                            // Amount of decimals for display purposes
+        symbol = "DOJO";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
