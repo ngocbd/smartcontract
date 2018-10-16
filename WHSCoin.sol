@@ -1,7 +1,22 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WHSCoin at 0xbaea1d11eb75760d46d4ebf842d6e14e07f8871a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WHSCoin at 0x5a36e5a750d0ba0b3b2c7d6c83c1bc0f90fbed0a
 */
 pragma solidity ^0.4.16;
+
+
+/**
+ * White Stone Coin
+ *
+ * When Art meets Blockchain, interesting things happen.
+ *
+ * This is a very simple token with the following properties:
+ *  - 10.000.000 coins max supply
+ *  - 5.000.000 coins mined for the company wallet
+ *  - Investor receives bonus coins from company wallet during bonus phases
+ * 
+ * Visit https://whscoin.com for more information and tokenholder benefits. 
+ */
+
 
 /**
  * @title ERC20Basic
@@ -9,7 +24,7 @@ pragma solidity ^0.4.16;
  * @dev see https://github.com/ethereum/EIPs/issues/179
  */
 contract ERC20Basic {
-  uint256 public totalSupply;
+  function totalSupply() public view returns (uint256);
   function balanceOf(address who) public view returns (uint256);
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
@@ -20,6 +35,10 @@ contract ERC20Basic {
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     if (a == 0) {
       return 0;
@@ -29,6 +48,9 @@ library SafeMath {
     return c;
   }
 
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
@@ -36,11 +58,17 @@ library SafeMath {
     return c;
   }
 
+  /**
+  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
   function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
@@ -56,6 +84,15 @@ contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
 
   mapping(address => uint256) balances;
+
+  uint256 totalSupply_;
+
+  /**
+  * @dev total number of tokens in existence
+  */
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
+  }
 
   /**
   * @dev transfer token for a specified address
@@ -152,10 +189,14 @@ contract StandardToken is ERC20, BasicToken {
   }
 
   /**
+   * @dev Increase the amount of tokens that an owner allowed to a spender.
+   *
    * approve should be called when allowed[_spender] == 0. To increment
    * allowed value is better to use this function to avoid 2 calls (and wait until
    * the first transaction is mined)
    * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _addedValue The amount of tokens to increase the allowance by.
    */
   function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
@@ -163,6 +204,16 @@ contract StandardToken is ERC20, BasicToken {
     return true;
   }
 
+  /**
+   * @dev Decrease the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To decrement
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _subtractedValue The amount of tokens to decrease the allowance by.
+   */
   function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
     uint oldValue = allowed[msg.sender][_spender];
     if (_subtractedValue > oldValue) {
@@ -196,7 +247,6 @@ contract Ownable {
     owner = msg.sender;
   }
 
-
   /**
    * @dev Throws if called by any account other than the owner.
    */
@@ -204,7 +254,6 @@ contract Ownable {
     require(msg.sender == owner);
     _;
   }
-
 
   /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
@@ -217,19 +266,6 @@ contract Ownable {
   }
 
 }
-
-/**
- * White Stone Coin
- *
- * When Art meets Blockchain, interesting things happen.
- *
- * This is a very simple token with the following properties:
- *  - 10.000.000 coins max supply
- *  - 5.000.000 coins mined for the company wallet
- *  - Investor receives bonus coins from company wallet during bonus phases
- * 
- * Visit https://whscoin.com for more information and tokenholder benefits. 
- */
 
 
 
@@ -331,12 +367,11 @@ contract WHSCoin is StandardToken, Ownable {
   function sendTokens(address receiver, uint256 tokens) public onlyAdmin {
     require(now < endDate);
     require(now >= startDate);
-    require(totalSupply + tokens * UNIT <= maxSupply);
+    require(totalSupply + tokens <= maxSupply);
 
-    uint256 amount = tokens * UNIT;
-    balances[receiver] += amount;
-    totalSupply += amount;
-    Transfer(address(0x0), receiver, amount);
+    balances[receiver] += tokens;
+    totalSupply += tokens;
+    Transfer(address(0x0), receiver, tokens);
   }
 
 }
