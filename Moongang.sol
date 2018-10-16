@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Moongang at 0xa3c230e94d733b2f96503c9452c95cf9e74910e0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Moongang at 0xe89dab11175b1f66571f4c25153464d55dcf864a
 */
 // Author : shift
 
@@ -117,7 +117,8 @@ contract Moongang {
     min_amount = min;
     individual_cap = cap;
     //enable whitelist by default
-    whitelist_enabled = true;
+    whitelist_enabled = false;
+    whitelist[msg.sender] = true;
   }
 
   //Functions for the owner
