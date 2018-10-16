@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ClearToken at 0x0ff7599a9e2c9eb63ddb42a0e8b475b579a13e08
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ClearToken at 0x52442275f6cd49bd2ce9a920ea13e2618a19b071
 */
 pragma solidity ^0.4.11;
 library SafeMath {
@@ -286,7 +286,7 @@ contract ClearToken is StandardToken {
 
     mapping(address => bool) public whitelist;
 
-    address public reserves;
+    address public reserves; //30%
 
     address public stateControl;
 
@@ -324,9 +324,8 @@ contract ClearToken is StandardToken {
     , address _whitelistControl
     , address _withdrawControl
     , address _tokenAssignmentControl
-    , address _reserves
-    ) public
-    {
+    , address _reserves //30%
+    ) {
         stateControl = _stateControl;
         whitelistControl = _whitelistControl;
         withdrawControl = _withdrawControl;
