@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WeeklyLotteryB at 0x59b8F851e1a433A7eCE7C8102AadB8Ed2C19727f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WeeklyLotteryB at 0xc98C7b13b2577BE006B4bF04418a115d43B1489e
 */
 /*
 	WeeklyLotteryB
 	Coded by: iFA
 	http://wlb.ethereumlottery.net
-	ver: 1.1
+	ver: 1.0
 */
 
 contract WLBdrawsDBInterface {
@@ -25,6 +25,7 @@ contract WeeklyLotteryB {
 		uint prepareBlock;
 		bool drawDone;
 		uint prizePot;
+		uint paidPot;
 		uint hit3Count;
 		uint hit3Value;
 		uint hit2Count;
@@ -118,34 +119,6 @@ contract WeeklyLotteryB {
 		}
 		return (investors[InvestorID].value, investors[InvestorID].balance, investors[InvestorID].live);
 	}
-	function CheckPrize(address Address) constant returns(uint value) {
-		uint gameID;
-		uint gameLowID;
-		uint8[3] memory numbers;
-		uint hit3Count;
-		uint hit2Count;
-		if (currentGame < prizeDismissDelay) {
-			gameLowID = 1;
-		} else {
-			gameLowID = currentGame-prizeDismissDelay;
-		}
-		for ( gameID=currentGame ; gameID>=gameLowID ; gameID-- ) {
-			if ( ! players[Address].games[gameID].checked) {
-				if (games[gameID].drawDone) {
-					numbers = getNumbersFromBytes(games[gameID].winningNumbersBytes);
-					hit3Count = players[Address].games[gameID].hit3Hash[sha3( numbers[0], numbers[1], numbers[2] )];
-					value += hit3Count * games[gameID].hit3Value;
-					hit2Count = players[Address].games[gameID].hit2Hash[sha3( numbers[0], numbers[1] )];
-					hit2Count += players[Address].games[gameID].hit2Hash[sha3( numbers[0], numbers[2] )];
-					hit2Count += players[Address].games[gameID].hit2Hash[sha3( numbers[1], numbers[2] )];
-					hit2Count -= hit3Count*3;
-					value += hit2Count * games[gameID].hit2Value;
-				} else if ( ! contractEnabled && gameID == currentGame) {
-					value += players[Address].games[gameID].numbersBytes.length * ticketPrice;
-				}
-			}
-		}
-	}
 	/* callback function */
 	function () {
 		var Numbers = getNumbersFromHash(sha3(block.coinbase, now, ticketCounter));
@@ -179,11 +152,10 @@ contract WeeklyLotteryB {
 	}
 	function CheckTickets() external noEther noContract {
 		uint _value;
-		uint _subValue;
 		uint gameID;
 		uint gameLowID;
 		uint8[3] memory numbers;
-		bool changed;
+		bool ok;
 		uint hit3Count;
 		uint hit2Count;
 		if (currentGame < prizeDismissDelay) {
@@ -196,24 +168,22 @@ contract WeeklyLotteryB {
 				if (games[gameID].drawDone) {
 					numbers = getNumbersFromBytes(games[gameID].winningNumbersBytes);
 					hit3Count = players[msg.sender].games[gameID].hit3Hash[sha3( numbers[0], numbers[1], numbers[2] )];
-					_subValue += hit3Count * games[gameID].hit3Value;
+					_value += hit3Count * games[gameID].hit3Value;
 					hit2Count = players[msg.sender].games[gameID].hit2Hash[sha3( numbers[0], numbers[1] )];
 					hit2Count += players[msg.sender].games[gameID].hit2Hash[sha3( numbers[0], numbers[2] )];
 					hit2Count += players[msg.sender].games[gameID].hit2Hash[sha3( numbers[1], numbers[2] )];
 					hit2Count -= hit3Count*3;
-					_subValue += hit2Count * games[gameID].hit2Value;
-					games[gameID].prizePot -= _subValue;
-					_value += _subValue;
+					_value += hit2Count * games[gameID].hit2Value;
 					players[msg.sender].games[gameID].checked = true;
-					changed = true;
+					ok = true;
 				} else if ( ! contractEnabled && gameID == currentGame) {
 					_value += players[msg.sender].games[gameID].numbersBytes.length * ticketPrice;
 					players[msg.sender].games[gameID].checked = true;
-					changed = true;
+					ok = true;
 				}
 			}
 		}
-		if ( ! changed) { throw; }
+		if ( ! ok) { throw; }
 		if (_value > 0) { if ( ! msg.sender.send(_value)) { throw; } }
 	}
 	/* external functions for investors */
@@ -346,7 +316,6 @@ contract WeeklyLotteryB {
 			ContractDisabledEvent(contractDisabledTimeStamp+contractDismissDelay);
 			ownerBalance += extraJackpot;
 			extraJackpot = 0;
-			games[currentGame].prizePot = games[currentGame].ticketsCount*ticketPrice;
 		}
 	}
 	/* private functions */
