@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GEMERAToken at 0x1c8ca35028c023c303c9646db4317c6b4c91c178
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GEMERAToken at 0xe9a2090557e9666676168cde58c8e18c5a03b2b7
 */
 pragma solidity 0.4.20;
 
@@ -379,8 +379,8 @@ contract Restrictable is Ownable {
 }
 
 contract GEMERAToken is MintableToken, BurnableToken, Restrictable {
-  string public constant name = "G_TEST";
-  string public constant symbol = "GTEST";
+  string public constant name = "GEMERA";
+  string public constant symbol = "GEMA";
   uint32 public constant decimals = 18;
 
   function GEMERAToken(address[50] _addrs) public BurnableToken(_addrs) {}
