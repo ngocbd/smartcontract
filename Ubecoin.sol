@@ -1,8 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ubecoin at 0x8dfe3cfb26a586495b3b8a2f586dc8ac1441e2c6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ubecoin at 0x9544b6a2f02e7be2ae53734e64811475d053d5ae
 */
 pragma solidity ^0.4.19;
-// ? Ubecoin. All Rights Reserved
+//   Ubecoin. All Rights Reserved
 library SafeMath {
   function mul(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a * b;
@@ -174,8 +174,8 @@ contract UbecoinICO is owned {
     Ubecoin public rewardToken;
 
 
-    uint256[] tokensRate = [7000,4200];
-    uint256[] tokensCap = [50000000,80000000];
+    uint256[] tokensRate = [4200];
+    uint256[] tokensCap = [80000000];
     mapping(address=>uint256) investments;
     uint256 limit_on_beneficiary = 1000 * 1000 ether;
 
@@ -332,7 +332,7 @@ contract Ubecoin is StandardToken {
       function Ubecoin() public {
         balances[msg.sender] = totalSupply;
         premineOf[premineWallets[0]] = 300000000 * 1 ether; 
-        premineOf[premineWallets[1]] = 2570000000 * 1 ether;
+        premineOf[premineWallets[1]] = 2620000000 * 1 ether;
                 
         for(uint i = 0; i<premineWallets.length;i++) {
           transfer(premineWallets[i],premineOf[premineWallets[i]]);
