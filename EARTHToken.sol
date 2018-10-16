@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EARTHToken at 0x900b4449236a7bb26b286601dd14d2bde7a6ac6c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EarthToken at 0x9e916df0b5D32eDf0289812aAB53eb517a16001E
 */
 pragma solidity ^0.4.18;
 
@@ -164,14 +164,14 @@ contract BurnableToken is StandardToken {
 
 
 
-contract EARTHToken is BurnableToken {
+contract EarthToken is BurnableToken {
 
-    string public name = "EARTH Token";
+    string public name = "Earth Token";
     string public symbol = "EARTH";
     uint public decimals = 8;
     uint public INITIAL_SUPPLY = 100000000000000000;
 
-    function EARTHToken() public {
+    function EarthToken() public {
         totalSupply = INITIAL_SUPPLY;
         balances[msg.sender] = INITIAL_SUPPLY;
     }
