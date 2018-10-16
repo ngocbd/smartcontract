@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GameCoin at 0x2c6537795def9ee3a4ff5a99dab508fe1c8d2d25
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GameCoin at 0x88eb460416af6ed4e0b4818e7c595d67ba94614b
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.12;
 
-contract OldContract{
-  function balanceOf(address _owner) view returns (uint balance) {}
-}
-
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
   function mul(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a * b;
@@ -33,6 +33,12 @@ library SafeMath {
   }
 }
 
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
   address public owner;
 
@@ -67,9 +73,13 @@ contract Ownable {
     OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
-
 }
 
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
 contract ERC20Basic {
   uint256 public totalSupply;
   function balanceOf(address who) public constant returns (uint256);
@@ -77,45 +87,23 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
+
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
 
   mapping(address => uint256) balances;
-  mapping(address => bool) transfered;
-  OldContract _oldContract;
-  
+
   /**
   * @dev transfer token for a specified address
   * @param _to The address to transfer to.
   * @param _value The amount to be transferred.
   */
-  
   function transfer(address _to, uint256 _value) public returns (bool) {
     require(_to != address(0));
-    
-    if(balances[msg.sender] == 0 && transfered[msg.sender] == false){
-    	 uint256 oldFromBalance;
-  		 
-  		 oldFromBalance = CheckOldBalance(msg.sender);
-  		 
-  		 if (oldFromBalance > 0)
-       {
-       	  ImportBalance(msg.sender); 
-       }
-    }
-    
-    if(balances[_to] == 0 && transfered[_to] == false){
-    	 uint256 oldBalance;
-  		 
-  		 oldBalance = CheckOldBalance(_to);
-  		 
-  		 if (oldBalance > 0)
-       {
-       	  ImportBalance(_to); 
-       }
-    }
-    
-    require(_value <= balances[msg.sender]);
 
     // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
@@ -123,71 +111,21 @@ contract BasicToken is ERC20Basic {
     Transfer(msg.sender, _to, _value);
     return true;
   }
+
   /**
   * @dev Gets the balance of the specified address.
   * @param _owner The address to query the the balance of.
   * @return An uint256 representing the amount owned by the passed address.
   */
   function balanceOf(address _owner) public constant returns (uint256 balance) {
-  	if(balances[_owner] == 0 && transfered[_owner] == false){
-  		 uint256 oldBalance;
-  		 
-  		 oldBalance = CheckOldBalance(_owner);
-  		 
-       if (oldBalance > 0)
-       {
-       	  return oldBalance;
-       }
-       else
-       {
-       		return balances[_owner];
-       }
-    }
-    else
-    {
-      return balances[_owner];
-    }
-  }
-
-  
-  function ImportBalance(address _owner) internal {
-  	uint256 oldBalance;
-  	
-  	oldBalance = CheckOldBalance(_owner);
-    if(balances[_owner] == 0  && (oldBalance > 0) && transfered[_owner] == false){
-    	balances[_owner] = oldBalance;
-      transfered[_owner] = true;
-    }
-  }
-  
-  function CheckOldBalance(address _owner) internal view returns (uint256 balance) {
-  	if(balances[_owner] == 0 && transfered[_owner]==false){
-  		
-  		uint256 oldBalance;
-  		
-  		_oldContract = OldContract(0x3719dAc5E8aeEb886A0B49f5cbafe2DfA73A16A3);
-  		
-  		oldBalance = _oldContract.balanceOf(_owner);
-  		
-  		if (oldBalance > 0)
-  		{
-        return oldBalance;
-      }
-      else
-      {
-      	return balances[_owner];
-      }
-    }
-    else
-    {
     return balances[_owner];
-    }
-
   }
-
-
 }
 
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
 contract ERC20 is ERC20Basic {
   function allowance(address owner, address spender) public constant returns (uint256);
   function transferFrom(address from, address to, uint256 value) public returns (bool);
@@ -195,10 +133,18 @@ contract ERC20 is ERC20Basic {
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
 contract StandardToken is ERC20, BasicToken {
 
-  mapping (address => mapping (address => uint256)) internal allowed;
-  
+  mapping (address => mapping (address => uint256)) allowed;
+
 
   /**
    * @dev Transfer tokens from one address to another
@@ -208,35 +154,15 @@ contract StandardToken is ERC20, BasicToken {
    */
   function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
     require(_to != address(0));
-    
-    if(balances[_from] == 0 && transfered[_from] == false){
-       uint256 oldFromBalance;
 
-       oldFromBalance = CheckOldBalance(_from);
+    uint256 _allowance = allowed[_from][msg.sender];
 
-  		 if (oldFromBalance > 0)
-       {
-       	  ImportBalance(_from); 
-       }
-    }
-    
-    if(balances[_to] == 0 && transfered[_to] == false){
-    	 uint256 oldBalance;
-  		 
-  		 oldBalance = CheckOldBalance(_to);
-  		 
-  		 if (oldBalance > 0)
-       {
-       	  ImportBalance(_to); 
-       }
-    }
-    
-    require(_value <= balances[_from]);
-    require(_value <= allowed[_from][msg.sender]);
+    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
+    // require (_value <= _allowance);
 
     balances[_from] = balances[_from].sub(_value);
     balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
     Transfer(_from, _to, _value);
     return true;
   }
@@ -273,13 +199,15 @@ contract StandardToken is ERC20, BasicToken {
    * the first transaction is mined)
    * From MonolithDAO Token.sol
    */
-  function increaseApproval (address _spender, uint _addedValue) public returns (bool success) {
+  function increaseApproval (address _spender, uint _addedValue)
+    returns (bool success) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
     Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
-  function decreaseApproval (address _spender, uint _subtractedValue) public returns (bool success) {
+  function decreaseApproval (address _spender, uint _subtractedValue)
+    returns (bool success) {
     uint oldValue = allowed[msg.sender][_spender];
     if (_subtractedValue > oldValue) {
       allowed[msg.sender][_spender] = 0;
@@ -289,67 +217,47 @@ contract StandardToken is ERC20, BasicToken {
     Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
-
 }
 
-contract BurnableToken is StandardToken, Ownable{
-    
-    mapping(address => uint256) public exchangequeue;
-    
-    event PutForExchange(address indexed from, uint256 value);
 
-    function putForExchange(uint256 _value) public {
-    
-    require(_value > 0);
-    address sender = msg.sender;
-      
-    if(balances[sender] == 0 && transfered[sender] == false){
-    	 uint256 oldFromBalance;
-  		 
-  		 oldFromBalance = CheckOldBalance(sender);
-  		 
-  		 if (oldFromBalance > 0)
-       {
-       	  ImportBalance(sender); 
-       }
+/**
+ * @title Burnable Token
+ * @dev Token that can be irreversibly burned (destroyed).
+ */
+contract BurnableToken is StandardToken {
+
+    event Burn(address indexed burner, uint256 value);
+
+    /**
+     * @dev Burns a specific amount of tokens.
+     * @param _value The amount of token to be burned.
+     */
+    function burn(uint256 _value) public {
+        require(_value > 0);
+        require(_value <= balances[msg.sender]);
+        // no need to require value <= totalSupply, since that would imply the
+        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+        address burner = msg.sender;
+        balances[burner] = balances[burner].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        Burn(burner, _value);
+        Transfer(burner, address(0), _value);
     }
-    
-	   require(_value <= balances[sender]);
-
-    // SafeMath.sub will throw if there is not enough balance.
-    balances[sender] = balances[sender].sub(_value);
-    exchangequeue[sender] = exchangequeue[sender].add(_value);
-    totalSupply = totalSupply.sub(_value);
-    PutForExchange(sender, _value);
-  }
-  
-    function confirmExchange(address _address,uint256 _value) public onlyOwner {
-    
-    require(_value > 0);
-    require(_value <= exchangequeue[_address]); 
-        
-   
-    exchangequeue[_address] = exchangequeue[_address].sub(_value);
-    
-  }
-  
-
 }
 
-contract GameCoin is Ownable, BurnableToken {
+contract GameCoin  is BurnableToken, Ownable {
 
-  string public constant name = "GameCoin";
-  string public constant symbol = "GMC";
-  uint8 public constant decimals = 2;
+    string public constant name = "GameCoin";
+    string public constant symbol = "GAME";
+    uint public constant decimals = 18;
+    // there is no problem in using * here instead of .mul()
+    uint256 public constant initialSupply = 100000000000 * (10 ** uint256(decimals));
 
-  uint256 public constant INITIAL_SUPPLY = 25907002099;
-  
-  /**
-   * @dev Constructor that gives msg.sender all of existing tokens.
-   */
-  function GameCoin() {
-    totalSupply = INITIAL_SUPPLY;
-    
-  }
+    // Constructors
+    function GameCoin () {
+        totalSupply = initialSupply;
+        balances[msg.sender] = initialSupply; // Send all tokens to owner
+    }
 
 }
