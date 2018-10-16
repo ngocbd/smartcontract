@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DScoin at 0x58C9907DA4519C91c9aB75aF5cACb1772FB67AFd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DScoin at 0xc82b50e6c729ab8ecd4e4ad189576b6594815565
 */
 pragma solidity ^0.4.16;
 
@@ -33,7 +33,7 @@ contract DScoin {
         string tokenName,
         string tokenSymbol
     ) public {
-        totalSupply = 1000000000000000000000000000;  // Update total supply with the decimal amount
+        totalSupply = 1000000000;  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
         name = "DScoin";                                   // Set the name for display purposes
         symbol = "DSC";                               // Set the symbol for display purposes
