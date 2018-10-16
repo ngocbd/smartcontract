@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CTCToken at 0x0b4298856285e36adf7682fbd06c8ffa3eeae72b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CTCToken at 0x4f1d24f8d60b1f8872abbd409e6bfaa54d7a9f40
 */
 pragma solidity ^0.4.21;
 
@@ -299,7 +299,7 @@ contract Pausable is Ownable {
 contract CTCToken is StandardToken, Ownable, Pausable, Destructible
 {
     using SafeMath for uint;
-    string public constant name = "Leooy Coin";
+    string public constant name = "Culture Travel Coin";
     string public constant symbol = "CTC";
     uint public constant decimals = 18;
     uint constant million = 1000000e18;
