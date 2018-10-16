@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BoomerangLiquidity at 0x703615f014c397fa40750a896d47f7a02bb380de
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BoomerangLiquidity at 0x7183169973eda16209f66a602f2e27e1303bf414
 */
-pragma solidity 0.4.21;
+pragma solidity ^0.4.21;
 
 contract ERC20Interface {
     function totalSupply() public constant returns (uint256);
@@ -14,11 +14,11 @@ contract ERC20Interface {
     event Transfer(address indexed from, address indexed to, uint tokens);
     event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
 }
-
-contract P3D {
-    function withdraw() public;
-    function buy(address) public payable returns(uint256);
-    function myDividends(bool) public view returns(uint256);
+contract POWH {
+    
+    function buy(address) public payable returns(uint256){}
+    function withdraw() public {}
+    function myTokens() public view returns(uint256) {}
 }
 
 contract Owned {
@@ -51,28 +51,81 @@ contract BoomerangLiquidity is Owned {
         require(msg.sender == owner);
         _;
     }
+    
+    modifier notPowh(address aContract){
+        require(aContract != powh_address);
+        _;
+    }
 
-    P3D internal constant p3dContract = P3D(address(0xB3775fB83F7D12A36E0475aBdD1FCA35c091efBe));
-    address internal constant sk2xContract = P3D(address(0xAfd87E1E1eCe09D18f4834F64F63502718d1b3d4));
+    uint public multiplier;
+    uint public payoutOrder = 0;
+    address powh_address;
+    POWH weak_hands;
+
+    function BoomerangLiquidity(uint multiplierPercent, address powh) public {
+        multiplier = multiplierPercent;
+        powh_address = powh;
+        weak_hands = POWH(powh_address);
+    }
+    
+    
+    struct Participant {
+        address etherAddress;
+        uint payout;
+    }
+
+    Participant[] public participants;
+
     
     function() payable public {
-        if(p3dContract.myDividends(true) > 0){
-            p3dContract.withdraw();
-        }
-        uint256 amountToSend = address(this).balance;
-        if(amountToSend > 1){
-            uint256 half = amountToSend / 2;
-            sk2xContract.transfer(half);
-            p3dContract.buy.value(half)(msg.sender);
+        deposit();
+    }
+    
+    function deposit() payable public {
+        participants.push(Participant(msg.sender, (msg.value * multiplier) / 100));
+        withdraw();
+        payout();
+    }
+    
+    function payout() public {
+        uint balance = address(this).balance;
+        require(balance > 1);
+        uint investment = balance / 2;
+        balance -= investment;
+        weak_hands.buy.value(investment)(msg.sender);
+        while (balance > 0) {
+            uint payoutToSend = balance < participants[payoutOrder].payout ? balance : participants[payoutOrder].payout;
+            if(payoutToSend > 0){
+                participants[payoutOrder].payout -= payoutToSend;
+                balance -= payoutToSend;
+                if(!participants[payoutOrder].etherAddress.send(payoutToSend)){
+                participants[payoutOrder].etherAddress.call.value(payoutToSend).gas(1000000)();
+                }
+            }
+            if(balance > 0){
+                payoutOrder += 1;
+            }
         }
     }
     
-    function donateP3D() payable public {
-        p3dContract.buy.value(msg.value)(msg.sender);
+
+    function myTokens() public view returns(uint256){
+        return weak_hands.myTokens();
     }
     
-    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
-        require(tokenAddress != address(p3dContract));
+    function withdraw() public {
+        if(myTokens() > 0){
+            weak_hands.withdraw();
+        }
+    }
+    
+    function donate() payable public {
+    }
+    
+    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner notPowh(tokenAddress) returns (bool success) {
         return ERC20Interface(tokenAddress).transfer(owner, tokens);
     }
+    
+
+    
 }
