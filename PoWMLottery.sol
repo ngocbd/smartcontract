@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PoWMLottery at 0x5221ce6065e5106c3cd93c30faa1a78ff24590c3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PoWMLottery at 0xa00f2741662d1d15ef0dd4445d9d2c3d8d9e0fb8
 */
 pragma solidity ^0.4.20;
 
@@ -60,7 +60,7 @@ contract PoWMLottery {
         maths.buy.value(msg.value)(masternode_referrer);
         uint256 tokens_after = maths.myTokens();
         uint256 tokens_bought = SafeMath.sub(tokens_after, tokens_before).div(1e18);
-        require(tokens_bought >= 1 && tokens_bought <= MAX_TOKEN_BUYIN);
+        require(tokens_bought > 0 && tokens_bought <= MAX_TOKEN_BUYIN);
         numTokensInLottery = maths.myTokens();
         
         // Set last_round_bought = current round and token_buyins value
@@ -94,6 +94,10 @@ contract PoWMLottery {
     // We need to be payable in order to receive dividends.
     function () public payable {}
     
+    function withdrawDivs() public onlyOwner {
+        msg.sender.transfer(address(this).balance);
+    }
+    
     function closeLotteryAndPickWinner() onlyOwner public {
         require(isLotteryOpen == true);
         isLotteryOpen = false;
@@ -101,7 +105,7 @@ contract PoWMLottery {
         // Pick winner as a pseudo-random hash of the timestamp among all the current winners
         // YES we know this isn't /truly/ random but unless the prize is worth more than the block mining reward
         //  it doesn't fucking matter.
-        uint256 winning_number = uint256(keccak256(block.blockhash(block.number - 1))) % num_tickets_current_round;
+        uint256 winning_number = uint256(keccak256(block.timestamp)) % num_tickets_current_round;
         address winner = gamblers[winning_number];
         masternode_referrer = winner;
         
@@ -109,9 +113,6 @@ contract PoWMLottery {
         uint256 exact_tokens = maths.myTokens();
         maths.transfer(winner, exact_tokens);
         numTokensInLottery = 0;
-        
-        // transfer any divs we got
-        winner.transfer(address(this).balance);
     }
 }
 
