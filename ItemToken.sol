@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ItemToken at 0xad56273c8268972341aaa9e2d999e4d0a00ec0f9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ItemToken at 0x61d89828f79bbaecf854c7df08dca887af0f8ee7
 */
 pragma solidity ^0.4.13;
 
@@ -194,8 +194,8 @@ contract ItemToken {
   }
 
   /*
-     Buy a country directly from the contract for the calculated price
-     which ensures that the owner gets a profit.  All countries that
+     Buy a estate directly from the contract for the calculated price
+     which ensures that the owner gets a profit.  All Estates that
      have been listed can be bought by this method. User funds are sent
      directly to the previous owner and are never stored in the contract.
   */
@@ -236,11 +236,11 @@ contract ItemToken {
   }
 
   function name() public pure returns (string _name) {
-    return "CryptoCountries.io Countries";
+    return "CryptoHongKong.io";
   }
 
   function symbol() public pure returns (string _symbol) {
-    return "CCC";
+    return "CHK";
   }
 
   function totalSupply() public view returns (uint256 _totalSupply) {
