@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PeerBudsToken at 0xdfc658e95763d677203866b06982dcc6c5f3aeb2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PeerBudsToken at 0x53b88f58521ec728193b93b0a33d438665c6e8de
 */
 pragma solidity ^0.4.8;
   
@@ -62,7 +62,7 @@ pragma solidity ^0.4.8;
      }
   
      // Constructor
-     function PeerBudsToken() {
+     function FixedSupplyToken() {
          owner = msg.sender;
          balances[owner] = _totalSupply;
      }
