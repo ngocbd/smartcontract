@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ONT at 0xef0c2c7c4dc5eda03fd6ff98b0ae756f2a9320eb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ONT at 0xdd1a644ccd7f4602119b56fb4052bdef944faa6b
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.18;
 
 contract ERC20Basic {
   uint256 public totalSupply;
@@ -32,7 +32,7 @@ contract Ownable {
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() {
+  function Ownable() public {
     owner = msg.sender;
   }
 
@@ -61,25 +61,25 @@ contract Ownable {
 
 
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
@@ -89,12 +89,12 @@ contract ONT is ERC20,Ownable{
 	using SafeMath for uint256;
 
 	string public constant name="Ontology Network Token";
-	string public symbol="ONT";
+	string public symbol="ONT.";
 	string public constant version = "1.0";
 	uint256 public constant decimals = 18;
 	uint256 public totalSupply;
 
-	uint256 public constant MAX_SUPPLY=1000000000*10**decimals;
+	uint256 public constant MAX_SUPPLY=10000000000*10**decimals;
 
 	
     mapping(address => uint256) balances;
@@ -102,7 +102,7 @@ contract ONT is ERC20,Ownable{
 	event GetETH(address indexed _from, uint256 _value);
 
 	//owner???????
-	function ONT(){
+	function ONT() public {
 		totalSupply=MAX_SUPPLY;
 		balances[msg.sender] = MAX_SUPPLY;
 		Transfer(0x0, msg.sender, MAX_SUPPLY);
