@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x9e2137388c6e7462a8a7a5b2cb2d1f7fa9265430
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xee66e97e13bc9acd1298c36fb21801241ae77e4b
 */
 pragma solidity ^0.4.19;
  
@@ -121,9 +121,9 @@ contract ERC20Token is StandardToken {
         ) {
         balances[msg.sender] = 700000000000000;               // Give the creator all initial tokens (100000 for example)
         totalSupply = 700000000000000;                        // Update total supply (100000 for example)
-        name = "Scencoin";                                   // Set the name for display purposes
+        name = "viepasTOKEN";                                   // Set the name for display purposes
         decimals = 8;                            // Amount of decimals for display purposes
-        symbol = "scc";                               // Set the symbol for display purposes
+        symbol = "vit";                               // Set the symbol for display purposes
     }
  
     /* Approves and then calls the receiving contract */
