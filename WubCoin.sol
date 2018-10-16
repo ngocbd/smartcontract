@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WubCoin at 0xded90b4ed5131890809e4f6102d0a8c11a20a246
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WubCoin at 0x2664877980f2684c9e9be07a50330e85847c5241
 */
 pragma solidity ^0.4.11;
 
@@ -161,6 +161,7 @@ contract ERC223Interface {
     function balanceOf(address who) constant returns (uint);
     function transfer(address to, uint value);
     function transfer(address to, uint value, bytes data);
+    event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
 }
 
 
@@ -215,7 +216,7 @@ contract WubCoin is ERC223Interface, ERC20CompatibleToken {
             ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
             receiver.tokenFallback(msg.sender, _value, _data);
         }
-        Transfer(msg.sender, _to, _value);
+        Transfer(msg.sender, _to, _value, _data);
     }
 
     /**
@@ -242,7 +243,7 @@ contract WubCoin is ERC223Interface, ERC20CompatibleToken {
             ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
             receiver.tokenFallback(msg.sender, _value, empty);
         }
-        Transfer(msg.sender, _to, _value);
+        Transfer(msg.sender, _to, _value, empty);
     }
 
 
