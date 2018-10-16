@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cillionaire at 0x02b97cca6d6a5227e464b2a60ee1a580ea4f7da9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cillionaire at 0xdaff1F98299b12d475b4725a2635e5bA291aA651
 */
 // <ORACLIZE_API>
 /*
@@ -1090,7 +1090,7 @@ contract Cillionaire is owned, usingOraclize {
         state = State.ENDED;
         oraclizeCallbackGas = 400000;
         nextRoundMaxDonors = 1000;
-    	nextRoundDuration = 600; // seconds
+    	nextRoundDuration = 1800; // seconds
     	nextRoundDonation = 0.01 ether;
     	nextRoundFee = 0.001 ether;
     	startRound(owner);
@@ -1139,7 +1139,7 @@ contract Cillionaire is owned, usingOraclize {
     }
     
     function deposit() external payable onlyOwner {
-        // allow to deposit ether in case we run out of money for the Oraclize calls.
+        // allow to deposit ehter in case we run out of money for the Oraclize calls.
     }
     
     function withdraw() external onlyOwner {
@@ -1172,9 +1172,5 @@ contract Cillionaire is owned, usingOraclize {
         require(_oraclizeCallbackGas > 200000); // prevent owner from starving Oraclize
         oraclizeCallbackGas = _oraclizeCallbackGas;
     }
-
-	function setOraclizeCallbackGasPrice(uint _oraclizeCallbackGasPrice) external onlyOwner {
-		oraclize_setCustomGasPrice(_oraclizeCallbackGasPrice); // default is 20 Gwei, i.e. 20000000000 wei
-	}
 
 }
