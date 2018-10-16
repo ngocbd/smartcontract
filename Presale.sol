@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0x5ed5b9a13af4581524ebb7a0701bc4366d002289
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0xaffd8d333badb2a6dfab4854c5a30ac2dbb9db9f
 */
 pragma solidity ^0.4.6;
 
@@ -37,13 +37,12 @@ contract Presale {
     string public constant VERSION = "0.1.4-beta";
 
     /* ====== configuration START ====== */
+	uint public constant PRESALE_START  = 3125270; /* approx. 05.02.2017 04:20 CET */
+    uint public constant PRESALE_END    = 3125280; /* approx. 05.02.2017 04:25 CET */
+    uint public constant WITHDRAWAL_END = 3125290; /* approx. 05.02.2017 04:30 CET */
 
-    uint public constant PRESALE_START  = 3127150; /* approx. 05.02.2017 11:00 CET */
-    uint public constant PRESALE_END    = 3127750; /* approx. 05.02.2017 13:00 CET */
-    uint public constant WITHDRAWAL_END = 3128710; /* approx. 05.02.2017 17:00 CET */
 
-
-    address public constant OWNER = 0x45d5426471D12b21C3326dD0cF96f6656F7d14b1;
+    address public constant OWNER = 0x41ab8360dEF1e19FdFa32092D83a7a7996C312a4;
 
     uint public constant MIN_TOTAL_AMOUNT_TO_RECEIVE_ETH = 1;
     uint public constant MAX_TOTAL_AMOUNT_TO_RECEIVE_ETH = 5;
@@ -178,9 +177,9 @@ contract Presale {
         _;
     }
 
-    //fails if the current state is not before than the given one.
+    //fails if the current state is after than the given one.
     modifier inStateBefore(State state) {
-        if (currentState() >= state) throw;
+        if (currentState() > state) throw;
         _;
     }
 
