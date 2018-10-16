@@ -1,47 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Artwork at 0x22164e957ac4c0cb0f19c49b05e627675436dfe1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Artwork at 0xc14971b19a39327C032CcFfBD1b714C0F886dc76
 */
 pragma solidity ^0.4.11;
-
-/* Ethart unindexed Factory Contract:
-
-	Ethart ARCHITECTURE
-	-------------------
-						_________________________________________
-						V										V
-	Controller --> Registrar <--> Factory Contract1 --> Artwork Contract1
-								  Factory Contract2	    Artwork Contract2
-								  		...					...
-								  Factory ContractN	    Artwork ContractN
-
-	Controller: The controler contract is the owner of the Registrar contract and can
-		- Set a new owner
-		- Controll the assets of the Registrar (withdraw ETH, transfer, sell, burn pieces owned by the Registrar)
-		- The plan is to replace the controller contract with a DAO in preperation for a possible ICO
-	
-	Registrar:
-		- The Registrar contract atcs as the central registry for all sha256 hashes in the Ethart factory contract network.
-		- Approved Factory Contracts can register sha256 hashes using the Registrar interface.
-		- 2.5% of the art produced and 2.5% of turnover of the contract network will be transfered to the Registrar.
-	
-	Factory Contracts:
-		- Factory Contracts can spawn Artwork Contracts in line with artists specifications
-		- Factory Contracts will only spawn Artwork Contracts who's sha256 hashes are unique per the Registrar's sha256 registry
-		- Factory Contracts will register every new Artwork Contract with it's details with the Registrar contract
-	
-	Artwork Contracts:
-		- Artwork Contracts act as minimalist decentralized exchanges for their pieces in line with specified conditions
-		- Artwork Contracts will interact with the Registrar to issue buyers of pieces a predetermined amount of Patron tokens based on the transaction value 
-		- Artwork Contracts can be interacted with by the Controller via the Registrar using their interfaces to transfer, sell, burn etc pieces
-	
-	(c) Stefan Pernar 2017 - all rights reserved
-	(c) ERC20 functions BokkyPooBah 2017. The MIT Licence.
-
-Artworks created with this factory have the following ABI:
-
-[{"constant":true,"inputs":[],"name":"pieceForSale","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_spender","type":"address"},{"name":"_amount","type":"uint256"}],"name":"approve","outputs":[{"name":"success","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"ownerCommission","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_proofLink","type":"string"}],"name":"setProof","outputs":[],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"proofLink","outputs":[{"name":"","type":"string"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"totalSupply","type":"uint256"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"lowestAskAddress","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_from","type":"address"},{"name":"_to","type":"address"},{"name":"_amount","type":"uint256"}],"name":"transferFrom","outputs":[{"name":"success","type":"bool"}],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"fillBid","outputs":[],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_amount","type":"uint256"}],"name":"burn","outputs":[{"name":"success","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"highestBidPrice","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"highestBidAddress","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"highestBidTime","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_from","type":"address"},{"name":"_value","type":"uint256"}],"name":"burnFrom","outputs":[{"name":"success","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"lowestAskPrice","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"cancelBid","outputs":[],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"newOwner","type":"address"}],"name":"changeOwner","outputs":[],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_to","type":"address"},{"name":"_amount","type":"uint256"}],"name":"transfer","outputs":[{"name":"success","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"pieceWanted","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":true,"inputs":[],"name":"SHA256ofArtwork","outputs":[{"name":"","type":"bytes32"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"_price","type":"uint256"}],"name":"offerPieceForSale","outputs":[],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"buyPiece","outputs":[],"payable":true,"type":"function"},{"constant":true,"inputs":[],"name":"activationTime","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"_owner","type":"address"},{"name":"_spender","type":"address"}],"name":"allowance","outputs":[{"name":"remaining","type":"uint256"}],"payable":false,"type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"piecesOwned","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"cancelSale","outputs":[],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"placeBid","outputs":[],"payable":true,"type":"function"},{"constant":true,"inputs":[],"name":"lowestAskTime","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"inputs":[{"name":"_SHA256ofArtwork","type":"bytes32"},{"name":"_editionSize","type":"uint256"},{"name":"_title","type":"string"},{"name":"_fileLink","type":"string"},{"name":"_ownerCommission","type":"uint256"},{"name":"_owner","type":"address"}],"payable":false,"type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"name":"price","type":"uint256"},{"indexed":false,"name":"seller","type":"address"}],"name":"newLowestAsk","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"price","type":"uint256"},{"indexed":false,"name":"bidder","type":"address"}],"name":"newHighestBid","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"amount","type":"uint256"},{"indexed":false,"name":"from","type":"address"},{"indexed":false,"name":"to","type":"address"}],"name":"pieceTransfered","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"name":"from","type":"address"},{"indexed":false,"name":"to","type":"address"},{"indexed":false,"name":"price","type":"uint256"}],"name":"pieceSold","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"_from","type":"address"},{"indexed":true,"name":"_to","type":"address"},{"indexed":false,"name":"_value","type":"uint256"}],"name":"Transfer","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"_owner","type":"address"},{"indexed":true,"name":"_spender","type":"address"},{"indexed":false,"name":"_value","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"name":"_owner","type":"address"},{"indexed":false,"name":"_amount","type":"uint256"}],"name":"Burn","type":"event"}]
-
-*/
 
 contract Interface {
 
@@ -159,11 +119,11 @@ The owner of a piece can burn it, removing it permanently from the pool of avail
 /* Public variables */
 	address public owner;						// Contract owner.
 	bytes32 public SHA256ofArtwork;				// sha256 hash of the artwork.
-	uint256 public editionSize;					// The edition size of the artwork.
-	string public title;						// The title of the artwork.
-	string public fileLink;						// The link to the file of the artwork.
+	uint256 editionSize;						// The edition size of the artwork.
+	string title;								// The title of the artwork.
+	string fileLink;							// The link to the file of the artwork.
 	string public proofLink;					// Link to the creation proof by the artist -> this has to be done after contract creation
-	string public customText;					// Custom text
+	string public customText;						// Custom text
 	uint256 public ownerCommission;				// Percent given to the contract owner for every sale - must be >=0 && <=975 1000 = 100%.
 	
 	uint256 public lowestAskPrice;				// The lowest price an owner of a piece is willing to sell it for.
@@ -188,12 +148,12 @@ The owner of a piece can burn it, removing it permanently from the pool of avail
 	event Burn (address indexed _owner, uint256 _amount);
 
 	/* Other variables */
-	bool public proofSet;							// Has the proof been set yet?
+	bool proofSet;							// Has the proof been set yet?
 	uint256 ethartAward;					// # of pieces awarded to Ethart.
 
 	mapping (address => uint256) public piecesOwned;				// Maps the number of pieces owned by an address
  	mapping (address => mapping (address => uint256)) allowed;		// Used in burnFrom and transferFrom
-    address registrar = 0xaD3e7D2788126250d48598e1DB6A2D3E19B89738;						// set after deployment of Registrar contract
+    address registrar = 0x562b85ACEEE81876D27252B7dc06f03F6A2565fc;						// set after deployment of Registrar contract
 
 	function Artwork (								// Constructor
 		bytes32 _SHA256ofArtwork,
