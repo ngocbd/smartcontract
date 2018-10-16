@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitcoinStore at 0x6c7a3c832e573b1d7f3c9f7d51b2ec13f461dbe1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitcoinStore at 0x711f388038efef6ca032ef9d9a0c79efc1579db6
 */
 pragma solidity ^0.4.11;
 
@@ -79,9 +79,21 @@ contract ERC20 is ERC20Basic {
 
 contract BitcoinStore is Ownable, SafeMath {
 
-  address constant public Bitcoin_address =0xB6eD7644C69416d67B522e20bC294A9a9B405B31;// TESTNET CONTRACT: 0x9D2Cc383E677292ed87f63586086CfF62a009010
-  uint bitcoin_ratio = 500*1E8;
-  uint eth_ratio = 1*1E18;
+  address constant public Bitcoin_address =0xB6eD7644C69416d67B522e20bC294A9a9B405B31;// TESTNET CONTRACT: 0x9D2Cc383E677292ed87f63586086CfF62a009010;
+  uint public bitcoin_ratio = 400*1E8;
+  uint public eth_ratio = 1*1E18;
+
+  function update_eth_ratio( uint new_eth_ratio) 
+  onlyOwner
+  {
+    eth_ratio = new_eth_ratio;
+  }
+
+  function update_bitcoin_ratio(uint new_bitcoin_ratio) 
+  onlyOwner
+  {
+    bitcoin_ratio = new_bitcoin_ratio;
+  }
 
   function update_ratio(uint new_bitcoin_ratio, uint new_eth_ratio) 
   onlyOwner
@@ -109,13 +121,19 @@ contract BitcoinStore is Ownable, SafeMath {
 
   /* fallback function for when ether is sent to the contract */
   function () external payable {
+    require(eth_ratio > 0); // safe divide
     uint buytokens = safeMul(bitcoin_ratio , msg.value)/eth_ratio;
     ERC20(Bitcoin_address).transfer(msg.sender, buytokens);
+
+    owner.transfer(this.balance);
   }
 
   function buy() public payable {
+    require(eth_ratio > 0); // safe divide
     uint buytokens = safeMul(bitcoin_ratio , msg.value)/eth_ratio;
     ERC20(Bitcoin_address).transfer(msg.sender, buytokens);
+    
+    owner.transfer(this.balance);
   }
 
   function withdraw() onlyOwner {
