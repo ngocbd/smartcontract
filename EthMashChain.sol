@@ -1,17 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthMashChain at 0x7bb936f496884c52d21df7b9b93bed14d7c24a3c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthMashChain at 0xaf1d2ac1b1f5986530c3b160c7a88a6be1143ee7
 */
-pragma solidity ^0.4.22;
+pragma solidity ^0.4.23;
 
 contract EthMashChain {
 
     address public owner;
     mapping (address => uint) public withdrawals;
 
-    uint round;
-    mapping (uint => address[3]) participants;
-    
-    event Log(address indexed user, uint action, uint price);
+    int round;
+    mapping (int => address[3]) public participants;
 
     constructor() public {
         owner = msg.sender;
@@ -19,29 +17,20 @@ contract EthMashChain {
         participants[1][0] = owner;
     }
 
-    modifier whenOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
-    function ownerWithdraw(uint amount) external whenOwner {
-        owner.transfer(amount);
-    }
-
-    function ownerDestroy() external whenOwner {
-        selfdestruct(owner);
-    }
-
-    function publicGetRound() view public returns (uint) {
-        return round;
-    }
-
-    function publicGetParticipants(uint index) view public returns (address[3]) {
-        return participants[index];
-    }
-
     function publicGetBalance(address player) view public returns (uint) {
         return withdrawals[player];
+    }
+
+    function publicGetState() view public returns (address[3][7]) {
+        return [
+            participants[round - 6],
+            participants[round - 5],
+            participants[round - 4],
+            participants[round - 3],
+            participants[round - 2],
+            participants[round - 1],
+            participants[round]
+        ];
     }
 
     function userWithdraw() public {
@@ -49,25 +38,22 @@ contract EthMashChain {
         uint amount = withdrawals[msg.sender];
         withdrawals[msg.sender] = 0;
         msg.sender.transfer(amount);
-        emit Log(msg.sender, 0, amount);
     }
 
     function userRegister() public payable {
         require(msg.value == 105 finney);
-        emit Log(msg.sender, 1, msg.value);
+        
+        withdrawals[owner] += 5 finney;
         participants[round][1] = msg.sender;
 
-        uint reward = 100 finney;
         uint random = (uint(blockhash(block.number - 1)) + uint(participants[round][0]) + uint(participants[round][1]));
 
         if (random % 2 == 0) {
             participants[round][2] = participants[round][0];
-            withdrawals[participants[round][0]] += reward;
-            emit Log(participants[round][0], 2, reward);
+            withdrawals[participants[round][0]] += 100 finney;
         } else {
             participants[round][2] = participants[round][1];
-            withdrawals[participants[round][1]] += reward;
-            emit Log(participants[round][1], 2, reward);
+            withdrawals[participants[round][1]] += 100 finney;
         }
         
         round++;
