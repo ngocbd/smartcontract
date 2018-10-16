@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptonCoin at 0x971fdec17b5f70d98d3a1017034499cf7172d9b4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptonCoin at 0xb2d402b2efc280cf37c9466183253adeaad9c1d9
 */
 pragma solidity ^0.4.4;
 
@@ -189,9 +189,9 @@ contract CryptonCoin is StandardToken {
         uint256 tokenPrice = unitsOneEthCanBuy;
 
         if (block.timestamp < preIcoFinishTimestamp) {
-            require(msg.value * tokenPrice * 13 / 10 <= (preIcoTotalSupply - preIcoSupply));
+            require(msg.value * tokenPrice * 7 / 10 <= (preIcoTotalSupply - preIcoSupply));
 
-            tokenPrice = safeMul(tokenPrice,13);
+            tokenPrice = safeMul(tokenPrice,7);
             tokenPrice = safeDiv(tokenPrice,10);
 
             amount = safeMul(msg.value,tokenPrice);
@@ -214,9 +214,9 @@ contract CryptonCoin is StandardToken {
     }
 
     function withdraw() public {
-            require(msg.sender == fundsWallet);
+        if (block.timestamp > fundingEndTime) {
             fundsWallet.transfer(contractAddress.balance);
-
+        }
     }
 
     function createTokensForCrypton() public returns (bool success) {
@@ -250,5 +250,3 @@ contract CryptonCoin is StandardToken {
         return true;
     }
 }
-//Based on the source from hashnode.com
-//CREATED BY MICHA? MICHALSKI @YSZTY with CRYPTON.VC
