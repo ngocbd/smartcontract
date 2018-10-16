@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IADSpecialEvent at 0x86015ebb77596f12cb83c22e9b5b833af3f1f553
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IADSpecialEvent at 0x8cfb4487aa8dc6e2120eac40764ad21b02d0780e
 */
 pragma solidity 0.4.24;
 /**
@@ -151,6 +151,10 @@ contract IADSpecialEvent is admined {
     */
     function whitelistAddress(address _user, bool _flag) onlyAdmin(1) public {
         whiteList[_user] = _flag;
+    }
+
+    function checkWhitelist(address _user) onlyAdmin(1) public view returns (bool flag) {
+        return whiteList[_user];
     }
 
     /**
