@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICO at 0xcc71f4fc42d8479c86edb4607a37b598c9b4df30
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICO at 0xd10996aeea66f21e1018d422d589dabe600f3960
 */
 pragma solidity ^0.4.18;
 /**
@@ -34,42 +34,32 @@ library SafeMath {
 
 contract token {
 
-    function balanceOf(address _owner) public constant returns (uint256 balance);
+    function balanceOf(address _owner) public constant returns (uint256 value);
     function transfer(address _to, uint256 _value) public returns (bool success);
 
     }
 
-contract DateTimeAPI {
-        
-        function toTimestamp(uint16 year, uint8 month, uint8 day, uint8 hour, uint8 minute) constant returns (uint timestamp);
-
-}
-
-contract FiatContract {
-
-  function USD(uint _id) constant returns (uint256);
-
-}
-
-
 contract ICO {
-
-    DateTimeAPI dateTimeContract = DateTimeAPI(0x1a6184CD4C5Bea62B0116de7962EE7315B7bcBce);
-    FiatContract price = FiatContract(0x8055d0504666e2B6942BeB8D6014c964658Ca591); // MAINNET ADDRESS
-
     using SafeMath for uint256;
+    //This ico have 5 states
     enum State {
-    //This ico have 4 states
-        stage1, //PreSales
-        stage2, //PreICo
-        stage3, //ICO
+        preico,
+        week1,
+        week2,
+        week3,
+        week4,
+        week5,
+        week6,
+        week7,
         Successful
     }
     //public variables
-    State public state = State.stage1; //Set initial stage
+    State public state = State.preico; //Set initial stage
     uint256 public startTime = now; //block-time when it was deployed
+    uint256 public rate;
     uint256 public totalRaised; //eth in wei
     uint256 public totalDistributed; //tokens
+    uint256 public totalContributors;
     uint256 public ICOdeadline;
     uint256 public completedAt;
     token public tokenReward;
@@ -96,18 +86,21 @@ contract ICO {
     * @param _campaignUrl is the ICO _url
     * @param _addressOfTokenUsedAsReward is the token totalDistributed
     */
-    function ICO ( string _campaignUrl, token _addressOfTokenUsedAsReward ) public {
+    function ICO (
+        string _campaignUrl,
+        token _addressOfTokenUsedAsReward) public {
+        require(_addressOfTokenUsedAsReward!=address(0));
 
         creator = msg.sender;
         campaignUrl = _campaignUrl;
         tokenReward = _addressOfTokenUsedAsReward;
-        ICOdeadline = dateTimeContract.toTimestamp(2018,7,31,23,59); // Jul 31
+        rate = 3214;
+        ICOdeadline = startTime.add(64 days); //9 weeks
 
         LogFunderInitialized(
             creator,
             campaignUrl,
             ICOdeadline);
-            
     }
 
     /**
@@ -116,62 +109,58 @@ contract ICO {
     function contribute() public notFinished payable {
 
         uint256 tokenBought = 0;
-        uint256 usdCentInWei = price.USD(0);
-        uint baseCalc = usdCentInWei.div(10 ** 2); //it will give 2 decimals numbers to the result
 
         totalRaised = totalRaised.add(msg.value);
+        totalContributors = totalContributors.add(1);
+
+        tokenBought = msg.value.mul(rate);
 
         //Rate of exchange depends on stage
-        if (state == State.stage1){
-
-            baseCalc = baseCalc.mul(15); //15 cents per token
-            tokenBought = msg.value.div(baseCalc);
-        
-        } else if (state == State.stage2){
-        
-            baseCalc = baseCalc.mul(27); //27 cents per token
-            tokenBought = msg.value.div(baseCalc);
-        
-        } else if (state == State.stage3){
-        
-            baseCalc = baseCalc.mul(35); //35 cents per token
-            tokenBought = msg.value.div(baseCalc);
-        
-        }
-
-        if(msg.value >= usdCentInWei.mul(5000000)){ // 5.000.000 cents = 50.000,00 $
-
-            tokenBought = tokenBought.mul(2); // +100%
-
-        } else if(msg.value >= usdCentInWei.mul(2000000)){ // 2.000.000 cents = 20.000,00 $
-
-            tokenBought = tokenBought.mul(18);
-            tokenBought = tokenBought.div(10); // +80%            
-
-        } else if(msg.value >= usdCentInWei.mul(1000000)){ // 1.000.000 cents = 10.000,00 $
-
-            tokenBought = tokenBought.mul(16);
-            tokenBought = tokenBought.div(10); // +60%            
-
-        } else if(msg.value >= usdCentInWei.mul(500000)){ // 500.000 cents = 5.000,00 $
+        if (state == State.preico){
 
             tokenBought = tokenBought.mul(14);
-            tokenBought = tokenBought.div(10); // +40%            
+            tokenBought = tokenBought.mul(10); //14/10 = 1.4 = 140%
+        
+        } else if (state == State.week1){
 
-        } else if(msg.value >= usdCentInWei.mul(100000)){ // 100.000 cents = 1.000,00 $
+            tokenBought = tokenBought.mul(13);
+            tokenBought = tokenBought.mul(10); //13/10 = 1.3 = 130%
+
+        } else if (state == State.week2){
+
+            tokenBought = tokenBought.mul(125);
+            tokenBought = tokenBought.mul(100); //125/100 = 1.25 = 125%
+
+        } else if (state == State.week3){
 
             tokenBought = tokenBought.mul(12);
-            tokenBought = tokenBought.div(10); // +20%            
+            tokenBought = tokenBought.mul(10); //12/10 = 1.2 = 120%
+
+        } else if (state == State.week4){
+
+            tokenBought = tokenBought.mul(115);
+            tokenBought = tokenBought.mul(100); //115/100 = 1.15 = 115%
+
+        } else if (state == State.week5){
+
+            tokenBought = tokenBought.mul(11);
+            tokenBought = tokenBought.mul(10); //11/10 = 1.10 = 110%
+
+        } else if (state == State.week6){
+
+            tokenBought = tokenBought.mul(105);
+            tokenBought = tokenBought.mul(100); //105/100 = 1.05 = 105%
 
         }
 
         totalDistributed = totalDistributed.add(tokenBought);
         
+        require(creator.send(msg.value));
         tokenReward.transfer(msg.sender, tokenBought);
 
         LogFundingReceived(msg.sender, msg.value, totalRaised);
         LogContributorsPayout(msg.sender, tokenBought);
-
+        
         checkIfFundingCompleteOrExpired();
     }
 
@@ -180,24 +169,42 @@ contract ICO {
     */
     function checkIfFundingCompleteOrExpired() public {
 
-        if(state == State.stage1 && now > dateTimeContract.toTimestamp(2018,5,31,23,59)){ // May 31
+        if(state == State.preico && now > startTime.add(15 days)){
 
-            state = State.stage2;
+            state = State.week1;
 
-        } else if(state == State.stage2 && now > dateTimeContract.toTimestamp(2018,6,30,23,59)){ // Jun 30
+        } else if(state == State.week1 && now > startTime.add(22 days)){
 
-            state = State.stage3;
+            state = State.week2;
             
-        } else if(state == State.stage3 && now > ICOdeadline && state!=State.Successful){
+        } else if(state == State.week2 && now > startTime.add(29 days)){
+
+            state = State.week3;
+            
+        } else if(state == State.week3 && now > startTime.add(36 days)){
+
+            state = State.week4;
+            
+        } else if(state == State.week4 && now > startTime.add(43 days)){
+
+            state = State.week5;
+            
+        } else if(state == State.week5 && now > startTime.add(50 days)){
+
+            state = State.week6;
+            
+        } else if(state == State.week6 && now > startTime.add(57 days)){
+
+            state = State.week7;
+            
+        } else if(now > ICOdeadline && state!=State.Successful ) { //if we reach ico deadline and its not Successful yet
 
             state = State.Successful; //ico becomes Successful
             completedAt = now; //ICO is complete
 
             LogFundingSuccessful(totalRaised); //we log the finish
             finished(); //and execute closure
-
         }
-
     }
 
     /**
@@ -208,7 +215,6 @@ contract ICO {
         require(state == State.Successful);
         uint256 remanent = tokenReward.balanceOf(this);
 
-        require(creator.send(this.balance));
         tokenReward.transfer(creator,remanent);
 
         LogBeneficiaryPaid(creator);
@@ -217,7 +223,7 @@ contract ICO {
     }
 
     /*
-    * @dev direct payments handle
+    * @dev Direct payments handle
     */
 
     function () public payable {
