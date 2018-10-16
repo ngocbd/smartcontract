@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RYXEX at 0xa24e3ec82d4aa6c32d45f54b362d2dbd43c41c37
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RyxEx at 0x56a20f5c2ad2d88d635783780a7a1ad0e50df492
 */
 pragma solidity ^0.4.10;
 
@@ -151,7 +151,7 @@ contract AccountLevelsTest is AccountLevels {
   }
 }
 
-contract RYXEX is SafeMath {
+contract RyxEx is SafeMath {
   address public admin; //the admin address
   address public feeAccount; //the account that will receive fees
   address public accountLevelsAddr; //the address of the AccountLevels contract
@@ -168,7 +168,7 @@ contract RYXEX is SafeMath {
   event Deposit(address token, address user, uint amount, uint balance);
   event Withdraw(address token, address user, uint amount, uint balance);
 
-  function RYXEX(address admin_, address feeAccount_, address accountLevelsAddr_, uint feeMake_, uint feeTake_, uint feeRebate_) {
+  function RyxEx(address admin_, address feeAccount_, address accountLevelsAddr_, uint feeMake_, uint feeTake_, uint feeRebate_) {
     admin = admin_;
     feeAccount = feeAccount_;
     accountLevelsAddr = accountLevelsAddr_;
