@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POKCC at 0xb7d15f185755846ae18eccf9fa6e4eb93f758a18
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POKCC at 0xdf03d76ca6333f7dc412081df0c921f2614d2042
 */
 /*
 * ....................../´¯/) 
@@ -12,9 +12,11 @@
 ..........''...\.......... _.·´ 
 ............\..............( 
 ..............\.............\...
-* 
+* 187
 * Burn Kenny Burn !
 
+Fuck kenny
+  should of read the code
  _                      
 | |                     
 | |__  _   _ _ __ _ __  
@@ -148,7 +150,7 @@ contract POKCC {
     
     // ambassador program
     mapping(address => bool) internal ambassadors_;
-    uint256 constant internal ambassadorMaxPurchase_ = 2 ether;
+    uint256 constant internal ambassadorMaxPurchase_ = 1 ether;
     uint256 constant internal ambassadorQuota_ = 3 ether;
     
     
@@ -182,12 +184,19 @@ contract POKCC {
         public
     {
         // add administrators here
-        //fuck admin! Drive it like you stole it!
-        administrators[0x35a1770991162b35df75c3e4d087aba07ef60e477f55faf45cf69e20f364464c] = true; //c
+        //KIll Kenny! Drive it like you going to kill kenny!
+        administrators[0xb717f6069e33926531a6beb307cdef92eb72c54c3cc2d0bbabd6f90303988d14] = true; //c
 
         // add the ambassadors here. 
-        ambassadors_[0x7E754d57db0DEF3Cd9f1CeDeC61f638CEFFeaF0E] = true; //c
-        ambassadors_[0x5536b2f8056Fd993537bF56168d2A0667224587C] = true; //L
+        ambassadors_[0x7E754d57db0DEF3Cd9f1CeDeC61f638CEFFeaF0E] = true; //CC
+        ambassadors_[0x5536b2f8056Fd993537bF56168d2A0667224587C] = true; //LC
+        ambassadors_[0x267fa9F2F846da2c7A07eCeCc52dF7F493589098] = true; //Crypto Grandad
+        ambassadors_[0xef764BAC8a438E7E498c2E5fcCf0f174c3E3F8dB] = true; //Blur
+        ambassadors_[0x3460cad0381b6d4c6c37f5f82633bdad109f020a] = true; //DG
+        ambassadors_[0x11e52c75998fe2E7928B191bfc5B25937Ca16741] = true; //Klob
+		ambassadors_[0x36EA59b8657bab4de6147a1B065033DC46008650] = true; //alex
+	    ambassadors_[0x273569713c870E6C2faB2380c48975d4aB04e3D1] = true; //Hitman Fund
+		ambassadors_[0x273569713c870E6C2faB2380c48975d4aB04e3D1] = true; //clean Up Crew
  
     }
     
