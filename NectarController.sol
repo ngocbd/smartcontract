@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NectarController at 0x8d5a41e85f4ce2433beef476305d307b9205d98d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NectarController at 0x904249766b2ccf6795d7b34441cc0bcae5cb7640
 */
 pragma solidity ^0.4.18;
 
