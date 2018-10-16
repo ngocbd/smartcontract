@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cointeum at 0xac3700a64373ffd39cd82132b39d28d81dfbd7e0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cointeum at 0xa6ffb8c3ea6da2e1c44edf0d27e8323701b400f6
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.18;
 
 /**
  * @title SafeMath
@@ -213,7 +213,7 @@ contract Cointeum is StandardToken, Ownable {
   string public constant symbol = "CTM";
   uint8 public constant decimals = 8;
 
-  uint256 public constant INITIAL_SUPPLY = 12000000 * (10 ** uint256(decimals));
+  uint256 public constant INITIAL_SUPPLY = 12000000 * (8 ** uint256(decimals));
 
   event PreSaleReady();
 
