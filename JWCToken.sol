@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JWCToken at 0xf3bc102b1d9cbd5fe67a71adc7de6f075bcf0b12
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JWCToken at 0x8fea6eb21213f311e1316330533d12d28a3b6e67
 */
 pragma solidity ^0.4.18;
 
@@ -305,11 +305,11 @@ contract JWCToken is ERC20BasicToken {
 	uint256 public constant decimals = 18;    //token decimal
 	string public constant version   = "1.0"; //tokens version
 
-	uint256 public constant tokenPreSale         = 100000000 * 10**decimals;//tokens for pre-sale
-	uint256 public constant tokenPublicSale      = 400000000 * 10**decimals;//tokens for public-sale
-	uint256 public constant tokenReserve         = 300000000 * 10**decimals;//tokens for reserve
-	uint256 public constant tokenTeamSupporter   = 120000000 * 10**decimals;//tokens for Team & Supporter
-	uint256 public constant tokenAdvisorPartners = 80000000  * 10**decimals;//tokens for Advisor
+	uint256 public tokenPreSale         = 100000000 * 10**decimals;//tokens for pre-sale
+	uint256 public tokenPublicSale      = 400000000 * 10**decimals;//tokens for public-sale
+	uint256 public tokenReserve         = 300000000 * 10**decimals;//tokens for reserve
+	uint256 public tokenTeamSupporter   = 120000000 * 10**decimals;//tokens for Team & Supporter
+	uint256 public tokenAdvisorPartners = 80000000  * 10**decimals;//tokens for Advisor
 
 	address public icoContract;
 
@@ -331,13 +331,47 @@ contract JWCToken is ERC20BasicToken {
 	/**
 	 * Sell tokens when ICO. Only called by ICO Contract
 	 * @param _recipient - address send ETH to buy tokens
-	 * @param _value - amount of ETHs
+	 * @param _value - amount of tokens
 	 */
 	function sell(address _recipient, uint256 _value) public whenNotPaused returns (bool success) {
 		assert(_value > 0);
 		require(msg.sender == icoContract);
 
 		balances[_recipient] = balances[_recipient].add(_value);
+
+		Transfer(0x0, _recipient, _value);
+		return true;
+	}
+
+	/**
+	 * Sell tokens when we don't have enough token in PreSale. Only called by ICO Contract
+	 * @param _recipient - address send ETH to buy tokens
+	 * @param _value - amount of tokens
+	 */
+	function sellSpecialTokensForPreSale(address _recipient, uint256 _value) public whenNotPaused returns (bool success) {
+		assert(_value > 0);
+		require(msg.sender == icoContract);
+
+		balances[_recipient] = balances[_recipient].add(_value);
+		tokenPreSale = tokenPreSale.add(_value);
+		totalSupply = totalSupply.add(_value);
+
+		Transfer(0x0, _recipient, _value);
+		return true;
+	}
+
+	/**
+	 * Sell tokens when we don't have enough token in PublicSale. Only called by ICO Contract
+	 * @param _recipient - address send ETH to buy tokens
+	 * @param _value - amount of tokens
+	 */
+	function sellSpecialTokensForPublicSale(address _recipient, uint256 _value) public whenNotPaused returns (bool success) {
+		assert(_value > 0);
+		require(msg.sender == icoContract);
+
+		balances[_recipient] = balances[_recipient].add(_value);
+		tokenPublicSale = tokenPublicSale.add(_value);
+		totalSupply = totalSupply.add(_value);
 
 		Transfer(0x0, _recipient, _value);
 		return true;
@@ -399,9 +433,6 @@ contract Affiliate is Ownable {
 
 	uint256 public referralCount;
 
-	//amount of accounts have been paid affiliate
-	uint256 public indexPaidAffiliate;
-
 	/**
 	 * Throw if affiliate is disable
 	 */
@@ -411,12 +442,12 @@ contract Affiliate is Ownable {
 	}
 
 	/**
-	 * constructor affiliate with level 1 rate = 10%
+	 * constructor affiliate with level 1 rate = 6%
 	 */
 	function Affiliate() public {
 		isAffiliate=true;
 		affiliateLevel=1;
-		affiliateRate[0]=10;
+		affiliateRate[0]=6;
 	}
 
 	/**
@@ -537,7 +568,7 @@ contract Affiliate is Ownable {
 	/**
 	 * Pay affiliate
 	 */
-	function payAffiliate() public onlyOwner returns (bool success);
+	function payAffiliateToAddress(address _referee) public onlyOwner returns (bool success);
 }
 
 /**
@@ -556,8 +587,6 @@ contract Bonus is IcoPhase, Ownable {
 	mapping(address => uint256) public bonusAccountBalances;
 	mapping(uint256 => address) public bonusAccountIndex;
 	uint256 public bonusAccountCount;
-
-	uint256 public indexPaidBonus;//amount of accounts have been paid bonus
 
 	function Bonus() public {
 		isBonus = true;
@@ -586,17 +615,35 @@ contract Bonus is IcoPhase, Ownable {
 	/**
 	 * Get bonus percent by time
 	 */
-	function getTimeBonus() public constant returns(uint256) {
+	function getBonusByTime() public constant returns(uint256) {
 		uint256 bonus = 0;
 
 		if(now>=phasePresale_From && now<phasePresale_To){
-			bonus = 20;
-		} else if (now>=phasePublicSale1_From && now<phasePublicSale1_To) {
 			bonus = 10;
-		} else if (now>=phasePublicSale2_From && now<phasePublicSale2_To) {
+		} else if (now>=phasePublicSale1_From && now<phasePublicSale1_To) {
 			bonus = 6;
-		} else if (now>=phasePublicSale3_From && now<phasePublicSale3_To) {
+		} else if (now>=phasePublicSale2_From && now<phasePublicSale2_To) {
 			bonus = 3;
+		} else if (now>=phasePublicSale3_From && now<phasePublicSale3_To) {
+			bonus = 1;
+		}
+
+		return bonus;
+	}
+
+	/**
+	 * Get bonus by eth
+	 * @param _value - eth to convert to bonus
+	 */
+	function getBonusByETH(uint256 _value) public constant returns(uint256) {
+		uint256 bonus = 0;
+
+		if(now>=phasePresale_From && now<phasePresale_To){
+			if(_value>=400*10**decimals){
+				bonus=_value.mul(10).div(100);
+			} else if(_value>=300*10**decimals){
+				bonus=_value.mul(5).div(100);
+			}
 		}
 
 		return bonus;
@@ -614,7 +661,7 @@ contract Bonus is IcoPhase, Ownable {
 	/**
 	 * Get bonus balance of an account
 	 */
-	function payBonus() public onlyOwner returns (bool success);
+	function payBonusToAddress(address _address) public onlyOwner returns (bool success);
 }
 
 /**
@@ -628,13 +675,13 @@ contract IcoContract is IcoPhase, Ownable, Pausable, Affiliate, Bonus {
 
 	uint256 public totalTokenSale;
 	uint256 public minContribution = 0.5 ether;//minimun eth used to buy tokens
-	uint256 public tokenExchangeRate = 7000;//1ETH=7000 tokens
+	uint256 public tokenExchangeRate = 10000;//1ETH=10000 tokens
 	uint256 public constant decimals = 18;
 
 	uint256 public tokenRemainPreSale;//tokens remain for pre-sale
 	uint256 public tokenRemainPublicSale;//tokens for public-sale
 
-	address public ethFundDeposit = 0xC69f762Cf7255c13e616E8D8eb328A6588cA2826;//multi-sig wallet
+	address public ethFundDeposit = 0x1Eb0fAaC52ED0AfCcbf1F3E67A399Da5440351cf;//multi-sig wallet
 	address public tokenAddress;
 
 	bool public isFinalized;
@@ -662,9 +709,7 @@ contract IcoContract is IcoPhase, Ownable, Pausable, Affiliate, Bonus {
 		uint256 etherRecev = _value + maxGasRefund;
 		require (etherRecev >= minContribution);
 
-		uint256 rate = getTokenExchangeRate();
-
-		uint256 tokens = etherRecev.mul(rate);
+		uint256 tokens = etherRecev.mul(tokenExchangeRate);
 
 		//get current phase of ICO
 		uint256 phaseICO = getCurrentICOPhase();
@@ -692,9 +737,6 @@ contract IcoContract is IcoPhase, Ownable, Pausable, Affiliate, Bonus {
 		uint256 etherRecev = msg.value + maxGasRefund;
 		require (etherRecev >= minContribution);
 
-		//get current token exchange rate
-		tokenExchangeRate = getTokenExchangeRate();
-
 		uint256 tokens = etherRecev.mul(tokenExchangeRate);
 
 		//get current phase of ICO
@@ -714,18 +756,18 @@ contract IcoContract is IcoPhase, Ownable, Pausable, Affiliate, Bonus {
 
 		if (tokenRemain < tokens) {
 			//if tokens is not enough to buy
+			uint256 tokensToIncrease = tokens.sub(tokenRemain);
+			ccc.sell(msg.sender, tokenRemain);
 
-			uint256 tokensToRefund = tokens.sub(tokenRemain);
-			uint256 etherToRefund = tokensToRefund / tokenExchangeRate;
-
-			//refund eth to buyer
-			msg.sender.transfer(etherToRefund);
-
-			tokens=tokenRemain;
-			etherRecev = etherRecev.sub(etherToRefund);
+			if(phaseICO == 1){//pre-sale
+				ccc.sellSpecialTokensForPreSale(msg.sender, tokensToIncrease);
+			} else if (phaseICO == 2 || phaseICO == 3 || phaseICO == 4) {
+				ccc.sellSpecialTokensForPublicSale(msg.sender, tokensToIncrease);
+			}
 
 			tokenRemain = 0;
 		} else {
+			ccc.sell(msg.sender, tokens);
 			tokenRemain = tokenRemain.sub(tokens);
 		}
 
@@ -736,14 +778,18 @@ contract IcoContract is IcoPhase, Ownable, Pausable, Affiliate, Bonus {
 			tokenRemainPublicSale = tokenRemain;
 		}
 
-		//send token
-		ccc.sell(msg.sender, tokens);
 		ethFundDeposit.transfer(this.balance);
 
 		//bonus
 		if(isBonus){
+			//bonus amount
+			//get bonus by eth
+			uint256 bonusByETH = getBonusByETH(etherRecev);
+			//get bonus by token
+			uint256 bonusTokenByETH = bonusByETH.mul(tokenExchangeRate);
+
 			//bonus time
-			uint256 bonusTimeToken = tokens.mul(getTimeBonus())/100;
+			uint256 bonusTokenByTime = tokens.mul(getBonusByTime()).div(100);
 
 			//store bonus
 			if(bonusAccountBalances[msg.sender]==0){//new
@@ -751,14 +797,15 @@ contract IcoContract is IcoPhase, Ownable, Pausable, Affiliate, Bonus {
 				bonusAccountCount++;
 			}
 
-			bonusAccountBalances[msg.sender]=bonusAccountBalances[msg.sender].add(bonusTimeToken);
+			uint256 bonusToken=bonusTokenByTime+bonusTokenByETH;
+			bonusAccountBalances[msg.sender]=bonusAccountBalances[msg.sender].add(bonusToken);
 		}
 
 		//affiliate
 		if(isAffiliate){
 			address child=msg.sender;
 			for(uint256 i=0; i<affiliateLevel; i++){
-				uint256 giftToken=affiliateRate[i].mul(tokens)/100;
+				uint256 giftToken=affiliateRate[i].mul(tokens).div(100);
 
 				address parent = referral[child];
 				if(parent != address(0x00)){//has affiliate
@@ -771,28 +818,10 @@ contract IcoContract is IcoPhase, Ownable, Pausable, Affiliate, Bonus {
 	}
 
 	/**
-	 * Pay affiliate to address. Called when ICO finish
-	 */
-	function payAffiliate() public onlyOwner returns (bool success) {
-		uint256 toIndex = indexPaidAffiliate + 15;
-		if(referralCount < toIndex)
-			toIndex = referralCount;
-
-		for(uint256 i=indexPaidAffiliate; i<toIndex; i++) {
-			address referee = referralIndex[i];
-
-			if(referralBalance[referee]>0)
-				payAffiliate1Address(referee);
-		}
-
-		return true;
-	}
-
-	/**
 	 * Pay affiliate to only a address
 	 * @param _referee - the address of referee
 	 */
-	function payAffiliate1Address(address _referee) public onlyOwner returns (bool success) {
+	function payAffiliateToAddress(address _referee) public onlyOwner returns (bool success) {
 		address referrer = referral[_referee];
 		ccc.payBonusAffiliate(referrer, referralBalance[_referee]);
 
@@ -801,27 +830,10 @@ contract IcoContract is IcoPhase, Ownable, Pausable, Affiliate, Bonus {
 	}
 
 	/**
-	 * Pay bonus to address. Called when ICO finish
-	 */
-	function payBonus() public onlyOwner returns (bool success) {
-		uint256 toIndex = indexPaidBonus + 15;
-		if(bonusAccountCount < toIndex)
-			toIndex = bonusAccountCount;
-
-		for(uint256 i=indexPaidBonus; i<toIndex; i++)
-		{
-			if(bonusAccountBalances[bonusAccountIndex[i]]>0)
-				payBonus1Address(bonusAccountIndex[i]);
-		}
-
-		return true;
-	}
-
-	/**
 	 * Pay bonus to only a address
 	 * @param _address - the address to pay bonus
 	 */
-	function payBonus1Address(address _address) public onlyOwner returns (bool success) {
+	function payBonusToAddress(address _address) public onlyOwner returns (bool success) {
 		ccc.payBonusAffiliate(_address, bonusAccountBalances[_address]);
 		bonusAccountBalances[_address]=0;
 		return true;
@@ -831,22 +843,7 @@ contract IcoContract is IcoPhase, Ownable, Pausable, Affiliate, Bonus {
 		require (!isFinalized);
 		// move to operational
 		isFinalized = true;
-		payAffiliate();
-		payBonus();
 		ethFundDeposit.transfer(this.balance);
-	}
-
-	/**
-	 * Get token exchange rate
-	 */
-	function getTokenExchangeRate() public constant returns(uint256 rate) {
-		rate = tokenExchangeRate;
-		if(now<phasePresale_To){
-			if(now>=phasePresale_From)
-				rate = 10000;
-		} else if(now<phasePublicSale3_To){
-			rate = 7000;
-		}
 	}
 
 	/**
