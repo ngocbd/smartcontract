@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Contest at 0xc1f9de7df87eb7a933192e4e9178b0b07472f65c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Contest at 0xc008dcb708c68286d80ae36cba6397ed5bd5c7ee
 */
 /** 
 * The contract defining the contest, allowing participation and voting.
@@ -64,13 +64,13 @@ c4c = 0x87b0de512502f3e86fd22654b72a640c8e0f59cc;
 c4cfee = 1000;
 owner = msg.sender;
 
-deadlineParticipation=1485995280;
-deadlineVoting=1486600080;
-participationFee=70000000000000000;
-votingFee=7000000000000000;
-prizeOwner=1000;
+deadlineParticipation=1485858780;
+deadlineVoting=1486463580;
+participationFee=100000000000000000;
+votingFee=0000000000000000;
+prizeOwner=955;
 prizeReferee=0;
-prizeWinners.push(8000);
+prizeWinners.push(6045);
 nLuckyVoters=1;
 
 
@@ -83,7 +83,8 @@ throw;
 else if(sumPrizes<10000 && nLuckyVoters == 0)//make sure everything is paid out
 throw;
 }
- /**
+
+/**
      * adds msg.sender to the list of participants if the deadline was not yet met and the participation fee is paid
      * */
     function participate() payable {
