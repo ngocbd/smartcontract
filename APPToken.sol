@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract APPToken at 0xaf0fb809d8a78184182d2867d0b772af72b90d90
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract APPToken at 0x1830f3497bb2917042d20a7de24a339a59b61c38
 */
 pragma solidity ^0.4.18;
 
@@ -70,7 +70,7 @@ contract APPToken is Ownable{
     mapping(address => uint256) balances;
     mapping (address => mapping (address => uint256)) internal allowed;
     
-        function APPToken() {
+        function  APPToken()  public {
         balances[msg.sender] = startBalance * 999999;
         currentTotalSupply = balances[msg.sender];
     }
