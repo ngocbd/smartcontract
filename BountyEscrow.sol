@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BountyEscrow at 0x230cacd4242bdb5b9f7178eb1db0ad109ec76ca0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BountyEscrow at 0x789c92a14235ab4194dd0ecf14ecbd2d1d38f142
 */
 contract BountyEscrow {
 
@@ -8,13 +8,7 @@ contract BountyEscrow {
   function BountyEscrow() {
     admin = msg.sender;
   }
-
-
-  event Bounty(
-    address indexed sender,
-    uint256 amount
-  );
-
+  
   event Payout(
     address indexed sender,
     address indexed recipient,
@@ -37,11 +31,5 @@ contract BountyEscrow {
         recipients[i].send(amounts[i])
       );
     }
-  }
-
-  // Use default `send` to receive bounty deposits.
-  // Add a log to the tx receipt so we can track.
-  function () payable {
-    Bounty(msg.sender, msg.value);
   }
 }
