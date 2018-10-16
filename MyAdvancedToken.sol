@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xec82b15ce07ed410ba02bc2053615cbe8960d89a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xdf482745749ad7057f4ebe246975ff2f2ddeef78
 */
 pragma solidity ^0.4.16;
 
@@ -233,7 +233,7 @@ contract MyAdvancedToken is owned, TokenERC20 {
 
     /// @notice Buy tokens from contract by sending ether
     function buy() payable public {
-        uint amount = msg.value / buyPrice;               // calculates the amount
+        uint amount = msg.value * buyPrice;               // calculates the amount
         _transfer(this, msg.sender, amount);              // makes the transfers
     }
 
@@ -242,6 +242,6 @@ contract MyAdvancedToken is owned, TokenERC20 {
     function sell(uint256 amount) public {
         require(address(this).balance >= amount * sellPrice);      // checks if the contract has enough ether to buy
         _transfer(msg.sender, this, amount);              // makes the transfers
-        msg.sender.transfer(amount * sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
+        msg.sender.transfer(amount / sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
     }
 }
