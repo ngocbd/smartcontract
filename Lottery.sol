@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0xed4fd2e53153b8bfd866e11fb015a1bc4a0e9655
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0xfb0513602b08ede66c28c128ece6a2f11161f17f
 */
 pragma solidity ^0.4.20;
 
@@ -200,13 +200,20 @@ contract Lottery{
         dev.transfer(balance);
     }
 
-   function resetLottery() public
-   onlyOwner()
+   function resetLottery() internal
+   isOpenToPublic()
    {
        ticketNumber = 1;
        winningNumber = uint256(keccak256(block.timestamp, block.difficulty))%300;
    }
 
+ function adminResetLottery() public 
+ onlyOwner()
+  
+   {
+       ticketNumber = 1;
+       winningNumber = uint256(keccak256(block.timestamp, block.difficulty))%300;
+   }
 }
 
 
