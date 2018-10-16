@@ -1,12 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DASCrowdsale at 0xD23abeA2946fEBEf30418d19dB5e2C93c7aBcB1E
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DASCrowdsale at 0xea24a873e32eb93c13aee7526eb5e430c95f4219
 */
 pragma solidity ^0.4.11;
-
-
-/*
-  Author: Victor Mezrin  victor@mezrin.com
-*/
 
 
 /* Interface of the ERC223 token */
@@ -261,8 +256,7 @@ contract DASCrowdsale is ERC223ContractInterface {
     address public crowdsaleBeneficiary;
     address public crowdsaleDasTokensChangeBeneficiary;
     uint256 public crowdsaleDeadline;
-    uint256 public crowdsaleTokenPriceNumerator;
-    uint256 public crowdsaleTokenPriceDenominator;
+    uint256 public crowdsaleTokenPrice;
     DASToken public dasToken;
     // crowdsale results
     mapping (address => uint256) public ethBalanceOf;
@@ -279,16 +273,14 @@ contract DASCrowdsale is ERC223ContractInterface {
         address _crowdsaleBeneficiary,
         address _crowdsaleDasTokensChangeBeneficiary,
         uint256 _durationInSeconds,
-        uint256 _crowdsaleTokenPriceNumerator,
-        uint256 _crowdsaleTokenPriceDenominator,
+        uint256 _crowdsaleTokenPriceInWei,
         address _dasTokenAddress
     ) {
         secretaryGeneral = _secretaryGeneral;
         crowdsaleBeneficiary = _crowdsaleBeneficiary;
         crowdsaleDasTokensChangeBeneficiary = _crowdsaleDasTokensChangeBeneficiary;
         crowdsaleDeadline = now + _durationInSeconds * 1 seconds;
-        crowdsaleTokenPriceNumerator = _crowdsaleTokenPriceNumerator;
-        crowdsaleTokenPriceDenominator = _crowdsaleTokenPriceDenominator;
+        crowdsaleTokenPrice = _crowdsaleTokenPriceInWei;
         dasToken = DASToken(_dasTokenAddress);
         crowdsaleFundsRaised = 0;
     }
@@ -297,7 +289,7 @@ contract DASCrowdsale is ERC223ContractInterface {
         secretaryGeneral = _secretaryGeneral;
     }
 
-    function __setBeneficiary(address _crowdsaleBeneficiary) onlySecretaryGeneral {
+    function __setBeneficiary(address _crowdsaleBeneficiary) onlyAfterCrowdsaleDeadline {
         crowdsaleBeneficiary = _crowdsaleBeneficiary;
     }
 
@@ -309,14 +301,8 @@ contract DASCrowdsale is ERC223ContractInterface {
         crowdsaleDeadline = now + _durationInSeconds * 1 seconds;
     }
 
-    function __setTokenPrice(
-        uint256 _crowdsaleTokenPriceNumerator,
-        uint256 _crowdsaleTokenPriceDenominator
-    )
-        onlySecretaryGeneral
-    {
-        crowdsaleTokenPriceNumerator = _crowdsaleTokenPriceNumerator;
-        crowdsaleTokenPriceDenominator = _crowdsaleTokenPriceDenominator;
+    function __setTokenPrice(uint256 _crowdsaleTokenPriceInWei) onlySecretaryGeneral {
+        crowdsaleTokenPrice = _crowdsaleTokenPriceInWei;
     }
 
 
@@ -327,7 +313,7 @@ contract DASCrowdsale is ERC223ContractInterface {
         ethBalanceOf[msg.sender] += receivedAmount;
         crowdsaleFundsRaised += receivedAmount;
 
-        dasToken.transfer(msg.sender, receivedAmount / crowdsaleTokenPriceDenominator * crowdsaleTokenPriceNumerator);
+        dasToken.transfer(msg.sender, receivedAmount / crowdsaleTokenPrice);
         FundsReceived(msg.sender, receivedAmount);
     }
 
