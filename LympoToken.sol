@@ -1,160 +1,226 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LympoToken at 0x57ad67acf9bf015e4820fbd66ea1a21bed8852ec
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LympoToken at 0xa2e672ae46c7f7dffa9d3f211e68a8194e9b0cb8
 */
-/*
- *  The Lympo Token contract complies with the ERC20 standard (see https://github.com/ethereum/EIPs/issues/20).
- *  All tokens not being sold during the crowdsale but the reserved token
- *  for tournaments future financing are burned.
- *  Author: Justas Kregzde
- */
- 
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.18;
 
-library SafeMath {
-    function mul(uint a, uint b) internal returns (uint) {
-        uint c = a * b;
-        assert(a == 0 || c / a == b);
-        return c;
+// ----------------------------------------------------------------------------
+// 'LympoToken' token contract
+//
+// Deployed to : 0x5dDD9bb4d5640cE37c76dDac8B3bbD35D84416A6
+// Symbol      : LYM
+// Name        : Lympo Token
+// Total supply: 100000000
+// Decimals    : 18
+//
+// Enjoy.
+//
+// (c) by Moritz Neto with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
+// ----------------------------------------------------------------------------
+
+
+// ----------------------------------------------------------------------------
+// Safe maths
+// ----------------------------------------------------------------------------
+contract SafeMath {
+    function safeAdd(uint a, uint b) public pure returns (uint c) {
+        c = a + b;
+        require(c >= a);
     }
-
-    function sub(uint a, uint b) internal returns (uint) {
-        assert(b <= a);
-        return a - b;
+    function safeSub(uint a, uint b) public pure returns (uint c) {
+        require(b <= a);
+        c = a - b;
     }
-
-    function add(uint a, uint b) internal returns (uint) {
-        uint c = a + b;
-        assert(c>=a && c>=b);
-        return c;
+    function safeMul(uint a, uint b) public pure returns (uint c) {
+        c = a * b;
+        require(a == 0 || c / a == b);
+    }
+    function safeDiv(uint a, uint b) public pure returns (uint c) {
+        require(b > 0);
+        c = a / b;
     }
 }
 
-contract LympoToken {
-    using SafeMath for uint;
-    // Public variables of the token
-    string constant public standard = "ERC20";
-    string constant public name = "Lympo tokens";
-    string constant public symbol = "LYM";
-    uint8 constant public decimals = 18;
-    uint _totalSupply = 1000000000e18; // Total supply of 1 billion Lympo Tokens
-    uint constant public tokensPreICO = 265000000e18; // 26.5%
-    uint constant public tokensICO = 385000000e18; // 38.5%
-    uint constant public teamReserve = 100000000e18; // 10%
-    uint constant public advisersReserve = 30000000e18; // 3%
-    uint constant public ecosystemReserve = 220000000e18; // 22%
-    uint constant public ecoLock23 = 146652000e18; // 2/3 of ecosystem reserve
-    uint constant public ecoLock13 = 73326000e18; // 1/3 of ecosystem reserve
-    uint constant public startTime = 1519815600; // Time after ICO, when tokens became transferable. Wednesday, 28 February 2018 11:00:00 GMT
-    uint public lockReleaseDate1year;
-    uint public lockReleaseDate2year;
-    address public ownerAddr;
-    address public ecosystemAddr;
-    address public advisersAddr;
-    bool burned;
 
-    // Array with all balances
-    mapping (address => uint) balances;
-    mapping (address => mapping (address => uint)) allowed;
+// ----------------------------------------------------------------------------
+// ERC Token Standard #20 Interface
+// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+// ----------------------------------------------------------------------------
+contract ERC20Interface {
+    function totalSupply() public constant returns (uint);
+    function balanceOf(address tokenOwner) public constant returns (uint balance);
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+    function transfer(address to, uint tokens) public returns (bool success);
+    function approve(address spender, uint tokens) public returns (bool success);
+    function transferFrom(address from, address to, uint tokens) public returns (bool success);
 
-    // Public event on the blockchain that will notify clients
-    event Transfer(address indexed from, address indexed to, uint value);
-    event Approval(address indexed _owner, address indexed spender, uint value);
-    event Burned(uint amount);
+    event Transfer(address indexed from, address indexed to, uint tokens);
+    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
+}
 
-    // What is the balance of a particular account?
-    function balanceOf(address _owner) constant returns (uint balance) {
-        return balances[_owner];
+
+// ----------------------------------------------------------------------------
+// Contract function to receive approval and execute function in one call
+//
+// Borrowed from MiniMeToken
+// ----------------------------------------------------------------------------
+contract ApproveAndCallFallBack {
+    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
+}
+
+
+// ----------------------------------------------------------------------------
+// Owned contract
+// ----------------------------------------------------------------------------
+contract Owned {
+    address public owner;
+    address public newOwner;
+
+    event OwnershipTransferred(address indexed _from, address indexed _to);
+
+    function Owned() public {
+        owner = msg.sender;
     }
 
-    // Returns the amount which _spender is still allowed to withdraw from _owner
-    function allowance(address _owner, address _spender) constant returns (uint remaining) {
-        return allowed[_owner][_spender];
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
     }
 
-    // Get the total token supply
-    function totalSupply() constant returns (uint totalSupply) {
-        totalSupply = _totalSupply;
+    function transferOwnership(address _newOwner) public onlyOwner {
+        newOwner = _newOwner;
+    }
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
+    }
+}
+
+
+// ----------------------------------------------------------------------------
+// ERC20 Token, with the addition of symbol, name and decimals and assisted
+// token transfers
+// ----------------------------------------------------------------------------
+contract LympoToken is ERC20Interface, Owned, SafeMath {
+    string public symbol;
+    string public  name;
+    uint8 public decimals;
+    uint public _totalSupply;
+
+    mapping(address => uint) balances;
+    mapping(address => mapping(address => uint)) allowed;
+
+
+    // ------------------------------------------------------------------------
+    // Constructor
+    // ------------------------------------------------------------------------
+    function LympoToken() public {
+        symbol = "LYM";
+        name = "Lympo Token";
+        decimals = 18;
+        _totalSupply = 10000000000000000000000000;
+        balances[0x5dDD9bb4d5640cE37c76dDac8B3bbD35D84416A6] = _totalSupply;
+        Transfer(address(0), 0x5dDD9bb4d5640cE37c76dDac8B3bbD35D84416A6, _totalSupply);
     }
 
-    // Initializes contract with initial supply tokens to the creator of the contract
-    function LympoToken(address _ownerAddr, address _advisersAddr, address _ecosystemAddr) {
-        ownerAddr = _ownerAddr;
-        advisersAddr = _advisersAddr;
-        ecosystemAddr = _ecosystemAddr;
-        lockReleaseDate1year = startTime + 1 years; // 2019
-        lockReleaseDate2year = startTime + 2 years; // 2020
-        balances[ownerAddr] = _totalSupply; // Give the owner all initial tokens
+
+    // ------------------------------------------------------------------------
+    // Total supply
+    // ------------------------------------------------------------------------
+    function totalSupply() public constant returns (uint) {
+        return _totalSupply  - balances[address(0)];
     }
-	
-    // Send some of your tokens to a given address
-    function transfer(address _to, uint _value) returns(bool) {
-        require(now >= startTime); // Check if the crowdsale is already over
 
-        // prevent the owner of spending his share of tokens for team within first the two year
-        if (msg.sender == ownerAddr && now < lockReleaseDate2year)
-            require(balances[msg.sender].sub(_value) >= teamReserve);
 
-        // prevent the ecosystem owner of spending 2/3 share of tokens for the first year, 1/3 for the next year
-        if (msg.sender == ecosystemAddr && now < lockReleaseDate1year)
-            require(balances[msg.sender].sub(_value) >= ecoLock23);
-        else if (msg.sender == ecosystemAddr && now < lockReleaseDate2year)
-            require(balances[msg.sender].sub(_value) >= ecoLock13);
+    // ------------------------------------------------------------------------
+    // Get the token balance for account tokenOwner
+    // ------------------------------------------------------------------------
+    function balanceOf(address tokenOwner) public constant returns (uint balance) {
+        return balances[tokenOwner];
+    }
 
-        balances[msg.sender] = balances[msg.sender].sub(_value); // Subtract from the sender
-        balances[_to] = balances[_to].add(_value); // Add the same to the recipient
-        Transfer(msg.sender, _to, _value); // Notify anyone listening that this transfer took place
+
+    // ------------------------------------------------------------------------
+    // Transfer the balance from token owner's account to to account
+    // - Owner's account must have sufficient balance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transfer(address to, uint tokens) public returns (bool success) {
+        balances[msg.sender] = safeSub(balances[msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
+        Transfer(msg.sender, to, tokens);
         return true;
     }
-	
-    // A contract or person attempts to get the tokens of somebody else.
-    // This is only allowed if the token holder approved.
-    function transferFrom(address _from, address _to, uint _value) returns(bool) {
-        if (now < startTime)  // Check if the crowdsale is already over
-            require(_from == ownerAddr);
 
-        // prevent the owner of spending his share of tokens for team within the first two year
-        if (_from == ownerAddr && now < lockReleaseDate2year)
-            require(balances[_from].sub(_value) >= teamReserve);
 
-        // prevent the ecosystem owner of spending 2/3 share of tokens for the first year, 1/3 for the next year
-        if (_from == ecosystemAddr && now < lockReleaseDate1year)
-            require(balances[_from].sub(_value) >= ecoLock23);
-        else if (_from == ecosystemAddr && now < lockReleaseDate2year)
-            require(balances[_from].sub(_value) >= ecoLock13);
-
-        var _allowed = allowed[_from][msg.sender];
-        balances[_from] = balances[_from].sub(_value); // Subtract from the sender
-        balances[_to] = balances[_to].add(_value); // Add the same to the recipient
-        allowed[_from][msg.sender] = _allowed.sub(_value);
-        Transfer(_from, _to, _value);
-        return true;
-    }
-	
-    // Approve the passed address to spend the specified amount of tokens
-    // on behalf of msg.sender.
-    function approve(address _spender, uint _value) returns (bool) {
-        //https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-        require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+    // ------------------------------------------------------------------------
+    // Token owner can approve for spender to transferFrom(...) tokens
+    // from the token owner's account
+    //
+    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+    // recommends that there are no checks for the approval double-spend attack
+    // as this should be implemented in user interfaces 
+    // ------------------------------------------------------------------------
+    function approve(address spender, uint tokens) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        Approval(msg.sender, spender, tokens);
         return true;
     }
 
-    // Called when ICO is closed. Burns the remaining tokens except the tokens reserved:
-    // Anybody may burn the tokens after ICO ended, but only once (in case the owner holds more tokens in the future).
-    // this ensures that the owner will not posses a majority of the tokens.
-    function burn() {
-        // If tokens have not been burned already and the crowdsale ended
-        if (!burned && now > startTime) {
-            uint totalReserve = ecosystemReserve.add(teamReserve);
-            totalReserve = totalReserve.add(advisersReserve);
-            uint difference = balances[ownerAddr].sub(totalReserve);
-            balances[ownerAddr] = teamReserve;
-            balances[advisersAddr] = advisersReserve;
-            balances[ecosystemAddr] = ecosystemReserve;
-            _totalSupply = _totalSupply.sub(difference);
-            burned = true;
-            Burned(difference);
-        }
+
+    // ------------------------------------------------------------------------
+    // Transfer tokens from the from account to the to account
+    // 
+    // The calling account must already have sufficient tokens approve(...)-d
+    // for spending from the from account and
+    // - From account must have sufficient balance to transfer
+    // - Spender must have sufficient allowance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transferFrom(address from, address to, uint tokens) public returns (bool success) {
+        balances[from] = safeSub(balances[from], tokens);
+        allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
+        Transfer(from, to, tokens);
+        return true;
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Returns the amount of tokens approved by the owner that can be
+    // transferred to the spender's account
+    // ------------------------------------------------------------------------
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
+        return allowed[tokenOwner][spender];
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Token owner can approve for spender to transferFrom(...) tokens
+    // from the token owner's account. The spender contract function
+    // receiveApproval(...) is then executed
+    // ------------------------------------------------------------------------
+    function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        Approval(msg.sender, spender, tokens);
+        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
+        return true;
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Don't accept ETH
+    // ------------------------------------------------------------------------
+    function () public payable {
+        revert();
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Owner can transfer out any accidentally sent ERC20 tokens
+    // ------------------------------------------------------------------------
+    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
+        return ERC20Interface(tokenAddress).transfer(owner, tokens);
     }
 }
