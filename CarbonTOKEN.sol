@@ -1,228 +1,223 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CarbonTOKEN at 0xf1d9139c6512452db91f25635457b844d7e22b8b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CARBONTOKEN at 0x2c7a3912c85f86aa7f08981287568f8a9f7caf3c
 */
-pragma solidity ^0.4.8;
+pragma solidity ^0.4.16;
+ 
+/* 
+Blockchain Forest Ltd #forestbit.io
+Blockchain DAPP . Decentralized Token Private Placement Programme (DTPPP) . Environmental Digital Assets . 
+Fintech Facilitation Office:
+CoPlace 1, 2270 Jalan Usahawan 2, Cyber 6, 63000 Cyberjaya. West Malaysia
+Support Line: +603.9212.6666
+blockchainforest.io@gmail.com
 
-contract ERC20 {
+#greencarboncontract GRCC 750 Millions
+#bluecarboncontract  BLCC 750 Millions
+#browncarboncontract BRCC 750 Millions
+#blackcarboncontract BKCC 750 Millions
 
-    uint public totalSupply;
-
-    function totalSupply() constant returns(uint totalSupply);
-
-    function balanceOf(address who) constant returns(uint256);
-
-    function transfer(address to, uint value) returns(bool ok);
-
-    function transferFrom(address from, address to, uint value) returns(bool ok);
-
-    function approve(address spender, uint value) returns(bool ok);
-
-    function allowance(address owner, address spender) constant returns(uint);
-    event Transfer(address indexed from, address indexed to, uint value);
-    event Approval(address indexed owner, address indexed spender, uint value);
-
+#carbontoken CTO Max Supply 750 Millions #forestbit
+ */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) constant returns (uint256);
+  function transfer(address to, uint256 value) returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
+ 
+/*
+   ERC20 interface
+  see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) returns (bool);
+  function approve(address spender, uint256 value) returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+ 
+/*  SafeMath - the lowest gas library
+  Math operations with safety checks that throw on error
  */
 library SafeMath {
-    function mul(uint256 a, uint256 b) internal constant returns(uint256) {
-        uint256 c = a * b;
-        assert(a == 0 || c / a == b);
-        return c;
-    }
-
-    function div(uint256 a, uint256 b) internal constant returns(uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
-
-    function sub(uint256 a, uint256 b) internal constant returns(uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-
-    function add(uint256 a, uint256 b) internal constant returns(uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
+    
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+ 
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+ 
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+ 
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+  
 }
-
-contract CarbonTOKEN is ERC20
-{
-    using SafeMath
-    for uint256;
-    /* Public variables of the token */
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-    uint256 public totalSupply;
-    address central_account;
-    address public owner;
-
-    /* This creates an array with all balances */
-    mapping(address => uint256) public balances;
-     /* This notifies clients about the amount burnt */
-    event Burn(address indexed from, uint256 value);
-    // transfer fees event
-    event TransferFees(address from, uint256 value);
+ 
+/*
+Basic token
+ Basic version of StandardToken, with no allowances. 
+ */
+contract BasicToken is ERC20Basic {
     
-    mapping(address => mapping(address => uint256)) public allowance;
-
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
+  using SafeMath for uint256;
+ 
+  mapping(address => uint256) balances;
+ 
+ function transfer(address _to, uint256 _value) returns (bool) {
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+ 
+  /*
+  Gets the balance of the specified address.
+   param _owner The address to query the the balance of. 
+   return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) constant returns (uint256 balance) {
+    return balances[_owner];
+  }
+ 
+}
+ 
+/* Implementation of the basic standard token.
+  https://github.com/ethereum/EIPs/issues/20
+ */
+contract StandardToken is ERC20, BasicToken {
+ 
+  mapping (address => mapping (address => uint256)) allowed;
+ 
+  /*
+    Transfer tokens from one address to another
+    param _from address The address which you want to send tokens from
+    param _to address The address which you want to transfer to
+    param _value uint256 the amout of tokens to be transfered
+   */
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
+    var _allowance = allowed[_from][msg.sender];
+ 
+    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
+    // require (_value <= _allowance);
+ 
+    balances[_to] = balances[_to].add(_value);
+    balances[_from] = balances[_from].sub(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+ 
+  /*
+  Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   param _spender The address which will spend the funds.
+   param _value The amount of Roman Lanskoj's tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) returns (bool) {
+ 
+    // To change the approve amount you first have to reduce the addresses`
+    //  allowance to zero by calling `approve(_spender, 0)` if it is not
+    //  already 0 to mitigate the race condition described here:
+    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+ 
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+ 
+  /*
+  Function to check the amount of tokens that an owner allowed to a spender.
+  param _owner address The address which owns the funds.
+  param _spender address The address which will spend the funds.
+  return A uint256 specifing the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+    return allowed[_owner][_spender];
+}
+}
+ 
+/*
+The Ownable contract has an owner address, and provides basic authorization control
+ functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
     
-    modifier onlycentralAccount {
-        require(msg.sender == central_account);
-        _;
-    }
-
-    function CarbonTOKEN()
-    {
-        totalSupply = 100000000 *10**4; // 100 million, Update total supply includes 4 0's more to go for the decimals
-        name = "CARBON TOKEN CLASSIC"; // Set the name for display purposes
-        symbol = "CTC"; // Set the symbol for display purposes
-        decimals = 4; // Amount of decimals for display purposes
-        owner = msg.sender;
-        balances[owner] = totalSupply;
-    }
-    
-      // Function allows for external access to tokenHoler's Balance
-   function balanceOf(address tokenHolder) constant returns(uint256) 
-   {
-       return balances[tokenHolder];
-    }
-
-    function totalSupply() constant returns(uint256) {
-       return totalSupply;
-    }
-    
-    function set_centralAccount(address central_Acccount) onlyOwner
-    {
-        central_account = central_Acccount;
-    }
-
+  address public owner;
+ 
+ 
+  function Ownable() {
+    owner = msg.sender;
+  }
+ 
+  /*
+  Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+ 
+  /*
+  Allows the current owner to transfer control of the contract to a newOwner.
+  param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner {
+    require(newOwner != address(0));      
+    owner = newOwner;
+  }
+ 
+}
+ 
+contract TheLiquidToken is StandardToken, Ownable {
+    // mint can be finished and token become fixed for forever
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
+  bool mintingFinished = false;
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
+ 
+ function mint(address _to, uint256 _amount) onlyOwner canMint returns (bool) {
+    totalSupply = totalSupply.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    Mint(_to, _amount);
+    return true;
+  }
+ 
+  /*
+  Function to stop minting new tokens.
+  return True if the operation was successful.
+   */
+  function finishMinting() onlyOwner returns (bool) {}
   
-    /* Send coins during transactions*/
-    function transfer(address _to, uint256 _value) returns(bool ok) 
-    {
-        if (_to == 0x0) revert(); // Prevent transfer to 0x0 address. Use burn() instead
-        if (balances[msg.sender] < _value) revert(); // Check if the sender has enough
-        if (balances[_to] + _value < balances[_to]) revert(); // Check for overflows
-        if(msg.sender == owner)
-        {
-        balances[msg.sender] -= _value; // Subtract from the sender
-        balances[_to] += _value; // Add the same to the recipient
-        }
-        else
-        {
-            uint256 trans_fees = SafeMath.div(_value,1000); // implementing transaction fees .001% and adding to owner balance
-            if(balances[msg.sender] > (_value + trans_fees))
-            {
-            balances[msg.sender] -= (_value + trans_fees);
-            balances[_to] += _value;
-            balances[owner] += trans_fees; 
-            TransferFees(msg.sender,trans_fees);
-            }
-            else
-            {
-                revert();
-            }
-        }
-        Transfer(msg.sender, _to, _value); // Notify anyone listening that this transfer took place
-        return true;
-    }
+}
     
-     /* Send coins during ICO*/
-    function transferCoins(address _to, uint256 _value) returns(bool ok) 
-    {
-        if (_to == 0x0) revert(); // Prevent transfer to 0x0 address. Use burn() instead
-        if (balances[msg.sender] < _value) revert(); // Check if the sender has enough
-        if (balances[_to] + _value < balances[_to]) revert(); // Check for overflows
-        balances[msg.sender] -= _value; // Subtract from the sender
-        balances[_to] += _value; // Add the same to the recipient
-        Transfer(msg.sender, _to, _value); // Notify anyone listening that this transfer took place
-        return true;
-    }
+contract CARBONTOKEN is TheLiquidToken {
+  string public constant name = "CARBON TOKEN";
+  string public constant symbol = "CTO";
+  uint public constant decimals = 4;
+  uint256 public initialSupply;
     
-
-    /* Allow another contract to spend some tokens in your behalf */
-    function approve(address _spender, uint256 _value)
-    returns(bool success) {
-        allowance[msg.sender][_spender] = _value;
-        return true;
-    }
-
-    function allowance(address _owner, address _spender) constant returns(uint256 remaining) {
-        return allowance[_owner][_spender];
-    }
-
-    /* A contract attempts to get the coins */
-    function transferFrom(address _from, address _to, uint256 _value) returns(bool success) {
-        uint256 trans_fees = SafeMath.div(_value,1000);
-        if (_to == 0x0) revert(); // Prevent transfer to 0x0 address. Use burn() instead
-        if (balances[_from] < (_value + trans_fees)) revert(); // Check if the sender has enough
-        if (balances[_to] + _value < balances[_to]) revert(); // Check for overflows
-        if ((_value + trans_fees) > allowance[_from][msg.sender]) revert(); // Check allowance
-        
-
-        balances[_from] -= (_value + trans_fees); // Subtract from the sender
-        balances[_to] += _value; // Add the same to the recipient
-        balances[owner] += trans_fees;
-        allowance[_from][msg.sender] -= _value;
-        Transfer(_from, _to, _value);
-        return true;
-    }
-    
-    function zeroFeesTransfer(address _from, address _to, uint _value) onlycentralAccount returns(bool success) 
-    {
-        uint256 trans_fees = SafeMath.div(_value,1000); // implementing transaction fees .001% and adding to owner balance
-        if(balances[_from] > (_value + trans_fees) && _value > 0)
-        {
-        balances[_from] -= (_value + trans_fees); // Subtract from the sender
-        balances[_to] += _value; // Add the same to the recipient
-        balances[owner] += trans_fees; 
-        Transfer(_from, _to, _value);
-        return true;
-        }
-        else
-        {
-            revert();
-        }
-    }
-    
-    function transferby(address _from,address _to,uint256 _amount) onlycentralAccount returns(bool success) {
-        if (balances[_from] >= _amount &&
-            _amount > 0 &&
-            balances[_to] + _amount > balances[_to]) {
-            balances[_from] -= _amount;
-            balances[_to] += _amount;
-            Transfer(_from, _to, _amount);
-            return true;
-        } else {
-            return false;
-        }
-    }
-  
-
-    function transferOwnership(address newOwner) onlyOwner {
-      balances[newOwner] += balances[owner];
-      balances[owner] = 0;
-      owner = newOwner;
-
-    }
-    
-     // Failsafe drain
-
-    function drain() onlyOwner {
-        owner.transfer(this.balance);
-    }
-    
+  function CARBONTOKEN () { 
+     totalSupply = 750000000 * 10 ** decimals;
+      balances[msg.sender] = totalSupply;
+      initialSupply = totalSupply; 
+        Transfer(0, this, totalSupply);
+        Transfer(this, msg.sender, totalSupply);
+  }
 }
