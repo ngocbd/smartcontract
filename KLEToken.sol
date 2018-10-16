@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KLEToken at 0x7f5c86bb449f0bb112cc5f69b94c77fda4b92d2a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KLEToken at 0x86b714dca366b22bbfe2f81045dd35a997ed5e9a
 */
 pragma solidity ^0.4.23;
 
@@ -160,7 +160,7 @@ contract KLEToken is TokenBase {
         decimals = a_decimals;
     }
 
-    // Allocate tokens to the users
+    // Allocate tokens
     function AllocateToken(address[] a_receiver)
     external
     IsOwner
@@ -173,10 +173,30 @@ contract KLEToken is TokenBase {
         
         _totalSupply = _totalSupply.add(receiverLength);
     }
+    
+    // Burn tokens
+    function BurnToken(address[] a_receiver)
+    external
+    IsOwner
+    AllLock {
+        uint receiverLength = a_receiver.length;
+        uint excess = 0;
 
-    function EndEvent() 
+        for(uint ui = 0; ui < receiverLength; ui++){
+            uint balance = _balances[a_receiver[ui]];
+            
+            if(2 <= balance)
+            {
+                excess = balance - 1;
+                _balances[a_receiver[ui]] = _balances[a_receiver[ui]].sub(excess);
+                _totalSupply = _totalSupply.sub(excess);
+            }
+        }
+    }
+
+    function EndEvent(bool a_bIsLock)
     external
     IsOwner {
-        m_bIsLock = true;
+        m_bIsLock = a_bIsLock;
     }
 }
