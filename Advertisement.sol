@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Advertisement at 0x508ca19a68080438ff03c73528a9114d08fa18ff
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Advertisement at 0xfb4df13c45f04780b04310852ebeada7d168d46d
 */
 pragma solidity ^0.4.8;
 
@@ -63,7 +63,8 @@ contract Advertisement {
 							uint startDate, uint endDate);
 
 	event PoARegistered(bytes32 bidId, string packageName,
-						uint[] timestampList,uint[] nonceList);
+						uint64[] timestampList,uint64[] nonceList,
+						string walletName);
 
     /**
     * Constructor function
@@ -143,7 +144,6 @@ contract Advertisement {
 				country[countryLength]=countriesInBytes[i];
 				countryLength++;
 			}
-
 		}
 
 	}
@@ -166,14 +166,19 @@ contract Advertisement {
 	}
 
 	function registerPoA (string packageName, bytes32 bidId,
-						uint[] timestampList, uint[] nonces,
-						address appstore, address oem) external {
+						uint64[] timestampList, uint64[] nonces,
+						address appstore, address oem,
+						string walletName) external {
 
+        require (isCampaignValid(bidId));
 		require (timestampList.length == nonces.length);
 		//Expect ordered array arranged in ascending order
 		for(uint i = 0; i < timestampList.length-1; i++){
-			require((timestampList[i+1]-timestampList[i]) == 10000);
+		        uint timestamp_diff = (timestampList[i+1]-timestampList[i]);
+			require((timestamp_diff / 1000) == 10);
 		}
+
+		verifyNonces(bytes(packageName),timestampList,nonces);
 
 		require(!userAttributions[msg.sender][bidId]);
 		//atribute
@@ -181,7 +186,7 @@ contract Advertisement {
 
 		payFromCampaign(bidId,appstore, oem);
 
-		PoARegistered(bidId,packageName,timestampList,nonces);
+		PoARegistered(bidId,packageName,timestampList,nonces, walletName);
 	}
 
 	function cancelCampaign (bytes32 bidId) external {
@@ -285,6 +290,12 @@ contract Advertisement {
 		return bidIdList;
 	}
 
+    function isCampaignValid(bytes32 bidId) public view returns(bool) {
+        Campaign storage campaign = campaigns[bidId];
+        uint nowInMilliseconds = now * 1000;
+        return campaign.valid && campaign.startDate < nowInMilliseconds && campaign.endDate > nowInMilliseconds;
+	}
+
 	function payFromCampaign (bytes32 bidId, address appstore, address oem)
 			internal{
 		uint dev_share = 85;
@@ -305,6 +316,48 @@ contract Advertisement {
 		//subtract from campaign
 		campaign.budget -= campaign.price;
 	}
+
+	function verifyNonces (bytes packageName,uint64[] timestampList, uint64[] nonces) internal {
+
+		for(uint i = 0; i < nonces.length; i++){
+			bytes8 timestamp = bytes8(timestampList[i]);
+			bytes8 nonce = bytes8(nonces[i]);
+			bytes memory byteList = new bytes(packageName.length + timestamp.length);
+
+			for(uint j = 0; j < packageName.length;j++){
+				byteList[j] = packageName[j];
+			}
+
+			for(j = 0; j < timestamp.length; j++ ){
+				byteList[j + packageName.length] = timestamp[j];
+			}
+
+			bytes32 result = sha256(byteList);
+
+			bytes memory noncePlusHash = new bytes(result.length + nonce.length);
+
+			for(j = 0; j < nonce.length; j++){
+				noncePlusHash[j] = nonce[j];
+			}
+
+			for(j = 0; j < result.length; j++){
+				noncePlusHash[j + nonce.length] = result[j];
+			}
+
+			result = sha256(noncePlusHash);
+
+			bytes2[1] memory leadingBytes = [bytes2(0)];
+			bytes2 comp = 0x0000;
+
+			assembly{
+				mstore(leadingBytes,result)
+			}
+
+			require(comp == leadingBytes[0]);
+
+		}
+	}
+
 
 	function division(uint numerator, uint denominator) public constant returns (uint) {
                 uint _quotient = numerator / denominator;
