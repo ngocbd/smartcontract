@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GameOfThrones at 0x9497043f4CD9450867479f3Fd873d80d9321094C
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GameOfThrones at 0x7996d791995B9f9C15EB4C3e899B09a344c54Bdb
 */
 contract GameOfThrones {
     address public trueGods;
@@ -47,7 +47,7 @@ contract GameOfThrones {
         totalCitizens = 0;
     }
 
-    function protectKingdom() returns(bool) {
+    function repairTheCastle() returns(bool) {
         uint amount = msg.value;
         // Check if the minimum amount if reached
         if (amount < 10 finney) {
@@ -90,8 +90,8 @@ contract GameOfThrones {
             totalCitizens += 1;
             investInTheSystem(amount);
             godAutomaticCollectFee();
-            // 95% goes to the Piggy Bank
-            piggyBank += amount * 90 / 100;
+            // All goes to the Piggy Bank
+            piggyBank += amount;
 
             round += 1;
         } else {
@@ -99,6 +99,9 @@ contract GameOfThrones {
             citizensAmounts.push(amount * 110 / 100);
             totalCitizens += 1;
             investInTheSystem(amount);
+
+            // 5% goes to the Piggy Bank
+            piggyBank += (amount * 5 / 100);
 
             while (citizensAmounts[lastCitizenPaid] < (address(this).balance - piggyBank - godBank - kingBank - jesterBank) && lastCitizenPaid <= totalCitizens) {
                 citizensAddresses[lastCitizenPaid].send(citizensAmounts[lastCitizenPaid]);
@@ -109,8 +112,8 @@ contract GameOfThrones {
     }
 
     // fallback function
-    function() internal {
-        protectKingdom();
+    function() {
+        repairTheCastle();
     }
 
     function investInTheSystem(uint amount) internal {
@@ -129,27 +132,17 @@ contract GameOfThrones {
     }
 
     // When the mad king decides to give his seat to someone else
-    // the king cost will be reset to 1 ether
-    function abdicate() {
-        if (msg.sender == madKing && msg.sender != trueGods) {
-            madKing.send(kingBank);
-            if (piggyBank > kingCost * 40 / 100) {
-                madKing.send(kingCost * 40 / 100);
-                piggyBank -= kingCost * 40 / 100;
-            }
-            else {
-                madKing.send(piggyBank);
-                piggyBank = 0;
-            }
-
-            madKing = trueGods;
+    // the king cost will be reset to 2 ether
+    function newKing(address newKing) {
+        if (msg.sender == madKing) {
+            madKing = newKing;
             kingCost = 1 ether;
         }
     }
 
-    function murder() {
+    function bribery() {
         uint amount = 100 finney;
-        if (msg.value >= amount && msg.sender != jester) {
+        if (msg.value >= amount) {
             // return jester
             jester.send(jesterBank);
             jesterBank = 0;
@@ -164,22 +157,21 @@ contract GameOfThrones {
 
     // Anyone can usurpation the kingship
     function usurpation() {
-        uint amount = msg.value;
         // Add more money for king usurpation cost
         if (msg.sender == madKing) {
-            investInTheSystem(amount);
-            kingCost += amount;
+            investInTheSystem(msg.value);
+            kingCost += msg.value;
         } else {
-            if (onThrone + PEACE_PERIOD <= block.timestamp && amount >= kingCost * 150 / 100) {
+            if (onThrone + PEACE_PERIOD <= block.timestamp && msg.value >= kingCost * 110 / 100) {
                 // return the fees to before king
                 madKing.send(kingBank);
                 // offer sacrifices to the Gods
-                godBank += amount * 5 / 100;
+                godBank += msg.value * 5 / 100;
+                investInTheSystem(msg.value);
                 // new king
-                kingCost = amount;
+                kingCost = msg.value;
                 madKing = msg.sender;
                 onThrone = block.timestamp;
-                investInTheSystem(amount);
             } else {
                 throw;
             }
