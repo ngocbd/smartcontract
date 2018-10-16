@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EONToken at 0xeb96f4caaea05e69f41c25ae42b58ffff7df628d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EONToken at 0x3032b9e916a575db2d5a0c865f413a82891bd260
 */
 pragma solidity ^0.4.24;
 
@@ -133,17 +133,9 @@ contract EONToken is StandardToken {
   string public constant name = "EOS Network";
   string public constant symbol = "EON";
   uint8 public constant decimals = 18;
-  mapping(address => bool) public claimed;
-  event Claim(address indexed from);
 
   constructor() public {
-    totalSupply = 1000000000000000000000000000;
+    totalSupply = 10000000000000000000000000000;
     balances[msg.sender] = totalSupply;
-  }
-
-  function claim() public returns (bool) {
-    claimed[msg.sender] = true;
-    emit Claim(msg.sender);
-    return true;
   }
 }
