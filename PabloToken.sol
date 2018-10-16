@@ -1,7 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PabloToken at 0xf611c672882b267488e73f502d082216a25a12f8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PabloToken at 0x5fd23309e927f1b9125c695049b93641e33872cc
 */
 pragma solidity ^0.4.8;
+
+/* Version: 0.4.18+commit.9cf6e910.Linux.g++ */
 
 contract PabloTokenBase {
     /* This is a slight change to the ERC20 base standard.
@@ -112,9 +114,9 @@ contract PabloToken is PabloStandardToken {
     string public version = 'H0.1.1';       //human 0.1 standard + applied blockchain first patch (H0.1.1)
 
      function PabloToken() public {
-        totalSupply = 1000000000;           // 1 billion
+        totalSupply = 1000000000000000000000000000;           // 1 billion + 18 decimals - irb: "#{("0"*3+"_")*3}#{"0"*18}"
         balances[msg.sender] = totalSupply; // Give the creator all initial tokens
-        decimals = 8;
+        decimals = 18;
 
         // livenet (main net) - Pablo
         name = "Pablo Token";
