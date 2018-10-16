@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DiamondProjectToken at 0x7c388b8b5c8c3a2883c402cc8d0bc7f1d93febe2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DiamondProjectToken at 0x087f0e53cbb012ed782abff64f8eee75b96405cb
 */
 pragma solidity ^ 0.4.18;
 library SafeMath {
@@ -37,7 +37,7 @@ contract DiamondProjectToken {
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed _owner, address indexed spender, uint256 value);
 
-    function CommunityToken() {
+    function DiamondProjectToken() {
         totalSupply = 50000000;
         symbol = 'DMP';
         owner = 0x7Fd988ab4959E0cb4428613DA7B252A3500f1178;
