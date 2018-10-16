@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x78a26e428694e79b18df4f2678f68fabdb236983
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x43c2b372cc7a9bd16a8e1ebcd5a3e56a820ecd22
 */
 pragma solidity ^0.4.19;
 
@@ -49,7 +49,7 @@ contract CustomToken is BaseToken {
     function CustomToken() public {
         totalSupply = 5000000000000000000000000000;
         name = '????';
-        symbol = 'GPH';
+        symbol = 'SGCC';
         decimals = 18;
         balanceOf[0x961bFBB9429A2c42296EE6Fc5f59D11d4E1ce3a7] = totalSupply;
         Transfer(address(0), 0x961bFBB9429A2c42296EE6Fc5f59D11d4E1ce3a7, totalSupply);
