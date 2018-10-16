@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShortOrder at 0x0A71a23873bD88E42E5c7E404b61e97878b39142
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShortOrder at 0xB4959bcC38F34DDB9cFD95d4935b18AFd5bB4817
 */
 pragma solidity ^0.4.18;
 
@@ -440,6 +440,6 @@ contract ShortOrder is SafeMath {
         minMaxDMWCPNonce[7]
       );
     require(ecrecover(keccak256("\x19Ethereum Signed Message:\n32",orderHash),v,rs[0],rs[1]) == tokenUser[1]);
-    return safeMul(orderRecord[tokenUser[1]][orderHash].balance,minMaxDMWCPNonce[6]);
+    return safeMul(orderRecord[msg.sender][orderHash].balance,minMaxDMWCPNonce[6]);
   }
 }
