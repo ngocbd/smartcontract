@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleToken at 0x807b9487aaf00629b674bd6d02e4917453bc5939
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleToken at 0xb04cfa8a26d602fb50232cee0daf29060264e04b
 */
 /*
  * ERC20 interface
@@ -73,9 +73,8 @@ contract SafeMath {
 
 
 /**
- * Standard ERC20 token
+ * Standard ERC20 token with Short Hand Attack and approve() race condition mitigation.
  *
- * https://github.com/ethereum/EIPs/issues/20
  * Based on code by FirstBlood:
  * https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
@@ -84,14 +83,27 @@ contract StandardToken is ERC20, SafeMath {
   mapping(address => uint) balances;
   mapping (address => mapping (address => uint)) allowed;
 
-  function transfer(address _to, uint _value) returns (bool success) {
+  /**
+   *
+   * Fix for the ERC20 short address attack
+   *
+   * http://vessenes.com/the-erc20-short-address-attack-explained/
+   */
+  modifier onlyPayloadSize(uint size) {
+     if(msg.data.length != size + 4) {
+       throw;
+     }
+     _;
+  }
+
+  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) returns (bool success) {
     balances[msg.sender] = safeSub(balances[msg.sender], _value);
     balances[_to] = safeAdd(balances[_to], _value);
     Transfer(msg.sender, _to, _value);
     return true;
   }
 
-  function transferFrom(address _from, address _to, uint _value) returns (bool success) {
+  function transferFrom(address _from, address _to, uint _value) onlyPayloadSize(3 * 32) returns (bool success) {
     var _allowance = allowed[_from][msg.sender];
 
     // Check is not needed because safeSub(_allowance, _value) will already throw if this condition is not met
@@ -109,6 +121,13 @@ contract StandardToken is ERC20, SafeMath {
   }
 
   function approve(address _spender, uint _value) returns (bool success) {
+
+    // To change the approve amount you first have to reduce the addresses`
+    //  allowance to zero by calling `approve(_spender, 0)` if it is not
+    //  already 0 to mitigate the race condition described here:
+    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) throw;
+
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
     return true;
@@ -116,6 +135,39 @@ contract StandardToken is ERC20, SafeMath {
 
   function allowance(address _owner, address _spender) constant returns (uint remaining) {
     return allowed[_owner][_spender];
+  }
+
+  /**
+   * Atomic increment of approved spending
+   *
+   * Works around https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   *
+   */
+  function addApproval(address _spender, uint _addedValue)
+  onlyPayloadSize(2 * 32)
+  returns (bool success) {
+      uint oldValue = allowed[msg.sender][_spender];
+      allowed[msg.sender][_spender] = safeAdd(oldValue, _addedValue);
+      return true;
+  }
+
+  /**
+   * Atomic decrement of approved spending.
+   *
+   * Works around https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   */
+  function subApproval(address _spender, uint _subtractedValue)
+  onlyPayloadSize(2 * 32)
+  returns (bool success) {
+
+      uint oldVal = allowed[msg.sender][_spender];
+
+      if (_subtractedValue > oldVal) {
+          allowed[msg.sender][_spender] = 0;
+      } else {
+          allowed[msg.sender][_spender] = safeSub(oldVal, _subtractedValue);
+      }
+      return true;
   }
 
 }
@@ -145,48 +197,11 @@ contract UpgradeAgent {
 
 
 /**
- * Safe unsigned safe math.
- *
- * https://blog.aragon.one/library-driven-development-in-solidity-2bebcaf88736#.750gwtwli
- *
- * Originally from https://raw.githubusercontent.com/AragonOne/zeppelin-solidity/master/contracts/SafeMathLib.sol
- *
- * Maintained here until merged to mainline zeppelin-solidity.
- *
- */
-library SafeMathLib {
-
-  function times(uint a, uint b) returns (uint) {
-    uint c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function minus(uint a, uint b) returns (uint) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function plus(uint a, uint b) returns (uint) {
-    uint c = a + b;
-    assert(c>=a && c>=b);
-    return c;
-  }
-
-  function assert(bool assertion) private {
-    if (!assertion) throw;
-  }
-}
-
-
-/**
  * A token upgrade mechanism where users can opt-in amount of tokens to the next smart contract revision.
  *
  * First envisioned by Golem and Lunyr projects.
  */
 contract UpgradeableToken is StandardToken {
-
-  using SafeMathLib for uint;
 
   /** Contract / person who can set the upgrade path. This can be the same as team multisig wallet, as what it is with its default value. */
   address public upgradeMaster;
@@ -208,13 +223,20 @@ contract UpgradeableToken is StandardToken {
    */
   enum UpgradeState {Unknown, NotAllowed, WaitingForAgent, ReadyToUpgrade, Upgrading}
 
+  /**
+   * Somebody has upgraded some of his tokens.
+   */
   event Upgrade(address indexed _from, address indexed _to, uint256 _value);
+
+  /**
+   * New upgrade agent available.
+   */
   event UpgradeAgentSet(address agent);
 
   /**
    * Do not allow construction without upgrade master set.
    */
-  function UpgradeAgentEnabledToken(address _upgradeMaster) {
+  function UpgradeableToken(address _upgradeMaster) {
     upgradeMaster = _upgradeMaster;
   }
 
@@ -232,11 +254,11 @@ contract UpgradeableToken is StandardToken {
       // Validate input value.
       if (value == 0) throw;
 
-      balances[msg.sender] = balances[msg.sender].minus(value);
+      balances[msg.sender] = safeSub(balances[msg.sender], value);
 
       // Take tokens out from circulation
-      totalSupply = totalSupply.minus(value);
-      totalUpgraded = totalUpgraded.plus(value);
+      totalSupply = safeSub(totalSupply, value);
+      totalUpgraded = safeAdd(totalUpgraded, value);
 
       // Upgrade agent reissues the tokens
       upgradeAgent.upgradeFrom(msg.sender, value);
@@ -263,7 +285,6 @@ contract UpgradeableToken is StandardToken {
 
       // Bad interface
       if(!upgradeAgent.isUpgradeAgent()) throw;
-
       // Make sure that token supplies match in source and target
       if (upgradeAgent.originalSupply() != totalSupply) throw;
 
@@ -285,7 +306,7 @@ contract UpgradeableToken is StandardToken {
    *
    * This allows us to set a new owner for the upgrade mechanism.
    */
-  function setUpgradeMaster(address master) external {
+  function setUpgradeMaster(address master) public {
       if (master == 0x0) throw;
       if (msg.sender != upgradeMaster) throw;
       upgradeMaster = master;
@@ -422,6 +443,40 @@ contract ReleasableToken is ERC20, Ownable {
 
 
 
+/**
+ * Safe unsigned safe math.
+ *
+ * https://blog.aragon.one/library-driven-development-in-solidity-2bebcaf88736#.750gwtwli
+ *
+ * Originally from https://raw.githubusercontent.com/AragonOne/zeppelin-solidity/master/contracts/SafeMathLib.sol
+ *
+ * Maintained here until merged to mainline zeppelin-solidity.
+ *
+ */
+library SafeMathLib {
+
+  function times(uint a, uint b) returns (uint) {
+    uint c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function minus(uint a, uint b) returns (uint) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function plus(uint a, uint b) returns (uint) {
+    uint c = a + b;
+    assert(c>=a && c>=b);
+    return c;
+  }
+
+  function assert(bool assertion) private {
+    if (!assertion) throw;
+  }
+}
+
 
 
 /**
@@ -500,13 +555,13 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
    *
    * This token must be created through a team multisig wallet, so that it is owned by that wallet.
    */
-  function CrowdsaleToken(string _name, string _symbol, uint _initialSupply, uint _decimals) {
+  function CrowdsaleToken(string _name, string _symbol, uint _initialSupply, uint _decimals)
+    UpgradeableToken(msg.sender) {
 
-    // Create from team multisig
+    // Create any address, can be transferred
+    // to team multisig via changeOwner(),
+    // also remember to call setUpgradeMaster()
     owner = msg.sender;
-
-    // Initially set the upgrade master same as owner
-    upgradeMaster = owner;
 
     name = _name;
     symbol = _symbol;
@@ -516,7 +571,7 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
     decimals = _decimals;
 
     // Create initially all balance on the team multisig
-    balances[msg.sender] = totalSupply;
+    balances[owner] = totalSupply;
   }
 
   /**
