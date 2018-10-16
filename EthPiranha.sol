@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthPiranha at 0xc72678b233db51ff01a6725c21a323a98096cfa1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthPiranha at 0x2b434a1b41afe100299e5be39c4d5be510a6a70c
 */
 pragma solidity ^0.4.21;
 
@@ -31,17 +31,13 @@ contract Ownable {
 /// @author Dieter Shirley <dete@axiomzen.co> (https://github.com/dete)
 contract ERC721 {
   // Required methods
-  function approve(address _to, uint256 _tokenId) public;
   function balanceOf(address _owner) public view returns (uint256 balance);
   function implementsERC721() public pure returns (bool);
   function ownerOf(uint256 _tokenId) public view returns (address addr);
-  function takeOwnership(uint256 _tokenId) public;
   function totalSupply() public view returns (uint256 total);
-  function transferFrom(address _from, address _to, uint256 _tokenId) public;
   function transfer(address _to, uint256 _tokenId) public;
 
   event Transfer(address indexed from, address indexed to, uint256 tokenId);
-  event Approval(address indexed owner, address indexed approved, uint256 tokenId);
 
   // Optional
   // function name() public view returns (string name);
@@ -63,8 +59,6 @@ contract EthPiranha is ERC721, Ownable {
   mapping (uint256 => address) private piranhaIdToOwner;
 
   mapping (address => uint256) private ownershipTokenCount;
-
-  mapping (uint256 => address) private piranhaIdToApproved;
   
    /*** DATATYPES ***/
   struct Piranha {
@@ -78,22 +72,17 @@ contract EthPiranha is ERC721, Ownable {
   }
 
   Piranha[] public piranhas;
-
-  function approve(address _to, uint256 _tokenId) public { //ERC721
-    // Caller must own token.
-    require(_owns(msg.sender, _tokenId));
-    piranhaIdToApproved[_tokenId] = _to;
-    Approval(msg.sender, _to, _tokenId);
-  }
+  
+  uint256 private breedingCost = 0.001 ether;
+  uint256 private biteCost = 0.001 ether;
 
   function balanceOf(address _owner) public view returns (uint256 balance) { //ERC721
     return ownershipTokenCount[_owner];
   }
 
-  function createPiranhaTokens() public onlyContractOwner {
-     for (uint8 i=0; i<15; i++) {
-		_createPiranha("EthPiranha", msg.sender, 20 finney, 160, 1, 0);
-	}
+  function createPiranhaToken(string _name, address _owner, uint256 _price, uint8 _size, uint8 _hungry) public onlyContractOwner {
+		//Emit new tokens ONLY GEN 1 
+		_createPiranha(_name, _owner, _price, _size, 1, 0, _hungry);
   }
 
   function implementsERC721() public pure returns (bool) {
@@ -147,12 +136,22 @@ contract EthPiranha is ERC721, Ownable {
   }
   
   function changePiranhaName(uint256 _tokenId, string _name) public payable {
-	require (piranhaIdToOwner[_tokenId] == msg.sender && msg.value == 0.001 ether);
+	require (piranhaIdToOwner[_tokenId] == msg.sender && msg.value == biteCost);
 	require(bytes(_name).length <= 15);
 	
 	Piranha storage piranha = piranhas[_tokenId];
 	piranha.name = _name;
   }
+  
+  function changeBeedingCost(uint256 _newCost) public onlyContractOwner {
+    require(_newCost > 0);
+	breedingCost=_newCost;
+  }  
+
+  function changeBiteCost(uint256 _newCost) public onlyContractOwner {
+    require(_newCost > 0);
+	biteCost=_newCost;
+  }    
   
   function startSelling(uint256 _tokenId, uint256 _price) public {
 	require (piranhaIdToOwner[_tokenId] == msg.sender);
@@ -176,7 +175,7 @@ contract EthPiranha is ERC721, Ownable {
 	Piranha storage piranha = piranhas[_tokenId];
 	require (piranha.hungry == 0);
 	
-	uint8 piranhaSize=uint8(piranha.size+(now-piranha.growthStartTime)/900);
+	uint8 piranhaSize=uint8(piranha.size+(now-piranha.growthStartTime)/300);
 
 	require (piranhaSize < 240);
 	
@@ -194,29 +193,32 @@ contract EthPiranha is ERC721, Ownable {
 
   function bite(uint256 _tokenId, uint256 _victimTokenId) public payable {
 	require (piranhaIdToOwner[_tokenId] == msg.sender);
-	require (msg.value == 1 finney);
+	require (msg.value == biteCost);
 	
 	Piranha storage piranha = piranhas[_tokenId];
 	Piranha storage victimPiranha = piranhas[_victimTokenId];
 	require (piranha.hungry == 1 && victimPiranha.hungry == 1);
 
-	uint8 vitimPiranhaSize=uint8(victimPiranha.size+(now-victimPiranha.growthStartTime)/900);
+	uint256 vitimPiranhaSize=victimPiranha.size+(now-victimPiranha.growthStartTime)/300;
 	
 	require (vitimPiranhaSize>40); // don't bite a small
 
-	uint8 piranhaSize=uint8(piranha.size+(now-piranha.growthStartTime)/900)+10;
+	uint256 piranhaSize=piranha.size+(now-piranha.growthStartTime)/300+10;
 	
 	if (piranhaSize>240) { 
 	    piranha.size = 240; //maximum
 		piranha.hungry = 0;
 	} else {
-	    piranha.size = piranhaSize;
+	    piranha.size = uint8(piranhaSize);
 	}
      
 	//decrease victim size 
+	if (vitimPiranhaSize>240) 
+	    vitimPiranhaSize=240;
+		
 	if (vitimPiranhaSize>=50) {
 	    vitimPiranhaSize-=10;
-	    victimPiranha.size = vitimPiranhaSize;
+	    victimPiranha.size = uint8(vitimPiranhaSize);
 	}
     else {
 		victimPiranha.size=40;
@@ -230,26 +232,24 @@ contract EthPiranha is ERC721, Ownable {
   function breeding(uint256 _maleTokenId, uint256 _femaleTokenId) public payable {
   
     require (piranhaIdToOwner[_maleTokenId] ==  msg.sender && piranhaIdToOwner[_femaleTokenId] == msg.sender);
-	require (msg.value == 0.01 ether);
+	require (msg.value == breedingCost);
 
 	Piranha storage piranhaMale = piranhas[_maleTokenId];
 	Piranha storage piranhaFemale = piranhas[_femaleTokenId];
 	
-	uint8 maleSize=uint8(piranhaMale.size+(now-piranhaMale.growthStartTime)/900);
-	if (maleSize>240)
-	   piranhaMale.size=240;
-	else 
-	   piranhaMale.size=maleSize;
-
-	uint8 femaleSize=uint8(piranhaFemale.size+(now-piranhaFemale.growthStartTime)/900);
-	if (femaleSize>240)
-	   piranhaFemale.size=240;
-	else 
-	   piranhaFemale.size=femaleSize;
-	   
-	require (piranhaMale.size > 150 && piranhaFemale.size > 150);
+	uint256 maleSize=piranhaMale.size+(now-piranhaMale.growthStartTime)/300;
 	
-	uint8 newbornSize = uint8(SafeMath.div(SafeMath.add(piranhaMale.size, piranhaMale.size),4));
+	if (maleSize>240)
+	   maleSize=240;
+
+	uint256 femaleSize=piranhaFemale.size+(now-piranhaFemale.growthStartTime)/300;
+
+	if (femaleSize>240)
+	    femaleSize=240;
+	   
+	require (maleSize > 150 && femaleSize > 150);
+	
+	uint8 newbornSize = uint8(SafeMath.div(SafeMath.add(maleSize, femaleSize),4));
 	
 	uint256 maxGen=piranhaFemale.gen;
 	uint256 minGen=piranhaMale.gen;
@@ -276,50 +276,33 @@ contract EthPiranha is ERC721, Ownable {
 		newbornUnique = 0;
 		
      //initiate new size, cancel selling
-	 piranhaMale.size = uint8(SafeMath.div(piranhaMale.size,2));		
-     piranhaFemale.size = uint8(SafeMath.div(piranhaFemale.size,2));	
+	 piranhaMale.size = uint8(SafeMath.div(maleSize,2));		
+     piranhaFemale.size = uint8(SafeMath.div(femaleSize,2));	
 
 	 piranhaMale.growthStartTime = now;	 
 	 piranhaFemale.growthStartTime = now;	 
 
-	 piranhaMale.sellPrice = 0;	 
-	 piranhaFemale.sellPrice = 0;	 
-		
-	_createPiranha("EthPiranha", msg.sender, 0, newbornSize, newbornGen, newbornUnique);
+	_createPiranha("EthPiranha", msg.sender, 0, newbornSize, newbornGen, newbornUnique, 0);
   
   }
   
-  function takeOwnership(uint256 _tokenId) public { //ERC721
-    address newOwner = msg.sender;
-    address oldOwner = piranhaIdToOwner[_tokenId];
-
-    require(_addressNotNull(newOwner));
-    require(_approved(newOwner, _tokenId));
-
-    _transfer(oldOwner, newOwner, _tokenId);
-  }
-
-  function allPiranhasInfo(uint256 _startPiranhaId) public view returns (address[] owners, uint8[] sizes, uint8[] hungry, uint256[] prices) { //for web site view
+  function allPiranhasInfo(uint256 _startPiranhaId) public view returns (address[] owners, uint256[] sizes, uint8[] hungry, uint256[] prices) { //for web site view
 	
-	uint256 totalPiranhas = totalSupply();
 	Piranha storage piranha;
+	uint256 indexTo = totalSupply();
 	
-    if (totalPiranhas == 0 || _startPiranhaId >= totalPiranhas) {
+    if (indexTo == 0 || _startPiranhaId >= indexTo) {
         // Return an empty array
-      return (new address[](0), new uint8[](0), new uint8[](0), new uint256[](0));
+      return (new address[](0), new uint256[](0), new uint8[](0), new uint256[](0));
     }
 
-	
-	uint256 indexTo;
-	if (totalPiranhas > _startPiranhaId+1000)
+	if (indexTo > _startPiranhaId+1000)
 		indexTo = _startPiranhaId + 1000;
-	else 	
-		indexTo = totalPiranhas;
 		
     uint256 totalResultPiranhas = indexTo - _startPiranhaId;		
 		
 	address[] memory owners_res = new address[](totalResultPiranhas);
-	uint8[] memory size_res = new uint8[](totalResultPiranhas);
+	uint256[] memory size_res = new uint256[](totalResultPiranhas);
 	uint8[] memory hungry_res = new uint8[](totalResultPiranhas);
 	uint256[] memory prices_res = new uint256[](totalResultPiranhas);
 	
@@ -327,8 +310,8 @@ contract EthPiranha is ERC721, Ownable {
 	  piranha = piranhas[piranhaId];
 	  
 	  owners_res[piranhaId - _startPiranhaId] = piranhaIdToOwner[piranhaId];
+      size_res[piranhaId - _startPiranhaId] = uint256(piranha.size+(now-piranha.growthStartTime)/300);	  
 	  hungry_res[piranhaId - _startPiranhaId] = piranha.hungry;
-	  size_res[piranhaId - _startPiranhaId] = uint8(piranha.size+(now-piranha.growthStartTime)/900);
 	  prices_res[piranhaId - _startPiranhaId] = piranha.sellPrice;
 	}
 	
@@ -346,25 +329,14 @@ contract EthPiranha is ERC721, Ownable {
 	_transfer(msg.sender, _to, _tokenId);
   }
 
-  function transferFrom(address _from, address _to, uint256 _tokenId) public { //ERC721
-    require(_owns(_from, _tokenId));
-    require(_approved(_to, _tokenId));
-    require(_addressNotNull(_to));
-
-    _transfer(_from, _to, _tokenId);
-  }
-
 
   /* PRIVATE FUNCTIONS */
   function _addressNotNull(address _to) private pure returns (bool) {
     return _to != address(0);
   }
 
-  function _approved(address _to, uint256 _tokenId) private view returns (bool) {
-    return piranhaIdToApproved[_tokenId] == _to;
-  }
 
-  function _createPiranha(string _name, address _owner, uint256 _price, uint8 _size, uint256 _gen, uint8 _unique) private {
+  function _createPiranha(string _name, address _owner, uint256 _price, uint8 _size, uint256 _gen, uint8 _unique, uint8 _hungry) private {
     Piranha memory _piranha = Piranha({
       name: _name,
 	  size: _size,
@@ -372,7 +344,7 @@ contract EthPiranha is ERC721, Ownable {
 	  unique: _unique,	  
 	  growthStartTime: now,
 	  sellPrice: _price,
-	  hungry: 0
+	  hungry: _hungry
     });
     uint256 newPiranhaId = piranhas.push(_piranha) - 1;
 
@@ -394,8 +366,6 @@ contract EthPiranha is ERC721, Ownable {
     // When creating new piranhas _from is 0x0, but we can't account that address.
     if (_from != address(0)) {
       ownershipTokenCount[_from]--;
-      // clear any previously approved ownership exchange
-      delete piranhaIdToApproved[_tokenId];
     }
 
     // Emit the transfer event.
