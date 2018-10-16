@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HarjFarmer at 0x163c64805c98fa2732f13030de457165f89493f9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HarjFarmer at 0x28474ef546033a129bdf27e0b74bc8579af31d17
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
@@ -18,7 +18,7 @@ contract HarjFarmer{
     mapping (address => uint256) public lastHatch;
     mapping (address => address) public referrals;
     uint256 public marketEggs;
-    function HarjFarmer() public{
+    function ShrimpFarmer() public{
         ceoAddress=msg.sender;
     }
     function hatchEggs(address ref) public{
