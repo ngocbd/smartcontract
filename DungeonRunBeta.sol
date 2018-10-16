@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DungeonRunBeta at 0xeb84356cd552869cf60b7e5e164f681bfee92cde
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DungeonRunBeta at 0x06ea256d8a2112aff4f700407e254bae8921811d
 */
 pragma solidity 0.4.19;
 
@@ -268,7 +268,7 @@ contract DungeonRunBeta is Pausable, Destructible {
     uint public entranceFee = 0.04 ether;
 
     /// @dev 0.1 ether is provided as the initial jackpot.
-    uint public jackpot = 0.1 ether;
+    uint public jackpot = 0.16 ether;
 
     /**
      * @dev The dungeon run entrance fee will first be deposited to a pool first, when the hero is
@@ -354,7 +354,7 @@ contract DungeonRunBeta is Pausable, Destructible {
         // Dungeon run is ended if either hero is defeated (health exhausted),
         // or hero failed to damage a monster before it flee.
         bool _dungeonRunEnded = monster.level > 0 && (
-            _heroHealth == 0 ||
+            _heroHealth == 0 || 
             now > _monsterCreationTime + monsterFleeTime * 2 ||
             (monster.health == monster.initialHealth && now > monster.creationTime + monsterFleeTime)
         );
@@ -430,7 +430,7 @@ contract DungeonRunBeta is Pausable, Destructible {
             // Throws if not enough fee, and any exceeding fee will be transferred back to the player.
             require(msg.value >= entranceFee);
             entranceFeePool += entranceFee;
-
+            
             // Create level 1 monster, initial health is 1 * monsterHealth.
             heroIdToMonster[_heroId] = Monster(uint64(now), 1, monsterHealth, monsterHealth);
             monster = heroIdToMonster[_heroId];
@@ -444,9 +444,9 @@ contract DungeonRunBeta is Pausable, Destructible {
                 msg.sender.transfer(msg.value - entranceFee);
             }
         } else {
-            // If the hero health is 0, the dungeon run has ends.
+            // If the hero health is 0, the dungeon run has ended.
             require(heroCurrentHealth > 0);
-
+    
             // If a hero failed to damage a monster before it flee, the dungeon run ends,
             // regardless of the remaining hero health.
             dungeonRunEnded = now > monster.creationTime + monsterFleeTime * 2 ||
@@ -455,13 +455,17 @@ contract DungeonRunBeta is Pausable, Destructible {
             if (dungeonRunEnded) {
                 // Add the non-refunded fee to jackpot.
                 uint addToJackpot = entranceFee - heroIdToRefundedFee[_heroId];
-                jackpot += addToJackpot;
-                entranceFeePool -= addToJackpot;
+            
+                if (addToJackpot > 0) {
+                    jackpot += addToJackpot;
+                    entranceFeePool -= addToJackpot;
+                    heroIdToRefundedFee[_heroId] += addToJackpot;
+                }
 
                 // Sanity check.
                 assert(addToJackpot <= entranceFee);
             }
-
+            
             // Future attack do not require any fee, so refund all ether sent with the transaction.
             msg.sender.transfer(msg.value);
         }
@@ -498,10 +502,11 @@ contract DungeonRunBeta is Pausable, Destructible {
         // Get the hero power.
         uint heroPower;
         (heroPower,,,,) = edCoreContract.getHeroPower(_genes, dungeonDifficulty);
+        
+        uint damageByMonster;
+        uint damageByHero;
 
         // Calculate the damage by monster.
-        uint damageByMonster;
-
         // Determine if the monster has fled due to hero failed to attack within flee period.
         if (now > monster.creationTime + monsterFleeTime) {
             // When a monster flees, the monster will attack the hero and flee.
@@ -519,10 +524,14 @@ contract DungeonRunBeta is Pausable, Destructible {
             // Hero is defeated, the dungeon run ends.
             heroIdToHealth[_heroId] = 0;
 
-            // Added the non-refunded fee to jackpot.
+            // Add the non-refunded fee to jackpot.
             uint addToJackpot = entranceFee - heroIdToRefundedFee[_heroId];
-            jackpot += addToJackpot;
-            entranceFeePool -= addToJackpot;
+            
+            if (addToJackpot > 0) {
+                jackpot += addToJackpot;
+                entranceFeePool -= addToJackpot;
+                heroIdToRefundedFee[_heroId] += addToJackpot;
+            }
 
             // Sanity check.
             assert(addToJackpot <= entranceFee);
@@ -530,47 +539,51 @@ contract DungeonRunBeta is Pausable, Destructible {
             // Hero is damanged but didn't defeated, game continues with a new monster.
             heroIdToHealth[_heroId] -= damageByMonster;
 
-            // Create next level monster, the health of a monster is level * monsterHealth.
-            currentLevel++;
-            heroIdToMonster[_heroId] = Monster(uint64(monster.creationTime + monsterFleeTime),
-                currentLevel, currentLevel * monsterHealth, currentLevel * monsterHealth);
-            monster = heroIdToMonster[_heroId];
-        }
-
-        // The damage formula is [[strength / gas + power / (10 * rand)]],
-        // where rand is a random integer from 1 to 5.
-        uint damageByHero = (_heroStrength + heroPower / (10 * (1 + _getRandomNumber(5)))) / tx.gasprice / 1e9;
-        bool isMonsterDefeated = damageByHero >= monster.health;
-        uint rewards;
-
-        if (isMonsterDefeated) {
-            // Monster is defeated, game continues with a new monster.
-            // Create next level monster, the health of a monster is level * monsterHealth.
-            uint8 newLevel = currentLevel + 1;
-            heroIdToMonster[_heroId] = Monster(uint64(now), newLevel, newLevel * monsterHealth, newLevel * monsterHealth);
-            monster = heroIdToMonster[_heroId];
-
-            // Determine the rewards based on current level.
-            if (currentLevel == checkpointLevel) {
-                // By defeating the checkPointLevel, half of the entranceFee is refunded.
-                rewards = entranceFee / 2;
-                heroIdToRefundedFee[_heroId] += rewards;
-                entranceFeePool -= rewards;
-            } else if (currentLevel == breakevenLevel) {
-                // By defeating the breakevenLevel, another half of the entranceFee is refunded.
-                rewards = entranceFee / 2;
-                heroIdToRefundedFee[_heroId] += rewards;
-                entranceFeePool -= rewards;
-            } else if (currentLevel == jackpotLevel) {
-                // By defeating the jackpotLevel, the player win the entire jackpot.
-                rewards = jackpot / 2;
-                jackpot -= rewards;
+            // If monser fled, create next level monster.
+            if (now > monster.creationTime + monsterFleeTime) {
+                currentLevel++;
+                heroIdToMonster[_heroId] = Monster(uint64(monster.creationTime + monsterFleeTime),
+                    currentLevel, currentLevel * monsterHealth, currentLevel * monsterHealth);
+                monster = heroIdToMonster[_heroId];
             }
 
-            msg.sender.transfer(rewards);
-        } else {
-            // Monster is damanged but not defeated, hurry up!
-            monster.health -= uint8(damageByHero);
+            // Calculate the damage by hero.
+            // The damage formula is (strength + power / (10 * rand)) / gasprice,
+            // where rand is a random integer from 1 to 5.
+            damageByHero = (_heroStrength * 1e9 + heroPower * 1e9 / (10 * (1 + _getRandomNumber(5)))) / tx.gasprice;
+            bool isMonsterDefeated = damageByHero >= monster.health;
+    
+            if (isMonsterDefeated) {
+                uint rewards;
+
+                // Monster is defeated, game continues with a new monster.
+                // Create next level monster.
+                uint8 newLevel = currentLevel + 1;
+                heroIdToMonster[_heroId] = Monster(uint64(now), newLevel, newLevel * monsterHealth, newLevel * monsterHealth);
+                monster = heroIdToMonster[_heroId];
+    
+                // Determine the rewards based on current level.
+                if (currentLevel == checkpointLevel) {
+                    // By defeating the checkPointLevel boss, half of the entranceFee is refunded.
+                    rewards = entranceFee / 2;
+                    heroIdToRefundedFee[_heroId] += rewards;
+                    entranceFeePool -= rewards;
+                } else if (currentLevel == breakevenLevel) {
+                    // By defeating the breakevenLevel boss, another half of the entranceFee is refunded.
+                    rewards = entranceFee / 2;
+                    heroIdToRefundedFee[_heroId] += rewards;
+                    entranceFeePool -= rewards;
+                } else if (currentLevel == jackpotLevel) {
+                    // By defeating the jackpotLevel, the player win the entire jackpot.
+                    rewards = jackpot / 2;
+                    jackpot -= rewards;
+                }
+    
+                msg.sender.transfer(rewards);
+            } else {
+                // Monster is damanged but not defeated, hurry up!
+                monster.health -= uint8(damageByHero);
+            }
         }
 
         // Emit LogAttack event.
@@ -593,7 +606,7 @@ contract DungeonRunBeta is Pausable, Destructible {
     /*==============================
     =           MODIFIERS          =
     ==============================*/
-
+    
     /// @dev Throws if the caller address is a contract.
     modifier onlyHumanAddress() {
         address addr = msg.sender;
