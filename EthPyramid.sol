@@ -1,22 +1,56 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthPyramid at 0xc6c58d71e9ea31d9237f4f794455641d4938bae3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthPyramid at 0x4cecc1f93b3b9fcbf87ec8b8817274b21a27af02
 */
 pragma solidity ^0.4.18;
+
+/*
+          ,/`.
+        ,'/ __`.
+      ,'_/_  _ _`.
+    ,'__/_ ___ _  `.
+  ,'_  /___ __ _ __ `.
+ '-.._/___...-"-.-..__`.
+  B
+
+ EthPyramid. A no-bullshit, transparent, self-sustaining pyramid scheme.
  
-//Inspired by https://test.jochen-hoenicke.de/eth/ponzitoken/
+ Inspired by https://test.jochen-hoenicke.de/eth/ponzitoken/
+
+ Developers:
+	Arc
+	Divine
+	Norsefire
+	ToCsIcK
+	
+ Front-End:
+	Cardioth
+	tenmei
+	Trendium
+	
+ Moral Support:
+	DeadCow.Rat
+	Dots
+	FatKreamy
+	Kaseylol
+	QuantumDeath666
+	Quentin
+ 
+ Shit-Tier:
+	HentaiChrist
+ 
+*/
 
 contract EthPyramid {
-    address factory;
 
 	// scaleFactor is used to convert Ether into tokens and vice-versa: they're of different
 	// orders of magnitude, hence the need to bridge between the two.
 	uint256 constant scaleFactor = 0x10000000000000000;  // 2^64
 
-	// CRR = 50%
+	// CRR = 70%
 	// CRR is Cash Reserve Ratio (in this case Crypto Reserve Ratio).
 	// For more on this: check out https://en.wikipedia.org/wiki/Reserve_requirement
-	int constant crr_n = 1; // CRR numerator
-	int constant crr_d = 2; // CRR denominator
+	int constant crr_n = 7; // CRR numerator
+	int constant crr_d = 10; // CRR denominator
 
 	// The price coefficient. Chosen such that at 1 token total supply
 	// the amount in reserve is 0.5 ether and token price is 1 Ether.
@@ -48,9 +82,7 @@ contract EthPyramid {
 	// Current contract balance in Ether
 	uint256 public contractBalance;
 
-	function EthPyramid(address _factory) public {
-          factory = _factory;
-        }
+	function EthPyramid() public {}
 
 	// The following functions are used by the front-end for display purposes.
 
@@ -73,10 +105,7 @@ contract EthPyramid {
 		
 		// Send the dividends to the address that requested the withdraw.
 		contractBalance = sub(contractBalance, balance);
-        var withdrawalFee = div(balance,5);
-        factory.transfer(withdrawalFee);
-        var balanceMinusWithdrawalFee = sub(balance,withdrawalFee);
-		msg.sender.transfer(balanceMinusWithdrawalFee);
+		msg.sender.transfer(balance);
 	}
 
 	// Converts the Ether accrued as dividends back into EPY tokens without having to
@@ -182,7 +211,8 @@ contract EthPyramid {
 	function fund() payable public {
 		// Don't allow for funding if the amount of Ether sent is less than 1 szabo.
 		if (msg.value > 0.000001 ether) {
-		  buy();
+		    contractBalance = add(contractBalance, msg.value);
+			buy();
 		} else {
 			revert();
 		}
@@ -222,10 +252,7 @@ contract EthPyramid {
 		
 		// Send the dividends to the address that requested the withdraw.
 		contractBalance = sub(contractBalance, balance);
-        var withdrawalFee = div(balance,5);
-        factory.transfer(withdrawalFee);
-        var balanceMinusWithdrawalFee = sub(balance,withdrawalFee);
-	to.transfer(balanceMinusWithdrawalFee);
+		to.transfer(balance);		
 	}
 
 	// Internal balance function, used to calculate the dynamic reserve value.
