@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoTreasure at 0xff873e1c70c910edd8542dcdebb47c8ea5c6192f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoTreasure at 0x7d1fc94095ad089c00428c3915f811936d043b54
 */
 pragma solidity ^0.4.19;
 
@@ -43,6 +43,35 @@ contract Ownable {
   }
 
 }
+
+
+
+
+
+/**
+ * @title Destructible
+ * @dev Base contract that can be destroyed by owner. All funds in contract will be sent to the owner.
+ */
+contract Destructible is Ownable {
+
+  function Destructible() public payable { }
+
+  /**
+   * @dev Transfers the current balance to the owner and terminates the contract.
+   */
+  function destroy() onlyOwner public {
+    selfdestruct(owner);
+  }
+
+  function destroyAndSend(address _recipient) onlyOwner public {
+    selfdestruct(_recipient);
+  }
+}
+
+
+
+
+
 
 
 /**
@@ -89,27 +118,6 @@ contract Pausable is Ownable {
   }
 }
 
-
-/**
- * @title Destructible
- * @dev Base contract that can be destroyed by owner. All funds in contract will be sent to the owner.
- */
-contract Destructible is Ownable {
-
-  function Destructible() public payable { }
-
-  /**
-   * @dev Transfers the current balance to the owner and terminates the contract.
-   */
-  function destroy() onlyOwner public {
-    selfdestruct(owner);
-  }
-
-  function destroyAndSend(address _recipient) onlyOwner public {
-    selfdestruct(_recipient);
-  }
-}
-
 // <ORACLIZE_API>
 /*
 Copyright (c) 2015-2016 Oraclize SRL
@@ -140,25 +148,26 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-// This api is currently targeted at 0.4.18, please import oraclizeAPI_pre0.4.sol or oraclizeAPI_0.4 where necessary
-pragma solidity ^0.4.18;
+//please import oraclizeAPI_pre0.4.sol when solidity < 0.4.0
 
 contract OraclizeI {
     address public cbAddress;
-    function query(uint _timestamp, string _datasource, string _arg) external payable returns (bytes32 _id);
-    function query_withGasLimit(uint _timestamp, string _datasource, string _arg, uint _gaslimit) external payable returns (bytes32 _id);
-    function query2(uint _timestamp, string _datasource, string _arg1, string _arg2) public payable returns (bytes32 _id);
-    function query2_withGasLimit(uint _timestamp, string _datasource, string _arg1, string _arg2, uint _gaslimit) external payable returns (bytes32 _id);
-    function queryN(uint _timestamp, string _datasource, bytes _argN) public payable returns (bytes32 _id);
-    function queryN_withGasLimit(uint _timestamp, string _datasource, bytes _argN, uint _gaslimit) external payable returns (bytes32 _id);
-    function getPrice(string _datasource) public returns (uint _dsprice);
-    function getPrice(string _datasource, uint gaslimit) public returns (uint _dsprice);
-    function setProofType(byte _proofType) external;
-    function setCustomGasPrice(uint _gasPrice) external;
-    function randomDS_getSessionPubKeyHash() external constant returns(bytes32);
+    function query(uint _timestamp, string _datasource, string _arg) payable returns (bytes32 _id);
+    function query_withGasLimit(uint _timestamp, string _datasource, string _arg, uint _gaslimit) payable returns (bytes32 _id);
+    function query2(uint _timestamp, string _datasource, string _arg1, string _arg2) payable returns (bytes32 _id);
+    function query2_withGasLimit(uint _timestamp, string _datasource, string _arg1, string _arg2, uint _gaslimit) payable returns (bytes32 _id);
+    function queryN(uint _timestamp, string _datasource, bytes _argN) payable returns (bytes32 _id);
+    function queryN_withGasLimit(uint _timestamp, string _datasource, bytes _argN, uint _gaslimit) payable returns (bytes32 _id);
+    function getPrice(string _datasource) returns (uint _dsprice);
+    function getPrice(string _datasource, uint gaslimit) returns (uint _dsprice);
+    function useCoupon(string _coupon);
+    function setProofType(byte _proofType);
+    function setConfig(bytes32 _config);
+    function setCustomGasPrice(uint _gasPrice);
+    function randomDS_getSessionPubKeyHash() returns(bytes32);
 }
 contract OraclizeAddrResolverI {
-    function getAddress() public returns (address _addr);
+    function getAddress() returns (address _addr);
 }
 contract usingOraclize {
     uint constant day = 60*60*24;
@@ -190,14 +199,11 @@ contract usingOraclize {
     }
     modifier coupon(string code){
         oraclize = OraclizeI(OAR.getAddress());
+        oraclize.useCoupon(code);
         _;
     }
 
     function oraclize_setNetwork(uint8 networkID) internal returns(bool){
-      return oraclize_setNetwork();
-      networkID; // silence the warning and remain backwards compatible
-    }
-    function oraclize_setNetwork() internal returns(bool){
         if (getCodeSize(0x1d3B2638a7cC9f2CB3D298A3DA7a90B67E5506ed)>0){ //mainnet
             OAR = OraclizeAddrResolverI(0x1d3B2638a7cC9f2CB3D298A3DA7a90B67E5506ed);
             oraclize_setNetworkName("eth_mainnet");
@@ -233,12 +239,14 @@ contract usingOraclize {
         return false;
     }
 
-    function __callback(bytes32 myid, string result) public {
+    function __callback(bytes32 myid, string result) {
         __callback(myid, result, new bytes(0));
     }
-    function __callback(bytes32 myid, string result, bytes proof) public {
-      return;
-      myid; result; proof; // Silence compiler warnings
+    function __callback(bytes32 myid, string result, bytes proof) {
+    }
+
+    function oraclize_useCoupon(string code) oraclizeAPI internal {
+        oraclize.useCoupon(code);
     }
 
     function oraclize_getPrice(string datasource) oraclizeAPI internal returns (uint){
@@ -631,6 +639,9 @@ contract usingOraclize {
     function oraclize_setCustomGasPrice(uint gasPrice) oraclizeAPI internal {
         return oraclize.setCustomGasPrice(gasPrice);
     }
+    function oraclize_setConfig(bytes32 config) oraclizeAPI internal {
+        return oraclize.setConfig(config);
+    }
 
     function oraclize_randomDS_getSessionPubKeyHash() oraclizeAPI internal returns (bytes32){
         return oraclize.randomDS_getSessionPubKeyHash();
@@ -642,7 +653,7 @@ contract usingOraclize {
         }
     }
 
-    function parseAddr(string _a) internal pure returns (address){
+    function parseAddr(string _a) internal returns (address){
         bytes memory tmp = bytes(_a);
         uint160 iaddr = 0;
         uint160 b1;
@@ -662,7 +673,7 @@ contract usingOraclize {
         return address(iaddr);
     }
 
-    function strCompare(string _a, string _b) internal pure returns (int) {
+    function strCompare(string _a, string _b) internal returns (int) {
         bytes memory a = bytes(_a);
         bytes memory b = bytes(_b);
         uint minLength = a.length;
@@ -680,7 +691,7 @@ contract usingOraclize {
             return 0;
     }
 
-    function indexOf(string _haystack, string _needle) internal pure returns (int) {
+    function indexOf(string _haystack, string _needle) internal returns (int) {
         bytes memory h = bytes(_haystack);
         bytes memory n = bytes(_needle);
         if(h.length < 1 || n.length < 1 || (n.length > h.length))
@@ -707,7 +718,7 @@ contract usingOraclize {
         }
     }
 
-    function strConcat(string _a, string _b, string _c, string _d, string _e) internal pure returns (string) {
+    function strConcat(string _a, string _b, string _c, string _d, string _e) internal returns (string) {
         bytes memory _ba = bytes(_a);
         bytes memory _bb = bytes(_b);
         bytes memory _bc = bytes(_c);
@@ -724,25 +735,25 @@ contract usingOraclize {
         return string(babcde);
     }
 
-    function strConcat(string _a, string _b, string _c, string _d) internal pure returns (string) {
+    function strConcat(string _a, string _b, string _c, string _d) internal returns (string) {
         return strConcat(_a, _b, _c, _d, "");
     }
 
-    function strConcat(string _a, string _b, string _c) internal pure returns (string) {
+    function strConcat(string _a, string _b, string _c) internal returns (string) {
         return strConcat(_a, _b, _c, "", "");
     }
 
-    function strConcat(string _a, string _b) internal pure returns (string) {
+    function strConcat(string _a, string _b) internal returns (string) {
         return strConcat(_a, _b, "", "", "");
     }
 
     // parseInt
-    function parseInt(string _a) internal pure returns (uint) {
+    function parseInt(string _a) internal returns (uint) {
         return parseInt(_a, 0);
     }
 
     // parseInt(parseFloat*10^_b)
-    function parseInt(string _a, uint _b) internal pure returns (uint) {
+    function parseInt(string _a, uint _b) internal returns (uint) {
         bytes memory bresult = bytes(_a);
         uint mint = 0;
         bool decimals = false;
@@ -760,7 +771,7 @@ contract usingOraclize {
         return mint;
     }
 
-    function uint2str(uint i) internal pure returns (string){
+    function uint2str(uint i) internal returns (string){
         if (i == 0) return "0";
         uint j = i;
         uint len;
@@ -777,7 +788,7 @@ contract usingOraclize {
         return string(bstr);
     }
 
-    function stra2cbor(string[] arr) internal pure returns (bytes) {
+    function stra2cbor(string[] arr) internal returns (bytes) {
             uint arrlen = arr.length;
 
             // get correct cbor output length
@@ -819,7 +830,7 @@ contract usingOraclize {
             return res;
         }
 
-    function ba2cbor(bytes[] arr) internal pure returns (bytes) {
+    function ba2cbor(bytes[] arr) internal returns (bytes) {
             uint arrlen = arr.length;
 
             // get correct cbor output length
@@ -867,14 +878,14 @@ contract usingOraclize {
         oraclize_network_name = _network_name;
     }
 
-    function oraclize_getNetworkName() internal view returns (string) {
+    function oraclize_getNetworkName() internal returns (string) {
         return oraclize_network_name;
     }
 
     function oraclize_newRandomDSQuery(uint _delay, uint _nbytes, uint _customGasLimit) internal returns (bytes32){
-        require((_nbytes > 0) && (_nbytes <= 32));
-        // Convert from seconds to ledger timer ticks
-        _delay *= 10; 
+        if ((_nbytes == 0)||(_nbytes > 32)) throw;
+	// Convert from seconds to ledger timer ticks
+        _delay *= 10;
         bytes memory nbytes = new bytes(1);
         nbytes[0] = byte(_nbytes);
         bytes memory unonce = new bytes(32);
@@ -887,18 +898,18 @@ contract usingOraclize {
             mstore(add(sessionKeyHash, 0x20), sessionKeyHash_bytes32)
         }
         bytes memory delay = new bytes(32);
-        assembly { 
-            mstore(add(delay, 0x20), _delay) 
+        assembly {
+            mstore(add(delay, 0x20), _delay)
         }
-        
+
         bytes memory delay_bytes8 = new bytes(8);
         copyBytes(delay, 24, 8, delay_bytes8, 0);
 
         bytes[4] memory args = [unonce, nbytes, sessionKeyHash, delay];
         bytes32 queryId = oraclize_query("random", args, _customGasLimit);
-        
+
         bytes memory delay_bytes8_left = new bytes(8);
-        
+
         assembly {
             let x := mload(add(delay_bytes8, 0x20))
             mstore8(add(delay_bytes8_left, 0x27), div(x, 0x100000000000000000000000000000000000000000000000000000000000000))
@@ -911,11 +922,11 @@ contract usingOraclize {
             mstore8(add(delay_bytes8_left, 0x20), div(x, 0x1000000000000000000000000000000000000000000000000))
 
         }
-        
-        oraclize_randomDS_setCommitment(queryId, keccak256(delay_bytes8_left, args[1], sha256(args[0]), args[2]));
+
+        oraclize_randomDS_setCommitment(queryId, sha3(delay_bytes8_left, args[1], sha256(args[0]), args[2]));
         return queryId;
     }
-    
+
     function oraclize_randomDS_setCommitment(bytes32 queryId, bytes32 commitment) internal {
         oraclize_randomDS_args[queryId] = commitment;
     }
@@ -944,10 +955,10 @@ contract usingOraclize {
 
 
         (sigok, signer) = safer_ecrecover(tosignh, 27, sigr, sigs);
-        if (address(keccak256(pubkey)) == signer) return true;
+        if (address(sha3(pubkey)) == signer) return true;
         else {
             (sigok, signer) = safer_ecrecover(tosignh, 28, sigr, sigs);
-            return (address(keccak256(pubkey)) == signer);
+            return (address(sha3(pubkey)) == signer);
         }
     }
 
@@ -962,7 +973,7 @@ contract usingOraclize {
         copyBytes(proof, 3+1, 64, appkey1_pubkey, 0);
 
         bytes memory tosign2 = new bytes(1+65+32);
-        tosign2[0] = byte(1); //role
+        tosign2[0] = 1; //role
         copyBytes(proof, sig2offset-65, 65, tosign2, 1);
         bytes memory CODEHASH = hex"fd94fa71bc0ba10d39d464d0d8f465efeef0a2764e3887fcc9df41ded20f505c";
         copyBytes(CODEHASH, 0, 32, tosign2, 1+65);
@@ -988,10 +999,10 @@ contract usingOraclize {
 
     modifier oraclize_randomDS_proofVerify(bytes32 _queryId, string _result, bytes _proof) {
         // Step 1: the prefix has to match 'LP\x01' (Ledger Proof version 1)
-        require((_proof[0] == "L") && (_proof[1] == "P") && (_proof[2] == 1));
+        if ((_proof[0] != "L")||(_proof[1] != "P")||(_proof[2] != 1)) throw;
 
         bool proofVerified = oraclize_randomDS_proofVerify__main(_proof, _queryId, bytes(_result), oraclize_getNetworkName());
-        require(proofVerified);
+        if (proofVerified == false) throw;
 
         _;
     }
@@ -1006,10 +1017,10 @@ contract usingOraclize {
         return 0;
     }
 
-    function matchBytes32Prefix(bytes32 content, bytes prefix, uint n_random_bytes) internal pure returns (bool){
+    function matchBytes32Prefix(bytes32 content, bytes prefix, uint n_random_bytes) internal returns (bool){
         bool match_ = true;
-        
-        require(prefix.length == n_random_bytes);
+
+	if (prefix.length != n_random_bytes) throw;
 
         for (uint256 i=0; i< n_random_bytes; i++) {
             if (content[i] != prefix[i]) match_ = false;
@@ -1024,7 +1035,7 @@ contract usingOraclize {
         uint ledgerProofLength = 3+65+(uint(proof[3+65+1])+2)+32;
         bytes memory keyhash = new bytes(32);
         copyBytes(proof, ledgerProofLength, 32, keyhash, 0);
-        if (!(keccak256(keyhash) == keccak256(sha256(context_name, queryId)))) return false;
+        if (!(sha3(keyhash) == sha3(sha256(context_name, queryId)))) return false;
 
         bytes memory sig1 = new bytes(uint(proof[ledgerProofLength+(32+8+1+32)+1])+2);
         copyBytes(proof, ledgerProofLength+(32+8+1+32), sig1.length, sig1, 0);
@@ -1032,7 +1043,7 @@ contract usingOraclize {
         // Step 3: we assume sig1 is valid (it will be verified during step 5) and we verify if 'result' is the prefix of sha256(sig1)
         if (!matchBytes32Prefix(sha256(sig1), result, uint(proof[ledgerProofLength+32+8]))) return false;
 
-        // Step 4: commitment match verification, keccak256(delay, nbytes, unonce, sessionKeyHash) == commitment in storage.
+        // Step 4: commitment match verification, sha3(delay, nbytes, unonce, sessionKeyHash) == commitment in storage.
         // This is to verify that the computed args match with the ones specified in the query.
         bytes memory commitmentSlice1 = new bytes(8+1+32);
         copyBytes(proof, ledgerProofLength+32, 8+1+32, commitmentSlice1, 0);
@@ -1042,7 +1053,7 @@ contract usingOraclize {
         copyBytes(proof, sig2offset-64, 64, sessionPubkey, 0);
 
         bytes32 sessionPubkeyHash = sha256(sessionPubkey);
-        if (oraclize_randomDS_args[queryId] == keccak256(commitmentSlice1, sessionPubkeyHash)){ //unonce, nbytes and sessionKeyHash match
+        if (oraclize_randomDS_args[queryId] == sha3(commitmentSlice1, sessionPubkeyHash)){ //unonce, nbytes and sessionKeyHash match
             delete oraclize_randomDS_args[queryId];
         } else return false;
 
@@ -1060,12 +1071,15 @@ contract usingOraclize {
         return oraclize_randomDS_sessionKeysHashVerified[sessionPubkeyHash];
     }
 
+
     // the following function has been written by Alex Beregszaszi (@axic), use it under the terms of the MIT license
-    function copyBytes(bytes from, uint fromOffset, uint length, bytes to, uint toOffset) internal pure returns (bytes) {
+    function copyBytes(bytes from, uint fromOffset, uint length, bytes to, uint toOffset) internal returns (bytes) {
         uint minLength = length + toOffset;
 
-        // Buffer too small
-        require(to.length >= minLength); // Should be a better way?
+        if (to.length < minLength) {
+            // Buffer too small
+            throw; // Should be a better way?
+        }
 
         // NOTE: the offset 32 is added to skip the `size` field of both bytes variables
         uint i = 32 + fromOffset;
@@ -1156,196 +1170,145 @@ contract usingOraclize {
 }
 // </ORACLIZE_API>
 
+contract CryptoTreasure is Pausable, Destructible, usingOraclize {
 
-contract CryptoTreasure is Ownable, Pausable, usingOraclize {
-
-	uint defaultPrice;
-	uint defaultMaxPlayers;
-	uint numberOfSpots;
-	uint commissionFeePercent;
-	uint public current;
-	uint commissionEarned;
-	uint bonusPool;
-	uint bonusPoolPercent;
+	uint currentGame = 1;
+	uint playPrice = 0.05 ether;
+	uint numberOfSpots = 107;
+	uint public currentTreasure;
+	uint initialTreasure = 2.5 ether;
 	uint totalPaidOut;
 	uint totalPlayers;
 	uint totalGamesEnded;
-	uint totalWonGames;
-	uint totalRevenue;
-	uint totalWithdrawn;
+	uint totalGamesWon;
+	uint totalGamesLost;
+	uint totalWagered;
 	uint totalPendingWithdrawals;
-	uint minimumBalance = 0.001 ether;
-	uint gasForOraclize;
-	address lastGameEndedBy;
-
-	struct Game {
-		bool Active;
-		uint dateStarted;
-		uint dateEnded;
-		uint dateDistributed;
-		uint Balance;
-		uint bonusAdded;
-		uint maxPlayers;
-		uint numberOfPlayers;
-		uint Price;
-		bool Completed;
-		mapping (address => uint) playerToSpot;
-		mapping (uint8 => address[]) spotToPlayers;
-	}
-
-	mapping (uint => Game) games;
+	uint gasForOraclize = 200000;
+	uint restakePercent = 1027;
 
 	struct Player {
 		uint lastGamePlayed;
 		uint gamesPlayed;
 		uint gamesWon;
+		uint gamesLost;
 		uint amountWon;
 		uint pendingWithdrawals;
+		uint lastGameStatus;
 	}
 
+	struct Game {
+		uint Id;
+		uint Date;
+		uint Spot;
+		bool Ended;
+		bool Won;
+		address Player;
+	}
+
+	mapping (uint => Game) games;
 	mapping (address => Player) players;
 	mapping (bytes32 => uint) oraclizeQueries;
 
-	event GameStarted(uint indexed game, uint date);
-	event GameEnded(uint indexed game, uint date);
 	event GameWon(uint indexed game, address indexed player, uint amount, uint date);
-	event GameDistributed(uint indexed game, uint8 indexed spot, uint date);
+	event GameEnded(uint indexed game, address indexed player, uint date, uint8 number);
 
 	function CryptoTreasure() public {
-		defaultPrice = 0.05 ether;
-		numberOfSpots = 107;
-		defaultMaxPlayers = 25;
-		commissionFeePercent = 15;
-		bonusPoolPercent = 20;
-		gasForOraclize = 400000;
-		newGame();
+		oraclize_setNetwork(networkID_consensys);
 	}
 
-	function newGame() internal {
-		current += 1;
-		games[current].dateStarted = now;
-		games[current].Active = true;
-		uint _bonusAmount = getBonusAmount();
-		games[current].Balance = _bonusAmount;
-		games[current].bonusAdded = _bonusAmount;
-		games[current].maxPlayers = defaultMaxPlayers;
-		games[current].Price = defaultPrice;
-		GameStarted(current, now);
-	}
-
-	function getVariables() public view returns(uint[13]) {
-		uint[13] memory array;
-		array[0] = current;
-		array[1] = (paused == true ? 1 : 0);
-		array[2] = games[current].Price;
-		array[3] = games[current].maxPlayers;
-		array[4] = games[current].numberOfPlayers;
-		array[5] = games[current].bonusAdded;
-		array[6] = calculateTotalGamePrize();
-		array[7] = players[msg.sender].lastGamePlayed;
-		array[8] = players[msg.sender].gamesPlayed;
-		array[9] = players[msg.sender].gamesWon;
-		array[10] = players[msg.sender].amountWon;
-		array[11] = players[msg.sender].pendingWithdrawals;
-		array[12] = commissionFeePercent;
+	function getVariables() public view returns(uint[11]) {
+		uint[11] memory array;
+		array[0] = (paused == true ? 1 : 0);
+		array[1] = playPrice;
+		array[2] = currentTreasure;
+		array[3] = players[msg.sender].lastGamePlayed;
+		array[4] = players[msg.sender].gamesPlayed;
+		array[5] = players[msg.sender].gamesWon;
+		array[6] = players[msg.sender].gamesLost;
+		array[7] = players[msg.sender].amountWon;
+		array[8] = players[msg.sender].pendingWithdrawals;
+		array[9] = players[msg.sender].lastGameStatus;
+		array[10] = totalPaidOut;
 		return array;
 	}
 
-	function getBonusAmount() internal returns(uint) {
-		if (bonusPoolPercent > 0 && bonusPool > 0) {
-			uint _amount = (bonusPool / 100) * bonusPoolPercent;
-			bonusPool -= _amount;
-			return _amount;
+	function initializeTreasure(uint _amount) internal {
+		if (_amount > 0) {
+			if (this.balance > _amount + totalPendingWithdrawals)
+				currentTreasure = _amount;
+			else
+				paused = true;
 		}
-	}
-
-	function hasAlreadyPlayed(address player) public view returns(bool) {
-		return (games[current].playerToSpot[player] > 0);
 	}
 
 	function participate(uint8 _spot) public payable whenNotPaused {
-
-		// Check that current game is active
-		require(isGameActive());
-
-		// Check that the max number of players hasn't been met yet
-		require(games[current].numberOfPlayers < games[current].maxPlayers);
-
-		// Check that the player doesn't exists
-		require(hasAlreadyPlayed(msg.sender) == false);
-
-		// Check that the spot is valid
     require(_spot >= 1 && _spot <= numberOfSpots);
+    require(msg.value == playPrice);
 
-		// Check that the amount paid is equal to the dig price
-    require(msg.value == games[current].Price);
-
-    games[current].playerToSpot[msg.sender] = _spot;
-		games[current].spotToPlayers[_spot].push(msg.sender);
-    games[current].numberOfPlayers++;
-
-		uint commission = (msg.value / 100) * commissionFeePercent;
-    uint balanceAmount = msg.value - commission;
-    commissionEarned += commission;
-    totalRevenue+= msg.value;
-    games[current].Balance += balanceAmount;
+		uint _restake = msg.value / 100 / 100 * restakePercent;
+    currentTreasure += _restake;
+    totalWagered += msg.value;
 
 		if (players[msg.sender].gamesPlayed == 0)
 			totalPlayers++;
-
 		players[msg.sender].gamesPlayed++;
-		players[msg.sender].lastGamePlayed = current;
 
-		if (games[current].numberOfPlayers >= games[current].maxPlayers)
-			respawnGame();
+	  games[currentGame].Id = currentGame;
+		games[currentGame].Date = now;
+		games[currentGame].Spot = _spot;
+		games[currentGame].Player = msg.sender;
 
+	  finishGame(currentGame);
+		currentGame++;
 	}
 
-	function __callback(bytes32 queryId, string result) public {
-  	if (msg.sender != oraclize_cbAddress()) throw;
-	  uint8 winningNumber = uint8(parseInt(result));
-	  if (games[oraclizeQueries[queryId]].Completed == false) {
-	  	games[oraclizeQueries[queryId]].Completed = true;
-			distributePrizes(oraclizeQueries[queryId], winningNumber);
-			GameDistributed(oraclizeQueries[queryId], winningNumber, now);
-	  }
+  function __callback(bytes32 queryId, string result) public {
+  	assert(msg.sender == oraclize_cbAddress());
+		uint gameId = oraclizeQueries[queryId];
+		uint8 winningNumber = uint8(parseInt(result));
+		distributeGame(winningNumber, gameId);
   }
 
-	function generateNumberWinnerQuery() internal {
-		bytes32 queryId = oraclize_query("WolframAlpha", "random number between 1 and 107", gasForOraclize);
-		oraclizeQueries[queryId] = current;
-	}
+  function distributeGame(uint8 winningNumber, uint gameId) internal {
+  	require(games[gameId].Ended == false);
+  	require(games[gameId].Player != 0x0);
+		games[gameId].Ended = true;
+		address _address = games[gameId].Player;
 
-	function respawnGame() internal {
-		lastGameEndedBy = msg.sender;
-		games[current].Active = false;
-		games[current].dateEnded = now;
-		generateNumberWinnerQuery();
-		GameEnded(current, now);
-		totalGamesEnded++;
-		newGame();
-	}
+		if (games[gameId].Spot == winningNumber) {
 
-	function distributePrizes(uint _game, uint8 winnerSpot) internal {
-	 	uint totalWinners = games[_game].spotToPlayers[winnerSpot].length;
-	 	if (totalWinners > 0) {
-	 		totalWonGames++;
-			uint winnerAmount = games[_game].Balance / totalWinners;
-			for(uint8 i = 0; i < totalWinners; i++) {
-				address _address = games[_game].spotToPlayers[winnerSpot][i];
-				GameWon(_game, _address, winnerAmount, now);
-				players[_address].gamesWon++;
-				players[_address].amountWon += winnerAmount;
-				if (!_address.send(winnerAmount)) {
-					players[_address].pendingWithdrawals += winnerAmount;
-					totalPendingWithdrawals += winnerAmount;
-				}
-				totalPaidOut += winnerAmount;
+			uint winningAmount = currentTreasure;
+			currentTreasure = 0;
+			games[gameId].Won = true;
+			players[_address].gamesWon++;
+			players[_address].amountWon += winningAmount;
+			players[_address].lastGameStatus = 1;
+			GameWon(gameId, _address, winningAmount, now);
+			if (!_address.send(winningAmount)) {
+				players[_address].pendingWithdrawals += winningAmount;
+				totalPendingWithdrawals += winningAmount;
 			}
+			totalPaidOut += winningAmount;
+			totalGamesWon++;
+			initializeTreasure(initialTreasure);
+
 		} else {
-			bonusPool += games[_game].Balance;
+			games[gameId].Won = false;
+			players[_address].gamesLost++;
+			players[_address].lastGameStatus = 2;
+			totalGamesLost++;
 		}
-		games[_game].dateDistributed = now;
+
+		players[_address].lastGamePlayed = gameId;
+		GameEnded(gameId, _address, now, winningNumber);
+		totalGamesEnded++;
+  }
+
+	function finishGame(uint gameId) internal {
+		require(games[gameId].Ended == false);
+		bytes32 queryId = oraclize_query("nested", "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random.data.0', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateIntegers\",\"params\":{\"apiKey\":\"${[decrypt] BFa/zWup+t1GegCMaZO/Tx433Go5RruGsY5Kikog/3HpGfQRkxEaIzcLlY28YgCiNsR/FdeHyQFqAKiPrRvLSGqL4tPFla1p71fEwxFYqhiu2Yrxqlk8vz//fA87oJ6eu+aL6ze3HihJpi3LQ+7j4k5EnoEq}\",\"n\":1,\"min\":1,\"max\":107,\"replacement\":true${[identity] \"}\"},\"id\":1${[identity] \"}\"}']");
+		oraclizeQueries[queryId] = gameId;
 	}
 
 	function withdraw() public whenNotPaused returns (bool) {
@@ -1363,115 +1326,80 @@ contract CryptoTreasure is Ownable, Pausable, usingOraclize {
 		}
 	}
 
-	function getGameBalance() public view returns(uint) {
-		return games[current].Balance;
-	}
-
-	function getGameBonusAdded() public view returns(uint) {
-		return games[current].bonusAdded;
-	}
-
-	function calculateTotalGamePrize() public view returns(uint) {
-		uint total = games[current].maxPlayers * games[current].Price;
-		uint commission = (total / 100) * commissionFeePercent;
-		return total - commission + games[current].bonusAdded;
-	}
-
-	function getNumberOfPlayersInCurrentGame() public view returns(uint) {
-		return games[current].numberOfPlayers;
-	}
-
-	function getPrice() public view returns(uint) {
-		return games[current].Price;
-	}
-
-	function getBalance() public view onlyOwner returns(uint) {
-		return this.balance;
-	}
-
-	function isGameActive() public view returns(bool) {
-		return games[current].Active;
-	}
-
-	function getPlayerInfo() public view returns(uint, uint, uint, uint) {
-		return (players[msg.sender].lastGamePlayed, players[msg.sender].gamesPlayed, players[msg.sender].gamesWon, players[msg.sender].amountWon);
-	}
-
 	/* Admin functions below */
 
-	function endCurrentGame() public onlyOwner {
-		respawnGame();
-	}
-
-	function withdrawCommission() public onlyOwner {
-    require(commissionEarned > minimumBalance);
-    uint _amount = commissionEarned - minimumBalance;
-    commissionEarned -= _amount;
-    totalWithdrawn += _amount;
+	function withdraw(uint _amount) public onlyOwner {
+		require(_amount <= this.balance - currentTreasure - totalPendingWithdrawals);
     owner.transfer(_amount);
 	}
 
-	function withdrawBonus(uint _percent) public onlyOwner {
-    require(bonusPool > 0);
-    require(_percent > 0 && _percent <= 100);
-    uint _amount = bonusPool / 100 * _percent;
-    bonusPool -= _amount;
-    commissionEarned += _amount;
+	function deposit() public payable onlyOwner {
 	}
 
-	function depositBonus() public payable onlyOwner {
-    bonusPool += msg.value;
-	}
-
-  function withdrawBalanceAmount (uint _amount) public onlyOwner {
-    owner.transfer(_amount);
-  }
-
-	function withdrawAll() public onlyOwner {
-    owner.transfer(this.balance);
-	}
-
-	function getAdminVariables() public view onlyOwner returns(uint[21]) {
-		uint[21] memory array;
+	function getAdminVariables() public view onlyOwner returns(uint[14]) {
+		uint[14] memory array;
 		array[0] = this.balance;
-		array[1] = defaultPrice;
-		array[2] = defaultMaxPlayers;
-		array[3] = numberOfSpots;
-		array[4] = commissionFeePercent;
-		array[5] = current;
-		array[6] = commissionEarned;
-		array[7] = bonusPool;
-		array[8] = bonusPoolPercent;
-		array[9] = totalPaidOut;
-		array[10] = totalPlayers;
-		array[11] = getGameBalance();
-		array[12] = getGameBonusAdded();
-		array[13] = getNumberOfPlayersInCurrentGame();
-		array[14] = totalWonGames;
-		array[15] = totalGamesEnded;
-		array[16] = totalRevenue;
-		array[17] = totalWithdrawn;
-		array[18] = totalPendingWithdrawals;
-		array[19] = gasForOraclize;
-		array[20] = games[current].maxPlayers;
+		array[1] = playPrice;
+		array[2] = initialTreasure;
+		array[3] = currentGame;
+		array[4] = totalPaidOut;
+		array[5] = totalPlayers;
+		array[6] = currentTreasure;
+		array[7] = totalGamesEnded;
+		array[8] = totalGamesWon;
+		array[9] = totalGamesLost;
+		array[10] = totalWagered;
+		array[11] = totalPendingWithdrawals;
+		array[12] = gasForOraclize;
+		array[13] = restakePercent;
 		return array;
 	}
 
-	function setAdminVariables(uint _defaultPrice,
-														 uint _defaultMaxPlayers,
-														 uint _commissionFeePercent,
-														 uint _bonusPoolPercent,
+	function setAdminVariables(uint _playPrice,
+														 uint _initialTreasure,
+														 uint _restakePercent,
 														 uint _gasForOraclize) public onlyOwner {
-		if (_defaultPrice > 0) defaultPrice = _defaultPrice;
-		if (_defaultMaxPlayers > 0) defaultMaxPlayers = _defaultMaxPlayers;
-		if (_commissionFeePercent >= 0 && _commissionFeePercent <= 100) commissionFeePercent = _commissionFeePercent;
-		if (_bonusPoolPercent >= 0 && _bonusPoolPercent <= 100) bonusPoolPercent = _bonusPoolPercent;
+		if (_playPrice > 0) playPrice = _playPrice;
+		if (_initialTreasure > 0) initialTreasure = _initialTreasure;
+		if (_restakePercent > 0) restakePercent = _restakePercent;
 		if (_gasForOraclize > 0) gasForOraclize = _gasForOraclize;
 	}
 
-	/* Admin function */
-	function kill() public onlyOwner() {
-		selfdestruct(owner);
+	function getUnfinishedGames() public view onlyOwner returns (uint[], uint[], uint[], bool[], bool[], address[]) {
+		uint totalUnfinished = 0;
+		uint i = 0;
+		for (i = 0; i < currentGame; i++) {
+			if (games[i].Ended == false && games[i].Id > 0)
+				totalUnfinished++;
+		}
+		uint[] memory arrId = new uint[](totalUnfinished);
+		uint[] memory arrDate = new uint[](totalUnfinished);
+		uint[] memory arrSpot = new uint[](totalUnfinished);
+		bool[] memory arrEnded = new bool[](totalUnfinished);
+		bool[] memory arrWon = new bool[](totalUnfinished);
+		address[] memory arrPlayer = new address[](totalUnfinished);
+		uint g = 0;
+		for (i = 0; i < currentGame; i++) {
+			if (games[i].Ended == false && games[i].Id > 0) {
+				arrId[g] = games[i].Id;
+				arrDate[g] = games[i].Date;
+				arrSpot[g] = games[i].Spot;
+				arrEnded[g] = games[i].Ended;
+				arrWon[g] = games[i].Won;
+				arrPlayer[g] = games[i].Player;
+				g++;
+			}
+		}
+		return (arrId, arrDate, arrSpot, arrEnded, arrWon, arrPlayer);
+	}
+
+	function manualFinishGame(uint gameId) public onlyOwner {
+		finishGame(gameId);
+	}
+
+	function manualInitializeTreasure(uint _amount) public onlyOwner {
+		require(this.balance > _amount + totalPendingWithdrawals);
+		initializeTreasure(_amount);
 	}
 
 }
