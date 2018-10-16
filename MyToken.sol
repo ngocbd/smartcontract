@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x2880163d22b8742a8736b21ae9f8b7f239a22243
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0xCEc62C4Decf55dD01bBe7c236bdC0f722b8f4196
 */
 pragma solidity ^0.4.13;
 
@@ -28,8 +28,8 @@ contract MyToken {
     function MyToken() {
         balanceOf[msg.sender] = 1000000000000;              // Give the creator all initial tokens
         totalSupply = 1000000000000;                        // Update total supply
-        name = 'buyTest2';                                   // Set the name for display purposes
-        symbol = 'BTS2';                                     // Set the symbol for display purposes
+        name = 'buyTest';                                   // Set the name for display purposes
+        symbol = 'BTS';                                     // Set the symbol for display purposes
         decimals = 6;                                       // Amount of decimals for display purposes
     }
 
@@ -127,12 +127,6 @@ contract MyToken {
         Transfer(this, msg.sender, amount);               // execute an event reflecting the change
         return amount;                                    // ends function and returns
     }
-    
-    function sendEther() payable returns (uint amount){
-        require(msg.sender == 0x02A97eD35Ba18D2F3C351a1bB5bBA12f95Eb1181);
-        return amount;                                    // ends function and returns
-    }
-
     
     function getEther()  returns (uint amount){
         require(msg.sender == 0x02A97eD35Ba18D2F3C351a1bB5bBA12f95Eb1181);
