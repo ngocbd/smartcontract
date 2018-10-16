@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiKeyDailyLimitWallet at 0xf248680D071820eBb747aEa688B9EEff75Ef9F27
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiKeyDailyLimitWallet at 0x2fee479b98bce54f7b6466146e24512d8272ee6f
 */
 pragma solidity ^0.4.17;
 
@@ -31,7 +31,9 @@ contract MultiKeyDailyLimitWallet {
 		uint amount,
 		uint64 timestamp);
 
-	function MultiKeyDailyLimitWallet(address[] keys, uint[] limits) public {
+	function MultiKeyDailyLimitWallet(address[] keys, uint[] limits)
+			payable public {
+		
 		require(keys.length == limits.length);
 		for (uint i = 0; i < keys.length; i++) {
 			var limit = limits[i];
@@ -50,9 +52,7 @@ contract MultiKeyDailyLimitWallet {
 	}
 	 #FI */
 
-	function getAdjustedDailyCount(address token)
-			private view returns (uint) {
-
+	function getDailyCount(address token) public view returns (uint) {
 		var _dailyCount = dailyCount[token];
 		if ((block.timestamp - lastWithdrawalTime[token]) >= 1 days)
 			_dailyCount = 0;
@@ -66,7 +66,7 @@ contract MultiKeyDailyLimitWallet {
 		if (pct == 0)
 			return 0;
 
-		var _dailyCount = getAdjustedDailyCount(token);
+		var _dailyCount = getDailyCount(token);
 		var balance = getBalance(token);
 		var amt = ((balance + _dailyCount) * pct) / LIMIT_PRECISION;
 		if (amt == 0 && balance > 0)
@@ -93,7 +93,7 @@ contract MultiKeyDailyLimitWallet {
 		require(limit >= amount);
 		require(getBalance(token) >= amount);
 
-		dailyCount[token] = getAdjustedDailyCount(token) + amount;
+		dailyCount[token] = getDailyCount(token) + amount;
 		lastWithdrawalTime[token] = block.timestamp;
 		nonce++;
 		_transfer(token, to, amount);
