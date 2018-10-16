@@ -1,82 +1,150 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Marketplace at 0x83bf4ce7a3937ef86f6eb8082e09ce39c52be697
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Marketplace at 0x4ce6405331b0cf16f3b7ac4037acad7247055ef2
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
 
-interface token {
-    function transfer(address receiver, uint amount) public;
-	function balanceOf(address check) public;
+// File: zeppelin-solidity/contracts/ownership/Ownable.sol
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
 }
 
+// File: zeppelin-solidity/contracts/token/ERC721/ERC721.sol
 
+/**
+ * @title ERC721 interface
+ * @dev see https://github.com/ethereum/eips/issues/721
+ */
+contract ERC721 {
+  event Transfer(address indexed _from, address indexed _to, uint256 _tokenId);
+  event Approval(address indexed _owner, address indexed _approved, uint256 _tokenId);
 
-contract Marketplace {
-    address public beneficiary;
-    uint public amountRaised;
-	uint public totalIncome;
-    uint public price;
-	 
-    token public tokenReward;
-	
-    mapping(address => uint256) public balanceOf;
-    bool changePrice = false;
+  function balanceOf(address _owner) public view returns (uint256 _balance);
+  function ownerOf(uint256 _tokenId) public view returns (address _owner);
+  function transfer(address _to, uint256 _tokenId) public;
+  function approve(address _to, uint256 _tokenId) public;
+  function takeOwnership(uint256 _tokenId) public;
+}
 
-    event DepositBeneficiary(address recipient, uint totalAmountRaised);
-    event FundTransfer(address backer, uint amount );
-    event ChangePrice(uint prices);
-    /**
-     * Constructor function
-     *
-     * Setup the owner
-     */
-    function Marketplace(
-        address ifSuccessfulSendTo,
-        uint etherCostOfEachToken,
-        address addressOfTokenUsedAsReward
-    )public {
-        beneficiary = ifSuccessfulSendTo;
-        price = etherCostOfEachToken * 1 finney;
-        tokenReward = token(addressOfTokenUsedAsReward);
+// File: contracts/Marketplace.sol
+
+contract Marketplace is Ownable {
+    ERC721 public nft;
+
+    mapping (uint256 => Listing) public listings;
+
+    uint256 public minListingSeconds;
+    uint256 public maxListingSeconds;
+
+    struct Listing {
+        address seller;
+        uint256 startingPrice;
+        uint256 minimumPrice;
+        uint256 createdAt;
+        uint256 durationSeconds;
     }
 
+    event TokenListed(uint256 indexed _tokenId, uint256 _startingPrice, uint256 _minimumPrice, uint256 _durationSeconds, address _seller);
+    event TokenUnlisted(uint256 indexed _tokenId, address _unlister);
+    event TokenSold(uint256 indexed _tokenId, uint256 _price, uint256 _paidAmount, address indexed _seller, address _buyer);
 
-    function () public payable {
-        uint amount = msg.value;
-        balanceOf[msg.sender] += amount;
-        amountRaised += amount;
-		totalIncome += amount; 
-        tokenReward.transfer(msg.sender, amount / price);
-		FundTransfer(beneficiary, amount);
+    modifier nftOnly() {
+        require(msg.sender == address(nft));
+        _;
     }
 
+    function Marketplace(ERC721 _nft, uint256 _minListingSeconds, uint256 _maxListingSeconds) public {
+        nft = _nft;
+        minListingSeconds = _minListingSeconds;
+        maxListingSeconds = _maxListingSeconds;
+    }
 
+    function list(address _tokenSeller, uint256 _tokenId, uint256 _startingPrice, uint256 _minimumPrice, uint256 _durationSeconds) public nftOnly {
+        require(_durationSeconds >= minListingSeconds && _durationSeconds <= maxListingSeconds);
+        require(_startingPrice >= _minimumPrice);
+        require(! listingActive(_tokenId));
+        listings[_tokenId] = Listing(_tokenSeller, _startingPrice, _minimumPrice, now, _durationSeconds);
+        nft.takeOwnership(_tokenId);
+        TokenListed(_tokenId, _startingPrice, _minimumPrice, _durationSeconds, _tokenSeller);
+    }
 
-    
+    function unlist(address _caller, uint256 _tokenId) public nftOnly {
+        address _seller = listings[_tokenId].seller;
+        // Allow owner to unlist (via nft) for when it's time to shut this down
+        require(_seller == _caller || address(owner) == _caller);
+        nft.transfer(_seller, _tokenId);
+        delete listings[_tokenId];
+        TokenUnlisted(_tokenId, _caller);
+    }
 
-    //transfer token to the owner of the contract (beneficiary)
-        function transferToken(uint amount)public  {  
-			if (beneficiary == msg.sender)
-			{            
-				tokenReward.transfer(msg.sender, amount);  
-			}
-       
-		}
-		function safeWithdrawal() public {
-			if (beneficiary == msg.sender) {
-					if(beneficiary.send(amountRaised)){
-					FundTransfer(beneficiary, amountRaised);
-					amountRaised = 0;
-					}
-			}
-		}
- 
+    function purchase(address _caller, uint256 _tokenId, uint256 _totalPaid) public payable nftOnly {
+        Listing memory _listing = listings[_tokenId];
+        address _seller = _listing.seller;
 
-    function checkPriceCrowdsale(uint newPrice1, uint newPrice2)public {
-        if (beneficiary == msg.sender) {          
-           price = (newPrice1 * 1 finney)+(newPrice2 * 1 szabo);
-           ChangePrice(price);
-           changePrice = true;
-        }
+        require(_caller != _seller); // Doesn't make sense for someone to buy/sell their own token.
+        require(listingActive(_tokenId));
 
+        uint256 _price = currentPrice(_tokenId);
+        require(_totalPaid >= _price);
+
+        delete listings[_tokenId];
+
+        nft.transfer(_caller, _tokenId);
+        _seller.transfer(msg.value);
+        TokenSold(_tokenId, _price, _totalPaid, _seller, _caller);
+    }
+
+    function currentPrice(uint256 _tokenId) public view returns (uint256) {
+        Listing memory listing = listings[_tokenId];
+        require(now >= listing.createdAt);
+
+        uint256 _deadline = listing.createdAt + listing.durationSeconds;
+        require(now <= _deadline);
+
+        uint256 _elapsedTime = now - listing.createdAt;
+        uint256 _progress = (_elapsedTime * 100) / listing.durationSeconds;
+        uint256 _delta = listing.startingPrice - listing.minimumPrice;
+        return listing.startingPrice - ((_delta * _progress) / 100);
+    }
+
+    function listingActive(uint256 _tokenId) internal view returns (bool) {
+        Listing memory listing = listings[_tokenId];
+        return listing.createdAt + listing.durationSeconds >= now && now >= listing.createdAt;
     }
 }
