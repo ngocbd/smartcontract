@@ -1,12 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BatchAirDrop at 0x9eb8398cf4b52b1aaf941e010a9cfa181a51ecd5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BatchAirDrop at 0x7c6546bea18e7d3f734b16ceb76950cb47c55fc5
 */
-/*
-Name : Cryptonia Poker Chips
-Descrition : Play poker online with cryptocurrency. This blockchain-powered platform lets you play in a fair and safe environment.
-Url : www.cryptonia.poker
-*/
-pragma solidity 0.4.23;
+pragma solidity ^0.4.23;
 
 
 contract MintableTokenIface {
@@ -27,7 +22,6 @@ contract BatchAirDrop {
     function batchSend(uint256 amount, address[] wallets) public {
         require(msg.sender == owner);
         require(amount != 0);
-        token.mint(this, amount * wallets.length);
         for (uint256 i = 0; i < wallets.length; i++) {
             token.transfer(wallets[i], amount);
         }
