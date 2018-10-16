@@ -1,290 +1,136 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VVToken at 0x1f4215fe007ee5b170391241656a28a8bd13826e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VVToken at 0xef19718e87bb889751b3019dfa85baa70e02cde9
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.21;
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
-contract MultiOwner {
-    /* Constructor */
-    event OwnerAdded(address newOwner);
-    event OwnerRemoved(address oldOwner);
-	event RequirementChanged(uint256 newRequirement);
-	
-    uint256 public ownerRequired;
-    mapping (address => bool) public isOwner;
-	mapping (address => bool) public RequireDispose;
-	address[] owners;
-	
-	function MultiOwner(address[] _owners, uint256 _required) public {
-        ownerRequired = _required;
-        isOwner[msg.sender] = true;
-        owners.push(msg.sender);
-        
-        for (uint256 i = 0; i < _owners.length; ++i){
-			require(!isOwner[_owners[i]]);
-			isOwner[_owners[i]] = true;
-			owners.push(_owners[i]);
-        }
-    }
-    
-	modifier onlyOwner {
-	    require(isOwner[msg.sender]);
-        _;
-    }
-    
-	modifier ownerDoesNotExist(address owner) {
-		require(!isOwner[owner]);
-        _;
-    }
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a / b;
+    return c;
+  }
 
-    modifier ownerExists(address owner) {
-		require(isOwner[owner]);
-        _;
-    }
-    
-    function addOwner(address owner) onlyOwner ownerDoesNotExist(owner) external{
-        isOwner[owner] = true;
-        owners.push(owner);
-        OwnerAdded(owner);
-    }
-    
-	function numberOwners() public constant returns (uint256 NumberOwners){
-	    NumberOwners = owners.length;
-	}
-	
-    function removeOwner(address owner) onlyOwner ownerExists(owner) external{
-		require(owners.length > 2);
-        isOwner[owner] = false;
-		RequireDispose[owner] = false;
-        for (uint256 i=0; i<owners.length - 1; i++){
-            if (owners[i] == owner) {
-				owners[i] = owners[owners.length - 1];
-                break;
-            }
-		}
-		owners.length -= 1;
-        OwnerRemoved(owner);
-    }
-    
-	function changeRequirement(uint _newRequired) onlyOwner external {
-		require(_newRequired >= owners.length);
-        ownerRequired = _newRequired;
-        RequirementChanged(_newRequired);
-    }
-	
-	function ConfirmDispose() onlyOwner() returns (bool){
-		uint count = 0;
-		for (uint i=0; i<owners.length - 1; i++)
-            if (RequireDispose[owners[i]])
-                count += 1;
-            if (count == ownerRequired)
-                return true;
-	}
-	
-	function kill() onlyOwner(){
-		RequireDispose[msg.sender] = true;
-		if(ConfirmDispose()){
-			selfdestruct(msg.sender);
-		}
-    }
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-contract VVToken is MultiOwner{
-	event SubmitTransaction(bytes32 transactionHash);
-	event Confirmation(address sender, bytes32 transactionHash);
-	event Execution(bytes32 transactionHash);
-	event FrozenFunds(address target, bool frozen);
-	event Transfer(address indexed from, address indexed to, uint256 value);
-	event FeePaid(address indexed from, address indexed to, uint256 value);
-	event VoidAccount(address indexed from, address indexed to, uint256 value);
-	event Bonus(uint256 value);
-	event Burn(uint256 value);
-	
-	string public name = "VV Coin";
-	string public symbol = "VVI";
-	uint8 public decimals = 8;
-	uint256 public totalSupply = 3000000000 * 10 ** uint256(decimals);
-	uint256 public EthPerToken = 300000;
-	uint256 public ChargeFee = 2;
-	
-	mapping(address => uint256) public balanceOf;
-	mapping(address => bool) public frozenAccount;
-	mapping (bytes32 => mapping (address => bool)) public Confirmations;
-	mapping (bytes32 => Transaction) public Transactions;
-	
-	struct Transaction {
-		address destination;
-		uint value;
-		bytes data;
-		bool executed;
-    }
-	
-	modifier notNull(address destination) {
-		require (destination != 0x0);
-        _;
-    }
-	
-	modifier confirmed(bytes32 transactionHash) {
-		require (Confirmations[transactionHash][msg.sender]);
-        _;
-    }
+/**
+ * @title ERC20 interface
+ */
+contract ERC20 {
+  uint256 public totalSupply;
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
-    modifier notConfirmed(bytes32 transactionHash) {
-		require (!Confirmations[transactionHash][msg.sender]);
-        _;
-    }
-	
-	modifier notExecuted(bytes32 TransHash) {
-		require (!Transactions[TransHash].executed);
-        _;
-    }
-    
-	function VVToken(address[] _owners, uint256 _required) MultiOwner(_owners, _required) public {
-		balanceOf[msg.sender] = totalSupply;                    
-    }
-	
-	/* Internal transfer, only can be called by this contract */
-    function _transfer(address _from, address _to, uint256 _value) internal {
-        require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
-        require (balanceOf[_from] >= _value);                // Check if the sender has enough
-        require (balanceOf[_to] + _value >= balanceOf[_to]); // Check for overflows
-        require(!frozenAccount[_from]);                     // Check if sender is frozen
-		uint256 previousBalances = balanceOf[_from] + balanceOf[_to];
-        balanceOf[_from] -= _value;                         // Subtract from the sender
-        balanceOf[_to] += _value;                           // Add the same to the recipient
-        Transfer(_from, _to, _value);
-		assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
-    }
-	
-	/* Internal transfer, only can be called by this contract */
-    function _collect_fee(address _from, address _to, uint256 _value) internal {
-        require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
-        require (balanceOf[_from] >= _value);                // Check if the sender has enough
-        require (balanceOf[_to] + _value >= balanceOf[_to]); // Check for overflows
-        require(!frozenAccount[_from]);                     // Check if sender is frozen
-		uint256 previousBalances = balanceOf[_from] + balanceOf[_to];
-        balanceOf[_from] -= _value;                         // Subtract from the sender
-        balanceOf[_to] += _value;                           // Add the same to the recipient
-		FeePaid(_from, _to, _value);
-		assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
-    }
-	
-	function transfer(address _to, uint256 _value) public {
-		_transfer(msg.sender, _to, _value);
-	}
-		
-	function transferFrom(address _from, address _to, uint256 _value, bool _fee) onlyOwner public returns (bool success) {
-		uint256 charge = 0 ;
-		uint256 t_value = _value;
-		if(_fee){
-			charge = _value * ChargeFee / 100;
-		}else{
-			charge = _value - (_value / (ChargeFee + 100) * 100);
-		}
-		t_value = _value - charge;
-		require(t_value + charge == _value);
-        _transfer(_from, _to, t_value);
-		_collect_fee(_from, this, charge);
-        return true;
-    }
-	
-	function setPrices(uint256 newValue) onlyOwner public {
-        EthPerToken = newValue;
-    }
-    
-	function setFee(uint256 newValue) onlyOwner public {
-        ChargeFee = newValue;
-    }
-	
-    function freezeAccount(address target, bool freeze) onlyOwner public {
-        frozenAccount[target] = freeze;
-        FrozenFunds(target, freeze);
-    }
-	
-	function() payable {
-		require(msg.value > 0);
-		uint amount = msg.value * 10 ** uint256(decimals) * EthPerToken / 1 ether;
-        _transfer(this, msg.sender, amount);
-    }
-	
-	function remainBalanced() public constant returns (uint256){
-        return balanceOf[this];
-    }
-	
-	/*Transfer Eth */
-	function execute(address _to, uint _value, bytes _data) notNull(_to) onlyOwner external returns (bytes32 _r) {
-		_r = addTransaction(_to, _value, _data);
-		confirmTransaction(_r);
-    }
-	
-	function addTransaction(address destination, uint value, bytes data) private notNull(destination) returns (bytes32 TransHash){
-        TransHash = sha3(destination, value, data);
-        if (Transactions[TransHash].destination == 0) {
-            Transactions[TransHash] = Transaction({
-                destination: destination,
-                value: value,
-                data: data,
-                executed: false
-            });
-            SubmitTransaction(TransHash);
-        }
-    }
-	
-	function addConfirmation(bytes32 TransHash) private onlyOwner notConfirmed(TransHash){
-        Confirmations[TransHash][msg.sender] = true;
-        Confirmation(msg.sender, TransHash);
-    }
-	
-	function isConfirmed(bytes32 TransHash) public constant returns (bool){
-        uint count = 0;
-        for (uint i=0; i<owners.length; i++)
-            if (Confirmations[TransHash][owners[i]])
-                count += 1;
-            if (count == ownerRequired)
-                return true;
-    }
-	
-	function confirmationCount(bytes32 TransHash) external constant returns (uint count){
-        for (uint i=0; i<owners.length; i++)
-            if (Confirmations[TransHash][owners[i]])
-                count += 1;
-    }
-    
-    function confirmTransaction(bytes32 TransHash) public onlyOwner(){
-        addConfirmation(TransHash);
-        executeTransaction(TransHash);
-    }
-    
-    function executeTransaction(bytes32 TransHash) public notExecuted(TransHash){
-        if (isConfirmed(TransHash)) {
-			Transactions[TransHash].executed = true;
-            require(Transactions[TransHash].destination.call.value(Transactions[TransHash].value)(Transactions[TransHash].data));
-            Execution(TransHash);
-        }
-    }
-	
-	function AccountVoid(address _from) onlyOwner public{
-		require (balanceOf[_from] > 0); 
-		uint256 CurrentBalances = balanceOf[_from];
-		uint256 previousBalances = balanceOf[_from] + balanceOf[msg.sender];
-        balanceOf[_from] -= CurrentBalances;                         
-        balanceOf[msg.sender] += CurrentBalances;
-		VoidAccount(_from, msg.sender, CurrentBalances);
-		assert(balanceOf[_from] + balanceOf[msg.sender] == previousBalances);	
-	}
-	
-	function burn(uint amount) onlyOwner{
-		uint BurnValue = amount * 10 ** uint256(decimals);
-		require(balanceOf[this] >= BurnValue);
-		balanceOf[this] -= BurnValue;
-		totalSupply -= BurnValue;
-		Burn(BurnValue);
-	}
-	
-	function bonus(uint amount) onlyOwner{
-		uint BonusValue = amount * 10 ** uint256(decimals);
-		require(balanceOf[this] + BonusValue > balanceOf[this]);
-		balanceOf[this] += BonusValue;
-		totalSupply += BonusValue;
-		Bonus(BonusValue);
-	}
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ */
+contract StandardToken is ERC20 {
+  using SafeMath for uint256;
+
+  mapping(address => uint256) balances;
+  mapping (address => mapping (address => uint256)) allowed;
+
+  /**
+   * @dev Gets the balance of the specified address.
+   * @param _owner The address to query the the balance of.
+   * @return An uint256 representing the amount owned by the passed address.
+   */
+  function balanceOf(address _owner) public view returns (uint256 balance) {
+    return balances[_owner];
+  }
+
+  /**
+   * @dev transfer token for a specified address
+   * @param _to The address to transfer to.
+   * @param _value The amount to be transferred.
+   */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    emit Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    uint256 _allowance = allowed[_from][msg.sender];
+    require(_to != address(0));
+    require (_value <= _allowance);
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
+    emit Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    // To change the approve amount you first have to reduce the addresses`
+    //  allowance to zero by calling `approve(_spender, 0)` if it is not
+    //  already 0 to mitigate the race condition described here:
+    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+    allowed[msg.sender][_spender] = _value;
+    emit Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
+    return allowed[_owner][_spender];
+  }
+}
+
+contract VVToken is StandardToken {
+  string public constant name = "VVeljk Token";
+  string public constant symbol = "VVT";
+  uint8 public constant decimals = 18;
+
+  function VVToken() public {
+    totalSupply = 300000000 * 10**uint(decimals);
+    balances[msg.sender] = totalSupply;
+  }
 }
