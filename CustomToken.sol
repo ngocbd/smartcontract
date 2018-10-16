@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xb97b5dd6fd79614ec0c6bc96a3660800e53405fc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x8a9d0b21fe37343cc99f6c0dc950e5a8f2bb4603
 */
 pragma solidity ^0.4.19;
 
@@ -47,11 +47,11 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 9000000000000;
-        name = 'DataChain';
-        symbol = 'DATAC';
-        decimals = 4;
-        balanceOf[0xacd55eaa2046d9a33b404ab776a6bc2d1a5e3d8b] = totalSupply;
-        Transfer(address(0), 0xacd55eaa2046d9a33b404ab776a6bc2d1a5e3d8b, totalSupply);
+        totalSupply = 300000000000000000000000000;
+        name = 'GreenFinanceChain';
+        symbol = 'GFCC';
+        decimals = 18;
+        balanceOf[0x70f33788f471ba1c61d0e8d924f9dd367f09a077] = totalSupply;
+        Transfer(address(0), 0x70f33788f471ba1c61d0e8d924f9dd367f09a077, totalSupply);
     }
 }
