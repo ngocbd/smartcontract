@@ -1,9 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Co2Bit at 0x97ba3d8ce6397ce7aea59a39e01ccd859c753387
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Co2Bit at 0xcc70b973a47dc7305b6d1145f32c58bbb0587f6f
 */
 pragma solidity ^0.4.18;
 /*
 This is based on the standard example of an ERC20 token.
+Initial supply, token name and symbol are needed as parameters when deploying the contract.
+All tokens are minted at once and assigned to the owner of the contract, which allows them to be
+manually transferrable.
+Starting a sale requires the owner address to 
+- send a setPrice command to the contract, specifying the ETH/Token exchange rate
+- send the amount of tokens available for distribution to the contract
+During the sale, the contract receives ETH and sends tokens back based on exchange generates
+The owner of the contract can withdraw Ether from the contract at any time by sending a 
+withdraw command to the contract with the amount of ether to withdraw.
 */
 contract owned {
     address public owner;
@@ -224,14 +233,14 @@ contract Co2Bit is owned, TokenERC20 {
     }
 
     function freezeContract(bool freeze) onlyOwner public {
-      /// Implements the ability to stop all token transfers 
-      ///   in order to migrate to a new contract
+      /// This gives us the ability to stop all token transfers 
+      ///   so we can migrate to a new contract
         isContractFrozen = freeze;
         FrozenContract(freeze);           // trigers network event
     }
     
     function setPrice(uint256 newBuyPrice) onlyOwner public {
-        buyPrice = newBuyPrice;                           
+        buyPrice = newBuyPrice;
     }
     
     function () public payable {
