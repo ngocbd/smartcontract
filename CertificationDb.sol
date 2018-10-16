@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CertificationDb at 0x10d4b24938f6de7ae4048c7273f09c50d5caf4d9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CertificationDb at 0x65dBc8988557CE4260e84a467990a075115be771
 */
 pragma solidity ^0.4.2;
 
@@ -332,9 +332,6 @@ contract CertificationDb is CertificationDbI, WithFee, PullPaymentCapable {
             uint256 certificationQueryFee,
             address _certifierDb)
             WithFee(beneficiary, certificationQueryFee) {
-        if (msg.value > 0) {
-            throw;
-        }
         if (_certifierDb == 0) {
             throw;
         }
