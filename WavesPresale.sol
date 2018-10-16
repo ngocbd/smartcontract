@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WavesPresale at 0x5Bc7e5694ee5D6ea32A0dA36EFb56A177190A53a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WavesPresale at 0x407113f6b520F3ac72386CFb0EEe9ed3930512c0
 */
 contract WavesPresale {
     address public owner;
