@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RajTest at 0xb7cc4f093436b966b671ad9d0c09e7a6c37b4a81
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RajTest at 0x678d0b382f2988d6c9654a143a5de4999cb58270
 */
 pragma solidity ^0.4.16;
 
@@ -28,7 +28,8 @@ contract RajTest is owned {
     string public symbol = "RT";
     uint8 public decimals = 18;
     uint256 public totalSupply = 0;
-
+    
+    uint256 public sellPrice = 1045;
     uint256 public buyPrice = 1045;
 
     bool public released = false;
@@ -159,7 +160,6 @@ contract RajTest is owned {
     function mintToken(address target, uint256 mintedAmount) onlyCrowdsaleAgent public {
         balanceOf[target] += mintedAmount;
         totalSupply += mintedAmount;
-        Transfer(0, this, mintedAmount);
         Transfer(this, target, mintedAmount);
     }
 
@@ -172,15 +172,25 @@ contract RajTest is owned {
     }
 
     /// @notice Allow users to buy tokens for `newBuyPrice` eth and sell tokens for `newSellPrice` eth
+    /// @param newSellPrice Price the users can sell to the contract
     /// @param newBuyPrice Price users can buy from the contract
-    function setPrices(uint256 newBuyPrice) onlyOwner public {
+    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner public {
+        sellPrice = newSellPrice;
         buyPrice = newBuyPrice;
     }
 
     /// @notice Buy tokens from contract by sending ether
     function buy() payable public {
-        uint amount = msg.value * buyPrice;               // calculates the amount
+        uint amount = msg.value / buyPrice;               // calculates the amount
         _transfer(this, msg.sender, amount);              // makes the transfers
+    }
+
+    /// @notice Sell `amount` tokens to contract
+    /// @param amount amount of tokens to be sold
+    function sell(uint256 amount) canTransfer public {
+        require(this.balance >= amount * sellPrice);      // checks if the contract has enough ether to buy
+        _transfer(msg.sender, this, amount);              // makes the transfers
+        msg.sender.transfer(amount * sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
     }
 
     /// @dev Set the contract that can call release and make the token transferable.
