@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWalletWithDailyLimit at 0x325d1a1b19e8a9081d874dcd463bba78d34d576f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWalletWithDailyLimit at 0xB321fe9D7B547e1b225b4e73cE1138531024663D
 */
-pragma solidity 0.4.15;
-
+pragma solidity 0.4.18;
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
 /// @author Stefan George - <stefan.george@consensys.net>
@@ -15,6 +14,7 @@ contract MultiSigWallet {
     event Revocation(address indexed sender, uint indexed transactionId);
     event Submission(uint indexed transactionId);
     event Execution(uint indexed transactionId);
+
     event ExecutionFailure(uint indexed transactionId);
     event Deposit(address indexed sender, uint value);
     event OwnerAddition(address indexed owner);
@@ -24,16 +24,17 @@ contract MultiSigWallet {
     /*
      *  Constants
      */
-    uint constant public MAX_OWNER_COUNT = 50;
+    uint constant public MAX_OWNER_COUNT = 10;
 
     /*
      *  Storage
      */
+    uint public required = 5;
+
     mapping (uint => Transaction) public transactions;
     mapping (uint => mapping (address => bool)) public confirmations;
     mapping (address => bool) public isOwner;
     address[] public owners;
-    uint public required;
     uint public transactionCount;
 
     struct Transaction {
@@ -93,7 +94,7 @@ contract MultiSigWallet {
             throw;
         _;
     }
-
+    
     modifier validRequirement(uint ownerCount, uint _required) {
         if (   ownerCount > MAX_OWNER_COUNT
             || _required > ownerCount
@@ -102,7 +103,7 @@ contract MultiSigWallet {
             throw;
         _;
     }
-
+    
     /// @dev Fallback function allows to deposit ether.
     function()
         payable
@@ -115,19 +116,23 @@ contract MultiSigWallet {
      * Public functions
      */
     /// @dev Contract constructor sets initial owners and required number of confirmations.
-    /// @param _owners List of initial owners.
-    /// @param _required Number of required confirmations.
-    function MultiSigWallet(address[] _owners, uint _required)
+
+    function MultiSigWallet()
         public
-        validRequirement(_owners.length, _required)
     {
-        for (uint i=0; i<_owners.length; i++) {
-            if (isOwner[_owners[i]] || _owners[i] == 0)
-                throw;
-            isOwner[_owners[i]] = true;
-        }
-        owners = _owners;
-        required = _required;
+        isOwner[0x160e529055D084add9634fE1c2059109c8CE044e] = true;
+        isOwner[0xCc071f42531481fcC3977518eE9e3883a5719017] = true;
+        isOwner[0xA88b950589Ac78ec10eDEfb0b40563400f3aF13E] = true;
+        isOwner[0xfb28b252679F11e37BbaD7C920D7Ba77fC2B0087] = true;
+        isOwner[0xA4bACDd1199c641d25D02004edb6f64D9fa641F2] = true;
+	    isOwner[0xC19Fd2748a4D5d7906A3Fb731fF6186FE526cC28] = true;
+        owners = [0x160e529055D084add9634fE1c2059109c8CE044e,
+                  0xCc071f42531481fcC3977518eE9e3883a5719017,
+                  0xC19Fd2748a4D5d7906A3Fb731fF6186FE526cC28,
+                  0xA88b950589Ac78ec10eDEfb0b40563400f3aF13E,
+                  0xfb28b252679F11e37BbaD7C920D7Ba77fC2B0087,
+                  0xA4bACDd1199c641d25D02004edb6f64D9fa641F2];
+
     }
 
     /// @dev Allows to add a new owner. Transaction has to be sent by wallet.
@@ -382,7 +387,6 @@ contract MultiSigWallet {
     }
 }
 
-
 /// @title Multisignature wallet with daily limit - Allows an owner to withdraw a daily limit without multisig.
 /// @author Stefan George - <stefan.george@consensys.net>
 contract MultiSigWalletWithDailyLimit is MultiSigWallet {
@@ -395,23 +399,9 @@ contract MultiSigWalletWithDailyLimit is MultiSigWallet {
     /*
      *  Storage
      */
-    uint public dailyLimit;
+    uint public dailyLimit = 50000000000000000000;
     uint public lastDay;
     uint public spentToday;
-
-    /*
-     * Public functions
-     */
-    /// @dev Contract constructor sets initial owners, required number of confirmations and daily withdraw limit.
-    /// @param _owners List of initial owners.
-    /// @param _required Number of required confirmations.
-    /// @param _dailyLimit Amount in wei, which can be withdrawn without confirmations on a daily basis.
-    function MultiSigWalletWithDailyLimit(address[] _owners, uint _required, uint _dailyLimit)
-        public
-        MultiSigWallet(_owners, _required)
-    {
-        dailyLimit = _dailyLimit;
-    }
 
     /// @dev Allows to change the daily limit. Transaction has to be sent by wallet.
     /// @param _dailyLimit Amount in wei.
