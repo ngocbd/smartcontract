@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FeeRegistrar at 0xccaf7B08a3AF4a5cCB7226C7BcddE917764e2d13
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FeeRegistrar at 0xdd9b54d1dd185f9302e24dd3ae9e652453f74705
 */
 //! FeeRegistrar contract.
 //! By Parity Technologies, 2017.
@@ -191,7 +191,7 @@ contract FeeRegistrar is Delegated {
     require(found);
 
     // Refund the fee to the origin payer
-    origin.transfer(msg.value);
+    who.transfer(msg.value);
   }
 
   /// @notice Change the address of the treasury, the address to which
