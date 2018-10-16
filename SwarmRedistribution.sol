@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SwarmRedistribution at 0x1926a3254d6bb48f983d1890a993d618d1b6c9cf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SwarmRedistribution at 0x0763312005DdCC51f88e2518049635a1748c90a5
 */
 pragma solidity ^0.4.6;
 
@@ -9,7 +9,7 @@ contract Campaign {
     bool campaignOpen;
     
     function Campaign() {
-        JohanNygren = msg.sender;
+        JohanNygren = 0x948176CB42B65d835Ee4324914B104B66fB93B52;
         campaignOpen = true;
     }
     
@@ -29,8 +29,6 @@ contract Campaign {
     
 }
 
-
-
 contract RES is Campaign { 
 
     /* Public variables of the token */
@@ -46,10 +44,12 @@ contract RES is Campaign {
     /* This generates a public event on the blockchain that will notify clients */
     event Transfer(address indexed from, address indexed to, uint256 value);
     
+
     /* Bought or sold */
 
     event Bought(address from, uint amount);
     event Sold(address from, uint amount);
+    event BoughtViaJohan(address from, uint amount);
 
     /* Initializes contract with name, symbol and decimals */
 
@@ -108,7 +108,24 @@ contract SwarmRedistribution is Campaign, RES {
     /* Exchange-rate in parts per thousand */
     exchangeRate = 0;
     
+    isHuman[JohanNygren] = true;
+    
     }
+
+    function buyViaJohan() isOpen public payable {
+      balanceOf[msg.sender] += msg.value;
+      totalSupply += msg.value;  
+
+      /* Create the dividend pathway */
+      dividendPathways[msg.sender].push(dividendPathway({
+                                      from: JohanNygren, 
+                                      amount:  msg.value,
+                                      timeStamp: now
+                                    }));
+
+      BoughtViaJohan(msg.sender, msg.value);
+    }
+
 
     /* Send coins */
     function transfer(address _to, uint256 _value) isOpen {
@@ -201,29 +218,5 @@ contract SwarmRedistribution is Campaign, RES {
                 }
                 dividendPathways[node].length--;
         }
-
-}
-
-contract CampaignBeneficiary is Campaign, RES, SwarmRedistribution {
-
-    event BuyWithPathwayFromBeneficiary(address from, uint amount);
-
-    function CampaignBeneficiary() {
-      isHuman[JohanNygren] = true;
-    }
-
-    function simulatePathwayFromBeneficiary() isOpen public payable {
-      balanceOf[msg.sender] += msg.value;
-      totalSupply += msg.value;  
-
-      /* Create the dividend pathway */
-      dividendPathways[msg.sender].push(dividendPathway({
-                                      from: JohanNygren, 
-                                      amount:  msg.value,
-                                      timeStamp: now
-                                    }));
-
-      BuyWithPathwayFromBeneficiary(msg.sender, msg.value);
-    }
 
 }
