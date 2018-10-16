@@ -1,26 +1,67 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Migrations at 0x61bd471cc68c90306a7a75e13e4a11579064914c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Migrations at 0xef29b4878c835a4646f39adfacc7fb385902a3d2
 */
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.18;
 
-contract Migrations {
+// File: zeppelin-solidity/contracts/ownership/Ownable.sol
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
   address public owner;
-  uint public last_completed_migration;
 
-  modifier restricted() {
-    if (msg.sender == owner) _;
-  }
 
-  function Migrations() public {
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
     owner = msg.sender;
   }
 
-  function setCompleted(uint completed) public restricted {
-    last_completed_migration = completed;
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
   }
 
-  function upgrade(address new_address) public restricted {
-    Migrations upgraded = Migrations(new_address);
-    upgraded.setCompleted(last_completed_migration);
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+// File: contracts/Migrations.sol
+
+/**
+ * @title Migrations
+ * @dev This is a truffle contract, needed for truffle integration, not meant for use by Zeppelin users.
+ */
+contract Migrations is Ownable {
+  uint256 public lastCompletedMigration;
+
+  function setCompleted(uint256 completed) onlyOwner public {
+    lastCompletedMigration = completed;
+  }
+
+  function upgrade(address newAddress) onlyOwner public {
+    Migrations upgraded = Migrations(newAddress);
+    upgraded.setCompleted(lastCompletedMigration);
   }
 }
