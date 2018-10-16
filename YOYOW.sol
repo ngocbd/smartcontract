@@ -1,7 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YOYOW at 0xcbeaec699431857fdb4d37addbbdc20e132d4903
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YOYOW at 0xcdbba64ecc5f1a17e3bb9c8b31185a35c0c2bd2d
 */
+// Abstract contract for the full ERC 20 Token standard
+// https://github.com/ethereum/EIPs/issues/20
 pragma solidity ^0.4.11;
+
 contract ERC20Token {
     /* This is a slight change to the ERC20 base standard.
     function totalSupply() constant returns (uint256 supply);
@@ -66,7 +69,6 @@ contract ERC20Token {
 
 /// @title MiniMeToken Contract
 /// @author Jordi Baylina
-/// @author yoyow-pureland
 /// @dev This token contract's goal is to make it easy for anyone to clone this
 ///  token using the token distribution at a given block, this will allow DAO's
 ///  and DApps to upgrade their features in a decentralized manner without
@@ -129,7 +131,6 @@ contract MiniMeToken is Controlled {
     string public symbol;              //An identifier: e.g. REP
     string public version = 'MMT_0.1'; //An arbitrary versioning scheme
 
-    address public generator;          //only generator can generate token to address
 
     /// @dev `Checkpoint` is the structure that attaches a block number to a
     ///  given value, the block number attached is the one that last changed the
@@ -142,7 +143,6 @@ contract MiniMeToken is Controlled {
         // `value` is the amount of tokens at a specific block number
         uint128 value;
     }
-
 
     // `parentToken` is the Token address that was cloned to produce this token;
     //  it will be 0x0 for a token that was not cloned
@@ -172,7 +172,7 @@ contract MiniMeToken is Controlled {
     // The factory used to create new clone tokens
     MiniMeTokenFactory public tokenFactory;
 
-    mapping(address=>address) public keys;
+    mapping(address=>address) keys;
 
     bool public showValue=true;
 
@@ -210,19 +210,6 @@ contract MiniMeToken is Controlled {
         parentSnapShotBlock = _parentSnapShotBlock;
         transfersEnabled = _transfersEnabled;
         creationBlock = getBlockNumber();
-        generator=msg.sender;
-    }
-
-
-    ///////////////////
-    // generator control methods
-    ///////////////////
-    modifier onlyGenerator() { if(msg.sender!=generator) throw; _;}
-
-    /// @notice Changes the controller of the contract
-    /// @param _newGenerator The new generator of the contract
-    function changeGenerator(address _newGenerator) onlyGenerator {
-        generator = _newGenerator;
     }
 
 
@@ -483,7 +470,7 @@ contract MiniMeToken is Controlled {
     /// @param _amount The quantity of tokens generated
     /// @return True if the tokens are generated correctly
     function generateTokens(address _owner, uint _amount
-    ) onlyGenerator returns (bool) {
+    ) onlyController returns (bool) {
         uint curTotalSupply = getValueAt(totalSupplyHistory, getBlockNumber());
         if (curTotalSupply + _amount < curTotalSupply) throw; // Check for overflow
         updateValueAtNow(totalSupplyHistory, curTotalSupply + _amount);
@@ -655,7 +642,6 @@ contract MiniMeToken is Controlled {
     event RegisterNewKey(address _account,address _newKeys);
 
 }
-
 
 ////////////////
 // MiniMeTokenFactory
