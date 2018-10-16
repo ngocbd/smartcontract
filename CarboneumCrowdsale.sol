@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CarboneumCrowdsale at 0xf6e4167819ed8ce74ec6eb7e8854a6438df17002
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CarboneumCrowdsale at 0x65e151d4e56261b4672bdebd76d7045030b38292
 */
 pragma solidity ^0.4.18;
 
@@ -234,6 +234,90 @@ contract Crowdsale {
   }
 }
 
+// File: zeppelin-solidity/contracts/crowdsale/validation/TimedCrowdsale.sol
+
+/**
+ * @title TimedCrowdsale
+ * @dev Crowdsale accepting contributions only within a time frame.
+ */
+contract TimedCrowdsale is Crowdsale {
+  using SafeMath for uint256;
+
+  uint256 public openingTime;
+  uint256 public closingTime;
+
+  /**
+   * @dev Reverts if not in crowdsale time range. 
+   */
+  modifier onlyWhileOpen {
+    require(now >= openingTime && now <= closingTime);
+    _;
+  }
+
+  /**
+   * @dev Constructor, takes crowdsale opening and closing times.
+   * @param _openingTime Crowdsale opening time
+   * @param _closingTime Crowdsale closing time
+   */
+  function TimedCrowdsale(uint256 _openingTime, uint256 _closingTime) public {
+    require(_openingTime >= now);
+    require(_closingTime >= _openingTime);
+
+    openingTime = _openingTime;
+    closingTime = _closingTime;
+  }
+
+  /**
+   * @dev Checks whether the period in which the crowdsale is open has already elapsed.
+   * @return Whether crowdsale period has elapsed
+   */
+  function hasClosed() public view returns (bool) {
+    return now > closingTime;
+  }
+  
+  /**
+   * @dev Extend parent behavior requiring to be within contributing period
+   * @param _beneficiary Token purchaser
+   * @param _weiAmount Amount of wei contributed
+   */
+  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal onlyWhileOpen {
+    super._preValidatePurchase(_beneficiary, _weiAmount);
+  }
+
+}
+
+// File: zeppelin-solidity/contracts/crowdsale/distribution/PostDeliveryCrowdsale.sol
+
+/**
+ * @title PostDeliveryCrowdsale
+ * @dev Crowdsale that locks tokens from withdrawal until it ends.
+ */
+contract PostDeliveryCrowdsale is TimedCrowdsale {
+  using SafeMath for uint256;
+
+  mapping(address => uint256) public balances;
+
+  /**
+   * @dev Overrides parent by storing balances instead of issuing tokens right away.
+   * @param _beneficiary Token purchaser
+   * @param _tokenAmount Amount of tokens purchased
+   */
+  function _processPurchase(address _beneficiary, uint256 _tokenAmount) internal {
+    balances[_beneficiary] = balances[_beneficiary].add(_tokenAmount);
+  }
+
+  /**
+   * @dev Withdraw tokens only after crowdsale ends.
+   */
+  function withdrawTokens() public {
+    require(hasClosed());
+    uint256 amount = balances[msg.sender];
+    require(amount > 0);
+    balances[msg.sender] = 0;
+    _deliverTokens(msg.sender, amount);
+  }
+}
+
 // File: zeppelin-solidity/contracts/crowdsale/emission/AllowanceCrowdsale.sol
 
 /**
@@ -426,58 +510,6 @@ contract IndividuallyCappedCrowdsale is Crowdsale, Ownable {
 
 }
 
-// File: zeppelin-solidity/contracts/crowdsale/validation/TimedCrowdsale.sol
-
-/**
- * @title TimedCrowdsale
- * @dev Crowdsale accepting contributions only within a time frame.
- */
-contract TimedCrowdsale is Crowdsale {
-  using SafeMath for uint256;
-
-  uint256 public openingTime;
-  uint256 public closingTime;
-
-  /**
-   * @dev Reverts if not in crowdsale time range. 
-   */
-  modifier onlyWhileOpen {
-    require(now >= openingTime && now <= closingTime);
-    _;
-  }
-
-  /**
-   * @dev Constructor, takes crowdsale opening and closing times.
-   * @param _openingTime Crowdsale opening time
-   * @param _closingTime Crowdsale closing time
-   */
-  function TimedCrowdsale(uint256 _openingTime, uint256 _closingTime) public {
-    require(_openingTime >= now);
-    require(_closingTime >= _openingTime);
-
-    openingTime = _openingTime;
-    closingTime = _closingTime;
-  }
-
-  /**
-   * @dev Checks whether the period in which the crowdsale is open has already elapsed.
-   * @return Whether crowdsale period has elapsed
-   */
-  function hasClosed() public view returns (bool) {
-    return now > closingTime;
-  }
-  
-  /**
-   * @dev Extend parent behavior requiring to be within contributing period
-   * @param _beneficiary Token purchaser
-   * @param _weiAmount Amount of wei contributed
-   */
-  function _preValidatePurchase(address _beneficiary, uint256 _weiAmount) internal onlyWhileOpen {
-    super._preValidatePurchase(_beneficiary, _weiAmount);
-  }
-
-}
-
 // File: contracts/CarboneumCrowdsale.sol
 
 /**
@@ -488,7 +520,7 @@ contract TimedCrowdsale is Crowdsale {
  * IndividuallyCappedCrowdsale - Crowdsale with per-user caps.
  * TimedCrowdsale - Crowdsale accepting contributions only within a time frame.
  */
-contract CarboneumCrowdsale is CappedCrowdsale, AllowanceCrowdsale, IndividuallyCappedCrowdsale, TimedCrowdsale {
+contract CarboneumCrowdsale is CappedCrowdsale, AllowanceCrowdsale, IndividuallyCappedCrowdsale, TimedCrowdsale, PostDeliveryCrowdsale {
 
   uint256 public pre_sale_end;
 
@@ -514,22 +546,17 @@ contract CarboneumCrowdsale is CappedCrowdsale, AllowanceCrowdsale, Individually
     rate = _rate;
   }
 
-  function getRate() public view returns (uint256) {
-    return rate;
-  }
-
   /**
    * @dev Add bonus to pre-sale period.
    * @param _weiAmount Value in wei to be converted into tokens
    * @return Number of tokens that can be purchased with the specified _weiAmount
    */
   function _getTokenAmount(uint256 _weiAmount) internal view returns (uint256) {
-    uint256 newRate = rate;
     if (now < pre_sale_end) {// solium-disable-line security/no-block-members
       // Bonus 8%
-      newRate += rate * 8 / 100;
+      return _weiAmount.mul(rate + (rate * 8 / 100));
     }
-    return _weiAmount.mul(newRate);
+    return _weiAmount.mul(rate);
   }
 
 }
