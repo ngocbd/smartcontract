@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Marriage at 0xdc33e6de6253855ae8d04e4ed78a5f4fd2ecb9d7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Marriage at 0xc1d9cc0dbe86aee761ea402fe8465c3e89d6ccf7
 */
 pragma solidity ^0.4.24;
 /**
@@ -39,7 +39,7 @@ contract Marriage is owned {
     function createMarriage() onlyOwner public {
         partner1 = "Edison Lee";
         partner2 = "Chino Kafuu";
-        marriageDate = 1527169003;
+        marriageDate = 1526983200;
         setStatus("Married");
         bytes32 name = "Marriage Contract Creation";
         
