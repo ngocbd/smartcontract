@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HackerGold at 0x14f37b574242d366558db61f3335289a5035c506
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HackerGold at 0xa62bdee2f277c2e2c0f46cba96879b263796ee1c
 */
 pragma solidity ^ 0.4 .0;
 
@@ -14,7 +14,7 @@ contract TokenInterface {
 
 
         // total amount of tokens
-        uint totalSupplyVar;
+        uint totalSupply;
 
 
         /**
@@ -56,10 +56,6 @@ contract TokenInterface {
          * 
          */
         function allowance(address owner, address spender) constant returns(uint256 remaining);
-
-        function totalSupply() constant returns(uint256 totalSupply) {
-                return totalSupplyVar;
-        }
 
         // events notifications
         event Transfer(address indexed from, address indexed to, uint256 value);
@@ -198,7 +194,6 @@ contract StandardToken is TokenInterface {
                 return true;
         }
 
-
         /**
          *
          * allowance() - constant function to check how mouch is 
@@ -293,7 +288,7 @@ contract HackerGold is StandardToken {
                 );
 
                 // assign recovery balance
-                totalSupplyVar = 16110893000;
+                totalSupply = 16110893000;
                 balances[0x342e62732b76875da9305083ea8ae63125a4e667] = 16110893000;
                 totalValue = 85362 ether;
         }
@@ -333,7 +328,7 @@ contract HackerGold is StandardToken {
 
                 uint tokens = msg.value * getPrice() * DECIMAL_ZEROS / 1 ether;
 
-                totalSupplyVar += tokens;
+                totalSupply += tokens;
                 balances[holder] += tokens;
                 totalValue += msg.value;
 
@@ -392,7 +387,7 @@ contract HackerGold is StandardToken {
          * @return result stored HKG amount
          */
         function getTotalSupply() constant returns(uint result) {
-                return totalSupplyVar;
+                return totalSupply;
         }
 
         /**
