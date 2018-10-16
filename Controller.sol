@@ -1,161 +1,318 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Controller at 0x8E9dD6C58165aC8e2AA6E7dA3D39743e60003c57
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Controller at 0xc9b3378516d0c7a622ff325dd3dfd60b50f7a74c
 */
-pragma solidity ^0.4.4;
+pragma solidity >=0.4.4;
 
-//copyright 2017 NewAlchemy
-//Written by Dennis Peterson
+//from Zeppelin
+contract SafeMath {
+    function safeMul(uint a, uint b) internal returns (uint) {
+        uint c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
+    }
 
-contract AbstractSweeper {
-    //abstract:
-    function sweep(address token, uint amount) returns (bool);
+    function safeSub(uint a, uint b) internal returns (uint) {
+        assert(b <= a);
+        return a - b;
+    }
 
-    //concrete:
-    function () { throw; }
+    function safeAdd(uint a, uint b) internal returns (uint) {
+        uint c = a + b;
+        assert(c>=a && c>=b);
+        return c;
+    }
+
+    function assert(bool assertion) internal {
+        if (!assertion) throw;
+    }
+}
+
+contract Owned {
+    address public owner;
+
+    function Owned() {
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner() {
+        if (msg.sender != owner) throw;
+        _;
+    }
+
+    address newOwner;
+
+    function changeOwner(address _newOwner) onlyOwner {
+        newOwner = _newOwner;
+    }
+
+    function acceptOwnership() {
+        if (msg.sender == newOwner) {
+            owner = newOwner;
+        }
+    }
+}
+
+contract Finalizable is Owned {
+    bool public finalized;
+
+    function finalize() onlyOwner {
+        finalized = true;
+    }
+
+    modifier notFinalized() {
+        if (finalized) throw;
+        _;
+    }
+}
+
+contract IToken {
+    function transfer(address _to, uint _value) returns (bool);
+    function balanceOf(address owner) returns(uint);
+}
+
+contract TokenReceivable is Owned {
+    event logTokenTransfer(address token, address to, uint amount);
+
+    function claimTokens(address _token, address _to) onlyOwner returns (bool) {
+        IToken token = IToken(_token);
+        uint balance = token.balanceOf(this);
+        if (token.transfer(_to, balance)) {
+            logTokenTransfer(_token, _to, balance);
+            return true;
+        }
+        return false;
+    }
+}
+
+contract EventDefinitions {
+    event Transfer(address indexed from, address indexed to, uint value);
+    event Approval(address indexed owner, address indexed spender, uint value);
+}
+
+contract Token is Finalizable, TokenReceivable, SafeMath, EventDefinitions {
+
+    string public name = "FunFair";
+    uint8 public decimals = 8;
+    string public symbol = "FUN";
 
     Controller controller;
+    address owner;
 
-    function AbstractSweeper(address _controller) {
-        controller = Controller(_controller);
+    function setController(address _c) onlyOwner notFinalized {
+        controller = Controller(_c);
     }
 
-    modifier canSweep() {
-        if (msg.sender != controller.authorizedCaller() && msg.sender != controller.owner()) throw;
-        if (controller.halted()) throw;
-        _;
-    }
-}
-
-contract Token {
-    function balanceOf(address a) returns (uint) {return 0;}
-    function transfer(address a, uint val) returns (bool) {return false;}
-}
-
-contract DefaultSweeper is AbstractSweeper {
-    function DefaultSweeper(address controller) 
-             AbstractSweeper(controller) {}
-
-    function sweep(address _token, uint _amount)  
-    canSweep
-    returns (bool) {
-        Token token = Token(_token);
-        uint amount = _amount;
-        if (amount > token.balanceOf(this)) amount = token.balanceOf(this);
-
-        address destination = controller.destination();
-
-	// Because sweep is called with delegatecall, this typically
-	// comes from the UserWallet.
-        bool success = token.transfer(destination, amount); 
-        if (success) { 
-            controller.logSweep(this, _token, _amount);
-        } else { 
-	    controller.logFailedSweep(msg.sender, _token, _amount);
-	}
-        return success;
-    }
-}
-
-contract UserWallet {
-    AbstractSweeperList c;
-    function UserWallet(address _sweeperlist) {
-        c = AbstractSweeperList(_sweeperlist);
+    function balanceOf(address a) constant returns (uint) {
+        return controller.balanceOf(a);
     }
 
-    function sweep(address _token, uint _amount) 
-    returns (bool) {
-        return c.sweeperOf(_token).delegatecall(msg.data);
+    function totalSupply() constant returns (uint) {
+        return controller.totalSupply();
     }
-}
 
-contract AbstractSweeperList {
-    function sweeperOf(address _token) returns (address);
-}
+    function allowance(address _owner, address _spender) constant returns (uint) {
+        return controller.allowance(_owner, _spender);
+    }
 
-contract Controller is AbstractSweeperList {
-    address public owner;
-    address public authorizedCaller;
+    function transfer(address _to, uint _value)
+    onlyPayloadSize(2)
+    returns (bool success) {
+       success = controller.transfer(msg.sender, _to, _value);
+        if (success) {
+            Transfer(msg.sender, _to, _value);
+        }
+    }
 
-    //destination defaults to same as owner
-    //but is separate to allow never exposing cold storage
-    address public destination; 
+    function transferFrom(address _from, address _to, uint _value)
+    onlyPayloadSize(3)
+    returns (bool success) {
+       success = controller.transferFrom(msg.sender, _from, _to, _value);
+        if (success) {
+            Transfer(_from, _to, _value);
+        }
+    }
 
-    bool public halted;
+    function approve(address _spender, uint _value)
+    onlyPayloadSize(2)
+    returns (bool success) {
+        //promote safe user behavior
+        if (controller.allowance(msg.sender, _spender) > 0) throw;
 
-    event LogNewWallet(uint _customer, address receiver);
-    event LogSweep(address from, address token, uint amount);
-    event LogFailedSweep(address from, address token, uint amount);
-    
-    modifier onlyOwner() {
-        if (msg.sender != owner) throw; 
+        success = controller.approve(msg.sender, _spender, _value);
+        if (success) {
+            Approval(msg.sender, _spender, _value);
+        }
+    }
+
+    function increaseApproval (address _spender, uint _addedValue)
+    onlyPayloadSize(2)
+    returns (bool success) {
+        success = controller.increaseApproval(msg.sender, _spender, _addedValue);
+        if (success) {
+            uint newval = controller.allowance(msg.sender, _spender);
+            Approval(msg.sender, _spender, newval);
+        }
+    }
+
+    function decreaseApproval (address _spender, uint _subtractedValue)
+    onlyPayloadSize(2)
+    returns (bool success) {
+        success = controller.decreaseApproval(msg.sender, _spender, _subtractedValue);
+        if (success) {
+            uint newval = controller.allowance(msg.sender, _spender);
+            Approval(msg.sender, _spender, newval);
+        }
+    }
+
+    modifier onlyPayloadSize(uint numwords) {
+    assert(msg.data.length == numwords * 32 + 4);
         _;
     }
 
-    modifier onlyAuthorizedCaller() {
-        if (msg.sender != authorizedCaller) throw; 
+}
+
+contract Controller is Owned, Finalizable {
+    Ledger public ledger;
+    address public token;
+
+    function setToken(address _token) onlyOwner {
+        token = _token;
+    }
+
+    function setLedger(address _ledger) onlyOwner {
+        ledger = Ledger(_ledger);
+    }
+
+    modifier onlyToken() {
+        if (msg.sender != token) throw;
         _;
     }
 
-    modifier onlyAdmins() {
-        if (msg.sender != authorizedCaller && msg.sender != owner) throw; 
+    function totalSupply() constant returns (uint) {
+        return ledger.totalSupply();
+    }
+
+    function balanceOf(address _a) onlyToken constant returns (uint) {
+        return Ledger(ledger).balanceOf(_a);
+    }
+
+    function allowance(address _owner, address _spender)
+    onlyToken constant returns (uint) {
+        return ledger.allowance(_owner, _spender);
+    }
+
+    function transfer(address _from, address _to, uint _value)
+    onlyToken
+    returns (bool success) {
+        return ledger.transfer(_from, _to, _value);
+    }
+
+    function transferFrom(address _spender, address _from, address _to, uint _value)
+    onlyToken
+    returns (bool success) {
+        return ledger.transferFrom(_spender, _from, _to, _value);
+    }
+
+    function approve(address _owner, address _spender, uint _value)
+    onlyToken
+    returns (bool success) {
+        return ledger.approve(_owner, _spender, _value);
+    }
+
+    function increaseApproval (address _owner, address _spender, uint _addedValue)
+    onlyToken
+    returns (bool success) {
+        return ledger.increaseApproval(_owner, _spender, _addedValue);
+    }
+
+    function decreaseApproval (address _owner, address _spender, uint _subtractedValue)
+    onlyToken
+    returns (bool success) {
+        return ledger.decreaseApproval(_owner, _spender, _subtractedValue);
+    }
+}
+
+contract Ledger is Owned, SafeMath, Finalizable {
+    address public controller;
+    mapping(address => uint) public balanceOf;
+    mapping (address => mapping (address => uint)) public allowance;
+    uint public totalSupply;
+
+    function setController(address _controller) onlyOwner notFinalized {
+        controller = _controller;
+    }
+
+    modifier onlyController() {
+        if (msg.sender != controller) throw;
         _;
     }
 
-    function Controller() 
-    {
-        owner = msg.sender;
-        destination = msg.sender;
-        authorizedCaller = msg.sender;
+    function transfer(address _from, address _to, uint _value)
+    onlyController
+    returns (bool success) {
+        if (balanceOf[_from] < _value) return false;
+
+        balanceOf[_from] = safeSub(balanceOf[_from], _value);
+        balanceOf[_to] = safeAdd(balanceOf[_to], _value);
+        return true;
     }
 
-    function changeAuthorizedCaller(address _newCaller) onlyOwner {
-        authorizedCaller = _newCaller;
+    function transferFrom(address _spender, address _from, address _to, uint _value)
+    onlyController
+    returns (bool success) {
+        if (balanceOf[_from] < _value) return false;
+
+        var allowed = allowance[_from][_spender];
+        if (allowed < _value) return false;
+
+        balanceOf[_to] = safeAdd(balanceOf[_to], _value);
+        balanceOf[_from] = safeSub(balanceOf[_from], _value);
+        allowance[_from][_spender] = safeSub(allowed, _value);
+        return true;
     }
 
-    function changeDestination(address _dest) onlyOwner {
-        destination = _dest;
+    function approve(address _owner, address _spender, uint _value)
+    onlyController
+    returns (bool success) {
+        //require user to set to zero before resetting to nonzero
+        if ((_value != 0) && (allowance[_owner][_spender] != 0)) {
+            return false;
+        }
+
+        allowance[_owner][_spender] = _value;
+        return true;
     }
 
-    function changeOwner(address _owner) onlyOwner {
-        owner = _owner;
+    function increaseApproval (address _owner, address _spender, uint _addedValue)
+    onlyController
+    returns (bool success) {
+        uint oldValue = allowance[_owner][_spender];
+        allowance[_owner][_spender] = safeAdd(oldValue, _addedValue);
+        return true;
     }
 
-    function makeWallet(uint _customer) onlyAdmins returns (address wallet)  {
-        wallet = address(new UserWallet(this));
-        LogNewWallet(_customer, wallet);
+    function decreaseApproval (address _owner, address _spender, uint _subtractedValue)
+    onlyController
+    returns (bool success) {
+        uint oldValue = allowance[_owner][_spender];
+        if (_subtractedValue > oldValue) {
+            allowance[_owner][_spender] = 0;
+        } else {
+            allowance[_owner][_spender] = safeSub(oldValue, _subtractedValue);
+        }
+        return true;
     }
 
-    //assuming halt because caller is compromised
-    //so let caller stop for speed, only owner can restart
-
-    function halt() onlyAdmins {
-        halted = true;
+    function mint(address _a, uint _amount) onlyOwner notFinalized {
+        balanceOf[_a] = safeAdd(balanceOf[_a], _amount);
+        totalSupply = safeAdd(totalSupply, _amount);
     }
 
-    function start() onlyOwner {
-        halted = false;
-    }
-
-    //***********
-    //SweeperList
-    //***********
-    address public defaultSweeper = address(new DefaultSweeper(this));
-    mapping (address => address) sweepers;
-
-    function addSweeper(address _token, address _sweeper) onlyOwner {
-        sweepers[_token] = _sweeper;
-    }
-
-    function sweeperOf(address _token) returns (address) {
-        address sweeper = sweepers[_token];
-        if (sweeper == 0) sweeper = defaultSweeper;
-        return sweeper;
-    }
-
-    function logSweep(address from, address token, uint amount) {
-        LogSweep(from, token, amount);
-    }
-    function logFailedSweep(address from, address token, uint amount) {
-        LogFailedSweep(from, token, amount);
+    function multiMint(uint[] bits) onlyOwner notFinalized {
+        for (uint i=0; i<bits.length; i++) {
+	    address a = address(bits[i]>>96);
+	    uint amount = bits[i]&((1<<96) - 1);
+	    mint(a, amount);
+        }
     }
 }
