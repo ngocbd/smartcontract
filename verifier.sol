@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract verifier at 0x3513a1e5f29af91b3acaba9ab877026402b317e6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract verifier at 0x0b67e34a0e0b5cb2858f97c5dcf02c677e0aad16
 */
 pragma solidity ^0.4.21;
 contract owned {
@@ -9,9 +9,7 @@ contract owned {
     constructor()payable public {
         owner = msg.sender;
     }
-    function fallback() public payable{
-        revert();
-    }
+
     modifier onlyOwner {
         require(msg.sender == owner);
         _;
@@ -44,7 +42,7 @@ contract verifier is owned{
         register[neo][transactionCount[neo]]=action(now,value,ethA);
         transactionCount[neo]+=1;
     }
-    function verifyYourself(string neo, uint256 value)public payable{
+    function verifyYourself(string neo, uint256 value)public{
         registerTransaction(neo,msg.sender,value);
     }
     function viewAll(string neo)public onlyOwner{
