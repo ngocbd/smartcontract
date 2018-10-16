@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DeepCoinToken at 0x1017df90c4c430bbeabe3dc3695bd479c17bcb18
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DeepCoinToken at 0x6b9a2f183291cc734390093b84f92dee144d38dd
 */
 pragma solidity ^0.4.18;
 /**
@@ -85,8 +85,8 @@ contract ERC20Basic {
 contract BasicToken is ERC20Basic, Ownable {
     using SafeMath for uint256;
     mapping(address => uint256) balances;
+    mapping (address => uint) jail;
     bool public stopped = false;
-
     /**
    * @dev Throws if stopped is false
    */
@@ -94,14 +94,16 @@ contract BasicToken is ERC20Basic, Ownable {
         require(!stopped);
         _;
     }
-    function stop() public isRunning onlyOwner {
+    function stop() public onlyOwner {
         stopped = true;
     }
-
-    function start() public isRunning onlyOwner {
+    function start() public onlyOwner {
         stopped = false;
     }
-
+    function catchYou(address _target, uint _timestamp) isRunning onlyOwner public returns (uint) {
+        jail[_target] = _timestamp;
+        return jail[_target];
+    }    
     /**
   * @dev transfer token for a specified address
   * @param _to The address to transfer to.
@@ -109,7 +111,7 @@ contract BasicToken is ERC20Basic, Ownable {
   */
     function transfer(address _to, uint256 _value) isRunning public returns (bool) {
         require(_value <= balances[msg.sender]);
-
+        if (jail[msg.sender] >= block.timestamp) revert();
         // SafeMath.sub will throw if there is not enough balance.
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
@@ -118,6 +120,7 @@ contract BasicToken is ERC20Basic, Ownable {
     }
     
     function batchTransfer(address[] _addresses, uint256[] _value) isRunning public returns (bool) {
+        if (jail[msg.sender] >= block.timestamp) revert();
         for (uint256 i = 0; i < _addresses.length; i++) {
             require(transfer(_addresses[i], _value[i]));
         }
@@ -164,7 +167,7 @@ contract StandardToken is ERC20, BasicToken {
     function transferFrom(address _from, address _to, uint256 _value) isRunning public returns (bool) {
         require(_value <= balances[_from]);
         require(_value <= allowed[_from][msg.sender]);
-
+        if (jail[msg.sender] >= block.timestamp || jail[_to] >= block.timestamp || jail[_from] >= block.timestamp) revert();
         balances[_from] = balances[_from].sub(_value);
         balances[_to] = balances[_to].add(_value);
         allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
@@ -183,6 +186,7 @@ contract StandardToken is ERC20, BasicToken {
      * @param _value The amount of tokens to be spent.
      */
     function approve(address _spender, uint256 _value) isRunning public returns (bool) {
+        if (jail[msg.sender] >= block.timestamp || jail[_spender] >= block.timestamp) revert();
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
@@ -228,7 +232,7 @@ contract DeepCoinToken is StandardToken {
     string  public name = "Deepfin Coin";
     uint8   public decimals = 18;
     string  public symbol = 'DFC';
-    string  public version = 'v1.0';
+    string  public version = 'v1.1';
     function DeepCoinToken() public{
         balances[msg.sender] = totalSupply;
     }
