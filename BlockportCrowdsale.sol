@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlockportCrowdsale at 0xa6407855d9742a47386aad09f688856981d21e5b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlockportCrowdsale at 0xb5572c64f2dd352e68d7c708473838f1ac218d90
 */
 pragma solidity ^0.4.13;
 
@@ -722,7 +722,7 @@ contract BlockportCrowdsale is CappedCrowdsale, FinalizableCrowdsale, CrowdsaleW
 
     // low level token purchase function
     function buyTokens(address beneficiary) public payable {
-        invested[beneficiary] += msg.value;
+        invested[msg.sender] += msg.value;
         super.buyTokens(beneficiary);
     }
 
@@ -783,4 +783,10 @@ contract BlockportCrowdsale is CappedCrowdsale, FinalizableCrowdsale, CrowdsaleW
         InitialDateChange(startTime, endTime);
         return true;
     }
+
+    //@notice Function sets the token owner to contract owner
+    function resetTokenOwnership() onlyOwner public { 
+        bpToken.transferOwnership(owner);
+    }
+
 }
