@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KarmazaToken at 0xe545e59231dbf13b0a5c0ad00171e1483cf55e73
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KarmazaToken at 0x276608a316620083a9bbd908aabc265109e3b787
 */
 pragma solidity ^0.4.23;
 
@@ -396,48 +396,18 @@ interface tokenRecipient {
 contract KarmazaToken is StandardToken, BurnableToken, FreezableToken, Pausable {
     string public constant name = "KARMAZA";
     string public constant symbol = "KMZ";
-    uint256 public constant decimals = 18;
+    uint8 public constant decimals = 18;
 
-    uint256 public constant TOTAL_SUPPLY_VALUE = 100 * (10 ** 9) * (10 ** decimals);
-
-    uint256 public constant RESERVED_TOKENS_ICO = 50 * (10 ** 9) * (10 ** decimals);
-    uint256 public constant RESERVED_TOKENS_FUTURE_OPERATIONS = 25 * (10 ** 9) * (10 ** decimals);
-    uint256 public constant RESERVED_TOKENS_FOUNDERS_TEAM = 20 * (10 ** 9) * (10 ** decimals);
-    uint256 public constant RESERVED_TOKENS_BOUNTIES_ADVISORS = 5 * (10 ** 9) * (10 ** decimals);
-
-    address private addressIco;
-
-    modifier onlyIco() {
-        require(msg.sender == addressIco);
-        _;
-    }
+    uint256 public constant TOTAL_SUPPLY_VALUE = 100 * (10 ** 9) * (10 ** uint256(decimals));
 
     /**
     * @dev Create KarmazaToken contract.
-    * @param _futureOperationsReserve The address of future operartions reserve.
-    * @param _foundersAndTeamReserve The address of founders and team reserve.
-    * @param _bountiesAndAdvisorsReserve The address of bounties and advisors reserve.
     */
-    constructor (address _futureOperationsReserve, address _foundersAndTeamReserve, address _bountiesAndAdvisorsReserve) public {
-        require(
-            _futureOperationsReserve != address(0) && _foundersAndTeamReserve != address(0) && _bountiesAndAdvisorsReserve != address(0)
-        );
-
-        addressIco = msg.sender;
-
+    constructor() public {
         totalSupply_ = TOTAL_SUPPLY_VALUE;
 
-        balances[msg.sender] = RESERVED_TOKENS_ICO;
-        emit Transfer(address(0), msg.sender, RESERVED_TOKENS_ICO);
-
-        balances[_futureOperationsReserve] = RESERVED_TOKENS_FUTURE_OPERATIONS;
-        emit Transfer(address(0), _futureOperationsReserve, RESERVED_TOKENS_FUTURE_OPERATIONS);
-
-        balances[_foundersAndTeamReserve] = RESERVED_TOKENS_FOUNDERS_TEAM;
-        emit Transfer(address(0), _foundersAndTeamReserve, RESERVED_TOKENS_FOUNDERS_TEAM);
-
-        balances[_bountiesAndAdvisorsReserve] = RESERVED_TOKENS_BOUNTIES_ADVISORS;
-        emit Transfer(address(0), _bountiesAndAdvisorsReserve, RESERVED_TOKENS_BOUNTIES_ADVISORS);
+        balances[msg.sender] = TOTAL_SUPPLY_VALUE;
+        emit Transfer(address(0), msg.sender, TOTAL_SUPPLY_VALUE);
     }
 
     /**
@@ -448,7 +418,7 @@ contract KarmazaToken is StandardToken, BurnableToken, FreezableToken, Pausable 
     */
     function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
         require(!isFrozen(msg.sender));
-        super.transfer(_to, _value);
+        return super.transfer(_to, _value);
     }
 
     /**
@@ -461,16 +431,7 @@ contract KarmazaToken is StandardToken, BurnableToken, FreezableToken, Pausable 
     function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
         require(!isFrozen(msg.sender));
         require(!isFrozen(_from));
-        super.transferFrom(_from, _to, _value);
-    }
-
-    /**
-    * @dev Transfer tokens from ICO address to another address.
-    * @param _to The address to transfer to.
-    * @param _value The amount to be transferred.
-    */
-    function transferFromIco(address _to, uint256 _value) public onlyIco returns (bool) {
-        super.transfer(_to, _value);
+        return super.transferFrom(_from, _to, _value);
     }
 
     /**
@@ -492,5 +453,4 @@ contract KarmazaToken is StandardToken, BurnableToken, FreezableToken, Pausable 
             return true;
         }
     }
-
 }
