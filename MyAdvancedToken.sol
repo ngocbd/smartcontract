@@ -1,7 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xb68454C8E9979053558Dd688C99Fc5cd71cB26ea
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x47377e14087883c27d3b442f350c7c4c381aab93
 */
-pragma solidity ^0.4.13; contract owned { address public owner;
+pragma solidity ^0.4.11;
+
+contract owned { address public owner;
 
   function owned() {
       owner = msg.sender;
@@ -15,14 +17,14 @@ pragma solidity ^0.4.13; contract owned { address public owner;
   function transferOwnership(address newOwner) onlyOwner {
       owner = newOwner;
   }
-
 }
 
 contract tokenRecipient { function receiveApproval(address from, uint256 value, address token, bytes extraData); }
 
-contract token { /* Public variables of the token */ string public name; string public symbol; uint8 public decimals; uint256 public totalSupply;
+contract token { 
+    string public name; string public symbol; uint8 public decimals; uint256 public totalSupply;
 
-/* This creates an array with all balances */
+  /* This creates an array with all balances */
   mapping (address => uint256) public balanceOf;
   mapping (address => mapping (address => uint256)) public allowance;
 
@@ -115,7 +117,6 @@ contract token { /* Public variables of the token */ string public name; string 
       Burn(_from, _value);
       return true;
   }
-
 }
 
 contract MyAdvancedToken is owned, token {
@@ -187,5 +188,4 @@ contract MyAdvancedToken is owned, token {
       _transfer(msg.sender, this, amount);              // makes the transfers
       msg.sender.transfer(amount * sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
   }
-
 }
