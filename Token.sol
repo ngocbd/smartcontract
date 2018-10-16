@@ -1,281 +1,239 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xAC9E0035dC040671E5646dc9b8896d7D78C48F85
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x430ca678e49327c5b3fad98ba80e0d67922c031d
 */
 pragma solidity ^0.4.18;
-
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a / b;
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-interface TokenUpgraderInterface{
-    function upgradeFor(address _for, uint256 _value) public returns (bool success);
-    function upgradeFrom(address _by, address _for, uint256 _value) public returns (bool success);
-}
-  
+ 
 contract Token {
-    using SafeMath for uint256;
-
-    address public owner = msg.sender;
-
-    string public name = "Hint";
-    string public symbol = "HINT";
-
-    bool public upgradable = false;
-    bool public upgraderSet = false;
-    TokenUpgraderInterface public upgrader;
-
-    bool public locked = false;
-    uint8 public decimals = 18;
-    uint256 public decimalMultiplier = 10**(uint256(decimals));
-
-    modifier unlocked() {
-        require(!locked);
-        _;
-    }
-
-    // Ownership
-
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
-    function transferOwnership(address newOwner) public onlyOwner returns (bool success) {
-        require(newOwner != address(0));      
-        OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-        return true;
-    }
-
-
-    // ERC20 related functions
-
-    uint256 public totalSupply = 0;
-
-    mapping(address => uint256) balances;
-    mapping(address => mapping (address => uint256)) allowed;
-
-
+    string public symbol = "";
+    string public name = "";
+    uint8 public constant decimals = 18;
+	string public constant ICOFactoryVersion = "1.0";
+    uint256 _totalSupply = 0;
+	uint256 _oneEtherEqualsInWei = 0;	
+	uint256 _maxICOpublicSupply = 0;
+	uint256 _ownerICOsupply = 0;
+	uint256 _currentICOpublicSupply = 0;
+	uint256 _blockICOdatetime = 0;
+	address _ICOfundsReceiverAddress = 0;
+	address _remainingTokensReceiverAddress = 0;
+    address owner = 0;	
+    bool setupDone = false;
+	bool isICOrunning = false;
+	bool ICOstarted = false;
+	uint256 ICOoverTimestamp = 0;
+   
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-
-    function transfer(address _to, uint256 _value) unlocked public returns (bool) {
-        require(_to != address(0));
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
-        return true;
+	event Burn(address indexed _owner, uint256 _value);
+ 
+    mapping(address => uint256) balances;
+ 
+    mapping(address => mapping (address => uint256)) allowed;
+ 
+    function Token(address adr) public {
+        owner = adr;        
     }
-
- /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of. 
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-
-    function balanceOf(address _owner) view public returns (uint256 bal) {
+	
+	function() public payable
+	{
+		if ((isICOrunning && _blockICOdatetime == 0) || (isICOrunning && _blockICOdatetime > 0 && now <= _blockICOdatetime))
+		{
+			uint256 _amount = ((msg.value * _oneEtherEqualsInWei) / 1000000000000000000);
+			
+			if (((_currentICOpublicSupply + _amount) > _maxICOpublicSupply) && _maxICOpublicSupply > 0) revert();
+			
+			if(!_ICOfundsReceiverAddress.send(msg.value)) revert();					
+			
+			_currentICOpublicSupply += _amount;
+			
+			balances[msg.sender] += _amount;
+			
+			_totalSupply += _amount;			
+			
+			Transfer(this, msg.sender, _amount);
+		}
+		else
+		{
+			revert();
+		}
+	}
+   
+    function SetupToken(string tokenName, string tokenSymbol, uint256 oneEtherEqualsInWei, uint256 maxICOpublicSupply, uint256 ownerICOsupply, address remainingTokensReceiverAddress, address ICOfundsReceiverAddress, uint256 blockICOdatetime) public
+    {
+        if (msg.sender == owner && !setupDone)
+        {
+            symbol = tokenSymbol;
+            name = tokenName;
+			_oneEtherEqualsInWei = oneEtherEqualsInWei;
+			_maxICOpublicSupply = maxICOpublicSupply * 1000000000000000000;									
+			if (ownerICOsupply > 0)
+			{
+				_ownerICOsupply = ownerICOsupply * 1000000000000000000;
+				_totalSupply = _ownerICOsupply;
+				balances[owner] = _totalSupply;
+				Transfer(this, owner, _totalSupply);
+			}			
+			_ICOfundsReceiverAddress = ICOfundsReceiverAddress;
+			if (_ICOfundsReceiverAddress == 0) _ICOfundsReceiverAddress = owner;
+			_remainingTokensReceiverAddress = remainingTokensReceiverAddress;
+			_blockICOdatetime = blockICOdatetime;			
+            setupDone = true;
+        }
+    }
+	
+	function StartICO() public returns (bool success)
+    {
+        if (msg.sender == owner && !ICOstarted && setupDone)
+        {
+            ICOstarted = true;			
+			isICOrunning = true;			
+        }
+		else
+		{
+			revert();
+		}
+		return true;
+    }
+	
+	function StopICO() public returns (bool success)
+    {
+        if (msg.sender == owner && isICOrunning)
+        {            
+			if (_remainingTokensReceiverAddress != 0 && _maxICOpublicSupply > 0)
+			{
+				uint256 _remainingAmount = _maxICOpublicSupply - _currentICOpublicSupply;
+				if (_remainingAmount > 0)
+				{
+					balances[_remainingTokensReceiverAddress] += _remainingAmount;
+					_totalSupply += _remainingAmount;
+					Transfer(this, _remainingTokensReceiverAddress, _remainingAmount);	
+				}
+			}				
+			isICOrunning = false;	
+			ICOoverTimestamp = now;
+        }
+		else
+		{
+			revert();
+		}
+		return true;
+    }
+	
+	function BurnTokens(uint256 amountInWei) public returns (bool success)
+    {
+		if (balances[msg.sender] >= amountInWei)
+		{
+			balances[msg.sender] -= amountInWei;
+			_totalSupply -= amountInWei;
+			Burn(msg.sender, amountInWei);
+			Transfer(msg.sender, 0, amountInWei);
+		}
+		else
+		{
+			revert();
+		}
+		return true;
+    }
+ 
+    function totalSupply() public constant returns (uint256 totalSupplyValue) {        
+        return _totalSupply;
+    }
+	
+	function OneEtherEqualsInWei() public constant returns (uint256 oneEtherEqualsInWei) {        
+        return _oneEtherEqualsInWei;
+    }
+	
+	function MaxICOpublicSupply() public constant returns (uint256 maxICOpublicSupply) {        
+        return _maxICOpublicSupply;
+    }
+	
+	function OwnerICOsupply() public constant returns (uint256 ownerICOsupply) {        
+        return _ownerICOsupply;
+    }
+	
+	function CurrentICOpublicSupply() public constant returns (uint256 currentICOpublicSupply) {        
+        return _currentICOpublicSupply;
+    }
+	
+	function RemainingTokensReceiverAddress() public constant returns (address remainingTokensReceiverAddress) {        
+        return _remainingTokensReceiverAddress;
+    }
+	
+	function ICOfundsReceiverAddress() public constant returns (address ICOfundsReceiver) {        
+        return _ICOfundsReceiverAddress;
+    }
+	
+	function Owner() public constant returns (address ownerAddress) {        
+        return owner;
+    }
+	
+	function SetupDone() public constant returns (bool setupDoneFlag) {        
+        return setupDone;
+    }
+    
+	function IsICOrunning() public constant returns (bool isICOrunningFalg) {        
+        return isICOrunning;
+    }
+	
+	function IsICOstarted() public constant returns (bool isICOstartedFlag) {        
+        return ICOstarted;
+    }
+	
+	function ICOoverTimeStamp() public constant returns (uint256 ICOoverTimestampCheck) {        
+        return ICOoverTimestamp;
+    }
+	
+	function BlockICOdatetime() public constant returns (uint256 blockStopICOdate) {        
+        return _blockICOdatetime;
+    }
+	
+	function TimeNow() public constant returns (uint256 timenow) {        
+        return now;
+    }
+	 
+    function balanceOf(address _owner) public constant returns (uint256 balance) {
         return balances[_owner];
     }
-
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amout of tokens to be transfered
-   */
-
-    function transferFrom(address _from, address _to, uint256 _value) unlocked public returns (bool) {
-        require(_to != address(0));
-        uint256 _allowance = allowed[_from][msg.sender];
-        require(_allowance >= _value);
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = _allowance.sub(_value);
-        Transfer(_from, _to, _value);
+ 
+    function transfer(address _to, uint256 _amount) public returns (bool success) {
+        if (balances[msg.sender] >= _amount
+            && _amount > 0
+            && balances[_to] + _amount > balances[_to]) {
+            balances[msg.sender] -= _amount;
+            balances[_to] += _amount;
+            Transfer(msg.sender, _to, _amount);
+            return true;
+        } else {
+            return false;
+        }
+    }
+ 
+    function transferFrom(
+        address _from,
+        address _to,
+        uint256 _amount
+    ) public returns (bool success) {
+        if (balances[_from] >= _amount
+            && allowed[_from][msg.sender] >= _amount
+            && _amount > 0
+            && balances[_to] + _amount > balances[_to]) {
+            balances[_from] -= _amount;
+            allowed[_from][msg.sender] -= _amount;
+            balances[_to] += _amount;
+            Transfer(_from, _to, _amount);
+            return true;
+        } else {
+            return false;
+        }
+    }
+ 
+    function approve(address _spender, uint256 _amount) public returns (bool success) {
+        allowed[msg.sender][_spender] = _amount;
+        Approval(msg.sender, _spender, _amount);
         return true;
     }
-
-  /**
-   * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-
-    function approve(address _spender, uint256 _value) unlocked public returns (bool) {
-        require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifing the amount of tokens still available for the spender.
-   */
-
-    function allowance(address _owner, address _spender) view public returns (uint256 remaining) {
+ 
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
         return allowed[_owner][_spender];
     }
-
-    function increaseApproval (address _spender, uint _addedValue) unlocked public
-        returns (bool success) {
-            allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-            Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-            return true;
-    }
-
-    function decreaseApproval (address _spender, uint _subtractedValue) unlocked public
-        returns (bool success) {
-            uint oldValue = allowed[msg.sender][_spender];
-            if (_subtractedValue > oldValue) {
-                allowed[msg.sender][_spender] = 0;
-            } else {
-                allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-            }
-            Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-            return true;
-    }
-
-  /**
-    * Constructor mints tokens to corresponding addresses
-   */
-
-    function Token () public {
-        
-        address publicSaleReserveAddress = 0x11f104b59d90A00F4bDFF0Bed317c8573AA0a968;
-        mint(publicSaleReserveAddress, 100000000);
-
-          address hintPlatformReserveAddress = 0xE46C2C7e4A53bdC3D91466b6FB45Ac9Bc996a3Dc;
-        mint(hintPlatformReserveAddress, 21000000000);
-
-        address advisorsReserveAddress = 0xdc9aea710D5F8169AFEDA4bf6F1d6D64548951AF;
-        mint(advisorsReserveAddress, 50000000);
-        
-        address frozenHintEcosystemReserveAddress = 0xfeC2C0d053E9D6b1A7098F17b45b48102C8890e5;
-        mint(frozenHintEcosystemReserveAddress, 77600000000);
-
-        address teamReserveAddress = 0xeE162d1CCBb1c14169f26E5b35e3ca44C8bDa4a0;
-        mint(teamReserveAddress, 50000000);
-        
-        address preICOReserveAddress = 0xD2c395e12174630993572bf4Cbb5b9a93384cdb2;
-        mint(preICOReserveAddress, 100000000);
-        
-        address foundationReserveAddress = 0x7A5d4e184f10b63C27ad772D17bd3b7393933142;
-        mint(foundationReserveAddress, 100000000);
-        
-        address hintPrivateOfferingReserve = 0x3f851952ACbEd98B39B913a5c8a2E55b2E28c8F4;
-        mint(hintPrivateOfferingReserve, 1000000000);
-
-        assert(totalSupply == 100000000000*decimalMultiplier);
-    }
-
-  /**
-   * @dev Function to mint tokens
-   * @param _for The address that will recieve the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
-   */
-
-    function mint(address _for, uint256 _amount) internal returns (bool success) {
-        _amount = _amount*decimalMultiplier;
-        balances[_for] = balances[_for].add(_amount);
-        totalSupply = totalSupply.add(_amount);
-        Transfer(0, _for, _amount);
-        return true;
-    }
-
-  /**
-   * @dev Function to lock token transfers
-   * @param _newLockState New lock state
-   * @return A boolean that indicates if the operation was successful.
-   */
-
-    function setLock(bool _newLockState) onlyOwner public returns (bool success) {
-        require(_newLockState != locked);
-        locked = _newLockState;
-        return true;
-    }
-
-  /**
-   * @dev Function to allow token upgrades
-   * @param _newState New upgrading allowance state
-   * @return A boolean that indicates if the operation was successful.
-   */
-
-    function allowUpgrading(bool _newState) onlyOwner public returns (bool success) {
-        upgradable = _newState;
-        return true;
-    }
-
-    function setUpgrader(address _upgraderAddress) onlyOwner public returns (bool success) {
-        require(!upgraderSet);
-        require(_upgraderAddress != address(0));
-        upgraderSet = true;
-        upgrader = TokenUpgraderInterface(_upgraderAddress);
-        return true;
-    }
-
-    function upgrade() public returns (bool success) {
-        require(upgradable);
-        require(upgraderSet);
-        require(upgrader != TokenUpgraderInterface(0));
-        uint256 value = balances[msg.sender];
-        assert(value > 0);
-        delete balances[msg.sender];
-        totalSupply = totalSupply.sub(value);
-        assert(upgrader.upgradeFor(msg.sender, value));
-        return true;
-    }
-
-    function upgradeFor(address _for, uint256 _value) public returns (bool success) {
-        require(upgradable);
-        require(upgraderSet);
-        require(upgrader != TokenUpgraderInterface(0));
-        uint256 _allowance = allowed[_for][msg.sender];
-        require(_allowance >= _value);
-        balances[_for] = balances[_for].sub(_value);
-        allowed[_for][msg.sender] = _allowance.sub(_value);
-        totalSupply = totalSupply.sub(_value);
-        assert(upgrader.upgradeFrom(msg.sender, _for, _value));
-        return true;
-    }
-
-    function () payable external {
-        if (upgradable) {
-            assert(upgrade());
-            return;
-        }
-        revert();
-    }
-
 }
