@@ -1,17 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UCASH at 0x92e52a1a235d9a103d970901066ce910aacefd37
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UCASH at 0x0c27eb966fea5f8752bfee51e11db2c301a8cd87
 */
 /*
-This is the UCASH Ethereum smart contract
-
-UCASH Implements the EIP20 token standard: https://github.com/ethereum/EIPs/issues/20
-
-The smart contract code can be viewed here: https://github.com/UdotCASH/UCASH-ERC20.git
-
-For more info about UCASH and the U.CASH ecosystem, visit https://u.cash
+Implements EIP20 token standard: https://github.com/ethereum/EIPs/issues/20
 .*/
-
 pragma solidity ^0.4.8;
+
 
 contract EIP20Interface {
     /* This is a slight change to the ERC20 base standard.
@@ -59,6 +53,7 @@ contract EIP20Interface {
 }
 
 
+
 contract UCASH is EIP20Interface {
 
     uint256 constant MAX_UINT256 = 2**256 - 1;
@@ -71,14 +66,18 @@ contract UCASH is EIP20Interface {
      function UCASH(
 
         ) public {
-        totalSupply = 21*10**9*10**8;               //UCASH totalSupply
-        balances[msg.sender] = totalSupply;         //Allocate UCASH to contract deployer
-        name = "UCASH";
-        decimals = 8;                               //Amount of decimals for display purposes
-        symbol = "UCASH";
+        totalSupply = 21*10**9*10**8;                        // Update total supply
+        balances[msg.sender] = totalSupply;               // Give the creator all initial tokens
+        name = "UCASH";                                   // Set the name for display purposes
+        decimals = 8;                            // Amount of decimals for display purposes
+        symbol = "UCASH";                               // Set the symbol for display purposes
     }
 
     function transfer(address _to, uint256 _value) public returns (bool success) {
+        //Default assumes totalSupply can't be over max (2^256 - 1).
+        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
+        //Replace the if with this one instead.
+        //require(balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]);
         require(balances[msg.sender] >= _value);
         balances[msg.sender] -= _value;
         balances[_to] += _value;
@@ -87,6 +86,8 @@ contract UCASH is EIP20Interface {
     }
 
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        //same as above. Replace this line with the following if you want to protect against wrapping uints.
+        //require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]);
         uint256 allowance = allowed[_from][msg.sender];
         require(balances[_from] >= _value && allowance >= _value);
         balances[_to] += _value;
