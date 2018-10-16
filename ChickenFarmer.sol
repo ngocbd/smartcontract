@@ -1,47 +1,41 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChickenFarmer at 0x898cae9474b6ddd35d1c4fe95f33dc269158ff1a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChickenFarmer at 0xf448322a37793479045edc23d871b48913887e6b
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
 
 
 contract ChickenFarmer{
-    //uint256 EGGS_PER_CHICKEN_PER_SECOND=1;
-    uint256 public EGGS_TO_HATCH_1CHICKEN=86400;//for final version should be seconds in a day
-    uint256 public STARTING_CHICKEN=2;
+    //uint256 EGGS_PER_SHRIMP_PER_SECOND=1;
+    uint256 public EGGS_TO_HATCH_1SHRIMP=86400;//for final version should be seconds in a day
+    uint256 public STARTING_SHRIMP=300;
     uint256 PSN=10000;
     uint256 PSNH=5000;
     bool public initialized=false;
-    address private ceoAddress1=0x48baB4A535d4CF9aEd72c5Db74fB392ee38ea3e1;
-    address private ceoAddress2=0x00d9391e4E09066C3D42D672AB453Fe70c203976;
-    mapping (address => uint256) public hatcheryChicken;
+    address public ceoAddress;
+    mapping (address => uint256) public hatcheryShrimp;
     mapping (address => uint256) public claimedEggs;
     mapping (address => uint256) public lastHatch;
     mapping (address => address) public referrals;
     uint256 public marketEggs;
-
-   
+    function ChickenFarmer() public{
+        ceoAddress=msg.sender;
+    }
     function hatchEggs(address ref) public{
         require(initialized);
         if(referrals[msg.sender]==0 && referrals[msg.sender]!=msg.sender){
             referrals[msg.sender]=ref;
         }
         uint256 eggsUsed=getMyEggs();
-
-        //20% early hatch bonus
-        if (SafeMath.sub(now,lastHatch[msg.sender]) < SafeMath.div(EGGS_TO_HATCH_1CHICKEN,2))
-{    
-        eggsUsed =  SafeMath.div(SafeMath.mul(eggsUsed,120),100); }
-
-        uint256 newChicken=SafeMath.div(eggsUsed,EGGS_TO_HATCH_1CHICKEN);
-        hatcheryChicken[msg.sender]=SafeMath.add(hatcheryChicken[msg.sender],newChicken);
+        uint256 newShrimp=SafeMath.div(eggsUsed,EGGS_TO_HATCH_1SHRIMP);
+        hatcheryShrimp[msg.sender]=SafeMath.add(hatcheryShrimp[msg.sender],newShrimp);
         claimedEggs[msg.sender]=0;
         lastHatch[msg.sender]=now;
         
         //send referral eggs
-        claimedEggs[referrals[msg.sender]]=SafeMath.add(claimedEggs[referrals[msg.sender]],SafeMath.div(eggsUsed,20));
+        claimedEggs[referrals[msg.sender]]=SafeMath.add(claimedEggs[referrals[msg.sender]],SafeMath.div(eggsUsed,5));
         
-        //boost market to nerf Chicken hoarding
+        //boost market to nerf shrimp hoarding
         marketEggs=SafeMath.add(marketEggs,SafeMath.div(eggsUsed,10));
     }
     function sellEggs() public{
@@ -52,29 +46,15 @@ contract ChickenFarmer{
         claimedEggs[msg.sender]=0;
         lastHatch[msg.sender]=now;
         marketEggs=SafeMath.add(marketEggs,hasEggs);
-        ceoAddress1.transfer(fee);
-        ceoAddress2.transfer(fee);
-
+        ceoAddress.transfer(fee);
         msg.sender.transfer(SafeMath.sub(eggValue,fee));
     }
     function buyEggs() public payable{
         require(initialized);
         uint256 eggsBought=calculateEggBuy(msg.value,SafeMath.sub(this.balance,msg.value));
-   //     claimedEggs[msg.sender]=SafeMath.add(claimedEggs[msg.sender],eggsBought);
-        
-        uint256 newChicken=SafeMath.div(eggsBought,EGGS_TO_HATCH_1CHICKEN);
-
-        if (hatcheryChicken[msg.sender]==0){
-        lastHatch[msg.sender]=now;
-        }
-
-        hatcheryChicken[msg.sender]=SafeMath.add(hatcheryChicken[msg.sender],newChicken);
-
-        //boost market to nerf Chicken hoarding
-        marketEggs=SafeMath.add(marketEggs,SafeMath.div(eggsBought,10));
-
-
-
+        eggsBought=SafeMath.sub(eggsBought,devFee(eggsBought));
+        ceoAddress.transfer(devFee(msg.value));
+        claimedEggs[msg.sender]=SafeMath.add(claimedEggs[msg.sender],eggsBought);
     }
     //magic trade balancing algorithm
     function calculateTrade(uint256 rt,uint256 rs, uint256 bs) public view returns(uint256){
@@ -91,31 +71,31 @@ contract ChickenFarmer{
         return calculateEggBuy(eth,this.balance);
     }
     function devFee(uint256 amount) public view returns(uint256){
-        return SafeMath.div(SafeMath.mul(amount,2),100);
+        return SafeMath.div(SafeMath.mul(amount,4),100);
     }
     function seedMarket(uint256 eggs) public payable{
         require(marketEggs==0);
         initialized=true;
         marketEggs=eggs;
     }
-    function getFreeChicken() public{
+    function getFreeShrimp() public{
         require(initialized);
-        require(hatcheryChicken[msg.sender]==0);
+        require(hatcheryShrimp[msg.sender]==0);
         lastHatch[msg.sender]=now;
-        hatcheryChicken[msg.sender]=STARTING_CHICKEN;
+        hatcheryShrimp[msg.sender]=STARTING_SHRIMP;
     }
     function getBalance() public view returns(uint256){
         return this.balance;
     }
-    function getMyChicken() public view returns(uint256){
-        return hatcheryChicken[msg.sender];
+    function getMyShrimp() public view returns(uint256){
+        return hatcheryShrimp[msg.sender];
     }
     function getMyEggs() public view returns(uint256){
         return SafeMath.add(claimedEggs[msg.sender],getEggsSinceLastHatch(msg.sender));
     }
     function getEggsSinceLastHatch(address adr) public view returns(uint256){
-        uint256 secondsPassed=min(EGGS_TO_HATCH_1CHICKEN,SafeMath.sub(now,lastHatch[adr]));
-        return SafeMath.mul(secondsPassed,hatcheryChicken[adr]);
+        uint256 secondsPassed=min(EGGS_TO_HATCH_1SHRIMP,SafeMath.sub(now,lastHatch[adr]));
+        return SafeMath.mul(secondsPassed,hatcheryShrimp[adr]);
     }
     function min(uint256 a, uint256 b) private pure returns (uint256) {
         return a < b ? a : b;
