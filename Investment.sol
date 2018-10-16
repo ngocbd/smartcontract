@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Investment at 0xaf2b8e6114da000176c506f77b173251c16b511d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Investment at 0xfac50f760d114de38bf0a6d44f31a9c22f778db3
 */
 /**
 *	This investment contract accepts investments, which will be sent to the Edgeless ICO contract as soon as it starts buy calling buyTokens().
@@ -30,28 +30,28 @@ contract Investment is SafeMath{
 	Crowdsale public ico;
 	address[] public investors;
 	mapping(address => uint) public balanceOf;
-	mapping(address => bool) invested;
 
 
 	/** constructs an investment contract for an ICO contract **/
 	function Investment(){
-		ico = Crowdsale(0x362bb67f7fdbdd0dbba4bce16da6a284cf484ed6);
+		ico = Crowdsale(0xf66ca56fc0cf7b5d9918349150026be80b327892);
 	}
 
 	/** make an investment **/
 	function() payable{
-		if(msg.value > 0){
-			//only checking balance of msg.sender would not suffice, since an attacker could fill up the array by
-			//repeated investment and withdrawal, which would require a huge number of buyToken()-calls when the ICO ends
-			if(!invested[msg.sender]){
-				investors.push(msg.sender);
-				invested[msg.sender] = true;
-			}
-			balanceOf[msg.sender] = safeAdd(balanceOf[msg.sender], msg.value);
+		if(!isInvestor(msg.sender)){
+			investors.push(msg.sender);
 		}
+		balanceOf[msg.sender] = safeAdd(balanceOf[msg.sender], msg.value);
 	}
 
-
+	/** checks if the address already invested **/
+	function isInvestor(address who) returns (bool){
+		for(uint i = 0; i< investors.length; i++)
+			if(investors[i] == who)
+				return true;
+		return false;
+	}
 
 	/** buys tokens in behalf of the investors by calling the ico contract
 	*   starting with the investor at index from and ending with investor at index to.
