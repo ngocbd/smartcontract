@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PiranhasBattle at 0x1002226135e9e42235319bba1653a6d930febf83
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PiranhasBattle at 0x507b0c87ba1116e75247442b28e2c77ae1622a58
 */
 pragma solidity ^0.4.21;
 
@@ -100,7 +100,7 @@ contract PiranhasBattle is Ownable, Payments  {
   
 
   
-  ERC721 piranhas = ERC721(0x2B434a1B41AFE100299e5Be39c4d5be510a6A70C); 
+  ERC721 piranhas = ERC721(0x88aa423b70905fe68310fe74aa4246990b58809c);  //kovan
   
   function piranhasTotalSupply() constant returns (uint256)  {
       return piranhas.totalSupply();
