@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherByte at 0x6849ab724d051bb2075e9d39147d4f0dbaab0d67
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherByte at 0xee06f9971f112ce12a075f0072a6e7e385431579
 */
 pragma solidity ^ 0.4 .9;
 library SafeMath {
@@ -30,17 +30,17 @@ contract EtherByte {
     for uint256;
     mapping(address => mapping(address => uint256)) allowed;
     mapping(address => uint256) balances;
-    uint256 public totalSupply;
-    uint256 public decimals;
-    address public owner;
-    bytes32 public symbol;
+    uint256 public totalSupply = 500000000;
+    uint256 public decimals = 2;
+    address public owner = 0x4e2E901D7Be5C2a3F86a475Ff9681E9229421E58;
+    bytes32 public symbol = 'EBX';
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed _owner, address indexed spender, uint256 value);
 
     function EtherByte() {
-        totalSupply = 900000000000000;
+        totalSupply = 500000000;
         symbol = 'EBX';
-        owner = 0xdcefefb8fb9c81f21759cdd3fba511c6e8f434ab;
+        owner = 0x4e2E901D7Be5C2a3F86a475Ff9681E9229421E58;
         balances[owner] = totalSupply;
         decimals = 2;
     }
