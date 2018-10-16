@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TronClone at 0x409761efbcdf814953453c58899d592aef03f6ad
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TronClone at 0x55eabc711e3481e7194111d89ae3564bfd66eee8
 */
 pragma solidity ^0.4.11;
 
@@ -16,7 +16,7 @@ contract TronClone {
     bool public stopped = false;
 
     uint256 constant valueFounder = 100000000000000000;
-    address public owner = 0x0;
+    address owner = 0x0;
 
     modifier isOwner {
         assert(owner == msg.sender);
@@ -33,11 +33,11 @@ contract TronClone {
         _;
     }
 
-    function TronClone() {
+    function TronToken(address _addressFounder) {
         owner = msg.sender;
         totalSupply = valueFounder;
-        balanceOf[owner] = valueFounder;
-        Transfer(0x0, owner, valueFounder);
+        balanceOf[_addressFounder] = valueFounder;
+        Transfer(0x0, _addressFounder, valueFounder);
     }
 
     function transfer(address _to, uint256 _value) isRunning validAddress returns (bool success) {
