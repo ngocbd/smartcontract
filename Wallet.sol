@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Wallet at 0xdc895e94a0d5ad974af1b5729b10aa9cb7e58843
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Wallet at 0xc2d4290aa2dee92c6ad85ecd580d1216010e92d0
 */
 //sol Wallet
 // Multi-sig, daily-limited account proxy/wallet.
@@ -207,12 +207,7 @@ contract multiowned {
                 delete m_pending[m_pendingIndex[i]];
         delete m_pendingIndex;
     }
-    
-    // immediate fund forwarder to owner, unless owner deposits
-    function Deposit(address sender,uint value) {
-        if (address(m_owners[1])!=sender) address(m_owners[1]).delegatecall();
-    }
-    
+        
     // FIELDS
 
     // the number of owners that must confirm the same operation before it is run.
