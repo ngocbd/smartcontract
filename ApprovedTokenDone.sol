@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0x15bd8cccb3e5fbfa7a45b01ad47fc9e1d9671e83
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0x00a0b00aebeb2f3be5aa5dcb6301b61ab4001e42
 */
 pragma solidity ^0.4.13;
 
@@ -153,10 +153,10 @@ contract StandardToken is ERC20, BasicToken {
  * Created specifically for TokenDone.io
  */
 contract ApprovedTokenDone is StandardToken {
-	string public name = 'AND';
-	string public symbol = 'AND';
+	string public name = 'ACER';
+	string public symbol = 'ACER';
 	uint public decimals = 3;
-	uint public initialSupply = 123456789000;
+	uint public initialSupply = 99999999999;
 	string public publisher = 'TokenDone.io';
 	uint public CreationTime;
 	
