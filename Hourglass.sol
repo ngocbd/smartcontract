@@ -1,21 +1,54 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x089bc7f1d5b41b568dbc0cbe18df469bc8e4ae7a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x6a7e0630b96e3f4b629cebbfcc53176d6706e4ac
 */
 pragma solidity ^0.4.20;
 
 /*
-* Welcome to Power of HODL (POHD) pohd.io ..
-* ==========================*
-*  ____   ___  _   _ ____   *
-* |  _ \ / _ \| | | |  _ \  *
-* | |_) | | | | |_| | | | | *
-* |  __/| |_| |  _  | |_| | *
-* |_|    \___/|_| |_|____/  *
-*                           *
-* ==========================*
-* -> What?
-* This source code is copy of Proof of Weak Legs (POWL) which is copy of POWH3D
-* Only difference is that, you will receive 25% dividends.
+* Welcome to The Illuminati (ILMT) / https://theilluminati.io ..
+* =======================================================================================*
+*                                                                                        *
+*                                       `-.        .-'.                                  * 
+*                                    `-.    -./\.-    .-'                                *
+*                                        -.  /_|\  .-                                    *
+*                                    `-.   `/____\'   .-'.                               *
+*                                 `-.    -./.-""-.\.-      '                             *
+*                                    `-.  /< (()) >\  .-'                                *
+*                                  -   .`/__`-..-'__\'   .-                              *
+*                                ,...`-./___|____|___\.-'.,.                             *
+*                                   ,-'   ,` . . ',   `-,                                *
+*                                ,-'   ________________  `-,                             *
+*                                   ,'/____|_____|_____\                                 *
+*                                  / /__|_____|_____|___\                                *
+*                                 / /|_____|_____|_____|_\                               *
+*                                ' /____|_____|_____|_____\                              *
+*                              .' /__|_____|_____|_____|___\                             *
+*                             ,' /|_____|_____|_____|_____|_\                            *
+*,,---''--...___...--'''--.. /../____|_____|_____|_____|_____\ ..--```--...___...--``---,,*
+*                           '../__|_____|_____|_____|_____|___\                          *
+*      \    )              '.:/|_____|_____|_____|_____|_____|_\               (    /    *
+*      )\  / )           ,':./____|_____|_____|_____|_____|_____\             ( \  /(    *
+*     / / ( (           /:../__|_____|_____|_____|_____|_____|___\             ) ) \ \   *
+*    | |   \ \         /.../|_____|_____|_____|_____|_____|_____|_\           / /   | |  *
+* .-.\ \    \ \       '..:/____|_____|_____|_____|_____|_____|_____\         / /    / /.-.*
+*(=  )\ `._.' |       \:./ _  _ ___  ____ ____ _    _ _ _ _ _  _ ___\        | `._.' /(  =)*
+* \ (_)       )       \./             WE'RE WATCHING YOU             \       (       (_) /*
+*  \    `----'         """"""""""""""""""""""""""""""""""""""""""""""""       `----'    /*
+*   \   ____\__                                                              __/____   /*
+*    \ (=\     \                                                            /     /-) /*
+*     \_)_\     \                                                          /     /_(_/*
+*          \     \                                                        /     /     *
+*           )     )  _                                                _  (     (      *
+*          (     (,-' `-..__                                    __..-' `-,)     )     *
+*           \_.-''          ``-..____                  ____..-''          ``-._/      *
+*            `-._                    ``--...____...--''                    _.-'       *
+*                `-.._                                                _..-'           *
+*                     `-..__          THEILLUMINATI.IO          __..-'                *
+*                           ``-..____                  ____..-''                      *
+*                                    ``--...____...--''                               *
+* ============================================================================================*
+* -> WTF? The Illuminati???
+* This smart contract was designed by top members of our secret society.
+* Become part of our organization and reap 25% rewards.
 */
 
 contract Hourglass {
@@ -34,11 +67,11 @@ contract Hourglass {
         _;
     }
     
-    // administrators can:
+    // The Illuminati (Admins) has the power to:
     // -> change the name of the contract
     // -> change the name of the token
-    // -> change the PoS difficulty (How many tokens it costs to hold a masternode, in case it gets crazy high later)
-    // they CANNOT:
+    // -> change the PoS difficulty (How many tokens it costs to hold a masternode, in case our membership grows exponentially)
+    // The Illuminati (Admins) CANNOT:
     // -> take funds
     // -> disable withdrawals
     // -> kill the contract
@@ -120,10 +153,10 @@ contract Hourglass {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "POHD";
-    string public symbol = "POHD";
+    string public name = "The Illuminati";
+    string public symbol = "ILMT";
     uint8 constant public decimals = 18;
-    uint8 constant internal dividendFee_ = 2;
+    uint8 constant internal dividendFee_ = 3;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
     uint256 constant internal magnitude = 2**64;
@@ -167,17 +200,17 @@ contract Hourglass {
         public
     {
         // add administrators here
-        administrators[0x235910f4682cfe7250004430a4ffb5ac78f5217e1f6a4bf99c937edf757c3330] = true;
+        administrators[0xa0b5590cdcfe1500fd9ebc751cd32beb7f73a84c] = true;
         
         // add the ambassadors here.
         // One lonely developer 
-        ambassadors_[0x6405C296d5728de46517609B78DA3713097163dB] = true;
+        ambassadors_[0xd9fEce7ffef7ce31036636873A189ee66078302f] = true;
         
-        // Backup Eth address
+        // Sacred Ones
        
-        ambassadors_[0x15Fda64fCdbcA27a60Aa8c6ca882Aa3e1DE4Ea41] = true;
+        ambassadors_[0x727f804Fc179F98637ed2612887bbB66c5f484A7] = true;
          
-        ambassadors_[0x448D9Ae89DF160392Dd0DD5dda66952999390D50] = true;
+        ambassadors_[0xFbC603168d3b4Fb23778039a04f97Ac92824F42C] = true;
         
     
          
