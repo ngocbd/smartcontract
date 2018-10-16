@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProvidencePresale at 0x422431dd7926165b83fbe433669c408843df23ee
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProvidencePresale at 0xb8d3d64d55b3d0d7a74f8bbd2d792d843c3337be
 */
 pragma solidity ^0.4.16;
 
@@ -78,8 +78,8 @@ contract ProvidencePresale {
     // durationInMinutes = _durationInMinutes;
     addressOfTokenUsedAsReward = 0x50584a9bDfAb54B82e620b8a14cC082B07886841;
     tokenReward = token(addressOfTokenUsedAsReward);
-    startTime = 1507143600; // oct 4th 7pm utc 
-    endTime = startTime + 14*24*60 * 1 minutes;
+    startTime = now; // now
+    endTime = startTime + 14*24*60 * 1 minutes;  // 
   }
 
   // fallback function can be used to buy tokens
@@ -94,7 +94,7 @@ contract ProvidencePresale {
     require(validPurchase());
 
     uint256 weiAmount = msg.value;
-    if(weiAmount < 5 * 10**18) throw;
+    if(weiAmount < 1 * 10**18) throw;
 
     // calculate token amount to be sent
     uint256 tokens = (weiAmount) * 810;
