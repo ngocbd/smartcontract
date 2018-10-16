@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DLCToken at 0x5fea306c80e1dff426bbe4966853f0e32c2f6161
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DLCToken at 0x221a8366b2c70453f2063fb36f54a73f214170aa
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
 
 contract ERC20Basic {
     uint256 public totalSupply;
@@ -57,7 +57,7 @@ contract BasicToken is ERC20Basic {
     function transfer(address _to, uint256 _value) public returns (bool) {
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
+        emit Transfer(msg.sender, _to, _value);
         return true;
     }
 
@@ -90,7 +90,7 @@ contract StandardToken is ERC20, BasicToken {
      * @param _value uint256 the amout of tokens to be transfered
      */
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        var _allowance = allowed[_from][msg.sender];
+        uint256 _allowance = allowed[_from][msg.sender];
 
         // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
         // require (_value <= _allowance);
@@ -98,7 +98,7 @@ contract StandardToken is ERC20, BasicToken {
         balances[_to] = balances[_to].add(_value);
         balances[_from] = balances[_from].sub(_value);
         allowed[_from][msg.sender] = _allowance.sub(_value);
-        Transfer(_from, _to, _value);
+        emit Transfer(_from, _to, _value);
         return true;
     }
 
@@ -116,7 +116,7 @@ contract StandardToken is ERC20, BasicToken {
         require((_value == 0) || (allowed[msg.sender][_spender] == 0));
 
         allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
@@ -292,7 +292,7 @@ contract DLCToken is StandardToken, Configurable {
         balances[beneficiary] = balances[beneficiary].add(qty);
         balances[toSaleWallet] = balances[toSaleWallet].sub(qty);
 
-        Transfer(toSaleWallet, beneficiary, qty);
+        emit Transfer(toSaleWallet, beneficiary, qty);
     }
 
     function () public payable {
@@ -375,7 +375,6 @@ contract Sale is Configurable, Bonuses{
         address _multisigWallet
     ) public onlyConfigurer {
         require(!saleInited);
-        require(_startTime >= now);
         require(_endTime >= _startTime);
         require(_tokensLimit > 0);
         require(_multisigWallet != address(0));
@@ -418,7 +417,7 @@ contract Sale is Configurable, Bonuses{
 
         uint256 amount = msg.value;
         uint256 tokens = calculateTokensQtyByEther({
-                amount: amount
+            amount: amount
             });
 
         require(tokensTransferred.add(tokens) < tokensLimit);
@@ -427,7 +426,7 @@ contract Sale is Configurable, Bonuses{
         collected = collected.add(amount);
 
         token.purchase(beneficiary, tokens);
-        TokenPurchase(msg.sender, beneficiary, amount, tokens);
+        emit TokenPurchase(msg.sender, beneficiary, amount, tokens);
 
         forwardFunds();
     }
@@ -443,13 +442,17 @@ contract Sale is Configurable, Bonuses{
         return withinPeriod && nonZeroPurchase && minimalPriceChecked && activated && !closed;
     }
 
+    function isStarted() public constant returns (bool) {
+        return now > startTime;
+    }
+
     function isEnded() public constant returns (bool) {
         return now > endTime;
     }
 }
 
 
-contract DoubleLandICO_TEST is Ownable {
+contract DoubleLandICO is Ownable {
     using SafeMath for uint256;
 
     DLCToken public token;
@@ -531,30 +534,29 @@ contract DoubleLandICO_TEST is Ownable {
         require(!isDeployed);
         isDeployed = true;
 
-        softCap = 6000 ether;
-        hardCap = 25000 ether;
+        softCap = 8000 ether;
+        hardCap = 50000 ether;
         maxActivatedSalesTotalCount = 5;
 
-        setGlobalMultisigWallet(0xcC6E23E740FBc50e242B6B90f0BcaF64b83BF813);
+        setGlobalMultisigWallet(0x7649EFf762E46a63225297949e932e9c6e53A5D5);
 
         token = new DLCToken();
         token.setTotalSupply(1000000000 * 1 ether);
         token.setFoundersTokensPercent(15);
         token.setBountyTokensPercent(1);
         token.setDevelopmentAuditPromotionTokensPercent(10);
-        token.setPriceOfToken(0.00013749 * 1 ether);
-        token.setToSaleWallet(0xf9D1398a6e2c856fab73B5baaD13D125EDe30006);
-        token.setBountyWallet(0xFc6248b06e65686C9aDC5f4F758bBd716BaE80e1);
-        token.setFoundersWallet(0xf54315F87480f87Bfa2fCe97aCA036fd90223516);
-        token.setDevelopmentAuditPromotionWallet(0x34EEA5f12DeF816Bd86F682eDc6010500dd51976);
+        token.setPriceOfToken(0.000183 * 1 ether);
+        token.setToSaleWallet(0xd16b70A9170038085EBee1BD2a3035b142f62a0D);
+        token.setBountyWallet(0xaD88Ff7240E66F8a0f626F95c7D2aF7cA21265AA);
+        token.setFoundersWallet(0xdF1F7EB40Fe2646CDCC5d189BA0aBae0b0166465);
+        token.setDevelopmentAuditPromotionWallet(0x1028D60104Cd17F98409706e7c7B188B07ab679e);
         token.transferOwnership(owner);
         token.init();
 
         createSale({
             _bonusPreset: 'privatesale',
-            _startTime: 1522342800, // 29.03.2018
-           // _startTime: 1523318400, // 2018-04-10
-            _endTime:   1524614400, // 2018-04-25
+            _startTime: 1523739600, // 15.04.2018 00:00:00
+            _endTime:   1525035600, // 30.04.2018 00:00:00
             _tokensLimit: 80000000 * 1 ether,
             _minimalPrice: 1 ether
             });
@@ -562,8 +564,8 @@ contract DoubleLandICO_TEST is Ownable {
 
         createSale({
             _bonusPreset: 'presale',
-            _startTime: 1525910400, // 2018-05-10
-            _endTime:   1527206400, // 2018-05-25
+            _startTime: 1526331600, // 15.05.2018 00:00:00
+            _endTime:   1527714000, // 31.05.2018 00:00:00
             _tokensLimit: 75000000 * 1 ether,
             _minimalPrice: 0.03 ether
             });
