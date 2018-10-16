@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DigixReserve at 0xc8a66fe965F4e1F009C1a43f5C61Ae2672DFCfbb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DigixReserve at 0xCe076F8AB3f5aF34ECf70B99995b11039190eDc1
 */
 pragma solidity 0.4.18;
 
@@ -283,6 +283,7 @@ interface MakerDao {
     function peek() public view returns (bytes32, bool);
 }
 
+
 contract DigixReserve is KyberReserveInterface, Withdrawable, Utils {
 
     ERC20 public digix;
@@ -290,17 +291,15 @@ contract DigixReserve is KyberReserveInterface, Withdrawable, Utils {
     ConversionRatesInterface public conversionRatesContract;
     SanityRatesInterface public sanityRatesContract;
     address public kyberNetwork;
-    uint maxBlockDrift = 300;
-    mapping(bytes32=>bool) public approvedWithdrawAddresses; // sha3(token,address)=>bool
-    uint public priceFeed;
+    uint public maxBlockDrift = 300; //Max drift from block that price feed was received till we can't use it.
     bool public tradeEnabled;
-    uint constant internal POW_2_64 = 2 ** 64;
-    uint constant internal etherWei = 10 ** 18;
-    uint public buyTransferFee = 13;
+    uint public buyTransferFee = 13; //Digix token has transaction fees we should compensate for our flow to work
     uint public sellTransferFee = 13;
+    mapping(bytes32=>bool) public approvedWithdrawAddresses; // sha3(token,address)=>bool
+    uint public priceFeed;  //all price feed data squinted to one uint256
+    uint constant internal POW_2_64 = 2 ** 64;
 
-
-    function DigixReserve(address _admin, address _kyberNetwork, ERC20 _digix) public{
+    function DigixReserve(address _admin, address _kyberNetwork, ERC20 _digix) public {
         require(_admin != address(0));
         require(_digix != address(0));
         require(_kyberNetwork != address(0));
@@ -313,7 +312,7 @@ contract DigixReserve is KyberReserveInterface, Withdrawable, Utils {
         tradeEnabled = true;
     }
 
-    function () public payable {}
+    function () public payable {} // solhint-disable-line no-empty-blocks
 
     /// @dev Add digix price feed. Valid for @maxBlockDrift blocks
     /// @param blockNumber the block this price feed was signed.
@@ -348,6 +347,7 @@ contract DigixReserve is KyberReserveInterface, Withdrawable, Utils {
         priceFeed = encodePriceFeed(blockNumber, nonce, ask1KDigix, bid1KDigix);
     }
 
+    /* solhint-disable code-complexity */
     function getConversionRate(ERC20 src, ERC20 dest, uint srcQty, uint blockNumber) public view returns(uint) {
         if (!tradeEnabled) return 0;
         if (makerDaoContract == MakerDao(0)) return 0;
@@ -369,10 +369,15 @@ contract DigixReserve is KyberReserveInterface, Withdrawable, Utils {
         uint rate;
         if (ETH_TOKEN_ADDRESS == src && digix == dest) {
             //buy digix with ether == sell ether
-            rate = 1000 * uint(dollarsPerEtherWei) * PRECISION / etherWei / ask1KDigix;
+            if (ask1KDigix == 0) return 0;
+            //rate = (ether $ price / digix $ price) * precision
+            //rate = ((dollarsPerEtherWei / etherwei == 10**18) / (bid1KDigix / 1000)) * PRECISION
+            rate = 1000 * uint(dollarsPerEtherWei) / ask1KDigix;
         } else if (digix == src && ETH_TOKEN_ADDRESS == dest) {
             //sell digix == buy ether with digix
-            rate = bid1KDigix * etherWei * PRECISION / uint(dollarsPerEtherWei) / 1000;
+            //rate = (digix $ price / ether $ price) * precision
+            //rate = ((bid1KDigix / 1000) / (dollarsPerEtherWei / etherwei == 10**18)) * PRECISION
+            rate = bid1KDigix * PRECISION * PRECISION / uint(dollarsPerEtherWei) / 1000;
         } else {
             return 0;
         }
@@ -380,15 +385,13 @@ contract DigixReserve is KyberReserveInterface, Withdrawable, Utils {
         if (rate > MAX_RATE) return 0;
 
         uint destQty = getDestQty(src, dest, srcQty, rate);
+        if (dest == digix) destQty = recalcAmountWithFees(destQty, true);
 
         if (getBalance(dest) < destQty) return 0;
 
-//        if (sanityRatesContract != address(0)) {
-//            uint sanityRate = sanityRatesContract.getSanityRate(src, dest);
-//            if (rate > sanityRate) return 0;
-//        }
         return rate;
     }
+    /* solhint-enable code-complexity */
 
     function getPriceFeed() public view returns(uint feedBlock, uint nonce, uint ask1KDigix, uint bid1KDigix) {
         (feedBlock, nonce, ask1KDigix, bid1KDigix) = decodePriceFeed(priceFeed);
@@ -431,14 +434,16 @@ contract DigixReserve is KyberReserveInterface, Withdrawable, Utils {
         }
 
         uint destAmount = getDestQty(srcToken, destToken, srcAmount, conversionRate);
-        uint adjustedAmount;
         // sanity check
         require(destAmount > 0);
 
+        uint adjustedAmount;
+
         // collect src tokens
         if (srcToken != ETH_TOKEN_ADDRESS) {
-            //due to fee network has less tokens. take amount less fee. reduce 1 to avoid rounding errors.
-            adjustedAmount = (srcAmount * (10000 - sellTransferFee) / 10000) - 1;
+            //due to fee network has less tokens. take amount less the fee.
+            adjustedAmount = recalcAmountWithFees(srcAmount, false);
+            require(adjustedAmount > 0);
             require(srcToken.transferFrom(msg.sender, this, adjustedAmount));
         }
 
@@ -447,7 +452,7 @@ contract DigixReserve is KyberReserveInterface, Withdrawable, Utils {
             destAddress.transfer(destAmount);
         } else {
             //add 1 to compensate for rounding errors.
-            adjustedAmount = (destAmount * 10000 / (10000 - buyTransferFee)) + 1;
+            adjustedAmount = recalcAmountWithFees(destAmount, true);
             require(destToken.transfer(destAddress, adjustedAmount));
         }
 
@@ -497,12 +502,12 @@ contract DigixReserve is KyberReserveInterface, Withdrawable, Utils {
         return true;
     }
 
-    function setMakerDaoContract(MakerDao daoContract) public onlyAdmin{
+    function setMakerDaoContract(MakerDao daoContract) public onlyAdmin {
         require(daoContract != address(0));
         makerDaoContract = daoContract;
     }
 
-    function setKyberNetworkAddress(address _kyberNetwork) public onlyAdmin{
+    function setKyberNetworkAddress(address _kyberNetwork) public onlyAdmin {
         require(_kyberNetwork != address(0));
         kyberNetwork = _kyberNetwork;
     }
@@ -535,32 +540,43 @@ contract DigixReserve is KyberReserveInterface, Withdrawable, Utils {
         return calcDstQty(srcQty, srcDecimals, dstDecimals, rate);
     }
 
-    function decodePriceFeed(uint input) internal pure returns(uint blockNumber, uint nonce, uint ask1KDigix, uint bid1KDigix) {
+    function decodePriceFeed(uint input) internal pure returns(uint blockNumber, uint nonce, uint ask, uint bid) {
         blockNumber = uint(uint64(input));
         nonce = uint(uint64(input / POW_2_64));
-        ask1KDigix = uint(uint64(input / (POW_2_64 * POW_2_64)));
-        bid1KDigix = uint(uint64(input / (POW_2_64 * POW_2_64 * POW_2_64)));
+        ask = uint(uint64(input / (POW_2_64 * POW_2_64)));
+        bid = uint(uint64(input / (POW_2_64 * POW_2_64 * POW_2_64)));
     }
 
-    function encodePriceFeed(uint blockNumber, uint nonce, uint ask1KDigix, uint bid1KDigix) internal pure returns(uint) {
+    function encodePriceFeed(uint blockNumber, uint nonce, uint ask, uint bid) internal pure returns(uint) {
         // check overflows
         require(blockNumber < POW_2_64);
         require(nonce < POW_2_64);
-        require(ask1KDigix < POW_2_64);
-        require(bid1KDigix < POW_2_64);
+        require(ask < POW_2_64);
+        require(bid < POW_2_64);
 
         // do encoding
         uint result = blockNumber;
         result |= nonce * POW_2_64;
-        result |= ask1KDigix * POW_2_64 * POW_2_64;
-        result |= bid1KDigix * POW_2_64 * POW_2_64 * POW_2_64;
+        result |= ask * POW_2_64 * POW_2_64;
+        result |= bid * POW_2_64 * POW_2_64 * POW_2_64;
 
         return result;
     }
 
-    function verifySignature(bytes32 hash, uint8 v, bytes32 r, bytes32 s) internal view returns(bool){
+    function verifySignature(bytes32 hash, uint8 v, bytes32 r, bytes32 s) internal view returns(bool) {
         address signer = ecrecover(hash, v, r, s);
         return operators[signer];
     }
 
+    function recalcAmountWithFees(uint amount, bool isEtherToDigix) internal view returns(uint adjustedAmount) {
+        if (isEtherToDigix) {
+            //when sending Digix to kyberNetwork fee will be reduced and received amount will be less then expected.
+            adjustedAmount = (amount * 10000 / (10000 - buyTransferFee)) + 1;
+        } else {
+            adjustedAmount = (amount * (10000 - sellTransferFee) / 10000);
+            if (adjustedAmount == 0) return 0;
+            // reduce 1 to avoid rounding errors on above calculation.
+            adjustedAmount -= 1;
+        }
+    }
 }
