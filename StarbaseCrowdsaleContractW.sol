@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StarbaseCrowdsaleContractW at 0xc03ab1fc46c6d01238707426c929e9eed3e7f9b3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StarbaseCrowdsaleContractW at 0x54c548703c6f423cf7ed22806b608d332fcebb3b
 */
 pragma solidity ^0.4.13;
 
@@ -81,6 +81,7 @@ contract AbstractStarbaseToken {
     function allocateToCrowdsalePurchaser(address to, uint256 value) public returns (bool);
     function allocateToMarketingSupporter(address to, uint256 value) public returns (bool);
 }
+
 
 contract AbstractStarbaseCrowdsale {
     function startDate() constant returns (uint256) {}
@@ -568,9 +569,6 @@ contract StarbaseEarlyPurchaseAmendment {
     }
 }
 
-//! Certifier contract.
-//! By Parity Technologies, 2017.
-//! Released under the Apache Licence 2.
 
 contract Certifier {
 	event Confirmed(address indexed who);
@@ -1313,6 +1311,7 @@ contract StarbaseCrowdsaleContractW is Ownable {
      */
     AbstractStarbaseToken public starbaseToken;
     StarbaseCrowdsale public starbaseCrowdsale;
+    StarbaseEarlyPurchaseAmendment public starbaseEpAmendment;
 
     /**
      *  Constants
@@ -1325,9 +1324,12 @@ contract StarbaseCrowdsaleContractW is Ownable {
      */
 
     // early purchase
+    address[] public earlyPurchasers;
+    mapping (address => uint256) public earlyPurchasedAmountBy; // early purchased amount in CNY per purchasers' address
     bool public earlyPurchasesLoaded = false;  // returns whether all early purchases are loaded into this contract
-    uint256 public totalAmountOfEarlyPurchases; // including 20% bonus
+    uint256 public totalAmountOfEarlyPurchases; // including bonus
     uint public numOfDeliveredEarlyPurchases;  // index to keep the number of early purchases have already been processed by `withdrawPurchasedTokens`
+    uint256 public numOfLoadedEarlyPurchases; // index to keep the number of early purchases that have already been loaded by `loadEarlyPurchases`
 
     // crowdsale
     uint256 public totalAmountOfCrowdsalePurchases; // in CNY, including bonuses
@@ -1341,12 +1343,6 @@ contract StarbaseCrowdsaleContractW is Ownable {
     bool public crowdsalePurchasesLoaded = false;   // returns whether all crowdsale purchases are loaded into this contract
     uint256 public numOfLoadedCrowdsalePurchases; // index to keep the number of crowdsale purchases that have already been loaded by `loadCrowdsalePurchases`
     uint256 public totalAmountOfPresalePurchasesWithoutBonus;  // in CNY
-
-    // bonus milestones
-    uint256 public firstBonusEnds;
-    uint256 public secondBonusEnds;
-    uint256 public thirdBonusEnds;
-    uint256 public fourthBonusEnds;
 
     // after the crowdsale
     mapping (address => bool) public tokenWithdrawn;    // returns whether purchased tokens were withdrawn by a purchaser
@@ -1388,14 +1384,13 @@ contract StarbaseCrowdsaleContractW is Ownable {
 
         starbaseToken = AbstractStarbaseToken(starbaseTokenAddress);
         starbaseCrowdsale = StarbaseCrowdsale(StarbaseCrowdsaleAddress);
+        starbaseEpAmendment = StarbaseEarlyPurchaseAmendment(starbaseCrowdsale.starbaseEpAmendment());
 
         require(starbaseCrowdsale.startDate() > 0);
         startDate = starbaseCrowdsale.startDate();
 
         require(starbaseCrowdsale.endedAt() > 0);
         endedAt = starbaseCrowdsale.endedAt();
-
-        totalAmountOfEarlyPurchases = starbaseCrowdsale.totalAmountOfEarlyPurchases();
     }
 
     /**
@@ -1443,14 +1438,58 @@ contract StarbaseCrowdsaleContractW is Ownable {
     }
 
     /**
+     * @dev Add early purchases
+     */
+    function addEarlyPurchases() external onlyOwner returns (bool) {
+        if (earlyPurchasesLoaded) {
+            return false;    // all EPs have already been loaded
+        }
+
+        uint256 numOfOrigEp = starbaseEpAmendment
+            .starbaseEarlyPurchase()
+            .numberOfEarlyPurchases();
+
+        for (uint256 i = numOfLoadedEarlyPurchases; i < numOfOrigEp && msg.gas > 200000; i++) {
+            if (starbaseEpAmendment.isInvalidEarlyPurchase(i)) {
+                numOfLoadedEarlyPurchases = SafeMath.add(numOfLoadedEarlyPurchases, 1);
+                continue;
+            }
+            var (purchaser, amount,) =
+                starbaseEpAmendment.isAmendedEarlyPurchase(i)
+                ? starbaseEpAmendment.amendedEarlyPurchases(i)
+                : starbaseEpAmendment.earlyPurchases(i);
+            if (amount > 0) {
+                if (earlyPurchasedAmountBy[purchaser] == 0) {
+                    earlyPurchasers.push(purchaser);
+                }
+                // each early purchaser receives 10% bonus
+                uint256 bonus = SafeMath.mul(amount, 10) / 100;
+                uint256 amountWithBonus = SafeMath.add(amount, bonus);
+
+                earlyPurchasedAmountBy[purchaser] = SafeMath.add(earlyPurchasedAmountBy[purchaser], amountWithBonus);
+                totalAmountOfEarlyPurchases = totalAmountOfEarlyPurchases.add(amountWithBonus);
+            }
+
+            numOfLoadedEarlyPurchases = SafeMath.add(numOfLoadedEarlyPurchases, 1);
+        }
+
+        assert(numOfLoadedEarlyPurchases <= numOfOrigEp);
+        if (numOfLoadedEarlyPurchases == numOfOrigEp) {
+            earlyPurchasesLoaded = true;    // enable the flag
+        }
+
+        return true;
+    }
+
+    /**
      * @dev Deliver tokens to purchasers according to their purchase amount in CNY
      */
     function withdrawPurchasedTokens()
         external
         whenEnded
     {
-        require(starbaseCrowdsale.earlyPurchasesLoaded());
         require(crowdsalePurchasesLoaded);
+        assert(earlyPurchasesLoaded);
         assert(address(starbaseToken) != 0);
 
         // prevent double withdrawal
@@ -1487,15 +1526,15 @@ contract StarbaseCrowdsaleContractW is Ownable {
          * {earlypurchaser_token_amount} * ({earlypurchase_value} / {total_earlypurchase_value})
          *  + {crowdsale_token_amount} * ({earlypurchase_value} / {earlypurchase_value} + {crowdsale_value}).
          *
-         * Example: If an Early Purchaser contributes 100 CNY (including Bonus of 20%) and the
+         * Example: If an Early Purchaser contributes 100 CNY (including Bonus) and the
          * total amount of early purchases amounts to 6’000’000 CNY and the total amount raised
          * during the Contribution Period is 30’000’000 CNY, then he will get 1180.55 STAR =
          * 50’000’000 STAR * 100 CNY / 6’000’000 CNY + 125’000’000 STAR * 100 CNY /
          * 30’000’000 CNY + 6’000’000 CNY
          */
 
-        if (earlyPurchasedAmountBy(msg.sender) > 0) {  // skip if is not an early purchaser
-            uint256 earlyPurchaserPurchaseValue = earlyPurchasedAmountBy(msg.sender);
+        if (earlyPurchasedAmountBy[msg.sender] > 0) {  // skip if is not an early purchaser
+            uint256 earlyPurchaserPurchaseValue = earlyPurchasedAmountBy[msg.sender];
             uint256 epTokenCalculationFromEPTokenAmount = SafeMath.mul(earlyPurchaseTokenAmount, earlyPurchaserPurchaseValue) / totalAmountOfEarlyPurchases;
             uint256 epTokenCalculationFromCrowdsaleTokenAmount = SafeMath.mul(crowdsaleTokenAmount, earlyPurchaserPurchaseValue) / totalRaisedAmountInCny();
             uint256 epTokenCount = SafeMath.add(epTokenCalculationFromEPTokenAmount, epTokenCalculationFromCrowdsaleTokenAmount);
@@ -1510,18 +1549,6 @@ contract StarbaseCrowdsaleContractW is Ownable {
     /**
      * Public functions
      */
-
-    /**
-     * @dev Returns purchased amount by an early purchaser
-     * @param purchaser Address of an early purchaser
-     */
-    function earlyPurchasedAmountBy(address purchaser)
-        constant
-        public
-        returns (uint256)
-    {
-        return starbaseCrowdsale.earlyPurchasedAmountBy(purchaser);
-    }
 
     /**
      * @dev Returns boolean for whether crowdsale has ended
