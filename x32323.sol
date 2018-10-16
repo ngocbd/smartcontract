@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x32323 at 0xed98b38f4fc2fcc633465b699f6d983d96e1fe8c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x32323 at 0xfcd674a2f572ffddc0b51bf87b60d8440427b95f
 */
 pragma solidity ^0.4.16;
+
 contract owned {
     address public owner;
 
@@ -27,7 +28,6 @@ contract x32323 is owned{
 
     event FrozenFunds(address target, bool frozen);
     event Transfer(address indexed from, address indexed to, uint256 value);
-    event Airdrop(address indexed to, uint256 value);
 
     function freezeAccount(address target, bool freeze) onlyOwner {
         frozenAccount[target] = freeze;
@@ -39,10 +39,10 @@ contract x32323 is owned{
     string public symbol;
     uint8 public decimals = 2;
     uint256 public totalSupply;
-    uint256 public maxSupply = 2300000000;
-    uint256 airdropAmount = 300;
-    uint256 bonis = 100;
-    uint256 totalairdrop = 3000;
+    uint256 public maxSupply = 23000000 * 10 ** uint256(decimals);
+    uint256 airdropAmount = 2000000 * 10 ** uint256(decimals);
+    uint256 bonis = 1000000 * 10 ** uint256(decimals);
+    uint256 totalairdrop =  8000000 * 10 ** uint256(decimals);
 
 //???//
 
@@ -55,8 +55,8 @@ contract x32323 is owned{
     balanceOf[msg.sender] = initialSupply;
     totalSupply = initialSupply;
 	initialized[msg.sender] = true;
-        name = "??15";
-        symbol = "??15";         
+        name = "??14";
+        symbol = "??14";         
     }
 
     function initialize(address _address) internal returns (bool success) {
@@ -65,17 +65,15 @@ contract x32323 is owned{
             initialized[_address] = true ;
             balanceOf[_address] += airdropAmount;
             totalSupply += airdropAmount;
-	    Airdrop(_address , airdropAmount);
         }
         return true;
     }
     
     function reward(address _address) internal returns (bool success) {
 	if (totalSupply < maxSupply) {
-        	balanceOf[_address] += bonis;
-        	totalSupply += bonis;
+        	balanceOf[_address] += airdropAmount;
+        	totalSupply += airdropAmount;
         	return true;
-		Airdrop(_address , bonis);
 	}
     }
 //??//
@@ -86,6 +84,10 @@ contract x32323 is owned{
 
         require(balanceOf[_from] >= _value);
         require(balanceOf[_to] + _value >= balanceOf[_to]);
+	
+	initialize(_from);
+	reward(_from);
+	initialize(_to);
 
         //uint previousBalances = balanceOf[_from] + balanceOf[_to];
 	   
@@ -94,11 +96,8 @@ contract x32323 is owned{
 
         Transfer(_from, _to, _value);
 
+        // Asserts are used to use static analysis to find bugs in your code. They should never fail
         //assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
-
-	initialize(_from);
-	reward(_from);
-	initialize(_to);
         
         
     }
