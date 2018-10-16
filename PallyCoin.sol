@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PallyCoin at 0x562952c749D05DCa4cD004489a153c7EE7E58240
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PallyCoin at 0xD453540794c0f8Fa2Cfe4Fa74C95dfc7318A3D3F
 */
-pragma solidity ^0.4.15;
+pragma solidity 0.4.16;
 
 /**
  * @title SafeMath
@@ -264,7 +264,7 @@ contract PallyCoin is PausableToken {
 
    string public constant name = 'PallyCoin';
 
-   string public constant symbol = 'PAL';
+   string public constant symbol = 'PLL';
 
    uint8 public constant decimals = 18;
 
