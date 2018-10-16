@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EnjinBuyer at 0x00a2409f41fdf485afd23599219c60a77524bba2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EnjinBuyer at 0x2d52d1517f47e1ab7be6377a1f11fbd2c49978db
 */
 pragma solidity ^0.4.13;
 
@@ -113,13 +113,6 @@ contract EnjinBuyer {
   function () payable {
     if (!bought_tokens) {
       balances[msg.sender] += msg.value;
-      if (this.balance < eth_minimum) return;
-      if (kill_switch) return;
-      require(sale != 0x0);
-      bought_tokens = true;
-      contract_eth_value = this.balance;
-      require(sale.call.value(contract_eth_value)());
-      require(this.balance==0);
     } else {
       // We might be getting a refund from Enjin's multisig wallet.
       // It could also be someone who has missed the buy, so we keep
