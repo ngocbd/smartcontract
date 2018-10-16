@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CottageToken at 0x8973514695aed340b5d55d60d631be237e8cc43b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CottageToken at 0xfe45e0e4c560edec3b4c69ab7f62dbc901592e29
 */
 pragma solidity ^0.4.11;
 
@@ -287,8 +287,7 @@ contract CottageToken is RewardToken {
 
     bool public mintingFinished = false;
     bool public commandGetBonus = false;
-    //uint public commandGetBonusTime = 1535760000;       // 01.09.2018
-    uint public commandGetBonusTime = now + 40 minutes;
+    uint public commandGetBonusTime = 1519884000;
 
     event Mint(address indexed holder, uint256 tokenAmount);
     event MintFinished();
@@ -327,5 +326,91 @@ contract CottageToken is RewardToken {
         require(_mint(_to, totalSupply.mul(15).div(100)));
 
         MintCommandBonus();
+    }
+}
+
+contract Crowdsale is Ownable {
+    using SafeMath for uint;
+
+    CottageToken public token;
+    address public beneficiary = 0xd358Bd183C8E85C56d84C1C43a785DfEE0236Ca2; 
+
+    uint public collectedFunds = 0;
+    uint public hardCap = 230000 * 1000000000000000000; // hardCap = 230000 ETH
+    uint public tokenETHAmount = 600; // Amount of tokens per 1 ETH
+    
+    uint public startPreICO = 1511762400; // Mon, 27 Nov 2017 06:00:00 GMT
+    uint public endPreICO = 1514354400; // Wed, 27 Dec 2017 06:00:00 GMT
+    uint public bonusPreICO = 200  ether; // If > 200 ETH - bonus 20%, if < 200 ETH - bonus 12% 
+     
+    uint public startICO = 1517464800; // Thu, 01 Feb 2018 06:00:00 GMT
+    uint public endICOp1 = 1518069600; //  Thu, 08 Feb 2018 06:00:00 GMT
+    uint public endICOp2 = 1518674400; // Thu, 15 Feb 2018 06:00:00 GMT
+    uint public endICOp3 = 1519279200; // Thu, 22 Feb 2018 06:00:00 GMT
+    uint public endICO = 1519884000; // Thu, 01 Mar 2018 06:00:00 GMT
+    
+    bool public crowdsaleFinished = false;
+
+    event NewContribution(address indexed holder, uint256 tokenAmount, uint256 etherAmount);
+
+    function Crowdsale() {
+        // beneficiary =  msg.sender; // if beneficiary = contract creator
+
+        token = new CottageToken();
+    }
+
+    function() payable {
+        doPurchase();
+    }
+
+    function doPurchase() payable {
+        
+        require((now >= startPreICO && now < endPreICO) || (now >= startICO && now < endICO));
+        require(collectedFunds < hardCap);
+        require(msg.value > 0);
+        require(!crowdsaleFinished);
+        
+        uint rest = 0;
+        uint tokensAmount = 0;
+        uint sum = msg.value;
+        
+        if(sum > hardCap.sub(collectedFunds) ) {
+           sum =  hardCap.sub(collectedFunds);
+           rest =  msg.value - sum; 
+        }
+        
+        if(now >= startPreICO && now < endPreICO){
+            if(msg.value >= bonusPreICO){
+                tokensAmount = sum.mul(tokenETHAmount).mul(120).div(100); // Bonus 20% 
+            } else {
+                tokensAmount = sum.mul(tokenETHAmount).mul(112).div(100); // Bonus 12%
+            }
+        }
+        
+        if(now >= startICO && now < endICOp1){
+             tokensAmount = sum.mul(tokenETHAmount).mul(110).div(100);  // Bonus 10%
+        } else if (now >= endICOp1 && now < endICOp2) {
+            tokensAmount = sum.mul(tokenETHAmount).mul(108).div(100);   // Bonus 8%
+        } else if (now >= endICOp2 && now < endICOp3) {
+            tokensAmount = sum.mul(tokenETHAmount).mul(105).div(100);  // Bonus 5%
+        } else if (now >= endICOp3 && now < endICO) {
+            tokensAmount = sum.mul(tokenETHAmount);
+        }
+
+        require(token.mint(msg.sender, tokensAmount));
+        beneficiary.transfer(sum);
+        msg.sender.transfer(rest);
+
+        collectedFunds = collectedFunds.add(sum);
+
+        NewContribution(msg.sender, tokensAmount, tokenETHAmount);
+    }
+
+    function withdraw() onlyOwner {
+        require(token.finishMinting());
+        require(beneficiary.send(this.balance)); // If we store ETH on contract
+        token.transferOwnership(beneficiary);
+
+        crowdsaleFinished = true;
     }
 }
