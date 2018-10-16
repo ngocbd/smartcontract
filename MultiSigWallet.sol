@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x16a0772b17ae004e6645e0e95bf50ad69498a34e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x05cf67329a262818e67c080e9d511a34d36152c0
 */
 pragma solidity ^0.4.15;
 
@@ -110,18 +110,12 @@ contract MultiSigWallet {
         address owner1 = address(0x5117afB03e83d180D0059a1Ad733F954220D2734);
         address owner2 = address(0x4F9049886d8087c7549224383075ffbb3dF2b7a0);
         address owner3 = address(0x4E63227fcFF602b3Fa9e6F4e86b33194f04236B1);
-        address owner4 = address(0x5c48a46744Ca4dDC427829cA0E2d1de77DB343e4);
-        address owner5 = address(0xac0A13CDab06D9A17ea9cf90e7766610128f487F);
         owners.push(address(owner1));
         owners.push(address(owner2));
         owners.push(address(owner3));
-        owners.push(address(owner4));
-        owners.push(address(owner5));
         isOwner[owner1] = true;
         isOwner[owner2] = true;
         isOwner[owner3] = true;
-        isOwner[owner4] = true;
-        isOwner[owner5] = true;
         required = 3;
     }
 
@@ -207,7 +201,7 @@ contract MultiSigWallet {
     function confirmTransaction(uint transactionId)
         public
         ownerExists(msg.sender)
-        transactionExists(transactionId)    
+        transactionExists(transactionId)
         notConfirmed(transactionId, msg.sender)
     {
         confirmations[transactionId][msg.sender] = true;
