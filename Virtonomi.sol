@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Virtonomi at 0x260d1f988c236ae11b8e628b7c8da17cf7c30b7d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Virtonomi at 0xd7cbcb28446c0f735dcdda0bd7b37cdd2facda77
 */
 pragma solidity ^0.4.13;
 
@@ -25,7 +25,7 @@ contract ERC20Interface {
 
 // contract
 contract Virtonomi is ERC20Interface {
-    string public constant symbol = "VTO";
+    string public constant symbol = "VTI";
     string public constant name = "Virtonomi";
     uint8 public constant decimals = 8;
     uint256 _totalSupply = 10000000000000000;
