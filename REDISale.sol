@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract REDISale at 0x0e622f6a94258697ef6927cc6b3dddc0d16fc263
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract REDISale at 0x8afc35663cafe36a157a1805c87222a142bb518d
 */
 pragma solidity ^0.4.13;
 
@@ -60,7 +60,7 @@ contract REDISale {
         token = ERC20(0x4d5c907a460B0844cc99b95003819c2AA2b2b77A);
         wallet   = 0x03C7d48F9710AE7c706e2e8F95F293Fe39e928C4;
         rate  =  400000; 
-        admin = wallet;
+        admin = msg.sender;
     }
 
     function setHaltSale( bool halt ) {
