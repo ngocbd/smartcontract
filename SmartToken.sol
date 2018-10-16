@@ -1,55 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartToken at 0x3271c5530221ccf9fdf35da3669c3caf26fa7786
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartToken at 0x1bce0e684a1607fd86407909073eea2336042bf7
 */
 pragma solidity ^0.4.11;
-
-/*
-    Owned contract interface
-*/
-contract IOwned {
-    // this function isn't abstract since the compiler emits automatically generated getter functions as external
-    function owner() public constant returns (address) {}
-
-    function transferOwnership(address _newOwner) public;
-    function acceptOwnership() public;
-}
-
-/*
-    Token Holder interface
-*/
-contract ITokenHolder is IOwned {
-    function withdrawTokens(IERC20Token _token, address _to, uint256 _amount) public;
-}
-
-
-/*
-    ERC20 Standard Token interface
-*/
-contract IERC20Token {
-    // these functions aren't abstract since the compiler emits automatically generated getter functions as external
-    function name() public constant returns (string) {}
-    function symbol() public constant returns (string) {}
-    function decimals() public constant returns (uint8) {}
-    function totalSupply() public constant returns (uint256) {}
-    function balanceOf(address _owner) public constant returns (uint256) { _owner; }
-    function allowance(address _owner, address _spender) public constant returns (uint256) { _owner; _spender; }
-
-    function transfer(address _to, uint256 _value) public returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-    function approve(address _spender, uint256 _value) public returns (bool success);
-}
-
-
-/*
-    Smart Token interface
-*/
-contract ISmartToken is IOwned, IERC20Token {
-    function disableTransfers(bool _disable) public;
-    function issue(address _to, uint256 _amount) public;
-    function destroy(address _from, uint256 _amount) public;
-}
-
-
 
 /*
     Utilities & Common Modifiers
@@ -123,6 +75,16 @@ contract Utils {
     }
 }
 
+/*
+    Owned contract interface
+*/
+contract IOwned {
+    // this function isn't abstract since the compiler emits automatically generated getter functions as external
+    function owner() public constant returns (address) {}
+
+    function transferOwnership(address _newOwner) public;
+    function acceptOwnership() public;
+}
 
 /*
     Provides support and utilities for contract ownership
@@ -169,38 +131,30 @@ contract Owned is IOwned {
     }
 }
 
+/*
+    ERC20 Standard Token interface
+*/
+contract IERC20Token {
+    // these functions aren't abstract since the compiler emits automatically generated getter functions as external
+    function name() public constant returns (string) {}
+    function symbol() public constant returns (string) {}
+    function decimals() public constant returns (uint8) {}
+    function totalSupply() public constant returns (uint256) {}
+    function balanceOf(address _owner) public constant returns (uint256) { _owner; }
+    function allowance(address _owner, address _spender) public constant returns (uint256) { _owner; _spender; }
+
+    function transfer(address _to, uint256 _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+    function approve(address _spender, uint256 _value) public returns (bool success);
+}
 
 /*
-    We consider every contract to be a 'token holder' since it's currently not possible
-    for a contract to deny receiving tokens.
-
-    The TokenHolder's contract sole purpose is to provide a safety mechanism that allows
-    the owner to send tokens that were sent to the contract by mistake back to their sender.
+    Smart Token interface
 */
-contract TokenHolder is ITokenHolder, Owned, Utils {
-    /**
-        @dev constructor
-    */
-    function TokenHolder() {
-    }
-
-    /**
-        @dev withdraws tokens held by the contract and sends them to an account
-        can only be called by the owner
-
-        @param _token   ERC20 token contract address
-        @param _to      account to receive the new amount
-        @param _amount  amount to withdraw
-    */
-    function withdrawTokens(IERC20Token _token, address _to, uint256 _amount)
-        public
-        ownerOnly
-        validAddress(_token)
-        validAddress(_to)
-        notThis(_to)
-    {
-        assert(_token.transfer(_to, _amount));
-    }
+contract ISmartToken is IOwned, IERC20Token {
+    function disableTransfers(bool _disable) public;
+    function issue(address _to, uint256 _amount) public;
+    function destroy(address _from, uint256 _amount) public;
 }
 
 /**
@@ -303,6 +257,45 @@ contract ERC20Token is IERC20Token, Utils {
     }
 }
 
+/*
+    Token Holder interface
+*/
+contract ITokenHolder is IOwned {
+    function withdrawTokens(IERC20Token _token, address _to, uint256 _amount) public;
+}
+
+/*
+    We consider every contract to be a 'token holder' since it's currently not possible
+    for a contract to deny receiving tokens.
+
+    The TokenHolder's contract sole purpose is to provide a safety mechanism that allows
+    the owner to send tokens that were sent to the contract by mistake back to their sender.
+*/
+contract TokenHolder is ITokenHolder, Owned, Utils {
+    /**
+        @dev constructor
+    */
+    function TokenHolder() {
+    }
+
+    /**
+        @dev withdraws tokens held by the contract and sends them to an account
+        can only be called by the owner
+
+        @param _token   ERC20 token contract address
+        @param _to      account to receive the new amount
+        @param _amount  amount to withdraw
+    */
+    function withdrawTokens(IERC20Token _token, address _to, uint256 _amount)
+        public
+        ownerOnly
+        validAddress(_token)
+        validAddress(_to)
+        notThis(_to)
+    {
+        assert(_token.transfer(_to, _amount));
+    }
+}
 
 /*
     Smart Token v0.3
