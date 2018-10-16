@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RestartEnergyToken at 0xf5be51FB93F296858344f044ae664aF481c1A20D
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RestartEnergyToken at 0x041bb86a5064169fb4667dba63779d5630565c43
 */
 pragma solidity ^0.4.18;
 
@@ -400,7 +400,7 @@ contract PausableToken is StandardToken, Pausable {
 //begin RestartEnergyToken.sol
 
 contract RestartEnergyToken is MintableToken, PausableToken {
-    string public name = "RED MegaWatt Token";
+    string public name = "RED MWAT";
     string public symbol = "MWAT";
     uint256 public decimals = 18;
 }
