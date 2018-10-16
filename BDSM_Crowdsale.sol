@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BDSM_Crowdsale at 0xfc4021a6ad5eed9c0e76bad0f3832ed6c9bfbfb7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BDSM_Crowdsale at 0xe7e0bb725a6c1ed81b89042b1d37756b21db4958
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.13;
 
 contract token {
     function transfer(address _to, uint256 _value);
