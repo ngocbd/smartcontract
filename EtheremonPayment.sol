@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonPayment at 0x721da477f68c71788a262d58853fe6977d86535e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonPayment at 0xfec769e54c266de2bc3fa5df7d9f0fe2a1e39461
 */
 pragma solidity ^0.4.16;
 
@@ -160,10 +160,21 @@ contract BattleInterface {
     function createCastleWithToken(address _trainer, uint32 _noBrick, string _name, uint64 _a1, uint64 _a2, uint64 _a3, uint64 _s1, uint64 _s2, uint64 _s3) external;
 }
 
+contract TransformInterface {
+    function removeHatchingTimeWithToken(address _trainer) external;
+    function buyEggWithToken(address _trainer) external;
+}
+
 contract EtheremonPayment is EtheremonEnum, BasicAccessControl, SafeMath {
     uint8 constant public STAT_COUNT = 6;
     uint8 constant public STAT_MAX = 32;
     uint8 constant public GEN0_NO = 24;
+    
+    enum PayServiceType {
+        NONE,
+        FAST_HATCHING,
+        RANDOM_EGG
+    }
     
     struct MonsterClassAcc {
         uint32 classId;
@@ -188,13 +199,17 @@ contract EtheremonPayment is EtheremonEnum, BasicAccessControl, SafeMath {
     address public dataContract;
     address public battleContract;
     address public tokenContract;
+    address public transformContract;
     
     address private lastHunter = address(0x0);
     
     // config
-    uint public brickPrice = 2 * 10 ** 8; // 2 tokens
+    uint public brickPrice = 3 * 10 ** 8; // 3 tokens
+    uint public fastHatchingPrice = 35 * 10 ** 8; // 15 tokens 
+    uint public buyEggPrice = 50 * 10 ** 8; // 50 tokens
     uint public tokenPrice = 0.004 ether / 10 ** 8;
-    uint public maxDexSize = 500;
+    uint public maxDexSize = 200;
+    uint public latestValue = 0;
     
     // event
     event EventCatchMonster(address indexed trainer, uint64 objId);
@@ -215,10 +230,16 @@ contract EtheremonPayment is EtheremonEnum, BasicAccessControl, SafeMath {
         _;
     }
     
-    function EtheremonPayment(address _dataContract, address _battleContract, address _tokenContract) public {
+    modifier requireTransformContract {
+        require(transformContract != address(0));
+        _;
+    }
+    
+    function EtheremonPayment(address _dataContract, address _battleContract, address _tokenContract, address _transformContract) public {
         dataContract = _dataContract;
         battleContract = _battleContract;
         tokenContract = _tokenContract;
+        transformContract = _transformContract;
     }
     
     // helper
@@ -239,16 +260,19 @@ contract EtheremonPayment is EtheremonEnum, BasicAccessControl, SafeMath {
         token.transfer(_sendTo, _amount);
     }
     
-    function setContract(address _dataContract, address _battleContract, address _tokenContract) onlyModerators external {
+    function setContract(address _dataContract, address _battleContract, address _tokenContract, address _transformContract) onlyModerators external {
         dataContract = _dataContract;
         battleContract = _battleContract;
         tokenContract = _tokenContract;
+        transformContract = _transformContract;
     }
     
-    function setConfig(uint _brickPrice, uint _tokenPrice, uint _maxDexSize) onlyModerators external {
+    function setConfig(uint _brickPrice, uint _tokenPrice, uint _maxDexSize, uint _fastHatchingPrice, uint _buyEggPrice) onlyModerators external {
         brickPrice = _brickPrice;
         tokenPrice = _tokenPrice;
         maxDexSize = _maxDexSize;
+        fastHatchingPrice = _fastHatchingPrice;
+        buyEggPrice = _buyEggPrice;
     }
     
     // battle
@@ -300,9 +324,27 @@ contract EtheremonPayment is EtheremonEnum, BasicAccessControl, SafeMath {
         return requiredToken;
     }
     
-    /*
-    function payService(address _trainer, uint _tokens, uint32 _type, string _text, uint64 _param1, uint64 _param2, uint64 _param3) public returns(uint) {
+
+    function payService(address _trainer, uint _tokens, uint32 _type, string _text, uint64 _param1, uint64 _param2, uint64 _param3, uint64 _param4, uint64 _param5, uint64 _param6) isActive requireTransformContract  public returns(uint result) {
         if (msg.sender != tokenContract)
             revert();
-    }*/
+        
+        TransformInterface transform = TransformInterface(transformContract);
+        if (_type == uint32(PayServiceType.FAST_HATCHING)) {
+            // remove hatching time 
+            if (_tokens < fastHatchingPrice)
+                revert();
+            transform.removeHatchingTimeWithToken(_trainer);
+            
+            return fastHatchingPrice;
+        } else if (_type == uint32(PayServiceType.RANDOM_EGG)) {
+            if (_tokens < buyEggPrice)
+                revert();
+            transform.buyEggWithToken(_trainer);
+
+            return buyEggPrice;
+        } else {
+            revert();
+        }
+    }
 }
