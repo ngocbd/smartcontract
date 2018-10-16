@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CTToken at 0xc02bec520cc8d726f859a7e5539f98f72676692a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CTToken at 0x0509a863569f2e9253a1fc8d4bc90a7a0cf9d2e4
 */
 pragma solidity ^0.4.19;
 
@@ -211,7 +211,7 @@ contract CTToken is StoppableToken {
     // Token constants
     uint256 constant CTTOKEN_TOTAL_SUPLY = 20000000000; // total 20 billion
     string constant CTTOKEN_NAME = "CrypTube";
-    string constant CTTOKEN_SYMBOL = "CTUBE";
+    string constant CTTOKEN_SYMBOL = "CT";
     // Lock constants
     uint256 constant OWNER_LOCKED_BALANCE_RELEASE_PERIOD_LEN_IN_SEC = 180 days;
     uint16 constant OWNER_LOCKED_BALANCE_TOTAL_RELEASE_TIMES = 4;
