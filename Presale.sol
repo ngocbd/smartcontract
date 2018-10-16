@@ -1,123 +1,79 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreSale at 0x477f97ec5d39946bb5c2964ed523a99d5dfcdcf8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0x592ada458d0a03f7a9e01da2cc58ed475bb29020
 */
 pragma solidity ^0.4.18;
-/**
-* @dev EtherLands PreSale contract.
-*
-*/
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
+interface token {
+    function transfer(address receiver, uint amount) public;                                    // Transfer function for transferring tokens
+    function getBalanceOf(address _owner) public constant returns (uint256 balance);            // Getting the balance from the main contract
 }
-
-contract PreSale is Ownable {
-    uint256 constant public INCREASE_RATE = 700000000000000;
-    uint256 constant public START_TIME = 1520972971;
-    uint256 constant public END_TIME =   1552508971;
-
-    uint256 public landsSold;
-    mapping (address => uint32) public lands;
-
-    bool private paused = false; 
-
-    function PreSale() payable public {
-    }
-
-    event landsPurchased(address indexed purchaser, uint256 value, uint32 quantity);
+contract Presale {
+    address public beneficiary;                     // Who is the beneficiary of this contract
+    uint public fundingLimit;                       // The maximum ether allowed in this sale
+    uint public amountRaised;                       // The total amount raised during presale
+    uint public deadline;                           // The deadline for this contract
+    uint public tokensPerEther;                     // Tokens received as a reward of participating in this pre sale
+    uint public minFinnRequired;                    // Minimum Finney needed to participate in this pre sale
+    uint public startTime;                          // StartTime for the presale
+    token public tokenReward;                       // The token contract it refers too
     
-    event landsRedeemed(address indexed sender, uint256 lands);
-
-    function bulkPurchageLand() payable public {
-        require(now > START_TIME);
-        require(now < END_TIME);
-        require(paused == false);
-        require(msg.value >= (landPriceCurrent() * 5));
-        lands[msg.sender] = lands[msg.sender] + 5;
-        landsSold = landsSold + 5;
-        landsPurchased(msg.sender, msg.value, 5);
+    mapping(address => uint256) public balanceOf;   // Mapping of all balances in this contract
+    event FundTransfer(address backer, uint amount, bool isContribution);   // Event of fund transfer to show each transaction
+    /**
+     * Constrctor function
+     *
+     * Setup the owner
+     */
+    function Presale(
+        address ifSuccessfulSendTo,
+        uint fundingLimitInEthers,
+        uint durationInMinutes,
+        uint tokensPerEthereum,
+        uint minFinneyRequired,
+        uint presaleStartTime,
+        address addressOfTokenUsedAsReward
+    ) public {
+        beneficiary = ifSuccessfulSendTo;
+        fundingLimit = fundingLimitInEthers * 1 ether;
+        deadline = presaleStartTime + durationInMinutes * 1 minutes;
+        tokensPerEther = tokensPerEthereum;
+        minFinnRequired = minFinneyRequired * 1 finney;
+        startTime = presaleStartTime;
+        tokenReward = token(addressOfTokenUsedAsReward);
     }
-    
-    function purchaseLand() payable public {
-        require(now > START_TIME);
-        require(now < END_TIME);
-        require(paused == false);
-        require(msg.value >= landPriceCurrent());
-
-        lands[msg.sender] = lands[msg.sender] + 1;
-        landsSold = landsSold + 1;
+    /**
+     * Fallback function
+     *
+     * The function without name is the default function that is called whenever anyone sends funds to a contract
+     */
+    function () payable public {
+        require(startTime <= now);
+        require(amountRaised < fundingLimit);
+        require(msg.value >= minFinnRequired);
         
-        landsPurchased(msg.sender, msg.value, 1);
+        uint amount = msg.value;
+        balanceOf[msg.sender] += amount;
+        amountRaised += amount;
+        tokenReward.transfer(msg.sender, amount * tokensPerEther);
+        FundTransfer(msg.sender, amount, true);
     }
-    
-    function redeemLand(address targetUser) public onlyOwner returns(uint256) {
-        require(paused == false);
-        require(lands[targetUser] > 0);
-
-        landsRedeemed(targetUser, lands[targetUser]);
-
-        uint256 userlands = lands[targetUser];
-        lands[targetUser] = 0;
-        return userlands;
-    }
-
-    function landPriceCurrent() view public returns(uint256) {
-        return (landsSold + 1) * INCREASE_RATE;
-    }
-     
-    function landPricePrevious() view public returns(uint256) {
-        return (landsSold) * INCREASE_RATE;
-    }
-
-    function withdrawal() onlyOwner public {
-        owner.transfer(this.balance);
-    }
-
-    function pause() onlyOwner public {
-        paused = true;
-    }
-    
-    function resume() onlyOwner public {
-        paused = false;
-    }
-
-    function isPaused () onlyOwner public view returns(bool) {
-        return paused;
+    /**
+     * Withdraw the funds
+     *
+     * Checks to see if goal or time limit has been reached, and if so, and the funding goal was reached,
+     * sends the entire amount to the beneficiary. If goal was not reached, each contributor can withdraw
+     * the amount they contributed.
+     */
+    function withdrawFundBeneficiary() public {
+        require(now >= deadline);
+        require(beneficiary == msg.sender);
+        uint remaining = tokenReward.getBalanceOf(this);
+        if(remaining > 0) {
+            tokenReward.transfer(beneficiary, remaining);
+        }
+        if (beneficiary.send(amountRaised)) {
+            FundTransfer(beneficiary, amountRaised, false);
+        } else {
+            revert();
+        }
     }
 }
