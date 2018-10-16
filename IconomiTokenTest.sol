@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IconomiTokenTest at 0x384e762dAd922B22a0d06f4D1229582473D2DEe6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IconomiTokenTest at 0xd9f7cd813983bd89d18015cc3022f7b9b97d26d4
 */
 pragma solidity ^0.4.0;
 
@@ -16,8 +16,8 @@ contract IconomiToken {
     }
   }
 
-  modifier blockLock(address _sender) {
-    if (!isLocked() || _sender == owner) {
+  modifier blockLock {
+    if (!isLocked() || msg.sender == owner) {
       _;
     }
   }
@@ -66,7 +66,7 @@ contract IconomiToken {
 
   }
 
-  function transfer(address _to, uint256 _value) blockLock(msg.sender) checkIfToContract(_to) returns (bool success) {
+  function transfer(address _to, uint256 _value) blockLock checkIfToContract(_to) returns (bool success) {
 
     if (balances[msg.sender] >= _value && _value > 0) {
       balances[msg.sender] -= _value;
@@ -79,7 +79,7 @@ contract IconomiToken {
 
   }
 
-  function transferFrom(address _from, address _to, uint256 _value) blockLock(_from) checkIfToContract(_to) returns (bool success) {
+  function transferFrom(address _from, address _to, uint256 _value) blockLock checkIfToContract(_to) returns (bool success) {
 
     if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
       balances[_to] += _value;
