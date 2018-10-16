@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract subdomainSale at 0x9d66fe7409a7c13f7715eecb50e259b95fede410
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract subdomainSale at 0x163c90d093109dccaa0efb55410b105eeb9fa02d
 */
 pragma solidity ^0.4.13;
 
@@ -23,7 +23,6 @@ contract subdomainSale{
   AbstractENS ens = AbstractENS(0x314159265dD8dbb310642f98f50C066173C1259b);
   Registrar registrar = Registrar(0x6090A6e47849629b7245Dfa1Ca21D94cd15878Ef);  
   address admin = 0x8301Fb8945760Fa2B3C669e8F420B8795Dc03766;
-
 
   struct Domain{
     address originalOwner;
@@ -65,8 +64,6 @@ contract subdomainSale{
 
   function listSubName(bytes32 label,bytes32 node,uint commit, uint price,uint expiry) prevOwn_check(label) deed_check(label) ens_check(node){
     require(records[node].subSale == false); 
-    require(expiry>=604800);   
-    require(expiry<=commit);
 
     records[node].originalOwner=msg.sender;
     records[node].subSale=true;
@@ -76,11 +73,12 @@ contract subdomainSale{
   }
 
   function unlistSubName(bytes32 label,bytes32 node) recorded_owner(node) ens_check(node) deed_check(label){
+    require(records[node].subSale == true); 
     require(records[node].commitPeriod <= now);    
 
     ens.setOwner(node,records[node].originalOwner);
     registrar.transfer(label,records[node].originalOwner);
- 
+
     records[node].originalOwner=address(0x0);
     records[node].subSale=false;
     records[node].subPrice = 0;
@@ -112,11 +110,12 @@ contract subdomainSale{
     return records[node].regPeriod;
   }
 
-  function subBuy(bytes32 ensName,bytes32 subNode,bytes32 newNode,address newOwner) payable ens_check(ensName) {
+  function subBuy(bytes32 ensName,bytes32 subNode,address newOwner) payable ens_check(ensName) {
     require( (records[ensName].subExpiry + now + 5) < records[ensName].commitPeriod );
     require(records[ensName].subSale == true);
     require(msg.value >= records[ensName].subPrice);
     
+    var newNode = sha3(ensName,subNode);
     require(records[newNode].regPeriod < now);
 
     uint fee = msg.value/20;
