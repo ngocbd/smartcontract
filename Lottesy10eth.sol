@@ -1,17 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottesy10eth at 0x162d558ac8f3b8aba5f549066ac81df4ddc912a2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottesy10eth at 0x7909f0b4a0c25f126f85e010aa573c64e5e2ebf9
 */
 pragma solidity ^0.4.17;
 
 // Lottesy 10 ETH lottery
 // Copyright (c) 2017 Lottesy
-// -----------------------------------------------------
-//  Send any amount multiple of 0.01 ETH to the address
-//            shown at http://lottesy.com
-//                Win 10 ETH today!
+// ----------------------------------------------------
+// Send any amount multiple of 0.01 ETH to the address
+// shown at http://lottesy.com
+// Win 10 ETH today!
 // ----------------------------------------------------
 
-// We use the Oraclize random datasource for the drawing
+// We use Oraclize for the drawing
 // Copyright (c) 2015-2017 Oraclize SRL
 // Copyright (c) 2017 Oraclize LTD
 // for more info visit https://oraclize.it
@@ -1015,61 +1015,61 @@ contract usingOraclize {
 // Main * Lottesy 10 ETH lottery * code
 
 contract Lottesy10eth is usingOraclize {
-    address owner = 0x1afE87a58189Ea9E957df44dB7a3E0b74C3b83Ad;
+    address LottesyAddress = 0x1EE61945aEE02B15154AB4A5824BA80eC8Ed6F4e;
     address public theWinner;
-    bool public previousDrawingClosed = true;
-    bool isClosed = false;
     uint public drawingNo = 1;
     uint public chanceNo;
     uint public winningChance;
-    uint public globalChanceNo;
-    uint newGlobalChanceNo;
-    uint lottesyCom;
+    uint public globalChanceNo; //hide
+    uint public forLottesy;
     uint public chancesBought;
     uint public theWinnernumber;
-    uint oraclizeGas = 500000;
-    uint maxRange = 1099;
+    uint public newGlobalChanceNo;
+    uint public oraclizeGas = 500000;
+    uint public randomNumber;
+    uint public maxRange = 1099;
+    bool public previousDrawingClosed = true;
+    bool public isClosed = false;
+    bool public proofVerifyFailed = false;
+    bool public gotResult = false;
+    mapping (uint => address) public globChanceOwner;
     mapping (uint => address) public winners;
     mapping (uint => uint) public drWinChances;
-    mapping (uint => address) public globChanceOwner;
 
     function () payable ifNotClosed { //sales
-        chancesBought = (msg.value / 0.01 ether); //how many chances bought
-        chanceNo += chancesBought; // chances sold
-        newGlobalChanceNo = globalChanceNo+chancesBought;
-        for (globalChanceNo; globalChanceNo < newGlobalChanceNo; globalChanceNo++) {
-        globChanceOwner[globalChanceNo] = msg.sender; //ownership records
-        }
-        if (previousDrawingClosed == true && chanceNo >= 1100) { //ready for the drawing?
-        previousDrawingClosed = false; // the drawing procedure
         oraclize_setCustomGasPrice(20000000000 wei);
         oraclize_setProof(proofType_Ledger); // sets the Ledger authenticity proof in the constructor
         uint N = 2; // number of random bytes we want the datasource to return
         uint delay = 0; // number of seconds to wait before the execution takes place
         uint callbackGas = oraclizeGas; // amount of gas we want Oraclize to set for the callback function
+        previousDrawingClosed = false;
         bytes32 queryId = oraclize_newRandomDSQuery(delay, N, callbackGas); // this function internally generates the correct oraclize_query and returns its queryId
-        }
     }
 
     function __callback(bytes32 _queryId, string _result, bytes _proof) {
+        gotResult = true;
         if (msg.sender != oraclize_cbAddress()) throw;
-        if (oraclize_randomDS_proofVerify__returnCode(_queryId, _result, _proof) != 0) throw;
-        uint randomNumber = uint(sha3(_result)) % maxRange; // random number between 0 and 1099
-        winningChance = randomNumber + 1; // now we have the winning chance number between 1 and 1100
+        if (oraclize_randomDS_proofVerify__returnCode(_queryId, _result, _proof) != 0) {
+          proofVerifyFailed = true;
+          throw;
+        } else {
+        randomNumber = uint(sha3(_result)) % maxRange;
+        winningChance = randomNumber + 1;
         theWinnernumber = (drawingNo-1)*1100 + winningChance;
-        theWinner = globChanceOwner[theWinnernumber]; // who is the winner? (address to send the prize)
-        theWinner.transfer (10 ether); // sends prize to the winner
-        winners[drawingNo] = theWinner; // the winner record
-        drWinChances[drawingNo] = winningChance; // the winning chance record
-        chanceNo = chanceNo - 1100;
-        lottesyCom = (this.balance - chanceNo*0.01 ether);
-        owner.transfer (lottesyCom); //Lottesy comission
-        drawingNo++; // the next drawing begins
+        //theWinner = LottesyAddress; //who is the winner?
+        //theWinner.transfer (0.001 ether); //send prize to the winner
+        winners[drawingNo] = LottesyAddress; //winner record
+        drWinChances[drawingNo] = winningChance; //winning chance record
+        chanceNo++;
+        forLottesy = (this.balance);
+        LottesyAddress.transfer (forLottesy); //Lottesy comission
+        drawingNo++; //next drawing begins
         previousDrawingClosed = true;
+        }
     }
 
     modifier onlyOwner() {
-        if (msg.sender != owner) {
+        if (msg.sender != LottesyAddress) {
             throw;
         }
         _;
@@ -1083,11 +1083,11 @@ contract Lottesy10eth is usingOraclize {
     }
 
     function emergencyWithdrawal () onlyOwner { // for Beta version only
-    owner.transfer (this.balance);
+    LottesyAddress.transfer (this.balance);
     }
 
     function addSomeGas () onlyOwner { // for Beta version only
-    oraclizeGas += 500000;
+    oraclizeGas += 300000;
     }
 
     function closeIt () onlyOwner {
@@ -1095,11 +1095,11 @@ contract Lottesy10eth is usingOraclize {
     }
 
     function emergencyDrawingReset () onlyOwner { // for Beta version only
-        oraclize_setProof(proofType_Ledger);
-        uint N = 2;
-        uint delay = 0;
-        uint callbackGas = oraclizeGas;
-        bytes32 queryId = oraclize_newRandomDSQuery(delay, N, callbackGas);
+      oraclize_setProof(proofType_Ledger);
+      uint N = 2;
+      uint delay = 0;
+      uint callbackGas = oraclizeGas;
+      bytes32 queryId = oraclize_newRandomDSQuery(delay, N, callbackGas);
     }
 
 }
