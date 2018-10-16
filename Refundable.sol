@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Refundable at 0xd2aa60e1c09c693706ee184dd831b6fd9d1ac3f5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Refundable at 0x38644aaa2b510bc6625e0742a212de59b185b290
 */
 pragma solidity ^0.4.23;
 
@@ -292,7 +292,7 @@ contract Crowdsale is Pausable, KYCCrowdsale{
       roundTwoLimit = roundTwoLimit.sub(_amount);
   }
 
-  function getTokenAmount(uint256 weiAmount) public view returns(uint256) {
+  function getTokenAmount(uint256 weiAmount) private view returns(uint256) {
   
       uint256 buffer = 0;
       uint256 tokens = 0;
