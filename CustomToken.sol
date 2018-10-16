@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x35ca9dcbcfcfb8ef114e24e57154f3f9ad8a12ed
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x617e14190bfd344a4e5022fe0ff3f80621702fbc
 */
 pragma solidity ^0.4.19;
 
@@ -45,49 +45,34 @@ contract BaseToken {
     }
 }
 
-contract ICOToken is BaseToken {
-    // 1 ether = icoRatio token
-    uint256 public icoRatio;
-    uint256 public icoEndtime;
-    address public icoSender;
-    address public icoHolder;
+contract BurnToken is BaseToken {
+    event Burn(address indexed from, uint256 value);
 
-    event ICO(address indexed from, uint256 indexed value, uint256 tokenValue);
-    event Withdraw(address indexed from, address indexed holder, uint256 value);
-
-    modifier onlyBefore() {
-        if (now > icoEndtime) {
-            revert();
-        }
-        _;
+    function burn(uint256 _value) public returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);
+        balanceOf[msg.sender] -= _value;
+        totalSupply -= _value;
+        Burn(msg.sender, _value);
+        return true;
     }
 
-    function() public payable onlyBefore {
-        uint256 tokenValue = (msg.value * icoRatio * 10 ** uint256(decimals)) / (1 ether / 1 wei);
-        if (tokenValue == 0 || balanceOf[icoSender] < tokenValue) {
-            revert();
-        }
-        _transfer(icoSender, msg.sender, tokenValue);
-        ICO(msg.sender, msg.value, tokenValue);
-    }
-
-    function withdraw() {
-        uint256 balance = this.balance;
-        icoHolder.transfer(balance);
-        Withdraw(msg.sender, icoHolder, balance);
+    function burnFrom(address _from, uint256 _value) public returns (bool success) {
+        require(balanceOf[_from] >= _value);
+        require(_value <= allowance[_from][msg.sender]);
+        balanceOf[_from] -= _value;
+        allowance[_from][msg.sender] -= _value;
+        totalSupply -= _value;
+        Burn(_from, _value);
+        return true;
     }
 }
 
-contract CustomToken is BaseToken, ICOToken {
+contract CustomToken is BaseToken, BurnToken {
     function CustomToken() public {
-        totalSupply = 195200823000000000000000000;
-        balanceOf[0xf588d792fa8a634162760482a7b61dd1ab99b1f1] = totalSupply;
-        name = 'Alan';
-        symbol = 'Alan';
-        decimals = 18;
-        icoRatio = 19520;
-        icoEndtime = 1609322400;
-        icoSender = 0xf588d792fa8a634162760482a7b61dd1ab99b1f1;
-        icoHolder = 0xf043ae16a61ece2107eb2ba48dcc7ad1c8f9f2dc;
+        totalSupply = 1000000000000000000000000000;
+        balanceOf[0x1dd91123acc8a51392b35b310b2f0bed6ff082f2] = totalSupply;
+        name = 'chinablockchainbank';
+        symbol = 'CBVB';
+        decimals = 17;
     }
 }
