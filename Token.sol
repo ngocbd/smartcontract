@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xF3b3Cad094B89392fcE5faFD40bC03b80F2Bc624
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xfd77e9a3e62450c930178d96fd376d14fe65cccd
 */
 pragma solidity ^0.4.15;
 contract Base {
@@ -117,7 +117,7 @@ contract ERC20 is Owned {
 }
 contract Token is ERC20 {
     using SafeMath for uint;
-    string public name = "PATRON";
+    string public name = "Patron coin";
     string public symbol = "PAT";
     uint8 public decimals = 18;
     address public crowdsaleMinter;
