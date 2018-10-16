@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Refundable at 0x38644aaa2b510bc6625e0742a212de59b185b290
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Refundable at 0x34e8bcccccf88f782f6e53a6ebedc8c8b4e766ae
 */
 pragma solidity ^0.4.23;
 
@@ -191,9 +191,9 @@ contract Crowdsale is Pausable, KYCCrowdsale{
   // token rate in wei
   uint256 public rate;
   
-  uint256 public roundOneRate;
-  uint256 public roundTwoRate;
-  uint256 public defaultBonussRate;
+  uint256 private roundOneRate;
+  uint256 private roundTwoRate;
+  uint256 private defaultBonussRate;
 
   // amount of raised money in wei
   uint256 public weiRaised;
@@ -235,7 +235,7 @@ contract Crowdsale is Pausable, KYCCrowdsale{
     endTime = 1527811199; //GMT: Thursday, May 31, 2018 11:59:59 PM
     rate = 500000000000000;                     // 1 Token price: 0.0005 Ether == $0.35 @ Ether prie $700
     roundOneRate = (rate.mul(6)).div(10);       // price at 40% discount
-    roundTwoRate = (rate.mul(65)).div(100);     // price at 35% discount
+    roundTwoRate = (rate.mul(75)).div(100);     // price at 35% discount
     defaultBonussRate = (rate.mul(8)).div(10);  // price at 20% discount
     
     wallet =  0xccB84A750f386bf5A4FC8C29611ad59057968605;
@@ -321,8 +321,8 @@ contract Crowdsale is Pausable, KYCCrowdsale{
           }
           
           if(buffer > 0){
-              uint256 roundTwo = (buffer.div(roundTwoRate)).mul(1 ether);
-              return tokens + roundTwo;
+              
+              return (buffer.div(roundTwoRate)).mul(1 ether);
           }
           
           return (weiAmount.div(roundTwoRate)).mul(1 ether);
@@ -353,7 +353,7 @@ contract Crowdsale is Pausable, KYCCrowdsale{
     emit EQUIPriceUpdated(rate, weiAmount);
     rate = weiAmount;
     roundOneRate = (rate.mul(6)).div(10);       // price at 40% discount
-    roundTwoRate = (rate.mul(65)).div(100);     // price at 35% discount
+    roundTwoRate = (rate.mul(75)).div(100);     // price at 35% discount
     defaultBonussRate = (rate.mul(8)).div(10);    // price at 20% discount
   }
 
