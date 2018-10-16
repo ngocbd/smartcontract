@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CTCToken at 0x1a018ff6042863614e0e88cd615412588fd0a2da
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CTCToken at 0x66969da31cccab81366524de642a9fc764532c26
 */
 pragma solidity ^0.4.21;
 
@@ -295,31 +295,15 @@ contract Pausable is Ownable {
     }
 }
 
-contract CheckTokenAssign is Ownable
-{
-    event InitAssignTokenOK();
-    bool public IsInitAssign = false;
-    
-    modifier checkInitAssignState() {
-        require(IsInitAssign == false);
-        _;
-    }
-    
-    function InitAssignOK() onlyOwner public {
-        IsInitAssign = true;
-        emit InitAssignTokenOK();
-    }
-}
-
 //CTCToken
-contract CTCToken is StandardToken, Ownable, Pausable, Destructible, CheckTokenAssign
+contract CTCToken is StandardToken, Ownable, Pausable, Destructible
 {
     using SafeMath for uint;
-    string public constant name = "New Culture Travel";
+    string public constant name = "Culture Travel Currency";
     string public constant symbol = "CTC";
     uint public constant decimals = 18;
     uint constant million = 1000000e18;
-    uint constant totalToken = 10000*million; 
+    uint constant totalToken = 10000*million;
     
     //Token Amount
     uint constant nThirdPartyPlatform       = 1000*million;
@@ -331,23 +315,18 @@ contract CTCToken is StandardToken, Ownable, Pausable, Destructible, CheckTokenA
     uint constant nCultureTravelFoundation  = 500*million;
     
     //Token address
-    address  public constant ThirdPartyPlatformAddr      = 0x211064a12ceeecb88fe2e757234e8c88795ed5cd;
-    address  public constant PlatformAutonomyAddr        = 0xe2db2aDE7F9dB41bfcd01364b0adD9445F343d74;
-    address  public constant ResearchGroupAddr           = 0xe4b74b0b84d4b5e7a15401c0b5c8acdd9ecb9df6;
-    address  public constant MarketingAddr               = 0xE8052a396d66B2c1D619b235076128dA9c4C114f;
-    address  public constant InvEnterpriseAddr           = 0x11d774dc8bba7ee455c02ed455f96af693a8d7a8;
-    address  public constant AngelInvestmentAddr         = 0xfBee428Ea0da7c5b3A85468bd98E42e9af0D4623;
-    address  public constant CultureTravelFoundationAddr = 0x17e552663cd183408ec5132b0ba8f75b87e11f5e;
+    address  public constant ThirdPartyPlatformAddr      = 0xE0297698c9C4F21d30CbBa74bC559fde7cb40a73;
+    address  public constant PlatformAutonomyAddr        = 0xdb3287cf2DD6343950c1bD34C313b2A2Ed88dC42;
+    address  public constant ResearchGroupAddr           = 0x449b74Cd98f5De4b19d2298c46248bAE5aE1D08E;
+    address  public constant MarketingAddr               = 0x0647a9798D8c66956431c7a662C4373967c657F2;
+    address  public constant InvEnterpriseAddr           = 0xa72Bd33afA261190232B94408Ce919E11b5B2425;
+    address  public constant AngelInvestmentAddr         = 0x4d2B583687EdA901Cf292Da9Ca2b32f8d84fF394;
+    address  public constant CultureTravelFoundationAddr = 0x0f55E72413844A3EB150E429c97De4fB320a77Aa;
     
     function CTCToken() public 
     {
         totalSupply = totalToken;
         balances[msg.sender] = 0;
-        IsInitAssign = false;
-    }
-    
-    function InitAssignCTC() onlyOwner checkInitAssignState public 
-    {
         balances[ThirdPartyPlatformAddr]      = nThirdPartyPlatform;
         balances[PlatformAutonomyAddr]        = nPlatformAutonomy;
         balances[ResearchGroupAddr]           = nResearchGroup;
@@ -355,6 +334,6 @@ contract CTCToken is StandardToken, Ownable, Pausable, Destructible, CheckTokenA
         balances[InvEnterpriseAddr]           = nInvEnterprise;
         balances[AngelInvestmentAddr]         = nAngelInvestment;
         balances[CultureTravelFoundationAddr] = nCultureTravelFoundation;
-        InitAssignOK();
     }
+    
 }
