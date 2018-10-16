@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CentraSale at 0xbdb45d02d8ef8dc5e59aa58b26b99a4af3806baa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CentraSale at 0x229f07c5df0d19919185dd08b61dd9a26151ddfe
 */
 pragma solidity ^0.4.16;        
    
@@ -81,9 +81,7 @@ pragma solidity ^0.4.16;
       if(cap + msg.value > cap_max) throw;         
 
       tokens_total = msg.value*10**18/token_price;
-      if(!(tokens_total > 0)) throw; 
-      
-      if(!contract_transfer(tokens_total)) throw;                
+      if(!(tokens_total > 0)) throw;                 
 
       cap = cap.add(msg.value); 
       operations();
@@ -96,16 +94,7 @@ pragma solidity ^0.4.16;
         operation_amount[operation] = msg.value;        
         operation = operation.add(1);        
         return true;
-    } 
-
-    //Contract execute
-    function contract_transfer(uint _amount) private returns (bool) {      
-
-      if(!contract_address.call(bytes4(sha3("transfer(address,uint256)")),msg.sender,_amount)) {    
-        return false;
-      }
-      return true;
-    }        
+    }    
 
     //Withdraw money from contract balance to owner
     function withdraw() onlyOwner returns (bool result) {
