@@ -1,55 +1,55 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EmaCrowdSale at 0x547febd018557b075e8b356ade5f0d58cd6e6d71
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EmaCrowdSale at 0x2821fb31998e60d220ff52af6299872f25a3e149
 */
-pragma solidity ^0.4.23;
+pragma solidity ^ 0.4 .23;
 /**
-* @title SafeMath
-* @dev Math operations with safety checks that throw on error
-*/
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 
 
 library SafeMath {
- /**
- * @dev Multiplies two numbers, throws on overflow.
- */
- function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-   if (a == 0) {
-     return 0;
-   }
-   uint256 c = a * b;
-   assert(c / a == b);
-   return c;
- }
- /**
- * @dev Integer division of two numbers, truncating the quotient.
- */
- function div(uint256 a, uint256 b) internal pure returns (uint256) {
-   // assert(b > 0); // Solidity automatically throws when dividing by 0
-   uint256 c = a / b;
-   // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-   return c;
- }
- /**
- * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
- */
- function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-   assert(b <= a);
-   return a - b;
- }
- /**
- * @dev Adds two numbers, throws on overflow.
- */
- function add(uint256 a, uint256 b) internal pure returns (uint256) {
-   uint256 c = a + b;
-   assert(c >= a);
-   return c;
- }
+    /**
+     * @dev Multiplies two numbers, throws on overflow.
+     */
+    function mul(uint256 a, uint256 b) internal pure returns(uint256) {
+        if (a == 0) {
+            return 0;
+        }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
+    }
+    /**
+     * @dev Integer division of two numbers, truncating the quotient.
+     */
+    function div(uint256 a, uint256 b) internal pure returns(uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
+    /**
+     * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+     */
+    function sub(uint256 a, uint256 b) internal pure returns(uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+    /**
+     * @dev Adds two numbers, throws on overflow.
+     */
+    function add(uint256 a, uint256 b) internal pure returns(uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
 }
 /**
  * @title Pausable
  * @dev Base contract which allows children to implement an emergency stop mechanism.
  */
- contract Ownable {
+contract Ownable {
     address public owner;
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
     /**
@@ -78,39 +78,39 @@ library SafeMath {
 }
 
 
- contract Pausable is Ownable {
-     event Pause();
-     event Unpause();
-     bool public paused = false;
-     /**
-      * @dev Modifier to make a function callable only when the contract is not paused.
-      */
-     modifier whenNotPaused() {
-         require(!paused);
-         _;
-     }
-     /**
-      * @dev Modifier to make a function callable only when the contract is paused.
-      */
-     modifier whenPaused() {
-         require(paused);
-         _;
-     }
-     /**
-      * @dev called by the owner to pause, triggers stopped state
-      */
-     function pause() onlyOwner whenNotPaused public {
-         paused = true;
-         emit Pause();
-     }
-     /**
-      * @dev called by the owner to unpause, returns to normal state
-      */
-     function unpause() onlyOwner whenPaused public {
-         paused = false;
-         emit Unpause();
-     }
- }
+contract Pausable is Ownable {
+    event Pause();
+    event Unpause();
+    bool public paused = false;
+    /**
+     * @dev Modifier to make a function callable only when the contract is not paused.
+     */
+    modifier whenNotPaused() {
+        require(!paused);
+        _;
+    }
+    /**
+     * @dev Modifier to make a function callable only when the contract is paused.
+     */
+    modifier whenPaused() {
+        require(paused);
+        _;
+    }
+    /**
+     * @dev called by the owner to pause, triggers stopped state
+     */
+    function pause() onlyOwner whenNotPaused public {
+        paused = true;
+        emit Pause();
+    }
+    /**
+     * @dev called by the owner to unpause, returns to normal state
+     */
+    function unpause() onlyOwner whenPaused public {
+        paused = false;
+        emit Unpause();
+    }
+}
 contract Controlled is Pausable {
     /// @notice The address of the controller is the only address that can call
     ///  a function with this modifier
@@ -157,7 +157,8 @@ contract TokenController {
 ///  that deploys the contract, so usually this token will be deployed by a
 ///  token controller contract, which Giveth will call a "Campaign"
 contract MiniMeToken is Controlled {
-    using SafeMath for uint256;
+    using SafeMath
+    for uint256;
     string public name; //The Token's name: e.g. DigixDAO Tokens
     uint8 public decimals; //Number of decimals of the smallest unit
     string public symbol; //An identifier: e.g. REP
@@ -527,7 +528,9 @@ contract MiniMeToken is Controlled {
  */
 contract ERC20Basic {
     function totalSupply() public view returns(uint256);
+
     function balanceOf(address who) public view returns(uint256);
+
     function transfer(address to, uint256 value) public returns(bool);
     event Transfer(address indexed from, address indexed to, uint256 value);
 }
@@ -545,7 +548,9 @@ contract EmaToken is MiniMeToken {
  */
 contract ERC20 is ERC20Basic {
     function allowance(address owner, address spender) public view returns(uint256);
+
     function transferFrom(address from, address to, uint256 value) public returns(bool);
+
     function approve(address spender, uint256 value) public returns(bool);
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
@@ -562,7 +567,7 @@ contract ERC20 is ERC20Basic {
  * the methods to add functionality. Consider using 'super' where appropiate to concatenate
  * behavior.
  */
- 
+
 ////////////////
 // MiniMeTokenFactory
 ////////////////
@@ -601,7 +606,7 @@ contract MiniMeTokenFactory {
         return newToken;
     }
 }
- 
+
 contract Crowdsale is Pausable {
     using SafeMath
     for uint256;
@@ -629,6 +634,7 @@ contract Crowdsale is Pausable {
         wallet = _wallet;
         token = _token;
     }
+
     function setCrowdsale(address _wallet, MiniMeToken _token) internal {
         require(_wallet != address(0));
         require(_token != address(0));
@@ -655,23 +661,23 @@ contract Crowdsale is Pausable {
         } else if (msg.value >= 1000000000000000000000) {
             rate = 7650;
         } else if (tokensSold <= 21420000000000000000000000) {
-            if(rate != 6120) {
-            rate = 6120; }
+
+            rate = 6120;
         } else if ((tokensSold > 21420000000000000000000000) && (tokensSold <= 42304500000000000000000000)) {
-             if(rate != 5967) {
-            rate = 5967; }
+
+            rate = 5967;
         } else if ((tokensSold > 42304500000000000000000000) && (tokensSold <= 73095750000000000000000000)) {
-             if(rate != 5865) {
-            rate = 5865; }
+
+            rate = 5865;
         } else if ((tokensSold > 73095750000000000000000000) && (tokensSold <= 112365750000000000000000000)) {
-             if(rate != 5610) {
-            rate = 5610; }
+
+            rate = 5610;
         } else if ((tokensSold > 112365750000000000000000000) && (tokensSold <= 159222000000000000000000000)) {
-             if(rate != 5355) {
-            rate = 5355; }
+
+            rate = 5355;
         } else if (tokensSold > 159222000000000000000000000) {
-             if(rate != 5100) {
-            rate = 5100;}
+
+            rate = 5100;
         }
         uint256 weiAmount = msg.value;
         uint256 tokens = _getTokenAmount(weiAmount);
@@ -732,29 +738,7 @@ contract Crowdsale is Pausable {
      * @return Number of tokens that can be purchased with the specified _weiAmount
      */
     function _getTokenAmount(uint256 _weiAmount) internal returns(uint256) {
-        if ((_weiAmount >= 500000000000000000000) && (_weiAmount < 1000000000000000000000)) {
-            rate = 7140;
-        } else if (_weiAmount >= 1000000000000000000000) {
-            rate = 7650;
-        } else if (tokensSold <= 21420000000000000000000000) {
-            if(rate != 6120) {
-            rate = 6120; }
-        } else if ((tokensSold > 21420000000000000000000000) && (tokensSold <= 42304500000000000000000000)) {
-             if(rate != 5967) {
-            rate = 5967;}
-        } else if ((tokensSold > 42304500000000000000000000) && (tokensSold <= 73095750000000000000000000)) {
-             if(rate != 5865) {
-            rate = 5865;}
-        } else if ((tokensSold > 73095750000000000000000000) && (tokensSold <= 112365750000000000000000000)) {
-             if(rate != 5610) {
-            rate = 5610;}
-        } else if ((tokensSold > 112365750000000000000000000) && (tokensSold <= 159222000000000000000000000)) {
-             if(rate != 5355) {
-            rate = 5355;}
-        } else if (tokensSold > 159222000000000000000000000) {
-             if(rate != 5100) {
-            rate = 5100;}
-        }
+
         return _weiAmount.mul(rate);
     }
     /**
@@ -767,21 +751,25 @@ contract Crowdsale is Pausable {
 contract EmaCrowdSale is Crowdsale {
     using SafeMath
     for uint256;
-    constructor(address wallet, MiniMeToken token) Crowdsale(wallet, token) public  {
+    constructor(address wallet, MiniMeToken token) Crowdsale(wallet, token) public {
         setCrowdsale(wallet, token);
     }
+
     function tranferPresaleTokens(address investor, uint256 ammount) public onlyOwner {
         tokensSold = tokensSold.add(ammount);
         token.transferFrom(this, investor, ammount);
     }
+
     function setTokenTransferState(bool state) public onlyOwner {
         token.changeController(this);
         token.enableTransfers(state);
     }
+
     function claim(address claimToken) public onlyOwner {
         token.changeController(this);
         token.claimTokens(claimToken);
     }
+
     function() external payable whenNotPaused {
         emit buyx(msg.sender, this, _getTokenAmount(msg.value));
         buyTokens(msg.sender);
