@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xdbd1c7af153151171ceaaa241203c5a9997ada46
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xf88e6fe8ff315ff5275ee9349120de6164250bb4
 */
 pragma solidity ^0.4.19;
 
@@ -47,9 +47,9 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 210000000000000000000000000;
-        name = 'IDC';
-        symbol = 'ID';
+        totalSupply = 21000000000000000000000000;
+        name = 'QQHang';
+        symbol = 'QQ';
         decimals = 18;
         balanceOf[0x55b2dd93c7e4ee5910818b209ddc65a6524f8e59] = totalSupply;
         Transfer(address(0), 0x55b2dd93c7e4ee5910818b209ddc65a6524f8e59, totalSupply);
