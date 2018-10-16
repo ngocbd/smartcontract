@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bam at 0xecb5017636cc78f8f8a5830ff3ad4be37958fabb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bam at 0x82f6feb8feebb573cb66c59cac46fcd5ffd891f6
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
 /**
 * @title Baikal Maining Contract
@@ -164,6 +164,10 @@ contract Bam {
      *
      * https://github.com/ethereum/EIPs/issues/20
      */
+     
+    function balanceOf(address _owner) constant public returns (uint256 balance) {
+        return balances[_owner];
+    }
     
     function transfer(address _to, uint256 _value) public
         onlyOwnerIfBlocked
