@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SetStepFunctionWrapper at 0x9224016462B204C57Eb70e1D69652f60bcAF53A8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SetStepFunctionWrapper at 0xd11797a6fbeb97e388b1ce73bc40903508a0ab3c
 */
 pragma solidity ^0.4.18;
 
@@ -201,13 +201,13 @@ contract SetStepFunctionWrapper is Withdrawable {
         // check all x for buy are positive and y are positive as well
         for( i = 0 ; i < xBuy.length ; i++ ) {
           require(xBuy[i] >= 0 );
-          require(yBuy[i] <= 0 );
+          require(yBuy[i] >= 0 );
         }
 
         // check all x for sell are negative and y are positive
         for( i = 0 ; i < xSell.length ; i++ ) {
           require(xSell[i] <= 0 );
-          require(ySell[i] <= 0 );
+          require(ySell[i] >= 0 );
         }
 
         rateContract.setImbalanceStepFunction(token,xBuy,yBuy,xSell,ySell);
