@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Reservation at 0x0014966c7439d8c10aaf0204036198236d9b0912
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Reservation at 0x432527b03eA4BD796ccA26F28EC9F46feBfA0Cef
 */
 //File: node_modules/zeppelin-solidity/contracts/ownership/Ownable.sol
 pragma solidity ^0.4.18;
@@ -357,7 +357,7 @@ contract CrowdsaleBase is Pausable, CanReclaimToken, ICOEngineInterface, KYCBase
 
     /*** CONSTANTS ***/
     uint256 public constant USD_PER_TOKEN = 2;                        //
-    uint256 public constant USD_PER_ETHER = 795;                      // 
+    uint256 public constant USD_PER_ETHER = 1000;                      // 
 
     uint256 public start;                                             // ICOEngineInterface
     uint256 public end;                                               // ICOEngineInterface
