@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xc09e946af23c9ee4a9ef36a88da7a34d184372cc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xfcc4b876838bcafe503b4f7ce930cd2c36d77dda
 */
 pragma solidity ^0.4.4;
 
@@ -119,13 +119,15 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 299792458;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 299792458;                        // Update total supply (100000 for example)
-        name = "Nathan";                                   // Set the name for display purposes
-        decimals = 0;                            // Amount of decimals for display purposes
-        symbol = "NATHAN";                               // Set the symbol for display purposes
+        balances[msg.sender] = 100000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 100000000000000000;                        // Update total supply (100000 for example)
+        name = "DonCoins";                                   // Set the name for display purposes
+        decimals = 8;                            // Amount of decimals for display purposes
+        symbol = "DON";                               // Set the symbol for display purposes
+        
     }
-
+        
+        
     /* Approves and then calls the receiving contract */
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
