@@ -1,7 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xed16f9f3fa7f5f05d447d361318475d989ac4641
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x1c381ca8112f823941c37cb9514819909ecb102d
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.17;
+
+
 
 /**
  * @title ERC20Basic
@@ -14,7 +16,6 @@ contract ERC20Basic {
   function transfer(address to, uint256 value) returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
-
 /**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
@@ -25,13 +26,12 @@ contract ERC20 is ERC20Basic {
   function approve(address spender, uint256 value) returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
-
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-    
+
   function mul(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a * b;
     assert(a == 0 || c / a == b);
@@ -55,16 +55,20 @@ library SafeMath {
     assert(c >= a);
     return c;
   }
-  
-}
 
+}
 /**
  * @title Basic token
- * @dev Basic version of StandardToken, with no allowances. 
+ * @dev Basic version of StandardToken, with no allowances.
  */
 contract BasicToken is ERC20Basic {
-    
+
   using SafeMath for uint256;
+
+  modifier onlyPayloadSize(uint size) {
+    assert(msg.data.length == size + 4);
+    _;
+  }
 
   mapping(address => uint256) balances;
 
@@ -73,7 +77,7 @@ contract BasicToken is ERC20Basic {
   * @param _to The address to transfer to.
   * @param _value The amount to be transferred.
   */
-  function transfer(address _to, uint256 _value) returns (bool) {
+  function transfer(address _to, uint256 _value) onlyPayloadSize(2 * 32) returns (bool) {
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
     Transfer(msg.sender, _to, _value);
@@ -82,13 +86,12 @@ contract BasicToken is ERC20Basic {
 
   /**
   * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of. 
+  * @param _owner The address to query the the balance of.
   * @return An uint256 representing the amount owned by the passed address.
   */
   function balanceOf(address _owner) constant returns (uint256 balance) {
     return balances[_owner];
   }
-
 }
 
 /**
@@ -157,7 +160,7 @@ contract StandardToken is ERC20, BasicToken {
  * functions, this simplifies the implementation of "user permissions".
  */
 contract Ownable {
-    
+
   address public owner;
 
   /**
@@ -181,109 +184,310 @@ contract Ownable {
    * @param newOwner The address to transfer ownership to.
    */
   function transferOwnership(address newOwner) onlyOwner {
-    require(newOwner != address(0));      
+    require(newOwner != address(0));
     owner = newOwner;
   }
 
 }
 
 /**
- * @title Burnable Token
- * @dev Token that can be irreversibly burned (destroyed).
+ * @title Mintable token
+ * @dev Simple ERC20 Token example, with mintable token creation
+ * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
+ * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
  */
-contract BurnableToken is StandardToken {
+
+contract MintableToken is StandardToken, Ownable {
+
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
+
+  bool public mintingFinished = false;
+  mapping (address => bool) public crowdsaleContracts;
+
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
+
+  function mint(address _to, uint256 _amount) onlyOwner canMint returns (bool) {
+
+    totalSupply = totalSupply.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    Mint(_to, _amount);
+    Transfer(this, _to, _amount);
+    return true;
+  }
+
+  function finishMinting() onlyOwner returns (bool) {
+    mintingFinished = true;
+    MintFinished();
+    return true;
+  }
+
+}
+
+contract BSEToken is MintableToken {
+
+  string public constant name = " BLACK SNAIL ENERGY ";
+
+  string public constant symbol = "BSE";
+
+  uint32 public constant decimals = 18;
+
+  event Burn(address indexed burner, uint256 value);
 
   /**
    * @dev Burns a specific amount of tokens.
    * @param _value The amount of token to be burned.
    */
-  function burn(uint _value) public {
+  function burn(uint256 _value) public {
     require(_value > 0);
+    require(_value <= balances[msg.sender]);
+    // no need to require value <= totalSupply, since that would imply the
+    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
     address burner = msg.sender;
     balances[burner] = balances[burner].sub(_value);
     totalSupply = totalSupply.sub(_value);
     Burn(burner, _value);
   }
 
-  event Burn(address indexed burner, uint indexed value);
-
 }
 
-contract Misscoin is BurnableToken {
-    
-  string public constant name = "Misscoin";
-   
-  string public constant symbol = "MISC";
-    
-  uint32 public constant decimals = 18;
+contract ReentrancyGuard {
 
-  uint256 public INITIAL_SUPPLY = 1000000000 * 1 ether;
+  /**
+   * @dev We use a single lock for the whole contract.
+   */
+  bool private rentrancy_lock = false;
 
-  function Misscoin() {
-    totalSupply = INITIAL_SUPPLY;
-    balances[msg.sender] = INITIAL_SUPPLY;
+  /**
+   * @dev Prevents a contract from calling itself, directly or indirectly.
+   * @notice If you mark a function `nonReentrant`, you should also
+   * mark it `external`. Calling one nonReentrant function from
+   * another is not supported. Instead, you can implement a
+   * `private` function doing the actual work, and a `external`
+   * wrapper marked as `nonReentrant`.
+   */
+  modifier nonReentrant() {
+    require(!rentrancy_lock);
+    rentrancy_lock = true;
+    _;
+    rentrancy_lock = false;
   }
-    
 }
 
-contract Crowdsale is Ownable {
-    
+contract Stateful {
+  enum State {
+  Init,
+  PreIco,
+  PreIcoPaused,
+  preIcoFinished,
+  ICO,
+  salePaused,
+  CrowdsaleFinished,
+  companySold
+  }
+  State public state = State.Init;
+
+  event StateChanged(State oldState, State newState);
+
+  function setState(State newState) internal {
+    State oldState = state;
+    state = newState;
+    StateChanged(oldState, newState);
+  }
+}
+
+
+contract FiatContract {
+  function ETH(uint _id) constant returns (uint256);
+  function USD(uint _id) constant returns (uint256);
+  function EUR(uint _id) constant returns (uint256);
+  function GBP(uint _id) constant returns (uint256);
+  function updatedAt(uint _id) constant returns (uint);
+}
+
+contract Crowdsale is Ownable, ReentrancyGuard, Stateful {
+
   using SafeMath for uint;
-    
+
+  mapping (address => uint) preICOinvestors;
+  mapping (address => uint) ICOinvestors;
+
+  BSEToken public token ;
+  uint256 public startICO;
+  uint256 public startPreICO;
+  uint256 public period;
+  uint256 public constant rateCent = 2000000000000000;
+  
+  uint256 public constant preICOTokenHardCap = 440000 * 1 ether;
+  uint256 public constant ICOTokenHardCap = 1540000 * 1 ether;
+  uint256 public collectedCent;
+  uint256 day = 86400; // sec in day
+  uint256 public soldTokens;
+  uint256 public priceUSD; // format 1 cent = priceUSD * wei
+
+
   address multisig;
-
-  uint restrictedPercent;
-
-  address restricted;
-
-  Misscoin public token = new Misscoin();
-
-  uint start;
-    
-  uint period;
-
-  uint rate;
-
-   function Crowdsale() {
-      multisig = 0x251d82DbfB2d7a03c27121cA6000016aF0948d21;
-      restricted = 0x251d82DbfB2d7a03c27121cA6000016aF0948d21;
-      restrictedPercent = 25;
-      rate = 33300;
-      start = 1510959600;
-      period = 65;
-    }
+  address public oracle;
 
 
-    function setPrice(uint256 _rate) public onlyOwner
-    { //  price need to be set maually as it cannot be done via ethereum network
-      rate = _rate;
-    }
-
-  modifier saleIsOn() {
-    require(now > start && now < start + period * 1 days);
+  modifier onlyOwnerOrOracle() {
+    require(msg.sender == oracle || msg.sender == owner);
     _;
   }
 
-   function createTokens() saleIsOn payable {
-        multisig.transfer(msg.value);
-        uint tokens = rate.mul(msg.value);
-        uint bonusTokens = 0;
-        if(now < start + 15 days) {
-          bonusTokens = tokens.div(2);
-        } else if(now >= start + 15 days && now < now + period * 1 days) {
-          uint dif = now - start - 15 days;
-          uint diff = dif.div(86400);
-          uint differ = 50-diff;
-          bonusTokens = tokens.mul(differ).div(100);
-        } 
-        uint tokensWithBonus = tokens.add(bonusTokens);
-        token.transfer(msg.sender, tokensWithBonus);
-        uint restrictedTokens = tokens.mul(restrictedPercent).div(100 - restrictedPercent);
-        token.transfer(restricted, restrictedTokens);
-   }
-
-  function() external payable {
-    createTokens();
+  function changeOracle(address _oracle) onlyOwner external {
+    require(_oracle != 0);
+    oracle = _oracle;
   }
-    
+
+  modifier saleIsOn() {
+    require((state == State.PreIco || state == State.ICO) &&(now < startICO + period || now < startPreICO + period));
+    _;
+  }
+
+  modifier isUnderHardCap() {
+    require(soldTokens < getHardcap());
+    _;
+  }
+
+  function getHardcap() internal returns(uint256) {
+    if (state == State.PreIco) {
+      return preICOTokenHardCap;
+    }
+    else {
+      if (state == State.ICO) {
+        return ICOTokenHardCap;
+      }
+    }
+  }
+
+
+  function Crowdsale(address _multisig, uint256 _priceUSD) {
+    priceUSD = _priceUSD;
+    multisig = _multisig;
+    token = new BSEToken();
+
+  }
+  function startCompanySell() onlyOwner {
+    require(state== State.CrowdsaleFinished);
+    setState(State.companySold);
+  }
+
+  // for mint tokens to USD investor
+  function usdSale(address _to, uint _valueUSD) onlyOwner  {
+    uint256 valueCent = _valueUSD * 100;
+    uint256 tokensAmount = rateCent.mul(valueCent);
+    collectedCent += valueCent;
+    token.mint(_to, tokensAmount);
+    if (state == State.ICO || state == State.preIcoFinished) {
+      ICOinvestors[_to] += tokensAmount;
+    } else {
+      preICOinvestors[_to] += tokensAmount;
+    }
+    soldTokens += tokensAmount;
+  }
+
+  function pauseSale() onlyOwner {
+    require(state == State.ICO);
+    setState(State.salePaused);
+  }
+
+  function pausePreSale() onlyOwner {
+    require(state == State.PreIco);
+    setState(State.PreIcoPaused);
+  }
+
+  function startPreIco(uint256 _period, uint256 _priceUSD) onlyOwner {
+    require(_period > 0);
+    require(state == State.Init || state == State.PreIcoPaused);
+    priceUSD = _priceUSD;
+    startPreICO = now;
+    period = _period * day;
+    setState(State.PreIco);
+  }
+
+  function finishPreIco() onlyOwner {
+    require(state == State.PreIco);
+    setState(State.preIcoFinished);
+    bool isSent = multisig.call.gas(3000000).value(this.balance)();
+    require(isSent);
+  }
+
+  function startIco(uint256 _period, uint256 _priceUSD) onlyOwner {
+    require(_period > 0);
+    require(state == State.PreIco || state == State.salePaused || state == State.preIcoFinished);
+    priceUSD = _priceUSD;
+    startICO = now;
+    period = _period * day;
+    setState(State.ICO);
+  }
+
+  function setPriceUSD(uint256 _priceUSD) onlyOwnerOrOracle {
+    priceUSD = _priceUSD;
+  }
+
+  function finishICO() onlyOwner {
+    require(state == State.ICO);
+    setState(State.CrowdsaleFinished);
+    bool isSent = multisig.call.gas(3000000).value(this.balance)();
+    require(isSent);
+
+  }
+  function finishMinting() onlyOwner {
+
+    token.finishMinting();
+
+  }
+
+  function getDouble() nonReentrant {
+    require (state == State.ICO || state == State.companySold);
+    uint256 extraTokensAmount;
+    if (state == State.ICO) {
+      extraTokensAmount = preICOinvestors[msg.sender];
+      preICOinvestors[msg.sender] = 0;
+      token.mint(msg.sender, extraTokensAmount);
+      ICOinvestors[msg.sender] += extraTokensAmount;
+    }
+    else {
+      if (state == State.companySold) {
+        extraTokensAmount = preICOinvestors[msg.sender] + ICOinvestors[msg.sender];
+        preICOinvestors[msg.sender] = 0;
+        ICOinvestors[msg.sender] = 0;
+        token.mint(msg.sender, extraTokensAmount);
+      }
+    }
+  }
+
+
+  function mintTokens() payable saleIsOn isUnderHardCap nonReentrant {
+    uint256 valueWEI = msg.value;
+    uint256 valueCent = valueWEI.div(priceUSD);
+    uint256 tokens = rateCent.mul(valueCent);
+    uint256 hardcap = getHardcap();
+    if (soldTokens + tokens > hardcap) {
+      tokens = hardcap.sub(soldTokens);
+      valueCent = tokens.div(rateCent);
+      valueWEI = valueCent.mul(priceUSD);
+      uint256 change = msg.value - valueWEI;
+      bool isSent = msg.sender.call.gas(3000000).value(change)();
+      require(isSent);
+    }
+    token.mint(msg.sender, tokens);
+    collectedCent += valueCent;
+    soldTokens += tokens;
+    if (state == State.PreIco) {
+      preICOinvestors[msg.sender] += tokens;
+    }
+    else {
+      ICOinvestors[msg.sender] += tokens;
+    }
+  }
+
+  function () payable {
+    mintTokens();
+  }
 }
