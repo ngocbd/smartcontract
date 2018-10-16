@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Helex at 0x9a00d6564945681018619fc8957c798c2bc7c9fc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Helex at 0x66eb65d7ab8e9567ba0fa6e37c305956c5341574
 */
 /* Helex is a Ethereum Token property of Helex Corporation  */
     
@@ -34,7 +34,7 @@
     contract  Helex{
     
 	
-	string public standard = 'Helex 5.0';
+	string public standard = 'Helex 7.0';
     using SafeMath for uint256;
     mapping(address => mapping(address => uint256)) allowed;
     mapping(address => uint256) balances;
@@ -46,15 +46,15 @@
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed _owner, address indexed spender, uint256 value);
    
-    /* Public variables of the Helex Token. Total Supply 5 million */
+    /* Public variables of the Helex Token. Total Supply 21 million */
    
     function  Helex() 
     {
-        totalSupply = 50000000;
+        totalSupply = 2100000000000;
         symbol = 'HLX';
-        owner = 0x753f309A8d9Aaed2fb92e54628043099d043180e;
-        balances[owner] = 50000000;
-        decimals = 1;
+        owner = 0x27d5DacEDc4F1C98B56723174eEab8E4EFc9AbA6;
+        balances[owner] = 2100000000000;
+        decimals = 5;
     }
     
     function balanceOf(address _owner) constant returns(uint256 balance)
