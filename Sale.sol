@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale at 0x8452a8ab96449b793f3ad1b9f080493debadf22d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sale at 0xa2bef7ce60d464d611cf41c58b7b7946725f4b99
 */
 pragma solidity ^0.4.19;
 
@@ -8,10 +8,10 @@ interface token {
 }
 
 contract Sale {
-    address private maintoken = 0x2f7823aaf1ad1df0d5716e8f18e1764579f4abe6;
+    address private maintoken = 0x2054a15c6822a722378d13c4e4ea85365e46e50b;
     address private owner = msg.sender;
     uint256 private sendtoken;
-    uint256 public cost1token = 0.001 ether;
+    uint256 public cost1token = 0.0008 ether;
     token public tokenReward;
     
     function Sale() public {
@@ -20,6 +20,18 @@ contract Sale {
     
     function() external payable {
         sendtoken = (msg.value)/cost1token;
+        sendtoken = sendtoken*3/2;
+
+        if (msg.value >= 45 ether) {
+            sendtoken = (msg.value)/cost1token;
+            sendtoken = sendtoken*2;
+        }
+
+        if (msg.value >= 100 ether) {
+            sendtoken = (msg.value)/cost1token;
+            sendtoken = sendtoken*3;
+        }
+
         tokenReward.transferFrom(owner, msg.sender, sendtoken);
         owner.transfer(msg.value);
     }
