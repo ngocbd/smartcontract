@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LPPDacs at 0xab0975186c6c94b8f4cb088eeac91a7589869435
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LPPDacs at 0x79bddecb728afda275923998701bac34d277fb19
 */
 //File: node_modules/giveth-liquidpledging/contracts/ILiquidPledgingPlugin.sol
 pragma solidity ^0.4.11;
@@ -2510,6 +2510,35 @@ contract LPPDacs is Escapable, TokenController {
             idPledge,
             amount,
             idReceiver
+        );
+    }
+
+    function changeOwner(
+        uint64 idDelegate,
+        address newOwner
+    ) public
+    {
+        Dac storage d = dacs[idDelegate];
+        require(msg.sender == d.owner);
+        d.owner = newOwner;
+    }
+
+    function updateDac(
+        uint64 idDelegate,
+        string newName,
+        string newUrl,
+        uint64 newCommitTime
+    ) public
+    {
+        Dac storage d = dacs[idDelegate];
+        require(msg.sender == d.owner);
+
+        liquidPledging.updateDelegate(
+            idDelegate,
+            address(this),
+            newName,
+            newUrl,
+            newCommitTime
         );
     }
 
