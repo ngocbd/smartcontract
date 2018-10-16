@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HeartBoutPreICO at 0xc258a94789cd6f50bdc76ce51de9e7b3c4ffb125
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HeartBoutPreICO at 0x6546e21a148d6ffffee6bef916949f2efdae36aa
 */
 pragma solidity ^0.4.18;
 /**
@@ -122,7 +122,7 @@ contract HeartBoutPreICO is CappedCrowdsale, Ownable {
     function HeartBoutPreICO(uint256 _startTime, uint256 _endTime, uint256 _rate, address _wallet, uint256 _cap, uint256 _minCount) public
     CappedCrowdsale(_startTime, _endTime, _rate, _wallet, _cap)
     {
-        token = 0x00A4E53EBCdd4360d9f7C367623B43a92F6E41Ef9E;
+        token = 0x00f5b36df8732fb5a045bd90ab40082ab37897b841;
         minCount = _minCount;
     }
     // fallback function can be used to buy tokens
