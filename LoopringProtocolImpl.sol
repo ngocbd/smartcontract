@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LoopringProtocolImpl at 0x2ea2e05f72d497e6e15c320530dc14abae70eb37
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LoopringProtocolImpl at 0xc80bbab86ced62cf795619a357581faf0cb46511
 */
 /*
   Copyright 2017 Loopring Project Ltd (Loopring Foundation).
@@ -918,12 +918,11 @@ contract LoopringProtocolImpl is LoopringProtocol {
     ////////////////////////////////////////////////////////////////////////////
     /// Variables                                                            ///
     ////////////////////////////////////////////////////////////////////////////
-    /* address public  lrcTokenAddress             = 0x0; */
-    /* address public  tokenRegistryAddress        = 0x0; */
-    /* address public  delegateAddress             = 0x0; */
-    /* address public  nameRegistryAddress         = 0x0; */
-    uint64  public  ringIndex                   = 0;
-    /* uint8   public  walletSplitPercentage       = 0; */
+    address constant public  lrcTokenAddress        = 0xEF68e7C694F40c8202821eDF525dE3782458639f;
+    address constant public  tokenRegistryAddress   = 0xa21c1f2AE7f721aE77b1204A4f0811c642638da9;
+    address constant public  delegateAddress        = 0xc787aE8D6560FB77B82F42CED8eD39f94961e304;
+    address constant public  nameRegistryAddress    = 0x0f3Dce8560a6010DE119396af005552B7983b7e7;
+    uint8   constant public  walletSplitPercentage  = 20;
     // Exchange rate (rate) is the amount to sell or sold divided by the amount
     // to buy or bought.
     //
@@ -933,7 +932,8 @@ contract LoopringProtocolImpl is LoopringProtocol {
     // To require all orders' rate ratios to have coefficient ofvariation (CV)
     // smaller than 2.5%, for an example , rateRatioCVSThreshold should be:
     //     `(0.025 * RATE_RATIO_SCALE)^2` or 62500.
-    /* uint    public rateRatioCVSThreshold        = 0; */
+    uint    constant public rateRatioCVSThreshold  = 62500;
+    uint64  public  ringIndex                   = 0;
     uint    public constant MAX_RING_SIZE       = 16;
     uint    public constant RATE_RATIO_SCALE    = 10000;
     uint64  public constant ENTERED_MASK        = 1 << 63;
@@ -1029,7 +1029,7 @@ contract LoopringProtocolImpl is LoopringProtocol {
         address       feeRecipient;     // queried
         bytes32       ringHash;         // computed
     }
-
+ 
     ////////////////////////////////////////////////////////////////////////////
     /// Public Functions                                                     ///
     ////////////////////////////////////////////////////////////////////////////
@@ -1204,7 +1204,7 @@ contract LoopringProtocolImpl is LoopringProtocol {
         }
         // Test all token addresses at once
         require(
-            TokenRegistry(0xa21c1f2AE7f721aE77b1204A4f0811c642638da9).areAllTokensRegistered(tokens)
+            TokenRegistry(tokenRegistryAddress).areAllTokensRegistered(tokens)
         ); // "token not registered");
     }
     function updateFeeRecipient(RingParams params)
@@ -1215,7 +1215,7 @@ contract LoopringProtocolImpl is LoopringProtocol {
             params.feeRecipient = msg.sender;
         } else {
             (params.feeRecipient, params.ringMiner) = NameRegistry(
-                0x0f3Dce8560a6010DE119396af005552B7983b7e7
+                nameRegistryAddress
             ).getParticipantById(
                 params.minerId
             );
@@ -1238,7 +1238,8 @@ contract LoopringProtocolImpl is LoopringProtocol {
         private
     {
         uint64 _ringIndex = ringIndex ^ ENTERED_MASK;
-        TokenTransferDelegate delegate = TokenTransferDelegate(0xc787aE8D6560FB77B82F42CED8eD39f94961e304);
+        address _lrcTokenAddress = lrcTokenAddress;
+        TokenTransferDelegate delegate = TokenTransferDelegate(delegateAddress);
         // Do the hard work.
         verifyRingHasNoSubRing(params.ringSize, orders);
         // Exchange rates calculation are performed by ring-miners as solidity
@@ -1261,14 +1262,16 @@ contract LoopringProtocolImpl is LoopringProtocol {
             delegate,
             params.ringSize,
             orders,
-            params.feeRecipient
+            params.feeRecipient,
+            _lrcTokenAddress
         );
         /// Make transfers.
         var (orderHashList, amountsList) = settleRing(
             delegate,
             params.ringSize,
             orders,
-            params.feeRecipient
+            params.feeRecipient,
+            _lrcTokenAddress
         );
         RingMined(
             _ringIndex,
@@ -1283,7 +1286,8 @@ contract LoopringProtocolImpl is LoopringProtocol {
         TokenTransferDelegate delegate,
         uint          ringSize,
         OrderState[]  orders,
-        address       feeRecipient
+        address       feeRecipient,
+        address       _lrcTokenAddress
         )
         private
         returns(
@@ -1323,7 +1327,7 @@ contract LoopringProtocolImpl is LoopringProtocol {
             amountsList[i][5] = state.splitB;
         }
         // Do all transactions
-        delegate.batchTransferToken(0xEF68e7C694F40c8202821eDF525dE3782458639f, feeRecipient, batch);
+        delegate.batchTransferToken(_lrcTokenAddress, feeRecipient, batch);
     }
     /// @dev Verify miner has calculte the rates correctly.
     function verifyMinerSuppliedFillRates(
@@ -1342,14 +1346,15 @@ contract LoopringProtocolImpl is LoopringProtocol {
             rateRatios[i] = _rateRatioScale.mul(s1b0) / s0b1;
         }
         uint cvs = MathUint.cvsquare(rateRatios, _rateRatioScale);
-        require(cvs <= 62500); // "miner supplied exchange rate is not evenly discounted");
+        require(cvs <= rateRatioCVSThreshold); // "miner supplied exchange rate is not evenly discounted");
     }
     /// @dev Calculate each order's fee or LRC reward.
     function calculateRingFees(
         TokenTransferDelegate delegate,
         uint            ringSize,
         OrderState[]    orders,
-        address         feeRecipient
+        address         feeRecipient,
+        address         _lrcTokenAddress
         )
         private
         view
@@ -1369,16 +1374,16 @@ contract LoopringProtocolImpl is LoopringProtocol {
             } else {
                 uint lrcSpendable = getSpendable(
                     delegate,
-                    0xEF68e7C694F40c8202821eDF525dE3782458639f,
+                    _lrcTokenAddress,
                     state.order.owner
                 );
                 // If the order is selling LRC, we need to calculate how much LRC
                 // is left that can be used as fee.
-                if (state.order.tokenS == 0xEF68e7C694F40c8202821eDF525dE3782458639f) {
+                if (state.order.tokenS == _lrcTokenAddress) {
                     lrcSpendable -= state.fillAmountS;
                 }
                 // If the order is buyign LRC, it will has more to pay as fee.
-                if (state.order.tokenB == 0xEF68e7C694F40c8202821eDF525dE3782458639f) {
+                if (state.order.tokenB == _lrcTokenAddress) {
                     nextFillAmountS = orders[(i + 1) % ringSize].fillAmountS;
                     lrcReceiable = nextFillAmountS;
                 }
@@ -1406,7 +1411,7 @@ contract LoopringProtocolImpl is LoopringProtocol {
                 // Only check the available miner balance when absolutely needed
                 if (!checkedMinerLrcSpendable && minerLrcSpendable < state.lrcFee) {
                     checkedMinerLrcSpendable = true;
-                    minerLrcSpendable = getSpendable(delegate, 0xEF68e7C694F40c8202821eDF525dE3782458639f, feeRecipient);
+                    minerLrcSpendable = getSpendable(delegate, _lrcTokenAddress, feeRecipient);
                 }
                 // Only calculate split when miner has enough LRC;
                 // otherwise all splits are 0.
