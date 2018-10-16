@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HorseToken at 0x5b0751713b2527d7f002c0c4e2a37e1219610a6b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HorseToken at 0xbf106842f8887e87f5848b008939fb2f44715679
 */
 pragma solidity ^0.4.13;
 
@@ -326,8 +326,8 @@ contract PausableToken is StandardToken, Pausable {
 
 contract HorseToken is PausableToken {
 
-    string public constant name = "Horse";
-    string public constant symbol = "HORSE";
+    string public constant name = "Gandalf";
+    string public constant symbol = "GANDALF";
     uint public constant decimals = 18;
 
     uint256 public constant INITIAL_SUPPLY = 125000000*(10**decimals); // 125 million x 18 decimals to represent in wei
