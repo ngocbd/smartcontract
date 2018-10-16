@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LockYourLove at 0x61CCA6c941c6629df67439694889C2d1877a17Eb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LockYourLove at 0xad01d8f28ed73c970d0d230ef9d6930a9f0a7281
 */
-pragma solidity ^0.4.11;
+pragma solidity 0.4.15;
 
 contract LockYourLove {
 
@@ -17,9 +17,9 @@ contract LockYourLove {
     
     mapping (bytes32 => LoveItem) private mapLoveItems;
 
-    uint public price;
-    uint public numLoveItems;
-    //bytes32 bb;
+    uint price;
+    uint numLoveItems;
+    
     event EvLoveItemAdded(bytes32 indexed _loveHash, 
                             address indexed _loversAddress, 
                             uint _blockNumber, 
@@ -34,26 +34,11 @@ contract LockYourLove {
         _;
     }
     
-    // This is the constructor. It's payable so you can initialize the contract with funds during deploy
     function LockYourLove () { // Constructor
         owner = msg.sender;
         price = 10000000000000000; // 0.01 ethers -> https://etherconverter.online
         numLoveItems = 0;
     }
-
-    /*function stringToBytes32(string memory str) returns (bytes32 result) {
-        assembly {
-            result := mload(add(str, 32))
-        }
-    }
-
-    function setBB (string str) { 
-       bb = stringToBytes32(str);
-    }
-
-    function getBB () constant returns (bytes32 result) {
-       result = bb;
-    }*/
     
     function() payable { 
         msg.sender.transfer(msg.value);
