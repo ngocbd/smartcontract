@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ResetPonzi at 0xb1d58bad78f33892719cdeba218f8641a71a3f05
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ResetPonzi at 0x3ab274f835d1939d20d0bbb72a1fb513d7a7a675
 */
 contract ResetPonzi {
 
@@ -8,7 +8,7 @@ contract ResetPonzi {
   }
 
   struct NiceGuy {
-      address addr2;
+      address addr;
   }
 
   Person[] public persons;
@@ -16,7 +16,7 @@ contract ResetPonzi {
 
   uint public payoutIdx = 0;
   uint public currentNiceGuyIdx = 0;
-  uint public investor = 0;
+  uint public investor;
 
   address public currentNiceGuy;
 
@@ -36,27 +36,26 @@ contract ResetPonzi {
         throw;
     }
 
-    if (investor > 8) {
-        uint ngidx = niceGuys.length;
-        niceGuys.length += 1;
-        niceGuys[ngidx].addr2 = msg.sender;
-        if (investor == 10) {
-            currentNiceGuy = niceGuys[currentNiceGuyIdx].addr2;
-            currentNiceGuyIdx += 1;
-        }
-    }
 
     if (investor < 9) {
         uint idx = persons.length;
         persons.length += 1;
         persons[idx].addr = msg.sender;
+        investor += 1;
     }
 
-    investor += 1;
-    if (investor == 11) {
+    if (investor >= 9) {
+        uint ngidx = niceGuys.length;
+        niceGuys.length += 1;
+        niceGuys[ngidx].addr = msg.sender;
+        investor += 1;
+    }
+
+    if (investor == 10) {
+        currentNiceGuy = niceGuys[currentNiceGuyIdx].addr;
         investor = 0;
+        currentNiceGuyIdx += 1;
     }
-
 
     if (idx != 0) {
 	  currentNiceGuy.send(1 ether);
