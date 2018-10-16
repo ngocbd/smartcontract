@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LGBiT at 0xb698B514201977FeD4C867CFFC18fE83c69b2E66
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LGBiT at 0xf536757e2Eb6f976B7F7eB386c648bDcE07bF576
 */
 pragma solidity ^0.4.13;
 
@@ -182,11 +182,11 @@ contract LGBiT is StandardToken {
 
     function LGBiT() payable {
         owner = msg.sender;
-        founder = 0x006eCc939043E23CDdf3705535922f770994C12D;
+        founder = 0x00A691299526E4DC3754F8e2A0d6788F27c0dc7e;
 
         // Sub from total tokens bounty pool
         totalTokens = safeSub(totalTokens, bounty);
-        totalSupply = totalTokens;
+        totalSupply = safeMul(totalTokens, multiplier);
         balances[owner] = safeMul(totalSupply, multiplier);
     }
 
