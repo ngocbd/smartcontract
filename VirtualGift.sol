@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VirtualGift at 0xcffd73396e6f4dae2fd43da7eeb2536b50b695a1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VirtualGift at 0xeb41d9b0326b787a7c767478cfc4d060c6aa9dbd
 */
 pragma solidity ^0.4.18;
 
@@ -22,8 +22,8 @@ contract ERC721 {
     // function tokenMetadata(uint256 _tokenId) public constant returns (string infoUrl);
     
     // Events
-    event Transfer(address _from, address _to, uint256 _tokenId);
-    event Approval(address _owner, address _approved, uint256 _tokenId);
+    event Transfer(address indexed _from, address indexed _to, uint256 _tokenId);
+    event Approval(address indexed _owner, address indexed _approved, uint256 _tokenId);
 }
 
 contract ERC20 {
