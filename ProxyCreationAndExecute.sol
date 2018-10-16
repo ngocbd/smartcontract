@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProxyCreationAndExecute at 0xb0a00896f34655edff6c8d915fb342194c4a6d48
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProxyCreationAndExecute at 0x793ebbe21607e4f04788f89c7a9b97320773ec59
 */
 pragma solidity ^0.4.16;
 
@@ -355,18 +355,23 @@ contract DSProxyCache {
 }
 
 contract ProxyCreationAndExecute is OasisDirectProxy {
+    TokenInterface wethToken;
+
+    function ProxyCreationAndExecute(address wethToken_) {
+        wethToken = TokenInterface(wethToken_);
+    }
 
     function createAndSellAllAmount(DSProxyFactory factory, OtcInterface otc, TokenInterface payToken, uint payAmt, TokenInterface buyToken, uint minBuyAmt) public returns (DSProxy proxy, uint buyAmt) {
         proxy = factory.build(msg.sender);
         buyAmt = sellAllAmount(otc, payToken, payAmt, buyToken, minBuyAmt);
     }
 
-    function createAndSellAllAmountPayEth(DSProxyFactory factory, OtcInterface otc, TokenInterface wethToken, TokenInterface buyToken, uint minBuyAmt) public payable returns (DSProxy proxy, uint buyAmt) {
+    function createAndSellAllAmountPayEth(DSProxyFactory factory, OtcInterface otc, TokenInterface buyToken, uint minBuyAmt) public payable returns (DSProxy proxy, uint buyAmt) {
         proxy = factory.build(msg.sender);
         buyAmt = sellAllAmountPayEth(otc, wethToken, buyToken, minBuyAmt);
     }
 
-    function createAndSellAllAmountBuyEth(DSProxyFactory factory, OtcInterface otc, TokenInterface payToken, uint payAmt, TokenInterface wethToken, uint minBuyAmt) public returns (DSProxy proxy, uint wethAmt) {
+    function createAndSellAllAmountBuyEth(DSProxyFactory factory, OtcInterface otc, TokenInterface payToken, uint payAmt, uint minBuyAmt) public returns (DSProxy proxy, uint wethAmt) {
         proxy = factory.build(msg.sender);
         wethAmt = sellAllAmountBuyEth(otc, payToken, payAmt, wethToken, minBuyAmt);
     }
@@ -376,13 +381,17 @@ contract ProxyCreationAndExecute is OasisDirectProxy {
         payAmt = buyAllAmount(otc, buyToken, buyAmt, payToken, maxPayAmt);
     }
 
-    function createAndBuyAllAmountPayEth(DSProxyFactory factory, OtcInterface otc, TokenInterface buyToken, uint buyAmt, TokenInterface wethToken) public payable returns (DSProxy proxy, uint wethAmt) {
+    function createAndBuyAllAmountPayEth(DSProxyFactory factory, OtcInterface otc, TokenInterface buyToken, uint buyAmt) public payable returns (DSProxy proxy, uint wethAmt) {
         proxy = factory.build(msg.sender);
         wethAmt = buyAllAmountPayEth(otc, buyToken, buyAmt, wethToken);
     }
 
-    function createAndBuyAllAmountBuyEth(DSProxyFactory factory, OtcInterface otc, TokenInterface wethToken, uint wethAmt, TokenInterface payToken, uint maxPayAmt) public returns (DSProxy proxy, uint payAmt) {
+    function createAndBuyAllAmountBuyEth(DSProxyFactory factory, OtcInterface otc, uint wethAmt, TokenInterface payToken, uint maxPayAmt) public returns (DSProxy proxy, uint payAmt) {
         proxy = factory.build(msg.sender);
         payAmt = buyAllAmountBuyEth(otc, wethToken, wethAmt, payToken, maxPayAmt);
+    }
+
+    function() public payable {
+        require(msg.sender == address(wethToken));
     }
 }
