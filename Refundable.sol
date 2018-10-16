@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Refundable at 0x82523590454895ed982e11ab2680c52c1604b83f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Refundable at 0xd2aa60e1c09c693706ee184dd831b6fd9d1ac3f5
 */
 pragma solidity ^0.4.23;
 
@@ -240,7 +240,7 @@ contract Crowdsale is Pausable, KYCCrowdsale{
     
     wallet =  0xccB84A750f386bf5A4FC8C29611ad59057968605;
     token = ERC20(0x1b0cD7c0DC07418296585313a816e0Cb953DEa96);
-    tokenWallet =  0x4AA48F9cF25eB7d2c425780653c321cfaC458FA4;
+    tokenWallet =  0xccB84A750f386bf5A4FC8C29611ad59057968605;
   }
 
   // fallback function can be used to buy tokens
