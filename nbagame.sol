@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract nbagame at 0xb2fb6b9989fc3401a3b180fa4246b6fadfa28c08
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract nbagame at 0x47110434a5c6425a605c95ac4497cdf81449a947
 */
 pragma solidity 0.4.20;
 
@@ -1036,8 +1036,8 @@ contract nbagame is usingOraclize {
   address public currentOwner = 0x0161C8d35f0B603c7552017fe9642523f70d7B6A;
 
   uint8 public constant NUM_TEAMS = 2;
-  string[NUM_TEAMS] public TEAM_NAMES = ["Milwaukee Bucks", "Detroit Pistons"];
-  enum TeamType { MBucks, DPistons, None }
+  string[NUM_TEAMS] public TEAM_NAMES = ["Toronto Raptors", "Orlando Magic"];
+  enum TeamType { TRaptors, OMagic, None }
   TeamType public winningTeam = TeamType.None;
 
   uint public constant TOTAL_POOL_COMMISSION = 10; // Total pool commission psuedo 5% (10% from losing side bet)
@@ -1133,7 +1133,7 @@ contract nbagame is usingOraclize {
   
   function pingOracle(uint pingDelay) private {
     // Ping oracle after pingDelay time to query result
-    oraclize_query(pingDelay, "WolframAlpha", "Bucks vs Pistons February 28, 2018 Winner");
+    oraclize_query(pingDelay, "WolframAlpha", "Raptors vs Magic February 28, 2018 Winner");
     //numberOfPingsAttempted++;
   }
 
@@ -1194,7 +1194,7 @@ contract nbagame is usingOraclize {
   // Function for user to bet on team idx,
   function bet(uint teamIdx) public payable {
     require(canBet() == true);
-    require(TeamType(teamIdx) == TeamType.MBucks || TeamType(teamIdx) == TeamType.DPistons);
+    require(TeamType(teamIdx) == TeamType.TRaptors || TeamType(teamIdx) == TeamType.OMagic);
     require(msg.value >= MINIMUM_BET);
 
     // Add bettor to bettor list if they are not on it
