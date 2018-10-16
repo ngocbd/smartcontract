@@ -1,11 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OpenPoWH at 0x8b3f2ec8577e4da54294dd924d26c4ca2ac4c80e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OpenPoWH at 0xc1128d09f0f7c0f01f5417eaf2661d8d4d80b92a
 */
 pragma solidity ^0.4.18;
 
 /*
-
-OFFICIAL LAUNCH IN 7 DAYS (based on 4 blocks per minute)!
+-[ Official ]-
 
 Proof of Weak Hands  -  New Open Edition!
  _____             _____     _ _ _ _____ 
@@ -27,8 +26,8 @@ Credits:
 
 Based on original PoWH concept: https://test.jochen-hoenicke.de/eth/ponzitoken/
 Original PoWHCoin Launch: PonziBot
-EthPy Secure Rewrite and Audit: functionZerO, tocsIck, arc, dumpinDivine
-Limitation of Buyin Amount: tocsick
+EthPy Secure Rewrite and Audit: divine, tocksIck, arc
+Limitation of Buyin Amount: tocksick
 Delayed Public Start Time: Common Sense / https://solidity.readthedocs.io/ / The People
 modernvillain: Shit Shadow didn't even get a mention?
 
