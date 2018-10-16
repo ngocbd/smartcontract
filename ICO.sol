@@ -1,275 +1,195 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICO at 0x6a04f1b8cd341232b59c8bc70a102c45f6b29b38
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICO at 0x44a16f9f7c67bafcbeb5d04a5d1f6248b1222ff7
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
+/**
+* @title ICO CONTRACT
+* @dev ERC-20 Token Standard Compliant
+* @author Fares A. Akel C. f.antonio.akel@gmail.com
+*/
 
-interface token {
-    function transfer(address receiver, uint amount) public;
-    function unlock() public;
-    function burn(uint256 _value) public returns (bool);
-}
+/**
+ * @title SafeMath by OpenZeppelin
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
 
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-contract Pausable is Ownable {
-  bool public stopped;
-
-  modifier stopInEmergency {
-    require(!stopped);
-    _;
-  }
-  
-  modifier onlyInEmergency {
-    require(stopped);
-    _;
-  }
-
-  // called by the owner on emergency, triggers stopped state
-  function emergencyStop() external onlyOwner {
-    stopped = true;
-  }
-
-  // called by the owner on end of emergency, returns to normal state
-  function release() external onlyOwner onlyInEmergency {
-    stopped = false;
-  }
-
-}
-
-contract SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
     }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a / b;
+        return c;
+    }
 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
 }
 
+contract DateTime {
 
+    function toTimestamp(uint16 year, uint8 month, uint8 day) constant returns (uint timestamp);
 
-contract ICO is SafeMath, Pausable{
-    address public ifSuccessfulSendFundsTo;
-    address public BTCproxy;
-    address public GBPproxy;
-    uint public fundingGoal;
-    uint public amountRaised;
-    uint public deadline;
-    uint public preIcoEnds;
-    uint public tokensSold;
-    uint public maxToken;
+}
+
+contract token {
+
+    function balanceOf(address _owner) public constant returns (uint256 value);
+    function transfer(address _to, uint256 _value) public returns (bool success);
+
+    }
+
+contract ICO {
+    using SafeMath for uint256;
+    //This ico have 5 states
+    enum State {
+        ico,
+        Successful
+    }
+    //public variables
+    State public state = State.ico; //Set initial stage
+    uint256 public startTime = now; //block-time when it was deployed
+    uint256 public rate = 1250;
+    uint256 public totalRaised; //eth in wei
+    uint256 public totalDistributed; //tokens
+    uint256 public ICOdeadline;
+    uint256 public completedAt;
     token public tokenReward;
-    mapping(address => uint256) public balanceOf;
-    bool fundingGoalReached = false;
-    bool crowdsaleClosed = false;
+    address public creator;
+    string public version = '1';
 
+    DateTime dateTimeContract = DateTime(0x1a6184CD4C5Bea62B0116de7962EE7315B7bcBce);
 
-    event FundWithdrawal(address addr, uint value);
-    event ReceivedETH(address addr, uint value);
-	event ReceivedBTC(address addr, uint value);
-	event ReceivedGBP(address addr, uint value);
-    
-    modifier beforeDeadline{ 
-        require(now < deadline); 
+    //events for log
+    event LogFundingReceived(address _addr, uint _amount, uint _currentTotal);
+    event LogBeneficiaryPaid(address _beneficiaryAddress);
+    event LogFundingSuccessful(uint _totalRaised);
+    event LogFunderInitialized(
+        address _creator,
+        uint256 _ICOdeadline);
+    event LogContributorsPayout(address _addr, uint _amount);
+
+    modifier notFinished() {
+        require(state != State.Successful);
         _;
     }
-	modifier afterDeadline{ 
-	    require(now >= deadline); 
-	    _; 
-	}
-	modifier ICOactive{ 
-	    require(!crowdsaleClosed); 
-	    _; 
-	}
-	
-	modifier ICOinactive{ 
-	    require(crowdsaleClosed); 
-	    _; 
-	}
-	
-	modifier onlyBy(address a){
-	    require(msg.sender == a);
-		_;
-	}
-	
     /**
-     * Constrctor function
-     *
-     * Setup the owner
-     */
-    function ICO() public{
-        maxToken = 40*(10 ** 6) * (10 ** 6);
-        stopped = false;
-        tokensSold = 0;
-        ifSuccessfulSendFundsTo = 0xDB9e5d21B0c4f06b55fb85ff96acfF75d94D60F7;
-        BTCproxy = 0x50651260Ba2B8A3264F1AE074E7a6E7Da101567a;
-        GBPproxy = 0x1ABb9E204Eb8E546eFA06Cbb8c039A91227cb211;
-        fundingGoal = 100 ether;
-        deadline = now + 35 days;
-        preIcoEnds = now + 7 days;
-        tokenReward = token(0x2749b5bfd51f9d9dd12927f53c112ebb5e94c247);
+    * @notice ICO constructor
+    * @param _addressOfTokenUsedAsReward is the token totalDistributed
+    */
+    function ICO (token _addressOfTokenUsedAsReward ) public {
+
+        creator = msg.sender;
+        tokenReward = _addressOfTokenUsedAsReward;
+        ICOdeadline = dateTimeContract.toTimestamp(2018,5,15);
+
+        LogFunderInitialized(
+            creator,
+            ICOdeadline);
     }
 
     /**
-     * Fallback function
-     *
-     * The function without name is the default function that is called whenever anyone sends funds to a contract
-     */
-    function () public payable stopInEmergency beforeDeadline ICOactive{
-        require(msg.value >= MinimumInvestment());
-        uint amount = amountToSend(msg.value);
-        if (amount==0){
-            revert();
-        }else{
-            balanceOf[msg.sender] += msg.value;
-            amountRaised += msg.value;
-            tokenReward.transfer(msg.sender,amount);
-            tokensSold = add(tokensSold,amount);
-            ReceivedETH(msg.sender,msg.value);
-        }
-    }
-    
-    function ReceiveBTC(address addr, uint value) public stopInEmergency beforeDeadline ICOactive onlyBy(BTCproxy){
-        require(value >= MinimumInvestment());
-        uint amount = amountToSend(value);
-        if (amount==0){
-            revert();
-        }else{
-            amountRaised += value;
-            tokenReward.transfer(addr,amount);
-            tokensSold = add(tokensSold,amount);
-            ReceivedBTC(addr,value);
-        }
-    }
-    
-    function ReceiveGBP(address addr, uint value) public stopInEmergency beforeDeadline ICOactive onlyBy(GBPproxy){
-        require(value >= MinimumInvestment());
-        uint amount = amountToSend(value);
-        if (amount==0){
-            revert();
-        }else{
-            balanceOf[addr] += value;
-            amountRaised += value;
-            tokenReward.transfer(addr,amount);
-            tokensSold = add(tokensSold,amount);
-            ReceivedGBP(addr,value);
-        }
-    }
-    
-    function MinimumInvestment() internal returns(uint){
-        if (now <= preIcoEnds){
-            return 0.1 ether;
-        }else{
-            return 0.01 ether;
-        }
-    }
-    
-    function amountToSend(uint amount) internal returns(uint){
-        uint toSend = 0;
-        if (tokensSold <= 5 * (10 ** 6) * (10 ** 6)){
-            toSend = mul(amount,1000*(10 ** 6))/(1 ether);
-        }else if (5 * (10 ** 6) * (10 ** 6)< tokensSold &&  tokensSold <= 10 * (10 ** 6) * (10 ** 6)){
-            toSend = mul(amount,850*(10 ** 6))/(1 ether);
-        }else if (10 * (10 ** 6) * (10 ** 6)< tokensSold &&  tokensSold <= 20 * (10 ** 6) * (10 ** 6)){
-            toSend = mul(amount,700*(10 ** 6))/(1 ether);
-        }else if (20 * (10 ** 6) * (10 ** 6)< tokensSold &&  tokensSold <= 30 * (10 ** 6) * (10 ** 6)){
-            toSend = mul(amount,600*(10 ** 6))/(1 ether);
-        }else if (30 * (10 ** 6) * (10 ** 6)< tokensSold &&  tokensSold <= 40 * (10 ** 6) * (10 ** 6)){
-            toSend = mul(amount,550*(10 ** 6))/(1 ether);
-        }
-        if (amount >= 10 ether){
-                toSend = add(toSend,toSend/50); // volume bonus
-        }
-        if (add(toSend,tokensSold) > maxToken){
-            return 0;
-        }else{
-            return toSend;
-        }
-    }
-    function finalize() public onlyBy(owner) {
-        if (amountRaised>=fundingGoal){
-		    if (!ifSuccessfulSendFundsTo.send(amountRaised)){
-		        revert();
-		    }else{
-            fundingGoalReached = true;
-		    }
-		}else{
-		    fundingGoalReached = false;
-		}
-		uint HYDEmitted = add(tokensSold,10 * (10 ** 6) * (10 ** 6));
-		if (HYDEmitted < 50 * (10 ** 6) * (10 ** 6)){													// burn the rest of RLC
-			  tokenReward.burn(50 * (10 ** 6) * (10 ** 6) - HYDEmitted);
-		}
-		tokenReward.unlock();
-		crowdsaleClosed = true;
-	}
+    * @notice contribution handler
+    */
+    function contribute() public notFinished payable {
 
-    
-    function safeWithdrawal() public afterDeadline ICOinactive{
-        if (!fundingGoalReached) {
-            uint amount = balanceOf[msg.sender];
-            balanceOf[msg.sender] = 0;
-            if (amount > 0) {
-                if (msg.sender.send(amount)) {
-                    FundWithdrawal(msg.sender, amount);
-                } else {
-                    balanceOf[msg.sender] = amount;
-                }
-            }
+        require(msg.value > (10**10));
+        
+        uint256 tokenBought = 0;
+
+        totalRaised = totalRaised.add(msg.value);
+
+        tokenBought = msg.value.div(10 ** 10);//token is 8 decimals, eth 18
+        tokenBought = tokenBought.mul(rate);
+
+        //Bonuses depends on stage
+        if (now < dateTimeContract.toTimestamp(2018,2,15)){//presale
+
+            tokenBought = tokenBought.mul(15);
+            tokenBought = tokenBought.div(10); //15/10 = 1.5 = 150%
+            require(totalDistributed.add(tokenBought) <= 100000000 * (10 ** 8));//presale limit
+        
+        } else if (now < dateTimeContract.toTimestamp(2018,2,28)){
+
+            tokenBought = tokenBought.mul(14);
+            tokenBought = tokenBought.div(10); //14/10 = 1.4 = 140%
+        
+        } else if (now < dateTimeContract.toTimestamp(2018,3,15)){
+
+            tokenBought = tokenBought.mul(13);
+            tokenBought = tokenBought.div(10); //13/10 = 1.3 = 130%
+        
+        } else if (now < dateTimeContract.toTimestamp(2018,3,31)){
+
+            tokenBought = tokenBought.mul(12);
+            tokenBought = tokenBought.div(10); //12/10 = 1.2 = 120%
+        
+        } else if (now < dateTimeContract.toTimestamp(2018,4,30)){
+
+            tokenBought = tokenBought.mul(11);
+            tokenBought = tokenBought.div(10); //11/10 = 1.1 = 110%
+        
+        } else if (now < dateTimeContract.toTimestamp(2018,5,15)){
+
+            tokenBought = tokenBought.mul(105);
+            tokenBought = tokenBought.div(100); //105/10 = 1.05 = 105%
+        
         }
+
+        totalDistributed = totalDistributed.add(tokenBought);
+        
+        tokenReward.transfer(msg.sender, tokenBought);
+
+        LogFundingReceived(msg.sender, msg.value, totalRaised);
+        LogContributorsPayout(msg.sender, tokenBought);
+        
+        checkIfFundingCompleteOrExpired();
+    }
+
+    /**
+    * @notice check status
+    */
+    function checkIfFundingCompleteOrExpired() public {
+
+        if(now > ICOdeadline && state!=State.Successful ) { //if we reach ico deadline and its not Successful yet
+
+            state = State.Successful; //ico becomes Successful
+            completedAt = now; //ICO is complete
+
+            LogFundingSuccessful(totalRaised); //we log the finish
+            finished(); //and execute closure
+        }
+    }
+
+    /**
+    * @notice closure handler
+    */
+    function finished() public { //When finished eth are transfered to creator
+
+        require(state == State.Successful);
+        uint256 remanent = tokenReward.balanceOf(this);
+
+        require(creator.send(this.balance));
+        tokenReward.transfer(creator,remanent);
+
+        LogBeneficiaryPaid(creator);
+        LogContributorsPayout(creator, remanent);
+
+    }
+
+    /*
+    * @dev Direct payments handle
+    */
+
+    function () public payable {
+        
+        contribute();
+
     }
 }
