@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitcoinAgileToken at 0x580c1e3caca14826976b5820947f7ad486ac174d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitcoinAgileToken at 0x9b745c272566fe29c7baa8ae2ad77b0fd239859e
 */
 pragma solidity ^0.4.16;
 
@@ -45,11 +45,12 @@ contract TokenERC20 {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function TokenERC20() public {
-        totalSupply = 100000000000000000000000000;  // Update total supply with the decimal amount
+    function TokenERC20(
+) public {
+        totalSupply = 100000000;  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
         name = "BitcoinAgile";                                   // Set the name for display purposes
-        symbol = "BAX";                               // Set the symbol for display purposes
+        symbol = "BAG";                               // Set the symbol for display purposes
     }
 
     /**
