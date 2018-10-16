@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SuMain at 0x2e87fbbf2f222e8dc16ae29441a47ffc07503063
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SuMain at 0x4a510cb4cc13cca6558a5fbc4f434266b788f330
 */
 pragma solidity ^0.4.21;
 
@@ -616,7 +616,7 @@ contract SuOperation is SuNFT {
     SuSquare[10001] public suSquares;
     
     /// @notice Update the contents of your square, the first 3 personalizations
-    ///  for a square are free then cost 10 finney (0.01 ether) each
+    ///  for a square are free then cost 100 finney (0.1 ether) each
     /// @param _squareId The top-left is 1, to its right is 2, ..., top-right is
     ///  100 and then 101 is below 1... the last one at bottom-right is 10000
     /// @param _squareId A 10x10 image for your square, in 8-bit RGB words
@@ -642,7 +642,7 @@ contract SuOperation is SuNFT {
         suSquares[_squareId].title = _title;
         suSquares[_squareId].href = _href;
         if (suSquares[_squareId].version > 3) {
-            require(msg.value == 10 finney);
+            require(msg.value == 100 finney);
         }
         emit Personalized(_squareId);
     }
