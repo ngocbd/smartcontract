@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherBrand at 0xe6101e8f83a0ab40fa228d6f4136a80d734055b3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherBrand at 0xdb5e04dc9c94bc8310e8885c85a4d0666ccaecae
 */
 pragma solidity ^0.4.18;
 
@@ -51,7 +51,7 @@ contract EtherBrand is ERC721 {
   /*** STORAGE ***/
   mapping (address => uint256) private ownerCount;
   mapping (uint256 => TopOwner) private topOwner;
-  mapping (uint256 => address) public lastBuyer;
+  mapping (uint256 => address) private lastBuyer;
 
   address public ceoAddress;
   address public cooAddress;
@@ -85,14 +85,6 @@ contract EtherBrand is ERC721 {
     require(_newExtra != address(0));
     // failsave :3 require(_id <= 2); // 3 = 1 ETH, 4 = 2.5 ETH, 5 = 5 ETH
     extra[_id] = _newExtra;
-  }
-  function setTop(uint256 _id, address _newExtra, uint256 _price) public onlyCXX {
-    require(_newExtra != address(0));
-    topOwner[_id] = TopOwner(_newExtra, _price);
-  }
-  function setLast(uint256 _id, address _newExtra) public onlyCXX {
-    require(_newExtra != address(0));
-    lastBuyer[_id] = _newExtra;
   }
 
   /*** DEFAULT METHODS ***/
@@ -322,7 +314,7 @@ contract EtherBrand is ERC721 {
                 if(i >= 3){ topOwner[4] = topOwner[3]; }
                 if(i >= 2){ topOwner[3] = topOwner[2]; }
                 if(i >= 1){ topOwner[2] = topOwner[1]; }
-                topOwner[i] = TopOwner(brand.owner, brand.price);
+                topOwner[i] = TopOwner(msg.sender, brand.price);
                 break;
             }
         }
