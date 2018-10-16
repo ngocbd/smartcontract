@@ -1,251 +1,143 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x26e7ddfd8cd4e4c6e1272b0ab53f14a1b0d6170c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x31e57ba352853163642093cde33e9e5bbd131d49
 */
-pragma solidity ^0.4.2;
+pragma solidity ^0.4.11;
 
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
-  function mul(uint a, uint b) internal returns (uint) {
-    uint c = a * b;
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
-  function div(uint a, uint b) internal returns (uint) {
-    assert(b > 0);
-    uint c = a / b;
-    assert(a == b * c + a % b);
+
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
-  function sub(uint a, uint b) internal returns (uint) {
+
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
     assert(b <= a);
     return a - b;
   }
-  function add(uint a, uint b) internal returns (uint) {
-    uint c = a + b;
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
     assert(c >= a);
     return c;
   }
-  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a >= b ? a : b;
-  }
-  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a < b ? a : b;
-  }
-  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a >= b ? a : b;
-  }
-  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a < b ? a : b;
-  }
-}
-
-contract ERC20Basic {
-  uint public totalSupply;
-  function balanceOf(address who) constant returns (uint);
-  function transfer(address to, uint value);
-  event Transfer(address indexed from, address indexed to, uint value);
-}
-
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint);
-  function transferFrom(address from, address to, uint value);
-  function approve(address spender, uint value);
-  event Approval(address indexed owner, address indexed spender, uint value);
-}
-
-contract BasicToken is ERC20Basic {
-  
-  using SafeMath for uint;
-  
-  mapping(address => uint) balances;
-  
-  /*
-   * Fix for the ERC20 short address attack  
-  */
-  modifier onlyPayloadSize(uint size) {
-     require(msg.data.length >= size + 4);
-     _;
-  }
-
-  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) {
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-  }
-
-  function balanceOf(address _owner) constant returns (uint balance) {
-    return balances[_owner];
-  }
-}
-
-contract StandardToken is BasicToken, ERC20 {
-  mapping (address => mapping (address => uint)) allowed;
-
-  function transferFrom(address _from, address _to, uint _value) onlyPayloadSize(3 * 32) {
-    var _allowance = allowed[_from][msg.sender];
-    // Check is not needed because sub(_allowance, _value) will already revert() if this condition is not met
-    // if (_value > _allowance) revert();
-    balances[_to] = balances[_to].add(_value);
-    balances[_from] = balances[_from].sub(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
-    Transfer(_from, _to, _value);
-  }
-
-  function approve(address _spender, uint _value) {
-    // To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) revert();
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-  }
-
-  function allowance(address _owner, address _spender) constant returns (uint remaining) {
-    return allowed[_owner][_spender];
-  }
-}
-
-contract PullPayment {
-
-  using SafeMath for uint;
-  
-  mapping(address => uint) public payments;
-
-  event LogRefundETH(address to, uint value);
-
-
-  /**
-  *  Store sent amount as credit to be pulled, called by payer 
-  **/
-  function asyncSend(address dest, uint amount) internal {
-    payments[dest] = payments[dest].add(amount);
-  }
-
-  // withdraw accumulated balance, called by payee
-  function withdrawPayments() {
-    address payee = msg.sender;
-    uint payment = payments[payee];
-    
-    require (payment > 0);
-    require (this.balance >= payment);
-
-    payments[payee] = 0;
-
-    require (payee.send(payment));
-    
-    LogRefundETH(payee,payment);
-  }
-}
-
-contract Ownable {
-    address public owner;
-
-    function Ownable() {
-        owner = msg.sender;
-    }
-
-    modifier onlyOwner {
-        require (msg.sender == owner);
-        _;
-    }
-
-    function transferOwnership(address newOwner) onlyOwner {
-        if (newOwner != address(0)) {
-            owner = newOwner;
-        }
-    }
-}
-
-contract Pausable is Ownable {
-  bool public stopped;
-
-  modifier stopInEmergency {
-    require(!stopped);
-    _;
-  }
-  
-  modifier onlyInEmergency {
-    require(stopped);
-    _;
-  }
-
-  // called by the owner on emergency, triggers stopped state
-  function emergencyStop() external onlyOwner {
-    stopped = true;
-  }
-
-  // called by the owner on end of emergency, returns to normal state
-  function release() external onlyOwner onlyInEmergency {
-    stopped = false;
-  }
-
 }
 
 /**
- *  UmbrellaCoin token contract.
+ * @title Crowdsale
+ * @dev Crowdsale is a base contract for managing a token crowdsale.
+ * Crowdsales have a start and end timestamps, where investors can make
+ * token purchases and the crowdsale will assign them tokens based
+ * on a token per ETH rate. Funds collected are forwarded to a wallet
+ * as they arrive.
  */
-contract UmbrellaCoin is StandardToken, Ownable {
-  string public constant name = "UmbrellaCoin";
-  string public constant symbol = "UMC";
-  uint public constant decimals = 6;
-  address public floatHolder;
+contract token { function transfer(address receiver, uint amount){  } }
+contract Crowdsale {
+  using SafeMath for uint256;
 
-  // Constructor
-  function UmbrellaCoin() {
-      totalSupply = 100000000000000;
-      balances[msg.sender] = totalSupply; // Send all tokens to owner
-      floatHolder = msg.sender;
+  // uint256 durationInMinutes;
+  // address where funds are collected
+  address public wallet;
+  // token address
+  address public addressOfTokenUsedAsReward;
+
+  token tokenReward;
+
+
+
+  // start and end timestamps where investments are allowed (both inclusive)
+  uint256 public startTime;
+  uint256 public endTime;
+  // amount of raised money in wei
+  uint256 public weiRaised;
+
+  /**
+   * event for token purchase logging
+   * @param purchaser who paid for the tokens
+   * @param beneficiary who got the tokens
+   * @param value weis paid for purchase
+   * @param amount amount of tokens purchased
+   */
+  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+
+
+  function Crowdsale() {
+    // wallet = 0x06e8e1c94a03bf157f04FA6528D67437Cb2EBA10;
+    wallet = 0x76483693D885c9ed9055d606D612B1050E981C33;//is it correct?yes ok
+    //your address...
+    // durationInMinutes = _durationInMinutes;
+    addressOfTokenUsedAsReward = 0x77727ef417696f95a10652cf2d02d6421dda5048;
+
+
+    tokenReward = token(addressOfTokenUsedAsReward);
+    startTime = now + 12085 * 1 minutes;
+    endTime = startTime + 51*24*60 * 1 minutes;
   }
 
-}
+  // fallback function can be used to buy tokens
+  function () payable {
+    buyTokens(msg.sender);
+  }
 
+  // low level token purchase function
+  // mapping (address => uint) public BALANCE;
 
-contract Crowdsale is Ownable{
-    using SafeMath for uint;
+  function buyTokens(address beneficiary) payable {
+    require(beneficiary != 0x0);
+    require(validPurchase());
 
-    address public beneficiary;
-    uint public amountRaised; uint public price;
-    UmbrellaCoin public tokenReward;
+    uint256 weiAmount = msg.value;
+    if(weiAmount <  5*10**17 || weiAmount > 10**19) throw;
 
-    /* data structure to hold information about campaign contributors */
+    // calculate token amount to be sent
+    uint _price;
 
-    /*  at initialization, setup the owner */
-    function Crowdsale() {
-        beneficiary = 0x6c7a8975e67dBb9c0C9664410862C91A01401fE7;
-        price = 1666 szabo;
-        tokenReward = UmbrellaCoin(0x190fB342aa6a15eB82903323ae78066fF8616746);
+    if(now < startTime + 20*24*60 * 1 minutes)
+      _price = 3300;
+    else _price = 3000;
+    uint256 tokens = (weiAmount / 10000000000) * _price;
+
+    // update state
+    weiRaised = weiRaised.add(weiAmount);
+
+    tokenReward.transfer(beneficiary, tokens);
+    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+    forwardFunds();
+  }
+
+  // send ether to the fund collection wallet
+  // override to create custom fund forwarding mechanisms
+  function forwardFunds() internal {
+    // wallet.transfer(msg.value);
+    if (!wallet.send(msg.value)) {
+      throw;
     }
+  }
 
-    /* The function without name is the default function that is called whenever anyone sends funds to a contract */
-    function () payable {
-        if (msg.value < 1000 finney || msg.value > 3000 ether) revert();
-        uint amount = msg.value;
-        amountRaised += amount;
-        uint payout = bonus(amount.div(price).mul(1000000));
-        beneficiary.transfer(msg.value);
-        tokenReward.transfer(msg.sender, payout);
-    }
+  // @return true if the transaction can buy tokens
+  function validPurchase() internal constant returns (bool) {
+    bool withinPeriod = now >= startTime && now <= endTime;
+    bool nonZeroPurchase = msg.value != 0;
+    return withinPeriod && nonZeroPurchase;
+  }
 
-        /*
-     *Compute the UmbrellaCoin bonus according to the investment period
-     */
-    function bonus(uint amount) internal constant returns (uint) {
-    if (350 ether <= amountRaised) {
-        return amount.mul(4);   // bonus 400%
-    } else if (351 ether >= amountRaised && 1000 ether <= amountRaised) {
-        return amount.mul(3);   // bonus 300%
-    } else if (1001 ether >= amountRaised && 1950 ether <= amountRaised) {
-        return amount.mul(2);   // bonus 200%
-    } else if (1951 ether >= amountRaised && 4000 ether <= amountRaised) {
-        return (amount.mul(15))/10;   // bonus 150%
-    }
-    return amount;
-    }
+  // @return true if crowdsale event has ended
+  function hasEnded() public constant returns (bool) {
+    return now > endTime;
+  }
 
-        /**
-     * Transfer remains to owner in case if impossible to do min invest
-     */
-    function sendCoinsToBeneficiary() onlyOwner public {
-        tokenReward.transfer(beneficiary, tokenReward.balanceOf(this));
-    }
+  function withdrawTokens(uint256 _amount) {
+    if(msg.sender!=wallet) throw;
+    tokenReward.transfer(wallet,_amount);
+  }
 }
