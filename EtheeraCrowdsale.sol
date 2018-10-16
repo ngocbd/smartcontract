@@ -1,15 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheeraCrowdsale at 0xb07d4f1b0645c1d86c3e51941d898845731be941
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheeraCrowdsale at 0x9546d1fa253c56f87a99aaaafd290e56424dcc5b
 */
-/**
- * Developer Team: 
- * Hira Siddiqui
- * connect on: https://www.linkedin.com/in/hira-siddiqui-96b60a74/
- * 
- * Mujtaba Idrees
- * connect on: https://www.linkedin.com/in/mujtabaidrees94/
- **/
-
 pragma solidity ^0.4.11;
 
 /**
@@ -151,7 +142,8 @@ contract EtheeraToken is BasicToken,Ownable {
       require(tokenBalances[wallet] >= tokenAmount);               // checks if it has enough to sell
       tokenBalances[buyer] = tokenBalances[buyer].add(tokenAmount);                  // adds the amount to buyer's balance
       tokenBalances[wallet] = tokenBalances[wallet].sub(tokenAmount);                        // subtracts amount from seller's balance
-      Transfer(wallet, buyer, tokenAmount); 
+      Transfer(wallet, buyer, tokenAmount);
+      totalSupply = totalSupply.sub(tokenAmount);
     }
     
     function showMyTokenBalance(address addr) public view onlyOwner returns (uint tokenBalance) {
@@ -159,9 +151,6 @@ contract EtheeraToken is BasicToken,Ownable {
         return tokenBalance;
     }
     
-    function showMyEtherBalance(address addr) public view onlyOwner returns (uint etherBalance) {
-        etherBalance = addr.balance;
-    }
 }
 contract EtheeraCrowdsale {
   using SafeMath for uint256;
@@ -197,7 +186,7 @@ contract EtheeraCrowdsale {
   uint256 public hardCap = 105000;
   
   //total tokens that have been sold  
-  uint256 tokens_sold = 0;
+  uint256 public tokens_sold = 0;
 
   //total tokens that are to be sold - this is 70% of the total supply i.e. 300000000
   uint maxTokensForSale = 210000000;
@@ -210,14 +199,10 @@ contract EtheeraCrowdsale {
   uint256 public tokensForTournament = 0;
 
   bool ethersSentForRefund = false;
-  
-  // whitelisted addresses are those that have registered on the website
-  mapping(address=>bool) whiteListedAddresses;
 
   // the buyers of tokens and the amount of ethers they sent in
   mapping(address=>uint256) usersThatBoughtETA;
  
-  address whiteLister; 
   /**
    * event for token purchase logging
    * @param purchaser who paid for the tokens
@@ -227,10 +212,8 @@ contract EtheeraCrowdsale {
    */
   event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
 
+  function EtheeraCrowdsale(uint256 _startTime, address _wallet) public {
 
-  function EtheeraCrowdsale(uint256 _startTime, address _wallet, address _whiteLister) public {
-    
-    require(_startTime >= now);
     startTime = _startTime;
     endTime = startTime + 60 days;
     
@@ -238,7 +221,6 @@ contract EtheeraCrowdsale {
     require(_wallet != 0x0);
 
     wallet = _wallet;
-    whiteLister = _whiteLister;
     token = createTokenContract(wallet);
   }
 
@@ -257,7 +239,7 @@ contract EtheeraCrowdsale {
     uint256 timeElapsed = now - startTime;
     uint256 timeElapsedInDays = timeElapsed.div(1 days);
     
-    if (timeElapsedInDays <=7)
+    if (timeElapsedInDays <=29)
     {
         //early sale
         //valid for 7 days (1st week)
@@ -295,7 +277,7 @@ contract EtheeraCrowdsale {
             bonus = 0;
         }
     }
-    else if (timeElapsedInDays>7 && timeElapsedInDays <=49)
+    else if (timeElapsedInDays>29 && timeElapsedInDays <=49)
     {
         //sale
         //from 7th day till 49th day (total 42 days or 6 weeks)
@@ -358,11 +340,9 @@ contract EtheeraCrowdsale {
   
   else
   {
-  
     //the purchase should be within duration and non zero
     require(validPurchase());
     
-    require(whiteListedAddresses[beneficiary] == true);
     // amount sent by the user
     uint256 weiAmount = msg.value;
     
@@ -400,7 +380,6 @@ contract EtheeraCrowdsale {
     TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
     
     tokens_sold = tokens_sold.add(tokens);
-    
     forwardFunds();
   }
  }
@@ -421,11 +400,6 @@ contract EtheeraCrowdsale {
   function hasEnded() public constant returns (bool) {
     return now > endTime;
   }
-  
-   function showMyTokenBalance() public view returns (uint256 tokenBalance) {
-        tokenBalance = token.showMyTokenBalance(msg.sender);
-        return tokenBalance;
-    }
     
     function burnRemainingTokens() internal
     {
@@ -437,19 +411,6 @@ contract EtheeraCrowdsale {
         require (balance >=tokensToBurn);
         address burnAddress = 0x0;
         token.mint(wallet,burnAddress,tokensToBurn);
-    }
-    
-    function addAddressToWhiteList(address whitelistaddress) public 
-    {
-        require(msg.sender == wallet || msg.sender == whiteLister);
-        whiteListedAddresses[whitelistaddress] = true;
-    }
-    
-    function checkIfAddressIsWhitelisted(address whitelistaddress) public constant returns (bool)
-    {
-        if (whiteListedAddresses[whitelistaddress] == true)
-            return true;
-        return false; 
     }
     
     function getRefund() public 
