@@ -1,8 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x7f4fe0059129442fd6e46785ba12938de51c5a25
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x2f69f3fad0031f6b666d87ca357031a93496652b
 */
 pragma solidity ^0.4.18;
 
+// ?????
 contract Owned {
     address public owner;
     function Owned() public {
@@ -22,6 +23,7 @@ contract Owned {
 
 interface tokenRecipient { function receiveApproval(address _from, uint _value, address _token, bytes _extraData) public; }
 
+// ??????
 contract TokenBase is Owned {
     string public name;
     string public symbol;
@@ -76,17 +78,17 @@ contract TokenBase is Owned {
     }
 }
 
-
+// ????????
 contract WorkProff is TokenBase {
     uint public oneYear = 1 years;
-    uint public minerTotalSupply = 3900 * wanUnit;
-    uint public minerTotalYears = 20;
-    uint public minerTotalTime = minerTotalYears * oneYear;
+    uint public minerTotalSupply = 3900 * wanUnit;              // ???????
+    uint public minerTotalYears = 20;                           // ????????
+    uint public minerTotalTime = minerTotalYears * oneYear;     // ????????
     uint public minerPreSupply = minerTotalSupply / 2;
     uint public minerPreTime = 7 days;
-    uint public minerTotalReward = 0;
-    uint public minerTimeOfLastProof;
-    uint public minerDifficulty = 10 ** 32;
+    uint public minerTotalReward = 0;                           // ??????
+    uint public minerTimeOfLastProof;                           // ?????????
+    uint public minerDifficulty = 10 ** 32;                     // ?????
     bytes32 public minerCurrentChallenge;
 
     function WorkProff() public {
@@ -121,15 +123,15 @@ contract WorkProff is TokenBase {
     }
 }
 
-
+// ????????
 contract Option is WorkProff {
-    uint public optionTotalSupply;
-    uint public optionInitialSupply = 6600 * wanUnit;
-    uint public optionTotalTimes = 5;
-    uint public optionExerciseSpan = 1 years;
+    uint public optionTotalSupply;                          // ?????
+    uint public optionInitialSupply = 6600 * wanUnit;       // ???????????4500 + 2100?
+    uint public optionTotalTimes = 5;                       // ????????
+    uint public optionExerciseSpan = 1 years;               // ???????
 
-    mapping (address => uint) public optionOf;
-    mapping (address => uint) public optionExerciseOf;
+    mapping (address => uint) public optionOf;              // ????????
+    mapping (address => uint) public optionExerciseOf;      // ??????????
 
     event OptionTransfer(address indexed from, address indexed to, uint option, uint exercised);
     event OptionExercise(address indexed addr, uint value);
@@ -185,9 +187,9 @@ contract Option is WorkProff {
 }
 
 contract Token is Option {
-    uint public initialSupply = 0 * wanUnit;
-    uint public reserveSupply = 10500 * wanUnit;
-    uint public sellSupply = 9000 * wanUnit;
+    uint public initialSupply = 0 * wanUnit;        // ?????
+    uint public reserveSupply = 10500 * wanUnit;    // ?????
+    uint public sellSupply = 9000 * wanUnit;        // ???ICO
 
     function Token() public {
         totalSupply = initialSupply;
