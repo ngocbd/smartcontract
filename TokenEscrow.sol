@@ -1,12 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenEscrow at 0x5ac0197c944c961f58bb02f3d0df58a74fdc15b6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenEscrow at 0x6cb2b8dc6a508c9a21db9683d1a729715969a6ee
 */
-pragma solidity ^0.4.10;
+pragma solidity ^0.4.19;
 
 /**
  * @title Interface to communicate with ICO token contract
  */
+ // FRACTAL PRE REALEASE "IOU" TOKEN - FPRT 
+ 
 contract IToken {
+   
   function balanceOf(address _address) constant returns (uint balance);
   function transferFromOwner(address _to, uint256 _value) returns (bool success);
 }
@@ -16,11 +19,12 @@ contract IToken {
  */
 contract TokenEscrow {
 	// Token-related properties/description to display in Wallet client / UI
-	string public standard = 'PBKXToken 0.3';
-	string public name = 'PBKXToken';
-	string public symbol = 'PBKX';
-	uint public decimals = 2;
-    	uint public totalSupply = 300000000;
+	string public standard = 'FractalPreRelease 1.0';
+	string public name = 'FractalPreReleaseToken';
+	string public symbol = 'FPRT';
+	uint public decimals = 4;
+    uint public totalSupply = 50000000000;
+   
 	
 	IToken icoToken;
 	
@@ -39,6 +43,7 @@ contract TokenEscrow {
 		uint limit;                 // Total amount of tokens
 		uint totalSupply;           // Current amount of sold tokens
 		uint tokenPriceInWei;  // Number of token per 1 Eth
+		
 	}
 	
 	TokenSupply[3] public tokenSupplies;
@@ -136,59 +141,23 @@ contract TokenEscrow {
 	function TokenEscrow() {
 		owner = msg.sender;
 		
-		balanceFor[msg.sender] = 300000000; // Give the creator all initial tokens
+		balanceFor[msg.sender] = 50000000000; // Give the creator all initial tokens
 		
 		// Discount policy
-		tokenSupplies[0] = TokenSupply(100000000, 0, 11428571428571); // First million of tokens will go 11210762331838 wei for 1 token
-		tokenSupplies[1] = TokenSupply(100000000, 0, 11848341232227); // Second million of tokens will go 12106537530266 wei for 1 token
-		tokenSupplies[2] = TokenSupply(100000000, 0, 12500000000000); // Third million of tokens will go 13245033112582 wei for 1 token
-	
-		//Balances recovery
-		transferFromOwner(0xa0c6c73e09b18d96927a3427f98ff07aa39539e2,875);
-		transferByOwner(875);
-		transferFromOwner(0xa0c6c73e09b18d96927a3427f98ff07aa39539e2,2150);
-		transferByOwner(2150);
-		transferFromOwner(0xa0c6c73e09b18d96927a3427f98ff07aa39539e2,975);
-		transferByOwner(975);
-		transferFromOwner(0xa0c6c73e09b18d96927a3427f98ff07aa39539e2,875000);
-		transferByOwner(875000);
-		transferFromOwner(0xa4a90f8d12ae235812a4770e0da76f5bc2fdb229,3500000);
-		transferByOwner(3500000);
-		transferFromOwner(0xbd08c225306f6b341ce5a896392e0f428b31799c,43750);
-		transferByOwner(43750);
-		transferFromOwner(0xf948fc5be2d2fd8a7ee20154a18fae145afd6905,3316981);
-		transferByOwner(3316981);
-		transferFromOwner(0x23f15982c111362125319fd4f35ac9e1ed2de9d6,2625);
-		transferByOwner(2625);
-		transferFromOwner(0x23f15982c111362125319fd4f35ac9e1ed2de9d6,5250);
-		transferByOwner(5250);
-		transferFromOwner(0x6ebff66a68655d88733df61b8e35fbcbd670018e,58625);
-		transferByOwner(58625);
-		transferFromOwner(0x1aaa29dffffc8ce0f0eb42031f466dbc3c5155ce,1043875);
-		transferByOwner(1043875);
-		transferFromOwner(0x5d47871df00083000811a4214c38d7609e8b1121,3300000);
-		transferByOwner(3300000);
-		transferFromOwner(0x30ced0c61ccecdd17246840e0d0acb342b9bd2e6,261070);
-		transferByOwner(261070);
-		transferFromOwner(0x1079827daefe609dc7721023f811b7bb86e365a8,2051875);
-		transferByOwner(2051875);
-		transferFromOwner(0x6c0b6a5ac81e07f89238da658a9f0e61be6a0076,10500000);
-		transferByOwner(10500000);
-		transferFromOwner(0xd16e29637a29d20d9e21b146fcfc40aca47656e5,1750);
-		transferByOwner(1750);
-		transferFromOwner(0x4c9ba33dcbb5876e1a83d60114f42c949da4ee22,7787500);
-		transferByOwner(7787500);
-		transferFromOwner(0x0d8cc80efe5b136865b9788393d828fd7ffb5887,100000000);
-		transferByOwner(100000000);
-	
-	}
-  
+		tokenSupplies[0] = TokenSupply(10000000000, 0, 50000000000); // First million of tokens will go 2000 tokens for 1 eth
+		tokenSupplies[1] = TokenSupply(20000000000, 0, 50000000000); // Following Two millions of tokens will go 2000 tokens for 1 eth
+		tokenSupplies[2] = TokenSupply(20000000000, 0, 50000000000); // Two last millions of tokens will go 2000 tokens for 1 eth
+	    
+}
+
+
 	// Incoming transfer from the Presale token buyer
 	function() payable {
 		
 		uint tokenAmount; // Amount of tokens which is possible to buy for incoming transfer/payment
 		uint amountToBePaid; // Amount to be paid
 		uint amountTransfered = msg.value; // Cost/price in WEI of incoming transfer/payment
+		
 		
 		if (amountTransfered <= 0) {
 		      	Error('no eth was transfered');
@@ -245,14 +214,16 @@ contract TokenEscrow {
 		
 		// Refund buyer if overpaid / no tokens to sell
 		msg.sender.transfer(msg.value - amountToBePaid);
+		
 	}
   
 	/**
 	 * @dev Removes/deletes contract
 	 */
 	function kill() owneronly {
-		suicide(msg.sender);
+		selfdestruct(msg.sender);
 	}
+	
   
 	/**
 	 * @dev Transfers tokens from owner to specified recipient
