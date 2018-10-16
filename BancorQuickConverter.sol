@@ -1,116 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorQuickConverter at 0x832a864f53ed20bb84fbeae39997f048292e3b9e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorQuickConverter at 0xcf1cc6ed5b653def7417e3fa93992c3ffe49139b
 */
 pragma solidity ^0.4.18;
-
-/*
-    ERC20 Standard Token interface
-*/
-contract IERC20Token {
-    // these functions aren't abstract since the compiler emits automatically generated getter functions as external
-    function name() public view returns (string) {}
-    function symbol() public view returns (string) {}
-    function decimals() public view returns (uint8) {}
-    function totalSupply() public view returns (uint256) {}
-    function balanceOf(address _owner) public view returns (uint256) { _owner; }
-    function allowance(address _owner, address _spender) public view returns (uint256) { _owner; _spender; }
-
-    function transfer(address _to, uint256 _value) public returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-    function approve(address _spender, uint256 _value) public returns (bool success);
-}
-
-
-/*
-    Owned contract interface
-*/
-contract IOwned {
-    // this function isn't abstract since the compiler emits automatically generated getter functions as external
-    function owner() public view returns (address) {}
-
-    function transferOwnership(address _newOwner) public;
-    function acceptOwnership() public;
-    function changeOwner(address _newOwner) public;
-}
-
-
-
-/*
-    EIP228 Token Converter interface
-*/
-contract ITokenConverter {
-    function convertibleTokenCount() public view returns (uint16);
-    function convertibleToken(uint16 _tokenIndex) public view returns (address);
-    function getReturn(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount) public view returns (uint256);
-    function convert(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256);
-    // deprecated, backward compatibility
-    function change(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256);
-}
-
-
-
-/*
-    Bancor Quick Converter interface
-*/
-contract IBancorQuickConverter {
-    function convert(IERC20Token[] _path, uint256 _amount, uint256 _minReturn) public payable returns (uint256);
-    function convertFor(IERC20Token[] _path, uint256 _amount, uint256 _minReturn, address _for) public payable returns (uint256);
-}
-
-
-
-
-
-/*
-    Provides support and utilities for contract ownership
-*/
-contract Owned is IOwned {
-    address public owner;
-    address public newOwner;
-
-    event OwnerUpdate(address indexed _prevOwner, address indexed _newOwner);
-
-    /**
-        @dev constructor
-    */
-    function Owned() public {
-        owner = msg.sender;
-    }
-
-    // allows execution by the owner only
-    modifier ownerOnly {
-        assert(msg.sender == owner);
-        _;
-    }
-
-    /**
-        @dev allows transferring the contract ownership
-        the new owner still needs to accept the transfer
-        can only be called by the contract owner
-
-        @param _newOwner    new contract owner
-    */
-    function transferOwnership(address _newOwner) public ownerOnly {
-        require(_newOwner != owner);
-        newOwner = _newOwner;
-    }
-
-    /**
-        @dev used by a new owner to accept an ownership transfer
-    */
-    function acceptOwnership() public {
-        require(msg.sender == newOwner);
-        OwnerUpdate(owner, newOwner);
-        owner = newOwner;
-        newOwner = address(0);
-    }
-
-    function changeOwner(address _newOwner) public ownerOnly {
-      owner = _newOwner;
-    }
-}
-
-
 
 /*
     Utilities & Common Modifiers
@@ -184,10 +75,78 @@ contract Utils {
     }
 }
 
+/*
+    ERC20 Standard Token interface
+*/
+contract IERC20Token {
+    // these functions aren't abstract since the compiler emits automatically generated getter functions as external
+    function name() public view returns (string) {}
+    function symbol() public view returns (string) {}
+    function decimals() public view returns (uint8) {}
+    function totalSupply() public view returns (uint256) {}
+    function balanceOf(address _owner) public view returns (uint256) { _owner; }
+    function allowance(address _owner, address _spender) public view returns (uint256) { _owner; _spender; }
 
+    function transfer(address _to, uint256 _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+    function approve(address _spender, uint256 _value) public returns (bool success);
+}
 
+/*
+    Owned contract interface
+*/
+contract IOwned {
+    // this function isn't abstract since the compiler emits automatically generated getter functions as external
+    function owner() public view returns (address) {}
 
+    function transferOwnership(address _newOwner) public;
+    function acceptOwnership() public;
+}
 
+/*
+    Provides support and utilities for contract ownership
+*/
+contract Owned is IOwned {
+    address public owner;
+    address public newOwner;
+
+    event OwnerUpdate(address indexed _prevOwner, address indexed _newOwner);
+
+    /**
+        @dev constructor
+    */
+    function Owned() public {
+        owner = msg.sender;
+    }
+
+    // allows execution by the owner only
+    modifier ownerOnly {
+        assert(msg.sender == owner);
+        _;
+    }
+
+    /**
+        @dev allows transferring the contract ownership
+        the new owner still needs to accept the transfer
+        can only be called by the contract owner
+
+        @param _newOwner    new contract owner
+    */
+    function transferOwnership(address _newOwner) public ownerOnly {
+        require(_newOwner != owner);
+        newOwner = _newOwner;
+    }
+
+    /**
+        @dev used by a new owner to accept an ownership transfer
+    */
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        OwnerUpdate(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
+    }
+}
 
 /*
     Token Holder interface
@@ -195,7 +154,6 @@ contract Utils {
 contract ITokenHolder is IOwned {
     function withdrawTokens(IERC20Token _token, address _to, uint256 _amount) public;
 }
-
 
 /*
     We consider every contract to be a 'token holder' since it's currently not possible
@@ -230,11 +188,6 @@ contract TokenHolder is ITokenHolder, Owned, Utils {
     }
 }
 
-
-
-
-
-
 /*
     Ether Token interface
 */
@@ -243,10 +196,6 @@ contract IEtherToken is ITokenHolder, IERC20Token {
     function withdraw(uint256 _amount) public;
     function withdrawTo(address _to, uint256 _amount) public;
 }
-
-
-
-
 
 /*
     Smart Token interface
@@ -257,7 +206,34 @@ contract ISmartToken is IOwned, IERC20Token {
     function destroy(address _from, uint256 _amount) public;
 }
 
+/*
+    EIP228 Token Converter interface
+*/
+contract ITokenConverter {
+    function convertibleTokenCount() public view returns (uint16);
+    function convertibleToken(uint16 _tokenIndex) public view returns (address);
+    function getReturn(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount) public view returns (uint256);
+    function convert(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256);
+    // deprecated, backward compatibility
+    function change(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256);
+}
 
+/*
+    Bancor Gas Price Limit interface
+*/
+contract IBancorGasPriceLimit {
+    function gasPrice() public view returns (uint256) {}
+    function validateGasPrice(uint256) public view;
+}
+
+/*
+    Bancor Quick Converter interface
+*/
+contract IBancorQuickConverter {
+    function convert(IERC20Token[] _path, uint256 _amount, uint256 _minReturn) public payable returns (uint256);
+    function convertFor(IERC20Token[] _path, uint256 _amount, uint256 _minReturn, address _for) public payable returns (uint256);
+    function convertForPrioritized(IERC20Token[] _path, uint256 _amount, uint256 _minReturn, address _for, uint256 _block, uint256 _nonce, uint8 _v, bytes32 _r, bytes32 _s) public payable returns (uint256);
+}
 
 /*
     The BancorQuickConverter contract provides allows converting between any token in the 
@@ -277,7 +253,10 @@ contract ISmartToken is IOwned, IERC20Token {
     [source token, smart token, to token, smart token, to token...]
 */
 contract BancorQuickConverter is IBancorQuickConverter, TokenHolder {
+    address public signerAddress = 0x0; // verified address that allows conversions with higher gas price
+    IBancorGasPriceLimit public gasPriceLimit; // bancor universal gas price limit contract
     mapping (address => bool) public etherTokens;   // list of all supported ether tokens
+    mapping (bytes32 => bool) public conversionHashes;
 
     /**
         @dev constructor
@@ -289,6 +268,34 @@ contract BancorQuickConverter is IBancorQuickConverter, TokenHolder {
     modifier validConversionPath(IERC20Token[] _path) {
         require(_path.length > 2 && _path.length <= (1 + 2 * 10) && _path.length % 2 == 1);
         _;
+    }
+
+    /*
+        @dev allows the owner to update the gas price limit contract address
+
+        @param _gasPriceLimit   address of a bancor gas price limit contract
+    */
+    function setGasPriceLimit(IBancorGasPriceLimit _gasPriceLimit)
+        public
+        ownerOnly
+        validAddress(_gasPriceLimit)
+        notThis(_gasPriceLimit)
+    {
+        gasPriceLimit = _gasPriceLimit;
+    }
+
+    /*
+        @dev allows the owner to update the signer address
+
+        @param _signerAddress    new signer address
+    */
+    function setSignerAddress(address _signerAddress)
+        public
+        ownerOnly
+        validAddress(_signerAddress)
+        notThis(_signerAddress)
+    {
+        signerAddress = _signerAddress;
     }
 
     /**
@@ -307,6 +314,36 @@ contract BancorQuickConverter is IBancorQuickConverter, TokenHolder {
     }
 
     /**
+        @dev verifies that the signer address is trusted by recovering 
+        the address associated with the public key from elliptic 
+        curve signature, returns zero on error.
+        notice that the signature is valid only for one conversion
+        and expires after the give block.
+
+        @return true if the signer is verified
+    */
+    function verifyTrustedSender(uint256 _block, address _addr, uint256 _nonce, uint8 _v, bytes32 _r, bytes32 _s) private returns(bool) {
+        bytes32 hash = sha256(_block, tx.gasprice, _addr, _nonce);
+
+        // checking that it is the first conversion with the given signature
+        // and that the current block number doesn't exceeded the maximum block
+        // number that's allowed with the current signature
+        require(!conversionHashes[hash] && block.number <= _block);
+
+        // recovering the signing address and comparing it to the trusted signer
+        // address that was set in the contract
+        bytes memory prefix = "\x19Ethereum Signed Message:\n32";
+        bytes32 prefixedHash = keccak256(prefix, hash);
+        bool verified = ecrecover(prefixedHash, _v, _r, _s) == signerAddress;
+
+        // if the signer is the trusted signer - mark the hash so that it can't
+        // be used multiple times
+        if (verified)
+            conversionHashes[hash] = true;
+        return verified;
+    }
+
+/**
         @dev converts the token to any other token in the bancor network by following
         a predefined conversion path and transfers the result tokens to a target account
         note that the converter should already own the source tokens
@@ -318,40 +355,48 @@ contract BancorQuickConverter is IBancorQuickConverter, TokenHolder {
 
         @return tokens issued in return
     */
-    function convertFor(IERC20Token[] _path, uint256 _amount, uint256 _minReturn, address _for)
+    function convertFor(IERC20Token[] _path, uint256 _amount, uint256 _minReturn, address _for) public payable returns (uint256) {
+        return convertForPrioritized(_path, _amount, _minReturn, _for, 0x0, 0x0, 0x0, 0x0, 0x0);
+    }
+
+    /**
+        @dev converts the token to any other token in the bancor network
+        by following a predefined conversion path and transfers the result
+        tokens to a target account.
+        this specific version of the function also allows the verified signer
+        to bypass the universal gas price limit.
+        note that the converter should already own the source tokens
+
+        @param _path        conversion path, see conversion path format above
+        @param _amount      amount to convert from (in the initial source token)
+        @param _minReturn   if the conversion results in an amount smaller than the minimum return - it is cancelled, must be nonzero
+        @param _for         account that will receive the conversion result
+
+        @return tokens issued in return
+    */
+    function convertForPrioritized(IERC20Token[] _path, uint256 _amount, uint256 _minReturn, address _for, uint256 _block, uint256 _nonce, uint8 _v, bytes32 _r, bytes32 _s)
         public
         payable
         validConversionPath(_path)
         returns (uint256)
     {
+        if (_v == 0x0 && _r == 0x0 && _s == 0x0)
+            gasPriceLimit.validateGasPrice(tx.gasprice);
+        else
+            require(verifyTrustedSender(_block, _for, _nonce, _v, _r, _s));
+
         // if ETH is provided, ensure that the amount is identical to _amount and verify that the source token is an ether token
         IERC20Token fromToken = _path[0];
         require(msg.value == 0 || (_amount == msg.value && etherTokens[fromToken]));
 
-        ISmartToken smartToken;
         IERC20Token toToken;
-        ITokenConverter converter;
-        uint256 pathLength = _path.length;
 
         // if ETH was sent with the call, the source is an ether token - deposit the ETH in it
         // otherwise, we assume we already have the tokens
         if (msg.value > 0)
             IEtherToken(fromToken).deposit.value(msg.value)();
-
-        // iterate over the conversion path
-        for (uint256 i = 1; i < pathLength; i += 2) {
-            smartToken = ISmartToken(_path[i]);
-            toToken = _path[i + 1];
-            converter = ITokenConverter(smartToken.owner());
-
-            // if the smart token isn't the source (from token), the converter doesn't have control over it and thus we need to approve the request
-            if (smartToken != fromToken)
-                ensureAllowance(fromToken, converter, _amount);
-
-            // make the conversion - if it's the last one, also provide the minimum return value
-            _amount = converter.change(fromToken, toToken, _amount, i == pathLength - 2 ? _minReturn : 1);
-            fromToken = toToken;
-        }
+        
+        (_amount, toToken) = convertByPath(_path, _amount, _minReturn, fromToken);
 
         // finished the conversion, transfer the funds to the target account
         // if the target token is an ether token, withdraw the tokens and send them as ETH
@@ -362,6 +407,30 @@ contract BancorQuickConverter is IBancorQuickConverter, TokenHolder {
             assert(toToken.transfer(_for, _amount));
 
         return _amount;
+    }
+
+    function convertByPath(IERC20Token[] _path, uint256 _amount, uint256 _minReturn, IERC20Token _fromToken) private returns (uint256, IERC20Token) {
+        ISmartToken smartToken;
+        IERC20Token toToken;
+        ITokenConverter converter;
+
+        // iterate over the conversion path
+        uint256 pathLength = _path.length;
+
+        for (uint256 i = 1; i < pathLength; i += 2) {
+            smartToken = ISmartToken(_path[i]);
+            toToken = _path[i + 1];
+            converter = ITokenConverter(smartToken.owner());
+
+            // if the smart token isn't the source (from token), the converter doesn't have control over it and thus we need to approve the request
+            if (smartToken != _fromToken)
+                ensureAllowance(_fromToken, converter, _amount);
+
+            // make the conversion - if it's the last one, also provide the minimum return value
+            _amount = converter.change(_fromToken, toToken, _amount, i == pathLength - 2 ? _minReturn : 1);
+            _fromToken = toToken;
+        }
+        return (_amount, toToken);
     }
 
     /**
