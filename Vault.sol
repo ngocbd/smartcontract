@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vault at 0x65C52Ae9b15dD6F30902E9f8164C91E912EE2Be3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vault at 0xcb8d1c16f97f86b4aaa400a50771bc958b9ba116
 */
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.18;
 
 contract Vault {
     
@@ -21,7 +21,7 @@ contract Vault {
 
     function init() payable open {
         Owner = msg.sender;
-        minDeposit = 0.5 ether;
+        minDeposit = 0.1 ether;
         Locked = false;
         deposit();
     }
