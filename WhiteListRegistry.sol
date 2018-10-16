@@ -1,62 +1,23 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WhiteListRegistry at 0x317b8c7b9a879c22c78e4251ff00848039b4936b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WhiteListRegistry at 0x851b29efbe37ea35d25e849e159e1945dc0a0f4e
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.23;
 
-library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
   address public owner;
 
-
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
 
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() public {
+  constructor() public {
     owner = msg.sender;
   }
 
@@ -74,43 +35,39 @@ contract Ownable {
    */
   function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
+    emit OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
-
 }
 
+/**
+ * @title WhiteListRegistry
+ * @dev A whitelist registry contract that holds the list of addreses that can participate in the crowdsale.
+ * Owner can add and remove addresses to whitelist.
+ */
 contract WhiteListRegistry is Ownable {
 
     mapping (address => WhiteListInfo) public whitelist;
-    using SafeMath for uint;
 
     struct WhiteListInfo {
         bool whiteListed;
         uint minCap;
-        uint maxCap;
     }
 
-    event AddedToWhiteList(
-        address contributor,
-        uint minCap,
-        uint maxCap
-    );
+    event AddedToWhiteList(address contributor, uint minCap);
 
-    event RemovedFromWhiteList(
-        address _contributor
-    );
+    event RemovedFromWhiteList(address _contributor);
 
-    function addToWhiteList(address _contributor, uint _minCap, uint _maxCap) public onlyOwner {
+    function addToWhiteList(address _contributor, uint _minCap) public onlyOwner {
         require(_contributor != address(0));
-        whitelist[_contributor] = WhiteListInfo(true, _minCap, _maxCap);
-        AddedToWhiteList(_contributor, _minCap, _maxCap);
+        whitelist[_contributor] = WhiteListInfo(true, _minCap);
+        emit AddedToWhiteList(_contributor, _minCap);
     }
 
     function removeFromWhiteList(address _contributor) public onlyOwner {
         require(_contributor != address(0));
         delete whitelist[_contributor];
-        RemovedFromWhiteList(_contributor);
+        emit RemovedFromWhiteList(_contributor);
     }
 
     function isWhiteListed(address _contributor) public view returns(bool) {
@@ -118,7 +75,6 @@ contract WhiteListRegistry is Ownable {
     }
 
     function isAmountAllowed(address _contributor, uint _amount) public view returns(bool) {
-       return whitelist[_contributor].maxCap >= _amount && whitelist[_contributor].minCap <= _amount && isWhiteListed(_contributor);
+        return whitelist[_contributor].minCap <= _amount && isWhiteListed(_contributor);
     }
-
 }
