@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hexagon at 0xB5335e24d0aB29C190AB8C2B459238Da1153cEBA
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hexagon at 0xe37b0c4c42e02c82a023d79600dc6465cfb94eb9
 */
 pragma solidity ^0.4.18;
 
@@ -29,11 +29,6 @@ contract Hexagon {
     _transfer(msg.sender, _to, _value);
 
     return true;
-  }
-
-  /* Return current supply */
-  function totalSupply() public constant returns (uint) {
-    return currentSupply;
   }
 
   /* Burn tokens */
