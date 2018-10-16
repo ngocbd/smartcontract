@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x5de961c448d0745c32839c8d9cf479e61f101076
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x1544f3bcbe71a79c660936b843402eeb44d3a06a
 */
 pragma solidity ^0.4.19;
 
@@ -45,6 +45,29 @@ contract BaseToken {
     }
 }
 
+contract AirdropToken is BaseToken {
+    uint256 public airAmount;
+    uint256 public airBegintime;
+    uint256 public airEndtime;
+    address public airSender;
+    uint32 public airLimitCount;
+
+    mapping (address => uint32) public airCountOf;
+
+    event Airdrop(address indexed from, uint32 indexed count, uint256 tokenValue);
+
+    function airdrop() public payable {
+        require(now >= airBegintime && now <= airEndtime);
+        require(msg.value == 0);
+        if (airLimitCount > 0 && airCountOf[msg.sender] >= airLimitCount) {
+            revert();
+        }
+        _transfer(airSender, msg.sender, airAmount);
+        airCountOf[msg.sender] += 1;
+        Airdrop(msg.sender, airCountOf[msg.sender], airAmount);
+    }
+}
+
 contract ICOToken is BaseToken {
     // 1 ether = icoRatio token
     uint256 public icoRatio;
@@ -73,41 +96,33 @@ contract ICOToken is BaseToken {
     }
 }
 
-contract LockToken is BaseToken {
-    struct LockMeta {
-        uint256 amount;
-        uint256 endtime;
-    }
-    
-    mapping (address => LockMeta) public lockedAddresses;
-
-    function _transfer(address _from, address _to, uint _value) internal {
-        require(balanceOf[_from] >= _value);
-        LockMeta storage meta = lockedAddresses[_from];
-        require(now >= meta.endtime || meta.amount <= balanceOf[_from] - _value);
-        super._transfer(_from, _to, _value);
-    }
-}
-
-contract CustomToken is BaseToken, ICOToken, LockToken {
+contract CustomToken is BaseToken, AirdropToken, ICOToken {
     function CustomToken() public {
-        totalSupply = 2100000000000000000000000000;
-        name = 'ekkoblockchaintoken';
-        symbol = 'ebkt';
+        totalSupply = 21000000000000000000000000000;
+        name = 'FundofFunds';
+        symbol = 'FOF';
         decimals = 18;
-        balanceOf[0x1a5e273c23518af490ca89d31c23dadd9f3df3a5] = totalSupply;
-        Transfer(address(0), 0x1a5e273c23518af490ca89d31c23dadd9f3df3a5, totalSupply);
+        balanceOf[0xfb3eb237657ed64ec8ae40da2a02e3dbaab2505f] = totalSupply;
+        Transfer(address(0), 0xfb3eb237657ed64ec8ae40da2a02e3dbaab2505f, totalSupply);
 
-        icoRatio = 8000;
-        icoBegintime = 1522512000;
-        icoEndtime = 1538323200;
-        icoSender = 0xd780eaf3d801d8a9b037c9429d456fe7645f7a9b;
-        icoHolder = 0xd780eaf3d801d8a9b037c9429d456fe7645f7a9b;
+        airAmount = 20000000000000000000;
+        airBegintime = 1522029600;
+        airEndtime = 1585188000;
+        airSender = 0xfb3eb237657ed64ec8ae40da2a02e3dbaab2505f;
+        airLimitCount = 0;
 
-        lockedAddresses[0xaf2775351ce665f6f430abee07bd88110cd63703] = LockMeta({amount: 630000000000000000000000000, endtime: 1556640000});
+        icoRatio = 3000;
+        icoBegintime = 1522036800;
+        icoEndtime = 1837656000;
+        icoSender = 0xfb3eb237657ed64ec8ae40da2a02e3dbaab2505f;
+        icoHolder = 0xfb3eb237657ed64ec8ae40da2a02e3dbaab2505f;
     }
 
     function() public payable {
-        ico();
+        if (msg.value == 0) {
+            airdrop();
+        } else {
+            ico();
+        }
     }
 }
