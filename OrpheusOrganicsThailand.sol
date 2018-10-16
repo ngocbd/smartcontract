@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OrpheusOrganicsThailand at 0x38fed0a5979e47232834a728428c97313d2535dd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OrpheusOrganicsThailand at 0xe1b3261999df08497c3b1dead7427bb77af311af
 */
 pragma solidity ^0.4.11;
 contract OrpheusOrganicsThailand {
     
-    uint public constant _totalSupply = 5000000000000000000000000000;
+    uint public constant _totalSupply = 5000000000000000000000000;
     
     string public constant symbol = "OOT";
     string public constant name = "Orpheus Organics Thailand";
