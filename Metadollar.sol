@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract METADOLLAR at 0xd8325fb1a8f37e339926ed784965ab92e5b03f40
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract METADOLLAR at 0x3af803136acf303075bf7374e0e5f5b500b6162b
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.16;
 
  // ERC Token Standard #20 Interface
  // https://github.com/ethereum/EIPs/issues/20
@@ -60,15 +60,15 @@ contract METADOLLAR is ERC20Interface, owned{
 	string public constant symbol = "DOL";
 	uint public constant decimals = 18;
 	uint256 public _totalSupply = 1000000000000000000000000000000;
-	uint256 public icoMin = 1000000000000000;					
-	uint256 public preIcoLimit = 1000000000000000000;			
+	uint256 public icoMin = 1000000000000000000000000000000;					// = 300000; amount is in Tokens, 1.800.000
+	uint256 public preIcoLimit = 1000000000000000000;			// = 600000; amount is in tokens, 3.600.000
 	uint256 public countHolders = 0;				// count how many unique holders have tokens
 	uint256 public amountOfInvestments = 0;	// amount of collected wei
 	
-	uint256 preICOprice;								
-	uint256 ICOprice;										
-	uint256 public currentTokenPrice;				
-	uint256 public sellPrice;      
+	uint256 preICOprice;									// price of 1 token in weis for the preICO time
+	uint256 ICOprice;										// price of 1 token in weis for the ICO time
+	uint256 public currentTokenPrice;				// current token price in weis
+	uint256 public sellPrice;      // buyback price of one token in weis
 	uint256 public mtdPreAmount;
 	uint256 public ethPreAmount;
 	uint256 public mtdAmount;
@@ -77,6 +77,7 @@ contract METADOLLAR is ERC20Interface, owned{
 	bool public preIcoIsRunning;
 	bool public minimalGoalReached;
 	bool public icoIsClosed;
+	bool icoExitIsPossible;
 	
 
 	//Balances for each account
@@ -123,20 +124,22 @@ contract METADOLLAR is ERC20Interface, owned{
 
 	/// @notice Constructor of the contract
 	function STARTMETADOLLAR() {
+	    sellPrice = 900000000000000;
 	    mtdAmount = 1000000000000000000;
 	    ethAmount = 1000000000000000;
-	    mtdPreAmount = 1000000000000000000;
-	    ethPreAmount = 1000000000000000;
+	    mtdPreAmount = 1;
+	    ethPreAmount = 1;
 		preIcoIsRunning = true;
 		minimalGoalReached = false;
+		icoExitIsPossible = false;
 		icoIsClosed = false;
 		tokenBalanceOf[this] += _totalSupply;
 		allowed[this][owner] = _totalSupply;
 		allowed[this][supervisor] = _totalSupply;
 		currentTokenPrice = mtdAmount * ethAmount;	// initial price of 1 Token
-		preICOprice = mtdPreAmount * ethPreAmount; 			
-		ICOprice = mtdAmount * ethAmount;			
-		sellPrice = 900000000000000;
+		preICOprice = mtdPreAmount * ethPreAmount; 			// price of 1 token in weis for the preICO time
+		ICOprice = mtdAmount * ethAmount;				// price of 1 token in weis for the ICO time
+		sellPrice = 0;
 		updatePrices();
 	}
 
@@ -391,35 +394,6 @@ contract METADOLLAR is ERC20Interface, owned{
 		ethAmount = ethAmountInWei;
 		updatePrices();
 	}
-	
-	/// @notice Set current mtdPreAmount price in wei for one token
-	/// @param mtdPreAmountInWei - is the amount in wei for one token
-	function setMtdPreAmount(uint256 mtdPreAmountInWei) isOwner {
-		require(mtdPreAmountInWei > 0);
-		require(mtdPreAmount != mtdPreAmountInWei);
-		mtdPreAmount = mtdPreAmountInWei;
-		updatePrices();
-	}
-
-	/// @notice Set current ethPreAmount price in wei for one token
-	/// @param ethPreAmountInWei - is the amount in wei for one token
-	function setEthPreAmount(uint256 ethPreAmountInWei) isOwner {
-		require(ethPreAmountInWei > 0);
-		require(ethPreAmount != ethPreAmountInWei);
-		ethPreAmount = ethPreAmountInWei;
-		updatePrices();
-	}
-
-	/// @notice Set both ethPreAmount and mtdPreAmount at the same time
-	/// @param mtdPreAmountInWei - is the amount in wei for one token
-	/// @param ethPreAmountInWei - is the amount in wei for one token
-	function setPreAmounts(uint256 mtdPreAmountInWei, uint256 ethPreAmountInWei) isOwner {
-		require(mtdPreAmountInWei > 0);
-		require(ethPreAmountInWei > 0);
-		mtdPreAmount = mtdPreAmountInWei;
-		ethPreAmount = ethPreAmountInWei;
-		updatePrices();
-	}
 
 	/// @notice Set the current sell price in wei for one token
 	/// @param priceInWei - is the amount in wei for one token
@@ -505,6 +479,12 @@ contract METADOLLAR is ERC20Interface, owned{
 		deposited(msg.sender, msg.value, "wei deposited");
 	}
 
+	/// @notice Allow user to exit ICO
+	/// @param exitAllowed - status if the exit is allowed
+	function allowIcoExit(bool exitAllowed) isOwner {
+		require(icoExitIsPossible != exitAllowed);
+		icoExitIsPossible = exitAllowed;
+	}
 
 	/// @notice Stop running ICO
 	/// @param icoIsStopped - status if this ICO is stopped
@@ -518,4 +498,29 @@ contract METADOLLAR is ERC20Interface, owned{
 		}
 	}
 
+	/// @notice Sell all tokens for half of a price and exit this ICO
+	function exitThisIcoForHalfOfTokenPrice() {
+		require(icoExitIsPossible);
+		require(!frozenAccount[msg.sender]);
+		require(tokenBalanceOf[msg.sender] > 0);         	// checks if the sender has enough to sell
+		require(currentTokenPrice > 1);
+		uint256 amount = tokenBalanceOf[msg.sender] ;
+		uint256 revenue = amount * currentTokenPrice / 2;
+		require(this.balance >= revenue);
+		_transfer(msg.sender, this, amount);
+		msg.sender.transfer(revenue);                	// sends ether to the seller: it's important to do this last to prevent recursion attacks
+	}
+
+	/// @notice Sell all of tokens for all ether of this smartcontract
+	function getAllMyTokensForAllEtherOnContract() {
+		require(icoExitIsPossible);
+		require(!frozenAccount[msg.sender]);
+		require(tokenBalanceOf[msg.sender] > 0);         	// checks if the sender has enough to sell
+		require(currentTokenPrice > 1);
+		uint256 amount = tokenBalanceOf[msg.sender] ;
+		uint256 revenue = amount * currentTokenPrice / 2;
+		require(this.balance <= revenue);
+		_transfer(msg.sender, this, amount);
+		msg.sender.transfer(this.balance); 
+	}
 }
