@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleMinter at 0x6be4e8a44c9d22f39db262cf1a54c1172da3b864
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleMinter at 0xD88E4822687d0F9c73E296296Ed3eCd0a193dd46
 */
 pragma solidity ^0.4.11;
 
@@ -127,17 +127,17 @@ contract PresaleBonusVoting {
 
 contract CrowdsaleMinter is Owned {
 
-    string public constant VERSION = "0.2.1-TEST.MAX.1";
+    string public constant VERSION = "0.2.1-TEST.1";
 
     /* ====== configuration START ====== */
-    uint public constant COMMUNITY_SALE_START = 3969950; /* approx. 04.07.2017 00:30 */
-    uint public constant PRIORITY_SALE_START  = 3970050; /* approx. 04.07.2017 01:00 */
-    uint public constant PUBLIC_SALE_START    = 3970150; /* approx. 04.07.2017 01:30 */
-    uint public constant PUBLIC_SALE_END      = 3970250; /* approx. 04.07.2017 02:00 */
-    uint public constant WITHDRAWAL_END       = 3970350; /* approx. 04.07.2017 02:30 */
+    uint public constant COMMUNITY_SALE_START = 3968190; /* approx. 03.07.2017 15:39 */
+    uint public constant PRIORITY_SALE_START  = 3968310; /* approx. 30.07.2017 16:00 */
+    uint public constant PUBLIC_SALE_START    = 3968430; /* approx. 30.07.2017 16:30 */
+    uint public constant PUBLIC_SALE_END      = 3968550; /* approx. 30.07.2017 17:00 */
+    uint public constant WITHDRAWAL_END       = 3968670; /* approx. 30.07.2017 17:10 */
 
-    address public TEAM_GROUP_WALLET           = 0x215aCB37845027cA64a4f29B2FCb7AffA8E9d326;
-    address public ADVISERS_AND_FRIENDS_WALLET = 0x41ab8360dEF1e19FdFa32092D83a7a7996C312a4;
+    address public TEAM_GROUP_WALLET           = 0x008cdC9b89AD677CEf7F2C055efC97d3606a50Bd;
+    address public ADVISERS_AND_FRIENDS_WALLET = 0x00eCf92fA3678678a1B82899da1307a0083b6379;
 
     uint public constant TEAM_BONUS_PER_CENT            = 18;
     uint public constant ADVISORS_AND_PARTNERS_PER_CENT = 10;
@@ -149,7 +149,7 @@ contract CrowdsaleMinter is Owned {
     BalanceStorage     public PRESALE_BALANCES         = BalanceStorage(0x4Fd997Ed7c10DbD04e95d3730cd77D79513076F2);
     PresaleBonusVoting public PRESALE_BONUS_VOTING     = PresaleBonusVoting(0x283a97Af867165169AECe0b2E963b9f0FC7E5b8c);
 
-    uint public constant COMMUNITY_PLUS_PRIORITY_SALE_CAP_ETH = 4;
+    uint public constant COMMUNITY_PLUS_PRIORITY_SALE_CAP_ETH = 5;
     uint public constant MIN_TOTAL_AMOUNT_TO_RECEIVE_ETH = 3;
     uint public constant MAX_TOTAL_AMOUNT_TO_RECEIVE_ETH = 5;
     uint public constant MIN_ACCEPTED_AMOUNT_FINNEY = 500;
@@ -294,12 +294,12 @@ contract CrowdsaleMinter is Owned {
         uint extra_amount = total_collected_amount * TEAM_AND_PARTNERS_PER_CENT / (100 - TEAM_AND_PARTNERS_PER_CENT);
         uint extra_team_amount = extra_amount * TEAM_BONUS_PER_CENT / TEAM_AND_PARTNERS_PER_CENT;
         uint extra_partners_amount = extra_amount * ADVISORS_AND_PARTNERS_PER_CENT / TEAM_AND_PARTNERS_PER_CENT;
-/* 
+
         //beautify total supply: round down to full eth.
         uint total_to_mint = total_collected_amount + extra_amount;
         uint round_remainder = total_to_mint - (total_to_mint / 1 ether * 1 ether);
         extra_team_amount -= round_remainder; //this will reduce total_supply to rounded value
-*/
+
         //mint group bonuses
         _mint(extra_team_amount , TEAM_GROUP_WALLET);
         _mint(extra_partners_amount, ADVISERS_AND_FRIENDS_WALLET);
