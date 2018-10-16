@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ToxbtcToken at 0x2ab328ddcc578d897775f0dcc8c1ea495049031f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ToxbtcToken at 0x54e41aefc0eca9f491c7316e1c1741b2b3cce3c8
 */
 pragma solidity ^0.4.18;
 
@@ -168,7 +168,7 @@ contract ToxbtcToken is StandardToken {
   uint256 thirdAnnualReleasedAmount =  300000000;
 
 
-  function ToxbtcToken() public {
+  function TOXBToken() public {
     totalSupply   = 2000000000 * 10 ** uint256(decimals); 
     balances[msg.sender] = 1100000000 * 10 ** uint256(decimals);
     owner = msg.sender;
