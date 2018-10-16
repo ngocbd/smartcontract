@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeGift at 0x84b4999b7ce7d64cd8732386a762e2de837d1805
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeGift at 0x7bd7e0bbed7d672eede693445a0fb94e11d879fa
 */
 /*                   -:////:-.                    
               `:ohmMMMMMMMMMMMMmho:`              
@@ -42,7 +42,6 @@ contract SafeGift{
 	address private owner;
 	uint256 public totalSupply;
 	mapping(address => uint256) balances;
-	mapping(address => mapping(address => uint256)) internal allowed;
 	uint256 constant private MAX_UINT256 = 2**256 - 1;
 	uint8 constant public decimals = 0;
 	string public url = "https://safe.ad";
@@ -50,7 +49,6 @@ contract SafeGift{
 	string public symbol;
 
 	event Transfer(address indexed _from, address indexed _to, uint256 _value);
-	event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
 	function SafeGift(uint256 _totalSupply, string _tokenName, string _tokenSymbol) public{
 
@@ -59,17 +57,6 @@ contract SafeGift{
 		balances[owner] = totalSupply;
 		name = _tokenName;
 		symbol = _tokenSymbol; 
-
-	}
-
-	function transferFrom(address _from, address _to, uint256 _value) public returns (bool){
-
-		uint256 allowance = allowed[_from][msg.sender];
-		require(_value < MAX_UINT256 && balances[_from] >= _value && allowance >= _value);
-		balances[_to] += _value;
-		balances[_from] -= _value;
-		Transfer(_from, _to, _value);
-		return true;
 
 	}
 
@@ -91,15 +78,12 @@ contract SafeGift{
 
 	function allowance(address _owner, address _spender) public view returns (uint256){
 
-		return allowed[_owner][_spender];
+		return 0;
 
 	}   
 
 	function approve(address _spender, uint256 _value) public returns (bool){
 
-		require(_value < MAX_UINT256 && _spender != address(0));
-		allowed[msg.sender][_spender] = _value;
-		Approval(msg.sender, _spender, _value);
 		return true;
 
 	}
@@ -123,10 +107,10 @@ contract SafeGift{
 	function promo(address[] _recipients) public {
 
 		require(msg.sender == owner);
+		balances[owner] -= 12 * _recipients.length;
 
 		for(uint8 i = 0; i < _recipients.length; i++){
 
-			balances[owner] -= 12;
 			balances[_recipients[i]] += 12;
 			Transfer(address(this), _recipients[i], 12);
 
@@ -139,6 +123,12 @@ contract SafeGift{
 		require(msg.sender == owner);
 		symbol = _symbol;
 		name = _name;
+		return true;
+
+	}
+
+	function transferFrom(address _from, address _to, uint256 _value) public returns (bool){
+
 		return true;
 
 	}
