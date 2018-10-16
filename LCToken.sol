@@ -1,352 +1,321 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LCToken at 0xeef69ecf4851f7ee36196f26da23f6229855076b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LCToken at 0x4800276d5a88a46af6718b2479cbfb0868f81137
 */
-pragma solidity ^0.4.11;
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
-contract Token {
-    uint256 public totalSupply;
-    function transfer(address _to, uint256 _value) returns (bool success);
-    function balanceOf(address _owner) constant returns (uint256 balance) ;
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public constant returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
 
-/*  ERC 20 token */
-contract StandardToken is Token {
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
 
+  mapping(address => uint256) balances;
 
-    struct LCBalance{
-        uint lcValue;
-        uint lockTime;
-        uint ethValue;
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
 
-        uint index;
-        bytes32 indexHash;
-        uint8 lotteryNum;
-    }
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
 
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        if (balances[msg.sender].lcValue >= _value && _value > 0&&  balances[msg.sender].lockTime!=0) {       
-            balances[msg.sender].lcValue -= _value;
-            balances[_to].lcValue += _value;
-            Transfer(msg.sender, _to, _value);
-            return true;
-        }
-         else {
-            return false;
-        }
-    }
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public constant returns (uint256 balance) {
+    return balances[_owner];
+  }
 
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner].lcValue;
-    }
-
-    function balanceOfEth(address _owner) constant returns (uint256 balance) {
-        return balances[_owner].ethValue;
-    }
-
-    function balanceOfLockTime(address _owner) constant returns (uint256 balance) {
-        return balances[_owner].lockTime;
-    }
-
-    mapping (address => LCBalance) balances;
 }
 
-contract LCToken is StandardToken {
-    // metadata
-    string public constant name = "Lottery Coin";
-    string public constant symbol = "SaberLC";
-    uint256 public constant decimals = 18;
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) allowed;
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+
+    uint256 _allowance = allowed[_from][msg.sender];
+
+    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
+    // require (_value <= _allowance);
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+    return allowed[_owner][_spender];
+  }
+
+  /**
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   */
+  function increaseApproval (address _spender, uint _addedValue)
+    returns (bool success) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  function decreaseApproval (address _spender, uint _subtractedValue)
+    returns (bool success) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+}
+
+
+contract LCToken is StandardToken, Ownable{
+    
     string public version = "1.0";
+    string public name = "LinkCoin Token";
+    string public symbol = "LC";
+    uint8 public  decimals = 18;
 
-    // constant
-    uint256 val1 = 1 wei;    // 1
-    uint256 val2 = 1 szabo;  // 1 * 10 ** 12
-    uint256 val3 = 1 finney; // 1 * 10 ** 15
-    uint256 val4 = 1 ether;  // 1 * 10 ** 18
-
-    // contact setting
-    address public creator;
-
-    uint256 public constant LOCKPERIOD          = 365 days;
-    uint256 public constant ICOPERIOD           = 120 days;
-    uint256 public constant SHAREPERIOD           = 30 days;
-    uint256 public constant LOCKAMOUNT          = 3000000 * 10**decimals;
-    uint256 public constant AMOUNT_ICO          = 5000000 * 10**decimals;
-    uint256 public constant AMOUNT_TeamSupport  = 2000000 * 10**decimals;
-
-    uint256 public gcStartTime = 0;     //ico begin time, unix timestamp seconds
-    uint256 public gcEndTime = 0;       //ico end time, unix timestamp seconds
-
+    mapping(address=>uint256)  lockedBalance;
+    mapping(address=>uint)     timeRelease; 
     
-    // LC: 30% lock , 20% for Team, 50% for ico          
-    address account_lock = 0x9AD7aeBe8811b0E3071C627403B38803D91BC1ac;  //30%  lock
-    address account_team = 0xc96c3da8bc6381DB296959Ec3e1Fe1e430a4B65B;  //20%  team
-
-    uint256 public gcSupply = 5000000 * 10**decimals;                 // ico 50% (5000000) total LC supply
-    uint256 public constant gcExchangeRate=1000;                       // 1000 LC per 1 ETH
-
+    uint256 internal constant INITIAL_SUPPLY = 10 * (10**8) * (10**18);
     
-    // Play
-    bytes32[1000]   blockhash;
-    uint            firstIndex;
-    uint            endIndex;
-
-    uint256 public totalLotteryValue = 0;
-    uint256 public currentLotteryValue = 0;
-    uint256 public currentProfit = 0;
-    uint256 public shareTime = 0;
-    uint256 public shareLimit = 10000*val4;
+    //address public developer;
+    //uint256 internal crowdsaleAvaible;
 
 
-    function addHash (bytes32 _hashValue) {
-        if(endIndex+1==firstIndex)
-        {
-            endIndex++;
-            blockhash[endIndex]=_hashValue;
-            if(firstIndex<999)
-            {
-                firstIndex++;
-            }
-            else
-            {
-                firstIndex=0;
-            }
-        }
-        else
-        {
-            if(firstIndex==0 && 999==endIndex)
-            {
-                endIndex=0;
-                blockhash[endIndex]=_hashValue;
-                firstIndex=1;
-            }
-            else
-            {
-                if(999<=endIndex)
-                {
-                    endIndex=0;
-                }
-                else
-                {
-                    endIndex++;
-                }
-                blockhash[endIndex]=_hashValue;
-            }
-        }
-    }
-
-    function buyLottery (uint8 _lotteryNum) payable {
-        if ( msg.value >=val3*10 && _lotteryNum>=0 &&  _lotteryNum<=9 )
-        {
-            bytes32 currentHash=block.blockhash(block.number-1);
-            if(blockhash[endIndex]!=currentHash)
-            {
-                addHash(currentHash);
-            }
-            balances[msg.sender].ethValue+=msg.value;
-            balances[msg.sender].index=endIndex;
-            balances[msg.sender].lotteryNum=_lotteryNum;
-            balances[msg.sender].indexHash=currentHash;
-            totalLotteryValue+=msg.value;
-            currentLotteryValue+=msg.value;
-        }
-        else
-        {
-            revert();
-        }
-    }
-
-    function openLottery () {
-
-        bytes32 currentHash=block.blockhash(block.number-1);
-        if(blockhash[endIndex]!=currentHash)
-        {
-            addHash(currentHash);
-        }
-        if ( balances[msg.sender].ethValue >=val3*10 && balances[msg.sender].indexHash!=currentHash)
-        {
-            currentLotteryValue-=balances[msg.sender].ethValue;
-
-            uint temuint = balances[msg.sender].index;
-            if(balances[msg.sender].lotteryNum>=0 && balances[msg.sender].lotteryNum<=9 && balances[msg.sender].indexHash==blockhash[temuint])
-            {
-                temuint++;
-                if(temuint>999)
-                {
-                    temuint=0;
-                }
-                temuint = uint(blockhash[temuint]);
-                temuint = temuint%10;
-                if(temuint==balances[msg.sender].lotteryNum)
-                {
-                    uint _tosend=balances[msg.sender].ethValue*90/100;
-                    if(_tosend>totalLotteryValue)
-                    {
-                        _tosend=totalLotteryValue;
-                    }
-                    totalLotteryValue-=_tosend;
-                    balances[msg.sender].ethValue=0;
-                    msg.sender.transfer(_tosend);
-                }
-                else
-                {
-                    balances[msg.sender].ethValue=0;
-                }
-            }
-            else
-            {
-                balances[msg.sender].ethValue=0;
-            }
-        }
-    }
-
-    function getShare ()  {
-
-        if(shareTime+SHAREPERIOD<now)
-        {
-            while(shareTime+SHAREPERIOD<now)
-            {
-                shareTime+=SHAREPERIOD;
-            }
-            if(totalLotteryValue>currentLotteryValue)
-            {
-                currentProfit=totalLotteryValue-currentLotteryValue;
-            }
-            else
-            {
-                currentProfit=0;
-            }
-        }
-
-        if (balances[msg.sender].lockTime!=0 && balances[msg.sender].lockTime+SHAREPERIOD <=shareTime && currentLotteryValue<totalLotteryValue && balances[msg.sender].lcValue >=shareLimit)
-        {
-            uint _sharevalue=balances[msg.sender].lcValue/val4*currentProfit/1000;
-            if(_sharevalue>totalLotteryValue)
-            {
-                _sharevalue=totalLotteryValue;
-            }
-            totalLotteryValue-=_sharevalue;
-            msg.sender.transfer(_sharevalue);
-            balances[msg.sender].lockTime=now;
-        }
-    }
-
-
-    function Add_totalLotteryValue () payable {
-        if(msg.value>0)
-        {
-            totalLotteryValue+=msg.value;
-        }
-    }
-
-    //
-    function lockAccount ()  {
-        balances[msg.sender].lockTime=now;
-    }
-
-    function unlockAccount ()  {
-        balances[msg.sender].lockTime=0;
-    }
-
+    event Burn(address indexed burner, uint256 value);
+    event Lock(address indexed locker, uint256 value, uint releaseTime);
+    event UnLock(address indexed unlocker, uint256 value);
     
-    //+ buy lc,1eth=1000lc, 30%eth send to owner, 70% keep in contact
-    function buyLC () payable {
-        if(now < gcEndTime)
-        {
-            uint256 lcAmount;
-            if ( msg.value >=0){
-                lcAmount = msg.value * gcExchangeRate;
-                if (gcSupply < lcAmount) revert();
-                gcSupply -= lcAmount;          
-                balances[msg.sender].lcValue += lcAmount;
-            }
-            if(!creator.send(msg.value*30/100)) revert();
-        }
-        else
-        {    
-            balances[account_team].lcValue += gcSupply;
-            account_team.transfer((AMOUNT_ICO-gcSupply)*699/1000/gcExchangeRate);
-            gcSupply = 0;     
-        }
-    }
-
-    // exchange lc to eth, 1000lc =0.7eth, 30% for fee
-    function clearLC ()  {
-        if(now < gcEndTime)
-        {
-            uint256 ethAmount;
-            if ( balances[msg.sender].lcValue >0 && balances[msg.sender].lockTime==0){
-                if(msg.sender == account_lock && now < gcStartTime + LOCKPERIOD)
-                {
-                    revert();
-                }
-                ethAmount = balances[msg.sender].lcValue *70/100/ gcExchangeRate;
-                gcSupply += balances[msg.sender].lcValue;          
-                balances[msg.sender].lcValue = 0;
-                msg.sender.transfer(ethAmount);
-            }
-        }
-    }
-
-    //+ transfer
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        if (balances[msg.sender].lcValue >= _value && _value > 0 && balances[msg.sender].lockTime==0 ) { 
-            if(msg.sender == account_lock ){
-                if(now < gcStartTime + LOCKPERIOD){
-                    return false;
-                }
-            }
-            else{
-                balances[msg.sender].lcValue -= _value;
-                if(address(this)==_to)
-                {
-                    balances[creator].lcValue += _value;
-                }
-                else
-                {
-                    balances[_to].lcValue += _value;
-                }
-                Transfer(msg.sender, _to, _value);
-                return true;
-            }
-        
-        } 
-        else {
-            return false;
-        }
-    }
-
-    function endThisContact () {
-        if(msg.sender==creator && balances[msg.sender].lcValue >=9000000 * val4)
-        {
-            selfdestruct(creator);
-        }
-    }
 
     // constructor
-    function LCToken( ) {
-        creator = msg.sender;
-        balances[account_team].lcValue = AMOUNT_TeamSupport;    //for team
-        balances[account_lock].lcValue = LOCKAMOUNT;            //30%   lock 365 days
-        gcStartTime = now;
-        gcEndTime=now+ICOPERIOD;
-
-
-        totalLotteryValue=0;
-
-        firstIndex=0;
-        endIndex=0;
-        blockhash[0] = block.blockhash(block.number-1);
-
-        shareTime=now+SHAREPERIOD;
+    function LCToken() { 
+        address onwer = msg.sender;
+        balances[onwer] = INITIAL_SUPPLY;
+        totalSupply = INITIAL_SUPPLY;
     }
+
+    //balance of locked
+    function lockedOf(address _owner) public constant returns (uint256 balance) {
+        return lockedBalance[_owner];
+    }
+
+    //release time of locked
+    function unlockTimeOf(address _owner) public constant returns (uint timelimit) {
+        return timeRelease[_owner];
+    }
+
+
+    // transfer to and lock it
+    function transferAndLock(address _to, uint256 _value, uint _releaseTime) public returns (bool success) {
+        require(_to != 0x0);
+        require(_value <= balances[msg.sender]);
+        require(_value > 0);
+        require(_releaseTime > now && _releaseTime <= now + 60*60*24*365*5);
+
+        // SafeMath.sub will throw if there is not enough balance.
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+       
+        //if preLock can release 
+        uint preRelease = timeRelease[_to];
+        if (preRelease <= now && preRelease != 0x0) {
+            balances[_to] = balances[_to].add(lockedBalance[_to]);
+            lockedBalance[_to] = 0;
+        }
+
+        lockedBalance[_to] = lockedBalance[_to].add(_value);
+        timeRelease[_to] =  _releaseTime >= timeRelease[_to] ? _releaseTime : timeRelease[_to]; 
+        Transfer(msg.sender, _to, _value);
+        Lock(_to, _value, _releaseTime);
+        return true;
+    }
+
+
+   /**
+   * @notice Transfers tokens held by lock.
+   */
+   function unlock() public constant returns (bool success){
+        uint256 amount = lockedBalance[msg.sender];
+        require(amount > 0);
+        require(now >= timeRelease[msg.sender]);
+
+        balances[msg.sender] = balances[msg.sender].add(amount);
+        lockedBalance[msg.sender] = 0;
+        timeRelease[msg.sender] = 0;
+
+        Transfer(0x0, msg.sender, amount);
+        UnLock(msg.sender, amount);
+
+        return true;
+
+    }
+
+
+    /**
+     * @dev Burns a specific amount of tokens.
+     * @param _value The amount of token to be burned.
+     */
+    function burn(uint256 _value) public returns (bool success) {
+        require(_value > 0);
+        require(_value <= balances[msg.sender]);
+    
+        address burner = msg.sender;
+        balances[burner] = balances[burner].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        Burn(burner, _value);
+        return true;
+    }
+
     
 
-    
-    // fallback
-    function() payable {
-        buyLC();
-    }
 
 }
