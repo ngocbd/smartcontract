@@ -1,56 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ManageBattleboards at 0x99b0d4cb34648486690db55288667472eeba6a1d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ManageBattleboards at 0xe6eee1f6915bae8a4ec92f77ab07e2fd36dff850
 */
 pragma solidity ^0.4.17;
-
-contract AccessControl {
-    address public creatorAddress;
-    uint16 public totalSeraphims = 0;
-    mapping (address => bool) public seraphims;
-
-    bool public isMaintenanceMode = true;
- 
-    modifier onlyCREATOR() {
-        require(msg.sender == creatorAddress);
-        _;
-    }
-
-    modifier onlySERAPHIM() {
-        require(seraphims[msg.sender] == true);
-        _;
-    }
-    
-    modifier isContractActive {
-        require(!isMaintenanceMode);
-        _;
-    }
-    
-    // Constructor
-    function AccessControl() public {
-        creatorAddress = msg.sender;
-    }
-    
-
-    function addSERAPHIM(address _newSeraphim) onlyCREATOR public {
-        if (seraphims[_newSeraphim] == false) {
-            seraphims[_newSeraphim] = true;
-            totalSeraphims += 1;
-        }
-    }
-    
-    function removeSERAPHIM(address _oldSeraphim) onlyCREATOR public {
-        if (seraphims[_oldSeraphim] == true) {
-            seraphims[_oldSeraphim] = false;
-            totalSeraphims -= 1;
-        }
-    }
-
-    function updateMaintenanceMode(bool _isMaintaining) onlyCREATOR public {
-        isMaintenanceMode = _isMaintaining;
-    }
-
-  
-} 
 
 contract SafeMath {
     function safeAdd(uint x, uint y) pure internal returns(uint) {
@@ -104,6 +55,54 @@ contract Enums {
         Green 
     }
 }
+contract AccessControl {
+    address public creatorAddress;
+    uint16 public totalSeraphims = 0;
+    mapping (address => bool) public seraphims;
+
+    bool public isMaintenanceMode = true;
+ 
+    modifier onlyCREATOR() {
+        require(msg.sender == creatorAddress);
+        _;
+    }
+
+    modifier onlySERAPHIM() {
+        require(seraphims[msg.sender] == true);
+        _;
+    }
+    
+    modifier isContractActive {
+        require(!isMaintenanceMode);
+        _;
+    }
+    
+    // Constructor
+    function AccessControl() public {
+        creatorAddress = msg.sender;
+    }
+    
+
+    function addSERAPHIM(address _newSeraphim) onlyCREATOR public {
+        if (seraphims[_newSeraphim] == false) {
+            seraphims[_newSeraphim] = true;
+            totalSeraphims += 1;
+        }
+    }
+    
+    function removeSERAPHIM(address _oldSeraphim) onlyCREATOR public {
+        if (seraphims[_oldSeraphim] == true) {
+            seraphims[_oldSeraphim] = false;
+            totalSeraphims -= 1;
+        }
+    }
+
+    function updateMaintenanceMode(bool _isMaintaining) onlyCREATOR public {
+        isMaintenanceMode = _isMaintaining;
+    }
+
+  
+} 
 
 contract IAngelCardData is AccessControl, Enums {
     uint8 public totalAngelCardSeries;
@@ -134,8 +133,6 @@ contract IAngelCardData is AccessControl, Enums {
     function getTotalAngels() constant public returns (uint64);
     function getAngelLockStatus(uint64 _angelId) constant public returns (bool);
 }
-
-
 contract IPetCardData is AccessControl, Enums {
     uint8 public totalPetCardSeries;    
     uint64 public totalPets;
@@ -160,9 +157,6 @@ contract IPetCardData is AccessControl, Enums {
     function getTotalPets() constant public returns (uint);
 }
 
-
-
-
 contract IBattleboardData is AccessControl  {
 
   
@@ -186,7 +180,7 @@ function clearAngelsFromBoard(uint16 battleboardId) private;
      
 function getTileHp(uint16 battleboardId, uint8 tileId) constant external returns (uint32) ;
 function getMedalsBurned(uint16 battleboardId) constant external returns (uint8) ;
-function getTeam(uint16 battleboardId, uint8 tileId) external returns (uint8) ;
+function getTeam(uint16 battleboardId, uint8 tileId) constant external returns (uint8) ;
 function getMaxFreeTeams() constant public returns (uint8);
 function getBarrierNum(uint16 battleboardId) public constant returns (uint8) ;
 function getTileFromBattleboard(uint16 battleboardId, uint8 tileId) public constant returns (uint8 tileType, uint8 value, uint8 id, uint8 position, uint32 hp, uint16 petPower, uint64 angelId, uint64 petId, bool isLive, address owner)   ;
@@ -211,6 +205,7 @@ function getTotalBattleboards() public constant returns (uint16) ;
    
 }
 
+
 contract IAccessoryData is AccessControl, Enums {
     uint8 public totalAccessorySeries;    
     uint32 public totalAccessories;
@@ -234,8 +229,8 @@ contract IAccessoryData is AccessControl, Enums {
     function getTotalAccessorySeries() constant public returns (uint8) ;
     function getTotalAccessories() constant public returns (uint);
     function getAccessoryLockStatus(uint64 _acessoryId) constant public returns (bool);
-
 }
+
 
 //This contract is to Manage (open, close, add teams, etc) battleboards. Call the Battleboards contract to make moves. Both of these contracts 
 //interface with the battleboards data contract. 
@@ -246,7 +241,7 @@ contract ManageBattleboards is AccessControl, SafeMath  {
     address public angelCardDataContract = 0x6D2E76213615925c5fc436565B5ee788Ee0E86DC;
     address public petCardDataContract = 0xB340686da996b8B3d486b4D27E38E38500A9E926;
     address public accessoryDataContract = 0x466c44812835f57b736ef9F63582b8a6693A14D0;
-    address public battleboardDataContract = 0x33201831496217A779bF6169038DD9232771f179;
+    address public battleboardDataContract = 0xE60fC4632bD6713E923FE93F8c244635E6d5009e;
 
    
     
@@ -256,26 +251,7 @@ contract ManageBattleboards is AccessControl, SafeMath  {
     uint public contractReservedBalance;
     
     
-    //Tile TYPES
-    // 0 - Empty Space
-    // 1 - Team (Angel + Pet)
  
-    // 3 - Red Barrier (red is hurt)
-    // 4 - Yellow barrier (yellow is hurt)
-    // 5 - Blue barrier (blue is hurt)
-    // 6 - Exp Boost (permanent)
-    // 7 - HP boost (temp)
-    // 8 - Eth boost
-    // 9 - Warp
-    // 10 - Medal
-    
-    //Aura Boosts
-    // Red - Slow Burn - Enemies lose extra 10 hp/round in battle. 
-    // Green - Healing Light - 20% chance to heal 50 hp each battle round
-    //Yellow - Guiding Path - 5 hp recovered each turn not in a battle
-    //Purple - Uncontroled Fury - 10% chance for sudden kill at start of battle. 
-    //Orange - Radiant Power - +100 max hp on joining board. 
-    //Blue - Undying Love - 30% chance to revive pet when dead. 
     
       
           // Utility Functions
@@ -359,61 +335,61 @@ contract ManageBattleboards is AccessControl, SafeMath  {
         function closeBattleboard(uint16 battleboardId) external {
        //This function can be called by ANYONE once either team 1 or team 2 has no more team members left. 
         IBattleboardData battleboardData = IBattleboardData(battleboardDataContract);
-        address[] storage winners;
+       
        if (battleboardData.isBattleboardLive(battleboardId) == false) {revert();}
        battleboardData.killBoard(battleboardId); 
         if ((battleboardData.getNumTeams(battleboardId,1) != 0) && (battleboardData.getNumTeams(battleboardId,2) != 0)) {revert();}
         //No teams are out, function shouldn't be called. 
         uint8 id;
         uint64 petId;
-        address owner;
+        address ownerWon;
+        address ownerLost;
+        uint8 i = 0;
+        IPetCardData PetCardData = IPetCardData(petCardDataContract);
         if ((battleboardData.getNumTeams(battleboardId,1) == 0) && (battleboardData.getNumTeams(battleboardId,2) == 0)) {
               //Something odd happened and BOTH teams have lost - this is a tie. 
-              IPetCardData PetCardData = IPetCardData(petCardDataContract);
-              for (uint8 i =0; i<battleboardData.getMaxFreeTeams(); i++) {
-                  owner = battleboardData.getOwner(battleboardId, 0, i);
-                  id = battleboardData.getTileIDByOwner(battleboardId,owner);
+              
+              for (i =0; i<battleboardData.getMaxFreeTeams(); i++) {
+                  ownerWon = battleboardData.getOwner(battleboardId, 0, i);
+                  id = battleboardData.getTileIDByOwner(battleboardId,ownerWon);
                  petId = battleboardData.getPetbyTileId(battleboardId, id);
-                 PetCardData.transferPet(address(this), owner, petId);
+                 PetCardData.transferPet(address(this), ownerWon, petId);
               }
         }
        if ((battleboardData.getNumTeams(battleboardId,1) != 0) && (battleboardData.getNumTeams(battleboardId,2) == 0)) {
        //Team 1 won 
-       
        //Give team 1 back their pets. 
-        for (i =0; i<(safeDiv(battleboardData.getMaxFreeTeams(),2)); i++) {
-                  owner = battleboardData.getOwner(battleboardId, 1, i);
-                  id = battleboardData.getTileIDByOwner(battleboardId,owner);
+        for (i =0; i<3; i++) {
+                  ownerWon = battleboardData.getOwner(battleboardId, 1, i);
+                  id = battleboardData.getTileIDByOwner(battleboardId,ownerWon);
                  petId = battleboardData.getPetbyTileId(battleboardId, id);
-                 PetCardData.transferPet(address(this), owner, petId);
-                winners.push(owner); 
-              }
+                 PetCardData.transferPet(address(this), ownerWon, petId);
+            
             //give team 2's pets to team 1.   
-        for (i =0; i<(safeDiv(battleboardData.getMaxFreeTeams(),2)); i++) {
-                  owner = battleboardData.getOwner(battleboardId, 2, i);
-                  id = battleboardData.getTileIDByOwner(battleboardId,owner);
+       
+                  ownerLost = battleboardData.getOwner(battleboardId, 2, i);
+                  id = battleboardData.getTileIDByOwner(battleboardId,ownerLost);
                  petId = battleboardData.getPetbyTileId(battleboardId, id);
-                 PetCardData.transferPet(address(this), winners[i], petId);
+                 PetCardData.transferPet(address(this), ownerWon, petId);
               }    
        }
           if ((battleboardData.getNumTeams(battleboardId,1) == 0) && (battleboardData.getNumTeams(battleboardId,2) != 0)) {
        //Team 2 won 
+        //Give team 2 back their pets. 
+            for (i =0; i<3; i++) {
+                  ownerWon = battleboardData.getOwner(battleboardId, 2 ,i);
+                  id = battleboardData.getTileIDByOwner(battleboardId,ownerWon);
+                 petId = battleboardData.getPetbyTileId(battleboardId, id);
+                 PetCardData.transferPet(address(this), ownerWon, petId);
+            
+            //give team 1's pets to team 2   
        
-       //Give team 2 back their pets. 
-        for (i =0; i<(safeDiv(battleboardData.getMaxFreeTeams(),2)); i++) {
-                  owner = battleboardData.getOwner(battleboardId, 2, i);
-                  id = battleboardData.getTileIDByOwner(battleboardId,owner);
+                  ownerLost = battleboardData.getOwner(battleboardId, 1, i);
+                  id = battleboardData.getTileIDByOwner(battleboardId,ownerLost);
                  petId = battleboardData.getPetbyTileId(battleboardId, id);
-                 PetCardData.transferPet(address(this), owner, petId);
-                winners.push(owner); 
-              }
-            //give team 1's pets to team 2  
-        for (i =0; i<(safeDiv(battleboardData.getMaxFreeTeams(),2)); i++) {
-                  owner = battleboardData.getOwner(battleboardId, 1, i);
-                  id = battleboardData.getTileIDByOwner(battleboardId,owner);
-                 petId = battleboardData.getPetbyTileId(battleboardId, id);
-                 PetCardData.transferPet(address(this), winners[i], petId);
-              }    
+                 PetCardData.transferPet(address(this), ownerWon, petId);
+              } 
+         
        }
    }
        
