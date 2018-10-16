@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Karma at 0x360e51857242661de8f3ec4e6c684b45b3c0de87
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Karma at 0x8309dd14df991b8f26954b3a2c0d03aad6cc0547
 */
 pragma solidity ^0.4.18;
 
@@ -101,6 +101,7 @@ contract DetailedERC20 is ERC20 {
   *   - Owner signs hash(address, username, endowment), and sends to user
   *   - User registers with username, endowment, and signature to create new account.
   * - Mod creates new user.
+  * - Users are first eligible to withdraw dividends for the period after account creation.
   *
   * Karma/Token Rules:
   * - Karma is created by initial user creation endowment.
@@ -110,20 +111,21 @@ contract DetailedERC20 is ERC20 {
   *
   * Dividends:
   * - each user can withdraw a dividend once per month.
-  * - dividend is total contract value at end of the month, divided by total number of users as end of the month.
+  * - dividend is total contract value minus owner cut at end of the month, divided by total number of users at end of month.
+  * - owner cut is determined at beginning of new period.
   * - user has 1 month to withdraw their dividend from the previous month.
-  * - if user does not withdraw their dividend, their share will be rolled over as a donation to the next month.
+  * - if user does not withdraw their dividend, their share will be given to owner.
   * - mod can place a user on a 1 month "timeout", whereby they won't be eligible for a dividend.
 
-  * Eg: 10 eth is sent to the contract in January. There are 100 token holders on Jan 31. At any time in February, 
-  * each token holder can withdraw .1 eth for their January dividend (unless they were given a "timeout" in January).
+  * Eg: 10 eth is sent to the contract in January, owner cut is 30%. 
+  * There are 70 token holders on Jan 31. At any time in February, each token holder can withdraw .1 eth for their January 
+  * dividend (unless they were given a "timeout" in January).
   */
 contract Karma is Ownable, DetailedERC20("KarmaToken", "KARMA", 0) {
   // SafeMath libs are responsible for checking overflow.
   using SafeMath for uint256;
   using SafeMath64 for uint64;
 
-  // TODO ensure this all fits in a single 256 bit block.
   struct User {
     bytes20 username;
     uint64 karma; 
@@ -136,10 +138,12 @@ contract Karma is Ownable, DetailedERC20("KarmaToken", "KARMA", 0) {
   mapping(bytes20 => address) public usernames;
 
   // Manage dividend payments.
-  uint256 public epoch;
-  uint256 public dividend;
-  uint64 public numUsers;
-  uint64 public newUsers;
+  uint256 public epoch; // Timestamp at start of new period.
+  uint256 dividendPool; // Total amount of dividends to pay out for last period.
+  uint256 public dividend; // Per-user share of last period's dividend.
+  uint256 public ownerCut; // Percentage, in basis points, of owner cut of this period's payments.
+  uint64 public numUsers; // Number of users created before this period.
+  uint64 public newUsers; // Number of users created during this period.
   uint16 public currentPeriod = 1;
 
   address public moderator;
@@ -148,7 +152,7 @@ contract Karma is Ownable, DetailedERC20("KarmaToken", "KARMA", 0) {
 
   event Mint(address indexed to, uint256 amount);
   event PeriodEnd(uint16 period, uint256 amount, uint64 users);
-  event Donation(address indexed from, uint256 amount);
+  event Payment(address indexed from, uint256 amount);
   event Withdrawal(address indexed to, uint16 indexed period, uint256 amount);
   event NewUser(address addr, bytes20 username, uint64 endowment);
 
@@ -163,7 +167,7 @@ contract Karma is Ownable, DetailedERC20("KarmaToken", "KARMA", 0) {
   }
 
   function() payable public {
-    Donation(msg.sender, msg.value);
+    Payment(msg.sender, msg.value);
   }
 
   /** 
@@ -175,22 +179,31 @@ contract Karma is Ownable, DetailedERC20("KarmaToken", "KARMA", 0) {
   }
 
   // Owner should call this on 1st of every month.
-  function newPeriod() public onlyOwner {
+  // _ownerCut is new owner cut for new period.
+  function newPeriod(uint256 _ownerCut) public onlyOwner {
     require(now >= epoch + 28 days);
+    require(_ownerCut <= 10000);
+
+    uint256 unclaimedDividend = dividendPool;
+    uint256 ownerRake = (this.balance-unclaimedDividend) * ownerCut / 10000;
+
+    dividendPool = this.balance - unclaimedDividend - ownerRake;
 
     // Calculate dividend.
     uint64 existingUsers = numUsers;
     if (existingUsers == 0) {
       dividend = 0;
     } else {
-      dividend = this.balance / existingUsers;
+      dividend = dividendPool / existingUsers;
     }
 
     numUsers = numUsers.add(newUsers);
     newUsers = 0;
     currentPeriod++;
     epoch = now;
+    ownerCut = _ownerCut;
 
+    msg.sender.transfer(ownerRake + unclaimedDividend);
     PeriodEnd(currentPeriod-1, this.balance, existingUsers);
   }
 
@@ -235,6 +248,7 @@ contract Karma is Ownable, DetailedERC20("KarmaToken", "KARMA", 0) {
     require(users[msg.sender].canWithdrawPeriod < currentPeriod);
 
     users[msg.sender].canWithdrawPeriod = currentPeriod;
+    dividendPool -= dividend;
     msg.sender.transfer(dividend);
     Withdrawal(msg.sender, currentPeriod-1, dividend);
   }
@@ -303,6 +317,23 @@ contract Karma is Ownable, DetailedERC20("KarmaToken", "KARMA", 0) {
     * Private Functions
     */
 
+  // Ensures that username isn't taken, and account doesn't already exist for 
+  // user's address.
+  function newUser(address _addr, bytes20 _username, uint64 _endowment) private {
+    require(usernames[_username] == address(0));
+    require(users[_addr].canWithdrawPeriod == 0);
+
+    users[_addr].canWithdrawPeriod = currentPeriod + 1;
+    users[_addr].birthPeriod = currentPeriod;
+    users[_addr].karma = _endowment;
+    users[_addr].username = _username;
+    usernames[_username] = _addr;
+
+    newUsers = newUsers.add(1);
+    totalSupply = totalSupply.add(_endowment);
+    NewUser(_addr, _username, _endowment);
+  }
+
   // https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/ECRecovery.sol
   function recover(bytes32 hash, bytes sig) internal pure returns (address) {
     bytes32 r;
@@ -332,22 +363,5 @@ contract Karma is Ownable, DetailedERC20("KarmaToken", "KARMA", 0) {
     } else {
       return ecrecover(hash, v, r, s);
     }
-  }
-
-  // Ensures that username isn't taken, and account doesn't already exist for 
-  // user's address.
-  function newUser(address _addr, bytes20 _username, uint64 _endowment) private {
-    require(usernames[_username] == address(0));
-    require(users[_addr].canWithdrawPeriod == 0);
-
-    users[_addr].canWithdrawPeriod = currentPeriod + 1;
-    users[_addr].birthPeriod = currentPeriod;
-    users[_addr].karma = _endowment;
-    users[_addr].username = _username;
-    usernames[_username] = _addr;
-
-    newUsers = newUsers.add(1);
-    totalSupply = totalSupply.add(_endowment);
-    NewUser(_addr, _username, _endowment);
   }
 }
