@@ -1,90 +1,112 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xa9ea9d7368f3f713376c9362a646aac78224403e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xe54a11dc70d4c048897ff9d07bfb181ad78ff37f
 */
 pragma solidity ^0.4.18;
 
 
-contract Token {
-
-uint256 constant private MAX_UINT256 = 2**256 - 1;
-mapping(address => uint) public balances;
-mapping(address => mapping(address => uint)) public allowed;
-
-string public description;
-uint8 public decimals;
-string public logoURL;
-string public name;
-string public symbol;
-uint public totalSupply;
-
-address public creator;
-
-event Transfer(address indexed _from, address indexed _to, uint256 _value);
-event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
-event Created(address creator, uint supply);
-
-function Token(
-    string _description,
-    string _logoURL,
-    string _name,
-    string _symbol,
-    uint256 _totalSupply
-) public
-{
-    description = _description;
-    logoURL = _logoURL;
-    name = _name;
-    symbol = _symbol;
-    decimals = 18;
-    totalSupply = _totalSupply;
-
-    creator = tx.origin;
-    Created(creator, _totalSupply);
-    balances[creator] = _totalSupply;
-}
-
-// Don't let people randomly send ETH to contract
-function() public payable {
-    revert();
-}
-
-function transfer(address _to, uint256 _value) public returns (bool success) {
-    require(balances[msg.sender] >= _value);
-    balances[msg.sender] -= _value;
-    balances[_to] += _value;
-    Transfer(msg.sender, _to, _value);
-    return true;
-}
-
-function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-    uint256 allowance = allowed[_from][msg.sender];
-    require(balances[_from] >= _value && allowance >= _value);
-    balances[_to] += _value;
-    balances[_from] -= _value;
-    if (allowance < MAX_UINT256) {
-        allowed[_from][msg.sender] -= _value;
+contract Owned {
+    address public owner;
+    function Owned() public {
+        owner = msg.sender;
     }
-    Transfer(_from, _to, _value);
-    return true;
+
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function transferOwnership(address newOwner) onlyOwner public {
+        owner = newOwner;
+    }
 }
 
-function balanceOf(address _owner) public view returns (uint256 balance) {
-    return balances[_owner];
+
+interface tokenRecipient { function receiveApproval(address _from, uint _value, address _token, bytes _extraData) public; }
+
+
+contract TokenBase is Owned {
+    string public name;
+    string public symbol;
+    uint8 public decimals = 18;
+    uint public totalSupply;
+    uint public tokenUnit = 10 ** uint(decimals);
+    uint public wanUnit = 10000 * tokenUnit;
+    uint public foundingTime;
+
+    mapping (address => uint) public balanceOf;
+    mapping (address => mapping (address => uint)) public allowance;
+
+    event Transfer(address indexed _from, address indexed _to, uint _value);
+
+    function TokenBase() public {
+        foundingTime = now;
+    }
+
+    function _transfer(address _from, address _to, uint _value) internal {
+        require(_to != 0x0);
+        require(balanceOf[_from] >= _value);
+        require(balanceOf[_to] + _value > balanceOf[_to]);
+        uint previousBalances = balanceOf[_from] + balanceOf[_to];
+        balanceOf[_from] -= _value;
+        balanceOf[_to] += _value;
+        Transfer(_from, _to, _value);
+        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+    }
+
+    function transfer(address _to, uint _value) public {
+        _transfer(msg.sender, _to, _value);
+    }
+
+    function transferFrom(address _from, address _to, uint _value) public returns (bool success) {
+        require(_value <= allowance[_from][msg.sender]);
+        allowance[_from][msg.sender] -= _value;
+        _transfer(_from, _to, _value);
+        return true;
+    }
+
+    function approve(address _spender, uint _value) public returns (bool success) {
+        allowance[msg.sender][_spender] = _value;
+        return true;
+    }
+
+    function approveAndCall(address _spender, uint _value, bytes _extraData) public returns (bool success) {
+        tokenRecipient spender = tokenRecipient(_spender);
+        if (approve(_spender, _value)) {
+            spender.receiveApproval(msg.sender, _value, this, _extraData);
+            return true;
+        }
+    }
 }
 
-function approve(address _spender, uint256 _value) public returns (bool success) {
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-}
 
-function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-}
 
-function setLogoURL(string url) public {
-    require(msg.sender == creator);
-    logoURL = url;
-}
+contract Token is TokenBase {
+    uint public initialSupply = 0 * wanUnit;
+    uint public reserveSupply = 10000 * wanUnit;
+    uint public sellSupply = 0 * wanUnit;
+
+    function Token() public {
+        totalSupply = initialSupply;
+        balanceOf[msg.sender] = initialSupply;
+        name = "LXB";
+        symbol = "LXB";
+    }
+
+    function releaseReserve(uint value) onlyOwner public {
+        require(reserveSupply >= value);
+        balanceOf[owner] += value;
+        totalSupply += value;
+        reserveSupply -= value;
+        Transfer(0, this, value);
+        Transfer(this, owner, value);
+    }
+
+    function releaseSell(uint value) onlyOwner public {
+        require(sellSupply >= value);
+        balanceOf[owner] += value;
+        totalSupply += value;
+        sellSupply -= value;
+        Transfer(0, this, value);
+        Transfer(this, owner, value);
+    }
 }
