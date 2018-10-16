@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FART at 0xaf6de38ffc92e0d52857f864048d7af2f345a3cf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FART at 0x41451E8E7Fd5B9A4F8176CCF1a0DB2B68Abc77fb
 */
-pragma solidity ^0.4.20;
-
+pragma solidity ^0.4.21;
 
 /*
 * ====================================*
@@ -18,6 +17,21 @@ pragma solidity ^0.4.20;
 *
 * Changing the humanitarian world while having fun!
 *
+* This source code is THE contract the crypto-community 
+* deserves. It was cloned from POOH and perfected by the genius mind of 
+* Kenneth Pacheco using ideas from the proof crypto-community.
+*
+*  
+*    Auditors:
+*   
+*   Etherguy -------- 5/4/18
+*   Sensei Kevlar --- 5/4/18
+*   Sixophrenia ----- 5/4/18
+*   ccashwell ------- 5/4/18
+*   
+*   
+*   
+* 
 */
 
 contract FART {
@@ -25,8 +39,14 @@ contract FART {
     =            MODIFIERS            =
     =================================*/
     // only people with tokens
-    modifier onlyBagholders() {
+    modifier onlyTokenHolders() {
         require(myTokens() > 0);
+        _;
+    }
+    
+    // only non-founders
+    modifier onlyNonFounders() {
+        require(!foundingFARTers_[msg.sender]);
         _;
     }
     
@@ -36,48 +56,29 @@ contract FART {
         _;
     }
     
-    // administrators can:
-    // -> change the name of the contract
-    // -> change the name of the token
-    // -> change the PoS difficulty (How many tokens it costs to hold a masternode, in case it gets crazy high later)
-    // they CANNOT:
-    // -> take funds
-    // -> disable withdrawals
-    // -> kill the contract
-    // -> change the price of tokens
-    modifier onlyAdministrator(){
-        address _customerAddress = msg.sender;
-        require(administrators[keccak256(_customerAddress)]);
-        _;
-    }
-    
-    
-    // ensures that the first tokens in the contract will be equally distributed
-    // meaning, no divine dump will be ever possible
-    // result: healthy longevity.
-    modifier antiEarlyWhale(uint256 _amountOfEthereum){
+    // ensures that the contract is only open to the public when the founders are ready for it to be
+    modifier areWeLive(uint256 _amountOfEthereum){
         address _customerAddress = msg.sender;
         
-        // are we still in the vulnerable phase?
-        // if so, enact anti early whale protocol 
-        if( onlyAmbassadors && ((totalEthereumBalance() - _amountOfEthereum) <= ambassadorQuota_ )){
+        // are we open to the public?
+        if( onlyFounders && ((totalEthereumBalance() - _amountOfEthereum) <= preLiveTeamFoundersMaxPurchase_ )){
             require(
                 // is the customer in the ambassador list?
-                ambassadors_[_customerAddress] == true &&
+                foundingFARTers_[_customerAddress] == true &&
                 
-                // does the customer purchase exceed the max ambassador quota?
-                (ambassadorAccumulatedQuota_[_customerAddress] + _amountOfEthereum) <= ambassadorMaxPurchase_
+                // does the customer purchase exceed the max quota needed to send contract live?
+                (contractQuotaToGoLive_[_customerAddress] + _amountOfEthereum) <= preLiveIndividualFoundersMaxPurchase_
                 
             );
             
-            // updated the accumulated quota    
-            ambassadorAccumulatedQuota_[_customerAddress] = SafeMath.add(ambassadorAccumulatedQuota_[_customerAddress], _amountOfEthereum);
+            // update the accumulated quota    
+            contractQuotaToGoLive_[_customerAddress] = SafeMath.add(contractQuotaToGoLive_[_customerAddress], _amountOfEthereum);
         
             // execute
             _;
         } else {
             // in case the ether count drops low, the ambassador phase won't reinitiate
-            onlyAmbassadors = false;
+            onlyFounders = false;
             _;    
         }
         
@@ -111,7 +112,6 @@ contract FART {
         uint256 ethereumWithdrawn
     );
     
-    // ERC20
     event Transfer(
         address indexed from,
         address indexed to,
@@ -125,18 +125,18 @@ contract FART {
     string public name = "FART";
     string public symbol = "FART";
     uint8 constant public decimals = 18;
-    uint8 constant internal dividendFee_ = 10;
+    uint8 constant internal dividendFee_ = 7; // roughly 15% = (5% to charity + 10% divs)
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
     uint256 constant internal magnitude = 2**64;
     
-    // proof of stake (defaults at 100 tokens)
-    uint256 public stakingRequirement = 5e18;
+    // Referral link requirement (20 tokens instead of 5 bacause this game is mainly for charity)
+    uint256 public referralLinkMinimum = 20e18; 
     
-    // ambassador program
-    mapping(address => bool) internal ambassadors_;
-    uint256 constant internal ambassadorMaxPurchase_ = 2 ether;
-    uint256 constant internal ambassadorQuota_ = 1 ether;
+    // founders program (Founders initially put in 1 ETH and can add more later when contract is live)
+    mapping(address => bool) internal foundingFARTers_;
+    uint256 constant internal preLiveIndividualFoundersMaxPurchase_ = 2 ether; // 2 ETH max for me so I can make sure to break the 1 ETH threshold.
+    uint256 constant internal preLiveTeamFoundersMaxPurchase_ = 1 ether; // 1 ETH threshold to go live
     
     
     
@@ -147,15 +147,15 @@ contract FART {
     mapping(address => uint256) internal tokenBalanceLedger_;
     mapping(address => uint256) internal referralBalance_;
     mapping(address => int256) internal payoutsTo_;
-    mapping(address => uint256) internal ambassadorAccumulatedQuota_;
+    mapping(address => uint256) internal contractQuotaToGoLive_;
     uint256 internal tokenSupply_ = 0;
     uint256 internal profitPerShare_;
     
     // administrator list (see above on what they can do)
     mapping(bytes32 => bool) public administrators;
     
-    // when this is set to true, only ambassadors can purchase tokens (this prevents a whale premine, it ensures a fairly distributed upper pyramid)
-    bool public onlyAmbassadors = true;
+    // when this is set to true, only founders can purchase tokens (this prevents an errored contract from being live to the public)
+    bool public onlyFounders = true;
     
 
 
@@ -168,44 +168,42 @@ contract FART {
     function FART()
         public
     {
-        // add administrators here
-        //fuck admin! Drive it like you stole it!
         
-
-        // add the ambassadors here. 
-        ambassadors_[0x7e474fe5Cfb720804860215f407111183cbc2f85] = true; //K
-
-
+        //No admin! True trust-less contracts don't have the ability to be alteredd! ('This is HUUUUUUUUUUGE!' - Donald Trump)
+        
+        
+        // add the founders here. Founders cannot sell or transfer FART tokens, 
+        // thereby making the token increase in value over time
+        foundingFARTers_[0x7e474fe5Cfb720804860215f407111183cbc2f85] = true; //Kenneth Pacheco    - https://www.linkedin.com/in/kennethpacheco/
     }
     
      
     /**
      * Converts all incoming ethereum to tokens for the caller, and passes down the referral addy (if any)
      */
-    function buy(address _referredBy)
+    function buy(address _referredBy, address _charity)
         public
         payable
         returns(uint256)
     {
-        purchaseTokens(msg.value, _referredBy);
+        purchaseTokens(msg.value, _referredBy, _charity);
     }
     
     /**
-     * Fallback function to handle ethereum that was send straight to the contract
-     * Unfortunately we cannot use a referral address this way.
+     * Fallback function to handle ethereum that was sent straight to the contract
      */
     function()
         payable
         public
     {
-        purchaseTokens(msg.value, 0x0);
+        purchaseTokens(msg.value, 0x0, 0x0);
     }
     
     /**
      * Converts all of caller's dividends to tokens.
      */
     function reinvest()
-        onlyStronghands()
+        onlyStronghands()//  <------Hey! We know this term!
         public
     {
         // fetch dividends
@@ -220,24 +218,24 @@ contract FART {
         referralBalance_[_customerAddress] = 0;
         
         // dispatch a buy order with the virtualized "withdrawn dividends"
-        uint256 _tokens = purchaseTokens(_dividends, 0x0);
+        uint256 _tokens = purchaseTokens(_dividends, 0x0, 0x0);
         
         // fire event
-        onReinvestment(_customerAddress, _dividends, _tokens);
+        emit onReinvestment(_customerAddress, _dividends, _tokens);
     }
     
     /**
      * Alias of sell() and withdraw().
      */
-    function exit()
+    function eject()
         public
     {
         // get token count for caller & sell them all
         address _customerAddress = msg.sender;
         uint256 _tokens = tokenBalanceLedger_[_customerAddress];
-        if(_tokens > 0) sell(_tokens);
+        if(_tokens > 0) sell(_tokens, 0x0);
         
-        // lambo delivery service
+        // get out now
         withdraw();
     }
 
@@ -263,143 +261,87 @@ contract FART {
         _customerAddress.transfer(_dividends);
         
         // fire event
-        onWithdraw(_customerAddress, _dividends);
+        emit onWithdraw(_customerAddress, _dividends);
     }
+    
+ 
     
     /**
      * Liquifies tokens to ethereum.
      */
-    function sell(uint256 _amountOfTokens)
-        onlyBagholders()
-        public
-    {
-        // setup data
-        address _customerAddress = msg.sender;
-        // russian hackers BTFO
-        require(_amountOfTokens <= tokenBalanceLedger_[_customerAddress]);
-        uint256 _tokens = _amountOfTokens;
-        uint256 _ethereum = tokensToEthereum_(_tokens);
-        uint256 _dividends = SafeMath.div(_ethereum, dividendFee_);
-        uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
-        
-        // burn the sold tokens
-        tokenSupply_ = SafeMath.sub(tokenSupply_, _tokens);
-        tokenBalanceLedger_[_customerAddress] = SafeMath.sub(tokenBalanceLedger_[_customerAddress], _tokens);
-        
-        // update dividends tracker
-        int256 _updatedPayouts = (int256) (profitPerShare_ * _tokens + (_taxedEthereum * magnitude));
-        payoutsTo_[_customerAddress] -= _updatedPayouts;       
-        
-        // dividing by zero is a bad idea
-        if (tokenSupply_ > 0) {
-            // update the amount of dividends per token
-            profitPerShare_ = SafeMath.add(profitPerShare_, (_dividends * magnitude) / tokenSupply_);
+    function sell(uint256 _amountOfTokens, address _charity)
+        onlyTokenHolders() //Can't sell what you don't have
+        onlyNonFounders() //Founders can't sell tokens
+        public {
+            // setup data
+            address _customerAddress = msg.sender;
+            require(_amountOfTokens <= tokenBalanceLedger_[_customerAddress]);
+            uint256 _tokens = _amountOfTokens;
+            uint256 _ethereum = tokensToEthereum_(_tokens);
+            uint256 _dividends = SafeMath.div(_ethereum, dividendFee_);
+            uint256 _charityDividends = 0;
+            uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
+            
+            if(_charity != 0x0000000000000000000000000000000000000000 && _charity != _customerAddress)//if not, it's an eject-call with no charity address
+            {     _charityDividends = SafeMath.div(_dividends, 3); // 1/3 of divs go to charity (5%)
+                 _dividends = SafeMath.sub(_dividends, _charityDividends); // 2/3 of divs go to everyone (10%)
+            }
+           
+            // burn the sold tokens
+            tokenSupply_ = SafeMath.sub(tokenSupply_, _tokens);
+            tokenBalanceLedger_[_customerAddress] = SafeMath.sub(tokenBalanceLedger_[_customerAddress], _tokens);
+            
+            // update dividends tracker
+            int256 _updatedPayouts = (int256) (profitPerShare_ * _tokens + (_taxedEthereum * magnitude));
+            payoutsTo_[_customerAddress] -= _updatedPayouts;       
+            
+            // dividing by zero is a bad idea
+            if (tokenSupply_ > 0) {
+                // update the amount of dividends per token
+                profitPerShare_ = SafeMath.add(profitPerShare_, (_dividends * magnitude) / tokenSupply_);
+            }
+            
+            // fire event
+            emit onTokenSell(_customerAddress, _tokens, _taxedEthereum);
+            if(_charityDividends > 0) {
+                //fire event to send to charity
+                _charity.transfer(_charityDividends);
+            }
         }
-        
-        // fire event
-        onTokenSell(_customerAddress, _tokens, _taxedEthereum);
-    }
     
     
     /**
      * Transfer tokens from the caller to a new holder.
-     * Remember, there's a 10% fee here as well.
+     * No fee to transfer because I hate doing math.
      */
     function transfer(address _toAddress, uint256 _amountOfTokens)
-        onlyBagholders()
+        onlyTokenHolders() // Can't tranfer what you don't have
+        onlyNonFounders() // Founders cannot transfer their tokens to be able to sell them
         public
-        returns(bool)
-    {
-        // setup
-        address _customerAddress = msg.sender;
+        returns(bool) {
         
-        // make sure we have the requested tokens
-        // also disables transfers until ambassador phase is over
-        // ( we dont want whale premines )
-        require(!onlyAmbassadors && _amountOfTokens <= tokenBalanceLedger_[_customerAddress]);
-        
-        // withdraw all outstanding dividends first
-        if(myDividends(true) > 0) withdraw();
-        
-        // liquify 10% of the tokens that are transfered
-        // these are dispersed to shareholders
-        uint256 _tokenFee = SafeMath.div(_amountOfTokens, dividendFee_);
-        uint256 _taxedTokens = SafeMath.sub(_amountOfTokens, _tokenFee);
-        uint256 _dividends = tokensToEthereum_(_tokenFee);
-  
-        // burn the fee tokens
-        tokenSupply_ = SafeMath.sub(tokenSupply_, _tokenFee);
-
-        // exchange tokens
-        tokenBalanceLedger_[_customerAddress] = SafeMath.sub(tokenBalanceLedger_[_customerAddress], _amountOfTokens);
-        tokenBalanceLedger_[_toAddress] = SafeMath.add(tokenBalanceLedger_[_toAddress], _taxedTokens);
-        
-        // update dividend trackers
-        payoutsTo_[_customerAddress] -= (int256) (profitPerShare_ * _amountOfTokens);
-        payoutsTo_[_toAddress] += (int256) (profitPerShare_ * _taxedTokens);
-        
-        // disperse dividends among holders
-        profitPerShare_ = SafeMath.add(profitPerShare_, (_dividends * magnitude) / tokenSupply_);
-        
-        // fire event
-        Transfer(_customerAddress, _toAddress, _taxedTokens);
-        
-        // ERC20
-        return true;
-       
-    }
+            // setup
+            address _customerAddress = msg.sender;
+            
+            // make sure we have the requested tokens
+            // also disables transfers until ambassador phase is over
+            // ( we dont want whale premines )
+            require(!onlyFounders && _amountOfTokens <= tokenBalanceLedger_[_customerAddress]);
+            
+            // withdraw all outstanding dividends first
+            if(myDividends(true) > 0) withdraw();
     
-    /*----------  ADMINISTRATOR ONLY FUNCTIONS  ----------*/
-    /**
-     * In case the amassador quota is not met, the administrator can manually disable the ambassador phase.
-     */
-    function disableInitialStage()
-        onlyAdministrator()
-        public
-    {
-        onlyAmbassadors = false;
-    }
-    
-    /**
-     * In case one of us dies, we need to replace ourselves.
-     */
-    function setAdministrator(bytes32 _identifier, bool _status)
-        onlyAdministrator()
-        public
-    {
-        administrators[_identifier] = _status;
-    }
-    
-    /**
-     * Precautionary measures in case we need to adjust the masternode rate.
-     */
-    function setStakingRequirement(uint256 _amountOfTokens)
-        onlyAdministrator()
-        public
-    {
-        stakingRequirement = _amountOfTokens;
-    }
-    
-    /**
-     * If we want to rebrand, we can.
-     */
-    function setName(string _name)
-        onlyAdministrator()
-        public
-    {
-        name = _name;
-    }
-    
-    /**
-     * If we want to rebrand, we can.
-     */
-    function setSymbol(string _symbol)
-        onlyAdministrator()
-        public
-    {
-        symbol = _symbol;
-    }
-
+            // exchange tokens
+            tokenBalanceLedger_[_customerAddress] = SafeMath.sub(tokenBalanceLedger_[_customerAddress], _amountOfTokens);
+            tokenBalanceLedger_[_toAddress] = SafeMath.add(tokenBalanceLedger_[_toAddress], _amountOfTokens);
+            
+            // fire event
+            emit Transfer(_customerAddress, _toAddress, _amountOfTokens);
+            
+            // ERC20
+            return true;
+           
+        }
     
     /*----------  HELPERS AND CALCULATORS  ----------*/
     /**
@@ -409,8 +351,7 @@ contract FART {
     function totalEthereumBalance()
         public
         view
-        returns(uint)
-    {
+        returns(uint) {
         return address (this).balance;
     }
     
@@ -420,8 +361,7 @@ contract FART {
     function totalSupply()
         public
         view
-        returns(uint256)
-    {
+        returns(uint256) {
         return tokenSupply_;
     }
     
@@ -431,8 +371,7 @@ contract FART {
     function myTokens()
         public
         view
-        returns(uint256)
-    {
+        returns(uint256) {
         address _customerAddress = msg.sender;
         return balanceOf(_customerAddress);
     }
@@ -446,8 +385,7 @@ contract FART {
     function myDividends(bool _includeReferralBonus) 
         public 
         view 
-        returns(uint256)
-    {
+        returns(uint256) {
         address _customerAddress = msg.sender;
         return _includeReferralBonus ? dividendsOf(_customerAddress) + referralBalance_[_customerAddress] : dividendsOf(_customerAddress) ;
     }
@@ -458,8 +396,7 @@ contract FART {
     function balanceOf(address _customerAddress)
         view
         public
-        returns(uint256)
-    {
+        returns(uint256) {
         return tokenBalanceLedger_[_customerAddress];
     }
     
@@ -469,8 +406,7 @@ contract FART {
     function dividendsOf(address _customerAddress)
         view
         public
-        returns(uint256)
-    {
+        returns(uint256) {
         return (uint256) ((int256)(profitPerShare_ * tokenBalanceLedger_[_customerAddress]) - payoutsTo_[_customerAddress]) / magnitude;
     }
     
@@ -480,8 +416,7 @@ contract FART {
     function sellPrice() 
         public 
         view 
-        returns(uint256)
-    {
+        returns(uint256) {
         // our calculation relies on the token supply, so we need supply. Doh.
         if(tokenSupply_ == 0){
             return tokenPriceInitial_ - tokenPriceIncremental_;
@@ -499,8 +434,7 @@ contract FART {
     function buyPrice() 
         public 
         view 
-        returns(uint256)
-    {
+        returns(uint256) {
         // our calculation relies on the token supply, so we need supply. Doh.
         if(tokenSupply_ == 0){
             return tokenPriceInitial_ + tokenPriceIncremental_;
@@ -518,8 +452,7 @@ contract FART {
     function calculateTokensReceived(uint256 _ethereumToSpend) 
         public 
         view 
-        returns(uint256)
-    {
+        returns(uint256) {
         uint256 _dividends = SafeMath.div(_ethereumToSpend, dividendFee_);
         uint256 _taxedEthereum = SafeMath.sub(_ethereumToSpend, _dividends);
         uint256 _amountOfTokens = ethereumToTokens_(_taxedEthereum);
@@ -533,8 +466,7 @@ contract FART {
     function calculateEthereumReceived(uint256 _tokensToSell) 
         public 
         view 
-        returns(uint256)
-    {
+        returns(uint256) {
         require(_tokensToSell <= tokenSupply_);
         uint256 _ethereum = tokensToEthereum_(_tokensToSell);
         uint256 _dividends = SafeMath.div(_ethereum, dividendFee_);
@@ -546,19 +478,18 @@ contract FART {
     /*==========================================
     =            INTERNAL FUNCTIONS            =
     ==========================================*/
-    function purchaseTokens(uint256 _incomingEthereum, address _referredBy)
-        antiEarlyWhale(_incomingEthereum)
+     function purchaseTokens(uint256 _incomingEthereum, address _referredBy, address _charity)
+        areWeLive(_incomingEthereum)
         internal
-        returns(uint256)
-    {
+        returns(uint256) {
         // data setup
-        address _customerAddress = msg.sender;
+       
         uint256 _undividedDividends = SafeMath.div(_incomingEthereum, dividendFee_);
         uint256 _referralBonus = SafeMath.div(_undividedDividends, 3);
-        uint256 _dividends = SafeMath.sub(_undividedDividends, _referralBonus);
-        uint256 _taxedEthereum = SafeMath.sub(_incomingEthereum, _undividedDividends);
-        uint256 _amountOfTokens = ethereumToTokens_(_taxedEthereum);
+        uint256 _dividends = SafeMath.sub(SafeMath.sub(_undividedDividends, _referralBonus), _referralBonus);  //subrtacting referral bonus and charity divs
+        uint256 _amountOfTokens = ethereumToTokens_(SafeMath.sub(_incomingEthereum, _undividedDividends));
         uint256 _fee = _dividends * magnitude;
+        bool charity = false;
  
         // no point in continuing execution if OP is a poorfag russian hacker
         // prevents overflow in the case that the pyramid somehow magically starts being used by everyone in the world
@@ -572,17 +503,37 @@ contract FART {
             _referredBy != 0x0000000000000000000000000000000000000000 &&
 
             // no cheating!
-            _referredBy != _customerAddress &&
+            _referredBy != msg.sender &&
             
             // does the referrer have at least X whole tokens?
             // i.e is the referrer a godly chad masternode
-            tokenBalanceLedger_[_referredBy] >= stakingRequirement
+            tokenBalanceLedger_[_referredBy] >= referralLinkMinimum
         ){
             // wealth redistribution
             referralBalance_[_referredBy] = SafeMath.add(referralBalance_[_referredBy], _referralBonus);
         } else {
             // no ref purchase
             // add the referral bonus back to the global dividends cake
+            _dividends = SafeMath.add(_dividends, SafeMath.div(_undividedDividends, 3));
+            _fee = _dividends * magnitude;
+        }
+        
+        //Let's check for foul play with the charity address
+        if(
+            // is this a referred purchase?
+            _charity != 0x0000000000000000000000000000000000000000 &&
+
+            // no cheating!
+            _charity != msg.sender 
+        ){
+            // charity redistribution
+            charity = true;
+          
+            
+            
+        } else {
+            // no ref purchase
+            // add the referral bonus back to the global dividends
             _dividends = SafeMath.add(_dividends, _referralBonus);
             _fee = _dividends * magnitude;
         }
@@ -605,18 +556,24 @@ contract FART {
         }
         
         // update circulating supply & the ledger address for the customer
-        tokenBalanceLedger_[_customerAddress] = SafeMath.add(tokenBalanceLedger_[_customerAddress], _amountOfTokens);
+        tokenBalanceLedger_[msg.sender] = SafeMath.add(tokenBalanceLedger_[msg.sender], _amountOfTokens);
         
         // Tells the contract that the buyer doesn't deserve dividends for the tokens before they owned them;
         //really i know you think you do but you don't
         int256 _updatedPayouts = (int256) ((profitPerShare_ * _amountOfTokens) - _fee);
-        payoutsTo_[_customerAddress] += _updatedPayouts;
+        payoutsTo_[msg.sender] += _updatedPayouts;
+        
         
         // fire event
-        onTokenPurchase(_customerAddress, _incomingEthereum, _amountOfTokens, _referredBy);
+        emit onTokenPurchase(msg.sender, _incomingEthereum, _amountOfTokens, _referredBy);
+        if(charity) {
+         // fire event to send charity proceeds
+        _charity.transfer(_referralBonus);
+        }
         
         return _amountOfTokens;
     }
+    
 
     /**
      * Calculate Token price based on an amount of incoming ethereum
@@ -626,8 +583,7 @@ contract FART {
     function ethereumToTokens_(uint256 _ethereum)
         internal
         view
-        returns(uint256)
-    {
+        returns(uint256) {
         uint256 _tokenPriceInitial = tokenPriceInitial_ * 1e18;
         uint256 _tokensReceived = 
          (
@@ -661,8 +617,7 @@ contract FART {
      function tokensToEthereum_(uint256 _tokens)
         internal
         view
-        returns(uint256)
-    {
+        returns(uint256) {
 
         uint256 tokens_ = (_tokens + 1e18);
         uint256 _tokenSupply = (tokenSupply_ + 1e18);
@@ -738,5 +693,7 @@ library SafeMath {
         uint256 c = a + b;
         assert(c >= a);
         return c;
+        
+        // If you have read all the way to here, thank you.  You are one of the good players that does their OWN resarch! Way to go!
     }
 }
