@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DistributeKRI at 0xa918cc1e37adeeee76dbd61d15e5d94674758654
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DistributeKRI at 0xe0bdc3cf4fc4276689e4cdcf900afd78a2482888
 */
 /**
  * @title Ownable
@@ -59,9 +59,5 @@ contract DistributeKRI is Ownable{
 		for(uint i = 0; i < addresses.length; ++i){
 			tokenReward.transfer(addresses[i],balances[i]*10**18);
 		}
-	}
-
-	function withdrawKRI(uint _amount) onlyOwner {
-		tokenReward.transfer(owner,_amount);
 	}
 }
