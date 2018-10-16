@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HexelErc20Token at 0xb313c71b20ce054c6224d403387ac2536c0b954e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HexelErc20Token at 0xbdd12b29139bc453a75100de86a1dde0b0a9843e
 */
 pragma solidity ^0.4.19;
 
@@ -305,9 +305,13 @@ contract HexelErc20Token is MintableToken {
     string public symbol;
     uint8 constant public decimals = 18;
 
-    function HexelErc20Token(string _name, string _symbol) public {
+    function HexelErc20Token(string _name, string _symbol, uint256 _initialSupply) public {
       name = _name;
       symbol = _symbol;
+      
+      if (_initialSupply > 0) {
+        mint(msg.sender, _initialSupply);
+      }
     }
 
     function multiMint(address[] recipients, uint256[] values) onlyOwner canMint external {
