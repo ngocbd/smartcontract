@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PCHAlN at 0x177d1082b1789db935954509e1ea915b206f2126
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PCHAlN at 0x0f31c8cd5be44ed51d172b311a1e05208c963657
 */
 pragma solidity ^0.4.4;
 
@@ -128,13 +128,13 @@ contract PCHAlN is StandardToken { // CHANGE THIS. Update the contract name.
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
     function PCHAlN() {
-        balances[msg.sender] = 21000000000000000000 ;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
-        totalSupply = 2100000000;                        // Update total supply (1000 for example) (CHANGE THIS)
+        balances[msg.sender] = 2100000000e18 ;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
+        totalSupply = 2100000000e18;                        // Update total supply (1000 for example) (CHANGE THIS)
         name = "PCHAlN";                                   // Set the name for display purposes (CHANGE THIS)
-        decimals = 10;                                               // Amount of decimals for display purposes (CHANGE THIS)
+        decimals = 18;                                               // Amount of decimals for display purposes (CHANGE THIS)
         symbol = "PCH";                                           // Set the symbol for display purposes (CHANGE THIS)
-        unitsOneEthCanBuy =12000;                                      // Set the price of your token for the ICO (CHANGE THIS)
-        fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
+        unitsOneEthCanBuy =10000;                                      // Set the price of your token for the ICO (CHANGE THIS)
+        fundsWallet =  msg.sender;                                    // The owner of the contract gets ETH
     }
 
 
