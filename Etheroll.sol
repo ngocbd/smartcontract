@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etheroll at 0x2a7E1F7932240A1e0609B4b993933649163D8755
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etheroll at 0x0F822AE3FC6E3305B33F95D905C9967bae244d82
 */
 //just updated the encrypted api key
 //updated contractBalance -= 57245901639344;
@@ -1401,14 +1401,6 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
         /* safely update contract balance to account for cost to call oraclize*/
         //todo - update in live contract
         contractBalance = safeSub(contractBalance, oraclize_getPrice("URL", 235000));
-
-        /* total number of bets */
-        //todo - update in live contract
-        totalBets += 1;
-
-        /* total wagered */
-        //todo - update in live contract
-        totalWeiWagered += msg.value;        
 
         /*
         * assign partially encrypted query to oraclize
