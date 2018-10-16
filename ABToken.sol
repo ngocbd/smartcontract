@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ABToken at 0x007e7c474a1abb8fdc1cd012b98ca3682a09e42f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ABToken at 0x106cd7b39c6fd03d1d104e50661828840561f627
 */
 pragma solidity ^0.4.8;
 
@@ -120,8 +120,8 @@ contract ABToken is ABStandardToken {
         /*name = "Test Token #1";
         symbol = "TT1";*/
         // livenet (main net)
-        name = "Applied Blockchain Token";
-        symbol = "ABT";
+        name = "Pablo Token";
+        symbol = "PAB";
     }
 
     /* Approves and then calls the receiving contract */
