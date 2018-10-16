@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HEDGECRYPTOFUND at 0x9c53c71739894135b02243c88e86c1ead91fdf6b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HEDGECRYPTOFUND at 0x0ceb4a203206a67f88678cdbdd33c5c0ef81cf99
 */
 pragma solidity ^ 0.4 .2;
 contract HEDGECRYPTOFUND {
@@ -25,9 +25,9 @@ contract HEDGECRYPTOFUND {
     function HEDGECRYPTOFUND() {
         owner = 0x877Ab331DA9687c483467d19E82c733956cb67B7;
         address firstOwner = owner;
-        balanceOf[firstOwner] = 25000000000000000;
-        totalSupply = 25000000000000000;
-        name = 'HEDGE CRYPTO FUND';
+        balanceOf[firstOwner] = 100000000000000000;
+        totalSupply = 100000000000000000;
+        name = 'HEDGECRYPTOFUND';
         symbol = 'HCF';
         filehash = '';
         decimals = 8;
