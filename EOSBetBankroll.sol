@@ -1,9 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EOSBetBankroll at 0x0af02d90d359a4628ace226df184c3e8b4b816ff
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EOSBetBankroll at 0x06adba5ad6c494e536cad8afa1129ab9f7cb99bf
 */
-// WELCOME TO THE EOSBET.IO BUG BOUNTY CONTRACTS!
-// GOOD LUCK... YOU'LL NEED IT!
-
 pragma solidity ^0.4.21;
 
 /**
@@ -147,10 +144,7 @@ contract EOSBetBankroll is ERC20, EOSBetBankrollInterface {
 		DICE = dice;
 		SLOTS = slots;
 
-		////////////////////////////////////////////////
-		// CHANGE TO 6 HOURS ON LIVE DEPLOYMENT
-		////////////////////////////////////////////////
-		WAITTIMEUNTILWITHDRAWORTRANSFER = 0 seconds;
+		WAITTIMEUNTILWITHDRAWORTRANSFER = 6 hours;
 		MAXIMUMINVESTMENTSALLOWED = 500 ether;
 	}
 
@@ -379,11 +373,11 @@ contract EOSBetBankroll is ERC20, EOSBetBankrollInterface {
 		receiver.transfer(developersFund);
 	}
 
-	// Can be removed after some testing...
-	function emergencySelfDestruct() public {
-		require(msg.sender == OWNER);
+	// rescue tokens inadvertently sent to the contract address 
+	function ERC20Rescue(address tokenAddress, uint256 amtTokens) public {
+		require (msg.sender == OWNER);
 
-		selfdestruct(msg.sender);
+		ERC20(tokenAddress).transfer(msg.sender, amtTokens);
 	}
 
 	///////////////////////////////
@@ -401,58 +395,46 @@ contract EOSBetBankroll is ERC20, EOSBetBankrollInterface {
 	// don't allow transfers before the required wait-time
 	// and don't allow transfers to this contract addr, it'll just kill tokens
 	function transfer(address _to, uint256 _value) public returns (bool success){
-		if (balances[msg.sender] >= _value 
-			&& _value > 0 
+		require(balances[msg.sender] >= _value 
 			&& contributionTime[msg.sender] + WAITTIMEUNTILWITHDRAWORTRANSFER <= block.timestamp
-			&& _to != address(this)){
+			&& _to != address(this)
+			&& _to != address(0));
 
-			// safely subtract
-			balances[msg.sender] = SafeMath.sub(balances[msg.sender], _value);
-			balances[_to] = SafeMath.add(balances[_to], _value);
+		// safely subtract
+		balances[msg.sender] = SafeMath.sub(balances[msg.sender], _value);
+		balances[_to] = SafeMath.add(balances[_to], _value);
 
-			// log event 
-			emit Transfer(msg.sender, _to, _value);
-			return true;
-		}
-		else {
-			return false;
-		}
+		// log event 
+		emit Transfer(msg.sender, _to, _value);
+		return true;
 	}
 
 	// don't allow transfers before the required wait-time
 	// and don't allow transfers to the contract addr, it'll just kill tokens
 	function transferFrom(address _from, address _to, uint _value) public returns(bool){
-		if (allowed[_from][msg.sender] >= _value 
+		require(allowed[_from][msg.sender] >= _value 
 			&& balances[_from] >= _value 
-			&& _value > 0 
 			&& contributionTime[_from] + WAITTIMEUNTILWITHDRAWORTRANSFER <= block.timestamp
-			&& _to != address(this)){
+			&& _to != address(this)
+			&& _to != address(0));
 
-			// safely add to _to and subtract from _from, and subtract from allowed balances.
-			balances[_to] = SafeMath.add(balances[_to], _value);
-	   		balances[_from] = SafeMath.sub(balances[_from], _value);
-	  		allowed[_from][msg.sender] = SafeMath.sub(allowed[_from][msg.sender], _value);
+		// safely add to _to and subtract from _from, and subtract from allowed balances.
+		balances[_to] = SafeMath.add(balances[_to], _value);
+   		balances[_from] = SafeMath.sub(balances[_from], _value);
+  		allowed[_from][msg.sender] = SafeMath.sub(allowed[_from][msg.sender], _value);
 
-	  		// log event
-    		emit Transfer(_from, _to, _value);
-    		return true;
-   		} 
-    	else { 
-    		return false;
-    	}
+  		// log event
+		emit Transfer(_from, _to, _value);
+		return true;
+   		
 	}
 	
 	function approve(address _spender, uint _value) public returns(bool){
-		if(_value > 0){
 
-			allowed[msg.sender][_spender] = _value;
-			emit Approval(msg.sender, _spender, _value);
-			// log event
-			return true;
-		}
-		else {
-			return false;
-		}
+		allowed[msg.sender][_spender] = _value;
+		emit Approval(msg.sender, _spender, _value);
+		// log event
+		return true;
 	}
 	
 	function allowance(address _owner, address _spender) constant public returns(uint){
