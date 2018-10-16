@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SportStarMaster at 0x5a52d88754c5b56c24f4c5e78ebb74ccf1666c87
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SportStarMaster at 0xd571788859897023b500c6c7fd295bba1e7ff71c
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
@@ -333,7 +333,6 @@ contract SportStarMaster {
     // ***** CONSTANTS ***/
 
     uint256 private startingPrice = 0.001 ether;
-    uint256 private constant PROMO_CREATION_LIMIT = 5000;
     uint256 private firstStepLimit = 0.053613 ether;
     uint256 private secondStepLimit = 0.564957 ether;
 
@@ -391,6 +390,57 @@ contract SportStarMaster {
     function SportStarMaster() public {
         ceoAddress = msg.sender;
         cooAddress = msg.sender;
+
+        //Old prices
+        tokenIndexToPrice[0]=198056585936481135;
+        tokenIndexToPrice[1]=198056585936481135;
+        tokenIndexToPrice[2]=198056585936481135;
+        tokenIndexToPrice[3]=76833314470700771;
+        tokenIndexToPrice[4]=76833314470700771;
+        tokenIndexToPrice[5]=76833314470700771;
+        tokenIndexToPrice[6]=76833314470700771;
+        tokenIndexToPrice[7]=76833314470700771;
+        tokenIndexToPrice[8]=76833314470700771;
+        tokenIndexToPrice[9]=76833314470700771;
+        tokenIndexToPrice[10]=76833314470700771;
+        tokenIndexToPrice[11]=76833314470700771;
+        tokenIndexToPrice[12]=76833314470700771;
+        tokenIndexToPrice[13]=76833314470700771;
+        tokenIndexToPrice[14]=37264157518289874;
+        tokenIndexToPrice[15]=76833314470700771;
+        tokenIndexToPrice[16]=144447284479990001;
+        tokenIndexToPrice[17]=144447284479990001;
+        tokenIndexToPrice[18]=37264157518289874;
+        tokenIndexToPrice[19]=76833314470700771;
+        tokenIndexToPrice[20]=37264157518289874;
+        tokenIndexToPrice[21]=76833314470700771;
+        tokenIndexToPrice[22]=105348771387661881;
+        tokenIndexToPrice[23]=144447284479990001;
+        tokenIndexToPrice[24]=105348771387661881;
+        tokenIndexToPrice[25]=37264157518289874;
+        tokenIndexToPrice[26]=37264157518289874;
+        tokenIndexToPrice[27]=37264157518289874;
+        tokenIndexToPrice[28]=76833314470700771;
+        tokenIndexToPrice[29]=105348771387661881;
+        tokenIndexToPrice[30]=76833314470700771;
+        tokenIndexToPrice[31]=37264157518289874;
+        tokenIndexToPrice[32]=76833314470700771;
+        tokenIndexToPrice[33]=37264157518289874;
+        tokenIndexToPrice[34]=76833314470700771;
+        tokenIndexToPrice[35]=37264157518289874;
+        tokenIndexToPrice[36]=37264157518289874;
+        tokenIndexToPrice[37]=76833314470700771;
+        tokenIndexToPrice[38]=76833314470700771;
+        tokenIndexToPrice[39]=37264157518289874;
+        tokenIndexToPrice[40]=37264157518289874;
+        tokenIndexToPrice[41]=37264157518289874;
+        tokenIndexToPrice[42]=76833314470700771;
+        tokenIndexToPrice[43]=37264157518289874;
+        tokenIndexToPrice[44]=37264157518289874;
+        tokenIndexToPrice[45]=76833314470700771;
+        tokenIndexToPrice[46]=37264157518289874;
+        tokenIndexToPrice[47]=37264157518289874;
+        tokenIndexToPrice[48]=76833314470700771;
     }
 
 
@@ -419,19 +469,18 @@ contract SportStarMaster {
 
 
     // ***** PUBLIC FUNCTIONS ***/
-
     function getTokenInfo(uint256 _tokenId) public view returns (
         address owner,
-        uint256 price
+        uint256 price,
+        bytes32 tokenData
     ) {
         owner = tokensContract.ownerOf(_tokenId);
         price = tokenIndexToPrice[_tokenId];
+        tokenData = tokensContract.getTokenData(_tokenId);
     }
 
     // @dev Creates a new promo Token with the given name, with given _price and assignes it to an address.
     function createPromoToken(address _owner, string _name, uint256 _price) public onlyCOO {
-        require(promoCreatedCount < PROMO_CREATION_LIMIT);
-
         address tokenOwner = _owner;
         if (tokenOwner == address(0)) {
             tokenOwner = cooAddress;
@@ -443,7 +492,7 @@ contract SportStarMaster {
 
         promoCreatedCount++;
         uint256 newTokenId = tokensContract.createToken(_name, tokenOwner);
-        tokenIndexToPrice[newTokenId] = startingPrice;
+        tokenIndexToPrice[newTokenId] = _price;
 
         Birth(newTokenId, _name, _owner);
     }
@@ -454,6 +503,21 @@ contract SportStarMaster {
         tokenIndexToPrice[newTokenId] = startingPrice;
 
         Birth(newTokenId, _name, address(this));
+    }
+
+    function createContractTokenWithPrice(string _name, uint256 _price) public onlyCOO {
+        uint256 newTokenId = tokensContract.createToken(_name, address(this));
+        tokenIndexToPrice[newTokenId] = _price;
+
+        Birth(newTokenId, _name, address(this));
+    }
+
+    function setGamblingFee(uint256 _tokenId, uint256 _fee) public {
+        require(msg.sender == tokensContract.ownerOf(_tokenId));
+        require(_fee >= 0 && _fee <= 100);
+
+        bytes32 tokenData = byte(_fee);
+        tokensContract.setTokenData(_tokenId, tokenData);
     }
 
     // Allows someone to send ether and obtain the token
@@ -519,6 +583,14 @@ contract SportStarMaster {
             return SafeMath.div(SafeMath.mul(_price, 115), 97);
         } else {
             return SafeMath.div(SafeMath.mul(_price, 113), 98);
+        }
+    }
+
+    function payout(address _to) public onlyCEO {
+        if (_to == address(0)) {
+            ceoAddress.transfer(this.balance);
+        } else {
+            _to.transfer(this.balance);
         }
     }
 
