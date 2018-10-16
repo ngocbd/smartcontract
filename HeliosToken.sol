@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HeliosToken at 0x5943e2a2f7498699438e615e4e92e7a77ac27390
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HeliosToken at 0x94c6581c6912d7333163df52c82eee8561362df7
 */
 pragma solidity ^0.4.20;
 library SafeMath { //standard library for uint
@@ -30,32 +30,7 @@ library SafeMath { //standard library for uint
   }
 }
 
-contract Ownable { //standart contract to identify owner
-  address public owner;
-  address public newOwner;
-
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-  
-  function Ownable() public {
-    owner = msg.sender;
-  }
-  
-  function transferOwnership(address _newOwner) public onlyOwner {
-    require(_newOwner != address(0));
-    newOwner = _newOwner;
-  }
-  
-  function acceptOwnership() public {
-    if (msg.sender == newOwner) {
-      owner = newOwner;
-    }
-  }
-}
-
-contract HeliosToken is Ownable { //ERC - 20 token contract
+contract HeliosToken { //ERC - 20 token contract
   using SafeMath for uint;
 
   // Triggered when tokens are transferred.
@@ -70,12 +45,7 @@ contract HeliosToken is Ownable { //ERC - 20 token contract
   uint8 public constant decimals = 2;
   uint256 _totalSupply = uint(5000000).mul(uint(10).pow(decimals));
 
-  // Owner of this contract
-  address public owner;
-  // Balances for each account
-
   function HeliosToken () public {
-    owner = 0xA957c13265Cb1b101401d10f5E0b69E0b36ef000;
     balances[address(this)] = _totalSupply;
   }
   
