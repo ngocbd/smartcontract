@@ -1,6 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlatPricingExt at 0x32166f7492c3bdd428dcc8d38c6c9e89e7f46101
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlatPricingExt at 0x80002ac729a5651da4db3b9dca8dc79044dafedc
 */
+// Created using ICO Wizard https://github.com/oraclesorg/ico-wizard by Oracles Network 
 pragma solidity ^0.4.11;
 /**
  * @title ERC20Basic
@@ -226,8 +227,6 @@ contract CrowdsaleExt is Haltable {
   address[] public joinedCrowdsales;
   uint public joinedCrowdsalesLen = 0;
   address public lastCrowdsale;
-  /// Event created on money deposit.
-  event Deposit (address recipient, uint value);
   /**
     * Do we verify that contributor has been cleared on the server side (accredited investors only).
     * This method was first used in FirstBlood crowdsale to ensure all contributors have accepted terms on sale (on the web).
@@ -391,7 +390,6 @@ contract CrowdsaleExt is Haltable {
     }
     // Tell us invest was success
     Invested(receiver, weiAmount, tokenAmount, customerId);
-    Deposit(receiver, weiAmount);
   }
   /**
    * Preallocate tokens for the early investors.
