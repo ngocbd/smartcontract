@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20dex at 0x1c1de57cc864072f7eab381c4c06b14a6963dd4b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20dex at 0x3d5d02fff6b7fc5a3f886a5f1a931fac9d78baa9
 */
 contract ERC20 {
     function totalSupply() constant returns (uint totalSupply);
@@ -123,6 +123,7 @@ contract ERC20dex {
     function createToken(string symbol, string name, address coin_address, uint8 decimals) public {
         // Check if sender included enough ETC for creation
         require(msg.value == deploy_fee);
+        require(shitcoin_index[symbol] == 0);
 
         // Pass fee to the owner
         require(owner.send(msg.value));
@@ -145,13 +146,8 @@ contract ERC20dex {
         require(msg.sender == owner);
         require(index < shitcoins.length);
         
-        string ticker = shitcoins[index].ticker;
-        delete shitcoins[index];
-        delete shitcoin_index[ticker];
-        
-        for (uint16 i = 0; i < uint16(shitcoins.length); i++) {
-            shitcoin_index[shitcoins[i].ticker] = i + 1;
-        }
+        shitcoin_index[shitcoins[index].ticker] = 0;
+        shitcoins[index].state = COIN_DEAD;
     }
     
     function set_fee(uint256 the_maker_fee, uint256 the_taker_fee, uint256 the_deploy_fee) public {
@@ -368,18 +364,19 @@ contract ERC20dex {
         require(order.amount > 0);
         
         // Null the order
+        uint256 old_amount = order.amount;
         order.amount = 0;
 
         // Return coins
         if (order.buy_sell == BUY) {
             // Return back ETC
-            uint256 total_deal = total_amount(token, order.amount, order.price);
+            uint256 total_deal = total_amount(token, old_amount, order.price);
             etx_balances[msg.sender] = safe_sub(etx_balances[msg.sender], total_deal);
             require(order.owner.send(total_deal));
         } else {
             // Return shitcoins back 
             ERC20 shitcoin = ERC20(coin.base);
-            shitcoin.transfer(order.owner, order.amount);
+            shitcoin.transfer(order.owner, old_amount);
         }
     }
     
@@ -391,6 +388,7 @@ contract ERC20dex {
         if (coin.fee > 0) {
             ERC20 shitcoin = ERC20(coin.base);
             shitcoin.transfer(owner, coin.fee);
+            coin.fee = 0;
         }
     }
     
@@ -399,6 +397,7 @@ contract ERC20dex {
 
         // Send main currency
         require(owner.send(main_fee));
+        main_fee = 0;
     }
 
 }
