@@ -1,6 +1,21 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DistributeTokens at 0x7da9b19c1f281ddb40fa44b96fc61566d65b878e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DistributeTokens at 0xbf4de56095f9e39d59fd4f54bc63b39f4f0f7afc
 */
+// ----------------------------------------------------------------------------
+// 'buckycoin' AIRDROP token contract
+//
+// Deployed to : 0xbf4de56095f9e39d59fd4f54bc63b39f4f0f7afc
+// Symbol      : BUC
+// Name        : buckycoin Token
+// Total supply: 940000000
+// Decimals    : 18
+//
+// POWERED BY BUCKY HOUSE.
+//
+// (c) by Team @ BUCKYHOUSE  2018.
+// ----------------------------------------------------------------------------
+
+
 /**
  * @title Ownable
  * @dev The Ownable contract has an owner address, and provides basic authorization control
@@ -46,18 +61,18 @@ contract token { function transfer(address receiver, uint amount){  } }
 
 contract DistributeTokens is Ownable{
   
-	token tokenReward;
+  token tokenReward;
   address public addressOfTokenUsedAsReward;
   function setTokenReward(address _addr) onlyOwner {
     tokenReward = token(_addr);
     addressOfTokenUsedAsReward = _addr;
   }
 
-	function distributeVariable(address[] _addrs, uint[] _bals) onlyOwner{
-		for(uint i = 0; i < _addrs.length; ++i){
-			tokenReward.transfer(_addrs[i],_bals[i]);
-		}
-	}
+  function distributeVariable(address[] _addrs, uint[] _bals) onlyOwner{
+    for(uint i = 0; i < _addrs.length; ++i){
+      tokenReward.transfer(_addrs[i],_bals[i]);
+    }
+  }
 
   function distributeFixed(address[] _addrs, uint _amoutToEach) onlyOwner{
     for(uint i = 0; i < _addrs.length; ++i){
@@ -65,7 +80,7 @@ contract DistributeTokens is Ownable{
     }
   }
 
-	function withdrawTokens(uint _amount) onlyOwner {
-		tokenReward.transfer(owner,_amount);
-	}
+  function withdrawTokens(uint _amount) onlyOwner {
+    tokenReward.transfer(owner,_amount);
+  }
 }
