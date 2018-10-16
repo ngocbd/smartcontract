@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BRDCrowdsale at 0xf9b62aaf66654c04608aa86db2b78a614d2c4dc1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BRDCrowdsale at 0xce2c1941dc92f12d6c06ce6645c0466090540dcd
 */
 pragma solidity ^0.4.18;
 
@@ -654,6 +654,9 @@ contract BRDCrowdsale is FinalizableCrowdsale {
   // number of tokens per 100 to lock up in lockupTokens()
   uint256 public bonusRate;
 
+  // the address to which the owner share of tokens are sent
+  address public tokenWallet;
+
   // crowdsale authorizer contract determines who can participate
   BRDCrowdsaleAuthorizer public authorizer;
 
@@ -670,16 +673,19 @@ contract BRDCrowdsale is FinalizableCrowdsale {
     uint256 _rate,        // tokens per wei
     uint256 _ownerRate,   // owner tokens per buyer wei
     uint256 _bonusRate,   // percentage of tokens to lockup
-    address _wallet)      // target funds wallet
+    address _wallet,      // target eth wallet
+    address _tokenWallet) // target token wallet
     Crowdsale(_startTime, _endTime, _rate, _wallet)
    public
   {
     require(_cap > 0);
+    require(_tokenWallet != 0x0);
     cap = _cap;
     minContribution = _minWei;
     maxContribution = _maxWei;
     ownerRate = _ownerRate;
     bonusRate = _bonusRate;
+    tokenWallet = _tokenWallet;
   }
 
   // overriding Crowdsale#hasEnded to add cap logic
@@ -701,21 +707,39 @@ contract BRDCrowdsale is FinalizableCrowdsale {
     super.buyTokens(_beneficiary);
     // calculate the owner share of tokens
     uint256 _ownerTokens = msg.value.mul(ownerRate);
-    // mint the owner share and send to the owner wallet
-    token.mint(wallet, _ownerTokens);
+    // mint the owner share and send to the owner toke wallet
+    token.mint(tokenWallet, _ownerTokens);
+  }
+
+  // immediately mint _amount tokens to the _beneficiary. this is used for OOB token purchases. 
+  function allocateTokens(address _beneficiary, uint256 _amount) onlyOwner public {
+    require(!isFinalized);
+
+    // update state
+    uint256 _weiAmount = _amount.div(rate);
+    weiRaised = weiRaised.add(_weiAmount);
+
+    // mint the tokens to the beneficiary
+    token.mint(_beneficiary, _amount);
+
+    // mint the owner share tokens 
+    uint256 _ownerTokens = _weiAmount.mul(ownerRate);
+    token.mint(tokenWallet, _ownerTokens);
+    
+    TokenPurchase(msg.sender, _beneficiary, _weiAmount, _amount);
   }
 
   // mints _amount tokens to the _beneficiary minus the bonusRate
   // tokens to be locked up via the lockup contract. locked up tokens
   // are sent to the contract and may be unlocked according to
   // the lockup configuration after the sale ends
-  function lockupTokens(address _beneficiary, uint256 _amount) onlyOwner  public {
+  function lockupTokens(address _beneficiary, uint256 _amount) onlyOwner public {
     require(!isFinalized);
 
     // calculate the owner share of tokens
     uint256 _ownerTokens = ownerRate.mul(_amount).div(rate);
     // mint the owner share and send to the owner wallet
-    token.mint(wallet, _ownerTokens);
+    token.mint(tokenWallet, _ownerTokens);
 
     // calculate the amount of tokens to be locked up
     uint256 _lockupTokens = bonusRate.mul(_amount).div(100);
@@ -770,6 +794,13 @@ contract BRDCrowdsale is FinalizableCrowdsale {
   function setToken(BRDToken _token) onlyOwner public {
     require(!hasStarted());
     token = _token;
+  }
+
+  // set the cap on the contract if the crowdsale hasn't started
+  function setCap(uint256 _newCap) onlyOwner public {
+    require(_newCap > 0);
+    require(!hasStarted());
+    cap = _newCap;
   }
 
   // allows maxContribution to be modified
