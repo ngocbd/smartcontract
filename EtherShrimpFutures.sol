@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherShrimpFutures at 0xd8ca5d93f12d9b6ea8c1b19513b26b44d01316c4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherShrimpFutures at 0xdfa8c502b826da290c90e370b378a73b3dba355b
 */
 pragma solidity ^0.4.24;
 
@@ -95,7 +95,6 @@ contract EtherShrimpFutures{
         return SafeMath.div(SafeMath.mul(amount,2),100);
     }
     function seedMarket(uint256 eggs) public payable{
-        require(msg.sender==ceoAddress && eggs != 0);
         require(marketEggs==0);
         initialized=true;
         marketEggs=eggs;
