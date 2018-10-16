@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DPOS at 0x7234cb8eac26c105e02ef054f70a62b93bf1e7dc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DPOS at 0x1f2659bd1f38ea484b3ed7d03749fe157326ad16
 */
 pragma solidity ^0.4.18;
 
@@ -30,12 +30,12 @@ contract DPOS {
         require(msg.sender == owner);
         _;
     }
-    
+
     function setLimit(uint256 _limit) public onlyOwner returns (bool) {
         limit = _limit;
         return true;
     }
-    
+
     function lengthOfRecord(uint256 _id) public view returns (uint length) {
         return voteRecords[_id].length;
     }
