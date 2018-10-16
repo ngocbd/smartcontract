@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TBCoin at 0x6158e3f89b4398f5fb20d20dbfc5a5c955f0f6dd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TBCoin at 0x7e8bae58a61805858186d6ff869c36a8162db3c0
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.11;
 
 /**
  * @title SafeMath
