@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DepositBank at 0x4eb3ce14FdA3a874ECAd0E9ad988258C827Bae82
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DepositBank at 0xCFc60841Bb8A64446771704159a1130a526d4b86
 */
 pragma solidity ^0.4.18;
 
@@ -91,7 +91,7 @@ contract DepositBank is Base
     
     uint public ClientQty;
     
-    uint public PrcntRate = 1;
+    uint public PrcntRate = 3;
     
     uint public MinPayment;
     
