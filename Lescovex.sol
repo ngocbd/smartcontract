@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lescovex at 0x8815dfae43dd8f6e772cb700b4721d1deab0fac0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lescovex at 0x837b926e698a999eed00cf5001569d00ac23f6a8
 */
 pragma solidity ^0.4.19;
 
@@ -274,7 +274,6 @@ contract Lescovex is LescovexERC20 {
         balances[_to] = balances[_to].add(_value);
 
         Transfer(this, _to, _value);
-        Transfer(this, LescovexAddr, _value);
         return true;
     }
 
