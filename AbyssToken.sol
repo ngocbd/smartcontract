@@ -1,226 +1,435 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AbyssToken at 0x295e65915bf0a884dcb225d0b60f95f25626e221
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AbyssToken at 0x6a546617fd8c74555a2cb63b7b064331de82f68d
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
 
-// ----------------------------------------------------------------------------
-// 'Gems' token contract
-//
-// Deployed to : 0x5dDD9bb4d5640cE37c76dDac8B3bbD35D84416A6
-// Symbol      : Abyss
-// Name        : The Abyss
-// Total supply: 10000000
-// Decimals    : 18
-//
-// Enjoy.
-//
-// (c) by Moritz Neto with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
-// ----------------------------------------------------------------------------
+// File: contracts/ownership/MultiOwnable.sol
 
+/**
+ * @title MultiOwnable
+ * @dev The MultiOwnable contract has owners addresses and provides basic authorization control
+ * functions, this simplifies the implementation of "users permissions".
+ */
+contract MultiOwnable {
+    address public manager; // address used to set owners
+    address[] public owners;
+    mapping(address => bool) public ownerByAddress;
 
-// ----------------------------------------------------------------------------
-// Safe maths
-// ----------------------------------------------------------------------------
-contract SafeMath {
-    function safeAdd(uint a, uint b) public pure returns (uint c) {
-        c = a + b;
-        require(c >= a);
-    }
-    function safeSub(uint a, uint b) public pure returns (uint c) {
-        require(b <= a);
-        c = a - b;
-    }
-    function safeMul(uint a, uint b) public pure returns (uint c) {
-        c = a * b;
-        require(a == 0 || c / a == b);
-    }
-    function safeDiv(uint a, uint b) public pure returns (uint c) {
-        require(b > 0);
-        c = a / b;
-    }
-}
+    event SetOwners(address[] owners);
 
-
-// ----------------------------------------------------------------------------
-// ERC Token Standard #20 Interface
-// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
-// ----------------------------------------------------------------------------
-contract ERC20Interface {
-    function totalSupply() public constant returns (uint);
-    function balanceOf(address tokenOwner) public constant returns (uint balance);
-    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
-    function transfer(address to, uint tokens) public returns (bool success);
-    function approve(address spender, uint tokens) public returns (bool success);
-    function transferFrom(address from, address to, uint tokens) public returns (bool success);
-
-    event Transfer(address indexed from, address indexed to, uint tokens);
-    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
-}
-
-
-// ----------------------------------------------------------------------------
-// Contract function to receive approval and execute function in one call
-//
-// Borrowed from MiniMeToken
-// ----------------------------------------------------------------------------
-contract ApproveAndCallFallBack {
-    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
-}
-
-
-// ----------------------------------------------------------------------------
-// Owned contract
-// ----------------------------------------------------------------------------
-contract Owned {
-    address public owner;
-    address public newOwner;
-
-    event OwnershipTransferred(address indexed _from, address indexed _to);
-
-    function Owned() public {
-        owner = msg.sender;
-    }
-
-    modifier onlyOwner {
-        require(msg.sender == owner);
+    modifier onlyOwner() {
+        require(ownerByAddress[msg.sender] == true);
         _;
     }
 
-    function transferOwnership(address _newOwner) public onlyOwner {
-        newOwner = _newOwner;
+    /**
+     * @dev MultiOwnable constructor sets the manager
+     */
+    function MultiOwnable() public {
+        manager = msg.sender;
     }
-    function acceptOwnership() public {
-        require(msg.sender == newOwner);
-        OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-        newOwner = address(0);
+
+    /**
+     * @dev Function to set owners addresses
+     */
+    function setOwners(address[] _owners) public {
+        require(msg.sender == manager);
+        _setOwners(_owners);
+
+    }
+
+    function _setOwners(address[] _owners) internal {
+        for(uint256 i = 0; i < owners.length; i++) {
+            ownerByAddress[owners[i]] = false;
+        }
+
+
+        for(uint256 j = 0; j < _owners.length; j++) {
+            ownerByAddress[_owners[j]] = true;
+        }
+        owners = _owners;
+        SetOwners(_owners);
+    }
+
+    function getOwners() public constant returns (address[]) {
+        return owners;
     }
 }
 
+// File: contracts/math/SafeMath.sol
 
-// ----------------------------------------------------------------------------
-// ERC20 Token, with the addition of symbol, name and decimals and assisted
-// token transfers
-// ----------------------------------------------------------------------------
-contract AbyssToken is ERC20Interface, Owned, SafeMath {
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+contract SafeMath {
+    /**
+    * @dev constructor
+    */
+    function SafeMath() public {
+    }
+
+    function safeMul(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
+    }
+
+    function safeDiv(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a / b;
+        return c;
+    }
+
+    function safeSub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(a >= b);
+        return a - b;
+    }
+
+    function safeAdd(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
+}
+
+// File: contracts/token/IERC20Token.sol
+
+/**
+ * @title IERC20Token - ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract IERC20Token {
+    string public name;
     string public symbol;
-    string public  name;
     uint8 public decimals;
-    uint public _totalSupply;
+    uint256 public totalSupply;
 
-    mapping(address => uint) balances;
-    mapping(address => mapping(address => uint)) allowed;
+    function balanceOf(address _owner) public constant returns (uint256 balance);
+    function transfer(address _to, uint256 _value)  public returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value)  public returns (bool success);
+    function approve(address _spender, uint256 _value)  public returns (bool success);
+    function allowance(address _owner, address _spender)  public constant returns (uint256 remaining);
 
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+}
 
-    // ------------------------------------------------------------------------
-    // Constructor
-    // ------------------------------------------------------------------------
-    function AbyssToken() public {
-        symbol = "Abyss";
-        name = "The Abyss";
+// File: contracts/token/ERC20Token.sol
+
+/**
+ * @title ERC20Token - ERC20 base implementation
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20Token is IERC20Token, SafeMath {
+    mapping (address => uint256) public balances;
+    mapping (address => mapping (address => uint256)) public allowed;
+
+    function transfer(address _to, uint256 _value) public returns (bool) {
+        require(_to != address(0));
+        require(balances[msg.sender] >= _value);
+
+        balances[msg.sender] = safeSub(balances[msg.sender], _value);
+        balances[_to] = safeAdd(balances[_to], _value);
+        Transfer(msg.sender, _to, _value);
+        return true;
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        require(_to != address(0));
+        require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
+
+        balances[_to] = safeAdd(balances[_to], _value);
+        balances[_from] = safeSub(balances[_from], _value);
+        allowed[_from][msg.sender] = safeSub(allowed[_from][msg.sender], _value);
+        Transfer(_from, _to, _value);
+        return true;
+    }
+
+    function balanceOf(address _owner) public constant returns (uint256) {
+        return balances[_owner];
+    }
+
+    function approve(address _spender, uint256 _value) public returns (bool) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function allowance(address _owner, address _spender) public constant returns (uint256) {
+      return allowed[_owner][_spender];
+    }
+}
+
+// File: contracts/token/ITokenEventListener.sol
+
+/**
+ * @title ITokenEventListener
+ * @dev Interface which should be implemented by token listener
+ */
+interface ITokenEventListener {
+    /**
+     * @dev Function is called after token transfer/transferFrom
+     * @param _from Sender address
+     * @param _to Receiver address
+     * @param _value Amount of tokens
+     */
+    function onTokenTransfer(address _from, address _to, uint256 _value) external;
+}
+
+// File: contracts/token/ManagedToken.sol
+
+/**
+ * @title ManagedToken
+ * @dev ERC20 compatible token with issue and destroy facilities
+ * @dev All transfers can be monitored by token event listener
+ */
+contract ManagedToken is ERC20Token, MultiOwnable {
+    bool public allowTransfers = false;
+    bool public issuanceFinished = false;
+
+    ITokenEventListener public eventListener;
+
+    event AllowTransfersChanged(bool _newState);
+    event Issue(address indexed _to, uint256 _value);
+    event Destroy(address indexed _from, uint256 _value);
+    event IssuanceFinished();
+
+    modifier transfersAllowed() {
+        require(allowTransfers);
+        _;
+    }
+
+    modifier canIssue() {
+        require(!issuanceFinished);
+        _;
+    }
+
+    /**
+     * @dev ManagedToken constructor
+     * @param _listener Token listener(address can be 0x0)
+     * @param _owners Owners list
+     */
+    function ManagedToken(address _listener, address[] _owners) public {
+        if(_listener != address(0)) {
+            eventListener = ITokenEventListener(_listener);
+        }
+        _setOwners(_owners);
+    }
+
+    /**
+     * @dev Enable/disable token transfers. Can be called only by owners
+     * @param _allowTransfers True - allow False - disable
+     */
+    function setAllowTransfers(bool _allowTransfers) external onlyOwner {
+        allowTransfers = _allowTransfers;
+        AllowTransfersChanged(_allowTransfers);
+    }
+
+    /**
+     * @dev Set/remove token event listener
+     * @param _listener Listener address (Contract must implement ITokenEventListener interface)
+     */
+    function setListener(address _listener) public onlyOwner {
+        if(_listener != address(0)) {
+            eventListener = ITokenEventListener(_listener);
+        } else {
+            delete eventListener;
+        }
+    }
+
+    function transfer(address _to, uint256 _value) public transfersAllowed returns (bool) {
+        bool success = super.transfer(_to, _value);
+        if(hasListener() && success) {
+            eventListener.onTokenTransfer(msg.sender, _to, _value);
+        }
+        return success;
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public transfersAllowed returns (bool) {
+        bool success = super.transferFrom(_from, _to, _value);
+        if(hasListener() && success) {
+            eventListener.onTokenTransfer(_from, _to, _value);
+        }
+        return success;
+    }
+
+    function hasListener() internal view returns(bool) {
+        if(eventListener == address(0)) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * @dev Issue tokens to specified wallet
+     * @param _to Wallet address
+     * @param _value Amount of tokens
+     */
+    function issue(address _to, uint256 _value) external onlyOwner canIssue {
+        totalSupply = safeAdd(totalSupply, _value);
+        balances[_to] = safeAdd(balances[_to], _value);
+        Issue(_to, _value);
+        Transfer(address(0), _to, _value);
+    }
+
+    /**
+     * @dev Destroy tokens on specified address (Called by owner or token holder)
+     * @dev Fund contract address must be in the list of owners to burn token during refund
+     * @param _from Wallet address
+     * @param _value Amount of tokens to destroy
+     */
+    function destroy(address _from, uint256 _value) external {
+        require(ownerByAddress[msg.sender] || msg.sender == _from);
+        require(balances[_from] >= _value);
+        totalSupply = safeSub(totalSupply, _value);
+        balances[_from] = safeSub(balances[_from], _value);
+        Transfer(_from, address(0), _value);
+        Destroy(_from, _value);
+    }
+
+    /**
+     * @dev Increase the amount of tokens that an owner allowed to a spender.
+     *
+     * approve should be called when allowed[_spender] == 0. To increment
+     * allowed value is better to use this function to avoid 2 calls (and wait until
+     * the first transaction is mined)
+     * From OpenZeppelin StandardToken.sol
+     * @param _spender The address which will spend the funds.
+     * @param _addedValue The amount of tokens to increase the allowance by.
+     */
+    function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+        allowed[msg.sender][_spender] = safeAdd(allowed[msg.sender][_spender], _addedValue);
+        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
+    }
+
+    /**
+     * @dev Decrease the amount of tokens that an owner allowed to a spender.
+     *
+     * approve should be called when allowed[_spender] == 0. To decrement
+     * allowed value is better to use this function to avoid 2 calls (and wait until
+     * the first transaction is mined)
+     * From OpenZeppelin StandardToken.sol
+     * @param _spender The address which will spend the funds.
+     * @param _subtractedValue The amount of tokens to decrease the allowance by.
+     */
+    function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+        uint oldValue = allowed[msg.sender][_spender];
+        if (_subtractedValue > oldValue) {
+            allowed[msg.sender][_spender] = 0;
+        } else {
+            allowed[msg.sender][_spender] = safeSub(oldValue, _subtractedValue);
+        }
+        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
+    }
+
+    /**
+     * @dev Finish token issuance
+     * @return True if success
+     */
+    function finishIssuance() public onlyOwner returns (bool) {
+        issuanceFinished = true;
+        IssuanceFinished();
+        return true;
+    }
+}
+
+// File: contracts/token/TransferLimitedToken.sol
+
+/**
+ * @title TransferLimitedToken
+ * @dev Token with ability to limit transfers within wallets included in limitedWallets list for certain period of time
+ */
+contract TransferLimitedToken is ManagedToken {
+    uint256 public constant LIMIT_TRANSFERS_PERIOD = 365 days;
+
+    mapping(address => bool) public limitedWallets;
+    uint256 public limitEndDate;
+    address public limitedWalletsManager;
+    bool public isLimitEnabled;
+
+    modifier onlyManager() {
+        require(msg.sender == limitedWalletsManager);
+        _;
+    }
+
+    /**
+     * @dev Check if transfer between addresses is available
+     * @param _from From address
+     * @param _to To address
+     */
+    modifier canTransfer(address _from, address _to)  {
+        require(now >= limitEndDate || !isLimitEnabled || (!limitedWallets[_from] && !limitedWallets[_to]));
+        _;
+    }
+
+    /**
+     * @dev TransferLimitedToken constructor
+     * @param _limitStartDate Limit start date
+     * @param _listener Token listener(address can be 0x0)
+     * @param _owners Owners list
+     * @param _limitedWalletsManager Address used to add/del wallets from limitedWallets
+     */
+    function TransferLimitedToken(
+        uint256 _limitStartDate,
+        address _listener,
+        address[] _owners,
+        address _limitedWalletsManager
+    ) public ManagedToken(_listener, _owners)
+    {
+        limitEndDate = _limitStartDate + LIMIT_TRANSFERS_PERIOD;
+        isLimitEnabled = true;
+        limitedWalletsManager = _limitedWalletsManager;
+    }
+
+    /**
+     * @dev Add address to limitedWallets
+     * @dev Can be called only by manager
+     */
+    function addLimitedWalletAddress(address _wallet) public {
+        require(msg.sender == limitedWalletsManager || ownerByAddress[msg.sender]);
+        limitedWallets[_wallet] = true;
+    }
+
+    /**
+     * @dev Del address from limitedWallets
+     * @dev Can be called only by manager
+     */
+    function delLimitedWalletAddress(address _wallet) public onlyManager {
+        limitedWallets[_wallet] = false;
+    }
+
+    /**
+     * @dev Disable transfer limit manually. Can be called only by manager
+     */
+    function disableLimit() public onlyManager {
+        isLimitEnabled = false;
+    }
+
+    function transfer(address _to, uint256 _value) public canTransfer(msg.sender, _to) returns (bool) {
+        return super.transfer(_to, _value);
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public canTransfer(_from, _to) returns (bool) {
+        return super.transferFrom(_from, _to, _value);
+    }
+
+    function approve(address _spender, uint256 _value) public canTransfer(msg.sender, _spender) returns (bool) {
+        return super.approve(_spender,_value);
+    }
+}
+
+// File: contracts/AbyssToken.sol
+
+contract AbyssToken is TransferLimitedToken {
+    uint256 public constant SALE_END_TIME = 1526479200; // 16.05.2018 14:00:00 UTC
+
+    function AbyssToken(address _listener, address[] _owners, address manager) public
+        TransferLimitedToken(SALE_END_TIME, _listener, _owners, manager)
+    {
+        name = "ABYSS";
+        symbol = "ABYSS";
         decimals = 18;
-        _totalSupply = 100000000000000000000000000;
-        balances[0x5dDD9bb4d5640cE37c76dDac8B3bbD35D84416A6] = _totalSupply;
-        Transfer(address(0), 0x5dDD9bb4d5640cE37c76dDac8B3bbD35D84416A6, _totalSupply);
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Total supply
-    // ------------------------------------------------------------------------
-    function totalSupply() public constant returns (uint) {
-        return _totalSupply  - balances[address(0)];
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Get the token balance for account tokenOwner
-    // ------------------------------------------------------------------------
-    function balanceOf(address tokenOwner) public constant returns (uint balance) {
-        return balances[tokenOwner];
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Transfer the balance from token owner's account to to account
-    // - Owner's account must have sufficient balance to transfer
-    // - 0 value transfers are allowed
-    // ------------------------------------------------------------------------
-    function transfer(address to, uint tokens) public returns (bool success) {
-        balances[msg.sender] = safeSub(balances[msg.sender], tokens);
-        balances[to] = safeAdd(balances[to], tokens);
-        Transfer(msg.sender, to, tokens);
-        return true;
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Token owner can approve for spender to transferFrom(...) tokens
-    // from the token owner's account
-    //
-    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
-    // recommends that there are no checks for the approval double-spend attack
-    // as this should be implemented in user interfaces 
-    // ------------------------------------------------------------------------
-    function approve(address spender, uint tokens) public returns (bool success) {
-        allowed[msg.sender][spender] = tokens;
-        Approval(msg.sender, spender, tokens);
-        return true;
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Transfer tokens from the from account to the to account
-    // 
-    // The calling account must already have sufficient tokens approve(...)-d
-    // for spending from the from account and
-    // - From account must have sufficient balance to transfer
-    // - Spender must have sufficient allowance to transfer
-    // - 0 value transfers are allowed
-    // ------------------------------------------------------------------------
-    function transferFrom(address from, address to, uint tokens) public returns (bool success) {
-        balances[from] = safeSub(balances[from], tokens);
-        allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
-        balances[to] = safeAdd(balances[to], tokens);
-        Transfer(from, to, tokens);
-        return true;
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Returns the amount of tokens approved by the owner that can be
-    // transferred to the spender's account
-    // ------------------------------------------------------------------------
-    function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
-        return allowed[tokenOwner][spender];
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Token owner can approve for spender to transferFrom(...) tokens
-    // from the token owner's account. The spender contract function
-    // receiveApproval(...) is then executed
-    // ------------------------------------------------------------------------
-    function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
-        allowed[msg.sender][spender] = tokens;
-        Approval(msg.sender, spender, tokens);
-        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
-        return true;
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Don't accept ETH
-    // ------------------------------------------------------------------------
-    function () public payable {
-        revert();
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Owner can transfer out any accidentally sent ERC20 tokens
-    // ------------------------------------------------------------------------
-    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
-        return ERC20Interface(tokenAddress).transfer(owner, tokens);
     }
 }
