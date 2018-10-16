@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XETHER at 0x875d14f7544374edc88e2bc4dd0a71ce7aae5ad9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XETHER at 0x6e5e810a6a0f6e308eff3010673cf7faba2a9fb8
 */
 pragma solidity ^0.4.4;
 
@@ -89,8 +89,7 @@ contract StandardToken is Token {
     uint256 public totalSupply;
 }
 
-
-//name this contract whatever you'd like
+//define token name
 contract XETHER is StandardToken {
 
     function () {
@@ -101,7 +100,7 @@ contract XETHER is StandardToken {
     /* Public variables of the token */
 
 
-    string public name;                   //XETHER
+    string public name;                   //XETHER Token
     uint8 public decimals;                //18
     string public symbol;                 //XTHR
     string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
@@ -110,11 +109,11 @@ contract XETHER is StandardToken {
 
     function XETHER(
         ) {
-        balances[msg.sender] = 500000000000000000000000;
-        totalSupply = 500000000000000000000000;
+        balances[msg.sender] = 150000000000000000000000000;
+        totalSupply = 150000000000000000000000000;
         name = "XETHER";
         decimals = 18;
-        symbol = "XTHR";
+        symbol = "XETH";
     }
 
     /* Approves and then calls the receiving contract */
