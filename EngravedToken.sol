@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EngravedToken at 0xcf43a59e41722BDd4631A0CDda76853374A3855d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EngravedToken at 0x044dd17bbbcbf1cf65f543918561bf8cf8130e7b
 */
-pragma solidity 0.4.15;
+pragma solidity 0.4.18;
 
 
 contract Owned {
@@ -39,27 +39,27 @@ contract ERC20Interface {
     uint256 public totalSupply; // Implicit getter
 
     // Get the account balance of another account with address _owner
-    function balanceOf(address _owner) constant returns (uint256 balance);
+    function balanceOf(address _owner) public constant returns (uint256 balance);
 
     // Send _amount amount of tokens to address _to
-    function transfer(address _to, uint256 _amount) returns (bool success);
+    function transfer(address _to, uint256 _amount) public returns (bool success);
 
     // Send _amount amount of tokens from address _from to address _to
-    function transferFrom(address _from, address _to, uint256 _amount) returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _amount) public returns (bool success);
 
     // Allow _spender to withdraw from your account, multiple times, up to the _amount amount.
     // If this function is called again it overwrites the current allowance with _amount.
     // this function is required for some DEX functionality
-    function approve(address _spender, uint256 _amount) returns (bool success);
+    function approve(address _spender, uint256 _amount) public returns (bool success);
 
     // Returns the amount which _spender is still allowed to withdraw from _owner
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
 
     // Triggered when tokens are transferred.
-    event Transfer(address indexed _from, address indexed _to, uint256 _amount);
+    event TransferEvent(address indexed _from, address indexed _to, uint256 _amount);
 
     // Triggered whenever approve(address _spender, uint256 _amount) is called.
-    event Approval(address indexed _owner, address indexed _spender, uint256 _amount);
+    event ApprovalEvent(address indexed _owner, address indexed _spender, uint256 _amount);
 }
 
 
@@ -94,13 +94,13 @@ contract EngravedToken is ERC20Interface, Owned {
     bool public locked;
 
     // Balances for each account
-    mapping(address => uint256) balances;
+    mapping(address => uint256) internal balances;
 
     // Owner of account approves the transfer of an amount to another account
-    mapping(address => mapping (address => uint256)) allowed;
+    mapping(address => mapping (address => uint256)) internal allowed;
 
     // Constructor
-    function EngravedToken() {
+    function EngravedToken() public {
         owner = msg.sender;
         balances[owner] = 0;
         totalSupply = 0;
@@ -111,12 +111,19 @@ contract EngravedToken is ERC20Interface, Owned {
     }
 
     /**
+     * Prevents accidental sending of ether
+     */
+    function() public {
+        assert(false);
+    }
+
+    /**
      * Get balance of `_owner`
      *
      * @param _owner The address from which the balance will be retrieved
      * @return The balance
      */
-    function balanceOf(address _owner) constant returns (uint256 balance) {
+    function balanceOf(address _owner) public constant returns (uint256 balance) {
         return balances[_owner];
     }
 
@@ -127,8 +134,7 @@ contract EngravedToken is ERC20Interface, Owned {
      * @param _amount The amount of token to be transferred
      * @return Whether the transfer was successful or not
      */
-    function transfer(address _to, uint256 _amount) returns (bool success) {
-
+    function transfer(address _to, uint256 _amount) public returns (bool success) {
         require(!locked);
         require(balances[msg.sender] >= _amount);
         require(_amount > 0);
@@ -136,7 +142,7 @@ contract EngravedToken is ERC20Interface, Owned {
 
         balances[msg.sender] -= _amount;
         balances[_to] += _amount;
-        Transfer(msg.sender, _to, _amount);
+        TransferEvent(msg.sender, _to, _amount);
         return true;
     }
 
@@ -162,7 +168,7 @@ contract EngravedToken is ERC20Interface, Owned {
         balances[_from] -= _amount;
         allowed[_from][msg.sender] -= _amount;
         balances[_to] += _amount;
-        Transfer(_from, _to, _amount);
+        TransferEvent(_from, _to, _amount);
         return true;
     }
 
@@ -173,14 +179,14 @@ contract EngravedToken is ERC20Interface, Owned {
      * @param _amount The amount of tokens to be approved for transfer
      * @return Whether the approval was successful or not
      */
-    function approve(address _spender, uint256 _amount) returns (bool success) {
+    function approve(address _spender, uint256 _amount) public returns (bool success) {
         require(!locked);
 
         // Update allowance
         allowed[msg.sender][_spender] = _amount;
 
         // Notify listners
-        Approval(msg.sender, _spender, _amount);
+        ApprovalEvent(msg.sender, _spender, _amount);
         return true;
     }
 
@@ -246,8 +252,8 @@ contract EngravedToken is ERC20Interface, Owned {
             totalSupply += amount;
 
             // Notify listeners
-            Transfer(0, this, amount);
-            Transfer(this, recipient, amount);
+            TransferEvent(0, this, amount);
+            TransferEvent(this, recipient, amount);
         }
 
         // Next round
@@ -281,17 +287,10 @@ contract EngravedToken is ERC20Interface, Owned {
         totalSupply += _amount;
 
         // Notify listners
-        Transfer(0, owner, _amount);
-        Transfer(owner, _recipient, _amount);
+        TransferEvent(0, owner, _amount);
+        TransferEvent(owner, _recipient, _amount);
 
         return true;
-    }
-
-    /**
-     * Prevents accidental sending of ether
-     */
-    function () {
-        assert(false);
     }
 
 }
