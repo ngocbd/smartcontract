@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Marriage at 0xfbe0aa2c264f1113c6639bdd09fb10e907f33a20
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Marriage at 0x851083ef3064236dbc9caa0c32962eb8f8bfd889
 */
 pragma solidity 0.4.20;
 
@@ -213,11 +213,11 @@ contract Marriage {
 
   Status status = Status.Affianced;
   
-  address groomAddr;
-  address brideAddr;
+  address public groomAddr;
+  address public brideAddr;
   
   uint256 public marriedAt = 0;
-  uint256 groomSignedAt = 0;
+  uint256 public groomSignedAt = 0;
   uint256 deposite = 0;
 
   string  public groom;
