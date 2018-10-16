@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherVote at 0x1e9d5e4ed8ef31cfece10b4c92c9057f991f36bc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherVote at 0xe9da10f1aba727bfb3641846ed4d5bbf2add39c4
 */
 /* 
 Based on a contract built by Vlad and Vitalik for Ether signal
@@ -14,7 +14,4 @@ contract EtherVote {
         // Log the vote
         LogVote(proposalHash, pro, msg.sender);
     }
-
-    // again, no ether
-    function () { throw; }
 }
