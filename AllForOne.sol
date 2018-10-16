@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AllForOne at 0x1c67ceba2f78e8af111279dc6d59fa5ef1707781
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AllForOne at 0x1f02a9e4b42954c0e9b980b23d29674006efbc4d
 */
 pragma solidity ^0.4.21;
 // The Original All For 1 -  www.allfor1.io
@@ -18,7 +18,7 @@ contract AllForOne {
     mapping (address => uint) private playerNumber;
     mapping (uint => address) private numberToAddress;
     
-    uint public currentBet = 0.005 ether;
+    uint public currentBet;
     address public contractAddress;
     address public owner;
     address public lastWinner;
@@ -48,7 +48,7 @@ contract AllForOne {
         currentGame[contractAddress]++;
         currentPlayersRequired[contractAddress] = 100;
         owner = msg.sender;
-        currentBet = 0.005 ether;
+        currentBet = .005 ether;
         lastWinner = msg.sender;
     }
     
