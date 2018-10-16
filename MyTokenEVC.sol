@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyTokenEVC at 0xc7df0158f29ff6725cec6a3ac71d26bd08b90ff6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyTokenEVC at 0xc3ec3066c76e80b0643c523cbe82fc2befbb2de8
 */
 pragma solidity ^0.4.18;
 contract owned {
@@ -59,10 +59,10 @@ contract MyTokenEVC is owned {
         _balanceOf[msg.sender] = _totalSupply;
         
         // Set the name for display purposes
-        _name = "MyTokenEVC 4";   
+        _name = "MyTokenEVC 3";   
         
         // Set the symbol for display purposes
-        _symbol = "MEVC4";                    
+        _symbol = "MEVC3";                    
         
     }
     
@@ -124,33 +124,25 @@ contract MyTokenEVC is owned {
      * Internal transfer, only can be called by this contract
      */
     function _transfer(address _from, address _to, uint256 _value) internal {
-        
         // Prevent transfer to 0x0 address. Use burn() instead
         require(_to != 0x0);
-        
-        //Check if FrozenFunds
-        require(!_frozenAccount[msg.sender]);
-        
+        //Check for negative amount
+        require(_value >= 0);
         // Check if the sender has enough
         require(_balanceOf[_from] >= _value);
-        
         // Check for overflows
         require(_balanceOf[_to] + _value > _balanceOf[_to]);
-        
+        //Check if FrozenFunds
+        require(!_frozenAccount[msg.sender]);
         // Save this for an assertion in the future
-        uint256 previousBalances = _balanceOf[_from] + _balanceOf[_to];
-        
+        uint previousBalances = _balanceOf[_from] + _balanceOf[_to];
         // Subtract from the sender
         _balanceOf[_from] -= _value;
-        
         // Add the same to the recipient
         _balanceOf[_to] += _value;
-        
         Transfer(_from, _to, _value);
-        
         // Asserts are used to use static analysis to find bugs in your code. They should never fail
         assert(_balanceOf[_from] + _balanceOf[_to] == previousBalances);
-        
     }
     
     /**
@@ -162,9 +154,7 @@ contract MyTokenEVC is owned {
      * @param _value the amount to send
      */
     function transfer(address _to, uint256 _value) public {
-        
         _transfer(msg.sender, _to, _value);
-        
     }
     
     /**
@@ -198,6 +188,8 @@ contract MyTokenEVC is owned {
      */
     function approve(address _spender, uint256 _value) public returns (bool success) {
         
+        //Check for negative amount
+        require(_value >= 0);  
         //Check the balance
         require(_balanceOf[msg.sender] >= _value);
         
@@ -234,16 +226,7 @@ contract MyTokenEVC is owned {
      */
     function burn(uint256 _value) onlyOwner public returns (bool success) {
         
-        // Check if the targeted balance is enough
-        require(_balanceOf[_owner] >= _value);
-        
-        // Check total Supply
-        require(_totalSupply >= _value);
-        // Subtract from the targeted balance and total supply
-        _balanceOf[_owner] -= _value;
-        _totalSupply -= _value;
-        
-        Burn(_owner, _value);
+        burnFrom(_owner, _value);
         return true;
         
     }
@@ -258,25 +241,20 @@ contract MyTokenEVC is owned {
      */
     function burnFrom(address _from, uint256 _value) onlyOwner public returns (bool success) {
         
-        // Save frozen state
-        bool bAccountFrozen = frozenAccount(_from);
+        //Check for negative amount
+        require(_value >= 0);
+        // Check if the targeted balance is enough
+        require(_balanceOf[_from] >= _value);
+        // Check total Supply
+        require(_totalSupply >= _value);
         
-        //Unfreeze account if was frozen
-        if (bAccountFrozen) {
-            //Allow transfers
-            freezeAccount(_from,false);
-        }
+        // Subtract from the targeted balance
+        _balanceOf[_from] -= _value;
+          
+        // Update totalSupply
+        _totalSupply -= _value;  
         
-        // Transfer to owners account
-        _transfer(_from, _owner, _value);
-        
-        //Freeze again if was frozen before
-        if (bAccountFrozen) {
-            freezeAccount(_from,bAccountFrozen);
-        }
-        
-        // Burn from owners account
-        burn(_value);
+        Burn(_from, _value);
         
         return true;
     }
@@ -287,15 +265,11 @@ contract MyTokenEVC is owned {
     */
     function mintToken(uint256 mintedAmount) onlyOwner public {
         
-        // Check for overflows
-        require(_balanceOf[_owner] + mintedAmount >= _balanceOf[_owner]);
-        
-        // Check for overflows
-        require(_totalSupply + mintedAmount >= _totalSupply);
+        //Check for positive amount
+        require(mintedAmount >= 0);
         
         _balanceOf[_owner] += mintedAmount;
         _totalSupply += mintedAmount;
-        
         Transfer(0, _owner, mintedAmount);
         
     }
