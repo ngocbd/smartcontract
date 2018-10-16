@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChilliZTokenPurchase at 0x273dc4c0b19669f9c53f48d170b3f2e18167dad4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChilliZTokenPurchase at 0xeb80ca0138a8444f761143c177b894513ff12f01
 */
 pragma solidity ^0.4.21;
 
@@ -56,7 +56,7 @@ interface EIP20Token {
 contract ChilliZTokenPurchase is Ownable {
 
   // Address of the target contract
-  address public purchase_address = 0xd64671135E7e01A1e3AB384691374FdDA0641Ed6;
+  address public purchase_address = 0x2Aa3BB100a96317D3A931570bCe4a96A26EafDb7;
   // Major partner address
   address public major_partner_address = 0x212286e36Ae998FAd27b627EB326107B3aF1FeD4;
   // Minor partner address
