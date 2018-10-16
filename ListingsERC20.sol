@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ListingsERC20 at 0x4e3b8c663d1a6620730dd68d65966b867d9e2f80
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ListingsERC20 at 0xab24cd33766da327ecd4ec9e46e2e7ba72cda783
 */
 pragma solidity ^0.4.18;
 
@@ -95,7 +95,7 @@ contract ListingsERC20 is Ownable {
     event ListingCancelled(bytes32 indexed listingId, uint256 dateCancelled);
     event ListingBought(bytes32 indexed listingId, address tokenContractAddress, uint256 price, uint256 amount, uint256 dateBought, address buyer);
 
-    string constant public VERSION = "1.0.0";
+    string constant public VERSION = "1.0.1";
     uint16 constant public GAS_LIMIT = 4999;
     uint256 public ownerPercentage;
     mapping (bytes32 => Listing) public listings;
@@ -135,8 +135,7 @@ contract ListingsERC20 is Ownable {
         require(price > 0);
         require(allowance > 0);
         require(dateEnds > 0);
-        require(getBalance(tokenContractAddress, msg.sender) > allowance);
-        require(getAllowance(tokenContractAddress, msg.sender, this) <= allowance);
+        require(getBalance(tokenContractAddress, msg.sender) >= allowance);
         bytes32 listingId = getHashInternal(tokenContractAddress, price, allowance, dateEnds, salt);
         Listing memory listing = Listing(msg.sender, tokenContractAddress, price, allowance, now, dateEnds);
         listings[listingId] = listing;
@@ -158,9 +157,9 @@ contract ListingsERC20 is Ownable {
         uint256 sale = price.mul(amount);
         uint256 allowance = listing.allowance;
         require(now <= listing.dateEnds);
-        require(allowance - sold[listingId] > amount);
-        require(allowance - amount > 0);
-        require(getBalance(contractAddress, seller) > allowance);
+        require(allowance - sold[listingId] >= amount);
+        require(allowance - amount >= 0);
+        require(getBalance(contractAddress, seller) >= allowance);
         require(getAllowance(contractAddress, seller, this) <= allowance);
         require(msg.value == sale);
         ERC20 tokenContract = ERC20(contractAddress);
