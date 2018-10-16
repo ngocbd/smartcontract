@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LANDRegistry at 0x7e06a9512086bc44c51c07c2bf0af338420c2a13
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LANDRegistry at 0xebde1cfefbdf9eae2eea69a145ddb82cb71e7651
 */
 pragma solidity ^0.4.18;
 
@@ -624,7 +624,7 @@ contract LANDRegistry is Storage,
     _name = 'Decentraland LAND';
     _symbol = 'LAND';
     _description = 'Contract that stores the Decentraland LAND registry';
-    super.initialize(data);
+    owner = 0x55ed2910cc807e4596024266ebdf7b1753405a11;
   }
 
   function authorizeDeploy(address beneficiary) public onlyOwner {
