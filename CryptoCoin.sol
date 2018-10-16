@@ -1,8 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoCoin at 0x88ded08c83e4cc86882969d10940cea44c01c010
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoCoin at 0x21974f1f094b8118859aea880cba60bf8b75c094
 */
-pragma solidity ^0.4.4;
-
 contract Token {
 
     /// @return total amount of tokens
@@ -43,7 +41,7 @@ contract Token {
 
 
 
-contract CryptoCoin is Token {
+contract StandardToken is Token {
 
     function transfer(address _to, uint256 _value) returns (bool success) {
         //Default assumes totalSupply can't be over max (2^256 - 1).
@@ -91,7 +89,7 @@ contract CryptoCoin is Token {
 
 
 //name this contract whatever you'd like
-contract ERC20Token is CryptoCoin {
+contract CryptoCoin is StandardToken {
 
     function () {
         //if ether is sent to this address, send it back.
@@ -117,12 +115,12 @@ contract ERC20Token is CryptoCoin {
 
 //make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
 
-    function ERC20Token(
+    function CryptoCoin(
         ) {
-        balances[msg.sender] = 5000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 5000000000;                        // Update total supply (100000 for example)
+        balances[msg.sender] = 50000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 50000000000000000;                        // Update total supply (100000 for example)
         name = "CryptoCoin";                                   // Set the name for display purposes
-        decimals = 1;                            // Amount of decimals for display purposes
+        decimals = 8;                            // Amount of decimals for display purposes
         symbol = "CCO";                               // Set the symbol for display purposes
     }
 
