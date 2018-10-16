@@ -1,27 +1,61 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Migrations at 0x680867b2f3414c4fbe2fb25f0933519d506312c9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Migrations at 0xb8666e5f0cbaa110b2322ae2306124eee8344392
 */
-pragma solidity ^0.4.21;
+pragma solidity 0.4.19;
+
+// File: zeppelin-solidity/contracts/ownership/Ownable.sol
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
 
 
-contract Migrations {
-    address public owner;
-    uint public last_completed_migration;
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-    modifier restricted() {
-        if (msg.sender == owner) _;
-    }
 
-    function Migrations() public {
-        owner = msg.sender;
-    }
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
 
-    function setCompleted(uint completed) public restricted {
-        last_completed_migration = completed;
-    }
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
 
-    function upgrade(address new_address) public restricted {
-        Migrations upgraded = Migrations(new_address);
-        upgraded.setCompleted(last_completed_migration);
-    }
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+// File: contracts/Migrations.sol
+
+contract Migrations is Ownable {
+  uint public lastCompletedMigration;
+
+  function setCompleted(uint completed) public onlyOwner {
+    lastCompletedMigration = completed;
+  }
+
+  function upgrade(address newAddress) public onlyOwner {
+    Migrations upgraded = Migrations(newAddress);
+    upgraded.setCompleted(lastCompletedMigration);
+  }
 }
