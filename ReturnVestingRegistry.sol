@@ -1,13 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReturnVestingRegistry at 0x1257f00e0333d7c9f9c87abf1dce6e373a6492f6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReturnVestingRegistry at 0x79c1fdaba012b9a094c495a86ce5c6199cf86368
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.13;
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
 contract Ownable {
   address public owner;
 
@@ -49,10 +44,8 @@ contract ReturnVestingRegistry is Ownable {
 
   mapping (address => address) public returnAddress;
 
-  function record(address from, address to) {
+  function record(address from, address to) onlyOwner public {
     require(from != 0);
-    require(returnAddress[from] == 0);
-    require(Ownable(msg.sender).owner() == owner);
 
     returnAddress[from] = to;
   }
