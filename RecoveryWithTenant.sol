@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RecoveryWithTenant at 0x8c0109c76e892a5481b156285faee6f0ab0ff1a0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RecoveryWithTenant at 0x83d904a2489bae727c1037469206891d8d058d92
 */
 contract Destination {
     function recover(address _from, address _to) returns(bool);
