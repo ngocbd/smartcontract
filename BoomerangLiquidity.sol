@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BoomerangLiquidity at 0x7ece309bdaf1a2dd3b417ea5b7750eb1b51c4491
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BoomerangLiquidity at 0x0676c860e11ea7b53c09bd7f2adb70fe81c8dd1e
 */
 pragma solidity 0.4.21;
 
@@ -18,6 +18,7 @@ contract ERC20Interface {
 contract P3D {
     function withdraw() public;
     function buy(address) public payable returns(uint256);
+    function myDividends(bool) public view returns(uint256);
 }
 
 contract Owned {
@@ -55,10 +56,9 @@ contract BoomerangLiquidity is Owned {
     address internal constant sk2xContract = address(0xAfd87E1E1eCe09D18f4834F64F63502718d1b3d4);
     
     function() payable public {
-        invest();
-    }
-    
-    function invest() public {
+        if(p3dContract.myDividends(true) > 0){
+            p3dContract.withdraw();
+        }
         uint256 amountToSend = address(this).balance;
         if(amountToSend > 1){
             uint256 half = amountToSend / 2;
@@ -66,34 +66,13 @@ contract BoomerangLiquidity is Owned {
             p3dContract.buy.value(half)(msg.sender);
         }
     }
-
-    function withdraw(address withdrawAddress) public {
-        P3D(withdrawAddress).withdraw();
-        invest();
-    }
-    
-    function withdraw() public {
-        p3dContract.withdraw();
-        invest();
-    }
-    
-    function withdrawAndSend() public {
-        p3dContract.withdraw();
-        invest();
-    }
-    
-    function donate() payable public {
-        sk2xContract.transfer(msg.value);
-    }
-    
-    function donate(address withdrawAddress) payable public {
-        p3dContract.buy.value(msg.value)(msg.sender);
-        withdraw(withdrawAddress);
-    }
     
     function donateP3D() payable public {
         p3dContract.buy.value(msg.value)(msg.sender);
-        withdraw();
     }
     
+    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
+        require(tokenAddress != address(p3dContract));
+        return ERC20Interface(tokenAddress).transfer(owner, tokens);
+    }
 }
