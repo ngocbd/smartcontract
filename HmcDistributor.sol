@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HmcDistributor at 0x7329e152d805dec79c67e45d4e04f3b6ce545b7c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HmcDistributor at 0x932a3d06e6d28114eee68af317e66f2c13cae981
 */
 pragma solidity ^0.4.16;
 
@@ -11,11 +11,11 @@ contract ERC20Interface {
 contract HmcDistributor {
 
     //add limit to 1 year
-    uint64  public constant lockDuration   = 1 minutes;
+    uint64  public constant lockDuration   = 1 years;
     //Bonus amount
-    uint256 public constant bonus          = 2*10*18;
+    uint256 public constant bonus          = 500*10*18;
     //add limit to 7000000 block height
-    uint    public constant minBlockNumber = 5000000;
+    uint    public constant minBlockNumber = 7000000;
 
     address public owner;
     address public hmcAddress;
