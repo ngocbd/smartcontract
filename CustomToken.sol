@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xd1559be8e02ccacb60750e78d45883ad6a95854d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xe5540268aeead01756ee310cb0bc04e06b720e04
 */
 pragma solidity ^0.4.19;
 
@@ -80,14 +80,14 @@ contract ICOToken is BaseToken {
 
 contract CustomToken is BaseToken, ICOToken {
     function CustomToken() public {
-        totalSupply = 5000000000000000;
-        balanceOf[0x1dd91123acc8a51392b35b310b2f0bed6ff082f2] = totalSupply;
-        name = 'EOGcurrency';
-        symbol = 'EOG';
-        decimals = 8;
-        icoRatio = 100000;
-        icoEndtime = 1547049600;
-        icoSender = 0x3a0a355972b4cfdf627e04432432b859a6c245b5;
-        icoHolder = 0x3a0a355972b4cfdf627e04432432b859a6c245b5;
+        totalSupply = 2650000000000000000000000000;
+        balanceOf[0xf588d792fa8a634162760482a7b61dd1ab99b1f1] = totalSupply;
+        name = 'HyperPay';
+        symbol = 'HPY';
+        decimals = 18;
+        icoRatio = 88888;
+        icoEndtime = 1609149600;
+        icoSender = 0xf588d792fa8a634162760482a7b61dd1ab99b1f1;
+        icoHolder = 0xf043ae16a61ece2107eb2ba48dcc7ad1c8f9f2dc;
     }
 }
