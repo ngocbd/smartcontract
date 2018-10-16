@@ -1,15 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x8d54a17421bcc23ea0563b2f99cf5d5860f2aab8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xC5e2e8d658E30Fb007491cdae4A156F36f7Acb9b
 */
-pragma solidity ^0.4.18;
-
+pragma solidity ^0.4.16;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
 contract TokenERC20 {
     // Public variables of the token
-    string public name;
-    string public symbol;
+    string public name = "Bitcoin Zero";
+    string public symbol = "BCZ";
     uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
@@ -30,14 +29,14 @@ contract TokenERC20 {
      * Initializes contract with initial supply tokens to the creator of the contract
      */
     function TokenERC20(
-        uint256 initialSupply,
-        string tokenName,
-        string tokenSymbol
+
     ) public {
-        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        totalSupply = 15000000000000000000000000 ;  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = tokenName;                                   // Set the name for display purposes
-        symbol = tokenSymbol;                               // Set the symbol for display purposes
+                                  // Set the name for display purposes
+
+        
+        // Set the symbol for display purposes
     }
 
     /**
@@ -102,6 +101,7 @@ contract TokenERC20 {
         allowance[msg.sender][_spender] = _value;
         return true;
     }
+    
 
     /**
      * Set allowance for other address and notify
