@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Issuer at 0xc7d07f6ffbb0b9afa300492bed1f6f0cd22809d2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Issuer at 0xa1448537a47bda2497e5d844fb6c84908b971afa
 */
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
@@ -178,21 +178,12 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-
-
 /**
- * Standard EIP-20 token with an interface marker.
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
  *
- * @notice Interface marker is used by crowdsale contracts to validate that addresses point a good token contract.
- *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
-contract StandardTokenExt is StandardToken {
 
-  /* Interface declaration */
-  function isToken() public constant returns (bool weAre) {
-    return true;
-  }
-}
 
 
 
@@ -233,6 +224,45 @@ contract Ownable {
   }
 
 }
+
+
+
+contract Recoverable is Ownable {
+
+  /// @dev Empty constructor (for now)
+  function Recoverable() {
+  }
+
+  /// @dev This will be invoked by the owner, when owner wants to rescue tokens
+  /// @param token Token which will we rescue to the owner from the contract
+  function recoverTokens(ERC20Basic token) onlyOwner public {
+    token.transfer(owner, tokensToBeReturned(token));
+  }
+
+  /// @dev Interface function, can be overwritten by the superclass
+  /// @param token Token which balance we will check and return
+  /// @return The amount of tokens (in smallest denominator) the contract owns
+  function tokensToBeReturned(ERC20Basic token) public returns (uint) {
+    return token.balanceOf(this);
+  }
+}
+
+
+
+/**
+ * Standard EIP-20 token with an interface marker.
+ *
+ * @notice Interface marker is used by crowdsale contracts to validate that addresses point a good token contract.
+ *
+ */
+contract StandardTokenExt is Recoverable, StandardToken {
+
+  /* Interface declaration */
+  function isToken() public constant returns (bool weAre) {
+    return true;
+  }
+}
+
 
 
 /**
