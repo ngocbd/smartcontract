@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Excalibur at 0xd0cef0a3d1c4df82623feaf81baca80f0194e9cc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Excalibur at 0x2c594e1cb006e86c3879b1d8191a8b059af52be7
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.20;
 
 /**
  * @title ContractReceiver
@@ -130,6 +130,7 @@ contract ERC223 {
   function transfer(address to, uint value, bytes data) public returns (bool ok);
   function transfer(address to, uint value, bytes data, string custom_fallback) public returns (bool ok);
   event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
+  event Transfer(address indexed _from, address indexed _to, uint256 _value);
 }
 
 contract Excalibur is ERC223, Ownable {
@@ -159,19 +160,19 @@ contract Excalibur is ERC223, Ownable {
   }
 
   function name() public view returns (string _name) {
-    return name;
+      return name;
   }
 
   function symbol() public view returns (string _symbol) {
-    return symbol;
+      return symbol;
   }
 
   function decimals() public view returns (uint8 _decimals) {
-    return decimals;
+      return decimals;
   }
 
   function totalSupply() public view returns (uint256 _totalSupply) {
-    return totalSupply;
+      return totalSupply;
   }
 
   function balanceOf(address _owner) public view returns (uint balance) {
@@ -185,65 +186,60 @@ contract Excalibur is ERC223, Ownable {
 
   // Function that is called when a user or another contract wants to transfer funds .
   function transfer(address _to, uint _value, bytes _data, string _custom_fallback) public returns (bool success) {
-    require(
-      _value > 0
-      && frozenAccount[msg.sender] == false
-      && frozenAccount[_to] == false
-      && now > unlockUnixTime[msg.sender]
-      && now > unlockUnixTime[_to]
-    );
+    require(_value > 0
+            && frozenAccount[msg.sender] == false
+            && frozenAccount[_to] == false
+            && now > unlockUnixTime[msg.sender]
+            && now > unlockUnixTime[_to]);
 
     if(isContract(_to)) {
-      if (balanceOf(msg.sender) < _value) revert();
-      balances[msg.sender] = SafeMath.sub(balanceOf(msg.sender), _value);
-      balances[_to] = SafeMath.add(balanceOf(_to), _value);
-      assert(_to.call.value(0)(bytes4(keccak256(_custom_fallback)), msg.sender, _value, _data));
-      Transfer(msg.sender, _to, _value, _data);
-      return true;
+        if (balanceOf(msg.sender) < _value) revert();
+        balances[msg.sender] = SafeMath.sub(balanceOf(msg.sender), _value);
+        balances[_to] = SafeMath.add(balanceOf(_to), _value);
+        assert(_to.call.value(0)(bytes4(keccak256(_custom_fallback)), msg.sender, _value, _data));
+        Transfer(msg.sender, _to, _value, _data);
+        Transfer(msg.sender, _to, _value);
+        return true;
     }
     else {
-      return transferToAddress(_to, _value, _data);
+        return transferToAddress(_to, _value, _data);
     }
   }
 
 
   // Function that is called when a user or another contract wants to transfer funds .
   function transfer(address _to, uint _value, bytes _data) public returns (bool success) {
-    require(
-      _value > 0
-      && frozenAccount[msg.sender] == false
-      && frozenAccount[_to] == false
-      && now > unlockUnixTime[msg.sender]
-      && now > unlockUnixTime[_to]
-    );
+    require(_value > 0
+            && frozenAccount[msg.sender] == false
+            && frozenAccount[_to] == false
+            && now > unlockUnixTime[msg.sender]
+            && now > unlockUnixTime[_to]);
 
     if(isContract(_to)) {
-      return transferToContract(_to, _value, _data);
+        return transferToContract(_to, _value, _data);
     }
     else {
-      return transferToAddress(_to, _value, _data);
+        return transferToAddress(_to, _value, _data);
     }
   }
 
   // Standard function transfer similar to ERC20 transfer with no _data .
   // Added due to backwards compatibility reasons .
   function transfer(address _to, uint _value) public returns (bool success) {
-    require(
-      _value > 0
-      && frozenAccount[msg.sender] == false
-      && frozenAccount[_to] == false
-      && now > unlockUnixTime[msg.sender]
-      && now > unlockUnixTime[_to]
-    );
+    require(_value > 0
+            && frozenAccount[msg.sender] == false
+            && frozenAccount[_to] == false
+            && now > unlockUnixTime[msg.sender]
+            && now > unlockUnixTime[_to]);
 
     //standard function transfer similar to ERC20 transfer with no _data
     //added due to backwards compatibility reasons
     bytes memory empty;
-    if (isContract(_to)) {
-      return transferToContract(_to, _value, empty);
+    if(isContract(_to)) {
+        return transferToContract(_to, _value, empty);
     }
     else {
-      return transferToAddress(_to, _value, empty);
+        return transferToAddress(_to, _value, empty);
     }
   }
 
@@ -263,6 +259,7 @@ contract Excalibur is ERC223, Ownable {
     balances[msg.sender] = SafeMath.sub(balanceOf(msg.sender), _value);
     balances[_to] = SafeMath.add(balanceOf(_to), _value);
     Transfer(msg.sender, _to, _value, _data);
+    Transfer(msg.sender, _to, _value);
     return true;
   }
 
@@ -274,6 +271,7 @@ contract Excalibur is ERC223, Ownable {
     ContractReceiver receiver = ContractReceiver(_to);
     receiver.tokenFallback(msg.sender, _value, _data);
     Transfer(msg.sender, _to, _value, _data);
+    Transfer(msg.sender, _to, _value);
     return true;
   }
 
@@ -298,7 +296,8 @@ contract Excalibur is ERC223, Ownable {
    * @param unixTimes Unix times when locking up will be finished
    */
   function lockupAccounts(address[] targets, uint[] unixTimes) onlyOwner public {
-    require(targets.length > 0 && targets.length == unixTimes.length);
+    require(targets.length > 0
+            && targets.length == unixTimes.length);
 
     for(uint i = 0; i < targets.length; i++){
       require(unlockUnixTime[targets[i]] < unixTimes[i]);
@@ -313,7 +312,8 @@ contract Excalibur is ERC223, Ownable {
    * @param _unitAmount The amount of token to be burned.
    */
   function burn(address _from, uint256 _unitAmount) onlyOwner public {
-    require(_unitAmount > 0 && balanceOf(_from) >= _unitAmount);
+    require(_unitAmount > 0
+            && balanceOf(_from) >= _unitAmount);
 
     balances[_from] = SafeMath.sub(balances[_from], _unitAmount);
     totalSupply = SafeMath.sub(totalSupply, _unitAmount);
@@ -336,8 +336,7 @@ contract Excalibur is ERC223, Ownable {
     totalSupply = SafeMath.add(totalSupply, _unitAmount);
     balances[_to] = SafeMath.add(balances[_to], _unitAmount);
     Mint(_to, _unitAmount);
-    bytes memory empty;
-    Transfer(address(0), _to, _unitAmount, empty);
+    Transfer(address(0), _to, _unitAmount);
     return true;
   }
 
@@ -354,27 +353,22 @@ contract Excalibur is ERC223, Ownable {
    * @dev Function to distribute tokens to the list of addresses by the provided amount
    */
   function distributeTokens(address[] addresses, uint256 amount) public returns (bool) {
-    require(
-      amount > 0
-      && addresses.length > 0
-      && frozenAccount[msg.sender] == false
-      && now > unlockUnixTime[msg.sender]
-    );
+    require(amount > 0
+            && addresses.length > 0
+            && frozenAccount[msg.sender] == false
+            && now > unlockUnixTime[msg.sender]);
 
     amount = SafeMath.mul(amount, 1e8);
     uint256 totalAmount = SafeMath.mul(amount, addresses.length);
     require(balances[msg.sender] >= totalAmount);
 
-    bytes memory empty;
     for (uint i = 0; i < addresses.length; i++) {
-      require(
-        addresses[i] != 0x0
-        && frozenAccount[addresses[i]] == false
-        && now > unlockUnixTime[addresses[i]]
-      );
+      require(addresses[i] != 0x0
+              && frozenAccount[addresses[i]] == false
+              && now > unlockUnixTime[addresses[i]]);
 
       balances[addresses[i]] = SafeMath.add(balances[addresses[i]], amount);
-      Transfer(msg.sender, addresses[i], amount, empty);
+      Transfer(msg.sender, addresses[i], amount);
     }
     balances[msg.sender] = SafeMath.sub(balances[msg.sender], totalAmount);
     return true;
@@ -384,24 +378,22 @@ contract Excalibur is ERC223, Ownable {
    * @dev Function to collect tokens from the list of addresses
    */
   function collectTokens(address[] addresses, uint[] amounts) onlyOwner public returns (bool) {
-    require(addresses.length > 0 && addresses.length == amounts.length);
+    require(addresses.length > 0
+            && addresses.length == amounts.length);
 
     uint256 totalAmount = 0;
 
-    bytes memory empty;
     for (uint i = 0; i < addresses.length; i++) {
-      require(
-        amounts[i] > 0
-        && addresses[i] != 0x0
-        && frozenAccount[addresses[i]] == false
-        && now > unlockUnixTime[addresses[i]]
-      );
+      require(amounts[i] > 0
+              && addresses[i] != 0x0
+              && frozenAccount[addresses[i]] == false
+              && now > unlockUnixTime[addresses[i]]);
 
       amounts[i] = SafeMath.mul(amounts[i], 1e8);
       require(balances[addresses[i]] >= amounts[i]);
       balances[addresses[i]] = SafeMath.sub(balances[addresses[i]], amounts[i]);
       totalAmount = SafeMath.add(totalAmount, amounts[i]);
-      Transfer(addresses[i], msg.sender, amounts[i], empty);
+      Transfer(addresses[i], msg.sender, amounts[i]);
     }
     balances[msg.sender] = SafeMath.add(balances[msg.sender], totalAmount);
     return true;
@@ -416,18 +408,15 @@ contract Excalibur is ERC223, Ownable {
    *      If distributeAmount is 0, this function doesn't work
    */
   function autoDistribute() payable public {
-    require(
-      distributeAmount > 0
-      && balanceOf(owner) >= distributeAmount
-      && frozenAccount[msg.sender] == false
-      && now > unlockUnixTime[msg.sender]
-    );
+    require(distributeAmount > 0
+            && balanceOf(owner) >= distributeAmount
+            && frozenAccount[msg.sender] == false
+            && now > unlockUnixTime[msg.sender]);
     if (msg.value > 0) owner.transfer(msg.value);
 
-    bytes memory empty;
     balances[owner] = SafeMath.sub(balances[owner], distributeAmount);
     balances[msg.sender] = SafeMath.add(balances[msg.sender], distributeAmount);
-    Transfer(owner, msg.sender, distributeAmount, empty);
+    Transfer(owner, msg.sender, distributeAmount);
   }
 
   /**
