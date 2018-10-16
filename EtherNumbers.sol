@@ -1,9 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherNumbers at 0xa1d121abe654d2a7c44f5b0f4752599746162cc4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherNumbers at 0x3f214f938e4e02c3823b852ab0f275f6c7352ec8
 */
 pragma solidity ^0.4.18; // solhint-disable-line
-
-
 
 /// @title Interface for contracts conforming to ERC-721: Non-Fungible Tokens
 /// @author Dieter Shirley <dete@axiomzen.co> (https://github.com/dete)
@@ -28,12 +26,11 @@ contract ERC721 {
   // function tokenMetadata(uint256 _tokenId) public view returns (string infoUrl);
 }
 
-
 contract EtherNumbers is ERC721 {
 
   /*** EVENTS ***/
 
-  /// @dev The Birth event is fired whenever a new Number comes into existence.
+  /// @dev The Birth event is fired whenever a new Gem comes into existence.
   event Birth(uint256 tokenId, string name, address owner);
 
   /// @dev The TokenSold event is fired whenever a token is sold.
@@ -56,21 +53,21 @@ contract EtherNumbers is ERC721 {
 
   /*** STORAGE ***/
 
-  /// @dev A mapping from person IDs to the address that owns them. All persons have
+  /// @dev A mapping from gem IDs to the address that owns them. All gems have
   ///  some valid owner address.
-  mapping (uint256 => address) public personIndexToOwner;
+  mapping (uint256 => address) public gemIndexToOwner;
 
   // @dev A mapping from owner address to count of tokens that address owns.
   //  Used internally inside balanceOf() to resolve ownership count.
   mapping (address => uint256) private ownershipTokenCount;
 
-  /// @dev A mapping from PersonIDs to an address that has been approved to call
-  ///  transferFrom(). Each Person can only have one approved address for transfer
+  /// @dev A mapping from GemIDs to an address that has been approved to call
+  ///  transferFrom(). Each Gem can only have one approved address for transfer
   ///  at any time. A zero value means no approval is outstanding.
-  mapping (uint256 => address) public personIndexToApproved;
+  mapping (uint256 => address) public gemIndexToApproved;
 
-  // @dev A mapping from PersonIDs to the price of the token.
-  mapping (uint256 => uint256) private personIndexToPrice;
+  // @dev A mapping from GemIDs to the price of the token.
+  mapping (uint256 => uint256) private gemIndexToPrice;
 
   // The addresses of the accounts (or contracts) that can execute actions within each roles.
   address public ceoAddress;
@@ -79,11 +76,11 @@ contract EtherNumbers is ERC721 {
   uint256 public promoCreatedCount;
 
   /*** DATATYPES ***/
-  struct Number {
+  struct Gem {
     string name;
   }
 
-  Number[] private numbers;
+  Gem[] private gems;
 
   /*** ACCESS MODIFIERS ***/
   /// @dev Access modifier for CEO-only functionality
@@ -126,7 +123,7 @@ contract EtherNumbers is ERC721 {
     // Caller must own token.
     require(_owns(msg.sender, _tokenId));
 
-    personIndexToApproved[_tokenId] = _to;
+    gemIndexToApproved[_tokenId] = _to;
 
     Approval(msg.sender, _to, _tokenId);
   }
@@ -152,25 +149,26 @@ contract EtherNumbers is ERC721 {
     }
 
     promoCreatedCount++;
-    _createPerson(_name, personOwner, _price);
+    _createGem(_name, personOwner, _price);
+  }
+  
+
+  /// @dev Creates a new Gem with the given name.
+  function createContractGem(string _name) public onlyCLevel {
+    _createGem(_name, address(this), startingPrice);
   }
 
-  /// @dev Creates a new Person with the given name.
-  function createContractNumber(string _name) public onlyCOO {
-    _createPerson(_name, address(this), startingPrice);
-  }
-
-  /// @notice Returns all the relevant information about a specific person.
-  /// @param _tokenId The tokenId of the person of interest.
-  function getNumber(uint256 _tokenId) public view returns (
-    string numberName,
+  /// @notice Returns all the relevant information about a specific gem.
+  /// @param _tokenId The tokenId of the gem of interest.
+  function getGem(uint256 _tokenId) public view returns (
+    string gemName,
     uint256 sellingPrice,
     address owner
   ) {
-    Number storage number = numbers[_tokenId];
-    numberName = number.name;
-    sellingPrice = personIndexToPrice[_tokenId];
-    owner = personIndexToOwner[_tokenId];
+    Gem storage gem = gems[_tokenId];
+    gemName = gem.name;
+    sellingPrice = gemIndexToPrice[_tokenId];
+    owner = gemIndexToOwner[_tokenId];
   }
 
   function implementsERC721() public pure returns (bool) {
@@ -190,7 +188,7 @@ contract EtherNumbers is ERC721 {
     view
     returns (address owner)
   {
-    owner = personIndexToOwner[_tokenId];
+    owner = gemIndexToOwner[_tokenId];
     require(owner != address(0));
   }
 
@@ -200,10 +198,10 @@ contract EtherNumbers is ERC721 {
 
   // Allows someone to send ether and obtain the token
   function purchase(uint256 _tokenId) public payable {
-    address oldOwner = personIndexToOwner[_tokenId];
+    address oldOwner = gemIndexToOwner[_tokenId];
     address newOwner = msg.sender;
 
-    uint256 sellingPrice = personIndexToPrice[_tokenId];
+    uint256 sellingPrice = gemIndexToPrice[_tokenId];
 
     // Making sure token owner is not sending to self
     require(oldOwner != newOwner);
@@ -220,13 +218,13 @@ contract EtherNumbers is ERC721 {
     // Update prices
     if (sellingPrice < firstStepLimit) {
       // first stage
-      personIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 200), 92);
+      gemIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 200), 92);
     } else if (sellingPrice < secondStepLimit) {
       // second stage
-      personIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 120), 92);
+      gemIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 120), 92);
     } else {
       // third stage
-      personIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 115), 92);
+      gemIndexToPrice[_tokenId] = SafeMath.div(SafeMath.mul(sellingPrice, 115), 92);
     }
 
     _transfer(oldOwner, newOwner, _tokenId);
@@ -236,13 +234,13 @@ contract EtherNumbers is ERC721 {
       oldOwner.transfer(payment); //(1-0.08)
     }
 
-    TokenSold(_tokenId, sellingPrice, personIndexToPrice[_tokenId], oldOwner, newOwner, numbers[_tokenId].name);
+    TokenSold(_tokenId, sellingPrice, gemIndexToPrice[_tokenId], oldOwner, newOwner, gems[_tokenId].name);
 
     msg.sender.transfer(purchaseExcess);
   }
 
   function priceOf(uint256 _tokenId) public view returns (uint256 price) {
-    return personIndexToPrice[_tokenId];
+    return gemIndexToPrice[_tokenId];
   }
 
   /// @dev Assigns a new address to act as the CEO. Only available to the current CEO.
@@ -271,7 +269,7 @@ contract EtherNumbers is ERC721 {
   /// @dev Required for ERC-721 compliance.
   function takeOwnership(uint256 _tokenId) public {
     address newOwner = msg.sender;
-    address oldOwner = personIndexToOwner[_tokenId];
+    address oldOwner = gemIndexToOwner[_tokenId];
 
     // Safety check to prevent against an unexpected 0x0 default.
     require(_addressNotNull(newOwner));
@@ -284,7 +282,7 @@ contract EtherNumbers is ERC721 {
 
   /// @param _owner The owner whose celebrity tokens we are interested in.
   /// @dev This method MUST NEVER be called by smart contract code. First, it's fairly
-  ///  expensive (it walks the entire Persons array looking for persons belonging to owner),
+  ///  expensive (it walks the entire Gems array looking for gems belonging to owner),
   ///  but it also returns a dynamic array, which is only supported for web3 calls, and
   ///  not contract-to-contract calls.
   function tokensOfOwner(address _owner) public view returns(uint256[] ownerTokens) {
@@ -294,13 +292,13 @@ contract EtherNumbers is ERC721 {
       return new uint256[](0);
     } else {
       uint256[] memory result = new uint256[](tokenCount);
-      uint256 totalPersons = totalSupply();
+      uint256 totalGems = totalSupply();
       uint256 resultIndex = 0;
 
-      uint256 personId;
-      for (personId = 0; personId <= totalPersons; personId++) {
-        if (personIndexToOwner[personId] == _owner) {
-          result[resultIndex] = personId;
+      uint256 gemId;
+      for (gemId = 0; gemId <= totalGems; gemId++) {
+        if (gemIndexToOwner[gemId] == _owner) {
+          result[resultIndex] = gemId;
           resultIndex++;
         }
       }
@@ -311,7 +309,7 @@ contract EtherNumbers is ERC721 {
   /// For querying totalSupply of token
   /// @dev Required for ERC-721 compliance.
   function totalSupply() public view returns (uint256 total) {
-    return numbers.length;
+    return gems.length;
   }
 
   /// Owner initates the transfer of the token to another account
@@ -353,32 +351,32 @@ contract EtherNumbers is ERC721 {
 
   /// For checking approval of transfer for address _to
   function _approved(address _to, uint256 _tokenId) private view returns (bool) {
-    return personIndexToApproved[_tokenId] == _to;
+    return gemIndexToApproved[_tokenId] == _to;
   }
 
-  /// For creating Person
-  function _createPerson(string _name, address _owner, uint256 _price) private {
-    Number memory _number = Number({
+  /// For creating Gem
+  function _createGem(string _name, address _owner, uint256 _price) private {
+    Gem memory _gem = Gem({
       name: _name
     });
-    uint256 newPersonId = numbers.push(_number) - 1;
+    uint256 newGemId = gems.push(_gem) - 1;
 
     // It's probably never going to happen, 4 billion tokens are A LOT, but
     // let's just be 100% sure we never let this happen.
-    require(newPersonId == uint256(uint32(newPersonId)));
+    require(newGemId == uint256(uint32(newGemId)));
 
-    Birth(newPersonId, _name, _owner);
+    Birth(newGemId, _name, _owner);
 
-    personIndexToPrice[newPersonId] = _price;
+    gemIndexToPrice[newGemId] = _price;
 
     // This will assign ownership, and also emit the Transfer event as
     // per ERC721 draft
-    _transfer(address(0), _owner, newPersonId);
+    _transfer(address(0), _owner, newGemId);
   }
 
   /// Check for token ownership
   function _owns(address claimant, uint256 _tokenId) private view returns (bool) {
-    return claimant == personIndexToOwner[_tokenId];
+    return claimant == gemIndexToOwner[_tokenId];
   }
 
   /// For paying out balance on contract
@@ -390,18 +388,18 @@ contract EtherNumbers is ERC721 {
     }
   }
 
-  /// @dev Assigns ownership of a specific Person to an address.
+  /// @dev Assigns ownership of a specific Gem to an address.
   function _transfer(address _from, address _to, uint256 _tokenId) private {
-    // Since the number of persons is capped to 2^32 we can't overflow this
+    // Since the number of gems is capped to 2^32 we can't overflow this
     ownershipTokenCount[_to]++;
     //transfer ownership
-    personIndexToOwner[_tokenId] = _to;
+    gemIndexToOwner[_tokenId] = _to;
 
-    // When creating new persons _from is 0x0, but we can't account that address.
+    // When creating new gems _from is 0x0, but we can't account that address.
     if (_from != address(0)) {
       ownershipTokenCount[_from]--;
       // clear any previously approved ownership exchange
-      delete personIndexToApproved[_tokenId];
+      delete gemIndexToApproved[_tokenId];
     }
 
     // Emit the transfer event.
