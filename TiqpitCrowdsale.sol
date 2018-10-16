@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TiqpitCrowdsale at 0x3bae01a250595cc17489394c04c09ab743e434eb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TiqpitCrowdsale at 0x9ce7c4dfa7564d02aafa748ca95a8af523925e26
 */
 pragma solidity ^0.4.18;
 
@@ -884,7 +884,7 @@ contract TiqpitCrowdsale is Pausable, Whitelistable {
             addPreIcoPurchaseInfo(msg.sender, weiAmount, tokensAmount);
 
             if (soldTokensPreIco >= MINCAP_TOKENS_PRE_ICO) {
-                owner.transfer(this.balance);
+                tiqpitSolutionsWallet.transfer(this.balance);
             }
         }
 
@@ -892,7 +892,7 @@ contract TiqpitCrowdsale is Pausable, Whitelistable {
             addIcoPurchaseInfo(msg.sender, weiAmount, tokensAmount);
 
             if (soldTokensIco >= MINCAP_TOKENS_ICO) {
-                owner.transfer(this.balance);
+                tiqpitSolutionsWallet.transfer(this.balance);
             }
         }
     }
