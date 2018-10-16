@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Gmt at 0x28d7ce9d3eb5ce111a85b6ed7ffd629c75d4f960
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Gmt at 0x08a4d2372777267373ff0fbf80fa278b2846c087
 */
 pragma solidity ^0.4.10;
 
@@ -96,7 +96,7 @@ contract Gmt is SafeMath, StandardToken {
     uint256 private constant tokenCreationCapPreICO =  460000*10**decimals;
     uint256 public constant tokenCreationCap = 1200000*10**decimals;
 
-    address public constant owner = 0x3705FC0600D7173E3d451740B3f304747B447ECe;
+    address public constant owner = 0x02baFcF3e3C183103Aa94A248CC512d4DCf10cfa;
 
     // 1 ETH = 250 USD
     uint private oneTokenInWeiSale = 5000000000000000; // 0,005 ETH
