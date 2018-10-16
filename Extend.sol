@@ -1,194 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Extend at 0x690508422d576edb99d676320ea251036d164062
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Extend at 0xa6f464823f967ec022b71cc46bf8bf14e43f2b81
 */
-pragma solidity ^0.4.17;
-
-contract ExtendData {
-    
-   struct User {
-        bytes32 username;
-        bool verified;
-    }
-
-    modifier onlyOwners {
-        require(owners[msg.sender]);
-        _;
-    }
-
-    mapping(bytes32 => address) usernameToAddress;
-    mapping(bytes32 => address) queryToAddress;
-    mapping(address => mapping(bytes32 => uint)) tips;
-    mapping(address => mapping(bytes32 => uint)) lastTip;
-    mapping(bytes32 => uint) balances;
-    mapping(address => User) users;   
-    mapping(address => bool) owners;
-    
-    function ExtendData() public {
-        owners[msg.sender] = true;
-    }
-    
-    //getters
-    function getAddressForUsername(bytes32 _username) public constant onlyOwners returns (address) {
-        return usernameToAddress[_username];
-    }
-
-    function getAddressForQuery(bytes32 _queryId) public constant onlyOwners returns (address) {
-        return queryToAddress[_queryId];
-    }
-    
-    function getBalanceForUser(bytes32 _username) public constant onlyOwners returns (uint) {
-        return balances[_username];
-    }
-    
-    function getUserVerified(address _address) public constant onlyOwners returns (bool) {
-        return users[_address].verified;
-    }
-    
-    function getUserUsername(address _address) public constant onlyOwners returns (bytes32) {
-        return users[_address].username;
-    }
-
-    function getTip(address _from, bytes32 _to) public constant onlyOwners  returns (uint) {
-        return tips[_from][_to];
-    }
-  
-    function getLastTipTime(address _from, bytes32 _to) public constant onlyOwners returns (uint) {
-        return lastTip[_from][_to];
-    }
-
-    //setters
-    function setQueryIdForAddress(bytes32 _queryId, address _address) public onlyOwners {
-        queryToAddress[_queryId] = _address;
-    }
-   
-    function setBalanceForUser(bytes32 _username, uint _balance) public onlyOwners {
-        balances[_username] = _balance;
-    }
- 
-    function setUsernameForAddress(bytes32 _username, address _address) public onlyOwners {
-        usernameToAddress[_username] = _address;
-    }
-
-    function setVerified(address _address) public onlyOwners {
-        users[_address].verified = true;
-    }
-
-    function addTip(address _from, bytes32 _to, uint _tip) public onlyOwners {
-        tips[_from][_to] += _tip;
-        balances[_to] += _tip;
-        lastTip[_from][_to] = now;     
-    }
-
-    function addUser(address _address, bytes32 _username) public onlyOwners {
-        users[_address] = User({
-                username: _username,
-                verified: false
-            });
-    }
-
-    function removeTip(address _from, bytes32 _to) public onlyOwners {
-        balances[_to] -= tips[_from][_to];
-        tips[_from][_to] = 0;
-    }
-    
-    //owner modification
-    function addOwner(address _address) public onlyOwners {
-        owners[_address] = true;
-    }
-    
-    function removeOwner(address _address) public onlyOwners {
-        owners[_address] = false;
-    }
-}
-
-pragma solidity ^0.4.17;
-
-contract ExtendEvents {
-
-    event LogQuery(bytes32 query, address userAddress);
-    event LogBalance(uint balance);
-    event LogNeededBalance(uint balance);
-    event CreatedUser(bytes32 username);
-    event UsernameDoesNotMatch(bytes32 username, bytes32 neededUsername);
-    event VerifiedUser(bytes32 username);
-    event UserTipped(address from, bytes32 indexed username, uint val);
-    event WithdrawSuccessful(bytes32 username);
-    event CheckAddressVerified(address userAddress);
-    event RefundSuccessful(address from, bytes32 username);
-    event GoldBought(uint price, address from, bytes32 to, string months, string priceUsd, string commentId, string nonce, string signature);
-
-    mapping(address => bool) owners;
-
-    modifier onlyOwners() {
-        require(owners[msg.sender]);
-        _;
-    }
-
-    function ExtendEvents() {
-        owners[msg.sender] = true;
-    }
-
-    function addOwner(address _address) onlyOwners {
-        owners[_address] = true;
-    }
-
-    function removeOwner(address _address) onlyOwners {
-        owners[_address] = false;
-    }
-
-    function goldBought(uint _price, 
-                        address _from, 
-                        bytes32 _to, 
-                        string _months,
-                        string _priceUsd, 
-                        string _commentId,
-                        string _nonce, 
-                        string _signature) onlyOwners {
-                            
-        GoldBought(_price, _from, _to, _months, _priceUsd, _commentId, _nonce, _signature);
-    }
-
-    function createdUser(bytes32 _username) onlyOwners {
-        CreatedUser(_username);
-    }
-
-    function refundSuccessful(address _from, bytes32 _username) onlyOwners {
-        RefundSuccessful(_from, _username);
-    }
-
-    function usernameDoesNotMatch(bytes32 _username, bytes32 _neededUsername) onlyOwners {
-        UsernameDoesNotMatch(_username, _neededUsername);
-    }
-
-    function verifiedUser(bytes32 _username) onlyOwners {
-        VerifiedUser(_username);
-    }
-
-    function userTipped(address _from, bytes32 _username, uint _val) onlyOwners {
-        UserTipped(_from, _username, _val);
-    }
-
-    function withdrawSuccessful(bytes32 _username) onlyOwners {
-        WithdrawSuccessful(_username);
-    }
-
-    function logQuery(bytes32 _query, address _userAddress) onlyOwners {
-        LogQuery(_query, _userAddress);
-    }
-
-    function logBalance(uint _balance) onlyOwners {
-        LogBalance(_balance);
-    }
-
-    function logNeededBalance(uint _balance) onlyOwners {
-        LogNeededBalance(_balance);
-    }
-
-}
-
-
-pragma solidity ^0.4.17;
-
 // <ORACLIZE_API>
 /*
 Copyright (c) 2015-2016 Oraclize SRL
@@ -1206,64 +1018,139 @@ contract usingOraclize {
 }
 // </ORACLIZE_API>
 
-pragma solidity ^0.4.17;
+
+
+
+
+
+pragma solidity ^0.4.19;
+
+contract OldData {
+    mapping(bytes32 => address) public oldUsers;
+    bytes32[] public allOldUsers;
+    
+    function OldData() public {
+        allOldUsers.push("anatalist");
+        allOldUsers.push("djoney_");
+        allOldUsers.push("Luit03");
+        allOldUsers.push("bquimper");
+        allOldUsers.push("oblomov1");
+        allOldUsers.push("myownman");
+        allOldUsers.push("saxis");
+        allOldUsers.push("bobanm");
+        allOldUsers.push("screaming_for_memes");
+        allOldUsers.push("playingethereum");
+        allOldUsers.push("eli0tz");
+        allOldUsers.push("BrBaumann");
+        allOldUsers.push("sunstrikuuu");
+        allOldUsers.push("RexetBlell");
+        allOldUsers.push("some_random_user_0");
+        allOldUsers.push("SterLu");
+        allOldUsers.push("besoisinovi");
+        allOldUsers.push("Matko95");
+        
+        oldUsers["anatalist"] = 0xC11B1890aE2c0F8FCf1ceD3917D92d652e5e7E11;
+        oldUsers["djoney_"] = 0x0400c514D8a63CF6e33B5C42994257e9F4f66dE0;
+        oldUsers["Luit03"] = 0x19DB8629bCCDd0EFc8F89cE1af298D31329320Ec;
+        oldUsers["bquimper"] = 0xaB001dAb0D919A9e9CafE79AeE6f6919845624f8;
+        oldUsers["oblomov1"] = 0xC471df16A1B1082F9Be13e70dAa07372C7AC355f;
+        oldUsers["myownman"] = 0x174252aE3327DD8cD16fE3883362D0BAB7Fb6f3b;
+        oldUsers["saxis"] = 0x27cb2A354E2907B0b5F03BB03d1B740a55A5a562;
+        oldUsers["bobanm"] = 0x45E0F19aDfeaD31eB091381FCE05C5DE4197DD9c;
+        oldUsers["screaming_for_memes"] = 0xfF3a0d4F244fe663F1a2E2d87D04FFbAC0910e0E;
+        oldUsers["playingethereum"] = 0x23dEd0678B7e41DC348D1D3F2259F2991cB21018;
+        oldUsers["eli0tz"] = 0x0b4F0F9CE55c3439Cf293Ee17d9917Eaf4803188;
+        oldUsers["BrBaumann"] = 0xE6AC244d854Ccd3de29A638a5A8F7124A508c61D;
+        oldUsers["sunstrikuuu"] = 0xf6246dfb1F6E26c87564C0BB739c1E237f5F621c;
+        oldUsers["RexetBlell"] = 0xc4C929484e16BD693d94f9903ecd5976E9FB4987;
+        oldUsers["some_random_user_0"] = 0x69CC780Bf4F63380c4bC745Ee338CB678752301a;
+        oldUsers["SterLu"] = 0xe07caB35275C4f0Be90D6F4900639EC301Fc9b69;
+        oldUsers["besoisinovi"] = 0xC834b38ba4470b43537169cd404FffB4d5615f12;
+        oldUsers["Matko95"] = 0xC26bf0FA0413d9a81470353589a50d4fb3f92a30;
+    }
+    
+    function getArrayLength() public view returns(uint) {
+        return allOldUsers.length;
+    }
+}
 
 contract Extend is usingOraclize {
 
+    event LogQuery(bytes32 query, address userAddress);
+    event LogBalance(uint balance);
+    event LogNeededBalance(uint balance);
+    event CreatedUser(bytes32 username);
+    event UsernameDoesNotMatch(bytes32 username, bytes32 neededUsername);
+    event VerifiedUser(bytes32 username, address userAddress);
+    event UserTipped(address from, bytes32 indexed username, uint val, bytes32 indexed commentId, bool reply);
+    event WithdrawSuccessful(bytes32 username);
+    event CheckAddressVerified(address userAddress);
+    event RefundSuccessful(address from, bytes32 username);
+    event GoldBought(uint price, address from, bytes32 to, string months, string priceUsd, bytes32 indexed commentId, string nonce, string signature, bool reply);
+
     modifier  onlyVerified() { 
-        require(data.getUserVerified(msg.sender)); 
+        require(users[msg.sender].verified); 
         _; 
     }
+
+   struct User {
+        bytes32 username;
+        bool verified;
+    }
     
-    ExtendData data;
-    ExtendEvents events;
-    address owner;
+    mapping(bytes32 => address) public usernameToAddress;
+    mapping(bytes32 => address) public queryToAddress;
+    mapping(address => mapping(bytes32 => uint)) public tips;
+    mapping(address => mapping(bytes32 => uint)) public lastTip;
+    mapping(bytes32 => uint) public balances;
+    mapping(address => User) public users;
 
-    function Extend(ExtendData _data, ExtendEvents _events) public {
-        data = ExtendData(_data);
-        events = ExtendEvents(_events);
+    address public owner;
+    uint public goldBalance;
+
+    OldData public oldData;
+
+    function Extend(address _oldData) public {
+        oldData = OldData(_oldData);
         owner = msg.sender;
-    }
+        oraclize_setProof(proofType_TLSNotary | proofStorage_IPFS);
 
-    function getDataAddress() public constant returns (address) {
-        return address(data);
-    }
-
-    function getEventAddress() public constant returns (address) {
-        return address(events);
+        createOldUsers();
     }
 
     function getOraclizePrice() public constant returns (uint) {
-        return oraclize_getPrice("computation");
+        return oraclize_getPrice("nested");
     }
 
-    function getAddressFromUsername(bytes32 _username) public constant returns (address userAddress) {
-        return data.getAddressForUsername(_username);
+    function getAddressFromUsername(bytes32 _username) public constant returns (address) {
+        return usernameToAddress[_username];
     }
 
     function getUsernameForAddress(address _address) public constant returns (bytes32) {
-        if (data.getUserVerified(_address)) {
-            return data.getUserUsername(_address);
+        if (users[_address].verified) {
+            return users[_address].username;
         }
-        
+
         return 0x0;
     }
 
     function checkAddressVerified() public constant returns (bool) {
-        return data.getUserVerified(msg.sender);
+        return users[msg.sender].verified;
     }
 
     function checkUsernameVerified(bytes32 _username) public constant returns (bool) {
-        return data.getUserVerified(data.getAddressForUsername(_username));
+        return users[usernameToAddress[_username]].verified;
     }
 
     function checkBalance() public onlyVerified constant returns (uint) {
-        return data.getBalanceForUser(data.getUserUsername(msg.sender));
+        return balances[users[msg.sender].username];
     }
 
     function checkIfRefundAvailable(bytes32 _username) public constant returns (bool) {
-        return (data.getLastTipTime(msg.sender, _username) < (now - 2 weeks)) && (data.getTip(msg.sender, _username) > 0);
+        return ((lastTip[msg.sender][_username] < (now - 2 weeks)) &&
+                (tips[msg.sender][_username] > 0));
     }
+    
 
     /**
      * Creates user with username and address
@@ -1272,30 +1159,69 @@ contract Extend is usingOraclize {
      */
     function createUser(bytes32 _username, string _token) public payable {
 
-        data.addUser(msg.sender, _username);
+        users[msg.sender] = User({
+                username: _username,
+                verified: false
+            });
 
-        if (oraclize_getPrice("computation") > msg.value) {
-            events.logBalance(msg.value);
-            events.logNeededBalance(oraclize_getPrice("computation"));
+        if (oraclize_getPrice("nested") > msg.value) {
+            LogBalance(msg.value);
+            LogNeededBalance(oraclize_getPrice("nested"));
             return;
         } 
         
         string memory queryString = strConcat("[computation] ['QmaCikXkkUHD7cQMK3AJhTjpPmNj4hLwf3DXBzcEpM9vnL', '${[decrypt] ", _token, "}']");
         bytes32 queryId = oraclize_query("nested", queryString);
-        data.setQueryIdForAddress(queryId, msg.sender);
+        queryToAddress[queryId] = msg.sender;
 
-        events.logQuery(queryId, msg.sender);
-        events.createdUser(_username);
+        LogQuery(queryId, msg.sender);
+        CreatedUser(_username);
+    }
+
+    /**
+     * Function called when API gets results
+     * @param _myid query id.
+     * @param _result string returned from api, should be reddit username
+     * @param _proof oraclize proof for TLSNotary | proofStorage_IPFS
+     */
+    function __callback(bytes32 _myid, string _result, bytes _proof) public {
+        require(msg.sender == oraclize_cbAddress());
+
+        address queryAddress = queryToAddress[_myid];
+        bytes32 usernameFromAddress = users[queryAddress].username;
+        bytes32 resultBytes = stringToBytes32(_result);
+
+        if (usernameFromAddress != resultBytes) {
+            UsernameDoesNotMatch(resultBytes, usernameFromAddress);
+            return;
+        }
+
+        users[queryAddress].verified = true;
+        usernameToAddress[usernameFromAddress] = queryAddress;
+
+        VerifiedUser(usernameFromAddress, queryAddress);
+
+        if (balances[usernameFromAddress] > 0) {
+            sendTip(usernameFromAddress, balances[usernameFromAddress]);
+        }
     }
 
     /**
      * Tip user for his post/comment 
      * @param _username reddit username for user
+     * @param _commentId comment id
+     * @param _reply reply to reddit thread
      */
-    function tipUser(bytes32 _username) public payable {
-        data.addTip(msg.sender, _username, msg.value);
+    function tipUser(bytes32 _username, bytes32 _commentId, bool _reply) public payable {
+        //add tip from-to user
+        tips[msg.sender][_username] += msg.value;
+        //add balance for username
+        balances[_username] += msg.value;
+        //remember last tip time
+        lastTip[msg.sender][_username] = now; 
         
-        events.userTipped(msg.sender, _username, msg.value);
+        UserTipped(msg.sender, _username, msg.value, _commentId, _reply);
+
         sendTip(_username, msg.value);
     }
 
@@ -1304,14 +1230,20 @@ contract Extend is usingOraclize {
      * @param _username reddit username for user
      */
     function refundMoneyForUser(bytes32 _username) public {
-        require(data.getLastTipTime(msg.sender, _username) < (now - 2 weeks));
+        //last tip has to be at least 2 weeks old
+        require(lastTip[msg.sender][_username] < (now - 2 weeks));
+        //if username is verified we already sent eth
         require(!checkUsernameVerified(_username));
+        
+        uint toSend = tips[msg.sender][_username];
+        //remove that from username balance
+        balances[_username] -= tips[msg.sender][_username];
+        //set tips from that user to 0
+        tips[msg.sender][_username] = 0;
 
-        uint toSend = data.getTip(msg.sender, _username);
-        data.removeTip(msg.sender, _username);
         msg.sender.transfer(toSend);
 
-        events.refundSuccessful(msg.sender, _username);
+        RefundSuccessful(msg.sender, _username);
     }
 
     /**
@@ -1322,47 +1254,36 @@ contract Extend is usingOraclize {
      * @param _commentId comment on reddit
      * @param _nonce server sent
      * @param _signature server sent
+     * @param _reply reply to reddit thread
      */
     function buyGold(bytes32 _to,  
                      string _months, 
                      string _priceUsd,
-                     string _commentId, 
+                     bytes32 _commentId, 
                      string _nonce, 
-                     string _signature) public payable {
+                     string _signature,
+                     bool _reply) public payable {
 
-        owner.transfer(msg.value);
-        events.goldBought(msg.value, msg.sender, _to, _months, _priceUsd, _commentId, _nonce,  _signature);  
+        goldBalance += msg.value;
+        GoldBought(msg.value, msg.sender, _to, _months, _priceUsd, _commentId, _nonce,  _signature, _reply);  
     }
 
     /**
-     * Function called when API gets results
-     * @param _myid query id.
-     * @param _result string returned from api, should be reddit username
+     * Owner can withdraw ethers sent for buying gold on Reddit
      */
-    function __callback(bytes32 _myid, string _result) {
-        require(msg.sender == oraclize_cbAddress());
+    function withdrawGoldMoney() public {
+        require(owner == msg.sender);
 
-        address queryAddress = data.getAddressForQuery(_myid);
-        bytes32 usernameAddress = data.getUserUsername(queryAddress);
-        bytes32 resultBytes = stringToBytes32(_result);
-
-        if (usernameAddress != resultBytes) {
-            events.usernameDoesNotMatch(resultBytes, usernameAddress);
-            return;
-        }
-
-        data.setVerified(queryAddress);
-        data.setUsernameForAddress(usernameAddress, queryAddress);
-        events.verifiedUser(usernameAddress);
-
-        sendTip(usernameAddress, data.getBalanceForUser(usernameAddress));
+        uint toSend = goldBalance;
+        goldBalance = 0;
+        owner.transfer(toSend);
     }
 
     /**
      * Convert string to bytes32
      * @param _source string to convert
      */
-    function stringToBytes32(string memory _source) internal returns (bytes32 result) {
+    function stringToBytes32(string memory _source) private returns (bytes32 result) {
         bytes memory tempEmptyStringTest = bytes(_source);
         if (tempEmptyStringTest.length == 0) {
             return 0x0;
@@ -1379,14 +1300,37 @@ contract Extend is usingOraclize {
      * @param _value to send
      */ 
     function sendTip(bytes32 _username, uint _value) private {
-        address userAddress = getAddressFromUsername(_username);
+        address userAddress = usernameToAddress[_username];
+
         if (userAddress != 0x0 && _value > 0) {
-            data.setBalanceForUser(_username, 0);
+            balances[_username] = 0;
             userAddress.transfer(_value);
         }
     }
 
-    function () payable {
+    /**
+     * Create already verified users from old contract
+     */
+    function createOldUsers() private {
+        uint arrayLen = oldData.getArrayLength();
+
+        for (uint i=0; i<arrayLen; i++){
+            bytes32 oldUsername = oldData.allOldUsers(i);
+            address oldAddress = oldData.oldUsers(oldData.allOldUsers(i));
+            
+            users[oldAddress] = User({
+                username: oldUsername,
+                verified: true
+            });
+
+            usernameToAddress[oldUsername] = oldAddress;
+
+            CreatedUser(oldUsername);
+            VerifiedUser(oldUsername, oldAddress);
+        }
+    }
+
+    function () public payable {
         revert();
     }
 }
