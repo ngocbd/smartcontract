@@ -1,139 +1,26 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DSToken at 0x05435983b4736d18d3c56e860d607f2825dc5d64
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DSToken at 0x331c97189a8b25c8acabf0af2382cdd8eae4d88a
 */
 // Copyright (C) 2017 DappHub, LLC
 
 pragma solidity ^0.4.11;
 
-//import "ds-exec/exec.sol";
 
-contract DSExec {
-    function tryExec( address target, bytes calldata, uint value)
-    internal
-    returns (bool call_ret)
-    {
-        return target.call.value(value)(calldata);
-    }
-    function exec( address target, bytes calldata, uint value)
-    internal
-    {
-        if(!tryExec(target, calldata, value)) {
-            throw;
-        }
-    }
+contract ERC20 {
+    function totalSupply() constant returns (uint supply);
+    function balanceOf( address who ) constant returns (uint value);
+    function allowance( address owner, address spender ) constant returns (uint _allowance);
 
-    // Convenience aliases
-    function exec( address t, bytes c )
-    internal
-    {
-        exec(t, c, 0);
-    }
-    function exec( address t, uint256 v )
-    internal
-    {
-        bytes memory c; exec(t, c, v);
-    }
-    function tryExec( address t, bytes c )
-    internal
-    returns (bool)
-    {
-        return tryExec(t, c, 0);
-    }
-    function tryExec( address t, uint256 v )
-    internal
-    returns (bool)
-    {
-        bytes memory c; return tryExec(t, c, v);
-    }
+    function transfer( address to, uint value) returns (bool ok);
+    function transferFrom( address from, address to, uint value) returns (bool ok);
+    function approve( address spender, uint value ) returns (bool ok);
+
+    event Transfer( address indexed from, address indexed to, uint value);
+    event Approval( address indexed owner, address indexed spender, uint value);
 }
 
-//import "ds-auth/auth.sol";
-contract DSAuthority {
-    function canCall(
-    address src, address dst, bytes4 sig
-    ) constant returns (bool);
-}
-
-contract DSAuthEvents {
-    event LogSetAuthority (address indexed authority);
-    event LogSetOwner     (address indexed owner);
-}
-
-contract DSAuth is DSAuthEvents {
-    DSAuthority  public  authority;
-    address      public  owner;
-
-    function DSAuth() {
-        owner = msg.sender;
-        LogSetOwner(msg.sender);
-    }
-
-    function setOwner(address owner_)
-    auth
-    {
-        owner = owner_;
-        LogSetOwner(owner);
-    }
-
-    function setAuthority(DSAuthority authority_)
-    auth
-    {
-        authority = authority_;
-        LogSetAuthority(authority);
-    }
-
-    modifier auth {
-        assert(isAuthorized(msg.sender, msg.sig));
-        _;
-    }
-
-    function isAuthorized(address src, bytes4 sig) internal returns (bool) {
-        if (src == address(this)) {
-            return true;
-        } else if (src == owner) {
-            return true;
-        } else if (authority == DSAuthority(0)) {
-            return false;
-        } else {
-            return authority.canCall(src, this, sig);
-        }
-    }
-
-    function assert(bool x) internal {
-        if (!x) throw;
-    }
-}
-
-//import "ds-note/note.sol";
-contract DSNote {
-    event LogNote(
-    bytes4   indexed  sig,
-    address  indexed  guy,
-    bytes32  indexed  foo,
-    bytes32  indexed  bar,
-    uint        wad,
-    bytes             fax
-    ) anonymous;
-
-    modifier note {
-        bytes32 foo;
-        bytes32 bar;
-
-        assembly {
-        foo := calldataload(4)
-        bar := calldataload(36)
-        }
-
-        LogNote(msg.sig, msg.sender, foo, bar, msg.value, msg.data);
-
-        _;
-    }
-}
-
-
-//import "ds-math/math.sol";
 contract DSMath {
-
+    
     /*
     standard uint256 functions
      */
@@ -294,33 +181,16 @@ contract DSMath {
 
 }
 
-//import "erc20/erc20.sol";
-contract ERC20 {
-    function totalSupply() constant returns (uint supply);
-    function balanceOf( address who ) constant returns (uint value);
-    function allowance( address owner, address spender ) constant returns (uint _allowance);
-
-    function transfer( address to, uint value) returns (bool ok);
-    function transferFrom( address from, address to, uint value) returns (bool ok);
-    function approve( address spender, uint value ) returns (bool ok);
-
-    event Transfer( address indexed from, address indexed to, uint value);
-    event Approval( address indexed owner, address indexed spender, uint value);
-}
-
-
-
-//import "ds-token/base.sol";
 contract DSTokenBase is ERC20, DSMath {
     uint256                                            _supply;
     mapping (address => uint256)                       _balances;
     mapping (address => mapping (address => uint256))  _approvals;
-
+    
     function DSTokenBase(uint256 supply) {
         _balances[msg.sender] = supply;
         _supply = supply;
     }
-
+    
     function totalSupply() constant returns (uint256) {
         return _supply;
     }
@@ -330,44 +200,119 @@ contract DSTokenBase is ERC20, DSMath {
     function allowance(address src, address guy) constant returns (uint256) {
         return _approvals[src][guy];
     }
-
+    
     function transfer(address dst, uint wad) returns (bool) {
         assert(_balances[msg.sender] >= wad);
-
+        
         _balances[msg.sender] = sub(_balances[msg.sender], wad);
         _balances[dst] = add(_balances[dst], wad);
-
+        
         Transfer(msg.sender, dst, wad);
-
+        
         return true;
     }
-
+    
     function transferFrom(address src, address dst, uint wad) returns (bool) {
         assert(_balances[src] >= wad);
         assert(_approvals[src][msg.sender] >= wad);
-
+        
         _approvals[src][msg.sender] = sub(_approvals[src][msg.sender], wad);
         _balances[src] = sub(_balances[src], wad);
         _balances[dst] = add(_balances[dst], wad);
-
+        
         Transfer(src, dst, wad);
-
+        
         return true;
     }
-
+    
     function approve(address guy, uint256 wad) returns (bool) {
         _approvals[msg.sender][guy] = wad;
-
+        
         Approval(msg.sender, guy, wad);
-
+        
         return true;
     }
 
 }
 
+contract DSAuthority {
+    function canCall(
+        address src, address dst, bytes4 sig
+    ) constant returns (bool);
+}
 
-//import "ds-stop/stop.sol";
-contract DSStop is DSAuth, DSNote {
+contract DSAuthEvents {
+    event LogSetAuthority (address indexed authority);
+    event LogSetOwner     (address indexed owner);
+}
+
+contract DSAuth is DSAuthEvents {
+    DSAuthority  public  authority;
+    address      public  owner;
+
+    function DSAuth() {
+        owner = msg.sender;
+        LogSetOwner(msg.sender);
+    }
+
+    function setOwner(address owner_)
+        auth
+    {
+        owner = owner_;
+        LogSetOwner(owner);
+    }
+
+    function setAuthority(DSAuthority authority_)
+        auth
+    {
+        authority = authority_;
+        LogSetAuthority(authority);
+    }
+
+    modifier auth {
+        assert(isAuthorized(msg.sender, msg.sig));
+        _;
+    }
+
+    function isAuthorized(address src, bytes4 sig) internal returns (bool) {
+        if (src == address(this)) {
+            return true;
+        } else if (src == owner) {
+            return true;
+        } else if (authority == DSAuthority(0)) {
+            return false;
+        } else {
+            return authority.canCall(src, this, sig);
+        }
+    }
+}
+
+contract DSNote {
+    event LogNote(
+        bytes4   indexed  sig,
+        address  indexed  guy,
+        bytes32  indexed  foo,
+        bytes32  indexed  bar,
+        uint              wad,
+        bytes             fax
+    ) anonymous;
+
+    modifier note {
+        bytes32 foo;
+        bytes32 bar;
+
+        assembly {
+            foo := calldataload(4)
+            bar := calldataload(36)
+        }
+
+        LogNote(msg.sig, msg.sender, foo, bar, msg.value, msg.data);
+
+        _;
+    }
+}
+
+contract DSStop is DSNote, DSAuth {
 
     bool public stopped;
 
@@ -384,29 +329,20 @@ contract DSStop is DSAuth, DSNote {
 
 }
 
-
-//import "ds-token/token.sol";
 contract DSToken is DSTokenBase(0), DSStop {
 
     bytes32  public  symbol;
     uint256  public  decimals = 18; // standard token precision. override to customize
-    address  public  generator;
-
-    modifier onlyGenerator {
-        if(msg.sender!=generator) throw;
-        _;
-    }
 
     function DSToken(bytes32 symbol_) {
         symbol = symbol_;
-        generator=msg.sender;
     }
 
     function transfer(address dst, uint wad) stoppable note returns (bool) {
         return super.transfer(dst, wad);
     }
     function transferFrom(
-    address src, address dst, uint wad
+        address src, address dst, uint wad
     ) stoppable note returns (bool) {
         return super.transferFrom(src, dst, wad);
     }
@@ -430,15 +366,10 @@ contract DSToken is DSTokenBase(0), DSStop {
         _supply = sub(_supply, wad);
     }
 
-    // owner can transfer token even stop,
-    function generatorTransfer(address dst, uint wad) onlyGenerator note returns (bool) {
-        return super.transfer(dst, wad);
-    }
-
     // Optional token name
 
     bytes32   public  name = "";
-
+    
     function setName(bytes32 name_) auth {
         name = name_;
     }
