@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMath at 0x8f7a325139f8605d0071ce8bd4afc2c032a38bee
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMath at 0xd1317446588b900e9602a67ec24c2398c2128d62
 */
 library SafeMath {
   function mul(uint256 a, uint256 b) constant public returns (uint256) {
