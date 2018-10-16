@@ -1,14 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TrustedDocument at 0x7d13d1eebfb7f5c0c22b52aa7dc63d52869e0efa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TrustedDocument at 0xaece2fc8473f75a3ecc5db0817a6f03f34b3cf9b
 */
 pragma solidity ^0.4.8;
 
-// 8D806FF01FFBE3374D34C8EC57BE9B1DA7188DF639478D37E4447DE430BA6BF4
 contract TrustedDocument {
 
-    // Data structure for keeping document signatures and metadata.
-    // String data types are used because its easier to read by humans 
-    // without need of decoding, gas price is less important.
+    // Data structure for keeping document bundles signatures
+    // and metadata
     struct Document {
         // Id of the document, starting at 1
         // 0 reserved for undefined / not found indicator
@@ -68,7 +66,7 @@ contract TrustedDocument {
     // Total count of signed documents
     uint public documentsCount;
 
-    // URLwith documents / GUI
+    // Base URL on which files will be stored
     string public baseUrl;
 
     // Map of signed documents
@@ -76,10 +74,8 @@ contract TrustedDocument {
 
     // Event for confirmation of adding new document
     event EventDocumentAdded(uint indexed documentId);
-
     // Event for updating document
     event EventDocumentUpdated(uint indexed referencingDocumentId, uint indexed updatedDocumentId);
-    
     // Event for going on retirement
     event Retired(address indexed upgradedVersion);
 
