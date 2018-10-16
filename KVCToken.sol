@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KVCToken at 0x1782e904c6b6f21bbca537f5a7ee08c2ad893c32
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KVCToken at 0x209e0fbed2efded2cfaf0eb86122fe8bc37f727f
 */
 pragma solidity ^0.4.18;
 
@@ -115,7 +115,7 @@ contract KVCToken is ERC20Interface, Owned, SafeMath {
     // ------------------------------------------------------------------------
     // Constructor
     // ------------------------------------------------------------------------
-    function KVCToken() public {
+    function FucksToken() public {
         symbol = "KVC";
         name = "KVC Token";
         decimals = 18;
