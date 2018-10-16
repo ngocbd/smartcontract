@@ -1,11 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x1487f4195d9953f6930c959a683a49501a8cc8bc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x9fe173573b3f3cf4aebce5fd5bef957b9a6686e8
 */
 pragma solidity ^0.4.18;
-
-//Hello if you're reading this! 
-// buy raiblocks 
-// sorry reddit 
 
 contract owned {
     address public owner;
@@ -30,16 +26,9 @@ contract TokenERC20 {
     // Public variables of the token
     string public name;
     string public symbol;
-    uint8 public decimals = 18;
+    uint8 public decimals = 6;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
-    
-    //variables for crowd sale 
-    uint256 public unitsOneEthCanBuy;  //what it's worth in the inital crowd sale 
-    uint256 public totalEthInWei;         // keeping track of how much eth worth has been sold   
-    address public fundsWallet;           // Where should the raised ETH go?
-    address public contractWallet;        //the address of the contract 
-    bool public crowdSaleIsOver;          // will be True if this contract is not selling tokens anymore 
 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
@@ -61,23 +50,10 @@ contract TokenERC20 {
         string tokenName,
         string tokenSymbol
     ) public {
-        //number of coins for creator of contract 
-        uint256 balanceOfSender = 30000000;
-        //balance of creator of contract = balanceOfSender * decimals 
-        balanceOf[msg.sender] = balanceOfSender * 10 ** uint256(decimals); 
-        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount 
-        
-        //setting balanceof this contract total supply - balanceOfSender
-        balanceOf[this] = totalSupply - (balanceOf[msg.sender]);
+        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
         name = tokenName;                                   // Set the name for display purposes
         symbol = tokenSymbol;                               // Set the symbol for display purposes
-        
-        //for crowdsale 
-        fundsWallet = msg.sender; //setting fundsWallet to my wallet 
-        contractWallet = this; //this; //setting contractWallet to be the contract
-        unitsOneEthCanBuy = 10000000; //10,000 for $1 * $1000 per ether = 10,000,000
-        //tracking crowdsale
-        crowdSaleIsOver = false; 
     }
 
     /**
@@ -152,9 +128,7 @@ contract TokenERC20 {
      * @param _value the max amount they can spend
      * @param _extraData some extra information to send to the approved contract
      */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
-        public
-        returns (bool success) {
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData)  public returns (bool success) {
         tokenRecipient spender = tokenRecipient(_spender);
         if (approve(_spender, _value)) {
             spender.receiveApproval(msg.sender, _value, this, _extraData);
@@ -171,9 +145,8 @@ contract TokenERC20 {
      */
     function burn(uint256 _value) public returns (bool success) {
         require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-        //balanceOf[msg.sender] -= _value;            // Subtract from the sender
+        balanceOf[msg.sender] -= _value;            // Subtract from the sender
         totalSupply -= _value;                      // Updates totalSupply
-        balanceOf[contractWallet] -= _value;  //Subtract from the contract 
         Burn(msg.sender, _value);
         return true;
     }
@@ -195,23 +168,6 @@ contract TokenERC20 {
         Burn(_from, _value);
         return true;
     }
-    
-    /*
-    ending the crowdsale when the value xx ether or xx days is reached
-    */
-    function setCrowdSaleStatus(bool status) public returns (bool success) {
-        crowdSaleIsOver = status;
-        return true;
-    }
-    
-    /*
-    changing the price if needed 
-    */
-    function changeAmountPerEther(uint256 newAmountPerEther) public returns (bool success) {
-        unitsOneEthCanBuy = newAmountPerEther;
-        return true;
-    }
-    
 }
 
 /******************************************/
@@ -220,9 +176,9 @@ contract TokenERC20 {
 
 contract MyAdvancedToken is owned, TokenERC20 {
 
-    //not used
     uint256 public sellPrice;
     uint256 public buyPrice;
+    bool public isEnableBuySell;
 
     mapping (address => bool) public frozenAccount;
 
@@ -234,34 +190,9 @@ contract MyAdvancedToken is owned, TokenERC20 {
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
-    ) TokenERC20(initialSupply, tokenName, tokenSymbol) public {}
-    
-    
-    function() payable public{
-        //tracking how much ether this contract has raised
-        totalEthInWei = totalEthInWei + msg.value;
-        //amount = how much ether someone sent * the rate
-        uint256 amount = msg.value * unitsOneEthCanBuy;
-        //if there's not enough  OR  if the ICO is over 
-        // if ((balanceOf[contractWallet] < amount) || (crowdSaleIsOver == true)) {
-        //     _transfer(this, msg.sender, msg.value); 
-        //     return;
-        // }
-        require(!crowdSaleIsOver);
-        require(balanceOf[contractWallet] >= amount);
-      
-        //tracking the balances correctly 
-        balanceOf[contractWallet] = balanceOf[contractWallet] - amount;
-        balanceOf[msg.sender] = balanceOf[msg.sender] + amount;
-
-        // Broadcast a message to the blockchain
-        Transfer(contractWallet, msg.sender, amount); 
-
-        //Transfer ether to fundsWallet
-        fundsWallet.transfer(msg.value);                               
+    ) TokenERC20(initialSupply, tokenName, tokenSymbol) public {
+        
     }
-    
-    
 
     /* Internal transfer, only can be called by this contract */
     function _transfer(address _from, address _to, uint _value) internal {
@@ -303,19 +234,21 @@ contract MyAdvancedToken is owned, TokenERC20 {
 
     /// @notice Buy tokens from contract by sending ether
     function buy() payable public {
-        require(!crowdSaleIsOver);
-       
+        require(isEnableBuySell);
         uint amount = msg.value / buyPrice;               // calculates the amount
         _transfer(this, msg.sender, amount);              // makes the transfers
     }
-    
 
-
-    // /// @notice Sell `amount` tokens to contract
-    // /// @param amount amount of tokens to be sold
-    // function sell(uint256 amount) public {
-    //     require(this.balance >= amount * sellPrice);      // checks if the contract has enough ether to buy
-    //     _transfer(msg.sender, this, amount);              // makes the transfers
-    //     msg.sender.transfer(amount * sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
-    // }
+    /// @notice Sell `amount` tokens to contract
+    /// @param amount amount of tokens to be sold
+    function sell(uint256 amount) public {
+        require(this.balance >= amount * sellPrice);      // checks if the contract has enough ether to buy
+        require(isEnableBuySell);
+        _transfer(msg.sender, this, amount);              // makes the transfers
+        msg.sender.transfer(amount * sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
+    }
+    ///set enabled
+    function setEnableBuyAndSell(bool isEnabled) onlyOwner public {
+        isEnableBuySell = isEnabled;
+    }
 }
