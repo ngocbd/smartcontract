@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xbd6c8be1179dfd7ad11496694bd51dceb2fea083
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x5f4fde3b07db9c6528b665957959f023b77878e1
 */
 pragma solidity ^0.4.4;
 
@@ -7,7 +7,7 @@ contract Token {
 
     /// @return total amount of tokens
     function totalSupply() constant returns (uint256 supply) {}
-
+   
     /// @param _owner The address from which the balance will be retrieved
     /// @return The balance
     function balanceOf(address _owner) constant returns (uint256 balance) {}
@@ -119,11 +119,11 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 2800000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 2800000000000000;                        // Update total supply (100000 for example)
-        name = "FinLevCoin";                                   // Set the name for display purposes
-        decimals = 8;                            // Amount of decimals for display purposes
-        symbol = "FLC";                               // Set the symbol for display purposes
+        balances[msg.sender] = 1000000;               // Give the creator all initial tokens (1000000 for example)
+        totalSupply = 300000000;                        // Update total supply (30000000 for example)
+        name = "BzzCoin";                                   // Set the name for display purposes
+        decimals = 0;                            // Amount of decimals for display purposes
+        symbol = "BZZ";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
