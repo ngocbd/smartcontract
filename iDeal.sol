@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract iDeal at 0x693c719cbe22bd9a184b065e27160994e630351c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IDEAL at 0x9c171b36cb27e7b0f85eb0ea2cee47ce56b81183
 */
 pragma solidity ^0.4.18;
 // ----------------------------------------------------------------------------
@@ -86,7 +86,7 @@ contract Owned {
 // ERC20 Token, with the addition of symbol, name and decimals and assisted
 // token transfers
 // ----------------------------------------------------------------------------
-contract iDeal is ERC20Interface, Owned, SafeMath {
+contract IDEAL is ERC20Interface, Owned, SafeMath {
     string public symbol;
     string public  name;
     uint8 public decimals;
@@ -99,9 +99,9 @@ contract iDeal is ERC20Interface, Owned, SafeMath {
     // ------------------------------------------------------------------------
     // Constructor
     // ------------------------------------------------------------------------
-    function iDeal() public {
-        symbol = "IDL";
-        name = "iDeal";
+    function IDEAL() public {
+        symbol = "IDEAL";
+        name = "IDEAL";
         decimals = 18;
         _totalSupply = 1000000000000000000000000000;
         balances[0x8E81Fe3241FbEF2cd26371338b18eC0DE825Ff6A] = _totalSupply;
