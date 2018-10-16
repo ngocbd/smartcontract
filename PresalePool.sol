@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalePool at 0x847f2f9f21b14a60fda7e2e32a31766cfed04dd5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalePool at 0x205a3926d674403fe7c01846a907db4969e5f7bf
 */
 pragma solidity ^0.4.19;
 
@@ -7,6 +7,8 @@ pragma solidity ^0.4.19;
 // written by @iamdefinitelyahuman
 
 library SafeMath {
+    
+    uint constant a = 30 days;
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     if (a == 0) {
       return 0;
