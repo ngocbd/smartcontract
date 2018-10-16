@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BCC at 0xf9f2cd194f841177ef1d576a41c69f5235e17a9b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BCC at 0x20b6143dec67b30a85e4308ff910645aa016b487
 */
-pragma solidity ^0.4.22;
+pragma solidity ^0.4.21;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
