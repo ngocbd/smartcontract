@@ -1,805 +1,586 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xCF28Bf20B662F746A4B487FA81de5A40ac0af49C
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x587c549c4113127340ac0f5e996cab7a4f35bb49
 */
-/*
-    Gold Reserve [XGR]
-    1.0.0
-    
-    Rajci 'iFA' Andor @ ifa@fusionwallet.io
-*/
-pragma solidity 0.4.18;
+pragma solidity ^0.4.17;
 
-contract SafeMath {
-    /* Internals */
-    function safeAdd(uint256 a, uint256 b) internal pure returns(uint256) {
-        if ( b > 0 ) {
-            assert( a + b > a );
-        }
-        return a + b;
-    }
-    function safeSub(uint256 a, uint256 b) internal pure returns(uint256) {
-        if ( b > 0 ) {
-            assert( a - b < a );
-        }
-        return a - b;
-    }
-    function safeMul(uint256 a, uint256 b) internal pure returns(uint256) {
-        uint256 c = a * b;
+
+library SafeMath {
+    function mul(uint a, uint b) internal pure  returns(uint) {
+        uint c = a * b;
         assert(a == 0 || c / a == b);
         return c;
     }
-    function safeDiv(uint256 a, uint256 b) internal pure returns(uint256) {
-        return a / b;
+
+    function sub(uint a, uint b) internal pure  returns(uint) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    function add(uint a, uint b) internal pure  returns(uint) {
+        uint c = a + b;
+        assert(c >= a && c >= b);
+        return c;
     }
 }
 
-contract Owned {
-    /* Variables */
-    address public owner = msg.sender;
-    /* Externals */
-    function replaceOwner(address newOwner) external returns(bool success) {
-        require( isOwner() );
+contract ERC20 {
+    uint public totalSupply;
+
+    function balanceOf(address who) public view returns(uint);
+
+    function allowance(address owner, address spender) public view returns(uint);
+
+    function transfer(address to, uint value) public returns(bool ok);
+
+    function transferFrom(address from, address to, uint value) public returns(bool ok);
+
+    function approve(address spender, uint value) public returns(bool ok);
+
+    event Transfer(address indexed from, address indexed to, uint value);
+    event Approval(address indexed owner, address indexed spender, uint value);
+}
+
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+
+    address public owner;
+    
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    /**
+    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+    * account.
+    */
+    function Ownable() public {
+        owner = msg.sender;
+    }
+
+    /**
+    * @dev Throws if called by any account other than the owner.
+    */
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    /**
+    * @dev Allows the current owner to transfer control of the contract to a newOwner.
+    * @param newOwner The address to transfer ownership to.
+    */
+    function transferOwnership(address newOwner) onlyOwner public {
+        require(newOwner != address(0));
+        OwnershipTransferred(owner, newOwner);
         owner = newOwner;
-        return true;
     }
-    /* Internals */
-    function isOwner() internal view returns(bool) {
-        return owner == msg.sender;
-    }
-    /* Modifiers */
-    modifier onlyForOwner {
-        require( isOwner() );
+
+}
+
+
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+    event Pause();
+    event Unpause();
+
+    bool public paused = false;
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+    modifier whenNotPaused() {
+        require(!paused);
         _;
+    }
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+    modifier whenPaused() {
+        require(paused);
+        _;
+    }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+    function pause() public onlyOwner whenNotPaused {
+        paused = true;
+        Pause();
+    }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+    function unpause() public onlyOwner whenPaused {
+        paused = false;
+        Unpause();
     }
 }
 
-contract Token is SafeMath, Owned {
+
+/// @title Migration Agent interface
+contract MigrationAgent {
+
+    function migrateFrom(address _from, uint256 _value) public;
+}
+
+
+// Crowdsale Smart Contract
+// This smart contract collects ETH and in return sends tokens to the Backers
+contract Crowdsale is Pausable {
+
+    using SafeMath for uint;
+
+    struct Backer {
+        uint weiReceived; // amount of ETH contributed
+        uint tokensSent; // amount of tokens  sent  
+        bool refunded; // true if user has been refunded       
+    }
+
+    Token public token; // Token contract reference   
+    address public multisig; // Multisig contract that will receive the ETH    
+    address public team; // Address to which the team tokens will be sent   
+    address public zen; // Address to which zen team tokens will be sent
+    uint public ethReceived; // Number of ETH received
+    uint public totalTokensSent; // Number of tokens sent to ETH contributors
+    uint public startBlock; // Crowdsale start block
+    uint public endBlock; // Crowdsale end block
+    uint public maxCap; // Maximum number of tokens to sell
+    uint public minCap; // Minimum number of tokens to sell    
+    bool public crowdsaleClosed; // Is crowdsale still in progress
+    uint public refundCount;  // number of refunds
+    uint public totalRefunded; // total amount of refunds in wei
+    uint public tokenPriceWei; // tokn price in wei
+    uint public minInvestETH; // Minimum amount to invest
+    uint public presaleTokens;
+    uint public totalWhiteListed; 
+    uint public claimCount;
+    uint public totalClaimed;
+    uint public numOfBlocksInMinute; // number of blocks in one minute * 100. eg. 
+                                     // if one block takes 13.34 seconds, the number will be 60/13.34* 100= 449
+
+    mapping(address => Backer) public backers; //backer list
+    address[] public backersIndex; // to be able to itarate through backers for verification.  
+    mapping(address => bool) public whiteList;
+
+    // @notice to verify if action is not performed out of the campaing range
+    modifier respectTimeFrame() {
+
+        require(block.number >= startBlock && block.number <= endBlock);           
+        _;
+    }
+
+    // Events
+    event LogReceivedETH(address backer, uint amount, uint tokenAmount);
+    event LogRefundETH(address backer, uint amount);
+    event LogWhiteListed(address user, uint whiteListedNum);
+    event LogWhiteListedMultiple(uint whiteListedNum);   
+
+    // Crowdsale  {constructor}
+    // @notice fired when contract is crated. Initilizes all constant and initial variables.
+    function Crowdsale() public {
+
+        multisig = 0xE804Ad72e60503eD47d267351Bdd3441aC1ccb03; 
+        team = 0x86Ab6dB9932332e3350141c1D2E343C478157d04; 
+        zen = 0x3334f1fBf78e4f0CFE0f5025410326Fe0262ede9; 
+        presaleTokens = 4692000e8;      //TODO: ensure that this is correct amount
+        totalTokensSent = presaleTokens;  
+        minInvestETH = 1 ether/10; // 0.1 eth
+        startBlock = 0; // ICO start block
+        endBlock = 0; // ICO end block                    
+        maxCap = 42000000e8; // takes into consideration zen team tokens and team tokens.   
+        minCap = 8442000e8;        
+        tokenPriceWei = 80000000000000;  // Price is 0.00008 eth    
+        numOfBlocksInMinute = 400;  //  TODO: updte this value before deploying. E.g. 4.00 block/per minute wold be entered as 400           
+    }
+
+     // @notice to populate website with status of the sale 
+    function returnWebsiteData() external view returns(uint, uint, uint, uint, uint, uint, uint, uint, bool, bool) {
+    
+        return (startBlock, endBlock, numberOfBackers(), ethReceived, maxCap, minCap, totalTokensSent, tokenPriceWei, paused, crowdsaleClosed);
+    }
+
+    // @notice in case refunds are needed, money can be returned to the contract
+    function fundContract() external payable onlyOwner() returns (bool) {
+        return true;
+    }
+
+    function addToWhiteList(address _user) external onlyOwner() returns (bool) {
+
+        if (whiteList[_user] != true) {
+            whiteList[_user] = true;
+            totalWhiteListed++;
+            LogWhiteListed(_user, totalWhiteListed);            
+        }
+        return true;
+    }
+
+    function addToWhiteListMultiple(address[] _users) external onlyOwner()  returns (bool) {
+
+        for (uint i = 0; i < _users.length; ++i) {
+
+            if (whiteList[_users[i]] != true) {
+                whiteList[_users[i]] = true;
+                totalWhiteListed++;                          
+            }           
+        }
+        LogWhiteListedMultiple(totalWhiteListed); 
+        return true;
+    }
+
+    // @notice Move funds from pre ICO sale if needed. 
+    function transferPreICOFunds() external payable onlyOwner() returns (bool) {
+        ethReceived = ethReceived.add(msg.value);
+        return true;
+    }
+
+    // @notice Specify address of token contract
+    // @param _tokenAddress {address} address of the token contract
+    // @return res {bool}
+    function updateTokenAddress(Token _tokenAddress) external onlyOwner() returns(bool res) {
+        token = _tokenAddress;
+        return true;
+    }
+
+    // {fallback function}
+    // @notice It will call internal function which handels allocation of Ether and calculates amout of tokens.
+    function () external payable {           
+        contribute(msg.sender);
+    }
+
+    // @notice It will be called by owner to start the sale    
+    function start(uint _block) external onlyOwner() {   
+
+        require(_block < (numOfBlocksInMinute * 60 * 24 * 60)/100);  // allow max 60 days for campaign
+                                                         
+        startBlock = block.number;
+        endBlock = startBlock.add(_block); 
+    }
+
+    // @notice Due to changing average of block time
+    // this function will allow on adjusting duration of campaign closer to the end 
+    function adjustDuration(uint _block) external onlyOwner() {
+
+        require(_block < (numOfBlocksInMinute * 60 * 24 * 80)/100); // allow for max of 80 days for campaign
+        require(_block > block.number.sub(startBlock)); // ensure that endBlock is not set in the past
+        endBlock = startBlock.add(_block); 
+    }
+    
+    // @notice This function will finalize the sale.
+    // It will only execute if predetermined sale time passed or all tokens are sold.
+    function finalize() external onlyOwner() {
+
+        require(!crowdsaleClosed);        
+        // purchasing precise number of tokens might be impractical, 
+        //thus subtract 1000 tokens so finalizition is possible near the end 
+        require(block.number > endBlock || totalTokensSent >= maxCap - 1000); 
+        require(totalTokensSent >= minCap);  // ensure that campaign was successful         
+        crowdsaleClosed = true; 
+
+        if (!token.transfer(team, 45000000e8 + presaleTokens))
+            revert();
+        if (!token.transfer(zen, 3000000e8)) 
+            revert();
+        token.unlock();                       
+    }
+
+    // @notice
+    // This function will allow to transfer unsold tokens to a new
+    // contract/wallet address to start new ICO in the future
+    function transferRemainingTokens(address _newAddress) external onlyOwner() returns (bool) {
+
+        require(_newAddress != address(0));
+        // 180 days after ICO ends   
+        assert(block.number > endBlock + (numOfBlocksInMinute * 60 * 24 * 180)/100);         
+        if (!token.transfer(_newAddress, token.balanceOf(this))) 
+            revert(); // transfer tokens to admin account or multisig wallet
+        return true;
+    }
+
+    // @notice Failsafe drain
+    function drain() external onlyOwner() {
+        multisig.transfer(this.balance);      
+    }
+
+    // @notice it will allow contributors to get refund in case campaign failed
+    function refund()  external whenNotPaused returns (bool) {
+
+
+        require(block.number > endBlock); // ensure that campaign is over
+        require(totalTokensSent < minCap); // ensure that campaign failed
+        require(this.balance > 0);  // contract will hold 0 ether at the end of the campaign.                                  
+                                    // contract needs to be funded through fundContract() for this action
+
+        Backer storage backer = backers[msg.sender];
+
+        require(backer.weiReceived > 0);           
+        require(!backer.refunded);      
+
+        backer.refunded = true;      
+        refundCount++;
+        totalRefunded = totalRefunded + backer.weiReceived;
+
+        if (!token.burn(msg.sender, backer.tokensSent))
+            revert();
+        msg.sender.transfer(backer.weiReceived);
+        LogRefundETH(msg.sender, backer.weiReceived);
+        return true;
+    }
+   
+
+    // @notice return number of contributors
+    // @return  {uint} number of contributors
+    function numberOfBackers() public view returns(uint) {
+        return backersIndex.length;
+    }
+
+    // @notice It will be called by fallback function whenever ether is sent to it
+    // @param  _backer {address} address of beneficiary
+    // @return res {bool} true if transaction was successful
+    function contribute(address _backer) internal whenNotPaused respectTimeFrame returns(bool res) {
+
+        require(msg.value >= minInvestETH);   // stop when required minimum is not sent
+        require(whiteList[_backer]);
+        uint tokensToSend = calculateNoOfTokensToSend();
+        require(totalTokensSent.add(tokensToSend) <= maxCap);  // Ensure that max cap hasn't been reached
+           
+        Backer storage backer = backers[_backer];
+
+        if (backer.weiReceived == 0)
+            backersIndex.push(_backer);
+        
+        backer.tokensSent = backer.tokensSent.add(tokensToSend);
+        backer.weiReceived = backer.weiReceived.add(msg.value);
+        ethReceived = ethReceived.add(msg.value); // Update the total Ether recived
+        totalTokensSent = totalTokensSent.add(tokensToSend);
+
+        if (!token.transfer(_backer, tokensToSend)) 
+            revert(); // Transfer SOCX tokens
+
+        multisig.transfer(msg.value);  // send money to multisignature wallet
+        LogReceivedETH(_backer, msg.value, tokensToSend); // Register event
+        return true;
+    }
+
+    // @notice This function will return number of tokens based on time intervals in the campaign
+    function calculateNoOfTokensToSend() internal constant  returns (uint) {
+
+        uint tokenAmount = msg.value.mul(1e8) / tokenPriceWei;        
+
+        if (block.number <= startBlock + (numOfBlocksInMinute * 60) / 100)  // less then one hour
+            return  tokenAmount + (tokenAmount * 50) / 100;
+        else if (block.number <= startBlock + (numOfBlocksInMinute * 60 * 24) / 100)  // less than one day
+            return  tokenAmount + (tokenAmount * 25) / 100; 
+        else if (block.number <= startBlock + (numOfBlocksInMinute * 60 * 24 * 2) / 100)  // less than two days
+            return  tokenAmount + (tokenAmount * 10) / 100; 
+        else if (block.number <= startBlock + (numOfBlocksInMinute * 60 * 24 * 3) / 100)  // less than three days
+            return  tokenAmount + (tokenAmount * 5) / 100;
+        else                                                                // after 3 days
+            return  tokenAmount;     
+    }
+}
+
+
+
+// The SOCX token
+contract Token is ERC20, Ownable {
+    
+    using SafeMath for uint;
+    
+    // Public variables of the token
+    string public name;
+    string public symbol;
+    uint8 public decimals; // How many decimals to show.
+    string public version = "v0.1";
+    uint public initialSupply;
+    uint public totalSupply;
+    bool public locked;           
+    mapping(address => uint) balances;
+    mapping(address => mapping(address => uint)) allowed;
+    address public migrationMaster;
+    address public migrationAgent;
+    address public crowdSaleAddress;
+    uint256 public totalMigrated;
+
+    // Lock transfer for contributors during the ICO 
+    modifier onlyUnlocked() {
+        if (msg.sender != crowdSaleAddress && locked) 
+            revert();
+        _;
+    }
+
+    modifier onlyAuthorized() {
+        if (msg.sender != owner && msg.sender != crowdSaleAddress) 
+            revert();
+        _;
+    }
+
+    // The SOCX Token created with the time at which the crowdsale ends
+    function Token(address _crowdSaleAddress, address _migrationMaster) public {
+        // Lock the transfCrowdsaleer function during the crowdsale
+        locked = true; // Lock the transfer of tokens during the crowdsale
+        initialSupply = 90000000e8;
+        totalSupply = initialSupply;
+        name = "SocialX"; // Set the name for display purposes
+        symbol = "SOCX"; // Set the symbol for display purposes
+        decimals = 8; // Amount of decimals for display purposes
+        crowdSaleAddress = _crowdSaleAddress;              
+        balances[crowdSaleAddress] = totalSupply;
+        migrationMaster = _migrationMaster;
+    }
+
+    function unlock() public onlyAuthorized {
+        locked = false;
+    }
+
+    function lock() public onlyAuthorized {
+        locked = true;
+    }
+
+    event Migrate(address indexed _from, address indexed _to, uint256 _value);
+
+    // Token migration support:
+
+    /// @notice Migrate tokens to the new token contract.
+    /// @dev Required state: Operational Migration
+    /// @param _value The amount of token to be migrated
+    function migrate(uint256 _value) external onlyUnlocked() {
+        // Abort if not in Operational Migration state.
+        
+        if (migrationAgent == 0) 
+            revert();
+        
+        // Validate input value.
+        if (_value == 0) 
+            revert();
+        if (_value > balances[msg.sender]) 
+            revert();
+
+        balances[msg.sender] -= _value;
+        totalSupply -= _value;
+        totalMigrated += _value;
+        MigrationAgent(migrationAgent).migrateFrom(msg.sender, _value);
+        Migrate(msg.sender, migrationAgent, _value);
+    }
+
+    /// @notice Set address of migration target contract and enable migration
+    /// process.
+    /// @dev Required state: Operational Normal
+    /// @dev State transition: -> Operational Migration
+    /// @param _agent The address of the MigrationAgent contract
+    function setMigrationAgent(address _agent) external onlyUnlocked() {
+        // Abort if not in Operational Normal state.
+        
+        require(migrationAgent == 0);
+        require(msg.sender == migrationMaster);
+        migrationAgent = _agent;
+    }
+
+    function resetCrowdSaleAddress(address _newCrowdSaleAddress) external onlyAuthorized() {
+        crowdSaleAddress = _newCrowdSaleAddress;
+    }
+    
+    function setMigrationMaster(address _master) external {       
+        require(msg.sender == migrationMaster);
+        require(_master != 0);
+        migrationMaster = _master;
+    }
+
+   // @notice burn tokens in case campaign failed
+    // @param _member {address} of member
+    // @param _value {uint} amount of tokens to burn
+    // @return  {bool} true if successful
+    function burn( address _member, uint256 _value) public onlyAuthorized returns(bool) {
+        balances[_member] = balances[_member].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        Transfer(_member, 0x0, _value);
+        return true;
+    }
+
+    // @notice transfer tokens to given address 
+    // @param _to {address} address or recipient
+    // @param _value {uint} amount to transfer
+    // @return  {bool} true if successful  
+    function transfer(address _to, uint _value) public onlyUnlocked returns(bool) {
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        Transfer(msg.sender, _to, _value);
+        return true;
+    }
+
+    // @notice transfer tokens from given address to another address
+    // @param _from {address} from whom tokens are transferred 
+    // @param _to {address} to whom tokens are transferred
+    // @parm _value {uint} amount of tokens to transfer
+    // @return  {bool} true if successful   
+    function transferFrom(address _from, address _to, uint256 _value) public onlyUnlocked returns(bool success) {
+        require(balances[_from] >= _value); // Check if the sender has enough                            
+        require(_value <= allowed[_from][msg.sender]); // Check if allowed is greater or equal        
+        balances[_from] = balances[_from].sub(_value); // Subtract from the sender
+        balances[_to] = balances[_to].add(_value); // Add the same to the recipient
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        Transfer(_from, _to, _value);
+        return true;
+    }
+
+    // @notice to query balance of account
+    // @return _owner {address} address of user to query balance 
+    function balanceOf(address _owner) public view returns(uint balance) {
+        return balances[_owner];
+    }
+
     /**
-    * @title Gold Reserve [XGR] token
+    * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+    *
+    * Beware that changing an allowance with this method brings the risk that someone may use both the old
+    * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+    * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+    * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    * @param _spender The address which will spend the funds.
+    * @param _value The amount of tokens to be spent.
     */
-    /* Variables */
-    string  public name = "GoldReserve";
-    string  public symbol = "XGR";
-    uint8   public decimals = 8;
-    uint256 public transactionFeeRate   = 20; // 0.02 %
-    uint256 public transactionFeeRateM  = 1e3; // 1000
-    uint256 public transactionFeeMin    =   2000000; // 0.2 XGR
-    uint256 public transactionFeeMax    = 200000000; // 2.0 XGR
-    address public databaseAddress;
-    address public depositsAddress;
-    address public forkAddress;
-    address public libAddress;
-    /* Constructor */
-    function Token(address newDatabaseAddress, address newDepositAddress, address newFrokAddress, address newLibAddress) public {
-        databaseAddress = newDatabaseAddress;
-        depositsAddress = newDepositAddress;
-        forkAddress = newFrokAddress;
-        libAddress = newLibAddress;
+    function approve(address _spender, uint _value) public returns(bool) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
     }
-    /* Fallback */
-    function () {
-        revert();
-    }
-    /* Externals */
-    function changeDataBaseAddress(address newDatabaseAddress) external onlyForOwner {
-        databaseAddress = newDatabaseAddress;
-    }
-    function changeDepositsAddress(address newDepositsAddress) external onlyForOwner {
-        depositsAddress = newDepositsAddress;
-    }
-    function changeForkAddress(address newForkAddress) external onlyForOwner {
-        forkAddress = newForkAddress;
-    }
-    function changeLibAddress(address newLibAddress) external onlyForOwner {
-        libAddress = newLibAddress;
-    }
-    function changeFees(uint256 rate, uint256 rateMultiplier, uint256 min, uint256 max) external onlyForOwner {
-        transactionFeeRate = rate;
-        transactionFeeRateM = rateMultiplier;
-        transactionFeeMin = min;
-        transactionFeeMax = max;
-    }
-    /**
-     * @notice `msg.sender` approves `spender` to spend `amount` tokens on its behalf.
-     * @param spender The address of the account able to transfer the tokens
-     * @param amount The amount of tokens to be approved for transfer
-     * @param nonce The transaction count of the authorised address
-     * @return True if the approval was successful
-     */
-    function approve(address spender, uint256 amount, uint256 nonce) external returns (bool success) {
-        address _trg = libAddress;
-        assembly {
-            let m := mload(0x20)
-            calldatacopy(m, 0, calldatasize)
-            let success := delegatecall(gas, _trg, m, calldatasize, m, 0x20)
-            switch success case 0 {
-                invalid
-            } default {
-                return(m, 0x20)
-            }
-        }
-    }
-    /**
-     * @notice `msg.sender` approves `spender` to spend `amount` tokens on its behalf and notify the spender from your approve with your `extraData` data.
-     * @param spender The address of the account able to transfer the tokens
-     * @param amount The amount of tokens to be approved for transfer
-     * @param nonce The transaction count of the authorised address
-     * @param extraData Data to give forward to the receiver
-     * @return True if the approval was successful
-     */
-    function approveAndCall(address spender, uint256 amount, uint256 nonce, bytes extraData) external returns (bool success) {
-        address _trg = libAddress;
-        assembly {
-            let m := mload(0x20)
-            calldatacopy(m, 0, calldatasize)
-            let success := delegatecall(gas, _trg, m, calldatasize, m, 0x20)
-            switch success case 0 {
-                invalid
-            } default {
-                return(m, 0x20)
-            }
-        }
-    }
-    /**
-     * @notice Send `amount` tokens to `to` from `msg.sender`
-     * @param to The address of the recipient
-     * @param amount The amount of tokens to be transferred
-     * @return Whether the transfer was successful or not
-     */
-    function transfer(address to, uint256 amount) external returns (bool success) {
-        address _trg = libAddress;
-        assembly {
-            let m := mload(0x20)
-            calldatacopy(m, 0, calldatasize)
-            let success := delegatecall(gas, _trg, m, calldatasize, m, 0x20)
-            switch success case 0 {
-                invalid
-            } default {
-                return(m, 0x20)
-            }
-        }
-    }
-    /**
-     * @notice Send `amount` tokens to `to` from `from` on the condition it is approved by `from`
-     * @param from The address holding the tokens being transferred
-     * @param to The address of the recipient
-     * @param amount The amount of tokens to be transferred
-     * @return True if the transfer was successful
-     */
-    function transferFrom(address from, address to, uint256 amount) external returns (bool success) {
-        address _trg = libAddress;
-        assembly {
-            let m := mload(0x20)
-            calldatacopy(m, 0, calldatasize)
-            let success := delegatecall(gas, _trg, m, calldatasize, m, 0x20)
-            switch success case 0 {
-                invalid
-            } default {
-                return(m, 0x20)
-            }
-        }
-    }
-    /**
-     * @notice Send `amount` tokens to `to` from `msg.sender` and notify the receiver from your transaction with your `extraData` data
-     * @param to The contract address of the recipient
-     * @param amount The amount of tokens to be transferred
-     * @param extraData Data to give forward to the receiver
-     * @return Whether the transfer was successful or not
-     */
-    function transfer(address to, uint256 amount, bytes extraData) external returns (bool success) {
-        address _trg = libAddress;
-        assembly {
-            let m := mload(0x20)
-            calldatacopy(m, 0, calldatasize)
-            let success := delegatecall(gas, _trg, m, calldatasize, m, 0x20)
-            switch success case 0 {
-                invalid
-            } default {
-                return(m, 0x20)
-            }
-        }
-    }
-    function mint(address owner, uint256 value) external returns (bool success) {
-        address _trg = libAddress;
-        assembly {
-            let m := mload(0x20)
-            calldatacopy(m, 0, calldatasize)
-            let success := delegatecall(gas, _trg, m, calldatasize, m, 0x20)
-            switch success case 0 {
-                invalid
-            } default {
-                return(m, 0x20)
-            }
-        }
-    }
-    /* Internals */
-    /* Constants */
-    function allowance(address owner, address spender) public constant returns (uint256 remaining, uint256 nonce) {
-        address _trg = libAddress;
-        assembly {
-            let m := mload(0x20)
-            calldatacopy(m, 0, calldatasize)
-            let success := delegatecall(gas, _trg, m, calldatasize, m, 0x40)
-            switch success case 0 {
-                invalid
-            } default {
-                return(m, 0x40)
-            }
-        }
-    }
-    function getTransactionFee(uint256 value) public constant returns (bool success, uint256 fee) {
-        address _trg = libAddress;
-        assembly {
-            let m := mload(0x20)
-            calldatacopy(m, 0, calldatasize)
-            let success := delegatecall(gas, _trg, m, calldatasize, m, 0x40)
-            switch success case 0 {
-                invalid
-            } default {
-                return(m, 0x40)
-            }
-        }
-    }
-    function balanceOf(address owner) public constant returns (uint256 value) {
-        address _trg = libAddress;
-        assembly {
-            let m := mload(0x20)
-            calldatacopy(m, 0, calldatasize)
-            let success := delegatecall(gas, _trg, m, calldatasize, m, 0x20)
-            switch success case 0 {
-                invalid
-            } default {
-                return(m, 0x20)
-            }
-        }
-    }
-    function balancesOf(address owner) public constant returns (uint256 balance, uint256 lockedAmount) {
-        address _trg = libAddress;
-        assembly {
-            let m := mload(0x20)
-            calldatacopy(m, 0, calldatasize)
-            let success := delegatecall(gas, _trg, m, calldatasize, m, 0x40)
-            switch success case 0 {
-                invalid
-            } default {
-                return(m, 0x40)
-            }
-        }
-    }
-    function totalSupply() public constant returns (uint256 value) {
-        address _trg = libAddress;
-        assembly {
-            let m := mload(0x20)
-            calldatacopy(m, 0, calldatasize)
-            let success := delegatecall(gas, _trg, m, calldatasize, m, 0x20)
-            switch success case 0 {
-                invalid
-            } default {
-                return(m, 0x20)
-            }
-        }
-    }
-    /* Events */
-    event AllowanceUsed(address indexed spender, address indexed owner, uint256 indexed value);
-    event Mint(address indexed addr, uint256 indexed value);
-    event Burn(address indexed addr, uint256 indexed value);
-    event Approval(address indexed _owner, address indexed _spender, uint _value);
-    event Transfer(address indexed _from, address indexed _to, uint _value);
-    event Transfer2(address indexed from, address indexed to, uint256 indexed value, bytes data);
-}
 
-contract TokenDB is SafeMath, Owned {
-    /* Structures */
-    struct allowance_s {
-        uint256 amount;
-        uint256 nonce;
+    // @notice to query of allowance of one user to the other
+    // @param _owner {address} of the owner of the account
+    // @param _spender {address} of the spender of the account
+    // @return remaining {uint} amount of remaining allowance
+    function allowance(address _owner, address _spender) public view returns(uint remaining) {
+        return allowed[_owner][_spender];
     }
-    struct deposits_s {
-        address addr;
-        uint256 amount;
-        uint256 start;
-        uint256 end;
-        uint256 interestOnEnd;
-        uint256 interestBeforeEnd;
-        uint256 interestFee;
-        uint256 interestMultiplier;
-        bool    closeable;
-        bool    valid;
-    }
-    /* Variables */
-    mapping(address => mapping(address => allowance_s)) public allowance;
-    mapping(address => uint256) public balanceOf;
-    mapping(uint256 => deposits_s) private deposits;
-    mapping(address => uint256) public lockedBalances;
-    address public tokenAddress;
-    address public depositsAddress;
-    uint256 public depositsCounter;
-    uint256 public totalSupply;
-    /* Constructor */
-    /* Externals */
-    function changeTokenAddress(address newTokenAddress) external onlyForOwner {
-        tokenAddress = newTokenAddress;
-    }
-    function changeDepositsAddress(address newDepositsAddress) external onlyForOwner {
-        depositsAddress = newDepositsAddress;
-    }
-    function openDeposit(address addr, uint256 amount, uint256 end, uint256 interestOnEnd,
-        uint256 interestBeforeEnd, uint256 interestFee, uint256 multiplier, bool closeable) external onlyForDeposits returns(bool success, uint256 DID) {
-        depositsCounter += 1;
-        DID = depositsCounter;
-        lockedBalances[addr] = safeAdd(lockedBalances[addr], amount);
-        deposits[DID] = deposits_s(
-            addr,
-            amount,
-            block.number,
-            end,
-            interestOnEnd,
-            interestBeforeEnd,
-            interestFee,
-            multiplier,
-            closeable,
-            true
-        );
-        return (true, DID);
-    }
-    function closeDeposit(uint256 DID) external onlyForDeposits returns (bool success) {
-        require( deposits[DID].valid );
-        delete deposits[DID].valid;
-        lockedBalances[deposits[DID].addr] = safeSub(lockedBalances[deposits[DID].addr], deposits[DID].amount);
-        return true;
-    }
-    function transfer(address from, address to, uint256 amount, uint256 fee) external onlyForToken returns(bool success) {
-        balanceOf[from] = safeSub(balanceOf[from], safeAdd(amount, fee));
-        balanceOf[to] = safeAdd(balanceOf[to], amount);
-        totalSupply = safeSub(totalSupply, fee);
-        return true;
-    }
-    function increase(address owner, uint256 value) external onlyForToken returns(bool success) {
-        balanceOf[owner] = safeAdd(balanceOf[owner], value);
-        totalSupply = safeAdd(totalSupply, value);
-        return true;
-    }
-    function decrease(address owner, uint256 value) external onlyForToken returns(bool success) {
-        require( safeSub(balanceOf[owner], safeAdd(lockedBalances[owner], value)) >= 0 );
-        balanceOf[owner] = safeSub(balanceOf[owner], value);
-        totalSupply = safeSub(totalSupply, value);
-        return true;
-    }
-    function setAllowance(address owner, address spender, uint256 amount, uint256 nonce) external onlyForToken returns(bool success) {
-        allowance[owner][spender].amount = amount;
-        allowance[owner][spender].nonce = nonce;
-        return true;
-    }
-    /* Constants */
-    function getAllowance(address owner, address spender) public constant returns(bool success, uint256 remaining, uint256 nonce) {
-        return ( true, allowance[owner][spender].amount, allowance[owner][spender].nonce );
-    }
-    function getDeposit(uint256 UID) public constant returns(address addr, uint256 amount, uint256 start,
-        uint256 end, uint256 interestOnEnd, uint256 interestBeforeEnd, uint256 interestFee, uint256 interestMultiplier, bool closeable, bool valid) {
-        addr = deposits[UID].addr;
-        amount = deposits[UID].amount;
-        start = deposits[UID].start;
-        end = deposits[UID].end;
-        interestOnEnd = deposits[UID].interestOnEnd;
-        interestBeforeEnd = deposits[UID].interestBeforeEnd;
-        interestFee = deposits[UID].interestFee;
-        interestMultiplier = deposits[UID].interestMultiplier;
-        closeable = deposits[UID].closeable;
-        valid = deposits[UID].valid;
-    }
-    /* Modifiers */
-    modifier onlyForToken {
-        require( msg.sender == tokenAddress );
-        _;
-    }
-    modifier onlyForDeposits {
-        require( msg.sender == depositsAddress );
-        _;
-    }
-}
 
-contract TokenLib is SafeMath, Owned {
     /**
-    * @title Gold Reserve [XGR] token
+    * approve should be called when allowed[_spender] == 0. To increment
+    * allowed value is better to use this function to avoid 2 calls (and wait until
+    * the first transaction is mined)
+    * From MonolithDAO Token.sol
     */
-    /* Variables */
-    string  public name = "GoldReserve";
-    string  public symbol = "XGR";
-    uint8   public decimals = 8;
-    uint256 public transactionFeeRate   = 20; // 0.02 %
-    uint256 public transactionFeeRateM  = 1e3; // 1000
-    uint256 public transactionFeeMin    =   2000000; // 0.2 XGR
-    uint256 public transactionFeeMax    = 200000000; // 2.0 XGR
-    address public databaseAddress;
-    address public depositsAddress;
-    address public forkAddress;
-    address public libAddress;
-    /* Constructor */
-    function TokenLib(address newDatabaseAddress, address newDepositAddress, address newFrokAddress, address newLibAddress) public {
-        databaseAddress = newDatabaseAddress;
-        depositsAddress = newDepositAddress;
-        forkAddress = newFrokAddress;
-        libAddress = newLibAddress;
-    }
-    /* Fallback */
-    function () public {
-        revert();
-    }
-    /* Externals */
-    function changeDataBaseAddress(address newDatabaseAddress) external onlyForOwner {
-        databaseAddress = newDatabaseAddress;
-    }
-    function changeDepositsAddress(address newDepositsAddress) external onlyForOwner {
-        depositsAddress = newDepositsAddress;
-    }
-    function changeForkAddress(address newForkAddress) external onlyForOwner {
-        forkAddress = newForkAddress;
-    }
-    function changeLibAddress(address newLibAddress) external onlyForOwner {
-        libAddress = newLibAddress;
-    }
-    function changeFees(uint256 rate, uint256 rateMultiplier, uint256 min, uint256 max) external onlyForOwner {
-        transactionFeeRate = rate;
-        transactionFeeRateM = rateMultiplier;
-        transactionFeeMin = min;
-        transactionFeeMax = max;
-    }
-    function approve(address spender, uint256 amount, uint256 nonce) external returns (bool success) {
-        _approve(spender, amount, nonce);
+    function increaseApproval (address _spender, uint _addedValue) public returns (bool success) {
+        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
         return true;
     }
-    function approveAndCall(address spender, uint256 amount, uint256 nonce, bytes extraData) external returns (bool success) {
-        _approve(spender, amount, nonce);
-        require( checkContract(spender) );
-        require( SampleContract(spender).approvedToken(msg.sender, amount, extraData) );
-        return true;
-    }
-    function transfer(address to, uint256 amount) external returns (bool success) {
-        bytes memory _data;
-        _transfer(msg.sender, to, amount, true, _data);
-        return true;
-    }
-    function transferFrom(address from, address to, uint256 amount) external returns (bool success) {
-        if ( from != msg.sender ) {
-            var (_success, _reamining, _nonce) = TokenDB(databaseAddress).getAllowance(from, msg.sender);
-            require( _success );
-            _reamining = safeSub(_reamining, amount);
-            _nonce = safeAdd(_nonce, 1);
-            require( TokenDB(databaseAddress).setAllowance(from, msg.sender, _reamining, _nonce) );
-            AllowanceUsed(msg.sender, from, amount);
-        }
-        bytes memory _data;
-        _transfer(from, to, amount, true, _data);
-        return true;
-    }
-    function transfer(address to, uint256 amount, bytes extraData) external returns (bool success) {
-        _transfer(msg.sender, to, amount, true, extraData);
-        return true;
-    }
-    function mint(address owner, uint256 value) external returns (bool success) {
-        require( msg.sender == forkAddress || msg.sender == depositsAddress );
-        _mint(owner, value);
-        return true;
-    }
-    /* Internals */
-    function _transfer(address from, address to, uint256 amount, bool fee, bytes extraData) internal {
-        bool _success;
-        uint256 _fee;
-        uint256 _payBack;
-        uint256 _amount = amount;
-        require( from != 0x00 && to != 0x00 );
-        if( fee ) {
-            (_success, _fee) = getTransactionFee(amount);
-            require( _success );
-            if ( TokenDB(databaseAddress).balanceOf(from) == amount ) {
-                _amount = safeSub(amount, _fee);
-            }
-        }
-        if ( fee ) {
-            Burn(from, _fee);
-        }
-        Transfer(from, to, _amount);
-        Transfer2(from, to, _amount, extraData);
-        require( TokenDB(databaseAddress).transfer(from, to, _amount, _fee) );
-        if ( isContract(to) ) {
-            require( checkContract(to) );
-            (_success, _payBack) = SampleContract(to).receiveToken(from, amount, extraData);
-            require( _success );
-            require( amount > _payBack );
-            if ( _payBack > 0 ) {
-                bytes memory _data;
-                Transfer(to, from, _payBack);
-                Transfer2(to, from, _payBack, _data);
-                require( TokenDB(databaseAddress).transfer(to, from, _payBack, 0) );
-            }
-        }
-    }
-    function _mint(address owner, uint256 value) internal {
-        require( TokenDB(databaseAddress).increase(owner, value) );
-        Mint(owner, value);
-    }
-    function _approve(address spender, uint256 amount, uint256 nonce) internal {
-        require( msg.sender != spender );
-        var (_success, _remaining, _nonce) = TokenDB(databaseAddress).getAllowance(msg.sender, spender);
-        require( _success && ( _nonce == nonce ) );
-        require( TokenDB(databaseAddress).setAllowance(msg.sender, spender, amount, nonce) );
-        Approval(msg.sender, spender, amount);
-    }
-    function isContract(address addr) internal view returns (bool success) {
-        uint256 _codeLength;
-        assembly {
-            _codeLength := extcodesize(addr)
-        }
-        return _codeLength > 0;
-    }
-    function checkContract(address addr) internal view returns (bool appropriate) {
-        return SampleContract(addr).XGRAddress() == address(this);
-    }
-    /* Constants */
-    function allowance(address owner, address spender) public constant returns (uint256 remaining, uint256 nonce) {
-        var (_success, _remaining, _nonce) = TokenDB(databaseAddress).getAllowance(owner, spender);
-        require( _success );
-        return (_remaining, _nonce);
-    }
-    function getTransactionFee(uint256 value) public constant returns (bool success, uint256 fee) {
-        fee = safeMul(value, transactionFeeRate) / transactionFeeRateM / 100;
-        if ( fee > transactionFeeMax ) { fee = transactionFeeMax; }
-        else if ( fee < transactionFeeMin ) { fee = transactionFeeMin; }
-        return (true, fee);
-    }
-    function balanceOf(address owner) public constant returns (uint256 value) {
-        return TokenDB(databaseAddress).balanceOf(owner);
-    }
-    function balancesOf(address owner) public constant returns (uint256 balance, uint256 lockedAmount) {
-        return (TokenDB(databaseAddress).balanceOf(owner), TokenDB(databaseAddress).lockedBalances(owner));
-    }
-    function totalSupply() public constant returns (uint256 value) {
-        return TokenDB(databaseAddress).totalSupply();
-    }
-    /* Events */
-    event AllowanceUsed(address indexed spender, address indexed owner, uint256 indexed value);
-    event Mint(address indexed addr, uint256 indexed value);
-    event Burn(address indexed addr, uint256 indexed value);
-    event Approval(address indexed _owner, address indexed _spender, uint _value);
-    event Transfer(address indexed _from, address indexed _to, uint _value);
-    event Transfer2(address indexed from, address indexed to, uint256 indexed value, bytes data);
-}
 
-contract Deposits is Owned, SafeMath {
-    /* Structures */
-    struct depositTypes_s {
-        uint256 blockDelay;
-        uint256 baseFunds;
-        uint256 interestRateOnEnd;
-        uint256 interestRateBeforeEnd;
-        uint256 interestFee;
-        bool closeable;
-        bool valid;
-    }
-    struct deposits_s {
-        address addr;
-        uint256 amount;
-        uint256 start;
-        uint256 end;
-        uint256 interestOnEnd;
-        uint256 interestBeforeEnd;
-        uint256 interestFee;
-        uint256 interestMultiplier;
-        bool    closeable;
-        bool    valid;
-    }
-    /* Variables */
-    mapping(uint256 => depositTypes_s) public depositTypes;
-    uint256 public depositTypesCounter;
-    address public tokenAddress;
-    address public databaseAddress;
-    address public founderAddress;
-    uint256 public interestMultiplier = 1e4;
-    /* Externals */
-    function changeDataBaseAddress(address newDatabaseAddress) external onlyForOwner {
-        databaseAddress = newDatabaseAddress;
-    }
-    function changeTokenAddress(address newTokenAddress) external onlyForOwner {
-        tokenAddress = newTokenAddress;
-    }
-    function changeFounderAddresss(address newFounderAddress) external onlyForOwner {
-        founderAddress = newFounderAddress;
-    }
-    function addDepositType(uint256 blockDelay, uint256 baseFunds, uint256 interestRateOnEnd,
-        uint256 interestRateBeforeEnd, uint256 interestFee, bool closeable) external onlyForOwner {
-        depositTypesCounter += 1;
-        uint256 DTID = depositTypesCounter;
-        depositTypes[DTID] = depositTypes_s(
-            blockDelay,
-            baseFunds,
-            interestRateOnEnd,
-            interestRateBeforeEnd,
-            interestFee,
-            closeable,
-            true
-        );
-        EventNewDepositType(
-            DTID,
-            blockDelay,
-            baseFunds,
-            interestRateOnEnd,
-            interestRateBeforeEnd,
-            interestFee,
-            closeable
-        );
-    }
-    function rekoveDepositType(uint256 DTID) external onlyForOwner {
-        depositTypes[DTID].valid = false;
-    }
-    function placeDeposit(uint256 amount, uint256 depositType) external checkSelf {
-        require( depositTypes[depositType].valid );
-        require( depositTypes[depositType].baseFunds <= amount );
-        uint256 balance = TokenDB(databaseAddress).balanceOf(msg.sender);
-        uint256 locked = TokenDB(databaseAddress).lockedBalances(msg.sender);
-        require( safeSub(balance, locked) >= amount );
-        var (success, DID) = TokenDB(databaseAddress).openDeposit(
-            msg.sender,
-            amount,
-            safeAdd(block.number, depositTypes[depositType].blockDelay),
-            depositTypes[depositType].interestRateOnEnd,
-            depositTypes[depositType].interestRateBeforeEnd,
-            depositTypes[depositType].interestFee,
-            interestMultiplier,
-            depositTypes[depositType].closeable
-        );
-        require( success );
-        EventNewDeposit(DID);
-    }
-    function closeDeposit(address beneficary, uint256 DID) external checkSelf {
-        address _beneficary = beneficary;
-        if ( _beneficary == 0x00 ) {
-            _beneficary = msg.sender;
-        }
-        var (addr, amount, start, end, interestOnEnd, interestBeforeEnd, interestFee,
-            interestM, closeable, valid) = TokenDB(databaseAddress).getDeposit(DID);
-        _closeDeposit(_beneficary, DID, deposits_s(addr, amount, start, end, interestOnEnd, interestBeforeEnd, interestFee, interestM, closeable, valid));
-    }
-    /* Internals */
-    function _closeDeposit(address beneficary, uint256 DID, deposits_s data) internal {
-        require( data.valid && data.addr == msg.sender );
-        var (interest, interestFee) = _calculateInterest(data);
-        if ( interest > 0 ) {
-            require( Token(tokenAddress).mint(beneficary, interest) );
-        }
-        if ( interestFee > 0 ) {
-            require( Token(tokenAddress).mint(founderAddress, interestFee) );
-        }
-        require( TokenDB(databaseAddress).closeDeposit(DID) );
-        EventDepositClosed(DID, interest, interestFee);
-    }
-    function _calculateInterest(deposits_s data) internal view returns (uint256 interest, uint256 interestFee) {
-        if ( ! data.valid || data.amount <= 0 || data.end <= data.start || block.number <= data.start ) { return (0, 0); }
-        uint256 rate;
-        uint256 delay;
-        if ( data.end <= block.number ) {
-            rate = data.interestOnEnd;
-            delay = safeSub(data.end, data.start);
+    function decreaseApproval (address _spender, uint _subtractedValue) public returns (bool success) {
+        uint oldValue = allowed[msg.sender][_spender];
+        if (_subtractedValue > oldValue) {
+            allowed[msg.sender][_spender] = 0;
         } else {
-            require( data.closeable );
-            rate = data.interestBeforeEnd;
-            delay = safeSub(block.number, data.start);
+            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
         }
-        if ( rate == 0 ) { return (0, 0); }
-        interest = safeDiv(safeMul(safeDiv(safeDiv(safeMul(data.amount, rate), 100), data.interestMultiplier), delay), safeSub(data.end, data.start));
-        if ( data.interestFee > 0 && interest > 0) {
-            interestFee = safeDiv(safeDiv(safeMul(interest, data.interestFee), 100), data.interestMultiplier);
-        }
-        if ( interestFee > 0 ) {
-            interest = safeSub(interest, interestFee);
-        }
-    }
-    /* Constants */
-    function calculateInterest(uint256 DID) public view returns(uint256, uint256) {
-        var (addr, amount, start, end, interestOnEnd, interestBeforeEnd, interestFee,
-            interestM, closeable, valid) = TokenDB(databaseAddress).getDeposit(DID);
-        return _calculateInterest(deposits_s(addr, amount, start, end, interestOnEnd, interestBeforeEnd, interestFee, interestM, closeable, valid));
-    }
-    /* Modifiers */
-    modifier checkSelf {
-        require( TokenDB(databaseAddress).tokenAddress() == tokenAddress );
-        require( TokenDB(databaseAddress).depositsAddress() == address(this) );
-        _;
-    }
-    /* Events */
-    event EventNewDepositType(uint256 indexed DTID, uint256 blockDelay, uint256 baseFunds,
-        uint256 interestRateOnEnd, uint256 interestRateBeforeEnd, uint256 interestFee, bool closeable);
-    event EventRevokeDepositType(uint256 indexed DTID);
-    event EventNewDeposit(uint256 indexed DID);
-    event EventDepositClosed(uint256 indexed DID, uint256 indexed interest, uint256 indexed interestFee);
-}
-
-contract Fork is Owned {
-    /* Variables */
-    address public uploader;
-    address public tokenAddress;
-    /* Constructor */
-    function Fork(address _uploader) public {
-        uploader = _uploader;
-    }
-    /* Externals */
-    function changeTokenAddress(address newTokenAddress) external onlyForOwner {
-        tokenAddress = newTokenAddress;
-    }
-    function upload(address[] addr, uint256[] amount) external onlyForUploader {
-        require( addr.length == amount.length );
-        for ( uint256 a=0 ; a<addr.length ; a++ ) {
-            require( Token(tokenAddress).mint(addr[a], amount[a]) );
-        }
-    }
-    /* Modifiers */
-    modifier onlyForUploader {
-        require( msg.sender == uploader );
-        _;
-    }
-}
-
-contract SampleContract is Owned, SafeMath {
-    /* Variables */
-    mapping(address => uint256) public deposits; // Database of users balance
-    address public XGRAddress; // XGR Token address, please do not change this variable name!
-    /* Constructor */
-    function SampleContract(address newXGRTokenAddress) public {
-        /*
-            For the first time you need set the XGR token address.
-            The contract deployer would be also the owner.
-        */
-        XGRAddress = newXGRTokenAddress;
-    }
-    /* Externals */
-    function receiveToken(address addr, uint256 amount, bytes data) external onlyFromXGRToken returns(bool, uint256) {
-        /*
-            @addr has send @amount to ourself. The second return parameter is the refund amount.
-            If you don't need the whole amount, you can refund that for the address instantly.
-            Please do not change this function name and parameter!
-        */
-        incomingToken(addr, amount);
-        return (true, 0);
-    }
-    function approvedToken(address addr, uint256 amount, bytes data) external onlyFromXGRToken returns(bool) {
-        /*
-            @addr has allowed @amount for withdraw from her/his balance. We withdraw that to ourself.
-            Please do not change this function name and parameter!
-        */
-        require( Token(XGRAddress).transferFrom(addr, address(this), amount) );
-        incomingToken(addr, amount);
+        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
         return true;
     }
-    function changeTokenAddress(address newTokenAddress) external onlyForOwner {
-        /*
-            Maybe the XGR token contract becomes new address, you need maintenance this.
-        */
-        XGRAddress = newTokenAddress;
-    }
-    function killThisContract() external onlyForOwner {
-        var balance = Token(XGRAddress).balanceOf(address(this)); // get this contract XGR balance
-        require( Token(XGRAddress).transfer(msg.sender, balance) ); // send all XGR token to the caller
-        selfdestruct(msg.sender); // destruct the contract;
-    }
-    function withdraw(uint256 amount) external {
-        /*
-            Some users withdraw XGR token from this contract.
-            The contract must pay the XGR token fee, we need to reduce that from the amount;
-        */
-        var (success, fee) = Token(XGRAddress).getTransactionFee(amount); // Get the transfer fee from the contract
-        require( success );
-        withdrawToken(msg.sender, amount);
-        require( Token(XGRAddress).transfer(msg.sender, safeSub(amount, fee)) );
-    }
-    /* Internals */
-    function incomingToken(address addr, uint256 amount) internal {
-        deposits[addr] = safeAdd(deposits[addr], amount);
-    }
-    function withdrawToken(address addr, uint256 amount) internal {
-        deposits[addr] = safeSub(deposits[addr], amount);
-    }
-    /* Modifiers */
-    modifier onlyFromXGRToken {
-        require( msg.sender == XGRAddress );
-        _;
-    }
+
 }
