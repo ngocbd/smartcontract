@@ -1,136 +1,33 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSwap at 0xc40cc58ee1bc43f81097217ded152ba8ffbdf3ad
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSwap at 0x7DC8A6E706dA7c4A77d3710F7B7e621ee0074dC3
 */
-pragma solidity ^0.4.18;
+pragma solidity 0.4.23;
+// ----------------------------------------------------------------------------
+// ERC Token Standard #20 Interface
+// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
+// ----------------------------------------------------------------------------
+contract ERC20Interface {
+    function totalSupply() public constant returns (uint);
+    function balanceOf(address tokenOwner) public constant returns (uint balance);
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+    function transfer(address to, uint tokens) public returns (bool success);
+    function approve(address spender, uint tokens) public returns (bool success);
+    function transferFrom(address from, address to, uint tokens) public returns (bool success);
 
-pragma solidity ^0.4.18;
-
-contract Token {
-
-    /// @return total amount of tokens
-    function totalSupply() public constant returns (uint256 supply) {}
-
-    /// @param _owner The address from which the balance will be retrieved
-    /// @return The balance
-    function balanceOf(address _owner) public constant returns (uint256 balance) {}
-
-    /// @notice send `_value` token to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _value) public returns (bool success) {}
-
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {}
-
-    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of wei to be approved for transfer
-    /// @return Whether the approval was successful or not
-    function approve(address _spender, uint256 _value) public returns (bool success) {}
-
-    /// @param _owner The address of the account owning tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {}
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    event Transfer(address indexed from, address indexed to, uint tokens);
+    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
 }
 
 
-/*
-This implements ONLY the standard functions and NOTHING else.
-For a token like you would want to deploy in something like Mist, see HumanStandardToken.sol.
-
-If you deploy this, you won't have anything useful.
-
-Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20
-.*/
-
-contract StandardToken is Token {
-
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-    uint256 public totalSupply;
+// ----------------------------------------------------------------------------
+// Receive approval and then execute function
+// ----------------------------------------------------------------------------
+contract ApproveAndCallFallBack {
+    function receiveApproval(address from, uint tokens, address token, bytes data) public;
 }
 
-/*
-This Token Contract implements the standard token functionality (https://github.com/ethereum/EIPs/issues/20) as well as the following OPTIONAL extras intended for use by humans.
-
-In other words. This is intended for deployment in something like a Token Factory or Mist wallet, and then used by humans.
-Imagine coins, currencies, shares, voting weight, etc.
-Machine-based, rapid creation of many tokens would not necessarily need these extra features or will be minted in other manners.
-
-1) Initial Finite Supply (upon creation one specifies how much is minted).
-2) In the absence of a token registry: Optional Decimal, Symbol & Name.
-3) Optional approveAndCall() functionality to notify a contract if an approval() has occurred.
-
-.*/
-
-contract HumanStandardToken is StandardToken {
-
-    //What is this function?
-    function () {
-        //if ether is sent to this address, send it back.
-        throw;
-    }
-
-    /* Public variables of the token */
-
-    /*
-    NOTE:
-    The following variables are OPTIONAL vanities. One does not have to include them.
-    They allow one to customise the token contract & in no way influences the core functionality.
-    Some wallets/interfaces might not even bother to look at this information.
-    */
-    string public name;                   //fancy name: eg Simon Bucks
-    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol;                 //An identifier: eg SBX
-    string public version = 'H0.1';       //human 0.1 standard. Just an arbitrary versioning scheme.
-
-    function HumanStandardToken(
-        uint256 _initialAmount,
-        string _tokenName,
-        uint8 _decimalUnits,
-        string _tokenSymbol
-        ) public {
-        balances[msg.sender] = _initialAmount;               // Give the creator all initial tokens
-        totalSupply = _initialAmount;                        // Update total supply
-        name = _tokenName;                                   // Set the name for display purposes
-        decimals = _decimalUnits;                            // Amount of decimals for display purposes
-        symbol = _tokenSymbol;                               // Set the symbol for display purposes
-    }
-
-
-}
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
+// https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/math/SafeMath.sol
+// Note: Div only
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
@@ -177,260 +74,283 @@ library SafeMath {
   }
 }
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
+// ------------------------------------------------------------------------
+// Standard ERC20 Token Contract.
+// Fixed Supply with burn capabilities
+// ------------------------------------------------------------------------
+contract ERC20 is ERC20Interface{
+    using SafeMath for uint; 
+
+    // ------------------------------------------------------------------------
+    /// Token supply, balances and allowance
+    // ------------------------------------------------------------------------
+    uint internal supply;
+    mapping (address => uint) internal balances;
+    mapping (address => mapping (address => uint)) internal allowed;
+
+    // ------------------------------------------------------------------------
+    // Token Information
+    // ------------------------------------------------------------------------
+    string public name;                   // Full Token name
+    uint8 public decimals;                // How many decimals to show
+    string public symbol;                 // An identifier
 
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    // ------------------------------------------------------------------------
+    // Constructor
+    // ------------------------------------------------------------------------
+    constructor(uint _initialAmount, string _tokenName, uint8 _decimalUnits, string _tokenSymbol) 
+    public {
+        balances[msg.sender] = _initialAmount;               // Give the creator all initial tokens
+        supply = _initialAmount;                        // Update total supply
+        name = _tokenName;                                   // Set the name for display purposes
+        decimals = _decimalUnits;                            // Amount of decimals for display purposes
+        symbol = _tokenSymbol;                               // Set the symbol for display purposes
+        emit Transfer(address(0), msg.sender, _initialAmount);    // Transfer event indicating token creation
+    }
 
 
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
+    // ------------------------------------------------------------------------
+    // Transfer _amount tokens to address _to 
+    // Sender must have enough tokens. Cannot send to 0x0.
+    // ------------------------------------------------------------------------
+    function transfer(address _to, uint _amount) 
+    public 
+    returns (bool success) {
+        require(_to != address(0));         // Use burn() function instead
+        require(_to != address(this));
+        balances[msg.sender] = balances[msg.sender].sub(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        emit Transfer(msg.sender, _to, _amount);
+        return true;
+    }
 
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
+    // ------------------------------------------------------------------------
+    // Transfer _amount of tokens if _from has allowed msg.sender to do so
+    //  _from must have enough tokens + must have approved msg.sender 
+    // ------------------------------------------------------------------------
+    function transferFrom(address _from, address _to, uint _amount) 
+    public 
+    returns (bool success) {
+        require(_to != address(0)); 
+        require(_to != address(this)); 
+        balances[_from] = balances[_from].sub(_amount);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);
+        balances[_to] = balances[_to].add(_amount);
+        emit Transfer(_from, _to, _amount);
+        return true;
+    }
 
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
+    // ------------------------------------------------------------------------
+    // Token owner can approve for `spender` to transferFrom(...) `tokens`
+    // from the token owner's account
+    // ------------------------------------------------------------------------
+    function approve(address _spender, uint _amount) 
+    public 
+    returns (bool success) {
+        allowed[msg.sender][_spender] = _amount;
+        emit Approval(msg.sender, _spender, _amount);
+        return true;
+    }
 
+
+    // ------------------------------------------------------------------------
+    // Token holder can notify a contract that it has been approved
+    // to spend _amount of tokens
+    // ------------------------------------------------------------------------
+    function approveAndCall(address _spender, uint _amount, bytes _data) 
+    public 
+    returns (bool success) {
+        allowed[msg.sender][_spender] = _amount;
+        emit Approval(msg.sender, _spender, _amount);
+        ApproveAndCallFallBack(_spender).receiveApproval(msg.sender, _amount, this, _data);
+        return true;
+    }
+
+    // ------------------------------------------------------------------------
+    // Removes senders tokens from supply.
+    // Lowers user balance and totalSupply by _amount
+    // ------------------------------------------------------------------------   
+    function burn(uint _amount) 
+    public 
+    returns (bool success) {
+        balances[msg.sender] = balances[msg.sender].sub(_amount);
+        supply = supply.sub(_amount);
+        emit LogBurn(msg.sender, _amount);
+        emit Transfer(msg.sender, address(0), _amount);
+        return true;
+    }
+
+    // ------------------------------------------------------------------------
+    // An approved sender can burn _amount tokens of user _from
+    // Lowers user balance and supply by _amount 
+    // ------------------------------------------------------------------------    
+    function burnFrom(address _from, uint _amount) 
+    public 
+    returns (bool success) {
+        balances[_from] = balances[_from].sub(_amount);                         // Subtract from the targeted balance
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_amount);             // Subtract from the sender's allowance
+        supply = supply.sub(_amount);                              // Update supply
+        emit LogBurn(_from, _amount);
+        emit Transfer(_from, address(0), _amount);
+        return true;
+    }
+
+    // ------------------------------------------------------------------------
+    // Returns the number of tokens in circulation
+    // ------------------------------------------------------------------------
+    function totalSupply()
+    public 
+    view 
+    returns (uint tokenSupply) { 
+        return supply; 
+    }
+
+    // ------------------------------------------------------------------------
+    // Returns the token balance of user
+    // ------------------------------------------------------------------------
+    function balanceOf(address _tokenHolder) 
+    public 
+    view 
+    returns (uint balance) {
+        return balances[_tokenHolder];
+    }
+
+    // ------------------------------------------------------------------------
+    // Returns amount of tokens _spender is allowed to transfer or burn
+    // ------------------------------------------------------------------------
+    function allowance(address _tokenHolder, address _spender) 
+    public 
+    view 
+    returns (uint remaining) {
+        return allowed[_tokenHolder][_spender];
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Fallback function
+    // Won't accept ETH
+    // ------------------------------------------------------------------------
+    function () 
+    public 
+    payable {
+        revert();
+    }
+
+    // ------------------------------------------------------------------------
+    // Event: Logs the amount of tokens burned and the address of the burner
+    // ------------------------------------------------------------------------
+    event LogBurn(address indexed _burner, uint indexed _amountBurned); 
 }
 
-/// @title Token Swap Contract for Neverdie
-/// @author Julia Altenried, Yuriy Kashnikov
-contract TokenSwap is Ownable {
+// ------------------------------------------------------------------------
+// This contract is in-charge of receiving old MyBit tokens and returning
+// New MyBit tokens to users.
+// Note: Old tokens have 8 decimal places, while new tokens have 18 decimals
+// 1.00000000 OldMyBit == 36.000000000000000000 NewMyBit
+// ------------------------------------------------------------------------  
+contract TokenSwap { 
+  using SafeMath for uint256; 
 
-    /* neverdie token contract address and its instance, can be set by owner only */
-    HumanStandardToken ndc;
-    /* neverdie token contract address and its instance, can be set by owner only */
-    HumanStandardToken tpt;
-    /* signer address, verified in 'swap' method, can be set by owner only */
-    address neverdieSigner;
-    /* minimal amount for swap, the amount passed to 'swap method can't be smaller
-       than this value, can be set by owner only */
-    uint256 minSwapAmount = 40;
 
-    event Swap(
-        address indexed to,
-        address indexed PTaddress,
-        uint256 rate,
-        uint256 amount,
-        uint256 ptAmount
-    );
+  // ------------------------------------------------------------------------
+  // Token addresses
+  // ------------------------------------------------------------------------  
+  address public oldTokenAddress;
+  ERC20 public newToken; 
 
-    event BuyNDC(
-        address indexed to,
-        uint256 NDCprice,
-        uint256 value,
-        uint256 amount
-    );
+  // ------------------------------------------------------------------------
+  // Token Transition Info
+  // ------------------------------------------------------------------------  
+  uint256 public scalingFactor = 36;          // 1 OldMyBit = 36 NewMyBit
+  uint256 public tenDecimalPlaces = 10**10; 
 
-    event BuyTPT(
-        address indexed to,
-        uint256 TPTprice,
-        uint256 value,
-        uint256 amount
-    );
 
-    /// @dev handy constructor to initialize TokenSwap with a set of proper parameters
-    /// NOTE: min swap amount is left with default value, set it manually if needed
-    /// @param _teleportContractAddress Teleport token address 
-    /// @param _neverdieContractAddress Neverdie token address
-    /// @param _signer signer address, verified further in swap functions
-    function TokenSwap(address _teleportContractAddress, address _neverdieContractAddress, address _signer) public {
-        tpt = HumanStandardToken(_teleportContractAddress);
-        ndc = HumanStandardToken(_neverdieContractAddress);
-        neverdieSigner = _signer;
-    }
+  // ------------------------------------------------------------------------
+  // Old Token Supply 
+  // ------------------------------------------------------------------------  
+  uint256 public oldCirculatingSupply;      // Old MyBit supply in circulation (8 decimals)
 
-    function setTeleportContractAddress(address _to) external onlyOwner {
-        tpt = HumanStandardToken(_to);
-    }
 
-    function setNeverdieContractAddress(address _to) external onlyOwner {
-        ndc = HumanStandardToken(_to);
-    }
+  // ------------------------------------------------------------------------
+  // New Token Supply
+  // ------------------------------------------------------------------------  
+  uint256 public totalSupply = 18000000000000000 * tenDecimalPlaces;      // New token supply. (Moving from 8 decimal places to 18)
+  uint256 public circulatingSupply = 10123464384447336 * tenDecimalPlaces;   // New user supply. 
+  uint256 public foundationSupply = totalSupply - circulatingSupply;      // Foundation supply. 
 
-    function setNeverdieSignerAddress(address _to) external onlyOwner {
-        neverdieSigner = _to;
-    }
+  // ------------------------------------------------------------------------
+  // Distribution numbers 
+  // ------------------------------------------------------------------------
+  uint256 public tokensRedeemed = 0;    // Total number of new tokens redeemed.
 
-    function setMinSwapAmount(uint256 _amount) external onlyOwner {
-        minSwapAmount = _amount;
-    }
 
-    /// @dev receiveApproval calls function encoded as extra data
-    /// @param _sender token sender
-    /// @param _value value allowed to be spent
-    /// @param _tokenContract callee, should be equal to neverdieContractAddress
-    /// @param _extraData  this should be a well formed calldata with function signature preceding which is used to call, for example, 'swap' method
-    function receiveApproval(address _sender, uint256 _value, address _tokenContract, bytes _extraData) external {
-        require(_tokenContract == address(ndc));
-        assert(this.call(_extraData));
-    }
+  // ------------------------------------------------------------------------
+  // Double check that all variables are set properly before swapping tokens
+  // ------------------------------------------------------------------------
+  constructor(address _myBitFoundation, address _oldTokenAddress)
+  public { 
+    oldTokenAddress = _oldTokenAddress; 
+    oldCirculatingSupply = ERC20Interface(oldTokenAddress).totalSupply(); 
+    assert ((circulatingSupply.div(oldCirculatingSupply.mul(tenDecimalPlaces))) == scalingFactor);
+    assert (oldCirculatingSupply.mul(scalingFactor.mul(tenDecimalPlaces)) == circulatingSupply); 
+    newToken = new ERC20(totalSupply, "MyBit", 18, "MYB"); 
+    newToken.transfer(_myBitFoundation, foundationSupply);
+  }
 
-    
+  // ------------------------------------------------------------------------
+  // Users can trade old MyBit tokens for new MyBit tokens here 
+  // Must approve this contract as spender to swap tokens
+  // ------------------------------------------------------------------------
+  function swap(uint256 _amount) 
+  public 
+  noMint
+  returns (bool){ 
+    require(ERC20Interface(oldTokenAddress).transferFrom(msg.sender, this, _amount));
+    uint256 newTokenAmount = _amount.mul(scalingFactor).mul(tenDecimalPlaces);   // Add 10 more decimals to number of tokens
+    assert(tokensRedeemed.add(newTokenAmount) <= circulatingSupply);       // redeemed tokens should never exceed circulatingSupply
+    tokensRedeemed = tokensRedeemed.add(newTokenAmount);
+    require(newToken.transfer(msg.sender, newTokenAmount));
+    emit LogTokenSwap(msg.sender, _amount, block.timestamp);
+    return true;
+  }
 
-    /// @dev One-way swapFor function, swaps NDC for purchasable token for a given spender
-    /// @param _spender account that wants to swap NDC for purchasable token 
-    /// @param _rate current NDC to purchasable token rate, i.e. that the returned amount 
-    ///              of purchasable tokens equals to (_amount * _rate) / 1000
-    /// @param _PTaddress the address of the purchasable token  
-    /// @param _amount amount of NDC being offered
-    /// @param _expiration expiration timestamp 
-    /// @param _v ECDCA signature
-    /// @param _r ECDSA signature
-    /// @param _s ECDSA signature
-    function swapFor(address _spender,
-                     uint256 _rate,
-                     address _PTaddress,
-                     uint256 _amount,
-                     uint256 _expiration,
-                     uint8 _v,
-                     bytes32 _r,
-                     bytes32 _s) public {
+  // ------------------------------------------------------------------------
+  // Alias for swap(). Called by old token contract when approval to transfer 
+  // tokens has been given. 
+  // ------------------------------------------------------------------------
+  function receiveApproval(address _from, uint256 _amount, address _token, bytes _data)
+  public 
+  noMint
+  returns (bool){ 
+    require(_token == oldTokenAddress);
+    require(ERC20Interface(oldTokenAddress).transferFrom(_from, this, _amount));
+    uint256 newTokenAmount = _amount.mul(scalingFactor).mul(tenDecimalPlaces);   // Add 10 more decimals to number of tokens
+    assert(tokensRedeemed.add(newTokenAmount) <= circulatingSupply);    // redeemed tokens should never exceed circulatingSupply
+    tokensRedeemed = tokensRedeemed.add(newTokenAmount);
+    require(newToken.transfer(_from, newTokenAmount));
+    emit LogTokenSwap(_from, _amount, block.timestamp);
+    return true;
+  }
 
-        // Check if the signature did not expire yet by inspecting the timestamp
-        require(_expiration >= block.timestamp);
+  // ------------------------------------------------------------------------
+  // Events 
+  // ------------------------------------------------------------------------
+  event LogTokenSwap(address indexed _sender, uint256 indexed _amount, uint256 indexed _timestamp); 
 
-        // Check if the signature is coming from the neverdie signer address
-        address signer = ecrecover(keccak256(_spender, _rate, _PTaddress, _amount, _expiration), _v, _r, _s);
-        require(signer == neverdieSigner);
 
-        // Check if the amount of NDC is higher than the minimum amount 
-        require(_amount >= minSwapAmount);
-       
-        // Check that we hold enough tokens
-        HumanStandardToken ptoken = HumanStandardToken(_PTaddress);
-        uint256 ptAmount;
-        uint8 decimals = ptoken.decimals();
-        if (decimals <= 18) {
-          ptAmount = SafeMath.div(SafeMath.div(SafeMath.mul(_amount, _rate), 1000), 10**(uint256(18 - decimals)));
-        } else {
-          ptAmount = SafeMath.div(SafeMath.mul(SafeMath.mul(_amount, _rate), 10**(uint256(decimals - 18))), 1000);
-        }
+  // ------------------------------------------------------------------------
+  // Modifiers 
+  // ------------------------------------------------------------------------
 
-        assert(ndc.transferFrom(_spender, this, _amount) && ptoken.transfer(_spender, ptAmount));
 
-        // Emit Swap event
-        Swap(_spender, _PTaddress, _rate, _amount, ptAmount);
-    }
-
-    /// @dev One-way swap function, swaps NDC to purchasable tokens
-    /// @param _rate current NDC to purchasable token rate, i.e. that the returned amount of purchasable tokens equals to _amount * _rate 
-    /// @param _PTaddress the address of the purchasable token  
-    /// @param _amount amount of NDC being offered
-    /// @param _expiration expiration timestamp 
-    /// @param _v ECDCA signature
-    /// @param _r ECDSA signature
-    /// @param _s ECDSA signature
-    function swap(uint256 _rate,
-                  address _PTaddress,
-                  uint256 _amount,
-                  uint256 _expiration,
-                  uint8 _v,
-                  bytes32 _r,
-                  bytes32 _s) external {
-        swapFor(msg.sender, _rate, _PTaddress, _amount, _expiration, _v, _r, _s);
-    }
-
-    /// @dev buy NDC with ether
-    /// @param _NDCprice NDC price in Wei
-    /// @param _expiration expiration timestamp
-    /// @param _v ECDCA signature
-    /// @param _r ECDSA signature
-    /// @param _s ECDSA signature
-    function buyNDC(uint256 _NDCprice,
-                    uint256 _expiration,
-                    uint8 _v,
-                    bytes32 _r,
-                    bytes32 _s
-                   ) payable external {
-        // Check if the signature did not expire yet by inspecting the timestamp
-        require(_expiration >= block.timestamp);
-
-        // Check if the signature is coming from the neverdie address
-        address signer = ecrecover(keccak256(_NDCprice, _expiration), _v, _r, _s);
-        require(signer == neverdieSigner);
-
-        uint256 a = SafeMath.div(msg.value, _NDCprice);
-        assert(ndc.transfer(msg.sender, a));
-
-        // Emit BuyNDC event
-        BuyNDC(msg.sender, _NDCprice, msg.value, a);
-    }
-
-    /// @dev buy TPT with ether
-    /// @param _TPTprice TPT price in Wei
-    /// @param _expiration expiration timestamp
-    /// @param _v ECDCA signature
-    /// @param _r ECDSA signature
-    /// @param _s ECDSA signature
-    function buyTPT(uint256 _TPTprice,
-                    uint256 _expiration,
-                    uint8 _v,
-                    bytes32 _r,
-                    bytes32 _s
-                   ) payable external {
-        // Check if the signature did not expire yet by inspecting the timestamp
-        require(_expiration >= block.timestamp);
-
-        // Check if the signature is coming from the neverdie address
-        address signer = ecrecover(keccak256(_TPTprice, _expiration), _v, _r, _s);
-        require(signer == neverdieSigner);
-
-        uint256 a = SafeMath.div(msg.value, _TPTprice);
-        assert(tpt.transfer(msg.sender, a));
-
-        // Emit BuyNDC event
-        BuyTPT(msg.sender, _TPTprice, msg.value, a);
-    }
-
-    /// @dev fallback function to reject any ether coming directly to the contract
-    function () payable public { 
-        revert(); 
-    }
-
-    /// @dev withdraw all ether
-    function withdrawEther() external onlyOwner {
-        owner.transfer(this.balance);
-    }
-
-    /// @dev withdraw token
-    /// @param _tokenContract any kind of ERC20 token to withdraw from
-    function withdraw(address _tokenContract) external onlyOwner {
-        ERC20 token = ERC20(_tokenContract);
-        uint256 balance = token.balanceOf(this);
-        assert(token.transfer(owner, balance));
-    }
-
-    /// @dev kill contract, but before transfer all TPT, NDC tokens and ether to owner
-    function kill() onlyOwner public {
-        uint256 allNDC = ndc.balanceOf(this);
-        uint256 allTPT = tpt.balanceOf(this);
-        assert(ndc.transfer(owner, allNDC) && tpt.transfer(owner, allTPT));
-        selfdestruct(owner);
-    }
+  // ------------------------------------------------------------------------
+  // This ensures that the owner of the previous token doesn't mint more 
+  // tokens during swap
+  // ------------------------------------------------------------------------
+  modifier noMint { 
+    require(oldCirculatingSupply == ERC20Interface(oldTokenAddress).totalSupply());
+    _;
+  }
 
 }
