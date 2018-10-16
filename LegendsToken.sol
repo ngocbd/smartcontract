@@ -1,12 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LegendsToken at 0x3695e178d6f2ec3bc9039667dc560e378b4c228a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LegendsToken at 0x4b326fd527306dd22927c16edbb8b97d2e928645
 */
 pragma solidity ^0.4.9;
-
-
-/***
- * VIP Token and Crowdfunding contracts.
- */
 
 
 /**
@@ -19,7 +14,7 @@ contract ERC20 {
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
     function approve(address _spender, uint256 _value) returns (bool success);
     function allowance(address _owner, address _spender) constant returns (uint256 remaining);
-
+    
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
