@@ -1,10 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyContract at 0xD5c93B00516AF744933016179195ACCD3dEd981E
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyContract at 0x3760607b757efebeedacf6692a2db110680188ad
 */
-pragma solidity 0.4.8;
+pragma solidity ^0.4.11;
 
 contract MyContract {
-    function whatDidJasonSay() constant returns (string said){
-        return "ether is a scam";
-    }
+  string word = "All men are created equal!";
+
+  function getWord() returns (string){
+    return word;
+  }
+
 }
