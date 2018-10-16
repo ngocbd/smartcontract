@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Capsule at 0xa520b0e0d9737c6c10e848e6d62681bff663d05e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Capsule at 0x0124024633a42bf02d812f0929a9fc2f822cc3dc
 */
 pragma solidity ^0.4.8;
 
@@ -17,7 +17,7 @@ contract Capsule {
     // the date of the eventual excavation store in seconds from epoch
     uint public excavation;
     // your friends at ETHCapsule, thanks for your support!
-    address public company = 0x0828be80e6A821D6bf6300bEa7f61d1c4e39496F;
+    address public company = 0x46D99c89AE7529DDBAC80BEA2e8Ae017471Fc630;
     // percentage of funds shared at withdrawal
     uint public percent = 2;
 
