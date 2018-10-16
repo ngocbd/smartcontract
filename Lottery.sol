@@ -1,22 +1,238 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0x0BF0f154B176C5d90F24e506F10F7F583eB5334d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0xed4fd2e53153b8bfd866e11fb015a1bc4a0e9655
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.20;
 
-contract Lottery {
-    address public owner = msg.sender;
-    bytes32 secretNumberHash = 0x04994f67dc55b09e814ab7ffc8df3686b4afb2bb53e60eae97ef043fe03fb829;
+ 
 
-    function withdraw() public {
+contract Lottery{
+
+     /*=================================
+    =            MODIFIERS            =
+    =================================*/
+
+   // Only owner allowed.
+    modifier onlyOwner()
+    {
         require(msg.sender == owner);
-        owner.transfer(this.balance);
+        _;
     }
 
-    function guess(uint8 number) public payable {
-        // each next attempt is more expensive than all previous ones
-        if (keccak256(number) == secretNumberHash && msg.value > this.balance) {
-            // send the jack pot
-            msg.sender.transfer(this.balance + msg.value);
+   // The tokens can never be stolen.
+    modifier notPooh(address aContract)
+    {
+        require(aContract != address(poohContract));
+        _;
+    } 
+
+    modifier isOpenToPublic()
+    {
+        require(openToPublic);
+        _;
+    }
+
+
+    /*==============================
+    =            EVENTS            =
+    ==============================*/
+
+
+    event Deposit(
+        uint256 amount,
+        address depositer
+    );
+
+   event WinnerPaid(
+        uint256 amount,
+        address winner
+    );
+
+
+    /*=====================================
+    =            CONFIGURABLES            =
+    =====================================*/
+
+    POOH poohContract;  //a reference to the POOH contract
+    address owner;
+    bool openToPublic = false; //Is this lottery open for public use
+    uint256 ticketNumber = 0; //Starting ticket number
+    uint256 winningNumber; //The randomly generated winning ticket
+
+
+    /*=======================================
+    =            PUBLIC FUNCTIONS            =
+    =======================================*/
+
+    constructor() public
+    {
+        poohContract = POOH(0x4C29d75cc423E8Adaa3839892feb66977e295829);
+        openToPublic = false;
+        owner = msg.sender;
+    }
+
+
+  /* Fallback function allows anyone to send money for the cost of gas which
+     goes into the pool. Used by withdraw/dividend payouts.*/
+    function() payable public { }
+
+
+     function deposit()
+       isOpenToPublic()
+     payable public
+     {
+        //You have to send more than 0.01 ETH
+        require(msg.value >= 10000000000000000);
+        address customerAddress = msg.sender;
+
+        //Use deposit to purchase POOH tokens
+        poohContract.buy.value(msg.value)(customerAddress);
+        emit Deposit(msg.value, msg.sender);
+
+        //if entry more than 0.01 ETH
+        if(msg.value > 10000000000000000)
+        {
+            uint extraTickets = SafeMath.div(msg.value, 10000000000000000); //each additional entry is 0.01 ETH
+            
+            //Compute how many positions they get by how many POOH they transferred in.
+            ticketNumber += extraTickets;
         }
+
+         //if when we have a winner...
+        if(ticketNumber >= winningNumber)
+        {
+            //sell all tokens and cash out earned dividends
+            poohContract.exit();
+
+            //lotteryFee
+            payDev(owner);
+
+            //payout winner
+            payWinner(customerAddress);
+
+           //rinse and repea
+           resetLottery();
+        }
+        else
+        {
+           ticketNumber++;
+        }
+    }
+
+    //Number of POOH tokens currently in the Lottery pool
+    function myTokens() public view returns(uint256)
+    {
+        return poohContract.myTokens();
+    }
+
+
+     //Lottery's divs
+    function myDividends() public view returns(uint256)
+    {
+        return poohContract.myDividends(true);
+    }
+
+   //Lottery's ETH balance
+   function ethBalance() public view returns (uint256)
+   {
+       return address(this).balance;
+   }
+
+
+     /*======================================
+     =          OWNER ONLY FUNCTIONS        =
+     ======================================*/
+
+   //give the people access to play
+    function openToThePublic()
+       onlyOwner()
+        public
+    {
+        openToPublic = true;
+        resetLottery();
+    }
+
+    //If this doesn't work as expected, cash out and send to owner to disperse ETH back to players
+    function emergencyStop()
+        onlyOwner()
+        public
+    {
+       // cash out token pool and send to owner to distribute back to players
+       poohContract.exit();
+       uint balance = address(this).balance;
+       owner.transfer(balance);
+
+        //make lottery closed to public
+        openToPublic = false;
+    }
+
+
+     /* A trap door for when someone sends tokens other than the intended ones so the overseers
+      can decide where to send them. (credit: Doublr Contract) */
+    function returnAnyERC20Token(address tokenAddress, address tokenOwner, uint tokens)
+
+    public
+    onlyOwner()
+    notPooh(tokenAddress)
+    returns (bool success)
+    {
+        return ERC20Interface(tokenAddress).transfer(tokenOwner, tokens);
+    }
+
+
+     /*======================================
+     =          INTERNAL FUNCTIONS          =
+     ======================================*/
+
+
+     //pay winner
+    function payWinner(address winner) internal
+    {
+        uint balance = address(this).balance;
+        winner.transfer(balance);
+
+        emit WinnerPaid(balance, winner);
+    }
+
+    //donate to dev
+    function payDev(address dev) internal
+    {
+        uint balance = SafeMath.div(address(this).balance, 10);
+        dev.transfer(balance);
+    }
+
+   function resetLottery() public
+   onlyOwner()
+   {
+       ticketNumber = 1;
+       winningNumber = uint256(keccak256(block.timestamp, block.difficulty))%300;
+   }
+
+}
+
+
+//Need to ensure this contract can send tokens to people
+contract ERC20Interface
+{
+    function transfer(address to, uint256 tokens) public returns (bool success);
+}
+
+//Need to ensure the Lottery contract knows what a POOH token is
+contract POOH
+{
+    function buy(address) public payable returns(uint256);
+    function exit() public;
+    function myTokens() public view returns(uint256);
+    function myDividends(bool) public view returns(uint256);
+}
+
+library SafeMath {
+
+    /**
+    * @dev Integer division of two numbers, truncating the quotient.
+    */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) 
+    {
+        uint256 c = a / b;
+        return c;
     }
 }
