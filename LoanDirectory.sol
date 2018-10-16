@@ -1,12 +1,29 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LoanDirectory at 0xc477042db387dd59c038ca4b829a07964b674347
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LoanDirectory at 0xabb44a0615bf806dce863785358af92ebf7c459e
 */
-pragma solidity ^0.4.10;
+pragma solidity ^0.4.15;
 
-contract Loan {
+contract ContractCatalog {
+    function validateContract(Versionable target) constant returns (bool);
+}
+
+contract Versionable {
+    string public versionCode;
+
+    function getVersionByte(uint index) constant returns (bytes1) { 
+        return bytes(versionCode)[index];
+    }
+
+    function getVersionLength() constant returns (uint256) {
+        return bytes(versionCode).length;
+    }
+}
+
+contract Loan is Versionable {
     uint8 public constant STATUS_INITIAL = 1;
     uint8 public constant STATUS_LENT = 2;
     uint8 public constant STATUS_PAID = 3;
+    uint8 public constant STATUS_DESTROYED = 4;
 
     string public versionCode;
     
@@ -24,26 +41,38 @@ contract Loan {
     event Transfer(address _from, address _to);
     event TotalPayment();
 
-    function pay(uint256 _amount, address _from);
-    function destroy();
-    function lend();
-    function approve();
+    function pay(uint256 _amount, address _from) returns (bool);
+    function destroy() returns (bool);
+    function lend() returns (bool);
+    function approve() returns (bool);
     function isApproved() returns (bool);
 }
 
 contract LoanDirectory {
+    uint256 public constant VERSION = 2;
+
+    ContractCatalog public catalog;
     Loan[] public loans;
+    
+    function LoanDirectory() {
+        catalog = ContractCatalog(0x50fD51B624Ca86Be3DBc640515ebC407A163cd6C);
+    }
+
+    function validateLoan(Loan loan) private returns (bool) {
+        require(loan.status() == loan.STATUS_INITIAL());
+        require(catalog.validateContract(loan));
+    }
 
     function registerLoan(Loan loan) {
-        require(loan.status() == loan.STATUS_INITIAL()); // Check if loan implements Loan interface
+        validateLoan(loan);
         loans.push(loan);
     }
     
     function registerLoanReplace(Loan loan, uint256 indexReplace) {
         require(indexReplace < loans.length);
-        Loan replaceLoan = loans[indexReplace]; // Get loan to delete
+        Loan replaceLoan = loans[indexReplace];
         require(replaceLoan.status() != replaceLoan.STATUS_INITIAL());
-        require(loan.status() == loan.STATUS_INITIAL());
+        validateLoan(loan);
         loans[indexReplace] = loan;
     }
 
@@ -51,7 +80,7 @@ contract LoanDirectory {
         require(replaceA < loans.length && replaceB < loans.length);
         require(replaceA != replaceB);
         require(loans[replaceA] == loans[replaceB]);
-        require(loan.status() == loan.STATUS_INITIAL());
+        validateLoan(loan);
         loans[replaceA] = loan;
     }
 
