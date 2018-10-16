@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MeshCrowdsale at 0xf4c5304366a87ff14bbae4ef8ae252c2c1243d8d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MeshCrowdsale at 0xf745373b294b920c1f123805f57e7d11977a3218
 */
 pragma solidity ^0.4.18;
 
@@ -420,8 +420,8 @@ contract PausableToken is StandardToken, Pausable {
  * PausableToken overrides all transfers methods and adds a modifier to check if paused is set to false.
  */
 contract MeshToken is CappedToken, PausableToken {
-  string public name = "DJANGO UNCHAIN";
-  string public symbol = "DJANGO";
+  string public name = "RightMesh Token";
+  string public symbol = "RMESH";
   uint256 public decimals = 18;
   uint256 public cap = 129498559 ether;
 
@@ -471,6 +471,41 @@ contract MeshToken is CappedToken, PausableToken {
    */
   function transfer(address _to, uint256 _value) onlyPayloadSize(2 * 32) public returns (bool) {
     return super.transfer(_to, _value);
+  }
+
+  /**
+   * @dev overriding transferFrom method to include the onlyPayloadSize check modifier
+   */
+  function transferFrom(address _from, address _to, uint256 _value) onlyPayloadSize(3 * 32) public returns (bool) {
+    return super.transferFrom(_from, _to, _value);
+  }
+
+  /**
+   * @dev overriding approve method to include the onlyPayloadSize check modifier
+   */
+  function approve(address _spender, uint256 _value) onlyPayloadSize(2 * 32) public returns (bool) {
+    return super.approve(_spender, _value);
+  }
+
+  /**
+   * @dev overriding increaseApproval method to include the onlyPayloadSize check modifier
+   */
+  function increaseApproval(address _spender, uint _addedValue) onlyPayloadSize(2 * 32) public returns (bool) {
+    return super.increaseApproval(_spender, _addedValue);
+  }
+
+  /**
+   * @dev overriding decreaseApproval method to include the onlyPayloadSize check modifier
+   */
+  function decreaseApproval(address _spender, uint _subtractedValue) onlyPayloadSize(2 * 32) public returns (bool) {
+    return super.decreaseApproval(_spender, _subtractedValue);
+  }
+
+  /**
+   * @dev overriding mint method to include the onlyPayloadSize check modifier
+   */
+  function mint(address _to, uint256 _amount) onlyOwner canMint onlyPayloadSize(2 * 32) public returns (bool) {
+    return super.mint(_to, _amount);
   }
 
   /*------------------------------------new methods------------------------------------*/
