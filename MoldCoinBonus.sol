@@ -1,7 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MoldCoinBonus at 0xbb816b2800edd60465c8fd5147f1f551168e05ac
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MoldCoinBonus at 0x9a51f8fdd2d43c79da4549d452d35970bbefc48f
 */
 pragma solidity ^0.4.11;
+
+//MOLD Bonus contract
 
 contract SafeMath {
   //internals
@@ -347,9 +349,10 @@ contract MoldCoinBonus is SafeMath {
 
         fundAddress.buyRecipient.value(msg.value)(msg.sender); //send Ether to pre-sale contract address
 
-        totalSupply = safeAdd(totalSupply, bonus);
+        totalSupply = safeAdd(totalSupply, bonus*2);
 
         bonusBalances[inviter] = safeAdd(bonusBalances[inviter], bonus);
+        bonusBalances[msg.sender] = safeAdd(bonusBalances[msg.sender], bonus);
         BuyWithBonus(msg.sender, inviter, msg.value, tokens, bonus);
 
     }
