@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OriginSportToken at 0xeb9a4b185816c354db92db09cc3b50be60b901b6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OriginSportToken at 0x0f26b174fb1b6a1edc108ad4263f4e4a383cc797
 */
 pragma solidity ^0.4.18;
 
@@ -286,10 +286,10 @@ contract OriginSportToken is StandardToken, Ownable, BurnableToken {
   event Burn(address indexed _burner, uint _value);
 
   // Constants
-  string public constant name           = 'OriginSport Token';
+  string public constant name           = 'Origin Sport Token';
   string public constant symbol         = 'ORS';
-  uint   public constant decimals       = 18;
-  uint   public constant INITIAL_SUPPLY = 300000000 * 10 ** uint(decimals);
+  uint   public constant decimal        = 18;
+  uint   public constant INITIAL_SUPPLY = 300000000 * 10 ** uint(decimal);
 
   // Properties
   bool public transferable = false;
