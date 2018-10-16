@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x2dc0170450e66af2d3f5c56aa0b20ec4a254902e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x3eab9a2fa76f16cdc46e707ff928f7995886dee0
 */
 pragma solidity ^0.4.6;
 contract owned {
@@ -97,10 +97,9 @@ contract token {
 
 contract MyAdvancedToken is owned, token {
 
+    uint256 public sellPrice;
     uint256 public buyPrice;
     uint256 public totalSupply;
-    uint256 public claim;
-    bool public claimStatus;
 
     mapping (address => bool) public frozenAccount;
 
@@ -155,7 +154,8 @@ contract MyAdvancedToken is owned, token {
         FrozenFunds(target, freeze);
     }
 
-    function setPrices(uint256 newBuyPrice) onlyOwner {
+    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner {
+        sellPrice = newSellPrice;
         buyPrice = newBuyPrice;
     }
 
@@ -167,32 +167,11 @@ contract MyAdvancedToken is owned, token {
         Transfer(this, msg.sender, amount);                // execute an event reflecting the change
     }
 
-    /* Insurance claim data */
-    
-    function setClaim(uint256 _claim)  onlyOwner{
-        claim = _claim;
-    }
-    
-    function claimAmount() returns (uint256) {
-        return claim;
-    }
-    
-    function setClaimStatus(bool _status) onlyOwner {
-        claimStatus = _status;
-    }
-    
-    function getClaimStatus() returns (bool) {
-        return claimStatus;
-    }
-    
-    /* Sell position and collect claim*/
-
     function sell(uint256 amount) {
-        if(getClaimStatus() == false) throw;                // checks if party can make a claim
         if (balanceOf[msg.sender] < amount ) throw;        // checks if the sender has enough to sell
         balanceOf[this] += amount;                         // adds the amount to owner's balance
         balanceOf[msg.sender] -= amount;                   // subtracts the amount from seller's balance
-        if (!msg.sender.send(claim)) {        // sends ether to the seller. It's important
+        if (!msg.sender.send(amount * sellPrice)) {        // sends ether to the seller. It's important
             throw;                                         // to do this last to avoid recursion attacks
         } else {
             Transfer(msg.sender, this, amount);            // executes an event reflecting on the change
