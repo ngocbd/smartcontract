@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AssetProxy at 0x28de6f2df4b401473c938ab51f6b1efe8304f8fa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AssetProxy at 0xa039369062636605761d2a6cedd9703862109f84
 */
 pragma solidity 0.4.15;
 
@@ -442,7 +442,11 @@ contract AssetProxy is ERC20Interface, AssetProxyInterface, Bytes32, ReturnData 
     /**
      * Indicates an upgrade freeze-time start, and the next asset implementation contract.
      */
-    event UpgradeProposal(address newVersion);
+    event UpgradeProposed(address newVersion);
+    event UpgradePurged(address newVersion);
+    event UpgradeCommited(address newVersion);
+    event OptedOut(address sender, address version);
+    event OptedIn(address sender, address version);
 
     // Current asset implementation contract address.
     address latestVersion;
@@ -534,7 +538,7 @@ contract AssetProxy is ERC20Interface, AssetProxyInterface, Bytes32, ReturnData 
         }
         pendingVersion = _newVersion;
         pendingVersionTimestamp = now;
-        UpgradeProposal(_newVersion);
+        UpgradeProposed(_newVersion);
         return true;
     }
 
@@ -549,6 +553,7 @@ contract AssetProxy is ERC20Interface, AssetProxyInterface, Bytes32, ReturnData 
         if (pendingVersion == 0x0) {
             return false;
         }
+        UpgradePurged(pendingVersion);
         delete pendingVersion;
         delete pendingVersionTimestamp;
         return true;
@@ -571,6 +576,7 @@ contract AssetProxy is ERC20Interface, AssetProxyInterface, Bytes32, ReturnData 
         latestVersion = pendingVersion;
         delete pendingVersion;
         delete pendingVersionTimestamp;
+        UpgradeCommited(latestVersion);
         return true;
     }
 
@@ -585,6 +591,7 @@ contract AssetProxy is ERC20Interface, AssetProxyInterface, Bytes32, ReturnData 
             return false;
         }
         userOptOutVersion[msg.sender] = latestVersion;
+        OptedOut(msg.sender, latestVersion);
         return true;
     }
 
@@ -596,6 +603,7 @@ contract AssetProxy is ERC20Interface, AssetProxyInterface, Bytes32, ReturnData 
      */
     function optIn() returns(bool) {
         delete userOptOutVersion[msg.sender];
+        OptedIn(msg.sender, latestVersion);
         return true;
     }
 
