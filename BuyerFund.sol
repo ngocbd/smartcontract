@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BuyerFund at 0x3b0e5a2a318616b1673b0bc7a91dd7c6d85b7e56
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BuyerFund at 0xefc9ba892c557ff541947116040cbb669b5c0a35
 */
 /*    Devery Funds
 ======================== */
@@ -27,7 +27,7 @@ contract BuyerFund {
   uint256 constant public min_required_amount = 20 ether; 
 
   // Maximum
-  uint256 public max_raised_amount = 1000 ether;
+  uint256 public max_raised_amount = 50 ether;
 
   // Creator address
   address constant public creator = 0x5777c72Fb022DdF1185D3e2C7BB858862c134080;
