@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdifyToken at 0x142f9a40FA1c55BaAC70fC5E4d87555733182484
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdifyToken at 0x17B1df92e60BA24539Ee2674D8017E9ea6E02e86
 */
 pragma solidity ^0.4.13;
 
@@ -246,7 +246,7 @@ contract Pausable is Ownable {
  * 1 ADT is equivalent to:
  *   100000000 == 1 * 10**8 == 1e8 == One Hundred Million Pebbles
  *
- * 100 Million TNT (total supply) is equivalent to:
+ * 1 Billion TNT (total supply) is equivalent to:
  *   10000000000000000 == 100000000 * 10**8 == 1e17 == Ten Quadrillion Pebbles
  *
  * All initial ADT Pebbles are assigned to the creator of
