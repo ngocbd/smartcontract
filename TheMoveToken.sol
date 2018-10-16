@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheMoveToken at 0x180c288c2151200ad37d150308346b1be421d32c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheMoveToken at 0xfbd592011527e69d86961f6d70f9169195f17ca5
 */
 /**
  * @title ERC20Basic
@@ -98,6 +98,9 @@ contract StandardToken is ERC20, BasicToken {
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
         require(now > icoEndDate);
         var _allowance = allowed[_from][msg.sender];
+        // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
+        // require (_value <= _allowance);
+
         balances[_to] = balances[_to].add(_value);
         balances[_from] = balances[_from].sub(_value);
         allowed[_from][msg.sender] = _allowance.sub(_value);
