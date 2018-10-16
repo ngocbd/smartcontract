@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WU at 0x150076a0780ee08e0c08d64f4047579058f368cf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WU at 0xba1acbb3fd5ebf246f32f1392da487d5a882b132
 */
 pragma solidity ^0.4.18;
 
@@ -193,18 +193,40 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
+contract BurnableToken is BasicToken {
+
+  event Burn(address indexed burner, uint256 value);
+
+  /**
+   * @dev Burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   */
+  function burn(uint256 _value) public {
+    require(_value <= balances[msg.sender]);
+    // no need to require value <= totalSupply, since that would imply the
+    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+    address burner = msg.sender;
+    balances[burner] = balances[burner].sub(_value);
+    totalSupply_ = totalSupply_.sub(_value);
+    Burn(burner, _value);
+  }
+}
+
 contract WU is StandardToken {
 
   string public constant name = "WU"; // solium-disable-line uppercase
   string public constant symbol = "WU"; // solium-disable-line uppercase
   uint8 public constant decimals = 18; // solium-disable-line uppercase
-
-  uint256 public constant INITIAL_SUPPLY = 21000000000000000000000000000 * (10 ** uint256(decimals));
+  uint256 public constant INITIAL_SUPPLY = 21000000000 * (10 ** uint256(decimals));
+  uint256 public price;
+  address public owner;
 
   /**
    * @dev Constructor that gives msg.sender all of existing tokens.
    */
-  function SimpleToken() public {
+  function WU() public {
+    owner 	= msg.sender;
     totalSupply_ = INITIAL_SUPPLY;
     balances[msg.sender] = INITIAL_SUPPLY;
     Transfer(0x0, msg.sender, INITIAL_SUPPLY);
