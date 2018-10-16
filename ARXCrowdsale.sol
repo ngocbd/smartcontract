@@ -1,11 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ARXCrowdsale at 0xaede31213c15d2273c1871e716fc8e762d176564
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ARXCrowdsale at 0xe75178c6fa2b0f1903145277413c32a00eb8c201
 */
 pragma solidity ^0.4.13;
 // **-----------------------------------------------
+// 0.4.13+commit.0fb4cb1a
 // [Assistive Reality ARX ERC20 token & crowdsale contract w/10% dev alloc]
 // [https://aronline.io/icoinfo]
-// [v3.2 final released 05/09/17 final masterARXsale32mainnet.sol]
+// [v3.2 final released 10/09/17 final masterARXsale32mainnet.sol]
 // [Adapted from Ethereum standard crowdsale contract]
 // [Contact staff@aronline.io for any queries]
 // [Join us in changing the world]
@@ -14,12 +15,12 @@ pragma solidity ^0.4.13;
 // ERC Token Standard #20 Interface
 // https://github.com/ethereum/EIPs/issues/20
 // -------------------------------------------------
-// Security reviews completed 05/09/17 [passed OK]
-// Functional reviews completed 05/09/17 [passed OK]
-// Final code revision and regression test cycle complete 05/09/17 [passed]
+// Security reviews completed 10/09/17 [passed OK]
+// Functional reviews completed 10/09/17 [passed OK]
+// Final code revision and regression test cycle complete 10/09/17 [passed]
 // https://github.com/assistivereality/ico/blob/master/3.2crowdsaletestsARXmainnet.txt
 // -------------------------------------------------
-contract owned { // security reviewed 05/09/17
+contract owned { // security reviewed 10/09/17
     address public owner;
 
     function owned() {
@@ -34,7 +35,7 @@ contract owned { // security reviewed 05/09/17
     }
 }
 
-contract SafeMath { // security reviewed 05/09/17
+contract SafeMath { // security reviewed 10/09/17
   function safeMul(uint256 a, uint256 b) internal returns (uint256) {
     uint256 c = a * b;
     safeAssert(a == 0 || c / a == b);
@@ -64,7 +65,7 @@ contract SafeMath { // security reviewed 05/09/17
   }
 }
 
-contract ERC20Interface is owned, SafeMath { // security reviewed 05/09/17
+contract ERC20Interface is owned, SafeMath { // security reviewed 10/09/17
     function totalSupply() constant returns (uint256 tokenTotalSupply);
     function balanceOf(address _owner) constant returns (uint256 balance);
     function transfer(address _to, uint256 _value) returns (bool success);
@@ -78,10 +79,10 @@ contract ERC20Interface is owned, SafeMath { // security reviewed 05/09/17
     event Refund(address indexed _refunder, uint256 _value);
 }
 
-contract ARXCrowdsale is ERC20Interface { // security reviewed 05/09/17
+contract ARXCrowdsale is ERC20Interface { // security reviewed 10/09/17
     // deployment variables for dynamic supply token
     string  public constant standard              = "ARX";
-    string  public constant name                  = "ARX";
+    string  public constant name                  = "Assistive Reality";
     string  public constant symbol                = "ARX";
     uint8   public constant decimals              = 18;
     uint256 _totalSupply                          = 0;
@@ -136,22 +137,22 @@ contract ARXCrowdsale is ERC20Interface { // security reviewed 05/09/17
         return balances[_owner];
     }
 
-    // returns approximate crowdsale max funding in Eth
+    // returns crowdsale max funding in Eth, low res
     function fundingMaxInEth() constant returns (uint256 fundingMaximumInEth) {
       fundingMaximumInEth = safeDiv(fundingMaxInWei,1 ether);
     }
 
-    // returns approximate crowdsale min funding in Eth
+    // returns crowdsale min funding in Eth, low res
     function fundingMinInEth() constant returns (uint256 fundingMinimumInEth) {
       fundingMinimumInEth = safeDiv(fundingMinInWei,1 ether);
     }
 
-    // returns approximate crowdsale progress (funds raised) in Eth
+    // returns crowdsale progress (funds raised) in Eth, low res
     function amountRaisedInEth() constant returns (uint256 amountRaisedSoFarInEth) {
       amountRaisedSoFarInEth = safeDiv(amountRaisedInWei,1 ether);
     }
 
-    // returns approximate crowdsale remaining cap (hardcap) in Eth
+    // returns crowdsale remaining cap (hardcap) in Eth, low res
     function remainingCapInEth() constant returns (uint256 remainingHardCapInEth) {
       remainingHardCapInEth = safeDiv(remainingCapInWei,1 ether);
     }
@@ -193,6 +194,9 @@ contract ARXCrowdsale is ERC20Interface { // security reviewed 05/09/17
 
     // ERC20 allow _spender to withdraw, multiple times, up to the _value amount
     function approve(address _spender, uint256 _amount) returns (bool success) {
+        //Fix for known double-spend https://docs.google.com/document/d/1YLPtQxZu1UAvO9cZ1O2RPXBbT0mooh4DYKjA_jp-RLM/edit#
+        //Input must either set allow amount to 0, or have 0 already set, to workaround issue
+        require((_amount == 0) || (allowed[msg.sender][_spender] == 0));
         allowed[msg.sender][_spender] = _amount;
         Approval(msg.sender, _spender, _amount);
         return true;
@@ -215,7 +219,7 @@ contract ARXCrowdsale is ERC20Interface { // security reviewed 05/09/17
 
             // mainnet funding targets with 18 decimals
             fundingMaxInWei = 70000000000000000000000; //70 000 000 000 000 000 000 000 = 70,000 Eth (hard cap) - crowdsale no longer accepts Eth after this value
-            fundingMinInWei = 7000000000000000000000;   //7 000 000 000 000 000 000 000 =  7,000 Eth (soft cap) - crowdsale is considered success after this value
+            fundingMinInWei = 3500000000000000000000;   //3 500 000 000 000 000 000 000 =  3,500 Eth (soft cap) - crowdsale is considered success after this value
 
             // value of ARX token for mainnet. if hardcap is reached, this results in 280,000,000 ARX tokens in general supply (+28,000,000 in the foundationFundMultisig for a total supply of 308,000,000)
             tokensPerEthPrice = 4000; // 4,000 tokens per Eth
@@ -347,7 +351,7 @@ contract ARXCrowdsale is ERC20Interface { // security reviewed 05/09/17
       && (amountRaisedInWei < fundingMinInWei)
       && (block.number > fundingEndBlock)
       && (balances[msg.sender] > 0));
-
+      //Proceed with refund
       uint256 ARXbalance = balances[msg.sender];
       balances[msg.sender] = 0;
       _totalSupply = safeSub(_totalSupply, ARXbalance);
