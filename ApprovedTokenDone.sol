@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0x734a8329c2b99bcb4c32091a4ca7df7126a14d6a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0xa4abcc19007990ee0b6cfae6289195c06f747496
 */
 pragma solidity ^0.4.13;
 
@@ -153,8 +153,8 @@ contract StandardToken is ERC20, BasicToken {
  * Created specifically for TokenDone.io
  */
 contract ApprovedTokenDone is StandardToken {
-	string public name = 'LIGHT';
-	string public symbol = 'LIGHT';
+	string public name = 'SUDO';
+	string public symbol = 'SUDO';
 	uint public decimals = 3;
 	uint public initialSupply = 100000000000;
 	string public publisher = 'TokenDone.io';
