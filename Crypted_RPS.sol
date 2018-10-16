@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crypted_RPS at 0xb39a89322379ed7d91dc2e8ae1b30989eaf91d41
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crypted_RPS at 0xDD88C4D189585B650a3FE3d0E39147fcca59Ec32
 */
 //                       , ; ,   .-'"""'-.   , ; ,
 //                       \\|/  .'          '.  \|//
@@ -21,16 +21,16 @@
 // *** please do not copy without authorization                          ***//
 // *** contact : reddit    /u/WhySoS3rious                               ***//
 
-//          STAKE : 0.5 ETH
+//          STAKE : 0.1 ETH
 //          DRAW : Full refund
-//          WIN : 0.995 ETH (house : 0.005)
-//          EXPIRATION TIME : 1hour after duel starts (refreshed when one player reveals)
-//          If only one player reveals, he wins after 1 hour if the other doesn't reveal
+//          WIN : 0.198 ETH (house : 0.002)
+//          EXPIRATION TIME : 24 hour after duel starts (refreshed when one player reveals)
+//          If only one player reveals, he wins after 24 hour if the other doesn't reveal
 //          he will be paid automatically when other ppl play the game.
 //          If both player don't reveal and forget the bet, it is refunded (-house)
 
 //         HOW TO PLAY ?
-//         1- Send a encrypted Hand (generated on the game's website)
+//         1- Send a encrypted Hand (generated on the game's website or by yourself)
 //         2- Wait for opponent (can cancel if you wish)
 //         3- Once matched, reveal your hand with the appropriate function and your secret
 //         4- Wait for your duel to resolve and the automatic payout
@@ -86,7 +86,7 @@ contract Crypted_RPS
         uint256 timeStamp;
     }
     Duel2Decrypt[] duels2Decrypt;
-    uint firstActiveDuel2; //index du premier duel2 non resolu
+    uint firstActiveDuel2; //index of first Duel 2 not decrypted
 
     struct Duel1Decrypt
    {
@@ -130,9 +130,9 @@ contract Crypted_RPS
     function Crypted_RPS()
     {
 	owner= msg.sender;
-	gambleValue = 500000 szabo;
-        house = 2500 szabo;
-        expirationTime = 3600;   //1 hour
+	gambleValue = 100000 szabo;
+        house = 1000 szabo;
+        expirationTime = 86400;   //24 hour
         payoffMatrix["rock"]["rock"] = 0;
         payoffMatrix["rock"]["paper"] = 2;
         payoffMatrix["rock"]["scissors"] = 1;
@@ -186,17 +186,25 @@ contract Crypted_RPS
     }	
 
 
+    //checks that the player is not already in the game
+    modifier notPlayingAlready 
+    {
+          //one not resolved duel per player only
+          uint progress = player_progress[msg.sender];
+          uint position = player_bet_position[msg.sender];
+          if ( progress==3 && position==1 ) throw;
+          if (progress == 2 ) throw; 
+          if (progress ==  1 ) throw; //no selfdueling
+          _
+    }
+
+
     function sendCryptedHand(bytes32 cryptedH)
+    notPlayingAlready
     equalGambleValue
     payexpired2Duel
     payexpired1Duel
     {
-          uint progress = player_progress[msg.sender];
-          uint position = player_bet_position[msg.sender];
-          //one not resolved duel per player only
-          if ( progress==3 && position==1 )throw;
-          if (progress == 2 ) throw; 
-          if (progress ==  1 ) throw; //no selfdueling
           if (!playerWaiting.full) 
           {
               playerWaiting.player=msg.sender;
