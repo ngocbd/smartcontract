@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReservedTokensFinalizeAgent at 0x30b313F0aEF971FDF11C02899B2Fa6339C4efe3c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReservedTokensFinalizeAgent at 0xe133a2812f63C8DC8C313Bbe7723e9974fF4598c
 */
 // Created using ICO Wizard https://github.com/oraclesorg/ico-wizard by Oracles Network 
 pragma solidity ^0.4.11;
