@@ -1,76 +1,73 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HiroyukiCoin at 0x928ed87dd5bd28358607676bc2b9d164666999d5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HiroyukiCoin at 0x56517acbe66379c3f3e07ef6e4880f9717d4be11
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
 // 'HiroyukiCoin' token contract
 //
-// Deployed to : 0x4C1203f0Acb91409bB8709c2fFE44242b105F7D7
+// Deployed to : 0x56517aCbE66379C3f3e07EF6e4880F9717d4be11
 // Symbol      : HRYK
 // Name        : HiroyukiCoin
-// Total supply: 1145141919
+// Total supply: 20000000000000
 // Decimals    : 18
-//
-// Enjoy.
-//
-// (c) by Moritz Neto with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
 // ----------------------------------------------------------------------------
 
 
 // ----------------------------------------------------------------------------
 // Safe maths
 // ----------------------------------------------------------------------------
-contract SafeMath {
-    function safeAdd(uint a, uint b) public pure returns (uint c) {
-        c = a + b;
-        require(c >= a);
-    }
-    function safeSub(uint a, uint b) public pure returns (uint c) {
-        require(b <= a);
-        c = a - b;
-    }
-    function safeMul(uint a, uint b) public pure returns (uint c) {
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        if (a == 0) {
+            return 0;
+        }
         c = a * b;
-        require(a == 0 || c / a == b);
+        assert(c / a == b);
+        return c;
     }
-    function safeDiv(uint a, uint b) public pure returns (uint c) {
-        require(b > 0);
-        c = a / b;
+
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b > 0); // Solidity automatically throws when dividing by 0
+        // uint256 c = a / b;
+        // assert(a == b * c + a % b);
+        return a / b;
+    }
+
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        c = a + b;
+        assert(c >= a);
+        return c;
     }
 }
 
 
-// ----------------------------------------------------------------------------
-// ERC Token Standard #20 Interface
-// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
-// ----------------------------------------------------------------------------
+
 contract ERC20Interface {
-    function totalSupply() public constant returns (uint);
-    function balanceOf(address tokenOwner) public constant returns (uint balance);
-    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
-    function transfer(address to, uint tokens) public returns (bool success);
-    function approve(address spender, uint tokens) public returns (bool success);
-    function transferFrom(address from, address to, uint tokens) public returns (bool success);
-
-    event Transfer(address indexed from, address indexed to, uint tokens);
-    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
+    function totalSupply() public constant returns (uint256);
+    function balanceOf(address tokenOwner) public constant returns (uint256 balance);
+    function allowance(address tokenOwner, address spender) public constant returns (uint256 remaining);
+    function transfer(address to, uint256 tokens) public returns (bool success);
+    function approve(address spender, uint256 tokens) public returns (bool success);
+    function transferFrom(address from, address to, uint256 tokens) public returns (bool success);
+    event Transfer(address indexed from, address indexed to, uint256 tokens);
+    event Approval(address indexed tokenOwner, address indexed spender, uint256 tokens);
+    event Burn(address indexed from, uint256 tokens);
 }
 
 
-// ----------------------------------------------------------------------------
-// Contract function to receive approval and execute function in one call
-//
-// Borrowed from MiniMeToken
-// ----------------------------------------------------------------------------
+
 contract ApproveAndCallFallBack {
     function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
 }
 
 
-// ----------------------------------------------------------------------------
-// Owned contract
-// ----------------------------------------------------------------------------
+
 contract Owned {
     address public owner;
     address public newOwner;
@@ -98,71 +95,86 @@ contract Owned {
 }
 
 
-// ----------------------------------------------------------------------------
-// ERC20 Token, with the addition of symbol, name and decimals and assisted
-// token transfers
-// ----------------------------------------------------------------------------
-contract HiroyukiCoin is ERC20Interface, Owned, SafeMath {
+
+contract HiroyukiCoin is ERC20Interface, Owned {
+    using SafeMath for uint;
+
+    address public owner;
     string public symbol;
     string public  name;
     uint8 public decimals;
-    uint public _totalSupply;
+    
+    uint256 public _totalSupply;
+    uint256 public _currentSupply;
 
-    mapping(address => uint) balances;
-    mapping(address => mapping(address => uint)) allowed;
+    uint public startDate;
+    uint public endDate;
+
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
 
 
     // ------------------------------------------------------------------------
     // Constructor
     // ------------------------------------------------------------------------
     function HiroyukiCoin() public {
+        owner = msg.sender;
+
         symbol = "HRYK";
         name = "HiroyukiCoin";
         decimals = 18;
-        _totalSupply = 1145141919000000000000000000;
-        balances[0x4C1203f0Acb91409bB8709c2fFE44242b105F7D7] = _totalSupply;
-        Transfer(address(0), 0x4C1203f0Acb91409bB8709c2fFE44242b105F7D7, _totalSupply);
+
+        _totalSupply = 20000000000000000000000000000000;
+        _currentSupply = 0;
+
+        startDate = now;
+        endDate = now + 8 weeks;
+
+        balances[owner] = _totalSupply;
+        Transfer(address(0), owner, _totalSupply);
     }
 
 
     // ------------------------------------------------------------------------
     // Total supply
     // ------------------------------------------------------------------------
-    function totalSupply() public constant returns (uint) {
-        return _totalSupply  - balances[address(0)];
+    function totalSupply() public constant returns (uint256) {
+        return _totalSupply - balances[address(0)];
     }
 
 
     // ------------------------------------------------------------------------
-    // Get the token balance for account tokenOwner
+    // Get the token balance for account `tokenOwner`
     // ------------------------------------------------------------------------
-    function balanceOf(address tokenOwner) public constant returns (uint balance) {
+    function balanceOf(address tokenOwner) public constant returns (uint256 balance) {
         return balances[tokenOwner];
     }
 
 
     // ------------------------------------------------------------------------
-    // Transfer the balance from token owner's account to to account
+    // Transfer the balance from token owner's account to `to` account
     // - Owner's account must have sufficient balance to transfer
     // - 0 value transfers are allowed
     // ------------------------------------------------------------------------
-    function transfer(address to, uint tokens) public returns (bool success) {
-        balances[msg.sender] = safeSub(balances[msg.sender], tokens);
-        balances[to] = safeAdd(balances[to], tokens);
+    function transfer(address to, uint256 tokens) public returns (bool success) {
+        require(to != address(0));
+        require(tokens <= balances[msg.sender]);
+        balances[msg.sender] = SafeMath.sub(balances[msg.sender], tokens);
+        balances[to] = SafeMath.add(balances[to], tokens);
         Transfer(msg.sender, to, tokens);
         return true;
     }
 
 
     // ------------------------------------------------------------------------
-    // Token owner can approve for spender to transferFrom(...) tokens
+    // Token owner can approve for `spender` to transferFrom(...) `tokens`
     // from the token owner's account
     //
     // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
     // recommends that there are no checks for the approval double-spend attack
-    // as this should be implemented in user interfaces 
+    // as this should be implemented in user interfaces
     // ------------------------------------------------------------------------
-    function approve(address spender, uint tokens) public returns (bool success) {
+    function approve(address spender, uint256 tokens) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
         Approval(msg.sender, spender, tokens);
         return true;
@@ -170,38 +182,48 @@ contract HiroyukiCoin is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Transfer tokens from the from account to the to account
-    // 
+    // Transfer `tokens` from the `from` account to the `to` account
+    //
     // The calling account must already have sufficient tokens approve(...)-d
-    // for spending from the from account and
+    // for spending from the `from` account and
     // - From account must have sufficient balance to transfer
     // - Spender must have sufficient allowance to transfer
     // - 0 value transfers are allowed
     // ------------------------------------------------------------------------
-    function transferFrom(address from, address to, uint tokens) public returns (bool success) {
-        balances[from] = safeSub(balances[from], tokens);
-        allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
-        balances[to] = safeAdd(balances[to], tokens);
+    function transferFrom(address from, address to, uint256 tokens) public returns (bool success) {
+        require(to != address(0));
+        require(tokens <= balances[from]);
+        require(tokens <= allowed[from][msg.sender]);
+        balances[from] = SafeMath.sub(balances[from], tokens);
+        allowed[from][msg.sender] = SafeMath.sub(allowed[from][msg.sender], tokens);
+        balances[to] = SafeMath.add(balances[to], tokens);
         Transfer(from, to, tokens);
         return true;
     }
 
+    function burn(uint256 tokens) public returns (bool success) {
+        require(tokens <= balances[msg.sender]);
+        balances[msg.sender] = SafeMath.sub(balances[msg.sender], tokens);
+        _totalSupply = SafeMath.sub(_totalSupply, tokens);
+        Burn(msg.sender, tokens);
+        return true;
+    }
 
     // ------------------------------------------------------------------------
     // Returns the amount of tokens approved by the owner that can be
     // transferred to the spender's account
     // ------------------------------------------------------------------------
-    function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
+    function allowance(address tokenOwner, address spender) public constant returns (uint256 remaining) {
         return allowed[tokenOwner][spender];
     }
 
 
     // ------------------------------------------------------------------------
-    // Token owner can approve for spender to transferFrom(...) tokens
-    // from the token owner's account. The spender contract function
-    // receiveApproval(...) is then executed
+    // Token owner can approve for `spender` to transferFrom(...) `tokens`
+    // from the token owner's account. The `spender` contract function
+    // `receiveApproval(...)` is then executed
     // ------------------------------------------------------------------------
-    function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
+    function approveAndCall(address spender, uint256 tokens, bytes data) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
         Approval(msg.sender, spender, tokens);
         ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
@@ -210,17 +232,9 @@ contract HiroyukiCoin is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Don't accept ETH
-    // ------------------------------------------------------------------------
-    function () public payable {
-        revert();
-    }
-
-
-    // ------------------------------------------------------------------------
     // Owner can transfer out any accidentally sent ERC20 tokens
     // ------------------------------------------------------------------------
-    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
+    function transferAnyERC20Token(address tokenAddress, uint256 tokens) public onlyOwner returns (bool success) {
         return ERC20Interface(tokenAddress).transfer(owner, tokens);
     }
 }
