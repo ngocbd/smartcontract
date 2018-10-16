@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QuasacoinTokenCrowdsale at 0x06ddef90c123b166769c2b4dfdfdf7854a72b036
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QuasacoinTokenCrowdsale at 0x48299b98d25c700e8f8c4393b4ee49d525162513
 */
 pragma solidity ^0.4.11;
 
@@ -521,6 +521,11 @@ contract QuasacoinTokenCrowdsale {
   function removeMinter(address addr) {
     require(msg.sender == tokenOwner);
     allowedMinters[addr] = false;
+  }
+
+  function mintProxyWithoutCap(address _to, uint256 _amount) public {
+    require(allowedMinters[msg.sender]);
+    token.mint(_to, _amount);
   }
 
   function mintProxy(address _to, uint256 _amount) public {
