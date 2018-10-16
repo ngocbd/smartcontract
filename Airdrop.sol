@@ -1,57 +1,71 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDrop at 0x71c8e6ab951288225fc2650330b842be6e42c112
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDrop at 0x9bcf5fc5c7888d3efd8165a15311d55765d2066f
 */
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.18;
 
+contract ERC20Interface {
+    // Get the total token supply
+    function totalSupply() public constant returns (uint256 supply);
 
-contract Ownable {
-    
+    // Get the account balance of another a ccount with address _owner
+    function balanceOf(address _owner) public constant returns (uint256 balance);
+
+    // Send _value amount of tokens to address _to
+    function transfer(address _to, uint256 _value) public returns (bool success);
+
+    // Send _value amount of tokens from address _from to address _to
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+
+    // Allow _spender to withdraw from your account, multiple times, up to the _value amount.
+    // If this function is called again it overwrites the current allowance with _value.
+    // this function is required for some DEX functionality
+    function approve(address _spender, uint256 _value) public returns (bool success);
+
+    // Returns the amount which _spender is still allowed to withdraw from _owner
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
+
+    // Triggered when tokens are transferred.
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+
+    // Triggered whenever approve(address _spender, uint256 _value) is called.
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+}
+
+contract AirDrop
+{
     address public owner;
-
-    function Ownable() public {
-        owner = 0x2d312d2a3cb2a7a48e900aA4559Ec068ab5b4B6D;
+    address public executor;
+    
+    // Constructor
+    function AirDrop() public {
+        owner = msg.sender;
+        executor = msg.sender;
     }
-
-    modifier onlyOwner {
+    
+    // Functions with this modifier can only be executed by the owner
+    modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
-
-    event OwnershipTransferred(address indexed from, address indexed to);
     
-
-    function transferOwnership(address _newOwner) public onlyOwner {
-        require(_newOwner != 0x0);
-        OwnershipTransferred(owner, _newOwner);
-        owner = _newOwner;
+    function transferExecutor(address newOwner) public onlyOwner {
+        require(newOwner != address(0));
+        executor = newOwner;
     }
-}
-
-
-contract TokenTransferInterface {
-    function transfer(address _to, uint256 _value) public;
-}
-
-
-contract AirDrop is Ownable {
-
-    TokenTransferInterface public constant token = TokenTransferInterface(0xC8A0D57d5F24622813a1BEe07509287BFaA4A3bc);
-
-    function multiValueAirDrop(address[] _addrs, uint256[] _values) public onlyOwner {
-	require(_addrs.length == _values.length && _addrs.length <= 100);
-        for (uint i = 0; i < _addrs.length; i++) {
-            if (_addrs[i] != 0x0 && _values[i] > 0) {
-                token.transfer(_addrs[i], _values[i] * (10 ** 18));  
-            }
-        }
+    
+    // Functions with this modifier can only be executed by the owner
+    modifier onlyExecutor() {
+        require(msg.sender == executor || msg.sender == owner);
+        _;
     }
-
-    function singleValueAirDrop(address[] _addrs, uint256 _value) public onlyOwner {
-	require(_addrs.length <= 100 && _value > 0);
-        for (uint i = 0; i < _addrs.length; i++) {
-            if (_addrs[i] != 0x0) {
-                token.transfer(_addrs[i], _value * (10 ** 18));
-            }
+    
+    function MultiTransfer(address _tokenAddr, address[] dests, uint256[] values) public onlyExecutor
+    {
+        uint256 i = 0;
+        ERC20Interface T = ERC20Interface(_tokenAddr);
+        while (i < dests.length) {
+            T.transfer(dests[i], values[i]);
+            i += 1;
         }
     }
 }
