@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ALCCrowdsale2 at 0x8851Db785eD637aB8f6FcDCC396cEdeaE2A204E0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ALCCrowdsale2 at 0xf6881c8d07d7A4775eEF414DCC58242258587498
 */
 pragma solidity ^0.4.18;
 
@@ -82,11 +82,11 @@ contract ALCCrowdsale2 is Owned{
     // Tier3  - 23h15
     // End - 23h20
     // ------------------------------------------------------------------------
-    uint public constant START_TIME = 1511606100;
-    uint public constant SECOND_TIER_SALE_START_TIME = 1511606400;
-    uint public constant THIRD_TIER_SALE_START_TIME = 1511606700;
-    uint public constant FOURTH_TIER_SALE_START_TIME = 1511607000;
-    uint public constant END_TIME = 1511607300;
+    uint public constant START_TIME = 1511604900;
+    uint public constant SECOND_TIER_SALE_START_TIME = 1511604960;
+    uint public constant THIRD_TIER_SALE_START_TIME = 1511605020;
+    uint public constant FOURTH_TIER_SALE_START_TIME = 1511605080;
+    uint public constant END_TIME = 1511605200;
 	
 	
     
