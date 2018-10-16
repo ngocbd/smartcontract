@@ -1,8 +1,21 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Announcement at 0xbf74cc2839b4b639062e37b6ea53f3ed7964132c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Announcement at 0x7b7f585506f997859811e527a4bf44e34363ed77
 */
 pragma solidity ^0.4.11;
 
+//
+// Ann.sol - A smart contract for managing announcements cryptographically.
+// Licensed under MIT
+// See https://github.com/secure-vote/ann.sol/ for the readme and license
+// 
+// This contract allows publishers to push out announcements cryptographically.
+// Before the contract recognizes them, they must be "thumbs up"ed by one or
+// more third parties. Those third parties can also raise the alarm if they
+// believe the announcement was made illegitimately.
+//
+// See https://ann-sol.com for a frontend and more info.
+// See https://github.com/secure-vote/ann.sol/ for the contract source code.
+//
 
 contract Announcement {
 
