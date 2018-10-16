@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BdpTransfer at 0x1d7b5788d3844010664900615e966f8e9e464738
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BdpTransfer at 0xbb58c5cadf428209151c61c72158b61d8d716b2b
 */
 pragma solidity ^0.4.19;
 
@@ -720,6 +720,11 @@ contract BdpOwnershipStorage is BdpBase {
 
 // File: contracts/libraries/BdpOwnership.sol
 
+/**
+ * Ownership manager
+ * Does not check if the caller is allowed to call functions
+ * State changing methods are not intended to be called from controller
+ */
 library BdpOwnership {
 
 	using SafeMath for uint256;
@@ -902,7 +907,7 @@ library BdpImage {
 			( (msg.sender == imageStorage.getImageOwner(_imageId)) && (imageStorage.getImageCurrentRegionId(_imageId) == 0) ) );
 
 		var nextImageId = dataStorage.getRegionNextImageId(_regionId);
-		require(!_swapImages || imageStorage.imageUploadComplete(nextImageId)); // Can swap images if next image upload is complete
+		require(!_swapImages || imageUploadComplete(_contracts, nextImageId)); // Can swap images if next image upload is complete
 	}
 
 	function setNextImagePart(address[16] _contracts, uint256 _regionId, uint16 _part, uint16 _partsCount, uint16 _imageDescriptor, uint256[] _imageData) public {
@@ -941,6 +946,17 @@ library BdpImage {
 		require(_part <= imageStorage.getImagePartsCount(_imageId));
 
 		imageStorage.setImageData(_imageId, _part, _imageData);
+	}
+
+	function imageUploadComplete(address[16] _contracts, uint256 _imageId) view public returns (bool) {
+		var imageStorage = BdpImageStorage(BdpContracts.getBdpImageStorage(_contracts));
+		var partsCount = imageStorage.getImagePartsCount(_imageId);
+		for (uint16 i = 1; i <= partsCount; i++) {
+			if(imageStorage.getImageDataLength(_imageId, i) == 0) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 }
