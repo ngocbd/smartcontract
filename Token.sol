@@ -1,66 +1,24 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x93e47e01b9e673cda4d42a1497cf7059efc4fa6e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x93d0ce92b22588c538969d8b81c701f781a2235d
 */
 /**
- * CoolCrypto
- * Keep it Simple, Keep it Cool
- * @title CoolToken Smart Contract
- * @author CoolCrypto
- * @description A Cool Token For Everyone
- * 100 Million COOL
- * 4 Decimals
- * With love in 2017
- **/
-pragma solidity >=0.4.4;
+ * Created by DiceyBit.com Team on 8/25/17.
+ * 
+ * @title DiceyBit preICO solidity contract
+ * @author DiceyBit Team
+ * @description ERC20 Standard Token
+ * 
+ * Copyright © 2017 DiceyBit.com
+ */
 
-//Cool safeMath
-library safeMath {
-  function mul(uint a, uint b) internal returns (uint) {
-    uint c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-  function div(uint a, uint b) internal returns (uint) {
-    assert(b > 0);
-    uint c = a / b;
-    assert(a == b * c + a % b);
-    return c;
-  }
-  function sub(uint a, uint b) internal returns (uint) {
-    assert(b <= a);
-    return a - b;
-  }
-  function add(uint a, uint b) internal returns (uint) {
-    uint c = a + b;
-    assert(c >= a);
-    return c;
-  }
-  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a >= b ? a : b;
-  }
-  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a < b ? a : b;
-  }
-  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a >= b ? a : b;
-  }
-  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a < b ? a : b;
-  }
-  function assert(bool assertion) internal {
-    if (!assertion) {
-      throw;
-    }
-  }
-}
+pragma solidity ^0.4.11;
 
-//Cool Contract
 contract Token {
-    string public standard = 'CoolToken';
-    string public name = 'Cool';
-    string public symbol = 'COOL';
-    uint8 public decimals = 4;
-    uint256 public totalSupply = 1000000000000;
+    string public standard = 'Token 0.1.8 diceybit.com';
+    string public name = 'DICEYBIT.COM';
+    string public symbol = 'd?BT';
+    uint8 public decimals = 0;
+    uint256 public totalSupply = 100000000;
 
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
@@ -72,6 +30,9 @@ contract Token {
         balanceOf[msg.sender] = totalSupply;
     }
 
+    // @brief Send coins
+    // @param _to recipient of coins
+    // @param _value amount of coins for send
     function transfer(address _to, uint256 _value) {
         require(_value > 0 && balanceOf[msg.sender] >= _value);
 
@@ -81,6 +42,10 @@ contract Token {
         Transfer(msg.sender, _to, _value);
     }
 
+    // @brief Send coins
+    // @param _from source of coins
+    // @param _to recipient of coins
+    // @param _value amount of coins for send
     function transferFrom(address _from, address _to, uint256 _value) {
         require(_value > 0 && balanceOf[_from] >= _value && allowed[_from][msg.sender] >= _value);
 
@@ -91,15 +56,24 @@ contract Token {
         Transfer(_from, _to, _value);
     }
 
+    // @brief Allow another contract to spend some tokens in your behalf
+    // @param _spender another contract address
+    // @param _value amount of approved tokens
     function approve(address _spender, uint256 _value) {
         allowed[msg.sender][_spender] = _value;
     }
 
-  
+    // @brief Get allowed amount of tokens
+    // @param _owner owner of allowance
+    // @param _spender spender contract
+    // @return the rest of allowed tokens
     function allowance(address _owner, address _spender) constant returns(uint256 remaining) {
         return allowed[_owner][_spender];
     }
 
+    // @brief Shows balance of specified address
+    // @param _who tokens owner
+    // @return the rest of tokens
     function getBalanceOf(address _who) returns(uint256 amount) {
         return balanceOf[_who];
     }
