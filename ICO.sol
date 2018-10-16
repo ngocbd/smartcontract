@@ -1,442 +1,793 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICO at 0xe9c5c1c7da613ef0749492da01129dddba484857
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ICO at 0xfd681571852e68e9d30c419e2f5d160d153ad8d1
 */
-pragma solidity 0.4.19;
+pragma solidity ^0.4.18;
 
+// File: contracts/ownership/Ownable.sol
 
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
-    
-    address public owner;
+  address public owner;
 
-    /**
-     * The address whcih deploys this contrcat is automatically assgined ownership.
-     * */
-    function Ownable() public {
-        owner = msg.sender;
-    }
 
-    /**
-     * Functions with this modifier can only be executed by the owner of the contract. 
-     * */
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-    event OwnershipTransferred(address indexed from, address indexed to);
 
-    /**
-    * Transfers ownership to new Ethereum address. This function can only be called by the 
-    * owner.
-    * @param _newOwner the address to be granted ownership.
-    **/
-    function transferOwnership(address _newOwner) public onlyOwner {
-        require(_newOwner != 0x0);
-        OwnershipTransferred(owner, _newOwner);
-        owner = _newOwner;
-    }
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
 }
 
+// File: contracts/math/SafeMath.sol
 
-
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
-    
-    function mul(uint256 a, uint256 b) internal pure  returns (uint256) {
-        uint256 c = a * b;
-        assert(a == 0 || c / a == b);
-        return c;
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
     }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
 
-    function div(uint256 a, uint256 b) internal pure  returns (uint256) {
-        uint256 c = a / b;
-        return c;
-    }
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
 
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
 
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
+// File: contracts/token/ERC20Basic.sol
 
-
-contract ERC20TransferInterface {
-    function transfer(address to, uint256 value) public returns (bool);
-    function balanceOf(address who) constant public returns (uint256);
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
+// File: contracts/token/BasicToken.sol
+
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
+
+  mapping(address => uint256) balances;
+
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public view returns (uint256 balance) {
+    return balances[_owner];
+  }
+
+}
+
+// File: contracts/token/ERC20.sol
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+// File: contracts/token/StandardToken.sol
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) internal allowed;
 
 
-contract ICO is Ownable {
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) public view returns (uint256) {
+    return allowed[_owner][_spender];
+  }
+
+  /**
+   * @dev Increase the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _addedValue The amount of tokens to increase the allowance by.
+   */
+  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  /**
+   * @dev Decrease the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To decrement
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _subtractedValue The amount of tokens to decrease the allowance by.
+   */
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+}
+
+// File: contracts/MintableToken.sol
+
+contract MintableToken is StandardToken, Ownable {
+
+  event Mint(address indexed to, uint256 amount);
+
+  event MintFinished();
+
+  bool public mintingFinished = false;
+
+  address public saleAgent;
+
+  modifier notLocked() {
+    require(msg.sender == owner || msg.sender == saleAgent || mintingFinished);
+    _;
+  }
+
+  function setSaleAgent(address newSaleAgnet) public {
+    require(msg.sender == saleAgent || msg.sender == owner);
+    saleAgent = newSaleAgnet;
+  }
+
+  function mint(address _to, uint256 _amount) public returns (bool) {
+    require((msg.sender == saleAgent || msg.sender == owner) && !mintingFinished);
     
-    using SafeMath for uint256;
+    totalSupply = totalSupply.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    Mint(_to, _amount);
+    return true;
+  }
 
-    event TokenAddressSet(address indexed tokenAddress);
-    event FirstPreIcoActivated(uint256 startTime, uint256 endTime, uint256 bonus);
-    event SecondPreIcoActivated(uint256 startTime, uint256 endTime, uint256 bonus);
-    event MainIcoActivated(uint256 startTime, uint256 endTime, uint256 bonus);
-    event TokenPriceChanged(uint256 newTokenPrice, uint256 newExchangeRate);
-    event ExchangeRateChanged(uint256 newExchangeRate, uint256 newTokenPrice);
-    event BonuseChanged(uint256 newBonus);
-    event OffchainPurchaseMade(address indexed recipient, uint256 tokensPurchased);
-    event TokensPurchased(address indexed recipient, uint256 tokensPurchased, uint256 weiSent);
-    event UnsoldTokensWithdrawn(uint256 tokensWithdrawn);
-    event ICOPaused(uint256 timeOfPause);
-    event ICOUnpaused(uint256 timeOfUnpause);
-    event IcoDeadlineExtended(State currentState, uint256 newDeadline);
-    event IcoDeadlineShortened(State currentState, uint256 newDeadline);
-    event IcoTerminated(uint256 terminationTime);
-    event AirdropInvoked();
+  /**
+   * @dev Function to stop minting new tokens.
+   * @return True if the operation was successful.
+   */
+  function finishMinting() public returns (bool) {
+    require((msg.sender == saleAgent || msg.sender == owner) && !mintingFinished);
+    mintingFinished = true;
+    MintFinished();
+    return true;
+  }
 
-    uint256 public endTime;
-    uint256 private pausedTime;
-    bool public IcoPaused;
-    uint256 public tokenPrice;
-    uint256 public rate;
-    uint256 public bonus;
-    uint256 public minInvestment;
-    ERC20TransferInterface public MSTCOIN;
-    address public multiSigWallet;
-    uint256 public tokensSold;
+  function transfer(address _to, uint256 _value) public notLocked returns (bool) {
+    return super.transfer(_to, _value);
+  }
 
-    mapping (address => uint256) public investmentOf;
+  function transferFrom(address from, address to, uint256 value) public notLocked returns (bool) {
+    return super.transferFrom(from, to, value);
+  }
 
-    enum State {FIRST_PRE_ICO, SECOND_PRE_ICO, MAIN_ICO, TERMINATED}
-    State public icoState;
+}
 
-    uint256[4] public mainIcoBonusStages;
+// File: contracts/ReceivingContractCallback.sol
 
-    function ICO() public {
-        endTime = now.add(7 days);
-        pausedTime = 0;
-        IcoPaused = false;
-        tokenPrice = 89e12; // tokenPrice is rate / 1e18
-        rate = 11235;  // rate is 1e18 / tokenPrice
-        bonus = 100;
-        minInvestment = 1e17;
-        multiSigWallet = 0xE1377e465121776d8810007576034c7E0798CD46;
-        tokensSold = 0;
-        icoState = State.FIRST_PRE_ICO;
-        FirstPreIcoActivated(now, endTime, bonus);
+contract ReceivingContractCallback {
+
+  function tokenFallback(address _from, uint _value) public;
+
+}
+
+// File: contracts/BuyAndSellToken.sol
+
+contract BuyAndSellToken is MintableToken {
+
+  string public constant name = "BUY&SELL Token";
+
+  string public constant symbol = "BAS";
+
+  uint32 public constant decimals = 18;
+
+  mapping(address => bool)  public registeredCallbacks;
+
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    return processCallback(super.transfer(_to, _value), msg.sender, _to, _value);
+  }
+
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    return processCallback(super.transferFrom(_from, _to, _value), _from, _to, _value);
+  }
+
+  function registerCallback(address callback) public onlyOwner {
+    registeredCallbacks[callback] = true;
+  }
+
+  function deregisterCallback(address callback) public onlyOwner {
+    registeredCallbacks[callback] = false;
+  }
+
+  function processCallback(bool result, address from, address to, uint value) internal returns(bool) {
+    if (result && registeredCallbacks[to]) {
+      ReceivingContractCallback targetCallback = ReceivingContractCallback(to);
+      targetCallback.tokenFallback(from, value);
+    }
+    return result;
+  }
+
+}
+
+// File: contracts/InvestedProvider.sol
+
+contract InvestedProvider is Ownable {
+
+  uint public invested;
+
+}
+
+// File: contracts/PercentRateProvider.sol
+
+contract PercentRateProvider is Ownable {
+
+  uint public percentRate = 100;
+
+  function setPercentRate(uint newPercentRate) public onlyOwner {
+    percentRate = newPercentRate;
+  }
+
+}
+
+// File: contracts/RetrieveTokensFeature.sol
+
+contract RetrieveTokensFeature is Ownable {
+
+  function retrieveTokens(address to, address anotherToken) public onlyOwner {
+    ERC20 alienToken = ERC20(anotherToken);
+    alienToken.transfer(to, alienToken.balanceOf(this));
+  }
+
+}
+
+// File: contracts/WalletProvider.sol
+
+contract WalletProvider is Ownable {
+
+  address public wallet;
+
+  function setWallet(address newWallet) public onlyOwner {
+    wallet = newWallet;
+  }
+
+}
+
+// File: contracts/CommonSale.sol
+
+contract CommonSale is InvestedProvider, WalletProvider, PercentRateProvider, RetrieveTokensFeature {
+
+  using SafeMath for uint;
+
+  address public directMintAgent;
+
+  uint public price;
+
+  uint public start;
+
+  uint public minInvestedLimit;
+
+  MintableToken public token;
+
+  uint public hardcap;
+
+  modifier isUnderHardcap() {
+    require(invested < hardcap);
+    _;
+  }
+
+  function setHardcap(uint newHardcap) public onlyOwner {
+    hardcap = newHardcap;
+  }
+
+  modifier onlyDirectMintAgentOrOwner() {
+    require(directMintAgent == msg.sender || owner == msg.sender);
+    _;
+  }
+
+  modifier minInvestLimited(uint value) {
+    require(value >= minInvestedLimit);
+    _;
+  }
+
+  function setStart(uint newStart) public onlyOwner {
+    start = newStart;
+  }
+
+  function setMinInvestedLimit(uint newMinInvestedLimit) public onlyOwner {
+    minInvestedLimit = newMinInvestedLimit;
+  }
+
+  function setDirectMintAgent(address newDirectMintAgent) public onlyOwner {
+    directMintAgent = newDirectMintAgent;
+  }
+
+  function setPrice(uint newPrice) public onlyOwner {
+    price = newPrice;
+  }
+
+  function setToken(address newToken) public onlyOwner {
+    token = MintableToken(newToken);
+  }
+
+  function calculateTokens(uint _invested) internal returns(uint);
+
+  function mintTokensExternal(address to, uint tokens) public onlyDirectMintAgentOrOwner {
+    mintTokens(to, tokens);
+  }
+
+  function mintTokens(address to, uint tokens) internal {
+    token.mint(this, tokens);
+    token.transfer(to, tokens);
+  }
+
+  function endSaleDate() public view returns(uint);
+
+  function mintTokensByETHExternal(address to, uint _invested) public onlyDirectMintAgentOrOwner returns(uint) {
+    return mintTokensByETH(to, _invested);
+  }
+
+  function mintTokensByETH(address to, uint _invested) internal isUnderHardcap returns(uint) {
+    invested = invested.add(_invested);
+    uint tokens = calculateTokens(_invested);
+    mintTokens(to, tokens);
+    return tokens;
+  }
+
+  function fallback() internal minInvestLimited(msg.value) returns(uint) {
+    require(now >= start && now < endSaleDate());
+    wallet.transfer(msg.value);
+    return mintTokensByETH(msg.sender, msg.value);
+  }
+
+  function () public payable {
+    fallback();
+  }
+
+}
+
+// File: contracts/StagedCrowdsale.sol
+
+contract StagedCrowdsale is Ownable {
+
+  using SafeMath for uint;
+
+  struct Milestone {
+    uint period;
+    uint bonus;
+  }
+
+  uint public totalPeriod;
+
+  Milestone[] public milestones;
+
+  function milestonesCount() public view returns(uint) {
+    return milestones.length;
+  }
+
+  function addMilestone(uint period, uint bonus) public onlyOwner {
+    require(period > 0);
+    milestones.push(Milestone(period, bonus));
+    totalPeriod = totalPeriod.add(period);
+  }
+
+  function removeMilestone(uint8 number) public onlyOwner {
+    require(number < milestones.length);
+    Milestone storage milestone = milestones[number];
+    totalPeriod = totalPeriod.sub(milestone.period);
+
+    delete milestones[number];
+
+    for (uint i = number; i < milestones.length - 1; i++) {
+      milestones[i] = milestones[i+1];
     }
 
-    /**
-    * Sets the address of the token. This function can only be executed by the 
-    * owner of the contract.
-    **/
-    function setTokenAddress(address _tokenAddress) public onlyOwner {
-        require(_tokenAddress != 0x0);
-        MSTCOIN = ERC20TransferInterface(_tokenAddress);
-        TokenAddressSet(_tokenAddress);
+    milestones.length--;
+  }
+
+  function changeMilestone(uint8 number, uint period, uint bonus) public onlyOwner {
+    require(number < milestones.length);
+    Milestone storage milestone = milestones[number];
+
+    totalPeriod = totalPeriod.sub(milestone.period);
+
+    milestone.period = period;
+    milestone.bonus = bonus;
+
+    totalPeriod = totalPeriod.add(period);
+  }
+
+  function insertMilestone(uint8 numberAfter, uint period, uint bonus) public onlyOwner {
+    require(numberAfter < milestones.length);
+
+    totalPeriod = totalPeriod.add(period);
+
+    milestones.length++;
+
+    for (uint i = milestones.length - 2; i > numberAfter; i--) {
+      milestones[i + 1] = milestones[i];
     }
 
-    /**
-    * Returns the address of the token. 
-    **/
-    function getTokenAddress() public view returns(address) {
-        return address(MSTCOIN);
+    milestones[numberAfter + 1] = Milestone(period, bonus);
+  }
+
+  function clearMilestones() public onlyOwner {
+    require(milestones.length > 0);
+    for (uint i = 0; i < milestones.length; i++) {
+      delete milestones[i];
     }
+    milestones.length -= milestones.length;
+    totalPeriod = 0;
+  }
 
-    /**
-    * Allows the owner to activate the second pre ICO. This function can only be 
-    * executed once the first pre ICO has finished. 
-    **/
-    function activateSecondPreIco() public onlyOwner {
-        require(now >= endTime && icoState == State.FIRST_PRE_ICO);
-        icoState = State.SECOND_PRE_ICO;
-        endTime = now.add(4 days);
-        bonus = 50;
-        SecondPreIcoActivated(now, endTime, bonus);
+  function lastSaleDate(uint start) public view returns(uint) {
+    return start + totalPeriod * 1 days;
+  }
+
+  function currentMilestone(uint start) public view returns(uint) {
+    uint previousDate = start;
+    for(uint i=0; i < milestones.length; i++) {
+      if(now >= previousDate && now < previousDate + milestones[i].period * 1 days) {
+        return i;
+      }
+      previousDate = previousDate.add(milestones[i].period * 1 days);
     }
+    revert();
+  }
 
-    /**
-    * Allows the owner to activate the main public ICO stage. This function can only be 
-    * executed once the second pre ICO has finished. 
-    **/
-    function activateMainIco() public onlyOwner {
-        require(now >= endTime && icoState == State.SECOND_PRE_ICO);
-        icoState = State.MAIN_ICO;
-        mainIcoBonusStages[0] = now.add(7 days);
-        mainIcoBonusStages[1] = now.add(14 days);
-        mainIcoBonusStages[2] = now.add(21 days);
-        mainIcoBonusStages[3] = now.add(31 days);
-        endTime = now.add(31 days);
-        bonus = 35;
-        MainIcoActivated(now, endTime, bonus);
+}
+
+// File: contracts/BASCommonSale.sol
+
+contract BASCommonSale is StagedCrowdsale, CommonSale {
+
+  function calculateTokens(uint _invested) internal returns(uint) {
+    uint milestoneIndex = currentMilestone(start);
+    Milestone storage milestone = milestones[milestoneIndex];
+
+    uint tokens = _invested.mul(price).div(1 ether);
+    if(milestone.bonus > 0) {
+      tokens = tokens.add(tokens.mul(milestone.bonus).div(percentRate));
     }
+    return tokens;
+  }
 
-    /**
-    * Allows the owner to change the price of the token. 
-    *
-    * @param _newTokenPrice The new price per token. 
-    **/
-    function changeTokenPrice(uint256 _newTokenPrice) public onlyOwner {
-        require(tokenPrice != _newTokenPrice && _newTokenPrice > 0);
-        tokenPrice = _newTokenPrice;
-        uint256 eth = 1e18;
-        rate = eth.div(tokenPrice);
-        TokenPriceChanged(tokenPrice, rate);
+  function endSaleDate() public view returns(uint) {
+    return lastSaleDate(start);
+  }
+
+}
+
+// File: contracts/ICO.sol
+
+contract ICO is BASCommonSale {
+
+  function finish() public onlyOwner {
+     token.finishMinting();
+  }
+
+}
+
+// File: contracts/NextSaleAgentFeature.sol
+
+contract NextSaleAgentFeature is Ownable {
+
+  address public nextSaleAgent;
+
+  function setNextSaleAgent(address newNextSaleAgent) public onlyOwner {
+    nextSaleAgent = newNextSaleAgent;
+  }
+
+}
+
+// File: contracts/SoftcapFeature.sol
+
+contract SoftcapFeature is InvestedProvider, WalletProvider {
+
+  using SafeMath for uint;
+
+  mapping(address => uint) public balances;
+
+  bool public softcapAchieved;
+
+  bool public refundOn;
+
+  uint public softcap;
+
+  uint public constant devLimit = 4500000000000000000;
+
+  address public constant devWallet = 0xEA15Adb66DC92a4BbCcC8Bf32fd25E2e86a2A770;
+
+  function setSoftcap(uint newSoftcap) public onlyOwner {
+    softcap = newSoftcap;
+  }
+
+  function withdraw() public {
+    require(msg.sender == owner || msg.sender == devWallet);
+    require(softcapAchieved);
+    devWallet.transfer(devLimit);
+    wallet.transfer(this.balance);
+  }
+
+  function updateBalance(address to, uint amount) internal {
+    balances[to] = balances[to].add(amount);
+    if (!softcapAchieved && invested >= softcap) {
+      softcapAchieved = true;
     }
+  }
 
-    /**
-    * Allows the owner to change the exchange rate of the token.
-    *
-    * @param _newRate The new exchange rate
-    **/
-    function changeRate(uint256 _newRate) public onlyOwner {
-        require(rate != _newRate && _newRate > 0);
-        rate = _newRate;
-        uint256 x = 1e12;
-        tokenPrice = x.div(rate);
-        ExchangeRateChanged(rate, tokenPrice);
+  function refund() public {
+    require(refundOn && balances[msg.sender] > 0);
+    uint value = balances[msg.sender];
+    balances[msg.sender] = 0;
+    msg.sender.transfer(value);
+  }
+
+  function updateRefundState() internal returns(bool) {
+    if (!softcapAchieved) {
+      refundOn = true;
     }
+    return refundOn;
+  }
 
-    /**
-    * Allows the owner to change the bonus of the current ICO stage. 
-    *
-    * @param _newBonus The new bonus percentage investors will receive.
-    **/
-    function changeBonus(uint256 _newBonus) public onlyOwner {
-        require(bonus != _newBonus && _newBonus > 0);
-        bonus = _newBonus;
-        BonuseChanged(bonus);
+}
+
+// File: contracts/PreICO.sol
+
+contract PreICO is NextSaleAgentFeature, SoftcapFeature, BASCommonSale {
+
+  address public bountyTokensWallet;
+
+  address public advisorsTokensWallet;
+
+  address public developersTokensWallet;
+
+  uint public bountyTokens;
+
+  uint public advisorsTokens;
+
+  uint public developersTokens;
+
+  bool public extraMinted;
+
+  function setBountyTokens(uint newBountyTokens) public onlyOwner {
+    bountyTokens = newBountyTokens;
+  }
+
+  function setAdvisorsTokens(uint newAdvisorsTokens) public onlyOwner {
+    advisorsTokens = newAdvisorsTokens;
+  }
+
+  function setDevelopersTokens(uint newDevelopersTokens) public onlyOwner {
+    developersTokens = newDevelopersTokens;
+  }
+
+  function setBountyTokensWallet(address newBountyTokensWallet) public onlyOwner {
+    bountyTokensWallet = newBountyTokensWallet;
+  }
+
+  function setAdvisorsTokensWallet(address newAdvisorsTokensWallet) public onlyOwner {
+    advisorsTokensWallet = newAdvisorsTokensWallet;
+  }
+
+  function setDevelopersTokensWallet(address newDevelopersTokensWallet) public onlyOwner {
+    developersTokensWallet = newDevelopersTokensWallet;
+  }
+
+  function mintExtraTokens() public onlyOwner {
+    require(!extraMinted);
+    mintTokens(bountyTokensWallet, bountyTokens);
+    mintTokens(advisorsTokensWallet, advisorsTokens);
+    mintTokens(developersTokensWallet, developersTokens);
+    extraMinted = true;
+  }
+
+  function mintTokensByETH(address to, uint _invested) internal returns(uint) {
+    uint _tokens = super.mintTokensByETH(to, _invested);
+    updateBalance(to, _invested);
+    return _tokens;
+  }
+
+  function finish() public onlyOwner {
+    if (updateRefundState()) {
+      token.finishMinting();
+    } else {
+      withdraw();
+      token.setSaleAgent(nextSaleAgent);
     }
+  }
 
-    /**
-    * Allows the owner to sell tokens with other forms of payment including fiat and all other
-    * cryptos. 
-    *
-    * @param _recipient The address to send tokens to.
-    * @param _value The amount of tokens to be sent.
-    **/
-    function processOffchainTokenPurchase(address _recipient, uint256 _value) public onlyOwner {
-        require(MSTCOIN.balanceOf(address(this)) >= _value);
-        require(_recipient != 0x0 && _value > 0);
-        MSTCOIN.transfer(_recipient, _value);
-        tokensSold = tokensSold.add(_value);
-        OffchainPurchaseMade(_recipient, _value);
-    }
+  function fallback() internal minInvestLimited(msg.value) returns(uint) {
+    require(now >= start && now < endSaleDate());
+    return mintTokensByETH(msg.sender, msg.value);
+  }
 
-    /**
-    * Fallback function calls the buyTokens function automatically when an investment is made.
-    **/
-    function() public payable {
-        buyTokens(msg.sender);
-    }
+}
 
-    /**
-    * Allows investors to send their ETH and automatically receive tokens in return.
-    *
-    * @param _recipient The addrewss which will receive tokens
-    **/
-    function buyTokens(address _recipient) public payable {
-        uint256 msgVal = msg.value.div(1e12); //because token has 6 decimals
-        require(MSTCOIN.balanceOf(address(this)) >= msgVal.mul(rate.mul(getBonus()).div(100)).add(rate) ) ;
-        require(msg.value >= minInvestment && withinPeriod());
-        require(_recipient != 0x0);
-        uint256 toTransfer = msgVal.mul(rate.mul(getBonus()).div(100).add(rate));
-        MSTCOIN.transfer(_recipient, toTransfer);
-        tokensSold = tokensSold.add(toTransfer);
-        investmentOf[msg.sender] = investmentOf[msg.sender].add(msg.value);
-        TokensPurchased(_recipient, toTransfer, msg.value);
-        forwardFunds();
-    }
+// File: contracts/Configurator.sol
 
-    /**
-    * This function is internally called by the buyTokens function to automatically forward
-    * all investments made to the multi signature wallet. 
-    **/
-    function forwardFunds() internal {
-        multiSigWallet.transfer(msg.value);
-    }
+contract Configurator is Ownable {
 
-    /**
-    * This function is internally called by the buyTokens function to ensure that investments
-    * are made during times when the ICO is not paused and when the duration of the current 
-    * phase has not finished.
-    **/
-    function withinPeriod() internal view returns(bool) {
-        return IcoPaused == false && now < endTime && icoState != State.TERMINATED;
-    }
+  BuyAndSellToken public token;
 
-    /**
-    * Calculates and returns the bonus of the current ICO stage. During the main public ICO, the
-    * first ICO the bonus stages are set as such:
-    *
-    * week 1: bonus = 35%
-    * week 2: bonus = 25%
-    * week 3: bonus = 15%
-    * week 4: bonus = 5%
-    **/
-    function getBonus() public view returns(uint256 _bonus) {
-        _bonus = bonus;
-        if(icoState == State.MAIN_ICO) {
-            if(now > mainIcoBonusStages[3]) {
-                _bonus = 0;
-            } else {
-                uint256 timeStamp = now;
-                for(uint i = 0; i < mainIcoBonusStages.length; i++) {
-                    if(timeStamp <= mainIcoBonusStages[i]) {
-                        break;
-                    } else {
-                        if(_bonus >= 15) {
-                            _bonus = _bonus.sub(10);
-                        }
-                    }
-                }
-            }
-        }
-        return _bonus;
-    }
+  PreICO public preICO;
 
-    /**
-    * Allows the owner of the contract to withdraw all unsold tokens. This function can 
-    * only be executed once the ICO contract has been terminated after the main public 
-    * ICO has finished. 
-    *
-    * @param _recipient The address to withdraw all unsold tokens to. If this field is 
-    * left empty, then the tokens will just be sent to the owner of the contract. 
-    **/
-    function withdrawUnsoldTokens(address _recipient) public onlyOwner {
-        require(icoState == State.TERMINATED);
-        require(now >= endTime && MSTCOIN.balanceOf(address(this)) > 0);
-        if(_recipient == 0x0) { 
-            _recipient = owner; 
-        }
-        UnsoldTokensWithdrawn(MSTCOIN.balanceOf(address(this)));
-        MSTCOIN.transfer(_recipient, MSTCOIN.balanceOf(address(this)));
-    }
+  ICO public ico;
 
-    /**
-    * Allows the owner to pause the ICO contract. While the ICO is paused investments cannot
-    * be made. 
-    **/
-    function pauseICO() public onlyOwner {
-        require(!IcoPaused);
-        IcoPaused = true;
-        pausedTime = now;
-        ICOPaused(now);
-    }
+  function deploy() public onlyOwner {
 
-    /**
-    * Allows the owner to unpause the ICO only when the ICO contract has been paused. Once
-    * invoked, the deadline will automatically be extended by the duration the ICO was 
-    * paused for. 
-    **/
-    function unpauseICO() public onlyOwner {
-        require(IcoPaused);
-        IcoPaused = false;
-        endTime = endTime.add(now.sub(pausedTime));
-        ICOUnpaused(now);
-    }
+    address manager = 0xb3e3fFeE7bcEC75cbC98bf6Fa5Eb35488b0a0904;
 
+    token = new BuyAndSellToken();
+    preICO = new PreICO();
+    ico = new ICO();
 
-    /**
-    * Allows the owner of the ICO to extend the deadline of the current ICO stage. This
-    * function can only be executed if the ICO contract has not been terminated. 
-    *
-    * @param _days The number of days to increase the duration of the ICO by. 
-    **/
-    function extendDeadline(uint256 _days) public onlyOwner {
-        require(icoState != State.TERMINATED);
-        endTime = endTime.add(_days.mul(1 days));
-        if(icoState == State.MAIN_ICO) {
-            uint256 blocks = 0;
-            uint256 stage = 0;
-            for(uint i = 0; i < mainIcoBonusStages.length; i++) {
-                if(now < mainIcoBonusStages[i]) {
-                    stage = i;
-                }
-            }
-            blocks = (_days.mul(1 days)).div(mainIcoBonusStages.length.sub(stage));
-            for(uint x = stage; x < mainIcoBonusStages.length; x++) {
-                mainIcoBonusStages[x] = mainIcoBonusStages[x].add(blocks);
-            }
-        }
-        IcoDeadlineExtended(icoState, endTime);
-    }
+    token.setSaleAgent(preICO);
 
-    /**
-    * Allows the owner of the contract to shorten the deadline of the current ICO stage.
-    *
-    * @param _days The number of days to reduce the druation of the ICO by. 
-    **/
-    function shortenDeadline(uint256 _days) public onlyOwner {
-        if(now.add(_days.mul(1 days)) >= endTime) {
-            revert();
-        } else {
-            endTime = endTime.sub(_days.mul(1 days));
-            if(icoState == State.MAIN_ICO) {
-                uint256 blocks = 0;
-                uint256 stage = 0;
-                for(uint i = 0; i < mainIcoBonusStages.length; i++) {
-                    if(now < mainIcoBonusStages[i]) {
-                        stage = i;
-                    }
-                }
-                blocks = (_days.mul(1 days)).div(mainIcoBonusStages.length.sub(stage));
-                for(uint x = stage; x < mainIcoBonusStages.length; x++) {
-                    mainIcoBonusStages[x] = mainIcoBonusStages[x].sub(blocks);
-                }
-            }
-        }
-        IcoDeadlineShortened(icoState, endTime);
-    }
+    preICO.setStart(1526428800); // 16 May 2018 00:00:00 GMT
+    preICO.addMilestone(1, 40);
+    preICO.addMilestone(13, 30);
+    preICO.setToken(token);
+    preICO.setPrice(9000000000000000000000);
+    preICO.setHardcap(16000000000000000000000);
+    preICO.setSoftcap(500000000000000000000);
+    preICO.setMinInvestedLimit(100000000000000000);
+    preICO.setWallet(0x1cbeeCf1b8a71E7CEB7Bc7dFcf76f7aA1092EA42);
+    preICO.setBountyTokensWallet(0x040Dd0f72c2350DCC043E45b8f9425E16190D7e3);
+    preICO.setAdvisorsTokensWallet(0x9dd06c9697c5c4fc9D4D526b4976Bf5A9960FE55);
+    preICO.setDevelopersTokensWallet(0x9fb9B9a8ABdA6626d5d739E7A1Ed80F519ac156D);
+    preICO.setBountyTokens(7200000000000000000000000);
+    preICO.setAdvisorsTokens(4800000000000000000000000);
+    preICO.setDevelopersTokens(48000000000000000000000000);
+    preICO.setNextSaleAgent(ico);
 
-    /**
-    * Terminates the ICO early permanently. This function can only be called by the
-    * owner of the contract during the main public ICO. 
-    **/
-    function terminateIco() public onlyOwner {
-        require(icoState == State.MAIN_ICO);
-        require(now < endTime);
-        endTime = now;
-        icoState = State.TERMINATED;
-        IcoTerminated(now);
-    }
+    preICO.mintExtraTokens();
 
-    /**
-    * Returns the amount of tokens that have been sold.
-    **/
-    function getTokensSold() public view returns(uint256) {
-        return tokensSold;
-    }
+    ico.setStart(1529107200); // 16 Jun 2018 00:00:00 GMT
+    ico.addMilestone(7, 25);
+    ico.addMilestone(7, 15);
+    ico.addMilestone(14, 10);
+    ico.setToken(token);
+    ico.setPrice(4500000000000000000000);
+    ico.setHardcap(24000000000000000000000);
+    ico.setMinInvestedLimit(100000000000000000);
+    ico.setWallet(0x4cF77fF6230A31280F886b5D7dc7324c22443eB5);
 
-    /**
-    * Airdrops tokens to up to 100 ETH addresses. 
-    *
-    * @param _addrs The list of addresses to send tokens to
-    * @param _values The list of amounts of tokens to send to each corresponding address.
-    **/
-    function airdrop(address[] _addrs, uint256[] _values) public onlyOwner returns(bool) {
-        require(_addrs.length == _values.length && _addrs.length <= 100);
-        require(MSTCOIN.balanceOf(address(this)) >= getSumOfValues(_values));
-        for (uint i = 0; i < _addrs.length; i++) {
-            if (_addrs[i] != 0x0 && _values[i] > 0) {
-                MSTCOIN.transfer(_addrs[i], _values[i]);
-            }
-        }
-        AirdropInvoked();
-        return true;
-    }
+    token.transferOwnership(manager);
+    preICO.transferOwnership(manager);
+    ico.transferOwnership(manager);
+  }
 
-    /**
-    * Called internally by the airdrop function to ensure the contract holds enough tokens
-    * to succesfully execute the airdrop.
-    *
-    * @param _values The list of values representing the amount of tokens which will be airdroped.
-    **/
-    function getSumOfValues(uint256[] _values) internal pure returns(uint256) {
-        uint256 sum = 0;
-        for(uint i=0; i < _values.length; i++) {
-            sum = sum.add(_values[i]);
-        }
-        return sum;
-    } 
 }
