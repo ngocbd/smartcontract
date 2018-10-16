@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADXExchange at 0x67c9232f2f449f7acd4dd784cc1f20395af5baae
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADXExchange at 0x912b8f85e28b9ec196b48228159e2f13546836e6
 */
 pragma solidity ^0.4.18;
 
@@ -133,6 +133,9 @@ contract ADXExchangeInterface {
 	event LogBidExpired(bytes32 bidId);
 	event LogBidConfirmed(bytes32 bidId, address advertiserOrPublisher, bytes32 report);
 	event LogBidCompleted(bytes32 bidId, bytes32 advReport, bytes32 pubReport);
+
+	event LogDeposit(address _user, uint _amnt);
+	event LogWithdrawal(address _user, uint _amnt);
 
 	function acceptBid(address _advertiser, bytes32 _adunit, uint _opened, uint _target, uint _rewardAmount, uint _timeout, bytes32 _adslot, uint8 v, bytes32 r, bytes32 s, uint8 sigMode) public;
 	function cancelBid(bytes32 _adunit, uint _opened, uint _target, uint _rewardAmount, uint _timeout, uint8 v, bytes32 r, bytes32 s, uint8 sigMode) public;
@@ -402,6 +405,8 @@ contract ADXExchange is ADXExchangeInterface, Drainable {
 	{
 		balances[msg.sender] = SafeMath.add(balances[msg.sender], _amount);
 		require(token.transferFrom(msg.sender, address(this), _amount));
+
+		LogDeposit(msg.sender, _amount);
 	}
 
 	function withdraw(uint _amount)
@@ -412,6 +417,8 @@ contract ADXExchange is ADXExchangeInterface, Drainable {
 
 		balances[msg.sender] = SafeMath.sub(balances[msg.sender], _amount);
 		require(token.transfer(msg.sender, _amount));
+
+		LogWithdrawal(msg.sender, _amount);
 	}
 
 	function didSign(address addr, bytes32 hash, uint8 v, bytes32 r, bytes32 s, uint8 mode)
