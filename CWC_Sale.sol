@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CWC_Sale at 0xDdCAf6c604592b37f775F3d303A02013BBD7AD93
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CWC_Sale at 0xd3bb6ffb59d082f701bcdb5dc43a1753fc6b43da
 */
 pragma solidity ^0.4.16;
 //import "github.com/oraclize/ethereum-api/oraclizeAPI.sol";
@@ -1027,6 +1027,10 @@ contract usingOraclize {
 }
 // </ORACLIZE_API>
 
+//CWC with verifiedUsersOnlyMode and verifiedUsers[] for KYC regulations
+//Feb 4, 2018 --Developed by Byunggu Yu
+
+
 contract CWC_SaleInterface {
     function balanceOf(address who) constant returns (uint);
     function minterGivesCWC(address _to, uint _value);
@@ -1172,12 +1176,15 @@ contract CWC_Sale is owned, CWC_SaleInterface {
     
     /* Settable Fee Structure per Sale and CWCreturn transaction */
     uint public fixedFeeInWei=1000000000000000; //default: 0.001 ether, fee per CWC Sale invariant to the sale transaction volume
-    uint public percentFeeTimes100=15; //default: 0.15% (=15), (e.g., 100=1%, 1=0.01%) %fee * 100 integerper CWC Sale transaction volume
+    uint public percentFeeTimes100=20; //default: 0.15% (=15), (e.g., 100=1%, 1=0.01%) %fee * 100 integerper CWC Sale transaction volume
     // Note: value/10000*percentFeeTimes100 is the percentFee of value
     //      e.g., 100/10000*100 = 1% of 100
     //      Make sure that you apply this to wei. percentFee=(wei/10000)*percentFeeTimes100
     
     /* Settable variables */
+    bool public verifiedUsersOnlyMode=false;
+    mapping(address => bool) verifiedUsers;
+    
     uint public totalSupply=1000000000000; // 1 Trillion CWCs
     //totalInCirculation (uint type) is in CWC_SaleInterface.sol; 
     bool public pauseCWC=false;
@@ -1246,7 +1253,22 @@ contract CWC_Sale is owned, CWC_SaleInterface {
         return balances[an_address];
     }
     
+    /* verified users checkup */
+    function isVerifiedUser(address an_address) constant returns (bool verified) {
+        return verifiedUsers[an_address];
+    }
+    
     /* Setters */
+    function set_verifiedUsersOnlyMode(bool _verifiedOnly) onlyOwner public {
+        verifiedUsersOnlyMode=_verifiedOnly;
+    }
+    function addVerifiedUser(address user_address) onlyOwner public {
+        verifiedUsers[user_address] = true;
+    }
+    function removeVerifiedUser(address user_address) onlyOwner public {
+        delete verifiedUsers[user_address];
+    }
+    
     function retryOraclizeSetProof(uint Type_1_if_sure) onlyOwner public {
         if(Type_1_if_sure==1) {
             oraclize_setProof(proofType_TLSNotary | proofStorage_IPFS);
@@ -1374,7 +1396,7 @@ contract CWC_Sale is owned, CWC_SaleInterface {
     }
     
     function saleTransaction() private {
-
+        require(verifiedUsersOnlyMode==false || verifiedUsers[msg.sender]==true);
         require(!pauseCWC);
 	    require(msg.value>minFinneyPerSaleMoreThan*10**15 && msg.value<maxFinneyPerSaleLessThan*10**15);
 
@@ -1401,7 +1423,7 @@ contract CWC_Sale is owned, CWC_SaleInterface {
     //================================ CWC Return Transaction ==================================//
 
     function CWCreturnTransaction(address from, uint amount) private {
-
+        require(verifiedUsersOnlyMode==false || verifiedUsers[from]==true);
         require(!pauseCWC);
         require(amount>minCWCsPerReturnMoreThan && amount<maxCWCsPerReturnLessThan);
         
