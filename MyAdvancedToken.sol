@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xdfbb635d33d85ef5c906c1eb0ceed9b10b81691e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xbf4a123c8124f995784f8af11f284a86b36b3a8c
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.4;
 
 contract owned {
     address public owner;
@@ -24,11 +24,11 @@ interface tokenRecipient { function receiveApproval(address _from, uint256 _valu
 
 contract TokenERC20 {
     // Public variables of the token
-    string public name;
-    string public symbol;
-    uint8 public decimals = 2;
+    string public name = "COTHAM1221";
+    string public symbol = "OH";
+    uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
-    uint256 public totalSupply;
+    uint256 public totalSupply = 104867442475;
 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
@@ -106,6 +106,39 @@ contract TokenERC20 {
     }
 
     /**
+     * Set allowance for other address
+     *
+     * Allows `_spender` to spend no more than `_value` tokens in your behalf
+     *
+     * @param _spender The address authorized to spend
+     * @param _value the max amount they can spend
+     */
+    function approve(address _spender, uint256 _value) public
+        returns (bool success) {
+        allowance[msg.sender][_spender] = _value;
+        return true;
+    }
+
+    /**
+     * Set allowance for other address and notify
+     *
+     * Allows `_spender` to spend no more than `_value` tokens in your behalf, and then ping the contract about it
+     *
+     * @param _spender The address authorized to spend
+     * @param _value the max amount they can spend
+     * @param _extraData some extra information to send to the approved contract
+     */
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
+        public
+        returns (bool success) {
+        tokenRecipient spender = tokenRecipient(_spender);
+        if (approve(_spender, _value)) {
+            spender.receiveApproval(msg.sender, _value, this, _extraData);
+            return true;
+        }
+    }
+
+    /**
      * Destroy tokens
      *
      * Remove `_value` tokens from the system irreversibly
@@ -145,12 +178,32 @@ contract TokenERC20 {
 
 contract MyAdvancedToken is owned, TokenERC20 {
 
+    uint256 public sellPrice;
+    uint256 public buyPrice;
+
+    mapping (address => bool) public frozenAccount;
+
+    /* This generates a public event on the blockchain that will notify clients */
+    event FrozenFunds(address target, bool frozen);
+
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function MyAdvancedToken(
         uint256 initialSupply,
         string tokenName,
         string tokenSymbol
     ) TokenERC20(initialSupply, tokenName, tokenSymbol) public {}
+
+    /* Internal transfer, only can be called by this contract */
+    function _transfer(address _from, address _to, uint _value) internal {
+        require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
+        require (balanceOf[_from] >= _value);               // Check if the sender has enough
+        require (balanceOf[_to] + _value > balanceOf[_to]); // Check for overflows
+        require(!frozenAccount[_from]);                     // Check if sender is frozen
+        require(!frozenAccount[_to]);                       // Check if recipient is frozen
+        balanceOf[_from] -= _value;                         // Subtract from the sender
+        balanceOf[_to] += _value;                           // Add the same to the recipient
+        Transfer(_from, _to, _value);
+    }
 
     /// @notice Create `mintedAmount` tokens and send it to `target`
     /// @param target Address to receive the tokens
@@ -160,5 +213,35 @@ contract MyAdvancedToken is owned, TokenERC20 {
         totalSupply += mintedAmount;
         Transfer(0, this, mintedAmount);
         Transfer(this, target, mintedAmount);
+    }
+
+    /// @notice `freeze? Prevent | Allow` `target` from sending & receiving tokens
+    /// @param target Address to be frozen
+    /// @param freeze either to freeze it or not
+    function freezeAccount(address target, bool freeze) onlyOwner public {
+        frozenAccount[target] = freeze;
+        FrozenFunds(target, freeze);
+    }
+
+    /// @notice Allow users to buy tokens for `newBuyPrice` eth and sell tokens for `newSellPrice` eth
+    /// @param newSellPrice Price the users can sell to the contract
+    /// @param newBuyPrice Price users can buy from the contract
+    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner public {
+        sellPrice = newSellPrice;
+        buyPrice = newBuyPrice;
+    }
+
+    /// @notice Buy tokens from contract by sending ether
+    function buy() payable public {
+        uint amount = msg.value / buyPrice;               // calculates the amount
+        _transfer(this, msg.sender, amount);              // makes the transfers
+    }
+
+    /// @notice Sell `amount` tokens to contract
+    /// @param amount amount of tokens to be sold
+    function sell(uint256 amount) public {
+        require(this.balance >= amount * sellPrice);      // checks if the contract has enough ether to buy
+        _transfer(msg.sender, this, amount);              // makes the transfers
+        msg.sender.transfer(amount * sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
     }
 }
