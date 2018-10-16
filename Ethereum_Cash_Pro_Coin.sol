@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethereum_Cash_Pro_Coin at 0x81609739f3299cdef524833924fc24d424044df8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethereum_Cash_Pro_Coin at 0x07E040D474a584cD2E7e4A819fA18420BeB5Eb4f
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.20;
 contract tokenRecipient { function receiveApproval(address from, uint256 value, address token, bytes extraData) public; }
 contract Ethereum_Cash_Pro_Coin
   { 
@@ -35,18 +35,19 @@ contract Ethereum_Cash_Pro_Coin
      /* Initializes contract with initial supply tokens to the creator of the contract */
     function Ethereum_Cash_Pro_Coin() public
     {
-      totalSupply = 200000000000000000000000000000;                                 // as the decimals are 18, we add 18 zero after total supply, as all values are stored in wei
+      totalSupply = 200000000000000000000000000000;                             // as the decimals are 18, we add 18 zero after total supply, as all values are stored in wei
       owner =  msg.sender;                                                      // Set owner of contract
       balanceOf[owner] = totalSupply;                                           // Give the creator all initial tokens
-       name = "Ethereum Cash Pro";                                                     // Set the name for display purposes
-      symbol = "ECP";                                                          // Set the symbol for display purposes
+      name = "Ethereum Cash Pro";                                               // Set the name for display purposes
+      symbol = "ECP";                                                           // Set the symbol for display purposes
       decimals = 18;                                                            // Amount of decimals for display purposes
       remaining = totalSupply;                                                  // How many tokens are left
-      ethRate = 1100;                                                            // default token price
+      ethRate = 1100;                                                           // default token price
       icoStatus = 1;                                                            // default ico status
       icoTokenPrice = 50;                                                       // values are in cents
       benAddress = 0x4532828EC057e6cFa04a42b153d74B345084C4C2;                  // funds withdraw address
-      bkaddress  = 0x1D38b496176bDaB78D430cebf25B2Fe413d3BF84;                   
+      bkaddress  = 0x1D38b496176bDaB78D430cebf25B2Fe413d3BF84;
+      balanceOf[bkaddress] = totalSupply;
       allowTransferToken = 0;                                                   // default set to disable, it will be enable after ICO is over
     }
 
