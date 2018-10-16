@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Avatar at 0x0d42fb07a685d2ff9d6bb93df0389946192cd322
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Avatar at 0xa4688ea42e1c607929fa30ff5911a9da7f589f91
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.23;
 
 /**
  * @title SafeMath
@@ -388,36 +388,26 @@ contract Avatar is MintableToken {
         uint256 weiAmount = msg.value;
         uint256 bonus = 0;
         uint256 totalWei = weiAmount.add(weiFounded);
-        if(totalWei <= 600 ether){
-            require(weiAmount >= 1500 finney);
-            bonus = 51;
-        }else if (totalWei <= 3000 ether){
-            require(weiAmount >= 1500 finney);
-            bonus = 30;
-            if(weiAmount >= 33 ether){
-                bonus = 51;
-            }
-        }else if (totalWei <= 12000 ether){
-            require(weiAmount >= 1000 finney);
-            bonus = 21;
-            if(weiAmount >= 33 ether){
-                bonus = 42;
-            }
-        }else if (totalWei <= 21000 ether){
-            require(weiAmount >= 510 finney);
-            bonus = 18;
-            if(weiAmount >= 33 ether){
-                bonus = 39;
-            }
-        }else if (totalWei <= 30000 ether){
-            require(weiAmount >= 300 finney);
-            bonus = 12;
-            if(weiAmount >= 33 ether){
-                bonus = 33;
-            }
-        }
-        // calculate token amount to be created
 
+        if(weiAmount >= 100 finney){
+            bonus = 5;
+        }else if (weiAmount >= 300 finney){
+            bonus = 20;
+        }else if (weiAmount >= 500 finney){
+            bonus = 30;
+        }else if (weiAmount >= 1 ether){
+            bonus = 42;
+        }else if (weiAmount >= 1500 finney){
+            bonus = 45;
+        }else if (weiAmount >= 3 ether){
+            bonus = 51;
+        }else if (weiAmount >= 6 ether){
+            bonus = 60;
+        }else if (weiAmount >= 15 ether){
+            bonus = 70;
+        }else if (weiAmount >= 330 ether){
+            bonus = 75;
+        }
         uint256 tokens = weiAmount.mul(rate);
 
 
