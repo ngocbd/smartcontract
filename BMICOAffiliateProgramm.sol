@@ -1,23 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BMICOAffiliateProgramm at 0x6203188c0dd1a4607614dbc8af409e91ed46def0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BMICOAffiliateProgramm at 0xbe44459058383729be8247802d4314ea76ca9e5a
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.16;
 
 
 contract BMICOAffiliateProgramm {
-    struct itemReferrals {
-        uint256 amount_investments;
-        uint256 preico_holdersBonus;
-    }
-    mapping (address => itemReferrals) referralsInfo;
-    uint256 public preico_holdersAmountInvestWithBonus = 0;
+    mapping (address => uint256) referralsInfo;
 
-    mapping (string => address) partnersPromo;
+    mapping (bytes32 => address) partnersPromo;
     struct itemPartners {
         uint256 attracted_investments;
-        string promo;
+        bytes32 promo;
         uint16 personal_percent;
-        uint256 preico_partnerBonus;
         bool create;
     }
     mapping (address => itemPartners) partnersInfo;
@@ -34,12 +28,10 @@ contract BMICOAffiliateProgramm {
     uint256 public amount_referral_invest;
 
     address public owner;
-    address public contractPreICO;
     address public contractICO;
 
     function BMICOAffiliateProgramm(){
         owner = msg.sender;
-        contractPreICO = address(0x0);
         contractICO = address(0x0);
     }
 
@@ -49,28 +41,24 @@ contract BMICOAffiliateProgramm {
         _;
     }
 
-    function str_length(string x) constant internal returns (uint256) {
-        bytes32 str;
-        assembly {
-        str := mload(add(x, 32))
-        }
-        bytes memory bytesString = new bytes(32);
-        uint256 charCount = 0;
-        for (uint j = 0; j < 32; j++) {
-            byte char = byte(bytes32(uint(str) * 2 ** (8 * j)));
-            if (char != 0) {
-                bytesString[charCount] = char;
-                charCount++;
-            }
-        }
-        return charCount;
-    }
-
     function changeOwner(address new_owner) isOwner {
         assert(new_owner!=address(0x0));
         assert(new_owner!=address(this));
 
         owner = new_owner;
+    }
+
+    function setPartnerFromPreICOAffiliate(address[] partners, bytes32[] promo_codes, uint256[] attracted_invests) isOwner {
+        assert(partners.length==promo_codes.length && partners.length==attracted_invests.length);
+
+        for(uint256 i=0; i<partners.length; i++){
+            if(!partnersInfo[partners[i]].create){
+                partnersPromo[promo_codes[i]] = partners[i];
+                partnersInfo[partners[i]].attracted_investments = attracted_invests[i];
+                partnersInfo[partners[i]].promo = promo_codes[i];
+                partnersInfo[partners[i]].create = true;
+            }
+        }
     }
 
     function setReferralPercent(uint16 new_percent) isOwner {
@@ -81,15 +69,8 @@ contract BMICOAffiliateProgramm {
         assert(partner!=address(0x0));
         assert(partner!=address(this));
         assert(partnersInfo[partner].create==true);
+        assert(new_percent<=1500);
         partnersInfo[partner].personal_percent = new_percent;
-    }
-
-    function setContractPreICO(address new_address) isOwner {
-        assert(contractPreICO==address(0x0));
-        assert(new_address!=address(0x0));
-        assert(new_address!=address(this));
-
-        contractPreICO = new_address;
     }
 
     function setContractICO(address new_address) isOwner {
@@ -100,10 +81,23 @@ contract BMICOAffiliateProgramm {
         contractICO = new_address;
     }
 
-    function setPromoToPartner(string promo) {
+    function stringTobytes32(string str) constant returns (bytes32){
+        bytes32 result;
+        assembly {
+            result := mload(add(str, 6))
+        }
+        return result;
+    }
+
+    function str_length(string x) constant internal returns (uint256) {
+        return bytes(x).length;
+    }
+
+    function setPromoToPartner(string code) {
+        bytes32 promo = stringTobytes32(code);
         assert(partnersPromo[promo]==address(0x0));
         assert(partnersInfo[msg.sender].create==false);
-        assert(str_length(promo)>0 && str_length(promo)<=6);
+        assert(str_length(code)>0 && str_length(code)<=6);
 
         partnersPromo[promo] = msg.sender;
         partnersInfo[msg.sender].attracted_investments = 0;
@@ -112,10 +106,11 @@ contract BMICOAffiliateProgramm {
     }
 
     function checkPromo(string promo) constant returns(bool){
-        return partnersPromo[promo]!=address(0x0);
+        bytes32 result = stringTobytes32(promo);
+        return partnersPromo[result]!=address(0x0);
     }
 
-    function checkPartner(address partner_address) constant returns(bool isPartner, string promo){
+    function checkPartner(address partner_address) constant returns(bool isPartner, bytes32 promo){
         isPartner = partnersInfo[partner_address].create;
         promo = '-1';
         if(isPartner){
@@ -147,7 +142,7 @@ contract BMICOAffiliateProgramm {
         }
     }
 
-    function partnerInfo(address partner_address) isOwner constant returns(string promo, uint256 attracted_investments, uint256[] h_datetime, uint256[] h_invest, address[] h_referrals){
+    function partnerInfo(address partner_address) isOwner constant returns(bytes32 promo, uint256 attracted_investments, uint256[] h_datetime, uint256[] h_invest, address[] h_referrals){
         if(partner_address != address(0x0) && partnersInfo[partner_address].create){
             promo = partnersInfo[partner_address].promo;
             attracted_investments = partnersInfo[partner_address].attracted_investments;
@@ -171,42 +166,20 @@ contract BMICOAffiliateProgramm {
         }
     }
 
-    function refferalPreICOBonus(address referral) constant external returns (uint256 bonus){
-        bonus = referralsInfo[referral].preico_holdersBonus;
-    }
-
-    function partnerPreICOBonus(address partner) constant external returns (uint256 bonus){
-        bonus = partnersInfo[partner].preico_partnerBonus;
-    }
-
     function referralAmountInvest(address referral) constant external returns (uint256 amount){
-        amount = referralsInfo[referral].amount_investments;
+        amount = referralsInfo[referral];
     }
 
     function add_referral(address referral, string promo, uint256 amount) external returns(address partner, uint256 p_partner, uint256 p_referral){
+        bytes32 promo_code = stringTobytes32(promo);
+
         p_partner = 0;
         p_referral = 0;
         partner = address(0x0);
-        if(partnersPromo[promo] != address(0x0) && partnersPromo[promo] != referral){
-            partner = partnersPromo[promo];
-            if(msg.sender == contractPreICO){
-                referralsInfo[referral].amount_investments += amount;
-                amount_referral_invest += amount;
-                partnersInfo[partner].attracted_investments += amount;
-                history[partner].push(itemHistory(now, referral, amount));
-
-                uint256 partner_bonus = (amount*uint256(calc_partnerPercent(partner)))/10000;
-                if(partner_bonus > 0){
-                    partnersInfo[partner].preico_partnerBonus += partner_bonus;
-                }
-                uint256 referral_bonus = (amount*uint256(ref_percent))/10000;
-                if(referral_bonus > 0){
-                    referralsInfo[referral].preico_holdersBonus += referral_bonus;
-                    preico_holdersAmountInvestWithBonus += amount;
-                }
-            }
+        if(partnersPromo[promo_code] != address(0x0) && partnersPromo[promo_code] != referral){
+            partner = partnersPromo[promo_code];
             if (msg.sender == contractICO){
-                referralsInfo[referral].amount_investments += amount;
+                referralsInfo[referral] += amount;
                 amount_referral_invest += amount;
                 partnersInfo[partner].attracted_investments += amount;
                 history[partner].push(itemHistory(now, referral, amount));
