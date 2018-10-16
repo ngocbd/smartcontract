@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etheroll at 0xddf0d0b9914d530e0b743808249d9af901f1bd01
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etheroll at 0x048717ea892f23fb0126f00640e2b18072efd9d2
 */
 pragma solidity ^0.4.18;
 
@@ -1833,13 +1833,15 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
     uint public maxProfit;   
     uint public maxProfitAsPercentOfHouse;                    
     uint public minBet; 
-    //init discontinued contract data        
-    int public totalBets = 244612;
+    //init discontinued contract data       
+    uint public totalBets = 263935;
     uint public maxPendingPayouts;
-    //init discontinued contract data 
-    uint public totalWeiWon = 110633844560463069959901;
-    //init discontinued contract data  
-    uint public totalWeiWagered = 316486087709317593009320;    
+    //init discontinued contract data   
+    uint public totalWeiWon = 119805027051623961676537;
+    //init discontinued contract data     
+    uint public totalWeiWagered = 331721907637461976915056; 
+    uint public randomQueryID;
+    
 
     /*
      * player vars
@@ -1848,8 +1850,7 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
     mapping (bytes32 => address) playerTempAddress;
     mapping (bytes32 => bytes32) playerBetId;
     mapping (bytes32 => uint) playerBetValue;
-    mapping (bytes32 => uint) playerTempBetValue;
-    mapping (bytes32 => uint) playerRandomResult;            
+    mapping (bytes32 => uint) playerTempBetValue;               
     mapping (bytes32 => uint) playerDieResult;
     mapping (bytes32 => uint) playerNumber;
     mapping (address => uint) playerPendingWithdrawals;      
@@ -1860,10 +1861,10 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
      * events
     */
     /* log bets + output to web3 for precise 'payout on win' field in UI */
-    event LogBet(bytes32 indexed BetID, address indexed PlayerAddress, uint indexed RewardValue, uint ProfitValue, uint BetValue, uint PlayerNumber);      
+    event LogBet(bytes32 indexed BetID, address indexed PlayerAddress, uint indexed RewardValue, uint ProfitValue, uint BetValue, uint PlayerNumber, uint RandomQueryID);      
     /* output to web3 UI on bet result*/
     /* Status: 0=lose, 1=win, 2=win + failed send, 3=refund, 4=refund + failed send*/
-	event LogResult(uint indexed ResultSerialNumber, bytes32 indexed BetID, address indexed PlayerAddress, uint PlayerNumber, uint DiceResult, uint Value, int Status, bytes Proof, uint RandomSeed);   
+	event LogResult(uint indexed ResultSerialNumber, bytes32 indexed BetID, address indexed PlayerAddress, uint PlayerNumber, uint DiceResult, uint Value, int Status, bytes Proof);   
     /* log manual refunds */
     event LogRefund(bytes32 indexed BetID, address indexed PlayerAddress, uint indexed RefundValue);
     /* log owner transfers */
@@ -1908,9 +1909,18 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
         * assign partially encrypted query to oraclize
         * only the apiKey is encrypted 
         * integer query is in plain text
-        */                            
-        bytes32 rngId = oraclize_query("nested", "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random[\"serialNumber\",\"data\"]', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BKg3TCs7lkzNr1kR6pxjPCM2SOejcFojUPMTOsBkC/47HHPf1sP2oxVLTjNBu+slR9SgZyqDtjVOV5Yzg12iUkbubp0DpcjCEdeJTHnGwC6gD729GUVoGvo96huxwRoZlCjYO80rWq2WGYoR/LC3WampDuvv2Bo=},\"n\":1,\"min\":1,\"max\":100,\"replacement\":true,\"base\":10${[identity] \"}\"},\"id\":1${[identity] \"}\"}']", gasForOraclize);
-        	    
+        */       
+        randomQueryID += 1;
+        string memory queryString1 = "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random[\"serialNumber\",\"data\"]', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BJ8BMENGnafmVci9OE5n98MGZRU624r/QWOQi90YwuZzHL2jaK2SCf5L38gsyD3kG4CS3sjZVLPdprfbo+L9lUXQtVJb/8SPIjkMU3lk943v60Co2+oLMVgSRtNKAAzHS6DJPeLOYaDHLhbCLORoUt2fPKSp87E=},\"n\":1,\"min\":1,\"max\":100,\"replacement\":true,\"base\":10${[identity] \"}\"},\"id\":";
+        string memory queryString2 = uint2str(randomQueryID);
+        string memory queryString3 = "${[identity] \"}\"}']";
+
+        string memory queryString1_2 = queryString1.toSlice().concat(queryString2.toSlice());
+
+        string memory queryString1_2_3 = queryString1_2.toSlice().concat(queryString3.toSlice());
+
+        bytes32 rngId = oraclize_query("nested", queryString1_2_3, gasForOraclize);   
+                 
         /* map bet id to this oraclize query */
 		playerBetId[rngId] = rngId;
         /* map player lucky number to this oraclize query */
@@ -1926,7 +1936,7 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
         /* check contract can payout on win */
         if(maxPendingPayouts >= contractBalance) throw;
         /* provides accurate numbers for web3 and allows for manual refunds in case of no oraclize __callback */
-        LogBet(playerBetId[rngId], playerAddress[rngId], safeAdd(playerBetValue[rngId], playerProfit[rngId]), playerProfit[rngId], playerBetValue[rngId], playerNumber[rngId]);          
+        LogBet(playerBetId[rngId], playerAddress[rngId], safeAdd(playerBetValue[rngId], playerProfit[rngId]), playerProfit[rngId], playerBetValue[rngId], playerNumber[rngId], randomQueryID);          
 
     }   
              
@@ -1949,12 +1959,7 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
         uint serialNumberOfResult = parseInt(sl_result.split(', '.toSlice()).toString());          
 
 	    /* map random result to player */
-        playerRandomResult[myid] = parseInt(sl_result.beyond("[".toSlice()).until("]".toSlice()).toString());
-
-        /* produce integer bounded to 1-100 inclusive
-        *  via sha3 result from random.org and proof (IPFS address of TLSNotary proof)
-        */
-        playerDieResult[myid] = uint(sha3(playerRandomResult[myid], proof)) % 100 + 1;        
+        playerDieResult[myid] = parseInt(sl_result.beyond("[".toSlice()).until("]".toSlice()).toString());        
         
         /* get the playerAddress for this query id */
         playerTempAddress[myid] = playerAddress[myid];
@@ -1985,9 +1990,9 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
         * if result is 0 result is empty or no proof refund original bet value
         * if refund fails save refund value to playerPendingWithdrawals
         */
-        if(playerDieResult[myid] == 0 || bytes(result).length == 0 || bytes(proof).length == 0 || playerRandomResult[myid] == 0){                                                     
+        if(playerDieResult[myid] == 0 || bytes(result).length == 0 || bytes(proof).length == 0){                                                     
 
-             LogResult(serialNumberOfResult, playerBetId[myid], playerTempAddress[myid], playerNumber[myid], playerDieResult[myid], playerTempBetValue[myid], 3, proof, playerRandomResult[myid]);            
+             LogResult(serialNumberOfResult, playerBetId[myid], playerTempAddress[myid], playerNumber[myid], playerDieResult[myid], playerTempBetValue[myid], 3, proof);            
 
             /*
             * send refund - external call to an untrusted contract
@@ -1995,7 +2000,7 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
             * for withdrawal later via playerWithdrawPendingTransactions
             */
             if(!playerTempAddress[myid].send(playerTempBetValue[myid])){
-                LogResult(serialNumberOfResult, playerBetId[myid], playerTempAddress[myid], playerNumber[myid], playerDieResult[myid], playerTempBetValue[myid], 4, proof, playerRandomResult[myid]);              
+                LogResult(serialNumberOfResult, playerBetId[myid], playerTempAddress[myid], playerNumber[myid], playerDieResult[myid], playerTempBetValue[myid], 4, proof);              
                 /* if send failed let player withdraw via playerWithdrawPendingTransactions */
                 playerPendingWithdrawals[playerTempAddress[myid]] = safeAdd(playerPendingWithdrawals[playerTempAddress[myid]], playerTempBetValue[myid]);                        
             }
@@ -2020,7 +2025,7 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
             /* safely calculate payout via profit plus original wager */
             playerTempReward[myid] = safeAdd(playerTempReward[myid], playerTempBetValue[myid]); 
 
-            LogResult(serialNumberOfResult, playerBetId[myid], playerTempAddress[myid], playerNumber[myid], playerDieResult[myid], playerTempReward[myid], 1, proof, playerRandomResult[myid]);                            
+            LogResult(serialNumberOfResult, playerBetId[myid], playerTempAddress[myid], playerNumber[myid], playerDieResult[myid], playerTempReward[myid], 1, proof);                            
 
             /* update maximum profit */
             setMaxProfit();
@@ -2031,7 +2036,7 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
             * for withdrawal later via playerWithdrawPendingTransactions
             */
             if(!playerTempAddress[myid].send(playerTempReward[myid])){
-                LogResult(serialNumberOfResult, playerBetId[myid], playerTempAddress[myid], playerNumber[myid], playerDieResult[myid], playerTempReward[myid], 2, proof, playerRandomResult[myid]);                   
+                LogResult(serialNumberOfResult, playerBetId[myid], playerTempAddress[myid], playerNumber[myid], playerDieResult[myid], playerTempReward[myid], 2, proof);                   
                 /* if send failed let player withdraw via playerWithdrawPendingTransactions */
                 playerPendingWithdrawals[playerTempAddress[myid]] = safeAdd(playerPendingWithdrawals[playerTempAddress[myid]], playerTempReward[myid]);                               
             }
@@ -2047,7 +2052,7 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
         */
         if(playerDieResult[myid] >= playerNumber[myid]){
 
-            LogResult(serialNumberOfResult, playerBetId[myid], playerTempAddress[myid], playerNumber[myid], playerDieResult[myid], playerTempBetValue[myid], 0, proof, playerRandomResult[myid]);                                
+            LogResult(serialNumberOfResult, playerBetId[myid], playerTempAddress[myid], playerNumber[myid], playerDieResult[myid], playerTempBetValue[myid], 0, proof);                                
 
             /*  
             *  safe adjust contractBalance
@@ -2105,14 +2110,7 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
     */
     function setMaxProfit() internal {
         maxProfit = (contractBalance*maxProfitAsPercentOfHouse)/maxProfitDivisor;  
-    } 
-
-    /*
-    * player check provably fair
-    */
-    function playerCheckProvablyFair(uint randomResult, bytes proof) public constant returns (uint) {
-         return uint(sha3(randomResult, proof)) % 100 + 1;
-    }     
+    }      
 
     /*
     * owner/treasury address only functions
