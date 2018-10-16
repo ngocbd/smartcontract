@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VLBCrowdsale at 0xd7e011ad27b6128934e2afd1763120ede1274ae4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VLBCrowdsale at 0xdea2bc436d38d4f8ee6f9e63b63b72a399c24e2c
 */
-pragma solidity ^0.4.15;
-
+pragma solidity ^0.4.18;
 
 
 
@@ -45,230 +44,8 @@ contract Ownable {
 }
 
 
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Ownable {
-    event Pause();
-
-    event Unpause();
-
-    bool public paused = false;
 
 
-    /**
-     * @dev Modifier to make a function callable only when the contract is not paused.
-     */
-    modifier whenNotPaused() {
-        require(!paused);
-        _;
-    }
-
-    /**
-     * @dev Modifier to make a function callable only when the contract is paused.
-     */
-    modifier whenPaused() {
-        require(paused);
-        _;
-    }
-
-    /**
-     * @dev called by the owner to pause, triggers stopped state
-     */
-    function pause() onlyOwner whenNotPaused public {
-        paused = true;
-        Pause();
-    }
-
-    /**
-     * @dev called by the owner to unpause, returns to normal state
-     */
-    function unpause() onlyOwner whenPaused public {
-        paused = false;
-        Unpause();
-    }
-}
-
-
-
-
-
-
-
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-    uint256 public totalSupply;
-
-    function balanceOf(address who) public constant returns (uint256);
-
-    function transfer(address to, uint256 value) public returns (bool);
-
-    event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-
-
-
-
-
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-    function allowance(address owner, address spender) public constant returns (uint256);
-
-    function transferFrom(address from, address to, uint256 value) public returns (bool);
-
-    function approve(address spender, uint256 value) public returns (bool);
-
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-
-
-
-
-
-
-
-
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
- */
-contract BasicToken is ERC20Basic {
-    using SafeMath for uint256;
-
-    mapping (address => uint256) balances;
-
-    /**
-    * @dev transfer token for a specified address
-    * @param _to The address to transfer to.
-    * @param _value The amount to be transferred.
-    */
-    function transfer(address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-
-        // SafeMath.sub will throw if there is not enough balance.
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    /**
-    * @dev Gets the balance of the specified address.
-    * @param _owner The address to query the the balance of.
-    * @return An uint256 representing the amount owned by the passed address.
-    */
-    function balanceOf(address _owner) public constant returns (uint256 balance) {
-        return balances[_owner];
-    }
-
-}
-
-
-
-
-
-
-
-
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
-contract StandardToken is ERC20, BasicToken {
-
-    mapping (address => mapping (address => uint256)) allowed;
-
-
-    /**
-     * @dev Transfer tokens from one address to another
-     * @param _from address The address which you want to send tokens from
-     * @param _to address The address which you want to transfer to
-     * @param _value uint256 the amount of tokens to be transferred
-     */
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-
-        uint256 _allowance = allowed[_from][msg.sender];
-
-        // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-        // require (_value <= _allowance);
-
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = _allowance.sub(_value);
-        Transfer(_from, _to, _value);
-        return true;
-    }
-
-    /**
-     * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-     *
-     * Beware that changing an allowance with this method brings the risk that someone may use both the old
-     * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-     * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-     * @param _spender The address which will spend the funds.
-     * @param _value The amount of tokens to be spent.
-     */
-    function approve(address _spender, uint256 _value) public returns (bool) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    /**
-     * @dev Function to check the amount of tokens that an owner allowed to a spender.
-     * @param _owner address The address which owns the funds.
-     * @param _spender address The address which will spend the funds.
-     * @return A uint256 specifying the amount of tokens still available for the spender.
-     */
-    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
-
-    /**
-     * approve should be called when allowed[_spender] == 0. To increment
-     * allowed value is better to use this function to avoid 2 calls (and wait until
-     * the first transaction is mined)
-     * From MonolithDAO Token.sol
-     */
-    function increaseApproval(address _spender, uint _addedValue)
-    returns (bool success) {
-        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
-
-    function decreaseApproval(address _spender, uint _subtractedValue)
-    returns (bool success) {
-        uint oldValue = allowed[msg.sender][_spender];
-        if (_subtractedValue > oldValue) {
-            allowed[msg.sender][_spender] = 0;
-        }
-        else {
-            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-        }
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
-
-}
 
 
 
@@ -305,181 +82,24 @@ library SafeMath {
 }
 
 
-/**
- * @title VLBTokens
- * @dev VLB Token contract based on Zeppelin StandardToken contract
- */
-contract VLBToken is StandardToken, Ownable {
-    using SafeMath for uint256;
 
-    /**
-     * @dev ERC20 descriptor variables
-     */
-    string public constant name = "VLB Tokens";
-    string public constant symbol = "VLB";
-    uint8 public decimals = 18;
+contract VLBBonusStore is Ownable {
+    mapping(address => uint8) public rates;
 
-    /**
-     * @dev 220 millions is the initial Tokensale supply
-     */
-    uint256 public constant publicTokens = 220 * 10 ** 24;
-
-    /**
-     * @dev 20 millions for the team
-     */
-    uint256 public constant teamTokens = 20 * 10 ** 24;
-
-    /**
-     * @dev 10 millions as a bounty reward
-     */
-    uint256 public constant bountyTokens = 10 * 10 ** 24;
-
-    /**
-     * @dev 2.5 millions as an initial wings.ai reward reserv
-     */
-    uint256 public constant wingsTokensReserv = 25 * 10 ** 23;
-    
-    /**
-     * @dev wings.ai reward calculated on tokensale finalization
-     */
-    uint256 public wingsTokensReward = 0;
-
-    // TODO: TestRPC addresses, replace to real
-    address public constant teamTokensWallet = 0x6a6AcA744caDB8C56aEC51A8ce86EFCaD59989CF;
-    address public constant bountyTokensWallet = 0x91A7DE4ce8e8da6889d790B7911246B71B4c82ca;
-    address public constant crowdsaleTokensWallet = 0x5e671ceD703f3dDcE79B13F82Eb73F25bad9340e;
-    
-    /**
-     * @dev wings.ai wallet for reward collecting
-     */
-    address public constant wingsWallet = 0xcbF567D39A737653C569A8B7dFAb617E327a7aBD;
-
-
-    /**
-     * @dev Address of Crowdsale contract which will be compared
-     *       against in the appropriate modifier check
-     */
-    address public crowdsaleContractAddress;
-
-    /**
-     * @dev variable that holds flag of ended tokensake 
-     */
-    bool isFinished = false;
-
-    /**
-     * @dev Modifier that allow only the Crowdsale contract to be sender
-     */
-    modifier onlyCrowdsaleContract() {
-        require(msg.sender == crowdsaleContractAddress);
-        _;
-    }
-
-    /**
-     * @dev event for the burnt tokens after crowdsale logging
-     * @param tokens amount of tokens available for crowdsale
-     */
-    event TokensBurnt(uint256 tokens);
-
-    /**
-     * @dev event for the tokens contract move to the active state logging
-     * @param supply amount of tokens left after all the unsold was burned
-     */
-    event Live(uint256 supply);
-
-    /**
-     * @dev event for bounty tone transfer logging
-     * @param from the address of bounty tokens wallet
-     * @param to the address of beneficiary tokens wallet
-     * @param value amount of tokens
-     */
-    event BountyTransfer(address indexed from, address indexed to, uint256 value);
-
-    /**
-     * @dev Contract constructor
-     */
-    function VLBToken() {
-        // Issue team tokens
-        balances[teamTokensWallet] = balanceOf(teamTokensWallet).add(teamTokens);
-        Transfer(address(0), teamTokensWallet, teamTokens);
-
-        // Issue bounty tokens
-        balances[bountyTokensWallet] = balanceOf(bountyTokensWallet).add(bountyTokens);
-        Transfer(address(0), bountyTokensWallet, bountyTokens);
-
-        // Issue crowdsale tokens minus initial wings reward.
-        // see endTokensale for more details about final wings.ai reward
-        uint256 crowdsaleTokens = publicTokens.sub(wingsTokensReserv);
-        balances[crowdsaleTokensWallet] = balanceOf(crowdsaleTokensWallet).add(crowdsaleTokens);
-        Transfer(address(0), crowdsaleTokensWallet, crowdsaleTokens);
-
-        // 250 millions tokens overall
-        totalSupply = publicTokens.add(bountyTokens).add(teamTokens);
-    }
-
-    /**
-     * @dev back link VLBToken contract with VLBCrowdsale one
-     * @param _crowdsaleAddress non zero address of VLBCrowdsale contract
-     */
-    function setCrowdsaleAddress(address _crowdsaleAddress) onlyOwner external {
-        require(_crowdsaleAddress != address(0));
-        crowdsaleContractAddress = _crowdsaleAddress;
-
-        // Allow crowdsale contract 
-        uint256 balance = balanceOf(crowdsaleTokensWallet);
-        allowed[crowdsaleTokensWallet][crowdsaleContractAddress] = balance;
-        Approval(crowdsaleTokensWallet, crowdsaleContractAddress, balance);
-    }
-
-    /**
-     * @dev called only by linked VLBCrowdsale contract to end crowdsale.
-     *      all the unsold tokens will be burned and totalSupply updated
-     *      but wings.ai reward will be secured in advance
-     */
-    function endTokensale() onlyCrowdsaleContract external {
-        require(!isFinished);
-        uint256 crowdsaleLeftovers = balanceOf(crowdsaleTokensWallet);
-        
-        if (crowdsaleLeftovers > 0) {
-            totalSupply = totalSupply.sub(crowdsaleLeftovers).sub(wingsTokensReserv);
-            wingsTokensReward = totalSupply.div(100);
-            totalSupply = totalSupply.add(wingsTokensReward);
-
-            balances[crowdsaleTokensWallet] = 0;
-            Transfer(crowdsaleTokensWallet, address(0), crowdsaleLeftovers);
-            TokensBurnt(crowdsaleLeftovers);
-        } else {
-            wingsTokensReward = wingsTokensReserv;
+    function collectRate(address investor) onlyOwner public returns (uint8) {
+        require(investor != address(0));
+        uint8 rate = rates[investor];
+        if (rate != 0) {
+            delete rates[investor];
         }
-        
-        balances[wingsWallet] = balanceOf(wingsWallet).add(wingsTokensReward);
-        Transfer(crowdsaleTokensWallet, wingsWallet, wingsTokensReward);
+        return rate;
+    }
 
-        isFinished = true;
-
-        Live(totalSupply);
+    function addRate(address investor, uint8 rate) onlyOwner public {
+        require(investor != address(0));
+        rates[investor] = rate;
     }
 }
-
-
-
-
-
-
-
-
-/*
- * !!!IMPORTANT!!!
- * Based on Open Zeppelin Refund Vault contract
- * https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/crowdsale/RefundVault.sol
- * the only thing that differs is a hardcoded wallet address
- */
-
-/**
- * @title RefundVault.
- * @dev This contract is used for storing funds while a crowdsale
- * is in progress. Supports refunding the money if crowdsale fails,
- * and forwarding it if crowdsale is successful.
- */
 contract VLBRefundVault is Ownable {
     using SafeMath for uint256;
 
@@ -488,44 +108,39 @@ contract VLBRefundVault is Ownable {
 
     mapping (address => uint256) public deposited;
 
-    address public constant wallet = 0x02D408bc203921646ECA69b555524DF3c7f3a8d7;
-
-    address crowdsaleContractAddress;
+    address public wallet;
 
     event Closed();
+    event FundsDrained(uint256 weiAmount);
     event RefundsEnabled();
     event Refunded(address indexed beneficiary, uint256 weiAmount);
 
-    function VLBRefundVault() {
+    function VLBRefundVault(address _wallet) public {
+        require(_wallet != address(0));
+        wallet = _wallet;
         state = State.Active;
     }
 
-    modifier onlyCrowdsaleContract() {
-        require(msg.sender == crowdsaleContractAddress);
-        _;
-    }
-
-    function setCrowdsaleAddress(address _crowdsaleAddress) external onlyOwner {
-        require(_crowdsaleAddress != address(0));
-        crowdsaleContractAddress = _crowdsaleAddress;
-    }
-
-    function deposit(address investor) onlyCrowdsaleContract external payable {
+    function deposit(address investor) onlyOwner public payable {
         require(state == State.Active);
         deposited[investor] = deposited[investor].add(msg.value);
     }
 
-    function close(address _wingsWallet) onlyCrowdsaleContract external {
-        require(_wingsWallet != address(0));
+    function unhold() onlyOwner public {
         require(state == State.Active);
-        state = State.Closed;
-        Closed();
-        uint256 wingsReward = this.balance.div(100);
-        _wingsWallet.transfer(wingsReward);
+        FundsDrained(this.balance);
         wallet.transfer(this.balance);
     }
 
-    function enableRefunds() onlyCrowdsaleContract external {
+    function close() onlyOwner public {
+        require(state == State.Active);
+        state = State.Closed;
+        Closed();
+        FundsDrained(this.balance);
+        wallet.transfer(this.balance);
+    }
+
+    function enableRefunds() onlyOwner public {
         require(state == State.Active);
         state = State.Refunding;
         RefundsEnabled();
@@ -538,30 +153,30 @@ contract VLBRefundVault is Ownable {
         investor.transfer(depositedValue);
         Refunded(investor, depositedValue);
     }
-
-    /**
-     * @dev killer method that can bu used by owner to
-     *      kill the contract and send funds to owner
-     */
-    function kill() onlyOwner {
-        require(state == State.Closed);
-        selfdestruct(owner);
-    }
 }
 
 
+interface Token {
+    function transferFrom(address from, address to, uint256 value) public returns (bool);
+    function tokensWallet() public returns (address);
+}
 
 /**
  * @title VLBCrowdsale
  * @dev VLB crowdsale contract borrows Zeppelin Finalized, Capped and Refundable crowdsales implementations
  */
-contract VLBCrowdsale is Ownable, Pausable {
+contract VLBCrowdsale is Ownable {
     using SafeMath for uint;
+
+    /**
+     * @dev escrow address
+     */
+    address public escrow;
 
     /**
      * @dev token contract
      */
-    VLBToken public token;
+    Token public token;
 
     /**
      * @dev refund vault used to hold funds while crowdsale is running
@@ -569,27 +184,30 @@ contract VLBCrowdsale is Ownable, Pausable {
     VLBRefundVault public vault;
 
     /**
-     * @dev tokensale(presale) start time: Nov 22, 2017, 12:00:00 UTC (1511352000)
+     * @dev refund vault used to hold funds while crowdsale is running
      */
-    uint startTime = 1511352000;
+    VLBBonusStore public bonuses;
 
     /**
-     * @dev tokensale end time: Dec 17, 2017 12:00:00 UTC (1513512000), or the date when
-     *       300’000 ether have been collected, whichever occurs first. see hasEnded()
-     *       for more details
+     * @dev tokensale start time: Dec 17, 2017 12:00:00 UTC (1513512000)
      */
-    uint endTime = 1513512000;
+    uint startTime = 1513512000;
+
+    /**
+     * @dev tokensale end time: Apr 09, 2018 12:00:00 UTC (1523275200)
+     */
+    uint endTime = 1523275200;
 
     /**
      * @dev minimum purchase amount for presale
      */
-    uint256 public constant minPresaleAmount = 100 * 10**18; // 100 ether
+    uint256 public constant MIN_SALE_AMOUNT = 5 * 10**17; // 0.5 ether
 
     /**
-     * @dev minimum and maximum amount of funds to be raised in weis
+     * @dev minimum and maximum amount of funds to be raised in USD
      */
-    uint256 public constant goal = 25 * 10**21;  // 25 Kether
-    uint256 public constant cap  = 300 * 10**21; // 300 Kether
+    uint256 public constant USD_GOAL = 4 * 10**6;  // $4M
+    uint256 public constant USD_CAP  = 12 * 10**6; // $12M
 
     /**
      * @dev amount of raised money in wei
@@ -602,6 +220,26 @@ contract VLBCrowdsale is Ownable, Pausable {
     bool public isFinalized = false;
 
     /**
+     * @dev tokensale pause flag
+     */
+    bool public paused = false;
+
+    /**
+     * @dev refunding satge flag
+     */
+    bool public refunding = false;
+
+    /**
+     * @dev min cap reach flag
+     */
+    bool public isMinCapReached = false;
+
+    /**
+     * @dev ETH x USD exchange rate
+     */
+    uint public ETHUSD;
+
+    /**
      * @dev event for token purchase logging
      * @param purchaser who paid for the tokens
      * @param beneficiary who got the tokens
@@ -612,28 +250,69 @@ contract VLBCrowdsale is Ownable, Pausable {
 
     /**
      * @dev event for tokensale final logging
-     */
+    */
     event Finalized();
+
+    /**
+     * @dev event for tokensale pause logging
+    */    
+    event Pause();
+
+    /**
+     * @dev event for tokensale uppause logging
+    */    
+    event Unpause();
+
+    /**
+     * @dev Modifier to make a function callable only when the contract is not paused.
+     */
+    modifier whenNotPaused() {
+        require(!paused);
+        _;
+    }
+
+    /**
+     * @dev Modifier to make a function callable only when the contract is paused.
+     */
+    modifier whenPaused() {
+        require(paused);
+        _;
+    }
+
+    /**
+     * @dev Modifier to make a function callable only when its called by escrow.
+     */
+    modifier onlyEscrow() {
+        require(msg.sender == escrow);
+        _;
+    }
 
     /**
      * @dev Crowdsale in the constructor takes addresses of
      *      the just deployed VLBToken and VLBRefundVault contracts
      * @param _tokenAddress address of the VLBToken deployed contract
-     * @param _vaultAddress address of the VLBRefundVault deployed contract
      */
-    function VLBCrowdsale(address _tokenAddress, address _vaultAddress) {
+    function VLBCrowdsale(address _tokenAddress, address _wallet, address _escrow, uint rate) public {
         require(_tokenAddress != address(0));
-        require(_vaultAddress != address(0));
+        require(_wallet != address(0));
+        require(_escrow != address(0));
 
-        // VLBToken and VLBRefundVault was deployed separately
-        token = VLBToken(_tokenAddress);
-        vault = VLBRefundVault(_vaultAddress);
+        escrow = _escrow;
+
+        // Set initial exchange rate
+        ETHUSD = rate;
+
+        // VLBTokenwas deployed separately
+        token = Token(_tokenAddress);
+
+        vault = new VLBRefundVault(_wallet);
+        bonuses = new VLBBonusStore();
     }
 
     /**
      * @dev fallback function can be used to buy tokens
      */
-    function() payable {
+    function() public payable {
         buyTokens(msg.sender);
     }
 
@@ -650,12 +329,17 @@ contract VLBCrowdsale is Ownable, Pausable {
         // buyer and beneficiary could be two different wallets
         address buyer = msg.sender;
 
+        weiRaised = weiRaised.add(weiAmount);
+
         // calculate token amount to be created
         uint256 tokens = weiAmount.mul(getConversionRate());
 
-        weiRaised = weiRaised.add(weiAmount);
+        uint8 rate = bonuses.collectRate(beneficiary);
+        if (rate != 0) {
+            tokens = tokens.mul(rate).div(100);
+        }
 
-        if (!token.transferFrom(token.crowdsaleTokensWallet(), beneficiary, tokens)) {
+        if (!token.transferFrom(token.tokensWallet(), beneficiary, tokens)) {
             revert();
         }
 
@@ -672,31 +356,34 @@ contract VLBCrowdsale is Ownable, Pausable {
     function validPurchase(uint256 _value) internal constant returns (bool) {
         bool nonZeroPurchase = _value != 0;
         bool withinPeriod = now >= startTime && now <= endTime;
-        bool withinCap = weiRaised.add(_value) <= cap;
+        bool withinCap = !capReached(weiRaised.add(_value));
+
         // For presale we want to decline all payments less then minPresaleAmount
-        bool withinAmount = now >= startTime + 5 days || msg.value >= minPresaleAmount;
+        bool withinAmount = msg.value >= MIN_SALE_AMOUNT;
 
         return nonZeroPurchase && withinPeriod && withinCap && withinAmount;
     }
 
     /**
+     * @dev finish presale stage and move vault to
+     *      refund state if GOAL was not reached
+     */
+    function unholdFunds() onlyOwner public {
+        if (goalReached()) {
+            isMinCapReached = true;
+            vault.unhold();
+        } else {
+            revert();
+        }
+    }
+    
+    /**
      * @dev check if crowdsale still active based on current time and cap
      * @return true if crowdsale event has ended
      */
     function hasEnded() public constant returns (bool) {
-        bool capReached = weiRaised >= cap;
         bool timeIsUp = now > endTime;
-        return timeIsUp || capReached;
-    }
-
-    /**
-     * @dev if crowdsale is unsuccessful, investors can claim refunds here
-     */
-    function claimRefund() public {
-        require(isFinalized);
-        require(!goalReached());
-
-        vault.refund(msg.sender);
+        return timeIsUp || capReached();
     }
 
     /**
@@ -706,45 +393,92 @@ contract VLBCrowdsale is Ownable, Pausable {
         require(!isFinalized);
         require(hasEnded());
 
-        // trigger vault and token finalization
         if (goalReached()) {
-            vault.close(token.wingsWallet());
+            vault.close();
         } else {
+            refunding = true;
             vault.enableRefunds();
         }
 
-        token.endTokensale();
         isFinalized = true;
-
         Finalized();
     }
 
     /**
-     * @dev check if hard cap goal is reached
+     * @dev add previous investor compensaton rate
      */
-    function goalReached() public constant returns (bool) {
-        return weiRaised >= goal;
+    function addRate(address investor, uint8 rate) onlyOwner public {
+        require(investor != address(0));
+        bonuses.addRate(investor, rate);
     }
+
+    /**
+     * @dev check if soft cap goal is reached in USD
+     */
+    function goalReached() public view returns (bool) {        
+        return isMinCapReached || weiRaised.mul(ETHUSD).div(10**20) >= USD_GOAL;
+    }
+
+    /**
+     * @dev check if hard cap goal is reached in USD
+     */
+    function capReached() internal view returns (bool) {
+        return weiRaised.mul(ETHUSD).div(10**20) >= USD_CAP;
+    }
+
+    /**
+     * @dev check if hard cap goal is reached in USD
+     */
+    function capReached(uint256 raised) internal view returns (bool) {
+        return raised.mul(ETHUSD).div(10**20) >= USD_CAP;
+    }
+
+    /**
+     * @dev if crowdsale is unsuccessful, investors can claim refunds here
+     */
+    function claimRefund() public {
+        require(isFinalized && refunding);
+
+        vault.refund(msg.sender);
+    }    
+
+    /**
+     * @dev called by the owner to pause, triggers stopped state
+     */
+    function pause() onlyOwner whenNotPaused public {
+        paused = true;
+        Pause();
+    }
+
+    /**
+     * @dev called by the owner to unpause, returns to normal state
+     */
+    function unpause() onlyOwner whenPaused public {
+        paused = false;
+        Unpause();
+    }
+    
+    /**
+     * @dev called by the escrow to update current ETH x USD exchange rate
+     */
+    function updateExchangeRate(uint rate) onlyEscrow public {
+        ETHUSD = rate;
+    } 
 
     /**
      * @dev returns current token price based on current presale time frame
      */
     function getConversionRate() public constant returns (uint256) {
-        if (now >= startTime + 20 days) {
+        if (now >= startTime + 106 days) {
             return 650;
-            // 650        Crowdasle Part 4
-        } else if (now >= startTime + 15 days) {
+        } else if (now >= startTime + 99 days) {
+            return 676;
+        } else if (now >= startTime + 92 days) {
             return 715;
-            // 650 + 10%. Crowdasle Part 3
-        } else if (now >= startTime + 10 days) {
+        } else if (now >= startTime + 85 days) {
             return 780;
-            // 650 + 20%. Crowdasle Part 2
-        } else if (now >= startTime + 5 days) {
-            return 845;
-            // 650 + 30%. Crowdasle Part 1
         } else if (now >= startTime) {
-            return 910;
-            // 650 + 40%. Presale
+            return 845;
         }
         return 0;
     }
@@ -753,7 +487,7 @@ contract VLBCrowdsale is Ownable, Pausable {
      * @dev killer method that can bu used by owner to
      *      kill the contract and send funds to owner
      */
-    function kill() onlyOwner whenPaused {
+    function kill() onlyOwner whenPaused public {
         selfdestruct(owner);
     }
 }
