@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x72419ff7590642cc6062b372e1583709ce1f8245
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x464998aa71b5e303a6b0cfb2b40cb50db7179800
 */
 pragma solidity ^0.4.4;
 
@@ -119,8 +119,8 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 6000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 6000000000000000;                        // Update total supply (100000 for example)
+        balances[msg.sender] = 3000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 6000000;                        // Update total supply (100000 for example)
         name = "metacube";                                   // Set the name for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
         symbol = "MTC";                               // Set the symbol for display purposes
