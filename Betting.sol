@@ -1,65 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Betting at 0xd9e8a52f712b0273770581f33b766a76724408d3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Betting at 0x32c4ed7b88cfb37cb96b9239d8f9307eb11e85bc
 */
 pragma solidity ^0.4.20;
 
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-// <ORACLIZE_API>
-/*
-Copyright (c) 2015-2016 Oraclize SRL
-Copyright (c) 2016 Oraclize LTD
-
-
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-*/
-
-pragma solidity ^0.4.11;//please import oraclizeAPI_pre0.4.sol when solidity < 0.4.0
 
 contract OraclizeI {
     address public cbAddress;
@@ -1046,6 +989,31 @@ contract usingOraclize {
 }
 // </ORACLIZE_API>
 
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
 contract BettingControllerInterface {
     function remoteBettingClose() external;
     function depositHouseTakeout() external payable;
@@ -1123,7 +1091,7 @@ contract Betting is usingOraclize {
     function Betting() public payable {
         oraclize_setProof(proofType_TLSNotary | proofStorage_IPFS);
         owner = msg.sender;
-        // oraclize_setCustomGasPrice(10000000000 wei);
+        oraclize_setCustomGasPrice(30000000000 wei);
         horses.BTC = bytes32("BTC");
         horses.ETH = bytes32("ETH");
         horses.LTC = bytes32("LTC");
@@ -1144,6 +1112,7 @@ contract Betting is usingOraclize {
 
     modifier duringBetting {
         require(chronus.betting_open);
+        require(now < chronus.starting_time + chronus.betting_duration);
         _;
     }
     
