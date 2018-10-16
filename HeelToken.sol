@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HeelToken at 0xf442c2f7f9f91bd482fac07ed599ece40ffcc283
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HeelToken at 0x80f395f8e95544cd9b7d907b030667db29f59bce
 */
 pragma solidity ^0.4.16;
 
@@ -11,7 +11,7 @@ contract HeelToken {
     string public symbol="HEEL";
     uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
-    uint256 public totalSupply=23000000000*10**uint256(decimals);
+    uint256 public totalSupply=23000000000;
 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
