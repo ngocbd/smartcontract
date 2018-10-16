@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DatareumCrowdsale at 0x3b1a8d3c9f80e8b97781b5b7448145d6e6955cbe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DatareumCrowdsale at 0x3f30b7eedb2bedf4a8600b7ee5bb2b3162ef13d8
 */
 pragma solidity ^0.4.20;
 
@@ -1163,12 +1163,14 @@ contract DatareumCrowdsale is Ownable, usingOraclize{
 
   //END ICO CONSTANTS
 
-  uint public constant ICO_START = 1527940800; //1527940800;
-  uint public ICO_FINISH = 1530575940; //1530575940;
+  uint public ICO_START = 9527940800; //1527940800;
+  uint public ICO_FINISH = 9530575940; //1530575940;
 
-  function setIcoFinish (uint _timestamp) external {
-    require (ICO_FINISH < _timestamp);
-    ICO_FINISH = _timestamp;
+
+  function setIcoPhase (uint _start, uint _finish) external onlyOwner {
+    require (now > PRE_ICO_FINISH && ICO_START == 9527940800);
+    ICO_START = _start;
+    ICO_FINISH = _finish;
   }
   
 
@@ -1303,7 +1305,7 @@ contract DatareumCrowdsale is Ownable, usingOraclize{
     return tokensToSend;
   }
   
-  function manualSendTokens (address _address, uint _value) public onlyOwnerOrSubOwners {
+  function manualSendTokens (address _address, uint _value) public onlyOwner {
     token.sendCrowdsaleTokens(_address,_value.mul((uint)(10).pow(decimals))/tokenPrice);
     ethCollected = ethCollected.add(_value);
   }
@@ -1425,6 +1427,7 @@ contract DatareumCrowdsale is Ownable, usingOraclize{
   function addFunder (address _address, uint _amount, uint _bonus) public onlyOwnerOrSubOwners {
     funders[_address] = Funder(_amount,_bonus,true);
   }
+
   function removeFunder (address _address) public onlyOwnerOrSubOwners {
     Funder memory buffer = funders[_address];
     buffer.active = false;
