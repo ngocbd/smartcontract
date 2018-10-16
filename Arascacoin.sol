@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Arascacoin at 0xf8ba822e6cfa75061aa118daf0e87f814397b487
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Arascacoin at 0x24698cff8aa12da47e50c57da3f3730452a3e844
 */
 pragma solidity ^0.4.16;
 
