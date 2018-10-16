@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CCCRCoin at 0x4f3f967d319f4ab49a89e7a768c8419ad9ab0cdb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CCCRCoin at 0x3cfce5b9e9109f3f13ead2579b867418b7c13bf1
 */
 pragma solidity ^0.4.16;
 
@@ -137,7 +137,7 @@ contract ERC20Basic is Pausable {
   uint256 public totalSupply;
   function balanceOf(address who) constant returns (uint256);
   function transfer(address to, uint256 value) returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 indexed value);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
 contract BasicToken is ERC20Basic {
@@ -242,28 +242,22 @@ contract CCCRCoin is StandardToken {
   function CCCRCoin() {
 
         totalSupply = 20000000000000000;
-        balances[msg.sender] = 19845521533406700;
+        balances[msg.sender] = 19792961056302700;
 
-        balances[0x0cb9cb4723c1764d26b3ab38fec121d0390d5e12] = 50000353012200;
-        Transfer(this, 0x0cb9cb4723c1764d26b3ab38fec121d0390d5e12, 50000353012200);
+        balances[0x0cb9cb4723c1764d26b3ab38fec121d0390d5e12] = 50000000000000;
+        Transfer(this, 0x0cb9cb4723c1764d26b3ab38fec121d0390d5e12, 50000000000000);
 
-        balances[0xaa00a534093975ac45ecac2365e40b2f81cf554b] = 27600000000900;
-        Transfer(this, 0xaa00a534093975ac45ecac2365e40b2f81cf554b, 27600000000900);
+        balances[0xdaeb100e594bec89aa8282d5b0f54e01100559b0] = 20000000000000;
+        Transfer(this, 0xdaeb100e594bec89aa8282d5b0f54e01100559b0, 20000000000000);
 
-        balances[0xdaeb100e594bec89aa8282d5b0f54e01100559b0] = 20000000001200;
-        Transfer(this, 0xdaeb100e594bec89aa8282d5b0f54e01100559b0, 20000000001200);
-
-        balances[0x7fc4662f19e83c986a4b8d3160ee9a0582ac45a2] = 3174000000100;
-        Transfer(this, 0x7fc4662f19e83c986a4b8d3160ee9a0582ac45a2, 3174000000100);
+        balances[0x7fc4662f19e83c986a4b8d3160ee9a0582ac45a2] = 3174000000000;
+        Transfer(this, 0x7fc4662f19e83c986a4b8d3160ee9a0582ac45a2, 3174000000000);
 
         balances[0xedfd6f7b43a4e2cdc39975b61965302c47c523cb] = 2731842480800;
         Transfer(this, 0xedfd6f7b43a4e2cdc39975b61965302c47c523cb, 2731842480800);
 
-        balances[0x911af73f46c16f0682c707fdc46b3e5a9b756dfc] = 2413068000600;
-        Transfer(this, 0x911af73f46c16f0682c707fdc46b3e5a9b756dfc, 2413068000600);
-
-        balances[0x2cec090622838aa3abadd176290dea1bbd506466] = 150055805570;
-        Transfer(this, 0x2cec090622838aa3abadd176290dea1bbd506466, 150055805570);
+        balances[0x2cec090622838aa3abadd176290dea1bbd506466] = 150558055200;
+        Transfer(this, 0x2cec090622838aa3abadd176290dea1bbd506466, 150558055200);
 
         balances[0xf023fa938d0fed67e944b3df2efaa344c7a9bfb1] = 966000000400;
         Transfer(this, 0xf023fa938d0fed67e944b3df2efaa344c7a9bfb1, 966000000400);
@@ -319,14 +313,14 @@ contract CCCRCoin is StandardToken {
         balances[0x12f3f72fb89f86110d666337c6cb49f3db4b15de] = 66306000000;
         Transfer(this, 0x12f3f72fb89f86110d666337c6cb49f3db4b15de, 66306000000);
 
-        balances[0x65f34b34b2c5da1f1469f4165f4369242edbbec5] = 27600000700;
-        Transfer(this, 0xbb4691d4dff55fb110f996d029900e930060fe48, 27600000700);
+        balances[0x65f34b34b2c5da1f1469f4165f4369242edbbec5] = 27600000000;
+        Transfer(this, 0xbb4691d4dff55fb110f996d029900e930060fe48, 27600000000);
 
         balances[0x750b5f444a79895d877a821dfce321a9b00e77b3] = 18102155500;
         Transfer(this, 0x750b5f444a79895d877a821dfce321a9b00e77b3, 18102155500);
 
-        balances[0x8d88391bfcb5d3254f82addba383523907e028bc] = 18449793100;
-        Transfer(this, 0x8d88391bfcb5d3254f82addba383523907e028bc, 18449793100);
+        balances[0x8d88391bfcb5d3254f82addba383523907e028bc] = 3418449793100;
+        Transfer(this, 0x8d88391bfcb5d3254f82addba383523907e028bc, 3418449793100);
 
         balances[0xf0db27cdabcc02ede5aee9574241a84af930f08e] = 13182523700;
         Transfer(this, 0xf0db27cdabcc02ede5aee9574241a84af930f08e, 13182523700);
@@ -361,11 +355,11 @@ contract CCCRCoin is StandardToken {
         balances[0x0f4e5dde970f2bdc9fd079efcb2f4630d6deebbf] = 1346342000;
         Transfer(this, 0x0f4e5dde970f2bdc9fd079efcb2f4630d6deebbf, 1346342000);
 
-        balances[0x7b6b64c0b9673a2a4400d0495f44eaf79b56b69e] = 229999800;
-        Transfer(this, 0x7b6b64c0b9673a2a4400d0495f44eaf79b56b69e, 229999800);
+        balances[0x7b6b64c0b9673a2a4400d0495f44eaf79b56b69e] = 1000000000;
+        Transfer(this, 0x7b6b64c0b9673a2a4400d0495f44eaf79b56b69e, 1000000000);
 
-        balances[0x74a4d45b8bb857f627229b94cf2b9b74308c61bb] = 199386600;
-        Transfer(this, 0x74a4d45b8bb857f627229b94cf2b9b74308c61bb, 199386600);
+        balances[0x74a4d45b8bb857f627229b94cf2b9b74308c61bb] = 1000000000;
+        Transfer(this, 0x74a4d45b8bb857f627229b94cf2b9b74308c61bb, 1000000000);
 
         balances[0x4ed117148c088a190bacc2bcec4a0cf8fe8179bf] = 30000000000000;
         Transfer(this, 0x4ed117148c088a190bacc2bcec4a0cf8fe8179bf, 30000000000000);
@@ -433,8 +427,8 @@ contract CCCRCoin is StandardToken {
         balances[0x5378d9fca2c0e8326205709e25db3ba616fb3ba1] = 12600334900;
         Transfer(this, 0x5378d9fca2c0e8326205709e25db3ba616fb3ba1, 12600334900);
         
-        balances[0x199363591ac6fb5d8a5b86fc15a1dcbd8e65e598] = 12300000000;
-        Transfer(this, 0x199363591ac6fb5d8a5b86fc15a1dcbd8e65e598, 12300000000);
+        balances[0x199363591ac6fb5d8a5b86fc15a1dcbd8e65e598] = 80533134420100;
+        Transfer(this, 0x199363591ac6fb5d8a5b86fc15a1dcbd8e65e598, 80533134420100);
         
         balances[0xe4fffc340c8bc4dc73a2008d3cde76a6ac37d5f0] = 12299999900;
         Transfer(this, 0xe4fffc340c8bc4dc73a2008d3cde76a6ac37d5f0, 12299999900);
@@ -489,9 +483,6 @@ contract CCCRCoin is StandardToken {
         
         balances[0x0242f37279f1425667a35ab37929cf71bf74caeb] = 1090000000;
         Transfer(this, 0x0242f37279f1425667a35ab37929cf71bf74caeb, 1090000000);
-        
-        balances[0x75c3b268b3a7267c30312820c4dcc07cba621e31] = 853255500;
-        Transfer(this, 0x75c3b268b3a7267c30312820c4dcc07cba621e31, 853255500);
 
   }
 
