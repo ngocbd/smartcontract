@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleToken at 0x9f195617fa8fbad9540c5d113a99a0a0172aaedc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleToken at 0x233007FDeeB9a1BFB705666f87a6B3e8b5B301B1
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.13;
 // Thanks to OpenZeppeline & TokenMarket for the awesome Libraries.
 contract SafeMathLib {
   function safeMul(uint a, uint b) returns (uint) {
@@ -421,6 +421,28 @@ contract MintableToken is StandardToken, Ownable {
   }
 }
 
+contract Allocatable is Ownable {
+
+  /** List of agents that are allowed to allocate new tokens */
+  mapping (address => bool) public allocateAgents;
+
+  event AllocateAgentChanged(address addr, bool state  );
+
+  /**
+   * Owner can allow a crowdsale contract to allocate new tokens.
+   */
+  function setAllocateAgent(address addr, bool state) onlyOwner public {
+    allocateAgents[addr] = state;
+    AllocateAgentChanged(addr, state);
+  }
+
+  modifier onlyAllocateAgent() {
+    // Only crowdsale contracts are allowed to allocate new tokens
+    require(allocateAgents[msg.sender]);
+    _;
+  }
+}
+
 /**
  * A crowdsaled token.
  *
@@ -432,23 +454,15 @@ contract MintableToken is StandardToken, Ownable {
  * - The token can be capped (supply set in the constructor) or uncapped (crowdsale contract can mint new tokens)
  *
  */
-contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
+ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
 
   event UpdatedTokenInformation(string newName, string newSymbol);
-  event ProfitDelivered(address fetcher, uint profit);
-  event ProfitLoaded(address owner, uint profit);
+
   string public name;
 
   string public symbol;
 
   uint8 public decimals;
-  uint loadedProfit;
-  bool ditributingProfit;
-  uint profitDistributed;
-  uint loadedProfitAvailable;
-
-  /** Whether an addresses has fetched profit of not*/
-  mapping (address => bool) public hasFetchedProfit;
 
   /**
    * Construct the token.
@@ -462,7 +476,8 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
    * @param _mintable Are new tokens created over the crowdsale or do we distribute only the initial supply? Note that when the token becomes transferable the minting always ends.
    */
   function CrowdsaleToken(string _name, string _symbol, uint _initialSupply, uint8 _decimals, bool _mintable)
-    UpgradeableToken(msg.sender) {
+    UpgradeableToken(msg.sender) 
+  {
 
     // Create any address, can be transferred
     // to team multisig via changeOwner(),
@@ -487,9 +502,6 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
     if(!_mintable) {
       mintingFinished = true;
       require(totalSupply != 0);
-      // if(totalSupply == 0) {
-      //   throw; // Cannot create a token without supply and no minting
-      // }
     }
   }
 
@@ -500,6 +512,7 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
     mintingFinished = true;
     super.releaseTokenTransfer();
   }
+  
 
   /**
    * Allow upgrade agent functionality kick in only if the crowdsale was success.
@@ -517,63 +530,10 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
     UpdatedTokenInformation(name, symbol);
   }
 
-  /**
-   * Allow load profit on the contract for the payout.
-   *
-   * 
-   */
-  function loadProfit() public payable onlyOwner {
-    require(released);
-    require(!ditributingProfit);
-    require(msg.value != 0);
-    loadedProfit = msg.value;
-    loadedProfitAvailable = loadedProfit;
-    ditributingProfit = true;
-    ProfitLoaded(msg.sender, loadedProfit);
-  }
-
-  /**
-   * Investors can claim profit if loaded.
-   */
-  function fetchProfit() public returns(bool) {
-    require(ditributingProfit);
-    require(!hasFetchedProfit[msg.sender]);
-    uint NBCBalanceOfFetcher = balanceOf(msg.sender);
-    require(NBCBalanceOfFetcher != 0);
-
-    uint weiValue = safeMul(loadedProfit,NBCBalanceOfFetcher)/totalSupply;
-    require(weiValue >= msg.gas);
-
-    loadedProfitAvailable = safeSub(loadedProfitAvailable, weiValue);
-    hasFetchedProfit[msg.sender] = true;
-
-    profitDistributed = safeAdd(profitDistributed, weiValue);
-
-      if(loadedProfitAvailable <= 0) { 
-       ditributingProfit = false;
-        loadedProfit = 0;
-    }
-
-    require(msg.sender.send(weiValue)); 
-    // require(msg.sender.call.value(weiValue) == true);
-    ProfitDelivered(msg.sender, weiValue);
-    
-  }
-
-  /**
-   * Allow owner to unload the loaded profit which could not be claimed.
-   * Owner must be responsible to call it at the right time.
-   * 
-   */
-  function fetchUndistributedProfit() public onlyOwner {
-    require(loadedProfitAvailable != 0);
-    require(msg.sender.send(loadedProfitAvailable));
-    loadedProfitAvailable = 0;
-    ditributingProfit = false;
-    loadedProfit = 0;
-  }
 
 }
+
+
 
 /**
  * Finalize agent defines what happens at the end of succeseful crowdsale.
@@ -668,6 +628,7 @@ contract Haltable is Ownable {
 
 }
 
+
 /**
  * Abstract base contract for token sales.
  *
@@ -680,13 +641,16 @@ contract Haltable is Ownable {
  * - different investment policies (require server side customer id, allow only whitelisted addresses)
  *
  */
-contract Crowdsale is Haltable, SafeMathLib {
+contract Crowdsale is Allocatable, Haltable, SafeMathLib {
 
   /* Max investment count when we are still allowed to change the multisig address */
   uint public MAX_INVESTMENTS_BEFORE_MULTISIG_CHANGE = 5;
 
   /* The token we are selling */
   FractionalERC20 public token;
+
+  /* Token Vesting Contract */
+  address public tokenVestingAddress;
 
   /* How we are going to price our offering */
   PricingStrategy public pricingStrategy;
@@ -761,25 +725,28 @@ contract Crowdsale is Haltable, SafeMathLib {
   enum State{Unknown, Preparing, PreFunding, Funding, Success, Failure, Finalized, Refunding}
 
   // A new investment was made
-  event Invested(address investor, uint weiAmount, uint tokenAmount, uint128 customerId);
+  event Invested(address investor, uint weiAmount, uint tokenAmount, string custId);
 
   // Refund was processed for a contributor
   event Refund(address investor, uint weiAmount);
 
   // The rules were changed what kind of investments we accept
-  event InvestmentPolicyChanged(bool requireCustomerId, bool requiredSignedAddress, address signerAddress);
+  event InvestmentPolicyChanged(bool requireCustId, bool requiredSignedAddr, address signerAddr);
 
   // Address early participation whitelist status changed
   event Whitelisted(address addr, bool status);
 
   // Crowdsale end time has been changed
-  event EndsAtChanged(uint endsAt);
+  event EndsAtChanged(uint endAt);
 
-  function Crowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal) {
+  function Crowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, 
+  uint _start, uint _end, uint _minimumFundingGoal, address _tokenVestingAddress) {
 
     owner = msg.sender;
 
     token = FractionalERC20(_token);
+
+    tokenVestingAddress = _tokenVestingAddress;
 
     setPricingStrategy(_pricingStrategy);
 
@@ -830,7 +797,7 @@ contract Crowdsale is Haltable, SafeMathLib {
    * @param customerId (optional) UUID v4 to track the successful payments on the server side
    *
    */
-  function investInternal(address receiver, uint128 customerId) stopInEmergency private {
+  function investInternal(address receiver, string customerId) stopInEmergency private {
 
     // Determine if it's a good time to accept investment from this participant
     if(getState() == State.PreFunding) {
@@ -885,7 +852,7 @@ contract Crowdsale is Haltable, SafeMathLib {
   }
 
   /**
-   * Preallocate tokens for the early investors.
+   * allocate tokens for the early investors.
    *
    * Preallocated tokens have been sold before the actual crowdsale opens.
    * This function mints the tokens and moves the crowdsale needle.
@@ -895,14 +862,15 @@ contract Crowdsale is Haltable, SafeMathLib {
    *
    * No money is exchanged, as the crowdsale team already have received the payment.
    *
-   * @param fullTokens tokens as full tokens - decimal places added internally
    * @param weiPrice Price of a single full token in wei
    *
    */
-  function preallocate(address receiver, uint fullTokens, uint weiPrice) public onlyOwner {
+  function allocate(address receiver, uint tokenAmount, uint weiPrice, string customerId,  uint lockedTokenAmount) public onlyAllocateAgent {
 
-    uint tokenAmount = fullTokens * 10**uint(token.decimals());
-    uint weiAmount = weiPrice * fullTokens; // This can be also 0, we give out tokens for free
+    // cannot lock more than total tokens
+    require(lockedTokenAmount <= tokenAmount);
+
+    uint weiAmount = (weiPrice * tokenAmount)/10**uint(token.decimals()); // This can be also 0, we give out tokens for free
 
     weiRaised = safeAdd(weiRaised,weiAmount);
     tokensSold = safeAdd(tokensSold,tokenAmount);
@@ -910,10 +878,23 @@ contract Crowdsale is Haltable, SafeMathLib {
     investedAmountOf[receiver] = safeAdd(investedAmountOf[receiver],weiAmount);
     tokenAmountOf[receiver] = safeAdd(tokenAmountOf[receiver],tokenAmount);
 
-    assignTokens(receiver, tokenAmount);
+    // assign locked token to Vesting contract
+    if (lockedTokenAmount > 0) {
+      TokenVesting tokenVesting = TokenVesting(tokenVestingAddress);
+      // to prevent minting of tokens which will be useless as vesting amount cannot be updated
+      require(!tokenVesting.isVestingSet(receiver));
+      assignTokens(tokenVestingAddress, lockedTokenAmount);
+      // set vesting with default schedule
+      tokenVesting.setVestingWithDefaultSchedule(receiver, lockedTokenAmount); 
+    }
+
+    // assign remaining tokens to contributor
+    if (tokenAmount - lockedTokenAmount > 0) {
+      assignTokens(receiver, tokenAmount - lockedTokenAmount);
+    }
 
     // Tell us invest was success
-    Invested(receiver, weiAmount, tokenAmount, 0);
+    Invested(receiver, weiAmount, tokenAmount, customerId);
   }
 
   /**
@@ -930,11 +911,11 @@ contract Crowdsale is Haltable, SafeMathLib {
   /**
    * Track who is the customer making the payment so we can send thank you email.
    */
-  function investWithCustomerId(address addr, uint128 customerId) public payable {
+  function investWithCustomerId(address addr, string customerId) public payable {
     require(!requiredSignedAddress);
     //if(requiredSignedAddress) throw; // Crowdsale allows only server-side signed participants
-    
-    require(customerId != 0);
+    bytes memory custIdTest = bytes(customerId);
+    require(custIdTest.length != 0);
     //if(customerId == 0) throw;  // UUIDv4 sanity check
     investInternal(addr, customerId);
   }
@@ -948,7 +929,7 @@ contract Crowdsale is Haltable, SafeMathLib {
     
     require(!requiredSignedAddress);
     //if(requiredSignedAddress) throw; // Crowdsale allows only server-side signed participants
-    investInternal(addr, 0);
+    investInternal(addr, "");
   }
 
   /**
@@ -964,7 +945,7 @@ contract Crowdsale is Haltable, SafeMathLib {
    * Invest to tokens, recognize the payer.
    *
    */
-  function buyWithCustomerId(uint128 customerId) public payable {
+  function buyWithCustomerId(string customerId) public payable {
     investWithCustomerId(msg.sender, customerId);
   }
 
@@ -1175,8 +1156,7 @@ contract Crowdsale is Haltable, SafeMathLib {
     _;
   }
 
-
-  //
+   //
   // Abstract functions
   //
 
@@ -1205,7 +1185,10 @@ contract Crowdsale is Haltable, SafeMathLib {
    * Create new tokens or transfer issued tokens to the investor depending on the cap model.
    */
   function assignTokens(address receiver, uint tokenAmount) private;
+
 }
+
+
 
 /**
  * At the end of the successful crowdsale allocate % bonus of tokens to the team.
@@ -1222,7 +1205,6 @@ contract BonusFinalizeAgent is FinalizeAgent, SafeMathLib {
 
   /** Total percent of tokens minted to the team at the end of the sale as base points (0.0001) */
   uint public totalMembers;
-  // Per address % of total token raised to be assigned to the member Ex 1% is passed as 100
   uint public allocatedBonus;
   mapping (address=>uint) bonusOf;
   /** Where we move the tokens at the end of the sale. */
@@ -1277,16 +1259,9 @@ contract BonusFinalizeAgent is FinalizeAgent, SafeMathLib {
     // get the total sold tokens count.
     uint tokensSold = crowdsale.tokensSold();
 
-    for (uint i=0;i<totalMembers;i++) {
+    for (uint i=0;i<totalMembers;i++){
       allocatedBonus = safeMul(tokensSold, bonusOf[teamAddresses[i]]) / 10000;
       // move tokens to the team multisig wallet
-      
-      // Give min bonus to advisor as committed
-      // the last address is the advisor address
-      uint minBonus = 1000000 * 1000000000000000000;
-      if (i == totalMembers-1 && allocatedBonus < minBonus)
-        allocatedBonus = minBonus;
-
       token.mint(teamAddresses[i], allocatedBonus);
     }
 
@@ -1298,7 +1273,6 @@ contract BonusFinalizeAgent is FinalizeAgent, SafeMathLib {
 
 }
 
-
 /**
  * ICO crowdsale contract that is capped by amout of ETH.
  *
@@ -1306,12 +1280,18 @@ contract BonusFinalizeAgent is FinalizeAgent, SafeMathLib {
  *
  *
  */
+
 contract MintedEthCappedCrowdsale is Crowdsale {
 
   /* Maximum amount of wei this crowdsale can raise. */
   uint public weiCap;
 
-  function MintedEthCappedCrowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal, uint _weiCap) Crowdsale(_token, _pricingStrategy, _multisigWallet, _start, _end, _minimumFundingGoal) {
+  function MintedEthCappedCrowdsale(address _token, PricingStrategy _pricingStrategy, 
+    address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal, uint _weiCap, 
+    address _tokenVestingAddress) 
+    Crowdsale(_token, _pricingStrategy, _multisigWallet, _start, _end, _minimumFundingGoal, 
+    _tokenVestingAddress) {
+    
     weiCap = _weiCap;
   }
 
@@ -1334,6 +1314,8 @@ contract MintedEthCappedCrowdsale is Crowdsale {
     mintableToken.mint(receiver, tokenAmount);
   }
 }
+
+
 
 /** Tranche based pricing with special support for pre-ico deals.
  *      Implementing "first price" tranches, meaning, that if byers order is
@@ -1484,5 +1466,167 @@ contract EthTranchePricing is PricingStrategy, Ownable, SafeMathLib {
   function() payable {
     require(false); // No money on this contract
   }
+
+}
+
+
+/**
+ * Contract to enforce Token Vesting
+ */
+contract TokenVesting is Allocatable, SafeMathLib {
+
+    address public LALATokenAddress;
+
+    /** keep track of total tokens yet to be released, 
+     * this should be less than or equal to LALA tokens held by this contract. 
+     */
+    uint public totalUnreleasedTokens;
+
+    // default vesting parameters
+    uint startAt = 0;
+    uint cliff = 3;
+    uint duration = 12; 
+    uint step = 2592000;
+    bool changeFreezed = false;
+
+    struct VestingSchedule {
+        uint startAt;
+        uint cliff;
+        uint duration;
+        uint step;
+        uint amount;
+        uint amountReleased;
+        bool changeFreezed;
+    }
+
+    mapping (address => VestingSchedule) public vestingMap;
+
+    event VestedTokensReleased(address _adr, uint _amount);
+
+
+    function TokenVesting(address _LALATokenAddress) {
+        LALATokenAddress = _LALATokenAddress;
+    }
+
+
+    /** Modifier to check if changes to vesting is freezed  */
+    modifier changesToVestingFreezed(address _adr){
+        require(vestingMap[_adr].changeFreezed);
+        _;
+    }
+
+
+    /** Modifier to check if changes to vesting is not freezed yet  */
+    modifier changesToVestingNotFreezed(address adr) {
+        require(!vestingMap[adr].changeFreezed); // if vesting not set then also changeFreezed will be false
+        _;
+    }
+
+
+    /** Function to set default vesting schedule parameters. */
+    function setDefaultVestingParameters(uint _startAt, uint _cliff, uint _duration, 
+        uint _step, bool _changeFreezed) onlyAllocateAgent {
+
+        // data validation
+        require(_step != 0);
+        require(_duration != 0);
+        require(_cliff <= _duration);
+
+        startAt = _startAt;
+        cliff = _cliff;
+        duration = _duration; 
+        step = _step;
+        changeFreezed = _changeFreezed;
+
+    }
+
+    /** Function to set vesting with default schedule. */
+    function setVestingWithDefaultSchedule(address _adr, uint _amount) 
+        changesToVestingNotFreezed(_adr) onlyAllocateAgent {
+        setVesting(_adr, startAt, cliff, duration, step, _amount, changeFreezed);
+    }
+
+    /** Function to set/update vesting schedule. PS - Amount cannot be changed once set */
+    function setVesting(address _adr, uint _startAt, uint _cliff, uint _duration, 
+        uint _step, uint _amount, bool _changeFreezed) changesToVestingNotFreezed(_adr) onlyAllocateAgent {
+
+        VestingSchedule storage vestingSchedule = vestingMap[_adr];
+
+        // data validation
+        require(_step != 0);
+        require(_amount != 0 || vestingSchedule.amount > 0);
+        require(_duration != 0);
+        require(_cliff <= _duration);
+
+        //if startAt is zero, set current time as start time.
+        if (_startAt == 0) 
+            _startAt = block.timestamp;
+
+        vestingSchedule.startAt = _startAt;
+        vestingSchedule.cliff = _cliff;
+        vestingSchedule.duration = _duration;
+        vestingSchedule.step = _step;
+
+        // special processing for first time vesting setting
+        if (vestingSchedule.amount == 0) {
+            // check if enough tokens are held by this contract
+            ERC20 LALAToken = ERC20(LALATokenAddress);
+            require(LALAToken.balanceOf(this) >= safeAdd(totalUnreleasedTokens, _amount));
+            totalUnreleasedTokens = safeAdd(totalUnreleasedTokens, _amount);
+            vestingSchedule.amount = _amount; 
+        }
+
+        vestingSchedule.amountReleased = 0;
+        vestingSchedule.changeFreezed = _changeFreezed;
+    }
+
+    function isVestingSet(address adr) public constant returns (bool isSet) {
+        return vestingMap[adr].amount != 0;
+    }
+
+    function freezeChangesToVesting(address _adr) changesToVestingNotFreezed(_adr) onlyAllocateAgent {
+        require(isVestingSet(_adr)); // first check if vesting is set
+        vestingMap[_adr].changeFreezed = true;
+    }
+
+
+    /** Release tokens as per vesting schedule, called by contributor  */
+    function releaseMyVestedTokens() changesToVestingFreezed(msg.sender) {
+        releaseVestedTokens(msg.sender);
+    }
+
+    /** Release tokens as per vesting schedule, called by anyone  */
+    function releaseVestedTokens(address _adr) changesToVestingFreezed(_adr) {
+        VestingSchedule storage vestingSchedule = vestingMap[_adr];
+        
+        // check if all tokens are not vested
+        require(safeSub(vestingSchedule.amount, vestingSchedule.amountReleased) > 0);
+        
+        // calculate total vested tokens till now
+        uint totalTime = block.timestamp - vestingSchedule.startAt;
+        uint totalSteps = totalTime / vestingSchedule.step;
+
+        // check if cliff is passed
+        require(vestingSchedule.cliff <= totalSteps);
+
+        uint tokensPerStep = vestingSchedule.amount / vestingSchedule.duration;
+        // check if amount is divisble by duration
+        if(tokensPerStep * vestingSchedule.duration != vestingSchedule.amount) tokensPerStep++;
+
+        uint totalReleasableAmount = safeMul(tokensPerStep, totalSteps);
+
+        // handle the case if user has not claimed even after vesting period is over or amount was not divisible
+        if(totalReleasableAmount > vestingSchedule.amount) totalReleasableAmount = vestingSchedule.amount;
+
+        uint amountToRelease = safeSub(totalReleasableAmount, vestingSchedule.amountReleased);
+        vestingSchedule.amountReleased = safeAdd(vestingSchedule.amountReleased, amountToRelease);
+
+        // transfer vested tokens
+        ERC20 LALAToken = ERC20(LALATokenAddress);
+        LALAToken.transfer(_adr, amountToRelease);
+        // decrement overall unreleased token count
+        totalUnreleasedTokens = safeSub(totalUnreleasedTokens, amountToRelease);
+        VestedTokensReleased(_adr, amountToRelease);
+    }
 
 }
