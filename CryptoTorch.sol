@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoTorch at 0x4970e5635fd9cbd51a9abf7d708943f613b74d51
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoTorch at 0xc67a3da58b43b0652a22c6f50826c9ebe7b78e49
 */
 // CryptoTorch Source code
 // copyright 2018 CryptoTorch <https://cryptotorch.io>
@@ -149,8 +149,6 @@ contract ReentrancyGuard {
  * Live Contract Address: 0x1a6184CD4C5Bea62B0116de7962EE7315B7bcBce
  */
 contract DateTime {
-    function isLeapYear(uint16 year) public pure returns (bool);
-    function getYear(uint timestamp) public pure returns (uint16);
     function getMonth(uint timestamp) public pure returns (uint8);
     function getDay(uint timestamp) public pure returns (uint8);
 }
@@ -745,13 +743,11 @@ contract CryptoTorch is Pausable, ReentrancyGuard {
      * Get the Day-Index of the current Day for Mapping with OwnTheDay.io
      */
     function getDayIndex_(uint timestamp) internal view returns (uint256) {
-        uint16[12] memory offset = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
         uint8 day = DateTimeLib_.getDay(timestamp);
-        uint8 month = DateTimeLib_.getMonth(timestamp) - 1;
-        bool isLeapYear = DateTimeLib_.isLeapYear(DateTimeLib_.getYear(timestamp));
+        uint8 month = DateTimeLib_.getMonth(timestamp);
         // OwnTheDay always includes Feb 29
-        if (isLeapYear && month > 1) { day = day + 1; }
-        return offset[month] + day;
+        uint16[12] memory offset = [0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335];
+        return offset[month-1] + day;
     }
 
     /**
