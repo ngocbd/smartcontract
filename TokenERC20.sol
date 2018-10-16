@@ -1,10 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x82e2deef0247f0893815060cbfbb083d4abb3646
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x36746015681a1dfcc8c75e1d01204ce4b544cc54
 */
 pragma solidity ^0.4.16;
 
-interface tokenRecipient { 
-    function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; 
+interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public;
 }
 
 contract TokenERC20 {
@@ -26,17 +25,21 @@ contract TokenERC20 {
     event Burn(address indexed from, uint256 value);
 
     /**
-     * Constrctor function
+     * Constructor function
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function TokenERC20() public {
-        totalSupply = 10000000000 * 10 ** uint256(18);  // Update total supply with the decimal amount
-        balanceOf[msg.sender] = totalSupply;           // Give the creator all initial tokens
-        name = 'Traceable Fruits Chain';                      // Set the name for display purposes
-        symbol = 'TRAF';                                // Set the symbol for display purposes
+    function TokenERC20(
+        uint256 initialSupply,
+        string tokenName,
+        string tokenSymbol
+    ) public {
+        totalSupply = initialSupply * 10 ** uint256(decimals); // Update total supply with the decimal amount
+        balanceOf[msg.sender
+        ] = totalSupply; // Give the creator all initial tokens
+        name = tokenName; // Set the name for display purposes
+        symbol = tokenSymbol; // Set the symbol for display purposes
     }
-
     /**
      * Internal transfer, only can be called by this contract
      */
@@ -44,31 +47,28 @@ contract TokenERC20 {
         // Prevent transfer to 0x0 address. Use burn() instead
         require(_to != 0x0);
         // Check if the sender has enough
-        require(balanceOf[_from] >= _value);
+        require(balanceOf[_from
+        ] >= _value);
         // Check for overflows
-        require(balanceOf[_to] + _value > balanceOf[_to]);
+        require(balanceOf[_to
+        ] + _value > balanceOf[_to
+        ]);
         // Save this for an assertion in the future
-        uint previousBalances = balanceOf[_from] + balanceOf[_to];
+        uint previousBalances = balanceOf[_from
+        ] + balanceOf[_to
+        ];
         // Subtract from the sender
-        balanceOf[_from] -= _value;
+        balanceOf[_from
+        ] -= _value;
         // Add the same to the recipient
-        balanceOf[_to] += _value;
+        balanceOf[_to
+        ] += _value;
         Transfer(_from, _to, _value);
         // Asserts are used to use static analysis to find bugs in your code. They should never fail
-        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+        assert(balanceOf[_from
+        ] + balanceOf[_to
+        ] == previousBalances);
     }
-    
-    /**
-     * tokens balance
-     *
-     * Get `_owner` tokens
-     *
-     * @param _owner The address 
-     */
-    function balanceOf(address _owner) public view returns (uint256 balance) {
-        return balanceOf[_owner];
-    }
-
     /**
      * Transfer tokens
      *
@@ -80,7 +80,6 @@ contract TokenERC20 {
     function transfer(address _to, uint256 _value) public {
         _transfer(msg.sender, _to, _value);
     }
-
     /**
      * Transfer tokens from other address
      *
@@ -91,12 +90,15 @@ contract TokenERC20 {
      * @param _value the amount to send
      */
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(_value <= allowance[_from][msg.sender]);     // Check allowance
-        allowance[_from][msg.sender] -= _value;
+        require(_value <= allowance[_from
+        ][msg.sender
+        ]); // Check allowance
+        allowance[_from
+        ][msg.sender
+        ] -= _value;
         _transfer(_from, _to, _value);
         return true;
     }
-
     /**
      * Set allowance for other address
      *
@@ -107,10 +109,11 @@ contract TokenERC20 {
      */
     function approve(address _spender, uint256 _value) public
         returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
+        allowance[msg.sender
+        ][_spender
+        ] = _value;
         return true;
     }
-
     /**
      * Set allowance for other address and notify
      *
@@ -129,7 +132,6 @@ contract TokenERC20 {
             return true;
         }
     }
-
     /**
      * Destroy tokens
      *
@@ -138,13 +140,14 @@ contract TokenERC20 {
      * @param _value the amount of money to burn
      */
     function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-        balanceOf[msg.sender] -= _value;            // Subtract from the sender
-        totalSupply -= _value;                      // Updates totalSupply
+        require(balanceOf[msg.sender
+        ] >= _value); // Check if the sender has enough
+        balanceOf[msg.sender
+        ] -= _value; // Subtract from the sender
+        totalSupply -= _value; // Updates totalSupply
         Burn(msg.sender, _value);
         return true;
     }
-
     /**
      * Destroy tokens from other account
      *
@@ -154,11 +157,17 @@ contract TokenERC20 {
      * @param _value the amount of money to burn
      */
     function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
-        require(_value <= allowance[_from][msg.sender]);    // Check allowance
-        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
-        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
-        totalSupply -= _value;                              // Update totalSupply
+        require(balanceOf[_from
+        ] >= _value); // Check if the targeted balance is enough
+        require(_value <= allowance[_from
+        ][msg.sender
+        ]); // Check allowance
+        balanceOf[_from
+        ] -= _value; // Subtract from the targeted balance
+        allowance[_from
+        ][msg.sender
+        ] -= _value; // Subtract from the sender's allowance
+        totalSupply -= _value; // Update totalSupply
         Burn(_from, _value);
         return true;
     }
