@@ -1,8 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreSale at 0x3b72ed6425607e51be842d428b87226cb0a45bd3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreSale at 0x477f97ec5d39946bb5c2964ed523a99d5dfcdcf8
 */
 pragma solidity ^0.4.18;
-
+/**
+* @dev EtherLands PreSale contract.
+*
+*/
 
 /**
  * @title Ownable
@@ -45,9 +48,9 @@ contract Ownable {
 }
 
 contract PreSale is Ownable {
-    uint256 constant public INCREASE_RATE = 350000000000000;
-    uint256 constant public START_TIME = 1514228838;
-    uint256 constant public END_TIME =   1524251238;
+    uint256 constant public INCREASE_RATE = 700000000000000;
+    uint256 constant public START_TIME = 1520972971;
+    uint256 constant public END_TIME =   1552508971;
 
     uint256 public landsSold;
     mapping (address => uint32) public lands;
@@ -65,7 +68,7 @@ contract PreSale is Ownable {
         require(now > START_TIME);
         require(now < END_TIME);
         require(paused == false);
-        require(msg.value >= (landPriceCurrent() * 5 + INCREASE_RATE * 10));
+        require(msg.value >= (landPriceCurrent() * 5));
         lands[msg.sender] = lands[msg.sender] + 5;
         landsSold = landsSold + 5;
         landsPurchased(msg.sender, msg.value, 5);
