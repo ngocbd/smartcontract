@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETUex at 0x7c62752173591de60ed72cfcfc41ca55aa3d87d6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETUex at 0x69cea718773f3ffbc9ff77dd0647f7270bf9282d
 */
 //@ create by ETU LAB, INC.
 pragma solidity ^0.4.19;
@@ -119,14 +119,14 @@ contract ERC20Token is ERC20 {
 
 contract ETUex is ERC20Token, Owned {
 
-    string  public constant name = "ETUex Token";
-    string  public constant symbol = "ETU";
+    string  public constant name = "ETU Exchange";
+    string  public constant symbol = "ETUex";
     uint256 public constant decimals = 18;
     uint256 public tokenDestroyed;
 	event Burn(address indexed _from, uint256 _tokenDestroyed, uint256 _timestamp);
 
     function ETUex() public {
-		totalToken = 200000000000000000000000000;
+		totalToken = 1000000000000000000000000000;
 		balances[msg.sender] = totalToken;
     }
 
@@ -139,7 +139,7 @@ contract ETUex is ERC20Token, Owned {
     	balances[msg.sender] = balances[msg.sender].sub(_burntAmount);
     	totalToken = totalToken.sub(_burntAmount);
     	tokenDestroyed = tokenDestroyed.add(_burntAmount);
-    	require (tokenDestroyed <= 100000000000000000000000000);
+    	require (tokenDestroyed <= 500000000000000000000000000);
     	Transfer(address(this), 0x0, _burntAmount);
     	Burn(msg.sender, _burntAmount, block.timestamp);
     	return true;
