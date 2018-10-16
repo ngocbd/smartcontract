@@ -1,39 +1,40 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTN at 0x5df5a712cc10512e64c0cd7ba375d5a28ac9b378
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTN at 0x34cd2f294f93242ff5ac2d43caa390df8af4b497
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.21;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
 contract BTN {
     // Public variables of the token
-    string public name = "BITCHAIN";
-    string public symbol = "BTN";
-    uint8 public decimals = 18;
-    // 18 decimals is the strongly suggested default
+    string public name;
+    string public symbol;
+    uint8 public decimals = 6;
     uint256 public totalSupply;
-    uint256 public btnSupply = 100000000000;
-    uint256 public buyPrice = 100000000;
-    address public creator;
+
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
 
     // This generates a public event on the blockchain that will notify clients
     event Transfer(address indexed from, address indexed to, uint256 value);
-    event FundTransfer(address backer, uint amount, bool isContribution);
-    
-    
+
+    // This notifies clients about the amount burnt
+    event Burn(address indexed from, uint256 value);
+
     /**
-     * Constrctor function
+     * Constructor function
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function BTN() public {
-        totalSupply = btnSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
-        balanceOf[msg.sender] = totalSupply;    // Give BITCHAINCoin Mint the total created tokens
-        creator = msg.sender;
+    function BTN(
+    ) public {
+        totalSupply = 1750000000000000000000000;                       // Total supply with the decimal amount
+        balanceOf[msg.sender] = 1750000000000000000000000;             // All initial tokens
+        name = "BatmanCoin";                                           // The name for display purposes
+        symbol = "BTN";                                                // The symbol for display purposes
     }
+
     /**
      * Internal transfer, only can be called by this contract
      */
@@ -43,13 +44,16 @@ contract BTN {
         // Check if the sender has enough
         require(balanceOf[_from] >= _value);
         // Check for overflows
-        require(balanceOf[_to] + _value >= balanceOf[_to]);
+        require(balanceOf[_to] + _value > balanceOf[_to]);
+        // Save this for an assertion in the future
+        uint previousBalances = balanceOf[_from] + balanceOf[_to];
         // Subtract from the sender
         balanceOf[_from] -= _value;
         // Add the same to the recipient
         balanceOf[_to] += _value;
         Transfer(_from, _to, _value);
-      
+        // Asserts are used to use static analysis to find bugs in your code. They should never fail
+        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
 
     /**
@@ -64,19 +68,85 @@ contract BTN {
         _transfer(msg.sender, _to, _value);
     }
 
-    
-    
-    /// @notice Buy tokens from contract by sending ether
-    function () payable internal {
-        uint amount = msg.value * buyPrice;                    // calculates the amount, made it so you can get many BTN but to get MANY BTN you have to spend ETH and not WEI
-        uint amountRaised;                                     
-        amountRaised += msg.value;                            //many thanks BTN, couldnt do it without r/me_irl
-        require(balanceOf[creator] >= amount);               // checks if it has enough to sell
-        require(msg.value < 10**17);                        // so any person who wants to put more then 0.1 ETH has time to think about what they are doing
-        balanceOf[msg.sender] += amount;                  // adds the amount to buyer's balance
-        balanceOf[creator] -= amount;                        // sends ETH to BTNCoinMint
-        Transfer(creator, msg.sender, amount);               // execute an event reflecting the change
-        creator.transfer(amountRaised);
+    /**
+     * Transfer tokens from other address
+     *
+     * Send `_value` tokens to `_to` on behalf of `_from`
+     *
+     * @param _from The address of the sender
+     * @param _to The address of the recipient
+     * @param _value the amount to send
+     */
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        require(_value <= allowance[_from][msg.sender]);     // Check allowance
+        allowance[_from][msg.sender] -= _value;
+        _transfer(_from, _to, _value);
+        return true;
     }
 
- }
+    /**
+     * Set allowance for other address
+     *
+     * Allows `_spender` to spend no more than `_value` tokens on your behalf
+     *
+     * @param _spender The address authorized to spend
+     * @param _value the max amount they can spend
+     */
+    function approve(address _spender, uint256 _value) public
+        returns (bool success) {
+        allowance[msg.sender][_spender] = _value;
+        return true;
+    }
+
+    /**
+     * Set allowance for other address and notify
+     *
+     * Allows `_spender` to spend no more than `_value` tokens on your behalf, and then ping the contract about it
+     *
+     * @param _spender The address authorized to spend
+     * @param _value the max amount they can spend
+     * @param _extraData some extra information to send to the approved contract
+     */
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
+        public
+        returns (bool success) {
+        tokenRecipient spender = tokenRecipient(_spender);
+        if (approve(_spender, _value)) {
+            spender.receiveApproval(msg.sender, _value, this, _extraData);
+            return true;
+        }
+    }
+
+    /**
+     * Destroy tokens
+     *
+     * Remove `_value` tokens from the system irreversibly
+     *
+     * @param _value the amount of money to burn
+     */
+    function burn(uint256 _value) public returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
+        balanceOf[msg.sender] -= _value;            // Subtract from the sender
+        totalSupply -= _value;                      // Updates totalSupply
+        Burn(msg.sender, _value);
+        return true;
+    }
+
+    /**
+     * Destroy tokens from other account
+     *
+     * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
+     *
+     * @param _from the address of the sender
+     * @param _value the amount of money to burn
+     */
+    function burnFrom(address _from, uint256 _value) public returns (bool success) {
+        require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
+        require(_value <= allowance[_from][msg.sender]);    // Check allowance
+        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
+        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
+        totalSupply -= _value;                              // Update totalSupply
+        Burn(_from, _value);
+        return true;
+    }
+}
