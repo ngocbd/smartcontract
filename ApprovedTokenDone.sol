@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0xd69de9ceb34257b4985f2e0cab8687ecb38612c2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0xddf2b3c69070186c5daaa98a440929a1a79e2411
 */
 pragma solidity ^0.4.13;
 
@@ -153,10 +153,10 @@ contract StandardToken is ERC20, BasicToken {
  * Created specifically for TokenDone.io
  */
 contract ApprovedTokenDone is StandardToken {
-	string public name = 'LEGO';
-	string public symbol = 'LEGO';
-	uint public decimals = 3;
-	uint public initialSupply = 99999999999;
+	string public name = 'GTA';
+	string public symbol = 'GTA';
+	uint public decimals = 18;
+	uint public initialSupply = 101111101011110010110010;
 	string public publishier = 'TokenDone.io';
 	uint public creationTime;
 	
