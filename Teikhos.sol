@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Teikhos at 0x9b582187b1984076730adb22ae53dd045a4ddf93
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Teikhos at 0x326923c142e4a75316b091cfd7d292eeffcf20a6
 */
 /* 
    A vault so that anyone can try out the Teikhos authentication method 
@@ -10,8 +10,6 @@
 */
 
 
-
-pragma solidity ^0.4.21;
 
 contract SHA3_512 {
    function hash(uint64[8]) pure public returns(uint32[16]) {}
@@ -28,7 +26,7 @@ contract Teikhos {
     mapping(string => uint) balanceOf;
 
 
-    function checkAccount(string _name) view public returns (uint value, bytes proof) {
+    function checkAccount(string _name) view public returns (uint balance, bytes proof) {
          return (balanceOf[_name], proof_of_public_key[_name]);
     }
 
