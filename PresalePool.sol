@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalePool at 0xfc4753f0531fd01b5faa49bb0ab14c621daa6e56
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalePool at 0x25984508b7060e460b224c8d5c7eb4fae76e440c
 */
 pragma solidity ^0.4.19;
 
-// Wolf Crypto pooling contract for DML
+// Wolf Crypto pooling contract for Alchemint
 // written by @iamdefinitelyahuman
 
 library SafeMath {
@@ -128,9 +128,9 @@ contract PresalePool {
   event ReceiverAddressSet ( address _addr);
   event PoolSubmitted (address receiver, uint amount);
   event WithdrawalsOpen (address tokenAddr);
-  event TokensWithdrawn (address receiver, address token, uint amount);
   event EthRefundReceived (address sender, uint amount);
   event EthRefunded (address receiver, uint amount);
+  event TokensWithdrawn (address receiver, address token, uint amount);
   event ERC223Received (address token, uint value);
    
   // These are internal functions used for calculating fees, eth and token allocations as %
