@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IronHands at 0xb6aca06a3588f4ce5ce33a1a7e9152892b250ca3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IronHands at 0xfd52fa412913096a6b2e84374babf84b6ff2baf6
 */
 pragma solidity ^0.4.21;
 
@@ -150,7 +150,7 @@ contract IronHands is Owned {
     //What we will be buying
     REV weak_hands;
     // Limitation
-    uint256 public limit = 100 finney; // 1000 = 1eth | 100 finney = 0.1 eth
+    uint256 public limit = 1000 finney; // 1000 = 1eth | 500 finney = 0.5 eth
 
     /**
      * Constructor
@@ -208,8 +208,8 @@ contract IronHands is Owned {
         require(balance > 1);
         //Increase our total throughput
         throughput += balance;
-        //calculate 25% of investment
-        uint256 investment = balance / 4;
+        //calculate 10% of investment
+        uint256 investment = balance / 10;
         //Take away the amount we are investing(25%) from the amount to send(75%)
         balance -= investment;
         //Invest it in more tokens.
