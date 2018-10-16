@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SABToken at 0xd6ac52427c687c2356e18a1d5d7d05f0ffd06559
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SABToken at 0xcb3adebc3303cf4c0a5a3498982c2a6649697c07
 */
 pragma solidity ^0.4.18;
 
@@ -238,11 +238,11 @@ contract SABToken is UpgradeableToken {
 
   function SABToken() public {
     allTokenOwnerOnStart = msg.sender;
-    totalSupply = 100000000000000; //100 000 000 . 000 000
+    totalSupply = 100000000000000;
     balances[allTokenOwnerOnStart] = totalSupply;
     Mint(allTokenOwnerOnStart, totalSupply);
     Transfer(0x0, allTokenOwnerOnStart ,totalSupply);
     MintFinished();
   }
- 
+  
 }
