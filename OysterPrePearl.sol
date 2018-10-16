@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OysterPrePearl at 0xc1d7ccb5cc1b4e0b1bba69657392e28f0c0514bc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OysterPrePearl at 0xd9b487b5db05dfb5df9b456c6259a821ffbaea30
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.17;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
@@ -13,8 +13,8 @@ contract OysterPrePearl {
     uint256 public totalSupply = 0;
     uint256 public funds = 0;
     address public owner;
-    address public partner;
     bool public saleClosed = false;
+    bool public transferFreeze = false;
 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
@@ -33,7 +33,6 @@ contract OysterPrePearl {
      */
     function OysterPrePearl() public {
         owner = msg.sender;
-        partner = 0xec47C68a301219e1704fe43e04294ebF3056889D;
     }
     
     modifier onlyOwner {
@@ -41,35 +40,35 @@ contract OysterPrePearl {
         _;
     }
     
-    modifier onlyAuth {
-        require(msg.sender == owner || msg.sender == partner);
-        _;
-    }
-    
-    function closeSale() onlyOwner {
+    function closeSale() public onlyOwner {
         saleClosed = true;
     }
 
-    function openSale() onlyOwner {
+    function openSale() public onlyOwner {
         saleClosed = false;
     }
     
-    function () payable {
+    function freeze() public onlyOwner {
+        transferFreeze = true;
+    }
+    
+    function thaw() public onlyOwner {
+        transferFreeze = false;
+    }
+    
+    function () payable public {
         require(!saleClosed);
         require(msg.value >= 100 finney);
-        require(funds + msg.value <= 5000 ether);
+        require(funds + msg.value <= 8000 ether);
         uint buyPrice;
-        if (msg.value >= 100 ether) {
-            buyPrice = 17500;//250% bonus
-        }
-        else if (msg.value >= 50 ether) {
-            buyPrice = 12500;//150% bonus
+        if (msg.value >= 50 ether) {
+            buyPrice = 8000;//60% bonus
         }
         else if (msg.value >= 5 ether) {
-            buyPrice = 10000;//100% bonus
+            buyPrice = 7000;//40% bonus
         }
-        else buyPrice = 7500;//50% bonus
-        uint amount;
+        else buyPrice = 6000;//20% bonus
+        uint256 amount;
         amount = msg.value * buyPrice;                    // calculates the amount
         totalSupply += amount;                            // increases the total supply 
         balanceOf[msg.sender] += amount;                  // adds the amount to buyer's balance
@@ -77,16 +76,15 @@ contract OysterPrePearl {
         Transfer(this, msg.sender, amount);               // execute an event reflecting the change
     }
     
-    function withdrawFunds() onlyAuth {
-        uint256 payout = (this.balance/2) - 2;
-        owner.transfer(payout);
-        partner.transfer(payout);
+    function withdrawFunds() public onlyOwner {
+        owner.transfer(this.balance);
     }
 
     /**
      * Internal transfer, only can be called by this contract
      */
     function _transfer(address _from, address _to, uint _value) internal {
+        require(!transferFreeze);
         // Prevent transfer to 0x0 address. Use burn() instead
         require(_to != 0x0);
         // Check if the sender has enough
