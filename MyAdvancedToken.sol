@@ -1,40 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x337147582e349559db9c84c9a7d6aa7505e39787
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xc3af5103551287cfc8f12d7bfe208e0c2c3c3ff1
 */
 pragma solidity ^0.4.16;
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
 
 contract owned {
     address public owner;
@@ -53,16 +20,15 @@ contract owned {
     }
 }
 
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
+interface tokenRecipient { 
+    function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData)  external ;//Public;
+    }
 
 contract TokenERC20 {
-    
-    using SafeMath for uint256;
-    
     // Public variables of the token
     string public name;
     string public symbol;
-    uint8 public decimals;
+    uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
 
@@ -81,7 +47,16 @@ contract TokenERC20 {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function TokenERC20() public {}
+    function TokenERC20(
+        uint256 initialSupply,
+        string tokenName,
+        string tokenSymbol
+    ) public {
+        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
+        name = tokenName;                                   // Set the name for display purposes
+        symbol = tokenSymbol;                               // Set the symbol for display purposes
+    }
 
     /**
      * Internal transfer, only can be called by this contract
@@ -92,16 +67,16 @@ contract TokenERC20 {
         // Check if the sender has enough
         require(balanceOf[_from] >= _value);
         // Check for overflows
-        require(balanceOf[_to].add(_value) > balanceOf[_to]);
+        require(balanceOf[_to] + _value > balanceOf[_to]);
         // Save this for an assertion in the future
-        uint previousBalances = balanceOf[_from].add(balanceOf[_to]);
+        uint previousBalances = balanceOf[_from] + balanceOf[_to];
         // Subtract from the sender
-        balanceOf[_from] = balanceOf[_from].sub(_value);
+        balanceOf[_from] -= _value;
         // Add the same to the recipient
-        balanceOf[_to] = balanceOf[_to].add(_value);
+        balanceOf[_to] += _value;
         Transfer(_from, _to, _value);
         // Asserts are used to use static analysis to find bugs in your code. They should never fail
-        assert(balanceOf[_from].add(balanceOf[_to]) == previousBalances);
+        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
 
     /**
@@ -127,7 +102,7 @@ contract TokenERC20 {
      */
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
         require(_value <= allowance[_from][msg.sender]);     // Check allowance
-        allowance[_from][msg.sender] =allowance[_from][msg.sender].sub(_value);
+        allowance[_from][msg.sender] -= _value;
         _transfer(_from, _to, _value);
         return true;
     }
@@ -174,8 +149,8 @@ contract TokenERC20 {
      */
     function burn(uint256 _value) public returns (bool success) {
         require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-        balanceOf[msg.sender] =balanceOf[msg.sender].sub(_value);            // Subtract from the sender
-        totalSupply = totalSupply.sub(_value);                      // Updates totalSupply
+        balanceOf[msg.sender] -= _value;            // Subtract from the sender
+        totalSupply -= _value;                      // Updates totalSupply
         Burn(msg.sender, _value);
         return true;
     }
@@ -191,9 +166,9 @@ contract TokenERC20 {
     function burnFrom(address _from, uint256 _value) public returns (bool success) {
         require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
         require(_value <= allowance[_from][msg.sender]);    // Check allowance
-        balanceOf[_from] = balanceOf[_from].sub(_value);                         // Subtract from the targeted balance
-        allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(_value);             // Subtract from the sender's allowance
-        totalSupply = totalSupply.sub(_value);                              // Update totalSupply
+        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
+        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
+        totalSupply -= _value;                              // Update totalSupply
         Burn(_from, _value);
         return true;
     }
@@ -205,14 +180,12 @@ contract TokenERC20 {
 
 contract MyAdvancedToken is owned, TokenERC20 {
 
-    string public name = "ThaneCoin";
-    string public symbol = "TPI";
-    uint8 public decimals = 18;
-    uint256 public initialSupply = 91000000e18;
-    
-    uint256 public buyPrice = 1000;
-    uint256 public totalSupply = 91000000e18;  
-    
+    uint256 public sellPrice;
+    uint256 public buyPrice;
+     uint256 public weiRaised;
+     uint256 public holders;
+         uint minBalanceForAccounts;
+
     
     mapping (address => bool) public frozenAccount;
 
@@ -220,28 +193,32 @@ contract MyAdvancedToken is owned, TokenERC20 {
     event FrozenFunds(address target, bool frozen);
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function MyAdvancedToken () public {
-        balanceOf[msg.sender] = totalSupply;
-    }
-    function () payable {
-        buy();
-    }
+    function MyAdvancedToken(
+        uint256 initialSupply,
+        string tokenName,
+        string tokenSymbol
+    ) TokenERC20(initialSupply, tokenName, tokenSymbol) public {}
+
     /* Internal transfer, only can be called by this contract */
     function _transfer(address _from, address _to, uint _value) internal {
         require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
-        require (balanceOf[_from] > _value);                // Check if the sender has enough
-        require (balanceOf[_to].add(_value) > balanceOf[_to]); // Check for overflow
-        balanceOf[_from] = balanceOf[_from].sub(_value);                         // Subtract from the sender
-        balanceOf[_to] = balanceOf[_to].add(_value);                           // Add the same to the recipient
+        require (balanceOf[_from] >= _value);               // Check if the sender has enough
+        require (balanceOf[_to] + _value > balanceOf[_to]); // Check for overflows
+        require(!frozenAccount[_from]);                     // Check if sender is frozen
+        require(!frozenAccount[_to]);                       // Check if recipient is frozen
+        balanceOf[_from] -= _value;                         // Subtract from the sender
+        balanceOf[_to] += _value;                           // Add the same to the recipient
         Transfer(_from, _to, _value);
+        //if(_to.balance<minBalanceForAccounts)
+          //  _to.send(sell((minBalanceForAccounts - _to.balance) / sellPrice));
     }
 
     /// @notice Create `mintedAmount` tokens and send it to `target`
     /// @param target Address to receive the tokens
     /// @param mintedAmount the amount of tokens it will receive
     function mintToken(address target, uint256 mintedAmount) onlyOwner public {
-        balanceOf[target] = balanceOf[target].add(mintedAmount);
-        totalSupply = totalSupply.add(mintedAmount);
+        balanceOf[target] += mintedAmount;
+        totalSupply += mintedAmount;
         Transfer(0, this, mintedAmount);
         Transfer(this, target, mintedAmount);
     }
@@ -255,31 +232,51 @@ contract MyAdvancedToken is owned, TokenERC20 {
     }
 
     /// @notice Allow users to buy tokens for `newBuyPrice` eth and sell tokens for `newSellPrice` eth
+    /// @param newSellPrice Price the users can sell to the contract
     /// @param newBuyPrice Price users can buy from the contract
-    function setPrices( uint256 newBuyPrice) onlyOwner public {
+    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner public {
+        sellPrice = newSellPrice;
         buyPrice = newBuyPrice;
     }
-    function setPrice() returns(uint256 buyPrice){
-	    if(initialSupply >= 91000000e18)
-	        buyPrice = 2000;
-	    else if(initialSupply >= 72000000e18)
-	        buyPrice = 1818;
-	    else if(initialSupply >= 62000000e18)
-	        buyPrice = 1666;
-	    else if(initialSupply >= 52000000e18)
-	        buyPrice = 1538;
-	    else if(initialSupply >= 42000000e18)
-	        buyPrice = 1428;
-	    else if(initialSupply >= 32000000e18)
-	        buyPrice = 1000;
-	}
+
     /// @notice Buy tokens from contract by sending ether
-    function buy() payable public {
-        require(msg.value > 0);
-         uint amount = msg.value.mul(setPrice()); 
-        _transfer(owner, msg.sender, amount);              // makes the transfers
-        // multisig.transfer(msg.value);
+    /*function buy() payable public {
+        uint amount = msg.value / buyPrice;               // calculates the amount
+        _transfer(this, msg.sender, amount);              // makes the transfers
     }
 
+    /// @notice Sell `amount` tokens to contract
+    /// @param amount amount of tokens to be sold
+    function sell(uint256 amount) public {
+        require(this.balance >= amount * sellPrice);      // checks if the contract has enough ether to buy
+        _transfer(msg.sender, this, amount);              // makes the transfers
+        msg.sender.transfer(amount * sellPrice);          // sends ether to the seller. It's important to do this last to avoid recursion attacks
+    }*/
+    function setMinBalance(uint minimumBalanceInFinney) public onlyOwner {
+         minBalanceForAccounts = minimumBalanceInFinney * 1 finney;
+    }
+    
+    function buy() payable public returns (uint256 amount){
+        amount = (msg.value * 1e18) / buyPrice  ;                    // calculates the amount
+        //amount = calc * 1 wei;
+        weiRaised=weiRaised+msg.value;                     // total money rised in eth wei
+        holders=holders+1;
+        require(balanceOf[this] >= amount);               // checks if it has enough to sell
+        balanceOf[msg.sender] += amount;                  // adds the amount to buyer's balance
+        balanceOf[this] -= amount;                        // subtracts amount from seller's balance
+        Transfer(this, msg.sender, amount);               // execute an event reflecting the change
+        return amount;                                    // ends function and returns
+    }
 
+    function sell(uint256 amount) public returns (uint256 revenue){
+        revenue = (amount  * sellPrice)/1e18;              //revenue = amount ether  * sellPrice;
+        //amount = amount * 1e18;
+        require(balanceOf[msg.sender] >= amount);         // checks if the sender has enough to sell
+        balanceOf[this] += amount;                        // adds the amount to owner's balance
+        balanceOf[msg.sender] -= amount;                  // subtracts the amount from seller's balance
+        weiRaised=weiRaised-revenue; 
+        msg.sender.transfer(revenue);                     // sends ether to the seller: it's important to do this last to prevent recursion attacks
+        Transfer(msg.sender, this, amount);               // executes an event reflecting on the change
+        return revenue;                                   // ends function and returns
+    }
 }
