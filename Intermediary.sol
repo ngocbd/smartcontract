@@ -1,65 +1,64 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Intermediary at 0x87b0de512502f3e86fd22654b72a640c8e0f59cc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Intermediary at 0x82df5022fbcfdd877830371d7713f0181a554c9c
 */
-pragma solidity ^0.4.7;
+pragma solidity ^0.4.8;
 
-contract Investment{
-    uint public investorIndex;
-    address[] public investors;
-    function returnInvestment() payable{}
-    function getNumInvestors() constant returns(uint){}
+contract mortal {
+	address owner;
+
+	function mortal() {
+		owner = msg.sender;
+	}
+
+	function kill()  {
+	    if(msg.sender==owner)
+		    suicide(owner);
+	}
 }
 
-contract Intermediary{
-    /** the investment contract */
-    Investment investmentContract;
-    /** the owner */
-    address public owner;
-   
-    /**
-     * creates a new intermediary to a given investment contract
-     * */
-    function Intermediary(){
-        investmentContract = Investment(0xabcdd0dbc5ba15804f5de963bd60491e48c3ef0b);
-        owner = msg.sender;
-    }
-    
-    /**
-     * Accet payments
-     * */
-    function() payable{
-    }
-    
-    /**
-     * sends the specified value to the investor contract, if there are still investors waiting to be paid out.
-     * Else, the value is sent to the owner
-     * */
-    function returnValue(uint value){
-        if(this.balance>=value){
-          if(investmentContract.investorIndex()<investmentContract.getNumInvestors())
-            investmentContract.returnInvestment.value(value)();
-          else 
-            owner.send(msg.value);
-        }
-    }
+
+
+contract Aquarium{
+  function receive(address receiver, uint8 animalType, uint32[] ids) payable {}
+}
+
+
+contract Intermediary is mortal{
+  Aquarium aquarium;
+  uint[] values;
   
-    /**
-     * sends the whole balance to the investor contract, if there are still investors waiting to be paid out.
-     * Else, the value is sent to the owner
-     * */
-    function returnEverything(){
-        if(investmentContract.investorIndex()<investmentContract.getNumInvestors())
-          investmentContract.returnInvestment.value(this.balance)();
-        else 
-          owner.send(this.balance);
-    }
+  event NewAquarium(address aqua);
+  
+  function Intermediary(){
     
-    /**
-     * change the owner wallet
-     * */
-    function changeOwner(address newOwner){
-        if(msg.sender==owner) 
-            owner=newOwner;
+    values =  [95000000000000000, 190000000000000000, 475000000000000000, 950000000000000000, 4750000000000000000];
+  }
+  function transfer(uint8[] animalTypes, uint8[] numsXType, uint32[] ids) payable{
+    uint needed;
+     for(uint8 i = 0; i < animalTypes.length; i++){
+      needed+=values[animalTypes[i]]*numsXType[i];
     }
+    if (msg.value<needed) throw;
     
+    uint8 from;
+    for(i = 0; i < animalTypes.length; i++){
+      aquarium.receive.value(values[animalTypes[i]]*numsXType[i])(msg.sender,animalTypes[i],slice(ids,from,numsXType[i]));
+      from+=numsXType[i];
+    }
+  }
+  
+  function setAquarium(address aqua){
+    if(msg.sender==owner){
+      aquarium = Aquarium(aqua);
+      NewAquarium(aqua);
+    }
+      
+  }
+  
+  function slice(uint32[] array, uint8 from, uint8 number) returns (uint32[] sliced){
+    sliced = new uint32[](number);
+    for(uint8 i = from; i < from+number; i++){
+      sliced[i-from] = array[i];
+    }
+  }
 }
