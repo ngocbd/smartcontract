@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LotteryAdmin at 0x8dc46946D5e56A780ee21EE6029AF675a46e39bf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LotteryAdmin at 0xf87865c9e297c4373714a0c29990f47408848b82
 */
 pragma solidity ^0.4.13;
 
@@ -19,6 +19,14 @@ contract LotteryAdmin {
 
     address public ethereumLottery;
 
+    uint public dailyAdminAllowance;
+    uint public maximumAdminBalance;
+    uint public maximumJackpot;
+    int public minimumDurationInBlocks;
+
+    uint public lastAllowancePaymentTimestamp;
+    uint public nextProfile;
+
     event Deposit(address indexed _from, uint _value);
 
     modifier onlyOwner {
@@ -35,10 +43,20 @@ contract LotteryAdmin {
         owner = msg.sender;
         admin = msg.sender;
         ethereumLottery = _ethereumLottery;
+
+        dailyAdminAllowance = 50 finney;
+        maximumAdminBalance = 1 ether;
+        maximumJackpot = 100 ether;
+        minimumDurationInBlocks = 60;
     }
 
     function () payable {
         Deposit(msg.sender, msg.value);
+    }
+
+    function needsAllowancePayment() constant returns (bool) {
+        return now - lastAllowancePaymentTimestamp >= 24 hours &&
+               admin.balance < maximumAdminBalance;
     }
 
     function needsAdministration() constant returns (bool) {
@@ -46,22 +64,52 @@ contract LotteryAdmin {
             return false;
         }
 
-        return EthereumLottery(ethereumLottery).needsFinalization();
+        return needsAllowancePayment() ||
+               EthereumLottery(ethereumLottery).needsFinalization();
     }
 
-    function administrate(uint _steps) {
-        EthereumLottery(ethereumLottery).finalizeLottery(_steps);
+    function administrate(uint _steps) onlyAdminOrOwner {
+        if (needsAllowancePayment()) {
+            lastAllowancePaymentTimestamp = now;
+            admin.transfer(dailyAdminAllowance);
+        } else {
+            EthereumLottery(ethereumLottery).finalizeLottery(_steps);
+        }
     }
 
-    function initLottery(uint _jackpot, uint _numTickets,
+    function needsInitialization() constant returns (bool) {
+        if (EthereumLottery(ethereumLottery).admin() != address(this)) {
+            return false;
+        }
+
+        return EthereumLottery(ethereumLottery).needsInitialization();
+    }
+
+    function initLottery(uint _nextProfile,
+                         uint _jackpot, uint _numTickets,
                          uint _ticketPrice, int _durationInBlocks)
              onlyAdminOrOwner {
+        require(_jackpot <= maximumJackpot);
+        require(_durationInBlocks >= minimumDurationInBlocks);
+
+        nextProfile = _nextProfile;
         EthereumLottery(ethereumLottery).initLottery.value(_jackpot)(
             _jackpot, _numTickets, _ticketPrice, _durationInBlocks);
     }
 
     function withdraw(uint _value) onlyOwner {
         owner.transfer(_value);
+    }
+
+    function setConfiguration(uint _dailyAdminAllowance,
+                              uint _maximumAdminBalance,
+                              uint _maximumJackpot,
+                              int _minimumDurationInBlocks)
+             onlyOwner {
+        dailyAdminAllowance = _dailyAdminAllowance;
+        maximumAdminBalance = _maximumAdminBalance;
+        maximumJackpot = _maximumJackpot;
+        minimumDurationInBlocks = _minimumDurationInBlocks;
     }
 
     function setLottery(address _ethereumLottery) onlyOwner {
