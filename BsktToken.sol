@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BsktToken at 0x1d1af2ba9a9cb472a7d6c2499b6622265822df5d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BsktToken at 0x3a354bfea2b3a00b1130446e80650c5462f702bf
 */
+pragma solidity ^0.4.18;
+
 // File: zeppelin-solidity/contracts/ownership/Ownable.sol
 
 /**
@@ -312,8 +314,11 @@ contract StandardToken is ERC20, BasicToken {
 
 library AddressArrayUtils {
 
-    /// @return Returns index and ok of the first occurrence starting from index 0
-    function index(address[] addresses, address a) internal pure returns (uint, bool) {
+    /// @return Returns index and ok for the first occurrence starting from
+    /// index 0
+    function index(address[] addresses, address a)
+        internal pure returns (uint, bool)
+    {
         for (uint i = 0; i < addresses.length; i++) {
             if (addresses[i] == a) {
                 return (i, true);
@@ -325,12 +330,11 @@ library AddressArrayUtils {
 }
 
 
-/// @title A decentralized Bskt-like ERC20 which gives the owner a claim to the
-/// underlying assets
-/// @notice Bskt Tokens are transferable, and can be created and redeemed by
+/// @title BsktToken
+/// @notice Bskt tokens are transferable, and can be created and redeemed by
 /// anyone. To create, a user must approve the contract to move the underlying
-/// tokens, then call `create()`.
-/// @author Daniel Que and Quan Pham
+/// tokens, then call `create`.
+/// @author Cryptofin
 contract BsktToken is StandardToken, Pausable {
     using SafeMath for uint256;
     using AddressArrayUtils for address[];
@@ -393,15 +397,14 @@ contract BsktToken is StandardToken, Pausable {
     /// @notice Returns the creationUnit
     /// @dev Creation quantity concept is similar but not identical to the one
     /// described by EIP777
-    /// @return creationUnit_ Creation quantity of the Bskt token
+    /// @return creationUnit_ Amount required for one creation unit
     function creationUnit() external view returns(uint256) {
         return creationUnit_;
     }
 
     /// @notice Creates Bskt tokens in exchange for underlying tokens. Before
-    /// calling, underlying tokens must be approved to be moved by the Bskt Token
-    /// contract. The number of approved tokens required depends on
-    /// baseUnits.
+    /// calling, underlying tokens must be approved to be moved by the Bskt
+    /// contract. The number of approved tokens required depends on baseUnits.
     /// @dev If any underlying tokens' `transferFrom` fails (eg. the token is
     /// frozen), create will no longer work. At this point a token upgrade will
     /// be necessary.
@@ -426,13 +429,13 @@ contract BsktToken is StandardToken, Pausable {
         mint(msg.sender, baseUnits);
     }
 
-    /// @notice Redeems Bskt Token in return for underlying tokens
+    /// @notice Redeems Bskt tokens in exchange for underlying tokens
     /// @param baseUnits Number of base units to redeem. Must be a multiple of
     /// creationUnit.
     /// @param tokensToSkip Underlying token addresses to skip redemption for.
     /// Intended to be used to skip frozen or broken tokens which would prevent
     /// all underlying tokens from being withdrawn due to a revert. Skipped
-    /// tokens will be left in the Bskt Token contract and will be unclaimable.
+    /// tokens are left in the Bskt contract and are unclaimable.
     function redeem(uint256 baseUnits, address[] tokensToSkip)
         external
         requireNonZero(baseUnits)
@@ -441,7 +444,8 @@ contract BsktToken is StandardToken, Pausable {
         require(baseUnits <= totalSupply_);
         require(baseUnits <= balances[msg.sender]);
         require(tokensToSkip.length <= tokens.length);
-        // Total supply check not required since a user would have to have balance greater than the total supply
+        // Total supply check not required since a user would have to have
+        // balance greater than the total supply
 
         // Burn before to prevent re-entrancy
         burn(msg.sender, baseUnits);
@@ -479,9 +483,9 @@ contract BsktToken is StandardToken, Pausable {
     }
 
     // @dev Mints new Bskt tokens
-    // @param to
-    // @param amount
-    // @return ok
+    // @param to Address to mint to
+    // @param amount Amount to mint
+    // @return ok Whether the operation was successful
     function mint(address to, uint256 amount) internal returns (bool) {
         totalSupply_ = totalSupply_.add(amount);
         balances[to] = balances[to].add(amount);
@@ -491,9 +495,9 @@ contract BsktToken is StandardToken, Pausable {
     }
 
     // @dev Burns Bskt tokens
-    // @param from
-    // @param amount
-    // @return ok
+    // @param from Address to burn from
+    // @param amount Amount to burn
+    // @return ok Whether the operation was successful
     function burn(address from, uint256 amount) internal returns (bool) {
         totalSupply_ = totalSupply_.sub(amount);
         balances[from] = balances[from].sub(amount);
@@ -502,11 +506,11 @@ contract BsktToken is StandardToken, Pausable {
         return true;
     }
 
-    // @notice Look up token info
+    // @notice Look up token quantity and whether token exists
     // @param token Token address to look up
     // @return (quantity, ok) Units of underlying token, and whether the
-    // operation was successful
-    function getQuantities(address token) internal view returns (uint256, bool) {
+    // token was found
+    function getQuantity(address token) internal view returns (uint256, bool) {
         for (uint256 i = 0; i < tokens.length; i++) {
             if (tokens[i].addr == token) {
                 return (tokens[i].quantity, true);
@@ -527,9 +531,11 @@ contract BsktToken is StandardToken, Pausable {
         uint256 amountOwned = erc20.balanceOf(address(this));
         uint256 quantity;
         bool ok;
-        (quantity, ok) = getQuantities(token);
+        (quantity, ok) = getQuantity(token);
         if (ok) {
-            withdrawAmount = amountOwned.sub(totalSupply_.div(creationUnit_).mul(quantity));
+            withdrawAmount = amountOwned.sub(
+                totalSupply_.div(creationUnit_).mul(quantity)
+            );
         } else {
             withdrawAmount = amountOwned;
         }
