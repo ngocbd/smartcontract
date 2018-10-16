@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x357af180d6822ebcdc269ea147cd3d36ed971596
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xd550C9fFb8667FB7660ea89bb7c4B9d73B0344bb
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.16;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
@@ -34,7 +34,7 @@ contract TokenERC20 {
         string tokenSymbol
     ) public {
         totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
-        balanceOf[msg.sender] = totalSupply;// Give the creator all initial tokens
+        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
         name = tokenName;                                   // Set the name for display purposes
         symbol = tokenSymbol;                               // Set the symbol for display purposes
     }
@@ -75,7 +75,7 @@ contract TokenERC20 {
     /**
      * Transfer tokens from other address
      *
-     * Send `_value` tokens to `_to` in behalf of `_from`
+     * Send `_value` tokens to `_to` on behalf of `_from`
      *
      * @param _from The address of the sender
      * @param _to The address of the recipient
@@ -91,7 +91,7 @@ contract TokenERC20 {
     /**
      * Set allowance for other address
      *
-     * Allows `_spender` to spend no more than `_value` tokens in your behalf
+     * Allows `_spender` to spend no more than `_value` tokens on your behalf
      *
      * @param _spender The address authorized to spend
      * @param _value the max amount they can spend
@@ -105,7 +105,7 @@ contract TokenERC20 {
     /**
      * Set allowance for other address and notify
      *
-     * Allows `_spender` to spend no more than `_value` tokens in your behalf, and then ping the contract about it
+     * Allows `_spender` to spend no more than `_value` tokens on your behalf, and then ping the contract about it
      *
      * @param _spender The address authorized to spend
      * @param _value the max amount they can spend
