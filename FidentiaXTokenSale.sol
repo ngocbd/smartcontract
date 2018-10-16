@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FidentiaXTokenSale at 0x844e2883A0CE21718B999e459890bD16023Dbca6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FidentiaXTokenSale at 0x88b9E2b80e573Fc9d44ebE96109b5FB4032A3258
 */
 pragma solidity ^0.4.16;
 
@@ -268,22 +268,9 @@ contract FidentiaXToken is MintableToken {
   }
 }
 
-contract Sender {
-    
-    address firstContractor = 0x155020972767efc46DDA0Ec63A95627550F8C64F;
-    address secondContractor = 0xDcDa40786C0E63B7932B7F844846eDce994a0851;
-    
-    function SendThreeWays( address multisig, uint256 value ) internal {
-        uint256 cshare = value / 400;
-        uint256 mainshare = value - 2 * cshare;
-        firstContractor.transfer(cshare);
-        secondContractor.transfer(cshare);
-        multisig.transfer(mainshare);
-    }
-    
-}
 
-contract FidentiaXTokenSale is Ownable,Sender {
+
+contract FidentiaXTokenSale is Ownable {
 
   using SafeMath for uint256;
 
@@ -360,7 +347,6 @@ contract FidentiaXTokenSale is Ownable,Sender {
     endTimestamp = 1512489599;   //  December 05, 2017 23:59:59 (pm) in time zone Asia/Singapore (SGT) ( GMT +08:00 )
     tier1Timestamp = 1510102799; //   November 08, 2017 08:59:59 (am) in time zone Asia/Singapore (SGT)
     tier2Timestamp = 1510361999; //   November 11, 2017 08:59:59 (am) in time zone Asia/Singapore (SGT)
-    multiSig = 0x90420B8aef42F856a0AFB4FFBfaA57405FB190f3;
     token = new FidentiaXToken();
     decimals = token.decimals();
     oneCoin = 10 ** decimals;
@@ -386,7 +372,8 @@ contract FidentiaXTokenSale is Ownable,Sender {
     if (tokenRaised >= tokensForSale)
       return true; // if we reach the tokensForSale
     return false;
- }
+  }
+
   /**
   * @dev throws if person sending is not contract owner or cs role
    */
@@ -481,7 +468,7 @@ contract FidentiaXTokenSale is Ownable,Sender {
     tokenRaised = tokenRaised.add(tokens); // so we can go slightly over
     token.mint(beneficiary, tokens);
     TokenPurchase(beneficiary, beneficiary, amount, tokens);
-    SendThreeWays(multiSig,this.balance); // better in case any other ether ends up here
+    multiSig.transfer(this.balance); // better in case any other ether ends up here
   }
 
   // transfer ownership of the token to the owner of the presale contract
