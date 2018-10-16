@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DevCash at 0xab0aa7542caa342d2c0b746fd73a656f122493ed
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DevCash at 0x0fca8fdb0fb115a33baadec6e7a141ffc1bc7d5a
 */
 /*
 This is the DevCash Token Contract
 
-DevCash Implements the EIP20 token standard: https://github.com/ethereum/EIPs/issues/20
+DevCash Implements the ERC20 token standard: https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
 
-DevCash will be distributed through bounties at "Blockchain Developers United" and affiliated meetups
+DevCash will be distributed through bounties at "Blockchain Developers United" and affiliated meetups. www.blockchaindevsunited.com
 
 Devcash is intended to incentivize proper Blockchain developer training, grant access to developer resources, and act a medium of exchange in the developer marketplace
 
@@ -14,7 +14,7 @@ DevCash is cash for the developer economy
 
 The smart contract code can be viewed here: https://github.com/BlockchainDevelopersUnited/DevCash-ERC20
 
-For more info about DevCash, visit https://u.cash
+For more info about DevCash, visit https://dev.cash
 .*/
 
 pragma solidity ^0.4.8;
