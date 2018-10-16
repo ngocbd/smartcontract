@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UnityToken at 0x70acb336d7d4bfa8c19d9cfab5f8c5c1aa0d8dee
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UnityToken at 0xb1ea18b3195d25847fedc83511043ac2be9e9bf1
 */
 pragma solidity ^0.4.18;
-
 
 
 /**
@@ -102,8 +101,7 @@ contract ERC223Interface {
   function transfer(address to, uint value, bytes data) public returns (bool ok);
   function transfer(address to, uint value, bytes data, string custom_fallback) public returns (bool ok);
 
-  event Transfer(address indexed from, address indexed to, uint value, bytes data);
-  event TransferContract(address indexed from, address indexed to, uint value, bytes data);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
 /**
@@ -162,11 +160,11 @@ contract UnityToken is ERC223Interface {
       balances[msg.sender] = balances[msg.sender].sub(_value);
       balances[_to] = balances[_to].add(_value);
       assert(_to.call.value(0)(bytes4(keccak256(_custom_fallback)), msg.sender, _value, _data));
-      TransferContract(msg.sender, _to, _value, _data);
+      Transfer(msg.sender, _to, _value);
       return true;
     }
     else {
-      return transferToAddress(_to, _value, _data);
+      return transferToAddress(_to, _value);
     }
   }
 
@@ -177,7 +175,7 @@ contract UnityToken is ERC223Interface {
     if (isContract(_to)) {
       return transferToContract(_to, _value, _data);
     } else {
-      return transferToAddress(_to, _value, _data);
+      return transferToAddress(_to, _value);
     }
   }
 
@@ -191,7 +189,7 @@ contract UnityToken is ERC223Interface {
       return transferToContract(_to, _value, empty);
     }
     else {
-      return transferToAddress(_to, _value, empty);
+      return transferToAddress(_to, _value);
     }
   }
 
@@ -206,12 +204,12 @@ contract UnityToken is ERC223Interface {
   }
 
   //function that is called when transaction target is an address
-  function transferToAddress(address _to, uint _value, bytes _data) private returns (bool success) {
+  function transferToAddress(address _to, uint _value) private returns (bool success) {
     if (balanceOf(msg.sender) < _value)
       revert();
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value, _data);
+    Transfer(msg.sender, _to, _value);
     return true;
   }
 
@@ -224,7 +222,7 @@ contract UnityToken is ERC223Interface {
     balances[_to] = balances[_to].add(_value);
     ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
     receiver.tokenFallback(msg.sender, _value, _data);
-    TransferContract(msg.sender, _to, _value, _data);
+    Transfer(msg.sender, _to, _value);
     return true;
   }
 
