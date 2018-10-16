@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xd7f5482de2fc616b22b6b88764aeba6a7a9018af
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x18f41fefd923b3f45ba532445c1ebd8aa8428efb
 */
 pragma solidity ^0.4.4;
 
@@ -11,11 +11,6 @@ contract Token {
     /// @param _owner The address from which the balance will be retrieved
     /// @return The balance
     function balanceOf(address _owner) constant returns (uint256 balance) {}
-
-    /// @notice send a set of token to different address  
-    /// @param _t a set of address and amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function multiTransfer(uint [2][] _t) returns (bool success) {}
 
     /// @notice send `_value` token to `_to` from `msg.sender`
     /// @param _to The address of the recipient
@@ -50,24 +45,12 @@ contract Token {
 
 contract StandardToken is Token {
 
-    function multiTransfer(uint [2][] _t) returns (bool success) {
-        if(_t.length <= 0){
-            return false;
-        }
-        for(uint i = 0; i < _t.length; i++) {
-            if(false == transfer(address(_t[0][i]), uint256(_t[1][i])))
-                return false;
-        }
-
-        return true;
-    }
-
     function transfer(address _to, uint256 _value) returns (bool success) {
         //Default assumes totalSupply can't be over max (2^256 - 1).
         //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
         //Replace the if with this one instead.
-        if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        //if (balances[msg.sender] >= _value && _value > 0) {
+        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        if (balances[msg.sender] >= _value && _value > 0) {
             balances[msg.sender] -= _value;
             balances[_to] += _value;
             Transfer(msg.sender, _to, _value);
@@ -77,8 +60,8 @@ contract StandardToken is Token {
 
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
         //same as above. Replace this line with the following if you want to protect against wrapping uints.
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
+        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
             balances[_to] += _value;
             balances[_from] -= _value;
             allowed[_from][msg.sender] -= _value;
@@ -123,10 +106,10 @@ contract ERC20Token is StandardToken {
     They allow one to customise the token contract & in no way influences the core functionality.
     Some wallets/interfaces might not even bother to look at this information.
     */
-    string public name;                   //fancy name: eg Simon Bucks
+    string public name;                   //0.02 - 
     uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol;                 //An identifier: eg SBX
-    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
+    string public symbol;                 //An identifier: eg SBX40ETH
+    string public version = 'H1.0';       //human 0.1 standard. Token lockdown
 
 //
 // CHANGE THESE VALUES FOR YOUR TOKEN
@@ -136,11 +119,11 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 3000000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 3000000000000000000000000000;                        // Update total supply (100000 for example)
-        name = "YYB";                                   // Set the name for display purposes
+        balances[msg.sender] = 2000000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 2000000000000000000000000000;                        // Update total supply (100000 for example)
+        name = "TexoChat";                                   // Set the name for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
-        symbol = "YYB";                               // Set the symbol for display purposes
+        symbol = "TXO";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
