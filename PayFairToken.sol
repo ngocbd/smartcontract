@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PayFairToken at 0x2fa32a39fc1c399e0cc7b2935868f5165de7ce97
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PayFairToken at 0x540cb060a73597e71a8deb049c261e5fc236fe08
 */
 pragma solidity ^0.4.13;
 
