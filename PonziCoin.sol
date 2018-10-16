@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PonziCoin at 0x1170548c7bf8ff70e4f7d2829b5ac5aa19fe172e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PonziCoin at 0xfa8879b2da0ff9ddcfd6265d9f81e5710847f08f
 */
 pragma solidity ^0.4.2;
 
@@ -134,16 +134,16 @@ contract PonziCoin is StandardToken, SafeMath {
     /*
      * Token meta data
      */
-    string constant public name = "Mad Stacks Coin";
-    string constant public symbol = "MSC";
+    string constant public name = "PonziCoin";
+    string constant public symbol = "SEC";
     uint8 constant public decimals = 3;
 
     uint public buyPrice = 10 szabo;
     uint public sellPrice = 2500000000000 wei;
     uint public tierBudget = 100000;
 
-    // Address of the founder of Mad Stacks Coin.
-    address public founder = 0x314864ea2550bb8C0262Ea8D01a03BeB0256661b;
+    // Address of the founder of PonziCoin.
+    address public founder = 0xC5DFD81676f3a91AEFb919e9F170fA54806B9424;
 
     /*
      * Contract functions
