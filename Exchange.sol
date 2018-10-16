@@ -1,51 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exchange at 0x03cc979c46b030c4abd7d4063cd075cb38cd0919
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exchange at 0x5421dc2b06a3b1a8206c644b98b34f0768344edc
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.22;
 
-contract ERC20 {
-    function transfer(address _to, uint256 _value) public returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-}
-
-library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        require(c / a == b);
-        return c;
-    }
-
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a / b;
-        return c;
-    }
-
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        require(b <= a);
-        return a - b;
-    }
-
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        require(c >= a);
-        return c;
-    }
-
-    function min(uint a, uint b) internal pure returns (uint) {
-        if (a >= b)
-            return b;
-        return a;
-    }
-
-    function max(uint a, uint b) internal pure returns (uint) {
-        if (a >= b)
-            return a;
-        return b;
-    }
-}
 
 contract DSAuthority {
     function canCall(
@@ -105,8 +62,6 @@ contract DSAuth is DSAuthEvents {
 
 contract Exchange is DSAuth {
 
-    using SafeMath for uint;
-
     ERC20 public daiToken;
     mapping(address => uint) public dai;
     mapping(address => uint) public eth;
@@ -127,16 +82,12 @@ contract Exchange is DSAuth {
     mapping(address => mapping(bytes32 => bool)) public cancelled;
     mapping(address => mapping(bytes32 => uint)) public filled;
 
-    mapping(address => uint) public feeRebates;
-    mapping(bytes32 => bool) public claimedFeeRebate;
-
     // fee values are actually in DAI, ether is just a keyword
     uint public flatFee       = 7 ether;
     uint public contractFee   = 1 ether;
     uint public exerciseFee   = 20 ether;
     uint public settlementFee = 20 ether;
     uint public feesCollected = 0;
-    uint public feesWithdrawn = 0;
 
     string precisionError = "Precision";
 
@@ -173,37 +124,43 @@ contract Exchange is DSAuth {
     }
 
     function withdrawDai(uint amount, address to) public {
-        require(to != 0x0);
+        require(
+            to != 0x0 &&
+            daiToken.transfer(to, amount)
+        );
         _subDai(amount, msg.sender);
-        daiToken.transfer(to, amount);
         emit WithdrawDai(msg.sender, amount, to);
     }
 
     function depositDaiFor(uint amount, address account) public {
-        require(account != 0x0);
-        require(daiToken.transferFrom(msg.sender, this, amount));
+        require(
+            account != 0x0 &&
+            daiToken.transferFrom(msg.sender, this, amount)
+        );
         _addDai(amount, account);
         emit DepositDai(account, amount);
     }
 
     function _addEth(uint amount, address account) private {
-        eth[account] = eth[account].add(amount);
-        totalEth[account] = totalEth[account].add(amount);
+        eth[account] += amount;
+        totalEth[account] += amount;
     }
 
     function _subEth(uint amount, address account) private {
-        eth[account] = eth[account].sub(amount);
-        totalEth[account] = totalEth[account].sub(amount);
+        require(eth[account] >= amount);
+        eth[account] -= amount;
+        totalEth[account] -= amount;
     }
 
     function _addDai(uint amount, address account) private {
-        dai[account] = dai[account].add(amount);
-        totalDai[account] = totalDai[account].add(amount);
+        dai[account] += amount;
+        totalDai[account] += amount;
     }
 
     function _subDai(uint amount, address account) private {
-        dai[account] = dai[account].sub(amount);
-        totalDai[account] = totalDai[account].sub(amount);
+        require(dai[account] >= amount);
+        dai[account] -= amount;
+        totalDai[account] -= amount;
     }
 
     // ===== Admin functions ===== //
@@ -219,17 +176,19 @@ contract Exchange is DSAuth {
         exerciseFee = _exerciseFee;
         settlementFee = _settlementFee;
 
-        require(contractFee < 5 ether);
-        require(flatFee < 6.95 ether);
-        require(exerciseFee < 20 ether);
-        require(settlementFee < 20 ether);
+        require(
+            contractFee < 5 ether &&
+            flatFee < 6.95 ether &&
+            exerciseFee < 20 ether &&
+            settlementFee < 20 ether
+        );
     }
 
     function withdrawFees(address to) public auth {
         require(to != 0x0);
-        uint amount = feesCollected.sub(feesWithdrawn);
-        feesWithdrawn = feesCollected;
-        require(daiToken.transfer(to, amount));
+        uint amount = feesCollected;
+        feesCollected = 0;
+        daiToken.transfer(to, amount);
     }
 
     // ===== End Admin Functions ===== //
@@ -268,12 +227,9 @@ contract Exchange is DSAuth {
         bytes32 s,
         uint8   v
     ) public hasFee(amount) {
-        bytes32 h = keccak256(Action.SellCallToOpen, expiration, nonce, price, size, strike, validUntil, this);
-        address maker = _getMaker(h, v, r, s);
-
-        _validateOrder(amount, expiration, h, maker, price, validUntil, size, strike);
-        _buyCallToOpen(amount, expiration, price, strike, msg.sender);
-        _sellCallToOpen(amount, expiration, price, strike, maker);
+        address maker = _validate(Action.SellCallToOpen, amount, expiration, nonce, price, size, strike, validUntil, r, s, v);
+        _bcto(amount, expiration, price, strike, msg.sender);
+        _scto(amount, expiration, price, strike, maker);
     }
 
     function callBtoWithStc(
@@ -288,12 +244,9 @@ contract Exchange is DSAuth {
         bytes32 s,
         uint8   v
     ) public hasFee(amount) {
-        bytes32 h = keccak256(Action.SellCallToClose, expiration, nonce, price, size, strike, validUntil, this);
-        address maker = _getMaker(h, v, r, s);
-
-        _validateOrder(amount, expiration, h, maker, price, validUntil, size, strike);
-        _buyCallToOpen(amount, expiration, price, strike, msg.sender);
-        _sellCallToClose(amount, expiration, price, strike, maker);
+        address maker = _validate(Action.SellCallToClose, amount, expiration, nonce, price, size, strike, validUntil, r, s, v);
+        _bcto(amount, expiration, price, strike, msg.sender);
+        _sctc(amount, expiration, price, strike, maker);
     }
 
     function callBtcWithSto(
@@ -308,12 +261,9 @@ contract Exchange is DSAuth {
         bytes32 s,
         uint8   v
     ) public hasFee(amount) {
-        bytes32 h = keccak256(Action.SellCallToOpen, expiration, nonce, price, size, strike, validUntil, this);
-        address maker = _getMaker(h, v, r, s);
-
-        _validateOrder(amount, expiration, h, maker, price, validUntil, size, strike);
-        _buyCallToClose(amount, expiration, price, strike, msg.sender);
-        _sellCallToOpen(amount, expiration, price, strike, maker);
+        address maker = _validate(Action.SellCallToOpen, amount, expiration, nonce, price, size, strike, validUntil, r, s, v);
+        _bctc(amount, expiration, price, strike, msg.sender);
+        _scto(amount, expiration, price, strike, maker);
     }
 
     function callBtcWithStc(
@@ -328,12 +278,9 @@ contract Exchange is DSAuth {
         bytes32 s,
         uint8   v
     ) public hasFee(amount) {
-        bytes32 h = keccak256(Action.SellCallToClose, expiration, nonce, price, size, strike, validUntil, this);
-        address maker = _getMaker(h, v, r, s);
-
-        _validateOrder(amount, expiration, h, maker, price, validUntil, size, strike);
-        _buyCallToClose(amount, expiration, price, strike, msg.sender);
-        _sellCallToClose(amount, expiration, price, strike, maker);
+        address maker = _validate(Action.SellCallToClose, amount, expiration, nonce, price, size, strike, validUntil, r, s, v);
+        _bctc(amount, expiration, price, strike, msg.sender);
+        _sctc(amount, expiration, price, strike, maker);
     }
 
     function callStoWithBto(
@@ -348,12 +295,9 @@ contract Exchange is DSAuth {
         bytes32 s,
         uint8   v
     ) public hasFee(amount) {
-        bytes32 h = keccak256(Action.BuyCallToOpen, expiration, nonce, price, size, strike, validUntil, this);
-        address maker = _getMaker(h, v, r, s);
-
-        _validateOrder(amount, expiration, h, maker, price, validUntil, size, strike);
-        _sellCallToOpen(amount, expiration, price, strike, msg.sender);
-        _buyCallToOpen(amount, expiration, price, strike, maker);
+        address maker = _validate(Action.BuyCallToOpen, amount, expiration, nonce, price, size, strike, validUntil, r, s, v);
+        _scto(amount, expiration, price, strike, msg.sender);
+        _bcto(amount, expiration, price, strike, maker);
     }
 
     function callStoWithBtc(
@@ -368,12 +312,9 @@ contract Exchange is DSAuth {
         bytes32 s,
         uint8   v
     ) public hasFee(amount) {
-        bytes32 h = keccak256(Action.BuyCallToClose, expiration, nonce, price, size, strike, validUntil, this);
-        address maker = _getMaker(h, v, r, s);
-
-        _validateOrder(amount, expiration, h, maker, price, validUntil, size, strike);
-        _sellCallToOpen(amount, expiration, price, strike, msg.sender);
-        _buyCallToClose(amount, expiration, price, strike, maker);
+        address maker = _validate(Action.BuyCallToClose, amount, expiration, nonce, price, size, strike, validUntil, r, s, v);
+        _scto(amount, expiration, price, strike, msg.sender);
+        _bctc(amount, expiration, price, strike, maker);
     }
 
     function callStcWithBto(
@@ -388,12 +329,9 @@ contract Exchange is DSAuth {
         bytes32 s,
         uint8   v
     ) public hasFee(amount) {
-        bytes32 h = keccak256(Action.BuyCallToOpen, expiration, nonce, price, size, strike, validUntil, this);
-        address maker = _getMaker(h, v, r, s);
-
-        _validateOrder(amount, expiration, h, maker, price, validUntil, size, strike);
-        _sellCallToClose(amount, expiration, price, strike, msg.sender);
-        _buyCallToOpen(amount, expiration, price, strike, maker);
+        address maker = _validate(Action.BuyCallToOpen, amount, expiration, nonce, price, size, strike, validUntil, r, s, v);
+        _sctc(amount, expiration, price, strike, msg.sender);
+        _bcto(amount, expiration, price, strike, maker);
     }
 
     function callStcWithBtc(
@@ -408,12 +346,9 @@ contract Exchange is DSAuth {
         bytes32 s,
         uint8   v
     ) public hasFee(amount) {
-        bytes32 h = keccak256(Action.BuyCallToClose, expiration, nonce, price, size, strike, validUntil, this);
-        address maker = _getMaker(h, v, r, s);
-
-        _validateOrder(amount, expiration, h, maker, price, validUntil, size, strike);
-        _sellCallToClose(amount, expiration, price, strike, msg.sender);
-        _buyCallToClose(amount, expiration, price, strike, maker);
+        address maker = _validate(Action.BuyCallToClose, amount, expiration, nonce, price, size, strike, validUntil, r, s, v);
+        _sctc(amount, expiration, price, strike, msg.sender);
+        _bctc(amount, expiration, price, strike, maker);
     }
 
     event BuyCallToOpen(address indexed account, uint amount, uint expiration, uint price, uint strike);
@@ -421,41 +356,48 @@ contract Exchange is DSAuth {
     event BuyCallToClose(address indexed account, uint amount, uint expiration, uint price, uint strike);
     event SellCallToClose(address indexed account, uint amount, uint expiration, uint price, uint strike);
 
-    function _buyCallToOpen(uint amount, uint expiration, uint price, uint strike, address buyer) private {
+    function _bcto(uint amount, uint expiration, uint price, uint strike, address buyer) private {
         bytes32 series = keccak256(expiration, strike);
-        uint premium = amount.mul(price).div(1 ether);
-
+        uint premium = amount * price / 1 ether;
         _subDai(premium, buyer);
-        callsOwned[series][buyer] = callsOwned[series][buyer].add(amount);
+
+        require(callsOwned[series][buyer] + amount >= callsOwned[series][buyer]);
+        callsOwned[series][buyer] += amount;
         emit BuyCallToOpen(buyer, amount, expiration, price, strike);
     }
 
-    function _buyCallToClose(uint amount, uint expiration, uint price, uint strike, address buyer) private {
+    function _bctc(uint amount, uint expiration, uint price, uint strike, address buyer) private {
         bytes32 series = keccak256(expiration, strike);
-        uint premium = amount.mul(price).div(1 ether);
+        uint premium = amount * price / 1 ether;
 
         _subDai(premium, buyer);
-        eth[buyer] = eth[buyer].add(amount);
-        callsSold[series][buyer] = callsSold[series][buyer].sub(amount);
+        eth[buyer] += amount;
+        require(callsSold[series][buyer] >= amount);
+        callsSold[series][buyer] -= amount;
         emit BuyCallToClose(buyer, amount, expiration, price, strike);
     }
 
-    function _sellCallToOpen(uint amount, uint expiration, uint price, uint strike, address seller) private {
+    function _scto(uint amount, uint expiration, uint price, uint strike, address seller) private {
         bytes32 series = keccak256(expiration, strike);
-        uint premium = amount.mul(price).div(1 ether);
+        uint premium = amount * price / 1 ether;
 
         _addDai(premium, seller);
-        eth[seller] = eth[seller].sub(amount);
-        callsSold[series][seller] = callsSold[series][seller].add(amount);
+        require(
+            eth[seller] >= amount &&
+            callsSold[series][seller] + amount >= callsSold[series][seller]
+        );
+        eth[seller] -= amount;
+        callsSold[series][seller] += amount;
         emit SellCallToOpen(seller, amount, expiration, price, strike);
     }
 
-    function _sellCallToClose(uint amount, uint expiration, uint price, uint strike, address seller) private {
+    function _sctc(uint amount, uint expiration, uint price, uint strike, address seller) private {
         bytes32 series = keccak256(expiration, strike);
-        uint premium = amount.mul(price).div(1 ether);
+        uint premium = amount * price / 1 ether;
 
         _addDai(premium, seller);
-        callsOwned[series][seller] = callsOwned[series][seller].sub(amount);
+        require(callsOwned[series][seller] >= amount);
+        callsOwned[series][seller] -= amount;
         emit SellCallToClose(seller, amount, expiration, price, strike);
     }
 
@@ -465,14 +407,18 @@ contract Exchange is DSAuth {
         uint expiration,
         uint strike
     ) public {
-        require(now < expiration, "Expired");
-        require(amount % 1 finney == 0, precisionError);
-        uint cost = amount.mul(strike).div(1 ether);
+        uint cost = amount * strike / 1 ether;
         bytes32 series = keccak256(expiration, strike);
 
-        require(callsOwned[series][msg.sender] > 0);
-        callsOwned[series][msg.sender] = callsOwned[series][msg.sender].sub(amount);
-        callsExercised[series] = callsExercised[series].add(amount);
+        require(
+            now < expiration &&
+            amount % 1 finney == 0 &&
+            callsOwned[series][msg.sender] >= amount &&
+            amount > 0
+        );
+
+        callsOwned[series][msg.sender] -= amount;
+        callsExercised[series] += amount;
 
         _collectFee(msg.sender, exerciseFee);
         _subDai(cost, msg.sender);
@@ -483,28 +429,30 @@ contract Exchange is DSAuth {
     event AssignCall(address indexed account, uint amount, uint expiration, uint strike);
     event SettleCall(address indexed account, uint expiration, uint strike);
     function settleCall(uint expiration, uint strike, address writer) public {
-        require(msg.sender == writer || isAuthorized(msg.sender, msg.sig), "Unauthorized");
-        require(now > expiration, "Expired");
-
         bytes32 series = keccak256(expiration, strike);
-        require(callsSold[series][writer] > 0);
+
+        require(
+            (msg.sender == writer || isAuthorized(msg.sender, msg.sig)) &&
+            now > expiration &&
+            callsSold[series][writer] > 0
+        );
 
         if (callsAssigned[series] < callsExercised[series]) {
             uint maximum = callsSold[series][writer];
-            uint needed = callsExercised[series].sub(callsAssigned[series]);
-            uint assignment = needed.min(maximum);
+            uint needed = callsExercised[series] - callsAssigned[series];
+            uint assignment = needed > maximum ? maximum : needed;
 
-            totalEth[writer] = totalEth[writer].sub(assignment);
-            callsAssigned[series] = callsAssigned[series].add(assignment);
-            callsSold[series][writer] = callsSold[series][writer].sub(assignment);
+            totalEth[writer] -= assignment;
+            callsAssigned[series] += assignment;
+            callsSold[series][writer] -= assignment;
 
-            uint value = strike.mul(assignment).div(1 ether);
+            uint value = strike * assignment / 1 ether;
             _addDai(value, writer);
             emit AssignCall(msg.sender, assignment, expiration, strike);
         }
 
         _collectFee(writer, settlementFee);
-        eth[writer] = eth[writer].add(callsSold[series][writer]);
+        eth[writer] += callsSold[series][writer];
         callsSold[series][writer] = 0;
         emit SettleCall(writer, expiration, strike);
     }
@@ -524,12 +472,9 @@ contract Exchange is DSAuth {
         bytes32 s,
         uint8   v
     ) public hasFee(amount) {
-        bytes32 h = keccak256(Action.SellPutToOpen, expiration, nonce, price, size, strike, validUntil, this);
-        address maker = _getMaker(h, v, r, s);
-
-        _validateOrder(amount, expiration, h, maker, price, validUntil, size, strike);
-        _buyPutToOpen(amount, expiration, price, strike, msg.sender);
-        _sellPutToOpen(amount, expiration, price, strike, maker);
+        address maker = _validate(Action.SellPutToOpen, amount, expiration, nonce, price, size, strike, validUntil, r, s, v);
+        _bpto(amount, expiration, price, strike, msg.sender);
+        _spto(amount, expiration, price, strike, maker);
     }
 
     function putBtoWithStc(
@@ -544,12 +489,9 @@ contract Exchange is DSAuth {
         bytes32 s,
         uint8   v
     ) public hasFee(amount) {
-        bytes32 h = keccak256(Action.SellPutToClose, expiration, nonce, price, size, strike, validUntil, this);
-        address maker = _getMaker(h, v, r, s);
-
-        _validateOrder(amount, expiration, h, maker, price, validUntil, size, strike);
-        _buyPutToOpen(amount, expiration, price, strike, msg.sender);
-        _sellPutToClose(amount, expiration, price, strike, maker);
+        address maker = _validate(Action.SellPutToClose, amount, expiration, nonce, price, size, strike, validUntil, r, s, v);
+        _bpto(amount, expiration, price, strike, msg.sender);
+        _sptc(amount, expiration, price, strike, maker);
     }
 
     function putBtcWithSto(
@@ -564,12 +506,9 @@ contract Exchange is DSAuth {
         bytes32 s,
         uint8   v
     ) public hasFee(amount) {
-        bytes32 h = keccak256(Action.SellPutToOpen, expiration, nonce, price, size, strike, validUntil, this);
-        address maker = _getMaker(h, v, r, s);
-
-        _validateOrder(amount, expiration, h, maker, price, validUntil, size, strike);
-        _buyPutToClose(amount, expiration, price, strike, msg.sender);
-        _sellPutToOpen(amount, expiration, price, strike, maker);
+        address maker = _validate(Action.SellPutToOpen, amount, expiration, nonce, price, size, strike, validUntil, r, s, v);
+        _bptc(amount, expiration, price, strike, msg.sender);
+        _spto(amount, expiration, price, strike, maker);
     }
 
     function putBtcWithStc(
@@ -584,12 +523,9 @@ contract Exchange is DSAuth {
         bytes32 s,
         uint8   v
     ) public hasFee(amount) {
-        bytes32 h = keccak256(Action.SellPutToClose, expiration, nonce, price, size, strike, validUntil, this);
-        address maker = _getMaker(h, v, r, s);
-
-        _validateOrder(amount, expiration, h, maker, price, validUntil, size, strike);
-        _buyPutToClose(amount, expiration, price, strike, msg.sender);
-        _sellPutToClose(amount, expiration, price, strike, maker);
+        address maker = _validate(Action.SellPutToClose, amount, expiration, nonce, price, size, strike, validUntil, r, s, v);
+        _bptc(amount, expiration, price, strike, msg.sender);
+        _sptc(amount, expiration, price, strike, maker);
     }
 
     function putStoWithBto(
@@ -604,12 +540,9 @@ contract Exchange is DSAuth {
         bytes32 s,
         uint8   v
     ) public hasFee(amount) {
-        bytes32 h = keccak256(Action.BuyPutToOpen, expiration, nonce, price, size, strike, validUntil, this);
-        address maker = _getMaker(h, v, r, s);
-
-        _validateOrder(amount, expiration, h, maker, price, validUntil, size, strike);
-        _sellPutToOpen(amount, expiration, price, strike, msg.sender);
-        _buyPutToOpen(amount, expiration, price, strike, maker);
+        address maker = _validate(Action.BuyPutToOpen, amount, expiration, nonce, price, size, strike, validUntil, r, s, v);
+        _spto(amount, expiration, price, strike, msg.sender);
+        _bpto(amount, expiration, price, strike, maker);
     }
 
     function putStoWithBtc(
@@ -624,12 +557,9 @@ contract Exchange is DSAuth {
         bytes32 s,
         uint8   v
     ) public hasFee(amount) {
-        bytes32 h = keccak256(Action.BuyPutToClose, expiration, nonce, price, size, strike, validUntil, this);
-        address maker = _getMaker(h, v, r, s);
-
-        _validateOrder(amount, expiration, h, maker, price, validUntil, size, strike);
-        _sellPutToOpen(amount, expiration, price, strike, msg.sender);
-        _buyPutToClose(amount, expiration, price, strike, maker);
+        address maker = _validate(Action.BuyPutToClose, amount, expiration, nonce, price, size, strike, validUntil, r, s, v);
+        _spto(amount, expiration, price, strike, msg.sender);
+        _bptc(amount, expiration, price, strike, maker);
     }
 
     function putStcWithBto(
@@ -644,12 +574,9 @@ contract Exchange is DSAuth {
         bytes32 s,
         uint8   v
     ) public hasFee(amount) {
-        bytes32 h = keccak256(Action.BuyPutToOpen, expiration, nonce, price, size, strike, validUntil, this);
-        address maker = _getMaker(h, v, r, s);
-
-        _validateOrder(amount, expiration, h, maker, price, validUntil, size, strike);
-        _sellPutToClose(amount, expiration, price, strike, msg.sender);
-        _buyPutToOpen(amount, expiration, price, strike, maker);
+        address maker = _validate(Action.BuyPutToOpen, amount, expiration, nonce, price, size, strike, validUntil, r, s, v);
+        _sptc(amount, expiration, price, strike, msg.sender);
+        _bpto(amount, expiration, price, strike, maker);
     }
 
     function putStcWithBtc(
@@ -664,12 +591,9 @@ contract Exchange is DSAuth {
         bytes32 s,
         uint8   v
     ) public hasFee(amount) {
-        bytes32 h = keccak256(Action.BuyPutToClose, expiration, nonce, price, size, strike, validUntil, this);
-        address maker = _getMaker(h, v, r, s);
-
-        _validateOrder(amount, expiration, h, maker, price, validUntil, size, strike);
-        _sellPutToClose(amount, expiration, price, strike, msg.sender);
-        _buyPutToClose(amount, expiration, price, strike, maker);
+        address maker = _validate(Action.BuyPutToClose, amount, expiration, nonce, price, size, strike, validUntil, r, s, v);
+        _sptc(amount, expiration, price, strike, msg.sender);
+        _bptc(amount, expiration, price, strike, maker);
     }
 
     event BuyPutToOpen(address indexed account, uint amount, uint expiration, uint price, uint strike);
@@ -677,42 +601,46 @@ contract Exchange is DSAuth {
     event BuyPutToClose(address indexed account, uint amount, uint expiration, uint price, uint strike);
     event SellPutToClose(address indexed account, uint amount, uint expiration, uint price, uint strike);
 
-    function _buyPutToOpen(uint amount, uint expiration, uint price, uint strike, address buyer) private {
+    function _bpto(uint amount, uint expiration, uint price, uint strike, address buyer) private {
         bytes32 series = keccak256(expiration, strike);
-        uint premium = amount.mul(price).div(1 ether);
+        uint premium = amount * price / 1 ether;
 
         _subDai(premium, buyer);
-        putsOwned[series][buyer] = putsOwned[series][buyer].add(amount);
+        require(putsOwned[series][buyer] + amount >= putsOwned[series][buyer]);
+        putsOwned[series][buyer] += amount;
         emit BuyPutToOpen(buyer, amount, expiration, price, strike);
     }
 
-    function _buyPutToClose(uint amount, uint expiration, uint price, uint strike, address buyer) private {
+    function _bptc(uint amount, uint expiration, uint price, uint strike, address buyer) private {
         bytes32 series = keccak256(expiration, strike);
-        uint premium = amount.mul(price).div(1 ether);
+        uint premium = amount * price / 1 ether;
 
-        dai[buyer] = dai[buyer].add(strike.mul(amount).div(1 ether));
+        dai[buyer] += strike * amount / 1 ether;
         _subDai(premium, buyer);
-        putsSold[series][buyer] = putsSold[series][buyer].sub(amount);
+        require(putsSold[series][buyer] >= amount);
+        putsSold[series][buyer] -= amount;
         emit BuyPutToClose(buyer, amount, expiration, price, strike);
     }
 
-    function _sellPutToOpen(uint amount, uint expiration, uint price, uint strike, address seller) private {
+    function _spto(uint amount, uint expiration, uint price, uint strike, address seller) private {
         bytes32 series = keccak256(expiration, strike);
-        uint premium = amount.mul(price).div(1 ether);
-        uint cost = strike.mul(amount).div(1 ether);
+        uint premium = amount * price / 1 ether;
+        uint escrow = strike * amount / 1 ether;
 
         _addDai(premium, seller);
-        dai[seller] = dai[seller].sub(cost);
-        putsSold[series][seller] = putsSold[series][seller].add(amount);
+        require(dai[seller] >= escrow);
+        dai[seller] -= escrow;
+        putsSold[series][seller] += amount;
         emit SellPutToOpen(seller, amount, expiration, price, strike);
     }
 
-    function _sellPutToClose(uint amount, uint expiration, uint price, uint strike, address seller) private {
+    function _sptc(uint amount, uint expiration, uint price, uint strike, address seller) private {
         bytes32 series = keccak256(expiration, strike);
-        uint premium = amount.mul(price).div(1 ether);
+        uint premium = amount * price / 1 ether;
 
         _addDai(premium, seller);
-        putsOwned[series][seller] = putsOwned[series][seller].sub(amount);
+        require(putsOwned[series][seller] >= amount);
+        putsOwned[series][seller] -= amount;
         emit SellPutToClose(seller, amount, expiration, price, strike);
     }
 
@@ -722,15 +650,18 @@ contract Exchange is DSAuth {
         uint expiration,
         uint strike
     ) public {
-        require(now < expiration, "Expired");
-        require(amount % 1 finney == 0, precisionError);
-        uint yield = amount.mul(strike).div(1 ether);
+        uint yield = amount * strike / 1 ether;
         bytes32 series = keccak256(expiration, strike);
 
-        require(putsOwned[series][msg.sender] > 0);
-        
-        putsOwned[series][msg.sender] = putsOwned[series][msg.sender].sub(amount);
-        putsExercised[series] = putsExercised[series].add(amount);
+        require(
+            now < expiration &&
+            amount % 1 finney == 0 &&
+            putsOwned[series][msg.sender] >= amount &&
+            amount > 0
+        );
+
+        putsOwned[series][msg.sender] -= amount;
+        putsExercised[series] += amount;
 
         _subEth(amount, msg.sender);
         _addDai(yield, msg.sender);
@@ -741,73 +672,87 @@ contract Exchange is DSAuth {
     event AssignPut(address indexed account, uint amount, uint expiration, uint strike);
     event SettlePut(address indexed account, uint expiration, uint strike);
     function settlePut(uint expiration, uint strike, address writer) public {
-        require(msg.sender == writer || isAuthorized(msg.sender, msg.sig), "Unauthorized");
-        require(now > expiration, "Expired");
 
         bytes32 series = keccak256(expiration, strike);
-        require(putsSold[series][writer] > 0);
+
+        require(
+            (msg.sender == writer || isAuthorized(msg.sender, msg.sig)) &&
+            now > expiration &&
+            putsSold[series][writer] > 0
+        );
 
         if (putsAssigned[series] < putsExercised[series]) {
             uint maximum = putsSold[series][writer];
-            uint needed = putsExercised[series].sub(putsAssigned[series]);
-            uint assignment = maximum.min(needed);
+            uint needed = putsExercised[series] - putsAssigned[series];
+            uint assignment = maximum > needed ? needed : maximum;
 
-            totalDai[writer] = totalDai[writer].sub(assignment.mul(strike).div(1 ether));
-            putsSold[series][writer] = putsSold[series][writer].sub(assignment);
-            putsAssigned[series] = putsAssigned[series].add(assignment);
+            totalDai[writer] -= assignment * strike / 1 ether;
+            putsSold[series][writer] -= assignment;
+            putsAssigned[series] += assignment;
 
             _addEth(assignment, writer);
             emit AssignPut(writer, assignment, expiration, strike);
         }
 
-        uint yield = putsSold[series][writer].mul(strike).div(1 ether);
+        uint yield = putsSold[series][writer] * strike / 1 ether;
         _collectFee(writer, settlementFee);
-        dai[writer] = dai[writer].add(yield);
+        dai[writer] += yield;
         putsSold[series][writer] = 0;
         emit SettlePut(writer, expiration, strike);
     }
 
     function calculateFee(uint amount) public view returns (uint) {
-        return amount.mul(contractFee).div(1 ether).add(flatFee);
+        return amount * contractFee / 1 ether + flatFee;
     }
 
-    function claimFeeRebate(uint amount, bytes32 nonce, bytes32 r, bytes32 s, uint8 v) public {
-        bytes32 h = keccak256(amount, nonce, msg.sender);
-        h = keccak256("\x19Ethereum Signed Message:\n32", h);
-        address signer = ecrecover(h, v, r, s);
-        require(amount <= 1000);
-        require(isAuthorized(signer, msg.sig));
-        require(claimedFeeRebate[nonce] == false);
-        feeRebates[msg.sender] = feeRebates[msg.sender].add(amount);
-        claimedFeeRebate[nonce] = true;
+    function _validate(
+        Action action,
+        uint amount,
+        uint expiration,
+        bytes32 nonce,
+        uint price,
+        uint size,
+        uint strike,
+        uint validUntil,
+        bytes32 r,
+        bytes32 s,
+        uint8 v
+    ) private returns (address) {
+        bytes32 h = keccak256(action, expiration, nonce, price, size, strike, validUntil, this);
+        address maker = ecrecover(keccak256("\x19Ethereum Signed Message:\n32", h), v, r, s);
+        _validateOrder(amount, expiration, h, maker, price, validUntil, size, strike);
+        return maker;
     }
 
     event TakeOrder(address indexed account, address maker, uint amount, bytes32 h);
-    function _validateOrder(uint amount, uint expiration, bytes32 h, address maker, uint price, uint validUntil, uint size, uint strike) private {
-        require(strike % 1 ether == 0, precisionError);
-        require(amount % 1 finney == 0, precisionError);
-        require(price % 1 finney == 0, precisionError);
-        require(expiration % 86400 == 0, "Expiration");
+    function _validateOrder(uint amount, uint expiration, bytes32 h, address maker, uint price, uint validUntil, uint size, uint strike) internal {
+        require(
+            strike % 1 ether == 0 &&
+            amount % 1 finney == 0 &&
+            price % 1 finney == 0 &&
+            expiration % 86400 == 0 &&
+            cancelled[maker][h] == false &&
+            amount <= size - filled[maker][h] &&
+            now < validUntil &&
+            now < expiration &&
+            strike > 10 ether &&
+            price < 1200000 ether &&
+            size < 1200000 ether &&
+            strike < 1200000 ether &&
+            price >= 1 finney
+        );
 
-        require(cancelled[maker][h] == false, "Cancelled");
-        require(amount <= size.sub(filled[maker][h]), "Filled");
-        require(now < validUntil, "OrderExpired");
-        require(now < expiration, "Expired");
-
-        filled[maker][h] = filled[maker][h].add(amount);
+        filled[maker][h] += amount;
         emit TakeOrder(msg.sender, maker, amount, h);
     }
 
     function _collectFee(address account, uint amount) private {
-        if (feeRebates[msg.sender] > 0) {
-            feeRebates[msg.sender] = feeRebates[msg.sender].sub(1);
-        } else {
-            _subDai(amount, account);
-            feesCollected = feesCollected.add(amount);
-        }
+        _subDai(amount, account);
+        feesCollected += amount;
     }
+}
 
-    function _getMaker(bytes32 h, uint8 v, bytes32 r, bytes32 s) public pure returns (address) {
-        return ecrecover(keccak256("\x19Ethereum Signed Message:\n32", h), v, r, s);
-    }
+contract ERC20 {
+    function transfer(address _to, uint256 _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
 }
