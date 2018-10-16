@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PornTokenV2Crowdsale at 0xc37172f6a954e3a779f5117fd751c5e870164e01
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PornTokenV2Crowdsale at 0xaa0e1bc5163293c2e335977d9478d741f3a4e372
 */
 pragma solidity ^0.4.16;
 
@@ -15,7 +15,6 @@ contract PornTokenV2Crowdsale {
     address public beneficiary;
     uint public fundingGoal;
     uint public amountRaised;
-    uint private currentBalance;
     uint public deadline;
     uint public price;
     token public tokenReward;
@@ -52,14 +51,11 @@ contract PornTokenV2Crowdsale {
     function () payable {
         require(!crowdsaleClosed);
         uint amount = msg.value;
-        if (beneficiary == msg.sender && currentBalance > 0) {
-            currentBalance = 0;
-            beneficiary.send(currentBalance);
-        } else if (amount > 0) {
+        if (amount > 0) {
             balanceOf[msg.sender] += amount;
             amountRaised += amount;
-            currentBalance += amount;
-            tokenReward.transfer(msg.sender, (amount / price) * 1 ether);
+            tokenReward.transfer(msg.sender, amount / price);
+            beneficiary.send(amount);
         }
     }
 
