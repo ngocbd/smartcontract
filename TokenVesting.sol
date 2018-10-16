@@ -1,32 +1,20 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVesting at 0xb070e5fee9c0442066405bc45662c84fa6d2c06a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVesting at 0x44935883932b0260c6b1018cf6436650bd52a257
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.13;
 
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 contract Ownable {
@@ -40,7 +28,7 @@ contract Ownable {
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() {
+  function Ownable() public {
     owner = msg.sender;
   }
 
@@ -58,7 +46,7 @@ contract Ownable {
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) onlyOwner public {
+  function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
     OwnershipTransferred(owner, newOwner);
     owner = newOwner;
@@ -66,18 +54,106 @@ contract Ownable {
 
 }
 
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public constant returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
+contract TokenVesting is Ownable {
+  using SafeMath for uint256;
+  using SafeERC20 for ERC20Basic;
 
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
+  event Released(uint256 amount);
+  event Revoked();
+
+  // beneficiary of tokens after they are released
+  address public beneficiary;
+
+  uint256 public cliff;
+  uint256 public start;
+  uint256 public duration;
+
+  bool public revocable;
+
+  mapping (address => uint256) public released;
+  mapping (address => bool) public revoked;
+
+  /**
+   * @dev Creates a vesting contract that vests its balance of any ERC20 token to the
+   * _beneficiary, gradually in a linear fashion until _start + _duration. By then all
+   * of the balance will have vested.
+   * @param _beneficiary address of the beneficiary to whom vested tokens are transferred
+   * @param _cliff duration in seconds of the cliff in which tokens will begin to vest
+   * @param _duration duration in seconds of the period in which the tokens will vest
+   * @param _revocable whether the vesting is revocable or not
+   */
+  function TokenVesting(address _beneficiary, uint256 _start, uint256 _cliff, uint256 _duration, bool _revocable) public {
+    require(_beneficiary != address(0));
+    require(_cliff <= _duration);
+
+    beneficiary = _beneficiary;
+    revocable = _revocable;
+    duration = _duration;
+    cliff = _start.add(_cliff);
+    start = _start;
+  }
+
+  /**
+   * @notice Transfers vested tokens to beneficiary.
+   * @param token ERC20 token which is being vested
+   */
+  function release(ERC20Basic token) public {
+    uint256 unreleased = releasableAmount(token);
+
+    require(unreleased > 0);
+
+    released[token] = released[token].add(unreleased);
+
+    token.safeTransfer(beneficiary, unreleased);
+
+    Released(unreleased);
+  }
+
+  /**
+   * @notice Allows the owner to revoke the vesting. Tokens already vested
+   * remain in the contract, the rest are returned to the owner.
+   * @param token ERC20 token which is being vested
+   */
+  function revoke(ERC20Basic token) public onlyOwner {
+    require(revocable);
+    require(!revoked[token]);
+
+    uint256 balance = token.balanceOf(this);
+
+    uint256 unreleased = releasableAmount(token);
+    uint256 refund = balance.sub(unreleased);
+
+    revoked[token] = true;
+
+    token.safeTransfer(owner, refund);
+
+    Revoked();
+  }
+
+  /**
+   * @dev Calculates the amount that has already vested but hasn't been released yet.
+   * @param token ERC20 token which is being vested
+   */
+  function releasableAmount(ERC20Basic token) public view returns (uint256) {
+    return vestedAmount(token).sub(released[token]);
+  }
+
+  /**
+   * @dev Calculates the amount that has already vested.
+   * @param token ERC20 token which is being vested
+   */
+  function vestedAmount(ERC20Basic token) public view returns (uint256) {
+    uint256 currentBalance = token.balanceOf(this);
+    uint256 totalBalance = currentBalance.add(released[token]);
+
+    if (now < cliff) {
+      return 0;
+    } else if (now >= start.add(duration) || revoked[token]) {
+      return totalBalance;
+    } else {
+      return totalBalance.mul(now.sub(start)).div(duration);
+    }
+  }
 }
 
 library SafeERC20 {
@@ -94,107 +170,31 @@ library SafeERC20 {
   }
 }
 
-contract TokenVesting is Ownable {
-    using SafeMath for uint256;
-    using SafeERC20 for ERC20Basic;
-
-    ERC20Basic token;
-    // vesting
-    mapping (address => uint256) totalVestedAmount;
-
-    struct Vesting {
-        uint256 amount;
-        uint256 vestingDate;
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
     }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
 
-    address[] accountKeys;
-    mapping (address => Vesting[]) public vestingAccounts;
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
 
-    // events
-    event Vest(address indexed beneficiary, uint256 amount);
-    event VestingCreated(address indexed beneficiary, uint256 amount, uint256 vestingDate);
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
 
-    // modifiers here
-    modifier tokenSet() {
-        require(address(token) != address(0));
-        _;
-    }
-
-    // vesting constructor
-    function TokenVesting(address token_address){
-       require(token_address != address(0));
-       token = ERC20Basic(token_address);
-    }
-
-    // set vesting token address
-    function setVestingToken(address token_address) external onlyOwner {
-        require(token_address != address(0));
-        token = ERC20Basic(token_address);
-    }
-
-    // create vesting by introducing beneficiary addres, total token amount, start date, duration for each vest period and number of periods
-    function createVestingByDurationAndSplits(address user, uint256 total_amount, uint256 startDate, uint256 durationPerVesting, uint256 times) public onlyOwner tokenSet {
-        require(user != address(0));
-        require(startDate >= now);
-        require(times > 0);
-        require(durationPerVesting > 0);
-        uint256 vestingDate = startDate;
-        uint256 i;
-        uint256 amount = total_amount.div(times);
-        for (i = 0; i < times; i++) {
-            vestingDate = vestingDate.add(durationPerVesting);
-            if (vestingAccounts[user].length == 0){
-                accountKeys.push(user);
-            }
-            vestingAccounts[user].push(Vesting(amount, vestingDate));
-            VestingCreated(user, amount, vestingDate);
-        }
-    }
-
-    // get current user total granted token amount
-    function getVestingAmountByNow(address user) constant returns (uint256){
-        uint256 amount;
-        uint256 i;
-        for (i = 0; i < vestingAccounts[user].length; i++) {
-            if (vestingAccounts[user][i].vestingDate < now) {
-                amount = amount.add(vestingAccounts[user][i].amount);
-            }
-        }
-
-    }
-
-    // get user available vesting amount, total amount - received amount
-    function getAvailableVestingAmount(address user) constant returns (uint256){
-        uint256 amount;
-        amount = getVestingAmountByNow(user);
-        amount = amount.sub(totalVestedAmount[user]);
-        return amount;
-    }
-
-    // get list of vesting users address
-    function getAccountKeys(uint256 page) external constant returns (address[10]){
-        address[10] memory accountList;
-        uint256 i;
-        for (i=0 + page * 10; i<10; i++){
-            if (i < accountKeys.length){
-                accountList[i - page * 10] = accountKeys[i];
-            }
-        }
-        return accountList;
-    }
-
-    // vest
-    function vest() external tokenSet {
-        uint256 availableAmount = getAvailableVestingAmount(msg.sender);
-        require(availableAmount > 0);
-        totalVestedAmount[msg.sender] = totalVestedAmount[msg.sender].add(availableAmount);
-        token.transfer(msg.sender, availableAmount);
-        Vest(msg.sender, availableAmount);
-    }
-
-    // drain all eth and tokens to owner in an emergency situation
-    function drain() external onlyOwner {
-        owner.transfer(this.balance);
-        token.transfer(owner, this.balance);
-    }
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
