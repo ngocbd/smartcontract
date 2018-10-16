@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xc87ab9904a14c7f264bfc4483ceeb2b0e811e01a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x6e37813a81ddbd6bf69e52052c89b0cb1918c4cc
 */
 pragma solidity ^0.4.4;
 
@@ -119,8 +119,8 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 80000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 80000000000000000000000000;                        // Update total supply (100000 for example)
+        balances[msg.sender] = 80000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 80000000;                        // Update total supply (100000 for example)
         name = "LenusChain";                                   // Set the name for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
         symbol = "BPM";                               // Set the symbol for display purposes
