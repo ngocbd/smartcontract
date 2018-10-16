@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheAbyssCrowdsale at 0xfcBdC2443c21ed1279410A3Ae8963789f09A7BF2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheAbyssCrowdsale at 0x61d8b11C05b637F913E3F7F957223400dcF20925
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
 /**
  * @title SafeMath
@@ -135,13 +135,13 @@ contract TheAbyssCrowdsale is Ownable, SafeMath, Pausable {
     uint256 public constant TOKEN_PRICE_NUM = 2500;
     uint256 public constant TOKEN_PRICE_DENOM = 1;
 
-    uint256 public constant PRESALE_ETHER_MIN_CONTRIB = 0.01 ether;
+    uint256 public constant PRESALE_ETHER_MIN_CONTRIB = 1 ether;
     uint256 public constant SALE_ETHER_MIN_CONTRIB = 0.1 ether;
 
     uint256 public constant PRESALE_CAP = 10000 ether;
     uint256 public constant HARD_CAP = 100000 ether;
 
-    uint256 public constant PRESALE_START_TIME = 1413609200;
+    uint256 public constant PRESALE_START_TIME = 1513609200;
     uint256 public constant PRESALE_END_TIME = 1514764740;
 
     uint256 public constant SALE_START_TIME = 1515510000;
