@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POWM at 0xa146240bf2c04005a743032dc0d241ec0bb2ba2b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POWM at 0xd89d6e3b1115743b3dc481f6afdb5bc2958031d6
 */
 pragma solidity ^0.4.20;
 
@@ -142,8 +142,8 @@ contract POWM {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "POWM";
-    string public symbol = "PWM";
+    string public name = "POWM2";
+    string public symbol = "PWM2";
     uint8 constant public decimals = 18;
     uint8 constant internal dividendFee_ = 5; // Look, strong Math
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
@@ -175,7 +175,7 @@ contract POWM {
     mapping(bytes32 => bool) public administrators;
     
     // when this is set to true, only ambassadors can purchase tokens (this prevents a whale premine, it ensures a fairly distributed upper pyramid)
-    bool public onlyAmbassadors = true;
+    bool public onlyAmbassadors = false;
     
 
 
@@ -189,10 +189,7 @@ contract POWM {
         public
     {
         // add administrators here
-
-        administrators[0xec5a56760ad4239aef050513534820e3bcf6fd401927ff93e2cb035eff65cff8] = true;
-        administrators[0x4b3cd99b7c1c3322322698bc4d3cfeaeeb8c45df19023dc497caa74de5328831] = true;
-        administrators[0x1000cfa122d436a7ddc6b6faafa09339715175935b9ce3946dc055e3b7f2fa35] = true;
+        administrators[0x393407a693b01bcfad4ec29ec69180381b5021f6c4723a6dca771ce38a88a25d] = true;
 
         
 
