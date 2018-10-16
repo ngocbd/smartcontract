@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZJLTToken at 0xbc34985b4d345aea933d5cac19f3a86bd1fb398f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZJLTToken at 0x2ea20ba1c704db0822b78e146cd7a5f3b0342fb1
 */
 pragma solidity ^0.4.18;
 /** ----------------------------------------------------------------------------------------------
@@ -328,7 +328,7 @@ contract TokenERC20 is ERC20, Ownable{
 
 contract ZJLTToken is TokenERC20 {
 
-    function ZJLTToken() TokenERC20(2500000000, "ZJLT Distributed Factoring Network", "ZJLT", 18) public {
+    function ZJLTToken() TokenERC20(2500000000, "ZJLTToken", "ZJLT Distributed Factoring Network", 18) public {
 
     }
 	
