@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GreenCoin at 0x781643835810707ad98db8928c49a5fcc956b584
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GreenCoin at 0x2ceac2f743d4b599b931e778481bc01819cffcd5
 */
 pragma solidity ^0.4.16;
-
 library SafeMath {
   function mul(uint256 a, uint256 b) constant public returns (uint256) {
     uint256 c = a * b;
@@ -195,6 +194,7 @@ contract MintableToken is StandardToken, Ownable {
     totalSupply = totalSupply.add(_amount);
     balances[_to] = balances[_to].add(_amount);
     Mint(_to, _amount);
+    Transfer(address(0),_to,_amount);
     return true;
   }
 
@@ -214,16 +214,18 @@ contract GreenCoin is MintableToken{
 	string public constant name = "Green Coin";
 	string public constant symbol = "GREEN";
 	uint8 public constant decimals = 18;
-	uint256 public constant MaxSupply = 10**18*10**6 ;
+	uint256 public constant MaxSupply = 10**18*10**7 ;
 	uint256 public _startTime = 0 ;
 	
 	function GreenCoin(){
+	    mint(address(0x7704C758db402bB7B1c2BbadA8af43B6B758B794),4000*10**18);
+	    mint(address(0xbb3465742ca0b93eea8ca9362f2c4bb6240bf942),1000*10**18);
 		_startTime = block.timestamp ;
 		owner = msg.sender;
 	}
 	
 	function GetMaxEther() returns(uint256){
-		return (MaxSupply.sub(totalSupply)).div(1000);
+		return (MaxSupply.sub(totalSupply)).div(10000);
 	}
 	
 	function IsICOOver() public constant returns(bool){
@@ -247,11 +249,11 @@ contract GreenCoin is MintableToken{
 		}
 		else{
 			if(GetMaxEther()>msg.value){
-				mint(msg.sender,msg.value*1000);
+				mint(msg.sender,msg.value*10000);
 				owner.transfer(msg.value);
 			}
 			else{
-				mint(msg.sender,GetMaxEther()*1000);
+				mint(msg.sender,GetMaxEther()*10000);
 				owner.transfer(GetMaxEther());
 				finishMinting();
 				
