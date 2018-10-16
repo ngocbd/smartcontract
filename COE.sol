@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COE at 0xfe2a80103c9037354a04094972fc7ecab747272b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COE at 0x7b203459eb87fbf70ca42624b4304dc24ede9c50
 */
 contract Partner {
     function exchangeTokensFromOtherContract(address _source, address _recipient, uint256 _RequestedTokens);
@@ -35,16 +35,16 @@ contract COE {
 
     // cost per token (cents *10^18) amounts for each tier.
     uint256[] costPerToken = [
-        3.85E21,
-        6.1E21,
-        4.15E21,
-        5.92E21,
-        9.47E21,
-        1.1E22,
-        1.123E22,
-        1.115E22,
-        1.135E22,
-        1.013E22
+        385000000000000000000000,
+        610000000000000000000000,
+        415000000000000000000000,
+        592000000000000000000000,
+        947000000000000000000000,
+        1100000000000000000000000,
+        1123000000000000000000000,
+        1115000000000000000000000,
+        1135000000000000000000000,
+        1013000000000000000000000
     ];
 
     uint256 public totalSupply = 100000000000000000000000;
