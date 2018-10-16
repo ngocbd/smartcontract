@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IssuerWithId at 0x8d64faa5ba0f4c9b711d8357f2a55e15a170ff87
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IssuerWithId at 0x1b5c5f9acb144cdcf82a2df1378f1f6cadbacd9e
 */
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
@@ -262,9 +262,6 @@ contract IssuerWithId is Ownable {
   /** How many addresses have received their tokens. */
   uint public issuedCount;
 
-  /** Issue event **/
-  event Issued(address benefactor, uint amount, uint id);
-
   function IssuerWithId(address _owner, address _allower, StandardTokenExt _token) {
     require(address(_owner) != address(0));
     require(address(_allower) != address(0));
@@ -280,8 +277,6 @@ contract IssuerWithId is Ownable {
     token.transferFrom(allower, benefactor, amount);
     issued[id] = true;
     issuedCount += amount;
-
-    Issued(benefactor, amount, id);
   }
 
 }
