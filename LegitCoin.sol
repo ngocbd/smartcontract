@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Legitcoin at 0x088fe3791b3228aea1ac8930479d79a021147868
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Legitcoin at 0xc0c869de4eb7b7325afc5a1dbbbea52a71b2da51
 */
 pragma solidity ^0.4.4;
 
@@ -119,10 +119,10 @@ contract Legitcoin is StandardToken {
 
     function Legitcoin(
         ) {
-        balances[msg.sender] = 2000000 * 10000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 20000000000;                        // Update total supply (100000 for example)
+        balances[msg.sender] = 2000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 2000000;                        // Update total supply (100000 for example)
         name = "Legitcoin";                                   // Set the name for display purposes
-        decimals = 4;                            // Amount of decimals for display purposes
+        decimals = 0;                            // Amount of decimals for display purposes
         symbol = "LEGIT";                               // Set the symbol for display purposes
     }
 
