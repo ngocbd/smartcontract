@@ -1,13 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Athleticoin at 0x7ebb8e2e72891d08c495433075c64c223623e809
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AthletiCoin at 0xf21dd3a97e0e767d5b2d79396a61276fa9e27f4b
 */
 pragma solidity ^0.4.16;
 
-contract Athleticoin {
+contract AthletiCoin {
 
-    string public name = "Athleticoin";      //  token name
+    string public name = "AthletiCoin";      //  token name
     string public symbol = "ATHA";           //  token symbol
-    //string public version = "realversion 1.0";
+    //string public version = "realversion";
     uint256 public decimals = 18;            //  token digit
 
     mapping (address => uint256) public balanceOf;
@@ -46,10 +46,10 @@ contract Athleticoin {
         balanceOf[owner] = valueFounder;
         emit Transfer(0x0, owner, valueFounder);
         
-        balanceOf[owner2] = valueFounder;
+        balanceOf[owner] = valueFounder;
         emit Transfer(0x0, owner2, valueFounder);
         
-        balanceOf[owner3] = valueFounder;
+        balanceOf[owner] = valueFounder;
         emit Transfer(0x0, owner3, valueFounder);
     }
 
