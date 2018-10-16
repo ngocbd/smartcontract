@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Marvin at 0x12f520c2aD3D77c06f5984a54e1A3224B811e3E8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Marvin at 0x76173489358f0cd3669fc02da3535e7bc05410a8
 */
 pragma solidity ^0.4.0;
 
@@ -10,10 +10,13 @@ contract Marvin {
     
     event statusCode(int32 code);
 
-    function Marvin() payable {
+    function Marvin() {
         owner = msg.sender;
     }
 
+    function payMe() payable returns(bool success) {
+        return true;
+    }
     function freeBeerOnMe(string sha512flag) {
         if (hashedflag == keccak256(sha512flag)){
             msg.sender.transfer(this.balance);
