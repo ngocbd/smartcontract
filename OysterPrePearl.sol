@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OysterPrePearl at 0xd9b487b5db05dfb5df9b456c6259a821ffbaea30
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OysterPrePearl at 0x0Ff758756e8f594fF463c9e7A41802e9Ef717265
 */
 pragma solidity ^0.4.17;
 
@@ -59,7 +59,7 @@ contract OysterPrePearl {
     function () payable public {
         require(!saleClosed);
         require(msg.value >= 100 finney);
-        require(funds + msg.value <= 8000 ether);
+        require(funds + msg.value <= 3500 ether);
         uint buyPrice;
         if (msg.value >= 50 ether) {
             buyPrice = 8000;//60% bonus
