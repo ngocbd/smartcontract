@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NullFinalizeAgent at 0xf62c32e754d8dd658a8fb133a5368c58c62f0be2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NullFinalizeAgent at 0x3f0a0682769afea0c316f74ace6bbb68daeab349
 */
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
