@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LedgerRandomProofVerifier at 0xaa8786eecd289fa7dd48a35ea31493bb67626623
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LedgerRandomProofVerifier at 0x38f8e42659ea40a36096cd6db69ae24ab2562f52
 */
 pragma solidity ^0.4.11;
 
