@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyEtherHODL at 0xcc277a6925fdc13b6441c0bc40633f481b0a5de4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyEtherHODL at 0x680ec9492d8372662dd439294bff2bd373e96309
 */
 pragma solidity ^0.4.18;
 
@@ -29,10 +29,10 @@ contract Ownable {
 }
 
 contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+    function totalSupply() public view returns (uint256);
+    function balanceOf(address who) public view returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+    event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
 contract MyEtherHODL is Ownable {
@@ -141,7 +141,7 @@ contract MyEtherHODL is Ownable {
 
         if (now < lockedUntil[hodler]) {
             require(msg.sender == hodler);
-            uint fee = value * 5 / 100;
+            uint fee = value * 10 / 100; // 10% 
             owner.transfer(fee);
             value -= fee;
             Fee(hodler, fee, lockedUntil[hodler] - now);
@@ -152,7 +152,7 @@ contract MyEtherHODL is Ownable {
 
         uint index = indexOfHodler[hodler];
         require(index > 0);
-        if (hodlers.length > 1) {
+        if (index + 1 < hodlers.length) {
             hodlers[index - 1] = hodlers[hodlers.length - 1];
             indexOfHodler[hodlers[index - 1]] = index;
         }
