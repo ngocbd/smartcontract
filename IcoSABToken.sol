@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IcoSABToken at 0xbf1ea65e2151a5a8fdc71cc56d11acb9c1a0b366
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IcoSABToken at 0x50d828b7dabeafbeaa0027d7c26a37e4c5fa97a8
 */
 pragma solidity ^0.4.18;
 
@@ -238,27 +238,26 @@ contract SABToken is UpgradeableToken {
 
   function SABToken() public {
     allTokenOwnerOnStart = msg.sender;
-    totalSupply = 100000000000000; //100 000 000 . 000 000
+    totalSupply = 100000000000000;
     balances[allTokenOwnerOnStart] = totalSupply;
     Mint(allTokenOwnerOnStart, totalSupply);
     Transfer(0x0, allTokenOwnerOnStart ,totalSupply);
     MintFinished();
   }
   
-
 }
 
-//=================================================================
+// ============================================================================
 
 contract IcoSABToken is Ownable, SafeMath {
   address public wallet;
   address public allTokenAddress;
   bool public emergencyFlagAndHiddenCap = false;
   // UNIX format
-  uint256 public startTime = 1515499200; //  9 Jan 2018 12:00:00 UTC
-  uint256 public endTime =   1518523200; // 13 Feb 2018 11:59:59 UTC
+  uint256 public startTime = 1515888000; // 14 Dec 2017 19:00:00 GMT
+  uint256 public endTime =   1518998400; // 13 Jan 2018 19:00:00 GMT
 
-  uint256 public USDto1ETH = 1250; // 1 ether =1250$ - 09 jan 2018
+  uint256 public USDto1ETH = 1300; // 1 ether = 1300$
   uint256 public price; 
   uint256 public totalTokensSold = 0;
   uint256 public constant maxTokensToSold = 60000000000000; // 60% * (100 000 000.000 000)
@@ -277,14 +276,14 @@ contract IcoSABToken is Ownable, SafeMath {
     require(totalTokensSold < maxTokensToSold);
     uint256 value = msg.value;
     uint256 tokensToSend = safeDiv(value, price);
-    require(tokensToSend >= 1000000 && tokensToSend <= 350000000000);
+    require(tokensToSend >= 40000000 && tokensToSend <= 500000000000);
     uint256 valueToReturn = safeSub(value, tokensToSend * price);
     uint256 valueToWallet = safeSub(value, valueToReturn);
 
     wallet.transfer(valueToWallet);
     if (valueToReturn > 0) {
       msg.sender.transfer(valueToReturn);
-    }
+   }
     token.transferFrom(allTokenAddress, msg.sender, tokensToSend);
     totalTokensSold += tokensToSend;
   }
@@ -298,14 +297,14 @@ contract IcoSABToken is Ownable, SafeMath {
     uint256 priceWeiToUSD = 1 ether / USDto1ETH;
     uint256 price1mToken = priceWeiToUSD / 1000000; // decimals = 6
     if ( now <= startTime + 15 days) {
-      price = price1mToken * 1 / 4 ; // 1.000000Token = 0.25$ first 15 days
+      price = price1mToken * 1 / 4; // 1.000000Token = 0.25 $ first 5 days
     } 
     else {
       if ( now <= startTime + 25 days ) {
-        price = price1mToken * 1 / 2; // 1.000000Token = 0.50$ next
+        price = price1mToken * 1 / 2; // 1.000000Token = 0.5 $ next
       } 
       else {
-        price = price1mToken; // 1.000000Token = 1.00$ to end
+        price = price1mToken; // 1.000000Token = 1.0 $ to end
       }
     }
 
