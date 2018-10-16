@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract InvestorWhiteList at 0x1fd6cf63b36e1258ddea7d0accd3838f0fe1aab7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract InvestorWhiteList at 0x325c96fa60eeb3a9f88bab75278b5ff18398c919
 */
-pragma solidity ^0.4.20;
+pragma solidity ^0.4.0;
 
 /**
  * @title Ownable
@@ -12,6 +12,7 @@ contract Ownable {
   address public owner;
 
 
+  event OwnershipRenounced(address indexed previousOwner);
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
 
@@ -37,10 +38,17 @@ contract Ownable {
    */
   function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
+    emit OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
 
+  /**
+   * @dev Allows the current owner to relinquish control of the contract.
+   */
+  function renounceOwnership() public onlyOwner {
+    emit OwnershipRenounced(owner);
+    owner = address(0);
+  }
 }
 
 contract InvestorWhiteList is Ownable {
