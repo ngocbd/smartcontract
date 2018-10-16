@@ -1,199 +1,121 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0x5d39fcebe89ab0397947881539fd6dc7d99c6a87
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0x498e950892260b0e9dfd5895d7501f340e92d263
 */
 pragma solidity ^0.4.6;
 
-// Presale Smart Contract
-//
-// **** START:  PARANOIA DISCLAIMER ****
-// A carefull reader will find here some unnecessary checks and excessive code consuming some extra valueable gas. It is intentionally. 
-// Even contract will works without these parts, they make the code more secure in production as well for future refactorings.
-// Additionally it shows more clearly what we have took care of.
-// You are welcome to discuss that places.
-// **** END OF: PARANOIA DISCLAIMER *****
-//
-// @author ethernian
-//
-
 contract Presale {
+    mapping (address => uint) public balances;
+    uint public transfered_total = 0;
+    
+    uint public constant min_goal_amount = 5 ether;
+    uint public constant max_goal_amount = 10 ether;
+    
+    // Vega Fund Round A Address
+    address public project_wallet;
 
-	function cleanUp() onlyOwner {
-		selfdestruct(OWNER);
-	}
-
-    string public constant VERSION = "0.1.3-[min1,max5]";
-
-	/* ====== configuration START ====== */
-    uint public constant MIN_TOTAL_AMOUNT_TO_RECEIVE_ETH = 1;
-    uint public constant MAX_TOTAL_AMOUNT_TO_RECEIVE_ETH = 5;
-    uint public constant MIN_ACCEPTED_AMOUNT_FINNEY = 1;
-	uint public constant PRESALE_START = 3044444;
-	uint public constant PRESALE_END = 3044555;
-	uint public constant WITHDRAWAL_END = 3044666;
-	address public constant OWNER = 0xF55DFd2B02Cf3282680C94BD01E9Da044044E6A2;
-    /* ====== configuration END ====== */
+    uint public presale_start_block;
+    uint public presale_end_block;
+    
+    // est. of blocks count in 1 month
+    // Based on 1 block every 17 seconds, 30 days would produce ~152,471
+    // Just for allowing for some additional time round to 153,000
+    uint constant blocks_in_one_months = 100;
+    
+    // block number of the end of refund window, 
+    // which will occur in the end of 1 month after presale
+    uint public refund_window_end_block;
+    
+    function Presale(uint _start_block, uint _end_block, address _project_wallet) {
+        if (_start_block <= block.number) throw;
+        if (_end_block <= _start_block) throw;
+        if (_project_wallet == 0) throw;
+        
+        presale_start_block = _start_block;
+        presale_end_block = _end_block;
+        project_wallet = _project_wallet;
+	refund_window_end_block = presale_end_block + blocks_in_one_months;
+    }
 	
-    string[5] private stateNames = ["BEFORE_START",  "PRESALE_RUNNING", "WITHDRAWAL_RUNNING", "REFUND_RUNNING", "CLOSED" ];
-    enum State { BEFORE_START,  PRESALE_RUNNING, WITHDRAWAL_RUNNING, REFUND_RUNNING, CLOSED }
+    function has_presale_started() private constant returns (bool) {
+	return block.number >= presale_start_block;
+    }
+    
+    function has_presale_time_ended() private constant returns (bool) {
+        return block.number > presale_end_block;
+    }
+    
+    function is_min_goal_reached() private constant returns (bool) {
+        return transfered_total >= min_goal_amount;
+    }
+    
+    function is_max_goal_reached() private constant returns (bool) {
+        return transfered_total >= max_goal_amount;
+    }
+    
+    // Accept ETH while presale is active or until maximum goal is reached.
+    function () payable {
+	// check if presale has started
+        if (!has_presale_started()) throw;
+	    
+	// check if presale date is not over
+	if (has_presale_time_ended()) throw;
+	    
+	// don`t accept transactions with zero value
+	if (msg.value == 0) throw;
 
-    uint public total_received_amount;
-	mapping (address => uint) public balances;
-	
-    uint private constant MIN_TOTAL_AMOUNT_TO_RECEIVE = MIN_TOTAL_AMOUNT_TO_RECEIVE_ETH * 1 ether;
-    uint private constant MAX_TOTAL_AMOUNT_TO_RECEIVE = MAX_TOTAL_AMOUNT_TO_RECEIVE_ETH * 1 ether;
-    uint private constant MIN_ACCEPTED_AMOUNT = MIN_ACCEPTED_AMOUNT_FINNEY * 1 finney;
-	
-
-    //constructor
-    function Presale () validSetupOnly() { }
-
-    //
-    // ======= interface methods =======
-    //
-
-    //accept payments here
-    function ()
-    payable
-    noReentrancy
-    {
-        State state = currentState();
-        if (state == State.PRESALE_RUNNING) {
-            receiveFunds();
-        } else if (state == State.REFUND_RUNNING) {
-            // any entring call in Refund Phase will cause full refund
-            sendRefund();
+        // check if max goal is not reached
+	if (is_max_goal_reached()) throw;
+        
+        if (transfered_total + msg.value > max_goal_amount) {
+            // return change
+	    var change_to_return = transfered_total + msg.value - max_goal_amount;
+	    if (!msg.sender.send(change_to_return)) throw;
+            
+            var to_add = max_goal_amount - transfered_total;
+            balances[msg.sender] += to_add;
+	    transfered_total += to_add;
         } else {
-            throw;
+            // set data
+	    balances[msg.sender] += msg.value;
+	    transfered_total += msg.value;
         }
     }
-
-    function refund() external
-    inState(State.REFUND_RUNNING)
-    noReentrancy
-    {
-        sendRefund();
+    
+    // Transfer ETH to Vega Round A address, as soon as minimum goal is reached.
+    function transfer_funds_to_project() {
+        if (!is_min_goal_reached()) throw;
+        if (this.balance == 0) throw;
+        
+        // transfer ethers to Vega Round A address
+        if (!project_wallet.send(this.balance)) throw;
     }
-
-
-    function withdrawFunds() external
-    inState(State.WITHDRAWAL_RUNNING)
-    onlyOwner
-    noReentrancy
-    {
-        // transfer funds to owner if any
-        if (this.balance > 0) {
-            if (!OWNER.send(this.balance)) throw;
-        }
-    }
-
-
-    //displays current contract state in human readable form
-    function state()  external constant
-    returns (string)
-    {
-        return stateNames[ uint(currentState()) ];
-    }
-
-
-    //
-    // ======= implementation methods =======
-    //
-
-    function sendRefund() private tokenHoldersOnly {
-        // load balance to refund plus amount currently sent
-        var amount_to_refund = balances[msg.sender] + msg.value;
+    
+    // Refund ETH in case minimum goal was not reached during presale.
+    // Refund will be available for one month window after presale.
+    function refund() {
+        if (!has_presale_time_ended()) throw;
+        if (is_min_goal_reached()) throw;
+        if (block.number > refund_window_end_block) throw;
+        
+        var amount = balances[msg.sender];
+        // check if sender has balance
+        if (amount == 0) throw;
+        
         // reset balance
         balances[msg.sender] = 0;
-        // send refund back to sender
-        if (!msg.sender.send(amount_to_refund)) throw;
+        
+        // actual refund
+        if (!msg.sender.send(amount)) throw;
     }
-
-
-    function receiveFunds() private notTooSmallAmountOnly {
-      // no overflow is possible here: nobody have soo much money to spend.
-      if (total_received_amount + msg.value > MAX_TOTAL_AMOUNT_TO_RECEIVE) {
-          // accept amount only and return change
-          var change_to_return = total_received_amount + msg.value - MAX_TOTAL_AMOUNT_TO_RECEIVE;
-          if (!msg.sender.send(change_to_return)) throw;
-
-          var acceptable_remainder = MAX_TOTAL_AMOUNT_TO_RECEIVE - total_received_amount;
-          balances[msg.sender] += acceptable_remainder;
-          total_received_amount += acceptable_remainder;
-      } else {
-          // accept full amount
-          balances[msg.sender] += msg.value;
-          total_received_amount += msg.value;
-      }
+    
+    // In case any ETH has left unclaimed after one month window, send them to Vega Round A address.
+    function transfer_left_funds_to_project() {
+        if (!has_presale_time_ended()) throw;
+        if (is_min_goal_reached()) throw;
+        if (block.number <= refund_window_end_block) throw;
+        
+        if (this.balance == 0) throw;
+        // transfer left ETH to Vega Round A address
+        if (!project_wallet.send(this.balance)) throw;
     }
-
-
-    function currentState() private constant returns (State) {
-        if (block.number < PRESALE_START) {
-            return State.BEFORE_START;
-        } else if (block.number <= PRESALE_END && total_received_amount < MAX_TOTAL_AMOUNT_TO_RECEIVE) {
-            return State.PRESALE_RUNNING;
-        } else if (block.number <= WITHDRAWAL_END && total_received_amount >= MIN_TOTAL_AMOUNT_TO_RECEIVE) {
-            return State.WITHDRAWAL_RUNNING;
-        } else if (this.balance > 0){
-            return State.REFUND_RUNNING;
-        } else {
-            return State.CLOSED;		
-		} 
-    }
-
-    //
-    // ============ modifiers ============
-    //
-
-    //fails if state dosn't match
-    modifier inState(State state) {
-        if (state != currentState()) throw;
-        _;
-    }
-
-
-    //fails if something in setup is looking weird
-    modifier validSetupOnly() {
-        if ( OWNER == 0x0 
-            || PRESALE_START == 0 
-            || PRESALE_END == 0 
-            || WITHDRAWAL_END ==0
-            || PRESALE_START <= block.number
-            || PRESALE_START >= PRESALE_END
-            || PRESALE_END   >= WITHDRAWAL_END
-            || MIN_TOTAL_AMOUNT_TO_RECEIVE > MAX_TOTAL_AMOUNT_TO_RECEIVE )
-				throw;
-        _;
-    }
-
-
-    //accepts calls from owner only
-    modifier onlyOwner(){
-    	if (msg.sender != OWNER)  throw;
-    	_;
-    }
-
-
-    //accepts calls from token holders only
-    modifier tokenHoldersOnly(){
-        if (balances[msg.sender] == 0) throw;
-        _;
-    }
-
-
-    // don`t accept transactions with value less than allowed minimum
-    modifier notTooSmallAmountOnly(){	
-        if (msg.value < MIN_ACCEPTED_AMOUNT) throw;
-        _;
-    }
-
-
-    //prevents reentrancy attacs
-    bool private locked = false;
-    modifier noReentrancy() {
-        if (locked) throw;
-        locked = true;
-        _;
-        locked = false;
-    }
-}//contract
+}
