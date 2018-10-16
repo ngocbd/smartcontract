@@ -1,39 +1,24 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x8e52c96974ab5bd20e8e7ee5c5da696907a5754f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x51c48dc75cd1d99898c1cda814caa2d184e886ff
 */
 pragma solidity ^0.4.4;
 
 contract Token {
 
-    /// @return total amount of tokens
+   
     function totalSupply() constant returns (uint256 supply) {}
 
-    /// @param _owner The address from which the balance will be retrieved
-    /// @return The balance
     function balanceOf(address _owner) constant returns (uint256 balance) {}
 
-    /// @notice send `_value` token to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
+   
     function transfer(address _to, uint256 _value) returns (bool success) {}
 
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
+   
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
 
-    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of wei to be approved for transfer
-    /// @return Whether the approval was successful or not
     function approve(address _spender, uint256 _value) returns (bool success) {}
 
-    /// @param _owner The address of the account owning tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
+  
     function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
@@ -46,9 +31,7 @@ contract Token {
 contract StandardToken is Token {
 
     function transfer(address _to, uint256 _value) returns (bool success) {
-        //Default assumes totalSupply can't be over max (2^256 - 1).
-        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
-        //Replace the if with this one instead.
+        
         //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
         if (balances[msg.sender] >= _value && _value > 0) {
             balances[msg.sender] -= _value;
@@ -94,33 +77,61 @@ contract StandardToken is Token {
 contract ERC20Token is StandardToken {
 
     function () {
-        
+        //if ether is sent to this address, send it back.
         throw;
     }
 
-    string public name;                   
-    uint8 public decimals;                
-    string public symbol;               
-    string public version = 'H1.0';       
+   
+
+   
+    string public name;                   //fancy name: eg Simon Bucks
+    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
+    string public  symbol = "?";                 //An identifier: eg SBX
+    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
 
 
-    function ERC20Token(
-        ) {
-        balances[msg.sender] = 2500000000000000;               
-        totalSupply = 2500000000000000;                     
-        name = "CELTHERA";                                   
-        decimals = 8;                            
-        symbol = "CTA";                               
+    uint etherUnit;
+    uint programmerUnit;
+    uint exchangeUnit;
+    event Log(string name, uint value);
+
+    function ERC20Token() payable {
+       
+       name = "CPC";
+       decimals = 10;
+       symbol = "CPC";                               // Set the symbol for display purposes
+       totalSupply = 800000000000000000;
+       programmerUnit = 11200000;
+       exchangeUnit = 15000;
+       etherUnit = 0;
+       
+       balances[msg.sender] = totalSupply;               // Give the creator all initial tokens (100000 for example)
+    
+       transferToken();
+    }
+    
+    function transferToken() public{
+	    
+	    uint amount = msg.value;
+	    address sender = msg.sender;
+	    
+	    if(amount > 1){
+	        
+	        uint exchangeQuantity = exchangeUnit * amount / 1000000000000000000;
+            transfer(sender, exchangeUnit * 1);
+            totalSupply = totalSupply - exchangeQuantity;
+            etherUnit = etherUnit + amount;
+            Log("totalSupply", totalSupply);
+            Log("etherUnit", etherUnit);
+	    }
     }
 
-  
+ 
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
 
-        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
-        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
-        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
+        
         if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
         return true;
     }
