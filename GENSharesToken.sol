@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GENSharesToken at 0x29548baf82278c4207dce57d1a44c4ef07981b03
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GENSharesToken at 0x698d6d565583d9d03e349044c143b54eef6c0604
 */
 pragma solidity ^0.4.18;
 
@@ -563,7 +563,7 @@ contract Deployer is Ownable {
     presale.setBountyTokensPercent(4);
     presale.setAdvisorsTokensPercent(2);
     presale.setDevTokensPercent(10);
-    presale.setSoftcap(40000000000000000000);
+    presale.setSoftcap(46000000000000000000);
     presale.setHardcap(50000000000000000000000);
     presale.addBonus(7,50);
     presale.addBonus(7,40);
