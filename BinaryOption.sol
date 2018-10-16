@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BinaryOption at 0xa6a8114712c2eb2fa1807b9577bcb2787c07b78c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BinaryOption at 0xe9a3217b3e9c7384dd62c0159ab05ea00ab4093a
 */
 pragma solidity ^0.4.18;
 /**
@@ -468,11 +468,11 @@ contract NamiCrowdSale {
     event TransferToExchange(address indexed _from, address indexed _to, uint _value, uint _price);
     
     
-        /**
-     * @dev Transfer the specified amount of tokens to the specified address.
-     *      Invokes the `tokenFallback` function if the recipient is a contract.
+    /**
+     * @dev Transfer the specified amount of tokens to the NamiExchange address.
+     *      Invokes the `tokenFallbackExchange` function.
      *      The token transfer fails if the recipient is a contract
-     *      but does not implement the `tokenFallback` function
+     *      but does not implement the `tokenFallbackExchange` function
      *      or the fallback function to receive funds.
      *
      * @param _to    Receiver address.
@@ -498,10 +498,10 @@ contract NamiCrowdSale {
     }
     
     /**
-     * @dev Transfer the specified amount of tokens to the specified address.
-     *      Invokes the `tokenFallback` function if the recipient is a contract.
+     * @dev Transfer the specified amount of tokens to the NamiExchange address.
+     *      Invokes the `tokenFallbackBuyer` function.
      *      The token transfer fails if the recipient is a contract
-     *      but does not implement the `tokenFallback` function
+     *      but does not implement the `tokenFallbackBuyer` function
      *      or the fallback function to receive funds.
      *
      * @param _to    Receiver address.
@@ -544,10 +544,12 @@ contract BinaryOption {
     address public namiMultiSigWallet;
     
     Session public session;
-    uint public timeInvestInMinute = 30;
-    uint public timeOneSession = 180;
+    uint public timeInvestInMinute = 10;
+    uint public timeOneSession = 15;
     uint public sessionId = 1;
-    uint public rate = 190;
+    uint public rateWin = 100;
+    uint public rateLoss = 20;
+    uint public rateFee = 5;
     uint public constant MAX_INVESTOR = 20;
     uint public minimunEth = 10000000000000000; // minimunEth = 0.01 eth
     /**
@@ -556,7 +558,7 @@ contract BinaryOption {
     event SessionOpen(uint timeOpen, uint indexed sessionId);
     event InvestClose(uint timeInvestClose, uint priceOpen, uint indexed sessionId);
     event Invest(address indexed investor, bool choose, uint amount, uint timeInvest, uint indexed sessionId);
-    event SessionClose(uint timeClose, uint indexed sessionId, uint priceClose, uint nacPrice, uint rate);
+    event SessionClose(uint timeClose, uint indexed sessionId, uint priceClose, uint nacPrice, uint rateWin, uint rateLoss, uint rateFee);
 
     event Deposit(address indexed sender, uint value);
     /// @dev Fallback function allows to deposit ether.
@@ -623,6 +625,7 @@ contract BinaryOption {
     
     /// @dev Change time for investor can invest in one session, can only change at time not in session
     /// @param _timeInvest time invest in minutes
+    ///---------------------------change time function------------------------------
     function changeTimeInvest(uint _timeInvest)
         public
         onlyEscrow
@@ -630,18 +633,7 @@ contract BinaryOption {
         require(!session.isOpen && _timeInvest < timeOneSession);
         timeInvestInMinute = _timeInvest;
     }
-    
-    // 100 < _rate < 200
-    // price of NAC for investor win = _rate/100
-    // price of NAC for investor loss = 2 - _rate/100
-    function changeRate(uint _rate)
-        public
-        onlyEscrow
-    {
-        require(100 < _rate && _rate < 200 && !session.isOpen);
-        rate = _rate;
-    }
-    
+
     function changeTimeOneSession(uint _timeOneSession) 
         public
         onlyEscrow
@@ -649,6 +641,33 @@ contract BinaryOption {
         require(!session.isOpen && _timeOneSession > timeInvestInMinute);
         timeOneSession = _timeOneSession;
     }
+
+    /////------------------------change rate function-------------------------------
+    
+    function changeRateWin(uint _rateWin)
+        public
+        onlyEscrow
+    {
+        require(!session.isOpen);
+        rateWin = _rateWin;
+    }
+    
+    function changeRateLoss(uint _rateLoss)
+        public
+        onlyEscrow
+    {
+        require(!session.isOpen);
+        rateLoss = _rateLoss;
+    }
+    
+    function changeRateFee(uint _rateFee)
+        public
+        onlyEscrow
+    {
+        require(!session.isOpen);
+        rateFee = _rateFee;
+    }
+    
     
     /// @dev withdraw ether to nami multisignature wallet, only escrow can call
     /// @param _amount value ether in wei to withdraw
@@ -777,17 +796,16 @@ contract BinaryOption {
     
     /// @dev get amount of ether to buy NAC for investor
     /// @param _ether amount ether which investor invest
-    /// @param _rate rate between win and loss investor
     /// @param _status true for investor win and false for investor loss
-    function getEtherToBuy (uint _ether, uint _rate, bool _status)
+    function getEtherToBuy (uint _ether, bool _status)
         public
-        pure
+        view
         returns (uint)
     {
         if (_status) {
-            return _ether * _rate / 100;
+            return _ether * rateWin / 100;
         } else {
-            return _ether * (200 - _rate) / 100;
+            return _ether * rateLoss / 100;
         }
     }
 
@@ -804,11 +822,14 @@ contract BinaryOption {
         uint etherToBuy;
         NamiCrowdSale namiContract = NamiCrowdSale(namiCrowdSaleAddr);
         uint price = namiContract.getPrice();
+        require(price != 0);
         for (uint i = 0; i < session.investorCount; i++) {
             if (session.win[i]==result) {
-                etherToBuy = getEtherToBuy(session.amountInvest[i], rate, true);
+                etherToBuy = (session.amountInvest[i] - session.amountInvest[i] * rateFee / 100) * rateWin / 100;
+                uint etherReturn = session.amountInvest[i] - session.amountInvest[i] * rateFee / 100;
+                (session.investor[i]).transfer(etherReturn);
             } else {
-                etherToBuy = getEtherToBuy(session.amountInvest[i], rate, false);
+                etherToBuy = (session.amountInvest[i] - session.amountInvest[i] * rateFee / 100) * rateLoss / 100;
             }
             namiContract.buy.value(etherToBuy)(session.investor[i]);
             // reset investor
@@ -817,7 +838,7 @@ contract BinaryOption {
             session.amountInvest[i] = 0;
         }
         session.isOpen = false;
-        SessionClose(now, sessionId, _priceClose, price, rate);
+        SessionClose(now, sessionId, _priceClose, price, rateWin, rateLoss, rateFee);
         sessionId += 1;
         
         // require(!session.isReset && !session.isOpen);
@@ -872,6 +893,8 @@ contract NamiExchange {
 
     event UpdateBid(address owner, uint price, uint balance);
     event UpdateAsk(address owner, uint price, uint volume);
+    event BuyHistory(address indexed buyer, address indexed seller, uint price, uint volume, uint time);
+    event SellHistory(address indexed seller, address indexed buyer, uint price, uint volume, uint time);
 
     
     mapping(address => OrderBid) public bid;
@@ -879,12 +902,10 @@ contract NamiExchange {
     string public name = "NacExchange";
     
     /// address of Nami token
-    address NamiAddr;
+    address public NamiAddr;
     
     /// price of Nac = ETH/NAC
     uint public price = 1;
-    uint public etherBalance=0;
-    uint public nacBalance=0;
     // struct store order of user
     struct OrderBid {
         uint price;
@@ -899,34 +920,8 @@ contract NamiExchange {
         
     // prevent lost ether
     function() payable public {
-        require(msg.value > 0);
-        if (bid[msg.sender].price > 0) {
-            bid[msg.sender].eth = (bid[msg.sender].eth).add(msg.value);
-            etherBalance = etherBalance.add(msg.value);
-            UpdateBid(msg.sender, bid[msg.sender].price, bid[msg.sender].eth);
-        } else {
-            // refund
-            msg.sender.transfer(msg.value);
-        }
-        // test
-        // address test = "0x70c932369fc1C76fde684FF05966A70b9c1561c1";
-        // test.transfer(msg.value);
-    }
-
-    // prevent lost token
-    function tokenFallback(address _from, uint _value, bytes _data) public returns (bool success) {
-        require(_value > 0 && _data.length == 0);
-        if (ask[_from].price > 0) {
-            ask[_from].volume = (ask[_from].volume).add(_value);
-            nacBalance = nacBalance.add(_value);
-            UpdateAsk(_from, ask[_from].price, ask[_from].volume);
-            return true;
-        } else {
-            //refund
-            ERC23 asset = ERC23(NamiAddr);
-            asset.transfer(_from, _value);
-            return false;
-        }
+        require(msg.data.length != 0);
+        require(msg.value == 0);
     }
     
     modifier onlyNami {
@@ -934,110 +929,122 @@ contract NamiExchange {
         _;
     }
     
-    
     /////////////////
-    // function about bid Order-----------------------------------------------------------
+    //---------------------------function about bid Order-----------------------------------------------------------
     
     function placeBuyOrder(uint _price) payable public {
-        require(_price > 0);
+        require(_price > 0 && msg.value > 0 && bid[msg.sender].eth == 0);
         if (msg.value > 0) {
-            etherBalance += msg.value;
             bid[msg.sender].eth = (bid[msg.sender].eth).add(msg.value);
+            bid[msg.sender].price = _price;
             UpdateBid(msg.sender, _price, bid[msg.sender].eth);
         }
-        bid[msg.sender].price = _price;
     }
     
-    function tokenFallbackBuyer(address _from, uint _value, address _buyer) onlyNami public returns (bool success) {
-        ERC23 asset = ERC23(NamiAddr);
-        uint currentEth = bid[_buyer].eth;
-        if ((_value.div(bid[_buyer].price)) > currentEth) {
-            if (_from.send(currentEth) && asset.transfer(_buyer, currentEth.mul(bid[_buyer].price)) && asset.transfer(_from, _value - (currentEth.mul(bid[_buyer].price) ) ) ) {
+    function sellNac(uint _value, address _buyer, uint _price) public returns (bool success) {
+        require(_price == bid[_buyer].price && _buyer != msg.sender);
+        NamiCrowdSale namiToken = NamiCrowdSale(NamiAddr);
+        uint ethOfBuyer = bid[_buyer].eth;
+        uint maxToken = ethOfBuyer.mul(bid[_buyer].price);
+        require(namiToken.allowance(msg.sender, this) >= _value && _value > 0 && ethOfBuyer != 0 && _buyer != 0x0);
+        if (_value > maxToken) {
+            if (msg.sender.send(ethOfBuyer) && namiToken.transferFrom(msg.sender,_buyer,maxToken)) {
+                // update order
                 bid[_buyer].eth = 0;
-                etherBalance = etherBalance.sub(currentEth);
                 UpdateBid(_buyer, bid[_buyer].price, bid[_buyer].eth);
+                BuyHistory(_buyer, msg.sender, bid[_buyer].price, maxToken, now);
                 return true;
             } else {
-                // refund token
-                asset.transfer(_from, _value);
-                return false;
+                // revert anything
+                revert();
             }
         } else {
             uint eth = _value.div(bid[_buyer].price);
-            if (_from.send(eth) && asset.transfer(_buyer, _value)) {
+            if (msg.sender.send(eth) && namiToken.transferFrom(msg.sender,_buyer,_value)) {
+                // update order
                 bid[_buyer].eth = (bid[_buyer].eth).sub(eth);
-                etherBalance = etherBalance.sub(eth);
                 UpdateBid(_buyer, bid[_buyer].price, bid[_buyer].eth);
+                BuyHistory(_buyer, msg.sender, bid[_buyer].price, _value, now);
                 return true;
             } else {
-                // refund token
-                asset.transfer(_from, _value);
-                return false;
+                // revert anything
+                revert();
             }
         }
     }
     
     function closeBidOrder() public {
         require(bid[msg.sender].eth > 0 && bid[msg.sender].price > 0);
+        // transfer ETH
         msg.sender.transfer(bid[msg.sender].eth);
-        etherBalance = etherBalance.sub(bid[msg.sender].eth);
+        // update order
         bid[msg.sender].eth = 0;
         UpdateBid(msg.sender, bid[msg.sender].price, bid[msg.sender].eth);
     }
     
 
     ////////////////
-    // function about ask Order-----------------------------------------------------------
-    // place ask order by send NAC to contract
+    //---------------------------function about ask Order-----------------------------------------------------------
     
+    // place ask order by send NAC to Nami Exchange contract
+    // this function place sell order
     function tokenFallbackExchange(address _from, uint _value, uint _price) onlyNami public returns (bool success) {
-        require(_price > 0);
+        require(_price > 0 && _value > 0 && ask[_from].volume == 0);
         if (_value > 0) {
-            nacBalance = nacBalance.add(_value);
             ask[_from].volume = (ask[_from].volume).add(_value);
             ask[_from].price = _price;
             UpdateAsk(_from, _price, ask[_from].volume);
-            return true;
-        } else {
-            ask[_from].price = _price;
-            return false;
         }
+        return true;
     }
     
     function closeAskOrder() public {
         require(ask[msg.sender].volume > 0 && ask[msg.sender].price > 0);
-        ERC23 asset = ERC23(NamiAddr);
-        if (asset.transfer(msg.sender, ask[msg.sender].volume)) {
-            nacBalance = nacBalance.sub(ask[msg.sender].volume);
-            ask[msg.sender].volume = 0;
-            UpdateAsk(msg.sender, ask[msg.sender].price, 0);
-        }
+        NamiCrowdSale namiToken = NamiCrowdSale(NamiAddr);
+        uint previousBalances = namiToken.balanceOf(msg.sender);
+        // transfer token
+        namiToken.transfer(msg.sender, ask[msg.sender].volume);
+        // update order
+        ask[msg.sender].volume = 0;
+        UpdateAsk(msg.sender, ask[msg.sender].price, 0);
+        // check balance
+        assert(previousBalances < namiToken.balanceOf(msg.sender));
     }
     
-    function buyNac(address _seller) payable public returns (bool success) {
+    function buyNac(address _seller, uint _price) payable public returns (bool success) {
         require(msg.value > 0 && ask[_seller].volume > 0 && ask[_seller].price > 0);
-        ERC23 asset = ERC23(NamiAddr);
+        require(_price == ask[_seller].price && _seller != msg.sender);
+        NamiCrowdSale namiToken = NamiCrowdSale(NamiAddr);
         uint maxEth = (ask[_seller].volume).div(ask[_seller].price);
+        uint previousBalances = namiToken.balanceOf(msg.sender);
         if (msg.value > maxEth) {
-            if (_seller.send(maxEth) && msg.sender.send(msg.value.sub(maxEth)) && asset.transfer(msg.sender, ask[_seller].volume)) {
-                nacBalance = nacBalance.sub(ask[_seller].volume);
+            if (_seller.send(maxEth) && msg.sender.send(msg.value.sub(maxEth))) {
+                // transfer token
+                namiToken.transfer(msg.sender, ask[_seller].volume);
+                SellHistory(_seller, msg.sender, ask[_seller].price, ask[_seller].volume, now);
+                // update order
                 ask[_seller].volume = 0;
                 UpdateAsk(_seller, ask[_seller].price, 0);
+                assert(previousBalances < namiToken.balanceOf(msg.sender));
                 return true;
             } else {
-                //refund
-                return false;
+                // revert anything
+                revert();
             }
         } else {
-            if (_seller.send(msg.value) && asset.transfer(msg.sender, (msg.value).mul(ask[_seller].price))) {
-                uint nac = (msg.value).mul(ask[_seller].price);
-                nacBalance = nacBalance.sub(nac);
+            uint nac = (msg.value).mul(ask[_seller].price);
+            if (_seller.send(msg.value)) {
+                // transfer token
+                namiToken.transfer(msg.sender, nac);
+                // update order
                 ask[_seller].volume = (ask[_seller].volume).sub(nac);
                 UpdateAsk(_seller, ask[_seller].price, ask[_seller].volume);
+                SellHistory(_seller, msg.sender, ask[_seller].price, nac, now);
+                assert(previousBalances < namiToken.balanceOf(msg.sender));
                 return true;
             } else {
-                //refund
-                return false;
+                // revert anything
+                revert();
             }
         }
     }
