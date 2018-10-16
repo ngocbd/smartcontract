@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoMastersToken at 0x08aa638f04c9658fc9a5712e794e27a4c6b561e8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoMastersToken at 0x02135140a3ecce81711460bac817060a6e4a96d7
 */
 pragma solidity ^0.4.11;
 
@@ -199,7 +199,7 @@ contract StandardToken is BasicToken, ERC20 {
 contract CryptoMastersToken is StandardToken {
     // metadata
     string public constant name = "Crypto Masters Token";
-    string public constant symbol = "CMS";
+    string public constant symbol = "CMT";
     uint public constant decimals = 0;
     // crowdsale parameters
     uint public constant tokenCreationMin = 1000000;
@@ -333,8 +333,10 @@ contract CryptoMastersToken is StandardToken {
         
         if(msg.value > purchaseValue) {
             msg.sender.transfer(msg.value.sub(purchaseValue));
-        }  
-        EthersRaised += purchaseValue;
+        }
+            
+        EthersRaised += purchaseValue.div(1000000000000000000);
+        
     }
     /**
      * @dev Withdraw funds to owners.
@@ -346,6 +348,8 @@ contract CryptoMastersToken is StandardToken {
         require(_amount <= this.balance);
         msg.sender.transfer(_amount);
     }
+    
+   
     /**
      * 
      * @dev When contract is halted no one can buy new tokens.
