@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsalePorto at 0xc8b34e97773ffaca00c06298d9e2233ad56dff93
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsalePorto at 0xfc7d60b31937edb9f2fd1f0f00f3bb2021cab386
 */
 // ----------------------------------------------------------------------------
 // Safe maths
@@ -49,7 +49,7 @@ contract Owned {
 }
 
 contract IPortoCoin{
-   function transfer(address _to, uint256 _value) returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
 }
 
 contract CrowdsalePorto is Owned {
@@ -105,7 +105,7 @@ contract CrowdsalePorto is Owned {
   }
   
   function _deliverTokens(address _beneficiary, uint256 _tokenAmount) internal {
-    token.transfer(_beneficiary,_tokenAmount);
+    token.transferFrom(owner,_beneficiary,_tokenAmount);
   }
 
   function _processPurchase(address _beneficiary, uint256 _tokenAmount) internal {
