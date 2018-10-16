@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract tokensale at 0x5af9af89535d0b0fc43cd4b9c69f5662fac4c8f8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract tokensale at 0xed6c0654cd61de5b1355ae4e9d9c786005e9d5bd
 */
 pragma solidity ^0.4.10;
 
@@ -195,9 +195,7 @@ contract tokensale {
     uint256 public numberOfTokensLeft;
     uint256 public pricePerToken;
     uint256 public tokensFromPresale = 0;
-    uint256 public tokensFromPreviousTokensale = 0;
     uint8 public decimals = 2;
-    uint256 public withdrawLimit = 200000000000000000000;
     
     address public owner;
     string public name;
@@ -216,7 +214,6 @@ contract tokensale {
     uint256 public numberOfDates = 8;
     
     tokensale ps = tokensale(0xa67d97d75eE175e05BB1FB17529FD772eE8E9030);
-    tokensale pts = tokensale(0xED6c0654cD61De5b1355Ae4e9d9C786005e9D5BD);
     
     function tokensale(address tokenAddress, uint256 noOfTokens, uint256 prPerToken) {
         dates[0] = 1505520000;
@@ -274,32 +271,12 @@ contract tokensale {
         }
     }
     
-    function withdraw(uint256 amount) {
-        if(msg.sender == owner) {
-            if(amount <= withdrawLimit) {
-                withdrawLimit-=amount;
-                if(!finalAddress.send(amount)) {
-                    throw;
-                }
-            } else {
-                throw;
-            }
-        } else {
-            throw;
-        }
-    }
-    
     function updatePresaleNumbers() {
         if(msg.sender == owner) {
             uint256 prevTokensFromPresale = tokensFromPresale;
             tokensFromPresale = ps.numberOfTokens() - ps.numberOfTokensLeft();
             uint256 dif = tokensFromPresale - prevTokensFromPresale;
             numberOfTokensLeft -= dif * 100;
-            
-            uint256 prevTokensFromPreviousTokensale = tokensFromPreviousTokensale;
-            tokensFromPreviousTokensale = pts.numberOfTokens() - pts.numberOfTokensLeft();
-            uint256 diff = tokensFromPreviousTokensale - prevTokensFromPreviousTokensale;
-            numberOfTokensLeft -= diff;
         } else {
             throw;
         }
@@ -310,12 +287,6 @@ contract tokensale {
         tokensFromPresale = ps.numberOfTokens() - ps.numberOfTokensLeft();
         uint256 dif = tokensFromPresale - prevTokensFromPresale;
         numberOfTokensLeft -= dif * 100;
-        
-        uint256 prevTokensFromPreviousTokensale = tokensFromPreviousTokensale;
-        tokensFromPreviousTokensale = pts.numberOfTokens() - pts.numberOfTokensLeft();
-        uint256 diff = tokensFromPreviousTokensale - prevTokensFromPreviousTokensale;
-        numberOfTokensLeft -= diff;
-        
         uint256 weiSent = msg.value * 100;
         if(weiSent==0) {
             throw;
