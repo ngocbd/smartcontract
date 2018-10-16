@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETHDividends at 0x906d7b0bae2ae1aca8c5afdf2812d7f8dd999ebe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETHDividends at 0xc27ead2d333d73db43323ebd2d7f1dbced1ec812
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.23;
 
 /*
           ,/`.
@@ -12,17 +12,24 @@ pragma solidity ^0.4.18;
  '-.._/___...-"-.-..__`.
   B
 
- EthDividends. A no-bullshit, transparent, self-sustaining pyramid scheme.
+ https://ETHDividends.com - A self-sustaining, secure and transparent game of fear and greed.
+
+  
+ 
  
  Inspired by https://test.jochen-hoenicke.de/eth/ponzitoken/
 
  Developer:
- 
- Xaos@keemail.me
  https://t.me/XaosPL
- https://discord.gg/3zVBb
-	
+ xaos@keemail.com
  
+ Discord:
+ https://discordapp.com/invite/6Yr36Jr
+ 
+ Telegram:
+ https://t.me/ETHDividends
+ 
+
  
 */
 
