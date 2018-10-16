@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Contest at 0xc008dcb708c68286d80ae36cba6397ed5bd5c7ee
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Contest at 0x1aa7cd179908adb9c257e7501c1eb32531e66616
 */
 /** 
 * The contract defining the contest, allowing participation and voting.
@@ -64,13 +64,13 @@ c4c = 0x87b0de512502f3e86fd22654b72a640c8e0f59cc;
 c4cfee = 1000;
 owner = msg.sender;
 
-deadlineParticipation=1485858780;
-deadlineVoting=1486463580;
-participationFee=100000000000000000;
-votingFee=0000000000000000;
-prizeOwner=955;
+deadlineParticipation=1488344100;
+deadlineVoting=1489640100;
+participationFee=200000000000000000;
+votingFee=10000000000000000;
+prizeOwner=4500;
 prizeReferee=0;
-prizeWinners.push(6045);
+prizeWinners.push(5000);
 nLuckyVoters=1;
 
 
@@ -80,148 +80,154 @@ sumPrizes += prizeWinners[i];
 }
 if(sumPrizes>10000) 
 throw;
-else if(sumPrizes<10000 && nLuckyVoters == 0)//make sure everything is paid out
+else if(sumPrizes < 10000 && nLuckyVoters == 0)//make sure everything is paid out
 throw;
 }
 
 /**
-     * adds msg.sender to the list of participants if the deadline was not yet met and the participation fee is paid
-     * */
-    function participate() payable {
-        if(msg.value<participationFee)
-            throw;
-        else if (now >= deadlineParticipation) 
-            throw;
-        else if (participated[msg.sender])
-            throw;
-        else {
-            participants.push(msg.sender);
-            participated[msg.sender]=true;
-            //if the winners list is smaller than the prize list, push the candidate
-            if(winners.length < prizeWinners.length) winners.push(msg.sender);
-        }    
-    }
+* adds msg.sender to the list of participants if the deadline was not yet met and the participation fee is paid
+* */
+function participate() payable {
+if(msg.value < participationFee)
+throw;
+else if (now >= deadlineParticipation) 
+throw;
+else if (participated[msg.sender])
+throw;
+else if (msg.sender!=tx.origin) //contract could decline money sending or have an expensive fallback function, only wallets should be able to participate
+throw;
+else {
+participants.push(msg.sender);
+participated[msg.sender]=true;
+//if the winners list is smaller than the prize list, push the candidate
+if(winners.length < prizeWinners.length) winners.push(msg.sender);
+} 
+}
 
-    /**
-     * adds msg.sender to the voter list and updates vote related mappings if msg.value is enough, the vote is done between the deadlines and the voter didn't vote already
-     */
-    function vote(address candidate) payable{
-        if(msg.value<votingFee) 
-            throw;
-        else if(now<deadlineParticipation || now >=deadlineVoting)
-            throw;
-        else if(voted[msg.sender])//voter did already vote
-            throw;
-        else{
-            voters.push(msg.sender);
-            voted[msg.sender] = true;
-            numVotes[candidate]++;
-            
-            for(var i = 0; i<winners.length; i++){//from the first to the last
-                if(winners[i]==candidate) break;//the candidate remains on the same position
-                if(numVotes[candidate]>numVotes[winners[i]]){//candidate is better
-                    //else, usually winners[i+1]==candidate, because usually a candidate just improves by one ranking
-                    //however, if there are multiple candidates with the same amount of votes, it might be otherwise
-                    for(var j = getCandidatePosition(candidate, i+1); j>i; j--){
-                       winners[j]=winners[j-1];  
-                    }
-                    winners[i]=candidate;
-                    break;
-                }
-            }
-        }
-    }
-  
-  function getCandidatePosition(address candidate, uint startindex) internal returns (uint){
-    for(uint i = startindex; i < winners.length; i++){
-      if(winners[i]==candidate) return i;
-    }
-    return winners.length-1;
-  }
-    
-    /**
-     * only called by referee, does not delete the participant from the list, but keeps him from winning (because of inappropiate content), only in contract if a referee exists
-     * */
-    function disqualify(address candidate){
-        if(msg.sender==referee)
-            disqualified[candidate]=true;
-    }
-    
-    /**
-     * only callable by referee. in case he disqualified the wrong participant
-     * */
-    function requalify(address candidate){
-        if(msg.sender==referee)
-            disqualified[candidate]=false;
-    }
-    
-    /**
-     * only callable after voting deadline, distributes the prizes, fires event?
-     * */
-    function close(){
-        // if voting already ended and the contract has not been closed yet
-        if(now>=deadlineVoting&&totalPrize==0){
-            determineLuckyVoters();
-            if(this.balance>10000) distributePrizes(); //more than 10000 wei so every party gets at least 1 wei (if s.b. gets 0.01%)
-            ContestClosed(totalPrize, winners, luckyVoters);
-        }
-    }
-    
-    /**
-     * Determines the winning voters
-     * */
-    function determineLuckyVoters() constant {
-        if(nLuckyVoters>=voters.length)
-            luckyVoters = voters;
-        else{
-             mapping (uint => bool) chosen;
-            uint nonce=1;
-     
-            uint rand;
-            for(uint i = 0; i < nLuckyVoters; i++){
-                do{
-                    rand = randomNumberGen(nonce, voters.length);
-                    nonce++;
-                }while (chosen[rand]);
-                
-                chosen[rand] = true;
-                luckyVoters.push(voters[rand]);
-            }
-        }
-    }
-    
-    /**
-     * creates a random number in [0,range)
-     * */
-    function randomNumberGen(uint nonce, uint range) internal constant returns(uint){
-        return uint(block.blockhash(block.number-nonce))%range;
-    }
-    
-    /**
-     * distribites the contract balance amongst the creator, wthe winners, the lucky voters, the referee and the provider
-     * */
-    function distributePrizes() internal{
-        
-        if(!c4c.send(this.balance/10000*c4cfee))  throw;
-        totalPrize = this.balance;
-        if(prizeOwner!=0 && !owner.send(totalPrize/10000*prizeOwner)) throw;
-        if(prizeReferee!=0 && !referee.send(totalPrize/10000*prizeReferee)) throw;
-        for (uint8 i = 0; i < winners.length; i++)
-            if(prizeWinners[i]!=0 && !winners[i].send(totalPrize/10000*prizeWinners[i])) throw;
-        if (luckyVoters.length>0){//if anybody voted
-            if(this.balance>luckyVoters.length){//if there is ether left to be distributed amongst the lucky voters
-                uint amount = this.balance/luckyVoters.length;
-                for(uint8 j = 0; j < luckyVoters.length; j++)
-                    if(!luckyVoters[j].send(amount))  throw;
-            }
-        }
-        else if(!owner.send(this.balance)) throw;//if there is no lucky voter, give remainder to the owner
-    }
-    
-    /**
-     * returns the total vote count
-     * */
-    function getTotalVotes() constant returns(uint){
-        return voters.length;
-    }
+/**
+* adds msg.sender to the voter list and updates vote related mappings if msg.value is enough, the vote is done between the deadlines and the voter didn't vote already
+*/
+function vote(address candidate) payable{
+if(msg.value < votingFee) 
+throw;
+else if(now < deadlineParticipation || now >=deadlineVoting)
+throw;
+else if(voted[msg.sender])//voter did already vote
+throw;
+else if (msg.sender!=tx.origin) //contract could decline money sending or have an expensive fallback function, only wallets should be able to vote
+throw;
+else if(!participated[candidate]) //only voting for actual participants
+throw;
+else{
+voters.push(msg.sender);
+voted[msg.sender] = true;
+numVotes[candidate]++;
+
+for(var i = 0; i < winners.length; i++){//from the first to the last
+if(winners[i]==candidate) break;//the candidate remains on the same position
+if(numVotes[candidate]>numVotes[winners[i]]){//candidate is better
+//else, usually winners[i+1]==candidate, because usually a candidate just improves by one ranking
+//however, if there are multiple candidates with the same amount of votes, it might be otherwise
+for(var j = getCandidatePosition(candidate, i+1); j>i; j--){
+winners[j]=winners[j-1]; 
+}
+winners[i]=candidate;
+break;
+}
+}
+}
+}
+
+function getCandidatePosition(address candidate, uint startindex) internal returns (uint){
+for(uint i = startindex; i < winners.length; i++){
+if(winners[i]==candidate) return i;
+}
+return winners.length-1;
+}
+
+/**
+* only called by referee, does not delete the participant from the list, but keeps him from winning (because of inappropiate content), only in contract if a referee exists
+* */
+function disqualify(address candidate){
+if(msg.sender==referee)
+disqualified[candidate]=true;
+}
+
+/**
+* only callable by referee. in case he disqualified the wrong participant
+* */
+function requalify(address candidate){
+if(msg.sender==referee)
+disqualified[candidate]=false;
+}
+
+/**
+* only callable after voting deadline, distributes the prizes, fires event?
+* */
+function close(){
+// if voting already ended and the contract has not been closed yet
+if(now>=deadlineVoting&&totalPrize==0){
+determineLuckyVoters();
+if(this.balance>10000) distributePrizes(); //more than 10000 wei so every party gets at least 1 wei (if s.b. gets 0.01%)
+ContestClosed(totalPrize, winners, luckyVoters);
+}
+}
+
+/**
+* Determines the winning voters
+* */
+function determineLuckyVoters() constant {
+if(nLuckyVoters>=voters.length)
+luckyVoters = voters;
+else{
+mapping (uint => bool) chosen;
+uint nonce=1;
+
+uint rand;
+for(uint i = 0; i < nLuckyVoters; i++){
+do{
+rand = randomNumberGen(nonce, voters.length);
+nonce++;
+}while (chosen[rand]);
+
+chosen[rand] = true;
+luckyVoters.push(voters[rand]);
+}
+}
+}
+
+/**
+* creates a random number in [0,range)
+* */
+function randomNumberGen(uint nonce, uint range) internal constant returns(uint){
+return uint(block.blockhash(block.number-nonce))%range;
+}
+
+/**
+* distribites the contract balance amongst the creator, wthe winners, the lucky voters, the referee and the provider
+* */
+function distributePrizes() internal{
+
+if(!c4c.send(this.balance/10000*c4cfee)) throw;
+totalPrize = this.balance;
+if(prizeOwner!=0 && !owner.send(totalPrize/10000*prizeOwner)) throw;
+if(prizeReferee!=0 && !referee.send(totalPrize/10000*prizeReferee)) throw;
+for (uint8 i = 0; i < winners.length; i++)
+if(prizeWinners[i]!=0 && !winners[i].send(totalPrize/10000*prizeWinners[i])) throw;
+if (luckyVoters.length>0){//if anybody voted
+if(this.balance>luckyVoters.length){//if there is ether left to be distributed amongst the lucky voters
+uint amount = this.balance/luckyVoters.length;
+for(uint8 j = 0; j < luckyVoters.length; j++)
+if(!luckyVoters[j].send(amount)) throw;
+}
+}
+else if(!owner.send(this.balance)) throw;//if there is no lucky voter, give remainder to the owner
+}
+
+/**
+* returns the total vote count
+* */
+function getTotalVotes() constant returns(uint){
+return voters.length;
+}
 }
