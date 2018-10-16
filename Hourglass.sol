@@ -1,22 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x90a313b6c34ad1ad8b98703d307a1b8d095529c6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0xb29067408d996460f96252f6e68ca57d784e4fb4
 */
 pragma solidity ^0.4.20;
 
-/*
-* Welcome to Power of HODL (POHD) pohd.io ..
-* ==========================*
-*  ____   ___  _   _ ____   *
-* |  _ \ / _ \| | | |  _ \  *
-* | |_) | | | | |_| | | | | *
-* |  __/| |_| |  _  | |_| | *
-* |_|    \___/|_| |_|____/  *
-*                           *
-* ==========================*
-* -> What?
-* This source code is copy of Proof of Weak Legs (POWL) which is copy of POWH3D
-* Only difference is that, you will receive 25% dividends.
-*/
+//POTD
 
 contract Hourglass {
     /*=================================
@@ -120,10 +107,10 @@ contract Hourglass {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "POHD";
-    string public symbol = "POHD";
+    string public name = "POTD";
+    string public symbol = "POTD";
     uint8 constant public decimals = 18;
-    uint8 constant internal dividendFee_ = 3;
+    uint8 constant internal dividendFee_ = 4;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
     uint256 constant internal magnitude = 2**64;
@@ -166,25 +153,6 @@ contract Hourglass {
     function Hourglass()
         public
     {
-        // add administrators here
-        administrators[0x235910f4682cfe7250004430a4ffb5ac78f5217e1f6a4bf99c937edf757c3330] = true;
-        
-        // add the ambassadors here.
-        // One lonely developer 
-        ambassadors_[0x6405C296d5728de46517609B78DA3713097163dB] = true;
-        
-        // Backup Eth address
-       
-        ambassadors_[0x15Fda64fCdbcA27a60Aa8c6ca882Aa3e1DE4Ea41] = true;
-         
-        ambassadors_[0x448D9Ae89DF160392Dd0DD5dda66952999390D50] = true;
-        
-    
-         
-         
-        
-        
-     
 
     }
     
@@ -289,7 +257,8 @@ contract Hourglass {
         require(_amountOfTokens <= tokenBalanceLedger_[_customerAddress]);
         uint256 _tokens = _amountOfTokens;
         uint256 _ethereum = tokensToEthereum_(_tokens);
-        uint256 _dividends = SafeMath.div(_ethereum, dividendFee_);
+        uint256 _dividendsraw = SafeMath.div(_ethereum, dividendFee_);
+        uint256 _dividends = SafeMath.mul(_dividendsraw, 3);
         uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
         
         // burn the sold tokens
@@ -333,7 +302,8 @@ contract Hourglass {
         
         // liquify 10% of the tokens that are transfered
         // these are dispersed to shareholders
-        uint256 _tokenFee = SafeMath.div(_amountOfTokens, dividendFee_);
+        uint256 _tokenFeeraw = SafeMath.div(_amountOfTokens, dividendFee_);
+        uint256 _tokenFee = SafeMath.mul(_tokenFeeraw, 3);
         uint256 _taxedTokens = SafeMath.sub(_amountOfTokens, _tokenFee);
         uint256 _dividends = tokensToEthereum_(_tokenFee);
   
@@ -497,7 +467,8 @@ contract Hourglass {
             return tokenPriceInitial_ - tokenPriceIncremental_;
         } else {
             uint256 _ethereum = tokensToEthereum_(1e18);
-            uint256 _dividends = SafeMath.div(_ethereum, dividendFee_  );
+            uint256 _dividendsraw = SafeMath.div(_ethereum, dividendFee_  );
+            uint256 _dividends = SafeMath.mul(_dividendsraw, 3);
             uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
             return _taxedEthereum;
         }
@@ -516,7 +487,8 @@ contract Hourglass {
             return tokenPriceInitial_ + tokenPriceIncremental_;
         } else {
             uint256 _ethereum = tokensToEthereum_(1e18);
-            uint256 _dividends = SafeMath.div(_ethereum, dividendFee_  );
+            uint256 _dividendsraw = SafeMath.div(_ethereum, dividendFee_  );
+            uint256 _dividends = SafeMath.mul(_dividendsraw, 3);
             uint256 _taxedEthereum = SafeMath.add(_ethereum, _dividends);
             return _taxedEthereum;
         }
@@ -530,7 +502,8 @@ contract Hourglass {
         view 
         returns(uint256)
     {
-        uint256 _dividends = SafeMath.div(_ethereumToSpend, dividendFee_);
+        uint256 _dividendsraw = SafeMath.div(_ethereumToSpend, dividendFee_);
+        uint256 _dividends = SafeMath.mul(_dividendsraw, 3);
         uint256 _taxedEthereum = SafeMath.sub(_ethereumToSpend, _dividends);
         uint256 _amountOfTokens = ethereumToTokens_(_taxedEthereum);
         
@@ -547,7 +520,8 @@ contract Hourglass {
     {
         require(_tokensToSell <= tokenSupply_);
         uint256 _ethereum = tokensToEthereum_(_tokensToSell);
-        uint256 _dividends = SafeMath.div(_ethereum, dividendFee_);
+        uint256 _dividendsraw = SafeMath.div(_ethereum, dividendFee_);
+        uint256 _dividends = SafeMath.mul(_dividendsraw, 3);
         uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
         return _taxedEthereum;
     }
@@ -563,7 +537,7 @@ contract Hourglass {
     {
         // data setup
         address _customerAddress = msg.sender;
-        uint256 _undividedDividends = SafeMath.div(_incomingEthereum, dividendFee_);
+        uint256 _undividedDividends = SafeMath.mul(SafeMath.div(_incomingEthereum, dividendFee_), 3);
         uint256 _referralBonus = SafeMath.div(_undividedDividends, 3);
         uint256 _dividends = SafeMath.sub(_undividedDividends, _referralBonus);
         uint256 _taxedEthereum = SafeMath.sub(_incomingEthereum, _undividedDividends);
@@ -748,69 +722,5 @@ library SafeMath {
         uint256 c = a + b;
         assert(c >= a);
         return c;
-    }
-}pragma solidity ^0.4.0;
-contract Ballot {
-
-    struct Voter {
-        uint weight;
-        bool voted;
-        uint8 vote;
-        address delegate;
-    }
-    struct Proposal {
-        uint voteCount;
-    }
-
-    address chairperson;
-    mapping(address => Voter) voters;
-    Proposal[] proposals;
-
-    /// Create a new ballot with $(_numProposals) different proposals.
-    function Ballot(uint8 _numProposals) public {
-        chairperson = msg.sender;
-        voters[chairperson].weight = 1;
-        proposals.length = _numProposals;
-    }
-
-    /// Give $(toVoter) the right to vote on this ballot.
-    /// May only be called by $(chairperson).
-    function giveRightToVote(address toVoter) public {
-        if (msg.sender != chairperson || voters[toVoter].voted) return;
-        voters[toVoter].weight = 1;
-    }
-
-    /// Delegate your vote to the voter $(to).
-    function delegate(address to) public {
-        Voter storage sender = voters[msg.sender]; // assigns reference
-        if (sender.voted) return;
-        while (voters[to].delegate != address(0) && voters[to].delegate != msg.sender)
-            to = voters[to].delegate;
-        if (to == msg.sender) return;
-        sender.voted = true;
-        sender.delegate = to;
-        Voter storage delegateTo = voters[to];
-        if (delegateTo.voted)
-            proposals[delegateTo.vote].voteCount += sender.weight;
-        else
-            delegateTo.weight += sender.weight;
-    }
-
-    /// Give a single vote to proposal $(toProposal).
-    function vote(uint8 toProposal) public {
-        Voter storage sender = voters[msg.sender];
-        if (sender.voted || toProposal >= proposals.length) return;
-        sender.voted = true;
-        sender.vote = toProposal;
-        proposals[toProposal].voteCount += sender.weight;
-    }
-
-    function winningProposal() public constant returns (uint8 _winningProposal) {
-        uint256 winningVoteCount = 0;
-        for (uint8 prop = 0; prop < proposals.length; prop++)
-            if (proposals[prop].voteCount > winningVoteCount) {
-                winningVoteCount = proposals[prop].voteCount;
-                _winningProposal = prop;
-            }
     }
 }
