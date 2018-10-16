@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WideEnergy at 0xa29B2C039a4dC6742F20873D21aFBF3ddaC95D1C
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WideEnergy at 0x62e9ce974213c04bbf97dee1e15f1a0b9df7274c
 */
 pragma solidity ^0.4.11;
 
@@ -8,7 +8,7 @@ contract WideEnergy{
     
     uint public constant _totalsupply = 75000000;
     
-    string public constant symbol = "WWE";
+    string public constant symbol = "WIDE";
     string public constant name = "Wide Energy";
     uint8 public constant decimls = 18;
     
