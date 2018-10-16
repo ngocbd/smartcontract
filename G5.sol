@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract G5 at 0x6a995491c251aa7d280cf321170e6279dd563058
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract G5 at 0x703967db0f05c140d77a8d1c02d52435c6eebe20
 */
 pragma solidity ^0.4.11;
 
@@ -184,14 +184,22 @@ contract StandardToken is ERC20, BasicToken {
  */
  
 contract G5 is StandardToken {
-    uint256 public ceiling;
-    uint256 public floor;
-    uint256 public lastUpdate;
+    uint256 ceiling;
+    uint256 floor;
+    uint256 lastUpdate;
     
     string public name = "G5";
     string public symbol = "G5";
     uint8 public decimals = 8;
-
+    
+    function getFloor() returns(uint256) {
+        return floor;
+    }
+    
+    function getCeiling() returns(uint256) {
+        return ceiling;
+    }
+    
     function updateCeiling() private {
         // ceiling is always 5% above the value of the floor
         ceiling = floor*21/20;
@@ -219,18 +227,18 @@ contract G5 is StandardToken {
         balances[msg.sender] = balances[msg.sender].add(_amount);
         Mint(msg.sender, _amount);
         Transfer(0x0, msg.sender, _amount);
-    }
     
-    function sell(uint _value) {
-        require(_value > 0);
-        require(_value <= balances[msg.sender]);
-        
         // set floor and ceiling if it's been at least 3 blocks since last update
         if (block.number >= lastUpdate+3) {
             floor = this.balance / totalSupply;
             updateCeiling();
             lastUpdate = block.number;
         }
+    }
+    
+    function sell(uint _value) {
+        require(_value > 0);
+        require(_value <= balances[msg.sender]);
         
         balances[msg.sender] = balances[msg.sender].sub(_value);
         totalSupply = totalSupply.sub(_value);
