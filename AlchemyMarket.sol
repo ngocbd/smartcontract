@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AlchemyMarket at 0xc9417ece1f4771ca2f91c44eadf5652c7d3c637b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AlchemyMarket at 0xcdb8a4cf457cf37d03372e9b52921e99679de6e5
 */
 pragma solidity ^0.4.18;
 
@@ -226,7 +226,6 @@ contract AlchemyBase is Manager {
     }
 }
 
-
 contract AlchemyPatent is AlchemyBase {
 
     // patent struct
@@ -271,7 +270,12 @@ contract AlchemyPatent is AlchemyBase {
     function sellPatent(uint16 assetId, uint256 sellPrice) public whenNotPaused {
         Patent memory patent = patents[assetId];
         require(patent.patentOwner == msg.sender);
-        require(sellPrice <= 2 * patent.lastPrice);
+        if (patent.lastPrice > 0) {
+            require(sellPrice <= 2 * patent.lastPrice);
+        } else {
+            require(sellPrice <= 1 ether);
+        }
+        
         require(!patent.onSale);
 
         patent.onSale = true;
@@ -304,7 +308,11 @@ contract AlchemyPatent is AlchemyBase {
     function changePatentSale(uint16 assetId, uint256 newPrice) external whenNotPaused {
         Patent memory patent = patents[assetId];
         require(patent.patentOwner == msg.sender);
-        require(newPrice <= 2 * patent.lastPrice);
+        if (patent.lastPrice > 0) {
+            require(newPrice <= 2 * patent.lastPrice);
+        } else {
+            require(newPrice <= 1 ether);
+        }
         require(patent.onSale == true);
 
         patent.price = newPrice;
@@ -336,22 +344,6 @@ contract AlchemyPatent is AlchemyBase {
         emit BuyPatent(assetId, msg.sender);
     }
 }
-
-contract ChemistryInterface {
-    function isChemistry() public pure returns (bool);
-
-    // function turnOnFurnace(bytes32 x0, bytes32 x1, bytes32 x2, bytes32 x3) public returns (bytes32 r0, bytes32 r1, bytes32 r2, bytes32 r3);
-    function turnOnFurnace(uint16[5] inputAssets, uint128 addition) public returns (uint16[5]);
-
-    function computeCooldownTime(uint128 typeAdd, uint256 baseTime) public returns (uint256);
-}
-
-
-
-contract SkinInterface {
-    function getActiveSkin(address account) public view returns (uint128);
-}
-
 
 
 contract AlchemySynthesize is AlchemyPatent {
@@ -620,6 +612,23 @@ contract AlchemySynthesize is AlchemyPatent {
     }
 }
 
+
+
+contract ChemistryInterface {
+    function isChemistry() public pure returns (bool);
+
+    // function turnOnFurnace(bytes32 x0, bytes32 x1, bytes32 x2, bytes32 x3) public returns (bytes32 r0, bytes32 r1, bytes32 r2, bytes32 r3);
+    function turnOnFurnace(uint16[5] inputAssets, uint128 addition) public returns (uint16[5]);
+
+    function computeCooldownTime(uint128 typeAdd, uint256 baseTime) public returns (uint256);
+}
+
+
+contract SkinInterface {
+    function getActiveSkin(address account) public view returns (uint128);
+}
+
+
 contract AlchemyMinting is AlchemySynthesize {
 
     // Limit the nubmer of zero order assets the owner can create every day
@@ -727,7 +736,6 @@ contract AlchemyMinting is AlchemySynthesize {
         }
     }
 }
-
 
 contract AlchemyMarket is AlchemyMinting {
 
