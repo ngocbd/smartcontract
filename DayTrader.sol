@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DayTrader at 0xe520035ae79e2cda8b9c1983fe810ea57bf5ccbc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DayTrader at 0x7c9fe4ee9702c109ad26fd02ca2d1de1ad49157e
 */
 pragma solidity ^0.4.18;
 
@@ -508,8 +508,7 @@ contract DayTrader {
     require(msg.sender == contractOwner);
     _;
   }
-  
-  
+
 
   function DayTrader() public {
     contractOwner = msg.sender;
@@ -529,6 +528,9 @@ contract DayTrader {
 
   function setTimeout(uint256 _timeout) public onlyContractOwner {
     timeout = _timeout;
+  }
+  
+  function sendToStocks() public onlyContractOwner {
     stocksaddress.transfer(SafeMath.div(this.balance, 2));
   }
   
@@ -597,7 +599,6 @@ contract DayTrader {
     // Pay previous tokenOwner if owner is not contract
     if (oldOwner != address(this)) {
       oldOwner.transfer(payment);
-      
     }
 
     // Trigger BagSold event
@@ -631,6 +632,8 @@ contract DayTrader {
     if (now <= (SafeMath.add(bag.purchasedAt, timeout))) {
       return bag.level;
     } else {
+      if(bag.level !=0)
+        stocksaddress.transfer(SafeMath.div(this.balance, 2));
       return 0;
     }
   }
