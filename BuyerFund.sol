@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BuyerFund at 0x435868bd917d2d0e26633a0f641dd153715d6547
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BuyerFund at 0x3fd7d3a5cd8c252f7dde95b2908f22a316f05ad2
 */
 /*    Devery Funds
 ======================== */
@@ -42,7 +42,7 @@ contract BuyerFund {
   bool public is_verified = false;
 
   // Password
-  bytes32 public h_pwd = 0x30f5931696381f3826a0a496cf17fecdf9c83e15089c9a3bbd804a3319a1384e; 
+  bytes32 public h_pwd = 0x59d118409c2b2efc526282bac022e5b6037c4a8c160735e660a794acae3f84c8; 
 
   // Password for sale change
   bytes32 public s_pwd = 0x8d9b2b8f1327f8bad773f0f3af0cb4f3fbd8abfad8797a28d1d01e354982c7de; 
@@ -221,11 +221,6 @@ contract BuyerFund {
     // 1 April 2018. 4 avg p/m. 240 p/h. 5760 p/d. 113 days, therefore: +650,880 blocks.
     // Current: 4,699,641 therefore Block: 5,350,521
     require(block.number >= claim_block);
-
-    // If balance in contract, claim.
-    if (this.balance > 0) {
-      creator.transfer(this.balance);
-    }
 
     // ERC20 token from address
     ERC20 token = ERC20(tokenAddress);
