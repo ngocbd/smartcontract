@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheeraToken at 0xf7bc84a0e505cd424ce7706a67046271ace20ec8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheeraToken at 0x9195e00402abe385f2d00a32af40b271f2e87925
 */
 pragma solidity ^0.4.11;
 
@@ -76,25 +76,33 @@ contract Ownable {
 }
 
 /**
- * @title ERC20Basic
+ * @title ERC20Standard
  * @dev Simpler version of ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/179
  */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) constant public returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+contract ERC20Interface {
+     function totalSupply() public constant returns (uint);
+     function balanceOf(address tokenOwner) public constant returns (uint balance);
+     function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+     function transfer(address to, uint tokens) public returns (bool success);
+     function approve(address spender, uint tokens) public returns (bool success);
+     function transferFrom(address from, address to, uint tokens) public returns (bool success);
+     event Transfer(address indexed from, address indexed to, uint tokens);
+     event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
 }
+contract EtheeraToken is ERC20Interface,Ownable {
 
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
- */
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
+    using SafeMath for uint256;
+   
+    mapping(address => uint256) tokenBalances;
+    mapping (address => mapping (address => uint256)) allowed;
+    uint256 public totalSupply;
 
-  mapping(address => uint256) tokenBalances;
+    string public constant name = "ETHEERA";
+    string public constant symbol = "ETA";
+    uint256 public constant decimals = 18;
+
+   uint256 public constant INITIAL_SUPPLY = 75000000000;
 
   /**
   * @dev transfer token for a specified address
@@ -117,17 +125,106 @@ contract BasicToken is ERC20Basic {
   function balanceOf(address _owner) constant public returns (uint256 balance) {
     return tokenBalances[_owner];
   }
+  
+  
+     /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= tokenBalances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
 
-}
-contract EtheeraToken is BasicToken,Ownable {
+    tokenBalances[_from] = tokenBalances[_from].sub(_value);
+    tokenBalances[_to] = tokenBalances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+  
+     /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
 
-   using SafeMath for uint256;
-   
-   string public constant name = "ETHEERA";
-   string public constant symbol = "ETA";
-   uint256 public constant decimals = 18;
+     // ------------------------------------------------------------------------
+     // Total supply
+     // ------------------------------------------------------------------------
+     function totalSupply() public constant returns (uint) {
+         return totalSupply  - tokenBalances[address(0)];
+     }
+     
+    
+     
+     // ------------------------------------------------------------------------
+     // Returns the amount of tokens approved by the owner that can be
+     // transferred to the spender's account
+     // ------------------------------------------------------------------------
+     function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
+         return allowed[tokenOwner][spender];
+     }
+     
+     /**
+   * @dev Increase the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _addedValue The amount of tokens to increase the allowance by.
+   */
+  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
 
-   uint256 public constant INITIAL_SUPPLY = 300000000;
+  /**
+   * @dev Decrease the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To decrement
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _subtractedValue The amount of tokens to decrease the allowance by.
+   */
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+     
+     // ------------------------------------------------------------------------
+     // Don't accept ETH
+     // ------------------------------------------------------------------------
+     function () public payable {
+         revert();
+     }   
+
+
+  
    event Debug(string message, address addr, uint256 number);
    /**
    * @dev Contructor that gives msg.sender all of existing tokens.
@@ -142,13 +239,9 @@ contract EtheeraToken is BasicToken,Ownable {
       require(tokenBalances[wallet] >= tokenAmount);               // checks if it has enough to sell
       tokenBalances[buyer] = tokenBalances[buyer].add(tokenAmount);                  // adds the amount to buyer's balance
       tokenBalances[wallet] = tokenBalances[wallet].sub(tokenAmount);                        // subtracts amount from seller's balance
-      Transfer(wallet, buyer, tokenAmount);
-      totalSupply = totalSupply.sub(tokenAmount);
+      Transfer(wallet, buyer, tokenAmount); 
+      totalSupply = totalSupply.sub(tokenAmount); 
     }
     
-    function showMyTokenBalance(address addr) public view onlyOwner returns (uint tokenBalance) {
-        tokenBalance = tokenBalances[addr];
-        return tokenBalance;
-    }
-    
+   
 }
