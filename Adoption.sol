@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Adoption at 0x9cc5404e0ad06fe0ff4d2c7cc5f28a32ae95e483
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Adoption at 0xBAe533C9C0A67D5dE2B89a8fD0bc01A2b450bD2d
 */
 pragma solidity ^0.4.19;
 contract Adoption {
@@ -20,11 +20,11 @@ contract Adoption {
     }
   }
 
-  function returnEth(address oldOwner, uint256 price) private {
+  function returnEth(address oldOwner, uint256 price) public payable {
     oldOwner.transfer(price);
   }
 
-  function fee(address, uint256 price) public {
+  function gimmeTendies(address, uint256 price) public payable {
     ceoAddress.transfer(price);
   }
   // Adopting a pet
@@ -38,7 +38,7 @@ contract Adoption {
     
     require(msg.value >= data[pepeId].price * uint256(1));
     returnEth(data[pepeId].owner,  (data[pepeId].price / 10) * (9)); 
-    fee(ceoAddress, (data[pepeId].price / 10) * (1));
+    gimmeTendies(ceoAddress, (data[pepeId].price / 10) * (1));
     data[pepeId].owner = msg.sender;
     return (pepeId, data[pepeId].price);
     //return value;
