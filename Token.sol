@@ -1,13 +1,16 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x51a9420bbc3cce4fd4b980ee6507c1d866008a76
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x5167b72f0796b1060e36ac2485f4b6882fe58ffb
 */
+// Created by Mohamed Sharaf.
+// EMail: m@mohamedsharaf.net
+// Date: 01/04/2018
 pragma solidity ^0.4.21;
 
 contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
 contract Token {
     // Public variables of the token
-    string public name = "Voxelx GRAY";
+    string public name = "VoxelX GRAY";
     string public symbol = "GRAY";
     uint8 public decimals = 18;
     uint256 public totalSupply = 10000000000 * 10 ** uint256(decimals); // 10 billion tokens;
@@ -46,7 +49,7 @@ contract Token {
         balanceOf[_from] -= _value;
         // Add the same to the recipient
         balanceOf[_to] += _value;
-        Transfer(_from, _to, _value);
+        emit Transfer(_from, _to, _value);
         // Asserts are used to use static analysis to find bugs in your code. They should never fail
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
@@ -123,7 +126,7 @@ contract Token {
         require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
         balanceOf[msg.sender] -= _value;            // Subtract from the sender
         totalSupply -= _value;                      // Updates totalSupply
-        Burn(msg.sender, _value);
+        emit Burn(msg.sender, _value);
         return true;
     }
 
@@ -141,7 +144,7 @@ contract Token {
         balanceOf[_from] -= _value;                         // Subtract from the targeted balance
         allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
         totalSupply -= _value;                              // Update totalSupply
-        Burn(_from, _value);
+        emit Burn(_from, _value);
         return true;
     }
 }
