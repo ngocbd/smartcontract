@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SFTSEV at 0xf772464393ac87a1b7c628bf79090e014d931a23
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SFTSEV at 0x36bdc3b60dc5491fbc7d74a05709e94d5b554321
 */
+pragma solidity ^0.4.21;
+
 contract SFTSEV {
 
     string public name = "Smart First Time 7 Way Distributor";
@@ -19,9 +21,14 @@ contract SFTSEV {
 
     }
 
-    // automatically distribute incoming funds to the 7 addresses based on agreed %
+    
     function () payable public {
-        require(msg.value > 0);
+
+    }
+
+    // distribute incoming funds to the 7 addresses based on agreed %
+    function withDrawFees() public
+    {
         dev.transfer(div(mul(msg.value,1000),10000));
         designer.transfer(div(mul(msg.value,500),10000));
         media.transfer(div(mul(msg.value,1000),10000));
