@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PeerLicensing at 0x7f1d1c0a0c3a5ff6f5523b939b769b9f88509122
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PeerLicensing at 0xc581dc3ac2bd252db8240553c5be8c31e8a01d7b
 */
 pragma solidity ^0.4.23;/*
  _ _____  ___   _ _  __ 
@@ -29,7 +29,9 @@ Decentralized Securities Licensing
 	int constant crr_n = 1; // CRR numerator
 	int constant crr_d = 2; // CRR denominator
 
-	int constant price_coeff = 0x299DC11F94E57CEB1;
+	// The price coefficient. Chosen such that at 1 token total supply
+	// the amount in reserve is 10 ether and token price is 1 Ether.
+	int constant price_coeff = -0x2793DB20E4C20163A;
 
 	// Array between each address and their number of tokens.
 	//mapping(address => uint256) public tokenBalance;
