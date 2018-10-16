@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BNFTToken at 0x03e9aa975f78447e525bdacf9b78d203d55ad89a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BNFTToken at 0xda2c424fc98c741c2d4ef2f42897cefed897ca75
 */
 pragma solidity ^0.4.18;
 
@@ -207,7 +207,7 @@ contract BNFTToken is StandardToken {
   /**
    * @dev Constructor that gives msg.sender all of existing tokens.
    */
-  function SimpleToken() public {
+  function BNFTToken() public {
     totalSupply = INITIAL_SUPPLY;
     balances[msg.sender] = INITIAL_SUPPLY;
   }
