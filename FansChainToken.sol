@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FansChainToken at 0x9ad748Cc73FA6Bf6F48ec4AF64cfe1181f6127A6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FansChainToken at 0xF352D33dC7e5828F47f3DbF7e6d30F8D3f9aA60C
 */
 pragma solidity ^0.4.18;
 
@@ -11,7 +11,7 @@ contract Owned {
         require(msg.sender == owner);
         _;
     }
-    function owned() public {
+    function Owned() public {
         owner = msg.sender;
     }
 
@@ -156,7 +156,7 @@ contract standardToken is ERC20Token, limitedFactor {
     function transferFrom(address _from, address _to, uint256 _value) public TokenUnFreeze returns (bool success) {
         require (balances[_from] > _value);                // Throw if sender does not have enough balance
         require (balances[_to] + _value > balances[_to]);  // Throw if overflow detected
-        require (_value > allowances[_from][msg.sender]);  // Throw if you do not have allowance
+        require (_value <= allowances[_from][msg.sender]);  // Throw if you do not have allowance
         balances[_from] -= _value;                          // Deduct senders balance
         balances[_to] += _value;                            // Add recipient blaance
         allowances[_from][msg.sender] -= _value;            // Deduct allowance for this address
@@ -175,7 +175,7 @@ contract FansChainToken is standardToken,Owned {
     using SafeMath for uint;
 
     string constant public name="FansChain";
-    string constant public symbol="FSC";
+    string constant public symbol="FANSC";
     uint256 constant public decimals=18;
     
     uint256 public totalSupply = 0;
@@ -187,11 +187,12 @@ contract FansChainToken is standardToken,Owned {
     uint256 public ICOSupply = 0;
     uint256 public ContributorsSupply = percent(30);
     uint256 public exchangeRate;
-    
+    bool    public ICOStart;
     
     
     /// @dev Fallback to calling deposit when ether is sent directly to contract.
     function() public payable {
+        require (ICOStart);
         depositToken(msg.value);
     }
     
@@ -238,7 +239,6 @@ contract FansChainToken is standardToken,Owned {
     
     /// @dev set initial message
     function setInitialVaribles(
-        uint256 _icoStartTime, 
         uint256 _icoStopTime,
         uint256 _exchangeRate,
         address _walletAddress,
@@ -247,13 +247,18 @@ contract FansChainToken is standardToken,Owned {
         )
         public
         onlyOwner {
-            startTime = _icoStartTime;
             stopTime = _icoStopTime;
             exchangeRate=_exchangeRate;
             walletAddress = _walletAddress;
             teamAddress = _teamAddress;
             contributorsAddress = _contributorsAddress;
         }
+    
+    /// @dev set ICO start or stop
+    function setICOStart(bool _start) public onlyOwner {
+        ICOStart = _start;
+        startTime = now;
+    }
     
     /// @dev withDraw Ether to a Safe Wallet
     function withDraw() public payable onlyOwner {
