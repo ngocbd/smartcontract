@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IDXM at 0xcc13fc627effd6e35d2d2706ea3c4d7396c610ea
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IDXM at 0x0daf4cd0d8f3132ca5eb256abbe03d45dbbaf7c4
 */
 pragma solidity ^0.4.19;
 
@@ -111,7 +111,6 @@ contract IDXM is Owned, SafeMath {
    * @param _amount Amount to be transferred.
    */
   function transfer(address _to, uint256 _amount) returns (bool success) {
-    require(!locked);
     require(balanceOf[msg.sender] >= _amount);
     require(balanceOf[_to] + _amount >= balanceOf[_to]);
     balanceOf[msg.sender] -= _amount;
@@ -136,7 +135,6 @@ contract IDXM is Owned, SafeMath {
    * @return result of the method call
    */
   function transferFrom(address _from, address _to, uint256 _amount) returns (bool success) {
-    require(!locked);
     require(balanceOf[_from] >= _amount);
     require(balanceOf[_to] + _amount >= balanceOf[_to]);
     require(_amount <= allowance[_from][msg.sender]);
@@ -178,7 +176,6 @@ contract IDXM is Owned, SafeMath {
    * @return result of the method call
    */
   function approve(address _spender, uint256 _amount) returns (bool success) {
-    require(!locked);
     allowance[msg.sender][_spender] = _amount;
     Approval(msg.sender, _spender, _amount);
     return true;
@@ -225,13 +222,6 @@ contract IDXM is Owned, SafeMath {
       return amount*fee*(singleIDXMQty - amountHeld) / feeDivisor;
     } else return amount*fee / baseFeeDivisor;
   }
-  
-  bool public locked = true;
-
-  function unlockToken() onlyOwner {
-    locked = false;
-  }
-
   function precalculate() internal returns (bool success) {
     baseFeeDivisor = pow10(1, feeDecimals);
     feeDivisor = pow10(1, feeDecimals + decimals);
