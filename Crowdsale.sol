@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x3b514e091f220c582a089fb8b8721b23646f2c79
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x7405db460b6ab08f16087c66ec34051c2e579477
 */
 pragma solidity ^0.4.18;
 
@@ -117,12 +117,12 @@ contract BurnableToken is StandardToken {
     Burn(burner, _value);
   }
 }
-contract SpaceTRIEUToken is BurnableToken {
-  string public constant name = "Space TRIEU Token";
-  string public constant symbol = "TRIEU";
+contract SpaceTRUMPLToken is BurnableToken {
+  string public constant name = "Space TRUMPL Token";
+  string public constant symbol = "TRUMP";
   uint32 public constant decimals = 0;
-  uint256 public constant INITIAL_SUPPLY = 37900000;
-  function SpaceTRIEUToken() public {
+  uint256 public constant INITIAL_SUPPLY = 38440000;
+  function SpaceTRUMPLToken() public {
     totalSupply = INITIAL_SUPPLY;
     balances[msg.sender] = INITIAL_SUPPLY;
   }
@@ -132,7 +132,7 @@ contract Crowdsale is Ownable {
 
   using SafeMath for uint;
 
-  SpaceTRIEUToken public token = new SpaceTRIEUToken();
+  SpaceTRUMPLToken public token = new SpaceTRUMPLToken();
 
   address multisig;
   address restricted;
@@ -178,14 +178,15 @@ contract Crowdsale is Ownable {
     restricted = 0x19d1858e8E5f959863EF5a04Db54d3CaE1B58730;
     minAmount = 0.01 * 1 ether;
     rate = 10000;
+    //Pre-ICO Dates:
 
-    saleStartDate = 1515974400; // 15.01.2018 00:00 GMT Main START
-    saleFinishDate = 1517961600; // 07.02.2017 00:00 GMT Main END
-    //Bounty first
-    olympStartDate = 1518134400; // 09.02.2018 00:00 GMT Olymp START
-    olympEndDate = 1519516800; // 25.02.2018 00:00 GMT Olymp END
+    saleStartDate = 1517832000; // 5 February 2018 12:00 UTC START
+    saleFinishDate = 1518696000; // 15 February 2018 12:00 UTC END
+    //ICO Dates:
+    olympStartDate = 1518696060; // 15 February 2018 12:01 UTC START
+    olympEndDate = 1521979200; // 25 march  2018 12:00 UTC END
     //Bounty second
-    endCrowdsaleDate = 1519948800; // 02.03.2018 00:00 GMT Close Contract
+    endCrowdsaleDate = 1521979260; // 25 march  2018 12:10 UTC Close Contract
 
     percentsTeamTokens = 20;
     percentsBountySecondTokens = 5;
