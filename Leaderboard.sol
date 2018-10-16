@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Leaderboard at 0xf4fc13034c1347e3ab1ee1a01c58796bdb20c639
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Leaderboard at 0xe4D6F6AABB8571c1668D8f35818f37dbf8C610E6
 */
 pragma solidity ^0.4.19;
 
@@ -56,7 +56,7 @@ contract Leaderboard {
         owner.transfer(this.balance);
     }
     
-    function getUser(uint index) public view returns(address, uint, string) {
-        return (leaderboard[index].user, leaderboard[index].balance, leaderboard[index].name);
+    function get() public constant returns (User[3]){
+        return leaderboard;
     }
 }
