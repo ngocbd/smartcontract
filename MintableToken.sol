@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintableToken at 0x336f646f87d9f6bc6ed42dd46e8b3fd9dbd15c22
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintableToken at 0x07ba910f747b472ba4840c184f6b6e92b0e7495e
 */
 pragma solidity ^0.4.11;
 
@@ -75,9 +75,8 @@ contract BasicToken is ERC20Basic {
   function burn(uint256 _value) {
       
     require ( balances[msg.sender] >= _value);           // Check if the sender has enough
+
     balances[msg.sender] = balances[msg.sender].sub(_value);
-    totalSupply = totalSupply.sub(_value);
-    
     Burn(msg.sender, _value);
   }
   
@@ -128,7 +127,7 @@ contract StandardToken is ERC20, BasicToken {
     //  allowance to zero by calling `approve(_spender, 0)` if it is not
     //  already 0 to mitigate the race condition described here:
     //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    require((_value != 0) && (allowed[msg.sender][_spender] == 0)) ;
+    require((_value == 0) && (allowed[msg.sender][_spender] == 0)) ;
 
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
