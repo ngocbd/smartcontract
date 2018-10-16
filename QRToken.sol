@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QRToken at 0xa39faccaddd80f03fafc3fcfa06e6fc796296d61
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QRToken at 0x6745c87289ab2524d26565679532acf88e7675db
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'QTest' token contract
+// 'QR' token contract
 //
 // Deployed to : 0x352aAff068CA9bF8aBa1DAEEbD59a4571BF42af8
 // Symbol      : QR
@@ -123,25 +123,20 @@ contract QRToken is ERC20Interface, Owned, SafeMath {
         balances[0x352aAff068CA9bF8aBa1DAEEbD59a4571BF42af8] = 1560000000000000000000000000000000; // General
         balances[0x9db9be6C5bCbcd80e080Fc30985552e4AF2341dc] = 200000000000000000000000000000000; // Company
         balances[0x2bF978100b39a1778C1F9D6BDc7534ae5D9D6E95] = 200000000000000000000000000000000; // Committee
-        balances[0x0c81B202ebFAFC255138d4F806303C4C58A6A270] = 4800000000000000000000000000000; // Aviv
-        balances[0xe4778eB30FbFf336BFBa58839fff52E23e61B08C] = 4800000000000000000000000000000; // Oren
-        balances[0xeaa7856637F90b8E36EA15fE524aE287a9bad514] = 29800000000000000000000000000000; // Saar
-        balances[0x5F5d2e1760c57b61E5Cf6d4F6B172747b57dde16] = 200000000000000000000000000000; // Ben
-        balances[0x3A6dd223C2887A480072fabC8F57d5E3b96457Ff] = 200000000000000000000000000000; // Tamar
-        balances[0x1741A6EA181179f916dbDD455405b7Bb36314770] = 200000000000000000000000000000; // Steven
-      
-        // Transfer(address(0), 0x352aAff068CA9bF8aBa1DAEEbD59a4571BF42af8, _totalSupply);
+        balances[0x0c81B202ebFAFC255138d4F806303C4C58A6A270] = 3076923077000000000000000000000; // Aviv
+        balances[0xe4778eB30FbFf336BFBa58839fff52E23e61B08C] = 3076923077000000000000000000000; // Oren
+        balances[0xeaa7856637F90b8E36EA15fE524aE287a9bad514] = 33846153846000000000000000000000; // Saar
 
-        Transfer(address(0), 0x352aAff068CA9bF8aBa1DAEEbD59a4571BF42af8, 1560000000000000000000000000000000); // General
-        Transfer(address(0), 0x9db9be6C5bCbcd80e080Fc30985552e4AF2341dc, 200000000000000000000000000000000); // Company
-        Transfer(address(0), 0x2bF978100b39a1778C1F9D6BDc7534ae5D9D6E95, 200000000000000000000000000000000); // Committee
-        Transfer(address(0), 0x0c81B202ebFAFC255138d4F806303C4C58A6A270, 4800000000000000000000000000000); // Aviv
-        Transfer(address(0), 0xe4778eB30FbFf336BFBa58839fff52E23e61B08C, 4800000000000000000000000000000); // Oren
-        Transfer(address(0), 0xeaa7856637F90b8E36EA15fE524aE287a9bad514, 29800000000000000000000000000000); // Saar
-        Transfer(address(0), 0x5F5d2e1760c57b61E5Cf6d4F6B172747b57dde16, 200000000000000000000000000000); // Ben
-        Transfer(address(0), 0x3A6dd223C2887A480072fabC8F57d5E3b96457Ff, 200000000000000000000000000000); // Tamar
-        Transfer(address(0), 0x1741A6EA181179f916dbDD455405b7Bb36314770, 200000000000000000000000000000); // Steven
-        
+
+
+        Transfer(address(0), 0x352aAff068CA9bF8aBa1DAEEbD59a4571BF42af8, 1560000000000000000000000000000000000); // General
+        Transfer(address(0), 0x9db9be6C5bCbcd80e080Fc30985552e4AF2341dc, 200000000000000000000000000000000000); // Company
+        Transfer(address(0), 0x2bF978100b39a1778C1F9D6BDc7534ae5D9D6E95, 200000000000000000000000000000000000); // Committee
+        Transfer(address(0), 0x0c81B202ebFAFC255138d4F806303C4C58A6A270, 3076923077000000000000000000000000); // Aviv
+        Transfer(address(0), 0xe4778eB30FbFf336BFBa58839fff52E23e61B08C, 3076923077000000000000000000000000); // Oren
+        Transfer(address(0), 0xeaa7856637F90b8E36EA15fE524aE287a9bad514, 33846153846000000000000000000000000); // Saar
+
+
     }
 
 
@@ -180,7 +175,7 @@ contract QRToken is ERC20Interface, Owned, SafeMath {
     //
     // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
     // recommends that there are no checks for the approval double-spend attack
-    // as this should be implemented in user interfaces 
+    // as this should be implemented in user interfaces
     // ------------------------------------------------------------------------
     function approve(address spender, uint tokens) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
@@ -191,7 +186,7 @@ contract QRToken is ERC20Interface, Owned, SafeMath {
 
     // ------------------------------------------------------------------------
     // Transfer tokens from the from account to the to account
-    // 
+    //
     // The calling account must already have sufficient tokens approve(...)-d
     // for spending from the from account and
     // - From account must have sufficient balance to transfer
