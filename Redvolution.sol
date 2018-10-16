@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Redvolution at 0xb8d8a92cafaf6c055bce8e53405d90be96d1a677
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Redvolution at 0x39139b54e733d01fd0b46fdb32cf45e08696541c
 */
 pragma solidity ^0.4.13;
 
@@ -73,7 +73,7 @@ contract SafeMath {
 contract ERC20 {
     string public symbol;
     string public name;
-    uint8 public decimals;
+    uint256 public decimals;
     uint256 _totalSupply;
     
     mapping(address => uint256) balances;
@@ -96,12 +96,12 @@ contract Redvolution is Ownable, SafeMath, ERC20 {
     // ERC20 constants
     string public symbol = "REDV";
     string public name = "Redvolution";
-    uint8 public constant decimals = 8;
-    uint256 _totalSupply = 21000000*(10**8);
+    uint256 constant decimals = 8;
+    uint256 _totalSupply = 21000000*(10**decimals);
     
     // Constants
-    uint public pricePerMessage = 5*(10**8);
-    uint public priceCreatingChannel = 5000*(10**8);
+    uint public pricePerMessage = 5*(10**decimals);
+    uint public priceCreatingChannel = 5000*(10**decimals);
     uint public maxCharacters = 300;
     uint public metadataSize = 1000;
     uint public channelMaxSize = 25;
@@ -284,10 +284,16 @@ contract Redvolution is Ownable, SafeMath, ERC20 {
     }
  
     function transfer(address _to, uint256 _amount) returns (bool success) {
-        balances[msg.sender] = safeSub(balances[msg.sender],_amount);
-        balances[_to] = safeAdd(balances[_to],_amount);
-        Transfer(msg.sender, _to, _amount);
-        return true;
+        if (balances[msg.sender] >= _amount 
+            && _amount > 0
+            && balances[_to] + _amount > balances[_to]) {
+            balances[msg.sender] = safeSub(balances[msg.sender],_amount);
+            balances[_to] = safeAdd(balances[_to],_amount);
+            Transfer(msg.sender, _to, _amount);
+            return true;
+        } else {
+            return false;
+        }
     }
      
     function transferFrom(
@@ -295,12 +301,18 @@ contract Redvolution is Ownable, SafeMath, ERC20 {
         address _to,
         uint256 _amount
     ) returns (bool success) {
-        
-        allowed[_from][msg.sender] = safeSub(allowed[_from][msg.sender],_amount);
-        balances[_from] = safeSub(balances[_from],_amount);
-        balances[_to] = safeAdd(balances[_to],_amount);
-        Transfer(_from, _to, _amount);
-        return true;
+        if (balances[_from] >= _amount
+            && allowed[_from][msg.sender] >= _amount
+            && _amount > 0
+            && balances[_to] + _amount > balances[_to]) {
+            allowed[_from][msg.sender] = safeSub(allowed[_from][msg.sender],_amount);
+            balances[_from] = safeSub(balances[_from],_amount);
+            balances[_to] = safeAdd(balances[_to],_amount);
+            Transfer(_from, _to, _amount);
+            return true;
+        } else {
+            return false;
+        }
     }
  
     function approve(address _spender, uint256 _amount) returns (bool success) {
