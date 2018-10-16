@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MtcToken at 0x0ec4207aa379dfcd9239e987530b95a55178e5eb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MtcToken at 0x090fC358FA1a992C083590c7dd33Ad5208A02e9d
 */
 pragma solidity ^0.4.16;
 
@@ -293,9 +293,5 @@ contract MtcToken is PausableToken {
     function MtcToken() {
       totalSupply = 7000000000 * (10**(uint256(decimals)));
       balances[msg.sender] = totalSupply;    // Give the creator all initial tokens
-    }
-    function () {
-        //if ether is sent to this address, send it back.
-        revert();
     }
 }
