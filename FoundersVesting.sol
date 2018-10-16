@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoundersVesting at 0x809ed499d06c1960944a16abf7120d74f0ff6144
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoundersVesting at 0x26bedda4f8c496444306c801367d9cba5d5d9266
 */
 pragma solidity ^0.4.16;
 
@@ -277,18 +277,19 @@ contract Goldmint is SafeMath {
      // These values are HARD CODED!!!
      // For extra security we split single multisig wallet into 10 separate multisig wallets
      //
-     // TODO: set real params here
+     // THIS IS A REAL ICO WALLETS!!!
+     // PLEASE DOUBLE CHECK THAT...
      address[] public multisigs = [
-          0xcec42e247097c276ad3d7cfd270adbd562da5c61,
-          0x373c46c544662b8c5d55c24cf4f9a5020163ec2f,
-          0x672cf829272339a6c8c11b14acc5f9d07bafac7c,
-          0xce0e1981a19a57ae808a7575a6738e4527fb9118,
-          0x93aa76cdb17eea80e4de983108ef575d8fc8f12b,
-          0x20ae3329cd1e35feff7115b46218c9d056d430fd,
-          0xe9fc1a57a5dc1caa3de22a940e9f09e640615f7e,
-          0xd360433950de9f6fa0e93c29425845eed6bfa0d0,
-          0xf0de97eaff5d6c998c80e07746c81a336e1bbd43,
-          0x80b365da1C18f4aa1ecFa0dFA07Ed4417B05Cc69
+          0xcEc42E247097C276Ad3D7cFd270aDBd562dA5c61,
+          0x373C46c544662B8C5D55c24Cf4F9a5020163eC2f,
+          0x672CF829272339A6c8c11b14Acc5F9d07bAFAC7c,
+          0xce0e1981A19a57aE808a7575a6738e4527fB9118,
+          0x93Aa76cdb17EeA80e4De983108ef575D8fc8f12b,
+          0x20ae3329Cd1e35FEfF7115B46218c9D056d430Fd,
+          0xe9fC1A57a5dC1CaA3DE22A940E9F09e640615f7E,
+          0xD360433950DE9F6FA0e93C29425845EeD6BFA0d0,
+          0xF0De97EAff5D6c998c80e07746c81a336e1BBd43,
+          0xF4Ce80097bf1E584822dBcA84f91D5d7d9df0846
      ];
 
      // We count ETH invested by person, for refunds (see below)
@@ -303,22 +304,21 @@ contract Goldmint is SafeMath {
      uint64 public lastUsdPerEthChangeDate = 0;
 
      // Price changes from block to block
-     //uint constant SINGLE_BLOCK_LEN = 700000;
-     // TODO: for test
-     uint constant SINGLE_BLOCK_LEN = 100;
-
+     uint constant SINGLE_BLOCK_LEN = 700000;
      // 1 000 000 tokens
      uint public constant BONUS_REWARD = 1000000 * 1 ether;
      // 2 000 000 tokens
      uint public constant FOUNDERS_REWARD = 2000000 * 1 ether;
      // 7 000 000 is sold during the ICO
-     //uint public constant ICO_TOKEN_SUPPLY_LIMIT = 7000000 * 1 ether;
-
-     // TODO: for tests only!
-     uint public constant ICO_TOKEN_SUPPLY_LIMIT = 250 * 1 ether;
-
+     uint public constant ICO_TOKEN_SUPPLY_LIMIT = 7000000 * 1 ether;
      // 150 000 tokens soft cap (otherwise - refund)
      uint public constant ICO_TOKEN_SOFT_CAP = 150000 * 1 ether;
+
+     // 3 000 000 can be issued from other currencies
+     uint public constant MAX_ISSUED_FROM_OTHER_CURRENCIES = 3000000 * 1 ether;
+     // 30 000 MNTP tokens per one call only
+     uint public constant MAX_SINGLE_ISSUED_FROM_OTHER_CURRENCIES = 30000 * 1 ether;
+     uint public issuedFromOtherCurrencies = 0;
 
 // Fields:
      address public creator = 0x0;                // can not be changed after deploy
@@ -585,12 +585,20 @@ contract Goldmint is SafeMath {
           require(_weiCount!=0);
 
           uint newTokens = (_weiCount * getMntTokensPerEth(icoTokensSold)) / 1 ether;
+          
+          require(newTokens<=MAX_SINGLE_ISSUED_FROM_OTHER_CURRENCIES);
+          require((issuedFromOtherCurrencies + newTokens)<=MAX_ISSUED_FROM_OTHER_CURRENCIES);
+
           issueTokensInternal(_to,newTokens);
+
+          issuedFromOtherCurrencies = issuedFromOtherCurrencies + newTokens;
      }
 
      /// @dev This can be called to manually issue new tokens 
      /// from the bonus reward
-     function issueTokensExternal(address _to, uint _tokens) public onlyInState(State.ICOFinished) onlyTokenManager {
+     function issueTokensExternal(address _to, uint _tokens) public onlyTokenManager {
+          // in 2 states
+          require((State.ICOFinished==currentState) || (State.ICORunning==currentState));
           // can not issue more than BONUS_REWARD
           require((issuedExternallyTokens + _tokens)<=BONUS_REWARD);
 
@@ -602,8 +610,7 @@ contract Goldmint is SafeMath {
      function issueTokensInternal(address _to, uint _tokens) internal {
           require((icoTokensSold + _tokens)<=ICO_TOKEN_SUPPLY_LIMIT);
 
-          mntToken.issueTokens(_to,_tokens);
-
+          mntToken.issueTokens(_to,_tokens); 
           icoTokensSold+=_tokens;
 
           LogBuy(_to,_tokens);
@@ -616,12 +623,12 @@ contract Goldmint is SafeMath {
 
           require(ethValue > 0);
 
-          // 1 - send money back
-          sender.transfer(ethValue);
+          // 1 - burn tokens
           ethInvestedBy[sender] = 0;
-
-          // 2 - burn tokens
           mntToken.burnTokens(sender, mntToken.balanceOf(sender));
+
+          // 2 - send money back
+          sender.transfer(ethValue);
      }
 
      function setUsdPerEthRate(uint _usdPerEthRate) public onlyEthSetter {
