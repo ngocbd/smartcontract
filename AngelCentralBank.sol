@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AngelCentralBank at 0xcf59a4405ea51392c4cb8807f641f3cb9d611994
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AngelCentralBank at 0xc45959d69cef5f6abfb7f79fa313daaebe0ee4f7
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.16;
 
 
 /**
@@ -17,7 +17,7 @@ contract Ownable {
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() {
+  function Ownable() public {
     owner = msg.sender;
   }
 
@@ -35,7 +35,7 @@ contract Ownable {
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) onlyOwner {
+  function transferOwnership(address newOwner) external onlyOwner {
     if (newOwner != address(0)) {
       owner = newOwner;
     }
@@ -85,17 +85,18 @@ library SafeMath {
  */
 contract ERC20Basic {
   uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
+  function balanceOf(address who) public constant returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
 
 
 
+
 /**
  * @title Basic token
- * @dev Basic version of StandardToken, with no allowances. 
+ * @dev Basic version of StandardToken, with no allowances.
  */
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
@@ -107,7 +108,7 @@ contract BasicToken is ERC20Basic {
   * @param _to The address to transfer to.
   * @param _value The amount to be transferred.
   */
-  function transfer(address _to, uint256 _value) returns (bool) {
+  function transfer(address _to, uint256 _value) public returns (bool) {
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
     Transfer(msg.sender, _to, _value);
@@ -116,14 +117,15 @@ contract BasicToken is ERC20Basic {
 
   /**
   * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of. 
+  * @param _owner The address to query the the balance of.
   * @return An uint256 representing the amount owned by the passed address.
   */
-  function balanceOf(address _owner) constant returns (uint256 balance) {
+  function balanceOf(address _owner) public constant returns (uint256 balance) {
     return balances[_owner];
   }
 
 }
+
 
 
 
@@ -133,11 +135,12 @@ contract BasicToken is ERC20Basic {
  * @dev see https://github.com/ethereum/EIPs/issues/20
  */
 contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
+  function allowance(address owner, address spender) public constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
+
 
 
 
@@ -161,7 +164,7 @@ contract StandardToken is ERC20, BasicToken {
    * @param _to address The address which you want to transfer to
    * @param _value uint256 the amout of tokens to be transfered
    */
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
     var _allowance = allowed[_from][msg.sender];
 
     // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
@@ -179,7 +182,7 @@ contract StandardToken is ERC20, BasicToken {
    * @param _spender The address which will spend the funds.
    * @param _value The amount of tokens to be spent.
    */
-  function approve(address _spender, uint256 _value) returns (bool) {
+  function approve(address _spender, uint256 _value) public returns (bool) {
 
     // To change the approve amount you first have to reduce the addresses`
     //  allowance to zero by calling `approve(_spender, 0)` if it is not
@@ -198,7 +201,7 @@ contract StandardToken is ERC20, BasicToken {
    * @param _spender address The address which will spend the funds.
    * @return A uint256 specifing the amount of tokens still avaible for the spender.
    */
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
     return allowed[_owner][_spender];
   }
 
@@ -237,7 +240,7 @@ contract Manageable is Ownable {
    * @dev Function to add new manager
    * @param _manager address New manager
    */
-  function enableManager(address _manager) onlyOwner onlyValidAddress(_manager) {
+  function enableManager(address _manager) external onlyOwner onlyValidAddress(_manager) {
     require(managerEnabled[_manager] == false);
 
     managerEnabled[_manager] = true;
@@ -248,7 +251,7 @@ contract Manageable is Ownable {
    * @dev Function to remove existing manager
    * @param _manager address Existing manager
    */
-  function disableManager(address _manager) onlyOwner onlyValidAddress(_manager) {
+  function disableManager(address _manager) external onlyOwner onlyValidAddress(_manager) {
     require(managerEnabled[_manager] == true);
 
     managerEnabled[_manager] = false;
@@ -263,6 +266,7 @@ contract Manageable is Ownable {
   function grantManagerPermission(
     address _manager, string _permissionName
   )
+    external
     onlyOwner
     onlyValidAddress(_manager)
     onlyValidPermissionName(_permissionName)
@@ -281,6 +285,7 @@ contract Manageable is Ownable {
   function revokeManagerPermission(
     address _manager, string _permissionName
   )
+    external
     onlyOwner
     onlyValidAddress(_manager)
     onlyValidPermissionName(_permissionName)
@@ -299,7 +304,7 @@ contract Manageable is Ownable {
    * @param _manager address Manager`s address
    * @return True if manager is enabled
    */
-  function isManagerEnabled(address _manager) constant onlyValidAddress(_manager) returns (bool) {
+  function isManagerEnabled(address _manager) public constant onlyValidAddress(_manager) returns (bool) {
     return managerEnabled[_manager];
   }
 
@@ -312,6 +317,7 @@ contract Manageable is Ownable {
   function isPermissionGranted(
     address _manager, string _permissionName
   )
+    public
     constant
     onlyValidAddress(_manager)
     onlyValidPermissionName(_permissionName)
@@ -329,6 +335,7 @@ contract Manageable is Ownable {
   function isManagerAllowed(
     address _manager, string _permissionName
   )
+    public
     constant
     onlyValidAddress(_manager)
     onlyValidPermissionName(_permissionName)
@@ -367,6 +374,8 @@ contract Manageable is Ownable {
     _;
   }
 }
+
+
 
 
 
@@ -413,7 +422,7 @@ contract Pausable is Manageable {
   /**
    * @dev called by the manager to pause, triggers stopped state
    */
-  function pauseContract() onlyAllowedManager('pause_contract') whenContractNotPaused {
+  function pauseContract() external onlyAllowedManager('pause_contract') whenContractNotPaused {
     paused = true;
     PauseEvent();
   }
@@ -421,7 +430,7 @@ contract Pausable is Manageable {
   /**
    * @dev called by the manager to unpause, returns to normal state
    */
-  function unpauseContract() onlyAllowedManager('unpause_contract') whenContractPaused {
+  function unpauseContract() external onlyAllowedManager('unpause_contract') whenContractPaused {
     paused = false;
     UnpauseEvent();
   }
@@ -429,10 +438,13 @@ contract Pausable is Manageable {
   /**
    * @dev The getter for "paused" contract variable
    */
-  function getPaused() constant returns (bool) {
+  function getPaused() external constant returns (bool) {
     return paused;
   }
 }
+
+
+
 
 
 
@@ -443,9 +455,9 @@ contract Pausable is Manageable {
 contract NamedToken {
   string public name;
   string public symbol;
-  uint32 public decimals;
+  uint8 public decimals;
 
-  function NamedToken(string _name, string _symbol, uint32 _decimals) {
+  function NamedToken(string _name, string _symbol, uint8 _decimals) public {
     name = _name;
     symbol = _symbol;
     decimals = _decimals;
@@ -456,8 +468,8 @@ contract NamedToken {
    * @dev Function needed because we can not just return name of the token to another contract - strings have variable length
    * @return Hash of the token`s name
    */
-  function getNameHash() constant returns (bytes32 result){
-    return sha3(name);
+  function getNameHash() external constant returns (bytes32 result){
+    return keccak256(name);
   }
 
   /**
@@ -465,10 +477,12 @@ contract NamedToken {
    * @dev Function needed because we can not just return symbol of the token to another contract - strings have variable length
    * @return Hash of the token`s symbol
    */
-  function getSymbolHash() constant returns (bytes32 result){
-    return sha3(symbol);
+  function getSymbolHash() external constant returns (bytes32 result){
+    return keccak256(symbol);
   }
 }
+
+
 
 
 
@@ -488,20 +502,20 @@ contract AngelToken is StandardToken, NamedToken, Pausable {
 
   /* Storage */
 
-  address public centralBankAddress;
+  address public centralBankAddress = 0x0;
   mapping (address => uint) spendingBlocksNumber;
 
 
   /* Constructor */
 
-  function AngelToken() NamedToken('ANGEL', 'ANG', 8) {
+  function AngelToken() public NamedToken('Angel Token', 'ANGL', 18) {
     centralBankAddress = msg.sender;
   }
 
 
   /* Methods */
 
-  function transfer(address _to, uint _value) returns (bool) {
+  function transfer(address _to, uint _value) public returns (bool) {
     if (_to != centralBankAddress) {
       require(!paused);
     }
@@ -514,11 +528,11 @@ contract AngelToken is StandardToken, NamedToken, Pausable {
     return result;
   }
 
-  function approve(address _spender, uint _value) whenContractNotPaused returns (bool){
+  function approve(address _spender, uint _value) public whenContractNotPaused returns (bool){
     return super.approve(_spender, _value);
   }
 
-  function transferFrom(address _from, address _to, uint _value) whenContractNotPaused returns (bool){
+  function transferFrom(address _from, address _to, uint _value) public whenContractNotPaused returns (bool){
     require(spendingBlocksNumber[_from] == 0);
 
     bool result = super.transferFrom(_from, _to, _value);
@@ -529,29 +543,30 @@ contract AngelToken is StandardToken, NamedToken, Pausable {
   }
 
 
-  function mint(address _account, uint _value) onlyAllowedManager('mint_tokens') {
+  function mint(address _account, uint _value) external onlyAllowedManager('mint_tokens') {
     balances[_account] = balances[_account].add(_value);
     totalSupply = totalSupply.add(_value);
     MintEvent(_account, _value);
-    Transfer(0x0, _account, _value); // required for blockexplorers
+    Transfer(address(0x0), _account, _value); // required for blockexplorers
   }
 
-  function burn(uint _value) onlyAllowedManager('burn_tokens') {
+  function burn(uint _value) external onlyAllowedManager('burn_tokens') {
     balances[msg.sender] = balances[msg.sender].sub(_value);
     totalSupply = totalSupply.sub(_value);
     BurnEvent(msg.sender, _value);
   }
 
-  function blockSpending(address _account) onlyAllowedManager('block_spending') {
+  function blockSpending(address _account) external onlyAllowedManager('block_spending') {
     spendingBlocksNumber[_account] = spendingBlocksNumber[_account].add(1);
     SpendingBlockedEvent(_account);
   }
 
-  function unblockSpending(address _account) onlyAllowedManager('unblock_spending') {
+  function unblockSpending(address _account) external onlyAllowedManager('unblock_spending') {
     spendingBlocksNumber[_account] = spendingBlocksNumber[_account].sub(1);
     SpendingUnblockedEvent(_account);
   }
 }
+
 
 
 
@@ -578,30 +593,29 @@ contract AngelCentralBank {
 
   /* Storage - config */
 
-  uint public icoCap = 70000000 * (10 ** 18);
+  uint public constant icoCap = 70000000 * (10 ** 18);
 
   uint public initialTokenPrice = 1 * (10 ** 18) / (10 ** 4); // means 0.0001 ETH for one token
 
-  uint public landmarkSize = 1000000 * (10 ** 18);
-  uint public landmarkPriceStepNumerator = 10;
-  uint public landmarkPriceStepDenominator = 100;
+  uint public constant landmarkSize = 1000000 * (10 ** 18);
+  uint public constant landmarkPriceStepNumerator = 10;
+  uint public constant landmarkPriceStepDenominator = 100;
 
-  uint public firstRefundRoundRateNumerator = 80;
-  uint public firstRefundRoundRateDenominator = 100;
-  uint public secondRefundRoundRateNumerator = 40;
-  uint public secondRefundRoundRateDenominator = 100;
+  uint public constant firstRefundRoundRateNumerator = 80;
+  uint public constant firstRefundRoundRateDenominator = 100;
+  uint public constant secondRefundRoundRateNumerator = 40;
+  uint public constant secondRefundRoundRateDenominator = 100;
 
-  uint public initialFundsReleaseNumerator = 20; // part of investment
-  uint public initialFundsReleaseDenominator = 100;
-  uint public afterFirstRefundRoundFundsReleaseNumerator = 50; // part of remaining funds
-  uint public afterFirstRefundRoundFundsReleaseDenominator = 100;
+  uint public constant initialFundsReleaseNumerator = 20; // part of investment
+  uint public constant initialFundsReleaseDenominator = 100;
+  uint public constant afterFirstRefundRoundFundsReleaseNumerator = 50; // part of remaining funds
+  uint public constant afterFirstRefundRoundFundsReleaseDenominator = 100;
 
-  uint public angelFoundationShareNumerator = 30;
-  uint public angelFoundationShareDenominator = 100;
+  uint public constant angelFoundationShareNumerator = 30;
+  uint public constant angelFoundationShareDenominator = 100;
 
   /* Storage - state */
 
-  address public angelAdminAddress;
   address public angelFoundationAddress = address(0x2b0556a6298eA3D35E90F1df32cc126b31F59770);
   uint public icoLaunchTimestamp = 1511784000;  // November 27th 12:00 GMT
   uint public icoFinishTimestamp = 1514376000;  // December 27th 12:00 GMT
@@ -616,7 +630,7 @@ contract AngelCentralBank {
   uint public totalInvestors = 0;
   uint public totalTokensSold = 0;
 
-  bool angelTokenUnpaused = false;
+  bool isIcoFinished = false;
   bool firstRefundRoundFundsWithdrawal = false;
 
 
@@ -628,9 +642,7 @@ contract AngelCentralBank {
 
   /* Constructor and config */
 
-  function AngelCentralBank() {
-    angelAdminAddress = msg.sender;
-
+  function AngelCentralBank() public {
     angelToken = new AngelToken();
     angelToken.enableManager(address(this));
     angelToken.grantManagerPermission(address(this), 'mint_tokens');
@@ -644,7 +656,7 @@ contract AngelCentralBank {
   /**
    * @dev Fallback function receives ETH and sends tokens back
    */
-  function () payable {
+  function () public payable {
     angelRaise();
   }
 
@@ -652,19 +664,20 @@ contract AngelCentralBank {
    * @dev Process new ETH investment and sends tokens back
    */
   function angelRaise() internal {
-    require(msg.value >= 0);
+    require(msg.value > 0);
     require(now >= icoLaunchTimestamp && now < icoFinishTimestamp);
 
     // calculate amount of tokens for received ETH
     uint _purchasedTokensWei = 0;
     uint _notProcessedEthWei = 0;
     (_purchasedTokensWei, _notProcessedEthWei) = calculatePurchasedTokens(totalTokensSold, msg.value);
+    uint _actualInvestment = (msg.value - _notProcessedEthWei);
 
     // create record for the investment
     uint _newRecordIndex = investments[msg.sender].length;
     investments[msg.sender].length += 1;
     investments[msg.sender][_newRecordIndex].tokensSoldBeforeWei = totalTokensSold;
-    investments[msg.sender][_newRecordIndex].investedEthWei = msg.value;
+    investments[msg.sender][_newRecordIndex].investedEthWei = _actualInvestment;
     investments[msg.sender][_newRecordIndex].purchasedTokensWei = _purchasedTokensWei;
     investments[msg.sender][_newRecordIndex].refundedEthWei = 0;
     investments[msg.sender][_newRecordIndex].returnedTokensWei = 0;
@@ -680,7 +693,7 @@ contract AngelCentralBank {
     angelToken.mint(msg.sender, _purchasedTokensWei);
     angelToken.mint(angelFoundationAddress,
                     _purchasedTokensWei * angelFoundationShareNumerator / (angelFoundationShareDenominator - angelFoundationShareNumerator));
-    angelFoundationAddress.transfer(msg.value * initialFundsReleaseNumerator / initialFundsReleaseDenominator);
+    angelFoundationAddress.transfer(_actualInvestment * initialFundsReleaseNumerator / initialFundsReleaseDenominator);
     if (_notProcessedEthWei > 0) {
       msg.sender.transfer(_notProcessedEthWei);
     }
@@ -689,11 +702,11 @@ contract AngelCentralBank {
     if (totalTokensSold >= icoCap) {
       icoFinishTimestamp = now;
 
-      unpauseAngelToken();
+      finishIco();
     }
 
     // fire event
-    InvestmentEvent(msg.sender, msg.value, _purchasedTokensWei);
+    InvestmentEvent(msg.sender, _actualInvestment, _purchasedTokensWei);
   }
 
   /**
@@ -705,7 +718,7 @@ contract AngelCentralBank {
   function calculatePurchasedTokens(
     uint _totalTokensSoldBefore,
     uint _investedEthWei)
-    constant returns (uint _purchasedTokensWei, uint _notProcessedEthWei)
+    constant public returns (uint _purchasedTokensWei, uint _notProcessedEthWei)
   {
     _purchasedTokensWei = 0;
     _notProcessedEthWei = _investedEthWei;
@@ -748,7 +761,7 @@ contract AngelCentralBank {
     address _investor,
     uint _returnedTokensWei
   )
-    returns (uint)
+    external returns (uint)
   {
     require(msg.sender == address(angelToken));
     require(now >= icoLaunchTimestamp && now < secondRefundRoundFinishTimestamp);
@@ -827,7 +840,7 @@ contract AngelCentralBank {
   function calculateRefundedEthWithDiscount(
     uint _refundedEthWei
   )
-    constant returns (uint)
+    public constant returns (uint)
   {
     if (now <= firstRefundRoundFinishTimestamp) {
       return (_refundedEthWei * firstRefundRoundRateNumerator / firstRefundRoundRateDenominator);
@@ -847,7 +860,7 @@ contract AngelCentralBank {
     uint _totalTokensSoldBefore,
     uint _returnedTokensWei
   )
-    constant returns (uint _refundedEthWei, uint _notProcessedTokensWei)
+    public constant returns (uint _refundedEthWei, uint _notProcessedTokensWei)
   {
     _refundedEthWei = 0;
     uint _refundedTokensWei = 0;
@@ -894,24 +907,25 @@ contract AngelCentralBank {
    * @param _totalTokensSoldBefore uint Amount of tokens sold before [token wei]
    * @return Calculated price
    */
-  function calculateLandmarkPrice(uint _totalTokensSoldBefore) constant returns (uint) {
-    return initialTokenPrice + initialTokenPrice * landmarkPriceStepNumerator / landmarkPriceStepDenominator * (_totalTokensSoldBefore / landmarkSize);
+  function calculateLandmarkPrice(uint _totalTokensSoldBefore) public constant returns (uint) {
+    return initialTokenPrice + initialTokenPrice
+                               * landmarkPriceStepNumerator / landmarkPriceStepDenominator
+                               * (_totalTokensSoldBefore / landmarkSize);
   }
 
 
   /* Lifecycle */
 
-  function unpauseAngelToken() {
+  function finishIco() public {
     require(now >= icoFinishTimestamp);
-    require(angelTokenUnpaused == false);
+    require(isIcoFinished == false);
 
-    angelTokenUnpaused = true;
+    isIcoFinished = true;
 
     angelToken.unpauseContract();
   }
 
-  function withdrawFoundationFunds() {
-    require(msg.sender == angelFoundationAddress || msg.sender == angelAdminAddress);
+  function withdrawFoundationFunds() external {
     require(now > firstRefundRoundFinishTimestamp);
 
     if (now > firstRefundRoundFinishTimestamp && now <= secondRefundRoundFinishTimestamp) {
