@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LedgerRandomProofVerifier at 0x38f8e42659ea40a36096cd6db69ae24ab2562f52
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LedgerRandomProofVerifier at 0x1872b33bb33e372d6f039a8b6af2e1be228bda23
 */
 pragma solidity ^0.4.11;
 
@@ -830,7 +830,7 @@ contract usingOraclize {
         bytes memory tosign2 = new bytes(1+65+32);
         tosign2[0] = 1; //role
         copyBytes(proof, sig2offset-65, 65, tosign2, 1);
-        bytes memory CODEHASH = hex"fd94fa71bc0ba10d39d464d0d8f465efeef0a2764e3887fcc9df41ded20f505c";
+        bytes memory CODEHASH = hex"f5557abbf544c3db784d84e777d3ca2894372d5ae761c74aa9266231225f156c";
         copyBytes(CODEHASH, 0, 32, tosign2, 1+65);
         sigok = verifySig(sha256(tosign2), sig2, appkey1_pubkey);
         
@@ -1040,7 +1040,7 @@ contract LedgerRandomProofVerifier is usingOraclize, Owned {
     
     function LedgerRandomProofVerifier() {
         // Change here if we expect different code hash
-        expectedCodeHash = hex"fd94fa71bc0ba10d39d464d0d8f465efeef0a2764e3887fcc9df41ded20f505c";
+        expectedCodeHash = hex"f5557abbf544c3db784d84e777d3ca2894372d5ae761c74aa9266231225f156c";
     }
 
     modifier onlyWhitelisted {
