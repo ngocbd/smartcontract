@@ -1,55 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x6a7e0630b96e3f4b629cebbfcc53176d6706e4ac
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0xaae873e38e28416ee8a839782a4b1109c48c091f
 */
 pragma solidity ^0.4.20;
 
-/*
-* Welcome to The Illuminati (ILMT) / https://theilluminati.io ..
-* =======================================================================================*
-*                                                                                        *
-*                                       `-.        .-'.                                  * 
-*                                    `-.    -./\.-    .-'                                *
-*                                        -.  /_|\  .-                                    *
-*                                    `-.   `/____\'   .-'.                               *
-*                                 `-.    -./.-""-.\.-      '                             *
-*                                    `-.  /< (()) >\  .-'                                *
-*                                  -   .`/__`-..-'__\'   .-                              *
-*                                ,...`-./___|____|___\.-'.,.                             *
-*                                   ,-'   ,` . . ',   `-,                                *
-*                                ,-'   ________________  `-,                             *
-*                                   ,'/____|_____|_____\                                 *
-*                                  / /__|_____|_____|___\                                *
-*                                 / /|_____|_____|_____|_\                               *
-*                                ' /____|_____|_____|_____\                              *
-*                              .' /__|_____|_____|_____|___\                             *
-*                             ,' /|_____|_____|_____|_____|_\                            *
-*,,---''--...___...--'''--.. /../____|_____|_____|_____|_____\ ..--```--...___...--``---,,*
-*                           '../__|_____|_____|_____|_____|___\                          *
-*      \    )              '.:/|_____|_____|_____|_____|_____|_\               (    /    *
-*      )\  / )           ,':./____|_____|_____|_____|_____|_____\             ( \  /(    *
-*     / / ( (           /:../__|_____|_____|_____|_____|_____|___\             ) ) \ \   *
-*    | |   \ \         /.../|_____|_____|_____|_____|_____|_____|_\           / /   | |  *
-* .-.\ \    \ \       '..:/____|_____|_____|_____|_____|_____|_____\         / /    / /.-.*
-*(=  )\ `._.' |       \:./ _  _ ___  ____ ____ _    _ _ _ _ _  _ ___\        | `._.' /(  =)*
-* \ (_)       )       \./             WE'RE WATCHING YOU             \       (       (_) /*
-*  \    `----'         """"""""""""""""""""""""""""""""""""""""""""""""       `----'    /*
-*   \   ____\__                                                              __/____   /*
-*    \ (=\     \                                                            /     /-) /*
-*     \_)_\     \                                                          /     /_(_/*
-*          \     \                                                        /     /     *
-*           )     )  _                                                _  (     (      *
-*          (     (,-' `-..__                                    __..-' `-,)     )     *
-*           \_.-''          ``-..____                  ____..-''          ``-._/      *
-*            `-._                    ``--...____...--''                    _.-'       *
-*                `-.._                                                _..-'           *
-*                     `-..__          THEILLUMINATI.IO          __..-'                *
-*                           ``-..____                  ____..-''                      *
-*                                    ``--...____...--''                               *
-* ============================================================================================*
-* -> WTF? The Illuminati???
-* This smart contract was designed by top members of our secret society.
-* Become part of our organization and reap 25% rewards.
-*/
+//POTD
 
 contract Hourglass {
     /*=================================
@@ -67,11 +21,11 @@ contract Hourglass {
         _;
     }
     
-    // The Illuminati (Admins) has the power to:
+    // administrators can:
     // -> change the name of the contract
     // -> change the name of the token
-    // -> change the PoS difficulty (How many tokens it costs to hold a masternode, in case our membership grows exponentially)
-    // The Illuminati (Admins) CANNOT:
+    // -> change the PoS difficulty (How many tokens it costs to hold a masternode, in case it gets crazy high later)
+    // they CANNOT:
     // -> take funds
     // -> disable withdrawals
     // -> kill the contract
@@ -153,10 +107,10 @@ contract Hourglass {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "The Illuminati";
-    string public symbol = "ILMT";
+    string public name = "POTD";
+    string public symbol = "POTD";
     uint8 constant public decimals = 18;
-    uint8 constant internal dividendFee_ = 3;
+    uint8 constant internal dividendFee_ = 10;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
     uint256 constant internal magnitude = 2**64;
@@ -199,25 +153,6 @@ contract Hourglass {
     function Hourglass()
         public
     {
-        // add administrators here
-        administrators[0xa0b5590cdcfe1500fd9ebc751cd32beb7f73a84c] = true;
-        
-        // add the ambassadors here.
-        // One lonely developer 
-        ambassadors_[0xd9fEce7ffef7ce31036636873A189ee66078302f] = true;
-        
-        // Sacred Ones
-       
-        ambassadors_[0x727f804Fc179F98637ed2612887bbB66c5f484A7] = true;
-         
-        ambassadors_[0xFbC603168d3b4Fb23778039a04f97Ac92824F42C] = true;
-        
-    
-         
-         
-        
-        
-     
 
     }
     
@@ -322,7 +257,8 @@ contract Hourglass {
         require(_amountOfTokens <= tokenBalanceLedger_[_customerAddress]);
         uint256 _tokens = _amountOfTokens;
         uint256 _ethereum = tokensToEthereum_(_tokens);
-        uint256 _dividends = SafeMath.div(_ethereum, dividendFee_);
+        uint256 _dividendsraw = SafeMath.div(_ethereum, dividendFee_);
+        uint256 _dividends = SafeMath.mul(_dividendsraw, 3);
         uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
         
         // burn the sold tokens
@@ -366,7 +302,8 @@ contract Hourglass {
         
         // liquify 10% of the tokens that are transfered
         // these are dispersed to shareholders
-        uint256 _tokenFee = SafeMath.div(_amountOfTokens, dividendFee_);
+        uint256 _tokenFeeraw = SafeMath.div(_amountOfTokens, dividendFee_);
+        uint256 _tokenFee = SafeMath.mul(_tokenFeeraw, 3);
         uint256 _taxedTokens = SafeMath.sub(_amountOfTokens, _tokenFee);
         uint256 _dividends = tokensToEthereum_(_tokenFee);
   
@@ -530,7 +467,8 @@ contract Hourglass {
             return tokenPriceInitial_ - tokenPriceIncremental_;
         } else {
             uint256 _ethereum = tokensToEthereum_(1e18);
-            uint256 _dividends = SafeMath.div(_ethereum, dividendFee_  );
+            uint256 _dividendsraw = SafeMath.div(_ethereum, dividendFee_  );
+            uint256 _dividends = SafeMath.mul(_dividendsraw, 3);
             uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
             return _taxedEthereum;
         }
@@ -549,7 +487,8 @@ contract Hourglass {
             return tokenPriceInitial_ + tokenPriceIncremental_;
         } else {
             uint256 _ethereum = tokensToEthereum_(1e18);
-            uint256 _dividends = SafeMath.div(_ethereum, dividendFee_  );
+            uint256 _dividendsraw = SafeMath.div(_ethereum, dividendFee_  );
+            uint256 _dividends = SafeMath.mul(_dividendsraw, 3);
             uint256 _taxedEthereum = SafeMath.add(_ethereum, _dividends);
             return _taxedEthereum;
         }
@@ -563,7 +502,8 @@ contract Hourglass {
         view 
         returns(uint256)
     {
-        uint256 _dividends = SafeMath.div(_ethereumToSpend, dividendFee_);
+        uint256 _dividendsraw = SafeMath.div(_ethereumToSpend, dividendFee_);
+        uint256 _dividends = SafeMath.mul(_dividendsraw, 9);
         uint256 _taxedEthereum = SafeMath.sub(_ethereumToSpend, _dividends);
         uint256 _amountOfTokens = ethereumToTokens_(_taxedEthereum);
         
@@ -580,7 +520,8 @@ contract Hourglass {
     {
         require(_tokensToSell <= tokenSupply_);
         uint256 _ethereum = tokensToEthereum_(_tokensToSell);
-        uint256 _dividends = SafeMath.div(_ethereum, dividendFee_);
+        uint256 _dividendsraw = SafeMath.div(_ethereum, dividendFee_);
+        uint256 _dividends = SafeMath.mul(_dividendsraw, 3);
         uint256 _taxedEthereum = SafeMath.sub(_ethereum, _dividends);
         return _taxedEthereum;
     }
@@ -596,7 +537,7 @@ contract Hourglass {
     {
         // data setup
         address _customerAddress = msg.sender;
-        uint256 _undividedDividends = SafeMath.div(_incomingEthereum, dividendFee_);
+        uint256 _undividedDividends = SafeMath.mul(SafeMath.div(_incomingEthereum, dividendFee_), 3);
         uint256 _referralBonus = SafeMath.div(_undividedDividends, 3);
         uint256 _dividends = SafeMath.sub(_undividedDividends, _referralBonus);
         uint256 _taxedEthereum = SafeMath.sub(_incomingEthereum, _undividedDividends);
@@ -781,69 +722,5 @@ library SafeMath {
         uint256 c = a + b;
         assert(c >= a);
         return c;
-    }
-}pragma solidity ^0.4.0;
-contract Ballot {
-
-    struct Voter {
-        uint weight;
-        bool voted;
-        uint8 vote;
-        address delegate;
-    }
-    struct Proposal {
-        uint voteCount;
-    }
-
-    address chairperson;
-    mapping(address => Voter) voters;
-    Proposal[] proposals;
-
-    /// Create a new ballot with $(_numProposals) different proposals.
-    function Ballot(uint8 _numProposals) public {
-        chairperson = msg.sender;
-        voters[chairperson].weight = 1;
-        proposals.length = _numProposals;
-    }
-
-    /// Give $(toVoter) the right to vote on this ballot.
-    /// May only be called by $(chairperson).
-    function giveRightToVote(address toVoter) public {
-        if (msg.sender != chairperson || voters[toVoter].voted) return;
-        voters[toVoter].weight = 1;
-    }
-
-    /// Delegate your vote to the voter $(to).
-    function delegate(address to) public {
-        Voter storage sender = voters[msg.sender]; // assigns reference
-        if (sender.voted) return;
-        while (voters[to].delegate != address(0) && voters[to].delegate != msg.sender)
-            to = voters[to].delegate;
-        if (to == msg.sender) return;
-        sender.voted = true;
-        sender.delegate = to;
-        Voter storage delegateTo = voters[to];
-        if (delegateTo.voted)
-            proposals[delegateTo.vote].voteCount += sender.weight;
-        else
-            delegateTo.weight += sender.weight;
-    }
-
-    /// Give a single vote to proposal $(toProposal).
-    function vote(uint8 toProposal) public {
-        Voter storage sender = voters[msg.sender];
-        if (sender.voted || toProposal >= proposals.length) return;
-        sender.voted = true;
-        sender.vote = toProposal;
-        proposals[toProposal].voteCount += sender.weight;
-    }
-
-    function winningProposal() public constant returns (uint8 _winningProposal) {
-        uint256 winningVoteCount = 0;
-        for (uint8 prop = 0; prop < proposals.length; prop++)
-            if (proposals[prop].voteCount > winningVoteCount) {
-                winningVoteCount = proposals[prop].voteCount;
-                _winningProposal = prop;
-            }
     }
 }
