@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TrustaBitCrowdsale at 0x6fb5b740296f712e058222c64d40f3a759ee5b32
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TrustaBitCrowdsale at 0x39db2ab26f405916f0020ca12baa95e56fadf599
 */
 pragma solidity ^0.4.18;
 
@@ -12,7 +12,7 @@ pragma solidity ^0.4.18;
  **/
 contract FallbackToken {
 
-  function isContract(address _addr) internal constant returns (bool) {
+  function isContract(address _addr) internal view returns (bool) {
     uint length;
     _addr = _addr;
     assembly {length := extcodesize(_addr)}
@@ -329,22 +329,8 @@ contract TrustaBitToken is MintableToken, FallbackToken {
     * http://vessenes.com/the-erc20-short-address-attack-explained/
     */
   modifier onlyPayloadSize(uint size) {
-    if (msg.data.length != size + 4) {
-      revert();
-    }
+    require(msg.data.length != size + 4);
     _;
-  }
-
-  /**
-   * @dev Constructor that gives msg.sender all of existing tokens.K
-   */
-  /// function TrustaBitsToken() public {}
-
-  /**
-   * @dev Fallback method will buyout tokens
-   */
-  function() public payable {
-    revert();
   }
 
   function release() onlyOwner public returns (bool) {
@@ -442,8 +428,8 @@ contract MilestoneCrowdsale {
      * Prise: $0.025 USD (2.5 cent)
      * No bonuses
      */
-    uint256 earlyInvestorPrice = ((25 * 1 ether) / (rateUSD * 10));
-    milestones.push(Milestone(now, preSaleStartDate, 0, earlyInvestorPrice));
+    uint256 earlyInvestorPrice = uint(25 ether).div(rateUSD.mul(10));
+    milestones.push(Milestone(0, preSaleStartDate, 0, earlyInvestorPrice));
 
     /**
      * Pre-Sale Milestone
@@ -461,9 +447,9 @@ contract MilestoneCrowdsale {
      * Week 3 Main Token Sale Bonus: 5%
      */
     uint256 mainSalePrice = usdToEther(10);
-    uint mainSaleStartDateWeek1 = mainSaleStartDate + 1 weeks;
-    uint mainSaleStartDateWeek3 = mainSaleStartDate + 3 * 1 weeks;
-    uint mainSaleStartDateWeek2 = mainSaleStartDate + 2 * 1 weeks;
+    uint mainSaleStartDateWeek1 = mainSaleStartDate.add(1 weeks);
+    uint mainSaleStartDateWeek3 = mainSaleStartDate.add(3 weeks);
+    uint mainSaleStartDateWeek2 = mainSaleStartDate.add(2 weeks);
 
     milestones.push(Milestone(mainSaleStartDate, mainSaleStartDateWeek1, 15, mainSalePrice));
     milestones.push(Milestone(mainSaleStartDateWeek1, mainSaleStartDateWeek2, 10, mainSalePrice));
@@ -576,7 +562,7 @@ contract TrustaBitCrowdsale is MilestoneCrowdsale, Ownable {
   using SafeMath for uint256;
 
   /* Minimum contribution */
-  uint public constant MINIMUM_CONTRIBUTION = 3 ether;
+  uint public constant MINIMUM_CONTRIBUTION = 15e16;
 
   /* Soft cap */
   uint public constant softCapUSD = 3e6; //$3 Million USD
@@ -641,7 +627,7 @@ contract TrustaBitCrowdsale is MilestoneCrowdsale, Ownable {
     vault = new RefundVault(wallet);
   }
 
-  function investorsCount() public constant returns (uint) {
+  function investorsCount() public view returns (uint) {
     return investors.length;
   }
 
