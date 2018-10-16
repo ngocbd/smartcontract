@@ -1,243 +1,244 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BFDToken at 0x117a4db782f29598d9627a57be5ed331f6aa446c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BFDToken at 0xd2d0f85b690604c245f61513bf4679b24ed64c35
 */
 pragma solidity ^0.4.18;
-// ----------------------------------------------------------------------------
-// 'BTRIC Founding Donor' token contract
-//
-// Issuer       Blockchain Technology Research Innovations Corporation
-// Website      https://www.btric.org
-// Symbol       BFD
-// Name         BTRIC Founding Donor Token
-// Total supply 500000
-// Decimals     8
-//
-// License      MIT
-// 
-// ----------------------------------------------------------------------------
 
-// ----------------------------------------------------------------------------
-// Safe maths
-// ----------------------------------------------------------------------------
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
+contract SafeMath {
+    function safeAdd(uint256 a, uint256 b) internal pure returns(uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
     }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-// ----------------------------------------------------------------------------
-// Owned contract
-// ----------------------------------------------------------------------------
-contract Ownable {
-  address public owner;
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-}
-
-// ----------------------------------------------------------------------------
-// ERC20Basic
-// ----------------------------------------------------------------------------
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-// ----------------------------------------------------------------------------
-// BasicToken
-// ----------------------------------------------------------------------------
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
-
-  mapping(address => uint256) balances;
-
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[msg.sender]);
-
-    // SafeMath.sub will throw if there is not enough balance.
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) public view returns (uint256 balance) {
-    return balances[_owner];
-  }
-}
-
-// ----------------------------------------------------------------------------
-// ERC20
-// ----------------------------------------------------------------------------
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-// ----------------------------------------------------------------------------
-// StandardToken
-// ----------------------------------------------------------------------------
-contract StandardToken is ERC20, BasicToken {
-  mapping (address => mapping (address => uint256)) internal allowed;
-
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
-   */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[_from]);
-    require(_value <= allowed[_from][msg.sender]);
-
-    balances[_from] = balances[_from].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  /**
-   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   *
-   * Beware that changing an allowance with this method brings the risk that someone may use both the old
-   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) public returns (bool) {
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifying the amount of tokens still available for the spender.
-   */
-  function allowance(address _owner, address _spender) public view returns (uint256) {
-    return allowed[_owner][_spender];
-  }
-
-  /**
-   * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   */
-  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
-    uint oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue > oldValue) {
-      allowed[msg.sender][_spender] = 0;
-    } else {
-      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    function safeSub(uint256 a, uint256 b) internal pure returns(uint256) {
+        assert(b <= a);
+        return a - b;
     }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
+
+    function safeMul(uint256 a, uint256 b) internal pure returns(uint256) {
+        if (a == 0) {
+            return 0;
+        }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
+    }
+
+    function safeDiv(uint256 a, uint256 b) internal pure returns(uint256) {
+        uint256 c = a / b;
+        return c;
+    }
 }
 
-// ----------------------------------------------------------------------------
-// BFDToken
-// ----------------------------------------------------------------------------
-contract BFDToken is StandardToken, Ownable {
-  string public name = "BTRIC Founding Donor Token"; 
-  string public symbol = "BFD";
-  uint public decimals = 8;
-  uint public INITIAL_SUPPLY = 500000 * (10 ** decimals);
+contract EIP20Interface {
+    /* This is a slight change to the ERC20 base standard.
+    function totalSupply() constant returns (uint256 supply);
+    is replaced with:
+    uint256 public totalSupply;
+    This automatically creates a getter function for the totalSupply.
+    This is moved to the base contract since public getter functions are not
+    currently recognised as an implementation of the matching abstract
+    function by the compiler.
+    */
+    /// total amount of tokens
+    uint256 public totalSupply;
 
-  function BFDToken() public {
-    totalSupply = INITIAL_SUPPLY;
-    balances[msg.sender] = INITIAL_SUPPLY;
-  }
+    /// @param _owner The address from which the balance will be retrieved
+    /// @return The balance
+    function balanceOf(address _owner) public view returns (uint256 balance);
 
-  /**
-   * @dev Revert ETH
-   */
-  function () public payable {
-    revert();
-  }
+    /// @notice send `_value` token to `_to` from `msg.sender`
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transfer(address _to, uint256 _value) public returns (bool success);
 
-  /**
-   * @dev Function to allow owner to transfer out accidentally sent ERC20 tokens
-   * @param tokenAddress The address of the ERC token
-   * @param tokens The amount of tokens to transfer
-   */
-  function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
-    return ERC20(tokenAddress).transfer(owner, tokens);
-  }
+    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+    /// @param _from The address of the sender
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+
+    /// @notice `msg.sender` approves `_spender` to spend `_value` tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @param _value The amount of tokens to be approved for transfer
+    /// @return Whether the approval was successful or not
+    function approve(address _spender, uint256 _value) public returns (bool success);
+
+    /// @param _owner The address of the account owning tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @return Amount of remaining tokens allowed to spent
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
+
+    // solhint-disable-next-line no-simple-event-func-name
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+}
+
+contract BFDToken is EIP20Interface, SafeMath {
+
+    uint256 constant private MAX_UINT256 = 2**256 - 1;
+    mapping (address => uint256) public balances;
+    mapping (address => mapping (address => uint256)) public allowed;
+
+    /*
+    NOTE:
+    The following variables are OPTIONAL vanities. One does not have to include them.
+    They allow one to customise the token contract & in no way influences the core functionality.
+    Some wallets/interfaces might not even bother to look at this information.
+    */
+    string constant public name = "BFDToken";
+    uint8 constant public decimals = 18;                //How many decimals to show.
+    string constant public symbol = "BFDT";
+
+    mapping (address => uint256) public addressType;  // 1 for team; 2 for advisors and partners; 3 for seed investors; 4 for angel investors; 5 for regular investors; 0 for others
+    mapping (address => uint256[3]) public releaseForSeed;
+    mapping (address => uint256[5]) public releaseForTeamAndAdvisor;
+    event AllocateToken(address indexed _to, uint256 _value, uint256 _type);
+
+    address public owner;
+    uint256 public finaliseTime;
+
+    function BFDToken() public {
+        totalSupply = 20*10**26;                        // Update total supply
+        balances[msg.sender] = totalSupply;               // Give the creator all initial tokens
+        owner = msg.sender;
+    }
+
+    modifier isOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    modifier notFinalised() {
+        require(finaliseTime == 0);
+        _;
+    }
+
+    //
+    function allocateToken(address _to, uint256 _eth, uint256 _type) isOwner notFinalised public {
+        require(_to != address(0x0) && _eth != 0);
+        require(addressType[_to] == 0 || addressType[_to] == _type);
+        addressType[_to] = _type;
+        uint256 temp;
+        if (_type == 3) {
+            temp = safeMul(_eth, 60000 * 10**18);
+            balances[_to] = safeAdd(balances[_to], temp);
+            balances[msg.sender] = safeSub(balances[msg.sender], temp);
+            releaseForSeed[_to][0] = safeDiv(safeMul(balances[_to], 60), 100);
+            releaseForSeed[_to][1] = safeDiv(safeMul(balances[_to], 30), 100);
+            releaseForSeed[_to][2] = 0;
+
+            AllocateToken(_to, temp, 3);
+        } else if (_type == 4) {
+            temp = safeMul(_eth, 20000 * 10**18);
+            balances[_to] = safeAdd(balances[_to], temp);
+            balances[msg.sender] = safeSub(balances[msg.sender], temp);
+            releaseForSeed[_to][0] = safeDiv(safeMul(balances[_to], 60), 100);
+            releaseForSeed[_to][1] = safeDiv(safeMul(balances[_to], 30), 100);
+            releaseForSeed[_to][2] = 0;
+            AllocateToken(_to, temp, 4);
+        } else if (_type == 5) {
+            temp = safeMul(_eth, 12000 * 10**18);
+            balances[_to] = safeAdd(balances[_to], temp);
+            balances[msg.sender] = safeSub(balances[msg.sender], temp);
+            AllocateToken(_to, temp, 5);
+        } else {
+            revert();
+        }
+    }
+
+    function allocateTokenForTeam(address _to, uint256 _value) isOwner notFinalised public {
+        require(addressType[_to] == 0 || addressType[_to] == 1);
+        addressType[_to] = 1;
+        balances[_to] = safeAdd(balances[_to], safeMul(_value, 10**18));
+        balances[msg.sender] = safeSub(balances[msg.sender], safeMul(_value, 10**18));
+
+        for (uint256 i = 0; i <= 4; ++i) {
+            releaseForTeamAndAdvisor[_to][i] = safeDiv(safeMul(balances[_to], (4 - i) * 25), 100);
+        }
+
+        AllocateToken(_to, safeMul(_value, 10**18), 1);
+    }
+
+    function allocateTokenForAdvisor(address _to, uint256 _value) isOwner public {
+        require(addressType[_to] == 0 || addressType[_to] == 2);
+        addressType[_to] = 2;
+        balances[_to] = safeAdd(balances[_to], safeMul(_value, 10**18));
+        balances[msg.sender] = safeSub(balances[msg.sender], safeMul(_value, 10**18));
+
+        for (uint256 i = 0; i <= 4; ++i) {
+            releaseForTeamAndAdvisor[_to][i] = safeDiv(safeMul(balances[_to], (4 - i) * 25), 100);
+        }
+        AllocateToken(_to, safeMul(_value, 10**18), 2);
+    }
+
+    function changeOwner(address _owner) isOwner public {
+        owner = _owner;
+    }
+
+    function setFinaliseTime() isOwner public {
+        require(finaliseTime == 0);
+        finaliseTime = now;
+    }
+
+    function transfer(address _to, uint256 _value) public returns (bool success) {
+        require(canTransfer(msg.sender, _value));
+        require(balances[msg.sender] >= _value);
+        balances[msg.sender] -= _value;
+        balances[_to] += _value;
+        Transfer(msg.sender, _to, _value);
+        return true;
+    }
+
+    function canTransfer(address _from, uint256 _value) internal view returns (bool success) {
+        require(finaliseTime != 0);
+        uint256 index;
+
+        if (addressType[_from] == 0  || addressType[_from] == 5) {
+            return true;
+        }
+        // for seed and angel investors
+        if (addressType[_from] == 3 || addressType[_from] == 4) {
+            index = safeSub(now, finaliseTime) / 60 days;
+            if ( index >= 2) {
+                index = 2;
+            }
+            require(safeSub(balances[_from], _value) >= releaseForSeed[_from][index]);
+        } else if (addressType[_from] == 1 || addressType[_from] == 2) {
+            index = safeSub(now, finaliseTime) / 180 days;
+            if (index >= 4) {
+                index = 4;
+            }
+            require(safeSub(balances[_from], _value) >= releaseForTeamAndAdvisor[_from][index]);
+        }
+        return true;
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        require(canTransfer(_from, _value));
+        uint256 allowance = allowed[_from][msg.sender];
+        require(balances[_from] >= _value && allowance >= _value);
+        balances[_to] += _value;
+        balances[_from] -= _value;
+        if (allowance < MAX_UINT256) {
+            allowed[_from][msg.sender] -= _value;
+        }
+        Transfer(_from, _to, _value);
+        return true;
+    }
+
+    function balanceOf(address _owner) public view returns (uint256 balance) {
+        return balances[_owner];
+    }
+
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
+        return allowed[_owner][_spender];
+    }
 }
