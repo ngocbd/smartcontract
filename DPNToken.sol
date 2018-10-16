@@ -1,71 +1,102 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DPNToken at 0x50de5fba9305546924950610ef3340e4ddec3d6a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DPNToken at 0xfb8bf095ebcdad57d2e37573a505e7d3bafdd3cc
 */
-contract Token{
-    uint256 public totalSupply;
-	mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-	
-	event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+contract DPNToken {
 
-    function balanceOf(address _owner) constant returns (uint256 balance);
+    string public name = "DIPNET";          //  token name
+    string public symbol = "DPN";           //  token symbol
+    uint256 public decimals = 8;            //  token digit
 
-    function transfer(address _to, uint256 _value) returns (bool success);
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
 
-    function transferFrom(address _from, address _to, uint256 _value) returns  (bool success);
+    uint256 public totalSupply = 0;
+    bool public stopped = false;
 
-    function approve(address _spender, uint256 _value) returns (bool success);
+    uint256 constant valueFounder = 1000000000000000000;
+    address public owner = 0x0;
 
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
-	
-}
-
-contract DPNToken is Token {
-
-   string public name;                   
-    uint8 public decimals;      
-    string public symbol;
-    string public version = '0.1';
-
-    function DPNToken() {
-        totalSupply = 1000000000000000000;
-        balances[msg.sender] = totalSupply;
-        name = "DIPNetwork";
-        decimals = 8;
-        symbol = "DPN";
+    modifier isOwner {
+        assert(owner == msg.sender);
+        _;
     }
 
-	function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
+    modifier isRunning {
+        assert (!stopped);
+        _;
     }
 
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        require(balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]);
-        balances[msg.sender] -= _value;
-        balances[_to] += _value;
+    modifier validAddress {
+        assert(0x0 != msg.sender);
+        _;
+    }
+
+    function DPNToken(address _addressFounder) {
+        owner = msg.sender;
+        totalSupply = valueFounder;
+        balanceOf[_addressFounder] = valueFounder;
+        Transfer(0x0, _addressFounder, valueFounder);
+    }
+
+    function transfer(address _to, uint256 _value) isRunning validAddress returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);
+        require(balanceOf[_to] + _value >= balanceOf[_to]);
+        balanceOf[msg.sender] -= _value;
+        balanceOf[_to] += _value;
         Transfer(msg.sender, _to, _value);
         return true;
     }
 
-
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        require(balances[_from] >= _value && allowed[_from][msg.sender] >=  _value && balances[_to] + _value > balances[_to]);
-        balances[_to] += _value;
-        balances[_from] -= _value;
-        allowed[_from][msg.sender] -= _value;
+    function transferFrom(address _from, address _to, uint256 _value) isRunning validAddress returns (bool success) {
+        require(balanceOf[_from] >= _value);
+        require(balanceOf[_to] + _value >= balanceOf[_to]);
+        require(allowance[_from][msg.sender] >= _value);
+        balanceOf[_to] += _value;
+        balanceOf[_from] -= _value;
+        allowance[_from][msg.sender] -= _value;
         Transfer(_from, _to, _value);
         return true;
     }
 
-    function approve(address _spender, uint256 _value) returns (bool success)   
-    {
-        allowed[msg.sender][_spender] = _value;
+    function approve(address _spender, uint256 _value) isRunning validAddress returns (bool success) {
+        require(_value == 0 || allowance[msg.sender][_spender] == 0);
+        allowance[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
     }
 
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
+    function stop() isOwner {
+        stopped = true;
     }
+
+    function start() isOwner {
+        stopped = false;
+    }
+
+    function setName(string _name) isOwner {
+        name = _name;
+    }
+
+    function setSymbol(string _symbol) isOwner{
+        symbol = _symbol;
+    }
+
+    function burn(uint256 _value) {
+        require(balanceOf[msg.sender] >= _value);
+        require(totalSupply >= _value);
+        balanceOf[msg.sender] -= _value;
+        totalSupply -= _value;
+        Burn(msg.sender, _value);
+    }
+    
+    function transferOwnership(address newOwner) public isOwner {
+		require(newOwner != address(0));
+		owner = newOwner;
+		OwnershipTransferred(owner, newOwner);
+	}
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    event Burn(address indexed burner, uint256 value);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 }
