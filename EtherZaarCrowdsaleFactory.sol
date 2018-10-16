@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherZaarCrowdsaleFactory at 0xdec8ec49c1958f1a3c7c77c91f1d66d54b9e0c43
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherZaarCrowdsaleFactory at 0x9ee855a2ef1790b3d100921bddf717a1ce4c5257
 */
 pragma solidity ^0.4.23;
 
@@ -240,8 +240,7 @@ contract CrowdsaleConstructor is MintedCrowdsale {
 
 contract EtherZaarCrowdsaleFactory {
 
-    event NewCrowdsaleToken(string tokenName, string tokenSymbol);
-    event NewCrowdsaleContract(uint256 tokenRate, address crowdsaleOwner, address tokenAddress);
+    event NewCrowdsale(address crowdsaleContractAddress, address crowdsaleTokenAddress, address crowdsaleOwnerAddress);
 
     function createToken(uint256 _rate, address _wallet, string _name, string _symbol) public {
         CrowdsaleTokenConstructor newToken =
@@ -252,7 +251,6 @@ contract EtherZaarCrowdsaleFactory {
 
         newToken.transferOwnership(address(newCrowdsale));
 
-        emit NewCrowdsaleToken(_name, _symbol);
-        emit NewCrowdsaleContract(_rate, _wallet, address(newToken));
+        emit NewCrowdsale(address(newCrowdsale), address(newToken), _wallet);
     }
 }
