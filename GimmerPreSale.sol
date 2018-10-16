@@ -1,7 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GimmerPreSale at 0x9813d5fa1a1838f30349c068492009b84fada13a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GimmerPreSale at 0xBfD9A5911a655729660048bD8f91511b09A439A3
 */
 pragma solidity ^0.4.17;
+
+
 
 /**
  * @title SafeMath
