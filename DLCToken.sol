@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DLCToken at 0x221a8366b2c70453f2063fb36f54a73f214170aa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DLCToken at 0x1ccfd02ed7e65b54398e5aa12c81b0ad74e67388
 */
 pragma solidity ^0.4.21;
 
@@ -192,7 +192,7 @@ contract Configurable is Ownable {
 contract DLCToken is StandardToken, Configurable {
 
     string public constant name = "DoubleLand Coin";
-    string public constant symbol = "DLC";
+    string public constant symbol = "DC";
     uint32 public constant decimals = 18;
 
     uint256 public priceOfToken;
@@ -538,7 +538,7 @@ contract DoubleLandICO is Ownable {
         hardCap = 50000 ether;
         maxActivatedSalesTotalCount = 5;
 
-        setGlobalMultisigWallet(0x7649EFf762E46a63225297949e932e9c6e53A5D5);
+        setGlobalMultisigWallet(0x9264669C5071944EaF5898B13f049aA667a2f94B);
 
         token = new DLCToken();
         token.setTotalSupply(1000000000 * 1 ether);
@@ -546,17 +546,17 @@ contract DoubleLandICO is Ownable {
         token.setBountyTokensPercent(1);
         token.setDevelopmentAuditPromotionTokensPercent(10);
         token.setPriceOfToken(0.000183 * 1 ether);
-        token.setToSaleWallet(0xd16b70A9170038085EBee1BD2a3035b142f62a0D);
-        token.setBountyWallet(0xaD88Ff7240E66F8a0f626F95c7D2aF7cA21265AA);
-        token.setFoundersWallet(0xdF1F7EB40Fe2646CDCC5d189BA0aBae0b0166465);
-        token.setDevelopmentAuditPromotionWallet(0x1028D60104Cd17F98409706e7c7B188B07ab679e);
+        token.setToSaleWallet(0x1Ab521E26d76826cE3130Dd7E31c64870016C268);
+        token.setBountyWallet(0xD1Aac7097a9a79EC60940Af9c6cCcD78597534bc);
+        token.setFoundersWallet(0xf5EEbE2be833458367200389ad567Cc1A450CD64);
+        token.setDevelopmentAuditPromotionWallet(0xebb8776f710A5Df053C291Fe65228687f07faACB);
         token.transferOwnership(owner);
         token.init();
 
         createSale({
             _bonusPreset: 'privatesale',
-            _startTime: 1523739600, // 15.04.2018 00:00:00
-            _endTime:   1525035600, // 30.04.2018 00:00:00
+            _startTime: 1526331600, // 15.05.2018 00:00:00
+            _endTime:   1527714000, // 31.05.2018 00:00:00
             _tokensLimit: 80000000 * 1 ether,
             _minimalPrice: 1 ether
             });
@@ -564,8 +564,8 @@ contract DoubleLandICO is Ownable {
 
         createSale({
             _bonusPreset: 'presale',
-            _startTime: 1526331600, // 15.05.2018 00:00:00
-            _endTime:   1527714000, // 31.05.2018 00:00:00
+            _startTime: 1529010000, // 15.06.2018 00:00:00
+            _endTime:   1530306000, // 30.06.2018 00:00:00
             _tokensLimit: 75000000 * 1 ether,
             _minimalPrice: 0.03 ether
             });
