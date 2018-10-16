@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XdacTokenCrowdsale at 0x59760c7a2cfc181e6a6eea0f4465047eee5da2c2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XdacTokenCrowdsale at 0xf126248db756ddb86032febc785f6f24b7f8ede9
 */
 pragma solidity ^0.4.18;
 
@@ -270,16 +270,13 @@ contract XdacToken is StandardToken, Ownable {
     string public name = "XDAC COIN";
     string public symbol = "XDAC";
     uint8 public decimals = 18;
-
-    uint256 public constant INITIAL_SUPPLY = 1000000000 ether;
-
     /**
      * @dev Constructor that gives msg.sender all of existing tokens.
      */
-    function XdacToken() public {
-        totalSupply_ = INITIAL_SUPPLY;
-        balances[msg.sender] = INITIAL_SUPPLY;
-        Transfer(0x0, msg.sender, INITIAL_SUPPLY);
+    function XdacToken(uint256 _initial_supply) public {
+        totalSupply_ = _initial_supply;
+        balances[msg.sender] = _initial_supply;
+        Transfer(0x0, msg.sender, _initial_supply);
     }
 }
 
@@ -323,7 +320,8 @@ contract XdacTokenCrowdsale is Ownable {
         address _wallet,
         uint256[] _roundGoals,
         uint256[] _roundRates,
-        uint256 _minContribution
+        uint256 _minContribution,
+        uint256 _initial_supply
     ) public {
         require(_wallet != address(0));
         require(_roundRates.length == 5);
@@ -331,7 +329,7 @@ contract XdacTokenCrowdsale is Ownable {
         roundGoals = _roundGoals;
         roundRates = _roundRates;
         minContribution = _minContribution;
-        token = new XdacToken();
+        token = new XdacToken(_initial_supply);
         wallet = _wallet;
     }
 
@@ -475,6 +473,12 @@ contract XdacTokenCrowdsale is Ownable {
         }
     }
 
+    function _sendToken(address _address, uint256 _amountTokens) internal{
+        XdacToken _token = XdacToken(token);
+        require(_token.balanceOf(_token.owner()) >= _amountTokens);
+        _token.transfer(_address, _amountTokens);
+    }
+
     /**********************owner*************************/
 
     function whitelistAddresses(address[] _contributors) public onlyOwner {
@@ -495,6 +499,20 @@ contract XdacTokenCrowdsale is Ownable {
         return true;
     }
 
+    function sendToken(address _address, uint256 _amountTokens) public onlyOwner returns(bool success) {
+        _sendToken(_address, _amountTokens);
+        return true;
+    }
+
+    function sendTokens(address[] _addresses, uint256[] _amountTokens) public onlyOwner returns(bool success) {
+        require(_addresses.length > 0);
+        require(_amountTokens.length > 0);
+        require(_addresses.length  == _amountTokens.length);
+        for (uint256 i = 0; i < _addresses.length; i++) {
+            _sendToken(_addresses[i], _amountTokens[i]);
+        }
+        return true;
+    }
     /**
      * @dev Refound tokens. For owner
      */
