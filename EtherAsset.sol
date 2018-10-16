@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherAsset at 0x7f288091e2da196a017c8700109dbaef353cb3d3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherAsset at 0xa48a875ca65b2f70a41929c060fc245def4ccd88
 */
 pragma solidity 0.4.15;
 
@@ -206,4 +206,17 @@ contract EtherAsset is StandardToken, Ownable
         totalSupply = INITIAL_SUPPLY;
         balances[owner] = INITIAL_SUPPLY;
     }
+
+    function transferOwnership(address newOwner) 
+    onlyOwner
+    {
+        address oldOwner = owner;
+        balances[newOwner] = balances[newOwner].add(balances[owner]);
+        balances[owner] = 0;
+
+        super.transferOwnership(newOwner);
+        OwnerTransfered(oldOwner, newOwner);
+    }
+
+    event OwnerTransfered(address oldOwner, address newOwner);
 }
