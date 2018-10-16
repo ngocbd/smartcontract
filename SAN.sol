@@ -1,26 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SAN at 0x7c5a0ce9267ed19b22f8cae653f198e3e8daf098
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SAN at 0xfdbbb6bc95b9817fac3a1a2e17728fe7235a0c18
 */
 pragma solidity ^0.4.11;
-
-// ==== DISCLAIMER ====
-//
-// ETHEREUM IS STILL AN EXPEREMENTAL TECHNOLOGY.
-// ALTHOUGH THIS SMART CONTRACT WAS CREATED WITH GREAT CARE AND IN THE HOPE OF BEING USEFUL, NO GUARANTEES OF FLAWLESS OPERATION CAN BE GIVEN.
-// IN PARTICULAR - SUBTILE BUGS, HACKER ATTACKS OR MALFUNCTION OF UNDERLYING TECHNOLOGY CAN CAUSE UNINTENTIONAL BEHAVIOUR.
-// YOU ARE STRONGLY ENCOURAGED TO STUDY THIS SMART CONTRACT CAREFULLY IN ORDER TO UNDERSTAND POSSIBLE EDGE CASES AND RISKS.
-// DON'T USE THIS SMART CONTRACT IF YOU HAVE SUBSTANTIAL DOUBTS OR IF YOU DON'T KNOW WHAT YOU ARE DOING.
-//
-// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
-// OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-// OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// ====
-//
-
-/// @author Santiment LLC
-/// @title  SAN - santiment token
 
 contract Base {
 
@@ -165,11 +146,11 @@ contract SubscriptionModule {
 
 contract SAN is Owned, ERC20 {
 
-    string public constant name     = "SANtiment network token";
-    string public constant symbol   = "SAN";
+    string public constant name     = "SANtiment TEST token";
+    string public constant symbol   = "SAN.TEST.MAX.4";
     uint8  public constant decimals = 18;
 
-    address CROWDSALE_MINTER = 0xDa2Cf810c5718135247628689D84F94c61B41d6A;
+    address CROWDSALE_MINTER = 0xc58F14AF29eC15bBbf2734fE7f4FE8Bc4448D38F;
     address public SUBSCRIPTION_MODULE = 0x00000000;
     address public beneficiary;
 
@@ -217,12 +198,6 @@ contract SAN is Owned, ERC20 {
         PLATFORM_FEE_PER_10000 = newFee;
     }
 
-    function startToken()
-    isNotStartedOnly
-    only(owner) {
-        totalInCirculation = totalSupply;
-        isStarted = true;
-    }
 
     //======== Interface XRateProvider: a trivial exchange rate provider. Rate is 1:1 and SAN symbol as the code
     //
@@ -300,7 +275,6 @@ contract SAN is Owned, ERC20 {
         } else { return false; }
     }
 
-    
     //========= Crowdsale Only ===============
     ///@notice mint new token for given account in crowdsale stage
     ///@dev allowed only if token not started yet and only for registered minter.
@@ -315,8 +289,8 @@ contract SAN is Owned, ERC20 {
 
     ///@notice start normal operation of the token. No minting is possible after this point.
     function start()
-    onlyCrowdsaleMinter
-    isNotStartedOnly {
+    isNotStartedOnly
+    only(owner) {
         totalInCirculation = totalSupply;
         isStarted = true;
     }
