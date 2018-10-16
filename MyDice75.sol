@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyDice75 at 0xe74af09d42d9e71f2cd4f13c7ce3a2b182653705
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyDice75 at 0xdd5dc6054aa77f21f6f4cee520320f1ef200991f
 */
 pragma solidity ^0.4.2;
 
@@ -30,7 +30,7 @@ contract MyDice75 is DSSafeAddSub {
      * checks player profit and number is within range
     */
     modifier betIsValid(uint _betSize, uint _playerNumber) {
-		
+        
     require(((((_betSize * (10000-(safeSub(_playerNumber,1)))) / (safeSub(_playerNumber,1))+_betSize))*houseEdge/houseEdgeDivisor)-_betSize <= maxProfit);
 
     require(_playerNumber < maxNumber);
@@ -43,14 +43,14 @@ contract MyDice75 is DSSafeAddSub {
     */
     modifier gameIsActive {
       require(gamePaused == false);
-		_;
+        _;
     }
 
     /*
      * checks payouts are currently active
     */
     modifier payoutsAreActive {
-		require(payoutsPaused == false);
+        require(payoutsPaused == false);
         _;
     }
 
@@ -69,7 +69,7 @@ contract MyDice75 is DSSafeAddSub {
 
     uint constant public maxBetDivisor = 1000000;
     uint constant public houseEdgeDivisor = 1000;
-	bool public gamePaused;
+    bool public gamePaused;
     address public owner;
     bool public payoutsPaused;
     uint public contractBalance;
@@ -92,11 +92,9 @@ contract MyDice75 is DSSafeAddSub {
      * events
     */
     /* Status: 0=lose, 1=win, 2=win + failed send,*/
-	event LogResult(uint indexed BetID, address indexed PlayerAddress, uint indexed PlayerNumber, uint DiceResult, uint Value, int Status,uint BetValue,uint targetNumber);
+    event LogResult(uint indexed BetID, address indexed PlayerAddress, uint indexed PlayerNumber, uint DiceResult, uint Value, int Status,uint BetValue,uint targetNumber);
     /* log owner transfers */
     event LogOwnerTransfer(address indexed SentToAddress, uint indexed AmountTransferred);
-    /*test*/
-    event LogRandom(uint result,uint randomNum);
 
     /*
      * init
@@ -105,16 +103,11 @@ contract MyDice75 is DSSafeAddSub {
 
         owner = msg.sender;
 
-
-        /* init 935 = 93.5% (6.5% houseEdge)*/
         ownerSetHouseEdge(935);
 
-        // 25,000 = 2.5% is our max profit of the house
-        ownerSetMaxProfitAsPercentOfHouse(25000);
-        /* init min bet (0.2 ether) */
-
-        ownerSetMinBet(200000000000000000);
-
+        ownerSetMaxProfitAsPercentOfHouse(20000);
+     
+        ownerSetMinBet(10000000000000000);
     }
 
     function GetRandomNumber() internal 
@@ -127,24 +120,22 @@ contract MyDice75 is DSSafeAddSub {
 
         randomNumber = uint(sha3(randomNumber,nonce,10 + 10*1000000000000000000/msg.value));
 
-        return (randomNumber % 10000 + 1);
+        return (maxNumber - randomNumber % maxNumber);
     }
 
     /*
      * public function
      * player submit bet
-     * only if game is active & bet is valid can query oraclize and set player vars
+     * only if game is active & bet is valid can query and set player vars
     */
-    function playerRollDice(uint rollUnder) public
+    function playerRollDice() public
         payable
         gameIsActive
-        betIsValid(msg.value, rollUnder)
-	{
-    
+        betIsValid(msg.value, underNumber)
+    {
         totalBets += 1;
 
         uint randReuslt = GetRandomNumber();
-        LogRandom(randReuslt,randomNumber);
 
         /*
         * pay winner
@@ -152,9 +143,9 @@ contract MyDice75 is DSSafeAddSub {
         * send reward
         * if send of reward fails save value to playerPendingWithdrawals
         */
-        if(randReuslt < rollUnder){
+        if(randReuslt < underNumber){
 
-            uint playerProfit = ((((msg.value * (maxNumber-(safeSub(rollUnder,1)))) / (safeSub(rollUnder,1))+msg.value))*houseEdge/houseEdgeDivisor)-msg.value;
+            uint playerProfit = ((((msg.value * (maxNumber-(safeSub(underNumber,1)))) / (safeSub(underNumber,1))+msg.value))*houseEdge/houseEdgeDivisor)-msg.value;
 
             /* safely reduce contract balance by player profit */
             contractBalance = safeSub(contractBalance, playerProfit);
@@ -189,7 +180,7 @@ contract MyDice75 is DSSafeAddSub {
         * send 1 wei to a losing bet
         * update contract balance to calculate new max bet
         */
-        if(randReuslt >= rollUnder){
+        if(randReuslt >= underNumber){
 
             LogResult(totalBets, msg.sender, underNumber, randReuslt, msg.value, 0, msg.value,underNumber);
 
@@ -257,7 +248,7 @@ contract MyDice75 is DSSafeAddSub {
     function ()
         payable
     {
-        playerRollDice(underNumber);
+        playerRollDice();
     }
 
     function setNonce(uint value) public
@@ -292,7 +283,7 @@ contract MyDice75 is DSSafeAddSub {
 
     /* only owner address can set houseEdge */
     function ownerSetHouseEdge(uint newHouseEdge) public
-		onlyOwner
+        onlyOwner
     {
         houseEdge = newHouseEdge;
     }
@@ -306,7 +297,7 @@ contract MyDice75 is DSSafeAddSub {
 
     /* only owner address can set maxProfitAsPercentOfHouse */
     function ownerSetMaxProfitAsPercentOfHouse(uint newMaxProfitAsPercent) public
-		onlyOwner
+        onlyOwner
     {
         /* restrict to maximum profit of 5% of total house balance*/
         require(newMaxProfitAsPercent <= 50000);
@@ -323,7 +314,7 @@ contract MyDice75 is DSSafeAddSub {
 
     /* only owner address can set minBet */
     function ownerSetMinBet(uint newMinimumBet) public
-		onlyOwner
+        onlyOwner
     {
         minBet = newMinimumBet;
     }
@@ -337,7 +328,7 @@ contract MyDice75 is DSSafeAddSub {
 
     /* only owner address can transfer ether */
     function ownerTransferEther(address sendTo, uint amount) public
-		onlyOwner
+        onlyOwner
     {
         /* safely update contract balance when sending out funds*/
         contractBalance = safeSub(contractBalance, amount);
@@ -349,31 +340,31 @@ contract MyDice75 is DSSafeAddSub {
 
     /* only owner address can set emergency pause #1 */
     function ownerPauseGame(bool newStatus) public
-		onlyOwner
+        onlyOwner
     {
-		gamePaused = newStatus;
+        gamePaused = newStatus;
     }
 
     /* only owner address can set emergency pause #2 */
     function ownerPausePayouts(bool newPayoutStatus) public
-		onlyOwner
+        onlyOwner
     {
-		payoutsPaused = newPayoutStatus;
+        payoutsPaused = newPayoutStatus;
     }
 
 
     /* only owner address can set owner address */
     function ownerChangeOwner(address newOwner) public
-		onlyOwner
-	{
+        onlyOwner
+    {
         owner = newOwner;
     }
 
     /* only owner address can suicide - emergency */
     function ownerkill() public
-		onlyOwner
-	{
-		suicide(owner);
-	}
+        onlyOwner
+    {
+        suicide(owner);
+    }
 
 }
