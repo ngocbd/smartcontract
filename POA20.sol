@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POA20 at 0xc50744437857e738bda62368a345af756fe54370
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POA20 at 0xc1f1b22d07302f8529a5710aff7eb8f003c76730
 */
 pragma solidity 0.4.21;
 
@@ -9,7 +9,7 @@ contract ERC677Receiver {
   function onTokenTransfer(address _from, uint _value, bytes _data) external returns(bool);
 }
 
-// File: zeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
+// File: openzeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
 
 /**
  * @title ERC20Basic
@@ -23,7 +23,7 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-// File: zeppelin-solidity/contracts/token/ERC20/ERC20.sol
+// File: openzeppelin-solidity/contracts/token/ERC20/ERC20.sol
 
 /**
  * @title ERC20 interface
@@ -41,7 +41,7 @@ contract ERC20 is ERC20Basic {
 contract ERC677 is ERC20 {
     event Transfer(address indexed from, address indexed to, uint value, bytes data);
 
-    function transferAndCall(address, uint, bytes) public returns (bool);
+    function transferAndCall(address, uint, bytes) external returns (bool);
 
 }
 
@@ -50,9 +50,10 @@ contract ERC677 is ERC20 {
 contract IBurnableMintableERC677Token is ERC677 {
     function mint(address, uint256) public returns (bool);
     function burn(uint256 _value) public;
+    function claimTokens(address _token, address _to) public;
 }
 
-// File: zeppelin-solidity/contracts/math/SafeMath.sol
+// File: openzeppelin-solidity/contracts/math/SafeMath.sol
 
 /**
  * @title SafeMath
@@ -63,11 +64,11 @@ library SafeMath {
   /**
   * @dev Multiplies two numbers, throws on overflow.
   */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
     if (a == 0) {
       return 0;
     }
-    uint256 c = a * b;
+    c = a * b;
     assert(c / a == b);
     return c;
   }
@@ -77,9 +78,9 @@ library SafeMath {
   */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
+    // uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
+    return a / b;
   }
 
   /**
@@ -93,14 +94,14 @@ library SafeMath {
   /**
   * @dev Adds two numbers, throws on overflow.
   */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
     assert(c >= a);
     return c;
   }
 }
 
-// File: zeppelin-solidity/contracts/token/ERC20/BasicToken.sol
+// File: openzeppelin-solidity/contracts/token/ERC20/BasicToken.sol
 
 /**
  * @title Basic token
@@ -129,10 +130,9 @@ contract BasicToken is ERC20Basic {
     require(_to != address(0));
     require(_value <= balances[msg.sender]);
 
-    // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
+    emit Transfer(msg.sender, _to, _value);
     return true;
   }
 
@@ -141,13 +141,13 @@ contract BasicToken is ERC20Basic {
   * @param _owner The address to query the the balance of.
   * @return An uint256 representing the amount owned by the passed address.
   */
-  function balanceOf(address _owner) public view returns (uint256 balance) {
+  function balanceOf(address _owner) public view returns (uint256) {
     return balances[_owner];
   }
 
 }
 
-// File: zeppelin-solidity/contracts/token/ERC20/BurnableToken.sol
+// File: openzeppelin-solidity/contracts/token/ERC20/BurnableToken.sol
 
 /**
  * @title Burnable Token
@@ -162,19 +162,22 @@ contract BurnableToken is BasicToken {
    * @param _value The amount of token to be burned.
    */
   function burn(uint256 _value) public {
-    require(_value <= balances[msg.sender]);
+    _burn(msg.sender, _value);
+  }
+
+  function _burn(address _who, uint256 _value) internal {
+    require(_value <= balances[_who]);
     // no need to require value <= totalSupply, since that would imply the
     // sender's balance is greater than the totalSupply, which *should* be an assertion failure
 
-    address burner = msg.sender;
-    balances[burner] = balances[burner].sub(_value);
+    balances[_who] = balances[_who].sub(_value);
     totalSupply_ = totalSupply_.sub(_value);
-    Burn(burner, _value);
-    Transfer(burner, address(0), _value);
+    emit Burn(_who, _value);
+    emit Transfer(_who, address(0), _value);
   }
 }
 
-// File: zeppelin-solidity/contracts/token/ERC20/DetailedERC20.sol
+// File: openzeppelin-solidity/contracts/token/ERC20/DetailedERC20.sol
 
 contract DetailedERC20 is ERC20 {
   string public name;
@@ -188,7 +191,7 @@ contract DetailedERC20 is ERC20 {
   }
 }
 
-// File: zeppelin-solidity/contracts/ownership/Ownable.sol
+// File: openzeppelin-solidity/contracts/ownership/Ownable.sol
 
 /**
  * @title Ownable
@@ -224,13 +227,13 @@ contract Ownable {
    */
   function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
+    emit OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
 
 }
 
-// File: zeppelin-solidity/contracts/token/ERC20/StandardToken.sol
+// File: openzeppelin-solidity/contracts/token/ERC20/StandardToken.sol
 
 /**
  * @title Standard ERC20 token
@@ -258,7 +261,7 @@ contract StandardToken is ERC20, BasicToken {
     balances[_from] = balances[_from].sub(_value);
     balances[_to] = balances[_to].add(_value);
     allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
+    emit Transfer(_from, _to, _value);
     return true;
   }
 
@@ -274,7 +277,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function approve(address _spender, uint256 _value) public returns (bool) {
     allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
+    emit Approval(msg.sender, _spender, _value);
     return true;
   }
 
@@ -300,7 +303,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
@@ -321,18 +324,18 @@ contract StandardToken is ERC20, BasicToken {
     } else {
       allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
 }
 
-// File: zeppelin-solidity/contracts/token/ERC20/MintableToken.sol
+// File: openzeppelin-solidity/contracts/token/ERC20/MintableToken.sol
 
 /**
  * @title Mintable token
  * @dev Simple ERC20 Token example, with mintable token creation
- * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
+ * @dev Issue: * https://github.com/OpenZeppelin/openzeppelin-solidity/issues/120
  * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
  */
 contract MintableToken is StandardToken, Ownable {
@@ -356,8 +359,8 @@ contract MintableToken is StandardToken, Ownable {
   function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
     totalSupply_ = totalSupply_.add(_amount);
     balances[_to] = balances[_to].add(_amount);
-    Mint(_to, _amount);
-    Transfer(address(0), _to, _amount);
+    emit Mint(_to, _amount);
+    emit Transfer(address(0), _to, _amount);
     return true;
   }
 
@@ -367,7 +370,7 @@ contract MintableToken is StandardToken, Ownable {
    */
   function finishMinting() onlyOwner canMint public returns (bool) {
     mintingFinished = true;
-    MintFinished();
+    emit MintFinished();
     return true;
   }
 }
@@ -391,14 +394,14 @@ contract POA20 is
     }
 
     function transferAndCall(address _to, uint _value, bytes _data)
-        public validRecipient(_to) returns (bool)
+        external validRecipient(_to) returns (bool)
     {
-        bool result = super.transfer(_to, _value);
+        require(transfer(_to, _value));
         emit Transfer(msg.sender, _to, _value, _data);
         if (isContract(_to)) {
-            result = contractFallback(_to, _value, _data);
+            require(contractFallback(_to, _value, _data));
         }
-        return result;
+        return true;
     }
 
     function contractFallback(address _to, uint _value, bytes _data)
@@ -411,6 +414,7 @@ contract POA20 is
 
     function isContract(address _addr)
         private
+        view
         returns (bool hasCode)
     {
         uint length;
@@ -421,5 +425,18 @@ contract POA20 is
     function finishMinting() public returns (bool) {
         revert();
     }
+
+    function claimTokens(address _token, address _to) public onlyOwner {
+        require(_to != address(0));
+        if (_token == address(0)) {
+            _to.transfer(address(this).balance);
+            return;
+        }
+
+        DetailedERC20 token = DetailedERC20(_token);
+        uint256 balance = token.balanceOf(address(this));
+        require(token.transfer(_to, balance));
+    }
+
 
 }
