@@ -1,30 +1,30 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ECT2Crowdsale2 at 0xF45546FcB8C604703a0c5f1A652F01cE452Ec511
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ECT2Crowdsale2 at 0x9D279601D236eB89Bc5cAc7aC05110f8a7979095
 */
 pragma solidity ^0.4.16;
 
 //SafeMath - Math operations with safety checks that throw on error
     
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
@@ -32,7 +32,7 @@ library SafeMath {
 }
 
 interface token { 
-    function transfer(address receiver, uint amount); 
+    function transfer(address receiver, uint amount) external; 
 }
 
 contract ECT2Crowdsale2 {
@@ -72,28 +72,28 @@ contract ECT2Crowdsale2 {
   }    
 
   function ECT2Crowdsale2(
-  ) {
+  ) public {
     wallet = 0x55BeA1A0335A8Ea56572b8E66f17196290Ca6467;
     addressOfTokenUsedAsReward = 0x3a799eD72BceF6fc98AeE750C5ACC352CDBA5f6c;
     price = 100 * 1 finney;
     fundingGoal = 50 * 1 finney;
     minimumFundingGoal = 10 * 1 finney;
     tokenReward = token(addressOfTokenUsedAsReward);
-    startTime = 1511355600; //13:00 UTC
-    stage1Bounty = 1511356800; //13:20 UTC 50%
-    stage2Bounty = 1511358000; //13:40 UTC 40%
-    stage3Bounty = 1511359200; //14:00 UTC 25%
-    stage4Bounty = 1511360100; //14:15UTC 10%
-    endTime = 1511361000; //14:30 UTC 0%
+    startTime = 1511547000; //18:10 UTC
+    stage1Bounty = 1511547300; //18:15 UTC 50%
+    stage2Bounty = 1511547600; //18:20 UTC 40%
+    stage3Bounty = 1511547900; //18:25 UTC 25%
+    stage4Bounty = 1511548200; //18:30 UTC 10%
+    endTime = 1511548500; //18:35 UTC 0%
   }
 
   // fallback function can be used to buy tokens
-  function () payable isMinimum{
+  function () external payable isMinimum{
     buyTokens(msg.sender);
   }
 
   // low level token purchase function
-  function buyTokens(address beneficiary) payable {
+  function buyTokens(address beneficiary) public payable {
     require(beneficiary != 0x0);
     require(validPurchase());
 
@@ -120,7 +120,7 @@ contract ECT2Crowdsale2 {
   
   
   //withdrawal or refund for investor and beneficiary
-  function safeWithdrawal() afterDeadline {
+  function safeWithdrawal() public afterDeadline {
         if (weiRaised < fundingGoal && weiRaised < minimumFundingGoal) {
             uint amount = balanceOf[msg.sender];
             balanceOf[msg.sender] = 0;
