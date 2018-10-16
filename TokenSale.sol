@@ -1,345 +1,363 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract tokensale at 0x97be2ff809b93c02f370da97b72fb3673b160708
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Tokensale at 0x664AE9Be65F1977f0eca5ece98E291D59d9ec9a8
 */
-pragma solidity ^0.4.10;
+pragma solidity ^0.4.11;
 
-contract Token {
-    
-    mapping (address => uint256) public balanceOf;
-    mapping (uint256 => address) public addresses;
-    mapping (address => bool) public addressExists;
-    mapping (address => uint256) public addressIndex;
-    uint256 public numberOfAddress = 0;
-    
-    string public physicalString;
-    string public cryptoString;
-    
-    bool public isSecured;
-    string public name;
-    string public symbol;
-    uint256 public totalSupply;
-    bool public canMintBurn;
-    uint256 public txnTax;
-    uint256 public holdingTax;
-    //In Weeks, on Fridays
-    uint256 public holdingTaxInterval;
-    uint256 public lastHoldingTax;
-    uint256 public holdingTaxDecimals = 2;
-    bool public isPrivate;
-    
-    address public owner;
-    
-    function Token(string n, string a, uint256 totalSupplyToUse, bool isSecured, bool cMB, string physical, string crypto, uint256 txnTaxToUse, uint256 holdingTaxToUse, uint256 holdingTaxIntervalToUse, bool isPrivateToUse) {
-        name = n;
-        symbol = a;
-        totalSupply = totalSupplyToUse;
-        balanceOf[msg.sender] = totalSupplyToUse;
-        isSecured = isSecured;
-        physicalString = physical;
-        cryptoString = crypto;
-        canMintBurn = cMB;
-        owner = msg.sender;
-        txnTax = txnTaxToUse;
-        holdingTax = holdingTaxToUse;
-        holdingTaxInterval = holdingTaxIntervalToUse;
-        if(holdingTaxInterval!=0) {
-            lastHoldingTax = now;
-            while(getHour(lastHoldingTax)!=21) {
-                lastHoldingTax -= 1 hours;
-            }
-            while(getWeekday(lastHoldingTax)!=5) {
-                lastHoldingTax -= 1 days;
-            }
-            lastHoldingTax -= getMinute(lastHoldingTax) * (1 minutes) + getSecond(lastHoldingTax) * (1 seconds);
-        }
-        isPrivate = isPrivateToUse;
-        
-        addAddress(owner);
-    }
-    
-    function transfer(address _to, uint256 _value) payable {
-        chargeHoldingTax();
-        if (balanceOf[msg.sender] < _value) throw;
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw;
-        if (msg.sender != owner && _to != owner && txnTax != 0) {
-            if(!owner.send(txnTax)) {
-                throw;
-            }
-        }
-        if(isPrivate && msg.sender != owner && !addressExists[_to]) {
-            throw;
-        }
-        balanceOf[msg.sender] -= _value;
-        balanceOf[_to] += _value;
-        addAddress(_to);
-        Transfer(msg.sender, _to, _value);
-    }
-    
-    function changeTxnTax(uint256 _newValue) {
-        if(msg.sender != owner) throw;
-        txnTax = _newValue;
-    }
-    
-    function mint(uint256 _value) {
-        if(canMintBurn && msg.sender == owner) {
-            if (balanceOf[msg.sender] + _value < balanceOf[msg.sender]) throw;
-            balanceOf[msg.sender] += _value;
-            totalSupply += _value;
-            Transfer(0, msg.sender, _value);
-        }
-    }
-    
-    function burn(uint256 _value) {
-        if(canMintBurn && msg.sender == owner) {
-            if (balanceOf[msg.sender] < _value) throw;
-            balanceOf[msg.sender] -= _value;
-            totalSupply -= _value;
-            Transfer(msg.sender, 0, _value);
-        }
-    }
-    
-    function chargeHoldingTax() {
-        if(holdingTaxInterval!=0) {
-            uint256 dateDif = now - lastHoldingTax;
-            bool changed = false;
-            while(dateDif >= holdingTaxInterval * (1 weeks)) {
-                changed=true;
-                dateDif -= holdingTaxInterval * (1 weeks);
-                for(uint256 i = 0;i<numberOfAddress;i++) {
-                    if(addresses[i]!=owner) {
-                        uint256 amtOfTaxToPay = ((balanceOf[addresses[i]]) * holdingTax)  / (10**holdingTaxDecimals)/ (10**holdingTaxDecimals);
-                        balanceOf[addresses[i]] -= amtOfTaxToPay;
-                        balanceOf[owner] += amtOfTaxToPay;
-                    }
-                }
-            }
-            if(changed) {
-                lastHoldingTax = now;
-                while(getHour(lastHoldingTax)!=21) {
-                    lastHoldingTax -= 1 hours;
-                }
-                while(getWeekday(lastHoldingTax)!=5) {
-                    lastHoldingTax -= 1 days;
-                }
-                lastHoldingTax -= getMinute(lastHoldingTax) * (1 minutes) + getSecond(lastHoldingTax) * (1 seconds);
-            }
-        }
-    }
-    
-    function changeHoldingTax(uint256 _newValue) {
-        if(msg.sender != owner) throw;
-        holdingTax = _newValue;
-    }
-    
-    function changeHoldingTaxInterval(uint256 _newValue) {
-        if(msg.sender != owner) throw;
-        holdingTaxInterval = _newValue;
-    }
-    
-    function addAddress (address addr) private {
-        if(!addressExists[addr]) {
-            addressIndex[addr] = numberOfAddress;
-            addresses[numberOfAddress++] = addr;
-            addressExists[addr] = true;
-        }
-    }
-    
-    function addAddressManual (address addr) {
-        if(msg.sender == owner && isPrivate) {
-            addAddress(addr);
-        } else {
-            throw;
-        }
-    }
-    
-    function removeAddress (address addr) private {
-        if(addressExists[addr]) {
-            numberOfAddress--;
-            addresses[addressIndex[addr]] = 0x0;
-            addressExists[addr] = false;
-        }
-    }
-    
-    function removeAddressManual (address addr) {
-        if(msg.sender == owner && isPrivate) {
-            removeAddress(addr);
-        } else {
-            throw;
-        }
-    }
-    
-    function getWeekday(uint timestamp) returns (uint8) {
-            return uint8((timestamp / 86400 + 4) % 7);
-    }
-    
-    function getHour(uint timestamp) returns (uint8) {
-            return uint8((timestamp / 60 / 60) % 24);
-    }
 
-    function getMinute(uint timestamp) returns (uint8) {
-            return uint8((timestamp / 60) % 60);
-    }
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
-    function getSecond(uint timestamp) returns (uint8) {
-            return uint8(timestamp % 60);
-    }
+  function div(uint256 a, uint256 b) internal returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
 
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+  function sub(uint256 a, uint256 b) internal returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-contract tokensale {
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) constant returns (uint256);
+  function transfer(address to, uint256 value);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+  event Burn(address indexed from, uint256 value);
+}
+
+
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value);
+  function approve(address spender, uint256 value);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
+
+  mapping(address => uint256) balances;
+
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) {
+      
+    require ( balances[msg.sender] >= _value);           // Check if the sender has enough
+    require (balances[_to] + _value >= balances[_to]);   // Check for overflows
+
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+  }
+  
+  // burn tokens from sender balance
+  function burn(uint256 _value) {
+      
+    require ( balances[msg.sender] >= _value);           // Check if the sender has enough
+
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    Burn(msg.sender, _value);
+  }
+  
+
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) constant returns (uint256 balance) {
+    return balances[_owner];
+  }
+
+}
+
+
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) allowed;
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amout of tokens to be transfered
+   */
+  function transferFrom(address _from, address _to, uint256 _value) {
+    var _allowance = allowed[_from][msg.sender];
+
+    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
+    // if (_value > _allowance) throw;
+
+    balances[_to] = balances[_to].add(_value);
+    balances[_from] = balances[_from].sub(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
+    Transfer(_from, _to, _value);
+  }
+
+  /**
+   * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) {
+
+    // To change the approve amount you first have to reduce the addresses`
+    //  allowance to zero by calling `approve(_spender, 0)` if it is not
+    //  already 0 to mitigate the race condition described here:
+    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    require ( !((_value != 0) && (allowed[msg.sender][_spender] != 0)));
+
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifing the amount of tokens still avaible for the spender.
+   */
+  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+    return allowed[_owner][_spender];
+  }
+
+}
+
+contract Ownable {
+  address public owner;
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner) ;
     
-    Token public token;
-    uint256 public totalSupply;
-    uint256 public numberOfTokens;
-    uint256 public numberOfTokensLeft;
-    uint256 public pricePerToken;
-    uint256 public tokensFromPresale = 0;
-    uint256 public tokensFromPreviousTokensale = 0;
-    uint8 public decimals = 2;
-    uint256 public withdrawLimit = 200000000000000000000;
-    
-    address public owner;
-    string public name;
-    string public symbol;
-    
-    address public finalAddress = 0x5904957d25D0c6213491882a64765967F88BCCC7;
-    
-    mapping (address => uint256) public balanceOf;
-    mapping (address => bool) public addressExists;
-    mapping (uint256 => address) public addresses;
-    mapping (address => uint256) public addressIndex;
-    uint256 public numberOfAddress = 0;
-    
-    mapping (uint256 => uint256) public dates;
-    mapping (uint256 => uint256) public percents;
-    uint256 public numberOfDates = 8;
-    
-    tokensale pts = tokensale(0xED6c0654cD61De5b1355Ae4e9d9C786005e9D5BD);
-    
-    function tokensale(address tokenAddress, uint256 noOfTokens, uint256 prPerToken) {
-        dates[0] = 1505520000;
-        dates[1] = 1506038400;
-        dates[2] = 1506124800;
-        dates[3] = 1506816000;
-        dates[4] = 1507420800;
-        dates[5] = 1508112000;
-        dates[6] = 1508630400;
-        dates[7] = 1508803200;
-        percents[0] = 70000;
-        percents[1] = 40000;
-        percents[2] = 20000;
-        percents[3] = 10000;
-        percents[4] = 5000;
-        percents[5] = 0;
-        percents[6] = 9001;
-        percents[7] = 9001;
-        token = Token(tokenAddress);
-        numberOfTokens = noOfTokens * 100;
-        totalSupply = noOfTokens * 100;
-        numberOfTokensLeft = noOfTokens * 100;
-        pricePerToken = prPerToken;
-        owner = msg.sender;
-        name = "Autonio ICO";
-        symbol = "NIO";
-        updatePresaleNumbers();
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner {
+    if (newOwner != address(0)) {
+      owner = newOwner;
     }
+  }
+
+}
+
+contract MintableToken is StandardToken, Ownable {
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
+  string public name = "ICScoin";
+  string public symbol = "ICS";
+  uint256 public decimals = 10;
+
+  bool public mintingFinished = false;
+
+
+  modifier canMint() {
+    require(!mintingFinished) ;
+    _;
+  }
+
+  function MintableToken(){
+    mint(msg.sender,5000000000000000);
+    finishMinting();
+  }
     
-    function addAddress (address addr) private {
-        if(!addressExists[addr]) {
-            addressIndex[addr] = numberOfAddress;
-            addresses[numberOfAddress++] = addr;
-            addressExists[addr] = true;
-        }
+  /**
+   * @dev Function to mint tokens
+   * @param _to The address that will recieve the minted tokens.
+   * @param _amount The amount of tokens to mint.
+   * @return A boolean that indicates if the operation was successful.
+   */
+  function mint(address _to, uint256 _amount) onlyOwner canMint returns (bool) {
+    totalSupply = totalSupply.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    Mint(_to, _amount);
+    return true;
+  }
+  
+  /**
+   * @dev Function to stop minting new tokens.
+   * @return True if the operation was successful.
+   */
+  function finishMinting() onlyOwner returns (bool) {
+    mintingFinished = true;
+    MintFinished();
+    return true;
+  }
+
+}
+
+
+contract Tokensale {
+    address public beneficiary;
+    uint public fundingGoal;
+    uint public amountRaised;
+    uint public deadline;
+    uint public price;
+    uint public minimumEntryThreshold;
+    address public devAddr; // developers team address (for reward)
+    MintableToken public tokenReward;
+    mapping(address => uint256) public balanceOf;
+    bool fundingGoalReached = false;
+    bool crowdsaleClosed = false;
+    bool public devPaid = false;
+    
+    // start and end block where investments are allowed (both inclusive)
+    uint256 public startTime;
+    uint256 public endTime;
+
+
+    event GoalReached(address beneficiary, uint amountRaised);
+    event FundTransfer(address backer, uint amount, bool isContribution);
+
+    /**
+     * Constrctor function
+     *
+     * Setup the owner
+     */
+    function Tokensale(
+    //    address ifSuccessfulSendTo,
+    //    uint fundingGoalInEthers,
+    //    uint finneyCostOfEachToken,
+        address addressOfTokenUsedAsReward
+     //   uint minimumEntryThresholdInFinney
+     //   address _devAddr
+    ) {
+        beneficiary = address(0x7486516460CdDC841ca7293C2a01328D359eB609);
+        fundingGoal = 4166 ether;
+        startTime = 1506600000; // September 28, 2017 12:00 (UTC)
+        endTime =   1507809600; // October 12, 2017 12:00 (UTC)
+        price = 833 finney;
+        minimumEntryThreshold = 1 ether;
+        tokenReward = MintableToken(addressOfTokenUsedAsReward);
+        devAddr = address(0x45e044ED9Bf130EafafA8095115Eda69FC3b0D20);
     }
-    
-    function endPresale() {
-        if(msg.sender == owner) {
-            if(now > dates[numberOfDates-1]) {
-                finish();
-            } else if(numberOfTokensLeft == 0) {
-                finish();
-            } else {
-                throw;
-            }
-        } else {
-            throw;
-        }
-    }
-    
-    function finish() private {
-        if(!finalAddress.send(this.balance)) {
-            throw;
-        }
-    }
-    
-    function withdraw(uint256 amount) {
-        if(msg.sender == owner) {
-            if(amount <= withdrawLimit) {
-                withdrawLimit-=amount;
-                if(!finalAddress.send(amount)) {
-                    throw;
-                }
-            } else {
-                throw;
-            }
-        } else {
-            throw;
-        }
-    }
-    
-    function updatePresaleNumbers() {
-        if(msg.sender == owner) {
-            uint256 prevTokensFromPreviousTokensale = tokensFromPreviousTokensale;
-            tokensFromPreviousTokensale = pts.numberOfTokens() - pts.numberOfTokensLeft();
-            uint256 diff = tokensFromPreviousTokensale - prevTokensFromPreviousTokensale;
-            numberOfTokensLeft -= diff * 2;
-        } else {
-            throw;
-        }
-    }
-    
+
+    /**
+     * Fallback function
+     *
+     * The function without name is the default function that is called whenever anyone sends funds to a contract
+     */
     function () payable {
-        uint256 prevTokensFromPreviousTokensale = tokensFromPreviousTokensale;
-        tokensFromPreviousTokensale = pts.numberOfTokens() - pts.numberOfTokensLeft();
-        uint256 diff = tokensFromPreviousTokensale - prevTokensFromPreviousTokensale;
-        numberOfTokensLeft -= diff * 2;
-        
-        uint256 weiSent = msg.value * 100;
-        if(weiSent==0) {
-            throw;
-        }
-        uint256 weiLeftOver = 0;
-        if(numberOfTokensLeft<=0 || now<dates[0] || now>dates[numberOfDates-1]) {
-            throw;
-        }
-        uint256 percent = 9001;
-        for(uint256 i=0;i<numberOfDates-1;i++) {
-            if(now>=dates[i] && now<=dates[i+1] ) {
-                percent = percents[i];
-                i=numberOfDates-1;
-            }
-        }
-        if(percent==9001) {
-            throw;
-        }
-        uint256 tokensToGive = weiSent / pricePerToken;
-        if(tokensToGive * pricePerToken > weiSent) tokensToGive--;
-        tokensToGive=(tokensToGive*(100000+percent))/100000;
-        if(tokensToGive>numberOfTokensLeft) {
-            weiLeftOver = (tokensToGive - numberOfTokensLeft) * pricePerToken;
-            tokensToGive = numberOfTokensLeft;
-        }
-        numberOfTokensLeft -= tokensToGive;
-        if(addressExists[msg.sender]) {
-            balanceOf[msg.sender] += tokensToGive;
-        } else {
-            addAddress(msg.sender);
-            balanceOf[msg.sender] = tokensToGive;
-        }
-        Transfer(0x0,msg.sender,tokensToGive);
-        if(weiLeftOver>0)msg.sender.send(weiLeftOver);
+
+        require(validPurchase());
+        require(msg.value >= minimumEntryThreshold);
+        uint amount = msg.value;
+        uint tokens = amount * 10000000000 / price;
+        require( tokenReward.balanceOf(this) >= tokens);
+        balanceOf[msg.sender] += amount;
+        amountRaised += amount;
+        tokenReward.transfer(msg.sender, tokens);
+        FundTransfer(msg.sender, amount, true);
+    }
+
+    modifier afterDeadline() { if (now >  endTime) _; }
+    
+      // @return true if the transaction can buy tokens
+    function validPurchase() internal constant returns (bool) {
+        bool withinPeriod = now >= startTime && now <= endTime;
+        bool nonZeroPurchase = msg.value != 0;
+        return withinPeriod && nonZeroPurchase;// && maxTokensSold;
+    }
+
+    // @return true if crowdsale event has ended
+    function hasEnded() public constant returns (bool) {
+        return ( now > endTime );// || (tokensSold >= token.balanceOf(this)) ;
     }
     
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    /**
+     * Check if goal was reached
+     *
+     * Checks if the goal or time limit has been reached and ends the campaign
+     */
+    function checkGoalReached() afterDeadline {
+        if (amountRaised >= fundingGoal){
+            fundingGoalReached = true;
+            GoalReached(beneficiary, amountRaised);
+        }
+        crowdsaleClosed = true;
+    }
+
+
+    /**
+     * Withdraw the funds
+     *
+     * Checks to see if goal or time limit has been reached, and if so, and the funding goal was reached,
+     * sends the entire amount to the beneficiary. If goal was not reached, each contributor can withdraw
+     * the amount they contributed.
+     */
+    function safeWithdrawal() afterDeadline {
+        
+        checkGoalReached();
+        
+        // sending reward for developers team
+        if ( !devPaid)  {
+            uint devReward;
+            if ( amountRaised >= 10 ether ) devReward = 10 ether; else devReward = amountRaised;
+            devAddr.transfer(devReward);
+            FundTransfer(devAddr, devReward, true);
+            devPaid = true;
+        }
+        
+        
+        if (!fundingGoalReached) {
+            uint amount = balanceOf[msg.sender];
+            balanceOf[msg.sender] = 0;
+            if (amount > 0) {
+                if (msg.sender.send(amount)) {
+                    FundTransfer(msg.sender, amount, false);
+                } else {
+                    balanceOf[msg.sender] = amount;
+                }
+            }
+        }
+
+        if (fundingGoalReached && beneficiary == msg.sender) {
+            if (beneficiary.send(amountRaised - 10 ether)) {
+                FundTransfer(beneficiary, amountRaised - 10 ether, false);
+            } else {
+                //If we fail to send the funds to beneficiary, unlock funders balance
+                fundingGoalReached = false;
+            }
+        }
+        
+    }
 }
