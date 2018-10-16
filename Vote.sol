@@ -1,22 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vote at 0x36ba156f8fba7bd116f78461d9fdf265b4e75747
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vote at 0x58dd96aa829353032a21c95733ce484b949b2849
 */
 contract Vote {
-    address creator;
-
-    function Vote() {
-        creator = msg.sender;
-    }
+    event LogVote(address indexed addr);
 
     function() {
-        if (msg.value > 0) {
-            tx.origin.send(msg.value);
-        }
-    }
+        LogVote(msg.sender);
 
-    function kill() {
-        if (msg.sender == creator) {
-            suicide(creator);
+        if (msg.value > 0) {
+            msg.sender.send(msg.value);
         }
     }
 }
