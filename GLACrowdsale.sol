@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GLACrowdsale at 0x57bfffd48366f78e787e167419c8c05cdb849ede
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GLACrowdsale at 0xaaf4281fd8142dc3263b3303b0a6f62d00b2d07e
 */
 pragma solidity ^0.4.15;
 
@@ -379,7 +379,7 @@ contract Crowdsale is ICrowdsale, Owned {
     uint public raised;
     uint public allocatedEth;
     uint public allocatedTokens;
-    Stages public stage = Stages.Deploying;
+    Stages public stage;
 
     // Token contract
     IManagedToken public token;
@@ -403,7 +403,7 @@ contract Crowdsale is ICrowdsale, Owned {
     mapping (uint => VolumeMultiplier) private volumeMultipliers;
     uint[] private volumeMultiplierThresholds;
 
-
+    
     /**
      * Throw if at stage other than current stage
      * 
@@ -445,13 +445,11 @@ contract Crowdsale is ICrowdsale, Owned {
 
 
     /**
-     * Allows the implementing contract to validate a 
-     * contributing account
-     *
-     * @param _contributor Address that is being validated
-     * @return Wheter the contributor is accepted or not
+     * Start in the deployed stage
      */
-    function isAcceptedContributor(address _contributor) internal constant returns (bool);
+    function Crowdsale() {
+        stage = Stages.Deploying;
+    }
 
 
     /**
@@ -468,7 +466,7 @@ contract Crowdsale is ICrowdsale, Owned {
      * @param _maxAmountPresale The max cap for the presale
      * @param _minAcceptedAmountPresale The lowest accepted amount during the presale phase
      */
-    function Crowdsale(uint _start, address _token, uint _tokenDenominator, uint _percentageDenominator, uint _minAmount, uint _maxAmount, uint _minAcceptedAmount, uint _minAmountPresale, uint _maxAmountPresale, uint _minAcceptedAmountPresale) {
+    function setup(uint _start, address _token, uint _tokenDenominator, uint _percentageDenominator, uint _minAmount, uint _maxAmount, uint _minAcceptedAmount, uint _minAmountPresale, uint _maxAmountPresale, uint _minAcceptedAmountPresale) public only_owner at_stage(Stages.Deploying) {
         token = IManagedToken(_token);
         tokenDenominator = _tokenDenominator;
         percentageDenominator = _percentageDenominator;
@@ -644,7 +642,7 @@ contract Crowdsale is ICrowdsale, Owned {
      *
      * @return The index of the current phase
      */
-    function getCurrentPhase() public constant returns (uint found) {
+    function getCurrentPhase() public constant returns (uint) {
         for (uint i = 0; i < phases.length; i++) {
             if (now <= phases[i].end) {
                 return i;
@@ -872,7 +870,7 @@ contract Crowdsale is ICrowdsale, Owned {
      * @param _sender Transaction sender
      * @param _received 
      */
-    function _handleTransaction(address _sender, uint _received) private at_stage(Stages.InProgress) {
+    function _handleTransaction(address _sender, uint _received) internal at_stage(Stages.InProgress) {
 
         // Crowdsale is active
         require(now >= start && now <= crowdsaleEnd);
@@ -913,13 +911,18 @@ contract Crowdsale is ICrowdsale, Owned {
         uint tokensToIssue = 0;
         uint phase = getCurrentPhase();
         var rate = getRate(phase, acceptedAmount);
-        var (volumes, releaseDates) = getDistributionData(phase, acceptedAmount);
+        if (rate == 0) {
+            revert(); // Paused phase
+        }
+
+        var (volumes, releaseDates) = getDistributionData(
+            phase, acceptedAmount);
         
         // Allocate tokens
         for (uint i = 0; i < volumes.length; i++) {
             var tokensAtCurrentRate = toTokens(volumes[i], rate);
             if (rate > baseRate && releaseDates[i] > now) {
-                uint bonusTokens = tokensAtCurrentRate / rate * (rate - baseRate);
+                uint bonusTokens = tokensAtCurrentRate * (rate - baseRate) / rate;
                 _allocateTokens(_sender, bonusTokens, releaseDates[i]);
 
                 tokensToIssue += tokensAtCurrentRate - bonusTokens;
@@ -947,7 +950,7 @@ contract Crowdsale is ICrowdsale, Owned {
      * @param _amount The amount of ETH to allocate
      * @param _releaseDate The date after which the eth can be withdrawn
      */    
-    function _allocateEth(address _beneficiary, uint _amount, uint _releaseDate) private {
+    function _allocateEth(address _beneficiary, uint _amount, uint _releaseDate) internal {
         if (hasBalance(_beneficiary, _releaseDate)) {
             allocated[_beneficiary][_releaseDate].eth += _amount;
         } else {
@@ -966,7 +969,7 @@ contract Crowdsale is ICrowdsale, Owned {
      * @param _amount The amount of tokens to allocate
      * @param _releaseDate The date after which the tokens can be withdrawn
      */    
-    function _allocateTokens(address _beneficiary, uint _amount, uint _releaseDate) private {
+    function _allocateTokens(address _beneficiary, uint _amount, uint _releaseDate) internal {
         if (hasBalance(_beneficiary, _releaseDate)) {
             allocated[_beneficiary][_releaseDate].tokens += _amount;
         } else {
@@ -984,7 +987,7 @@ contract Crowdsale is ICrowdsale, Owned {
      * @param _amount The amount of ETH to allocate
      * @param _releaseDate The date after which the eth can be withdrawn
      */    
-    function _allocateStakeholdersEth(uint _amount, uint _releaseDate) private {
+    function _allocateStakeholdersEth(uint _amount, uint _releaseDate) internal {
         for (uint i = 0; i < stakeholderPercentagesIndex.length; i++) {
             Percentage storage p = stakeholderPercentages[stakeholderPercentagesIndex[i]];
             if (p.eth > 0) {
@@ -1000,7 +1003,7 @@ contract Crowdsale is ICrowdsale, Owned {
      * @param _amount The amount of tokens created
      * @param _releaseDate The date after which the tokens can be withdrawn (unless overwitten)
      */    
-    function _allocateStakeholdersTokens(uint _amount, uint _releaseDate) private {
+    function _allocateStakeholdersTokens(uint _amount, uint _releaseDate) internal {
         for (uint i = 0; i < stakeholderPercentagesIndex.length; i++) {
             Percentage storage p = stakeholderPercentages[stakeholderPercentagesIndex[i]];
             if (p.tokens > 0) {
@@ -1011,6 +1014,16 @@ contract Crowdsale is ICrowdsale, Owned {
             }
         }
     }
+
+
+    /**
+     * Allows the implementing contract to validate a 
+     * contributing account
+     *
+     * @param _contributor Address that is being validated
+     * @return Wheter the contributor is accepted or not
+     */
+    function isAcceptedContributor(address _contributor) internal constant returns (bool);
 }
 
 
@@ -1027,29 +1040,22 @@ contract Crowdsale is ICrowdsale, Owned {
  */
 contract GLACrowdsale is Crowdsale, ITokenRetreiver, IWingsAdapter {
 
-    /**
-     * Whitelist used for authentication
-     */
+    // Whitelist used for authentication
     IWhitelist private whitelist;
 
+    // Presale
+    bool private presaleAttached;
+    IToken private presaleToken;
+    ICrowdsale private presale;
+    mapping(address => bool) private presaleConversions;
+
 
     /**
-     * Setup the crowdsale
+     * Setup the whitelist
      *
      * @param _whitelist The address of the whitelist authenticator
-     * @param _start The timestamp of the start date
-     * @param _token The token that is sold
-     * @param _tokenDenominator The token amount of decimals that the token uses
-     * @param _percentageDenominator The precision of percentages
-     * @param _minAmount The min cap for the ICO
-     * @param _maxAmount The max cap for the ICO
-     * @param _minAcceptedAmount The lowest accepted amount during the ICO phase
-     * @param _minAmountPresale The min cap for the presale
-     * @param _maxAmountPresale The max cap for the presale
-     * @param _minAcceptedAmountPresale The lowest accepted amount during the presale phase
      */
-    function GLACrowdsale(address _whitelist, uint _start, address _token, uint _tokenDenominator, uint _percentageDenominator, uint _minAmount, uint _maxAmount, uint _minAcceptedAmount, uint _minAmountPresale, uint _maxAmountPresale, uint _minAcceptedAmountPresale) 
-        Crowdsale(_start, _token, _tokenDenominator, _percentageDenominator, _minAmount, _maxAmount, _minAcceptedAmount, _minAmountPresale, _maxAmountPresale, _minAcceptedAmountPresale) {
+    function setupWhitelist(address _whitelist) public only_owner at_stage(Stages.Deploying) {
         whitelist = IWhitelist(_whitelist);
     }
 
@@ -1076,6 +1082,47 @@ contract GLACrowdsale is Crowdsale, ITokenRetreiver, IWingsAdapter {
      */
     function isAcceptedContributor(address _contributor) internal constant returns (bool) {
         return whitelist.authenticate(_contributor);
+    }
+
+
+    /**
+     * Attach the presale contracts
+     *
+     * @param _presale The address of the private presale contract
+     * @param _presaleToken The token used in the private presale 
+     */
+    function attachPresale(address _presale, address _presaleToken) public only_owner at_stage(Stages.Deploying) {
+        presaleToken = IToken(_presaleToken);
+        presale = ICrowdsale(_presale);
+        presaleAttached = true;
+    }
+
+
+    /**
+     * Allow investors that contributed in the private presale 
+     * to generate the same amount of tokens in the actual crowdsale
+     *
+     * @param _contributor Account that contributed in the presale
+     */
+    function importPresaleContribution(address _contributor) public {
+        require(presaleAttached);
+        require(!presaleConversions[_contributor]);
+        presaleConversions[_contributor] = true;
+
+        // Read amounts from private presale
+        uint distributedPresaleTokens = presaleToken.balanceOf(_contributor);
+
+        // If this is zero _contributor did not contribute anything
+        require(distributedPresaleTokens > 0);
+        
+        // Allocate tokens
+        uint allocatedPresaleTokens = presale.balanceOf(_contributor);
+        _allocateTokens(_contributor, allocatedPresaleTokens, crowdsaleEnd + 30 days);
+
+        // Issue tokens
+        if (!token.issue(_contributor, distributedPresaleTokens)) {
+            revert();
+        }
     }
 
 
