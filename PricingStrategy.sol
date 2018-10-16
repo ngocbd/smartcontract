@@ -1,13 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PricingStrategy at 0x8f56c8c551f130b7d4543df73157e5e03fe05ec5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PricingStrategy at 0xed9f3f3f22443a8ab92cbff999111b0d9380d640
 */
 pragma solidity ^0.4.11;
 
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
 library SafeMath {
   function mul(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a * b;
@@ -35,41 +30,30 @@ library SafeMath {
 }
 
 
-
 contract PricingStrategy {
 
     using SafeMath for uint;
 
-    uint public rate0;
+    uint public newRateTime;
     uint public rate1;
     uint public rate2;
-
-    uint public threshold1;
-    uint public threshold2;
-
     uint public minimumWeiAmount;
 
     function PricingStrategy(
-        uint _rate0,
+        uint _newRateTime,
         uint _rate1,
         uint _rate2,
-        uint _minimumWeiAmount,
-        uint _threshold1,
-        uint _threshold2
+        uint _minimumWeiAmount
     ) {
-        require(_rate0 > 0);
+        require(_newRateTime > 0);
         require(_rate1 > 0);
         require(_rate2 > 0);
         require(_minimumWeiAmount > 0);
-        require(_threshold1 > 0);
-        require(_threshold2 > 0);
 
-        rate0 = _rate0;
+        newRateTime = _newRateTime;
         rate1 = _rate1;
         rate2 = _rate2;
         minimumWeiAmount = _minimumWeiAmount;
-        threshold1 = _threshold1;
-        threshold2 = _threshold2;
     }
 
     /** Interface declaration. */
@@ -82,15 +66,11 @@ contract PricingStrategy {
         uint bonusRate = 0;
 
         if (weiAmount >= minimumWeiAmount) {
-            bonusRate = rate0;
-        }
-
-        if (weiAmount >= threshold1) {
-            bonusRate = rate1;
-        }
-
-        if (weiAmount >= threshold2) {
-            bonusRate = rate2;
+            if (now < newRateTime) {
+                bonusRate = rate1;
+            } else {
+                bonusRate = rate2;
+            }
         }
 
         return weiAmount.mul(bonusRate);
