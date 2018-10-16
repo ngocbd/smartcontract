@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FFC at 0x8005F31bA96f88B9D7883ADE2bDa4C65B4362dC0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FFC at 0xb941ef1f4f9593e211e4ca47b11cb5c2de43ba38
 */
 pragma solidity ^0.4.11;
 
@@ -154,7 +154,7 @@ contract FFC is Token, Owned {
 
     // Constructor
     function FFC() public{
-    	supplies.total = 1 * (10 ** 9) * (10 ** 18);
+    	supplies.total = 1 * (10 ** 10) * (10 ** 18);
     }
 
     function totalSupply()public constant returns (uint256 supply){
