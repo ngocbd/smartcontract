@@ -1,36 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BithToken at 0xec796d62dd915cb80768596acc72cd6a4286aaa4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BithToken at 0x5ea401aa37d0d2f2bbe2eb3df3a78d986ee95d50
 */
 pragma solidity ^0.4.16;
-
-library SafeMath {
-    function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-        if (a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        assert(c / a == b);
-        return c;
-    }
-
-    function div(uint256 a, uint256 b) internal constant returns (uint256) {
-        uint256 c = a / b;
-        return c;
-    }
-
-    function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-
-    function add(uint256 a, uint256 b) internal constant returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
-}
-
-interface TokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
 contract Owned {
     address public owner;
@@ -49,9 +20,13 @@ contract Owned {
     }
 }
 
+interface TokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
+
 contract TokenERC20 {
     using SafeMath for uint256;
-    uint private constant _totalSupply = 21000000;
+
+    uint public constant _totalSupply = 21000000;
+
     string public constant symbol = "BITH";
     string public constant name = "Bith Token";
     uint8 public decimals = 18;
@@ -85,7 +60,7 @@ contract TokenERC20 {
     }
 
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(_value <= allowance[_from][msg.sender]);
+        require(_value <= allowance[_from][msg.sender]);    
         allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(_value);
         _transfer(_from, _to, _value);
         return true;
@@ -108,25 +83,28 @@ contract TokenERC20 {
     }
 
     function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);
-        balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);
-        totalSupply = totalSupply.sub(_value);
+        require(balanceOf[msg.sender] >= _value);   
+        balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);           
+        totalSupply = totalSupply.sub(_value);                     
         Burn(msg.sender, _value);
         return true;
     }
 
     function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);
-        require(_value <= allowance[_from][msg.sender]);
-        balanceOf[_from] = balanceOf[_from].sub(_value);
-        allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(_value);
-        totalSupply = totalSupply.sub(_value);
+        require(balanceOf[_from] >= _value);                
+        require(_value <= allowance[_from][msg.sender]);    
+        balanceOf[_from] = balanceOf[_from].sub(_value);                        
+        allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(_value);            
+        totalSupply = totalSupply.sub(_value);                             
         Burn(_from, _value);
         return true;
     }
 }
 
 contract BithToken is Owned, TokenERC20 {
+
+    uint256 public sellPrice;
+    uint256 public buyPrice;
 
     mapping (address => bool) public frozenAccount;
 
@@ -135,13 +113,13 @@ contract BithToken is Owned, TokenERC20 {
     function BithToken() TokenERC20() public {}
 
     function _transfer(address _from, address _to, uint _value) internal {
-        require (_to != 0x0);
-        require (balanceOf[_from] > _value);
-        require (balanceOf[_to] + _value > balanceOf[_to]);
-        require(!frozenAccount[_from]);
-        require(!frozenAccount[_to]);
-        balanceOf[_from] = balanceOf[_from].sub(_value);
-        balanceOf[_to] = balanceOf[_to].add(_value);
+        require (_to != 0x0);                              
+        require (balanceOf[_from] > _value);               
+        require (balanceOf[_to] + _value > balanceOf[_to]); 
+        require(!frozenAccount[_from]);                     
+        require(!frozenAccount[_to]);                       
+        balanceOf[_from] = balanceOf[_from].sub(_value);                        
+        balanceOf[_to] = balanceOf[_to].add(_value);                           
         Transfer(_from, _to, _value);
     }
 
@@ -155,5 +133,48 @@ contract BithToken is Owned, TokenERC20 {
     function freezeAccount(address target, bool freeze) onlyOwner public {
         frozenAccount[target] = freeze;
         FrozenFunds(target, freeze);
+    }
+
+    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner public {
+        sellPrice = newSellPrice;
+        buyPrice = newBuyPrice;
+    }
+
+    function buy() payable public {
+        uint amount = msg.value / buyPrice;               
+        _transfer(this, msg.sender, amount);             
+    }
+
+    function sell(uint256 amount) public {
+        require(this.balance >= amount * sellPrice);      
+        _transfer(msg.sender, this, amount);              
+        msg.sender.transfer(amount * sellPrice);          
+    }
+}
+
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+        if (a == 0) {
+            return 0;
+        }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
+    }
+
+    function div(uint256 a, uint256 b) internal constant returns (uint256) {
+        uint256 c = a / b;
+        return c;
+    }
+
+    function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    function add(uint256 a, uint256 b) internal constant returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
     }
 }
