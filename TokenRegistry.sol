@@ -1,15 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenRegistry at 0x926a74c5c36adf004c87399e65f75628b0f98d2c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenRegistry at 0x945e5e3343b5eab73fe378f92a41665e53bbb9f8
 */
 /*
 
-  Copyright 2017 ZeroEx Intl.
+  Copyright 2017 Loopring Project Ltd (Loopring Foundation).
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
   You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+  http://www.apache.org/licenses/LICENSE-2.0
 
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,318 +18,103 @@
   limitations under the License.
 
 */
+pragma solidity ^0.4.11;
 
-pragma solidity 0.4.11;
-
-/*
- * Ownable
- *
- * Base contract with an owner.
- * Provides onlyOwner modifier, which prevents function from running if it is called by anyone other than the owner.
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
  */
 contract Ownable {
-    address public owner;
+  address public owner;
 
-    function Ownable() {
-        owner = msg.sender;
-    }
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() {
+    owner = msg.sender;
+  }
 
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
 
-    function transferOwnership(address newOwner) onlyOwner {
-        if (newOwner != address(0)) {
-            owner = newOwner;
-        }
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner {
+    if (newOwner != address(0)) {
+      owner = newOwner;
     }
+  }
+
 }
 
-
-/// @title Token Registry - Stores metadata associated with ERC20 tokens. See ERC22 https://github.com/ethereum/EIPs/issues/22
-/// @author Amir Bandeali - <amir@0xProject.com>, Will Warren - <will@0xProject.com>
+/// @title Token Register Contract
+/// @author Kongliang Zhong - <kongliang@loopring.org>,
+/// @author Daniel Wang - <daniel@loopring.org>.
 contract TokenRegistry is Ownable {
 
-    event LogAddToken(
-        address indexed token,
-        string name,
-        string symbol,
-        uint8 decimals,
-        bytes ipfsHash,
-        bytes swarmHash
-    );
+    address[] public tokens;
 
-    event LogRemoveToken(
-        address indexed token,
-        string name,
-        string symbol,
-        uint8 decimals,
-        bytes ipfsHash,
-        bytes swarmHash
-    );
+    mapping (string => address) tokenSymbolMap;
 
-    event LogTokenNameChange(address indexed token, string oldName, string newName);
-    event LogTokenSymbolChange(address indexed token, string oldSymbol, string newSymbol);
-    event LogTokenIpfsHashChange(address indexed token, bytes oldIpfsHash, bytes newIpfsHash);
-    event LogTokenSwarmHashChange(address indexed token, bytes oldSwarmHash, bytes newSwarmHash);
-
-    mapping (address => TokenMetadata) public tokens;
-    mapping (string => address) tokenBySymbol;
-    mapping (string => address) tokenByName;
-
-    address[] public tokenAddresses;
-
-    struct TokenMetadata {
-        address token;
-        string name;
-        string symbol;
-        uint8 decimals;
-        bytes ipfsHash;
-        bytes swarmHash;
-    }
-
-    modifier tokenExists(address _token) {
-        require(tokens[_token].token != address(0));
-        _;
-    }
-
-    modifier tokenDoesNotExist(address _token) {
-        require(tokens[_token].token == address(0));
-        _;
-    }
-
-    modifier nameDoesNotExist(string _name) {
-      require(tokenByName[_name] == address(0));
-      _;
-    }
-
-    modifier symbolDoesNotExist(string _symbol) {
-        require(tokenBySymbol[_symbol] == address(0));
-        _;
-    }
-
-    modifier addressNotNull(address _address) {
-        require(_address != address(0));
-        _;
-    }
-
-
-    /// @dev Allows owner to add a new token to the registry.
-    /// @param _token Address of new token.
-    /// @param _name Name of new token.
-    /// @param _symbol Symbol for new token.
-    /// @param _decimals Number of decimals, divisibility of new token.
-    /// @param _ipfsHash IPFS hash of token icon.
-    /// @param _swarmHash Swarm hash of token icon.
-    function addToken(
-        address _token,
-        string _name,
-        string _symbol,
-        uint8 _decimals,
-        bytes _ipfsHash,
-        bytes _swarmHash)
+    function registerToken(address _token, string _symbol)
         public
-        onlyOwner
-        tokenDoesNotExist(_token)
-        addressNotNull(_token)
-        symbolDoesNotExist(_symbol)
-        nameDoesNotExist(_name)
-    {
-        tokens[_token] = TokenMetadata({
-            token: _token,
-            name: _name,
-            symbol: _symbol,
-            decimals: _decimals,
-            ipfsHash: _ipfsHash,
-            swarmHash: _swarmHash
-        });
-        tokenAddresses.push(_token);
-        tokenBySymbol[_symbol] = _token;
-        tokenByName[_name] = _token;
-        LogAddToken(
-            _token,
-            _name,
-            _symbol,
-            _decimals,
-            _ipfsHash,
-            _swarmHash
-        );
+        onlyOwner {
+        require(_token != address(0));
+        require(!isTokenRegisteredBySymbol(_symbol));
+        require(!isTokenRegistered(_token));
+        tokens.push(_token);
+        tokenSymbolMap[_symbol] = _token;
     }
 
-    /// @dev Allows owner to remove an existing token from the registry.
-    /// @param _token Address of existing token.
-    function removeToken(address _token, uint _index)
+    function unregisterToken(address _token, string _symbol)
         public
-        onlyOwner
-        tokenExists(_token)
-    {
-        require(tokenAddresses[_index] == _token);
-
-        tokenAddresses[_index] = tokenAddresses[tokenAddresses.length - 1];
-        tokenAddresses.length -= 1;
-
-        TokenMetadata storage token = tokens[_token];
-        LogRemoveToken(
-            token.token,
-            token.name,
-            token.symbol,
-            token.decimals,
-            token.ipfsHash,
-            token.swarmHash
-        );
-        delete tokenBySymbol[token.symbol];
-        delete tokenByName[token.name];
-        delete tokens[_token];
+        onlyOwner {
+        require(tokenSymbolMap[_symbol] == _token);
+        delete tokenSymbolMap[_symbol];
+        for (uint i = 0; i < tokens.length; i++) {
+            if (tokens[i] == _token) {
+                tokens[i] == tokens[tokens.length - 1];
+                tokens.length --;
+                break;
+            }
+        }
     }
 
-    /// @dev Allows owner to modify an existing token's name.
-    /// @param _token Address of existing token.
-    /// @param _name New name.
-    function setTokenName(address _token, string _name)
-        public
-        onlyOwner
-        tokenExists(_token)
-        nameDoesNotExist(_name)
-    {
-        TokenMetadata storage token = tokens[_token];
-        LogTokenNameChange(_token, token.name, _name);
-        delete tokenByName[token.name];
-        tokenByName[_name] = _token;
-        token.name = _name;
-    }
-
-    /// @dev Allows owner to modify an existing token's symbol.
-    /// @param _token Address of existing token.
-    /// @param _symbol New symbol.
-    function setTokenSymbol(address _token, string _symbol)
-        public
-        onlyOwner
-        tokenExists(_token)
-        symbolDoesNotExist(_symbol)
-    {
-        TokenMetadata storage token = tokens[_token];
-        LogTokenSymbolChange(_token, token.symbol, _symbol);
-        delete tokenBySymbol[token.symbol];
-        tokenBySymbol[_symbol] = _token;
-        token.symbol = _symbol;
-    }
-
-    /// @dev Allows owner to modify an existing token's IPFS hash.
-    /// @param _token Address of existing token.
-    /// @param _ipfsHash New IPFS hash.
-    function setTokenIpfsHash(address _token, bytes _ipfsHash)
-        public
-        onlyOwner
-        tokenExists(_token)
-    {
-        TokenMetadata storage token = tokens[_token];
-        LogTokenIpfsHashChange(_token, token.ipfsHash, _ipfsHash);
-        token.ipfsHash = _ipfsHash;
-    }
-
-    /// @dev Allows owner to modify an existing token's Swarm hash.
-    /// @param _token Address of existing token.
-    /// @param _swarmHash New Swarm hash.
-    function setTokenSwarmHash(address _token, bytes _swarmHash)
-        public
-        onlyOwner
-        tokenExists(_token)
-    {
-        TokenMetadata storage token = tokens[_token];
-        LogTokenSwarmHashChange(_token, token.swarmHash, _swarmHash);
-        token.swarmHash = _swarmHash;
-    }
-
-    /*
-     * Web3 call functions
-     */
-
-    /// @dev Provides a registered token's address when given the token symbol.
-    /// @param _symbol Symbol of registered token.
-    /// @return Token's address.
-    function getTokenAddressBySymbol(string _symbol) constant returns (address) {
-        return tokenBySymbol[_symbol];
-    }
-
-    /// @dev Provides a registered token's address when given the token name.
-    /// @param _name Name of registered token.
-    /// @return Token's address.
-    function getTokenAddressByName(string _name) constant returns (address) {
-        return tokenByName[_name];
-    }
-
-    /// @dev Provides a registered token's metadata, looked up by address.
-    /// @param _token Address of registered token.
-    /// @return Token metadata.
-    function getTokenMetaData(address _token)
+    function isTokenRegisteredBySymbol(string symbol)
         public
         constant
-        returns (
-            address,  //tokenAddress
-            string,   //name
-            string,   //symbol
-            uint8,    //decimals
-            bytes,    //ipfsHash
-            bytes     //swarmHash
-        )
-    {
-        TokenMetadata memory token = tokens[_token];
-        return (
-            token.token,
-            token.name,
-            token.symbol,
-            token.decimals,
-            token.ipfsHash,
-            token.swarmHash
-        );
+        returns (bool) {
+        return tokenSymbolMap[symbol] != address(0);
     }
 
-    /// @dev Provides a registered token's metadata, looked up by name.
-    /// @param _name Name of registered token.
-    /// @return Token metadata.
-    function getTokenByName(string _name)
+    function isTokenRegistered(address _token)
         public
         constant
-        returns (
-            address,  //tokenAddress
-            string,   //name
-            string,   //symbol
-            uint8,    //decimals
-            bytes,    //ipfsHash
-            bytes     //swarmHash
-        )
-    {
-        address _token = tokenByName[_name];
-        return getTokenMetaData(_token);
+        returns (bool) {
+
+        for (uint i = 0; i < tokens.length; i++) {
+            if (tokens[i] == _token) {
+                return true;
+            }
+        }
+        return false;
     }
 
-    /// @dev Provides a registered token's metadata, looked up by symbol.
-    /// @param _symbol Symbol of registered token.
-    /// @return Token metadata.
-    function getTokenBySymbol(string _symbol)
+    function getAddressBySymbol(string symbol)
         public
         constant
-        returns (
-            address,  //tokenAddress
-            string,   //name
-            string,   //symbol
-            uint8,    //decimals
-            bytes,    //ipfsHash
-            bytes     //swarmHash
-        )
-    {
-        address _token = tokenBySymbol[_symbol];
-        return getTokenMetaData(_token);
-    }
-
-    /// @dev Returns an array containing all token addresses.
-    /// @return Array of token addresses.
-    function getTokenAddresses()
-        public
-        constant
-        returns (address[])
-    {
-        return tokenAddresses;
+        returns (address) {
+        return tokenSymbolMap[symbol];
     }
 }
