@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheBasic at 0x351b8Af184E9eD46af5f0947E7F22f155c8D5Fa4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheBasic at 0xedd9ad476fbB9f4b27530446459a07aEFfcF9777
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.13;
 
 /**
 * TheBasic 
