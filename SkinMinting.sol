@@ -1,109 +1,88 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SkinMinting at 0xbb6641d34755a19352ff63a31d82a84f981d4d69
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SkinMinting at 0x8e48f1fd56abd20d86bfb995f4b7ef1eb4f32d1c
 */
 pragma solidity ^0.4.18;
 
-contract Manager {
-    address public ceo;
-    address public cfo;
-    address public coo;
-    address public cao;
-
-    event OwnershipTransferred(address indexed previousCeo, address indexed newCeo);
-    event Pause();
-    event Unpause();
+contract Ownable {
+  address public owner;
 
 
-    /**
-    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-    * account.
-    */
-    function Manager() public {
-        coo = msg.sender;
-        cfo = 0x447870C2f334Fcda68e644aE53Db3471A9f7302D;
-        ceo = 0x6EC9C6fcE15DB982521eA2087474291fA5Ad6d31;
-        cao = 0x391Ef2cB0c81A2C47D659c3e3e6675F550e4b183;
-    }
-
-    /**
-    * @dev Throws if called by any account other than the owner.
-    */
-    modifier onlyCEO() {
-        require(msg.sender == ceo);
-        _;
-    }
-
-    modifier onlyCOO() {
-        require(msg.sender == coo);
-        _;
-    }
-
-    modifier onlyCAO() {
-        require(msg.sender == cao);
-        _;
-    }
-
-    /**
-    * @dev Allows the current owner to transfer control of the contract to a newCeo.
-    * @param newCeo The address to transfer ownership to.
-    */
-    function demiseCEO(address newCeo) public onlyCEO {
-        require(newCeo != address(0));
-        OwnershipTransferred(ceo, newCeo);
-        ceo = newCeo;
-    }
-
-    function setCFO(address newCfo) public onlyCEO {
-        require(newCfo != address(0));
-        cfo = newCfo;
-    }
-
-    function setCOO(address newCoo) public onlyCEO {
-        require(newCoo != address(0));
-        coo = newCoo;
-    }
-
-    function setCAO(address newCao) public onlyCEO {
-        require(newCao != address(0));
-        cao = newCao;
-    }
-
-    bool public paused = false;
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
 
-    /**
-    * @dev Modifier to make a function callable only when the contract is not paused.
-    */
-    modifier whenNotPaused() {
-        require(!paused);
-        _;
-    }
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
 
-    /**
-    * @dev Modifier to make a function callable only when the contract is paused.
-    */
-    modifier whenPaused() {
-        require(paused);
-        _;
-    }
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
 
-    /**
-    * @dev called by the owner to pause, triggers stopped state
-    */
-    function pause() onlyCAO whenNotPaused public {
-        paused = true;
-        Pause();
-    }
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
 
-    /**
-    * @dev called by the owner to unpause, returns to normal state
-    */
-    function unpause() onlyCAO whenPaused public {
-        paused = false;
-        Unpause();
-    }
 }
-contract SkinBase is Manager {
+
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    Pause();
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    Unpause();
+  }
+}
+
+contract SkinBase is Pausable {
 
     struct Skin {
         uint128 appearance;
@@ -182,20 +161,19 @@ contract SkinBase is Manager {
         return (skin.appearance, skin.cooldownEndTime, skin.mixingWithId);
     }
 
-    function withdrawETH() external onlyCAO {
-        cfo.transfer(this.balance);
+    function withdrawETH() external onlyOwner {
+        owner.transfer(this.balance);
     }
 }
 contract MixFormulaInterface {
     function calcNewSkinAppearance(uint128 x, uint128 y) public pure returns (uint128);
 
     // create random appearance
-    function randomSkinAppearance(uint256 externalNum) public view returns (uint128);
+    function randomSkinAppearance() public view returns (uint128);
 
     // bleach
     function bleachAppearance(uint128 appearance, uint128 attributes) public pure returns (uint128);
 }
-
 contract SkinMix is SkinBase {
 
     // Mix formula
@@ -203,7 +181,7 @@ contract SkinMix is SkinBase {
 
 
     // Pre-paid ether for synthesization, will be returned to user if the synthesization failed (minus gas).
-    uint256 public prePaidFee = 150000 * 5000000000; // (15w gas * 5 gwei)
+    uint256 public prePaidFee = 2500000 * 5000000000; // (0.15million gas * 5 gwei)
 
     // Events
     event MixStart(address account, uint256 skinAId, uint256 skinBId);
@@ -211,12 +189,12 @@ contract SkinMix is SkinBase {
     event MixSuccess(address account, uint256 skinId, uint256 skinAId, uint256 skinBId);
 
     // Set mix formula contract address 
-    function setMixFormulaAddress(address mixFormulaAddress) external onlyCOO {
+    function setMixFormulaAddress(address mixFormulaAddress) external onlyOwner {
         mixFormula = MixFormulaInterface(mixFormulaAddress);
     }
 
     // setPrePaidFee: set advance amount, only owner can call this
-    function setPrePaidFee(uint256 newPrePaidFee) external onlyCOO {
+    function setPrePaidFee(uint256 newPrePaidFee) external onlyOwner {
         prePaidFee = newPrePaidFee;
     }
 
@@ -336,12 +314,11 @@ contract SkinMix is SkinBase {
         MixSuccess(account, nextSkinId - 1, skinAId, skinBId);
     }
 }
-
 contract SkinMarket is SkinMix {
 
     // Cut ratio for a transaction
     // Values 0-10,000 map to 0%-100%
-    uint128 public trCut = 400;
+    uint128 public trCut = 290;
 
     // Sale orders list 
     mapping (uint256 => uint256) public desiredPrice;
@@ -425,12 +402,10 @@ contract SkinMarket is SkinMix {
         return _price * trCut / 10000;
     }
 }
-
 contract SkinMinting is SkinMarket {
 
     // Limits the number of skins the contract owner can ever create.
     uint256 public skinCreatedLimit = 50000;
-    uint256 public skinCreatedNum;
 
     // The summon numbers of each accouts: will be cleared every day
     mapping (address => uint256) public accoutToSummonNum;
@@ -442,8 +417,8 @@ contract SkinMinting is SkinMarket {
     uint256 public levelClearTime = now;
 
     // price
-    uint256 public baseSummonPrice = 1 finney;
-    uint256 public bleachPrice = 300 finney;  // do not call this
+    uint256 public baseSummonPrice = 3 finney;
+    uint256 public bleachPrice = 30 finney;
 
     // Pay level
     uint256[5] public levelSplits = [10,
@@ -452,12 +427,12 @@ contract SkinMinting is SkinMarket {
                                      100,
                                      200];
     
-    uint256[6] public payMultiple = [10,
-                                     12,
-                                     15,
+    uint256[6] public payMultiple = [1,
+                                     2,
+                                     4,
+                                     8,
                                      20,
-                                     30,
-                                     40];
+                                     100];
 
 
     // events
@@ -467,49 +442,33 @@ contract SkinMinting is SkinMarket {
     // functions
 
     // Set price 
-    function setBaseSummonPrice(uint256 newPrice) external onlyCOO {
+    function setBaseSummonPrice(uint256 newPrice) external onlyOwner {
         baseSummonPrice = newPrice;
     }
 
-    function setBleachPrice(uint256 newPrice) external onlyCOO {
+    function setBleachPrice(uint256 newPrice) external onlyOwner {
         bleachPrice = newPrice;
     }
 
     // Create base skin for sell. Only owner can create
-    function createSkin(uint128 specifiedAppearance, uint256 salePrice) external onlyCOO {
-        require(skinCreatedNum < skinCreatedLimit);
+    function createSkin(uint128 specifiedAppearance, uint256 salePrice) external onlyOwner whenNotPaused {
+        require(numSkinOfAccounts[owner] < skinCreatedLimit);
 
         // Create specified skin
         // uint128 randomAppearance = mixFormula.randomSkinAppearance();
         Skin memory newSkin = Skin({appearance: specifiedAppearance, cooldownEndTime: uint64(now), mixingWithId: 0});
         skins[nextSkinId] = newSkin;
-        skinIdToOwner[nextSkinId] = coo;
+        skinIdToOwner[nextSkinId] = owner;
         isOnSale[nextSkinId] = false;
 
         // Emit the create event
-        CreateNewSkin(nextSkinId, coo);
+        CreateNewSkin(nextSkinId, owner);
 
         // Put this skin on sale
         putOnSale(nextSkinId, salePrice);
 
         nextSkinId++;
-        numSkinOfAccounts[coo] += 1;   
-        skinCreatedNum += 1;
-    }
-
-    // Donate a skin to player. Only COO can operate
-    function donateSkin(uint128 specifiedAppearance, address donee) external onlyCOO {
-        Skin memory newSkin = Skin({appearance: specifiedAppearance, cooldownEndTime: uint64(now), mixingWithId: 0});
-        skins[nextSkinId] = newSkin;
-        skinIdToOwner[nextSkinId] = donee;
-        isOnSale[nextSkinId] = false;
-
-        // Emit the create event
-        CreateNewSkin(nextSkinId, donee);
-
-        nextSkinId++;
-        numSkinOfAccounts[donee] += 1;   
-        skinCreatedNum += 1;
+        numSkinOfAccounts[owner] += 1;   
     }
 
     // Summon
@@ -531,7 +490,7 @@ contract SkinMinting is SkinMarket {
         require(msg.value >= price);
 
         // Create random skin
-        uint128 randomAppearance = mixFormula.randomSkinAppearance(nextSkinId);
+        uint128 randomAppearance = mixFormula.randomSkinAppearance();
         // uint128 randomAppearance = 0;
         Skin memory newSkin = Skin({appearance: randomAppearance, cooldownEndTime: uint64(now), mixingWithId: 0});
         skins[nextSkinId] = newSkin;
@@ -577,7 +536,7 @@ contract SkinMinting is SkinMarket {
     }
 
     // Our daemon will clear daily summon numbers
-    function clearSummonNum() external onlyCOO {
+    function clearSummonNum() external onlyOwner {
         uint256 nextDay = levelClearTime + 1 days;
         if (now > nextDay) {
             levelClearTime = nextDay;
