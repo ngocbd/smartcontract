@@ -1,12 +1,36 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HelloWorld at 0x129a52385d55eff5f9b0c1192586f03359560e3f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HelloWorld at 0x16837f355218cf0256df30a878c01d210c428637
 */
-pragma solidity ^0.4.13;
- 
-contract HelloWorld {
-    
-    function getData() constant returns (string) {
-        return "Hello, world!";
+pragma solidity ^0.4.18;
+
+contract HelloWorld
+{
+    address creator;
+    string greeting;
+
+    function HelloWorld(string _greeting) public
+    {
+        creator = msg.sender;
+        greeting = _greeting;
     }
-    
+
+    function greet() constant returns (string)
+    {
+        return greeting;
+    }
+
+    function setGreeting(string _newgreeting)
+    {
+        greeting = _newgreeting;
+    }
+
+     /**********
+     Standard kill() function to recover funds
+     **********/
+
+    function kill()
+    {
+        if (msg.sender == creator)
+            suicide(creator);  // kills this contract and sends remaining funds back to creator
+    }
 }
