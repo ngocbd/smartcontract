@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0x0b3cedf1fb7f835cd4b7bd49b8a14f8c388bc24f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0x449903a01595118c8eacc01dbf7ec13024f98989
 */
 pragma solidity ^0.4.13;
 
@@ -153,16 +153,16 @@ contract StandardToken is ERC20, BasicToken {
  * Created specifically for TokenDone.io
  */
 contract ApprovedTokenDone is StandardToken {
-	string public name = 'The Beatles';
-	string public symbol = 'BEATLES';
+	string public name = 'BLUECHIP';
+	string public symbol = 'BLUECHIP';
 	uint public decimals = 3;
-	uint public initialSupply = 4000;
+	uint public initialSupply = 100000000000;
 	string public publishier = 'TokenDone.io';
-	uint public creationTime;
+	uint public CreationTime;
 	
 	function ApprovedTokenDone() {
 		totalSupply = initialSupply;
     	balances[0xe90fFFd34aEcFE44db61a6efD85663296094A09c] = initialSupply;
-		creationTime = now;
+		CreationTime = now;
 	}
 }
