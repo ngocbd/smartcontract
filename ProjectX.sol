@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProjectX at 0xcb05ebbe2062f063493560579bb1d612d73d7c7e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProjectX at 0x18da8521c333aed9de8f512e847734cb7be42e38
 */
 pragma solidity ^0.4.11;
 library SafeMath {
@@ -216,7 +216,7 @@ contract Crowdsale is Pausable, PullPayment {
     * Constants
     */
     /* Minimum number of ProjectX to sell */
-    uint public constant MIN_CAP = 30000000000; // 30,000 ProjectXs
+    uint public constant MIN_CAP = 15000000000; // 15,000 ProjectXs
     /* Maximum number of ProjectX to sell */
     uint public constant MAX_CAP = 600000000000; // 600,000 ProjectXs
     /* Minimum amount to invest */
