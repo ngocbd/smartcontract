@@ -1,18 +1,20 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dignity at 0x758c77d94a78ebcba672e4a6c5a9c6f02a5f65a3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dignity at 0xc5285cc8da144741c5b7eab79535ea6a71c2e224
 */
 pragma solidity ^0.4.16;
 
 contract Dignity {
 
    string public standard = 'Token 0.1';
-   string public name = 'Dignity';
-   string public symbol = 'DIG';
+   string public name;
+   string public symbol;
    uint8 public decimals;
-   uint256 public totalSupply = 300000000000000000;
+   uint256 public totalSupply;
 
     //Admins declaration
     address private admin1;
+    address private admin2;
+    address private admin3;
 
     //User struct
     struct User {
@@ -33,14 +35,16 @@ contract Dignity {
     event Minted(address indexed to, uint256 indexed value);
 
     //Main contract function
-    function Dignity (uint256 initialSupply, string tokenName,string tokenSymbol) public {
+    function tan (uint256 initialSupply, string tokenName,string tokenSymbol) public {
         //setting up admins
-        admin1 = 0x6135f88d151D95Bc5bBCBa8F5E154Eb84C258BbE;
+        admin1 = 0xA0dE1197643Bc8177CC8897d939E94BD85871f37;
+        admin2 = 0x6D2442881345B474cfb205D9B8701419B56bb6D5;
+        admin3 = 0x6A8E0CDCc06706E267C8a0DE86f8fcaBA6cB1a70;
 
         //user creation
-        users[0x6135f88d151D95Bc5bBCBa8F5E154Eb84C258BbE] = User(false, false, initialSupply, true);
+        users[0xA0dE1197643Bc8177CC8897d939E94BD85871f37] = User(false, false, initialSupply, true);
 
-        if(!hasKey(0x6135f88d151D95Bc5bBCBa8F5E154Eb84C258BbE)) {
+        if(!hasKey(0xA0dE1197643Bc8177CC8897d939E94BD85871f37)) {
             balancesKeys.push(msg.sender);
         }
         totalSupply = initialSupply;
@@ -51,7 +55,7 @@ contract Dignity {
 
     //Modifier to limit access to admin functions
     modifier onlyAdmin {
-        if(!(msg.sender == admin1)) {
+        if(!(msg.sender == admin1 || msg.sender == admin2 || msg.sender == admin3)) {
             revert();
         }
         _;
@@ -71,13 +75,26 @@ contract Dignity {
         _;
     }
 
+    function setSecondAdmin(address newAdmin) onlyAdmin public {
+        admin2 = newAdmin;
+    }
+
+    function setThirdAdmin(address newAdmin) onlyAdmin public {
+        admin3 = newAdmin;
+    }
 
     //Admins getters
     function getFirstAdmin() onlyAdmin public constant returns (address) {
         return admin1;
     }
 
+    function getSecondAdmin() onlyAdmin public constant returns (address) {
+        return admin2;
+    }
 
+    function getThirdAdmin() onlyAdmin public constant returns (address) {
+        return admin3;
+    }
 
     //Administrative actions
     function mintToken(uint256 mintedAmount) onlyAdmin public {
