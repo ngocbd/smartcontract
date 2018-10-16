@@ -1,24 +1,27 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlightDelayPayout at 0xa0eb827c013d3c5170cbb1f57a5f83f1c41caf74
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlightDelayPayout at 0xec2374b274a8c04c0ec52dab10bc78078589ab62
 */
 /**
  * FlightDelay with Oraclized Underwriting and Payout
  *
- * @description Contract interface
+ * @description Controlled contract Interface
  * @copyright (c) 2017 etherisc GmbH
- * @author Christoph Mussenbrock, Stephan Karpischek
+ * @author Christoph Mussenbrock
  */
 
 pragma solidity ^0.4.11;
 
+contract FlightDelayAccessControllerInterface {
 
-contract FlightDelayControllerInterface {
+    function setPermissionById(uint8 _perm, bytes32 _id);
 
-    function isOwner(address _addr) returns (bool _isOwner);
+    function setPermissionById(uint8 _perm, bytes32 _id, bool _access);
 
-    function selfRegister(bytes32 _id) returns (bool result);
+    function setPermissionByAddress(uint8 _perm, address _addr);
 
-    function getContract(bytes32 _id) returns (address _addr);
+    function setPermissionByAddress(uint8 _perm, address _addr, bool _access);
+
+    function checkPermission(uint8 _perm, address _addr) returns (bool _success);
 }
 
 contract FlightDelayDatabaseModel {
@@ -35,24 +38,24 @@ contract FlightDelayDatabaseModel {
 
     // policy Status Codes and meaning:
     //
-    // 00 = Applied:	  the customer has payed a premium, but the oracle has
-    //					        not yet checked and confirmed.
-    //					        The customer can still revoke the policy.
-    // 01 = Accepted:	  the oracle has checked and confirmed.
-    //					        The customer can still revoke the policy.
-    // 02 = Revoked:	  The customer has revoked the policy.
-    //					        The premium minus cancellation fee is payed back to the
-    //					        customer by the oracle.
-    // 03 = PaidOut:	  The flight has ended with delay.
-    //					        The oracle has checked and payed out.
-    // 04 = Expired:	  The flight has endet with <15min. delay.
-    //					        No payout.
-    // 05 = Declined:	  The application was invalid.
-    //					        The premium minus cancellation fee is payed back to the
-    //					        customer by the oracle.
-    // 06 = SendFailed:	During Revoke, Decline or Payout, sending ether failed
-    //					        for unknown reasons.
-    //					        The funds remain in the contracts RiskFund.
+    // 00 = Applied:      the customer has payed a premium, but the oracle has
+    //                          not yet checked and confirmed.
+    //                          The customer can still revoke the policy.
+    // 01 = Accepted:     the oracle has checked and confirmed.
+    //                          The customer can still revoke the policy.
+    // 02 = Revoked:      The customer has revoked the policy.
+    //                          The premium minus cancellation fee is payed back to the
+    //                          customer by the oracle.
+    // 03 = PaidOut:      The flight has ended with delay.
+    //                          The oracle has checked and payed out.
+    // 04 = Expired:      The flight has endet with <15min. delay.
+    //                          No payout.
+    // 05 = Declined:     The application was invalid.
+    //                          The premium minus cancellation fee is payed back to the
+    //                          customer by the oracle.
+    // 06 = SendFailed: During Revoke, Decline or Payout, sending ether failed
+    //                          for unknown reasons.
+    //                          The funds remain in the contracts RiskFund.
 
 
     //                   00       01        02       03        04      05           06
@@ -140,6 +143,16 @@ contract FlightDelayDatabaseModel {
     }
 }
 
+
+contract FlightDelayControllerInterface {
+
+    function isOwner(address _addr) returns (bool _isOwner);
+
+    function selfRegister(bytes32 _id) returns (bool result);
+
+    function getContract(bytes32 _id) returns (address _addr);
+}
+
 contract FlightDelayControlledContract is FlightDelayDatabaseModel {
 
     address public controller;
@@ -166,7 +179,6 @@ contract FlightDelayControlledContract is FlightDelayDatabaseModel {
         _addr = FD_CI.getContract(_id);
     }
 }
-
 
 contract FlightDelayConstants {
 
@@ -302,7 +314,7 @@ contract FlightDelayConstants {
 // --> prod-mode
     // DEFINITIONS FOR ROPSTEN AND MAINNET
     // minimum time before departure for applying
-    uint constant MIN_TIME_BEFORE_DEPARTURE	= 24 hours; // for production
+    uint constant MIN_TIME_BEFORE_DEPARTURE = 24 hours; // for production
     // check for delay after .. minutes after scheduled arrival
     uint constant CHECK_PAYOUT_OFFSET = 15 minutes; // for production
 // <-- prod-mode
@@ -344,9 +356,7 @@ contract FlightDelayConstants {
         "[URL] json(https://api.flightstats.com/flex/flightstatus/rest/v2/json/flight/status/";
     string constant ORACLIZE_STATUS_QUERY =
         // pattern:
-        "?${[decrypt] BO9eB+Q5EVeSEGUo+LcDHLdAzJ6RUtcLnddOO/IHLh0yYkzNhoZIND26/cz8yzXkxzJaiS4dGGkhaAKMiI8WxhJc3ZxVfB+cfHAcGcg8Kj4x/9WLlakqB3EPMYQrDWHONuyD1G9i0g0IVRcO/s7pqwK+LKDcxQFYgkMtpcrWBrgAre40lN/S}&utc=true).flightStatuses[0]['status','delays','operationalTimes']";
-
-
+        "?${[decrypt] <!--PUT ENCRYPTED_QUERY HERE--> }&utc=true).flightStatuses[0]['status','delays','operationalTimes']";
 // <-- prod-mode
 
 // --> test-mode
@@ -434,19 +444,6 @@ contract FlightDelayDatabaseInterface is FlightDelayDatabaseModel {
         returns (bool _result);
 }
 
-contract FlightDelayAccessControllerInterface {
-
-    function setPermissionById(uint8 _perm, bytes32 _id);
-
-    function setPermissionById(uint8 _perm, bytes32 _id, bool _access);
-
-    function setPermissionByAddress(uint8 _perm, address _addr);
-
-    function setPermissionByAddress(uint8 _perm, address _addr, bool _access);
-
-    function checkPermission(uint8 _perm, address _addr) returns (bool _success);
-}
-
 contract FlightDelayLedgerInterface is FlightDelayDatabaseModel {
 
     function receiveFunds(Acc _to) payable;
@@ -456,11 +453,11 @@ contract FlightDelayLedgerInterface is FlightDelayDatabaseModel {
     function bookkeeping(Acc _from, Acc _to, uint amount);
 }
 
-
 contract FlightDelayPayoutInterface {
 
     function schedulePayoutOraclizeCall(uint _policyId, bytes32 _riskId, uint _offset);
 }
+
 contract OraclizeI {
     address public cbAddress;
     function query(uint _timestamp, string _datasource, string _arg) payable returns (bytes32 _id);
@@ -2285,7 +2282,7 @@ contract FlightDelayPayout is FlightDelayControlledContract, FlightDelayConstant
         FD_LG = FlightDelayLedgerInterface(getContract("FD.Ledger"));
 
         FD_AC.setPermissionById(101, "FD.Underwrite");
-        //FD_AC.setPermissionByAddress(101, oraclize_cbAddress());
+        FD_AC.setPermissionById(101, "FD.Payout");
         FD_AC.setPermissionById(102, "FD.Funder");
     }
 
