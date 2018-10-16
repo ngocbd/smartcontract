@@ -1,79 +1,27 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BBLib at 0x4555d48b5b51c31bde6f6a1654d0c93b1ac4f39f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BBLib at 0x0484c599e228e13befb61129888e8bd2b63a9619
 */
 pragma solidity 0.4.24;
 
-// (c) SecureVote 2018
-// github.com/secure-vote/sv-light-smart-contracts
 
-interface BBFarmIface {
-    /* events */
+/**
+ * (c) SecureVote 2018
+ * 
+ * This is a library to manage all ballot box functions. The idea is that
+ * ballot box contracts should the the _minimum_ code required to be deployed
+ * which means most (ideally all) functions should be moved here.
+ */
 
-    event BBFarmInit(bytes4 namespace);
-    event BallotCreatedWithID(uint ballotId);
-
-    /* from permissioned */
-
-    function upgradeMe(address newSC) external;
-
-    /* global bbfarm getters */
-
-    function getNamespace() external view returns (bytes4);
-    function getVersion() external view returns (uint);
-    function getBBLibVersion() external view returns (uint256);
-    function getNBallots() external view returns (uint256);
-
-    /* init a ballot */
-
-    // note that the ballotId returned INCLUDES the namespace.
-    function initBallot( bytes32 specHash
-                       , uint256 packed
-                       , IxIface ix
-                       , address bbAdmin
-                       , bytes24 extraData
-                       ) external returns (uint ballotId);
-
-    /* Sponsorship of ballots */
-
-    function sponsor(uint ballotId) external payable;
-
-    /* Voting functions */
-
-    function submitVote(uint ballotId, bytes32 vote, bytes extra) external;
-    function submitProxyVote(bytes32[5] proxyReq, bytes extra) external;
-
-    /* Ballot Getters */
-
-    function getDetails(uint ballotId, address voter) external view returns
-            ( bool hasVoted
-            , uint nVotesCast
-            , bytes32 secKey
-            , uint16 submissionBits
-            , uint64 startTime
-            , uint64 endTime
-            , bytes32 specHash
-            , bool deprecated
-            , address ballotOwner
-            , bytes16 extraData);
-
-    function getVote(uint ballotId, uint voteId) external view returns (bytes32 voteData, address sender, bytes extra);
-    function getTotalSponsorship(uint ballotId) external view returns (uint);
-    function getSponsorsN(uint ballotId) external view returns (uint);
-    function getSponsor(uint ballotId, uint sponsorN) external view returns (address sender, uint amount);
-    function getCreationTs(uint ballotId) external view returns (uint);
-
-    /* Admin on ballots */
-    function revealSeckey(uint ballotId, bytes32 sk) external;
-    function setEndTime(uint ballotId, uint64 newEndTime) external;  // note: testing only
-    function setDeprecated(uint ballotId) external;
-    function setBallotOwner(uint ballotId, address newOwner) external;
-}
 
 library BBLib {
     using BytesLib for bytes;
 
     // ballot meta
-    uint256 constant BB_VERSION = 5;
+    uint256 constant BB_VERSION = 6;
+    /* 4 deprecated due to insecure vote by proxy
+       5 deprecated to
+        - add `returns (address)` to submitProxyVote
+    */
 
     // voting settings
     uint16 constant USE_ETH = 1;          // 2^0
@@ -178,7 +126,7 @@ library BBLib {
 
     /* Library meta */
 
-    function getVersion() external view returns (uint) {
+    function getVersion() external pure returns (uint) {
         // even though this is constant we want to make sure that it's actually
         // callable on Ethereum so we don't accidentally package the constant code
         // in with an SC using BBLib. This function _must_ be external.
@@ -190,6 +138,8 @@ library BBLib {
     // "Constructor" function - init core params on deploy
     // timestampts are uint64s to give us plenty of room for millennia
     function init(DB storage db, bytes32 _specHash, uint256 _packed, IxIface ix, address ballotOwner, bytes16 extraData) external {
+        require(db.specHash == bytes32(0), "b-exists");
+
         db.index = ix;
         db.ballotOwner = ballotOwner;
 
@@ -218,7 +168,6 @@ library BBLib {
             // (which someone might be able to do if they could set the timestamp in the past)
             startTs = startTs > now ? startTs : uint64(now);
         }
-        require(db.specHash == bytes32(0), "b-exists");
         require(_specHash != bytes32(0), "null-specHash");
         db.specHash = _specHash;
 
@@ -277,7 +226,7 @@ library BBLib {
     }
 
     // Boundaries for constructing the msg we'll validate the signature of
-    function submitProxyVote(DB storage db, bytes32[5] proxyReq, bytes extra) external {
+    function submitProxyVote(DB storage db, bytes32[5] proxyReq, bytes extra) external returns (address voter) {
         // a proxy vote (where the vote is submitted (i.e. tx fee paid by someone else)
         // docs for datastructs: https://github.com/secure-vote/tokenvote/blob/master/Docs/DataStructs.md
 
@@ -285,6 +234,7 @@ library BBLib {
         bytes32 s = proxyReq[1];
         uint8 v = uint8(proxyReq[2][0]);
         // converting to uint248 will truncate the first byte, and we can then convert it to a bytes31.
+        // we truncate the first byte because it's the `v` parm used above
         bytes31 proxyReq2 = bytes31(uint248(proxyReq[2]));
         // proxyReq[3] is ballotId - required for verifying sig but not used for anything else
         bytes32 ballotId = proxyReq[3];
@@ -294,7 +244,7 @@ library BBLib {
         bytes memory signed = abi.encodePacked(proxyReq2, ballotId, voteData, extra);
         bytes32 msgHash = keccak256(signed);
         // need to be sure we are signing the entire ballot and any extra data that comes with it
-        address voter = ecrecover(msgHash, v, r, s);
+        voter = ecrecover(msgHash, v, r, s);
 
         // we need to make sure that this is the most recent vote the voter made, and that it has
         // not been seen before. NOTE: we've already validated the BBFarm namespace before this, so
@@ -423,441 +373,7 @@ library BPackedUtils {
     // }
 }
 
-interface BallotBoxIface {
-    function getVersion() external pure returns (uint256);
-
-    function getVote(uint256) external view returns (bytes32 voteData, address sender, bytes32 encPK);
-
-    function getDetails(address voter) external view returns (
-        bool hasVoted,
-        uint nVotesCast,
-        bytes32 secKey,
-        uint16 submissionBits,
-        uint64 startTime,
-        uint64 endTime,
-        bytes32 specHash,
-        bool deprecated,
-        address ballotOwner);
-
-    function getTotalSponsorship() external view returns (uint);
-
-    function submitVote(bytes32 voteData, bytes32 encPK) external;
-
-    function revealSeckey(bytes32 sk) external;
-    function setEndTime(uint64 newEndTime) external;
-    function setDeprecated() external;
-
-    function setOwner(address) external;
-    function getOwner() external view returns (address);
-
-    event CreatedBallot(bytes32 specHash, uint64 startTs, uint64 endTs, uint16 submissionBits);
-    event SuccessfulVote(address indexed voter, uint voteId);
-    event SeckeyRevealed(bytes32 secretKey);
-}
-
-interface BBAuxIface {
-    function isTesting(BallotBoxIface bb) external view returns (bool);
-    function isOfficial(BallotBoxIface bb) external view returns (bool);
-    function isBinding(BallotBoxIface bb) external view returns (bool);
-    function qualifiesAsCommunityBallot(BallotBoxIface bb) external view returns (bool);
-
-
-    function isDeprecated(BallotBoxIface bb) external view returns (bool);
-    function getEncSeckey(BallotBoxIface bb) external view returns (bytes32);
-    function getSpecHash(BallotBoxIface bb) external view returns (bytes32);
-    function getSubmissionBits(BallotBoxIface bb) external view returns (uint16);
-    function getStartTime(BallotBoxIface bb) external view returns (uint64);
-    function getEndTime(BallotBoxIface bb) external view returns (uint64);
-    function getNVotesCast(BallotBoxIface bb) external view returns (uint256 nVotesCast);
-
-    function hasVoted(BallotBoxIface bb, address voter) external view returns (bool hv);
-}
-
-interface IxIface {
-    function doUpgrade(address) external;
-
-    function addBBFarm(BBFarmIface bbFarm) external returns (uint8 bbFarmId);
-    function emergencySetABackend(bytes32 toSet, address newSC) external;
-    function emergencySetBBFarm(uint8 bbFarmId, address _bbFarm) external;
-    function emergencySetDAdmin(bytes32 democHash, address newAdmin) external;
-
-    function getPayments() external view returns (IxPaymentsIface);
-    function getBackend() external view returns (IxBackendIface);
-    function getBBFarm(uint8 bbFarmId) external view returns (BBFarmIface);
-    function getBBFarmID(bytes4 bbNamespace) external view returns (uint8 bbFarmId);
-
-    function getVersion() external view returns (uint256);
-
-    function dInit(address defualtErc20) external payable returns (bytes32);
-
-    function setDErc20(bytes32 democHash, address newErc20) external;
-    function dAddCategory(bytes32 democHash, bytes32 categoryName, bool hasParent, uint parent) external returns (uint);
-    function dDeprecateCategory(bytes32 democHash, uint categoryId) external;
-    function dUpgradeToPremium(bytes32 democHash) external;
-    function dDowngradeToBasic(bytes32 democHash) external;
-    function dSetArbitraryData(bytes32 democHash, bytes key, bytes value) external;
-
-    /* democ getters (that used to be here) should be called on either backend or payments directly */
-    /* use IxLib for convenience functions from other SCs */
-
-    /* ballot deployment */
-    // only ix owner - used for adding past or special ballots
-    function dAddBallot(bytes32 democHash, uint ballotId, uint256 packed) external;
-    function dDeployBallot(bytes32 democHash, bytes32 specHash, bytes32 extraData, uint256 packed) external payable returns (uint);
-
-
-    /* events */
-    event PaymentMade(uint[2] valAndRemainder);
-    event Emergency(bytes32 setWhat);
-    event EmergencyDemocAdmin(bytes32 democHash, address newAdmin);
-    event EmergencyBBFarm(uint16 bbFarmId);
-    event AddedBBFarm(uint16 bbFarmId);
-    event ManuallyAddedBallot(bytes32 democHash, uint256 ballotId, uint256 packed);
-    // from backend
-    event NewBallot(bytes32 indexed democHash, uint ballotN);
-    event NewDemoc(bytes32 democHash);
-    event DemocAdminSet(bytes32 indexed democHash, address admin);
-    // from BBFarm
-    event BallotCreatedWithID(uint ballotId);
-}
-
-interface IxPaymentsIface {
-    function upgradeMe(address) external;
-
-    function payoutAll() external;
-
-    function setPayTo(address) external;
-    function getPayTo() external view returns (address);
-    function setMinorEditsAddr(address) external;
-
-    function getCommunityBallotCentsPrice() external view returns (uint);
-    function setCommunityBallotCentsPrice(uint) external;
-    function getCommunityBallotWeiPrice() external view returns (uint);
-
-    function setBasicCentsPricePer30Days(uint amount) external;
-    function getBasicCentsPricePer30Days() external view returns(uint);
-    function getBasicExtraBallotFeeWei() external view returns (uint);
-    function getBasicBallotsPer30Days() external view returns (uint);
-    function setBasicBallotsPer30Days(uint amount) external;
-    function setPremiumMultiplier(uint8 amount) external;
-    function getPremiumMultiplier() external view returns (uint8);
-    function getPremiumCentsPricePer30Days() external view returns (uint);
-    function setWeiPerCent(uint) external;
-    function setFreeExtension(bytes32 democHash, bool hasFreeExt) external;
-    function getWeiPerCent() external view returns (uint weiPerCent);
-    function getUsdEthExchangeRate() external view returns (uint centsPerEth);
-
-    function weiBuysHowManySeconds(uint amount) external view returns (uint secs);
-
-    function downgradeToBasic(bytes32 democHash) external;
-    function upgradeToPremium(bytes32 democHash) external;
-    function doFreeExtension(bytes32 democHash) external;
-
-    function payForDemocracy(bytes32 democHash) external payable;
-    function accountInGoodStanding(bytes32 democHash) external view returns (bool);
-    function getSecondsRemaining(bytes32 democHash) external view returns (uint);
-    function getPremiumStatus(bytes32 democHash) external view returns (bool);
-    function getAccount(bytes32 democHash) external view returns (bool isPremium, uint lastPaymentTs, uint paidUpTill, bool hasFreeExtension);
-    function getFreeExtension(bytes32 democHash) external view returns (bool);
-
-    function giveTimeToDemoc(bytes32 democHash, uint additionalSeconds, bytes32 ref) external;
-
-    function setDenyPremium(bytes32 democHash, bool isPremiumDenied) external;
-    function getDenyPremium(bytes32 democHash) external view returns (bool);
-
-    function getPaymentLogN() external view returns (uint);
-    function getPaymentLog(uint n) external view returns (bool _external, bytes32 _democHash, uint _seconds, uint _ethValue);
-
-    event UpgradedToPremium(bytes32 indexed democHash);
-    event GrantedAccountTime(bytes32 indexed democHash, uint additionalSeconds, bytes32 ref);
-    event AccountPayment(bytes32 indexed democHash, uint additionalSeconds);
-    event SetCommunityBallotFee(uint amount);
-    event SetBasicCentsPricePer30Days(uint amount);
-    event SetPremiumMultiplier(uint8 multiplier);
-    event DowngradeToBasic(bytes32 indexed democHash);
-    event UpgradeToPremium(bytes32 indexed democHash);
-    event SetExchangeRate(uint weiPerCent);
-    event FreeExtension(bytes32 democHash);
-}
-
-interface IxBackendIface {
-    function upgradeMe(address) external;
-
-    /* global getters */
-    function getGDemocsN() external view returns (uint);
-    function getGDemoc(uint id) external view returns (bytes32);
-    function getGErc20ToDemocs(address erc20) external view returns (bytes32[] democHashes);
-
-    /* democ admin */
-    function dInit(address defaultErc20) external returns (bytes32);
-    function dAddBallot(bytes32 democHash, uint ballotId, uint256 packed, bool recordTowardsBasicLimit) external;
-    function dAddCategory(bytes32 democHash, bytes32 categoryName, bool hasParent, uint parent) external returns (uint);
-    function dDeprecateCategory(bytes32 democHash, uint categoryId) external;
-    function setDAdmin(bytes32 democHash, address newAdmin) external;
-    function setDErc20(bytes32 democHash, address newErc20) external;
-    function dSetArbitraryData(bytes32 democHash, bytes key, bytes value) external;
-
-    /* global democ getters */
-    function getDInfo(bytes32 democHash) external view returns (address erc20, address admin, uint256 nBallots);
-    function getDErc20(bytes32 democHash) external view returns (address);
-    function getDAdmin(bytes32 democHash) external view returns (address);
-    function getDArbitraryData(bytes32 democHash, bytes key) external view returns (bytes value);
-
-    function getDBallotsN(bytes32 democHash) external view returns (uint256);
-    function getDBallotID(bytes32 democHash, uint n) external view returns (uint ballotId);
-    function getDCountedBasicBallotsN(bytes32 democHash) external view returns (uint256);
-    function getDCountedBasicBallotID(bytes32 democHash, uint256 n) external view returns (uint256);
-
-    function getDCategoriesN(bytes32 democHash) external view returns (uint);
-    function getDCategory(bytes32 democHash, uint categoryId) external view returns (bool deprecated, bytes32 name, bool hasParent, uint parent);
-
-    /* just for prefix stuff */
-    function getDHash(bytes13 prefix) external view returns (bytes32);
-
-    /* events */
-    event NewBallot(bytes32 indexed democHash, uint ballotN);
-    event NewDemoc(bytes32 democHash);
-    event DemocAdminSet(bytes32 indexed democHash, address admin);
-}
-
-contract SVBallotConsts {
-    // voting settings
-    uint16 constant USE_ETH = 1;          // 2^0
-    uint16 constant USE_SIGNED = 2;       // 2^1
-    uint16 constant USE_NO_ENC = 4;       // 2^2
-    uint16 constant USE_ENC = 8;          // 2^3
-
-    // ballot settings
-    uint16 constant IS_BINDING = 8192;    // 2^13
-    uint16 constant IS_OFFICIAL = 16384;  // 2^14
-    uint16 constant USE_TESTING = 32768;  // 2^15
-}
-
-contract safeSend {
-    bool private txMutex3847834;
-
-    // we want to be able to call outside contracts (e.g. the admin proxy contract)
-    // but reentrency is bad, so here's a mutex.
-    function doSafeSend(address toAddr, uint amount) internal {
-        doSafeSendWData(toAddr, "", amount);
-    }
-
-    function doSafeSendWData(address toAddr, bytes data, uint amount) internal {
-        require(txMutex3847834 == false, "ss-guard");
-        txMutex3847834 = true;
-        // we need to use address.call.value(v)() because we want
-        // to be able to send to other contracts, even with no data,
-        // which might use more than 2300 gas in their fallback function.
-        require(toAddr.call.value(amount)(data), "ss-failed");
-        txMutex3847834 = false;
-    }
-}
-
-contract payoutAllC is safeSend {
-    address _payTo;
-
-    constructor() public {
-        _payTo = msg.sender;
-    }
-
-    function payoutAll() external {
-        doSafeSend(_payTo, address(this).balance);
-    }
-}
-
-contract owned {
-    address public owner;
-
-    event OwnerChanged(address newOwner);
-
-    modifier only_owner() {
-        require(msg.sender == owner, "only_owner: forbidden");
-        _;
-    }
-
-    constructor() public {
-        owner = msg.sender;
-    }
-
-    function setOwner(address newOwner) only_owner() external {
-        owner = newOwner;
-        emit OwnerChanged(newOwner);
-    }
-}
-
-contract hasAdmins is owned {
-    mapping (uint => mapping (address => bool)) admins;
-    uint public currAdminEpoch = 0;
-    bool public adminsDisabledForever = false;
-    address[] adminLog;
-
-    event AdminAdded(address indexed newAdmin);
-    event AdminRemoved(address indexed oldAdmin);
-    event AdminEpochInc();
-    event AdminDisabledForever();
-
-    modifier only_admin() {
-        require(adminsDisabledForever == false, "admins must not be disabled");
-        require(isAdmin(msg.sender), "only_admin: forbidden");
-        _;
-    }
-
-    constructor() public {
-        _setAdmin(msg.sender, true);
-    }
-
-    function isAdmin(address a) view public returns (bool) {
-        return admins[currAdminEpoch][a];
-    }
-
-    function getAdminLogN() view external returns (uint) {
-        return adminLog.length;
-    }
-
-    function getAdminLog(uint n) view external returns (address) {
-        return adminLog[n];
-    }
-
-    function upgradeMeAdmin(address newAdmin) only_admin() external {
-        // note: already checked msg.sender has admin with `only_admin` modifier
-        require(msg.sender != owner, "owner cannot upgrade self");
-        _setAdmin(msg.sender, false);
-        _setAdmin(newAdmin, true);
-    }
-
-    function setAdmin(address a, bool _givePerms) only_admin() external {
-        require(a != msg.sender && a != owner, "cannot change your own (or owner's) permissions");
-        _setAdmin(a, _givePerms);
-    }
-
-    function _setAdmin(address a, bool _givePerms) internal {
-        admins[currAdminEpoch][a] = _givePerms;
-        if (_givePerms) {
-            emit AdminAdded(a);
-            adminLog.push(a);
-        } else {
-            emit AdminRemoved(a);
-        }
-    }
-
-    // safety feature if admins go bad or something
-    function incAdminEpoch() only_owner() external {
-        currAdminEpoch++;
-        admins[currAdminEpoch][msg.sender] = true;
-        emit AdminEpochInc();
-    }
-
-    // this is internal so contracts can all it, but not exposed anywhere in this
-    // contract.
-    function disableAdminForever() internal {
-        currAdminEpoch++;
-        adminsDisabledForever = true;
-        emit AdminDisabledForever();
-    }
-}
-
-contract permissioned is owned, hasAdmins {
-    mapping (address => bool) editAllowed;
-    bool public adminLockdown = false;
-
-    event PermissionError(address editAddr);
-    event PermissionGranted(address editAddr);
-    event PermissionRevoked(address editAddr);
-    event PermissionsUpgraded(address oldSC, address newSC);
-    event SelfUpgrade(address oldSC, address newSC);
-    event AdminLockdown();
-
-    modifier only_editors() {
-        require(editAllowed[msg.sender], "only_editors: forbidden");
-        _;
-    }
-
-    modifier no_lockdown() {
-        require(adminLockdown == false, "no_lockdown: check failed");
-        _;
-    }
-
-
-    constructor() owned() hasAdmins() public {
-    }
-
-
-    function setPermissions(address e, bool _editPerms) no_lockdown() only_admin() external {
-        editAllowed[e] = _editPerms;
-        if (_editPerms)
-            emit PermissionGranted(e);
-        else
-            emit PermissionRevoked(e);
-    }
-
-    function upgradePermissionedSC(address oldSC, address newSC) no_lockdown() only_admin() external {
-        editAllowed[oldSC] = false;
-        editAllowed[newSC] = true;
-        emit PermissionsUpgraded(oldSC, newSC);
-    }
-
-    // always allow SCs to upgrade themselves, even after lockdown
-    function upgradeMe(address newSC) only_editors() external {
-        editAllowed[msg.sender] = false;
-        editAllowed[newSC] = true;
-        emit SelfUpgrade(msg.sender, newSC);
-    }
-
-    function hasPermissions(address a) public view returns (bool) {
-        return editAllowed[a];
-    }
-
-    function doLockdown() external only_owner() no_lockdown() {
-        disableAdminForever();
-        adminLockdown = true;
-        emit AdminLockdown();
-    }
-}
-
-contract upgradePtr {
-    address ptr = address(0);
-
-    modifier not_upgraded() {
-        require(ptr == address(0), "upgrade pointer is non-zero");
-        _;
-    }
-
-    function getUpgradePointer() view external returns (address) {
-        return ptr;
-    }
-
-    function doUpgradeInternal(address nextSC) internal {
-        ptr = nextSC;
-    }
-}
-
-interface ERC20Interface {
-    // Get the total token supply
-    function totalSupply() constant external returns (uint256 _totalSupply);
-
-    // Get the account balance of another account with address _owner
-    function balanceOf(address _owner) constant external returns (uint256 balance);
-
-    // Send _value amount of tokens to address _to
-    function transfer(address _to, uint256 _value) external returns (bool success);
-
-    // Send _value amount of tokens from address _from to address _to
-    function transferFrom(address _from, address _to, uint256 _value) external returns (bool success);
-
-    // Allow _spender to withdraw from your account, multiple times, up to the _value amount.
-    // If this function is called again it overwrites the current allowance with _value.
-    // this function is required for some DEX functionality
-    function approve(address _spender, uint256 _value) external returns (bool success);
-
-    // Returns the amount which _spender is still allowed to withdraw from _owner
-    function allowance(address _owner, address _spender) constant external returns (uint256 remaining);
-
-    // Triggered when tokens are transferred.
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-
-    // Triggered whenever approve(address _spender, uint256 _value) is called.
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-}
+interface IxIface {}
 
 library BytesLib {
     function concat(bytes memory _preBytes, bytes memory _postBytes) internal pure returns (bytes) {
@@ -1254,110 +770,4 @@ library BytesLib {
 
         return success;
     }
-}
-
-library MemArrApp {
-
-    // A simple library to allow appending to memory arrays.
-
-    function appendUint256(uint256[] memory arr, uint256 val) internal pure returns (uint256[] memory toRet) {
-        toRet = new uint256[](arr.length + 1);
-
-        for (uint256 i = 0; i < arr.length; i++) {
-            toRet[i] = arr[i];
-        }
-
-        toRet[arr.length] = val;
-    }
-
-    function appendUint128(uint128[] memory arr, uint128 val) internal pure returns (uint128[] memory toRet) {
-        toRet = new uint128[](arr.length + 1);
-
-        for (uint256 i = 0; i < arr.length; i++) {
-            toRet[i] = arr[i];
-        }
-
-        toRet[arr.length] = val;
-    }
-
-    function appendUint64(uint64[] memory arr, uint64 val) internal pure returns (uint64[] memory toRet) {
-        toRet = new uint64[](arr.length + 1);
-
-        for (uint256 i = 0; i < arr.length; i++) {
-            toRet[i] = arr[i];
-        }
-
-        toRet[arr.length] = val;
-    }
-
-    function appendUint32(uint32[] memory arr, uint32 val) internal pure returns (uint32[] memory toRet) {
-        toRet = new uint32[](arr.length + 1);
-
-        for (uint256 i = 0; i < arr.length; i++) {
-            toRet[i] = arr[i];
-        }
-
-        toRet[arr.length] = val;
-    }
-
-    function appendUint16(uint16[] memory arr, uint16 val) internal pure returns (uint16[] memory toRet) {
-        toRet = new uint16[](arr.length + 1);
-
-        for (uint256 i = 0; i < arr.length; i++) {
-            toRet[i] = arr[i];
-        }
-
-        toRet[arr.length] = val;
-    }
-
-    function appendBool(bool[] memory arr, bool val) internal pure returns (bool[] memory toRet) {
-        toRet = new bool[](arr.length + 1);
-
-        for (uint256 i = 0; i < arr.length; i++) {
-            toRet[i] = arr[i];
-        }
-
-        toRet[arr.length] = val;
-    }
-
-    function appendBytes32(bytes32[] memory arr, bytes32 val) internal pure returns (bytes32[] memory toRet) {
-        toRet = new bytes32[](arr.length + 1);
-
-        for (uint256 i = 0; i < arr.length; i++) {
-            toRet[i] = arr[i];
-        }
-
-        toRet[arr.length] = val;
-    }
-
-    function appendBytes32Pair(bytes32[2][] memory arr, bytes32[2] val) internal pure returns (bytes32[2][] memory toRet) {
-        toRet = new bytes32[2][](arr.length + 1);
-
-        for (uint256 i = 0; i < arr.length; i++) {
-            toRet[i] = arr[i];
-        }
-
-        toRet[arr.length] = val;
-    }
-
-    function appendBytes(bytes[] memory arr, bytes val) internal pure returns (bytes[] memory toRet) {
-        toRet = new bytes[](arr.length + 1);
-
-        for (uint256 i = 0; i < arr.length; i++) {
-            toRet[i] = arr[i];
-        }
-
-        toRet[arr.length] = val;
-    }
-
-    function appendAddress(address[] memory arr, address val) internal pure returns (address[] memory toRet) {
-        toRet = new address[](arr.length + 1);
-
-        for (uint256 i = 0; i < arr.length; i++) {
-            toRet[i] = arr[i];
-        }
-
-        toRet[arr.length] = val;
-    }
-
 }
