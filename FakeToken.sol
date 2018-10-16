@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FakeToken at 0x0429047892b8a903c0b4fbbd26e85d288f7af958
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FakeToken at 0xffe69f1c1d9fe3a6a345a86f7dcfa5bf71adc13d
 */
 pragma solidity ^0.4.10;
 
@@ -129,11 +129,6 @@ contract FakeToken is StandardToken, SafeMath {
       Transfer(0, msg.sender, tokens);
       totalSupply = checkedSupply;
       balances[msg.sender] += tokens;  // safeAdd not needed; bad semantics to use here
-    }
-
-    function changeStartBlock(uint256 blockNumberChanged) external{
-        fundingStartBlock = blockNumberChanged;
-        fundingEndBlock = blockNumberChanged;
     }
 
     /// @dev Ends the funding period and sends the ETH home
