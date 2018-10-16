@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BST at 0xe92b8dffad5ed5de60e4b24243f1796904473a69
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BST at 0x3ba24a04b8da2a86221c6b01a20de16f1e19c71a
 */
 pragma solidity ^0.4.4;
 
@@ -115,11 +115,11 @@ contract BST is StandardToken { // CHANGE THIS. Update the contract name.
 
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
-    function BST() {
+    function BetstreakToken() {
         unitEthWei = 1000000000000000000;
         balances[msg.sender] = 1000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
         totalSupply = 1000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
-        name = "BST";                                   // Set the name for display purposes (CHANGE THIS)
+        name = "Betstreak Token";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 6;                                               // Amount of decimals for display purposes (CHANGE THIS)
         symbol = "BST";                                             // Set the symbol for display purposes (CHANGE THIS)
         unitsOneEthCanBuy = 5000;                                      // Set the price of your token for the ICO (CHANGE THIS)
