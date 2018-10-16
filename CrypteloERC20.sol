@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrypteloERC20 at 0x05fceB069136e291f5241753E8E5ad2B55a372d6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrypteloERC20 at 0x7123027d76a5135e66b3a365efaba2b55de18a62
 */
 pragma solidity ^0.4.16;
 
@@ -42,10 +42,10 @@ contract CrypteloERC20 {
         totalSupplyTeamTokens = 125000000;
         totalSupplyExpansionTokens = 125000000;
         
-        address privateW = 0xc837Bf0664C67390aC8dA52168D0Bbdbfc53B03f;
-        address ICOW = 0x25814bb26Ff76E196A2D4F69EE0A6cEd0415965c;
-        address companyW = 0xA84Bff015B31e3Bc10A803F5BC5aE98e99922B68;
-        address expansionW = 0x600BeAbb79885acbE606944f54ae8bC29Ec332ef;
+        address privateW = 0xb3d9c613a4B680A5Ffd28E08258dBd7BA77102A2;
+        address ICOW = 0xF2b3Fc7196D5Ec9bD9111AF5B6D79c9FE26d729F;
+        address companyW = 0xeC23f509E328100C08646389a3b6C45e9290AA42;
+        address expansionW = 0xf799aa9cA15D6137eDAEb204016378112064ECa3;
         
         balanceOf[ICOW] = totalSupplyICO * ( 10 ** decimals);
         balanceOf[privateW] = totalSupplyPrivateSale * ( 10 ** decimals);
