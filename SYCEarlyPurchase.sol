@@ -1,7 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SYCEarlyPurchase at 0x011585ba96aa16b803e239defd807465073b883c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SYCEarlyPurchase at 0xebbcdc146b536557782acb9f7869627ad92fb5aa
 */
 pragma solidity ^0.4.7;
+
+contract AbstractSYCCrowdsale {
+}
 
 /// @title EarlyPurchase contract - Keep track of purchased amount by Early Purchasers
 /// Project by SynchroLife Team (https://synchrolife.org)
@@ -12,14 +15,12 @@ contract SYCEarlyPurchase {
      *  Properties
      */
     string public constant PURCHASE_AMOUNT_UNIT = 'ETH';    // Ether
-    uint public constant WEI_MINIMUM_PURCHASE = 40 * 10 ** 18;
-    uint public constant WEI_MAXIMUM_EARLYPURCHASE = 7000 * 10 ** 18;
+    uint public constant WEI_MINIMUM_PURCHASE = 1 * 10 ** 18;
+    uint public constant WEI_MAXIMUM_EARLYPURCHASE = 2 * 10 ** 18;
     address public owner;
     EarlyPurchase[] public earlyPurchases;
     uint public earlyPurchaseClosedAt;
     uint public totalEarlyPurchaseRaised;
-    address public sycCrowdsale;
-
 
     /*
      *  Types
@@ -29,6 +30,12 @@ contract SYCEarlyPurchase {
         uint amount;        // Amount in Wei( = 1/ 10^18 Ether)
         uint purchasedAt;   // timestamp
     }
+
+    /*
+     *  External contracts
+     */
+    AbstractSYCCrowdsale public sycCrowdsale;
+
 
     /*
      *  Modifiers
@@ -69,20 +76,6 @@ contract SYCEarlyPurchase {
         }
     }
 
-    /// @dev Setup function sets external contracts' addresses.
-    /// @param _sycCrowdsale SYC token crowdsale address.
-    function setup(address _sycCrowdsale)
-        external
-        onlyOwner
-        returns (bool)
-    {
-        if (address(_sycCrowdsale) == 0) {
-            sycCrowdsale = _sycCrowdsale;
-            return true;
-        }
-        return false;
-    }
-
     /// @dev Returns number of early purchases
     function numberOfEarlyPurchases()
         external
@@ -105,6 +98,10 @@ contract SYCEarlyPurchase {
             throw;
         }
 
+        if (purchasedAt == 0 || purchasedAt > now) {
+            throw;
+        }
+
         if(totalEarlyPurchaseRaised + amount >= WEI_MAXIMUM_EARLYPURCHASE){
            purchaser.send(totalEarlyPurchaseRaised + amount - WEI_MAXIMUM_EARLYPURCHASE);
            earlyPurchases.push(EarlyPurchase(purchaser, WEI_MAXIMUM_EARLYPURCHASE - totalEarlyPurchaseRaised, purchasedAt));
@@ -116,7 +113,7 @@ contract SYCEarlyPurchase {
         }
 
         if(totalEarlyPurchaseRaised >= WEI_MAXIMUM_EARLYPURCHASE){
-            earlyPurchaseClosedAt = now;
+            closeEarlyPurchase();
         }
         return true;
     }
@@ -127,6 +124,20 @@ contract SYCEarlyPurchase {
         returns (bool)
     {
         earlyPurchaseClosedAt = now;
+    }
+
+    /// @dev Setup function sets external crowdsale contract's address
+    /// @param sycCrowdsaleAddress Token address
+    function setup(address sycCrowdsaleAddress)
+        external
+        onlyOwner
+        returns (bool)
+    {
+        if (address(sycCrowdsale) == 0) {
+            sycCrowdsale = AbstractSYCCrowdsale(sycCrowdsaleAddress);
+            return true;
+        }
+        return false;
     }
 
     function withdraw(uint withdrawalAmount) onlyOwner {
