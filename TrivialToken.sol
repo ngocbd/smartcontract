@@ -1,126 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TrivialToken at 0x158a96da5dcd1ade84ac11ac952683c0ee3516ab
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TrivialToken at 0x55fc04a73f058832b4f3498dc83ceb6e53a9e314
 */
 pragma solidity ^0.4.11;
 
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
 
-
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
-
-  mapping(address => uint256) balances;
-
-  function transfer(address _to, uint256 _value) returns (bool) {
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  function balanceOf(address _owner) constant returns (uint256 balance) {
-    return balances[_owner];
-  }
-
-}
-
-contract ERC223TokenInterface {
-    function name() constant returns (string _name);
-    function symbol() constant returns (string _symbol);
-    function decimals() constant returns (uint8 _decimals);
-    function totalSupply() constant returns (uint256 _totalSupply);
-
-    function transfer(address to, uint value, bytes data) returns (bool);
-    event Transfer(address indexed from, address indexed to, uint value, bytes data);
-}
-
-contract ERC223ReceiverInterface {
-    function tokenFallback(address from, uint value, bytes data);
-}
-
-contract ERC223Token is BasicToken, ERC223TokenInterface {
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-    uint256 public totalSupply;
-
-    function name() constant returns (string _name) {
-        return name;
-    }
-    function symbol() constant returns (string _symbol) {
-        return symbol;
-    }
-    function decimals() constant returns (uint8 _decimals) {
-        return decimals;
-    }
-    function totalSupply() constant returns (uint256 _totalSupply) {
-        return totalSupply;
-    }
-
-    modifier onlyPayloadSize(uint size) {
-        require(msg.data.length >= size + 4);
-        _;
-    }
-
-    function transfer(address to, uint value, bytes data) onlyPayloadSize(2 * 32) returns (bool) {
-        balances[msg.sender] = SafeMath.sub(balances[msg.sender], value);
-        balances[to] = SafeMath.add(balances[to], value);
-        if (isContract(to)){
-            ERC223ReceiverInterface receiver = ERC223ReceiverInterface(to);
-            receiver.tokenFallback(msg.sender, value, data);
-        }
-        //ERC223 event
-        Transfer(msg.sender, to, value, data);
-        return true;
-    }
-
-    function transfer(address to, uint value) returns (bool) {
-        bytes memory empty;
-        transfer(to, value, empty);
-        //ERC20 legacy event
-        Transfer(msg.sender, to, value);
-        return true;
-    }
-
-    function isContract(address _address) private returns (bool isContract) {
-        uint length;
-        _address = _address; //Silence compiler warning
-        assembly { length := extcodesize(_address) }
-        return length > 0;
-    }
-}
-
-contract PullPayment {
-  using SafeMath for uint256;
-
-  mapping(address => uint256) public payments;
-  uint256 public totalPayments;
-
-  function asyncSend(address dest, uint256 amount) internal {
-    payments[dest] = payments[dest].add(amount);
-    totalPayments = totalPayments.add(amount);
-  }
-
-
-  function withdrawPayments() {
-    address payee = msg.sender;
-    uint256 payment = payments[payee];
-
-    require(payment != 0);
-    require(this.balance >= payment);
-
-    totalPayments = totalPayments.sub(payment);
-    payments[payee] = 0;
-
-    assert(payee.send(payment));
-  }
-}
-
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
   function mul(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a * b;
@@ -147,9 +34,161 @@ library SafeMath {
   }
 }
 
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) constant returns (uint256);
+  function transfer(address to, uint256 value) returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
-contract TrivialToken is ERC223Token, PullPayment {
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) returns (bool);
+  function approve(address spender, uint256 value) returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances. 
+ */
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
+
+  mapping(address => uint256) balances;
+
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) returns (bool) {
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of. 
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) constant returns (uint256 balance) {
+    return balances[_owner];
+  }
+
+}
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) allowed;
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amout of tokens to be transfered
+   */
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
+    var _allowance = allowed[_from][msg.sender];
+
+    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
+    // require (_value <= _allowance);
+
+    balances[_to] = balances[_to].add(_value);
+    balances[_from] = balances[_from].sub(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) returns (bool) {
+
+    // To change the approve amount you first have to reduce the addresses`
+    //  allowance to zero by calling `approve(_spender, 0)` if it is not
+    //  already 0 to mitigate the race condition described here:
+    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifing the amount of tokens still avaible for the spender.
+   */
+  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+    return allowed[_owner][_spender];
+  }
+
+}
+
+/**
+ * @title PullPayment
+ * @dev Base contract supporting async send for pull payments. Inherit from this
+ * contract and use asyncSend instead of send.
+ */
+contract PullPayment {
+  using SafeMath for uint256;
+
+  mapping(address => uint256) public payments;
+  uint256 public totalPayments;
+
+  /**
+  * @dev Called by the payer to store the sent amount as credit to be pulled.
+  * @param dest The destination address of the funds.
+  * @param amount The amount to transfer.
+  */
+  function asyncSend(address dest, uint256 amount) internal {
+    payments[dest] = payments[dest].add(amount);
+    totalPayments = totalPayments.add(amount);
+  }
+
+  /**
+  * @dev withdraw accumulated balance, called by payee.
+  */
+  function withdrawPayments() {
+    address payee = msg.sender;
+    uint256 payment = payments[payee];
+
+    require(payment != 0);
+    require(this.balance >= payment);
+
+    totalPayments = totalPayments.sub(payment);
+    payments[payee] = 0;
+
+    assert(payee.send(payment));
+  }
+}
+
+contract TrivialToken is StandardToken, PullPayment {
     //Constants
     uint8 constant DECIMALS = 0;
     uint256 constant MIN_ETH_AMOUNT = 0.005 ether;
@@ -157,15 +196,24 @@ contract TrivialToken is ERC223Token, PullPayment {
     uint256 constant TOTAL_SUPPLY = 1000000;
     uint256 constant TOKENS_PERCENTAGE_FOR_KEY_HOLDER = 25;
     uint256 constant CLEANUP_DELAY = 180 days;
+    uint256 constant FREE_PERIOD_DURATION = 60 days;
+
+    //Basic
+    string public name;
+    string public symbol;
+    uint8 public decimals;
+    uint256 public totalSupply;
 
     //Accounts
     address public artist;
     address public trivial;
 
     //Time information
+    uint256 public icoDuration;
     uint256 public icoEndTime;
     uint256 public auctionDuration;
     uint256 public auctionEndTime;
+    uint256 public freePeriodEndTime;
 
     //Token information
     uint256 public tokensForArtist;
@@ -194,6 +242,14 @@ contract TrivialToken is ERC223Token, PullPayment {
     enum State { Created, IcoStarted, IcoFinished, AuctionStarted, AuctionFinished, IcoCancelled }
     State public currentState;
 
+    //Item description
+    struct DescriptionHash {
+        bytes32 descriptionHash;
+        uint256 timestamp;
+    }
+    DescriptionHash public descriptionHash;
+    DescriptionHash[] public descriptionHashHistory;
+
     //Token contributors and holders
     mapping(address => uint) public contributions;
     address[] public contributors;
@@ -203,9 +259,7 @@ contract TrivialToken is ERC223Token, PullPayment {
     modifier onlyBefore(uint256 _time) { require(now < _time); _; }
     modifier onlyAfter(uint256 _time) { require(now > _time); _; }
     modifier onlyTrivial() { require(msg.sender == trivial); _; }
-    modifier onlyKeyHolders() { require(balances[msg.sender] >= SafeMath.div(
-        SafeMath.mul(tokensForIco, TOKENS_PERCENTAGE_FOR_KEY_HOLDER), 100)); _;
-    }
+    modifier onlyArtist() { require(msg.sender == artist); _; }
     modifier onlyAuctionWinner() {
         require(currentState == State.AuctionFinished);
         require(msg.sender == highestBidder);
@@ -214,19 +268,19 @@ contract TrivialToken is ERC223Token, PullPayment {
 
     function TrivialToken(
         string _name, string _symbol,
-        uint256 _icoEndTime, uint256 _auctionDuration,
+        uint256 _icoDuration, uint256 _auctionDuration,
         address _artist, address _trivial,
         uint256 _tokensForArtist,
         uint256 _tokensForTrivial,
-        uint256 _tokensForIco
+        uint256 _tokensForIco,
+        bytes32 _descriptionHash
     ) {
-        require(now < _icoEndTime);
-        require(
+        /*require(
             TOTAL_SUPPLY == SafeMath.add(
                 _tokensForArtist,
                 SafeMath.add(_tokensForTrivial, _tokensForIco)
             )
-        );
+        );*/
         require(MIN_BID_PERCENTAGE < 100);
         require(TOKENS_PERCENTAGE_FOR_KEY_HOLDER < 100);
 
@@ -234,7 +288,7 @@ contract TrivialToken is ERC223Token, PullPayment {
         symbol = _symbol;
         decimals = DECIMALS;
 
-        icoEndTime = _icoEndTime;
+        icoDuration = _icoDuration;
         auctionDuration = _auctionDuration;
         artist = _artist;
         trivial = _trivial;
@@ -243,6 +297,7 @@ contract TrivialToken is ERC223Token, PullPayment {
         tokensForTrivial = _tokensForTrivial;
         tokensForIco = _tokensForIco;
 
+        descriptionHash = DescriptionHash(_descriptionHash, now);
         currentState = State.Created;
     }
 
@@ -252,6 +307,8 @@ contract TrivialToken is ERC223Token, PullPayment {
     function startIco()
     onlyInState(State.Created)
     onlyTrivial() {
+        icoEndTime = SafeMath.add(now, icoDuration);
+        freePeriodEndTime = SafeMath.add(icoEndTime, FREE_PERIOD_DURATION);
         currentState = State.IcoStarted;
         IcoStarted(icoEndTime);
     }
@@ -314,9 +371,18 @@ contract TrivialToken is ERC223Token, PullPayment {
     /*
         Auction methods
     */
+    function canStartAuction() returns (bool) {
+        bool isArtist = msg.sender == artist;
+        bool isKeyHolder = balances[msg.sender] >= SafeMath.div(
+        SafeMath.mul(TOTAL_SUPPLY, TOKENS_PERCENTAGE_FOR_KEY_HOLDER), 100);
+        return isArtist || isKeyHolder;
+    }
+
     function startAuction()
-    onlyInState(State.IcoFinished)
-    onlyKeyHolders() {
+    onlyAfter(freePeriodEndTime)
+    onlyInState(State.IcoFinished) {
+        require(canStartAuction());
+
         // 100% tokens owner is the only key holder
         if (balances[msg.sender] == TOTAL_SUPPLY) {
             // no auction takes place,
@@ -403,6 +469,8 @@ contract TrivialToken is ERC223Token, PullPayment {
         General methods
     */
 
+    function contributorsCount() constant returns (uint256) { return contributors.length; }
+
     // Cancel ICO will be redesigned to prevent
     // risk of user funds overtaken
 
@@ -419,6 +487,12 @@ contract TrivialToken is ERC223Token, PullPayment {
         contributions[contributor] = 0;
         contributor.transfer(contribution);
     }*/
+
+    function setDescriptionHash(bytes32 _descriptionHash)
+    onlyArtist() {
+        descriptionHashHistory.push(descriptionHash);
+        descriptionHash = DescriptionHash(_descriptionHash, now);
+    }
 
     function setAuctionWinnerMessageHash(bytes32 _auctionWinnerMessageHash)
     onlyAuctionWinner() {
@@ -442,27 +516,36 @@ contract TrivialToken is ERC223Token, PullPayment {
     function getContractState() constant returns (
         uint256, uint256, uint256, uint256, uint256,
         uint256, uint256, address, uint256, State,
-        uint256, uint256
+        uint256, uint256, uint256
     ) {
         return (
             icoEndTime, auctionDuration, auctionEndTime,
             tokensForArtist, tokensForTrivial, tokensForIco,
             amountRaised, highestBidder, highestBid, currentState,
-            TOKENS_PERCENTAGE_FOR_KEY_HOLDER, MIN_BID_PERCENTAGE
+            TOKENS_PERCENTAGE_FOR_KEY_HOLDER, MIN_BID_PERCENTAGE,
+            freePeriodEndTime
         );
     }
 
-    function transfer(address _to, uint _value, bytes _data) onlyInState(State.IcoFinished) returns (bool) {
-        return ERC223Token.transfer(_to, _value, _data);
+    function transfer(address _to, uint _value)
+    onlyInState(State.IcoFinished) returns (bool) {
+        return BasicToken.transfer(_to, _value);
     }
 
-    function transfer(address _to, uint _value) returns (bool) {
-        // onlyInState(IcoFinished) check is contained in a call below
-        bytes memory empty;
-        return transfer(_to, _value, empty);
+    function transferFrom(address _from, address _to, uint256 _value)
+    onlyInState(State.IcoFinished) returns (bool) {
+        return StandardToken.transferFrom(_from, _to, _value);
     }
 
     function () payable {
-        revert();
+        if (currentState == State.IcoStarted) {
+            contributeInIco();
+        }
+        else if (currentState == State.AuctionStarted) {
+            bidInAuction();
+        }
+        else {
+            revert();
+        }
     }
 }
