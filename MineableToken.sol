@@ -1,8 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MineableToken at 0xe0c3f2deaa356fea4b6a1355674a766cb5821589
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MineableToken at 0x884e3902c4d5cfa86de4ace7a96aa91ebc25c0ff
 */
-// compiler: 0.4.21+commit.dfe3193c.Emscripten.clang
-pragma solidity ^0.4.21;
+// 0.4.20+commit.3155dd80.Emscripten.clang
+pragma solidity ^0.4.20;
 
 // Ethereum Token callback
 interface tokenRecipient {
@@ -44,11 +44,9 @@ contract MineableToken is owned {
   string  public symbol;
   uint8   public decimals;
   uint256 public totalSupply;
-
   uint256 public supplyCap;
 
   mapping( address => uint256 ) balances_;
-
   mapping( address => mapping(address => uint256) ) allowances_;
 
   // ERC20
@@ -56,8 +54,8 @@ contract MineableToken is owned {
                   address indexed spender,
                   uint value );
 
-  // ERC20-compatible version only, breaks ERC223 compliance but etherscan
-  // and exchanges only support ERC20 version. Can't overload events
+  // ERC20-compatible version only, breaks ERC223 compliance but block
+  // explorers and exchanges expect ERC20. Also, cannot overload events
 
   event Transfer( address indexed from,
                   address indexed to,
@@ -69,22 +67,21 @@ contract MineableToken is owned {
               uint256 value );
 
   function MineableToken() public {
-
-    decimals = uint8(18); // audit recommended 18 decimals
-    supplyCap = 833333333 * 10**uint256(decimals);
-
-    name = "ORST";
-    symbol = "ORS";
+    decimals = uint8(18);
+    supplyCap = 4 * 1e9 * 10**uint256(decimals);
+    name = "Jbox";
+    symbol = "JBX";
   }
 
   function mine( uint256 qty ) public onlyOwner {
+
     require (    (totalSupply + qty) > totalSupply
               && (totalSupply + qty) <= supplyCap
             );
 
     totalSupply += qty;
     balances_[owner] += qty;
-    emit Transfer( address(0), owner, qty );
+    Transfer( address(0), owner, qty );
   }
 
   function cap() public constant returns(uint256) {
@@ -106,7 +103,7 @@ contract MineableToken is owned {
     // See: https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
 
     allowances_[msg.sender][spender] = value;
-    emit Approval( msg.sender, spender, value );
+    Approval( msg.sender, spender, value );
     return true;
   }
  
@@ -134,9 +131,11 @@ contract MineableToken is owned {
 
   // ERC20
   function transfer(address to, uint256 value) public
+  returns (bool success)
   {
     bytes memory empty; // null
     _transfer( msg.sender, to, value, empty );
+    return true;
   }
 
   // ERC20
@@ -179,7 +178,7 @@ contract MineableToken is owned {
     balances_[msg.sender] -= value;
     totalSupply -= value;
 
-    emit Burn( msg.sender, value );
+    Burn( msg.sender, value );
     return true;
   }
 
@@ -194,7 +193,7 @@ contract MineableToken is owned {
     allowances_[from][msg.sender] -= value;
     totalSupply -= value;
 
-    emit Burn( from, value );
+    Burn( from, value );
     return true;
   }
 
@@ -260,14 +259,11 @@ contract MineableToken is owned {
     require( balances_[from] >= value );
     require( balances_[to] + value > balances_[to] ); // catch overflow
 
-    // no transfers allowed before ICO ends 26MAY2018 0900 CET
-    if (msg.sender != owner) require( now >= 1527321600 );
-
     balances_[from] -= value;
     balances_[to] += value;
 
     bytes memory ignore;
     ignore = data;                    // ignore compiler warning
-    emit Transfer( from, to, value ); // ignore data
+    Transfer( from, to, value ); // ERC20-version, ignore data
   }
 }
