@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IMCOToken at 0xacf3a326a84ab58657c5738275243525418b9040
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IMCOToken at 0x448c455a6b349e005d2b680e15b456447b14c561
 */
 pragma solidity ^0.4.18;
 
@@ -8,7 +8,7 @@ pragma solidity ^0.4.18;
 //
 // Symbol      : IMCO
 // Name        : IMCO
-// Total supply: 1,000,000,000.0000000
+// Total supply: 10,000,000,000.0000000
 // Decimals    : 7
 //
 // Enjoy.
@@ -119,7 +119,7 @@ contract IMCOToken is ERC20Interface, Owned {
         symbol = "IMCO";
         name = "IMCO";
         decimals = 7;
-        _totalSupply = 1000000000 * 10**uint(decimals);
+        _totalSupply = 10000000000 * 10**uint(decimals);
         balances[owner] = _totalSupply;
         Transfer(address(0), owner, _totalSupply);
     }
