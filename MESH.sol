@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MESH at 0x3ac6cb00f5a44712022a51fbace4c7497f56ee31
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MESH at 0x01f2acf2914860331c1cb1a9acecda7475e06af8
 */
 // Abstract contract for the full ERC 20 Token standard
 // https://github.com/ethereum/EIPs/issues/20
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.15;
 
 contract Token {
     /* This is a slight change to the ERC20 base standard.*/
@@ -100,9 +100,10 @@ contract Controlled is Owned{
         return true;
     }
 
-    function addLock(address _addr) public onlyOwner returns (bool success){
-        require(_addr!=msg.sender);
-        locked[_addr]=true;
+    function addLock(address[] _addrs) public onlyOwner returns (bool success){
+        for (uint256 i = 0; i < _addrs.length; i++){
+            locked[_addrs[i]]=true;
+         }
         return true;
     }
 
@@ -111,8 +112,10 @@ contract Controlled is Owned{
         return true;
     }
 
-    function removeLock(address _addr) public onlyOwner returns (bool success){
-        locked[_addr]=false;
+    function removeLock(address[] _addrs) public onlyOwner returns (bool success){
+        for (uint256 i = 0; i < _addrs.length; i++){
+            locked[_addrs[i]]=false;
+         }
         return true;
     }
 
@@ -123,7 +126,7 @@ contract Controlled is Owned{
                 assert(!locked[_addr]);
             }
         }
-
+        
         _;
     }
 
@@ -178,47 +181,49 @@ contract MESH is StandardToken {
         revert();
     }
 
-    string public name = "M2C Mesh Network";
-    uint8 public decimals = 18;
-    string public symbol = "mesh";
+    string public name = "MeshBox";                   //fancy name
+    uint8 public decimals = 18;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
+    string public symbol = "MESH";                 //An identifier
+    string public version = 'v0.1';       //MESH 0.1 standard. Just an arbitrary versioning scheme.
+    uint256 public allocateEndTime;
 
-
+    
     // The nonce for avoid transfer replay attacks
     mapping(address => uint256) nonces;
 
-    function MESH (uint256 initialSupply) public {
-        totalSupply = initialSupply * 10 ** uint256(decimals);
-        balances[msg.sender] = totalSupply;
+    function MESH() public {
+        allocateEndTime = now + 1 days;
     }
+
     /*
-     * Proxy transfer token. When some users of the ethereum account has no ether,
+     * Proxy transfer MESH. When some users of the ethereum account has no ether,
      * he or she can authorize the agent for broadcast transactions, and agents may charge agency fees
      * @param _from
      * @param _to
      * @param _value
-     * @param fee
+     * @param feeMesh
      * @param _v
      * @param _r
      * @param _s
      */
-    function transferProxy(address _from, address _to, uint256 _value, uint256 _fee,
+    function transferProxy(address _from, address _to, uint256 _value, uint256 _feeMesh,
         uint8 _v,bytes32 _r, bytes32 _s) public transferAllowed(_from) returns (bool){
 
-        if(balances[_from] < _fee + _value) revert();
+        if(balances[_from] < _feeMesh + _value) revert();
 
         uint256 nonce = nonces[_from];
-        bytes32 h = keccak256(_from,_to,_value,_fee,nonce);
+        bytes32 h = keccak256(_from,_to,_value,_feeMesh,nonce,name);
         if(_from != ecrecover(h,_v,_r,_s)) revert();
 
         if(balances[_to] + _value < balances[_to]
-            || balances[msg.sender] + _fee < balances[msg.sender]) revert();
+            || balances[msg.sender] + _feeMesh < balances[msg.sender]) revert();
         balances[_to] += _value;
         Transfer(_from, _to, _value);
 
-        balances[msg.sender] += _fee;
-        Transfer(_from, msg.sender, _fee);
+        balances[msg.sender] += _feeMesh;
+        Transfer(_from, msg.sender, _feeMesh);
 
-        balances[_from] -= _value + _fee;
+        balances[_from] -= _value + _feeMesh;
         nonces[_from] = nonce + 1;
         return true;
     }
@@ -226,7 +231,7 @@ contract MESH is StandardToken {
     /*
      * Proxy approve that some one can authorize the agent for broadcast transaction
      * which call approve method, and agents may charge agency fees
-     * @param _from The address which should tranfer tokens to others
+     * @param _from The address which should tranfer MESH to others
      * @param _spender The spender who allowed by _from
      * @param _value The value that should be tranfered.
      * @param _v
@@ -237,7 +242,7 @@ contract MESH is StandardToken {
         uint8 _v,bytes32 _r, bytes32 _s) public returns (bool success) {
 
         uint256 nonce = nonces[_from];
-        bytes32 hash = keccak256(_from,_spender,_value,nonce);
+        bytes32 hash = keccak256(_from,_spender,_value,nonce,name);
         if(_from != ecrecover(hash,_v,_r,_s)) revert();
         allowed[_from][_spender] = _value;
         Approval(_from, _spender, _value);
@@ -266,7 +271,7 @@ contract MESH is StandardToken {
         return true;
     }
 
-    /* Approves and then calls the contract code*/
+    /* Approves and then calls the contract code */
     function approveAndCallcode(address _spender, uint256 _value, bytes _extraData) public returns (bool success) {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
@@ -274,5 +279,27 @@ contract MESH is StandardToken {
         //Call the contract code
         if(!_spender.call(_extraData)) { revert(); }
         return true;
+    }
+
+   /* Refundable tokens sent to the smart contract for misoperation of the user */
+    function getBackToken(address _spender,address _to,uint256 _value) public onlyOwner{
+        if(!_spender.call(bytes4(bytes32(keccak256("transfer(address,uint256)"))), _to, _value)) { revert(); }
+    }
+
+    // Allocate tokens to the users
+    // @param _owners The owners list of the token
+    // @param _values The value list of the token
+    function allocateTokens(address[] _owners, uint256[] _values) public onlyOwner {
+
+        if(allocateEndTime < now) revert();
+        if(_owners.length != _values.length) revert();
+
+        for(uint256 i = 0; i < _owners.length ; i++){
+            address to = _owners[i];
+            uint256 value = _values[i];
+            if(totalSupply + value <= totalSupply || balances[to] + value <= balances[to]) revert();
+            totalSupply += value;
+            balances[to] += value;
+        }
     }
 }
