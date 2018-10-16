@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MainToken at 0x4e8e8eb5a4ed17170b646d33b8ef3e7352585607
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MainToken at 0x20c632e587aea97eff47d04d522aa1b00c72a197
 */
 pragma solidity ^0.4.18;
 
@@ -575,11 +575,11 @@ contract usingConsts {
     uint8 constant TOKEN_DECIMALS_UINT8 = 18;
     uint constant TOKEN_DECIMAL_MULTIPLIER = 10 ** TOKEN_DECIMALS;
 
-    string constant TOKEN_NAME = "PandroytyToken";
-    string constant TOKEN_SYMBOL = "PDRY";
-    bool constant PAUSED = true;
-    address constant TARGET_USER = 0x8f302c391b2b6fd064ae8257d09a13d9fedde207;
-    uint constant START_TIME = 1520730000;
+    string constant TOKEN_NAME = "GPCCTOKEN";
+    string constant TOKEN_SYMBOL = "GPCCT";
+    bool constant PAUSED = false;
+    address constant TARGET_USER = 0x6D5BdbEec91CC5e79b7A4Ab8Fd4fB89520497e72;
+    uint constant START_TIME = 1517997621;
     bool constant CONTINUE_MINTING = true;
 }
 
@@ -587,6 +587,9 @@ contract usingConsts {
 
 contract MainToken is usingConsts, FreezableMintableToken, BurnableToken, Pausable {
     function MainToken() {
+        if (PAUSED) {
+            pause();
+        }
     }
 
     function name() constant public returns (string _name) {
