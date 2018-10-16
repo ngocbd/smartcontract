@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZiberCrowdsale at 0xf0a924661b0263e5ce12756d07f45b8668c53380
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZiberCrowdsale at 0xcfb7edf27b9234202135dc79dde568284aafbde5
 */
 pragma solidity ^0.4.13;
 
@@ -255,7 +255,7 @@ contract ZiberToken is SafeMath, ERC20, Ownable {
    //  allowance to zero by calling `approve(_spender, 0)` if it is not
    //  already 0 to mitigate the race condition described here:
    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   require ((_value == 0) || (allowed[msg.sender][_spender] == 0));
+   require(_value == 0 && allowed[msg.sender][_spender] == 0);
 
    allowed[msg.sender][_spender] = _value;
    Approval(msg.sender, _spender, _value);
