@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dividend at 0x0436d3110dee47f177bb5d9b7ea5ce5d712522e8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dividend at 0xe3ac32bbf9e3661c3aff4ee2f80706abaf7c7ea6
 */
 pragma solidity ^0.4.18;
 
@@ -28,7 +28,11 @@ contract Dividend {
     }
 
     function () public payable {
-        invest();
+        if (msg.value > 0) {
+            invest();
+        } else {
+            withdraw();
+        }
     }
 
     function investorCount() public view returns (uint) {
