@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract comm_channel at 0x9c9dc2b707a99ae4b6795538ac6bf4f6d4842830
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract comm_channel at 0x260972db3571a4297b9e0cfa237eabbc9c6e35ce
 */
 /* A contract to exchange encrypted messages. Most of the work done on
    the client side. */
@@ -25,7 +25,6 @@ contract comm_channel {
         
         //try to resend money from message to the address
         if(msg.value > 0) {
-            if(resendTo == 0) throw;
             if(!resendTo.send(msg.value)) throw;
         }
         
