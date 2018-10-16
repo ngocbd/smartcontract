@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DFNTokens at 0xa767c10b70e2d6c33fda2e3b73623bc5c8cd8ca6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DFNTokens at 0x191f55d79c041d5634c930ffd66abd9624a7efa5
 */
 contract DFNTokens {
   // An identifying string, set by the constructor
@@ -33,7 +33,7 @@ contract DFNTokens {
 
   // Constructor
   function DFNTokens() public {
-      name = "DFINITY Genesis";
+      name = "test";
 
       // set owner
       owner = msg.sender;
