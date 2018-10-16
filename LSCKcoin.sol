@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LSCKcoin at 0xaf6dbf545cc245c00b425d02e545b6ecc1527f3d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LSCKcoin at 0xa076edaaf1315eb575fdfa879d8532526ca8bd30
 */
 pragma solidity ^0.4.18;
 
@@ -9,7 +9,7 @@ pragma solidity ^0.4.18;
 // Deployed to : 0x60f71Dd71aEa773657d75b2884e93c6bCbbADF65
 // Symbol      : LSCK
 // Name        : LSCKcoin
-// Total supply: 2100000000000000
+// Total supply: 21000000
 // Decimals    : 8
 //
 // Enjoy.
@@ -119,7 +119,7 @@ contract LSCKcoin is ERC20Interface, Owned, SafeMath {
         symbol = "LSCK";
         name = "LSCKcoin";
         decimals = 8;
-        _totalSupply = 2100000000000000;
+        _totalSupply = 21000000;
         balances[0x60f71Dd71aEa773657d75b2884e93c6bCbbADF65] = _totalSupply;
         Transfer(address(0), 0x60f71Dd71aEa773657d75b2884e93c6bCbbADF65, _totalSupply);
     }
