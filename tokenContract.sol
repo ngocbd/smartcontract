@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenContract at 0x88ae2901d6e98dad8f3c2f22f3dcc25b0397065a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenContract at 0xf3f1d5796c147425a691Ed038464e50d13f588aE
 */
 pragma solidity ^0.4.18;
 
@@ -131,20 +131,15 @@ contract StandardToken is ERC20, BasicToken {
 }
 
 contract TokenContract is Ownable, StandardToken {
-    string public constant name = "MTE Token";
-    string public constant symbol = "MTE";
-    uint8 public constant decimals = 18;
-    uint256 public constant INITIAL_SUPPLY = 80000000 * (10 ** uint256(decimals));
+    string public constant name = "Real Estate";
+    string public constant symbol = "REA";
+    uint8 public constant decimals = 6;
+    uint256 public constant INITIAL_SUPPLY = 100000000 * (10 ** uint256(decimals));
 
-    function TokenContract(address _mainWallet) public {
-    address mainWallet = _mainWallet;
-    uint256 tokensForWallet = 18400000 * (10 ** uint256(decimals));
-    uint256 tokensForICO = INITIAL_SUPPLY - tokensForWallet;
+    function TokenContract() public {
     totalSupply = INITIAL_SUPPLY;
-    balances[mainWallet] = tokensForWallet;
-    balances[msg.sender] = tokensForICO;
-    emit Transfer(0x0, mainWallet, tokensForWallet);
-    emit Transfer(0x0, msg.sender, tokensForICO);
+    balances[msg.sender] = INITIAL_SUPPLY;
+    emit Transfer(0x0, msg.sender, INITIAL_SUPPLY);
   }
 
     function transfer(address _to, uint256 _value) public returns (bool) {
@@ -167,12 +162,4 @@ contract TokenContract is Ownable, StandardToken {
         return super.decreaseApproval(_spender, _subtractedValue);
     }
 
-    function burn(uint256 _amount) public {
-        require(balances[msg.sender] >= _amount);
-        balances[msg.sender] = balances[msg.sender].sub(_amount);
-        totalSupply = totalSupply.sub(_amount);
-        emit Burn(msg.sender, _amount);
-    }
-
-    event Burn(address indexed from, uint256 amount);
 }
