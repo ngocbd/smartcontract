@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract E4Token at 0xdd8a7295d2ea1a9d492631b8e8e3d36ec83123db
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract E4Token at 0xe18c9465e6ed5cb3c58a316b990e0d17fb946eca
 */
-// VERSION L
+// VERSION K
 
 pragma solidity ^0.4.8;
 
@@ -270,10 +270,7 @@ contract E4Token is Token, E4RowRewards {
 		    }
 
 		    uint newHeld = _value + getHeld(holderAccounts[_to].tokens);
-		    if (icoStatus == IcoStatusValue.saleOpen) // avoid mcgees gambit
-		    	pidFrom = curPayoutId;
 		    holderAccounts[_to].tokens = newHeld | (pidFrom * (2 ** 48));
-
 	            Transfer(msg.sender, _to, _value);
 	            return true;
 	        } else { 
@@ -302,10 +299,7 @@ contract E4Token is Token, E4RowRewards {
 
 		    uint newHeld = _value + getHeld(holderAccounts[_to].tokens);
 
-		    if (icoStatus == IcoStatusValue.saleOpen) // avoid mcgees gambit
-		    	pidFrom = curPayoutId;
 		    holderAccounts[_to].tokens = newHeld | (pidFrom * (2 ** 48));
-
 	            allowed[_from][msg.sender] -= _value;
 	            Transfer(_from, _to, _value);
 	            return true;
@@ -537,12 +531,12 @@ contract E4Token is Token, E4RowRewards {
 			if (getNumTokensPurchased() >= minIcoTokenGoal)
 				nrefund -= (nrefund /10); // only 90 percent b/c 10 percent payout
 
-			if (!holderAccounts[developers].alloced) 
-				addAccount(developers);
 			holderAccounts[developers].tokens += ntokens;
 			holderAccounts[nrequester].tokens = 0;
 			if (holderAccounts[nrequester].balance > 0) {
 				// see above warning!!
+				if (!holderAccounts[developers].alloced) 
+					addAccount(developers);
 				holderAccounts[developers].balance += holderAccounts[nrequester].balance;
 				holderAccounts[nrequester].balance = 0;
 			}
