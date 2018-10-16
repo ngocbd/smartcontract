@@ -1,7 +1,97 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Whitelist at 0x313df3fac623a824c8e64b4c47cf62fe0b75809e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Whitelist at 0x833d404fc58ea23fe8be63130bdb2d1806843517
 */
 pragma solidity ^0.4.18;
+
+// File: zeppelin-solidity/contracts/ownership/Ownable.sol
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+// File: zeppelin-solidity/contracts/lifecycle/Pausable.sol
+
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    Pause();
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    Unpause();
+  }
+}
 
 // File: zeppelin-solidity/contracts/math/SafeMath.sol
 
@@ -10,10 +100,6 @@ pragma solidity ^0.4.18;
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     if (a == 0) {
       return 0;
@@ -23,9 +109,6 @@ library SafeMath {
     return c;
   }
 
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
@@ -33,17 +116,11 @@ library SafeMath {
     return c;
   }
 
-  /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
   function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
@@ -51,7 +128,7 @@ library SafeMath {
   }
 }
 
-// File: zeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
+// File: zeppelin-solidity/contracts/token/ERC20Basic.sol
 
 /**
  * @title ERC20Basic
@@ -59,13 +136,13 @@ library SafeMath {
  * @dev see https://github.com/ethereum/EIPs/issues/179
  */
 contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
+  uint256 public totalSupply;
   function balanceOf(address who) public view returns (uint256);
   function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-// File: zeppelin-solidity/contracts/token/ERC20/BasicToken.sol
+// File: zeppelin-solidity/contracts/token/BasicToken.sol
 
 /**
  * @title Basic token
@@ -75,15 +152,6 @@ contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
 
   mapping(address => uint256) balances;
-
-  uint256 totalSupply_;
-
-  /**
-  * @dev total number of tokens in existence
-  */
-  function totalSupply() public view returns (uint256) {
-    return totalSupply_;
-  }
 
   /**
   * @dev transfer token for a specified address
@@ -112,7 +180,7 @@ contract BasicToken is ERC20Basic {
 
 }
 
-// File: zeppelin-solidity/contracts/token/ERC20/ERC20.sol
+// File: zeppelin-solidity/contracts/token/ERC20.sol
 
 /**
  * @title ERC20 interface
@@ -125,7 +193,7 @@ contract ERC20 is ERC20Basic {
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-// File: zeppelin-solidity/contracts/token/ERC20/StandardToken.sol
+// File: zeppelin-solidity/contracts/token/StandardToken.sol
 
 /**
  * @title Standard ERC20 token
@@ -222,188 +290,14 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-// File: zeppelin-solidity/contracts/examples/SimpleToken.sol
+// File: contracts/Token.sol
 
-/**
- * @title SimpleToken
- * @dev Very simple ERC20 Token example, where all tokens are pre-assigned to the creator.
- * Note they can later distribute these tokens as they wish using `transfer` and other
- * `StandardToken` functions.
- */
-contract SimpleToken is StandardToken {
+contract Token is StandardToken, Pausable {
+    string constant public name = "Bace Token";
+    string constant public symbol = "BACE";
+    uint8 constant public decimals =  18;
 
-  string public constant name = "SimpleToken"; // solium-disable-line uppercase
-  string public constant symbol = "SIM"; // solium-disable-line uppercase
-  uint8 public constant decimals = 18; // solium-disable-line uppercase
-
-  uint256 public constant INITIAL_SUPPLY = 10000 * (10 ** uint256(decimals));
-
-  /**
-   * @dev Constructor that gives msg.sender all of existing tokens.
-   */
-  function SimpleToken() public {
-    totalSupply_ = INITIAL_SUPPLY;
-    balances[msg.sender] = INITIAL_SUPPLY;
-    Transfer(0x0, msg.sender, INITIAL_SUPPLY);
-  }
-
-}
-
-// File: zeppelin-solidity/contracts/ownership/Ownable.sol
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-// File: contracts/LockedOutTokens.sol
-
-// for unit test purposes only
-
-
-
-contract LockedOutTokens is Ownable {
-
-    address public wallet;
-    uint8 public tranchesCount;
-    uint256 public trancheSize;
-    uint256 public period;
-
-    uint256 public startTimestamp;
-    uint8 public tranchesPayedOut = 0;
-
-    ERC20Basic internal token;
-    
-    function LockedOutTokens(
-        address _wallet,
-        address _tokenAddress,
-        uint256 _startTimestamp,
-        uint8 _tranchesCount,
-        uint256 _trancheSize,
-        uint256 _periodSeconds
-    ) {
-        require(_wallet != address(0));
-        require(_tokenAddress != address(0));
-        require(_startTimestamp > 0);
-        require(_tranchesCount > 0);
-        require(_trancheSize > 0);
-        require(_periodSeconds > 0);
-
-        wallet = _wallet;
-        tranchesCount = _tranchesCount;
-        startTimestamp = _startTimestamp;
-        trancheSize = _trancheSize;
-        period = _periodSeconds;
-
-        token = ERC20Basic(_tokenAddress);
-    }
-
-    function grant()
-        public
-    {
-        require(wallet == msg.sender);
-        require(tranchesPayedOut < tranchesCount);
-        require(startTimestamp > 0);
-        require(now >= startTimestamp + (period * (tranchesPayedOut + 1)));
-
-        tranchesPayedOut = tranchesPayedOut + 1;
-        token.transfer(wallet, trancheSize);
-    }
-}
-
-// File: zeppelin-solidity/contracts/lifecycle/Pausable.sol
-
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
-
-  bool public paused = false;
-
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
-  modifier whenPaused() {
-    require(paused);
-    _;
-  }
-
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused public {
-    paused = true;
-    Pause();
-  }
-
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused public {
-    paused = false;
-    Unpause();
-  }
-}
-
-// File: contracts/TiqpitToken.sol
-
-contract TiqpitToken is StandardToken, Pausable {
-    using SafeMath for uint256;
-
-    string constant public name = "Tiqpit Token";
-    string constant public symbol = "PIT";
-    uint8 constant public decimals = 18;
-
-    string constant public smallestUnitName = "TIQ";
-
-    uint256 constant public INITIAL_TOTAL_SUPPLY = 500e6 * (uint256(10) ** decimals);
+    uint256 constant public INITIAL_TOTAL_SUPPLY = 100 * 1E6 * (uint256(10) ** (decimals));
 
     address private addressIco;
 
@@ -411,24 +305,23 @@ contract TiqpitToken is StandardToken, Pausable {
         require(msg.sender == addressIco);
         _;
     }
-    
+
     /**
-    * @dev Create TiqpitToken contract and set pause
+    * @dev Create BACE Token contract and set pause
     * @param _ico The address of ICO contract.
     */
-    function TiqpitToken (address _ico) public {
+    function Token(address _ico) public {
         require(_ico != address(0));
-
         addressIco = _ico;
 
-        totalSupply_ = totalSupply_.add(INITIAL_TOTAL_SUPPLY);
+        totalSupply = totalSupply.add(INITIAL_TOTAL_SUPPLY);
         balances[_ico] = balances[_ico].add(INITIAL_TOTAL_SUPPLY);
         Transfer(address(0), _ico, INITIAL_TOTAL_SUPPLY);
 
         pause();
     }
 
-     /**
+    /**
     * @dev Transfer token for a specified address with pause feature for owner.
     * @dev Only applies when the transfer is allowed by the owner.
     * @param _to The address to transfer to.
@@ -459,19 +352,26 @@ contract TiqpitToken is StandardToken, Pausable {
     }
 
     /**
-    * @dev Burn a specific amount of tokens of other token holders if refund process enable.
-    * @param _from The address of token holder whose tokens to be burned.
+    * @dev Burn remaining tokens from the ICO balance.
     */
-    function burnFromAddress(address _from) onlyIco public {
-        uint256 amount = balances[_from];
+    function burnFromIco() onlyIco public {
+        uint256 remainingTokens = balanceOf(addressIco);
+        balances[addressIco] = balances[addressIco].sub(remainingTokens);
+        totalSupply = totalSupply.sub(remainingTokens);
+        Transfer(addressIco, address(0), remainingTokens);
+    }
 
-        require(_from != address(0));
-        require(amount > 0);
-        require(amount <= balances[_from]);
+    /**
+    * @dev Refund tokens from the investor balance.
+    * @dev Function is needed for Refund investors ETH, if pre-ICO has failed.
+    */
+    function refund(address _to, uint256 _value) onlyIco public {
+        require(_value <= balances[_to]);
 
-        balances[_from] = balances[_from].sub(amount);
-        totalSupply_ = totalSupply_.sub(amount);
-        Transfer(_from, address(0), amount);
+        address addr = _to;
+        balances[addr] = balances[addr].sub(_value);
+        balances[addressIco] = balances[addressIco].add(_value);
+        Transfer(_to, addressIco, _value);
     }
 }
 
@@ -485,15 +385,32 @@ contract Whitelist is Ownable {
     mapping(address => bool) whitelist;
 
     uint256 public whitelistLength = 0;
+	
+	address private addressApi;
+	
+	modifier onlyPrivilegeAddresses {
+        require(msg.sender == addressApi || msg.sender == owner);
+        _;
+    }
 
-    address public backendAddress;
+    /**
+    * @dev Set backend Api address.
+    * @dev Accept request from owner only.
+    * @param _api The address of backend API.
+    */
+    function setApiAddress(address _api) onlyOwner public {
+        require(_api != address(0));
+
+        addressApi = _api;
+    }
+
 
     /**
     * @dev Add wallet to whitelist.
     * @dev Accept request from the owner only.
     * @param _wallet The address of wallet to add.
     */  
-    function addWallet(address _wallet) public onlyPrivilegedAddresses {
+    function addWallet(address _wallet) onlyPrivilegeAddresses public {
         require(_wallet != address(0));
         require(!isWhitelisted(_wallet));
         whitelist[_wallet] = true;
@@ -505,7 +422,7 @@ contract Whitelist is Ownable {
     * @dev Accept request from the owner only.
     * @param _wallet The address of whitelisted wallet to remove.
     */  
-    function removeWallet(address _wallet) public onlyOwner {
+    function removeWallet(address _wallet) onlyOwner public {
         require(_wallet != address(0));
         require(isWhitelisted(_wallet));
         whitelist[_wallet] = false;
@@ -516,29 +433,19 @@ contract Whitelist is Ownable {
     * @dev Check the specified wallet whether it is in the whitelist.
     * @param _wallet The address of wallet to check.
     */ 
-    function isWhitelisted(address _wallet) constant public returns (bool) {
+    function isWhitelisted(address _wallet) view public returns (bool) {
         return whitelist[_wallet];
     }
 
-    /**
-    * @dev Sets the backend address for automated operations.
-    * @param _backendAddress The backend address to allow.
-    */
-    function setBackendAddress(address _backendAddress) public onlyOwner {
-        require(_backendAddress != address(0));
-        backendAddress = _backendAddress;
-    }
-
-    /**
-    * @dev Allows the function to be called only by the owner and backend.
-    */
-    modifier onlyPrivilegedAddresses() {
-        require(msg.sender == owner || msg.sender == backendAddress);
-        _;
-    }
 }
 
 // File: contracts/Whitelistable.sol
+
+/**
+ * @title Whitelistable contract.
+ * @dev Contract that can be embedded in another contract, to add functionality "whitelist".
+ */
+
 
 contract Whitelistable {
     Whitelist public whitelist;
@@ -556,411 +463,676 @@ contract Whitelistable {
     }
 }
 
-// File: contracts/TiqpitCrowdsale.sol
+// File: contracts/Crowdsale.sol
 
-contract TiqpitCrowdsale is Pausable, Whitelistable {
+contract Crowdsale is Pausable, Whitelistable {
     using SafeMath for uint256;
 
+    /////////////////////////////
+    //Constant block
+    //
+    // DECIMALS = 18
     uint256 constant private DECIMALS = 18;
-    
-    uint256 constant public RESERVED_TOKENS_BOUNTY = 10e6 * (10 ** DECIMALS);
-    uint256 constant public RESERVED_TOKENS_FOUNDERS = 25e6 * (10 ** DECIMALS);
-    uint256 constant public RESERVED_TOKENS_ADVISORS = 25e5 * (10 ** DECIMALS);
-    uint256 constant public RESERVED_TOKENS_TIQPIT_SOLUTIONS = 625e5 * (10 ** DECIMALS);
+    // rate 1 ETH = 180 BACE tokens
+    uint256 constant public BACE_ETH = 1800;
+    // Bonus: 20%
+    uint256 constant public PREICO_BONUS = 20;
+    // 20 000 000 * 10^18
+    uint256 constant public RESERVED_TOKENS_BACE_TEAM = 20 * 1E6 * (10 ** DECIMALS);
+    // 10 000 000 * 10^18
+    uint256 constant public RESERVED_TOKENS_ANGLE = 10 * 1E6 * (10 ** DECIMALS);
+    // 10 000 000 * 10^18
+    uint256 constant public HARDCAP_TOKENS_PRE_ICO = 10 * 1E6 * (10 ** DECIMALS);
+    // 70 000 000 * 10^18
+    uint256 constant public HARDCAP_TOKENS_ICO = 70 * 1E6 * (10 ** DECIMALS);
+    // 5 000 000 * 10^18
+    uint256 constant public MINCAP_TOKENS = 5 * 1E6 * (10 ** DECIMALS);
+    /////////////////////////////
 
-    uint256 constant public MIN_INVESTMENT = 200 * (10 ** DECIMALS);
-    
-    uint256 constant public MINCAP_TOKENS_PRE_ICO = 1e6 * (10 ** DECIMALS);
-    uint256 constant public MAXCAP_TOKENS_PRE_ICO = 75e5 * (10 ** DECIMALS);
-    
-    uint256 constant public MINCAP_TOKENS_ICO = 5e6 * (10 ** DECIMALS);    
-    uint256 constant public MAXCAP_TOKENS_ICO = 3925e5 * (10 ** DECIMALS);
+    /////////////////////////////
+    //Live cycle block
+    //
+    uint256 public maxInvestments;
 
-    uint256 public tokensRemainingIco = MAXCAP_TOKENS_ICO;
-    uint256 public tokensRemainingPreIco = MAXCAP_TOKENS_PRE_ICO;
-
-    uint256 public soldTokensPreIco = 0;
-    uint256 public soldTokensIco = 0;
-    uint256 public soldTokensTotal = 0;
-
-    uint256 public preIcoRate = 2857;        // 1 PIT = 0.00035 ETH //Base rate for  Pre-ICO stage.
-
-    // ICO rates
-    uint256 public firstRate = 2500;         // 1 PIT = 0.0004 ETH
-    uint256 public secondRate = 2222;        // 1 PIT = 0.00045 ETH
-    uint256 public thirdRate = 2000;         // 1 PIT = 0.0005 ETH
-
-    uint256 public startTimePreIco = 0;
-    uint256 public endTimePreIco = 0;
-
-    uint256 public startTimeIco = 0;
-    uint256 public endTimeIco = 0;
-
-    uint256 public weiRaisedPreIco = 0;
-    uint256 public weiRaisedIco = 0;
-    uint256 public weiRaisedTotal = 0;
-
-    TiqpitToken public token = new TiqpitToken(this);
-
-    // Key - address of wallet, Value - address of  contract.
-    mapping (address => address) private lockedList;
-
-    address private tiqpitSolutionsWallet;
-    address private foundersWallet;
-    address private advisorsWallet;
-    address private bountyWallet;
-
-    address public backendAddress;
-
-    bool private hasPreIcoFailed = false;
-    bool private hasIcoFailed = false;
-
-    bool private isInitialDistributionDone = false;
-
-    struct Purchase {
-        uint256 refundableWei;
-        uint256 burnableTiqs;
-    }
-
-    mapping(address => Purchase) private preIcoPurchases;
-    mapping(address => Purchase) private icoPurchases;
+    uint256 public minInvestments;
 
     /**
-    * @dev Constructor for TiqpitCrowdsale contract.
-    * @dev Set the owner who can manage whitelist and token.
-    * @param _startTimePreIco The pre-ICO start time.
-    * @param _endTimePreIco The pre-ICO end time.
-    * @param _foundersWallet The address to which reserved tokens for founders will be transferred.
-    * @param _advisorsWallet The address to which reserved tokens for advisors.
-    * @param _tiqpitSolutionsWallet The address to which reserved tokens for Tiqpit Solutions.
-    */
-    function TiqpitCrowdsale(
+     * @dev test mode.
+     * @dev if test mode is "true" allows to change caps in an deployed contract
+     */
+    bool private testMode;
+
+    /**
+     * @dev contract BACE token object.
+     */
+    Token public token;
+
+    /**
+     * @dev start time of PreIco stage.
+     */
+    uint256 public preIcoStartTime;
+
+    /**
+     * @dev finish time of PreIco stage.
+     */
+    uint256 public preIcoFinishTime;
+
+    /**
+     * @dev start time of Ico stage.
+     */
+    uint256 public icoStartTime;
+
+    /**
+     * @dev finish time of Ico stage.
+     */
+    uint256 public icoFinishTime;
+
+    /**
+     * @dev were the Ico dates set?
+     */
+    bool public icoInstalled;
+
+    /**
+     * @dev The address to backend program.
+     */
+    address private backendWallet;
+
+    /**
+     * @dev The address to which raised funds will be withdrawn.
+     */
+    address private withdrawalWallet;
+
+    /**
+     * @dev The guard interval.
+     */
+    uint256 public guardInterval;
+    ////////////////////////////
+
+    /////////////////////////////
+    //ETH block
+    //
+    /**
+     * @dev Map of investors. Key = address, Value = Total ETH at PreIco.
+     */
+    mapping(address => uint256) public preIcoInvestors;
+
+    /**
+     * @dev Array of addresses of investors at PreIco.
+     */
+    address[] public preIcoInvestorsAddresses;
+
+    /**
+     * @dev Map of investors. Key = address, Value = Total ETH at Ico.
+     */
+    mapping(address => uint256) public icoInvestors;
+
+    /**
+     * @dev Array of addresses of investors at Ico.
+     */
+    address[] public icoInvestorsAddresses;
+
+    /**
+     * @dev Amount of investment collected in PreIco stage. (without BTC investment)
+     */
+    uint256 public preIcoTotalCollected;
+
+    /**
+     * @dev Amount of investment collected in Ico stage. (without BTC investment)
+     */
+    uint256 public icoTotalCollected;
+    ////////////////////////////
+
+    ////////////////////////////
+    //Tokens block
+    //
+
+    /**
+     * @dev Map of investors. Key = address, Value = Total tokens at PreIco.
+     */
+    mapping(address => uint256) public preIcoTokenHolders;
+
+    /**
+     * @dev Array of addresses of investors.
+     */
+    address[] public preIcoTokenHoldersAddresses;
+
+    /**
+     * @dev Map of investors. Key = address, Value = Total tokens at PreIco.
+     */
+    mapping(address => uint256) public icoTokenHolders;
+
+    /**
+     * @dev Array of addresses of investors.
+     */
+    address[] public icoTokenHoldersAddresses;
+
+    /**
+     * @dev the minimum amount in tokens for the investment.
+     */
+    uint256 public minCap;
+
+    /**
+     * @dev the maximum amount in tokens for the investment in the PreIco stage.
+     */
+    uint256 public hardCapPreIco;
+
+    /**
+     * @dev the maximum amount in tokens for the investment in the Ico stage.
+     */
+    uint256 public hardCapIco;
+
+    /**
+     * @dev number of sold tokens issued in  PreIco stage.
+     */
+    uint256 public preIcoSoldTokens;
+
+    /**
+     * @dev number of sold tokens issued in Ico stage.
+     */
+    uint256 public icoSoldTokens;
+
+    /**
+     * @dev The BACE token exchange rate for PreIco stage.
+     */
+    uint256 public exchangeRatePreIco;
+
+    /**
+     * @dev The BACE token exchange rate for Ico stage.
+     */
+    uint256 public exchangeRateIco;
+
+    /**
+     * @dev unsold BACE tokens burned?.
+     */
+    bool burnt;
+    ////////////////////////////
+
+    /**
+     * @dev Constructor for Crowdsale contract.
+     * @dev Set the owner who can manage whitelist and token.
+     * @param _startTimePreIco The PreIco start time.
+     * @param _endTimePreIco The PreIco end time.
+     * @param _angelInvestorsWallet The address to which reserved tokens angel investors will be transferred.
+     * @param _foundersWallet The address to which reserved tokens for founders will be transferred.
+     * @param _backendWallet The address to backend program.
+     * @param _withdrawalWallet The address to which raised funds will be withdrawn.
+     * @param _testMode test mode is on?
+     */
+    function Crowdsale (
         uint256 _startTimePreIco,
         uint256 _endTimePreIco,
-        uint256 _startTimeIco,
-        uint256 _endTimeIco,
+        address _angelInvestorsWallet,
         address _foundersWallet,
-        address _advisorsWallet,
-        address _tiqpitSolutionsWallet,
-        address _bountyWallet
-    ) Whitelistable() public
+        address _backendWallet,
+        address _withdrawalWallet,
+        uint256 _maxInvestments,
+        uint256 _minInvestments,
+        bool _testMode
+    ) public Whitelistable()
     {
-        require(_bountyWallet != address(0) && _foundersWallet != address(0) && _tiqpitSolutionsWallet != address(0) && _advisorsWallet != address(0));
-        
+        require(_angelInvestorsWallet != address(0) && _foundersWallet != address(0) && _backendWallet != address(0) && _withdrawalWallet != address(0));
         require(_startTimePreIco >= now && _endTimePreIco > _startTimePreIco);
-        require(_startTimeIco >= _endTimePreIco && _endTimeIco > _startTimeIco);
+        require(_maxInvestments != 0 && _minInvestments != 0 && _maxInvestments > _minInvestments);
 
-        startTimePreIco = _startTimePreIco;
-        endTimePreIco = _endTimePreIco;
+        ////////////////////////////
+        //Live cycle block init
+        //
+        testMode = _testMode;
+        token = new Token(this);
+        maxInvestments = _maxInvestments;
+        minInvestments = _minInvestments;
+        preIcoStartTime = _startTimePreIco;
+        preIcoFinishTime = _endTimePreIco;
+        icoStartTime = 0;
+        icoFinishTime = 0;
+        icoInstalled = false;
+        guardInterval = uint256(86400).mul(7); //guard interval - 1 week
+        /////////////////////////////
 
-        startTimeIco = _startTimeIco;
-        endTimeIco = _endTimeIco;
+        ////////////////////////////
+        //ETH block init
+        preIcoTotalCollected = 0;
+        icoTotalCollected = 0;
+        /////////////////////////////
 
-        tiqpitSolutionsWallet = _tiqpitSolutionsWallet;
-        advisorsWallet = _advisorsWallet;
-        foundersWallet = _foundersWallet;
-        bountyWallet = _bountyWallet;
+        ////////////////////////////
+        //Tokens block init
+        //
+        minCap = MINCAP_TOKENS;
+        hardCapPreIco = HARDCAP_TOKENS_PRE_ICO;
+        hardCapIco = HARDCAP_TOKENS_ICO;
+        preIcoSoldTokens = 0;
+        icoSoldTokens = 0;
+        exchangeRateIco = BACE_ETH;
+        exchangeRatePreIco = exchangeRateIco.mul(uint256(100).add(PREICO_BONUS)).div(100);
+        burnt = false;
+        ////////////////////////////
+
+        backendWallet = _backendWallet;
+        withdrawalWallet = _withdrawalWallet;
 
         whitelist.transferOwnership(msg.sender);
+
+        token.transferFromIco(_angelInvestorsWallet, RESERVED_TOKENS_ANGLE);
+        token.transferFromIco(_foundersWallet, RESERVED_TOKENS_BACE_TEAM);
         token.transferOwnership(msg.sender);
     }
 
-    /**
-    * @dev Fallback function can be used to buy tokens.
-    */
-    function() public payable {
-        sellTokens();
+    modifier isTestMode() {
+        require(testMode);
+        _;
     }
 
     /**
-    * @dev Check whether the pre-ICO is active at the moment.
-    */
-    function isPreIco() public view returns (bool) {
-        return now >= startTimePreIco && now <= endTimePreIco;
+     * @dev check Ico Failed.
+     * @return bool true if Ico Failed.
+     */
+    function isIcoFailed() public view returns (bool) {
+        return isIcoFinish() && icoSoldTokens.add(preIcoSoldTokens) < minCap;
     }
 
     /**
-    * @dev Check whether the ICO is active at the moment.
-    */
-    function isIco() public view returns (bool) {
-        return now >= startTimeIco && now <= endTimeIco;
+     * @dev check Ico Success.
+     * @return bool true if Ico Success.
+     */
+    function isIcoSuccess() public view returns (bool) {
+        return isIcoFinish() && icoSoldTokens.add(preIcoSoldTokens) >= minCap;
     }
 
     /**
-    * @dev Burn Remaining Tokens.
-    */
-    function burnRemainingTokens() onlyOwner public {
-        require(tokensRemainingIco > 0);
-        require(now > endTimeIco);
-
-        token.burnFromAddress(this);
-
-        tokensRemainingIco = 0;
+     * @dev check PreIco Stage.
+     * @return bool true if PreIco Stage now.
+     */
+    function isPreIcoStage() public view returns (bool) {
+        return now > preIcoStartTime && now < preIcoFinishTime;
     }
 
     /**
-    * @dev Send tokens to Advisors & Tiqpit Solutions Wallets.
-    * @dev Locked  tokens for Founders wallet.
-    */
-    function initialDistribution() onlyOwner public {
-        require(!isInitialDistributionDone);
-
-        token.transferFromIco(bountyWallet, RESERVED_TOKENS_BOUNTY);
-
-        token.transferFromIco(advisorsWallet, RESERVED_TOKENS_ADVISORS);
-        token.transferFromIco(tiqpitSolutionsWallet, RESERVED_TOKENS_TIQPIT_SOLUTIONS);
-        
-        lockTokens(foundersWallet, RESERVED_TOKENS_FOUNDERS, 1 years);
-
-        isInitialDistributionDone = true;
+     * @dev check Ico Stage.
+     * @return bool true if Ico Stage now.
+     */
+    function isIcoStage() public view returns (bool) {
+        return icoInstalled && now > icoStartTime && now < icoFinishTime;
     }
 
     /**
-    * @dev Get Purchase by investor's address.
-    * @param _address The address of a ICO investor.
-    */
-    function getIcoPurchase(address _address) view public returns(uint256 weis, uint256 tokens) {
-        return (icoPurchases[_address].refundableWei, icoPurchases[_address].burnableTiqs);
+     * @dev check PreIco Finish.
+     * @return bool true if PreIco Finished.
+     */
+    function isPreIcoFinish() public view returns (bool) {
+        return now > preIcoFinishTime;
     }
 
     /**
-    * @dev Get Purchase by investor's address.
-    * @param _address The address of a Pre-ICO investor.
-    */
-    function getPreIcoPurchase(address _address) view public returns(uint256 weis, uint256 tokens) {
-        return (preIcoPurchases[_address].refundableWei, preIcoPurchases[_address].burnableTiqs);
+     * @dev check Ico Finish.
+     * @return bool true if Ico Finished.
+     */
+    function isIcoFinish() public view returns (bool) {
+        return icoInstalled && now > icoFinishTime;
     }
 
     /**
-    * @dev Refund Ether invested in pre-ICO to the sender if pre-ICO failed.
-    */
-    function refundPreIco() public {
-        require(hasPreIcoFailed);
-
-        require(preIcoPurchases[msg.sender].burnableTiqs > 0 && preIcoPurchases[msg.sender].refundableWei > 0);
-        
-        uint256 amountWei = preIcoPurchases[msg.sender].refundableWei;
-        msg.sender.transfer(amountWei);
-
-        preIcoPurchases[msg.sender].refundableWei = 0;
-        preIcoPurchases[msg.sender].burnableTiqs = 0;
-
-        token.burnFromAddress(msg.sender);
+     * @dev guard interval finished?
+     * @return bool true if guard Interval finished.
+     */
+    function guardIntervalFinished() public view returns (bool) {
+        return now > icoFinishTime.add(guardInterval);
     }
 
     /**
-    * @dev Refund Ether invested in ICO to the sender if ICO failed.
-    */
-    function refundIco() public {
-        require(hasIcoFailed);
+     * @dev Set start time and end time for Ico.
+     * @param _startTimeIco The Ico start time.
+     * @param _endTimeIco The Ico end time.
+     */
+    function setStartTimeIco(uint256 _startTimeIco, uint256 _endTimeIco) onlyOwner public {
+        require(_startTimeIco >= now && _endTimeIco > _startTimeIco && _startTimeIco > preIcoFinishTime);
 
-        require(icoPurchases[msg.sender].burnableTiqs > 0 && icoPurchases[msg.sender].refundableWei > 0);
-        
-        uint256 amountWei = icoPurchases[msg.sender].refundableWei;
-        msg.sender.transfer(amountWei);
-
-        icoPurchases[msg.sender].refundableWei = 0;
-        icoPurchases[msg.sender].burnableTiqs = 0;
-
-        token.burnFromAddress(msg.sender);
+        icoStartTime = _startTimeIco;
+        icoFinishTime = _endTimeIco;
+        icoInstalled = true;
     }
 
     /**
-    * @dev Manual burn tokens from specified address.
-    * @param _address The address of a investor.
-    */
-    function burnTokens(address _address) onlyOwner public {
-        require(hasIcoFailed);
-
-        require(icoPurchases[_address].burnableTiqs > 0 || preIcoPurchases[_address].burnableTiqs > 0);
-
-        icoPurchases[_address].burnableTiqs = 0;
-        preIcoPurchases[_address].burnableTiqs = 0;
-
-        token.burnFromAddress(_address);
-    }
-
-    /**
-    * @dev Manual send tokens  for  specified address.
-    * @param _address The address of a investor.
-    * @param _tokensAmount Amount of tokens.
-    */
-    function manualSendTokens(address _address, uint256 _tokensAmount) whenWhitelisted(_address) public onlyPrivilegedAddresses {
-        require(_tokensAmount > 0);
-        
-        if (isPreIco() && _tokensAmount <= tokensRemainingPreIco) {
-            token.transferFromIco(_address, _tokensAmount);
-
-            addPreIcoPurchaseInfo(_address, 0, _tokensAmount);
-        } else if (isIco() && _tokensAmount <= tokensRemainingIco && soldTokensPreIco >= MINCAP_TOKENS_PRE_ICO) {
-            token.transferFromIco(_address, _tokensAmount);
-
-            addIcoPurchaseInfo(_address, 0, _tokensAmount);
-        } else {
-            revert();
+     * @dev Remaining amount of tokens for PreIco stage.
+     */
+    function tokensRemainingPreIco() public view returns(uint256) {
+        if (isPreIcoFinish()) {
+            return 0;
         }
+        return hardCapPreIco.sub(preIcoSoldTokens);
     }
 
     /**
-    * @dev Get Locked Contract Address.
-    */
-    function getLockedContractAddress(address wallet) public view returns(address) {
-        return lockedList[wallet];
+     * @dev Remaining amount of tokens for Ico stage.
+     */
+    function tokensRemainingIco() public view returns(uint256) {
+        if (burnt) {
+            return 0;
+        }
+        if (isPreIcoFinish()) {
+            return hardCapIco.sub(icoSoldTokens).sub(preIcoSoldTokens);
+        }
+        return hardCapIco.sub(hardCapPreIco).sub(icoSoldTokens);
     }
 
     /**
-    * @dev Enable refund process.
-    */
-    function triggerFailFlags() onlyOwner public {
-        if (!hasPreIcoFailed && now > endTimePreIco && soldTokensPreIco < MINCAP_TOKENS_PRE_ICO) {
-            hasPreIcoFailed = true;
+     * @dev Add information about the investment at the PreIco stage.
+     * @param _addr Investor's address.
+     * @param _weis Amount of wei(1 ETH = 1 * 10 ** 18 wei) received.
+     * @param _tokens Amount of Token for investor.
+     */
+    function addInvestInfoPreIco(address _addr,  uint256 _weis, uint256 _tokens) private {
+        if (preIcoTokenHolders[_addr] == 0) {
+            preIcoTokenHoldersAddresses.push(_addr);
         }
-
-        if (!hasIcoFailed && now > endTimeIco && soldTokensIco < MINCAP_TOKENS_ICO) {
-            hasIcoFailed = true;
-        }
-    }
-
-    /**
-    * @dev Calculate rate for ICO phase.
-    */
-    function currentIcoRate() public view returns(uint256) {     
-        if (now > startTimeIco && now <= startTimeIco + 5 days) {
-            return firstRate;
-        }
-
-        if (now > startTimeIco + 5 days && now <= startTimeIco + 10 days) {
-            return secondRate;
-        }
-
-        if (now > startTimeIco + 10 days) {
-            return thirdRate;
-        }
-    }
-
-    /**
-    * @dev Sell tokens during Pre-ICO && ICO stages.
-    * @dev Sell tokens only for whitelisted wallets.
-    */
-    function sellTokens() whenWhitelisted(msg.sender) whenNotPaused public payable {
-        require(msg.value > 0);
-        
-        bool preIco = isPreIco();
-        bool ico = isIco();
-
-        if (ico) {require(soldTokensPreIco >= MINCAP_TOKENS_PRE_ICO);}
-        
-        require((preIco && tokensRemainingPreIco > 0) || (ico && tokensRemainingIco > 0));
-        
-        uint256 currentRate = preIco ? preIcoRate : currentIcoRate();
-        
-        uint256 weiAmount = msg.value;
-        uint256 tokensAmount = weiAmount.mul(currentRate);
-
-        require(tokensAmount >= MIN_INVESTMENT);
-
-        if (ico) {
-            // Move unsold Pre-Ico tokens for current phase.
-            if (tokensRemainingPreIco > 0) {
-                tokensRemainingIco = tokensRemainingIco.add(tokensRemainingPreIco);
-                tokensRemainingPreIco = 0;
+        preIcoTokenHolders[_addr] = preIcoTokenHolders[_addr].add(_tokens);
+        preIcoSoldTokens = preIcoSoldTokens.add(_tokens);
+        if (_weis > 0) {
+            if (preIcoInvestors[_addr] == 0) {
+                preIcoInvestorsAddresses.push(_addr);
             }
+            preIcoInvestors[_addr] = preIcoInvestors[_addr].add(_weis);
+            preIcoTotalCollected = preIcoTotalCollected.add(_weis);
         }
-       
-        uint256 tokensRemaining = preIco ? tokensRemainingPreIco : tokensRemainingIco;
-        if (tokensAmount > tokensRemaining) {
-            uint256 tokensRemainder = tokensAmount.sub(tokensRemaining);
-            tokensAmount = tokensAmount.sub(tokensRemainder);
-            
-            uint256 overpaidWei = tokensRemainder.div(currentRate);
-            msg.sender.transfer(overpaidWei);
+    }
 
-            weiAmount = msg.value.sub(overpaidWei);
+    /**
+     * @dev Add information about the investment at the Ico stage.
+     * @param _addr Investor's address.
+     * @param _weis Amount of wei(1 ETH = 1 * 10 ** 18 wei) received.
+     * @param _tokens Amount of Token for investor.
+     */
+    function addInvestInfoIco(address _addr,  uint256 _weis, uint256 _tokens) private {
+        if (icoTokenHolders[_addr] == 0) {
+            icoTokenHoldersAddresses.push(_addr);
+        }
+        icoTokenHolders[_addr] = icoTokenHolders[_addr].add(_tokens);
+        icoSoldTokens = icoSoldTokens.add(_tokens);
+        if (_weis > 0) {
+            if (icoInvestors[_addr] == 0) {
+                icoInvestorsAddresses.push(_addr);
+            }
+            icoInvestors[_addr] = icoInvestors[_addr].add(_weis);
+            icoTotalCollected = icoTotalCollected.add(_weis);
+        }
+    }
+
+    /**
+     * @dev Fallback function can be used to buy tokens.
+     */
+    function() public payable {
+        acceptInvestments(msg.sender, msg.value);
+    }
+
+    /**
+     * @dev function can be used to buy tokens by ETH investors.
+     */
+    function sellTokens() public payable {
+        acceptInvestments(msg.sender, msg.value);
+    }
+
+    /**
+     * @dev Function processing new investments.
+     * @param _addr Investor's address.
+     * @param _amount The amount of wei(1 ETH = 1 * 10 ** 18 wei) received.
+     */
+    function acceptInvestments(address _addr, uint256 _amount) private whenWhitelisted(msg.sender) whenNotPaused {
+        require(_addr != address(0) && _amount >= minInvestments);
+
+        bool preIco = isPreIcoStage();
+        bool ico = isIcoStage();
+
+        require(preIco || ico);
+        require((preIco && tokensRemainingPreIco() > 0) || (ico && tokensRemainingIco() > 0));
+
+        uint256 intermediateEthInvestment;
+        uint256 ethSurrender = 0;
+        uint256 currentEth = preIco ? preIcoInvestors[_addr] : icoInvestors[_addr];
+
+        if (currentEth.add(_amount) > maxInvestments) {
+            intermediateEthInvestment = maxInvestments.sub(currentEth);
+            ethSurrender = ethSurrender.add(_amount.sub(intermediateEthInvestment));
+        } else {
+            intermediateEthInvestment = _amount;
         }
 
-        token.transferFromIco(msg.sender, tokensAmount);
+        uint256 currentRate = preIco ? exchangeRatePreIco : exchangeRateIco;
+        uint256 intermediateTokenInvestment = intermediateEthInvestment.mul(currentRate);
+        uint256 tokensRemaining = preIco ? tokensRemainingPreIco() : tokensRemainingIco();
+        uint256 currentTokens = preIco ? preIcoTokenHolders[_addr] : icoTokenHolders[_addr];
+        uint256 weiToAccept;
+        uint256 tokensToSell;
+
+        if (currentTokens.add(intermediateTokenInvestment) > tokensRemaining) {
+            tokensToSell = tokensRemaining;
+            weiToAccept = tokensToSell.div(currentRate);
+            ethSurrender = ethSurrender.add(intermediateEthInvestment.sub(weiToAccept));
+        } else {
+            tokensToSell = intermediateTokenInvestment;
+            weiToAccept = intermediateEthInvestment;
+        }
 
         if (preIco) {
-            addPreIcoPurchaseInfo(msg.sender, weiAmount, tokensAmount);
-
-            if (soldTokensPreIco >= MINCAP_TOKENS_PRE_ICO) {
-                owner.transfer(this.balance);
-            }
+            addInvestInfoPreIco(_addr, weiToAccept, tokensToSell);
+        } else {
+            addInvestInfoIco(_addr, weiToAccept, tokensToSell);
         }
 
-        if (ico) {
-            addIcoPurchaseInfo(msg.sender, weiAmount, tokensAmount);
+        token.transferFromIco(_addr, tokensToSell);
 
-            if (soldTokensIco >= MINCAP_TOKENS_ICO) {
-                owner.transfer(this.balance);
-            }
+        if (ethSurrender > 0) {
+            msg.sender.transfer(ethSurrender);
         }
     }
 
     /**
-    * @dev Add new investment to the Pre-ICO investments storage.
-    * @param _address The address of a Pre-ICO investor.
-    * @param _amountWei The investment received from a Pre-ICO investor.
-    * @param _amountTokens The tokens that will be sent to Pre-ICO investor.
-    */
-    function addPreIcoPurchaseInfo(address _address, uint256 _amountWei, uint256 _amountTokens) internal {
-        preIcoPurchases[_address].refundableWei = preIcoPurchases[_address].refundableWei.add(_amountWei);
-        preIcoPurchases[_address].burnableTiqs = preIcoPurchases[_address].burnableTiqs.add(_amountTokens);
+     * @dev Function can be used to buy tokens by third-party investors.
+     * @dev Only the owner or the backend can call this function.
+     * @param _addr Investor's address.
+     * @param _value Amount of Token for investor.
+     */
+    function thirdPartyInvestments(address _addr, uint256 _value) public  whenWhitelisted(_addr) whenNotPaused {
+        require(msg.sender == backendWallet || msg.sender == owner);
+        require(_addr != address(0) && _value > 0);
 
-        soldTokensPreIco = soldTokensPreIco.add(_amountTokens);
-        tokensRemainingPreIco = tokensRemainingPreIco.sub(_amountTokens);
+        bool preIco = isPreIcoStage();
+        bool ico = isIcoStage();
 
-        weiRaisedPreIco = weiRaisedPreIco.add(_amountWei);
+        require(preIco || ico);
+        require((preIco && tokensRemainingPreIco() > 0) || (ico && tokensRemainingIco() > 0));
 
-        soldTokensTotal = soldTokensTotal.add(_amountTokens);
-        weiRaisedTotal = weiRaisedTotal.add(_amountWei);
+        uint256 currentRate = preIco ? exchangeRatePreIco : exchangeRateIco;
+        uint256 currentTokens = preIco ? preIcoTokenHolders[_addr] : icoTokenHolders[_addr];
+
+        require(maxInvestments.mul(currentRate) >= currentTokens.add(_value));
+        require(minInvestments.mul(currentRate) <= _value);
+
+        uint256 tokensRemaining = preIco ? tokensRemainingPreIco() : tokensRemainingIco();
+
+        require(tokensRemaining >= _value);
+
+        if (preIco) {
+            addInvestInfoPreIco(_addr, 0, _value);
+        } else {
+            addInvestInfoIco(_addr, 0, _value);
+        }
+
+        token.transferFromIco(_addr, _value);
     }
 
     /**
-    * @dev Add new investment to the ICO investments storage.
-    * @param _address The address of a ICO investor.
-    * @param _amountWei The investment received from a ICO investor.
-    * @param _amountTokens The tokens that will be sent to ICO investor.
-    */
-    function addIcoPurchaseInfo(address _address, uint256 _amountWei, uint256 _amountTokens) internal {
-        icoPurchases[_address].refundableWei = icoPurchases[_address].refundableWei.add(_amountWei);
-        icoPurchases[_address].burnableTiqs = icoPurchases[_address].burnableTiqs.add(_amountTokens);
-
-        soldTokensIco = soldTokensIco.add(_amountTokens);
-        tokensRemainingIco = tokensRemainingIco.sub(_amountTokens);
-
-        weiRaisedIco = weiRaisedIco.add(_amountWei);
-
-        soldTokensTotal = soldTokensTotal.add(_amountTokens);
-        weiRaisedTotal = weiRaisedTotal.add(_amountWei);
+     * @dev Send raised funds to the withdrawal wallet.
+     * @param _weiAmount The amount of raised funds to withdraw.
+     */
+    function forwardFunds(uint256 _weiAmount) public onlyOwner {
+        require(isIcoSuccess() || (isIcoFailed() && guardIntervalFinished()));
+        withdrawalWallet.transfer(_weiAmount);
     }
 
     /**
-    * @dev Locked specified amount  of  tokens for  specified wallet.
-    * @param _wallet The address of wallet.
-    * @param _amount The tokens  for locked.
-    * @param _time The time for locked period.
-    */
-    function lockTokens(address _wallet, uint256 _amount, uint256 _time) internal {
-        LockedOutTokens locked = new LockedOutTokens(_wallet, token, endTimePreIco, 1, _amount, _time);
-        lockedList[_wallet] = locked;
-        token.transferFromIco(locked, _amount);
+     * @dev Function for refund eth if Ico failed and guard interval has not expired.
+     * @dev Any wallet can call the function.
+     * @dev Function returns ETH for sender if it is a member of Ico or(and) PreIco.
+     */
+    function refund() public {
+        require(isIcoFailed() && !guardIntervalFinished());
+
+        uint256 ethAmountPreIco = preIcoInvestors[msg.sender];
+        uint256 ethAmountIco = icoInvestors[msg.sender];
+        uint256 ethAmount = ethAmountIco.add(ethAmountPreIco);
+
+        uint256 tokensAmountPreIco = preIcoTokenHolders[msg.sender];
+        uint256 tokensAmountIco = icoTokenHolders[msg.sender];
+        uint256 tokensAmount = tokensAmountPreIco.add(tokensAmountIco);
+
+        require(ethAmount > 0 && tokensAmount > 0);
+
+        preIcoInvestors[msg.sender] = 0;
+        icoInvestors[msg.sender] = 0;
+        preIcoTokenHolders[msg.sender] = 0;
+        icoTokenHolders[msg.sender] = 0;
+
+        msg.sender.transfer(ethAmount);
+        token.refund(msg.sender, tokensAmount);
     }
 
     /**
-    * @dev Sets the backend address for automated operations.
-    * @param _backendAddress The backend address to allow.
-    */
-    function setBackendAddress(address _backendAddress) public onlyOwner {
-        require(_backendAddress != address(0));
-        backendAddress = _backendAddress;
+     * @dev Set new withdrawal wallet address.
+     * @param _addr new withdrawal Wallet address.
+     */
+    function setWithdrawalWallet(address _addr) public onlyOwner {
+        require(_addr != address(0));
+
+        withdrawalWallet = _addr;
     }
 
     /**
-    * @dev Allows the function to be called only by the owner and backend.
+        * @dev Set new backend wallet address.
+        * @param _addr new backend Wallet address.
+        */
+    function setBackendWallet(address _addr) public onlyOwner {
+        require(_addr != address(0));
+
+        backendWallet = _addr;
+    }
+
+    /**
+    * @dev Burn unsold tokens from the Ico balance.
+    * @dev Only applies when the Ico was ended.
     */
-    modifier onlyPrivilegedAddresses() {
-        require(msg.sender == owner || msg.sender == backendAddress);
-        _;
+    function burnUnsoldTokens() onlyOwner public {
+        require(isIcoFinish());
+        token.burnFromIco();
+        burnt = true;
+    }
+
+    /**
+     * @dev Set new MinCap.
+     * @param _newMinCap new MinCap,
+     */
+    function setMinCap(uint256 _newMinCap) public onlyOwner isTestMode {
+        require(now < preIcoFinishTime);
+        minCap = _newMinCap;
+    }
+
+    /**
+     * @dev Set new PreIco HardCap.
+     * @param _newPreIcoHardCap new PreIco HardCap,
+     */
+    function setPreIcoHardCap(uint256 _newPreIcoHardCap) public onlyOwner isTestMode {
+        require(now < preIcoFinishTime);
+        require(_newPreIcoHardCap <= hardCapIco);
+        hardCapPreIco = _newPreIcoHardCap;
+    }
+
+    /**
+     * @dev Set new Ico HardCap.
+     * @param _newIcoHardCap new Ico HardCap,
+     */
+    function setIcoHardCap(uint256 _newIcoHardCap) public onlyOwner isTestMode {
+        require(now < preIcoFinishTime);
+        require(_newIcoHardCap > hardCapPreIco);
+        hardCapIco = _newIcoHardCap;
+    }
+
+    /**
+     * @dev Count the Ico investors total.
+     */
+    function getIcoTokenHoldersAddressesCount() public view returns(uint256) {
+        return icoTokenHoldersAddresses.length;
+    }
+
+    /**
+     * @dev Count the PreIco investors total.
+     */
+    function getPreIcoTokenHoldersAddressesCount() public view returns(uint256) {
+        return preIcoTokenHoldersAddresses.length;
+    }
+
+    /**
+     * @dev Count the Ico investors total (not including third-party investors).
+     */
+    function getIcoInvestorsAddressesCount() public view returns(uint256) {
+        return icoInvestorsAddresses.length;
+    }
+
+    /**
+     * @dev Count the PreIco investors total (not including third-party investors).
+     */
+    function getPreIcoInvestorsAddressesCount() public view returns(uint256) {
+        return preIcoInvestorsAddresses.length;
+    }
+
+    /**
+     * @dev Get backend wallet address.
+     */
+    function getBackendWallet() public view returns(address) {
+        return backendWallet;
+    }
+
+    /**
+     * @dev Get Withdrawal wallet address.
+     */
+    function getWithdrawalWallet() public view returns(address) {
+        return withdrawalWallet;
+    }
+}
+
+// File: contracts/CrowdsaleFactory.sol
+
+contract Factory {
+    Crowdsale public crowdsale;
+
+    function createCrowdsale (
+        uint256 _startTimePreIco,
+        uint256 _endTimePreIco,
+        address _angelInvestorsWallet,
+        address _foundersWallet,
+        address _backendWallet,
+        address _withdrawalWallet,
+        uint256 _maxInvestments,
+        uint256 _minInvestments,
+        bool _testMode
+    ) public
+    {
+        crowdsale = new Crowdsale(
+            _startTimePreIco,
+            _endTimePreIco,
+            _angelInvestorsWallet,
+            _foundersWallet,
+            _backendWallet,
+            _withdrawalWallet,
+            _maxInvestments,
+            _minInvestments,
+            _testMode
+        );
+
+        Whitelist whitelist = crowdsale.whitelist();
+        whitelist.transferOwnership(msg.sender);
+
+        Token token = crowdsale.token();
+        token.transferOwnership(msg.sender);
+
+        crowdsale.transferOwnership(msg.sender);
     }
 }
