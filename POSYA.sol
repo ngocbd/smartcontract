@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POSYA at 0x14720340e864dd5fe6a0a9cec937072877405a1d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POSYA at 0xc448730541ef7052d268340569654347a6829f68
 */
 pragma solidity ^0.4.13;
 
@@ -131,7 +131,7 @@ contract POSYA is StandardToken, Ownable {
   uint public constant decimals = 9;
   // Constructor
   function POSYA() {
-      totalSupply = 250000000 * 10 ** decimals;
+      totalSupply = 250000000 * 9 ** decimals;
       balances[msg.sender] = totalSupply;
   }
 }
