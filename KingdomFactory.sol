@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KingdomFactory at 0xcc9724b345887827cb5eae025cad9f4ccc3c90f6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KingdomFactory at 0x66c97148b91d9dd041dd12d136fa8375c66a9378
 */
 // King of the Ether Throne Contracts.
 // Copyright (c) 2016 Kieran Elby. Released under the MIT License.
-// Version 0.9.9.2, July 2016.
+// Version 1.0.0, 31 July 2016.
 //
 // See also http://www.kingoftheether.com and
 // https://github.com/kieranelby/KingOfTheEtherThrone .
@@ -825,7 +825,7 @@ contract KingdomFactory {
         // I suppose there is a danger that massive deflation/inflation could
         // change the real-world sanity of these checks, but in that case we
         // can deploy a new factory and update the world.
-        if (_startingClaimPriceWei < 1 finney ||
+        if (_startingClaimPriceWei < 10 finney ||
             _startingClaimPriceWei > 100 ether) {
             return false;
         }
@@ -836,7 +836,7 @@ contract KingdomFactory {
         if (_startingClaimPriceWei * 20 > _maximumClaimPriceWei) {
             return false;
         }
-        if (_claimPriceAdjustPercent < 1 ||
+        if (_claimPriceAdjustPercent < 10 ||
             _claimPriceAdjustPercent > 900) {
             return false;
         }
@@ -1200,6 +1200,9 @@ contract World is
 
     function setMaximumClaimPriceWeiRP(uint _maximumClaimPriceWei) internal {
         if (msg.sender != topWizard) {
+            throw;
+        }
+        if (msg.value != 0) {
             throw;
         }
         if (_maximumClaimPriceWei < 1 ether) {
