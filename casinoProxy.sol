@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract casinoProxy at 0x1d1ff336189f16fcb5aea6f00398c06bec5fd0cc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract casinoProxy at 0xbd18a4335aef9c1bff9ca2f7166ae8b9c5420a7b
 */
 /**
  * Edgeless Casino Proxy Contract. Serves as a proxy for game functionality.
@@ -63,7 +63,9 @@ contract casinoBank is owned, safeMath{
 	/** in case the user wants/needs to call the withdraw function from his own wallet, he first needs to request a withdrawal */
 	mapping(address=>uint) public withdrawAfter;
 	/** the price per kgas in tokens (4 decimals) */
-	uint public gasPrice = 20;
+	uint public gasPrice = 4;
+	/** the average amount of gas consumend per game **/
+	mapping(address=>uint) public avgGas;
 	/** the edgeless token contract */
 	token edg;
 	/** owner should be able to close the contract is nobody has been using it for at least 30 days */
@@ -224,7 +226,7 @@ contract casinoProxy is casinoBank{
 	**/
 	function shift(address player, uint numTokens, bool isReceiver) public onlyCasinoGames{
 		require(authorizedByUser[player][msg.sender]);
-		var gasCost = msg.gas/1000 * gasPrice;//at this point a good deal of the gas has already been consumend, maybe better to have fix price
+		var gasCost = avgGas[msg.sender] * gasPrice;
 		if(isReceiver){
 			numTokens = safeSub(numTokens, gasCost);
 			balanceOf[player] = safeAdd(balanceOf[player], numTokens);
@@ -311,6 +313,15 @@ contract casinoProxy is casinoBank{
 	**/
 	function setGasPrice(uint8 price) public onlyOwner{
 		gasPrice = price;
+	}
+	
+	/**
+	* updates the average amount of gas consumed by a game
+	* @param game the index of the game contract
+	* 			 gas	the new avg gas
+	**/
+	function setAvgGas(uint8 game, uint16 gas) public onlyOwner{
+		avgGas[casinoGames[game]] = gas;
 	}
   
   /**
