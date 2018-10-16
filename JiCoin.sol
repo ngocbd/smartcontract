@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JiCoin at 0xc7825cc6c45eb1249234cb3c20700a41008cc0be
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JiCoin at 0x114f3d4983debcb3aaa9d58b9717f8f00a2efe64
 */
 pragma solidity ^0.4.4;
 
@@ -119,7 +119,7 @@ contract JiCoin is StandardToken {
         balances[msg.sender] = 69000001;               // Give the creator all initial tokens (100000 for example)
         totalSupply = 69000001;                        // Update total supply (100000 for example)
         name = "JiCoin";                                   // Set the name for display purposes
-        decimals = 6;                            // Amount of decimals for display purposes
+        decimals = 0;                            // Amount of decimals for display purposes
         symbol = "JI";                               // Set the symbol for display purposes
     }
 
