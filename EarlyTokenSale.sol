@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EarlyTokenSale at 0x8aec8f09a840faea966f4b0e29a497d8f5b5a6b4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EarlyTokenSale at 0x3f874330cbd26f5122fa9f63f8d3d44fe5c776de
 */
 pragma solidity ^0.4.15;
 
@@ -957,10 +957,6 @@ contract EarlyTokenSale is TokenController, Controlled {
         require(tokenContract.generateTokens(_owner, tokensPerEther.mul(msg.value)));
         
         return true;
-    }
-
-    function changeTokenController(address _newController) onlyController {
-        tokenContract.changeController(_newController);
     }
 
     /// @dev Internal function to determine if an address is a contract
