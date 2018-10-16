@@ -1,20 +1,20 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WavesEthereumSwap at 0xE01B770235Bc5db653604e5519F048dF54490B5f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WavesEthereumSwap at 0x873c58020bcb114b4fea456cef93aaf58e8e305d
 */
 pragma solidity ^0.4.8;
 
 // ----------------------------------------------------------------------------------------------
-// The Waves Community token smart contract - to find out more, join the Incent Slack; http://incentinvites.herokuapp.com/
+// The Ripto Bux smart contract - to find out more, join the Incent Slack; http://incentinvites.herokuapp.com/
 // A collaboration between Incent and Bok :)
 // Enjoy. (c) Incent Loyalty Pty Ltd and Bok Consulting Pty Ltd 2017. The MIT Licence.
 // ----------------------------------------------------------------------------------------------
 
 // Contract configuration
 contract TokenConfig {
-    string public constant symbol = "WCT";
-    string public constant name = "Waves Community Token";
-    uint8 public constant decimals = 2;  // 2 decimal places, the same as tokens on Wave
-    uint256 _totalSupply = 1000000000;
+    string public constant symbol = "RBUX";
+    string public constant name = "Ripto Bux";
+    uint8 public constant decimals = 8;  // 0 decimal places, the same as tokens on Wave
+    uint256 _totalSupply = 100000000000000000;
 }
 
 // ERC Token Standard #20 Interface
@@ -47,7 +47,7 @@ contract ERC20Interface {
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
-contract WavesCommunityToken is ERC20Interface, TokenConfig {
+contract RiptoBuxToken is ERC20Interface, TokenConfig {
     // Owner of this contract
     address public owner;
 
@@ -66,7 +66,7 @@ contract WavesCommunityToken is ERC20Interface, TokenConfig {
     }
 
     // Constructor
-    function WavesCommunityToken() {
+    function RiptoBuxToken() {
         owner = msg.sender;
         balances[owner] = _totalSupply;
     }
@@ -132,7 +132,7 @@ contract WavesCommunityToken is ERC20Interface, TokenConfig {
     }
 }
 
-contract WavesEthereumSwap is WavesCommunityToken {
+contract WavesEthereumSwap is RiptoBuxToken {
     event WavesTransfer(address indexed _from, string wavesAddress, uint256 amount);
 
     function moveToWaves(string wavesAddress, uint256 amount) {
