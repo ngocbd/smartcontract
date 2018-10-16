@@ -1,13 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleLib at 0x8b90e3937a5db939f15da38af99579b3c213d02a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleLib at 0x56367a4cd348c8c61dc8a66e6a5f88e32fd6aa32
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.18;
 
 /**
  * @title CrowdsaleLib
  * @author Majoolr.io
  *
- * version 2.0.0
+ * version 2.1.0
  * Copyright (c) 2017 Majoolr, LLC
  * The MIT License (MIT)
  * https://github.com/Majoolr/ethereum-libraries/blob/master/LICENSE
@@ -79,7 +79,7 @@ library CrowdsaleLib {
   event LogNoticeMsg(address _buyer, uint256 value, string Msg);
 
   // Indicates when an error has occurred in the execution of a function
-  event LogErrorMsg(string Msg);
+  event LogErrorMsg(uint256 amount, string Msg);
 
   /// @dev Called by a crowdsale contract upon creation.
   /// @param self Stored crowdsale from crowdsale contract
@@ -100,6 +100,7 @@ library CrowdsaleLib {
                 uint256 _endTime,
                 uint8 _percentBurn,
                 CrowdsaleToken _token)
+                public
   {
   	require(self.capAmount == 0);
   	require(self.owner == 0);
@@ -136,26 +137,26 @@ library CrowdsaleLib {
   /// @dev function to check if the crowdsale is currently active
   /// @param self Stored crowdsale from crowdsale contract
   /// @return success
-  function crowdsaleActive(CrowdsaleStorage storage self) constant returns (bool) {
+  function crowdsaleActive(CrowdsaleStorage storage self) public view returns (bool) {
   	return (now >= self.startTime && now <= self.endTime);
   }
 
   /// @dev function to check if the crowdsale has ended
   /// @param self Stored crowdsale from crowdsale contract
   /// @return success
-  function crowdsaleEnded(CrowdsaleStorage storage self) constant returns (bool) {
+  function crowdsaleEnded(CrowdsaleStorage storage self) public view returns (bool) {
   	return now > self.endTime;
   }
 
   /// @dev function to check if a purchase is valid
   /// @param self Stored crowdsale from crowdsale contract
   /// @return true if the transaction can buy tokens
-  function validPurchase(CrowdsaleStorage storage self) internal constant returns (bool) {
+  function validPurchase(CrowdsaleStorage storage self) internal returns (bool) {
     bool nonZeroPurchase = msg.value != 0;
     if (crowdsaleActive(self) && nonZeroPurchase) {
       return true;
     } else {
-      LogErrorMsg("Invalid Purchase! Check send time and amount of ether.");
+      LogErrorMsg(msg.value, "Invalid Purchase! Check start time and amount of ether.");
       return false;
     }
   }
@@ -163,17 +164,17 @@ library CrowdsaleLib {
   /// @dev Function called by purchasers to pull tokens
   /// @param self Stored crowdsale from crowdsale contract
   /// @return true if tokens were withdrawn
-  function withdrawTokens(CrowdsaleStorage storage self) returns (bool) {
+  function withdrawTokens(CrowdsaleStorage storage self) public returns (bool) {
     bool ok;
 
     if (self.withdrawTokensMap[msg.sender] == 0) {
-      LogErrorMsg("Sender has no tokens to withdraw!");
+      LogErrorMsg(0, "Sender has no tokens to withdraw!");
       return false;
     }
 
     if (msg.sender == self.owner) {
       if(!crowdsaleEnded(self)){
-        LogErrorMsg("Owner cannot withdraw extra tokens until after the sale!");
+        LogErrorMsg(0, "Owner cannot withdraw extra tokens until after the sale!");
         return false;
       } else {
         if(self.percentBurn > 0){
@@ -196,10 +197,9 @@ library CrowdsaleLib {
   /// @dev Function called by purchasers to pull leftover wei from their purchases
   /// @param self Stored crowdsale from crowdsale contract
   /// @return true if wei was withdrawn
-  function withdrawLeftoverWei(CrowdsaleStorage storage self) returns (bool) {
-    require(self.hasContributed[msg.sender] > 0);
+  function withdrawLeftoverWei(CrowdsaleStorage storage self) public returns (bool) {
     if (self.leftoverWei[msg.sender] == 0) {
-      LogErrorMsg("Sender has no extra wei to withdraw!");
+      LogErrorMsg(0, "Sender has no extra wei to withdraw!");
       return false;
     }
 
@@ -213,9 +213,9 @@ library CrowdsaleLib {
   /// @dev send ether from the completed crowdsale to the owners wallet address
   /// @param self Stored crowdsale from crowdsale contract
   /// @return true if owner withdrew eth
-  function withdrawOwnerEth(CrowdsaleStorage storage self) returns (bool) {
+  function withdrawOwnerEth(CrowdsaleStorage storage self) public returns (bool) {
     if ((!crowdsaleEnded(self)) && (self.token.balanceOf(this)>0)) {
-      LogErrorMsg("Cannot withdraw owner ether until after the sale!");
+      LogErrorMsg(0, "Cannot withdraw owner ether until after the sale!");
       return false;
     }
 
@@ -234,19 +234,21 @@ library CrowdsaleLib {
   /// @param self Stored crowdsale from crowdsale contract
   /// @param _newPrice new token price (amount of tokens per ether)
   /// @return true if the token price changed successfully
-  function changeTokenPrice(CrowdsaleStorage storage self,uint256 _newPrice) internal returns (bool) {
+  function changeTokenPrice(CrowdsaleStorage storage self,
+                            uint256 _newPrice)
+                            internal
+                            returns (bool)
+  {
   	require(_newPrice > 0);
 
+    bool err;
     uint256 result;
-    uint256 remainder;
 
-    result = self.exchangeRate / _newPrice;
-    remainder = self.exchangeRate % _newPrice;
-    if(remainder > 0) {
-      self.tokensPerEth = result + 1;
-    } else {
-      self.tokensPerEth = result;
-    }
+    (err, result) = self.exchangeRate.times(10**uint256(self.tokenDecimals));
+    require(!err);
+
+    self.tokensPerEth = result / _newPrice;
+
     return true;
   }
 
@@ -254,7 +256,10 @@ library CrowdsaleLib {
   /// @param self Stored Crowdsale from crowdsale contract
   /// @param _exchangeRate  ETH exchange rate expressed in cents/ETH
   /// @return true if the exchange rate has been set
-  function setTokenExchangeRate(CrowdsaleStorage storage self, uint256 _exchangeRate) returns (bool) {
+  function setTokenExchangeRate(CrowdsaleStorage storage self, uint256 _exchangeRate)
+                                public
+                                returns (bool)
+  {
     require(msg.sender == self.owner);
     require((now > (self.startTime - 3 days)) && (now < (self.startTime)));
     require(!self.rateSet);   // the exchange rate can only be set once!
@@ -262,31 +267,28 @@ library CrowdsaleLib {
     require(_exchangeRate > 0);
 
     uint256 _capAmountInCents;
-    uint256 _tokenBalance;
     bool err;
 
     (err, _capAmountInCents) = self.exchangeRate.times(self.capAmount);
     require(!err);
-
-    _tokenBalance = self.token.balanceOf(this);
-    self.withdrawTokensMap[msg.sender] = _tokenBalance;
-    self.startingTokenBalance = _tokenBalance;
-    self.tokensSet = true;
 
     self.exchangeRate = _exchangeRate;
     self.capAmount = (_capAmountInCents/_exchangeRate) + 1;
     changeTokenPrice(self,self.saleData[self.milestoneTimes[0]][0]);
     self.rateSet = true;
 
-    LogNoticeMsg(msg.sender,self.tokensPerEth,"Owner has sent the exchange Rate and tokens bought per ETH!");
+    err = !(setTokens(self));
+    require(!err);
+
+    LogNoticeMsg(msg.sender,self.tokensPerEth,"Owner has set the exchange Rate and tokens bought per ETH!");
     return true;
   }
 
   /// @dev fallback function to set tokens if the exchange rate function was not called
   /// @param self Stored Crowdsale from crowdsale contract
   /// @return true if tokens set successfully
-  function setTokens(CrowdsaleStorage storage self) returns (bool) {
-    require(msg.sender == self.owner);
+  function setTokens(CrowdsaleStorage storage self) public returns (bool) {
+    require((msg.sender == self.owner) || (msg.sender == address(this)));
     require(!self.tokensSet);
 
     uint256 _tokenBalance;
@@ -303,7 +305,11 @@ library CrowdsaleLib {
   /// @param self Stored Crowdsale from crowdsale contract
   /// @param timestamp Time during sale for which data is requested
   /// @return A 3-element array with 0 the timestamp, 1 the price in cents, 2 the address cap
-  function getSaleData(CrowdsaleStorage storage self, uint256 timestamp) constant returns (uint256[3]) {
+  function getSaleData(CrowdsaleStorage storage self, uint256 timestamp)
+                       public
+                       view
+                       returns (uint256[3])
+  {
     uint256[3] memory _thisData;
     uint256 index;
 
@@ -322,21 +328,19 @@ library CrowdsaleLib {
   /// @dev Gets the number of tokens sold thus far
   /// @param self Stored Crowdsale from crowdsale contract
   /// @return Number of tokens sold
-  function getTokensSold(CrowdsaleStorage storage self) constant returns (uint256) {
+  function getTokensSold(CrowdsaleStorage storage self) public view returns (uint256) {
     return self.startingTokenBalance - self.token.balanceOf(this);
   }
 }
 
 library BasicMathLib {
-  event Err(string typeErr);
-
   /// @dev Multiplies two numbers and checks for overflow before returning.
-  /// Does not throw but rather logs an Err event if there is overflow.
+  /// Does not throw.
   /// @param a First number
   /// @param b Second number
   /// @return err False normally, or true if there is overflow
   /// @return res The product of a and b, or 0 if there is overflow
-  function times(uint256 a, uint256 b) constant returns (bool err,uint256 res) {
+  function times(uint256 a, uint256 b) public view returns (bool err,uint256 res) {
     assembly{
       res := mul(a,b)
       switch or(iszero(b), eq(div(res,b), a))
@@ -345,36 +349,38 @@ library BasicMathLib {
         res := 0
       }
     }
-    if (err)
-      Err("times func overflow");
   }
 
   /// @dev Divides two numbers but checks for 0 in the divisor first.
-  /// Does not throw but rather logs an Err event if 0 is in the divisor.
+  /// Does not throw.
   /// @param a First number
   /// @param b Second number
   /// @return err False normally, or true if `b` is 0
   /// @return res The quotient of a and b, or 0 if `b` is 0
-  function dividedBy(uint256 a, uint256 b) constant returns (bool err,uint256 res) {
+  function dividedBy(uint256 a, uint256 b) public view returns (bool err,uint256 i) {
+    uint256 res;
     assembly{
       switch iszero(b)
       case 0 {
         res := div(a,b)
-        mstore(add(mload(0x40),0x20),res)
-        return(mload(0x40),0x40)
+        let loc := mload(0x40)
+        mstore(add(loc,0x20),res)
+        i := mload(add(loc,0x20))
+      }
+      default {
+        err := 1
+        i := 0
       }
     }
-    Err("tried to divide by zero");
-    return (true, 0);
   }
 
   /// @dev Adds two numbers and checks for overflow before returning.
-  /// Does not throw but rather logs an Err event if there is overflow.
+  /// Does not throw.
   /// @param a First number
   /// @param b Second number
   /// @return err False normally, or true if there is overflow
   /// @return res The sum of a and b, or 0 if there is overflow
-  function plus(uint256 a, uint256 b) constant returns (bool err, uint256 res) {
+  function plus(uint256 a, uint256 b) public view returns (bool err, uint256 res) {
     assembly{
       res := add(a,b)
       switch and(eq(sub(res,b), a), or(gt(res,b),eq(res,b)))
@@ -383,8 +389,6 @@ library BasicMathLib {
         res := 0
       }
     }
-    if (err)
-      Err("plus func overflow");
   }
 
   /// @dev Subtracts two numbers and checks for underflow before returning.
@@ -393,7 +397,7 @@ library BasicMathLib {
   /// @param b Second number
   /// @return err False normally, or true if there is underflow
   /// @return res The difference between a and b, or 0 if there is underflow
-  function minus(uint256 a, uint256 b) constant returns (bool err,uint256 res) {
+  function minus(uint256 a, uint256 b) public view returns (bool err,uint256 res) {
     assembly{
       res := sub(a,b)
       switch eq(and(eq(add(res,b), a), or(lt(res,a), eq(res,a))), 1)
@@ -402,8 +406,6 @@ library BasicMathLib {
         res := 0
       }
     }
-    if (err)
-      Err("minus func underflow");
   }
 }
 
@@ -411,13 +413,14 @@ library TokenLib {
   using BasicMathLib for uint256;
 
   struct TokenStorage {
+    bool initialized;
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
 
     string name;
     string symbol;
     uint256 totalSupply;
-    uint256 INITIAL_SUPPLY;
+    uint256 initialSupply;
     address owner;
     uint8 decimals;
     bool stillMinting;
@@ -443,12 +446,14 @@ library TokenLib {
                 uint8 _decimals,
                 uint256 _initial_supply,
                 bool _allowMinting)
+                public
   {
-    require(self.INITIAL_SUPPLY == 0);
+    require(!self.initialized);
+    self.initialized = true;
     self.name = _name;
     self.symbol = _symbol;
     self.totalSupply = _initial_supply;
-    self.INITIAL_SUPPLY = _initial_supply;
+    self.initialSupply = _initial_supply;
     self.decimals = _decimals;
     self.owner = _owner;
     self.stillMinting = _allowMinting;
@@ -460,7 +465,8 @@ library TokenLib {
   /// @param _to Address to send tokens
   /// @param _value Number of tokens to send
   /// @return True if completed
-  function transfer(TokenStorage storage self, address _to, uint256 _value) returns (bool) {
+  function transfer(TokenStorage storage self, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
     bool err;
     uint256 balance;
 
@@ -483,6 +489,7 @@ library TokenLib {
                         address _from,
                         address _to,
                         uint256 _value)
+                        public
                         returns (bool)
   {
     var _allowance = self.allowed[_from][msg.sender];
@@ -508,7 +515,7 @@ library TokenLib {
   /// @param self Stored token from token contract
   /// @param _owner Address to retrieve balance of
   /// @return balance The number of tokens in the subject account
-  function balanceOf(TokenStorage storage self, address _owner) constant returns (uint256 balance) {
+  function balanceOf(TokenStorage storage self, address _owner) public view returns (uint256 balance) {
     return self.balances[_owner];
   }
 
@@ -517,7 +524,10 @@ library TokenLib {
   /// @param _spender Address to authorize
   /// @param _value Number of tokens authorized account may send
   /// @return True if completed
-  function approve(TokenStorage storage self, address _spender, uint256 _value) returns (bool) {
+  function approve(TokenStorage storage self, address _spender, uint256 _value) public returns (bool) {
+    // must set to zero before changing approval amount in accordance with spec
+    require((_value == 0) || (self.allowed[msg.sender][_spender] == 0));
+
     self.allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
     return true;
@@ -528,7 +538,10 @@ library TokenLib {
   /// @param _owner Address of token holder
   /// @param _spender Address of authorized spender
   /// @return remaining Number of tokens spender has left in owner's account
-  function allowance(TokenStorage storage self, address _owner, address _spender) constant returns (uint256 remaining) {
+  function allowance(TokenStorage storage self, address _owner, address _spender)
+                     public
+                     view
+                     returns (uint256 remaining) {
     return self.allowed[_owner][_spender];
   }
 
@@ -539,7 +552,7 @@ library TokenLib {
   /// @param _increase True if increasing allowance, false if decreasing allowance
   /// @return True if completed
   function approveChange (TokenStorage storage self, address _spender, uint256 _valueChange, bool _increase)
-                          returns (bool)
+                          public returns (bool)
   {
     uint256 _newAllowed;
     bool err;
@@ -566,7 +579,7 @@ library TokenLib {
   /// @param self Stored token from token contract
   /// @param _newOwner Address for the new owner
   /// @return True if completed
-  function changeOwner(TokenStorage storage self, address _newOwner) returns (bool) {
+  function changeOwner(TokenStorage storage self, address _newOwner) public returns (bool) {
     require((self.owner == msg.sender) && (_newOwner > 0));
 
     self.owner = _newOwner;
@@ -578,7 +591,7 @@ library TokenLib {
   /// @param self Stored token from token contract
   /// @param _amount Number of tokens to mint
   /// @return True if completed
-  function mintToken(TokenStorage storage self, uint256 _amount) returns (bool) {
+  function mintToken(TokenStorage storage self, uint256 _amount) public returns (bool) {
     require((self.owner == msg.sender) && self.stillMinting);
     uint256 _newAmount;
     bool err;
@@ -595,7 +608,7 @@ library TokenLib {
   /// @dev Permanent stops minting
   /// @param self Stored token from token contract
   /// @return True if completed
-  function closeMint(TokenStorage storage self) returns (bool) {
+  function closeMint(TokenStorage storage self) public returns (bool) {
     require(self.owner == msg.sender);
 
     self.stillMinting = false;
@@ -607,7 +620,7 @@ library TokenLib {
   /// @param self Stored token from token contract
   /// @param _amount Amount of tokens to burn
   /// @return True if completed
-  function burnToken(TokenStorage storage self, uint256 _amount) returns (bool) {
+  function burnToken(TokenStorage storage self, uint256 _amount) public returns (bool) {
       uint256 _newBalance;
       bool err;
 
@@ -628,60 +641,68 @@ contract CrowdsaleToken {
   TokenLib.TokenStorage public token;
 
   function CrowdsaleToken(address owner,
-                                string name,
-                                string symbol,
-                                uint8 decimals,
-                                uint256 initialSupply,
-                                bool allowMinting)
+                                   string name,
+                                   string symbol,
+                                   uint8 decimals,
+                                   uint256 initialSupply,
+                                   bool allowMinting)
+                                   public
   {
     token.init(owner, name, symbol, decimals, initialSupply, allowMinting);
   }
 
-  function name() constant returns (string) {
+  function name() public view returns (string) {
     return token.name;
   }
 
-  function symbol() constant returns (string) {
+  function symbol() public view returns (string) {
     return token.symbol;
   }
 
-  function decimals() constant returns (uint8) {
+  function decimals() public view returns (uint8) {
     return token.decimals;
   }
 
-  function totalSupply() constant returns (uint256) {
+  function totalSupply() public view returns (uint256) {
     return token.totalSupply;
   }
 
-  function initialSupply() constant returns (uint256) {
-    return token.INITIAL_SUPPLY;
+  function initialSupply() public view returns (uint256) {
+    return token.initialSupply;
   }
 
-  function balanceOf(address who) constant returns (uint256) {
+  function balanceOf(address who) public view returns (uint256) {
     return token.balanceOf(who);
   }
 
-  function allowance(address owner, address spender) constant returns (uint256) {
+  function allowance(address owner, address spender) public view returns (uint256) {
     return token.allowance(owner, spender);
   }
 
-  function transfer(address to, uint value) returns (bool ok) {
+  function transfer(address to, uint256 value) public returns (bool ok) {
     return token.transfer(to, value);
   }
 
-  function transferFrom(address from, address to, uint value) returns (bool ok) {
+  function transferFrom(address from, address to, uint value) public returns (bool ok) {
     return token.transferFrom(from, to, value);
   }
 
-  function approve(address spender, uint value) returns (bool ok) {
+  function approve(address spender, uint256 value) public returns (bool ok) {
     return token.approve(spender, value);
   }
 
-  function changeOwner(address newOwner) returns (bool ok) {
+  function approveChange(address spender, uint256 valueChange, bool increase)
+                         public
+                         returns (bool)
+  {
+    return token.approveChange(spender, valueChange, increase);
+  }
+
+  function changeOwner(address newOwner) public returns (bool ok) {
     return token.changeOwner(newOwner);
   }
 
-  function burnToken(uint256 amount) returns (bool ok) {
+  function burnToken(uint256 amount) public returns (bool ok) {
     return token.burnToken(amount);
   }
 }
