@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FeeBurner at 0xa0b3890c3032e4e744e325e779749a696f9a1de6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FeeBurner at 0xF61b69A1961Cd0d7E0422F3E8A7aA09d1bAd01F8
 */
 pragma solidity 0.4.18;
 
@@ -11,6 +11,7 @@ contract PermissionGroups {
     mapping(address=>bool) internal alerters;
     address[] internal operatorsGroup;
     address[] internal alertersGroup;
+    uint constant internal MAX_GROUP_SIZE = 50;
 
     function PermissionGroups() public {
         admin = msg.sender;
@@ -51,6 +52,17 @@ contract PermissionGroups {
         pendingAdmin = newAdmin;
     }
 
+    /**
+     * @dev Allows the current admin to set the admin in one tx. Useful initial deployment.
+     * @param newAdmin The address to transfer ownership to.
+     */
+    function transferAdminQuickly(address newAdmin) public onlyAdmin {
+        require(newAdmin != address(0));
+        TransferAdminPending(newAdmin);
+        AdminClaimed(newAdmin, admin);
+        admin = newAdmin;
+    }
+
     event AdminClaimed( address newAdmin, address previousAdmin);
 
     /**
@@ -67,6 +79,8 @@ contract PermissionGroups {
 
     function addAlerter(address newAlerter) public onlyAdmin {
         require(!alerters[newAlerter]); // prevent duplicates.
+        require(alertersGroup.length < MAX_GROUP_SIZE);
+
         AlerterAdded(newAlerter, true);
         alerters[newAlerter] = true;
         alertersGroup.push(newAlerter);
@@ -90,6 +104,8 @@ contract PermissionGroups {
 
     function addOperator(address newOperator) public onlyAdmin {
         require(!operators[newOperator]); // prevent duplicates.
+        require(operatorsGroup.length < MAX_GROUP_SIZE);
+
         OperatorAdded(newOperator, true);
         operators[newOperator] = true;
         operatorsGroup.push(newOperator);
@@ -108,6 +124,11 @@ contract PermissionGroups {
             }
         }
     }
+}
+
+interface BurnableToken {
+    function transferFrom(address _from, address _to, uint _value) public returns (bool);
+    function burnFrom(address _from, uint256 _value) public returns (bool);
 }
 
 contract Withdrawable is PermissionGroups {
@@ -238,9 +259,4 @@ contract FeeBurner is Withdrawable, FeeBurnerInterface {
 
         SendWalletFees(wallet, reserve, msg.sender);
     }
-}
-
-interface BurnableToken {
-    function transferFrom(address _from, address _to, uint _value) public returns (bool);
-    function burnFrom(address _from, uint256 _value) public returns (bool);
 }
