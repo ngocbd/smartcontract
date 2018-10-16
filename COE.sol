@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COE at 0xb8a9cd26ebb5468f65cabe94cda6181c5f75e858
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract COE at 0x4230fe2b3d6411f8c32f3032585de9aedf067e2f
 */
 contract Partner {
     function exchangeTokensFromOtherContract(address _source, address _recipient, uint256 _RequestedTokens);
@@ -29,7 +29,6 @@ contract COE {
 
     bool public receiveEth = false;
     bool payFees = true;
-    bool distributionDone = false;
     bool public canExchange = false;
     bool addTiers = true;
     bool public initialTiers = false;
@@ -50,14 +49,12 @@ contract COE {
         doPremine();
     }
 
-    function doPremine() public {
+    function doPremine() internal {
         require(msg.sender == owner);
-        require(distributionDone == false);
         balances[owner] = add(balances[owner],32664993546427000000000);
         Transfer(this, owner, 32664993546427000000000);
         circulatingSupply = add(circulatingSupply, 32664993546427000000000);
         totalSupply = sub(totalSupply,32664993546427000000000);
-        distributionDone = true;
     }
 
     function populateTierTokens() public {
@@ -102,6 +99,16 @@ contract COE {
         scheduleTokens[38] = 7.5E19;
         scheduleTokens[39] = 7.5E19;
         scheduleTokens[40] = 7.5E19;
+        scheduleTokens[41] = 7.5E19;
+        scheduleTokens[42] = 7.5E19;
+        scheduleTokens[43] = 7.5E19;
+        scheduleTokens[44] = 7.5E19;
+        scheduleTokens[45] = 7.5E19;
+        scheduleTokens[46] = 7.5E19;
+        scheduleTokens[47] = 7.5E19;
+        scheduleTokens[48] = 7.5E19;
+        scheduleTokens[49] = 7.5E19;
+        scheduleTokens[50] = 7.5E19;
     }
 
     function populateTierRates() public {
@@ -147,6 +154,16 @@ contract COE {
         scheduleRates[38] = 1.175E24;
         scheduleRates[39] = 1.146E24;
         scheduleRates[40] = 1.098E24;
+        scheduleRates[41] = 1.058E24;
+        scheduleRates[42] = 9.97E23;
+        scheduleRates[43] = 9.32E23;
+        scheduleRates[44] = 8.44E23;
+        scheduleRates[45] = 8.33E23;
+        scheduleRates[46] = 7.8E23;
+        scheduleRates[47] = 7.67E23;
+        scheduleRates[48] = 8.37E23;
+        scheduleRates[49] = 1.011E24;
+        scheduleRates[50] = 9.79E23;
         initialTiers = true;
     }
 
@@ -199,13 +216,11 @@ contract COE {
 
     function transfer(address _to, uint _value) public {
         require(balances[msg.sender] >= _value);
-        totalSupply = add(totalSupply, _value);
-        circulatingSupply = sub(circulatingSupply, _value);
 
         if(_to == address(this)) {
             // WARNING: if you transfer tokens back to the contract you will lose them
             // use the exchange function to exchange for tokens with approved partner contracts
-            balances[msg.sender] = sub(balanceOf(msg.sender), _value);
+            balances[msg.sender] = sub(balances[msg.sender], _value);
             Transfer(msg.sender, _to, _value);
         }
         else {
@@ -224,14 +239,14 @@ contract COE {
                     }
                     else {
                         // WARNING: if you transfer to a contract that cannot handle incoming tokens you may lose them
-                        balances[msg.sender] = sub(balanceOf(msg.sender), _value);
+                        balances[msg.sender] = sub(balances[msg.sender], _value);
                         balances[_to] = add(balances[_to], _value);
                         Transfer(msg.sender, _to, _value);
                     }
                 }
             }
             else {
-                balances[msg.sender] = sub(balanceOf(msg.sender), _value);
+                balances[msg.sender] = sub(balances[msg.sender], _value);
                 balances[_to] = add(balances[_to], _value);
                 Transfer(msg.sender, _to, _value);
             }
