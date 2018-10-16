@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract REOC at 0x36b53bf543eebf9ad42c5f161efd1247f38d034d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract REOC at 0xf806bfb4e407bee4e0693f276ea9deb6ff6349da
 */
 pragma solidity ^0.4.16;
 
@@ -29,7 +29,7 @@ contract REOC {
      * Initializes contract with initial supply tokens to the creator of the contract
      */
     function REOC() public {
-        totalSupply = 2000000 * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        totalSupply = 200000000 * 10 ** uint256(decimals);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
         name = "Recycled Oil Coin";                                   // Set the name for display purposes
         symbol = "REOC";                               // Set the symbol for display purposes
