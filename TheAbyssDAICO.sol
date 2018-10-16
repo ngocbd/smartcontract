@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheAbyssDAICO at 0x770b05bec95bbfdd90a9e46c48fcb101e70ebf9b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheAbyssDAICO at 0xca8d88ee68d019d4c94f4bad9745381f93215972
 */
 pragma solidity ^0.4.21;
 
@@ -230,7 +230,7 @@ contract SafeMath {
  * @title LockedTokens
  * @dev Lock tokens for certain period of time
  */
-contract LockedTokens is SafeMath {
+contract LockedTokensTest is SafeMath {
     struct Tokens {
         uint256 amount;
         uint256 lockEndTime;
@@ -248,7 +248,7 @@ contract LockedTokens is SafeMath {
      * @param _token ERC20 compatible token contract
      * @param _crowdsaleAddress Crowdsale contract address
      */
-    function LockedTokens(IERC20Token _token, address _crowdsaleAddress) public {
+    function LockedTokensTest(IERC20Token _token, address _crowdsaleAddress) public {
         token = _token;
         crowdsaleAddress = _crowdsaleAddress;
     }
@@ -651,17 +651,17 @@ contract TheAbyssDAICO is Ownable, SafeMath, Pausable, ISimpleCrowdsale {
     uint256 public constant ADDITIONAL_BONUS_NUM = 3;
     uint256 public constant ADDITIONAL_BONUS_DENOM = 100;
 
-    uint256 public constant ETHER_MIN_CONTRIB = 0.2 ether;
+    uint256 public constant ETHER_MIN_CONTRIB = 0.0002 ether;
     uint256 public constant ETHER_MAX_CONTRIB = 20 ether;
 
     uint256 public constant ETHER_MIN_CONTRIB_PRIVATE = 100 ether;
     uint256 public constant ETHER_MAX_CONTRIB_PRIVATE = 3000 ether;
 
-    uint256 public constant ETHER_MIN_CONTRIB_USA = 0.2 ether;
+    uint256 public constant ETHER_MIN_CONTRIB_USA = 0.0002 ether;
     uint256 public constant ETHER_MAX_CONTRIB_USA = 20 ether;
 
-    uint256 public constant SALE_START_TIME = 1523887200; // 16.04.2018 14:00:00 UTC
-    uint256 public constant SALE_END_TIME = 1526479200; // 16.05.2018 14:00:00 UTC
+    uint256 public constant SALE_START_TIME = 1523904300; // 16.04.2018 14:00:00 UTC
+    uint256 public constant SALE_END_TIME = 1523906100; // 16.05.2018 14:00:00 UTC
 
     uint256 public constant BONUS_WINDOW_1_END_TIME = SALE_START_TIME + 2 days;
     uint256 public constant BONUS_WINDOW_2_END_TIME = SALE_START_TIME + 7 days;
@@ -679,7 +679,7 @@ contract TheAbyssDAICO is Ownable, SafeMath, Pausable, ISimpleCrowdsale {
     TransferLimitedToken public token;
     ICrowdsaleFund public fund;
     ICrowdsaleReservationFund public reservationFund;
-    LockedTokens public lockedTokens;
+    LockedTokensTest public lockedTokens;
 
     mapping(address => bool) public whiteList;
     mapping(address => bool) public privilegedList;
@@ -935,7 +935,7 @@ contract TheAbyssDAICO is Ownable, SafeMath, Pausable, ISimpleCrowdsale {
      * @dev Set LockedTokens contract address
      */
     function setLockedTokens(address lockedTokensAddress) public onlyOwner {
-        lockedTokens = LockedTokens(lockedTokensAddress);
+        lockedTokens = LockedTokensTest(lockedTokensAddress);
     }
 
     /**
