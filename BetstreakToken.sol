@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BetstreakToken at 0x2af3c466199f11f779135354319861af4237b521
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BetstreakToken at 0x081a639eef435a436b957c1b58cd4c454e422907
 */
 pragma solidity ^0.4.4;
 
@@ -100,76 +100,35 @@ contract BetstreakToken is StandardToken { // CHANGE THIS. Update the contract n
     string public name;                   // Token Name
     uint8 public decimals;                // How many decimals to show. To be standard complicant keep it 18
     string public symbol;                 // An identifier: eg SBX, XPR etc..
-    string public version = "H1.0"; 
+    string public version = 'H1.0'; 
     uint256 public unitsOneEthCanBuy;     // How many units of your coin can be bought by 1 ETH?
-    uint256 public units30percentExtra;
-    uint256 public units40percentExtra;
-    uint256 public units50percentExtra;
     uint256 public totalEthInWei;         // WEI is the smallest unit of ETH (the equivalent of cent in USD or satoshi in BTC). We'll store the total ETH raised via our ICO here.  
     address public fundsWallet;           // Where should the raised ETH go?
-    uint256 public maxHardCaphardcap;     // Max hard cap
-    uint256 private unitEthWei;
-    uint private IEOEndDate;
-    uint private tokenMoveableDate;
-    bool private isIEOActive;
 
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
-    function BetstreakToken() {
-        unitEthWei = 1000000000000000000;
+    function HashnodeTestCoin() {
         balances[msg.sender] = 1000000000000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
         totalSupply = 1000000000000000;                        // Update total supply (1000 for example) (CHANGE THIS)
         name = "Betstreak Token";                                   // Set the name for display purposes (CHANGE THIS)
         decimals = 6;                                               // Amount of decimals for display purposes (CHANGE THIS)
         symbol = "BST";                                             // Set the symbol for display purposes (CHANGE THIS)
         unitsOneEthCanBuy = 5000;                                      // Set the price of your token for the ICO (CHANGE THIS)
-        units30percentExtra = 6500;
-        units40percentExtra = 7000;
-        units50percentExtra = 7500;
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
-        maxHardCaphardcap = 20000;
-        IEOEndDate = 1529020800; // 15th June 2018 00:00:00
-        tokenMoveableDate = 1539388800; // 13th Oct 2018 00:00:00 --- 120 days from 15th June 2018
-        isIEOActive = isWithinIEO();
     }
 
-    function() payable {
-        if(!isWithinIEO()) {
-            throw;
-        }
+    function() payable{
         totalEthInWei = totalEthInWei + msg.value;
-        uint256 amount = 0;
-
-        if(msg.value < convertToEther(1)) {
-            amount = msg.value * unitsOneEthCanBuy;
-        }else if(msg.value >= convertToEther(1) && msg.value < convertToEther(9)) {
-            amount = msg.value * units30percentExtra;
-        }else if(msg.value >= convertToEther(10) && msg.value <= convertToEther(99)) {
-            amount = msg.value * units40percentExtra;
-        }else if(msg.value >= convertToEther(100) && msg.value < convertToEther(maxHardCaphardcap)) {
-            amount = msg.value * units50percentExtra;
-        }else if(msg.value > convertToEther(maxHardCaphardcap)) {
-            throw;
-        }
-
-        amount = amount / 1000000000000;
-
-        if (balances[fundsWallet] < amount) {
-            throw;
-        }
+        uint256 amount = msg.value * unitsOneEthCanBuy;
+        require(balances[fundsWallet] >= amount);
 
         balances[fundsWallet] = balances[fundsWallet] - amount;
         balances[msg.sender] = balances[msg.sender] + amount;
-        
+
         Transfer(fundsWallet, msg.sender, amount); // Broadcast a message to the blockchain
 
         //Transfer ether to fundsWallet
         fundsWallet.transfer(msg.value);                               
-    }
-
-    function convertToEther(uint256 _value) returns (uint256 val) {
-        uint256 _return = _value * unitEthWei;
-        return _return;
     }
 
     /* Approves and then calls the receiving contract */
@@ -182,56 +141,5 @@ contract BetstreakToken is StandardToken { // CHANGE THIS. Update the contract n
         //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
         if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
         return true;
-    }
-
-    function isWithinIEO() returns (bool success) {
-        if(now > IEOEndDate) {
-            return false;
-        }else {
-            return true;
-        }
-    }
-
-    function canMovetoken() returns (bool success){
-        if(now > tokenMoveableDate) {
-            return true;
-        }else {
-            return false;
-        }
-    }
-
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        //Default assumes totalSupply can't be over max (2^256 - 1).
-        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
-        //Replace the if with this one instead.
-        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (isWithinIEO() || !canMovetoken()) {
-            throw;
-        }else {
-            if (balances[msg.sender] >= _value && _value > 0) {
-                balances[msg.sender] -= _value;
-                balances[_to] += _value;
-                Transfer(msg.sender, _to, _value);
-                return true;
-            } else { return false; }
-        }
-        
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        //same as above. Replace this line with the following if you want to protect against wrapping uints.
-        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (isWithinIEO() || !canMovetoken()) {
-            throw;
-        }else {
-            if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-                balances[_to] += _value;
-                balances[_from] -= _value;
-                allowed[_from][msg.sender] -= _value;
-                Transfer(_from, _to, _value);
-                return true;
-            } else { return false; }
-        }
-        
     }
 }
