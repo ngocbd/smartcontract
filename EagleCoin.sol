@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EagleCoin at 0x994f0dffdbae0bbf09b652d6f11a493fd33f42b9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EagleCoin at 0x7615965d97f2c88f9910dd056b1c2b58fd8297bd
 */
 pragma solidity ^0.4.11;
 
@@ -157,8 +157,8 @@ contract EagleCoin is ERC20,EagleCoinStandard,Ownable {
     }
 
     function EagleCoin() {
-        maxTotalSupply = 12000000000000000000000000; // 12 Mil.
-        totalInitialSupply = 3600000000000000000000000; // 3.6 Mil.
+        maxTotalSupply = 12**25; // 12 Mil.
+        totalInitialSupply = 36**24; // 3.6 Mil.
 
         chainStartTime = now;
         chainStartBlockNumber = block.number;
