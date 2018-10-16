@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xd68f38076056b9db89a9431f0fdf9c6927a871ee
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x842f2e636f8c8bd450f390d46c68f50b0c9c2c55
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.16;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
@@ -9,7 +9,7 @@ contract TokenERC20 {
     // Public variables of the token
     string public name;
     string public symbol;
-    uint8 public decimals;
+    uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
 
@@ -24,15 +24,16 @@ contract TokenERC20 {
     event Burn(address indexed from, uint256 value);
 
     /**
-     * Constructor function
+     * Constrctor function
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function TokenERC20() public {
-        balanceOf[msg.sender] = 2100000000000000;                // Give the creator all initial tokens
-        name = "StarBlock";                                   // Set the name for display purposes
-        symbol = "STB";                               // Set the symbol for display purposes
-        decimals = 8;                            // Amount of decimals for display purposes
+    function TokenERC20(
+    ) public {
+        totalSupply = 202000000 * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
+        name = "Koin";                                   // Set the name for display purposes
+        symbol = "KOIN";                               // Set the symbol for display purposes
     }
 
     /**
