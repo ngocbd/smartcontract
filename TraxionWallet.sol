@@ -1,53 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TraxionWallet at 0x042ae5dd4f08fcbf848c48487642b4195d160283
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TraxionWallet at 0x143237dd3a05bc386053d635d3e7fcc49110d83a
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.21;
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
 
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    if (a == 0) {
-      return 0;
-    }
-    c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    // uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return a / b;
-  }
-
-  /**
-  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
 
 /**
  * @title Ownable
@@ -65,7 +21,7 @@ contract Ownable {
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  constructor() public {
+  function Ownable() public {
     owner = msg.sender;
   }
 
@@ -83,25 +39,78 @@ contract Ownable {
    */
   function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
+    OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
 
 }
 
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+
 contract TraxionWallet is Ownable {
     using SafeMath for uint256;
 
+
+    constructor(){
+        transferOwnership(0xC889dFBDc9C1D0FC3E77e46c3b82A3903b2D919c);
+    }
+
     // Address where funds are collectedt
-    address public wallet = 0x6163286bA933d8a007c02DB6b0fd5A08629d23f8;
+    address public wallet = 0xC889dFBDc9C1D0FC3E77e46c3b82A3903b2D919c;
   
     // How many token units a buyer gets per wei
-    uint256 public rate = 1000;
+    uint256 public rate = 2857;
 
-    // Minimum investment in wei (0.40 ETH)
-    uint256 public minInvestment = 4E17;
+    // Minimum investment in wei (0.20 ETH)
+    uint256 public minInvestment = 2E17;
 
-    // Invesstment upper bound per investor in wei (2,000 ETH)
+    // Maximum investment in wei (2,000 ETH)
     uint256 public investmentUpperBounds = 2E21;        
 
     // Hard cap in wei (100,000 ETH)
@@ -208,4 +217,3 @@ contract TraxionWallet is Ownable {
         wallet.transfer(msg.value);
     }
 }
-//Github: @AlvinVeroy
