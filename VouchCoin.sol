@@ -1,15 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VouchCoin at 0x1DF6647166012C4Fb6355396b16C8d00BceED90b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VouchCoin at 0x6cbef0eec5c883fe96dcd5db5cf1b9d578aa7e92
 */
 pragma solidity ^0.4.2;
 
 contract VouchCoin  {
 
   address public owner;
-  uint public totalSupply;
-  uint public initialSupply;
-  string public name;
-  uint public decimals;
+  uint public constant totalSupply = 10000000000000000;
+  string public constant name = "VouchCoin";
+  string public constant symbol = "VHC";
+  uint public constant decimals = 8;
   string public standard = "VouchCoin";
 
   mapping (address => uint) public balanceOf;
@@ -18,24 +18,29 @@ contract VouchCoin  {
 
   function VouchCoin() {
     owner = msg.sender;
-    balanceOf[msg.sender] = 10000000000000000;
-    totalSupply = 10000000000000000;
-    name = "VouchCoin";
-    decimals = 8;
+    balanceOf[msg.sender] = totalSupply;
   }
 
-  function balance(address user) public returns (uint) {
-    return balanceOf[user];
-  }
-
-  function transfer(address _to, uint _value)  {
+  function transfer(address _to, uint _value) returns (bool success) {
     if (_to == 0x0) throw;
-    if (balanceOf[owner] < _value) throw;
-    if (balanceOf[_to] + _value < balanceOf[_to]) throw;
+    if (balanceOf[owner] >= _value && _value > 0) {
+      balanceOf[owner] -= _value;
+      balanceOf[_to] += _value;
+      Transfer(owner, _to, _value);
+      return true;
+    }
+    return false;
+  }
 
-    balanceOf[owner] -= _value;
-    balanceOf[_to] += _value;
-    Transfer(owner, _to, _value);
+  function transferFrom(address _from, address _to, uint _value) returns (bool success) {
+    if (_from == 0x0 && _to == 0x0) throw;
+    if (balanceOf[_from] >= _value && _value > 0) {
+      balanceOf[_from] -= _value;
+      balanceOf[_to] += _value;
+      Transfer(_from, _to, _value);
+      return true;
+    }
+    return false;
   }
 
   function () {
