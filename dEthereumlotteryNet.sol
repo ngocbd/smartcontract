@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract dEthereumlotteryNet at 0x8182d0EEF9f71Bf38875e22f2c353195D80506D2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract dEthereumlotteryNet at 0xeb17adcc8cf24d2d6813f50f647b613df01014a2
 */
 contract dEthereumlotteryNet {
 	/*
@@ -168,7 +168,7 @@ contract dEthereumlotteryNet {
 		if (found == false) { throw; }
 	}
 	event RollEvent(address Player,uint Difficulty, uint Result, uint Number, uint Win);
-	function makeRoll(uint id) private returns(uint win){
+	function makeRoll(uint id) private returns(uint win) {
 		uint feeValue_ = players[msg.sender][id].value * fee / 100 ;
 		feeValue += feeValue_;
 		uint investorFee_ = players[msg.sender][id].value * investorFee / 100;
