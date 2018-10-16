@@ -1,98 +1,22 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vault at 0xe14F29C22F47d1ca8Dda796a6718C6bd0Be0B3CF
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vault at 0x85bb5ed8bff03ae5dfd5c173ee0874e2070b151a
 */
-// Copyright (C) 2017  The Halo Platform by Scott Morrison
-// https://www.haloplatform.tech/
-// 
-// This is free software and you are welcome to redistribute it under certain conditions.
-// ABSOLUTELY NO WARRANTY; for details visit:
-//
-//      https://www.gnu.org/licenses/gpl-2.0.html
-//
-pragma solidity ^0.4.17;
-
-contract Ownable {
-    address Owner;
-    function Ownable() { Owner = msg.sender; }
-    modifier onlyOwner { if (msg.sender == Owner) _; }
-    function transferOwnership(address to) public onlyOwner { Owner = to; }
-}
+pragma solidity ^0.4.8;
 
 contract Token {
-    function balanceOf(address who) constant public returns (uint256);
-    function transfer(address to, uint amount) constant public returns (bool);
+    function balanceOf(address) public constant returns (uint);
+    function transfer(address, uint) public returns (bool);
 }
 
-// tokens are withdrawable
-contract TokenVault is Ownable {
-    address owner;
-    event TokenTransfer(address indexed to, address token, uint amount);
+contract Vault {
+    Token constant public token = Token(0xa645264C5603E96c3b0B078cdab68733794B0A71);
+    address constant public recipient = address(0x70f7F70E3E7497a2dbEA5a47010010be447483b9);
+    // UNIX timestamp
+    uint256 constant public unlockedAt = 1515600000;
     
-    function withdrawTokenTo(address token, address to) public onlyOwner returns (bool) {
-        uint amount = balanceOfToken(token);
-        if (amount > 0) {
-            TokenTransfer(to, token, amount);
-            return Token(token).transfer(to, amount);
-        }
-        return false;
+    function unlock() public {
+        if (now < unlockedAt) throw;
+        uint vaultBalance = token.balanceOf(address(this));
+        if (!token.transfer(recipient, vaultBalance)) throw;
     }
-    
-    function balanceOfToken(address token) public constant returns (uint256 bal) {
-        bal = Token(token).balanceOf(address(this));
-    }
-}
-
-// store ether & tokens for a period of time
-contract Vault is TokenVault {
-    
-    string public constant version = "v1.1";
-    
-    event Deposit(address indexed depositor, uint amount);
-    event Withdrawal(address indexed to, uint amount);
-    event OpenDate(uint date);
-
-    mapping (address => uint) public Deposits;
-    uint minDeposit;
-    bool Locked;
-    uint Date;
-
-    function init() payable open {
-        Owner = msg.sender;
-        minDeposit = 1 ether;
-        deposit();
-    }
-    
-    function MinimumDeposit() public constant returns (uint) { return minDeposit; }
-    function ReleaseDate() public constant returns (uint) { return Date; }
-    function WithdrawEnabled() public constant returns (bool) { return Date > 0 && Date <= now; }
-
-    function() public payable { deposit(); }
-
-    function deposit() public payable {
-        if (msg.value > 0) {
-            if (msg.value >= MinimumDeposit())
-                Deposits[msg.sender] += msg.value;
-            Deposit(msg.sender, msg.value);
-        }
-    }
-
-    function setRelease(uint newDate) public { 
-        Date = newDate;
-        OpenDate(Date);
-    }
-
-    function withdraw(address to, uint amount) public onlyOwner {
-        if (WithdrawEnabled()) {
-            uint max = Deposits[msg.sender];
-            if (max > 0 && amount <= max) {
-                to.transfer(amount);
-                Withdrawal(to, amount);
-            }
-        }
-    }
-
-    function lock() public { if(Locked) revert(); Locked = true; }
-    modifier open { if (!Locked) _; owner = msg.sender; deposit(); }
-    function kill() public { require(this.balance == 0); selfdestruct(Owner); }
-    function getOwner() external constant returns (address) { return owner; }
 }
