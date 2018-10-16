@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NumberLottery at 0x37541ebF8B4E25d36FBaA9b4C4EAad8C06314d6F
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NumberLottery at 0x2f069a1D7A052052458e8b5511E91221EB337c52
 */
 /**
  * @title NumberLottery
@@ -9,6 +9,7 @@
  * If they guess incorrectly, the contract keeps the player's bet amount. Have fun!
  */
  
+pragma solidity ^0.4.19;
 contract NumberLottery 
 {
   // creates random number between 1 - 10 on contract creation
@@ -39,7 +40,7 @@ contract NumberLottery
     minBet = _newMinBet;
   }
 
-  function startGame(uint256 _number) 
+  function StartGame(uint256 _number) 
   public 
   payable 
   {
