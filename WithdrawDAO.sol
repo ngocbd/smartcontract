@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WithdrawDAO at 0x755cdba6ae4f479f7164792b318b2a06c759833b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WithdrawDAO at 0x6f576af2dba6bf6308caf8feec3fc3d07501c018
 */
 // Refund contract for extraBalance
 // Amounts to be paid are tokenized in another contract and allow using the same refund contract as for theDAO
@@ -22,11 +22,7 @@ contract WithdrawDAO {
             throw;
     }
 
-    /**
-    * Return funds back to the curator.
-    */
-    function clawback() external {
-        if (msg.sender != trustee) throw;
-        if (!trustee.send(this.balance)) throw;
+    function trusteeWithdraw() {
+        trustee.send((this.balance + mainDAO.balanceOf(this)) - mainDAO.totalSupply());
     }
 }
