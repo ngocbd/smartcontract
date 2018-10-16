@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MilkCoinToken at 0xb008b81eaa812a3e5ab6e8a9a9233fa31b744d6d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MilkCoinToken at 0x203feca1b8ded7e170188adba844f3b58ac25b63
 */
 pragma solidity ^0.4.18;
 
@@ -371,7 +371,7 @@ contract MilkCoinToken is MintableToken {
     invested = newInvested;
     buyBackInvestedValue = newInvested;
     tokensAfterCrowdsale = totalSupply;    
-    startBuyBackDate = 1609459200;
+    startBuyBackDate = now;
     endBuyBackDate = startBuyBackDate + 365 * 1 days;      
     toBuyBack = tokensAfterCrowdsale.div(10);
     return super.finishMinting();
