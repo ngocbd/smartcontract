@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Configurator at 0x485ec4741f2dd65a4d16fb1706778f66bc4540ec
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Configurator at 0xebe87cde131154d0f6f96a8feec600c2f2ff47dd
 */
 pragma solidity ^0.4.18;
 
@@ -676,25 +676,9 @@ contract NextSaleAgentFeature is Ownable {
 
 }
 
-// File: contracts/WhiteListFeature.sol
-
-contract WhiteListFeature is CommonSale {
-
-  mapping(address => bool)  public whiteList;
-
-  function addToWhiteList(address _address) public onlyDirectMintAgentOrOwner {
-    whiteList[_address] = true;
-  }
-
-  function deleteFromWhiteList(address _address) public onlyDirectMintAgentOrOwner {
-    whiteList[_address] = false;
-  }
-
-}
-
 // File: contracts/PreICO.sol
 
-contract PreICO is NextSaleAgentFeature, WhiteListFeature {
+contract PreICO is NextSaleAgentFeature, CommonSale {
 
   uint public period;
 
@@ -716,7 +700,6 @@ contract PreICO is NextSaleAgentFeature, WhiteListFeature {
   
   function fallback() internal minInvestLimited(msg.value) returns(uint) {
     require(now >= start && now < endSaleDate());
-    require(whiteList[msg.sender]);
     wallet.transfer(msg.value);
     return mintTokensByETH(msg.sender, msg.value);
   }
@@ -783,52 +766,23 @@ contract Configurator is Ownable {
 
   function deploy() public onlyOwner {
 
-    token = new UBCoinToken();
+    token = UBCoinToken(0x2D3E7D4870a51b918919E7B851FE19983E4c38d5);
 
     preICO = new PreICO();
 
     preICO.setWallet(0x00EE9d057f66754C7D92550F77Aeb0A87AE34B01);
     preICO.setStart(1520640000); // 10 Mar 2018 00:00:00 GMT
     preICO.setPeriod(22);
-    preICO.setPrice(33334000000000000000000);
-    preICO.setMinInvestedLimit(100000000000000000);
+    preICO.setPrice(18667000000000000000000);
+    preICO.setMinInvestedLimit(50000000000000000000);
     preICO.setToken(token);
-    preICO.setHardcap(8500000000000000000000);
-    token.setSaleAgent(preICO);
+    preICO.setHardcap(21500000000000000000000);
 
-    ico = new ICO();
-
-    ico.addMilestone(20, 40);
-    ico.addMilestone(20, 20);
-    ico.addMilestone(20, 0);
-    ico.setMinInvestedLimit(100000000000000000);
-    ico.setToken(token);
-    ico.setPrice(14286000000000000000000);
-    ico.setWallet(0x5FB78D8B8f1161731BC80eF93CBcfccc5783356F);
-    ico.setBountyTokensWallet(0xdAA156b6eA6b9737eA20c68Db4040B1182E487B6);
-    ico.setReservedTokensWallet(0xE1D1898660469797B22D348Ff67d54643d848295);
-    ico.setStart(1522627200); // 02 Apr 2018 00:00:00 GMT
-    ico.setHardcap(96000000000000000000000);
-    ico.setTeamTokensPercent(12);
-    ico.setBountyTokensPercent(4);
-    ico.setReservedTokensPercent(34);
-
-    teamTokensWallet = new FreezeTokensWallet();
-    teamTokensWallet.setStartLockPeriod(180);
-    teamTokensWallet.setPeriod(360);
-    teamTokensWallet.setDuration(90);
-    teamTokensWallet.setToken(token);
-    teamTokensWallet.transferOwnership(ico);
-
-    ico.setTeamTokensWallet(teamTokensWallet);
-
-    preICO.setNextSaleAgent(ico);
+    preICO.setNextSaleAgent(0xdb58279c60C7641dABB015665db32372D031e55f);
 
     address manager = 0xF1f94bAD54C8827C3B53754ad7dAa0FF5DCD527d;
 
-    token.transferOwnership(manager);
     preICO.transferOwnership(manager);
-    ico.transferOwnership(manager);
   }
 
 }
