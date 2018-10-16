@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract theultimatepyramid at 0x0f26c26318872e8fa85dee5d30cba45ed53b3d3e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract theultimatepyramid at 0x4028b9672bfd71ba2fcd97a6c82e06f72eaa14ba
 */
 contract theultimatepyramid {
 
@@ -37,7 +37,7 @@ contract theultimatepyramid {
 		uint amount;
 		if (msg.value > 40 ether) {
 			msg.sender.send(msg.value - 40 ether);	
-			amount = 10 ether;
+			amount = 40 ether;
     }
 		else {
 			amount = msg.value;
