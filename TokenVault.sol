@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVault at 0xaae6986f19b0aa082fc3fbfbe9335e9901cd3f88
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVault at 0x34f34f58c50ef059b766065dbb24f7cf885e6463
 */
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
@@ -504,8 +504,11 @@ contract TokenVault is Ownable, Recoverable {
   }
 
   /// @dev This function is prototyped in Recoverable contract
-  function tokensToBeReturned(ERC20Basic token) public returns (uint) {
-    return getBalance().minus(tokensAllocatedTotal);
+  function tokensToBeReturned(ERC20Basic _token) public returns (uint) {
+    if (address(_token) == address(token))
+      return getBalance().minus(tokensAllocatedTotal);
+    else
+      return token.balanceOf(this);
   }
 
   /// @dev Resolve the contract umambigious state
