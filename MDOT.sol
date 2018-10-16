@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MDOT at 0xd0486b26aafdde59ab0e6ead1559d1f6d369314f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MDOT at 0xef7d906fd1c0eb5234df32f40c6a1cb0328d7279
 */
 pragma solidity ^0.4.7;
 
@@ -86,8 +86,13 @@ contract MDOT is StandardToken {
     string public symbol = "MDOT"; // An identifier: eg MDOT
     uint public decimals = 8;      // Unit precision
 
-    constructor() public {
+    function constructor() public {
         totalSupply = 5000000000000;       // Set the total supply (in base units)
         balances[0xbfC729007CE9CBBE54132Fb9BFa097D80AAC791C] = 5000000000000;    // Initially assign the entire supply to the specified account
+    }
+
+    // do not allow deposits
+    function() public {
+        revert();
     }
 }
