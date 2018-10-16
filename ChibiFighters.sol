@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChibiFighters at 0x75b9f86e79ad930b9396c0d165e4bb93c8382ca9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChibiFighters at 0x71c118b00759b0851785642541ceb0f4ceea0bd5
 */
 pragma solidity ^0.4.21;
 
@@ -263,7 +263,7 @@ contract ChibiFighters is ERC721, ContractOwned, CustomEvents {
         // set comission percentage 100-90 = 10%
         comission = 90; 
 
-        _infoUrlPrefix = "http://chibigame.io/chibis.php?idj=";
+        _infoUrlPrefix = "https://chibigame.io/chibis.php?idj=";
     }
     
     /**
@@ -338,10 +338,19 @@ contract ChibiFighters is ERC721, ContractOwned, CustomEvents {
     }
 
     /**
-    * @dev Set url prefix, of course that won`t change the existing Chibi urls on chain
+    * @dev Set url prefix
     */
-    function setInfoUrlPrefix(string prefix) external contract_onlyOwner returns (bool success) {
+    function setInfoUrlPrefix(string prefix) external contract_onlyOwner returns (string infoUrlPrefix) {
         _infoUrlPrefix = prefix;
+        return _infoUrlPrefix;
+    }
+    
+    /**
+    * @dev Set infoUrl of chibi
+    */
+    function changeInfoUrl(uint _tokenId, string _infoUrl) public returns (bool success) {
+        if (ownerOf(_tokenId) != msg.sender && msg.sender != contract_owner) revert();
+        chibies[_tokenId].infoUrl = _infoUrl;
         return true;
     }
 
