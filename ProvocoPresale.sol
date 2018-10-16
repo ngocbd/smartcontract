@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProvocoPresale at 0x5fafe57bd692d07c4db048558752632210ccddf6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProvocoPresale at 0x9f139bd33dbf365898abb3b5272e0e4817d3e805
 */
 pragma solidity 0.4.15;
 
@@ -32,9 +32,9 @@ contract ProvocoPresale is Owned {
 
     // Public presale period
     // Starts Wednesday, February 21, 2018 2:00:00 PM
-    // Ends Monday, April 2, 2018 12:00:00 PM
+    // Ends Saturday, March 31, 2018 11:59:59 PM
     uint256 public constant PRESALE_START_DATE = 1519171201;
-    uint256 public constant PRESALE_END_DATE = 1522670400;
+    uint256 public constant PRESALE_END_DATE = 1522540799;
 
     // Owner can clawback after a date in the future, so no ethers remain
     // trapped in the contract. This will only be relevant if the
