@@ -1,17 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract testingToken at 0xbFb0Cfd13dbB56c2dbf69EAe33255f0EF1fC7955
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract testingToken at 0x1654d540616bfb3f13973ed6019e43005be43219
 */
 pragma solidity ^0.4.8;
 
 contract testingToken {
-    /* Public variables of the token */
-    string public standard = "Token 0.1";
-    string public name = "Testing Token";
-    string public symbol = "TT";
-    uint8 public decimals = 2;
-    uint256 public totalSupply = 10000;
-    
-    /*other vars*/
 	mapping (address => uint256) public balanceOf;
 	mapping (address => uint256) public weiWantedOf;
 	mapping (address => uint256) public tokensOfferedOf;
@@ -26,6 +18,9 @@ contract testingToken {
 	
 	event Transfer(address indexed _from, address indexed _to, uint256 _value);
 	
+	function totalSupply() constant returns (uint256 totalSupply) {
+	    return 10000;
+	}
 	function balanceOf(address _owner) constant returns (uint256 balance) {
 	    return balanceOf[_owner];
 	}
@@ -101,9 +96,5 @@ contract testingToken {
 	}
 	function transferOwnership(address _bank) bankOnly { //change owner
 		bank = _bank;
-	}
-	
-	function () {
-	    throw;
 	}
 }
