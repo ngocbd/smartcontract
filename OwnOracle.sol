@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OwnOracle at 0x0c59827005a47c233d191f943fd94b13b8fd27d9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OwnOracle at 0x21185d4efb6ab6f301fa12b610b69552fb6def63
 */
 pragma solidity ^0.4.18;
 
@@ -55,7 +55,7 @@ contract OwnOracle is Ownable {
     event BankSet(address bank);
     event UpdaterSet(address updater);
 
-    bytes32 public oracleName = "LibreOracle Omega";
+    bytes32 public oracleName = "LibreOracle Alpha";
     bytes16 public oracleType = "Libre ETHUSD";
     uint256 public updateTime;
     uint256 public callbackTime;
