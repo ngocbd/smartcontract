@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract hodlEthereum at 0x1bb28e79f2482df6bf60efc7a33365703bcf1536
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract hodlEthereum at 0xba2403b8ec4f310017a887421c0227a529b04ad5
 */
 pragma solidity ^0.4.11;
 contract hodlEthereum {
     event Hodl(address indexed hodler, uint indexed amount);
     event Party(address indexed hodler, uint indexed amount);
-    mapping (address => uint) public hodlers;
+    mapping (address => uint) hodlers;
     uint constant partyTime = 1596067200; // 30th July 2020
     function() payable {
         hodlers[msg.sender] += msg.value;
