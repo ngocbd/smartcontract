@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VirCoinToken at 0xa016ed8c7e4fce4e715ed3c217c713cbc8df33ae
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VirCoinToken at 0x0c54df61bb9e1c6b532899e0d5e818fc10763849
 */
 pragma solidity ^0.4.16;
 
