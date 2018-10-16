@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ClipperCoin at 0xc2221b777857f4a862a8c528d24b35cc995dd8b1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ClipperCoin at 0x8a113a57e74aef531bee8de7e16e604916f053ac
 */
 //////////////////////////////////////////////////////////////////////////////////////////
 //																						//
@@ -244,8 +244,8 @@ contract ClipperCoin is Owned{
     /// contract, who is defined as the minter of the coin
     function ClipperCoin(
     	uint256 initialSupply,
-    	uint8 tokenDecimals,
     	string tokenName,
+    	uint8 tokenDecimals,
     	string tokenSymbol
     	) {
     	    
