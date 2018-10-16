@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x214bc591050cba145a22a5a45c2fabcd6b613fbc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xc81ad405d820a3771a5fa1c31399c364ce34dce0
 */
 pragma solidity ^0.4.11;
 
@@ -416,7 +416,7 @@ contract Crowdsale is Ownable {
     
         function mint(address _to, uint _value) onlyOwner {
             
-        _value = _value.mul(10000000000000000);
+        _value = _value.mul(1000000000000000000);
 
         require((now >= startPreICO && now < endPreICO) || (now >= startICO && now < endICO));
         require(collectedFunds < hardCap);
