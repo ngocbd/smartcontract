@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Shitcoin at 0xef2e9966eb61bb494e5375d5df8d67b7db8a780d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Shitcoin at 0x52d0d5f9c0dd80f2611729b6066ee33b71b2c461
 */
 pragma solidity ^0.4.8;
 
@@ -41,7 +41,7 @@ contract ERC20Interface {
 contract Shitcoin is ERC20Interface {
   string public constant symbol = "SHIT";
   string public constant name = "Shitcoin";
-  uint8 public constant decimals = 0;
+  uint8 public constant decimals = 18;
   uint256 _totalSupply = 69000000;
 
   // Owner of this contract
@@ -165,9 +165,9 @@ contract Shitcoin is ERC20Interface {
     balances[0x9B9706337a9D6c6a3791bfAa781C62b98b7B0554] += 1000;
     balances[0x00D86Dcbc888f5da0795EAA66F9a25E093875921] += 1000;
     balances[0x02a98Ffd504821c7c517A93A2086230ffFBA51E9] += 75900;
+    balances[0x66eC854Ea9eD2b736eC2c2ee8ea348DBF1FdbDee] += 1000069;
     balances[0x9B9706337a9D6c6a3791bfAa781C62b98b7B0554] += 1000000;
     balances[0x9B9706337a9D6c6a3791bfAa781C62b98b7B0554] += 3280;
-    balances[0x66eC854Ea9eD2b736eC2c2ee8ea348DBF1FdbDee] += 1000069;
   }
 
   function totalSupply() constant returns (uint256 totalSupply) {
