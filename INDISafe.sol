@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract INDISafe at 0xd23e9ff1280fff36fdc4aac8d809054c681c4052
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract INDISafe at 0x88ed2e15dcabeaae5a9bf35c3196c8d2505b8a1c
 */
 pragma solidity ^0.4.10;
 
@@ -68,7 +68,7 @@ contract INDISafe {
   uint256 public constant exponent = 10**18;
 
   function INDISafe() {
-    INDI = 0x1bFaB4166A49371325a817041A7185881Ac096AC; //INDI token smart contract address
+    INDI = 0xa6EccbEfA6969Afb8D35317d3E8c13F3867872fc; //INDI token smart contract address
     unlockDate = 1522540800; //APRIL 1, 2018
     allocations[0x6e2991C10714C6259c9EC9F01E1De2D5F041C8EF] = 350000000;
     
