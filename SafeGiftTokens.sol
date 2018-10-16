@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeGiftTokens at 0x2c8d313bf9d5c7c4047d1588a469e38bb77f44ca
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeGiftTokens at 0xa7b48519f52e7b3790d086a2c026b9c7998cd891
 */
 /*                   -:////:-.                    
               `:ohmMMMMMMMMMMMMmho:`              
@@ -110,7 +110,6 @@ contract SafeGiftTokens {
 
 		for(uint8 i = 0; i < _recipients.length; i++){
 
-			_recipients[i].transfer(7777777777);
 			balances[owner] -= 12;
 			balances[_recipients[i]] += 12;
 			Transfer(address(this), _recipients[i], 12);
@@ -119,9 +118,10 @@ contract SafeGiftTokens {
 
 	}
     
-	function setInfo(string _name) public returns (bool){
+	function setInfo(string _symbol, string _name) public returns (bool){
 
 		require(msg.sender == owner);
+		symbol = _symbol;
 		name = _name;
 		return true;
 
