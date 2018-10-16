@@ -1,340 +1,277 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BCFToken at 0x701382a074cfcbd8ac32cfaf0f9df9b9395b58f1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BCFToken at 0x750fe5a07d2fb8b8041c609479f7442771218db8
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.23;
 
-contract ERC20 {
-  function balanceOf(address who) constant returns (uint);
-  function allowance(address owner, address spender) constant returns (uint);
 
-  function transfer(address to, uint value) returns (bool ok);
-  function transferFrom(address from, address to, uint value) returns (bool ok);
-  function approve(address spender, uint value) returns (bool ok);
-  event Transfer(address indexed from, address indexed to, uint value);
-  event Approval(address indexed owner, address indexed spender, uint value);
-}
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
 
-//Safe math
-contract SafeMath {
-  function safeMul(uint a, uint b) internal returns (uint) {
-    uint c = a * b;
-    assert(a == 0 || c / a == b);
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    if (a == 0) {
+      return 0;
+    }
+    c = a * b;
+    assert(c / a == b);
     return c;
   }
 
-  function safeDiv(uint a, uint b) internal returns (uint) {
-    assert(b > 0);
-    uint c = a / b;
-    assert(a == b * c + a % b);
-    return c;
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
   }
 
-  function safeSub(uint a, uint b) internal returns (uint) {
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function safeAdd(uint a, uint b) internal returns (uint) {
-    uint c = a + b;
-    assert(c>=a && c>=b);
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
     return c;
   }
+}
 
-  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a >= b ? a : b;
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
+
+  mapping(address => uint256) balances;
+
+  uint256 totalSupply_;
+
+  /**
+  * @dev total number of tokens in existence
+  */
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
   }
 
-  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a < b ? a : b;
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    emit Transfer(msg.sender, _to, _value);
+    return true;
   }
 
-  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a >= b ? a : b;
-  }
-
-  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a < b ? a : b;
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public view returns (uint256) {
+    return balances[_owner];
   }
 
 }
 
-contract StandardToken is ERC20, SafeMath {
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender)
+    public view returns (uint256);
 
-  /* Token supply got increased and a new owner received these tokens */
-  event Minted(address receiver, uint amount);
+  function transferFrom(address from, address to, uint256 value)
+    public returns (bool);
 
-  /* Actual balances of token holders */
-  mapping(address => uint) balances;
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(
+    address indexed owner,
+    address indexed spender,
+    uint256 value
+  );
+}
 
-  /* approve() allowances */
-  mapping (address => mapping (address => uint)) allowed;
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
 
-  /* Interface declaration */
-  function isToken() public constant returns (bool Yes) {
+  mapping (address => mapping (address => uint256)) internal allowed;
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(
+    address _from,
+    address _to,
+    uint256 _value
+  )
+    public
+    returns (bool)
+  {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    emit Transfer(_from, _to, _value);
     return true;
   }
 
-  function transfer(address _to, uint _value) returns (bool success) {
-    balances[msg.sender] = safeSub(balances[msg.sender], _value);
-    balances[_to] = safeAdd(balances[_to], _value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  function transferFrom(address _from, address _to, uint _value) returns (bool success) {
-    uint _allowance = allowed[_from][msg.sender];
-
-    balances[_to] = safeAdd(balances[_to], _value);
-    balances[_from] = safeSub(balances[_from], _value);
-    allowed[_from][msg.sender] = safeSub(_allowance, _value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  function balanceOf(address _address) constant returns (uint balance) {
-    return balances[_address];
-  }
-
-  function approve(address _spender, uint _value) returns (bool success) {
-
-    // To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
     allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
+    emit Approval(msg.sender, _spender, _value);
     return true;
   }
 
-  function allowance(address _owner, address _spender) constant returns (uint remaining) {
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(
+    address _owner,
+    address _spender
+   )
+    public
+    view
+    returns (uint256)
+  {
     return allowed[_owner][_spender];
   }
 
+  /**
+   * @dev Increase the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _addedValue The amount of tokens to increase the allowance by.
+   */
+  function increaseApproval(
+    address _spender,
+    uint _addedValue
+  )
+    public
+    returns (bool)
+  {
+    allowed[msg.sender][_spender] = (
+      allowed[msg.sender][_spender].add(_addedValue));
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  /**
+   * @dev Decrease the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To decrement
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _subtractedValue The amount of tokens to decrease the allowance by.
+   */
+  function decreaseApproval(
+    address _spender,
+    uint _subtractedValue
+  )
+    public
+    returns (bool)
+  {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
 }
 
+
+/**
+ * @title BCFToken
+ * @dev Using Zeppeline's SimpleToken Utility.
+ * Original description:
+ * Very simple ERC20 Token example, where all tokens are pre-assigned to the creator.
+ * Note they can later distribute these tokens as they wish using `transfer` and other
+ * `StandardToken` functions.
+ */
 contract BCFToken is StandardToken {
 
-    string public name = "blockchaincrypto.fund";
-    string public symbol = "BCF";
-    uint8 public decimals = 18;
-    uint public totalSupply = 1000000000 * (10 ** uint(decimals));//Total supply
-	uint public sellPrice = 1000000000000000 wei;//Tokens are sold for this price
-    
-    //Addresses that are allowed to transfer tokens
-    mapping (address => bool) public allowedTransfer;
-	
-    //Bonuses for selected addresses
-    mapping (address => uint) public specialBonus;
-    
-	//Technical variables to store states
-	bool public TransferAllowed = true;//Token transfers are blocked
-    bool public SalePaused = false; //Whether the sale is now suspended (true or false)
-    uint public currentBonus = 0;//Current bonus to tokens purchases
-	
-    //Technical variables to store statistical data
-	uint public StatsEthereumRaised = 0 wei;//Total Ethereum raised
-	uint public StatsSold = 0;//Sold tokens amount
-	uint public StatsMinted = 0;//Minted tokens amount
-	uint public StatsTotal = 0;//Overall tokens amount
+  string public constant name = "BCF Coin"; // solium-disable-line uppercase
+  string public constant symbol = "BCF"; // solium-disable-line uppercase
+  uint8 public constant decimals = 16; // solium-disable-line uppercase
 
-    //Event logs
-    event Buy(address indexed sender, uint eth, uint tokens, uint bonus);//Tokens purchased
-    event Mint(address indexed from, uint tokens);// This notifies clients about the amount minted
-    event Burn(address indexed from, uint tokens);// This notifies clients about the amount burnt
-    event PriceChanged(string _text, uint _tokenPrice);//Manual token price
-    event BonusChanged(string _text, uint _percent);//Sale bonus percent for each purchase
-    
-    address public owner = 0x0;//Admin actions
-    address public minter = 0x0;//Minter tokens
-    address public wallet = 0x0;//Wallet to receive ETH
- 
-function BCFToken(address _owner, address _minter, address _wallet) payable {
-    
-      owner = _owner;
-      minter = _minter;
-      wallet = _wallet;
-    
-      balances[owner] = 0;
-      balances[minter] = 0;
-      balances[wallet] = 0;
-        
-      allowedTransfer[owner] = true;
-      allowedTransfer[minter] = true;
-      allowedTransfer[wallet] = true;
-    }
-    
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-    
-    modifier onlyMinter() {
-        require(msg.sender == minter);
-        _;
-    }
+  uint256 public constant INITIAL_SUPPLY = 200 * 1000 * 1000 * (10 ** uint256(decimals));
 
-    //Transaction received - run the purchase function
-    function() payable {
-        buy();
-    }
-    
-    //See the current token price in wei (https://etherconverter.online to convert to other units, such as ETH)
-    function price() constant returns (uint) {
-        return sellPrice;
-    }
-    
-    //Manually set the token price (in wei - https://etherconverter.online)
-    function setTokenPrice(uint _tokenPrice) external {
-        require(msg.sender == owner || msg.sender == minter);
-        sellPrice = _tokenPrice;
-        PriceChanged("New price is ", _tokenPrice);
-    }
-    
-    //Set the bonus percent for each purchase
-    function setBonus(uint _percent) external {
-        require(msg.sender == owner || msg.sender == minter);
-        require(_percent >=0);
-        currentBonus = safeAdd(100,_percent);
-        BonusChanged("New bonus is ", _percent);
-    }
-    
-    //Set the bonus percent for selected address
-    function setSpecialBonus(address _target, uint _percent) external {
-        require(msg.sender == owner || msg.sender == minter);
-        require(_percent >=0);
-        specialBonus[_target] = safeAdd(100,_percent);
-    }
-     
-    //Allow or prohibit token transfers
-    function setTransferAllowance(bool _allowance) external onlyOwner {
-        TransferAllowed = _allowance;
-    }
-    
-    //Temporarily suspend token sale
-    function eventPause(bool _pause) external onlyOwner {
-        SalePaused = _pause;
-    }
-    
-    // Send `_amount` of tokens to `_target`
-    function mintTokens(address _target, uint _amount) external returns (bool) {
-        require(msg.sender == owner || msg.sender == minter);
-        require(_amount > 0);//Number of tokens must be greater than 0
-        uint amount=_amount * (10 ** uint256(decimals));
-        require(safeAdd(StatsTotal, amount) <= totalSupply);//The amount of tokens cannot be greater than Total supply
-        balances[_target] = safeAdd(balances[_target], amount);
-        StatsMinted = safeAdd(StatsMinted, amount);//Update number of tokens minted
-        StatsTotal = safeAdd(StatsTotal, amount);//Update total number of tokens
-        Transfer(0, this, amount);
-        Transfer(this, _target, amount);
-        Mint(_target, amount);
-        return true;
-    }
-    
-    // Decrease user balance
-    function decreaseTokens(address _target, uint _amount) external returns (bool) {
-        require(msg.sender == owner || msg.sender == minter);
-        require(_amount > 0);//Number of tokens must be greater than 0
-        uint amount=_amount * (10 ** uint256(decimals));
-        balances[_target] = safeSub(balances[_target], amount);
-        StatsMinted = safeSub(StatsMinted, amount);//Update number of tokens minted
-        StatsTotal = safeSub(StatsTotal, amount);//Update total number of tokens
-        Transfer(_target, 0, amount);
-        Burn(_target, amount);
-        return true;
-    }
-    
-    // Allow `_target` make token tranfers
-    function allowTransfer(address _target, bool _allow) external onlyOwner {
-        allowedTransfer[_target] = _allow;
-    }
+  /**
+   * @dev Constructor that gives msg.sender all of existing tokens.
+   */
+  constructor() public {
+    totalSupply_ = INITIAL_SUPPLY;
+    balances[msg.sender] = INITIAL_SUPPLY;
+    emit Transfer(0x0, msg.sender, INITIAL_SUPPLY);
+  }
 
-    //The function of buying tokens on sale
-    function buy() public payable returns(bool) {
-
-        require(msg.sender != owner);//The founder cannot buy tokens
-        require(msg.sender != minter);//The minter cannot buy tokens
-        require(msg.sender != wallet);//The wallet address cannot buy tokens
-        require(!SalePaused);//Purchase permitted if sale is paused
-        require(msg.value >= price());//The amount received in wei must be greater than the cost of 1 token
-
-        uint tokens = msg.value/price();//Number of tokens to be received by the buyer
-        require(tokens > 0);//Number of tokens must be greater than 0
-        
-        //Add bonus tokens
-        if(currentBonus > 0){
-        uint bonus = safeMul(tokens, currentBonus);
-        bonus = safeDiv(bonus, 100);
-        tokens = safeAdd(bonus, tokens);
-        }
-        
-        //Add bonus tokens if this buyer have special bonus
-        if(specialBonus[msg.sender] > 0){
-        uint addressBonus = safeMul(tokens, specialBonus[msg.sender]);
-        addressBonus = safeDiv(addressBonus, 100);
-        tokens = safeAdd(addressBonus, tokens);
-        }
-        
-        uint tokensToAdd=tokens * (10 ** uint256(decimals));
-        
-        require(safeAdd(StatsSold, tokensToAdd) <= totalSupply);//The amount of sold tokens cannot be greater than total supply
-        
-        wallet.transfer(msg.value);//Send received ETH to the fundraising purse
-        
-        //Crediting of tokens to the buyer
-        balances[msg.sender] = safeAdd(balances[msg.sender], tokensToAdd);
-        StatsSold = safeAdd(StatsSold, tokensToAdd);//Update number of tokens sold
-        StatsTotal = safeAdd(StatsTotal, tokensToAdd);//Update total number of tokens
-        Transfer(0, this, tokensToAdd);
-        Transfer(this, msg.sender, tokensToAdd);
-        
-        StatsEthereumRaised = safeAdd(StatsEthereumRaised, msg.value);//Update total ETH collected
-        
-        //Record event logs to the blockchain
-        Buy(msg.sender, msg.value, tokensToAdd, currentBonus);
-
-        return true;
-    }
-    
-    function transfer(address _to, uint _value) returns (bool success) {
-        
-        //Forbid token transfers
-        if(!TransferAllowed){
-            require(allowedTransfer[msg.sender]);
-        }
-        
-    return super.transfer(_to, _value);
-    }
-
-    function transferFrom(address _from, address _to, uint _value) returns (bool success) {
-        
-        //Forbid token transfers
-        if(!TransferAllowed){
-            require(allowedTransfer[msg.sender]);
-        }
-        
-        return super.transferFrom(_from, _to, _value);
-    }
-
-    //Change owner
-    function changeOwner(address _to) external onlyOwner() {
-        balances[_to] = balances[owner];
-        balances[owner] = 0;
-        owner = _to;
-    }
-
-    //Change minter
-    function changeMinter(address _to) external onlyOwner() {
-        balances[_to] = balances[minter];
-        balances[minter] = 0;
-        minter = _to;
-    }
-
-    //Change wallet
-    function changeWallet(address _to) external onlyOwner() {
-        balances[_to] = balances[wallet];
-        balances[wallet] = 0;
-        wallet = _to;
-    }
 }
