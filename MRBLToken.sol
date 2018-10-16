@@ -1,7 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MRBLToken at 0xE41603BC180E82B0253C349ef642BE53CfEA863A
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MRBLToken at 0xeb5b649e88466d686c6560c3995ee0c4cc249fe2
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.21;
+// We have to specify what version of compiler this code will compile with
+
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
 
@@ -9,7 +11,7 @@ contract MRBLToken {
     string public name = "Marble";
     string public symbol = "MRBL";
     uint256 public decimals = 18;
-    uint256 public totalSupply = 100*1000*1000*10**decimals;
+    uint256 public totalSupply = 100*1000*1000*1000*10**decimals;
 
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
@@ -30,8 +32,12 @@ contract MRBLToken {
         uint previousBalances = balanceOf[_from] + balanceOf[_to];
         balanceOf[_from] -= _value;
         balanceOf[_to] += _value;
-        Transfer(_from, _to, _value);
+        emit Transfer(_from, _to, _value);
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+    }
+
+    function getBalance(address _address) view public returns (uint256) {
+        return balanceOf[_address];
     }
 
     function transfer(address _to, uint256 _value) public {
@@ -67,7 +73,7 @@ contract MRBLToken {
         require(balanceOf[msg.sender] >= _value);   
         balanceOf[msg.sender] -= _value;            
         totalSupply -= _value;                      
-        Burn(msg.sender, _value);
+        emit Burn(msg.sender, _value);
         return true;
     }
 
@@ -78,7 +84,7 @@ contract MRBLToken {
         balanceOf[_from] -= _value;                         
         allowance[_from][msg.sender] -= _value;             
         totalSupply -= _value;                              
-        Burn(_from, _value);
+        emit Burn(_from, _value);
         return true;
     }
 }
