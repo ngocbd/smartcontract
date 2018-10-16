@@ -1,11 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreTgeExperty at 0x17f2892418d1765691c7e43c682db83b60b3ddd2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreTgeExperty at 0x87710139a7dd3f5be464acb1af9b016a8361b97d
 */
 pragma solidity ^0.4.11;
 
-// import "./ERC223BasicToken.sol";
+// import "browser/ERC223BasicToken.sol";
 
-// import "./SafeMath.sol";
+// import "browser/SafeMath.sol";
+
 /**
  * Math operations with safety checks
  */
@@ -56,9 +57,10 @@ library SafeMath {
     }
   }
 }
+
 // end import
 
-// import "./ERC223Basic.sol";
+
 contract ERC223Basic {
   uint public totalSupply;
   function balanceOf(address who) constant returns (uint);
@@ -66,16 +68,13 @@ contract ERC223Basic {
   function transfer(address to, uint value, bytes data);
   event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
 }
-// end import
 
-// import "./ERC223ReceivingContract.sol";
  /*
  * Contract that is working with ERC223 tokens
  */
 contract ERC223ReceivingContract {
   function tokenFallback(address _from, uint _value, bytes _data);
 }
-// end import 
 
 
 contract ERC223BasicToken is ERC223Basic {
@@ -148,7 +147,7 @@ contract PreTgeExperty is ERC223BasicToken {
   
   // preICO constructor
   function PreTgeExperty() {
-    multisigWallet = 0x6fb25777000c069bf4c253b9f5f886a5144a0021;
+    multisigWallet = 0x60f4025c67477edf3a8eda7d1bf6b3b035a664eb;
     preTgeManager = 0x009A55A3c16953A359484afD299ebdC444200EdB;
   }
 
