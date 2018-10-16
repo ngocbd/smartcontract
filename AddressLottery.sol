@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AddressLottery at 0xd4342df2c7cfe5938540648582c8d222f1513c50
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AddressLottery at 0xf8e89d113924300b38615ceb5719709569ebec6b
 */
 pragma solidity ^0.4.0;
 /*
@@ -11,8 +11,6 @@ pragma solidity ^0.4.0;
  *
  * Ticket price: 0.1 ETH
  * Jackpot chance:   1 in 8
- * 
- * To participate, send 0.10 ETH to the contract with data "d11711a2"
 */
 contract AddressLottery{
     struct SeedComponents{
