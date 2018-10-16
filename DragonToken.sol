@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DragonToken at 0xe71c5fa129e908f7b85b0356151a1ac862e9a74a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DragonToken at 0x1da015ea4ad2d3e5586e54b9fb0682ca3ca8a17a
 */
 pragma solidity ^0.4.15;
 /**
@@ -444,16 +444,21 @@ contract FrozenableToken is Operational, BurnableToken, ReentrancyGuard {
         require(balances[owner] >= _value);
         require(_unFrozenTime > createTime);
         require(_unFrozenTime > now);  
-        balances[owner] = balances[owner].sub(_value);
         if (_unFrozenTime.parseTimestamp().year - createTime.parseTimestamp().year > 10 ){
+                balances[owner] = balances[owner].sub(_value);
                 frozenForever = frozenForever.add(_value);
+                FreezeForOwner(owner, _value, _unFrozenTime);
         } else {
                 uint256 day = _unFrozenTime.toDay();
+                if (frozenBalances[day].day == day) {
+                        revert();
+                }
+                balances[owner] = balances[owner].sub(_value);
                 frozenAnnually = frozenAnnually.add(_value);
-                frozenBalances[day] = FrozenRecord({value: _value, day:day});
+                frozenBalances[day] = FrozenRecord( _value, day);
+                FreezeForOwner(owner, _value, _unFrozenTime);
         }
 
-        FreezeForOwner(owner, _value, _unFrozenTime);
         return true;
     }
 
@@ -501,7 +506,7 @@ contract DragonReleaseableToken is FrozenableToken {
     }
     function judgeReleaseRecordExist(uint256 timestamp) internal returns(bool _exist) {
         bool exist = false;
-        uint256 day = timestamp.parseTimestamp().year * 10000 + timestamp.parseTimestamp().month * 100 + timestamp.parseTimestamp().day;
+        uint256 day = timestamp.toDay();
         if (releasedRecords[day].releasedDay == day){
             exist = true;
         }
