@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BITTOToken at 0x992b4e3c40557ffddd482f47f646fee43ccdf038
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BITTOToken at 0x63b9abba99cfb2b650c06f5a24bcfcbdf27467fb
 */
 pragma solidity ^0.4.18;
 
@@ -55,7 +55,7 @@ contract SafeERC20 {
     string public symbol;
     uint8 public decimals;
     // 18 decimals is the strongly suggested default, avoid changing it
-    uint256 public _totalSupply;
+    uint256 public totalSupply;
 
     // This creates an array with all balances    
     mapping (address => uint256) public balanceOf;
@@ -64,7 +64,7 @@ contract SafeERC20 {
     
 
     function totalSupply() public constant returns (uint256) {
-        return _totalSupply;
+        return totalSupply;
     }
     
     
@@ -138,7 +138,7 @@ contract BITTOToken is SafeERC20, owned {
     uint256 public decimals = 18;
 
     uint256 public _totalSupply = 33000000e18;
-    address multisig = 0x228C8c3D0878b0d3ce72381b8CC92396A03f399e;
+
 
     
 
@@ -156,7 +156,7 @@ contract BITTOToken is SafeERC20, owned {
     // @return the transaction address
     function BITTOToken() public {
  
-        balanceOf[multisig] = _totalSupply;
+        balanceOf[owner] = _totalSupply;
 
     }
 
