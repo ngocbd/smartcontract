@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xb8fa3b0a0c671a91565f891f390454c2ae44c623
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x5d0fe1fbaed92e33877acc95b1b9272ebf50ec7e
 */
 pragma solidity ^0.4.4;
 
@@ -12,20 +12,20 @@ contract Token {
     /// @return The balance
     function balanceOf(address _owner) constant returns (uint256 balance) {}
 
-    /// @notice send `_value` token to `_to` from `msg.sender`
+    /// @notice send _value token to _to from msg.sender
     /// @param _to The address of the recipient
     /// @param _value The amount of token to be transferred
     /// @return Whether the transfer was successful or not
     function transfer(address _to, uint256 _value) returns (bool success) {}
 
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+    /// @notice send _value token to _to from _from on the condition it is approved by _from
     /// @param _from The address of the sender
     /// @param _to The address of the recipient
     /// @param _value The amount of token to be transferred
     /// @return Whether the transfer was successful or not
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
 
-    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
+    /// @notice msg.sender approves _addr to spend _value tokens
     /// @param _spender The address of the account able to transfer the tokens
     /// @param _value The amount of wei to be approved for transfer
     /// @return Whether the approval was successful or not
@@ -112,18 +112,18 @@ contract ERC20Token is StandardToken {
     string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
 
 //
-
+// CHANGE THESE VALUES FOR YOUR TOKEN
 //
 
 //make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 100000000000000000000000000;               
-        totalSupply = 100000000000000000000000000;                        
-        name = "LADoken";                                   
-        decimals = 18;                            
-        symbol = "LAD";                               
+        balances[msg.sender] = 17760000000000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 17760000000000000000000000 ;                        // Update total supply (100000 for example)
+        name = "'Murica Coin";                                   // Set the name for display purposes
+        decimals = 18;                          // Amount of decimals for display purposes
+        symbol = "MURC";                              // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
@@ -133,7 +133,7 @@ contract ERC20Token is StandardToken {
 
         //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
         //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
-        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
+        //it is assumed that when does this that the call should succeed, otherwise one would use vanilla approve instead.
         if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
         return true;
     }
