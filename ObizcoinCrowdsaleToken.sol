@@ -1,29 +1,31 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ObizcoinCrowdsaleToken at 0xdf44d0206c234931a1a6c6dc3fac87c14e5694a7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ObizcoinCrowdsaleToken at 0xbf5eed8d51b20834c9d887b22c229237922055d7
 */
-pragma solidity ^0.4.14;
-
+pragma solidity ^0.4.18;
 
 library SafeMath {
-    function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
+        }
         uint256 c = a * b;
-        assert(a == 0 || c / a == b);
+        assert(c / a == b);
         return c;
     }
 
-    function div(uint256 a, uint256 b) internal constant returns (uint256) {
-       
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+
         uint256 c = a / b;
-       
+
         return c;
     }
 
-    function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
         assert(b <= a);
         return a - b;
     }
 
-    function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
         uint256 c = a + b;
         assert(c >= a);
         return c;
@@ -34,9 +36,9 @@ library SafeMath {
 contract ERC20Basic {
     uint256 public totalSupply;
 
-    function balanceOf(address who) constant returns (uint256);
+    function balanceOf(address who) public constant returns (uint256);
 
-    function transfer(address to, uint256 value) returns (bool);
+    function transfer(address to, uint256 value) public returns (bool);
 
     event Transfer(address indexed from, address indexed to, uint256 value);
 }
@@ -46,25 +48,25 @@ contract BasicToken is ERC20Basic {
     using SafeMath for uint256;
     mapping (address => uint256) balances;
 
-    function transfer(address _to, uint256 _value) returns (bool) {
+    function transfer(address _to, uint256 _value) public returns (bool) {
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
         Transfer(msg.sender, _to, _value);
         return true;
     }
 
-    function balanceOf(address _owner) constant returns (uint256 balance) {
+    function balanceOf(address _owner) public  constant returns (uint256 balance) {
         return balances[_owner];
     }
 }
 
 
 contract ERC20 is ERC20Basic {
-    function allowance(address owner, address spender) constant returns (uint256);
+    function allowance(address owner, address spender) public constant returns (uint256);
 
-    function transferFrom(address from, address to, uint256 value) returns (bool);
+    function transferFrom(address from, address to, uint256 value) public returns (bool);
 
-    function approve(address spender, uint256 value) returns (bool);
+    function approve(address spender, uint256 value) public returns (bool);
 
     event Approval(address indexed owner, address indexed spender, uint256 value);
 }
@@ -73,7 +75,7 @@ contract ERC20 is ERC20Basic {
 contract StandardToken is ERC20, BasicToken {
     mapping (address => mapping (address => uint256)) allowed;
 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
         var _allowance = allowed[_from][msg.sender];
 
         balances[_to] = balances[_to].add(_value);
@@ -83,7 +85,7 @@ contract StandardToken is ERC20, BasicToken {
         return true;
     }
 
-    function approve(address _spender, uint256 _value) returns (bool) {
+    function approve(address _spender, uint256 _value) public returns (bool) {
 
         require((_value == 0) || (allowed[msg.sender][_spender] == 0));
         allowed[msg.sender][_spender] = _value;
@@ -91,7 +93,7 @@ contract StandardToken is ERC20, BasicToken {
         return true;
     }
 
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
         return allowed[_owner][_spender];
     }
 }
@@ -100,7 +102,7 @@ contract StandardToken is ERC20, BasicToken {
 contract Ownable {
     address public owner;
 
-    function Ownable() {
+    function Ownable() public {
         owner = msg.sender;
     }
 
@@ -109,7 +111,7 @@ contract Ownable {
         _;
     }
 
-    function transferOwnership(address newOwner) onlyOwner {
+    function transferOwnership(address newOwner) public onlyOwner {
         if (newOwner != address(0)) {
             owner = newOwner;
         }
@@ -129,14 +131,14 @@ contract MintableToken is StandardToken, Ownable {
         _;
     }
 
-    function mint(address _to, uint256 _amount) onlyOwner canMint returns (bool) {
+    function mint(address _to, uint256 _amount) public onlyOwner canMint returns (bool) {
         totalSupply = totalSupply.add(_amount);
         balances[_to] = balances[_to].add(_amount);
         Mint(_to, _amount);
         return true;
     }
 
-    function destroy(uint256 _amount, address destroyer) onlyOwner {
+    function destroy(uint256 _amount, address destroyer) public onlyOwner {
         uint256 myBalance = balances[destroyer];
         if (myBalance > _amount) {
             totalSupply = totalSupply.sub(_amount);
@@ -148,7 +150,7 @@ contract MintableToken is StandardToken, Ownable {
         }
     }
 
-    function finishMinting() onlyOwner returns (bool) {
+    function finishMinting() public onlyOwner returns (bool) {
         mintingFinished = true;
         MintFinished();
         return true;
@@ -167,12 +169,12 @@ contract Crowdsale is Ownable {
 
     event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount, uint mytime);
 
-    function Crowdsale() {
+    function Crowdsale()public {
         token = createTokenContract();
         wallet = msg.sender;
     }
 
-    function setNewWallet(address newWallet) onlyOwner {
+    function setNewWallet(address newWallet) public onlyOwner {
         require(newWallet != 0x0);
         wallet = newWallet;
     }
@@ -181,7 +183,7 @@ contract Crowdsale is Ownable {
         return new ObizcoinCrowdsaleToken();
     }
     // fallback function can be used to buy tokens
-    function() payable {
+    function() public payable {
         buyTokens(msg.sender);
     }
 
@@ -197,12 +199,12 @@ contract Crowdsale is Ownable {
         }
     }
 
-    function destroyMyToken(uint256 amount) onlyOwner {
+    function destroyMyToken(uint256 amount) public onlyOwner {
         token.destroy(amount.mul(1000000000000000000), msg.sender);
     }
 
-        uint time0 = 1512970200; // now; // 11th dec, 2017 at 05:30 hrs UTC
-//    uint time0 = block.timestamp; 
+    uint time0 = 1512970200; // now; // 11th dec, 2017 at 05:30 hrs UTC
+    //uint time0 = block.timestamp;
     uint time1 = time0 + 15 days;
 
     uint time2 = time1 + 44 days + 5 hours + 5 minutes; // 24th Jan,2018 at 11:00 hrs UTC
@@ -218,7 +220,7 @@ contract Crowdsale is Ownable {
     uint time7 = time2 + 34 days;
 
     // low level token purchase function
-    function buyTokens(address beneficiary) payable {
+    function buyTokens(address beneficiary) public payable {
         require(beneficiary != 0x0);
         require(validPurchase());
         require(!hasEnded());
@@ -226,12 +228,8 @@ contract Crowdsale is Ownable {
         uint256 tokens;
         // calculate token amount to be created
 
-        if (block.timestamp >= time0 && block.timestamp < time1) tokens = weiAmount.mul(11000);
-        else if (block.timestamp >= time1 && block.timestamp < time2) tokens = weiAmount.mul(10000);
-        else if (block.timestamp >= time3 && block.timestamp < time4) tokens = weiAmount.mul(9000);
-        else if (block.timestamp >= time4 && block.timestamp < time5) tokens = weiAmount.mul(8000);
-        else if (block.timestamp >= time5 && block.timestamp < time6) tokens = weiAmount.mul(7000);
-        else if (block.timestamp >= time6 && block.timestamp < time7) tokens = weiAmount.mul(6000);
+        if (block.timestamp >= time0 && block.timestamp < time2) tokens = weiAmount.mul(11000);
+        else if (block.timestamp >= time3 && block.timestamp < time7) tokens = weiAmount.mul(10000);
 
         // update state
         weiRaised = weiRaised.add(weiAmount);
@@ -243,12 +241,8 @@ contract Crowdsale is Ownable {
 
     function mintTokens(address beneficiary, uint256 tokens) internal {
         uint256 weiAmount;
-        if (block.timestamp >= time0 && block.timestamp < time1) weiAmount = tokens.div(11000);
-        else if (block.timestamp >= time1 && block.timestamp < time2) weiAmount = tokens.div(10000);
-        else if (block.timestamp >= time3 && block.timestamp < time4) weiAmount = tokens.div(9000);
-        else if (block.timestamp >= time4 && block.timestamp < time5) weiAmount = tokens.div(8000);
-        else if (block.timestamp >= time5 && block.timestamp < time6) weiAmount = tokens.div(7000);
-        else if (block.timestamp >= time6 && block.timestamp < time7) weiAmount = tokens.div(6000);
+        if (block.timestamp >= time0 && block.timestamp < time2) weiAmount = tokens.div(11000);
+        else if (block.timestamp >= time3 && block.timestamp < time7) weiAmount = tokens.div(10000);
 
         weiRaised = weiRaised.add(weiAmount);
         token.mint(beneficiary, tokens);
@@ -290,8 +284,8 @@ contract ObizcoinCrowdsaleToken is MintableToken {
 
     uint8 public decimals;
 
-    function ObizcoinCrowdsaleToken() {
-        name = "Obizcoin Token";
+    function ObizcoinCrowdsaleToken() public {
+        name = "OBZ ICO TOKEN SALE";
         symbol = "OBZ";
         decimals = 18;
     }
@@ -304,7 +298,7 @@ contract ObizcoinCrowdsale is Crowdsale {
 
     ProfitSharingObizcoin public profitSharingContract;
 
-    function ObizcoinCrowdsale()
+    function ObizcoinCrowdsale () public
     Crowdsale()
     {
         investors = 0;
@@ -312,17 +306,17 @@ contract ObizcoinCrowdsale is Crowdsale {
     }
 
 
-    function buyObizcoinTokens(address _sender) payable {
+    function buyObizcoinTokens(address _sender) public payable {
         investors++;
         buyTokens(_sender);
     }
 
-    function mintObizcoinTokens(address beneficiary, uint256 tokens) onlyOwner {
+    function mintObizcoinTokens(address beneficiary, uint256 tokens) public onlyOwner {
         investors++;
         mintTokens(beneficiary, tokens.mul(1000000000000000000));
     }
 
-    function() payable {
+    function() public payable {
         buyObizcoinTokens(msg.sender);
     }
 
@@ -333,11 +327,11 @@ contract ProfitSharingObizcoin is Ownable {
 
     ObizcoinCrowdsale crowdsale;
 
-    function ProfitSharingObizcoin(){
+    function ProfitSharingObizcoin()public {
         crowdsale = ObizcoinCrowdsale(msg.sender);
     }
 
-    function() payable {
+    function() public payable {
         crowdsale.profitSharing.value(msg.value)();
     }
 }
