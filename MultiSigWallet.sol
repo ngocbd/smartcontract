@@ -1,7 +1,20 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0xdecbd42e064b4d2aab28fd5443e634d4159e49be
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x830aef165b900fa7dc6b219f062c5784f6436d67
 */
 pragma solidity 0.4.15;
+
+// ERC Token Standard #20 Interface
+// https://github.com/ethereum/EIPs/issues/20
+contract ERC20Interface {
+	function totalSupply() public constant returns(uint256 totalSupplyReturn);
+	function balanceOf(address _owner) public constant returns(uint256 balance);
+	function transfer(address _to, uint256 _value) public returns(bool success);
+	function transferFrom(address _from, address _to, uint256 _value) public returns(bool success);
+	function approve(address _spender, uint256 _value) public returns(bool success);
+	function allowance(address _owner, address _spender) public constant returns(uint256 remaining);
+	event Transfer(address indexed _from, address indexed _to, uint256 _value);
+	event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+}
 
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
@@ -378,4 +391,11 @@ contract MultiSigWallet {
         for (i=from; i<to; i++)
             _transactionIds[i - from] = transactionIdsTemp[i];
     }
+    
+    function claimTokens(address tokenAddress, uint amount)
+      public
+      ownerExists(msg.sender) 
+      returns(bool success) {
+        return ERC20Interface(tokenAddress).transfer(msg.sender, amount);
+      }
 }
