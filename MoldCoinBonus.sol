@@ -1,9 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MoldCoinBonus at 0x9a51f8fdd2d43c79da4549d452d35970bbefc48f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MoldCoinBonus at 0x428c57de1a1d519e953334553b1cc7ef3216e0db
 */
 pragma solidity ^0.4.11;
-
-//MOLD Bonus contract
 
 contract SafeMath {
   //internals
@@ -319,7 +317,6 @@ contract MoldCoinBonus is SafeMath {
     bool public halted = false; //the admin address can set this to true to halt the pre-sell due to emergency
 
     event BuyWithBonus(address indexed sender, address indexed inviter, uint eth, uint tokens, uint bonus);
-    event BuyForFriend(address indexed sender, address indexed friend, uint eth, uint tokens, uint bonus);
 
     modifier onlyAdmin {
         require(msg.sender == admin);
@@ -349,14 +346,12 @@ contract MoldCoinBonus is SafeMath {
 
         fundAddress.buyRecipient.value(msg.value)(msg.sender); //send Ether to pre-sale contract address
 
-        totalSupply = safeAdd(totalSupply, bonus*2);
+        totalSupply = safeAdd(totalSupply, bonus);
 
         bonusBalances[inviter] = safeAdd(bonusBalances[inviter], bonus);
-        bonusBalances[msg.sender] = safeAdd(bonusBalances[msg.sender], bonus);
         BuyWithBonus(msg.sender, inviter, msg.value, tokens, bonus);
 
     }
-
 
     /**
      * Emergency Stop.
