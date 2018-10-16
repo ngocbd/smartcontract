@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleCoinToken at 0xde9de79b38339aae158e28e5c9553b710a04c966
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleCoinToken at 0xeb30eb5f931f5e794d1d19050c1514499327685d
 */
 pragma solidity ^0.4.16;
 
@@ -249,7 +249,7 @@ contract Crowdsale is Ownable {
     restricted = 0x99BBCe354a39B72A0d07e47574B038B9096Ac441;
     restrictedPercent = 20;
     rate = 1250*1 ether;
-    start = 1513350915;
+    start = 1513771200;
     period = 20;
   }
 
