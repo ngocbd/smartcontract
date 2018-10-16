@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Whitelist at 0x63a589c95b6bbb85b859d913cfe46005b98d716a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Whitelist at 0xb4d9202d3e743dbd36b40e6083e818d6397ae77e
 */
 /*
  * Ownable
