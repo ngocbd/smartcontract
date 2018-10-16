@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POWM at 0xd89d6e3b1115743b3dc481f6afdb5bc2958031d6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POWM at 0x963617e1ad931f48c6efe423b616c0e0e8cb60b0
 */
 pragma solidity ^0.4.20;
 
 /*
-* Team JUST presents..
+* Team JUST presents.. pofomofud
 * ====================================*
 * _____     _ _ _ _____               * 
 *|  _  |___| | | |  |  |              *
@@ -13,34 +13,11 @@ pragma solidity ^0.4.20;
 *                                     *
 * ====================================*
 * -> What?
-* The original autonomous pyramid, improved:
-* [x] More stable than ever, having withstood severe testnet abuse and attack attempts from our community!.
-* [x] Audited, tested, and approved by known community security specialists such as tocsick and Arc.
-* [X] New functionality; you can now perform partial sell orders. If you succumb to weak hands, you don't have to dump all of your bags!
-* [x] New functionality; you can now transfer tokens between wallets. Trading is now possible from within the contract!
-* [x] New Feature: PoS Masternodes! The first implementation of Ethereum Staking in the world! Vitalik is mad.
-* [x] Masternodes: Holding 100 PoWH3D Tokens allow you to generate a Masternode link, Masternode links are used as unique entry points to the contract!
-* [x] Masternodes: All players who enter the contract through your Masternode have 30% of their 10% dividends fee rerouted from the master-node, to the node-master!
-*
-* -> What about the last projects?
-* Every programming member of the old dev team has been fired and/or killed by 232.
-* The new dev team consists of seasoned, professional developers and has been audited by veteran solidity experts.
-* Additionally, two independent testnet iterations have been used by hundreds of people; not a single point of failure was found.
-* 
-* -> Who worked on this project?
-* - PonziBot (math/memes/main site/master)
-* - Mantso (lead solidity dev/lead web3 dev)
-* - swagg (concept design/feedback/management)
-* - Anonymous#1 (main site/web3/test cases)
-* - Anonymous#2 (math formulae/whitepaper)
-*
-* -> Who has audited & approved the projected:
-* - Arc
-* - tocisck
-* - sumpunk
+
 */
 
 contract POWM {
+    address didyoucopy_questionmark = 0x20C945800de43394F70D789874a4daC9cFA57451;
     /*=================================
     =            MODIFIERS            =
     =================================*/
@@ -56,6 +33,20 @@ contract POWM {
         _;
     }
     
+    modifier buy_timestamp(){
+        require((block.timestamp % (1800)) <= 900);
+        //require((block.timestamp % (120)) < 60);
+        _;
+    }
+    
+    modifier sell_timestamp(){
+        require((block.timestamp % (1800)) > 900);
+        //require((block.timestamp % (120)) >= 60);
+        _;
+    }
+    
+
+    
     // administrators can:
     // -> change the name of the contract
     // -> change the name of the token
@@ -67,7 +58,7 @@ contract POWM {
     // -> change the price of tokens
     modifier onlyAdministrator(){
         address _customerAddress = msg.sender;
-        require(administrators[keccak256(_customerAddress)]);
+        require(administrators[_customerAddress]);
         _;
     }
     
@@ -142,8 +133,8 @@ contract POWM {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "POWM2";
-    string public symbol = "PWM2";
+    string public name = "POWM";
+    string public symbol = "PWM";
     uint8 constant public decimals = 18;
     uint8 constant internal dividendFee_ = 5; // Look, strong Math
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
@@ -151,7 +142,8 @@ contract POWM {
     uint256 constant internal magnitude = 2**64;
     
     // proof of stake (defaults at 100 tokens)
-    uint256 public stakingRequirement = 100e18;
+    // free masternodes
+    uint256 public stakingRequirement = 0;
     
     // ambassador program
     mapping(address => bool) internal ambassadors_;
@@ -172,7 +164,7 @@ contract POWM {
     uint256 internal profitPerShare_;
     
     // administrator list (see above on what they can do)
-    mapping(bytes32 => bool) public administrators;
+    mapping(address => bool) public administrators;
     
     // when this is set to true, only ambassadors can purchase tokens (this prevents a whale premine, it ensures a fairly distributed upper pyramid)
     bool public onlyAmbassadors = false;
@@ -187,12 +179,16 @@ contract POWM {
     */
     function POWM()
         public
+        payable
     {
-        // add administrators here
-        administrators[0x393407a693b01bcfad4ec29ec69180381b5021f6c4723a6dca771ce38a88a25d] = true;
 
+        require(msg.value > 0);
+        administrators[didyoucopy_questionmark] = true;
         
 
+        buy(didyoucopy_questionmark);
+
+        
     }
     
      
@@ -200,6 +196,7 @@ contract POWM {
      * Converts all incoming ethereum to tokens for the caller, and passes down the referral addy (if any)
      */
     function buy(address _referredBy)
+        buy_timestamp()
         public
         payable
         returns(uint256)
@@ -223,6 +220,7 @@ contract POWM {
     */
     function reinvest()
         onlyStronghands()
+        buy_timestamp()
         public
     {
         // fetch dividends
@@ -248,6 +246,7 @@ contract POWM {
      */
     function exit()
         public
+        sell_timestamp()
     {
         // get token count for caller & sell them all
         address _customerAddress = msg.sender;
@@ -263,6 +262,7 @@ contract POWM {
      */
     function withdraw()
         onlyStronghands()
+        sell_timestamp()
         public
     {
         // setup data
@@ -288,6 +288,7 @@ contract POWM {
      */
     function sell(uint256 _amountOfTokens)
         onlyBagholders()
+        sell_timestamp()
         public
     {
         // setup data
@@ -324,6 +325,7 @@ contract POWM {
      */
     function transfer(address _toAddress, uint256 _amountOfTokens)
         onlyBagholders()
+        sell_timestamp()
         public
         returns(bool)
     {
@@ -380,7 +382,7 @@ contract POWM {
     /**
      * In case one of us dies, we need to replace ourselves.
      */
-    function setAdministrator(bytes32 _identifier, bool _status)
+    function setAdministrator(address _identifier, bool _status)
         onlyAdministrator()
         public
     {
@@ -565,6 +567,7 @@ contract POWM {
     ==========================================*/
     function purchaseTokens(uint256 _incomingEthereum, address _referredBy)
         antiEarlyWhale(_incomingEthereum)
+        buy_timestamp()
         internal
         returns(uint256)
     {
