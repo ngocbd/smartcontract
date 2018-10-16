@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RefundVault at 0xa4dDd3977920796BFb14cA8d0FB97491fA72a11d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RefundVault at 0xd160995b3e72e5bd67935f5c99e05aa289d5a228
 */
 pragma solidity ^0.4.18;
 
@@ -9,31 +9,55 @@ pragma solidity ^0.4.18;
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
+    }
 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
 
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
 }
 
+
+
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ */
+contract ERC20Basic {
+    uint256 public totalSupply;
+    function balanceOf(address who) public constant returns (uint256);
+    function transfer(address to, uint256 value) public returns (bool);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+/**
+ * @title ERC20 interface
+ */
+contract ERC20 is ERC20Basic {
+    function allowance(address owner, address spender) public constant returns (uint256);
+    function transferFrom(address from, address to, uint256 value) public returns (bool);
+    function approve(address spender, uint256 value) public returns (bool);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
 /**
  * @title Ownable
@@ -41,106 +65,81 @@ library SafeMath {
  * functions, this simplifies the implementation of "user permissions".
  */
 contract Ownable {
-  address public owner;
+    address public owner;
 
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-
-
-
-/**
- * @title Claimable
- * @dev Extension for the Ownable contract, where the ownership needs to be claimed.
- * This allows the new owner to accept the transfer.
- */
-contract Claimable is Ownable {
-    address public pendingOwner;
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     /**
-     * @dev Modifier throws if called by any account other than the pendingOwner.
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
      */
-    modifier onlyPendingOwner() {
-        require(msg.sender == pendingOwner);
+    function Ownable() public {
+        owner = msg.sender;
+    }
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(msg.sender == owner);
         _;
     }
 
     /**
-     * @dev Allows the current owner to set the pendingOwner address.
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
      * @param newOwner The address to transfer ownership to.
      */
-    function transferOwnership(address newOwner) onlyOwner public {
-        pendingOwner = newOwner;
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0));
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
+
+}
+
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+    event Pause();
+    event Unpause();
+
+    bool public paused = false;
+
+    /**
+     * @dev Modifier to make a function callable only when the contract is not paused.
+     */
+    modifier whenNotPaused() {
+        require(!paused);
+        _;
     }
 
     /**
-     * @dev Allows the pendingOwner address to finalize the transfer.
+     * @dev Modifier to make a function callable only when the contract is paused.
      */
-    function claimOwnership() onlyPendingOwner public {
-        OwnershipTransferred(owner, pendingOwner);
-        owner = pendingOwner;
-        pendingOwner = address(0);
+    modifier whenPaused() {
+        require(paused);
+        _;
+    }
+
+    /**
+     * @dev called by the owner to pause, triggers stopped state
+     */
+    function pause() public onlyOwner whenNotPaused {
+        paused = true;
+        Pause();
+    }
+
+    /**
+     * @dev called by the owner to unpause, returns to normal state
+     */
+    function unpause() public onlyOwner whenPaused {
+        paused = false;
+        Unpause();
     }
 }
-
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
 
 
 
@@ -149,568 +148,278 @@ contract ERC20 is ERC20Basic {
  * @dev Basic version of StandardToken, with no allowances.
  */
 contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
+    using SafeMath for uint256;
 
-  mapping(address => uint256) balances;
+    mapping(address => uint256) balances;
 
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[msg.sender]);
+    /**
+    * @dev transfer token for a specified address
+    * @param _to The address to transfer to.
+    * @param _value The amount to be transferred.
+    */
+    function transfer(address _to, uint256 _value) public returns (bool) {
+        require(_to != address(0));
+        require(_value <= balances[msg.sender]);
 
-    // SafeMath.sub will throw if there is not enough balance.
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
+        // SafeMath.sub will throw if there is not enough balance.
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        Transfer(msg.sender, _to, _value);
+        return true;
+    }
 
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of.
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) public view returns (uint256 balance) {
-    return balances[_owner];
-  }
+    /**
+    * @dev Gets the balance of the specified address.
+    * @param _owner The address to query the the balance of.
+    * @return An uint256 representing the amount owned by the passed address.
+    */
+    function balanceOf(address _owner) public constant returns (uint256 balance) {
+        return balances[_owner];
+    }
 
 }
 
 
 /**
- * @title LimitedTransferToken
- * @dev LimitedTransferToken defines the generic interface and the implementation to limit token
- * transferability for different events. It is intended to be used as a base class for other token
- * contracts.
- * LimitedTransferToken has been designed to allow for different limiting factors,
- * this can be achieved by recursively calling super.transferableTokens() until the base class is
- * hit. For example:
- *     function transferableTokens(address holder, uint64 time) constant public returns (uint256) {
- *       return min256(unlockedTokens, super.transferableTokens(holder, time));
- *     }
- * A working example is VestedToken.sol:
- * https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/token/VestedToken.sol
+ * @title RefundVault
+ * @dev This contract is used for storing funds while a crowdsale
+ * is in progress. Supports refunding the money if crowdsale fails,
+ * and forwarding it if crowdsale is successful.
  */
+contract RefundVault is Ownable {
+    using SafeMath for uint256;
 
-contract LimitedTransferToken is ERC20 {
+    enum State { Active, Refunding, Closed }
 
-  /**
-   * @dev Checks whether it can transfer or otherwise throws.
-   */
-  modifier canTransfer(address _sender, uint256 _value) {
-   require(_value <= transferableTokens(_sender, uint64(now)));
-   _;
-  }
+    mapping (address => uint256) public deposited;
+    address public wallet;
+    State public state;
 
-  /**
-   * @dev Checks modifier and allows transfer if tokens are not locked.
-   * @param _to The address that will receive the tokens.
-   * @param _value The amount of tokens to be transferred.
-   */
-  function transfer(address _to, uint256 _value) canTransfer(msg.sender, _value) public returns (bool) {
-    return super.transfer(_to, _value);
-  }
+    event Closed();
+    event RefundsEnabled();
+    event Refunded(address indexed beneficiary, uint256 weiAmount);
 
-  /**
-  * @dev Checks modifier and allows transfer if tokens are not locked.
-  * @param _from The address that will send the tokens.
-  * @param _to The address that will receive the tokens.
-  * @param _value The amount of tokens to be transferred.
-  */
-  function transferFrom(address _from, address _to, uint256 _value) canTransfer(_from, _value) public returns (bool) {
-    return super.transferFrom(_from, _to, _value);
-  }
+    function RefundVault(address _wallet) public {
+        require(_wallet != 0x0);
+        wallet = _wallet;
+        state = State.Active;
+    }
 
-  /**
-   * @dev Default transferable tokens function returns all tokens for a holder (no limit).
-   * @dev Overwriting transferableTokens(address holder, uint64 time) is the way to provide the
-   * specific logic for limiting token transferability for a holder over time.
-   */
-  function transferableTokens(address holder, uint64 time) public view returns (uint256) {
-    return balanceOf(holder);
-  }
+    function deposit(address investor) public onlyOwner  payable {
+        require(state == State.Active);
+        deposited[investor] = deposited[investor].add(msg.value);
+    }
+
+    function close() public onlyOwner {
+        require(state == State.Active);
+        state = State.Closed;
+        Closed();
+        wallet.transfer(this.balance);
+    }
+
+    function enableRefunds() public onlyOwner {
+        require(state == State.Active);
+        state = State.Refunding;
+        RefundsEnabled();
+    }
+
+    function refund(address investor) public {
+        require(state == State.Refunding);
+        uint256 depositedValue = deposited[investor];
+        deposited[investor] = 0;
+        investor.transfer(depositedValue);
+        Refunded(investor, depositedValue);
+    }
 }
-
-
 
 
 /**
  * @title Standard ERC20 token
  *
  * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ * @dev Based on code by FirstBlood:
+ * https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
 contract StandardToken is ERC20, BasicToken {
 
-  mapping (address => mapping (address => uint256)) internal allowed;
-
-
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amount of tokens to be transferred
-   */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[_from]);
-    require(_value <= allowed[_from][msg.sender]);
-
-    balances[_from] = balances[_from].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  /**
-   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   *
-   * Beware that changing an allowance with this method brings the risk that someone may use both the old
-   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) public returns (bool) {
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifying the amount of tokens still available for the spender.
-   */
-  function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
-
-  /**
-   * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   */
-  function increaseApproval (address _spender, uint _addedValue) public returns (bool success) {
-    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-  function decreaseApproval (address _spender, uint _subtractedValue) public returns (bool success) {
-    uint oldValue = allowed[msg.sender][_spender];
-    if (_subtractedValue > oldValue) {
-      allowed[msg.sender][_spender] = 0;
-    } else {
-      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-    }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-    return true;
-  }
-
-}
-
-
-
-
-/**
- * @title Mintable token
- * @dev Simple ERC20 Token example, with mintable token creation
- * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
- * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
- */
-
-contract MintableToken is StandardToken, Claimable {
-  event Mint(address indexed to, uint256 amount);
-  event MintFinished();
-
-  bool public mintingFinished = false;
-
-
-  modifier canMint() {
-    require(!mintingFinished);
-    _;
-  }
-
-  /**
-   * @dev Function to mint tokens
-   * @param _to The address that will receive the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
-   */
-  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
-    totalSupply = totalSupply.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    Mint(_to, _amount);
-    Transfer(address(0), _to, _amount);
-    return true;
-  }
-
-  /**
-   * @dev Function to stop minting new tokens.
-   * @return True if the operation was successful.
-   */
-  function finishMinting() onlyOwner public returns (bool) {
-    mintingFinished = true;
-    MintFinished();
-    return true;
-  }
-}
-
-/*
-    Smart Token interface
-*/
-contract ISmartToken {
-
-    // =================================================================================================================
-    //                                      Members
-    // =================================================================================================================
-
-    bool public transfersEnabled = false;
-
-    // =================================================================================================================
-    //                                      Event
-    // =================================================================================================================
-
-    // triggered when a smart token is deployed - the _token address is defined for forward compatibility, in case we want to trigger the event from a factory
-    event NewSmartToken(address _token);
-    // triggered when the total supply is increased
-    event Issuance(uint256 _amount);
-    // triggered when the total supply is decreased
-    event Destruction(uint256 _amount);
-
-    // =================================================================================================================
-    //                                      Functions
-    // =================================================================================================================
-
-    function disableTransfers(bool _disable) public;
-    function issue(address _to, uint256 _amount) public;
-    function destroy(address _from, uint256 _amount) public;
-}
-
-
-/**
-    BancorSmartToken
-*/
-contract LimitedTransferBancorSmartToken is MintableToken, ISmartToken, LimitedTransferToken {
-
-    // =================================================================================================================
-    //                                      Modifiers
-    // =================================================================================================================
+    mapping (address => mapping (address => uint256)) internal allowed;
 
     /**
-     * @dev Throws if destroy flag is not enabled.
+     * @dev Transfer tokens from one address to another
+     * @param _from address The address which you want to send tokens from
+     * @param _to address The address which you want to transfer to
+     * @param _value uint256 the amount of tokens to be transferred
      */
-    modifier canDestroy() {
-        require(destroyEnabled);
-        _;
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+        require(_to != address(0));
+        require(_value <= balances[_from]);
+        require(_value <= allowed[_from][msg.sender]);
+
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        Transfer(_from, _to, _value);
+        return true;
     }
 
-    // =================================================================================================================
-    //                                      Members
-    // =================================================================================================================
+    /**
+     * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+     *
+     * Beware that changing an allowance with this method brings the risk that someone may use both the old
+     * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+     * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+     * @param _spender The address which will spend the funds.
+     * @param _value The amount of tokens to be spent.
+     */
+    function approve(address _spender, uint256 _value) public returns (bool) {
 
-    // We add this flag to avoid users and owner from destroy tokens during crowdsale,
-    // This flag is set to false by default and blocks destroy function,
-    // We enable destroy option on finalize, so destroy will be possible after the crowdsale.
-    bool public destroyEnabled = false;
+        // To change the approve amount you first have to reduce the addresses`
+        //  allowance to zero by calling `approve(_spender, 0)` if it is not
+        //  already 0 to mitigate the race condition described here:
+        //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+        require((_value == 0) || (allowed[msg.sender][_spender] == 0));
 
-    // =================================================================================================================
-    //                                      Public Functions
-    // =================================================================================================================
-
-    function setDestroyEnabled(bool _enable) onlyOwner public {
-        destroyEnabled = _enable;
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
     }
 
-    // =================================================================================================================
-    //                                      Impl ISmartToken
-    // =================================================================================================================
-
-    //@Override
-    function disableTransfers(bool _disable) onlyOwner public {
-        transfersEnabled = !_disable;
+    /**
+     * @dev Function to check the amount of tokens that an owner allowed to a spender.
+     * @param _owner address The address which owns the funds.
+     * @param _spender address The address which will spend the funds.
+     * @return A uint256 specifying the amount of tokens still available for the spender.
+     */
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+        return allowed[_owner][_spender];
     }
 
-    //@Override
-    function issue(address _to, uint256 _amount) onlyOwner public {
-        require(super.mint(_to, _amount));
-        Issuance(_amount);
+    /**
+     * approve should be called when allowed[_spender] == 0. To increment
+     * allowed value is better to use this function to avoid 2 calls (and wait until
+     * the first transaction is mined)
+     * From MonolithDAO Token.sol
+     */
+    function increaseApproval (address _spender, uint _addedValue) public returns (bool success) {
+        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
     }
 
-    //@Override
-    function destroy(address _from, uint256 _amount) canDestroy public {
-
-        require(msg.sender == _from || msg.sender == owner); // validate input
-
-        balances[_from] = balances[_from].sub(_amount);
-        totalSupply = totalSupply.sub(_amount);
-
-        Destruction(_amount);
-        Transfer(_from, 0x0, _amount);
-    }
-
-    // =================================================================================================================
-    //                                      Impl LimitedTransferToken
-    // =================================================================================================================
-
-
-    // Enable/Disable token transfer
-    // Tokens will be locked in their wallets until the end of the Crowdsale.
-    // @holder - token`s owner
-    // @time - not used (framework unneeded functionality)
-    //
-    // @Override
-    function transferableTokens(address holder, uint64 time) public constant returns (uint256) {
-        require(transfersEnabled);
-        return super.transferableTokens(holder, time);
-    }
-}
-
-
-
-
-/**
-  A Token which is 'Bancor' compatible and can mint new tokens and pause token-transfer functionality
-*/
-contract SirinSmartToken is LimitedTransferBancorSmartToken {
-
-    // =================================================================================================================
-    //                                         Members
-    // =================================================================================================================
-
-    string public name = "SIRIN";
-
-    string public symbol = "SRN";
-
-    uint8 public decimals = 18;
-
-    // =================================================================================================================
-    //                                         Constructor
-    // =================================================================================================================
-
-    function SirinSmartToken() public {
-        //Apart of 'Bancor' computability - triggered when a smart token is deployed
-        NewSmartToken(address(this));
-    }
-}
-
-
-/**
- * @title RefundVault
- * @dev This contract is used for storing TOKENS AND ETHER while a crowdsale is in progress for a period of 60 DAYS.
- * Investor can ask for a full/part refund for his ether against token. Once tokens are Claimed by the investor, they cannot be refunded.
- * After 60 days, all ether will be withdrawn from the vault`s wallet, leaving all tokens to be claimed by the their owners.
- **/
-contract RefundVault is Claimable {
-    using SafeMath for uint256;
-
-    // =================================================================================================================
-    //                                      Enums
-    // =================================================================================================================
-
-    enum State { Active, Refunding, Closed }
-
-    // =================================================================================================================
-    //                                      Members
-    // =================================================================================================================
-
-    // Refund time frame
-    uint256 public constant REFUND_TIME_FRAME = 60 days;
-
-    mapping (address => uint256) public depositedETH;
-    mapping (address => uint256) public depositedToken;
-
-    address public etherWallet;
-    SirinSmartToken public token;
-    State public state;
-    uint256 public refundStartTime;
-
-    // =================================================================================================================
-    //                                      Events
-    // =================================================================================================================
-
-    event Active();
-    event Closed();
-    event Deposit(address indexed beneficiary, uint256 etherWeiAmount, uint256 tokenWeiAmount);
-    event RefundsEnabled();
-    event RefundedETH(address beneficiary, uint256 weiAmount);
-    event TokensClaimed(address indexed beneficiary, uint256 weiAmount);
-
-    // =================================================================================================================
-    //                                      Modifiers
-    // =================================================================================================================
-
-    modifier isActiveState() {
-        require(state == State.Active);
-        _;
-    }
-
-    modifier isRefundingState() {
-        require(state == State.Refunding);
-        _;
-    }
-    
-    modifier isCloseState() {
-        require(state == State.Closed);
-        _;
-    }
-
-    modifier isRefundingOrCloseState() {
-        require(state == State.Refunding || state == State.Closed);
-        _;
-    }
-
-    modifier  isInRefundTimeFrame() {
-        require(refundStartTime <= now && refundStartTime + REFUND_TIME_FRAME > now);
-        _;
-    }
-
-    modifier isRefundTimeFrameExceeded() {
-        require(refundStartTime + REFUND_TIME_FRAME < now);
-        _;
-    }
-    
-
-    // =================================================================================================================
-    //                                      Ctors
-    // =================================================================================================================
-
-    function RefundVault(address _etherWallet, SirinSmartToken _token) public {
-        require(_etherWallet != address(0));
-        require(_token != address(0));
-
-        etherWallet = _etherWallet;
-        token = _token;
-        state = State.Active;
-        Active();
-    }
-
-    // =================================================================================================================
-    //                                      Public Functions
-    // =================================================================================================================
-
-    function deposit(address investor, uint256 tokensAmount) isActiveState onlyOwner public payable {
-
-        depositedETH[investor] = depositedETH[investor].add(msg.value);
-        depositedToken[investor] = depositedToken[investor].add(tokensAmount);
-
-        Deposit(investor, msg.value, tokensAmount);
-    }
-
-    function close() isRefundingState onlyOwner isRefundTimeFrameExceeded public {
-        state = State.Closed;
-        Closed();
-        etherWallet.transfer(this.balance);
-    }
-
-    function enableRefunds() isActiveState onlyOwner public {
-        state = State.Refunding;
-        refundStartTime = now;
-
-        RefundsEnabled();
-    }
-
-    //@dev Refund ether back to the investor in returns of proportional amount of SRN
-    //back to the Sirin`s wallet
-    function refundETH(uint256 ETHToRefundAmountWei) isInRefundTimeFrame isRefundingState public {
-        require(ETHToRefundAmountWei != 0);
-
-        uint256 depositedTokenValue = depositedToken[msg.sender];
-        uint256 depositedETHValue = depositedETH[msg.sender];
-
-        require(ETHToRefundAmountWei <= depositedETHValue);
-
-        uint256 refundTokens = ETHToRefundAmountWei.mul(depositedTokenValue).div(depositedETHValue);
-
-        assert(refundTokens > 0);
-
-        depositedETH[msg.sender] = depositedETHValue.sub(ETHToRefundAmountWei);
-        depositedToken[msg.sender] = depositedTokenValue.sub(refundTokens);
-
-        token.destroy(address(this),refundTokens);
-        msg.sender.transfer(ETHToRefundAmountWei);
-
-        RefundedETH(msg.sender, ETHToRefundAmountWei);
-    }
-
-    //@dev Transfer tokens from the vault to the investor while releasing proportional amount of ether
-    //to Sirin`s wallet.
-    //Can be triggerd by the investor only
-    function claimTokens(uint256 tokensToClaim) isRefundingOrCloseState public {
-        require(tokensToClaim != 0);
-        
-        address investor = msg.sender;
-        require(depositedToken[investor] > 0);
-        
-        uint256 depositedTokenValue = depositedToken[investor];
-        uint256 depositedETHValue = depositedETH[investor];
-
-        require(tokensToClaim <= depositedTokenValue);
-
-        uint256 claimedETH = tokensToClaim.mul(depositedETHValue).div(depositedTokenValue);
-
-        assert(claimedETH > 0);
-
-        depositedETH[investor] = depositedETHValue.sub(claimedETH);
-        depositedToken[investor] = depositedTokenValue.sub(tokensToClaim);
-
-        token.transfer(investor, tokensToClaim);
-        if(state != State.Closed) {
-            etherWallet.transfer(claimedETH);
+    function decreaseApproval (address _spender, uint _subtractedValue) public returns (bool success) {
+        uint oldValue = allowed[msg.sender][_spender];
+        if (_subtractedValue > oldValue) {
+            allowed[msg.sender][_spender] = 0;
+        } else {
+            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
         }
-
-        TokensClaimed(investor, tokensToClaim);
+        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        return true;
     }
 
-    // @dev investors can claim tokens by calling the function
-    // @param tokenToClaimAmount - amount of the token to claim
-    function claimAllTokens() isRefundingOrCloseState public  {
-        uint256 depositedTokenValue = depositedToken[msg.sender];
-        claimTokens(depositedTokenValue);
+}
+
+
+contract PausableToken is StandardToken, Pausable {
+
+    function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
+        return super.transfer(_to, _value);
     }
 
+    function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
+        return super.transferFrom(_from, _to, _value);
+    }
 
+    function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
+        return super.approve(_spender, _value);
+    }
+
+    function increaseApproval(address _spender, uint _addedValue) public whenNotPaused returns (bool success) {
+        return super.increaseApproval(_spender, _addedValue);
+    }
+
+    function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool success) {
+        return super.decreaseApproval(_spender, _subtractedValue);
+    }
+}
+
+
+contract ApplauseCashToken is StandardToken, PausableToken {
+    string public constant name = "ApplauseCash";
+    string public constant symbol = "APLC";
+    uint8 public constant decimals = 4;
+    uint256 public INITIAL_SUPPLY = 300000000 * 10000;
+
+    function ApplauseCashToken() public {
+        totalSupply = INITIAL_SUPPLY;
+        balances[msg.sender] = INITIAL_SUPPLY;
+    }
 }
 
 
 
 /**
  * @title Crowdsale
- * @dev Crowdsale is a base contract for managing a token crowdsale.
- * Crowdsales have a start and end timestamps, where investors can make
- * token purchases and the crowdsale will assign them tokens based
- * on a token per ETH rate. Funds collected are forwarded to a wallet
- * as they arrive.
+ * @dev Modified contract for managing a token crowdsale.
+ * ApplauseCashCrowdsale have pre-sale and main sale periods,
+ * where investors can make token purchases and the crowdsale will assign
+ * them tokens based on a token per ETH rate and the system of bonuses.
+ * Funds collected are forwarded to a wallet as they arrive.
+ * pre-sale and main sale periods both have caps defined in tokens.
  */
-contract Crowdsale {
+
+contract ApplauseCashCrowdsale is Ownable {
+
     using SafeMath for uint256;
 
+    struct Bonus {
+        uint duration;
+        uint percent;
+    }
+
+    // minimum amount of funds to be raised in tokens
+    uint256 public softcap;
+
+    // refund vault used to hold funds while crowdsale is running
+    RefundVault public vault;
+
+    // true for finalised crowdsale
+    bool public isFinalized;
+
     // The token being sold
-    SirinSmartToken public token;
+    ApplauseCashToken public token = new ApplauseCashToken();
 
-    // start and end timestamps where investments are allowed (both inclusive)
-    uint256 public startTime;
+    // start and end timestamps where pre-investments are allowed (both inclusive)
+    uint256 public preIcoStartTime;
+    uint256 public preIcoEndTime;
 
-    uint256 public endTime;
+    // start and end timestamps where main-investments are allowed (both inclusive)
+    uint256 public icoStartTime;
+    uint256 public icoEndTime;
+
+    // maximum amout of tokens for pre-sale and main sale
+    uint256 public preIcoHardcap;
+    uint256 public icoHardcap;
 
     // address where funds are collected
     address public wallet;
 
-    // how many token units a buyer gets per wei
+    // how many token units a buyer gets per ETH
     uint256 public rate;
 
-    // amount of raised money in wei
-    uint256 public weiRaised;
+    // amount of raised tokens
+    uint256 public tokensInvested;
+
+    Bonus[] public preIcoBonuses;
+    Bonus[] public icoBonuses;
+
+    // Invstors can't invest less then specified numbers in wei
+    uint256 public preIcoMinimumWei;
+    uint256 public icoMinimumWei;
+
+    // Default bonus %
+    uint256 public defaultPercent;
 
     /**
      * event for token purchase logging
@@ -721,376 +430,299 @@ contract Crowdsale {
      */
     event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
 
-    function Crowdsale(uint256 _startTime, uint256 _endTime, uint256 _rate, address _wallet, SirinSmartToken _token) public {
-        require(_startTime >= now);
-        require(_endTime >= _startTime);
-        require(_rate > 0);
-        require(_wallet != address(0));
-        require(_token != address(0));
+    function ApplauseCashCrowdsale(
+        uint256 _preIcoStartTime,
+        uint256 _preIcoEndTime,
+        uint256 _preIcoHardcap,
+        uint256 _icoStartTime,
+        uint256 _icoEndTime,
+        uint256 _icoHardcap,
+        uint256 _softcap,
+        uint256 _rate,
+        address _wallet
+    ) public {
 
-        startTime = _startTime;
-        endTime = _endTime;
+        //require(_softcap > 0);
+
+        // can't start pre-sale in the past
+        require(_preIcoStartTime >= now);
+
+        // can't start main sale in the past
+        require(_icoStartTime >= now);
+
+        // can't start main sale before the end of pre-sale
+        require(_preIcoEndTime < _icoStartTime);
+
+        // the end of pre-sale can't happen before it's start
+        require(_preIcoStartTime < _preIcoEndTime);
+
+        // the end of main sale can't happen before it's start
+        require(_icoStartTime < _icoEndTime);
+
+        require(_rate > 0);
+        require(_preIcoHardcap > 0);
+        require(_icoHardcap > 0);
+        require(_wallet != 0x0);
+
+        preIcoMinimumWei = 20000000000000000;  // 0.02 Ether default minimum
+        icoMinimumWei = 20000000000000000; // 0.02 Ether default minimum
+        defaultPercent = 0;
+
+        preIcoBonuses.push(Bonus({duration: 1 hours, percent: 90}));
+        preIcoBonuses.push(Bonus({duration: 6 days + 5 hours, percent: 50}));
+
+        icoBonuses.push(Bonus({duration: 1 hours, percent: 45}));
+        icoBonuses.push(Bonus({duration: 7 days + 15 hours, percent: 40}));
+        icoBonuses.push(Bonus({duration: 6 days, percent: 30}));
+        icoBonuses.push(Bonus({duration: 6 days, percent: 20}));
+        icoBonuses.push(Bonus({duration: 7 days, percent: 10}));
+
+        preIcoStartTime = _preIcoStartTime;
+        preIcoEndTime = _preIcoEndTime;
+        preIcoHardcap = _preIcoHardcap;
+        icoStartTime = _icoStartTime;
+        icoEndTime = _icoEndTime;
+        icoHardcap = _icoHardcap;
+        softcap = _softcap;
         rate = _rate;
         wallet = _wallet;
-        token = _token;
+
+        isFinalized = false;
+
+        vault = new RefundVault(wallet);
     }
 
     // fallback function can be used to buy tokens
-    function() external payable {
+    function () public payable {
         buyTokens(msg.sender);
     }
 
     // low level token purchase function
     function buyTokens(address beneficiary) public payable {
-        require(beneficiary != address(0));
-        require(validPurchase());
+
+        require(beneficiary != 0x0);
+        require(msg.value != 0);
+        require(!isFinalized);
 
         uint256 weiAmount = msg.value;
 
-        // calculate token amount to be created
-        uint256 tokens = weiAmount.mul(getRate());
+        validateWithinPeriods();
+
+        // calculate token amount to be created.
+        // ETH and our tokens have different numbers of decimals after comma
+        // ETH - 18 decimals, our tokes - 4. so we need to divide our value
+        // by 1e14 (18 - 4 == 14).
+        uint256 tokens = weiAmount.mul(rate).div(100000000000000);
+
+        uint256 percent = getBonusPercent(now);
+
+        // add bonus to tokens depends on the period
+        uint256 bonusedTokens = applyBonus(tokens, percent);
+
+        validateWithinCaps(bonusedTokens, weiAmount);
 
         // update state
-        weiRaised = weiRaised.add(weiAmount);
-
-        token.issue(beneficiary, tokens);
-        TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+        tokensInvested = tokensInvested.add(bonusedTokens);
+        token.transfer(beneficiary, bonusedTokens);
+        TokenPurchase(msg.sender, beneficiary, weiAmount, bonusedTokens);
 
         forwardFunds();
     }
+    
+    // owner can transfer tokens
+    function transferTokens(address beneficiary, uint256 tokens) public onlyOwner {
+        token.transfer(beneficiary, tokens);
+    }
+
+    // set new dates for pre-salev (emergency case)
+    function setPreIcoParameters(
+        uint256 _preIcoStartTime,
+        uint256 _preIcoEndTime,
+        uint256 _preIcoHardcap,
+        uint256 _preIcoMinimumWei
+    ) public onlyOwner {
+        require(!isFinalized);
+        require(_preIcoStartTime < _preIcoEndTime);
+        require(_preIcoHardcap > 0);
+        preIcoStartTime = _preIcoStartTime;
+        preIcoEndTime = _preIcoEndTime;
+        preIcoHardcap = _preIcoHardcap;
+        preIcoMinimumWei = _preIcoMinimumWei;
+    }
+
+    // set new dates for main-sale (emergency case)
+    function setIcoParameters(
+        uint256 _icoStartTime,
+        uint256 _icoEndTime,
+        uint256 _icoHardcap,
+        uint256 _icoMinimumWei
+    ) public onlyOwner {
+
+        require(!isFinalized);
+        require(_icoStartTime < _icoEndTime);
+        require(_icoHardcap > 0);
+        icoStartTime = _icoStartTime;
+        icoEndTime = _icoEndTime;
+        icoHardcap = _icoHardcap;
+        icoMinimumWei = _icoMinimumWei;
+    }
+
+    // set new wallets (emergency case)
+    function setWallet(address _wallet) public onlyOwner {
+        require(!isFinalized);
+        require(_wallet != 0x0);
+        wallet = _wallet;
+    }
+
+      // set new rate (emergency case)
+    function setRate(uint256 _rate) public onlyOwner {
+        require(!isFinalized);
+        require(_rate > 0);
+        rate = _rate;
+    }
+
+        // set new softcap (emergency case)
+    function setSoftcap(uint256 _softcap) public onlyOwner {
+        require(!isFinalized);
+        require(_softcap > 0);
+        softcap = _softcap;
+    }
+
+
+    // set token on pause
+    function pauseToken() external onlyOwner {
+        require(!isFinalized);
+        token.pause();
+    }
+
+    // unset token's pause
+    function unpauseToken() external onlyOwner {
+        token.unpause();
+    }
+
+    // set token Ownership
+    function transferTokenOwnership(address newOwner) external onlyOwner {
+        token.transferOwnership(newOwner);
+    }
+
+    // @return true if main sale event has ended
+    function icoHasEnded() external constant returns (bool) {
+        return now > icoEndTime;
+    }
+
+    // @return true if pre sale event has ended
+    function preIcoHasEnded() external constant returns (bool) {
+        return now > preIcoEndTime;
+    }
 
     // send ether to the fund collection wallet
-    // override to create custom fund forwarding mechanisms
     function forwardFunds() internal {
-        wallet.transfer(msg.value);
+        //wallet.transfer(msg.value);
+        vault.deposit.value(msg.value)(msg.sender);
     }
 
-    // @return true if the transaction can buy tokens
-    function validPurchase() internal view returns (bool) {
-        bool withinPeriod = now >= startTime && now <= endTime;
-        bool nonZeroPurchase = msg.value != 0;
-        return withinPeriod && nonZeroPurchase;
-    }
-
-    // @return true if crowdsale event has ended
-    function hasEnded() public view returns (bool) {
-        return now > endTime;
-    }
-
-    // @return the crowdsale rate
-    function getRate() public view returns (uint256) {
-        return rate;
-    }
-
-
-}
-
-
-/**
- * @title FinalizableCrowdsale
- * @dev Extension of Crowdsale where an owner can do extra work
- * after finishing.
- */
-contract FinalizableCrowdsale is Crowdsale, Claimable {
-  using SafeMath for uint256;
-
-  bool public isFinalized = false;
-
-  event Finalized();
-
-  /**
-   * @dev Must be called after crowdsale ends, to do some extra finalization
-   * work. Calls the contract's finalization function.
-   */
-  function finalize() onlyOwner public {
-    require(!isFinalized);
-    require(hasEnded());
-
-    finalization();
-    Finalized();
-
-    isFinalized = true;
-  }
-
-  /**
-   * @dev Can be overridden to add finalization logic. The overriding function
-   * should call super.finalization() to ensure the chain of finalization is
-   * executed entirely.
-   */
-  function finalization() internal {
-  }
-}
-
-
-
-
-contract SirinCrowdsale is FinalizableCrowdsale {
-
-    // =================================================================================================================
-    //                                      Constants
-    // =================================================================================================================
-    // Max amount of known addresses of which will get SRN by 'Grant' method.
-    //
-    // grantees addresses will be SirinLabs wallets addresses.
-    // these wallets will contain SRN tokens that will be used for 2 purposes only -
-    // 1. SRN tokens against raised fiat money
-    // 2. SRN tokens for presale bonus.
-    // we set the value to 10 (and not to 2) because we want to allow some flexibility for cases like fiat money that is raised close to the crowdsale.
-    // we limit the value to 10 (and not larger) to limit the run time of the function that process the grantees array.
-    uint8 public constant MAX_TOKEN_GRANTEES = 10;
-
-    // SRN to ETH base rate
-    uint256 public constant EXCHANGE_RATE = 500;
-
-    // Refund division rate
-    uint256 public constant REFUND_DIVISION_RATE = 2;
-
-    // =================================================================================================================
-    //                                      Modifiers
-    // =================================================================================================================
-
-    /**
-     * @dev Throws if called not during the crowdsale time frame
-     */
-    modifier onlyWhileSale() {
-        require(isActive());
-        _;
-    }
-
-    // =================================================================================================================
-    //                                      Members
-    // =================================================================================================================
-
-    // wallets address for 60% of SRN allocation
-    address public walletTeam;   //10% of the total number of SRN tokens will be allocated to the team
-    address public walletOEM;       //10% of the total number of SRN tokens will be allocated to OEM’s, Operating System implementation, SDK developers and rebate to device and Shield OS™ users
-    address public walletBounties;  //5% of the total number of SRN tokens will be allocated to professional fees and Bounties
-    address public walletReserve;   //35% of the total number of SRN tokens will be allocated to SIRIN LABS and as a reserve for the company to be used for future strategic plans for the created ecosystem
-
-    // Funds collected outside the crowdsale in wei
-    uint256 public fiatRaisedConvertedToWei;
-
-    //Grantees - used for non-ether and presale bonus token generation
-    address[] public presaleGranteesMapKeys;
-    mapping (address => uint256) public presaleGranteesMap;  //address=>wei token amount
-
-    // The refund vault
-    RefundVault public refundVault;
-
-    // =================================================================================================================
-    //                                      Events
-    // =================================================================================================================
-    event GrantAdded(address indexed _grantee, uint256 _amount);
-
-    event GrantUpdated(address indexed _grantee, uint256 _oldAmount, uint256 _newAmount);
-
-    event GrantDeleted(address indexed _grantee, uint256 _hadAmount);
-
-    event FiatRaisedUpdated(address indexed _address, uint256 _fiatRaised);
-
-    event TokenPurchaseWithGuarantee(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
-
-    // =================================================================================================================
-    //                                      Constructors
-    // =================================================================================================================
-
-    function SirinCrowdsale(uint256 _startTime,
-    uint256 _endTime,
-    address _wallet,
-    address _walletTeam,
-    address _walletOEM,
-    address _walletBounties,
-    address _walletReserve,
-    SirinSmartToken _sirinSmartToken,
-    RefundVault _refundVault)
-    public
-    Crowdsale(_startTime, _endTime, EXCHANGE_RATE, _wallet, _sirinSmartToken) {
-        require(_walletTeam != address(0));
-        require(_walletOEM != address(0));
-        require(_walletBounties != address(0));
-        require(_walletReserve != address(0));
-        require(_sirinSmartToken != address(0));
-        require(_refundVault != address(0));
-
-        walletTeam = _walletTeam;
-        walletOEM = _walletOEM;
-        walletBounties = _walletBounties;
-        walletReserve = _walletReserve;
-
-        token = _sirinSmartToken;
-        refundVault  = _refundVault;
-    }
-
-    // =================================================================================================================
-    //                                      Impl Crowdsale
-    // =================================================================================================================
-
-    // @return the rate in SRN per 1 ETH according to the time of the tx and the SRN pricing program.
-    // @Override
-    function getRate() public view returns (uint256) {
-        if (now < (startTime.add(24 hours))) {return 1000;}
-        if (now < (startTime.add(2 days))) {return 950;}
-        if (now < (startTime.add(3 days))) {return 900;}
-        if (now < (startTime.add(4 days))) {return 855;}
-        if (now < (startTime.add(5 days))) {return 810;}
-        if (now < (startTime.add(6 days))) {return 770;}
-        if (now < (startTime.add(7 days))) {return 730;}
-        if (now < (startTime.add(8 days))) {return 690;}
-        if (now < (startTime.add(9 days))) {return 650;}
-        if (now < (startTime.add(10 days))) {return 615;}
-        if (now < (startTime.add(11 days))) {return 580;}
-        if (now < (startTime.add(12 days))) {return 550;}
-        if (now < (startTime.add(13 days))) {return 525;}
-
-        return rate;
-    }
-
-    // =================================================================================================================
-    //                                      Impl FinalizableCrowdsale
-    // =================================================================================================================
-
-    //@Override
-    function finalization() internal onlyOwner {
-        super.finalization();
-
-        // granting bonuses for the pre crowdsale grantees:
-        for (uint256 i = 0; i < presaleGranteesMapKeys.length; i++) {
-            token.issue(presaleGranteesMapKeys[i], presaleGranteesMap[presaleGranteesMapKeys[i]]);
-        }
-
-        // Adding 60% of the total token supply (40% were generated during the crowdsale)
-        // 40 * 2.5 = 100
-        uint256 newTotalSupply = token.totalSupply().mul(250).div(100);
-
-        // 10% of the total number of SRN tokens will be allocated to the team
-        token.issue(walletTeam, newTotalSupply.mul(10).div(100));
-
-        // 10% of the total number of SRN tokens will be allocated to OEM’s, Operating System implementation,
-        // SDK developers and rebate to device and Sirin OS™ users
-        token.issue(walletOEM, newTotalSupply.mul(10).div(100));
-
-        // 5% of the total number of SRN tokens will be allocated to professional fees and Bounties
-        token.issue(walletBounties, newTotalSupply.mul(5).div(100));
-
-        // 35% of the total number of SRN tokens will be allocated to SIRIN LABS,
-        // and as a reserve for the company to be used for future strategic plans for the created ecosystem
-        token.issue(walletReserve, newTotalSupply.mul(35).div(100));
-
-        // Re-enable transfers after the token sale.
-        token.disableTransfers(false);
-
-        // Re-enable destroy function after the token sale.
-        token.setDestroyEnabled(true);
-
-        // Enable ETH refunds and token claim.
-        refundVault.enableRefunds();
-
-        // transfer token ownership to crowdsale owner
-        token.transferOwnership(owner);
-
-        // transfer refundVault ownership to crowdsale owner
-        refundVault.transferOwnership(owner);
-    }
-
-    // =================================================================================================================
-    //                                      Public Methods
-    // =================================================================================================================
-    // @return the total funds collected in wei(ETH and none ETH).
-    function getTotalFundsRaised() public view returns (uint256) {
-        return fiatRaisedConvertedToWei.add(weiRaised);
-    }
-
-    // @return true if the crowdsale is active, hence users can buy tokens
-    function isActive() public view returns (bool) {
-        return now >= startTime && now < endTime;
-    }
-
-    // =================================================================================================================
-    //                                      External Methods
-    // =================================================================================================================
-    // @dev Adds/Updates address and token allocation for token grants.
-    // Granted tokens are allocated to non-ether, presale, buyers.
-    // @param _grantee address The address of the token grantee.
-    // @param _value uint256 The value of the grant in wei token.
-    function addUpdateGrantee(address _grantee, uint256 _value) external onlyOwner onlyWhileSale{
-        require(_grantee != address(0));
-        require(_value > 0);
-
-        // Adding new key if not present:
-        if (presaleGranteesMap[_grantee] == 0) {
-            require(presaleGranteesMapKeys.length < MAX_TOKEN_GRANTEES);
-            presaleGranteesMapKeys.push(_grantee);
-            GrantAdded(_grantee, _value);
-        }
-        else {
-            GrantUpdated(_grantee, presaleGranteesMap[_grantee], _value);
-        }
-
-        presaleGranteesMap[_grantee] = _value;
-    }
-
-    // @dev deletes entries from the grants list.
-    // @param _grantee address The address of the token grantee.
-    function deleteGrantee(address _grantee) external onlyOwner onlyWhileSale {
-        require(_grantee != address(0));
-        require(presaleGranteesMap[_grantee] != 0);
-
-        //delete from the map:
-        delete presaleGranteesMap[_grantee];
-
-        //delete from the array (keys):
-        uint256 index;
-        for (uint256 i = 0; i < presaleGranteesMapKeys.length; i++) {
-            if (presaleGranteesMapKeys[i] == _grantee) {
-                index = i;
-                break;
+    // we want to be able to check all bonuses in already deployed contract
+    // that's why we pass currentTime as a parameter instead of using "now"
+    function getBonusPercent(uint256 currentTime) public constant returns (uint256 percent) {
+      //require(currentTime >= preIcoStartTime);
+        uint i = 0;
+        bool isPreIco = currentTime >= preIcoStartTime && currentTime <= preIcoEndTime;
+        uint256 offset = 0;
+        if (isPreIco) {
+            uint256 preIcoDiffInSeconds = currentTime.sub(preIcoStartTime);
+            for (i = 0; i < preIcoBonuses.length; i++) {
+                if (preIcoDiffInSeconds <= preIcoBonuses[i].duration + offset) {
+                    return preIcoBonuses[i].percent;
+                }
+                offset = offset.add(preIcoBonuses[i].duration);
+            }
+        } else {
+            uint256 icoDiffInSeconds = currentTime.sub(icoStartTime);
+            for (i = 0; i < icoBonuses.length; i++) {
+                if (icoDiffInSeconds <= icoBonuses[i].duration + offset) {
+                    return icoBonuses[i].percent;
+                }
+                offset = offset.add(icoBonuses[i].duration);
             }
         }
-        presaleGranteesMapKeys[index] = presaleGranteesMapKeys[presaleGranteesMapKeys.length - 1];
-        delete presaleGranteesMapKeys[presaleGranteesMapKeys.length - 1];
-        presaleGranteesMapKeys.length--;
-
-        GrantDeleted(_grantee, presaleGranteesMap[_grantee]);
+        return defaultPercent;
     }
 
-    // @dev Set funds collected outside the crowdsale in wei.
-    //  note: we not to use accumulator to allow flexibility in case of humane mistakes.
-    // funds are converted to wei using the market conversion rate of USD\ETH on the day on the purchase.
-    // @param _fiatRaisedConvertedToWei number of none eth raised.
-    function setFiatRaisedConvertedToWei(uint256 _fiatRaisedConvertedToWei) external onlyOwner onlyWhileSale {
-        fiatRaisedConvertedToWei = _fiatRaisedConvertedToWei;
-        FiatRaisedUpdated(msg.sender, fiatRaisedConvertedToWei);
+    function applyBonus(uint256 tokens, uint256 percent) internal pure returns  (uint256 bonusedTokens) {
+        uint256 tokensToAdd = tokens.mul(percent).div(100);
+        return tokens.add(tokensToAdd);
     }
 
-    /// @dev Accepts new ownership on behalf of the SirinCrowdsale contract. This can be used, by the token sale
-    /// contract itself to claim back ownership of the SirinSmartToken contract.
-    function claimTokenOwnership() external onlyOwner {
-        token.claimOwnership();
+    function validateWithinPeriods() internal constant {
+        // within pre-sale or main sale
+        require((now >= preIcoStartTime && now <= preIcoEndTime) || (now >= icoStartTime && now <= icoEndTime));
     }
 
-    /// @dev Accepts new ownership on behalf of the SirinCrowdsale contract. This can be used, by the token sale
-    /// contract itself to claim back ownership of the refundVault contract.
-    function claimRefundVaultOwnership() external onlyOwner {
-        refundVault.claimOwnership();
+    function validateWithinCaps(uint256 tokensAmount, uint256 weiAmount) internal constant {
+        uint256 expectedTokensInvested = tokensInvested.add(tokensAmount);
+
+        // within pre-sale
+        if (now >= preIcoStartTime && now <= preIcoEndTime) {
+            require(weiAmount >= preIcoMinimumWei);
+            require(expectedTokensInvested <= preIcoHardcap);
+        }
+
+        // within main sale
+        if (now >= icoStartTime && now <= icoEndTime) {
+            require(expectedTokensInvested <= icoHardcap);
+        }
     }
 
-    // @dev Buy tokes with guarantee
-    function buyTokensWithGuarantee() public payable {
-        require(validPurchase());
-
-        uint256 weiAmount = msg.value;
-
-        // calculate token amount to be created
-        uint256 tokens = weiAmount.mul(getRate());
-        tokens = tokens.div(REFUND_DIVISION_RATE);
-
-        // update state
-        weiRaised = weiRaised.add(weiAmount);
-
-        token.issue(address(refundVault), tokens);
-
-        refundVault.deposit.value(msg.value)(msg.sender, tokens);
-
-        TokenPurchaseWithGuarantee(msg.sender, address(refundVault), weiAmount, tokens);
+    // if crowdsale is unsuccessful, investors can claim refunds here
+    function claimRefund() public {
+        require(isFinalized);
+        require(!softcapReached());
+        vault.refund(msg.sender);
     }
+
+    function softcapReached() public constant returns (bool) {
+        return tokensInvested >= softcap;
+    }
+
+    // finish crowdsale
+    function finaliseCrowdsale() external onlyOwner returns (bool) {
+        require(!isFinalized);
+        if (softcapReached()) {
+            vault.close();
+        } else {
+            vault.enableRefunds();
+        }
+
+        isFinalized = true;
+        return true;
+    }
+
+}
+
+
+contract Deployer is Ownable {
+
+    ApplauseCashCrowdsale public applauseCashCrowdsale;
+    uint256 public constant TOKEN_DECIMALS_MULTIPLIER = 10000;
+    address public multisig = 0xaB188aCBB8a401277DC2D83C242677ca3C96fF05;
+
+    function deploy() public onlyOwner {
+        applauseCashCrowdsale = new ApplauseCashCrowdsale(
+            1516280400, //Pre ICO Start: 18 Jan 2018 at 8:00 am EST
+            1516856400, //Pre ICO End: 24 Jan 2018 at 11:59 pm EST
+            3000000 * TOKEN_DECIMALS_MULTIPLIER, //Pre ICO hardcap
+            1517490000,  // ICO Start: 1 Feb 2018 at 8 am EST
+            1519880400, // ICO End: 28 Feb 2018 at 11.59 pm EST
+            144000000 * TOKEN_DECIMALS_MULTIPLIER,  // ICO hardcap
+            50000 * TOKEN_DECIMALS_MULTIPLIER, // Overal crowdsale softcap
+            500, // 1 ETH = 500 APLC
+            multisig // Multisignature wallet (controlled by multiple accounts)
+        );
+    }
+
+    function setOwner() public onlyOwner {
+        applauseCashCrowdsale.transferOwnership(owner);
+    }
+
+
 }
