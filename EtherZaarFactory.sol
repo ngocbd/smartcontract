@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherZaarFactory at 0xbe4eecbc7afb5ddba40dd3b327d5bf5c33b62a7e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherZaarFactory at 0x598af135e0249528835f3c2736f80257d725715a
 */
 pragma solidity ^0.4.18;
 
@@ -32,18 +32,16 @@ contract ERC20 is ERC20Interface {
     string public symbol;
     
     function ERC20(
-        address _initialOwner,
         uint256 _initialAmount,
         string _tokenName,
         uint8 _decimalUnits,
         string _tokenSymbol
     ) public {
-        balances[_initialOwner] = _initialAmount;               
+        balances[msg.sender] = _initialAmount;               
         totalSupply = _initialAmount;                        
         name = _tokenName;                                   
         decimals = _decimalUnits;                            
-        symbol = _tokenSymbol;   
-        emit Transfer(_initialOwner, _initialOwner, _initialAmount);
+        symbol = _tokenSymbol;                               
     }
 
     function transfer(address _to, uint256 _value) public returns (bool success) {
@@ -81,7 +79,11 @@ contract ERC20 is ERC20Interface {
     }   
 }
 
+
 contract EtherZaarFactory {
+
+    mapping(address => address[]) public initialOwnerToToken;
+    mapping(address => address) public tokenToInitialOwner;
 
     function EtherZaarFactory() public {
     }
@@ -90,7 +92,12 @@ contract EtherZaarFactory {
         public 
     returns (address) {
 
-        ERC20 newToken = (new ERC20(_initialOwner, _initialAmount, _name, _decimals, _symbol));
+        ERC20 newToken = (new ERC20(_initialAmount, _name, _decimals, _symbol));
+        
+        initialOwnerToToken[_initialOwner].push(address(newToken));
+        tokenToInitialOwner[address(newToken)] = _initialOwner;
+        
+        newToken.transfer(_initialOwner, _initialAmount); 
 
         return address(newToken);
     }
