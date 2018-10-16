@@ -1,40 +1,45 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AssetProxy at 0x660b612ec57754d949ac1a09d0c2937a010dee05
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AssetProxy at 0x28de6f2df4b401473c938ab51f6b1efe8304f8fa
 */
-/**
- * This software is a subject to Ambisafe License Agreement.
- * No use or distribution is allowed without written permission from Ambisafe.
- * https://www.ambisafe.co/terms-of-use/
- */
+pragma solidity 0.4.15;
 
-pragma solidity 0.4.8;
+contract RegistryICAPInterface {
+    function parse(bytes32 _icap) constant returns(address, bytes32, bool);
+    function institutions(bytes32 _institution) constant returns(address);
+}
 
-contract EToken2 {
+contract EToken2Interface {
+    function registryICAP() constant returns(RegistryICAPInterface);
     function baseUnit(bytes32 _symbol) constant returns(uint8);
-    function name(bytes32 _symbol) constant returns(string);
     function description(bytes32 _symbol) constant returns(string);
     function owner(bytes32 _symbol) constant returns(address);
     function isOwner(address _owner, bytes32 _symbol) constant returns(bool);
     function totalSupply(bytes32 _symbol) constant returns(uint);
     function balanceOf(address _holder, bytes32 _symbol) constant returns(uint);
+    function isLocked(bytes32 _symbol) constant returns(bool);
+    function issueAsset(bytes32 _symbol, uint _value, string _name, string _description, uint8 _baseUnit, bool _isReissuable) returns(bool);
+    function reissueAsset(bytes32 _symbol, uint _value) returns(bool);
+    function revokeAsset(bytes32 _symbol, uint _value) returns(bool);
+    function setProxy(address _address, bytes32 _symbol) returns(bool);
+    function lockAsset(bytes32 _symbol) returns(bool);
     function proxyTransferFromToICAPWithReference(address _from, bytes32 _icap, uint _value, string _reference, address _sender) returns(bool);
     function proxyApprove(address _spender, uint _value, bytes32 _symbol, address _sender) returns(bool);
     function allowance(address _from, address _spender, bytes32 _symbol) constant returns(uint);
     function proxyTransferFromWithReference(address _from, address _to, uint _value, bytes32 _symbol, string _reference, address _sender) returns(bool);
 }
 
-contract Asset {
+contract AssetInterface {
     function _performTransferWithReference(address _to, uint _value, string _reference, address _sender) returns(bool);
     function _performTransferToICAPWithReference(bytes32 _icap, uint _value, string _reference, address _sender) returns(bool);
     function _performApprove(address _spender, uint _value, address _sender) returns(bool);    
     function _performTransferFromWithReference(address _from, address _to, uint _value, string _reference, address _sender) returns(bool);
     function _performTransferFromToICAPWithReference(address _from, bytes32 _icap, uint _value, string _reference, address _sender) returns(bool);
-    function _performGeneric(bytes _data, address _sender) payable returns(bytes32) {
-        throw;
+    function _performGeneric(bytes, address) payable {
+        revert();
     }
 }
 
-contract ERC20 {
+contract ERC20Interface {
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed from, address indexed spender, uint256 value);
 
@@ -44,19 +49,40 @@ contract ERC20 {
     function transferFrom(address _from, address _to, uint256 _value) returns(bool success);
     function approve(address _spender, uint256 _value) returns(bool success);
     function allowance(address _owner, address _spender) constant returns(uint256 remaining);
+
+    // function symbol() constant returns(string);
     function decimals() constant returns(uint8);
+    // function name() constant returns(string);
 }
 
 contract AssetProxyInterface {
-    function _forwardApprove(address _spender, uint _value, address _sender) returns(bool);    
+    function _forwardApprove(address _spender, uint _value, address _sender) returns(bool);
     function _forwardTransferFromWithReference(address _from, address _to, uint _value, string _reference, address _sender) returns(bool);
     function _forwardTransferFromToICAPWithReference(address _from, bytes32 _icap, uint _value, string _reference, address _sender) returns(bool);
+    function balanceOf(address _owner) constant returns(uint);
 }
 
 contract Bytes32 {
     function _bytes32(string _input) internal constant returns(bytes32 result) {
         assembly {
             result := mload(add(_input, 32))
+        }
+    }
+}
+
+contract ReturnData {
+    function _returnReturnData(bool _success) internal {
+        assembly {
+            let returndatastart := msize()
+            mstore(0x40, add(returndatastart, returndatasize))
+            returndatacopy(returndatastart, 0, returndatasize)
+            switch _success case 0 { revert(returndatastart, returndatasize) } default { return(returndatastart, returndatasize) }
+        }
+    }
+
+    function _assemblyCall(address _destination, uint _value, bytes _data) internal returns(bool success) {
+        assembly {
+            success := call(div(mul(gas, 63), 64), _destination, _value, add(_data, 32), mload(_data), 0, 0)
         }
     }
 }
@@ -89,9 +115,9 @@ contract Bytes32 {
  * Note: all the non constant functions return false instead of throwing in case if state change
  * didn't happen yet.
  */
-contract AssetProxy is ERC20, AssetProxyInterface, Bytes32 {
+contract AssetProxy is ERC20Interface, AssetProxyInterface, Bytes32, ReturnData {
     // Assigned EToken2, immutable.
-    EToken2 public etoken2;
+    EToken2Interface public etoken2;
 
     // Assigned symbol, immutable.
     bytes32 public etoken2Symbol;
@@ -111,7 +137,7 @@ contract AssetProxy is ERC20, AssetProxyInterface, Bytes32 {
      *
      * @return success.
      */
-    function init(EToken2 _etoken2, string _symbol, string _name) returns(bool) {
+    function init(EToken2Interface _etoken2, string _symbol, string _name) returns(bool) {
         if (address(etoken2) != 0x0) {
             return false;
         }
@@ -145,8 +171,8 @@ contract AssetProxy is ERC20, AssetProxyInterface, Bytes32 {
      *
      * @return asset implementation contract.
      */
-    function _getAsset() internal returns(Asset) {
-        return Asset(getVersionFor(msg.sender));
+    function _getAsset() internal returns(AssetInterface) {
+        return AssetInterface(getVersionFor(msg.sender));
     }
 
     function recoverTokens(uint _value) onlyAssetOwner() returns(bool) {
@@ -392,11 +418,25 @@ contract AssetProxy is ERC20, AssetProxyInterface, Bytes32 {
      * along with the value. This allows for proxy interface growth.
      */
     function () payable {
-        bytes32 result = _getAsset()._performGeneric.value(msg.value)(msg.data, msg.sender);
-        assembly {
-            mstore(0, result)
-            return(0, 32)
-        }
+        _getAsset()._performGeneric.value(msg.value)(msg.data, msg.sender);
+        _returnReturnData(true);
+    }
+
+    // Interface functions to allow specifying ICAP addresses as strings.
+    function transferToICAP(string _icap, uint _value) returns(bool) {
+        return transferToICAPWithReference(_icap, _value, '');
+    }
+
+    function transferToICAPWithReference(string _icap, uint _value, string _reference) returns(bool) {
+        return transferToICAPWithReference(_bytes32(_icap), _value, _reference);
+    }
+
+    function transferFromToICAP(address _from, string _icap, uint _value) returns(bool) {
+        return transferFromToICAPWithReference(_from, _icap, _value, '');
+    }
+
+    function transferFromToICAPWithReference(address _from, string _icap, uint _value, string _reference) returns(bool) {
+        return transferFromToICAPWithReference(_from, _bytes32(_icap), _value, _reference);
     }
 
     /**
@@ -560,7 +600,7 @@ contract AssetProxy is ERC20, AssetProxyInterface, Bytes32 {
     }
 
     // Backwards compatibility.
-    function multiAsset() constant returns(EToken2) {
+    function multiAsset() constant returns(EToken2Interface) {
         return etoken2;
     }
 }
