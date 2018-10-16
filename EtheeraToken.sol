@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheeraToken at 0xc2c8c84fd920f10b93a7293c7eada20901a6fc5d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheeraToken at 0x558b10202c474f37f9b49b7ec75cf9c4f28c5b7e
 */
 /**
  * Developer Team: 
@@ -82,7 +82,6 @@ contract Ownable {
     OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
-
 }
 
 /**
@@ -92,8 +91,8 @@ contract Ownable {
  */
 contract ERC20Basic {
   uint256 public totalSupply;
-  function balanceOf(address who) constant internal returns (uint256);
-  function transfer(address to, uint256 value) internal returns (bool);
+  function balanceOf(address who) constant public returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
@@ -111,7 +110,7 @@ contract BasicToken is ERC20Basic {
   * @param _to The address to transfer to.
   * @param _value The amount to be transferred.
   */
-  function transfer(address _to, uint256 _value) internal returns (bool) {
+  function transfer(address _to, uint256 _value) public returns (bool) {
     require(tokenBalances[msg.sender]>=_value);
     tokenBalances[msg.sender] = tokenBalances[msg.sender].sub(_value);
     tokenBalances[_to] = tokenBalances[_to].add(_value);
@@ -124,7 +123,7 @@ contract BasicToken is ERC20Basic {
   * @param _owner The address to query the the balance of.
   * @return An uint256 representing the amount owned by the passed address.
   */
-  function balanceOf(address _owner) constant internal returns (uint256 balance) {
+  function balanceOf(address _owner) constant public returns (uint256 balance) {
     return tokenBalances[_owner];
   }
 
@@ -133,7 +132,6 @@ contract EtheeraToken is BasicToken,Ownable {
 
    using SafeMath for uint256;
    
-   //TODO: Change the name and the symbol
    string public constant name = "ETHEERA";
    string public constant symbol = "ETA";
    uint256 public constant decimals = 18;
@@ -145,8 +143,8 @@ contract EtheeraToken is BasicToken,Ownable {
    */
     function EtheeraToken(address wallet) public {
         owner = msg.sender;
-        totalSupply = INITIAL_SUPPLY;
-        tokenBalances[wallet] = INITIAL_SUPPLY * 10 ** 18;   //Since we divided the token into 10^18 parts
+        totalSupply = INITIAL_SUPPLY * 10 ** 18;
+        tokenBalances[wallet] = totalSupply;   //Since we divided the token into 10^18 parts
     }
 
     function mint(address wallet, address buyer, uint256 tokenAmount) public onlyOwner {
