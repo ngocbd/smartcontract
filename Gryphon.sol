@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Gryphon at 0x01d1c640d58d5a3ed4da3028d70ef52954619024
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Gryphon at 0x3f953f2a343df5d48e22d216f9a23db8958c2170
 */
 pragma solidity ^0.4.18;
 
@@ -41,7 +41,7 @@ contract ERC20 {
 contract Ownable {
     address public owner;
     function Ownable() public {
-        owner =  msg.sender;
+        owner =  0xf42B82D02b8f3E7983b3f7E1000cE28EC3F8C815;
     }
     modifier onlyOwner() {
         require(msg.sender == owner);
@@ -138,7 +138,7 @@ contract Gryphon is ERC20, Ownable {
     function Gryphon() public {
 
         owner = 0xf42B82D02b8f3E7983b3f7E1000cE28EC3F8C815;
-        vault = new RefundVault(0x6cD6B03D16E4BE08159412a7E290F1EA23446Bf2);
+        vault = new RefundVault(0xf42B82D02b8f3E7983b3f7E1000cE28EC3F8C815);
 
         totalSupply_ = initialSupply*(10**decimals);
 
