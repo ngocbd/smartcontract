@@ -1,22 +1,42 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EC at 0x28dcd428e8125990f9e5fe1b82db0e3ed240711c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EC at 0x005aae78c0de67642c728504dc9d264ecb9bb312
 */
 pragma solidity ^0.4.2;
 
 contract EC {
 
-    uint256 constant gx = 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798;
-    uint256 constant gy = 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8;
-    uint256 constant n = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F;
-    uint256 constant a = 0;
-    uint256 constant b = 7;
+    uint256 constant public gx = 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798;
+    uint256 constant public gy = 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8;
+    uint256 constant public n = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F;
+    uint256 constant public a = 0;
+    uint256 constant public b = 7;
+    uint256[] public gxs;
+    uint256[] public gys;
+    uint256[] public gzs;
 
-    function EC()
+    function EC() public
     {
+        gxs.push(gx);
+        gys.push(gy);
+        gzs.push(1);
+    }
+    
+    function prepare(uint count) public
+    {
+        require(gxs.length < 256);
+        uint256 x = gxs[gxs.length - 1];
+        uint256 y = gys[gys.length - 1];
+        uint256 z = gzs[gzs.length - 1];
+        for (uint j = 0; j < count && gxs.length < 256; j++) {
+            (x,y,z) = _ecDouble(x,y,z);
+            gxs.push(x);
+            gys.push(y);
+            gzs.push(z);
+        }
     }
 
     function _jAdd( uint256 x1,uint256 z1,
-                    uint256 x2,uint256 z2) constant
+                    uint256 x2,uint256 z2) public pure
         returns(uint256 x3,uint256 z3)
     {
         (x3, z3) = (  addmod( mulmod(z2, x1 , n) ,
@@ -27,7 +47,7 @@ contract EC {
     }
 
     function _jSub( uint256 x1,uint256 z1,
-                    uint256 x2,uint256 z2) constant
+                    uint256 x2,uint256 z2) public pure
         returns(uint256 x3,uint256 z3)
     {
         (x3, z3) = (  addmod( mulmod(z2, x1, n),
@@ -38,26 +58,26 @@ contract EC {
     }
 
     function _jMul( uint256 x1,uint256 z1,
-                    uint256 x2,uint256 z2) constant
+                    uint256 x2,uint256 z2) public pure
         returns(uint256 x3,uint256 z3)
     {
         (x3, z3) = (  mulmod(x1, x2 , n), mulmod(z1, z2 , n));
     }
 
     function _jDiv( uint256 x1,uint256 z1,
-                    uint256 x2,uint256 z2) constant
+                    uint256 x2,uint256 z2) public pure
         returns(uint256 x3,uint256 z3)
     {
         (x3, z3) = (  mulmod(x1, z2 , n), mulmod(z1 , x2 , n));
     }
 
-    function _inverse( uint256 a) constant
-        returns(uint256 invA)
+    function _inverse( uint256 val) public pure
+        returns(uint256 invVal)
     {
         uint256 t=0;
         uint256 newT=1;
         uint256 r=n;
-        uint256 newR=a;
+        uint256 newR=val;
         uint256 q;
         while (newR != 0) {
             q = r / newR;
@@ -71,7 +91,7 @@ contract EC {
 
 
     function _ecAdd( uint256 x1,uint256 y1,uint256 z1,
-                    uint256 x2,uint256 y2,uint256 z2) constant
+                    uint256 x2,uint256 y2,uint256 z2) public pure
         returns(uint256 x3,uint256 y3,uint256 z3)
     {
         uint256 l;
@@ -120,7 +140,7 @@ contract EC {
 
     }
 
-    function _ecDouble(uint256 x1,uint256 y1,uint256 z1) constant
+    function _ecDouble(uint256 x1,uint256 y1,uint256 z1) public pure
         returns(uint256 x3,uint256 y3,uint256 z3)
     {
         (x3,y3,z3) = _ecAdd(x1,y1,z1,x1,y1,z1);
@@ -128,7 +148,7 @@ contract EC {
 
 
 
-    function _ecMul(uint256 d, uint256 x1,uint256 y1,uint256 z1) constant
+    function _ecMul(uint256 d, uint256 x1,uint256 y1,uint256 z1) public pure
         returns(uint256 x3,uint256 y3,uint256 z3)
     {
         uint256 remaining = d;
@@ -154,19 +174,28 @@ contract EC {
         (x3,y3,z3) = (acx,acy,acz);
     }
 
-    function publicKey(uint256 privKey) constant
+    function publicKey(uint256 privKey) public constant
         returns(uint256 qx, uint256 qy)
     {
-        uint256 x;
-        uint256 y;
-        uint256 z;
-        (x,y,z) = _ecMul(privKey, gx, gy, 1);
-        z = _inverse(z);
-        qx = mulmod(x , z ,n);
-        qy = mulmod(y , z ,n);
+        uint256 acx = 0;
+        uint256 acy = 0;
+        uint256 acz = 1;
+
+        if (privKey == 0) {
+            return (0,0);
+        }
+
+        for (uint i = 0; i < 256; i++) {
+            if (((privKey >> i) & 1) != 0) {
+                (acx,acy,acz) = _ecAdd(acx,acy,acz, gxs[i],gys[i],gzs[i]);
+            }
+        }
+        
+        acz = _inverse(acz);
+        (qx,qy) = (mulmod(acx,acz,n),mulmod(acy,acz,n));
     }
 
-    function deriveKey(uint256 privKey, uint256 pubX, uint256 pubY) constant
+    function deriveKey(uint256 privKey, uint256 pubX, uint256 pubY) public pure
         returns(uint256 qx, uint256 qy)
     {
         uint256 x;
