@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoxTradingToken at 0x965ed5ca828c66f9ed8350682d4331bc4a72e93d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FoxTradingToken at 0xfbe878ced08132bd8396988671b450793c44bc12
 */
 pragma solidity ^0.4.18;
 
@@ -95,7 +95,7 @@ contract BasicToken is ERC20Basic {
     // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
+    emit Transfer(msg.sender, _to, _value);
     return true;
   }
 
@@ -136,7 +136,7 @@ contract StandardToken is ERC20, BasicToken {
     balances[_from] = balances[_from].sub(_value);
     balances[_to] = balances[_to].add(_value);
     allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
+    emit Transfer(_from, _to, _value);
     return true;
   }
 
@@ -152,7 +152,7 @@ contract StandardToken is ERC20, BasicToken {
     //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
     require((_value == 0) || (allowed[msg.sender][_spender] == 0));
     allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
+    emit Approval(msg.sender, _spender, _value);
     return true;
   }
 
@@ -174,7 +174,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function increaseApproval (address _spender, uint _addedValue) public returns (bool success) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
@@ -185,7 +185,7 @@ contract StandardToken is ERC20, BasicToken {
     } else {
       allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
@@ -228,7 +228,7 @@ contract Ownable {
    */
   function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
+    emit OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
 
@@ -269,7 +269,7 @@ contract Pausable is Ownable  {
     */
     function pause() public onlyOwner whenNotPaused {
         paused = true;
-        Pause();
+        emit Pause();
     }
     
 
@@ -278,7 +278,7 @@ contract Pausable is Ownable  {
     */
     function unpause() public onlyOwner whenPaused {
         paused = false;
-        Unpause();
+        emit Unpause();
     }
 }
 
@@ -324,14 +324,14 @@ contract MintableToken is PausableToken {
   function mint(address _to, uint256 _amount) public onlyOwner canMint returns (bool) {
     totalSupply = totalSupply.add(_amount);
     balances[_to] = balances[_to].add(_amount);
-    Mint(_to, _amount);
-    Transfer(address(0), _to, _amount);
+    emit Mint(_to, _amount);
+    emit Transfer(address(0), _to, _amount);
     return true;
   }
 
   function finishMinting() public onlyOwner canMint returns (bool) {
     mintingFinished = true;
-    MintFinished();
+    emit MintFinished();
     return true;
   }
 }
@@ -349,13 +349,13 @@ contract FoxTradingToken is MintableToken {
    * @dev Constructor that gives the founder all of the existing tokens.
    */
     function FoxTradingToken() public {
-        name = "FoxTrading";
+        name = "Fox Trading";
         symbol = "FOXT";
         decimals = 18;
-        totalSupply = 15000000e18;
-        founder = 0x47dE58a352e40d7FC57Efe57944836a0173206c2;
+        totalSupply = 3000000e18;
+        founder = 0x698825d0CfeeD6F65E981FFB543ef5196A5C2A5A;
         balances[founder] = totalSupply;
-        Transfer(0x0, founder, 15000000e18);
+        emit Transfer(0x0, founder, totalSupply);
         pause();
     }
 
@@ -368,7 +368,7 @@ contract FoxTradingToken is MintableToken {
 
     function changeFounderAddress(address _newFounder) public onlyFounder {
         require(_newFounder != 0x0);
-        NewFounderAddress(founder, _newFounder);
+        emit NewFounderAddress(founder, _newFounder);
         founder = _newFounder;
     }
 
@@ -381,7 +381,7 @@ contract FoxTradingToken is MintableToken {
         require(balances[_partner] >= _tokens);
         balances[_partner] = balances[_partner].sub(_tokens);
         totalSupply = totalSupply.sub(_tokens);
-        TokensBurned(msg.sender, _partner, _tokens);
+        emit TokensBurned(msg.sender, _partner, _tokens);
     }
 }
 
@@ -391,7 +391,7 @@ contract Crowdsale is Ownable {
     using SafeMath for uint256;
 
     FoxTradingToken public token;
-    uint256 public tokensForPreICO;
+
     uint256 public tokenCapForFirstMainStage;
     uint256 public tokenCapForSecondMainStage;
     uint256 public tokenCapForThirdMainStage;
@@ -402,11 +402,9 @@ contract Crowdsale is Ownable {
     address public wallet;
     uint256 public rate;
     uint256 public weiRaised;
+    bool public ICOpaused;
 
     uint256[4] public ICObonusStages;
-
-    uint256 public preICOduration;
-    bool public mainSaleActive;
 
     uint256 public tokensSold;
 
@@ -424,38 +422,39 @@ contract Crowdsale is Ownable {
         token = new FoxTradingToken();  
         startTime = now; 
         rate = 1200;
-        wallet = 0x47dE58a352e40d7FC57Efe57944836a0173206c2;
-        tokensForPreICO = 4500000e18;
-
-        tokenCapForFirstMainStage = 11500000e18;  //7,000,000 + 4,500,000
-        tokenCapForSecondMainStage = 18500000e18;  //11,500,000 + 7,000,000
-        tokenCapForThirdMainStage = 25500000e18;  //18,500,000 + 7,000,000
-        tokenCapForFourthMainStage = 35000000e18;  //25,500,000 + 9,500,000
-
-        totalTokensForSale = 35000000e18;
+        wallet = 0x698825d0CfeeD6F65E981FFB543ef5196A5C2A5A;
+        totalTokensForSale = 6200000e18;
         tokensSold = 0;
 
-        preICOduration = now.add(31 days);
-        endTime = preICOduration;
-
-        mainSaleActive = false;
+        tokenCapForFirstMainStage = 1000000e18;
+        tokenCapForSecondMainStage = 2000000e18;  
+        tokenCapForThirdMainStage = 3000000e18;  
+        tokenCapForFourthMainStage = 6200000e18; 
+    
+        ICObonusStages[0] = now.add(7 days);
+        for (uint y = 1; y < ICObonusStages.length; y++) {
+            ICObonusStages[y] = ICObonusStages[y - 1].add(7 days);
+        }
+        
+        endTime = ICObonusStages[3];
+        
+        ICOpaused = false;
+    }
+    
+    modifier whenNotPaused {
+        require(!ICOpaused);
+        _;
     }
 
     function() external payable {
         buyTokens(msg.sender);
     }
 
-    function buyTokens(address _addr) public payable {
+    function buyTokens(address _addr) public payable whenNotPaused {
         require(validPurchase() && tokensSold < totalTokensForSale);
         require(_addr != 0x0 && msg.value >= 100 finney);  
         uint256 toMint;
-        if(now <= preICOduration) {
-            if(tokensSold >= tokensForPreICO) { revert(); }
-            toMint = msg.value.mul(rate.mul(2));
-        } else {
-            if(!mainSaleActive) { revert(); }
-            toMint = msg.value.mul(getRateWithBonus());
-        }
+        toMint = msg.value.mul(getRateWithBonus());
         tokensSold = tokensSold.add(toMint);
         token.mint(_addr, toMint);
         forwardFunds();
@@ -471,6 +470,21 @@ contract Crowdsale is Ownable {
         tokensSold = tokensSold.add(_toMint);
         token.mint(_to, _toMint);
     }
+    
+    
+    /**
+     * @param _addrs The array of ETH addresses
+     * @param _values The amount of tokens to send to each address
+     * */
+    function airDrop(address[] _addrs, uint256[] _values) public onlyOwner {
+        //require(_addrs.length > 0);
+        for (uint i = 0; i < _addrs.length; i++) {
+            if (_addrs[i] != 0x0 && _values[i] > 0) {
+                token.mint(_addrs[i], _values[i]);
+            }
+        }
+    }
+
 
     function validPurchase() internal view returns (bool) {
         bool withinPeriod = now >= startTime && now <= endTime; 
@@ -482,10 +496,9 @@ contract Crowdsale is Ownable {
     function finishMinting() public onlyOwner {
         token.finishMinting();
     }
-
-
+    
     function getRateWithBonus() internal view returns (uint256 rateWithDiscount) {
-        if (now > preICOduration && tokensSold < totalTokensForSale) {
+        if (tokensSold < totalTokensForSale) {
             return rate.mul(getCurrentBonus()).div(100).add(rate);
             return rateWithDiscount;
         }
@@ -531,31 +544,11 @@ contract Crowdsale is Ownable {
     }
 
 
-    
-    /**
-    * Function activates the main ICO only when the duration of the preICO hass finished. This function
-    * can only be called by the owner of the contract. Once called, the bonus stages will be set as such:
-    * week 1 will have 20% bonus, week 2 will have 15% bonus, week 3 will have 10% bonus and week 4 will 
-    * have no bonus.
-    **/
-    function activateMainSale() public onlyOwner {
-        require(now > preICOduration || tokensSold >= tokensForPreICO);
-        require(!mainSaleActive);
-        if(now < preICOduration) { preICOduration = now; }
-        mainSaleActive = true;
-        ICObonusStages[0] = now.add(7 days);
-
-        for (uint y = 1; y < ICObonusStages.length; y++) {
-            ICObonusStages[y] = ICObonusStages[y - 1].add(7 days);
-        }
-
-        endTime = ICObonusStages[3];
-    }
 
     function extendDuration(uint256 _newEndTime) public onlyOwner {
-        require(endTime < _newEndTime && mainSaleActive);
+        require(endTime < _newEndTime);
         endTime = _newEndTime;
-        ICOSaleExtended(_newEndTime);
+        emit ICOSaleExtended(_newEndTime);
     }
 
 
@@ -575,5 +568,13 @@ contract Crowdsale is Ownable {
     */
     function unpauseToken() public onlyOwner {
         token.unpause();
+    }
+    
+    function pauseUnpauseICO() public onlyOwner {
+        if (ICOpaused) {
+            ICOpaused = false;
+        } else {
+            ICOpaused = true;
+        }
     }
 }
