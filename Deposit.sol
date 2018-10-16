@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Deposit at 0xE7E25a3D83abdC4a4273792CCa7865889a7b0Df3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Deposit at 0x1235b9042f7fe167f09450eaffdc07efcc3acb38
 */
-pragma solidity ^0.4.8;
+pragma solidity ^0.4.7;
 
 contract ForeignToken {
     function balanceOf(address who) constant public returns (uint256);
@@ -9,8 +9,10 @@ contract ForeignToken {
 }
 
 contract Owned {
+    bool public locked = true;
     address public Owner = msg.sender;
-    modifier onlyOwner { if (msg.sender == Owner) _; }
+    modifier onlyOwner { if (msg.sender == Owner || !locked) _; }
+    function lock(bool flag) onlyOwner { locked = flag; }
 }
 
 contract Deposit is Owned {
