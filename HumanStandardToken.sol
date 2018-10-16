@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0xe0116fa61a5eeca79a1b1a9c693334f2770347fe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0x5f7e168d65b92080f61f681a7ec28a27e2bfe57e
 */
 pragma solidity ^0.4.8;
 contract Token{
@@ -15,6 +15,7 @@ contract Token{
     
     function transferFrom(address _from, address _to, uint256 _value) returns   
     (bool success);
+
     
     function approve(address _spender, uint256 _value) returns (bool success);
 
