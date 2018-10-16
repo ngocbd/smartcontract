@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleERC20Token at 0x339f0a7ec421e751d3727be6c83492c56979b408
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleERC20Token at 0xcea5be202e170dc9b63a931036718c634a9babbd
 */
 pragma solidity 0.4.15;
 
@@ -130,12 +130,12 @@ contract Ownable {
 
 contract SimpleERC20Token is StandardToken, Ownable
 {
-    string public name = "Dis Token";
-    string public symbol = "DIS";
+    string public name = "Bitcoin New";
+    string public symbol = "BTN";
 
-    uint public decimals = 2;
+    uint public decimals = 8;
 
-    uint private constant initialSupply = 10 * 10**(6+2);
+    uint private constant initialSupply = 21 * 10**(6+8);
 
     function SimpleERC20Token()
     {
