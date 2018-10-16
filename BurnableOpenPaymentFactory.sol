@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnableOpenPaymentFactory at 0x1e69c3cb4f08aba18bad6da03f5c5441014d4169
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnableOpenPaymentFactory at 0xbaeb0499524ebdcaf4367ef940fa9ebc845b4e4d
 */
 //A BurnableOpenPayment is instantiated with a specified payer and a commitThreshold.
 //The recipient is not set when the contract is instantiated.
@@ -73,7 +73,7 @@ contract BurnableOpenPayment {
     event DefaultActionDelayed();
     event DefaultActionCalled();
     
-    function BurnableOpenPayment(address _payer, string _payerString, uint _commitThreshold, DefaultAction _defaultAction, uint _defaultTimeoutLength)
+    function BurnableOpenPayment(address _payer, uint _commitThreshold, DefaultAction _defaultAction, uint _defaultTimeoutLength, string _payerString)
     public
     payable {
         if (msg.value > 0) {
@@ -83,14 +83,14 @@ contract BurnableOpenPayment {
             
         state = State.Open;
         payer = _payer;
-        payerString = _payerString;
-        PayerStringUpdated(payerString);
         
         commitThreshold = _commitThreshold;
         
         defaultAction = _defaultAction;
         if (defaultAction != DefaultAction.None) 
             defaultTimeoutLength = _defaultTimeoutLength;
+        
+        payerString = _payerString;
     }
     
     function getFullState()
@@ -245,15 +245,15 @@ contract BurnableOpenPayment {
 }
 
 contract BurnableOpenPaymentFactory {
-    event NewBOP(address newBOPAddress);
+    event NewBOP(address newBOPAddress, address payer, uint commitThreshold, BurnableOpenPayment.DefaultAction defaultAction, uint defaultTimeoutLength, string initialPayerString);
     
-    function newBurnableOpenPayment(address payer, string payerString, uint commitThreshold, BurnableOpenPayment.DefaultAction defaultAction, uint defaultTimeoutLength)
+    function newBurnableOpenPayment(address payer, uint commitThreshold, BurnableOpenPayment.DefaultAction defaultAction, uint defaultTimeoutLength, string initialPayerString)
     public
     payable
     returns (address) {
         //pass along any ether to the constructor
-        address newBOPAddr = (new BurnableOpenPayment).value(msg.value)(payer, payerString, commitThreshold, defaultAction, defaultTimeoutLength);
-        NewBOP(newBOPAddr);
+        address newBOPAddr = (new BurnableOpenPayment).value(msg.value)(payer, commitThreshold, defaultAction, defaultTimeoutLength, initialPayerString);
+        NewBOP(newBOPAddr, payer, commitThreshold, defaultAction, defaultTimeoutLength, initialPayerString);
         return newBOPAddr;
     }
 }
