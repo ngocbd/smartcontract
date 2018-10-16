@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartVows at 0x4b8ede3ef8eb0fe5c869949048c0a0806ca2d6ae
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartVows at 0x4d09401ff2d7b0e30057870752667b9b07f230da
 */
 pragma solidity ^0.4.17;
 
@@ -66,6 +66,12 @@ contract Util{
         return strConcat(_a, _b, "", "", "");
     }
 
+    function toString(address x) internal pure returns (string) {
+        bytes memory b = new bytes(20);
+        for (uint i = 0; i < 20; i++)
+        b[i] = byte(uint8(uint(x) / (2**(8*(19 - i)))));
+        return string(b);
+    }
 }
 
 contract SmartVows is Ownable, Util {
@@ -152,7 +158,7 @@ contract SmartVows is Ownable, Util {
     // Declare Contract event structure
     event ContractEvent(string ce_description, string ce_mesg);
 
-    function SmartVows(string _partner1, address _partner1_address, string _partner2, address _partner2_address, string _marriageDate, string _maritalStatus, string _officiant, string _witnesses, string _location, bytes _coupleImageIPFShash, bytes _marriageLicenceImageIPFShash) public{        
+    function SmartVows(string _partner1, address _partner1_address, string _partner2, address _partner2_address, string _marriageDate, string _maritalStatus, string _officiant, string _witnesses, string _location, string coupleImageIPFShash, string marriageLicenceImageIPFShash) public{        
         partner1_name = _partner1;
         partner2_name = _partner2;  
         partner1_address=_partner1_address;
@@ -162,8 +168,8 @@ contract SmartVows is Ownable, Util {
         officiant=_officiant;
         witnesses=_witnesses;
         location=_location;
-        coupleImageIPFShash=_coupleImageIPFShash;
-        marriageLicenceImageIPFShash=_marriageLicenceImageIPFShash;
+        //coupleImageIPFShash=_coupleImageIPFShash;
+        //marriageLicenceImageIPFShash=_marriageLicenceImageIPFShash;
 
         //Record contract creation in events
         saveContractEvent("Blockchain marriage smart contract created","Marriage smart contract added to the blockchain");
