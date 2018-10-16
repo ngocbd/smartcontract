@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DiscourzeToken at 0xb59c5ab4be02106434e729ab020f824d45bd6f30
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DiscourzeToken at 0xa672a511e7d9dfcea9af4e530d784745eba4ff12
 */
 // Abstract contract for the full ERC 20 Token standard
 //@ create by m-chain jerry
@@ -90,8 +90,8 @@ contract DiscourzeToken is StandardToken {
     uint8 public decimals;                //How many decimals to show. ie. 
     string public symbol;                 //An identifier: eg SBX
     function DiscourzeToken() {
-        balances[msg.sender] = 10000000000000000;               // Give the creator all initial tokens
-        totalSupply = 10000000000000000;                        // Update total supply
+        balances[msg.sender] = 100000000000000000;               // Give the creator all initial tokens
+        totalSupply = 100000000000000000;                        // Update total supply
         name = "Discourze Token";                                   // Set the name for display purposes
         decimals = 8;                            // Amount of decimals for display purposes
         symbol = "DIZ";                               // Set the symbol for display purposes
