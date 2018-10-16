@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SetUsageExample at 0x318b6bbfd80a31ecd7eddaf79f44e622ad167a0c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SetUsageExample at 0x0078bd770f55a3c6b8f3b3d2a0c21fcac8a92394
 */
 /*
  * Written by Jesse Busman (info@jesbus.com) on 2017-11-30.
@@ -53,10 +53,7 @@ library SetLibrary
         // contains the element we're removing.
         if (self.valuesMapping[value].index < self.values.length-1)
         {
-            uint256 valueToMove = self.values[self.values.length-1];
-            uint256 indexToMoveItTo = self.valuesMapping[value].index;
-            self.values[indexToMoveItTo] = valueToMove;
-            self.valuesMapping[valueToMove].index = indexToMoveItTo;
+            self.values[self.valuesMapping[value].index] = self.values[self.values.length-1];
         }
         
         // Now we remove the last element from the array, because we just duplicated it.
