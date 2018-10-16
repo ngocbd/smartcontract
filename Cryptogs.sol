@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cryptogs at 0xe9Df89E2e7Df9064cE85A0099D731EABAF8dC860
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cryptogs at 0xefabe332d31c3982b76f8630a306c960169bd5b3
 */
 pragma solidity ^0.4.15;
 
@@ -21,7 +21,7 @@ contract NFT {
   mapping (address => uint256) ownershipTokenCount;
   mapping (uint256 => address) public tokenIndexToApproved;
 
-  function transfer(address _to,uint256 _tokenId) external {
+  function transfer(address _to,uint256 _tokenId) public {
       require(_to != address(0));
       require(_to != address(this));
       require(_owns(msg.sender, _tokenId));
@@ -153,7 +153,7 @@ contract Cryptogs is NFT, Ownable {
 
     address public slammerTime;
     function setSlammerTime(address _slammerTime) public onlyOwner returns (bool){
-      //in order to trust that this contract isn't sending a players tokens
+      //in order to trust that this contract isn't sending a player's tokens
       // to a different contract, the slammertime contract is set once and
       // only once -- at deploy
       require(slammerTime==address(0));
@@ -464,7 +464,6 @@ contract Cryptogs is NFT, Ownable {
       require(mode[_stack]==2);
 
       //make sure that we are on a later block than the commit block
-      // (added 3/5/2018)
       require(uint32(block.number)>commitBlock[_stack]);
 
       //make sure hash of reveal == commit
@@ -539,7 +538,6 @@ contract Cryptogs is NFT, Ownable {
       require(mode[_stack]==4);
 
       //make sure that we are on a later block than the commit block
-      // (added 3/5/2018)
       require(uint32(block.number)>commitBlock[_stack]);
 
       uint256[10] memory flipped;
@@ -698,6 +696,37 @@ contract Cryptogs is NFT, Ownable {
       token.transfer(msg.sender,_amount);
       return true;
     }
+
+
+    //adapted from ERC-677 from my dude Steve Ellis - thanks man!
+    function transferStackAndCall(address _to, uint _token1, uint _token2, uint _token3, uint _token4, uint _token5, bytes32 _data) public returns (bool) {
+      transfer(_to, _token1);
+      transfer(_to, _token2);
+      transfer(_to, _token3);
+      transfer(_to, _token4);
+      transfer(_to, _token5);
+
+      if (isContract(_to)) {
+        contractFallback(_to,_token1,_token2,_token3,_token4,_token5,_data);
+      }
+      return true;
+    }
+
+    function contractFallback(address _to, uint _token1, uint _token2, uint _token3, uint _token4, uint _token5, bytes32 _data) private {
+      StackReceiver receiver = StackReceiver(_to);
+      receiver.onTransferStack(msg.sender,_token1,_token2,_token3,_token4,_token5,_data);
+    }
+
+    function isContract(address _addr) private returns (bool hasCode) {
+      uint length;
+      assembly { length := extcodesize(_addr) }
+      return length > 0;
+    }
+
+}
+
+contract StackReceiver {
+  function onTransferStack(address _sender, uint _token1, uint _token2, uint _token3, uint _token4, uint _token5, bytes32 _data);
 }
 
 contract StandardToken {
