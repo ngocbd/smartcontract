@@ -1,46 +1,16 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WeeklyLotteryB at 0x3e368966c54C606ef545cCafD43af8bE1deF734F
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WeeklyLotteryB at 0x59b8F851e1a433A7eCE7C8102AadB8Ed2C19727f
 */
 /*
 	WeeklyLotteryB
 	Coded by: iFA
 	http://wlb.ethereumlottery.net
-	ver: 1.2
+	ver: 1.1
 */
-contract WLBDrawsDB {
-	address private owner;
-	address private game;
-	
-	struct draws_s {
-		uint date;
-		uint8[3] numbers;
-		uint hit3Count;
-		uint hit3Value;
-		uint hit2Count;
-		uint hit2Value;
-	}
-	
-	draws_s[] private draws;
-	
-	function WLBDrawsDB() {
-		owner = msg.sender;
-	}
-	
-	function newDraw(uint date, uint8[3] numbers, uint hit3Count, uint hit3Value, uint hit2Count, uint hit2Value) noEther {
-		if ( msg.sender != owner && msg.sender != game ) { throw; }
-		draws.push( draws_s( date, numbers, hit3Count, hit3Value, hit2Count, hit2Value) );
-	}
-	
-	function getDraw(uint id) constant returns (uint date, uint8[3] numbers, uint hit3Count, uint hit3Value, uint hit2Count, uint hit2Value) {
-		return ( draws[id].date, draws[id].numbers, draws[id].hit3Count, draws[id].hit3Value, draws[id].hit2Count, draws[id].hit2Value );
-	}
-	
-	function setGameAddress(address _game) noEther OnlyOwner external {
-		game = _game;
-	}
-	
-	modifier noEther() { if (msg.value > 0) { throw; } _ }
-	modifier OnlyOwner() { if (owner != msg.sender) { throw; } _ }
+
+contract WLBdrawsDBInterface {
+	function newDraw(uint date, uint8[3] numbers, uint hit3Count, uint hit3Value, uint hit2Count, uint hit2Value);
+	function getDraw(uint id) constant returns (uint date, uint8[3] numbers, uint hit3Count, uint hit3Value, uint hit2Count, uint hit2Value);
 }
 
 contract WeeklyLotteryB {
@@ -101,7 +71,7 @@ contract WeeklyLotteryB {
 	uint private constant forInvestors = 40; //%
 	uint private constant forHit2 = 30; //%
 	/* variables */
-	address private WLBdrawsDBAddr;
+	address private WLBdrawsDB;
 	address private owner;
 	uint private currentJackpot;
 	uint private investmentsValue;
@@ -109,7 +79,6 @@ contract WeeklyLotteryB {
 	uint private ticketCounter;
 	uint private currentGame;
 	uint private ownerBalance;
-	uint private oldContractLastGame;
 	bool public contractEnabled = true;
 	uint private contractDisabledTimeStamp;
 	mapping(address => players_s) private players;
@@ -123,29 +92,23 @@ contract WeeklyLotteryB {
 	event InvestAddEvent(address Investor, uint Value);
 	event InvestCancelEvent(address Investor, uint Value);
 	/* constructor */
-	function WeeklyLotteryB(address _WLBdrawsDBAddr, uint _oldContractLastGame) {
-		WLBdrawsDBAddr = _WLBdrawsDBAddr;
+	function WeeklyLotteryB(address _WLBdrawsDB) {
+		WLBdrawsDB = _WLBdrawsDB;
 		owner = msg.sender;
-		currentGame = 0;
-		oldContractLastGame = _oldContractLastGame;
-		games.length = 1;
-		games[0].startTimestamp = now;
-		uint ret = 1470571200;
-		while (ret < now) {
-			ret += 1 weeks;
-		}
-		games[0].endTimestamp = ret;
+		currentGame = 1;
+		games.length = 2;
+		games[1].startTimestamp = now;
+		games[1].endTimestamp = calcNextDrawTime();
 	}
 	/* constant functions */
 	function Visit() constant returns (string) { return "http://wlb.ethereumlottery.net"; }
 	function Draws(uint id) constant returns (uint date, uint8[3] Numbers, uint hit3Count, uint hit3Value, uint hit2Count, uint hit2Value) {
-		return WLBDrawsDB( WLBdrawsDBAddr ).getDraw(id);
+		return WLBdrawsDBInterface( WLBdrawsDB ).getDraw(id);
 	}
 	function CurrentGame() constant returns (uint GameID, uint Jackpot, uint Start, uint End, uint Tickets) {
-		return (currentGame+oldContractLastGame, currentJackpot, games[currentGame].startTimestamp, games[currentGame].endTimestamp, games[currentGame].ticketsCount);
+		return (currentGame, currentJackpot, games[currentGame].startTimestamp, games[currentGame].endTimestamp, games[currentGame].ticketsCount);
 	}
 	function PlayerTickets(address Player, uint GameID, uint TicketID) constant returns (uint8[3] numbers, bool Checked) {
-		GameID -= oldContractLastGame;
 		return ( getNumbersFromBytes( players[Player].games[GameID].numbersBytes[TicketID] ), players[Player].games[GameID].checked);
 	}
 	function Investors(address Address) constant returns(uint Investment, uint Balance, bool Live) {
@@ -161,7 +124,12 @@ contract WeeklyLotteryB {
 		uint8[3] memory numbers;
 		uint hit3Count;
 		uint hit2Count;
-		for ( gameID=currentGame ; gameID>=0 ; gameID-- ) {
+		if (currentGame < prizeDismissDelay) {
+			gameLowID = 1;
+		} else {
+			gameLowID = currentGame-prizeDismissDelay;
+		}
+		for ( gameID=currentGame ; gameID>=gameLowID ; gameID-- ) {
 			if ( ! players[Address].games[gameID].checked) {
 				if (games[gameID].drawDone) {
 					numbers = getNumbersFromBytes(games[gameID].winningNumbersBytes);
@@ -176,7 +144,6 @@ contract WeeklyLotteryB {
 					value += players[Address].games[gameID].numbersBytes.length * ticketPrice;
 				}
 			}
-			if (gameID == 0 || gameID-prizeDismissDelay == gameID) { break; }
 		}
 	}
 	/* callback function */
@@ -219,7 +186,12 @@ contract WeeklyLotteryB {
 		bool changed;
 		uint hit3Count;
 		uint hit2Count;
-		for ( gameID=currentGame ; gameID>=0 ; gameID-- ) {
+		if (currentGame < prizeDismissDelay) {
+			gameLowID = 1;
+		} else {
+			gameLowID = currentGame-prizeDismissDelay;
+		}
+		for ( gameID=currentGame ; gameID>=gameLowID ; gameID-- ) {
 			if ( ! players[msg.sender].games[gameID].checked) {
 				if (games[gameID].drawDone) {
 					numbers = getNumbersFromBytes(games[gameID].winningNumbersBytes);
@@ -240,7 +212,6 @@ contract WeeklyLotteryB {
 					changed = true;
 				}
 			}
-			if (gameID == 0 || gameID-prizeDismissDelay == gameID) { break; }
 		}
 		if ( ! changed) { throw; }
 		if (_value > 0) { if ( ! msg.sender.send(_value)) { throw; } }
@@ -287,8 +258,8 @@ contract WeeklyLotteryB {
 		if (found == false) { throw; }
 		if ( ! investors[InvestorID].valid) { throw; }
 		if (contractEnabled) {
-			if (investors[InvestorID].begins+investMinDuration < now) { throw; }
-			if (games[currentGame].startTimestamp+investIdleTime < now) { throw; }
+			if (investors[InvestorID].begins+investMinDuration > now) { throw; }
+			if (games[currentGame].startTimestamp+investIdleTime > now) { throw; }
 		}
 		uint balance_;
 		if (investors[InvestorID].live) {
@@ -329,12 +300,10 @@ contract WeeklyLotteryB {
 		hit2Count -= hit3Count*3;
 		uint totalPot = games[currentGame].ticketsCount*ticketPrice;
 		hit2Value = ( totalPot * forHit2 / 100 );
-		if (hit2Count > 0) {
-			games[currentGame].prizePot = hit2Value;
-		}
+		games[currentGame].prizePot = hit2Value;
 		hit2Value = hit2Value / hit2Count;
 		totalPot -= hit2Value;
-		uint _ownerBalance = totalPot * forOwner / 100;
+		uint _ownerBalance = totalPot * forHit2 / 100;
 		totalPot -= _ownerBalance;
 		ownerBalance += _ownerBalance;
 		uint _addInvestorsValue = totalPot * forInvestors / 100;
@@ -351,8 +320,8 @@ contract WeeklyLotteryB {
 		}
 		extraJackpot += totalPot;
 		setJackpot();
-		DrawEvent(currentGame+oldContractLastGame, numbers[0], numbers[1], numbers[2], hit3Count, hit3Value, hit2Count, hit2Value);
-		WLBDrawsDB( WLBdrawsDBAddr ).newDraw( now, numbers, hit3Count, hit3Value, hit2Count, hit2Value);
+		DrawEvent(currentGame, numbers[0], numbers[1], numbers[2], hit3Count, hit3Value, hit2Count, hit2Value);
+		WLBdrawsDBInterface( WLBdrawsDB ).newDraw( now, numbers, hit3Count, hit3Value, hit2Count, hit2Value);
 		games[currentGame].hit3Count = hit3Count;
 		games[currentGame].hit3Value = hit3Value;
 		games[currentGame].hit2Count = hit2Count;
@@ -395,12 +364,11 @@ contract WeeklyLotteryB {
 		}
 	}
 	function newGame() private {
-		var nextDraw = games[currentGame].endTimestamp  + 1 weeks;
 		currentGame++;
 		uint gamesID = games.length;
 		games.length++;
 		games[gamesID].startTimestamp = now;
-		games[gamesID].endTimestamp = nextDraw;
+		games[gamesID].endTimestamp = calcNextDrawTime();
 		if (games.length > prizeDismissDelay) {
 			ownerBalance += games[currentGame-prizeDismissDelay].prizePot;
 			delete games[currentGame-prizeDismissDelay];
@@ -456,6 +424,12 @@ contract WeeklyLotteryB {
 			}
 		}
 		return true;
+	}
+	function calcNextDrawTime() private returns (uint ret) {
+		ret = 1468152000;
+		while (ret < now) {
+			ret += 1 weeks;
+		}
 	}
 	function sortNumbers(uint8[3] numbers) private returns(uint8[3] sNumbers) {
 		sNumbers = numbers;
