@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoalichainToken at 0x4eb07120772ad18785792663ef94970f4f006885
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoalichainToken at 0xe1b32233d08a6250aaea20f7a841e0f22a4bc0af
 */
 pragma solidity ^0.4.21;
 
@@ -321,7 +321,7 @@ contract CoalichainToken is StandardToken, BurnableToken, Ownable {
     uint256 public crowdSaleAllowance;      // the number of tokens available for crowdsales
     uint256 public adminAllowance;          // the number of tokens available for the administrator
     address public crowdSaleAddr = 0xd742955953f5c510f21a65c90ab87823d0b12683;     // the address of a crowdsale contract set to sale ZUZ
-    address public adminAddr = 0xDee6Bd05672110F44C90B98438089d77aD819F48;         // the address of the token admin account
+    address public adminAddr = 0x3aE26de0cc38B76eF670D9Bb085AafD3Ed2d487d;         // the address of the token admin account
     bool    public transferEnabled = false; // indicates if transferring tokens is enabled or not
 
     // Modifiers
