@@ -1,202 +1,110 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ScamCoin at 0x821cc0b6817ea2b23c87b591d72328a821edf694
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ScamCoin at 0xC983f7d4eB9992f300c7402387C66C76967f5fC8
 */
-pragma solidity ^0.4.2;
+pragma solidity ^0.4.11;
 
-/// Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20
-/// @title Abstract token contract - Functions to be implemented by token contracts.
-
-contract AbstractToken {
-    // This is not an abstract function, because solc won't recognize generated getter functions for public variables as functions
-    function totalSupply() constant returns (uint256 supply) {}
-    function balanceOf(address owner) constant returns (uint256 balance);
-    function transfer(address to, uint256 value) returns (bool success);
-    function transferFrom(address from, address to, uint256 value) returns (bool success);
-    function approve(address spender, uint256 value) returns (bool success);
-    function allowance(address owner, address spender) constant returns (uint256 remaining);
-
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-    event Issuance(address indexed to, uint256 value);
-}
-
-contract StandardToken is AbstractToken {
-
-    /*
-     *  Data structures
-     */
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-    uint256 public totalSupply;
-
-    /*
-     *  Read and write storage functions
-     */
-    /// @dev Transfers sender's tokens to a given address. Returns success.
-    /// @param _to Address of token receiver.
-    /// @param _value Number of tokens to transfer.
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
-
-    /// @dev Allows allowed third party to transfer tokens from one address to another. Returns success.
-    /// @param _from Address from where tokens are withdrawn.
-    /// @param _to Address to where tokens are sent.
-    /// @param _value Number of tokens to transfer.
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-      if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
-
-    /// @dev Returns number of tokens owned by given address.
-    /// @param _owner Address of token owner.
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
-    }
-
-    /// @dev Sets approved amount of tokens for spender. Returns success.
-    /// @param _spender Address of allowed account.
-    /// @param _value Number of approved tokens.
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    /*
-     * Read storage functions
-     */
-    /// @dev Returns number of allowed tokens for given address.
-    /// @param _owner Address of token owner.
-    /// @param _spender Address of token spender.
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
-    }
-
-}
-
-/**
- * Math operations with safety checks
- */
-contract SafeMath {
-  function mul(uint a, uint b) internal returns (uint) {
-    uint c = a * b;
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
 
-  function div(uint a, uint b) internal returns (uint) {
-    assert(b > 0);
-    uint c = a / b;
-    assert(a == b * c + a % b);
+  function div(uint256 a, uint256 b) internal  pure returns (uint256) {
+    uint256 c = a / b;
     return c;
   }
 
-  function sub(uint a, uint b) internal returns (uint) {
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint a, uint b) internal returns (uint) {
-    uint c = a + b;
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
     assert(c >= a);
     return c;
   }
+}
 
-  function assert(bool assertion) internal {
-    if (!assertion) {
-      throw;
-    }
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public constant returns (uint256);
+  function transfer(address to, uint256 value)  public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public  constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public  returns (bool);
+  function approve(address spender, uint256 value) public  returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
+
+  mapping(address => uint256) balances;
+  function transfer(address _to, uint256 _value)  public returns (bool) {
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
   }
+  function balanceOf(address _owner)  public constant returns (uint256 balance) {
+    return balances[_owner];
+  }
+
 }
 
 
-/// @title Token contract - Implements Standard Token Interface but adds Pyramid Scheme Support :)
-contract ScamCoin is StandardToken, SafeMath {
+contract StandardToken is ERC20, BasicToken {
 
-    /*
-     * Token meta data
-     */
-    string constant public name = "ScamCoin";
-    string constant public symbol = "SCAM";
-    uint8 constant public decimals = 3;
+  mapping (address => mapping (address => uint256)) allowed;
+  function transferFrom(address _from, address _to, uint256 _value)  public returns (bool) {
+    var _allowance = allowed[_from][msg.sender];
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+  function approve(address _spender, uint256 _value) public  returns (bool) {
+    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
 
-    uint public buyPrice = 10 szabo;
-    uint public sellPrice = 2500000000000 wei;
-    uint public tierBudget = 100000;
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+  function allowance(address _owner, address _spender)  public constant returns (uint256 remaining) {
+    return allowed[_owner][_spender];
+  }
+}
 
-    // Address of the founder of ScamCoin.
-    address public founder = 0x43B141F00121F8caEce6068445aAcd4A505D7160;
+contract Ownable {
+  address public owner;
+  function Ownable() public  {
+    owner = msg.sender;
+  }
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+  function transferOwnership(address newOwner)  public onlyOwner {
+    require(newOwner != address(0));      
+    owner = newOwner;
+  }
 
-    /*
-     * Contract functions
-     */
-    /// @dev Allows user to create tokens if token creation is still going
-    /// and cap was not reached. Returns token count.
-    function fund()
-      public
-      payable 
-      returns (bool)
-    {
-      uint tokenCount = msg.value / buyPrice;
-      if (tokenCount > tierBudget) {
-        tokenCount = tierBudget;
-      }
-      
-      uint investment = tokenCount * buyPrice;
+}
 
-      balances[msg.sender] += tokenCount;
-      Issuance(msg.sender, tokenCount);
-      totalSupply += tokenCount;
-      tierBudget -= tokenCount;
-
-      if (tierBudget <= 0) {
-        tierBudget = 100000;
-        buyPrice *= 2;
-        sellPrice *= 2;
-      }
-      if (msg.value > investment) {
-        msg.sender.transfer(msg.value - investment);
-      }
-      return true;
-    }
-
-    function withdraw(uint tokenCount)
-      public
-      returns (bool)
-    {
-      if (balances[msg.sender] >= tokenCount) {
-        uint withdrawal = tokenCount * sellPrice;
-        balances[msg.sender] -= tokenCount;
-        totalSupply -= tokenCount;
-        msg.sender.transfer(withdrawal);
-        return true;
-      } else {
-        return false;
-      }
-    }
-
-    /// @dev Contract constructor function sets initial token balances.
-    function ScamCoin()
-    {   
-        // It's not a good scam unless it's pre-mined
-        balances[founder] = 1000000;
-        totalSupply += 1000000;
-    }
+contract ScamCoin is StandardToken, Ownable {
+    string public name = "ScamCoin";		
+  string public symbol = "SCAM";		
+  uint256 public decimals = 18;	
+  uint256 public INITIAL_SUPPLY = 200000000 * (10 ** uint256(decimals));
+  function ScamCoin()  public {
+ //   totalSupply = INITIAL_SUPPLY;
+    balances[owner] = INITIAL_SUPPLY;
+  }
+  
 }
