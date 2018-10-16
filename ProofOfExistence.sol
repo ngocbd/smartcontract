@@ -1,8 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofOfExistence at 0xB19ff6657A80a68c94CA3fe6AAc3B6cfd16bdcD4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofOfExistence at 0x80f84866d4872f1ea412ddf10e2ed7af0b8ca8fb
 */
 /*
-this smartcontract used to store documents text on the Ethereum blockchain
+This smartcontract used to store documents text on the Ethereum blockchain
+and to get the document by document's hash (sha256).
+
 */
 
 contract ProofOfExistence{
@@ -10,17 +12,27 @@ contract ProofOfExistence{
     /* ---- Public variables: */
     string public created;
     address public manager; // account that adds info to this smartcontract
-    uint256 public index;   // record's numbers and number of records
-    mapping (uint256 => Doc) public docs; // index => Doc
-    // to get Doc obj call ProofOfExistence.docs(index);
+    uint256 public docIndex;   // record's numbers and number of records
+
+    mapping (uint256 => Doc) public indexedDocs; // docIndex => Doc
+    // to get Doc obj call ProofOfExistence.indexedDocs(docIndex);
+
+    mapping (bytes32 => Doc) public sha256Docs; // docHash => Doc
+    // to get Doc obj call ProofOfExistence.docs(docHash);
+    mapping (bytes32 => Doc) public sha3Docs; // docHash => Doc
+    // to get Doc obj call ProofOfExistence.docs(docHash);
+
 
     /* ---- Stored document structure: */
 
     struct Doc {
-        string publisher; // publisher's email
-        uint256 publishedOnUnixTime; // block timestamp (block.timestamp)
-        uint256 publishedInBlockNumber; // block.number
-        string text; // text of the document
+        uint256 docIndex; // .............................................1
+        string publisher; // publisher's email............................2
+        uint256 publishedOnUnixTime; // block timestamp (block.timestamp).3
+        uint256 publishedInBlockNumber; // block.number...................4
+        string docText; // text of the document...........................5
+        bytes32 sha256Hash; // ...........................................6
+        bytes32 sha3Hash; // .............................................7
     }
 
     /* ---- Constructor: */
@@ -28,32 +40,57 @@ contract ProofOfExistence{
     function ProofOfExistence(){
         manager = msg.sender;
         created = "cryptonomica.net";
-        index = 0; //
     }
 
     /* ---- Event:  */
-    // This generates a public event on the blockchain that will notify clients. In 'Mist' SmartContract page enable 'Watch contract events'
-    event DocumentAdded(uint256 indexed index,
-                        string indexed publisher,
-                        uint256 publishedOnUnixTime,
-                        string indexed text);
+    // This generates a public event on the blockchain that will notify clients.
+    // In 'Mist' SmartContract page enable 'Watch contract events'
+    event DocumentAdded(uint256 docIndex,
+                        string publisher,
+                        uint256 publishedOnUnixTime);
+
 
     /* ----- Main method: */
 
-    function addDoc(string _publisher, string _text) returns (uint256) {
+    function addDoc(
+                    string _publisher,
+                    string _docText) returns (bytes32) {
         // authorization
-        if (msg.sender != manager) throw;
+        if (msg.sender != manager){
+            // throw;
+            return sha3("not authorized"); //
+            // <- is 'bytes32' too:
+            // "0x8aed0440c9cacb4460ecdd12f6aff03c27cace39666d71f0946a6f3e9022a4a1"
+        }
+
+        // chech if exists
+        if (sha256Docs[sha256(_docText)].docIndex > 0){
+            // throw;
+            return sha3("text already exists"); //
+            // <- is 'bytes32' too:
+            // "0xd42b321cfeadc9593d0a28c4d013aaad8e8c68fc8e0450aa419a130a53175137"
+        }
         // document number
-        index += 1;
+        docIndex = docIndex + 1;
         // add document data:
-        docs[index] = Doc(_publisher, now, block.number, _text);
+        indexedDocs[docIndex] = Doc(docIndex,
+                                    _publisher,
+                                    now,
+                                    block.number,
+                                    _docText,
+                                    sha256(_docText),
+                                    sha3(_docText)
+                                    );
+        sha256Docs[sha256(_docText)] = indexedDocs[docIndex];
+        sha3Docs[sha3(_docText)]   = indexedDocs[docIndex];
         // add event
-        DocumentAdded(index,
-                      docs[index].publisher,
-                      docs[index].publishedOnUnixTime,
-                      docs[index].text);
-        // return number of the stored document
-        return index;
+        DocumentAdded(indexedDocs[docIndex].docIndex,
+                      indexedDocs[docIndex].publisher,
+                      indexedDocs[docIndex].publishedOnUnixTime
+                      );
+        // return sha3 of the stored document
+        // (sha3 is better for in web3.js)
+        return indexedDocs[docIndex].sha3Hash;
     }
 
     /* ---- Utilities: */
