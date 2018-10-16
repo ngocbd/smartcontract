@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LoomToken at 0xfd7361d9d7a15985026e2f24cca761dd2bb68063
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LoomToken at 0x89f17a6c1c831bb2fadc08c1838a196cae36bb2d
 */
 pragma solidity ^0.4.13;
 
@@ -168,8 +168,8 @@ contract StandardToken is ERC20, BasicToken {
 
 contract LoomToken is StandardToken {
 	string public name = 'LoomToken';
-	string public symbol = 'LMX';
-	uint8 public decimals = 100;
+	string public symbol = 'LOOM';
+	uint8 public decimals = 18;
 	uint public INITIAL_SUPPLY = 1000000000; //one billion
 
 	function LoomToken() public {
