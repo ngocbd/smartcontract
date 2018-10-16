@@ -1,7 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ContractCatalog at 0x50fd51b624ca86be3dbc640515ebc407a163cd6c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ContractCatalog at 0xa46aaf1b1f69e78d67fcb6c343e1701f835292e4
 */
 pragma solidity ^0.4.15;
+
+contract Token {
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+    function approve(address _spender, uint256 _value) returns (bool success);
+}
 
 contract Versionable {
     string public versionCode;
@@ -15,15 +21,8 @@ contract Versionable {
     }
 }
 
-
-contract Token {
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
-    function approve(address _spender, uint256 _value) returns (bool success);
-}
-
 contract ContractCatalog {
-    uint256 public constant VERSION = 3;
+    uint256 public constant VERSION = 2;
     string public constant SEPARATOR = "-";
 
     Token public token;
@@ -64,14 +63,6 @@ contract ContractCatalog {
     mapping(uint256 => uint256) prefixesPrices;
 
     string[] public forgivedChars;
-
-    function getPrefixOwner(string prefix) constant returns (address) {
-        return prefixes[prefix];
-    }
-
-    function getPrefixPrice(string prefix) constant returns (uint256) { 
-        return prefixesPrices[stringLen(prefix)];
-    }
 
     function transfer(address to) {
         require(to != address(0));
@@ -114,7 +105,7 @@ contract ContractCatalog {
         return getContractCode(types[code].sample);
     }
 
-    function hasForgivedChar(string s) private returns (bool) {
+    function hasForgivedChar(string s) constant returns (bool) {
         for (uint i = 0; i < forgivedChars.length; i++) {
             if (stringContains(s, forgivedChars[i]))
                 return true;
@@ -140,7 +131,6 @@ contract ContractCatalog {
         require(!stringContains(prefix, SEPARATOR));
         require(!hasForgivedChar(prefix));
         require(prefixes[prefix] == address(0));
-        RegisteredPrefix(prefix, msg.sender);
         if (msg.sender == owner) {
             prefixes[prefix] = owner;
             return true;
@@ -148,9 +138,10 @@ contract ContractCatalog {
             uint256 price = prefixesPrices[stringLen(prefix)];
             require(price != 0);
             require(token.transferFrom(msg.sender, owner, price));
-            prefixes[prefix] = msg.sender;
+            prefixes[prefix] = owner;
             return true;
         }
+        RegisteredPrefix(prefix, msg.sender);
     }
 
     function transferPrefix(string prefix, address to) {
@@ -162,7 +153,7 @@ contract ContractCatalog {
 
     function unregisterPrefix(string prefix) {
         require(prefixes[prefix] == msg.sender);
-        prefixes[prefix] = address(0);
+        prefixes[prefix] == address(0);
         UnregisteredPrefix(prefix, msg.sender);
     }
 
