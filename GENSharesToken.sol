@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GENSharesToken at 0x959b06600405760d95b5be11a2d36c1e8e7517aa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GENSharesToken at 0xe17276888d1b3c0eac64309c15f5d4195d24c695
 */
 pragma solidity ^0.4.18;
 
@@ -258,6 +258,19 @@ contract GENSharesToken is StandardToken, Ownable {
  
   address public saleAgent;
 
+  modifier notLocked() {
+    require(msg.sender == owner || msg.sender == saleAgent || mintingFinished);
+    _;
+  }
+
+  function transfer(address _to, uint256 _value) public notLocked returns (bool) {
+    return super.transfer(_to, _value);
+  }
+
+  function transferFrom(address from, address to, uint256 value) public notLocked returns (bool) {
+    return super.transferFrom(from, to, value);
+  }
+
   function setSaleAgent(address newSaleAgent) public {
     require(saleAgent == msg.sender || owner == msg.sender);
     saleAgent = newSaleAgent;
@@ -403,7 +416,7 @@ contract CommonCrowdsale is Ownable, LockableChanges {
     uint advisorsTokens = summaryTokens.mul(advisorsTokensPercent).div(PERCENT_RATE);
     mintAndSendTokens(advisorsTokensWallet, advisorsTokens);
 
-    uint devTokens = summaryTokens.sub(advisorsTokens).sub(bountyTokens);
+    uint devTokens = extendedTokens.sub(advisorsTokens).sub(bountyTokens);
     mintAndSendTokens(devTokensWallet, devTokens);
   }
 
