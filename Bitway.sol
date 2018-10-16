@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bitway at 0xcd19a08b139a4cc47bae0d9de41241f5056988c7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bitway at 0xcf0dc7952d663bd1e16403081d525cf7193573cf
 */
 pragma solidity ^0.4.18;
 
@@ -18,7 +18,7 @@ pragma solidity ^0.4.18;
     library SafeMath {
     function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     if (a == 0) {
-      return 0;
+    return 0;
     }
     uint256 c = a * b;
     assert(c / a == b);
@@ -70,12 +70,10 @@ pragma solidity ^0.4.18;
     
     function () public payable {
         createTokens();
-        
     }
     
     function Bitway() public {
         owner = msg.sender;
-        
     }
     
    
@@ -85,7 +83,7 @@ pragma solidity ^0.4.18;
         uint256 tokens = msg.value.mul(RATE);
         balances[msg.sender] = balances[msg.sender].add(tokens);
         totalSupply = totalSupply.add(tokens);
-        
+        owner.transfer(msg.value);
     }
     
     
