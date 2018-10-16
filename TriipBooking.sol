@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TriipBooking at 0x31ff339e707f821a6bfb5c70d7efe8b630fecc73
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TriipBooking at 0x8587d284f2cdb717a156729b545d001f8bbb1594
 */
 pragma solidity ^0.4.18;
 
@@ -56,7 +56,7 @@ contract TriipBooking is ERC20Interface {
     
     uint public constant _totalSupply = 50 * 10 ** 24;
     
-    string public constant name = "TripBooking";
+    string public constant name = "TriipBooking";
     string public constant symbol = "TRP";
     uint8 public constant decimals = 18;
     
@@ -65,8 +65,8 @@ contract TriipBooking is ERC20Interface {
 
 		uint256 public constant developmentTokens = 15 * 10 ** 24;
     uint256 public constant bountyTokens = 2.5 * 10 ** 24;
-		address public constant developmentTokensWallet = 0x27Aa956546Cd747D730CBd82b29a2Fa5b6BeE02a;
-		address public constant bountyTokensWallet = 0xc377f0B79aD77996a15ED7eFb450DDC760a02b45;
+		address public constant developmentTokensWallet = 0x2De3a11A5C1397CeFeA81D844C3173629e19a630;
+		address public constant bountyTokensWallet = 0x7E2435A1780a7E4949C059045754a98894215665;
 
 		uint public constant startTime = 1516406400;
 
@@ -99,6 +99,7 @@ contract TriipBooking is ERC20Interface {
 			require(validPurchase(msg.value,tokens));
 
 	    balances[msg.sender] = balances[msg.sender].add(tokens);
+			Transfer(address(0), msg.sender, tokens);
 			totalCrowdsale = totalCrowdsale.add(tokens);
 			owner.transfer(msg.value);
 	}	
