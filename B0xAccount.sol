@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract B0xAccount at 0xebfb9777124fed74aa8db2c6ab982116271a03b0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract B0xAccount at 0x3219e435d2d851ad9d314dbe7053c35a665bcb2a
 */
 pragma solidity ^0.4.23;
 
@@ -101,6 +101,7 @@ contract B0xAccount is Ownable {
     uint public denominator = 7;
 
     struct Withdraw {
+        address receiver;
         uint amount;
         uint blockNumber;
         uint blockTimestamp;
@@ -136,6 +137,18 @@ contract B0xAccount is Ownable {
         public
         returns(bool)
     {
+        return (withdrawTo(
+            _value,
+            msg.sender
+        ));
+    }
+
+    function withdrawTo(
+        uint _value,
+        address _to)
+        public
+        returns(bool)
+    {
         require(
             msg.sender == receiver1 
             || msg.sender == receiver2);
@@ -146,13 +159,28 @@ contract B0xAccount is Ownable {
         }
 
         withdrawals[msg.sender].push(Withdraw({
+            receiver: _to,
             amount: amount,
             blockNumber: block.number,
             blockTimestamp: block.timestamp
         }));
 
-        return (msg.sender.send(amount));
+        return (_to.send(amount));
     }
+
+    function transferToken(
+        address _tokenAddress,
+        address _to,
+        uint _value)
+        public
+        onlyOwner
+        returns (bool)
+    {
+        // bytes4(keccak256("transfer(address,uint256)")) == 0xa9059cbb
+        require(_tokenAddress.call(0xa9059cbb, _to, _value));
+
+        return true;
+    }    
 
     function setReceiver1(
         address _receiver
