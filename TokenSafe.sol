@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSafe at 0x1ef07a7888f70a1b0dfa9e482885b437b1d44f16
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSafe at 0xaf31604f0a88f7fcebc7d4cf4dd14653f4a6773c
 */
 pragma solidity ^0.4.13;
 
@@ -80,7 +80,7 @@ contract TokenSafe {
     //100%
     allocations[3] = 1000;
     
-    isAddressInclude[0xd3d45cd6210f9fa061a46406b5472d76a43dafd5] = true;
+    isAddressInclude[0xaf430805522178db0f2fd2c786bf506bd537a539] = true;
     isAddressInclude[0xb94a75e6fd07bfba543930a500e1648c2e8c9622] = true;
     isAddressInclude[0x59c582aefb682e0f32c9274a6cd1c2aa45353a1f] = true;
   }
