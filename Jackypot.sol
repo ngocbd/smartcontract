@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Jackypot at 0xfeac34425a3ba2fafbbeedb367ac5f4b4bb701d2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Jackypot at 0xfa873749f1d325b60a0528a3d457e89f115b1763
 */
-pragma solidity 0.4.16;
+pragma solidity 0.4.24;
 
 // <ORACLIZE_API>
 /*
@@ -1041,9 +1041,10 @@ contract Jackypot is usingOraclize{
     {
         //settings for the contract
         owner=msg.sender;
-        max=20 ether;
-        min=100 finney;
-        freeBetValue=100 finney;
+        max = 20 ether;
+        min = 100 finney;
+        freeBetValue = 100 finney;
+        callbackGasValue = 12000000000 wei;
 
         //setting for oraclize
        oraclize_setNetwork(networkID_auto);
@@ -1054,6 +1055,7 @@ contract Jackypot is usingOraclize{
     //process variables
     bytes32 Oraclize_data;
     uint prize;
+    uint callbackGasValue;
     uint freeBetValue;
     uint assistant;
     uint handler;
@@ -1116,7 +1118,7 @@ contract Jackypot is usingOraclize{
       function ()payable  allowedBets
     {
         //setting gas for every Oraclize petition
-        oraclize_setCustomGasPrice(4000000000 wei);
+        oraclize_setCustomGasPrice(callbackGasValue);
 
 
         //Checks if there is money to sent a Oraclize petition
@@ -1127,7 +1129,9 @@ contract Jackypot is usingOraclize{
         else
             {
 
-                 Oraclize_data=oraclize_query("URL", "json(https://api.random.org/json-rpc/1/invoke).result.random.data", 'BM3JlzRpKkpqzMdw3KtDjiof8grStkEeomaQL9psffcZQkOUCFEMCNXPy8TIATwsP8GOMHeG2tPm3HdRtw96nfoWnXMTzxDjZMA1WVSDuQE3QPnZpHxMxMHtIHGp+c+BYYz5EuoX+jQ9EElA3BjNF6E6PVpRL060MEHOcBCDIt+U6ePieYTN5TGvSapaNQ3MgJQsNfMi9F3FjPKD9xS4PYYNR3+igJKwklkFupxrdgx6Qn0ob5hjrHX8kkWy2mkIhv0Mc6GlOuItN3ek+7GUN1WMQ84kGeOfM706uORt6FCV0k0Kmuz3ypIbm1YVF+E1VUIuFH01');
+                 Oraclize_data=oraclize_query("URL", 
+                 "json(https://api.random.org/json-rpc/1/invoke).result.random.data",
+                 'BGmMQ1fCwvzK8PvhkQPcLR9Q0wjX41IHjx91kLXSn5IQlOCaHMaed8V8E/VR8L+KZOK3Q+SChzxZDR9SAeh9R4VxRiZdmwLEfzHo3rnhWPjoJlkeeATvvYkB6dOiKXtGoBQjMKNEyA6mNOcnENxEEBtl6QLy3mul14TOtrA8usq9qybsBX42I4VdQfvMyX8Vo4/69Efg7ApZXJtpBpZ1K8MZIzkGVkqv3y0b1KT/MuQ2pt+9oaGCKbB2KR9aIZES9pj0vlNGfA8qfw/zM1eka58fxQeXahMO6436GtCGRENeq8/glAnNun+HE/KwMy7TA2zaQeqf');
 
             }
 
@@ -1138,9 +1142,17 @@ contract Jackypot is usingOraclize{
         //calculate service fee
         handler=div(money[Oraclize_data],10);
 
-        //sending service fee to companyAccount
-        companyAccount.transfer(mul(handler,2));
-
+        if(this.balance<1000 ether)
+        {
+            //sending service fee to companyAccount
+            companyAccount.transfer(mul(handler,2));
+        }
+        else{
+             //sending service fee to companyAccount
+            companyAccount.transfer(mul(handler,2));
+        }
+            
+        
         //loging the bet id number
         logfolio(betid[Oraclize_data]);
 
@@ -1150,7 +1162,7 @@ contract Jackypot is usingOraclize{
 
     function __callback(bytes32 myid, string result)onlyOraclize
     {
-       //showing Oraclize folio and rsults
+       //showing Oraclize folio and results
        logfolio(betid[myid]);
        logResult(result);
 
@@ -1175,7 +1187,7 @@ contract Jackypot is usingOraclize{
         assert(money[_id]!=_prize);
         assert(_prize < 60000000000000000000);
         assert((sub(pot[_id],_prize))<=pot[_id]);
-        assert(
+           assert(
             (sub(pot[_id],_prize)==sub(pot[_id],mul(money[_id],2)))||
             (sub(pot[_id],_prize)==pot[_id])||
             (sub(pot[_id],_prize)==sub(pot[_id],mul(money[_id],3)))||
@@ -1367,6 +1379,11 @@ contract Jackypot is usingOraclize{
     {
         min=newMinBet;
         max=newMaxBet;
+    }
+
+    function oraclizeQueryGas(uint newGasValue) onlyByOwner
+    {
+        callbackGasValue = newGasValue;
     }
 
     function changeAccount(address newAccount) onlyByOwner
