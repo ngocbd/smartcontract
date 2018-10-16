@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthPyramid at 0xd20ac5cb462051dc3dea6ac445b794effd649a20
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthPyramid at 0xd647aa84f4fd6155a6bbc4e0d7f28a000b86db5c
 */
 pragma solidity ^0.4.18;
  
