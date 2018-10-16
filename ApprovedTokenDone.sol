@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0x7f776a65a7aa46715da45f126510377201e3bdaf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0x192623bab84414abfa3c084202da56d13e7c1764
 */
 pragma solidity ^0.4.13;
 
@@ -153,8 +153,8 @@ contract StandardToken is ERC20, BasicToken {
  * Created specifically for TokenDone.io
  */
 contract ApprovedTokenDone is StandardToken {
-	string public name = 'NESTLE';
-	string public symbol = 'NESTLE';
+	string public name = 'DANONE';
+	string public symbol = 'DANONE';
 	uint public decimals = 3;
 	uint public initialSupply = 99999999999;
 	string public publisher = 'TokenDone.io';
