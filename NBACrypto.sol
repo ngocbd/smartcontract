@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NBACrypto at 0x2fd747959bb92e1e33e39c517605f0bc4bd12746
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NBACrypto at 0x01293cd77f68341635814c35299ed30ae212789e
 */
 pragma solidity ^0.4.18;
 
@@ -13,7 +13,15 @@ contract NBACrypto {
 		address ownerAddress;
 		uint256 curPrice;
 	}
+
+  struct Player {
+    string name;
+    address ownerAddress;
+    uint256 curPrice;
+    uint256 realTeamId;
+  }
 	Team[] teams;
+  Player[] players;
 
 	modifier onlyCeo() {
         require (msg.sender == ceoAddress);
@@ -21,8 +29,9 @@ contract NBACrypto {
     }
 
     bool teamsAreInitiated;
+    bool playersAreInitiated;
     bool isPaused;
-    
+
     /*
     We use the following functions to pause and unpause the game.
     */
@@ -36,30 +45,55 @@ contract NBACrypto {
        return(isPaused);
     }
 
-    /*
-    This function allows players to purchase countries from other players. 
-    The price is automatically multiplied by 2 after each purchase.
-    Players can purchase multiple coutries
-    */
+
 	function purchaseCountry(uint _countryId) public payable {
 		require(msg.value == teams[_countryId].curPrice);
 		require(isPaused == false);
 
-		// Calculate the 5% value
+
 		uint256 commission5percent = (msg.value / 10);
 
-		// Calculate the owner commission on this sale & transfer the commission to the owner.		
+
 		uint256 commissionOwner = msg.value - commission5percent; // => 95%
 		teams[_countryId].ownerAddress.transfer(commissionOwner);
 
-		// Transfer the 5% commission to the developer
-		cfoAddress.transfer(commission5percent); // => 5% (25% remains in the Jackpot)						
+
+		cfoAddress.transfer(commission5percent);
 
 		// Update the team owner and set the new price
 		teams[_countryId].ownerAddress = msg.sender;
 		teams[_countryId].curPrice = mul(teams[_countryId].curPrice, 2);
 	}
-	
+
+  function purchasePlayer(uint256 _playerId) public payable {
+    require(msg.value == players[_playerId].curPrice);
+	require(isPaused == false);
+
+    // Calculate dev fee
+		uint256 commissionDev = (msg.value / 10);
+
+    //Calculate commision for team owner
+    uint256 commisionTeam = (msg.value / 5);
+
+    uint256 afterDevCut = msg.value - commissionDev;
+
+
+
+		// Calculate the owner commission on this sale & transfer the commission to the owner.
+		uint256 commissionOwner = afterDevCut - commisionTeam; //
+		players[_playerId].ownerAddress.transfer(commissionOwner);
+    teams[players[_playerId].realTeamId].ownerAddress.transfer(commisionTeam);
+
+		// Transfer fee to Dev
+		cfoAddress.transfer(commissionDev);
+
+		// Update the team owner and set the new price
+
+
+		players[_playerId].ownerAddress = msg.sender;
+		players[_playerId].curPrice = mul(players[_playerId].curPrice, 2);
+  }
+
 	/*
 	This function can be used by the owner of a team to modify the price of its team.
 	He can make the price smaller than the current price but never bigger.
@@ -70,7 +104,7 @@ contract NBACrypto {
 	    require(_newPrice < teams[_teamId].curPrice);
 	    teams[_teamId].curPrice = _newPrice;
 	}
-	
+
 	// This function will return all of the details of our teams
 	function getTeam(uint _teamId) public view returns (
         string name,
@@ -83,17 +117,40 @@ contract NBACrypto {
         ownerAddress = _team.ownerAddress;
         curPrice = _team.curPrice;
     }
-    
+
+    function getPlayer(uint _playerId) public view returns (
+          string name,
+          address ownerAddress,
+          uint256 curPrice,
+          uint256 realTeamId
+      ) {
+          Player storage _player = players[_playerId];
+
+          name = _player.name;
+          ownerAddress = _player.ownerAddress;
+          curPrice = _player.curPrice;
+          realTeamId = _player.realTeamId;
+      }
+
+
     // This function will return only the price of a specific team
     function getTeamPrice(uint _teamId) public view returns(uint256) {
         return(teams[_teamId].curPrice);
     }
-    
+
+    function getPlayerPrice(uint _playerId) public view returns(uint256) {
+        return(players[_playerId].curPrice);
+    }
+
     // This function will return only the addess of a specific team
     function getTeamOwner(uint _teamId) public view returns(address) {
         return(teams[_teamId].ownerAddress);
     }
-    
+
+    function getPlayerOwner(uint _playerId) public view returns(address) {
+        return(players[_playerId].ownerAddress);
+    }
+
     /**
     @dev Multiplies two numbers, throws on overflow. => From the SafeMath library
     */
@@ -118,37 +175,43 @@ contract NBACrypto {
 
 	// We run this function once to create all the teams and set the initial price.
 	function InitiateTeams() public onlyCeo {
-		require(teamsAreInitiated == false);
-        teams.push(Team("Raptors", cfoAddress, 750000000000000000)); 
-		teams.push(Team("Rockets", cfoAddress, 750000000000000000)); 
-		teams.push(Team("Celtics", cfoAddress, 700000000000000000)); 
-        teams.push(Team("Warriors", cfoAddress, 700000000000000000)); 
-        teams.push(Team("Cavaliers", cfoAddress, 650000000000000000)); 
-        teams.push(Team("Spurs", cfoAddress, 650000000000000000)); 
-        teams.push(Team("Wizards", cfoAddress, 600000000000000000)); 
-        teams.push(Team("Timberwolves", cfoAddress, 600000000000000000)); 
-        teams.push(Team("Pacers", cfoAddress, 550000000000000000)); 
-        teams.push(Team("Thunder", cfoAddress, 550000000000000000)); 
-        teams.push(Team("Bucks", cfoAddress, 500000000000000000));
-        teams.push(Team("Nuggets", cfoAddress, 500000000000000000)); 
-		teams.push(Team("76ers", cfoAddress, 450000000000000000));
-		teams.push(Team("Blazers", cfoAddress, 450000000000000000)); 		
-        teams.push(Team("Heat", cfoAddress, 400000000000000000)); 		
-        teams.push(Team("Pelicans", cfoAddress, 400000000000000000)); 		
-        teams.push(Team("Pistons", cfoAddress, 350000000000000000)); 		
-        teams.push(Team("Clippers", cfoAddress, 350000000000000000)); 
-        teams.push(Team("Hornets", cfoAddress, 300000000000000000));		
-        teams.push(Team("Jazz", cfoAddress, 300000000000000000)); 		
-        teams.push(Team("Knicks", cfoAddress, 250000000000000000)); 		
-        teams.push(Team("Lakers", cfoAddress, 250000000000000000)); 		
-        teams.push(Team("Bulls", cfoAddress, 200000000000000000)); 		
-        teams.push(Team("Grizzlies", cfoAddress, 200000000000000000)); 		
-        teams.push(Team("Nets", cfoAddress, 150000000000000000));		
-        teams.push(Team("Kings", cfoAddress, 150000000000000000));		
-        teams.push(Team("Magic", cfoAddress, 100000000000000000));		
-        teams.push(Team("Mavericks", cfoAddress, 100000000000000000)); 
-        teams.push(Team("Hawks", cfoAddress, 100000000000000000));			
-        teams.push(Team("Suns", cfoAddress, 100000000000000000)); 		
+		 require(teamsAreInitiated == false);
+		 teams.push(Team("Cavaliers", 0x54d6fca0ca37382b01304e6716420538604b447b, 6400000000000000000));
+ 		 teams.push(Team("Warriors", 0xc88ddaa37c1fec910670366ae16df2aa5e1124f7, 12800000000000000000));
+ 		 teams.push(Team("Celtics", 0x28d02f67316123dc0293849a0d254ad86b379b34, 6400000000000000000));
+		 teams.push(Team("Rockets", 0xc88ddaa37c1fec910670366ae16df2aa5e1124f7, 6400000000000000000));
+		 teams.push(Team("Raptors", 0x5c035bb4cb7dacbfee076a5e61aa39a10da2e956, 6400000000000000000));
+		 teams.push(Team("Spurs", 0x183febd8828a9ac6c70c0e27fbf441b93004fc05, 3200000000000000000));
+		 teams.push(Team("Wizards", 0xaec539a116fa75e8bdcf016d3c146a25bc1af93b, 3200000000000000000));
+		 teams.push(Team("Timberwolves", 0xef764bac8a438e7e498c2e5fccf0f174c3e3f8db, 3200000000000000000));
+		 teams.push(Team("Pacers", 0x8e668a4582d0465accf66b4e4ab6d817f6c5b2dc, 3200000000000000000));
+		 teams.push(Team("Thunder", 0x7d757e571bd545008a95cd0c48d2bb164faa72e3, 3200000000000000000));
+		 teams.push(Team("Bucks", 0x1edb4c7b145cef7e46d5b5c256cedcd5c45f2ece, 3200000000000000000));
+		 teams.push(Team("Lakers", 0xa2381223639181689cd6c46d38a1a4884bb6d83c, 3200000000000000000));
+		 teams.push(Team("76ers", 0xa2381223639181689cd6c46d38a1a4884bb6d83c, 3200000000000000000));
+		 teams.push(Team("Blazers", 0x54d6fca0ca37382b01304e6716420538604b447b, 1600000000000000000));
+		 teams.push(Team("Heat", 0xef764bac8a438e7e498c2e5fccf0f174c3e3f8db, 3200000000000000000));
+		 teams.push(Team("Pelicans", 0x54d6fca0ca37382b01304e6716420538604b447b, 1600000000000000000));
+		 teams.push(Team("Pistons", 0x54d6fca0ca37382b01304e6716420538604b447b, 1600000000000000000));
+		 teams.push(Team("Clippers", 0x7ec915b8d3ffee3deaae5aa90def8ad826d2e110, 3200000000000000000));
+		 teams.push(Team("Hornets", 0x7ec915b8d3ffee3deaae5aa90def8ad826d2e110, 3200000000000000000));
+		 teams.push(Team("Jazz", 0x54d6fca0ca37382b01304e6716420538604b447b, 1600000000000000000));
+		 teams.push(Team("Knicks", 0x7ec915b8d3ffee3deaae5aa90def8ad826d2e110, 3200000000000000000));
+		 teams.push(Team("Nuggets", 0x7ec915b8d3ffee3deaae5aa90def8ad826d2e110, 3200000000000000000));
+		 teams.push(Team("Bulls", 0x28d02f67316123dc0293849a0d254ad86b379b34, 3200000000000000000));
+		 teams.push(Team("Grizzlies", 0x7ec915b8d3ffee3deaae5aa90def8ad826d2e110, 3200000000000000000));
+		 teams.push(Team("Nets", 0x54d6fca0ca37382b01304e6716420538604b447b, 1600000000000000000));
+		 teams.push(Team("Kings", 0x7ec915b8d3ffee3deaae5aa90def8ad826d2e110, 3200000000000000000));
+		 teams.push(Team("Magic", 0xb87e73ad25086c43a16fe5f9589ff265f8a3a9eb, 3200000000000000000));
+		 teams.push(Team("Mavericks", 0x7ec915b8d3ffee3deaae5aa90def8ad826d2e110, 3200000000000000000));
+		 teams.push(Team("Hawks", 0x7ec915b8d3ffee3deaae5aa90def8ad826d2e110, 3200000000000000000));
+		 teams.push(Team("Suns", 0x7ec915b8d3ffee3deaae5aa90def8ad826d2e110, 3200000000000000000));
 	}
+
+    function addPlayer(string name, address address1, uint256 price, uint256 realTeamId) public onlyCeo {
+        players.push(Player(name,address1,price,realTeamId));
+    }
+
+
 
 }
