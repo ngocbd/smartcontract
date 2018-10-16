@@ -1,6 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Pluton at 0xD8912C10681D8B21Fd3742244f44658dBA12264E
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Pluton at 0xe03db7565f8c7abf82129fa131e6dc3c1fe9dd24
 */
+pragma solidity ^0.4.10;
 /*
 The Pluton Contract implements the standard token functionality (https://github.com/ethereum/EIPs/issues/20) as well as the following OPTIONAL extras intended for use by humans.
 
