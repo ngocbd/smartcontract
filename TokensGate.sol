@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokensGate at 0xf1ada8ab9b75375c05c1af0acec6f6d975470a24
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokensGate at 0x7c3c696bb3c3844fbf540175d0afc7b879e696c5
 */
 pragma solidity ^0.4.18;
 
@@ -297,7 +297,7 @@ contract MintableToken is StandardToken, Ownable {
 // File: contracts/TGCToken.sol
 
 contract TGCToken is MintableToken {
-    string public constant name = "TokensGate Coin";
+    string public constant name = "TGCToken";
     string public constant symbol = "TGC";
     uint8 public constant decimals = 18;
 }
