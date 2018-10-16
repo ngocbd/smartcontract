@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Capricornus_ZodiacToken at 0x97244c7640c8a7d525e056e1b020204d9e0742c6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Capricornus_ZodiacToken at 0x129acf3033adf867e186141ed182eafd39596436
 */
 pragma solidity ^0.4.19;
 
