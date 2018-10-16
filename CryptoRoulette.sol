@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoRoulette at 0x74808c86c6f0bc6f59a3a1430ddfcd2e29952eac
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoRoulette at 0xc57fc2c9fd3130933bd29f01ff940dc52bc4115b
 */
 pragma solidity ^0.4.23;
 
@@ -35,7 +35,6 @@ contract CryptoRoulette {
 
     function play(uint256 number) payable public {
         require(msg.value >= betPrice && number <= 10);
-        require(msg.sender == ownerAddr);
 
         Game game;
         game.player = msg.sender;
