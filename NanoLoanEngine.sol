@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NanoLoanEngine at 0xba5a1760dbf1dc1be22dd48fe54a028203240a64
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NanoLoanEngine at 0xba5a17c1af87193b1c2bb1d8e28b1f9ca80332fc
 */
 pragma solidity ^0.4.19;
 
@@ -92,12 +92,15 @@ contract ERC721 {
    function approve(address, uint256) public returns (bool);
    function takeOwnership(uint256) public returns (bool);
    function transfer(address, uint256) public returns (bool);
+   function setApprovalForAll(address _operator, bool _approved) public returns (bool);
    function getApproved(uint256 _tokenId) public view returns (address);
+   function isApprovedForAll(address _owner, address _operator) public view returns (bool);
    // Token metadata
    function tokenMetadata(uint256 _tokenId) public view returns (string info);
    // Events
    event Transfer(address indexed _from, address indexed _to, uint256 _tokenId);
    event Approval(address indexed _owner, address indexed _approved, uint256 _tokenId);
+   event ApprovalForAll(address indexed _owner, address indexed _operator, bool _approved);
 }
 
 contract Token {
@@ -255,20 +258,20 @@ contract TokenLockable is RpSafeMath, Ownable {
 
 contract NanoLoanEngine is ERC721, Engine, Ownable, TokenLockable {
     uint256 constant internal PRECISION = (10**18);
-    uint256 constant internal MAX_DECIMALS = 18;
+    uint256 constant internal RCN_DECIMALS = 18;
 
-    uint256 public constant VERSION = 210;
+    uint256 public constant VERSION = 211;
     string public constant VERSION_NAME = "Basalt";
 
     uint256 private activeLoans = 0;
     mapping(address => uint256) private lendersBalance;
 
     function name() public view returns (string _name) {
-        _name = "RCN - Nano loan engine - Basalt 210";
+        _name = "RCN - Nano loan engine - Basalt 211";
     }
 
     function symbol() public view returns (string _symbol) {
-        _symbol = "RCN-NLE-210";
+        _symbol = "RCN-NLE-211";
     }
 
     /**
@@ -362,6 +365,15 @@ contract NanoLoanEngine is ERC721, Engine, Ownable, TokenLockable {
     }
 
     /**
+        @notice Returns true if the _operator can transfer the loans of the _owner
+
+        @dev Required for ERC-721 compliance 
+    */
+    function isApprovedForAll(address _owner, address _operator) public view returns (bool) {
+        return operators[_owner][_operator];
+    }
+
+    /**
         @notice Returns the loan metadata, this field can be set by the creator of the loan with his own criteria.
 
         @param index Index of the loan
@@ -429,6 +441,7 @@ contract NanoLoanEngine is ERC721, Engine, Ownable, TokenLockable {
         mapping(address => bool) approbations;
     }
 
+    mapping(address => mapping(address => bool)) private operators;
     Loan[] private loans;
 
     /**
@@ -647,7 +660,7 @@ contract NanoLoanEngine is ERC721, Engine, Ownable, TokenLockable {
         Loan storage loan = loans[index];
         
         require(loan.status != Status.destroyed && loan.status != Status.paid);
-        require(msg.sender == loan.lender || msg.sender == loan.approvedTransfer);
+        require(msg.sender == loan.lender || msg.sender == loan.approvedTransfer || operators[loan.lender][msg.sender]);
         require(to != address(0));
         loan.lender = to;
         loan.approvedTransfer = address(0);
@@ -707,6 +720,18 @@ contract NanoLoanEngine is ERC721, Engine, Ownable, TokenLockable {
         require(msg.sender == loan.lender);
         loan.approvedTransfer = to;
         Approval(msg.sender, to, index);
+        return true;
+    }
+
+    /**
+        @notice Enable or disable approval for a third party ("operator") to manage
+
+        @param _approved True if the operator is approved, false to revoke approval
+        @param _operator Address to add to the set of authorized operators.
+    */
+    function setApprovalForAll(address _operator, bool _approved) public returns (bool) {
+        operators[msg.sender][_operator] = _approved;
+        ApprovalForAll(msg.sender, _operator, _approved);
         return true;
     }
 
@@ -899,8 +924,8 @@ contract NanoLoanEngine is ERC721, Engine, Ownable, TokenLockable {
             
             (rate, decimals) = oracle.getRate(currency, data);
 
-            require(decimals <= MAX_DECIMALS);
-            return (safeMult(safeMult(amount, rate), (10**decimals))) / PRECISION;
+            require(decimals <= RCN_DECIMALS);
+            return (safeMult(safeMult(amount, rate), (10**(RCN_DECIMALS-decimals)))) / PRECISION;
         }
     }
 
