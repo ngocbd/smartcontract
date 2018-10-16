@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x5281147d7ad05937eeb4fbe5c252a35696e8c28a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x2480ce2f64cb4c3434adf7b369ae1e906088fdb9
 */
 pragma solidity ^0.4.4;
 
@@ -106,10 +106,10 @@ contract ERC20Token is StandardToken {
     They allow one to customise the token contract & in no way influences the core functionality.
     Some wallets/interfaces might not even bother to look at this information.
     */
-    bytes32 public name;                   //fancy name: eg Simon Bucks
+    string public name;                   //fancy name: eg Simon Bucks
     uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    bytes32 public symbol;                 //An identifier: eg SBX
-    bytes32 public version = 'NITTE1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
+    string public symbol;                 //An identifier: eg SBX
+    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
 
 //
 // CHANGE THESE VALUES FOR YOUR TOKEN
@@ -119,13 +119,11 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 1000000000000000;               
-// Give the creator all initial tokens (100000 for example)
-        totalSupply = 1000000000000000;                       
- // Update total supply (100000 for example)
-        name = "NITTE Coins";                                   // Set the name for display purposes
-        decimals = 18;                            // Amount of decimals for display purposes
-        symbol = "NITTE";                               // Set the symbol for display purposes
+        balances[msg.sender] = 10000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 10000000000000;                        // Update total supply (100000 for example)
+        name = "BitPlay";                                   // Set the name for display purposes
+        decimals = 4;                            // Amount of decimals for display purposes
+        symbol = "BTP";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
