@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x1f26fc3471868b307510ea3ebaa5c9f5b20a52f5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x6ef2b022bea67b819fa9a4d582d5002c09a8372b
 */
 pragma solidity ^0.4.4;
 
@@ -38,14 +38,12 @@ contract Token {
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
+    
 }
 
 
 
 contract StandardToken is Token {
-
-    address public owner;
 
     function transfer(address _to, uint256 _value) returns (bool success) {
         //Default assumes totalSupply can't be over max (2^256 - 1).
@@ -111,7 +109,7 @@ contract ERC20Token is StandardToken {
     string public name;                   //fancy name: eg Simon Bucks
     uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
     string public symbol;                 //An identifier: eg SBX
-    string public version = "H1.0";       //human 0.1 standard. Just an arbitrary versioning scheme.
+    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
 
 //
 // CHANGE THESE VALUES FOR YOUR TOKEN
@@ -119,12 +117,13 @@ contract ERC20Token is StandardToken {
 
 //make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
 
-    function ERC20Token() {
-        balances[msg.sender] = 10000000000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 10000000000000000000;                        // Update total supply (100000 for example)
-        name = "Condor Fund Trend";                                   // Set the name for display purposes
-        decimals = 9;                            // Amount of decimals for display purposes
-        symbol = "COT";                               // Set the symbol for display purposes
+    function ERC20Token(
+        ) {
+        balances[msg.sender] = 69000000069;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 69000000069;                        // Update total supply (100000 for example)
+        name = "DikCoin";                                   // Set the name for display purposes
+        decimals = 0;                            // Amount of decimals for display purposes
+        symbol = "DIK";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
