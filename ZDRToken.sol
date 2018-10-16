@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZDRToken at 0x956d760f8665358ea1a9f11b82913020e5479376
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZDRToken at 0x71f1bc89f38b241f3ebf0d5a013fa2850c63a1d4
 */
 pragma solidity ^0.4.15;
 
@@ -34,8 +34,11 @@ contract ERC20 is ERC20Basic {
  */
 library SafeMath {
   function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
     uint256 c = a * b;
-    assert(a == 0 || c / a == b);
+    assert(c / a == b);
     return c;
   }
 
@@ -208,11 +211,11 @@ contract HasNoTokens is CanReclaimToken {
 
  /**
   * @dev Reject all ERC23 compatible tokens
-  * param from_ address The address that is transferring the tokens
-  * param value_ uint256 the amount of the specified token
-  * param data_ Bytes The data passed from the caller.
+  * @param from_ address The address that is transferring the tokens
+  * @param value_ uint256 the amount of the specified token
+  * @param data_ Bytes The data passed from the caller.
   */
-  function tokenFallback(address /*from_*/, uint256 /*value_*/, bytes /*data_*/) external {
+  function tokenFallback(address from_, uint256 value_, bytes data_) external {
     revert();
   }
 
@@ -372,15 +375,16 @@ contract MintableToken is StandardToken, Ownable {
    * @dev Function to stop minting new tokens.
    * @return True if the operation was successful.
    */
-  function finishMinting() onlyOwner public returns (bool) {
+  function finishMinting() onlyOwner canMint public returns (bool) {
     mintingFinished = true;
     MintFinished();
     return true;
   }
 }
 
+
 //====== Zloadr Contracts =====
-contract ZDRToken is MintableToken, HasNoContracts, HasNoTokens { //MintableToken is StandardToken, Ownable
+contract ZDRToken is MintableToken, HasNoContracts, HasNoTokens, HasNoEther { //MintableToken is StandardToken, Ownable
     string public symbol = 'ZDR';
     string public name = 'Zloadr Token';
     uint8 public constant decimals = 8;
@@ -393,11 +397,11 @@ contract ZDRToken is MintableToken, HasNoContracts, HasNoTokens { //MintableToke
         _;
     }
     
-    function transfer(address _to, uint256 _value) canTransfer returns (bool) {
-        super.transfer(_to, _value);
+    function transfer(address _to, uint256 _value) canTransfer public returns (bool) {
+        return super.transfer(_to, _value);
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) canTransfer returns (bool) {
-        super.transferFrom(_from, _to, _value);
+    function transferFrom(address _from, address _to, uint256 _value) canTransfer public returns (bool) {
+        return super.transferFrom(_from, _to, _value);
     }
 }
