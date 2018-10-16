@@ -1,88 +1,33 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Contribution at 0x4ae5aee119a6ea4c849ce0d757b2c203a35e1555
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Contribution at 0x89dd662cc0651a6f3631a617724525f2ff373b1e
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.18;
+
+// File: zeppelin-solidity/contracts/token/ERC20Basic.sol
 
 /**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
  */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-contract ERC20 {
-  /// @notice Send `_amount` tokens to `_to` from `msg.sender`
-  /// @param _to The address of the recipient
-  /// @param _amount The amount of tokens to be transferred
-  /// @return Whether the transfer was successful or not
-  function transfer(address _to, uint256 _amount) returns (bool success);
+// File: contracts/ExchangerI.sol
 
-  /// @notice Send `_amount` tokens to `_to` from `_from` on the condition it
-  ///  is approved by `_from`
-  /// @param _from The address holding the tokens being transferred
-  /// @param _to The address of the recipient
-  /// @param _amount The amount of tokens to be transferred
-  /// @return True if the transfer was successful
-  function transferFrom(address _from, address _to, uint256 _amount
-  ) returns (bool success);
+contract ExchangerI {
+  ERC20Basic public wpr;
 
-  /// @param _owner The address that's balance is being requested
-  /// @return The balance of `_owner` at the current block
-  function balanceOf(address _owner) constant returns (uint256 balance);
-
-  /// @notice `msg.sender` approves `_spender` to spend `_amount` tokens on
-  ///  its behalf. This is a modified version of the ERC20 approve function
-  ///  to be a little bit safer
-  /// @param _spender The address of the account able to transfer the tokens
-  /// @param _amount The amount of tokens to be approved for transfer
-  /// @return True if the approval was successful
-  function approve(address _spender, uint256 _amount) returns (bool success);
-
-  /// @dev This function makes it easy to read the `allowed[]` map
-  /// @param _owner The address of the account that owns the token
-  /// @param _spender The address of the account able to transfer the tokens
-  /// @return Amount of remaining tokens of _owner that _spender is allowed
-  ///  to spend
-  function allowance(address _owner, address _spender
-  ) constant returns (uint256 remaining);
-
-  /// @notice `msg.sender` approves `_spender` to send `_amount` tokens on
-  ///  its behalf, and then a function is triggered in the contract that is
-  ///  being approved, `_spender`. This allows users to use their tokens to
-  ///  interact with contracts in one function call instead of two
-  /// @param _spender The address of the contract able to transfer the tokens
-  /// @param _amount The amount of tokens to be approved for transfer
-  /// @return True if the function call was successful
-  function approveAndCall(address _spender, uint256 _amount, bytes _extraData
-  ) returns (bool success);
-
-  /// @dev This function makes it easy to get the total number of tokens
-  /// @return The total number of tokens
-  function totalSupply() constant returns (uint);
+  /// @notice This method should be called by the WCT holders to collect their
+  ///  corresponding WPRs
+  function collect(address caller) public;
 }
+
+// File: contracts/MiniMeToken.sol
 
 /*
     Copyright 2016, Jordi Baylina
@@ -266,7 +211,7 @@ contract MiniMeToken is Controlled {
     ) returns (bool success) {
 
         // The controller of this contract can move tokens around at will,
-        //  this is important to recognize! Confirm that you trust the
+
         //  controller of this contract, which in most situations should be
         //  another open source smart contract or 0x0
         if (msg.sender != controller) {
@@ -344,8 +289,7 @@ contract MiniMeToken is Controlled {
         //  allowance to zero by calling `approve(_spender,0)` if it is not
         //  already 0 to mitigate the race condition described here:
         //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-        // Recommended by Bokky Poobah to remove this check
-        // require((_amount == 0) || (allowed[msg.sender][_spender] == 0));
+        require((_amount == 0) || (allowed[msg.sender][_spender] == 0));
 
         // Alerts the token controller of the approve function call
         if (isContract(controller)) {
@@ -686,37 +630,415 @@ contract MiniMeTokenFactory {
     }
 }
 
+// File: zeppelin-solidity/contracts/ownership/Ownable.sol
 
 /**
- * @title Aigang Contribution contract
- *
- *  By contributing ETH to this smart contract you agree to the following terms and conditions:
- *  https://github.com/AigangNetwork/aigang-crowdsale-contracts/Aigang-T&Cs(171020_clean).docx
- *
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
  */
+contract Ownable {
+  address public owner;
 
 
-contract Contribution is Controlled, TokenController {
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+// File: zeppelin-solidity/contracts/math/SafeMath.sol
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+// File: zeppelin-solidity/contracts/token/BasicToken.sol
+
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
 
-  MiniMeToken public aix;
-  bool public transferable;
+  mapping(address => uint256) balances;
+
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public view returns (uint256 balance) {
+    return balances[_owner];
+  }
+
+}
+
+// File: zeppelin-solidity/contracts/token/ERC20.sol
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+// File: zeppelin-solidity/contracts/token/StandardToken.sol
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) internal allowed;
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) public view returns (uint256) {
+    return allowed[_owner][_spender];
+  }
+
+  /**
+   * @dev Increase the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _addedValue The amount of tokens to increase the allowance by.
+   */
+  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  /**
+   * @dev Decrease the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To decrement
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _subtractedValue The amount of tokens to decrease the allowance by.
+   */
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+}
+
+// File: zeppelin-solidity/contracts/token/MintableToken.sol
+
+/**
+ * @title Mintable token
+ * @dev Simple ERC20 Token example, with mintable token creation
+ * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
+ * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
+ */
+
+contract MintableToken is StandardToken, Ownable {
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
+
+  bool public mintingFinished = false;
+
+
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
+
+  /**
+   * @dev Function to mint tokens
+   * @param _to The address that will receive the minted tokens.
+   * @param _amount The amount of tokens to mint.
+   * @return A boolean that indicates if the operation was successful.
+   */
+  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+    totalSupply = totalSupply.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    Mint(_to, _amount);
+    Transfer(address(0), _to, _amount);
+    return true;
+  }
+
+  /**
+   * @dev Function to stop minting new tokens.
+   * @return True if the operation was successful.
+   */
+  function finishMinting() onlyOwner canMint public returns (bool) {
+    mintingFinished = true;
+    MintFinished();
+    return true;
+  }
+}
+
+// File: zeppelin-solidity/contracts/lifecycle/Pausable.sol
+
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    Pause();
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    Unpause();
+  }
+}
+
+// File: zeppelin-solidity/contracts/token/PausableToken.sol
+
+/**
+ * @title Pausable token
+ *
+ * @dev StandardToken modified with pausable transfers.
+ **/
+
+contract PausableToken is StandardToken, Pausable {
+
+  function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
+    return super.transfer(_to, _value);
+  }
+
+  function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
+    return super.transferFrom(_from, _to, _value);
+  }
+
+  function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
+    return super.approve(_spender, _value);
+  }
+
+  function increaseApproval(address _spender, uint _addedValue) public whenNotPaused returns (bool success) {
+    return super.increaseApproval(_spender, _addedValue);
+  }
+
+  function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool success) {
+    return super.decreaseApproval(_spender, _subtractedValue);
+  }
+}
+
+// File: contracts/WPR.sol
+
+/**
+ * @title WePower Contribution Token
+ */
+contract WPR is MintableToken, PausableToken {
+  string constant public name = "WePower Token";
+  string constant public symbol = "WPR";
+  uint constant public decimals = 18;
+
+  function WPR() {
+  }
+
+  //////////
+  // Safety Methods
+  //////////
+
+  /// @notice This method can be used by the controller to extract mistakenly
+  ///  sent tokens to this contract.
+  /// @param _token The address of the token contract that you want to recover
+  ///  set to 0 in case you want to extract ether.
+  function claimTokens(address _token) public onlyOwner {
+    if (_token == 0x0) {
+      owner.transfer(this.balance);
+      return;
+    }
+
+    ERC20 token = ERC20(_token);
+    uint balance = token.balanceOf(this);
+    token.transfer(owner, balance);
+    ClaimedTokens(_token, owner, balance);
+  }
+
+  event ClaimedTokens(address indexed _token, address indexed _controller, uint _amount);
+
+  function disown() public onlyOwner {
+    OwnershipTransferred(owner, address(0));
+    owner = address(0);
+  }
+}
+
+// File: contracts/Contribution.sol
+
+contract Contribution is Ownable {
+  using SafeMath for uint256;
+
+  WPR public wpr;
   address public contributionWallet;
-  address public remainderHolder;
-  address public devHolder;
+  address public teamHolder;
   address public communityHolder;
+  address public futureHolder;
   address public exchanger;
 
-  address public collector;
-  uint256 public collectorWeiCap;
-  uint256 public collectorWeiCollected;
+  // Wings Integration
+  uint256 public totalCollected;
 
   uint256 public totalWeiCap;             // Total Wei to be collected
   uint256 public totalWeiCollected;       // How much Wei has been collected
-  uint256 public weiPreCollected;
-  uint256 public notCollectedAmountAfter24Hours;
-  uint256 public twentyPercentWithBonus;
-  uint256 public thirtyPercentWithBonus;
+  uint256 public presaleTokensIssued;
 
   uint256 public minimumPerTransaction = 0.01 ether;
 
@@ -741,14 +1063,9 @@ contract Contribution is Controlled, TokenController {
   }
 
   modifier contributionOpen() {
-    // collector can start depositing 2 days prior
-    if (msg.sender == collector) {
-      require(getBlockTimestamp().add(2 days) >= startTime);
-    } else {
-      require(getBlockTimestamp() >= startTime);
-    }
-    require(getBlockTimestamp() <= endTime);
-    require(finalizedTime == 0);
+    require(getBlockTimestamp() >= startTime &&
+           getBlockTimestamp() <= endTime &&
+           finalizedTime == 0);
     _;
   }
 
@@ -757,51 +1074,44 @@ contract Contribution is Controlled, TokenController {
     _;
   }
 
-  function Contribution(address _aix) {
-    require(_aix != 0x0);
-    aix = MiniMeToken(_aix);
+  function Contribution(address _wpr) {
+    require(_wpr != 0x0);
+    wpr = WPR(_wpr);
   }
 
   function initialize(
-      address _apt,
+      address _wct1,
+      address _wct2,
       address _exchanger,
       address _contributionWallet,
-      address _remainderHolder,
-      address _devHolder,
+      address _futureHolder,
+      address _teamHolder,
       address _communityHolder,
-      address _collector,
-      uint256 _collectorWeiCap,
       uint256 _totalWeiCap,
       uint256 _startTime,
       uint256 _endTime
-  ) public onlyController {
+  ) public onlyOwner {
     // Initialize only once
     require(initializedBlock == 0);
     require(initializedTime == 0);
-    assert(aix.totalSupply() == 0);
-    assert(aix.controller() == address(this));
-    assert(aix.decimals() == 18);  // Same amount of decimals as ETH
+    assert(wpr.totalSupply() == 0);
+    assert(wpr.owner() == address(this));
+    assert(wpr.decimals() == 18);  // Same amount of decimals as ETH
+    wpr.pause();
 
     require(_contributionWallet != 0x0);
     contributionWallet = _contributionWallet;
 
-    require(_remainderHolder != 0x0);
-    remainderHolder = _remainderHolder;
+    require(_futureHolder != 0x0);
+    futureHolder = _futureHolder;
 
-    require(_devHolder != 0x0);
-    devHolder = _devHolder;
+    require(_teamHolder != 0x0);
+    teamHolder = _teamHolder;
 
     require(_communityHolder != 0x0);
     communityHolder = _communityHolder;
 
-    require(_collector != 0x0);
-    collector = _collector;
-
-    require(_collectorWeiCap > 0);
-    require(_collectorWeiCap <= _totalWeiCap);
-    collectorWeiCap = _collectorWeiCap;
-
-    assert(_startTime >= getBlockTimestamp());
+    require(_startTime >= getBlockTimestamp());
     require(_startTime < _endTime);
     startTime = _startTime;
     endTime = _endTime;
@@ -812,13 +1122,17 @@ contract Contribution is Controlled, TokenController {
     initializedBlock = getBlockNumber();
     initializedTime = getBlockTimestamp();
 
-    require(_apt != 0x0);
+    require(_wct1 != 0x0);
+    require(_wct2 != 0x0);
     require(_exchanger != 0x0);
 
-    weiPreCollected = MiniMeToken(_apt).totalSupplyAt(initializedBlock);
+    presaleTokensIssued = MiniMeToken(_wct1).totalSupplyAt(initializedBlock);
+    presaleTokensIssued = presaleTokensIssued.add(
+      MiniMeToken(_wct2).totalSupplyAt(initializedBlock)
+    );
 
-    // Exchangerate from apt to aix 2500 considering 25% bonus.
-    require(aix.generateTokens(_exchanger, weiPreCollected.mul(2500)));
+    // Exchange rate from wct to wpr 10000
+    require(wpr.mint(_exchanger, presaleTokensIssued.mul(10000)));
     exchanger = _exchanger;
 
     Initialized(initializedBlock);
@@ -826,74 +1140,50 @@ contract Contribution is Controlled, TokenController {
 
   /// @notice interface for founders to blacklist investors
   /// @param _investors array of investors
-  function blacklistAddresses(address[] _investors) public onlyController {
+  function blacklistAddresses(address[] _investors) public onlyOwner {
     for (uint256 i = 0; i < _investors.length; i++) {
       blacklist(_investors[i]);
     }
   }
 
+  /// @notice Notifies if an investor is whitelisted for contribution
+  /// @param _investor investor address
+  /// @return status
+  function isWhitelisted(address _investor) public onlyOwner constant returns(bool) {
+    return canPurchase[_investor];
+  }
+
   /// @notice interface for founders to whitelist investors
   /// @param _investors array of investors
-  function whitelistAddresses(address[] _investors) public onlyController {
+  function whitelistAddresses(address[] _investors) public onlyOwner {
     for (uint256 i = 0; i < _investors.length; i++) {
       whitelist(_investors[i]);
     }
   }
 
-  function whitelist(address investor) public onlyController {
+  function whitelist(address investor) public onlyOwner {
     if (canPurchase[investor]) return;
     numWhitelistedInvestors++;
     canPurchase[investor] = true;
   }
 
-  function blacklist(address investor) public onlyController {
+  function blacklist(address investor) public onlyOwner {
     if (!canPurchase[investor]) return;
     numWhitelistedInvestors--;
     canPurchase[investor] = false;
   }
 
-  // ETH-AIX exchange rate
+  // ETH-WPR exchange rate
   function exchangeRate() constant public initialized returns (uint256) {
-    if (getBlockTimestamp() <= startTime + 1 hours) {
-      // 15% Bonus
-      return 2300;
-    }
-
-    if (getBlockTimestamp() <= startTime + 2 hours) {
-      // 10% Bonus
-      return 2200;
-    }
-
-    if (getBlockTimestamp() <= startTime + 1 days) {
-      return 2000;
-    }
-
-    uint256 collectedAfter24Hours = notCollectedAmountAfter24Hours.sub(weiToCollect());
-
-    if (collectedAfter24Hours <= twentyPercentWithBonus) {
-      // 15% Bonus
-      return 2300;
-    }
-
-    if (collectedAfter24Hours <= twentyPercentWithBonus + thirtyPercentWithBonus) {
-      // 10% Bonus
-      return 2200;
-    }
-
-    return 2000;
+    return 8000;
   }
 
-  function tokensToGenerate(uint256 toFund) constant public returns (uint256) {
-    // collector gets 15% bonus
-    if (msg.sender == collector) {
-      return toFund.mul(2300);
-    }
-
-    return toFund.mul(exchangeRate());
+  function tokensToGenerate(uint256 toFund) internal returns (uint256 generatedTokens) {
+    generatedTokens = toFund.mul(exchangeRate());
   }
 
   /// @notice If anybody sends Ether directly to this contract, consider he is
-  /// getting AIXs.
+  /// getting WPRs.
   function () public payable notPaused {
     proxyPayment(msg.sender);
   }
@@ -902,64 +1192,47 @@ contract Contribution is Controlled, TokenController {
   // TokenController functions
   //////////
 
-  /// @notice This method will generally be called by the AIX token contract to
-  ///  acquire AIXs. Or directly from third parties that want to acquire AIXs in
+  /// @notice This method will generally be called by the WPR token contract to
+  ///  acquire WPRs. Or directly from third parties that want to acquire WPRs in
   ///  behalf of a token holder.
-  /// @param _th AIX holder where the AIXs will be minted.
+  /// @param _th WPR holder where the WPRs will be minted.
   function proxyPayment(address _th) public payable notPaused initialized contributionOpen returns (bool) {
     require(_th != 0x0);
-    doBuy(_th);
+    if (msg.value == 0) {
+      wpr.unpause();
+      ExchangerI(exchanger).collect(_th);
+      wpr.pause();
+    } else {
+      doBuy(_th);
+    }
     return true;
-  }
-
-  function onTransfer(address _from, address, uint256) public returns (bool) {
-    if (_from == exchanger) {
-      return true;
-    }
-    return transferable;
-  }
-
-  function onApprove(address _from, address, uint256) public returns (bool) {
-    if (_from == exchanger) {
-      return true;
-    }
-    return transferable;
-  }
-
-  function allowTransfers(bool _transferable) onlyController {
-    transferable = _transferable;
   }
 
   function doBuy(address _th) internal {
     // whitelisting only during the first day
-    if (getBlockTimestamp() <= startTime + 1 days) {
-      require(canPurchase[_th] || msg.sender == collector);
-    } else if (notCollectedAmountAfter24Hours == 0) {
-      notCollectedAmountAfter24Hours = weiToCollect();
-      twentyPercentWithBonus = notCollectedAmountAfter24Hours.mul(20).div(100);
-      thirtyPercentWithBonus = notCollectedAmountAfter24Hours.mul(30).div(100);
-    }
-
+    // if (getBlockTimestamp() <= startTime + 1 days) {
+    require(canPurchase[_th]);
+    // }
     require(msg.value >= minimumPerTransaction);
     uint256 toFund = msg.value;
     uint256 toCollect = weiToCollectByInvestor(_th);
 
-    if (toCollect > 0) {
-      // Check total supply cap reached, sell the all remaining tokens
-      if (toFund > toCollect) {
-        toFund = toCollect;
-      }
-      uint256 tokensGenerated = tokensToGenerate(toFund);
-      require(tokensGenerated > 0);
-      require(aix.generateTokens(_th, tokensGenerated));
+    require(toCollect > 0);
 
-      contributionWallet.transfer(toFund);
-      individualWeiCollected[_th] = individualWeiCollected[_th].add(toFund);
-      totalWeiCollected = totalWeiCollected.add(toFund);
-      NewSale(_th, toFund, tokensGenerated);
-    } else {
-      toFund = 0;
+    // Check total supply cap reached, sell the all remaining tokens
+    if (toFund > toCollect) {
+      toFund = toCollect;
     }
+    uint256 tokensGenerated = tokensToGenerate(toFund);
+    require(tokensGenerated > 0);
+    require(wpr.mint(_th, tokensGenerated));
+
+    contributionWallet.transfer(toFund);
+    // Wings Integration
+    totalCollected = totalCollected.add(toFund);
+    individualWeiCollected[_th] = individualWeiCollected[_th].add(toFund);
+    totalWeiCollected = totalWeiCollected.add(toFund);
+    NewSale(_th, toFund, tokensGenerated);
 
     uint256 toReturn = msg.value.sub(toFund);
     if (toReturn > 0) {
@@ -975,16 +1248,27 @@ contract Contribution is Controlled, TokenController {
     require(finalizedBlock == 0);
     require(finalizedTime == 0);
     require(getBlockTimestamp() >= startTime);
-    require(msg.sender == controller || getBlockTimestamp() > endTime || weiToCollect() == 0);
+    require(msg.sender == owner || getBlockTimestamp() > endTime || weiToCollect() == 0);
 
-    // remainder will be minted and locked for 1 year.
-    aix.generateTokens(remainderHolder, weiToCollect().mul(2000));
-    // AIX generated so far is 51% of total
-    uint256 tokenCap = aix.totalSupply().mul(100).div(51);
-    // dev Wallet will have 20% of the total Tokens and will be able to retrieve quarterly.
-    aix.generateTokens(devHolder, tokenCap.mul(20).div(100));
-    // community Wallet will have access to 29% of the total Tokens.
-    aix.generateTokens(communityHolder, tokenCap.mul(29).div(100));
+    uint CROWDSALE_PCT = 62;
+    uint TEAMHOLDER_PCT = 20;
+    uint COMMUNITYHOLDER_PCT = 15;
+    uint FUTUREHOLDER_PCT = 3;
+    assert(CROWDSALE_PCT + TEAMHOLDER_PCT + COMMUNITYHOLDER_PCT + FUTUREHOLDER_PCT == 100);
+
+    // WPR generated so far is 62% of total
+    uint256 tokenCap = wpr.totalSupply().mul(100).div(CROWDSALE_PCT);
+    // team Wallet will have 20% of the total Tokens and will be in a 36 months
+    // vesting contract with 3 months cliff.
+    wpr.mint(teamHolder, tokenCap.mul(TEAMHOLDER_PCT).div(100));
+    // community Wallet will have access to 15% of the total Tokens.
+    wpr.mint(communityHolder, tokenCap.mul(COMMUNITYHOLDER_PCT).div(100));
+    // future Wallet will have 3% of the total Tokens and will be able to retrieve
+    // after a 4 years.
+    wpr.mint(futureHolder, tokenCap.mul(FUTUREHOLDER_PCT).div(100));
+
+    require(wpr.finishMinting());
+    wpr.transferOwnership(owner);
 
     finalizedBlock = getBlockNumber();
     finalizedTime = getBlockTimestamp();
@@ -1007,10 +1291,7 @@ contract Contribution is Controlled, TokenController {
     uint256 collected;
     // adding 1 day as a placeholder for X hours.
     // This should change into a variable or coded into the contract.
-    if (investor == collector) {
-      cap = collectorWeiCap;
-      collected = individualWeiCollected[investor];
-    } else if (getBlockTimestamp() <= startTime + 1 days) {
+    if (getBlockTimestamp() <= startTime + 5 hours) {
       cap = totalWeiCap.div(numWhitelistedInvestors);
       collected = individualWeiCollected[investor];
     } else {
@@ -1037,28 +1318,35 @@ contract Contribution is Controlled, TokenController {
   // Safety Methods
   //////////
 
+  // Wings Integration
+  // This function can be used by the contract owner to add ether collected
+  // outside of this contract, such as from a presale
+  function setTotalCollected(uint _totalCollected) public onlyOwner {
+    totalCollected = _totalCollected;
+  }
+
   /// @notice This method can be used by the controller to extract mistakenly
   ///  sent tokens to this contract.
   /// @param _token The address of the token contract that you want to recover
   ///  set to 0 in case you want to extract ether.
-  function claimTokens(address _token) public onlyController {
-    if (aix.controller() == address(this)) {
-      aix.claimTokens(_token);
+  function claimTokens(address _token) public onlyOwner {
+    if (wpr.owner() == address(this)) {
+      wpr.claimTokens(_token);
     }
 
     if (_token == 0x0) {
-      controller.transfer(this.balance);
+      owner.transfer(this.balance);
       return;
     }
 
     ERC20 token = ERC20(_token);
     uint256 balance = token.balanceOf(this);
-    token.transfer(controller, balance);
-    ClaimedTokens(_token, controller, balance);
+    token.transfer(owner, balance);
+    ClaimedTokens(_token, owner, balance);
   }
 
   /// @notice Pauses the contribution if there is any issue
-  function pauseContribution(bool _paused) onlyController {
+  function pauseContribution(bool _paused) onlyOwner {
     paused = _paused;
   }
 
