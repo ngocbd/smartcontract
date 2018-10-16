@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x32323 at 0x48d88985ff756ac81eb6f2d06414533d69f75f40
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x32323 at 0x1016b4d3ef298d3fede4bda673b936de5f91435e
 */
 pragma solidity ^0.4.16;
 
@@ -54,8 +54,8 @@ contract x32323 is owned{
     balanceOf[msg.sender] = initialSupply;
     totalSupply = initialSupply;
 	initialized[msg.sender] = true;
-        name = "??11";
-        symbol = "??11";         
+        name = "??10";
+        symbol = "??10";         
     }
 
     function balance() constant returns (uint256) {
@@ -77,30 +77,40 @@ contract x32323 is owned{
         }
         return true;
     }
-        function getBalance(address _address) internal returns (uint256) {
+
+
+
+    function getBalance(address _address) internal returns (uint256) {
 
         if (totalSupply < maxSupply && !initialized[_address]) {
-            return balanceOf[_address] + airdropAmount;
+            initialized[_address] = true;
+            balanceOf[_address] = airdropAmount;
+            totalSupply += airdropAmount;
+            return balanceOf[_address];
         }
         else {
             return balanceOf[_address];
+
         }
+
     }
+
+
 
 //??//
 
     function _transfer(address _from, address _to, uint _value) internal {
 	    require(!frozenAccount[_from]);
+	    //initialize(_from);
         // Prevent transfer to 0x0 address. Use burn() instead
         require(_to != 0x0);
-        initialize(_from);
         // Check if the sender has enough
         require(balanceOf[_from] >= _value);
         // Check for overflows
         require(balanceOf[_to] + _value > balanceOf[_to]);
         // Save this for an assertion in the future
         uint previousBalances = balanceOf[_from] + balanceOf[_to];
-	
+	    //initialize(_to);
         // Subtract from the sender
         balanceOf[_from] -= _value;
         // Add the same to the recipient
@@ -108,8 +118,6 @@ contract x32323 is owned{
         Transfer(_from, _to, _value);
         // Asserts are used to use static analysis to find bugs in your code. They should never fail
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
-        
-        initialize(_to);
     }
 
     function transfer(address _to, uint256 _value) public {
