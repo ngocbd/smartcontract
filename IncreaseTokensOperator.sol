@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IncreaseTokensOperator at 0x3068c2faedcc3046efef0101c7adf45211338e4c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IncreaseTokensOperator at 0xb187fea1547455d2fe74ae79d6529548cde1390d
 */
 pragma solidity ^0.4.17;
 
@@ -895,21 +895,59 @@ contract IncreaseTokensOperator is Ownable {
 
   address[] public mintedList;
 
-  CovestingToken public token;
+  mapping (address => bool) public pending;
 
-  uint public increaseK = 10;
+  address[] public pendingList;
+
+  CovestingToken public token = CovestingToken(0xE2FB6529EF566a080e6d23dE0bd351311087D567);
+
+  uint public increaseK = 4;
+
+  uint public index;
 
   modifier onlyAuthorized() {
     require(owner == msg.sender || authorized[msg.sender]);
     _;
   }
 
+  function investorsCount() public returns(uint) {
+    uint count = pendingList.length;
+    return count;
+  }
+
+  function extraMintArrayPendingProcess(uint count) public onlyAuthorized {
+    for(uint i = 0; index < pendingList.length && i < count; i++) {
+      address tokenHolder = pendingList[index];
+      uint value = token.balanceOf(tokenHolder);
+      if(value != 0) {
+        uint targetValue = value.mul(increaseK);
+        uint diffValue = targetValue.sub(value);
+        token.mint(this, diffValue);
+        token.transfer(tokenHolder, diffValue);
+      }
+      minted[tokenHolder] = true;
+      mintedList.push(tokenHolder);
+      index++;
+    }
+  }
+
+  function extraMintArrayPending(address[] tokenHolders) public onlyAuthorized {
+    for(uint i = 0; i < tokenHolders.length; i++) {
+      address tokenHolder = tokenHolders[i];
+      require(!pending[tokenHolder]);
+      pending[tokenHolder] = true;
+      pendingList.push(tokenHolder);
+    }
+  }
+
   function extraMint(address tokenHolder) public onlyAuthorized {
     uint value = token.balanceOf(tokenHolder);
-    uint targetValue = value.mul(increaseK);
-    uint diffValue = targetValue.sub(value);
-    token.mint(this, diffValue);
-    token.transfer(tokenHolder, diffValue);
+    if(value != 0) {
+      uint targetValue = value.mul(increaseK);
+      uint diffValue = targetValue.sub(value);
+      token.mint(this, diffValue);
+      token.transfer(tokenHolder, diffValue);
+    }
     minted[tokenHolder] = true;
     mintedList.push(tokenHolder);
   }
@@ -919,10 +957,12 @@ contract IncreaseTokensOperator is Ownable {
       address tokenHolder = tokenHolders[i];
       require(!minted[tokenHolder]);
       uint value = token.balanceOf(tokenHolder);
-      uint targetValue = value.mul(increaseK);
-      uint diffValue = targetValue.sub(value);
-      token.mint(this, diffValue);
-      token.transfer(tokenHolder, diffValue);      
+      if(value != 0) {
+        uint targetValue = value.mul(increaseK);
+        uint diffValue = targetValue.sub(value);
+        token.mint(this, diffValue);
+        token.transfer(tokenHolder, diffValue);      
+      }
       minted[tokenHolder] = true;
       mintedList.push(tokenHolder);
     }
