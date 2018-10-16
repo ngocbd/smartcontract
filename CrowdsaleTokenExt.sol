@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleTokenExt at 0x074Ff98724ec2E95082CeF8ae86501B650AB38A9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleTokenExt at 0xdf1b8fd37a0243924ab3d495ccc11a3b431bcc33
 */
 // Created using ICO Wizard https://github.com/oraclesorg/ico-wizard by Oracles Network 
 pragma solidity ^0.4.11;
@@ -638,6 +638,8 @@ contract CrowdsaleTokenExt is ReleasableToken, MintableTokenExt, UpgradeableToke
   /** Name and symbol were updated. */
   event UpdatedTokenInformation(string newName, string newSymbol);
 
+  event ClaimedTokens(address indexed _token, address indexed _controller, uint _amount);
+
   string public name;
 
   string public symbol;
@@ -720,6 +722,21 @@ contract CrowdsaleTokenExt is ReleasableToken, MintableTokenExt, UpgradeableToke
     symbol = _symbol;
 
     UpdatedTokenInformation(name, symbol);
+  }
+
+  /**
+   * Claim tokens that were accidentally sent to this contract.
+   *
+   * @param _token The address of the token contract that you want to recover.
+   */
+  function claimTokens(address _token) public onlyOwner {
+    require(_token != address(0));
+
+    ERC20 token = ERC20(_token);
+    uint balance = token.balanceOf(this);
+    token.transfer(owner, balance);
+
+    ClaimedTokens(_token, owner, balance);
   }
 
 }
