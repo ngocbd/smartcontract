@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDrop at 0xcf3a1ba564180b2e583da7ef03d1a40b539c3b3c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDrop at 0xb9b971f5c1434d8d28e07a309a2ed421230bf21a
 */
 pragma solidity ^0.4.16;
 
@@ -41,13 +41,13 @@ contract AirDrop is Ownable {
   }
 
   function AirDrop () {
-      address _tokenAddr = 0xC77A91BEF771a0b62A81ef776BC5071713025dDe; //here pass address of your token
+      address _tokenAddr = 0xb62d18DeA74045E822352CE4B3EE77319DC5ff2F; 
       token = Token(_tokenAddr);
   }
 
   function isActive() constant returns (bool) {
     return (
-        tokensAvailable() > 0 // Tokens must be available to send
+        tokensAvailable() > 0 
     );
   }
   //below function can be used when you want to send every recipeint with different number of tokens
@@ -55,32 +55,21 @@ contract AirDrop is Ownable {
     uint256 i = 0;
     while (i < dests.length) {
         uint256 toSend = values[i] * 10**18;
-        sendInternally(dests[i] , toSend, values[i]);
+        sendInternally(dests[i], toSend, values[i]);
         i++;
     }
-  }
-
-  // this function can be used when you want to send same number of tokens to all the recipients
-  function sendTokensSingleValue(address[] dests, uint256 value) whenDropIsActive onlyOwner external {
-    uint256 i = 0;
-    uint256 toSend = value * 10**18;
-    while (i < dests.length) {
-        sendInternally(dests[i] , toSend, value);
-        i++;
-    }
-  }  
+  } 
 
   function sendInternally(address recipient, uint256 tokensToSend, uint256 valueToPresent) internal {
-    if(recipient == address(0)) return;
+    if (recipient == address(0)) return;
 
-    if(tokensAvailable() >= tokensToSend) {
+    if (tokensAvailable() >= tokensToSend) {
       token.transfer(recipient, tokensToSend);
       TransferredToken(recipient, valueToPresent);
     } else {
       FailedTransfer(recipient, valueToPresent); 
     }
   }   
-
 
   function tokensAvailable() constant returns (uint256) {
     return token.balanceOf(this);
