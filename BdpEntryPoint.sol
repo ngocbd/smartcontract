@@ -1,7 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BdpEntryPoint at 0x7af66d707d8477ed9f246d29021112f9b588fcf6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BdpEntryPoint at 0x8ccbe832cf62077662abee27a9f142417f1f85b4
 */
 pragma solidity ^0.4.19;
+
+// File: contracts/BdpBaseData.sol
 
 contract BdpBaseData {
 
@@ -13,11 +15,13 @@ contract BdpBaseData {
 
 	bool public paused = false;
 
-	bool public setupComplete = false;
+	bool public setupCompleted = false;
 
 	bytes8 public version;
 
 }
+
+// File: contracts/libraries/BdpContracts.sol
 
 library BdpContracts {
 
@@ -51,6 +55,8 @@ library BdpContracts {
 
 }
 
+// File: contracts/BdpEntryPoint.sol
+
 contract BdpEntryPoint is BdpBaseData {
 
 	function () payable public {
@@ -73,7 +79,7 @@ contract BdpEntryPoint is BdpBaseData {
 		ownerAddress = msg.sender;
 		managerAddress = msg.sender;
 		contracts = _contracts;
-		setupComplete = true;
+		setupCompleted = true;
 		version = _version;
 	}
 
