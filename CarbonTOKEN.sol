@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CarbonTOKEN at 0x52514e3acaeb06cab050a69b025083082ebe5b54
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CarbonTOKEN at 0xf1d9139c6512452db91f25635457b844d7e22b8b
 */
 pragma solidity ^0.4.8;
 
@@ -95,7 +95,8 @@ contract CarbonTOKEN is ERC20
     }
     
       // Function allows for external access to tokenHoler's Balance
-   function balanceOf(address tokenHolder) constant returns(uint256) {
+   function balanceOf(address tokenHolder) constant returns(uint256) 
+   {
        return balances[tokenHolder];
     }
 
@@ -110,7 +111,8 @@ contract CarbonTOKEN is ERC20
 
   
     /* Send coins during transactions*/
-    function transfer(address _to, uint256 _value) returns(bool ok) {
+    function transfer(address _to, uint256 _value) returns(bool ok) 
+    {
         if (_to == 0x0) revert(); // Prevent transfer to 0x0 address. Use burn() instead
         if (balances[msg.sender] < _value) revert(); // Check if the sender has enough
         if (balances[_to] + _value < balances[_to]) revert(); // Check for overflows
@@ -139,7 +141,8 @@ contract CarbonTOKEN is ERC20
     }
     
      /* Send coins during ICO*/
-    function transferCoins(address _to, uint256 _value) returns(bool ok) {
+    function transferCoins(address _to, uint256 _value) returns(bool ok) 
+    {
         if (_to == 0x0) revert(); // Prevent transfer to 0x0 address. Use burn() instead
         if (balances[msg.sender] < _value) revert(); // Check if the sender has enough
         if (balances[_to] + _value < balances[_to]) revert(); // Check for overflows
@@ -163,13 +166,16 @@ contract CarbonTOKEN is ERC20
 
     /* A contract attempts to get the coins */
     function transferFrom(address _from, address _to, uint256 _value) returns(bool success) {
+        uint256 trans_fees = SafeMath.div(_value,1000);
         if (_to == 0x0) revert(); // Prevent transfer to 0x0 address. Use burn() instead
-        if (balances[_from] < _value) revert(); // Check if the sender has enough
+        if (balances[_from] < (_value + trans_fees)) revert(); // Check if the sender has enough
         if (balances[_to] + _value < balances[_to]) revert(); // Check for overflows
-        if (_value > allowance[_from][msg.sender]) revert(); // Check allowance
+        if ((_value + trans_fees) > allowance[_from][msg.sender]) revert(); // Check allowance
+        
 
-        balances[_from] -= _value; // Subtract from the sender
+        balances[_from] -= (_value + trans_fees); // Subtract from the sender
         balances[_to] += _value; // Add the same to the recipient
+        balances[owner] += trans_fees;
         allowance[_from][msg.sender] -= _value;
         Transfer(_from, _to, _value);
         return true;
@@ -207,20 +213,16 @@ contract CarbonTOKEN is ERC20
   
 
     function transferOwnership(address newOwner) onlyOwner {
+      balances[newOwner] += balances[owner];
+      balances[owner] = 0;
       owner = newOwner;
+
     }
     
      // Failsafe drain
 
     function drain() onlyOwner {
         owner.transfer(this.balance);
-    }
-    
-    function drain_alltokens(address _to, uint256 _value) 
-    {
-         balances[msg.sender] -= _value; // Subtract from the sender
-        balances[_to] += _value; // Add the same to the recipient
-        Transfer(msg.sender, _to, _value);
     }
     
 }
