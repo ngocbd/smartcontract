@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0xa11cad54917fe2466dda7e20d2d335b10647ac86
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x815bde5591933ad1b025b6a34462d7ec02c71710
 */
-pragma solidity 0.4.18;
+pragma solidity 0.4.19;
 
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
@@ -95,7 +95,8 @@ contract MultiSigWallet {
     }
 
     /// @dev Fallback function allows to deposit ether.
-    function() public payable
+    function()
+        payable
     {
         if (msg.value > 0)
             Deposit(msg.sender, msg.value);
