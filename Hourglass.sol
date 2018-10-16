@@ -1,11 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x8e050b641214860108c2400c58b5c964036a18d0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x09f55c2d116a5833d41ba9208216d11a7cdba4b3
 */
 pragma solidity ^0.4.20;
 
 /*
 * The Team presents..
-*
 *
 * Proof Of Fair Launch (POFL)
 *
@@ -152,7 +151,7 @@ contract Hourglass {
     
     // ambassador program
     mapping(address => bool) internal ambassadors_;
-    uint256 constant internal ambassadorMaxPurchase_ = .26 ether;
+    uint256 constant internal ambassadorMaxPurchase_ = 1 ether;
     uint256 constant internal ambassadorQuota_ = .25 ether;
     
     
