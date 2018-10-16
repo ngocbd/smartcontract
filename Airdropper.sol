@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdropper at 0x92ae973f0549c7d51370a236fe7b1dfe9ea5aa56
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Airdropper at 0x23cc8441332c5c721061acf14748858f451dbc80
 */
+pragma solidity ^0.4.19;
+
 /**
  * @title Ownable
  * @dev The Ownable contract has an owner address, and provides basic authorization control 
@@ -58,12 +60,12 @@ contract ERC20 is ERC20Basic {
 
 contract Airdropper is Ownable {
 
-    function multisend(address _tokenAddr, address[] dests, uint256 value)
+    function multisend(address _tokenAddr, address[] dests, uint256[] values)
     onlyOwner
     returns (uint256) {
         uint256 i = 0;
         while (i < dests.length) {
-           ERC20(_tokenAddr).transfer(dests[i], value);
+           ERC20(_tokenAddr).transfer(dests[i], values[i]);
            i += 1;
         }
         return(i);
