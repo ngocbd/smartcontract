@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GlobexSciPreSale at 0xd85f7bfd410c90ed2978cc8ef80ea1634636eb54
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GlobexSciPreSale at 0xe914e10f1c9c30c89511f4e7a0f5f7c9c46d6e10
 */
 pragma solidity ^0.4.14;
 
@@ -96,11 +96,11 @@ contract GlobexSciPreSale is Ownable {
   using SafeMath for uint256;
 
   // The token being sold
-  GlobexSci public token = GlobexSci(0x37d56175a3468669033c8AdB312A7201aC6D2dcE);
+  GlobexSci public token = GlobexSci(0x88dBd3f9E6809FC24d27B9403371Af1cC089ba9e);
 
   // start and end date where investments are allowed (both inclusive)
-  uint256 public startDate = 1512720000; //Wed, 08 Dec 2017 8:00:00 +0000
-  uint256 public endDate = 1515398400; //Sat, 08 Jan 2018 8:00:00 +0000
+  uint256 public startDate = 1517961600; //Wed, 07 Feb 2018 00:00:00 +0000
+  uint256 public endDate = 1520380800; //Web, 07 Mar 2018 00:00:00 +0000
 
   // Minimum amount to participate
   uint256 public minimumParticipationAmount = 100000000000000000 wei; //0.1 ether
