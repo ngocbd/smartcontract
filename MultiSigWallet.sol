@@ -1,143 +1,100 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x90420B8aef42F856a0AFB4FFBfaA57405FB190f3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x8862d55fa8e1d766b386f08d869d7fbcf5b96a06
 */
-pragma solidity 0.4.15;
+pragma solidity ^0.4.17;
 
+// ----------------------------------------------------------------------------------------------
+// by EdooPAD Inc.
+// An ERC20 standard
+//
+// author: EdooPAD Inc.
+// Contact: william@edoopad.com 
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
-/// @author Stefan George - <stefan.george@consensys.net>
+
 contract MultiSigWallet {
 
-    /*
-     *  Events
-     */
-    event Confirmation(address indexed sender, uint indexed transactionId);
-    event Revocation(address indexed sender, uint indexed transactionId);
-    event Submission(uint indexed transactionId);
-    event Execution(uint indexed transactionId);
-    event ExecutionFailure(uint indexed transactionId);
-    event Deposit(address indexed sender, uint value);
-    event OwnerAddition(address indexed owner);
-    event OwnerRemoval(address indexed owner);
+    event Confirmation(address sender, bytes32 transactionId);
+    event Revocation(address sender, bytes32 transactionId);
+    event Submission(bytes32 transactionId);
+    event Execution(bytes32 transactionId);
+    event Deposit(address sender, uint value);
+    event OwnerAddition(address owner);
+    event OwnerRemoval(address owner);
     event RequirementChange(uint required);
+    event CoinCreation(address coin);
 
-    /*
-     *  Constants
-     */
-    uint constant public MAX_OWNER_COUNT = 50;
-
-    /*
-     *  Storage
-     */
-    mapping (uint => Transaction) public transactions;
-    mapping (uint => mapping (address => bool)) public confirmations;
+    mapping (bytes32 => Transaction) public transactions;
+    mapping (bytes32 => mapping (address => bool)) public confirmations;
     mapping (address => bool) public isOwner;
-    address[] public owners;
+    address[] owners;
+    bytes32[] transactionList;
     uint public required;
-    uint public transactionCount;
 
     struct Transaction {
         address destination;
         uint value;
         bytes data;
+        uint nonce;
         bool executed;
     }
 
-    /*
-     *  Modifiers
-     */
     modifier onlyWallet() {
         if (msg.sender != address(this))
-            throw;
+            revert();
         _;
     }
 
     modifier ownerDoesNotExist(address owner) {
         if (isOwner[owner])
-            throw;
+            revert();
         _;
     }
 
     modifier ownerExists(address owner) {
         if (!isOwner[owner])
-            throw;
+            revert();
         _;
     }
 
-    modifier transactionExists(uint transactionId) {
-        if (transactions[transactionId].destination == 0)
-            throw;
-        _;
-    }
-
-    modifier confirmed(uint transactionId, address owner) {
+    modifier confirmed(bytes32 transactionId, address owner) {
         if (!confirmations[transactionId][owner])
-            throw;
+            revert();
         _;
     }
 
-    modifier notConfirmed(uint transactionId, address owner) {
+    modifier notConfirmed(bytes32 transactionId, address owner) {
         if (confirmations[transactionId][owner])
-            throw;
+            revert();
         _;
     }
 
-    modifier notExecuted(uint transactionId) {
+    modifier notExecuted(bytes32 transactionId) {
         if (transactions[transactionId].executed)
-            throw;
+            revert();
         _;
     }
 
-    modifier notNull(address _address) {
-        if (_address == 0)
-            throw;
+    modifier notNull(address destination) {
+        if (destination == 0)
+            revert();
         _;
     }
 
-    modifier validRequirement(uint ownerCount, uint _required) {
-        if (   ownerCount > MAX_OWNER_COUNT
-            || _required > ownerCount
+    modifier validRequirement(uint _ownerCount, uint _required) {
+        if (   _required > _ownerCount
             || _required == 0
-            || ownerCount == 0)
-            throw;
+            || _ownerCount == 0)
+            revert();
         _;
-    }
-
-    /// @dev Fallback function allows to deposit ether.
-    function()
-        payable
-    {
-        if (msg.value > 0)
-            Deposit(msg.sender, msg.value);
-    }
-
-    /*
-     * Public functions
-     */
-    /// @dev Contract constructor sets initial owners and required number of confirmations.
-    /// @param _owners List of initial owners.
-    /// @param _required Number of required confirmations.
-    function MultiSigWallet(address[] _owners, uint _required)
-        public
-        validRequirement(_owners.length, _required)
-    {
-        for (uint i=0; i<_owners.length; i++) {
-            if (isOwner[_owners[i]] || _owners[i] == 0)
-                throw;
-            isOwner[_owners[i]] = true;
-        }
-        owners = _owners;
-        required = _required;
     }
 
     /// @dev Allows to add a new owner. Transaction has to be sent by wallet.
     /// @param owner Address of new owner.
     function addOwner(address owner)
-        public
+        external
         onlyWallet
         ownerDoesNotExist(owner)
-        notNull(owner)
-        validRequirement(owners.length + 1, required)
     {
         isOwner[owner] = true;
         owners.push(owner);
@@ -147,7 +104,7 @@ contract MultiSigWallet {
     /// @dev Allows to remove an owner. Transaction has to be sent by wallet.
     /// @param owner Address of owner.
     function removeOwner(address owner)
-        public
+        external
         onlyWallet
         ownerExists(owner)
     {
@@ -163,28 +120,8 @@ contract MultiSigWallet {
         OwnerRemoval(owner);
     }
 
-    /// @dev Allows to replace an owner with a new owner. Transaction has to be sent by wallet.
-    /// @param owner Address of owner to be replaced.
-    /// @param newOwner Address of new owner.
-    function replaceOwner(address owner, address newOwner)
-        public
-        onlyWallet
-        ownerExists(owner)
-        ownerDoesNotExist(newOwner)
-    {
-        for (uint i=0; i<owners.length; i++)
-            if (owners[i] == owner) {
-                owners[i] = newOwner;
-                break;
-            }
-        isOwner[owner] = false;
-        isOwner[newOwner] = true;
-        OwnerRemoval(owner);
-        OwnerAddition(newOwner);
-    }
-
-    /// @dev Allows to change the number of required confirmations. Transaction has to be sent by wallet.
-    /// @param _required Number of required confirmations.
+    /// @dev Update the minimum required owner for transaction validation
+    /// @param _required number of owners
     function changeRequirement(uint _required)
         public
         onlyWallet
@@ -194,25 +131,52 @@ contract MultiSigWallet {
         RequirementChange(_required);
     }
 
+    /// @dev Adds a new transaction to the transaction mapping, if transaction does not exist yet.
+    /// @param destination Transaction target address.
+    /// @param value Transaction ether value.
+    /// @param data Transaction data payload.
+    /// @param nonce 
+    /// @return transactionId.
+    function addTransaction(address destination, uint value, bytes data, uint nonce)
+        private
+        notNull(destination)
+        returns (bytes32 transactionId)
+    {
+        // transactionId = sha3(destination, value, data, nonce);
+        transactionId = keccak256(destination, value, data, nonce);
+        if (transactions[transactionId].destination == 0) {
+            transactions[transactionId] = Transaction({
+                destination: destination,
+                value: value,
+                data: data,
+                nonce: nonce,
+                executed: false
+            });
+            transactionList.push(transactionId);
+            Submission(transactionId);
+        }
+    }
+
     /// @dev Allows an owner to submit and confirm a transaction.
     /// @param destination Transaction target address.
     /// @param value Transaction ether value.
     /// @param data Transaction data payload.
-    /// @return Returns transaction ID.
-    function submitTransaction(address destination, uint value, bytes data)
-        public
-        returns (uint transactionId)
+    /// @param nonce 
+    /// @return transactionId.
+    function submitTransaction(address destination, uint value, bytes data, uint nonce)
+        external
+        ownerExists(msg.sender)
+        returns (bytes32 transactionId)
     {
-        transactionId = addTransaction(destination, value, data);
+        transactionId = addTransaction(destination, value, data, nonce);
         confirmTransaction(transactionId);
     }
 
     /// @dev Allows an owner to confirm a transaction.
-    /// @param transactionId Transaction ID.
-    function confirmTransaction(uint transactionId)
+    /// @param transactionId transaction Id.
+    function confirmTransaction(bytes32 transactionId)
         public
         ownerExists(msg.sender)
-        transactionExists(transactionId)
         notConfirmed(transactionId, msg.sender)
     {
         confirmations[transactionId][msg.sender] = true;
@@ -220,10 +184,27 @@ contract MultiSigWallet {
         executeTransaction(transactionId);
     }
 
-    /// @dev Allows an owner to revoke a confirmation for a transaction.
-    /// @param transactionId Transaction ID.
-    function revokeConfirmation(uint transactionId)
+    
+    /// @dev Allows anyone to execute a confirmed transaction.
+    /// @param transactionId transaction Id.
+    function executeTransaction(bytes32 transactionId)
         public
+        notExecuted(transactionId)
+    {
+        if (isConfirmed(transactionId)) {
+            Transaction storage txn = transactions[transactionId]; 
+            txn.executed = true;
+            if (!txn.destination.call.value(txn.value)(txn.data))
+                revert();
+                // What happen with txn.executed when revert() is executed?
+            Execution(transactionId);
+        }
+    }
+
+    /// @dev Allows an owner to revoke a confirmation for a transaction.
+    /// @param transactionId transaction Id.
+    function revokeConfirmation(bytes32 transactionId)
+        external
         ownerExists(msg.sender)
         confirmed(transactionId, msg.sender)
         notExecuted(transactionId)
@@ -232,75 +213,56 @@ contract MultiSigWallet {
         Revocation(msg.sender, transactionId);
     }
 
-    /// @dev Allows anyone to execute a confirmed transaction.
-    /// @param transactionId Transaction ID.
-    function executeTransaction(uint transactionId)
-        public
-        ownerExists(msg.sender)
-        confirmed(transactionId, msg.sender)
-        notExecuted(transactionId)
+    /// @dev Contract constructor sets initial owners and required number of confirmations.
+    /// @param _owners List of initial owners.
+    /// @param _required Number of required confirmations.
+    function MultiSigWallet(address[] _owners, uint _required)
+        validRequirement(_owners.length, _required)
+        public 
     {
-        if (isConfirmed(transactionId)) {
-            Transaction tx = transactions[transactionId];
-            tx.executed = true;
-            if (tx.destination.call.value(tx.value)(tx.data))
-                Execution(transactionId);
-            else {
-                ExecutionFailure(transactionId);
-                tx.executed = false;
-            }
+        for (uint i=0; i<_owners.length; i++) {
+            // WHY Not included in this code?
+            // if (isOwner[_owners[i]] || _owners[i] == 0)
+            //     throw;
+            isOwner[_owners[i]] = true;
         }
+        owners = _owners;
+        required = _required;
+    }
+
+    ///  Fallback function allows to deposit ether.
+    function()
+        public
+        payable
+    {
+        if (msg.value > 0)
+            Deposit(msg.sender, msg.value);
     }
 
     /// @dev Returns the confirmation status of a transaction.
-    /// @param transactionId Transaction ID.
+    /// @param transactionId transaction Id.
     /// @return Confirmation status.
-    function isConfirmed(uint transactionId)
+    function isConfirmed(bytes32 transactionId)
         public
         constant
         returns (bool)
     {
         uint count = 0;
-        for (uint i=0; i<owners.length; i++) {
+        for (uint i=0; i<owners.length; i++)
             if (confirmations[transactionId][owners[i]])
                 count += 1;
             if (count == required)
                 return true;
-        }
-    }
-
-    /*
-     * Internal functions
-     */
-    /// @dev Adds a new transaction to the transaction mapping, if transaction does not exist yet.
-    /// @param destination Transaction target address.
-    /// @param value Transaction ether value.
-    /// @param data Transaction data payload.
-    /// @return Returns transaction ID.
-    function addTransaction(address destination, uint value, bytes data)
-        internal
-        notNull(destination)
-        returns (uint transactionId)
-    {
-        transactionId = transactionCount;
-        transactions[transactionId] = Transaction({
-            destination: destination,
-            value: value,
-            data: data,
-            executed: false
-        });
-        transactionCount += 1;
-        Submission(transactionId);
     }
 
     /*
      * Web3 call functions
      */
     /// @dev Returns number of confirmations of a transaction.
-    /// @param transactionId Transaction ID.
+    /// @param transactionId transaction Id.
     /// @return Number of confirmations.
-    function getConfirmationCount(uint transactionId)
-        public
+    function confirmationCount(bytes32 transactionId)
+        external
         constant
         returns (uint count)
     {
@@ -309,75 +271,44 @@ contract MultiSigWallet {
                 count += 1;
     }
 
-    /// @dev Returns total number of transactions after filers are applied.
-    /// @param pending Include pending transactions.
-    /// @param executed Include executed transactions.
-    /// @return Total number of transactions after filters are applied.
-    function getTransactionCount(bool pending, bool executed)
-        public
+    ///  @dev Return list of transactions after filters are applied
+    ///  @param isPending pending status
+    ///  @return List of transactions
+    function filterTransactions(bool isPending)
+        private
         constant
-        returns (uint count)
+        returns (bytes32[] _transactionList)
     {
-        for (uint i=0; i<transactionCount; i++)
-            if (   pending && !transactions[i].executed
-                || executed && transactions[i].executed)
-                count += 1;
-    }
-
-    /// @dev Returns list of owners.
-    /// @return List of owner addresses.
-    function getOwners()
-        public
-        constant
-        returns (address[])
-    {
-        return owners;
-    }
-
-    /// @dev Returns array with owner addresses, which confirmed transaction.
-    /// @param transactionId Transaction ID.
-    /// @return Returns array of owner addresses.
-    function getConfirmations(uint transactionId)
-        public
-        constant
-        returns (address[] _confirmations)
-    {
-        address[] memory confirmationsTemp = new address[](owners.length);
+        bytes32[] memory _transactionListTemp = new bytes32[](transactionList.length);
         uint count = 0;
-        uint i;
-        for (i=0; i<owners.length; i++)
-            if (confirmations[transactionId][owners[i]]) {
-                confirmationsTemp[count] = owners[i];
-                count += 1;
-            }
-        _confirmations = new address[](count);
-        for (i=0; i<count; i++)
-            _confirmations[i] = confirmationsTemp[i];
-    }
-
-    /// @dev Returns list of transaction IDs in defined range.
-    /// @param from Index start position of transaction array.
-    /// @param to Index end position of transaction array.
-    /// @param pending Include pending transactions.
-    /// @param executed Include executed transactions.
-    /// @return Returns array of transaction IDs.
-    function getTransactionIds(uint from, uint to, bool pending, bool executed)
-        public
-        constant
-        returns (uint[] _transactionIds)
-    {
-        uint[] memory transactionIdsTemp = new uint[](transactionCount);
-        uint count = 0;
-        uint i;
-        for (i=0; i<transactionCount; i++)
-            if (   pending && !transactions[i].executed
-                || executed && transactions[i].executed)
+        for (uint i=0; i<transactionList.length; i++)
+            if (   isPending && !transactions[transactionList[i]].executed
+                || !isPending && transactions[transactionList[i]].executed)
             {
-                transactionIdsTemp[count] = i;
+                _transactionListTemp[count] = transactionList[i];
                 count += 1;
             }
-        _transactionIds = new uint[](to - from);
-        for (i=from; i<to; i++)
-            _transactionIds[i - from] = transactionIdsTemp[i];
+        _transactionList = new bytes32[](count);
+        for (i=0; i<count; i++)
+            if (_transactionListTemp[i] > 0)
+                _transactionList[i] = _transactionListTemp[i];
+    }
+
+    /// @dev Returns list of pending transactions
+    function getPendingTransactions()
+        external
+        constant
+        returns (bytes32[])
+    {
+        return filterTransactions(true);
+    }
+
+    /// @dev Returns list of executed transactions
+    function getExecutedTransactions()
+        external
+        constant
+        returns (bytes32[])
+    {
+        return filterTransactions(false);
     }
 }
