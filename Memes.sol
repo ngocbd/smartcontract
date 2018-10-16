@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Memes at 0x437e27d8a8cc41d4d77dba15a8c82141b18952d4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Memes at 0xe1cc1e5a679cbb7c6817a0cfecdb7c7284e8f47d
 */
 pragma solidity ^0.4.21;
 
@@ -12,7 +12,7 @@ contract Memes{
     address helper=0x690F34053ddC11bdFF95D44bdfEb6B0b83CBAb58;
 
     uint256 public TimeFinish = 0;
-    uint256 TimerResetTime = 7200000; // 2 hours cooldown @ new game 
+    uint256 TimerResetTime = 7200; // 2 hours cooldown @ new game 
     uint256 TimerStartTime = 360000; 
     uint256 public Pot = 0;
     // Price increase in percent divided (10k = 100% = 2x increase.)
