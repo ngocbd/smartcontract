@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DynamicToken at 0x772932a7093f5f3fba00a9339abf01c47a660499
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DynamicToken at 0x3c6ce03a4ae39d56da53fbb045cedd2d750e4531
 */
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.13;
 
 contract TokenInterface {
     mapping (address => uint256) balances;
@@ -41,11 +41,8 @@ contract DynamicToken is TokenInterface {
   mapping (address => bool) public accountExists;
   mapping (string => bool) proofIdExists;
 
-  string public name;
-  string public symbol;
-  uint8 public constant decimals = 0;
-
   event TransferFrom(address indexed _from, address indexed _to,  address indexed _spender, uint256 _amount);
+  event Issue(address indexed _from, address indexed _to, uint256 _amount, string _proofId);
   event Burn(address indexed _burnFrom, uint256 _amount);
   event Close(address indexed _closedBy);
   event Upgrade(address indexed _upgradedContract);
@@ -63,8 +60,6 @@ contract DynamicToken is TokenInterface {
     isMaxSupplyLocked = false;
     isLockedOpen = false;
     isContractOwnerLocked = false;
-    name = "Vevue Pre";
-    symbol = "VEVP";
   }
 
   // restrict usage to only the owner
@@ -111,12 +106,11 @@ contract DynamicToken is TokenInterface {
     if (proofIdExists[_proofId]) return false;
     if (totalSupply + _amount > maxSupply) return false;
 
-    balances[msg.sender] += _amount;
+    balances[_to] += _amount;
     totalSupply += _amount;
-
-    transfer(_to, _amount);
     _indexAccount(_to);
     _indexProofId(_proofId);
+    Issue(msg.sender, _to, _amount, _proofId);
     return true;
   }
 
