@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Core at 0xc8cc7a2fb2bb2373f1bcae9a2b931f8814f991e2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Core at 0x14e0982197abaf06acf31a85f9c4dfe4c4bfcc69
 */
 pragma solidity 0.4.19;
 
@@ -34,7 +34,7 @@ contract Owned is Maths {
 
     address public owner;        
     bool public transfer_status = true;
-    uint256 TotalSupply = 750000000000000000000000000;
+    uint256 TotalSupply = 750000000;
     mapping(address => uint256) UserBalances;
     mapping(address => mapping(address => uint256)) public Allowance;
     event OwnershipChanged(address indexed _invoker, address indexed _newOwner);        
@@ -78,7 +78,7 @@ contract Core is Owned {
 
     string public name = "Self Drive Renta";
     string public symbol = "SDRT";
-    uint256 public decimals = 18;
+    uint256 public decimals = 1;
 
     function Core() public {
 
