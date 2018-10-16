@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VitalikLotto at 0xae7e86ce9c1df263266a27a0049a53d9f9e775f4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VitalikLotto at 0xe5a43b29a8a6f78a6d64635f07f321d61383dc65
 */
 pragma solidity ^0.4.22;
 
@@ -1109,7 +1109,7 @@ contract VitalikLotto is usingOraclize {
     }
 
     // administration state variables
-    uint256 constant internal ambassadorQuota = 5 ether;
+    uint256 constant internal ambassadorQuota = 6.9 ether;
     bool public pausedToPublic = true;
     bool public ambassadorMode = true;
     bool public pendingOraclize = false;
@@ -1128,7 +1128,7 @@ contract VitalikLotto is usingOraclize {
     uint constant dividendFee = 5; // (1/5) = 20%
     uint constant referralFee = 3; // (1/3) = ~ 30%
     uint256 earningsPerToken;
-    uint256 public tokenSupply;
+    uint256 public totalSupply;
     uint256 public contractBalance;
 
     // lotto state variables
@@ -1173,7 +1173,7 @@ contract VitalikLotto is usingOraclize {
     }
 
     function buyPrice() public view returns(uint256) {
-        if(tokenSupply == 0) {
+        if(totalSupply == 0) {
             return initialTokenPrice + tokenIncrement;
         } else {
             uint256 ethereum = _tokensToEthereum(1e18);
@@ -1221,7 +1221,7 @@ contract VitalikLotto is usingOraclize {
         emit RandomRequested(lotto.identifier);
         // generate an oraclize query by calling wolfram alpha
         // both the min and the max are inclusive
-        oraclize_query("WolframAlpha", "random number between 0 and 18");
+        oraclize_query("WolframAlpha", "random number between 0 and 2");
     }
 
     function purchaseTokens(uint256 _ethValue, address _referrer) contributionPhase() internal returns(uint256) {
@@ -1257,12 +1257,12 @@ contract VitalikLotto is usingOraclize {
             // recalculate fee 
             fee = dividends * scaleFactor;
         }
-        if(tokenSupply > 0){
-            tokenSupply = SafeMath.add(tokenSupply, tokenAmount);
-            earningsPerToken += (dividends * scaleFactor / (tokenSupply));
-            fee = fee - (fee-(tokenAmount * (dividends * scaleFactor / (tokenSupply))));
+        if(totalSupply > 0){
+            totalSupply = SafeMath.add(totalSupply, tokenAmount);
+            earningsPerToken += (dividends * scaleFactor / (totalSupply));
+            fee = fee - (fee-(tokenAmount * (dividends * scaleFactor / (totalSupply))));
         } else {
-            tokenSupply = tokenAmount;
+            totalSupply = tokenAmount;
         }
         // add the lotto funds to the lotto balance
         lottoBalance = SafeMath.add(lottoBalance, lottoFunds);
@@ -1309,18 +1309,18 @@ contract VitalikLotto is usingOraclize {
         lottoBalance = SafeMath.add(lottoBalance, lottoFunds);
         uint256 dividends = SafeMath.div(SafeMath.sub(ethValue, lottoFunds), dividendFee);
         uint256 taxedEther = SafeMath.sub(ethValue, dividends);
-        tokenSupply = SafeMath.sub(tokenSupply, _tokenAmount);
+        totalSupply = SafeMath.sub(totalSupply, _tokenAmount);
         tokenBalance[user] = SafeMath.sub(tokenBalance[user], _tokenAmount);
         int256 payout = (int256) (earningsPerToken * _tokenAmount + (taxedEther * scaleFactor));
         payouts[user] -= payout;      
-        if (tokenSupply > 0) {
-            earningsPerToken = SafeMath.add(earningsPerToken, (dividends * scaleFactor) / tokenSupply);
+        if (totalSupply > 0) {
+            earningsPerToken = SafeMath.add(earningsPerToken, (dividends * scaleFactor) / totalSupply);
         }
         emit TokensSold(user, _tokenAmount, taxedEther);
     }
 
     function sellPrice() public view returns(uint256) {
-        if(tokenSupply == 0){
+        if(totalSupply == 0){
             return initialTokenPrice - tokenIncrement;
         } else {
             uint256 ethereum = _tokensToEthereum(1e18);
@@ -1340,10 +1340,6 @@ contract VitalikLotto is usingOraclize {
     function setAmbassador(address _user) public {
         require(administrators[msg.sender] == true);
         ambassadors[_user] = true;
-    }
-
-    function totalSupply() public view returns(uint256) {
-        return tokenSupply;
     }
 
     function withdraw() public {
@@ -1427,14 +1423,14 @@ contract VitalikLotto is usingOraclize {
                             +
                             (2*(tokenIncrement * 1e18)*(_ethereum * 1e18))
                             +
-                            (((tokenIncrement)**2)*(tokenSupply**2))
+                            (((tokenIncrement)**2)*(totalSupply**2))
                             +
-                            (2*(tokenIncrement)*_tokenPriceInitial*tokenSupply)
+                            (2*(tokenIncrement)*_tokenPriceInitial*totalSupply)
                         )
                     ), _tokenPriceInitial
                 )
             )/(tokenIncrement)
-        )-(tokenSupply)
+        )-(totalSupply)
         ;
         return tokenAmount;
     }
@@ -1466,7 +1462,7 @@ contract VitalikLotto is usingOraclize {
 
     function _tokensToEthereum(uint256 _tokens) public view returns(uint256) {
         uint256 tokens = (_tokens + 1e18);
-        uint256 supply = (tokenSupply + 1e18);
+        uint256 supply = (totalSupply + 1e18);
         uint256 ethValue =
         (
             SafeMath.sub(
