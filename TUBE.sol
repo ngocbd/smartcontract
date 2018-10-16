@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TUBE at 0x3d52C112A0e4A5Ea44013F13A04764104b0c98b8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TUBE at 0x75088a29163Dae5687b08b99D9d2f04eBc4F9A04
 */
 pragma solidity ^0.4.10;
 
@@ -96,7 +96,7 @@ contract TUBE is SafeMath, StandardToken {
     address public owner;
 
     //~10usd
-    uint public oneTokenInWei = 3e16;
+    uint public oneTokenInWei = 32786885245901600;
     
 
     modifier onlyOwner {
