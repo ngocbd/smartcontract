@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YobCoin at 0xc42b76eea05c7fbcfa65a4dbb6045cc32719ac0f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YobCoin at 0x824bc5ab53f9e58592703483fdbc8a7c954bf635
 */
 pragma solidity ^0.4.18;
 
