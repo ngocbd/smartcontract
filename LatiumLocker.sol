@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LatiumLocker at 0x85e0ffc8f68b638e73a4c113f69e8dc9deb0d77d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LatiumLocker at 0x1363d909a1ef96b475e5ee6e514fb87d4ac5a293
 */
 pragma solidity ^0.4.17;
 
@@ -53,17 +53,11 @@ contract LatiumLocker {
 
     // variables for release tiers and iteration thru them
     uint32[] private _timestamps = [
-        1517400000 // 2018-01-31 12:00:00 UTC
-        , 1525089600 // 2018-04-30 12:00:00 UTC
-        , 1533038400 // 2018-07-31 12:00:00 UTC
-        , 1540987200 // 2018-10-31 12:00:00 UTC
+        1541034000 // 2018-11-01 01:00:00 UTC
         
     ];
     uint32[] private _tokensToRelease = [ // without decimals
-        15000000
-        , 15000000
-        , 15000000
-        , 15000000
+        45000000
        
     ];
     mapping (uint32 => uint256) private _releaseTiers;
