@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DevTeamContract at 0x6bcc2993649dc9e4b5163db6aa41090edc4d941a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DevTeamContract at 0x2fc554bd744cd59b30b0e8d83faa1a93c44e222e
 */
 contract Transferable {
   function transfer(address to, uint256 value) public returns (bool);
@@ -47,7 +47,7 @@ contract DevTeamContract{
      to be allowed for execution, here 10000 blocks ~2.5 days
     */
     uint256 public constant  WAIT_BLOCKS = 15000;
-    uint256 constant MINIMUM_CONFIRMATION_COUNT = 3;
+    uint256 constant MINIMUM_CONFIRMATION_COUNT = 2;
     
     uint256 constant USER1_CODE = 1;// every user has different bit
     address constant USER1_ACCOUNT1 = 0x383125Faf0c83671D42Ac941BDc33cd38131a9d1; 
@@ -59,9 +59,6 @@ contract DevTeamContract{
     uint256 constant USER_JRKP_CODE = 4;// every user has different bit
     address constant USER_JRKP_ACCOUNT1 = 0x2C4a6B54718821b4eA6700086E8FcC4651289cBC;
     address constant USER_JRKP_ACCOUNT2 = 0x5f55c525C21Fe54D826a63Fc27EaCf35AA9B1481;
-    uint256 constant USER_MBL_CODE = 8;// every user has different bitt 
-    address constant USER_MBL_ACCOUNT1 = 0x678C66747e96258EFCDE4AF5f6b408dC00D68c42;
-    address constant USER_MBL_ACCOUNT2 = 0xb6407A53E41B09cf35a25c55e18bFFf2163879b5;
     uint256 constant USER_DEV_CODE = 16;// every user has different bitt 
     address constant USER_DEV_ACCOUNT1 = 0x94DA43C587c515AD30eA86a208603a7586D2C25F;
     address constant USER_DEV_ACCOUNT2 = 0x189891d02445D87e70d515fD2159416f023B0087;
@@ -97,8 +94,6 @@ contract DevTeamContract{
         owners[USER_DEV_ACCOUNT2] = USER_DEV_CODE;
         owners[USER_JRKP_ACCOUNT1] = USER_JRKP_CODE;
         owners[USER_JRKP_ACCOUNT2] = USER_JRKP_CODE;
-        owners[USER_MBL_ACCOUNT1] = USER_MBL_CODE;
-        owners[USER_MBL_ACCOUNT2] = USER_MBL_CODE;
     }
     /*
         Gets Contract Balance
@@ -153,7 +148,7 @@ contract DevTeamContract{
     }
     function RegisterTokenTransaction(address _to,uint256 amount,address _from) isHuman isOwner public{
     
-        if(owners[msg.sender]>0 && amount+pendingAmount<=this.balance){
+        if(owners[msg.sender]>0){
             transactions.push(Transaction(_to,amount,amount,this.GetNow(),_from));
             pendingAmount = amount+pendingAmount;
         }
