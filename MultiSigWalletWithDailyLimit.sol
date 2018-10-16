@@ -1,46 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWalletWithDailyLimit at 0xb3af8d08975e5c6bc98cb2f8646e54539e2d8f0d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWalletWithDailyLimit at 0x3c5f3161deae3e444f334cf5a5f85cca914a8397
 */
-contract Factory {
+pragma solidity ^0.4.19;
 
-    /*
-     *  Events
-     */
-    event ContractInstantiation(address sender, address instantiation);
-
-    /*
-     *  Storage
-     */
-    mapping(address => bool) public isInstantiation;
-    mapping(address => address[]) public instantiations;
-
-    /*
-     * Public functions
-     */
-    /// @dev Returns number of instantiations by creator.
-    /// @param creator Contract creator.
-    /// @return Returns number of instantiations by creator.
-    function getInstantiationCount(address creator)
-        public
-        constant
-        returns (uint)
-    {
-        return instantiations[creator].length;
-    }
-
-    /*
-     * Internal functions
-     */
-    /// @dev Registers contract in factory registry.
-    /// @param instantiation Address of contract instantiation.
-    function register(address instantiation)
-        internal
-    {
-        isInstantiation[instantiation] = true;
-        instantiations[msg.sender].push(instantiation);
-        ContractInstantiation(msg.sender, instantiation);
-    }
-}
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
 /// @author Stefan George - <stefan.george@consensys.net>
@@ -271,13 +233,35 @@ contract MultiSigWallet {
         if (isConfirmed(transactionId)) {
             Transaction storage txn = transactions[transactionId];
             txn.executed = true;
-            if (txn.destination.call.value(txn.value)(txn.data))
+            if (external_call(txn.destination, txn.value, txn.data.length, txn.data))
                 Execution(transactionId);
             else {
                 ExecutionFailure(transactionId);
                 txn.executed = false;
             }
         }
+    }
+
+    // call has been separated into its own function in order to take advantage
+    // of the Solidity's code generator to produce a loop that copies tx.data into memory.
+    function external_call(address destination, uint value, uint dataLength, bytes data) private returns (bool) {
+        bool result;
+        assembly {
+            let x := mload(0x40)   // "Allocate" memory for output (0x40 is where "free memory" pointer is stored by convention)
+            let d := add(data, 32) // First 32 bytes are the padded length of data, so exclude that
+            result := call(
+                sub(gas, 34710),   // 34710 is the value that solidity is currently emitting
+                                   // It includes callGas (700) + callVeryLow (3, to pay for SUB) + callValueTransferGas (9000) +
+                                   // callNewAccountGas (25000, in case the destination address does not exist and needs creating)
+                destination,
+                value,
+                d,
+                dataLength,        // Size of the input (in bytes) - this is what fixes the padding problem
+                x,
+                0                  // Output is ignored, therefore the output size is zero
+            )
+        }
+        return result;
     }
 
     /// @dev Returns the confirmation status of a transaction.
@@ -509,26 +493,5 @@ contract MultiSigWalletWithDailyLimit is MultiSigWallet {
         if (dailyLimit < spentToday)
             return 0;
         return dailyLimit - spentToday;
-    }
-}
-
-/// @title Multisignature wallet factory for daily limit version - Allows creation of multisig wallet.
-/// @author Stefan George - <stefan.george@consensys.net>
-contract MultiSigWalletWithDailyLimitFactory is Factory {
-
-    /*
-     * Public functions
-     */
-    /// @dev Allows verified creation of multisignature wallet.
-    /// @param _owners List of initial owners.
-    /// @param _required Number of required confirmations.
-    /// @param _dailyLimit Amount in wei, which can be withdrawn without confirmations on a daily basis.
-    /// @return Returns wallet address.
-    function create(address[] _owners, uint _required, uint _dailyLimit)
-        public
-        returns (address wallet)
-    {
-        wallet = new MultiSigWalletWithDailyLimit(_owners, _required, _dailyLimit);
-        register(wallet);
     }
 }
