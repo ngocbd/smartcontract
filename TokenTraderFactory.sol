@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTraderFactory at 0xe3282094d332d26f7Dfca853899eC1736f0295ce
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTraderFactory at 0x559b52b6a30Ba913A7e8F85C4A6Aa443a0FE66ab
 */
 pragma solidity ^0.4.0;
 
@@ -77,7 +77,7 @@ contract TokenTrader is owned {
     function activate (
         bool    _sellsTokens,
         bool    _buysTokens
-        ) onlyOwner
+        )
     {
           sellsTokens   = _sellsTokens;
           buysTokens    = _buysTokens;
@@ -89,14 +89,12 @@ contract TokenTrader is owned {
     // deposit tokens by sending them directly to contract
     // buyers must not send tokens to the contract, use: sell(...)
     function deposit() payable onlyOwner {
-        UpdateEvent();
     }
 
     // allow owner to remove trade token
     function withdrawAsset(uint256 _value) onlyOwner returns (bool ok)
     {
         return ERC20(asset).transfer(owner,_value);
-        UpdateEvent();
     }
 
     // allow owner to remove arbitrary tokens
@@ -104,7 +102,6 @@ contract TokenTrader is owned {
     function withdrawToken(address _token, uint256 _value) onlyOwner returns (bool ok)
     {
         return ERC20(_token).transfer(owner,_value);
-        UpdateEvent();
     }
 
     // allow owner to remove ETH
@@ -113,7 +110,6 @@ contract TokenTrader is owned {
         if(this.balance >= _value) {
             return owner.send(_value);
         }
-        UpdateEvent();
     }
 
     //user buys token with ETH
