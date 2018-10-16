@@ -1,151 +1,86 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x80f47fdf3073c0c5489e6a579a57b1fb35e7bb34
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xd93bc824fe11d6ac608a7096b75466b6968d1b99
 */
 pragma solidity ^0.4.11;
  
-contract ContractReceiver {
-     
-    struct TKN {
-        address sender;
-        uint value;
-        bytes data;
-        bytes4 sig;
+contract Token {
+    string public symbol = "";
+    string public name = "";
+    uint8 public constant decimals = 18;
+    uint256 _totalSupply = 0;
+    address owner = 0;
+    bool setupDone = false;
+	
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+ 
+    mapping(address => uint256) balances;
+ 
+    mapping(address => mapping (address => uint256)) allowed;
+ 
+    function Token(address adr) {
+		owner = adr;        
     }
-   
-   
-    function tokenFallback(address _from, uint _value, bytes _data){
-      TKN memory tkn;
-      tkn.sender = _from;
-      tkn.value = _value;
-      tkn.data = _data;
-      uint32 u = uint32(_data[3]) + (uint32(_data[2]) << 8) + (uint32(_data[1]) << 16) + (uint32(_data[0]) << 24);
-      tkn.sig = bytes4(u);
+	
+	function SetupToken(string tokenName, string tokenSymbol, uint256 tokenSupply)
+	{
+		if (msg.sender == owner && setupDone == false)
+		{
+			symbol = tokenSymbol;
+			name = tokenName;
+			_totalSupply = tokenSupply * 1000000000000000000;
+			balances[owner] = _totalSupply;
+			setupDone = true;
+		}
+	}
  
-    }
-}
- 
-contract SafeMath {
-    uint256 constant public MAX_UINT256 =
-    0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
- 
-    function safeAdd(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        if (x > MAX_UINT256 - y) throw;
-        return x + y;
-    }
- 
-    function safeSub(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        if (x < y) throw;
-        return x - y;
-    }
- 
-    function safeMul(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        if (y == 0) return 0;
-        if (x > MAX_UINT256 / y) throw;
-        return x * y;
-    }
-}
- 
-contract Token is SafeMath{
- 
-  mapping(address => uint) balances;
- 
-  string public symbol = "";
-  string public name = "";
-  uint8 public decimals = 18;
-  uint256 public totalSupply = 0;
-  address owner = 0;
-  bool setupDone = false;
- 
-  event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
- 
-  function Token(address adr) {
-        owner = adr;        
-    }
-   
-    function SetupToken(string _tokenName, string _tokenSymbol, uint256 _tokenSupply)
-    {
-        if (msg.sender == owner && setupDone == false)
-        {
-            symbol = _tokenSymbol;
-            name = _tokenName;
-            totalSupply = _tokenSupply * 1000000000000000000;
-            balances[owner] = totalSupply;
-            setupDone = true;
-        }
+    function totalSupply() constant returns (uint256 totalSupply) {        
+		return _totalSupply;
     }
  
-  function name() constant returns (string _name) {
-      return name;
-  }
- 
-  function symbol() constant returns (string _symbol) {
-      return symbol;
-  }
- 
-  function decimals() constant returns (uint8 _decimals) {
-      return decimals;
-  }
- 
-  function totalSupply() constant returns (uint256 _totalSupply) {
-      return totalSupply;
-  }
- 
-  function transfer(address _to, uint _value, bytes _data) returns (bool success) {
-     
-    if(isContract(_to)) {
-        return transferToContract(_to, _value, _data);
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
     }
-    else {
-        return transferToAddress(_to, _value, _data);
-    }
-}
  
-  function transfer(address _to, uint _value) returns (bool success) {
-     
-    bytes memory empty;
-    if(isContract(_to)) {
-        return transferToContract(_to, _value, empty);
-    }
-    else {
-        return transferToAddress(_to, _value, empty);
-    }
-}
- 
-  function isContract(address _addr) private returns (bool is_contract) {
-      uint length;
-     
-      if (balanceOf(_addr) >=0 )
-     
-      assembly {
-            length := extcodesize(_addr)
-        }
-        if(length>0) {
+    function transfer(address _to, uint256 _amount) returns (bool success) {
+        if (balances[msg.sender] >= _amount 
+            && _amount > 0
+            && balances[_to] + _amount > balances[_to]) {
+            balances[msg.sender] -= _amount;
+            balances[_to] += _amount;
+            Transfer(msg.sender, _to, _amount);
             return true;
-        }
-        else {
+        } else {
             return false;
         }
     }
  
-  function transferToAddress(address _to, uint _value, bytes _data) private returns (bool success) {
-    if (balanceOf(msg.sender) < _value) throw;
-    balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
-    balances[_to] = safeAdd(balanceOf(_to), _value);
-    Transfer(msg.sender, _to, _value, _data);
-    return true;
-  }
+    function transferFrom(
+        address _from,
+        address _to,
+        uint256 _amount
+    ) returns (bool success) {
+        if (balances[_from] >= _amount
+            && allowed[_from][msg.sender] >= _amount
+            && _amount > 0
+            && balances[_to] + _amount > balances[_to]) {
+            balances[_from] -= _amount;
+            allowed[_from][msg.sender] -= _amount;
+            balances[_to] += _amount;
+            Transfer(_from, _to, _amount);
+            return true;
+        } else {
+            return false;
+        }
+    }
  
-  function transferToContract(address _to, uint _value, bytes _data) private returns (bool success) {
-    if (balanceOf(msg.sender) < _value) throw;
-    balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
-    balances[_to] = safeAdd(balanceOf(_to), _value);
-    ContractReceiver reciever = ContractReceiver(_to);
-    reciever.tokenFallback(msg.sender, _value, _data);
-    Transfer(msg.sender, _to, _value, _data);
-    return true;
-}
+    function approve(address _spender, uint256 _amount) returns (bool success) {
+        allowed[msg.sender][_spender] = _amount;
+        Approval(msg.sender, _spender, _amount);
+        return true;
+    }
  
-  function balanceOf(address _owner) constant returns (uint balance) {
-    return balances[_owner];
-  }
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+        return allowed[_owner][_spender];
+    }
 }
