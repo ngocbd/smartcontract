@@ -1,15 +1,82 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorGasPriceLimit at 0x607a5c47978e2eb6d59c6c6f51bc0bf411f4b85a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorGasPriceLimit at 0x7869a003d3DC53175fF2cdA645321548Ec43A816
 */
 pragma solidity ^0.4.18;
 
+/*
+    Owned contract interface
+*/
+contract IOwned {
+    // this function isn't abstract since the compiler emits automatically generated getter functions as external
+    function owner() public view returns (address) {}
 
-contract Utils {
+    function transferOwnership(address _newOwner) public;
+    function acceptOwnership() public;
+}
+
+
+/*
+    Bancor Gas Price Limit interface
+*/
+contract IBancorGasPriceLimit {
+    function gasPrice() public view returns (uint256) {}
+    function validateGasPrice(uint256) public view;
+}
+
+
+
+
+/*
+    Provides support and utilities for contract ownership
+*/
+contract Owned is IOwned {
+    address public owner;
+    address public newOwner;
+
+    event OwnerUpdate(address indexed _prevOwner, address indexed _newOwner);
+
     /**
-        constructor
+        @dev constructor
     */
-    function Utils() public {
+    constructor () public {
+        owner = msg.sender;
     }
+
+    // allows execution by the owner only
+    modifier ownerOnly {
+        assert(msg.sender == owner);
+        _;
+    }
+
+    /**
+        @dev allows transferring the contract ownership
+        the new owner still needs to accept the transfer
+        can only be called by the contract owner
+
+        @param _newOwner    new contract owner
+    */
+    function transferOwnership(address _newOwner) public ownerOnly {
+        require(_newOwner != owner);
+        newOwner = _newOwner;
+    }
+
+    /**
+        @dev used by a new owner to accept an ownership transfer
+    */
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        emit OwnerUpdate(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
+    }
+}
+
+
+
+/*
+    Utilities & Common Modifiers
+*/
+contract Utils {
 
     // verifies that an amount is greater than zero
     modifier greaterThanZero(uint256 _amount) {
@@ -73,64 +140,15 @@ contract Utils {
     }
 }
 
-contract IOwned {
-    // this function isn't abstract since the compiler emits automatically generated getter functions as external
-    function owner() public view returns (address) {}
-
-    function transferOwnership(address _newOwner) public;
-    function acceptOwnership() public;
-}
-
-contract Owned is IOwned {
-    address public owner;
-    address public newOwner;
-
-    event OwnerUpdate(address indexed _prevOwner, address indexed _newOwner);
-
-    /**
-        @dev constructor
-    */
-    function Owned() public {
-        owner = msg.sender;
-    }
-
-    // allows execution by the owner only
-    modifier ownerOnly {
-        assert(msg.sender == owner);
-        _;
-    }
-
-    /**
-        @dev allows transferring the contract ownership
-        the new owner still needs to accept the transfer
-        can only be called by the contract owner
-
-        @param _newOwner    new contract owner
-    */
-    function transferOwnership(address _newOwner) public ownerOnly {
-        require(_newOwner != owner);
-        newOwner = _newOwner;
-    }
-
-    /**
-        @dev used by a new owner to accept an ownership transfer
-    */
-    function acceptOwnership() public {
-        require(msg.sender == newOwner);
-        OwnerUpdate(owner, newOwner);
-        owner = newOwner;
-        newOwner = address(0);
-    }
-}
 
 
-
-contract IBancorGasPriceLimit {
-    function gasPrice() public view returns (uint256) {}
-    function validateGasPrice(uint256) public view;
-}
-
-
+/*
+    The BancorGasPriceLimit contract serves as an extra front-running attack mitigation mechanism.
+    It sets a maximum gas price on all bancor conversions, which prevents users from "cutting in line"
+    in order to front-run other transactions.
+    The gas price limit is universal to all converters and it can be updated by the owner to be in line
+    with the network's current gas price.
+*/
 contract BancorGasPriceLimit is IBancorGasPriceLimit, Owned, Utils {
     uint256 public gasPrice = 0 wei;    // maximum gas price for bancor transactions
     
@@ -144,15 +162,6 @@ contract BancorGasPriceLimit is IBancorGasPriceLimit, Owned, Utils {
         greaterThanZero(_gasPrice)
     {
         gasPrice = _gasPrice;
-    }
-
-    /*
-        @dev gas price getter
-
-        @return the current gas price
-    */
-    function gasPrice() public view returns (uint256) {
-        return gasPrice;
     }
 
     /*
