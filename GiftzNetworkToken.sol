@@ -1,8 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GiftzNetworkToken at 0x96d8fbf95f72f5abe9ef04f1ade94e1ba79be508
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GiftzNetworkToken at 0xb344f584e002e2ad84a71a60e395ecd057060d19
 */
-pragma solidity ^0.4.18;
-
 pragma solidity ^0.4.18;
 
 contract EtherealFoundationOwned {
@@ -36,10 +34,10 @@ contract EtherealFoundationOwned {
 
 contract GiftzNetworkToken is EtherealFoundationOwned {
     string public constant CONTRACT_NAME = "GiftzNetworkToken";
-    string public constant CONTRACT_VERSION = "A";
+    string public constant CONTRACT_VERSION = "B";
     
     string public constant name = "itCoin® Black";
-    string public constant symbol = "ITC";
+    string public constant symbol = "ITCB";
     uint256 public constant decimals = 18;  // 18 is the most common number of decimal places
     bool private tradeable;
     uint256 private currentSupply;
