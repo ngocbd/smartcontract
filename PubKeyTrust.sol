@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PubKeyTrust at 0x0d5f48df656fbf2a220222a74d3faba14cc76516
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PubKeyTrust at 0xf8cadbcadbeac3b5192ba29df5007746054102a4
 */
 pragma solidity 0.4.18;
 
@@ -16,8 +16,11 @@ pragma solidity 0.4.18;
  * 
  * In order to verify a user:
  * - Use this contract to fetch the merkle tree root value for the userID.
- * - Then use HTTPS to fetch the corresponding merkle file from our server at
- *   https://blockchain.storm4.cloud/merkleTreeRootValueGoesHere.json
+ * - Then use HTTPS to fetch the corresponding merkle file from our server.
+ *   For example, if the merkle tree root value is
+ *   "0xcd59b7bda6dc1dd82cb173d0cdfa408db30e9a747d4366eb5b60597899eb69c1",
+ *   then you could fetch the corresponding JSON file at
+ *   https://blockchain.storm4.cloud/cd59b7bda6dc1dd82cb173d0cdfa408db30e9a747d4366eb5b60597899eb69c1.json
  * - The JSON file allows you to independently verify the public key information
  *   by calculating the merkle tree root for yourself.
 **/
@@ -37,7 +40,7 @@ contract PubKeyTrust {
 	 * Note: Since we are expecting there to be very few hash algorithms used
 	 * in practice (probably just 1 or 2), we artificially limit the size of
 	 * the hashTypes array to 256 entries. This allows us to use uint8 throughout
-	 * the rest of the contract, which helps limit storage requirements.
+	 * the rest of the contract.
 	**/
 	string[] public hashTypes;
 
