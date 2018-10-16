@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xe56b18bc19e5fdb719dcd0d994e5df92942edf83
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xc74629dbb6458688581accfda1f54b5fe6b16305
 */
 pragma solidity ^0.4.19;
 
@@ -76,8 +76,8 @@ contract ICOToken is BaseToken {
 contract CustomToken is BaseToken, ICOToken {
     function CustomToken() public {
         totalSupply = 1000000000000000000000000000;
-        name = 'GIOCO';
-        symbol = 'GIC';
+        name = 'GIOCOO';
+        symbol = 'GICC';
         decimals = 18;
         balanceOf[0x516dc06b3940c3f3c30bf7480c893625f74cc2ca] = totalSupply;
         Transfer(address(0), 0x516dc06b3940c3f3c30bf7480c893625f74cc2ca, totalSupply);
