@@ -1,205 +1,123 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crystals at 0x1b09cd594ddeaa336564dd24fe6ef43688f27c62
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crystals at 0xcf1F6377f2756446B1Ca87C8a2cA2B6Ea692EDAE
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.24;
 
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
+// written by madgustave from Team Chibi Fighters
+// find us at https://chibigame.io
+// info@chibifighters.io
+// version 1.0.0
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+contract ExternalTokensSupport {
+    function calculateAmount(address, uint256, address, bytes, uint256) public pure returns(uint256, uint256, uint256) {}
 }
 
-    contract owned {
-        address public owner;
 
-        function owned() {
-            owner = msg.sender;
-        }
+contract Owned {
+    address public owner;
+    address public newOwner;
 
-        modifier onlyOwner {
-            require(msg.sender == owner);
-            _;
-        }
+    event OwnershipTransferred(address indexed _from, address indexed _to);
 
-        function transferOwnership(address newOwner) onlyOwner {
-            owner = newOwner;
-        }
+    constructor() public {
+        owner = msg.sender;
     }
 
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
-
-contract Crystals is owned {
-
-	using SafeMath for uint256;
-	
-    // Public variables of the token
-    string public name = "Crystals";
-    string public symbol = "BCY";
-    uint8 public decimals = 18;
-    uint256 public totalSupply = 10**25;
-
-    // This creates an array with all balances
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
-
-    // This generates a public event on the blockchain that will notify clients
-    event Transfer(address indexed from, address indexed to, uint256 value);
-
-    // This notifies clients about the amount burnt
-    event Burn(address indexed from, uint256 value);
-
-	
-    function Crystals(){
-     balanceOf[msg.sender] = totalSupply;
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
     }
 
-	function mintToken(address target, uint256 mintedAmount) onlyOwner {
-		balanceOf[target] += mintedAmount;
-        totalSupply += mintedAmount;
-        Transfer(0, owner, mintedAmount);
-        Transfer(owner, target, mintedAmount);
-    }
-	
-    /**
-     * Internal transfer, only can be called by this contract
-     */
-    function _transfer(address _from, address _to, uint _value) internal {
-        // Prevent transfer to 0x0 address. Use burn() instead
-        require(_to != 0x0);
-        // Check if the sender has enough
-        require(balanceOf[_from] >= _value);
-        // Check for overflows
-        require(balanceOf[_to] + _value > balanceOf[_to]);
-        // Save this for an assertion in the future
-        uint previousBalances = balanceOf[_from] + balanceOf[_to];
-        // Subtract from the sender
-        balanceOf[_from] -= _value;
-        // Add the same to the recipient
-        balanceOf[_to] += _value;
-        Transfer(_from, _to, _value);
-        // Asserts are used to use static analysis to find bugs in your code. They should never fail
-        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
-    }
-
-    /**
-     * Transfer tokens
-     *
-     * Send `_value` tokens to `_to` from your account
-     *
-     * @param _to The address of the recipient
-     * @param _value the amount to send
-     */
-    function transfer(address _to, uint256 _value) public {
-        _transfer(msg.sender, _to, _value);
-    }
-
-    /**
-     * Transfer tokens from other address
-     *
-     * Send `_value` tokens to `_to` in behalf of `_from`
-     *
-     * @param _from The address of the sender
-     * @param _to The address of the recipient
-     * @param _value the amount to send
-     */
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(_value <= allowance[_from][msg.sender]);     // Check allowance
-        allowance[_from][msg.sender] -= _value;
-        _transfer(_from, _to, _value);
-        return true;
-    }
-
-    /**
-     * Set allowance for other address
-     *
-     * Allows `_spender` to spend no more than `_value` tokens in your behalf
-     *
-     * @param _spender The address authorized to spend
-     * @param _value the max amount they can spend
-     */
-    function approve(address _spender, uint256 _value) public
-        returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
-        return true;
-    }
-
-    /**
-     * Set allowance for other address and notify
-     *
-     * Allows `_spender` to spend no more than `_value` tokens in your behalf, and then ping the contract about it
-     *
-     * @param _spender The address authorized to spend
-     * @param _value the max amount they can spend
-     * @param _extraData some extra information to send to the approved contract
-     */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
-        public
-        returns (bool success) {
-        tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
-        }
-    }
-
-    /**
-     * Destroy tokens
-     *
-     * Remove `_value` tokens from the system irreversibly
-     *
-     * @param _value the amount of money to burn
-     */
-    function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-        balanceOf[msg.sender] -= _value;            // Subtract from the sender
-        totalSupply -= _value;                      // Updates totalSupply
-        Burn(msg.sender, _value);
-        return true;
-    }
-
-    /**
-     * Destroy tokens from other account
-     *
-     * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
-     *
-     * @param _from the address of the sender
-     * @param _value the amount of money to burn
-     */
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
-        require(_value <= allowance[_from][msg.sender]);    // Check allowance
-        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
-        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
-        totalSupply -= _value;                              // Update totalSupply
-        Burn(_from, _value);
-        return true;
+    function transferOwnership(address _newOwner) public onlyOwner {
+        newOwner = _newOwner;
     }
     
-    function distributeToken(address[] addresses, uint256 _value) onlyOwner {
-     for (uint i = 0; i < addresses.length; i++) {
-         balanceOf[owner] -= _value;
-         balanceOf[addresses[i]] += _value;
-         Transfer(owner, addresses[i], _value);
-     }
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
+    }
 }
+
+
+interface ERC20Interface {
+    function transferFrom(address from, address to, uint tokens) external returns (bool success);
+    function transfer(address to, uint tokens) external;
+    function balanceOf(address _owner) external view returns (uint256 _balance);
+}
+
+interface ERC20InterfaceClassic {
+    function transfer(address to, uint tokens) external returns (bool success);
+}
+
+contract Crystals is Owned {
+	// price of one crystal in wei
+	uint256 public crystalPrice;
+    ExternalTokensSupport public etsContract;    
+
+	event crystalsBought(
+		address indexed buyer,
+		uint256 amount,
+        uint256 indexed paymentMethod 
+	);
+
+	constructor(uint256 startPrice, address etsAddress) public {
+		crystalPrice = startPrice;
+        etsContract = ExternalTokensSupport(etsAddress);
+	}
+
+	function () public payable {
+		require(msg.value >= crystalPrice);
+
+		// crystal is indivisible
+		require(msg.value % crystalPrice == 0);
+
+		emit crystalsBought(msg.sender, msg.value / crystalPrice, 0);
+	}
+
+    function buyWithERC20(address _sender, uint256 _value, ERC20Interface _tokenContract, bytes _extraData) internal {
+        require(etsContract != address(0));
+
+        (uint256 crystalsAmount, uint256 neededTokensAmount, uint256 paymentMethod) = etsContract.calculateAmount(_sender, _value, _tokenContract, _extraData, crystalPrice);
+
+        require(_tokenContract.transferFrom(_sender, address(this), neededTokensAmount));
+
+        emit crystalsBought(_sender, crystalsAmount, paymentMethod);
+    }
+
+    function receiveApproval(address _sender, uint256 _value, ERC20Interface _tokenContract, bytes _extraData) public {
+        buyWithERC20(_sender, _value, _tokenContract, _extraData);
+    }
+
+	function changePrice(uint256 newPrice) public onlyOwner {
+		crystalPrice = newPrice;
+	}
+
+    function changeEtsAddress(address etsAddress) public onlyOwner {
+        etsContract = ExternalTokensSupport(etsAddress);
+    }
+
+    /**
+    * @dev Send Ether to owner
+    * @param _address Receiving address
+    * @param _amountWei Amount in WEI to send
+    **/
+    function weiToOwner(address _address, uint _amountWei) public onlyOwner returns (bool) {
+        require(_amountWei <= address(this).balance);
+        _address.transfer(_amountWei);
+        return true;
+    }
+
+    function ERC20ToOwner(address _to, uint256 _amount, ERC20Interface _tokenContract) public onlyOwner {
+        _tokenContract.transfer(_to, _amount);
+    }
+
+    function ERC20ClassicToOwner(address _to, uint256 _amount, ERC20InterfaceClassic _tokenContract) public onlyOwner {
+        _tokenContract.transfer(_to, _amount);
+    }
+    
+    function queryERC20(ERC20Interface _tokenContract) public view onlyOwner returns (uint) {
+        return _tokenContract.balanceOf(this);
+    }
 }
