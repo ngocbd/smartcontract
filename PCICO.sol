@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PCICO at 0x8e40894954b987c32571fe9d3cabe8024c6830b2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PCICO at 0x763de7eb97a80f12784436aabf3911d3d9ac823a
 */
 pragma solidity ^0.4.13;
 contract SafeMath {
@@ -34,7 +34,7 @@ contract PCICO is SafeMath{
     // Deposit address of account controlled by the creators
     address public ethFundDeposit = 0x48084911fdA6C97aa317516f2d21dD3e4698FC54;
     address public tokenExchangeAddress = 0x009f0e67dbaf4644603c0660e974cf5e34726481;
-    address public tokenAccountAddress = 0x9eDF59D33e6320D4b7Cd3B9556aa459A8c95Af;
+    address public tokenAccountAddress = 0x3c1F16a8D4B56889D4F6E49cc49b47B5c4287751;
     //Access to token contract for tokens exchange
     PrivateCityTokens public tokenExchange;
 
