@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract subSale at 0x1bcbc935b377432224b9050211edaaf67f184f0d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract subSale at 0x44e4ebbfc7b33030e6b4828ff0f44bb890ec913b
 */
 pragma solidity ^0.4.13;
 
@@ -39,11 +39,6 @@ contract subSale{
     _;
   }
 
-  modifier recorded_owner(bytes32 node){
-    if (records[node].originalOwner != msg.sender) throw;
-    _;
-  }
-
   function subSale() {}
 
   function listSubName(bytes32 node,uint price,uint expiry) node_owner(node){
@@ -55,7 +50,7 @@ contract subSale{
     records[node].subExpiry=expiry;
   }
 
-  function unlistSubName(bytes32 node) recorded_owner(node){
+  function unlistSubName(bytes32 node) node_owner(node){
     require(records[node].subSale==true);
 
     ens.setOwner(node,records[node].originalOwner);
