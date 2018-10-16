@@ -1,319 +1,212 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UECToken at 0xe2178b5a8a308922c97c69f7354acff525f2f3d7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UECToken at 0xc3a007ee74b71fb09a1fd0296f643438e207df00
 */
-pragma solidity ^ 0.4.18;
-library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns(uint256) {
-        if (a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        assert(c / a == b);
-        return c;
+pragma solidity ^0.4.18;
+
+// ----------------------------------------------------------------------------
+// Safe maths
+// ----------------------------------------------------------------------------
+contract SafeMath {
+    function safeAdd(uint256 a, uint256 b) public pure returns (uint256 c) {
+        c = a + b;
+        require(c >= a);
     }
-    function div(uint256 a, uint256 b) internal pure returns(uint256) {
-        uint256 c = a / b;
-        return c;
+    function safeSub(uint256 a, uint256 b) public pure returns (uint256 c) {
+        require(b <= a);
+        c = a - b;
     }
-    function sub(uint256 a, uint256 b) internal pure returns(uint256) {
-        assert(b <= a);
-        return a - b;
+    function safeMul(uint256 a, uint256 b) public pure returns (uint256 c) {
+        c = a * b;
+        require(a == 0 || c / a == b);
     }
-    function add(uint256 a, uint256 b) internal pure returns(uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
+    function safeDiv(uint256 a, uint256 b) public pure returns (uint256 c) {
+        require(b > 0);
+        c = a / b;
     }
 }
-contract UECToken {
-    using SafeMath for uint256;
-    event Bought(uint256 indexed _itemId, address indexed _owner, uint256 _price);
-    event Sold(uint256 indexed _itemId, address indexed _owner, uint256 _price);
-    event Transfer(address indexed _from, address indexed _to, uint256 _tokenId);
-    event Approval(address indexed _owner, address indexed _approved, uint256 _tokenId);
-    event ReNameEvent(uint256 indexed _itemId, address indexed _owner, bytes32 indexed _itemName);
-    address private owner;
-    mapping(address => bool) private admins;
-    IItemRegistry private itemRegistry;
-    bool private erc721Enabled = false;
-    uint256 private increaseLimit1 = 0.02 ether;
-    uint256 private increaseLimit2 = 0.5 ether;
-    uint256 private increaseLimit3 = 2.0 ether;
-    uint256 private increaseLimit4 = 5.0 ether;
-    uint256[] private listedItems;
-    mapping(uint256 => address) private ownerOfItem;
-    mapping(uint256 => uint256) private startingPriceOfItem;
-    mapping(uint256 => uint256) private priceOfItem;
-    mapping(uint256 => address) private approvedOfItem;
-    mapping(uint256 => bytes32) private nameOfItem;
-    mapping(uint256 => address) private nameAddressOfItem;
-    string private constant p_contract_name = "UniverseCoin UEC";
-    string private constant p_contract_symbol = "UEC";
-    uint256 private p_itemName_len = 5;
-    uint256 private p_itemName_price = 1000000000000000000;
-    mapping(address => string) private accountOfNick;
-    mapping(address => uint256) private accountOfPrice;
-    mapping(address => string) private countryofNick;
-    uint256 accountPrice = 1000000000000000;
-    event SetNick(string indexed _nick, string indexed _countryName, address indexed _owner);
-    event SetNickPrice(uint256 indexed _accountOfPrice, address indexed _owner);
-    function accountOfN(address _owner) public view returns(string _nick) {
-        return accountOfNick[_owner];
-    }
-    function accountOfP(address _owner) public view returns(uint256 _nick) {
-        return accountOfPrice[_owner];
-    }
-    function countryofN(address _owner) public view returns(string _nick) {
-        return countryofNick[_owner];
-    }
-    function setNick(string _nick, string _countryname) payable public {
-        require(bytes(_nick).length > 2);
-        require(bytes(_countryname).length > 2);
-        uint256 accountPriceCurrent = accountPrice;
-        if (accountOfP(msg.sender) <= 0) {
-            accountPriceCurrent = accountPrice;
-        } else {
-            accountPriceCurrent = accountOfP(msg.sender);
-            accountPriceCurrent = accountPriceCurrent*2;
-        }
-        if (msg.value != accountPriceCurrent) {
-            return;
-        }
-        accountOfNick[msg.sender] = _nick;
-        accountOfPrice[msg.sender] = accountPriceCurrent;
-        countryofNick[msg.sender] = _countryname;
-        SetNick(_nick, _countryname, msg.sender);
-        SetNickPrice(accountPriceCurrent,msg.sender);
-    }
-    function UECToken() public {
+
+
+// ----------------------------------------------------------------------------
+// ERC Token Standard #20 Interface
+// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+// ----------------------------------------------------------------------------
+contract ERC20Interface {
+    function totalSupply() public constant returns (uint256);
+    function balanceOf(address tokenOwner) public constant returns (uint256 balance);
+    function allowance(address tokenOwner, address spender) public constant returns (uint256 remaining);
+    function transfer(address to, uint256 tokens) public returns (bool success);
+    function approve(address spender, uint256 tokens) public returns (bool success);
+    function transferFrom(address from, address to, uint256 tokens) public returns (bool success);
+
+    event Transfer(address indexed from, address indexed to, uint256 tokens);
+    event Approval(address indexed tokenOwner, address indexed spender, uint256 tokens);
+}
+
+
+// ----------------------------------------------------------------------------
+// Contract function to receive approval and execute function in one call
+//
+// Borrowed from MiniMeToken
+// ----------------------------------------------------------------------------
+contract ApproveAndCallFallBack {
+    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
+}
+
+
+// ----------------------------------------------------------------------------
+// Owned contract
+// ----------------------------------------------------------------------------
+contract Owned {
+    address public owner;
+    address public newOwner;
+
+    event OwnershipTransferred(address indexed _from, address indexed _to);
+
+    constructor() public {
         owner = msg.sender;
-        admins[owner] = true;
     }
-    modifier onlyOwner() {
-        require(owner == msg.sender);
+
+    modifier onlyOwner {
+        require(msg.sender == owner);
         _;
     }
-    modifier onlyAdmins() {
-        require(admins[msg.sender]);
-        _;
+
+    function transferOwnership(address _newOwner) public onlyOwner {
+        newOwner = _newOwner;
     }
-    modifier onlyERC721() {
-        require(erc721Enabled);
-        _;
-    }
-    function setItemName(uint256 _itemId, bytes32 _itemName) payable public {
-        require(priceOf(_itemId) > 0);
-        require(msg.sender != nameAddressOfItem[_itemId]);
-        nameOfItem[_itemId] = _itemName;
-        nameAddressOfItem[_itemId] = msg.sender;
-    }
-    function setOwner(address _owner) onlyOwner() public {
-        owner = _owner;
-    }
-    function setItemRegistry(address _itemRegistry) onlyOwner() public {
-        itemRegistry = IItemRegistry(_itemRegistry);
-    }
-    function addAdmin(address _admin) onlyOwner() public {
-        admins[_admin] = true;
-    }
-    function removeAdmin(address _admin) onlyOwner() public {
-        delete admins[_admin];
-    }
-    function enableERC721() onlyOwner() public {
-        erc721Enabled = true;
-    }
-    function withdrawAll() onlyOwner() public {
-        owner.transfer(this.balance);
-    }
-    function withdrawAmount(uint256 _amount) onlyOwner() public {
-        owner.transfer(_amount);
-    }
-    function populateFromItemRegistry(uint256[] _itemIds) onlyOwner() public {
-        for (uint256 i = 0; i < _itemIds.length; i++) {
-            if (priceOfItem[_itemIds[i]] > 0 || itemRegistry.priceOf(_itemIds[i]) == 0) {
-                continue;
-            }
-            listItemFromRegistry(_itemIds[i]);
-        }
-    }
-    function listItemFromRegistry(uint256 _itemId) onlyOwner() public {
-        require(itemRegistry != address(0));
-        require(itemRegistry.ownerOf(_itemId) != address(0));
-        require(itemRegistry.priceOf(_itemId) > 0);
-        uint256 price = itemRegistry.priceOf(_itemId);
-        address itemOwner = itemRegistry.ownerOf(_itemId);
-        listItem(_itemId, price,itemOwner,'',itemOwner);
-    }
-    function listMultipleItems(uint256[] _itemIds, uint256 _price, address _owner, bytes32 _itemName) onlyAdmins() external {
-        for (uint256 i = 0; i < _itemIds.length; i++) {
-            listItem(_itemIds[i], _price, _owner, _itemName,_owner);
-        }
-    }
-    function listItem(uint256 _itemId, uint256 _price, address _owner, bytes32 _itemName, address _itemNameAddress) onlyAdmins() public {
-        require(_price > 0);
-        require(priceOfItem[_itemId] == 0);
-        require(ownerOfItem[_itemId] == address(0));
-        ownerOfItem[_itemId] = _owner;
-        priceOfItem[_itemId] = _price;
-        nameOfItem[_itemId] = _itemName;
-        nameAddressOfItem[_itemId] = _itemNameAddress;
-        startingPriceOfItem[_itemId] = _price;
-        listedItems.push(_itemId);
-    }
-    function calculateNextPrice(uint256 _price) public view returns(uint256 _nextPrice) {
-        if (_price < increaseLimit1) {
-            return _price.mul(200).div(95);
-        } else if (_price < increaseLimit2) {
-            return _price.mul(135).div(96);
-        } else if (_price < increaseLimit3) {
-            return _price.mul(125).div(97);
-        } else if (_price < increaseLimit4) {
-            return _price.mul(117).div(97);
-        } else {
-            return _price.mul(115).div(98);
-        }
-    }
-    function calculateDevCut(uint256 _price) public view returns(uint256 _devCut) {
-        if (_price < increaseLimit1) {
-            return _price.mul(5).div(100);
-        } else if (_price < increaseLimit2) {
-            return _price.mul(4).div(100);
-        } else if (_price < increaseLimit3) {
-            return _price.mul(3).div(100);
-        } else if (_price < increaseLimit4) {
-            return _price.mul(3).div(100);
-        } else {
-            return _price.mul(2).div(100);
-        }
-    }
-    function buy(uint256 _itemId) payable public {
-        require(priceOf(_itemId) > 0);
-        require(ownerOf(_itemId) != address(0));
-        require(msg.value >= priceOf(_itemId));
-        require(ownerOf(_itemId) != msg.sender);
-        require(!isContract(msg.sender));
-        require(msg.sender != address(0));
-        address oldOwner = ownerOf(_itemId);
-        address newOwner = msg.sender;
-        uint256 price = priceOf(_itemId);
-        uint256 excess = msg.value.sub(price);
-        _transfer(oldOwner, newOwner, _itemId);
-        priceOfItem[_itemId] = nextPriceOf(_itemId);
-        Bought(_itemId, newOwner, price);
-        Sold(_itemId, oldOwner, price);
-        uint256 devCut = calculateDevCut(price);
-        oldOwner.transfer(price.sub(devCut));
-        if (excess > 0) {
-            newOwner.transfer(excess);
-        }
-    }
-    function implementsERC721() public view returns(bool _implements) {
-        return erc721Enabled;
-    }
-    function name() public pure returns(string _name) {
-        return p_contract_name;
-    }
-    function symbol() public pure returns(string _symbol) {
-        return p_contract_symbol;
-    }
-    function totalSupply() public view returns(uint256 _totalSupply) {
-        return listedItems.length;
-    }
-    function balanceOf(address _owner) public view returns(uint256 _balance) {
-        uint256 counter = 0;
-        for (uint256 i = 0; i < listedItems.length; i++) {
-            if (ownerOf(listedItems[i]) == _owner) {
-                counter++;
-            }
-        }
-        return counter;
-    }
-    function ownerOf(uint256 _itemId) public view returns(address _owner) {
-        return ownerOfItem[_itemId];
-    }
-    function tokensOf(address _owner) public view returns(uint256[] _tokenIds) {
-        uint256[] memory items = new uint256[](balanceOf(_owner));
-        uint256 itemCounter = 0;
-        for (uint256 i = 0; i < listedItems.length; i++) {
-            if (ownerOf(listedItems[i]) == _owner) {
-                items[itemCounter] = listedItems[i];
-                itemCounter += 1;
-            }
-        }
-        return items;
-    }
-    function tokenExists(uint256 _itemId) public view returns(bool _exists) {
-        return priceOf(_itemId) > 0;
-    }
-    function approvedFor(uint256 _itemId) public view returns(address _approved) {
-        return approvedOfItem[_itemId];
-    }
-    function approve(address _to, uint256 _itemId) onlyERC721() public {
-        require(msg.sender != _to);
-        require(tokenExists(_itemId));
-        require(ownerOf(_itemId) == msg.sender);
-        if (_to == 0) {
-            if (approvedOfItem[_itemId] != 0) {
-                delete approvedOfItem[_itemId];
-                Approval(msg.sender, 0, _itemId);
-            }
-        } else {
-            approvedOfItem[_itemId] = _to;
-            Approval(msg.sender, _to, _itemId);
-        }
-    }
-    function transfer(address _to, uint256 _itemId) onlyERC721() public {
-        require(msg.sender == ownerOf(_itemId));
-        _transfer(msg.sender, _to, _itemId);
-    }
-    function transferFrom(address _from, address _to, uint256 _itemId) onlyERC721() public {
-        require(approvedFor(_itemId) == msg.sender);
-        _transfer(_from, _to, _itemId);
-    }
-    function _transfer(address _from, address _to, uint256 _itemId) internal {
-        require(tokenExists(_itemId));
-        require(ownerOf(_itemId) == _from);
-        require(_to != address(0));
-        require(_to != address(this));
-        ownerOfItem[_itemId] = _to;
-        approvedOfItem[_itemId] = 0;
-        Transfer(_from, _to, _itemId);
-    }
-    function isAdmin(address _admin) public view returns(bool _isAdmin) {
-        return admins[_admin];
-    }
-    function startingPriceOf(uint256 _itemId) public view returns(uint256 _startingPrice) {
-        return startingPriceOfItem[_itemId];
-    }
-    function priceOf(uint256 _itemId) public view returns(uint256 _price) {
-        return priceOfItem[_itemId];
-    }
-    function nextPriceOf(uint256 _itemId) public view returns(uint256 _nextPrice) {
-        return calculateNextPrice(priceOf(_itemId));
-    }
-    function itemNameOf(uint256 _itemId) public view returns(bytes32 _itemName) {
-        return nameOfItem[_itemId];
-    }
-    function itemNameAddress(uint256 _itemId) public view returns(address _itemNameAddress) {
-        return nameAddressOfItem[_itemId];
-    }
-    function itemsForSaleLimit(uint256 _from, uint256 _take) public view returns(uint256[] _items) {
-        uint256[] memory items = new uint256[](_take);
-        for (uint256 i = 0; i < _take; i++) {
-            items[i] = listedItems[_from + i];
-        }
-        return items;
-    }
-    function isContract(address addr) internal view returns(bool) {
-        uint size;
-        assembly {
-            size: =extcodesize(addr)
-        }
-        return size > 0;
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
     }
 }
-interface IItemRegistry {
-    function itemsForSaleLimit(uint256 _from, uint256 _take) public view returns(uint256[] _items);
-    function ownerOf(uint256 _itemId) public view returns(address _owner);
-    function priceOf(uint256 _itemId) public view returns(uint256 _price);
+
+
+// ----------------------------------------------------------------------------
+// ERC20 Token, with the addition of symbol, name and decimals and assisted
+// token transfers
+// ----------------------------------------------------------------------------
+contract UECToken is ERC20Interface, Owned, SafeMath {
+    bytes32 public symbol;
+    bytes32 public name;
+    uint8 public decimals;
+    uint256 public _totalSupply;
+
+    mapping(address => uint256) balances;
+    mapping(address => mapping(address => uint256)) allowed;
+
+
+    // ------------------------------------------------------------------------
+    // Constructor
+    // ------------------------------------------------------------------------
+    constructor() public {
+        symbol = "UEC";
+        name = "Universal Energy Token";
+        decimals = 6;
+        _totalSupply = 1000000000000000;
+        balances[0xc7C3E00d990f38DC22BDf61383C0FebC98190E0E] = _totalSupply;
+        emit Transfer(address(0), 0xc7C3E00d990f38DC22BDf61383C0FebC98190E0E, _totalSupply);
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Total supply
+    // ------------------------------------------------------------------------
+    function totalSupply() public constant returns (uint256) {
+        return _totalSupply  - balances[address(0)];
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Get the token balance for account tokenOwner
+    // ------------------------------------------------------------------------
+    function balanceOf(address tokenOwner) public constant returns (uint256 balance) {
+        return balances[tokenOwner];
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Transfer the balance from token owner's account to to account
+    // - Owner's account must have sufficient balance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transfer(address to, uint256 tokens) public returns (bool success) {
+        balances[msg.sender] = safeSub(balances[msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
+        emit Transfer(msg.sender, to, tokens);
+        return true;
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Token owner can approve for spender to transferFrom(...) tokens
+    // from the token owner's account
+    //
+    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+    // recommends that there are no checks for the approval double-spend attack
+    // as this should be implemented in user interfaces 
+    // ------------------------------------------------------------------------
+    function approve(address spender, uint256 tokens) public returns (bool success) {
+        require(balances[msg.sender] > tokens && tokens > 0);
+        allowed[msg.sender][spender] = tokens;
+        emit Approval(msg.sender, spender, tokens);
+        return true;
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Transfer tokens from the from account to the to account
+    // 
+    // The calling account must already have sufficient tokens approve(...)-d
+    // for spending from the from account and
+    // - From account must have sufficient balance to transfer
+    // - Spender must have sufficient allowance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transferFrom(address from, address to, uint256 tokens) public returns (bool success) {
+        balances[from] = safeSub(balances[from], tokens);
+        allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
+        emit Transfer(from, to, tokens);
+        return true;
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Returns the amount of tokens approved by the owner that can be
+    // transferred to the spender's account
+    // ------------------------------------------------------------------------
+    function allowance(address tokenOwner, address spender) public constant returns (uint256 remaining) {
+        return allowed[tokenOwner][spender];
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Token owner can approve for spender to transferFrom(...) tokens
+    // from the token owner's account. The spender contract function
+    // receiveApproval(...) is then executed
+    // ------------------------------------------------------------------------
+    function approveAndCall(address spender, uint256 tokens, bytes data) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        emit Approval(msg.sender, spender, tokens);
+        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
+        return true;
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Don't accept ETH
+    // ------------------------------------------------------------------------
+    function () public payable {
+        revert();
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Owner can transfer out any accidentally sent ERC20 tokens
+    // ------------------------------------------------------------------------
+    function transferAnyERC20Token(address tokenAddress, uint256 tokens) public onlyOwner returns (bool success) {
+        return ERC20Interface(tokenAddress).transfer(owner, tokens);
+    }
 }
