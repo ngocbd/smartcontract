@@ -1,63 +1,100 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDrop at 0x3f8fc6758e0ad014ee426565a6383969b22d9e37
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDrop at 0x851ba7347b3d7f873267fe597c8efd187de29a77
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.19;
+
+/**
+ * @title Token
+ * @dev Simpler version of ERC20 interface
+ */
+contract Token {
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
 contract Ownable {
   address public owner;
 
+
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-  function Ownable() public {
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() {
     owner = msg.sender;
   }
 
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
   modifier onlyOwner() {
     require(msg.sender == owner);
     _;
   }
 
-  function transferOwnership(address newOwner) public onlyOwner {
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
     require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
+    OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
-}
 
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 contract AirDrop is Ownable {
 
-    function contractTokenBalance(address _tokenAddr) onlyOwner public constant returns(uint256) {
-       return  ERC20(_tokenAddr).balanceOf(msg.sender);
+  // This declares a state variable that would store the contract address
+  Token public tokenInstance;
+
+  /*
+    constructor function to set token address
+   */
+  function AirDrop(address _tokenAddress){
+    tokenInstance = Token(_tokenAddress);
+  }
+
+  /*
+    Airdrop function which take up a array of address,token amount and eth amount and call the
+    transfer function to send the token plus send eth to the address is balance is 0
+   */
+  function doAirDrop(address[] _address, uint256 _amount, uint256 _ethAmount) onlyOwner public returns (bool) {
+    uint256 count = _address.length;
+    for (uint256 i = 0; i < count; i++)
+    {
+      /* calling transfer function from contract */
+      tokenInstance.transfer(_address [i],_amount);
+      if((_address [i].balance == 0) && (this.balance >= _ethAmount))
+      {
+        require(_address [i].send(_ethAmount));
+      }
     }
-    
-    function send(address _tokenAddr, address _to, uint256 amount) onlyOwner public returns(bool) {
-       return ERC20(_tokenAddr).transfer(_to, amount);
-    }
-    
-    function multisend(address _tokenAddr, address[] dests, uint256 amount) onlyOwner public returns(uint256) {
-      
-        uint256 i = 0;
-        while (i < dests.length) {
-          ERC20(_tokenAddr).transfer(dests[i], amount);
-          i += 1;
-        }
-        return(i);
-    }
-    
-    function () payable public {
-    }
+  }
+
+
+  function transferEthToOnwer() onlyOwner public returns (bool) {
+    require(owner.send(this.balance));
+  }
+
+  /*
+    function to add eth to the contract
+   */
+  function() payable {
+
+  }
+
+  /*
+    function to kill contract
+  */
+
+  function kill() onlyOwner {
+    selfdestruct(owner);
+  }
 }
