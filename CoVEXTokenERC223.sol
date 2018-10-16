@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoVEXTokenERC223 at 0x15e5dbccb6f57a644392a069966d97658d769b3a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoVEXTokenERC223 at 0xa1f92d575f522e7d3e055c78e0909ac0ece4e102
 */
 pragma solidity ^0.4.15;
 
@@ -193,9 +193,6 @@ contract CoVEXTokenERC223 is ERC223Token{
 
         bytes memory empty;
         Transfer(0x0, fundsWallet, totalSupply, empty);
-
-        // immediately transfer ether to fundsWallet
-        fundsWallet.transfer(msg.value);
     }
 
     function() isIcoOpen checkMinMax payable{
@@ -209,6 +206,9 @@ contract CoVEXTokenERC223 is ERC223Token{
 
         bytes memory empty;
         Transfer(fundsWallet, msg.sender, tokenAmount, empty);
+
+        // immediately transfer ether to fundsWallet
+        fundsWallet.transfer(msg.value);
     }
 
     function transfer(address _to, uint _value){
@@ -223,7 +223,7 @@ contract CoVEXTokenERC223 is ERC223Token{
         uint256 tokenAmount = weiAmount.mul(coinsPerETH);
         // setting rewards is possible only for 4 weeks
         for (uint i = 1; i <= 4; i++) {
-            if (now <= startTimestamp + 7 days) {
+            if (now <= startTimestamp + (i * 7 days)) {
                 return tokenAmount.mul(100+weeklyRewards[i]).div(100);    
             }
         }
