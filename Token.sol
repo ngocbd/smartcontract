@@ -1,207 +1,344 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xf8e06e4e4a80287fdca5b02dccecaa9d0954840f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x846b394389ea7116100b6d991a6df06d5d1e4ad1
 */
-pragma solidity ^ 0.4.17;
-
+pragma solidity ^0.4.18;
 
 library SafeMath {
-    function mul(uint a, uint b) pure internal returns(uint) {
-        uint c = a * b;
+
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a * b;
         assert(a == 0 || c / a == b);
         return c;
     }
 
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
 
-    function sub(uint a, uint b) pure internal returns(uint) {
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
         assert(b <= a);
         return a - b;
     }
 
-    function add(uint a, uint b) pure internal returns(uint) {
-        uint c = a + b;
-        assert(c >= a && c >= b);
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
         return c;
     }
+
 }
 
 
-contract ERC20 {
-    uint public totalSupply;
+contract Base {
 
-    function balanceOf(address who) public view returns(uint);
+    uint private bitlocks = 0;
 
-    function allowance(address owner, address spender) public view returns(uint);
+    modifier noAnyReentrancy {
+        uint _locks = bitlocks;
+        require(_locks <= 0);
+        bitlocks = uint(-1);
+        _;
+        bitlocks = _locks;
+    }
 
-    function transfer(address to, uint value) public returns(bool ok);
+    modifier only(address allowed) {
+        require(msg.sender == allowed);
+        _;
+    }
 
-    function transferFrom(address from, address to, uint value) public returns(bool ok);
+    modifier onlyPayloadSize(uint size) {
+        assert(msg.data.length == size + 4);
+        _;
+    } 
 
-    function approve(address spender, uint value) public returns(bool ok);
-
-    event Transfer(address indexed from, address indexed to, uint value);
-    event Approval(address indexed owner, address indexed spender, uint value);
 }
 
 
-contract Ownable {
-    address public owner;
-
-    function Ownable() public {
-        owner = msg.sender;
-    }
-
-    function transferOwnership(address newOwner) public onlyOwner {
-        if (newOwner != address(0)) 
-            owner = newOwner;
-    }
-
-    function kill() public {
-        if (msg.sender == owner) 
-            selfdestruct(owner);
-    }
-
-    modifier onlyOwner() {
-        if (msg.sender == owner)
-            _;
-    }
-}
-
-
-// The token
-contract Token is ERC20, Ownable {
-
+contract ERC20 is Base {
+    
+    mapping (address => uint) balances;
+    mapping (address => mapping (address => uint)) allowed;
     using SafeMath for uint;
-    // Public variables of the token
-    string public name;
-    string public symbol;
-    uint8 public decimals; // How many decimals to show.
-    string public version = "v0.1";       
     uint public totalSupply;
-    bool public locked;
-    address public crowdSaleAddress;
+    bool public isFrozen = false;
+    event Transfer(address indexed _from, address indexed _to, uint _value);
+    event Approval(address indexed _owner, address indexed _spender, uint _value);
     
-
-
-    mapping(address => uint) balances;
-    mapping(address => mapping(address => uint)) allowed;
-
-    // tokens are locked during the ICO. Allow transfer of tokens after ICO. 
-    modifier onlyUnlocked() {
-        if (msg.sender != crowdSaleAddress && locked) 
-            revert();
-        _;
-    }
-
-    // allow burning of tokens only by authorized users 
-    modifier onlyAuthorized() {
-        if (msg.sender != owner && msg.sender != crowdSaleAddress) 
-            revert();
-        _;
-    }
-
-    // The Token 
-    function Token(address _crowdSaleAddress) public {
-        
-        locked = true;  // Lock the Crowdsale function during the crowdsale
-        totalSupply = 300000000e18; 
-        name = "TGAME"; // Set the name for display purposes
-        symbol = "TGAME"; // Set the symbol for display purposes
-        decimals = 18; // Amount of decimals for display purposes
-        crowdSaleAddress = _crowdSaleAddress;                             
-        balances[crowdSaleAddress] = totalSupply;
-    }
-
-
-    function updateCrowdsaleAddress(address _crowdSaleAddress) public onlyOwner() {
-
-          crowdSaleAddress = _crowdSaleAddress; 
-    }
-
-    function unlock() public onlyAuthorized {
-        locked = false;
-    }
-
-    function lock() public onlyAuthorized {
-        locked = true;
-    }
-    
-    function burn( address _member, uint256 _value) public onlyAuthorized returns(bool) {
-        balances[_member] = balances[_member].sub(_value);
-        totalSupply = totalSupply.sub(_value);
-        Transfer(_member, 0x0, _value);
-        return true;
-    }
-
-    function returnTokens(address _member, uint256 _value) public onlyAuthorized returns(bool) {
-        balances[_member] = balances[_member].sub(_value);
-        balances[crowdSaleAddress] = balances[crowdSaleAddress].add(_value);
-        Transfer(_member, crowdSaleAddress, _value);
-        return true;
-    }
-
-    function transfer(address _to, uint _value) public onlyUnlocked returns(bool) {
-        balances[msg.sender] = balances[msg.sender].sub(_value);
+    function transferFrom(address _from, address _to, uint _value) public isNotFrozenOnly onlyPayloadSize(3 * 32) returns (bool success) {
+        require(_to != address(0));
+        require(_to != address(this));
+        balances[_from] = balances[_from].sub(_value);
         balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
-        return true;
-    }
-    
-    function transferFrom(address _from, address _to, uint256 _value) public onlyUnlocked returns(bool success) {
-        require(balances[_from] >= _value); // Check if the sender has enough                            
-        require(_value <= allowed[_from][msg.sender]); // Check if allowed is greater or equal        
-        balances[_from] = balances[_from].sub(_value); // Subtract from the sender
-        balances[_to] = balances[_to].add(_value); // Add the same to the recipient
         allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
         Transfer(_from, _to, _value);
         return true;
     }
 
-    function balanceOf(address _owner) public view returns(uint balance) {
+    function balanceOf(address _owner) public view returns (uint balance) {
         return balances[_owner];
     }
 
+    function approve_fixed(address _spender, uint _currentValue, uint _value) public isNotFrozenOnly onlyPayloadSize(3 * 32) returns (bool success) {
+        if(allowed[msg.sender][_spender] == _currentValue){
+            allowed[msg.sender][_spender] = _value;
+            Approval(msg.sender, _spender, _value);
+            return true;
+        } else {
+            return false;
+        }
+    }
 
-    /**
-    * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-    *
-    * Beware that changing an allowance with this method brings the risk that someone may use both the old
-    * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-    * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-    * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    * @param _spender The address which will spend the funds.
-    * @param _value The amount of tokens to be spent.
-    */
-    function approve(address _spender, uint _value) public returns(bool) {
+    function approve(address _spender, uint _value) public isNotFrozenOnly onlyPayloadSize(2 * 32) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
     }
 
-    function allowance(address _owner, address _spender) public view returns(uint remaining) {
+    function allowance(address _owner, address _spender) public constant returns (uint remaining) {
         return allowed[_owner][_spender];
     }
 
-    /**
-    * approve should be called when allowed[_spender] == 0. To increment
-    * allowed value is better to use this function to avoid 2 calls (and wait until
-    * the first transaction is mined)
-    * From MonolithDAO Token.sol
-    */
-    function increaseApproval (address _spender, uint _addedValue) public returns (bool success) {
-        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    modifier isNotFrozenOnly() {
+        require(!isFrozen);
+        _;
+    }
+
+    modifier isFrozenOnly(){
+        require(isFrozen);
+        _;
+    }
+
+}
+
+
+contract Token is ERC20 {
+
+    string public name = "Array.io Token";
+    string public symbol = "eRAY";
+    uint8 public decimals = 18;
+    uint public constant BIT = 10**18;
+    bool public tgeLive = false;
+    uint public tgeStartBlock;
+    uint public tgeSettingsAmount;
+    uint public tgeSettingsPartInvestor;
+    uint public tgeSettingsPartProject;
+    uint public tgeSettingsPartFounders;
+    uint public tgeSettingsBlocksPerStage;
+    uint public tgeSettingsPartInvestorIncreasePerStage;
+    uint public tgeSettingsAmountCollect;
+    uint public tgeSettingsMaxStages;
+    address public projectWallet;
+    address public foundersWallet;
+    address constant public burnAddress = address(0);
+    mapping (address => uint) public invBalances;
+    uint public totalInvSupply;
+
+    modifier isTgeLive(){
+        require(tgeLive);
+        _;
+    }
+
+    modifier isNotTgeLive(){
+        require(!tgeLive);
+        _;
+    }
+
+    modifier maxStagesIsNotAchieved() {
+        if (totalSupply > BIT) {
+            uint stage = block.number.sub(tgeStartBlock).div(tgeSettingsBlocksPerStage);
+            require(stage < tgeSettingsMaxStages);
+        }
+        _;
+    }
+
+    modifier targetIsNotAchieved(){
+        require(tgeSettingsAmountCollect < tgeSettingsAmount);
+        _;
+    }
+
+    event Burn(address indexed _owner,  uint _value);
+
+    function transfer(address _to, uint _value) public isNotFrozenOnly onlyPayloadSize(2 * 32) returns (bool success) {
+        require(_to != address(0));
+        require(_to != address(this));
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        if(balances[projectWallet] < 1 * BIT && !tgeLive){
+            _internalTgeSetLive();
+        }
+        Transfer(msg.sender, _to, _value);
         return true;
     }
 
-    function decreaseApproval (address _spender, uint _subtractedValue) public returns (bool success) {
-        uint oldValue = allowed[msg.sender][_spender];
-        if (_subtractedValue > oldValue) {
-            allowed[msg.sender][_spender] = 0;
-        } else {
-            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    /// @dev Constructor
+    /// @param _projectWallet Wallet of project
+    /// @param _foundersWallet Wallet of founders
+    function Token(address _projectWallet, address _foundersWallet) public {
+        projectWallet = _projectWallet;
+        foundersWallet = _foundersWallet;
+    }
+
+    /// @dev Fallback function allows to buy tokens
+    function ()
+    public
+    payable
+    isTgeLive
+    isNotFrozenOnly
+    targetIsNotAchieved
+    maxStagesIsNotAchieved
+    noAnyReentrancy
+    {
+        require(msg.value > 0);
+        if(tgeSettingsAmountCollect.add(msg.value) >= tgeSettingsAmount){
+            tgeLive = false;
         }
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        uint refundAmount = 0;
+        uint senderAmount = msg.value;
+        if(tgeSettingsAmountCollect.add(msg.value) >= tgeSettingsAmount){
+            refundAmount = tgeSettingsAmountCollect.add(msg.value).sub(tgeSettingsAmount);
+            senderAmount = (msg.value).sub(refundAmount);
+        }
+        uint stage = block.number.sub(tgeStartBlock).div(tgeSettingsBlocksPerStage);        
+        
+        uint currentPartInvestor = tgeSettingsPartInvestor.add(stage.mul(tgeSettingsPartInvestorIncreasePerStage));
+        uint allStakes = currentPartInvestor.add(tgeSettingsPartProject).add(tgeSettingsPartFounders);
+        uint amountProject = senderAmount.mul(tgeSettingsPartProject).div(allStakes);
+        uint amountFounders = senderAmount.mul(tgeSettingsPartFounders).div(allStakes);
+        uint amountSender = senderAmount.sub(amountProject).sub(amountFounders);
+        _mint(amountProject, amountFounders, amountSender);
+        msg.sender.transfer(refundAmount);
+        this.updateStatus();
+    }
+
+    function setFinished() public only(projectWallet) isNotFrozenOnly isTgeLive {
+        if(balances[projectWallet] > 1*BIT){
+            tgeLive = false;
+        }
+    }
+
+    function updateStatus() public {
+        if (totalSupply > BIT) {
+            uint stage = block.number.sub(tgeStartBlock).div(tgeSettingsBlocksPerStage);
+            if (stage > tgeSettingsMaxStages) {
+                tgeLive = false;
+            }
+        }
+    }
+
+    /// @dev Start new tge stage
+    function tgeSetLive() public only(projectWallet) isNotTgeLive isNotFrozenOnly {
+        _internalTgeSetLive();
+    }
+
+    /// @dev Burn tokens to burnAddress from msg.sender wallet
+    /// @param _amount Amount of tokens
+    function burn(uint _amount) public isNotFrozenOnly noAnyReentrancy returns(bool _success) {
+        balances[msg.sender] = balances[msg.sender].sub(_amount);
+        balances[burnAddress] = balances[burnAddress].add(_amount);
+        totalSupply = totalSupply.sub(_amount);
+        msg.sender.transfer(_amount);
+        Transfer(msg.sender, burnAddress, _amount);
+        Burn(burnAddress, _amount);
         return true;
+    }
+
+    /// @dev _foundersWallet Wallet of founders
+    /// @param dests array of addresses 
+    /// @param values array amount of tokens to transfer    
+    function multiTransfer(address[] dests, uint[] values) public isNotFrozenOnly returns(uint) {
+        uint i = 0;
+        while (i < dests.length) {
+           transfer(dests[i], values[i]);
+           i += 1;
+        }
+        return i;
+    }
+
+    //---------------- FROZEN -----------------
+
+    /// @dev Allows an owner to confirm freezeng process
+    function setFreeze() public only(projectWallet) isNotFrozenOnly returns (bool) {
+        isFrozen = true;
+        totalInvSupply = address(this).balance;
+        return true;
+    }
+
+    /// @dev Allows to users withdraw eth in frozen stage 
+    function withdrawFrozen() public isFrozenOnly noAnyReentrancy {
+        require(invBalances[msg.sender] > 0);
+
+        uint amountWithdraw = totalSupply.mul(invBalances[msg.sender]).div(totalInvSupply);
+        // fix possible rounding errors for last withdrawal:
+        if (amountWithdraw > address(this).balance) {
+            amountWithdraw = address(this).balance;
+        }
+        invBalances[msg.sender] = 0;
+        msg.sender.transfer(amountWithdraw);
+    }
+
+    /// @dev Allows an owner to confirm a change settings request.
+    function executeSettingsChange(
+        uint amount, 
+        uint partInvestor,
+        uint partProject, 
+        uint partFounders, 
+        uint blocksPerStage, 
+        uint partInvestorIncreasePerStage,
+        uint maxStages
+    ) 
+    public
+    only(projectWallet)
+    isNotTgeLive 
+    isNotFrozenOnly
+    returns(bool success) 
+    {
+        tgeSettingsAmount = amount;
+        tgeSettingsPartInvestor = partInvestor;
+        tgeSettingsPartProject = partProject;
+        tgeSettingsPartFounders = partFounders;
+        tgeSettingsBlocksPerStage = blocksPerStage;
+        tgeSettingsPartInvestorIncreasePerStage = partInvestorIncreasePerStage;
+        tgeSettingsMaxStages = maxStages;
+        return true;
+    }
+
+    //---------------- GETTERS ----------------
+    /// @dev Amount of blocks left to the end of this stage of TGE 
+    function tgeStageBlockLeft() public view isTgeLive returns(uint) {
+        uint stage = block.number.sub(tgeStartBlock).div(tgeSettingsBlocksPerStage);
+        return tgeStartBlock.add(stage.mul(tgeSettingsBlocksPerStage)).sub(block.number);
+    }
+
+    function tgeCurrentPartInvestor() public view isTgeLive returns(uint) {
+        uint stage = block.number.sub(tgeStartBlock).div(tgeSettingsBlocksPerStage);
+        return tgeSettingsPartInvestor.add(stage.mul(tgeSettingsPartInvestorIncreasePerStage));
+    }
+
+    function tgeNextPartInvestor() public view isTgeLive returns(uint) {
+        uint stage = block.number.sub(tgeStartBlock).div(tgeSettingsBlocksPerStage).add(1);        
+        return tgeSettingsPartInvestor.add(stage.mul(tgeSettingsPartInvestorIncreasePerStage));
+    }
+
+    //---------------- INTERNAL ---------------
+    function _mint(uint _amountProject, uint _amountFounders, uint _amountSender) internal {
+        balances[projectWallet] = balances[projectWallet].add(_amountProject);
+        balances[foundersWallet] = balances[foundersWallet].add(_amountFounders);
+        balances[msg.sender] = balances[msg.sender].add(_amountSender);
+        invBalances[msg.sender] = invBalances[msg.sender].add(_amountSender).add(_amountFounders).add(_amountProject);
+        tgeSettingsAmountCollect = tgeSettingsAmountCollect.add(_amountProject+_amountFounders+_amountSender);
+        totalSupply = totalSupply.add(_amountProject+_amountFounders+_amountSender);
+        Transfer(0x0, msg.sender, _amountSender);
+        Transfer(0x0, projectWallet, _amountProject);
+        Transfer(0x0, foundersWallet, _amountFounders);
+    }
+
+    function _internalTgeSetLive() internal {
+        tgeLive = true;
+        tgeStartBlock = block.number;
+        tgeSettingsAmountCollect = 0;
     }
 
 }
