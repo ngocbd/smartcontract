@@ -1,18 +1,77 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x519c5dcaa311ca31009a3fcc7e03f7b24a55ff42
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x09F1621d2549bE2A90C3EC8a4e3F361eD7Baa0f6
 */
-/**
- * Originally from https://github.com/ConsenSys/MultiSigWallet
- */
+pragma solidity 0.4.18;
+contract Factory {
 
+    /*
+     *  Events
+     */
+    event ContractInstantiation(address sender, address instantiation);
+
+    /*
+     *  Storage
+     */
+    mapping(address => bool) public isInstantiation;
+    mapping(address => address[]) public instantiations;
+
+    /*
+     * Public functions
+     */
+    /// @dev Returns number of instantiations by creator.
+    /// @param creator Contract creator.
+    /// @return Returns number of instantiations by creator.
+    function getInstantiationCount(address creator)
+        public
+        constant
+        returns (uint)
+    {
+        return instantiations[creator].length;
+    }
+
+    /*
+     * Internal functions
+     */
+    /// @dev Registers contract in factory registry.
+    /// @param instantiation Address of contract instantiation.
+    function register(address instantiation)
+        internal
+    {
+        isInstantiation[instantiation] = true;
+        instantiations[msg.sender].push(instantiation);
+        ContractInstantiation(msg.sender, instantiation);
+    }
+}
+
+
+/// @title Multisignature wallet factory - Allows creation of multisig wallet.
+/// @author Stefan George - <stefan.george@consensys.net>
+contract MultiSigWalletFactory is Factory {
+
+    /*
+     * Public functions
+     */
+    /// @dev Allows verified creation of multisignature wallet.
+    /// @param _owners List of initial owners.
+    /// @param _required Number of required confirmations.
+    /// @return Returns wallet address.
+    function create(address[] _owners, uint _required)
+        public
+        returns (address wallet)
+    {
+        wallet = new MultiSigWallet(_owners, _required);
+        register(wallet);
+    }
+}
 
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
 /// @author Stefan George - <stefan.george@consensys.net>
 contract MultiSigWallet {
 
-    uint constant public MAX_OWNER_COUNT = 50;
-
+    /*
+     *  Events
+     */
     event Confirmation(address indexed sender, uint indexed transactionId);
     event Revocation(address indexed sender, uint indexed transactionId);
     event Submission(uint indexed transactionId);
@@ -23,6 +82,14 @@ contract MultiSigWallet {
     event OwnerRemoval(address indexed owner);
     event RequirementChange(uint required);
 
+    /*
+     *  Constants
+     */
+    uint constant public MAX_OWNER_COUNT = 50;
+
+    /*
+     *  Storage
+     */
     mapping (uint => Transaction) public transactions;
     mapping (uint => mapping (address => bool)) public confirmations;
     mapping (address => bool) public isOwner;
@@ -37,6 +104,9 @@ contract MultiSigWallet {
         bool executed;
     }
 
+    /*
+     *  Modifiers
+     */
     modifier onlyWallet() {
         if (msg.sender != address(this))
             throw;
@@ -156,7 +226,7 @@ contract MultiSigWallet {
 
     /// @dev Allows to replace an owner with a new owner. Transaction has to be sent by wallet.
     /// @param owner Address of owner to be replaced.
-    /// @param owner Address of new owner.
+    /// @param newOwner Address of new owner.
     function replaceOwner(address owner, address newOwner)
         public
         onlyWallet
@@ -227,6 +297,8 @@ contract MultiSigWallet {
     /// @param transactionId Transaction ID.
     function executeTransaction(uint transactionId)
         public
+        ownerExists(msg.sender)
+        confirmed(transactionId, msg.sender)
         notExecuted(transactionId)
     {
         if (isConfirmed(transactionId)) {
