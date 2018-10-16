@@ -1,126 +1,135 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fundraiser at 0xa8855be2f7142f1485a958ca4135a7ee2752c732
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fundraiser at 0xdc20b371ec6c7e911df545ea56bb9397f1272317
 */
-//! Fundraiser contract. Just records who sent what.
-//! By Parity Technologies, 2017.
-//! Released under the Apache Licence 2.
-//! Modified by the Interchain Foundation.
+pragma solidity ^0.4.0;
 
-pragma solidity ^0.4.8;
-
-/// Will accept Ether "contributions" and record each both as a log and in a
-/// queryable record.
 contract Fundraiser {
 
+  /* State */
 
-    // How much is enough?
-    uint public constant dust = 1 finney; // XXX: change for production
+  address signer1;
+  address signer2;
+  bool accept; // are contributions accepted
 
+  enum Action {
+    None,
+    Withdraw,
+    Close,
+    Open
+  }
+  
+  struct Proposal {
+    Action action;
+    address destination;
+    uint256 amount;
+  }
+  
+  Proposal signer1_proposal;
+  Proposal signer2_proposal;
 
-    // Special addresses: 
-    //  administrator can halt/unhalt/kill/adjustRate;
-    //  treasury receives all the funds
-    address public admin;
-    address public treasury;
+  /* Constructor, choose signers. Those cannot be changed */
+  function Fundraiser(address init_signer1,
+                      address init_signer2) {
+    accept = true;
+    signer1 = init_signer1;
+    signer2 = init_signer2;
+    signer1_proposal.action = Action.None;
+    signer2_proposal.action = Action.None;
+  }
 
-    // Begin and end block for the fundraising period
-    uint public beginBlock;
-    uint public endBlock;
+  /* no default action, in case people forget to send their data
+     or in case they use a buggy app that forgets to send the data */
+  function () {
+    throw;
+  }
 
-    // Number of wei per atom
-    uint public weiPerAtom; 
+  /* Entry point for contributors */
 
-    // Are contributions abnormally halted?
-    bool public isHalted = false;
+  event Deposit (
+                 bytes20 tezos_pk_hash,
+                 uint amount
+                 );
 
-    // The `record` mapping maps cosmos addresses to the amount of atoms.
-    mapping (address => uint) public record;
+  function Contribute(bytes24 tezos_pkh_and_chksum) payable {
+    // Don't accept contributions if fundraiser closed
+    if (!accept) { throw; }
+    bytes20 tezos_pk_hash = bytes20(tezos_pkh_and_chksum);
+    /* shift left 20 bytes to extract checksum */
+    bytes4 expected_chksum = bytes4(tezos_pkh_and_chksum << 160);
+    bytes4 chksum = bytes4(sha256(sha256(tezos_pk_hash)));
+    /* revert transaction if the checksum cannot be verified */
+    if (chksum != expected_chksum) { throw; }
+    Deposit(tezos_pk_hash, msg.value);
+  }
 
-    // The total amount of ether raised
-    uint public totalWei = 0;
-    // The total amount of atoms suggested for allocation
-    uint public totalAtom = 0;
-    // The number of donation
-    uint public numDonations = 0;
+  /* Entry points for signers */
 
-    /// Constructor. `_admin` has the ability to pause the
-    /// contribution period and, eventually, kill this contract. `_treasury`
-    /// receives all funds. `_beginBlock` and `_endBlock` define the begin and
-    /// end of the period. `_weiPerAtom` is the ratio of atoms to ether.
-    function Fundraiser(address _admin, address _treasury, uint _beginBlock, uint _endBlock, uint _weiPerAtom) {
-        admin = _admin;
-        treasury = _treasury;
-        beginBlock = _beginBlock;
-        endBlock = _endBlock;
-	weiPerAtom = _weiPerAtom;
+  function Withdraw(address proposed_destination,
+                    uint256 proposed_amount) {
+    /* check amount */
+    if (proposed_amount > this.balance) { throw; }
+    /* update action */
+    if (msg.sender == signer1) {
+      signer1_proposal.action = Action.Withdraw;
+      signer1_proposal.destination = proposed_destination;
+      signer1_proposal.amount = proposed_amount;
+    } else if (msg.sender == signer2) {
+      signer2_proposal.action = Action.Withdraw;
+      signer2_proposal.destination = proposed_destination;
+      signer2_proposal.amount = proposed_amount;
+    } else { throw; }
+    /* perform action */
+    MaybePerformWithdraw();
+  }
+
+  function Close(address proposed_destination) {
+    /* update action */
+    if (msg.sender == signer1) {
+      signer1_proposal.action = Action.Close;
+      signer1_proposal.destination = proposed_destination;
+    } else if (msg.sender == signer2) {
+      signer2_proposal.action = Action.Close;
+      signer2_proposal.destination = proposed_destination;
+    } else { throw; }
+    /* perform action */
+    MaybePerformClose();
+  }
+
+  function Open() {
+    /* update action */
+    if (msg.sender == signer1) {
+      signer1_proposal.action = Action.Open;
+    } else if (msg.sender == signer2) {
+      signer2_proposal.action = Action.Open;
+    } else { throw; }
+    /* perform action */
+    MaybePerformOpen();
+  }
+
+  function MaybePerformWithdraw() internal {
+    if (signer1_proposal.action == Action.Withdraw
+        && signer2_proposal.action == Action.Withdraw
+        && signer1_proposal.amount == signer2_proposal.amount
+        && signer1_proposal.destination == signer2_proposal.destination) {
+      signer1_proposal.action = Action.None;
+      signer2_proposal.action = Action.None;
+      signer1_proposal.destination.transfer(signer1_proposal.amount);
     }
+  }
 
-    // Can only be called by _admin.
-    modifier only_admin { if (msg.sender != admin) throw; _; }
-    // Can only be called by prior to the period.
-    modifier only_before_period { if (block.number >= beginBlock) throw; _; }
-    // Can only be called during the period when not halted.
-    modifier only_during_period { if (block.number < beginBlock || block.number >= endBlock || isHalted) throw; _; }
-    // Can only be called during the period when halted.
-    modifier only_during_halted_period { if (block.number < beginBlock || block.number >= endBlock || !isHalted) throw; _; }
-    // Can only be called after the period.
-    modifier only_after_period { if (block.number < endBlock) throw; _; }
-    // The value of the message must be sufficiently large to not be considered dust.
-    modifier is_not_dust { if (msg.value < dust) throw; _; }
-
-    /// Some contribution `amount` received from `recipient` at rate of `currentRate` with emergency return of `returnAddr`.
-    event Received(address indexed recipient, address returnAddr, uint amount, uint currentRate);
-    /// Period halted abnormally.
-    event Halted();
-    /// Period restarted after abnormal halt.
-    event Unhalted();
-
-    // Is the fundraiser active?
-    function isActive() constant returns (bool active) {
-	return (block.number >= beginBlock && block.number < endBlock && !isHalted);
+  function MaybePerformClose() internal {
+    if (signer1_proposal.action == Action.Close
+        && signer2_proposal.action == Action.Close
+        && signer1_proposal.destination == signer2_proposal.destination) {
+      accept = false;
+      signer1_proposal.destination.transfer(this.balance);
     }
+  }
 
-    /// Receive a contribution for a donor cosmos address.
-    function donate(address _donor, address _returnAddress, bytes4 checksum) payable only_during_period is_not_dust {
-	// checksum is the first 4 bytes of the sha3 of the xor of the bytes32 versions of the cosmos address and the return address
-	if ( !( bytes4(sha3( bytes32(_donor)^bytes32(_returnAddress) )) == checksum )) throw;
-
-	// forward the funds to the treasurer
-        if (!treasury.send(msg.value)) throw;
-
-	// calculate the number of atoms at the current rate
-	var atoms = msg.value / weiPerAtom;
-
-	// update the donor details
-        record[_donor] += atoms;
-
-	// update the totals
-        totalWei += msg.value;
-	totalAtom += atoms;
-	numDonations += 1;
-
-        Received(_donor, _returnAddress, msg.value, weiPerAtom);
+  function MaybePerformOpen() internal {
+    if (signer1_proposal.action == Action.Open
+        && signer2_proposal.action == Action.Open) {
+      accept = true;
     }
-
-    /// Adjust the weiPerAtom
-    function adjustRate(uint newRate) only_admin {
-	weiPerAtom = newRate;
-    }
-
-    /// Halt the contribution period. Any attempt at contributing will fail.
-    function halt() only_admin only_during_period {
-        isHalted = true;
-        Halted();
-    }
-
-    /// Unhalt the contribution period.
-    function unhalt() only_admin only_during_halted_period {
-        isHalted = false;
-        Unhalted();
-    }
-
-    /// Kill this contract.
-    function kill() only_admin only_after_period {
-        suicide(treasury);
-    }
+  }
 }
