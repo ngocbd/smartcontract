@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TRMCrowdsale at 0x25741355b5db45c98d30d7a4e431f802bd56aa77
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TRMCrowdsale at 0x09be87473d05d44d2a495855b32d54bc12b1f95f
 */
 contract ERC20Basic {
   uint256 public totalSupply;
@@ -80,7 +80,7 @@ contract TRMCrowdsale is Owned {
 
     event Print(string _message, address _msgSender);
 
-    uint public ETHUSD = 88459; //in cent
+    uint public ETHUSD = 38390; //in cent
     address manager = 0xf5c723B7Cc90eaA3bEec7B05D6bbeBCd9AFAA69a;
     address ETHUSDdemon = 0xb42f06b2fc28decc022985a1a35c7b868f91bd17;
     address public multisig = 0xc2CDcE18deEcC1d5274D882aEd0FB082B813FFE8;
@@ -89,14 +89,14 @@ contract TRMCrowdsale is Owned {
 
     uint public startICO = now;
     uint public endICO = 1519862400; // Thu, 01 Mar 2018 00:00:00 GMT
-    uint public endPostICO = 1522540800;  // Sun, 01 Apr 2018 00:00:00 GMT
+    uint public endPostICO = 1525132800;  // Tue, 01 May 2018 00:00:00 GMT
 
     uint public tokenIcoUsdCentPrice = 550;
     uint public tokenPostIcoUsdCentPrice = 650;
 
-    uint public bonusWeiAmount = 30000000000000000000 ; //30 ETH
-    uint public smallBonusPercent = 1;
-    uint public bigBonusPercent = 35;
+    uint public bonusWeiAmount = 100000000000000000000; //100 ETH
+    uint public smallBonusPercent = 333;
+    uint public bigBonusPercent = 333;
     
     bool public TRM1BonusActive = false;
     uint public minTokenForSP = 1 * 100000000;
@@ -115,10 +115,7 @@ contract TRMCrowdsale is Owned {
         token = ERC20(addressOfERC20Token);
         oldToken = ERC20(addressOfERC20OldToken);
         ETHUSDdemon = msg.sender;
-        
-        //???????
-        //manager = msg.sender;
-        //multisig = msg.sender;
+
 
     }
 
