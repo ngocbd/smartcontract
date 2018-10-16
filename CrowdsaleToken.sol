@@ -1,106 +1,75 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleToken at 0x0b1724cc9fda0186911ef6a75949e9c0d3f0f2f3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleToken at 0x4fE6Ea636aBe664E0268Af373A10CA3621A0B95b
 */
 pragma solidity ^0.4.11;
 
-contract SafeMathLib {
-
-  function safeMul(uint a, uint b) returns (uint) {
-    uint c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function safeSub(uint a, uint b) returns (uint) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function safeAdd(uint a, uint b) returns (uint) {
-    uint c = a + b;
-    assert(c>=a);
-    return c;
-  }
-
-  function assert(bool assertion) private {
-    if (!assertion) throw;
-  }
-}
-
-contract Ownable {
-  address public owner;
-
-
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-
-  modifier onlyOwner() {
-    if (msg.sender != owner) {
-      throw;
-    }
-    _;
-  }
-
-
-  function transferOwnership(address newOwner) onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
-    }
-  }
-
-}
-
-
-contract ERC20Basic {
+/*
+ * ERC20 interface
+ * see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 {
   uint public totalSupply;
   function balanceOf(address who) constant returns (uint);
-  function transfer(address _to, uint _value) returns (bool success);
-  event Transfer(address indexed from, address indexed to, uint value);
-}
-
-contract ERC20 is ERC20Basic {
   function allowance(address owner, address spender) constant returns (uint);
-  function transferFrom(address _from, address _to, uint _value) returns (bool success);
-  function approve(address _spender, uint _value) returns (bool success);
+
+  function transfer(address to, uint value) returns (bool ok);
+  function transferFrom(address from, address to, uint value) returns (bool ok);
+  function approve(address spender, uint value) returns (bool ok);
+  event Transfer(address indexed from, address indexed to, uint value);
   event Approval(address indexed owner, address indexed spender, uint value);
 }
 
 
-
-contract StandardToken is ERC20, SafeMathLib{
-  
-  event Minted(address receiver, uint amount);
-
-  
-  mapping(address => uint) balances;
-
-  
-  mapping (address => mapping (address => uint)) allowed;
-
-  modifier onlyPayloadSize(uint size) {
-     if(msg.data.length != size + 4) {
-       throw;
-     }
-     _;
+/**
+ * Math operations with safety checks
+ */
+contract SafeMath {
+  function safeSub(uint a, uint b) internal returns (uint) {
+    assert(b <= a);
+    return a - b;
   }
 
-  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) returns (bool success) {
-   
-   
-    balances[msg.sender] = safeSub(balances[msg.sender],_value);
-    balances[_to] = safeAdd(balances[_to],_value);
+  function safeAdd(uint a, uint b) internal returns (uint) {
+    uint c = a + b;
+    assert(c>=a && c>=b);
+    return c;
+  }
+
+  function assert(bool assertion) internal {
+    if (!assertion) {
+      throw;
+    }
+  }
+}
+
+/**
+ * Standard ERC20 token
+ *
+ * https://github.com/ethereum/EIPs/issues/20
+ * Based on code by FirstBlood:
+ * https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, SafeMath {
+
+  mapping(address => uint) balances;
+  mapping (address => mapping (address => uint)) allowed;
+
+  function transfer(address _to, uint _value) returns (bool success) {
+    balances[msg.sender] = safeSub(balances[msg.sender], _value);
+    balances[_to] = safeAdd(balances[_to], _value);
     Transfer(msg.sender, _to, _value);
     return true;
   }
 
   function transferFrom(address _from, address _to, uint _value) returns (bool success) {
-    uint _allowance = allowed[_from][msg.sender];
+    var _allowance = allowed[_from][msg.sender];
 
-    balances[_to] = safeAdd(balances[_to],_value);
-    balances[_from] = safeSub(balances[_from],_value);
-    allowed[_from][msg.sender] = safeSub(_allowance,_value);
+    // Check is not needed because safeSub(_allowance, _value) will already throw if this condition is not met
+    // if (_value > _allowance) throw;
+
+    balances[_to] = safeAdd(balances[_to], _value);
+    balances[_from] = safeSub(balances[_from], _value);
+    allowed[_from][msg.sender] = safeSub(_allowance, _value);
     Transfer(_from, _to, _value);
     return true;
   }
@@ -110,9 +79,6 @@ contract StandardToken is ERC20, SafeMathLib{
   }
 
   function approve(address _spender, uint _value) returns (bool success) {
-
-    if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) throw;
-
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
     return true;
@@ -122,39 +88,18 @@ contract StandardToken is ERC20, SafeMathLib{
     return allowed[_owner][_spender];
   }
 
- function addApproval(address _spender, uint _addedValue)
-  onlyPayloadSize(2 * 32)
-  returns (bool success) {
-      uint oldValue = allowed[msg.sender][_spender];
-      allowed[msg.sender][_spender] = safeAdd(oldValue,_addedValue);
-      Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-      return true;
-  }
-
-  function subApproval(address _spender, uint _subtractedValue)
-  onlyPayloadSize(2 * 32)
-  returns (bool success) {
-
-      uint oldVal = allowed[msg.sender][_spender];
-
-      if (_subtractedValue > oldVal) {
-          allowed[msg.sender][_spender] = 0;
-      } else {
-          allowed[msg.sender][_spender] = safeSub(oldVal,_subtractedValue);
-      }
-      Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-      return true;
-  }
-
 }
-
-
-
+/**
+ * Upgrade agent interface inspired by Lunyr.
+ *
+ * Upgrade agent transfers tokens to a new contract.
+ * Upgrade agent itself can be the token contract, or just a middle man contract doing the heavy lifting.
+ */
 contract UpgradeAgent {
 
   uint public originalSupply;
 
-  
+  /** Interface marker */
   function isUpgradeAgent() public constant returns (bool) {
     return true;
   }
@@ -163,80 +108,98 @@ contract UpgradeAgent {
 
 }
 
+/**
+ * A token upgrade mechanism where users can opt-in amount of tokens to the next smart contract revision.
+ *
+ * First envisioned by Golem and Lunyr projects.
+ */
+contract UpgradeableToken is StandardToken {
 
-
- contract UpgradeableToken is StandardToken {
-
-  
+  /** Contract / person who can set the upgrade path. This can be the same as team multisig wallet, as what it is with its default value. */
   address public upgradeMaster;
 
-  
+  /** The next contract where the tokens will be migrated. */
   UpgradeAgent public upgradeAgent;
 
-  
+  /** How many tokens we have upgraded by now. */
   uint256 public totalUpgraded;
 
-  
+  /**
+   * Upgrade states.
+   *
+   * - NotAllowed: The child contract has not reached a condition where the upgrade can bgun
+   * - WaitingForAgent: Token allows upgrade, but we don't have a new agent yet
+   * - ReadyToUpgrade: The agent is set, but not a single token has been upgraded yet
+   * - Upgrading: Upgrade agent is set and the balance holders can upgrade their tokens
+   *
+   */
   enum UpgradeState {Unknown, NotAllowed, WaitingForAgent, ReadyToUpgrade, Upgrading}
 
-  
   event Upgrade(address indexed _from, address indexed _to, uint256 _value);
-
-  
   event UpgradeAgentSet(address agent);
 
-  
+  /**
+   * Do not allow construction without upgrade master set.
+   */
   function UpgradeableToken(address _upgradeMaster) {
     upgradeMaster = _upgradeMaster;
   }
 
-  
+  /**
+   * Allow the token holder to upgrade some of their tokens to a new contract.
+   */
   function upgrade(uint256 value) public {
 
       UpgradeState state = getUpgradeState();
       if(!(state == UpgradeState.ReadyToUpgrade || state == UpgradeState.Upgrading)) {
-        
+        // Called in a bad state
         throw;
       }
 
-      
+      // Validate input value.
       if (value == 0) throw;
 
-      balances[msg.sender] = safeSub(balances[msg.sender],value);
+      balances[msg.sender] = safeSub(balances[msg.sender], value);
 
-      
-      totalSupply = safeSub(totalSupply,value);
-      totalUpgraded = safeAdd(totalUpgraded,value);
+      // Take tokens out from circulation
+      totalSupply = safeSub(totalSupply, value);
+      totalUpgraded = safeAdd(totalUpgraded, value);
 
-      
+      // Upgrade agent reissues the tokens
       upgradeAgent.upgradeFrom(msg.sender, value);
       Upgrade(msg.sender, upgradeAgent, value);
   }
 
- 
+  /**
+   * Set an upgrade agent that handles
+   */
   function setUpgradeAgent(address agent) external {
 
       if(!canUpgrade()) {
-        
+        // The token is not yet in a state that we could think upgrading
         throw;
       }
 
       if (agent == 0x0) throw;
-      
+      // Only a master can designate the next agent
       if (msg.sender != upgradeMaster) throw;
-      
+      // Upgrade has already begun for an agent
       if (getUpgradeState() == UpgradeState.Upgrading) throw;
 
       upgradeAgent = UpgradeAgent(agent);
 
-      
+      // Bad interface
       if(!upgradeAgent.isUpgradeAgent()) throw;
-      
+
+      // Make sure that token supplies match in source and target
       if (upgradeAgent.originalSupply() != totalSupply) throw;
 
       UpgradeAgentSet(upgradeAgent);
   }
 
+  /**
+   * Get the state of the token upgrade.
+   */
   function getUpgradeState() public constant returns(UpgradeState) {
     if(!canUpgrade()) return UpgradeState.NotAllowed;
     else if(address(upgradeAgent) == 0x00) return UpgradeState.WaitingForAgent;
@@ -244,182 +207,70 @@ contract UpgradeAgent {
     else return UpgradeState.Upgrading;
   }
 
-  
-  function setUpgradeMaster(address master) public {
+  /**
+   * Change the upgrade master.
+   *
+   * This allows us to set a new owner for the upgrade mechanism.
+   */
+  function setUpgradeMaster(address master) external {
       if (master == 0x0) throw;
       if (msg.sender != upgradeMaster) throw;
       upgradeMaster = master;
   }
 
-  
+  /**
+   * Child contract can enable to provide the condition when the upgrade can begun.
+   */
   function canUpgrade() public constant returns(bool) {
      return true;
   }
 
 }
 
-
-contract ReleasableToken is ERC20, Ownable {
-
-  
-  address public releaseAgent;
-
-  
-  bool public released = false;
-
-  
-  mapping (address => bool) public transferAgents;
-
-
-  modifier canTransfer(address _sender) {
-
-    if(!released) {
-        if(!transferAgents[_sender]) {
-            throw;
-        }
-    }
-
-    _;
-  }
-
-
-  function setReleaseAgent(address addr) onlyOwner inReleaseState(false) public {
-    releaseAgent = addr;
-  }
-
-
-  function setTransferAgent(address addr, bool state) onlyOwner inReleaseState(false) public {
-    transferAgents[addr] = state;
-  }
-
-
-  function releaseTokenTransfer() public onlyReleaseAgent {
-    released = true;
-  }
-
-  
-  modifier inReleaseState(bool releaseState) {
-    if(releaseState != released) {
-        throw;
-    }
-    _;
-  }
-
-  
-  modifier onlyReleaseAgent() {
-    if(msg.sender != releaseAgent) {
-        throw;
-    }
-    _;
-  }
-
-  function transfer(address _to, uint _value) canTransfer(msg.sender) returns (bool success) {
-    
-   return super.transfer(_to, _value);
-  }
-
-  function transferFrom(address _from, address _to, uint _value) canTransfer(_from) returns (bool success) {
-    
-    return super.transferFrom(_from, _to, _value);
-  }
-
-}
-
-contract MintableToken is StandardToken, Ownable {
-
-  bool public mintingFinished = false;
-
-  
-  mapping (address => bool) public mintAgents;
-
-  event MintingAgentChanged(address addr, bool state  );
-
-
-  function mint(address receiver, uint amount) onlyMintAgent canMint public {
-    totalSupply = safeAdd(totalSupply,amount);
-    balances[receiver] = safeAdd(balances[receiver],amount);
-
-
-    Transfer(0, receiver, amount);
-  }
-
-
-  function setMintAgent(address addr, bool state) onlyOwner canMint public {
-    mintAgents[addr] = state;
-    MintingAgentChanged(addr, state);
-  }
-
-  modifier onlyMintAgent() {
-    
-    if(!mintAgents[msg.sender]) {
-        throw;
-    }
-    _;
-  }
-
-  
-  modifier canMint() {
-    if(mintingFinished) throw;
-    _;
-  }
-}
-
-
-contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
-
-  event UpdatedTokenInformation(string newName, string newSymbol);
-
+/**
+ * A crowdsaled token.
+ *
+ * An ERC-20 token designed specifically for crowdsales with investor protection and further development path.
+ *
+ * - The token contract gives an opt-in upgrade path to a new contract
+ *
+ */
+contract CrowdsaleToken is UpgradeableToken, UpgradeAgent {
   string public name;
 
   string public symbol;
 
   uint public decimals;
 
-  function CrowdsaleToken(string _name, string _symbol, uint _initialSupply, uint _decimals, bool _mintable)
-    UpgradeableToken(msg.sender) {
+  address public source;
 
-    owner = msg.sender;
+  event TokensUpgradedFrom(address indexed from, uint256 value);
+
+  /**
+   * Construct the token.
+   *
+   * This token must be created through a team multisig wallet, so that it is owned by that wallet.
+   */
+  function CrowdsaleToken(
+      string _name,
+      string _symbol,
+      uint _decimals,
+      address _source
+  ) UpgradeableToken (msg.sender) {
+    originalSupply = ERC20(_source).totalSupply();
+    if (originalSupply == 0) throw;
+
+    source = _source;
 
     name = _name;
     symbol = _symbol;
-
-    totalSupply = _initialSupply;
-
     decimals = _decimals;
-
-    
-    balances[owner] = totalSupply;
-
-    if(totalSupply > 0) {
-      Minted(owner, totalSupply);
-    }
-
-    
-    if(!_mintable) {
-      mintingFinished = true;
-      if(totalSupply == 0) {
-        throw; 
-      }
-    }
   }
 
-
-  function releaseTokenTransfer() public onlyReleaseAgent {
-    mintingFinished = true;
-    super.releaseTokenTransfer();
+  function upgradeFrom(address _from, uint256 _value) public {
+    if (msg.sender != source) throw;
+    totalSupply = safeAdd(totalSupply, _value);
+    balances[_from] = safeAdd(balances[_from], _value);
+    TokensUpgradedFrom(_from, _value);
   }
-
-
-  function canUpgrade() public constant returns(bool) {
-    return released && super.canUpgrade();
-  }
-
-
-  function setTokenInformation(string _name, string _symbol) onlyOwner {
-    name = _name;
-    symbol = _symbol;
-
-    UpdatedTokenInformation(name, symbol);
-  }
-
 }
