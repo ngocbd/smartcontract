@@ -1,421 +1,329 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xa4342c85a9a19b8d2c66e8b6821238cbacfa82c3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x66bf425100421454793c3f8892a635b4c595f8c9
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.11;
 
-contract useContractWeb {
-
-  ContractWeb internal web = ContractWeb(0x5F9489D7FfC63ce0bDCD282D14E595A865B259d7);
-
-}
-
-contract Owned {
-
-  address public owner = msg.sender;
-
-  function transferOwner(address _newOwner) onlyOwner public returns (bool) {
-    owner = _newOwner;
-    return true;
-  }
-
-  modifier onlyOwner {
-    require(msg.sender == owner);
-    _;
-  }
-
-}
-
-contract CheckPayloadSize {
-
-  modifier onlyPayloadSize(uint256 _size) {
-    require(msg.data.length >= _size + 4);
-    _;
-  }
-
-}
-
-contract CanTransferTokens is CheckPayloadSize, Owned {
-
-  function transferCustomToken(address _token, address _to, uint256 _value) onlyPayloadSize(3 * 32) onlyOwner public returns (bool) {
-    Token tkn = Token(_token);
-    return tkn.transfer(_to, _value);
-  }
-
-}
-
-contract SafeMath {
-
-  function add(uint256 x, uint256 y) pure internal returns (uint256) {
-    require(x <= x + y);
-    return x + y;
-  }
-
-  function sub(uint256 x, uint256 y) pure internal returns (uint256) {
-    require(x >= y);
-    return x - y;
-  }
-
-}
-
-contract CheckIfContract {
-
-  function isContract(address _addr) view internal returns (bool) {
-    uint256 length;
-    if (_addr == address(0x0)) return false;
-    assembly {
-      length := extcodesize(_addr)
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal constant returns(uint256) {
+        uint256 c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
     }
-    if(length > 0) {
-      return true;
-    } else {
-      return false;
+
+    function div(uint256 a, uint256 b) internal constant returns(uint256) {
+        uint256 c = a / b;
+        return c;
     }
-  }
+
+    function sub(uint256 a, uint256 b) internal constant returns(uint256) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    function add(uint256 a, uint256 b) internal constant returns(uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
 }
 
-contract ContractReceiver {
+contract Ownable {
+    address public owner;
 
-  TKN internal fallback;
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-  struct TKN {
-    address sender;
-    uint256 value;
-    bytes data;
-    bytes4 sig;
-  }
+    modifier onlyOwner() { require(msg.sender == owner); _; }
 
-  function getFallback() view public returns (TKN) {
-    return fallback;
-  }
+    function Ownable() {
+        owner = msg.sender;
+    }
 
-
-  function tokenFallback(address _from, uint256 _value, bytes _data) public returns (bool) {
-    TKN memory tkn;
-    tkn.sender = _from;
-    tkn.value = _value;
-    tkn.data = _data;
-    uint32 u = uint32(_data[3]) + (uint32(_data[2]) << 8) + (uint32(_data[1]) << 16) + (uint32(_data[0]) << 24);
-    tkn.sig = bytes4(u);
-    fallback = tkn;
-    return true;
-  }
-
+    function transferOwnership(address newOwner) onlyOwner {
+        require(newOwner != address(0));
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
 }
 
-contract Token1st {
+contract Pausable is Ownable {
+    bool public paused = false;
 
-  address public currentTradingSystem;
-  address public currentExchangeSystem;
+    event Pause();
+    event Unpause();
 
-  mapping(address => uint) public balanceOf;
-  mapping(address => mapping (address => uint)) public allowance;
-  mapping(address => mapping (address => uint)) public tradingBalanceOf;
-  mapping(address => mapping (address => uint)) public exchangeBalanceOf;
+    modifier whenNotPaused() { require(!paused); _; }
+    modifier whenPaused() { require(paused); _; }
 
-  /* @notice get balance of a specific address */
-  function getBalanceOf(address _address) view public returns (uint amount){
-    return balanceOf[_address];
-  }
-
-  event Transfer (address _to, address _from, uint _decimalAmount);
-
-  /* A contract or user attempts to get the coins */
-  function transferDecimalAmountFrom(address _from, address _to, uint _value) public returns (bool success) {
-    require(balanceOf[_from]
-      - tradingBalanceOf[_from][currentTradingSystem]
-      - exchangeBalanceOf[_from][currentExchangeSystem] >= _value);                 // Check if the sender has enough
-    require(balanceOf[_to] + (_value) >= balanceOf[_to]);  // Check for overflows
-    require(_value <= allowance[_from][msg.sender]);   // Check allowance
-    balanceOf[_from] -= _value;                          // Subtract from the sender
-    balanceOf[_to] += _value;                            // Add the same to the recipient
-    allowance[_from][msg.sender] -= _value;
-    Transfer(_to, _from, _value);
-    return true;
-  }
-
-    /* Allow another contract or user to spend some tokens in your behalf */
-  function approveSpenderDecimalAmount(address _spender, uint _value) public returns (bool success) {
-    allowance[msg.sender][_spender] = _value;
-    return true;
-  }
-
+    function pause() onlyOwner whenNotPaused {
+        paused = true;
+        Pause();
+    }
+    
+    function unpause() onlyOwner whenPaused {
+        paused = false;
+        Unpause();
+    }
 }
 
-contract ContractWeb is CanTransferTokens, CheckIfContract {
+contract ERC20 {
+    uint256 public totalSupply;
 
-      //contract name | contract info
-  mapping(string => contractInfo) internal contracts;
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
 
-  event ContractAdded(string indexed _name, address indexed _referredTo);
-  event ContractEdited(string indexed _name, address indexed _referredTo);
-  event ContractMadePermanent(string indexed _name);
-
-  struct contractInfo {
-    address contractAddress;
-    bool isPermanent;
-  }
-
-  function getContractAddress(string _name) view public returns (address) {
-    return contracts[_name].contractAddress;
-  }
-
-  function isContractPermanent(string _name) view public returns (bool) {
-    return contracts[_name].isPermanent;
-  }
-
-  function setContract(string _name, address _address) onlyPayloadSize(2 * 32) onlyOwner public returns (bool) {
-    require(isContract(_address));
-    require(this != _address);
-    require(contracts[_name].contractAddress != _address);
-    require(contracts[_name].isPermanent == false);
-    address oldAddress = contracts[_name].contractAddress;
-    contracts[_name].contractAddress = _address;
-    if(oldAddress == address(0x0)) {
-      ContractAdded(_name, _address);
-    } else {
-      ContractEdited(_name, _address);
-    }
-    return true;
-  }
-
-  function makeContractPermanent(string _name) onlyOwner public returns (bool) {
-    require(contracts[_name].contractAddress != address(0x0));
-    require(contracts[_name].isPermanent == false);
-    contracts[_name].isPermanent = true;
-    ContractMadePermanent(_name);
-    return true;
-  }
-
-  function tokenSetup(address _Tokens1st, address _Balancecs, address _Token, address _Conversion, address _Distribution) onlyPayloadSize(5 * 32) onlyOwner public returns (bool) {
-    setContract("Token1st", _Tokens1st);
-    setContract("Balances", _Balancecs);
-    setContract("Token", _Token);
-    setContract("Conversion", _Conversion);
-    setContract("Distribution", _Distribution);
-    return true;
-  }
-
+    function balanceOf(address who) constant returns (uint256);
+    function transfer(address to, uint256 value) returns (bool);
+    function transferFrom(address from, address to, uint256 value) returns (bool);
+    function allowance(address owner, address spender) constant returns (uint256);
+    function approve(address spender, uint256 value) returns (bool);
 }
 
-contract Balances is CanTransferTokens, SafeMath, useContractWeb {
+contract StandardToken is ERC20 {
+    using SafeMath for uint256;
 
-  mapping(address => uint256) internal _balances;
+    mapping(address => uint256) balances;
+    mapping(address => mapping(address => uint256)) allowed;
 
-  function get(address _account) view public returns (uint256) {
-    return _balances[_account];
-  }
+    function balanceOf(address _owner) constant returns(uint256 balance) {
+        return balances[_owner];
+    }
 
-  function tokenContract() view internal returns (address) {
-    return web.getContractAddress("Token");
-  }
+    function transfer(address _to, uint256 _value) returns(bool success) {
+        require(_to != address(0));
 
-  function Balances() public {
-    _balances[msg.sender] = 190 * 1000000 * 1000000000000000000;
-  }
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
 
-  modifier onlyToken {
-    require(msg.sender == tokenContract());
-    _;
-  }
+        Transfer(msg.sender, _to, _value);
 
-  function transfer(address _from, address _to, uint256 _value) onlyPayloadSize(3 * 32) onlyToken public returns (bool success) {
-  _balances[_from] = sub(_balances[_from], _value);
-  _balances[_to] = add(_balances[_to], _value);
-  return true;
-  }
+        return true;
+    }
 
+    function transferFrom(address _from, address _to, uint256 _value) returns(bool success) {
+        require(_to != address(0));
+
+        var _allowance = allowed[_from][msg.sender];
+
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        allowed[_from][msg.sender] = _allowance.sub(_value);
+
+        Transfer(_from, _to, _value);
+
+        return true;
+    }
+
+    function allowance(address _owner, address _spender) constant returns(uint256 remaining) {
+        return allowed[_owner][_spender];
+    }
+
+    function approve(address _spender, uint256 _value) returns(bool success) {
+        require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+
+        allowed[msg.sender][_spender] = _value;
+
+        Approval(msg.sender, _spender, _value);
+
+        return true;
+    }
+
+    function increaseApproval(address _spender, uint _addedValue) returns(bool success) {
+        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+
+        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+
+        return true;
+    }
+
+    function decreaseApproval(address _spender, uint _subtractedValue) returns(bool success) {
+        uint oldValue = allowed[msg.sender][_spender];
+
+        if(_subtractedValue > oldValue) {
+            allowed[msg.sender][_spender] = 0;
+        } else {
+            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+        }
+
+        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        
+        return true;
+    }
 }
 
-contract Token is CanTransferTokens, SafeMath, CheckIfContract, useContractWeb {
+contract BurnableToken is StandardToken {
+    event Burn(address indexed burner, uint256 value);
 
-  string public symbol = "SHC";
-  string public name = "ShineCoin";
-  uint8 public decimals = 18;
-  uint256 public totalSupply = 190 * 1000000 * 1000000000000000000;
+    function burn(uint256 _value) public {
+        require(_value > 0);
 
-  mapping (address => mapping (address => uint256)) internal _allowance;
-
-    // ERC20 Events
-  event Approval(address indexed from, address indexed to, uint256 value);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-
-    // ERC223 Event
-  event Transfer(address indexed from, address indexed to, uint256 value, bytes indexed data);
-
-  function balanceOf(address _account) view public returns (uint256) {
-    return Balances(balancesContract()).get(_account);
-  }
-
-  function allowance(address _from, address _to) view public returns (uint256 remaining) {
-    return _allowance[_from][_to];
-  }
-
-  function balancesContract() view internal returns (address) {
-    return web.getContractAddress("Balances");
-  }
-
-  function Token() public {
-    bytes memory empty;
-    Transfer(this, msg.sender, 190 * 1000000 * 1000000000000000000);
-    Transfer(this, msg.sender, 190 * 1000000 * 1000000000000000000, empty);
-  }
-
-  function transfer(address _to, uint256 _value, bytes _data, string _custom_fallback) onlyPayloadSize(4 * 32) public returns (bool success) {
-    if(isContract(_to)) {
-      require(Balances(balancesContract()).get(msg.sender) >= _value);
-      Balances(balancesContract()).transfer(msg.sender, _to, _value);
-      ContractReceiver receiver = ContractReceiver(_to);
-      require(receiver.call.value(0)(bytes4(keccak256(_custom_fallback)), msg.sender, _value, _data));
-      Transfer(msg.sender, _to, _value);
-      Transfer(msg.sender, _to, _value, _data);
-      return true;
-    } else {
-      return transferToAddress(_to, _value, _data);
+        address burner = msg.sender;
+        balances[burner] = balances[burner].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        Burn(burner, _value);
     }
-  }
-
-  function transfer(address _to, uint256 _value, bytes _data) onlyPayloadSize(3 * 32) public returns (bool success) {
-    if(isContract(_to)) {
-      return transferToContract(_to, _value, _data);
-    }
-    else {
-      return transferToAddress(_to, _value, _data);
-    }
-  }
-
-  function transfer(address _to, uint256 _value) onlyPayloadSize(2 * 32) public returns (bool success) {
-    bytes memory empty;
-    if(isContract(_to)) {
-      return transferToContract(_to, _value, empty);
-    }
-    else {
-      return transferToAddress(_to, _value, empty);
-    }
-  }
-
-  function transferToAddress(address _to, uint256 _value, bytes _data) internal returns (bool success) {
-    require(Balances(balancesContract()).get(msg.sender) >= _value);
-    Balances(balancesContract()).transfer(msg.sender, _to, _value);
-    Transfer(msg.sender, _to, _value);
-    Transfer(msg.sender, _to, _value, _data);
-    return true;
-  }
-
-  function transferToContract(address _to, uint256 _value, bytes _data) internal returns (bool success) {
-    require(Balances(balancesContract()).get(msg.sender) >= _value);
-    Balances(balancesContract()).transfer(msg.sender, _to, _value);
-    ContractReceiver receiver = ContractReceiver(_to);
-    receiver.tokenFallback(msg.sender, _value, _data);
-    Transfer(msg.sender, _to, _value);
-    Transfer(msg.sender, _to, _value, _data);
-    return true;
-  }
-
-  function transferFrom(address _from, address _to, uint256 _value) onlyPayloadSize(3 * 32) public returns (bool) {
-    bytes memory empty;
-    require(_value > 0 && _allowance[_from][msg.sender] >= _value && Balances(balancesContract()).get(_from) >= _value);
-    _allowance[_from][msg.sender] = sub(_allowance[_from][msg.sender], _value);
-    if(msg.sender != _to && isContract(_to)) {
-      Balances(balancesContract()).transfer(_from, _to, _value);
-      ContractReceiver receiver = ContractReceiver(_to);
-      receiver.tokenFallback(_from, _value, empty);
-    } else {
-      Balances(balancesContract()).transfer(_from, _to, _value);
-    }
-    Transfer(_from, _to, _value);
-    Transfer(_from, _to, _value, empty);
-    return true;
-  }
-
-  function approve(address _spender, uint256 _value) onlyPayloadSize(2 * 32) public returns (bool) {
-    _allowance[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
 }
 
-contract Conversion is CanTransferTokens, useContractWeb {
+contract MintableToken is StandardToken, Ownable {
+    event Mint(address indexed to, uint256 amount);
+    event MintFinished();
 
-  function token1stContract() view internal returns (address) {
-    return web.getContractAddress("Token1st");
-  }
+    bool public mintingFinished = false;
 
-  function tokenContract() view internal returns (address) {
-    return web.getContractAddress("Token");
-  }
+    modifier canMint() { require(!mintingFinished); _; }
 
-  function deposit() onlyOwner public returns (bool) {
-    require(Token(tokenContract()).allowance(owner, this) > 0);
-    return Token(tokenContract()).transferFrom(owner, this, Token(tokenContract()).allowance(owner, this));
-  }
+    function mint(address _to, uint256 _amount) onlyOwner canMint public returns(bool success) {
+        totalSupply = totalSupply.add(_amount);
+        balances[_to] = balances[_to].add(_amount);
 
-  function convert() public returns (bool) {
-    uint256 senderBalance = Token1st(token1stContract()).getBalanceOf(msg.sender);
-    require(Token1st(token1stContract()).allowance(msg.sender, this) >= senderBalance);
-    Token1st(token1stContract()).transferDecimalAmountFrom(msg.sender, owner, senderBalance);
-    return Token(tokenContract()).transfer(msg.sender, senderBalance * 10000000000);
-  }
+        Mint(_to, _amount);
+        Transfer(address(0), _to, _amount);
 
+        return true;
+    }
+
+    function finishMinting() onlyOwner public returns(bool success) {
+        mintingFinished = true;
+
+        MintFinished();
+
+        return true;
+    }
 }
 
-contract Distribution is CanTransferTokens, SafeMath, useContractWeb {
-
-  uint256 public liveSince;
-  uint256 public withdrawn;
-
-  function withdrawnReadable() view public returns (uint256) {
-    return withdrawn / 1000000000000000000;
-  }
-
-  function secondsLive() view public returns (uint256) {
-    if(liveSince != 0) {
-      return now - liveSince;
+contract RewardToken is StandardToken, Ownable {
+    struct Payment {
+        uint time;
+        uint amount;
+        uint total;
     }
-  }
 
-  function allowedSince() view public returns (uint256) {
-    return secondsLive() * 380265185769276972;
-  }
+    Payment[] public repayments;
+    mapping(address => Payment[]) public rewards;
 
-  function allowedSinceReadable() view public returns (uint256) {
-    return secondsLive() * 380265185769276972 / 1000000000000000000;
-  }
+    event Repayment(uint256 amount);
+    event Reward(address indexed to, uint256 amount);
 
-  function stillAllowed() view public returns (uint256) {
-    return allowedSince() - withdrawn;
-  }
+    function repayment(uint amount) onlyOwner {
+        require(amount >= 1000);
 
-  function stillAllowedReadable() view public returns (uint256) {
-    uint256 _1 = allowedSince() - withdrawn;
-    return _1 / 1000000000000000000;
-  }
+        repayments.push(Payment({time : now, amount : amount * 1 ether, total : totalSupply}));
 
-  function tokenContract() view internal returns (address) {
-    return web.getContractAddress("Token");
-  }
+        Repayment(amount * 1 ether);
+    }
 
-  function makeLive() onlyOwner public returns (bool) {
-    require(liveSince == 0);
-    liveSince = now;
-    return true;
-  }
+    function _reward(address _to) private returns(bool) {
+        if(rewards[_to].length < repayments.length) {
+            uint sum = 0;
+            for(uint i = rewards[_to].length; i < repayments.length; i++) {
+                uint amount = balances[_to] > 0 ? (repayments[i].amount * balances[_to] / repayments[i].total) : 0;
+                rewards[_to].push(Payment({time : now, amount : amount, total : repayments[i].total}));
+                sum += amount;
+            }
 
-  function deposit() onlyOwner public returns (bool) {
-    require(Token(tokenContract()).allowance(owner, this) > 0);
-    return Token(tokenContract()).transferFrom(owner, this, Token(tokenContract()).allowance(owner, this));
-  }
+            if(sum > 0) {
+                totalSupply = totalSupply.add(sum);
+                balances[_to] = balances[_to].add(sum);
+                
+                Reward(_to, sum);
+            }
 
-  function transfer(address _to, uint256 _value) onlyPayloadSize(2 * 32) onlyOwner public returns (bool) {
-    require(stillAllowed() >= _value && _value > 0 && liveSince != 0);
-    withdrawn = add(withdrawn, _value);
-    return Token(tokenContract()).transfer(_to, _value);
-  }
+            return true;
+        }
+        return false;
+    }
 
-  function transferReadable(address _to, uint256 _value) onlyPayloadSize(2 * 32) onlyOwner public returns (bool) {
-    require(stillAllowed() >= _value * 1000000000000000000 && stillAllowed() != 0 && liveSince != 0);
-    withdrawn = add(withdrawn, _value * 1000000000000000000);
-    return Token(tokenContract()).transfer(_to, _value * 1000000000000000000);
-  }
+    function reward() returns(bool) {
+        return _reward(msg.sender);
+    }
 
+    function transfer(address _to, uint256 _value) returns(bool) {
+        _reward(msg.sender);
+        _reward(_to);
+        return super.transfer(_to, _value);
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) returns(bool) {
+        _reward(_from);
+        _reward(_to);
+        return super.transferFrom(_from, _to, _value);
+    }
+}
+
+/*
+    ICO Mining Data Center Coin
+    - ??????? ??????? ?? ??????????? (?????? ????? ???????)
+    - ???? ?????? ?? PreICO ?????????????: 1 ETH = 634 ???????
+    - ???? ?????? ?? ICO ?????????????: 1 ETH = 317 ???????
+    - ??????????? ? ???????????? ????? ???????: 0.001 ETH ? 100 ETH
+    - ???? ????? ????????????? 1 ETH = 300 USD
+    - ??????? ????? ?????? 22 000 000 USD (????? ?????? ?? ?????????, ????? ?? ??????, ?????? ????? ??????????)
+    - ???????? ?? ??????? ??????? ????? ?????????? ???????????
+    - Crowdsale ????????? ?? ???????
+    - ???????? Crowdsale ?????????? ? ??????? ??????? `withdraw()`: ?????????? ??????? ?????????? ???????????, ?????? ??????? ???????????
+    - ?? Token ????? ???? ????????? ????????? ? ???? ??????? ???????? `repayment(amount)` ??? amount - ???-?? ???????
+    - ????? ??????? ????????? ????????? ??????? ?????????? ??????? ? Token ??????? `reward()`
+*/
+contract Token is RewardToken, MintableToken, BurnableToken {
+    string public name = "Mining Data Center Coin";
+    string public symbol = "MDCC";
+    uint256 public decimals = 18;
+
+    function Token() {
+    }
+}
+
+contract Crowdsale is Pausable {
+    using SafeMath for uint;
+
+    Token public token;
+    address public beneficiary = 0x7cE9A678A78Dca8555269bA39036098aeA68b819;        // Beneficiary
+
+    uint public collectedWei;
+    uint public tokensSold;
+
+    uint public piStartTime = 1512162000;                                           // Date start   Sat Dec 02 2017 00:00:00 GMT+0300 (??????????????? ????? (????))
+    uint public piEndTime = 1514753999;                                             // Date end     Sun Dec 31 2017 23:59:59 GMT+0300 (??????????????? ????? (????))
+    uint public startTime = 1516006800;                                             // Date start   Mon Jan 15 2018 12:00:00 GMT+0300 (??????????????? ????? (????))
+    uint public endTime = 1518685200;                                               // Date end     Thu Feb 15 2018 12:00:00 GMT+0300 (??????????????? ????? (????))
+    bool public crowdsaleFinished = false;
+
+    event NewContribution(address indexed holder, uint256 tokenAmount, uint256 etherAmount);
+    event Withdraw();
+
+    function Crowdsale() {
+        token = new Token();
+    }
+
+    function() payable {
+        purchase();
+    }
+    
+    function purchase() whenNotPaused payable {
+        require(!crowdsaleFinished);
+        require((now >= piStartTime && now < piEndTime) || (now >= startTime && now < endTime));
+        require(msg.value >= 0.001 * 1 ether && msg.value <= 100 * 1 ether);
+        require(collectedWei.mul(350) < 22000000 * 1 ether);
+
+        uint sum = msg.value;
+        uint amount = sum.mul(now < piEndTime ? 634 : 317);
+
+        tokensSold = tokensSold.add(amount);
+        collectedWei = collectedWei.add(sum);
+
+        token.mint(msg.sender, amount);
+        beneficiary.transfer(sum);
+
+        NewContribution(msg.sender, amount, sum);
+    }
+
+    function withdraw() onlyOwner {
+        require(!crowdsaleFinished);
+
+        token.finishMinting();
+        token.transferOwnership(beneficiary);
+
+        crowdsaleFinished = true;
+
+        Withdraw();
+    }
 }
