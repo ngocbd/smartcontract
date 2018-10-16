@@ -1,37 +1,62 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedTokenCappedCrowdsale at 0x6cd81d35b3b8dc27a54ae20baec956586383d34b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedTokenCappedCrowdsale at 0x36e168966f61b674a3073e1d9e159a56880c7059
 */
 /**
- * Safe unsigned safe math.
- *
- * https://blog.aragon.one/library-driven-development-in-solidity-2bebcaf88736#.750gwtwli
- *
- * Originally from https://raw.githubusercontent.com/AragonOne/zeppelin-solidity/master/contracts/SafeMathLib.sol
- *
- * Maintained here until merged to mainline zeppelin-solidity.
- *
+ *  Streamr Network AG crowd contribution
+ *  By contributing ETH to this smart contract you agree to the following terms and conditions:
+ *  https://s3.amazonaws.com/streamr-public/Governance+Terms+-+Crowdcontribution.pdf
  */
-library SafeMathLib {
 
-  function times(uint a, uint b) returns (uint) {
+
+
+/**
+ * Math operations with safety checks
+ */
+contract SafeMath {
+  function safeMul(uint a, uint b) internal returns (uint) {
     uint c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
 
-  function minus(uint a, uint b) returns (uint) {
+  function safeDiv(uint a, uint b) internal returns (uint) {
+    assert(b > 0);
+    uint c = a / b;
+    assert(a == b * c + a % b);
+    return c;
+  }
+
+  function safeSub(uint a, uint b) internal returns (uint) {
     assert(b <= a);
     return a - b;
   }
 
-  function plus(uint a, uint b) returns (uint) {
+  function safeAdd(uint a, uint b) internal returns (uint) {
     uint c = a + b;
-    assert(c>=a);
+    assert(c>=a && c>=b);
     return c;
   }
 
-  function assert(bool assertion) private {
-    if (!assertion) throw;
+  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a >= b ? a : b;
+  }
+
+  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a < b ? a : b;
+  }
+
+  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a >= b ? a : b;
+  }
+
+  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a < b ? a : b;
+  }
+
+  function assert(bool assertion) internal {
+    if (!assertion) {
+      throw;
+    }
   }
 }
 
@@ -190,7 +215,6 @@ contract FractionalERC20 is ERC20 {
 }
 
 
-
 /**
  * Abstract base contract for token sales.
  *
@@ -202,13 +226,13 @@ contract FractionalERC20 is ERC20 {
  * - different pricing strategies
  * - different investment policies (require server side customer id, allow only whitelisted addresses)
  *
+ * Changes:
+ * - Whitelisting also for the State.Funding phase, with individual limits
  */
-contract Crowdsale is Haltable {
+contract Crowdsale is Haltable, SafeMath {
 
   /* Max investment count when we are still allowed to change the multisig address */
   uint public MAX_INVESTMENTS_BEFORE_MULTISIG_CHANGE = 5;
-
-  using SafeMathLib for uint;
 
   /* The token we are selling */
   FractionalERC20 public token;
@@ -225,8 +249,11 @@ contract Crowdsale is Haltable {
   /* if the funding goal is not reached, investors may withdraw their funds */
   uint public minimumFundingGoal;
 
-  /* the UNIX timestamp start date of the crowdsale */
+  /* the UNIX timestamp start date of the crowdsale; CHANGE: small-cap limits apply */
   uint public startsAt;
+
+  /* CHANGE: Seconds after start of the crowdsale when the large-cap limit applies (added on top of small-cap limit) */
+  uint public largeCapDelay = 24 * 60 * 60;
 
   /* the UNIX timestamp end date of the crowdsale */
   uint public endsAt;
@@ -267,8 +294,17 @@ contract Crowdsale is Haltable {
   /** How much tokens this crowdsale has credited for each investor address */
   mapping (address => uint256) public tokenAmountOf;
 
+  /** Addresses that are allowed to invest, and their individual limit (in wei) */
+  mapping (address => uint256) public smallCapLimitOf;
+
+  /** Addresses that are allowed to invest after a largeCapDelay, and their individual large-cap limit (in wei, possibly in addition to smallCapLimitOf their account) */
+  mapping (address => uint256) public largeCapLimitOf;
+
   /** Addresses that are allowed to invest even before ICO offical opens. For testing, for ICO partners, etc. */
   mapping (address => bool) public earlyParticipantWhitelist;
+
+  /** Addresses that are allowed to add participants to the LimitOf whitelists */
+  mapping (address => bool) public isWhitelistAgent;
 
   /** This is for manul testing for the interaction from owner wallet. You can set it to any value and inspect this in blockchain explorer to see that crowdsale interaction works. */
   uint public ownerTestValue;
@@ -294,12 +330,15 @@ contract Crowdsale is Haltable {
   // The rules were changed what kind of investments we accept
   event InvestmentPolicyChanged(bool requireCustomerId, bool requiredSignedAddress, address signerAddress);
 
-  // Address early participation whitelist status changed
-  event Whitelisted(address addr, bool status);
+  // Whitelist status and/or wei limit changed
+  event WhitelistedEarlyParticipant(address addr, bool status);
+  event WhitelistedSmallCap(address addr, uint256 limit);
+  event WhitelistedLargeCap(address addr, uint256 limit);
 
   // Crowdsale start/end time has been changed
   event EndsAtChanged(uint endsAt);
   event StartsAtChanged(uint startsAt);
+  event LargeCapStartTimeChanged(uint startsAt);
 
   function Crowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal) {
 
@@ -331,15 +370,19 @@ contract Crowdsale is Haltable {
         throw;
     }
 
+    // owner and multisig are able to whitelist participants by default
+    isWhitelistAgent[owner] = true;
+    isWhitelistAgent[multisigWallet] = true;
+
     // Minimum funding goal can be zero
     minimumFundingGoal = _minimumFundingGoal;
   }
 
   /**
-   * Don't expect to just send in money and get tokens.
+   * Receiving money is ok, because that's what this contract is for. Sending money to Crowdsale is equivalent to buy().
    */
   function() payable {
-    throw;
+    invest(msg.sender);
   }
 
   /**
@@ -382,12 +425,21 @@ contract Crowdsale is Haltable {
     }
 
     // Update investor
-    investedAmountOf[receiver] = investedAmountOf[receiver].plus(weiAmount);
-    tokenAmountOf[receiver] = tokenAmountOf[receiver].plus(tokenAmount);
+    investedAmountOf[receiver] = safeAdd(investedAmountOf[receiver], weiAmount);
+    tokenAmountOf[receiver] = safeAdd(tokenAmountOf[receiver], tokenAmount);
+
+    // Check individual token limit (also acts as crowdsale whitelist)
+    uint256 personalWeiLimit = smallCapLimitOf[receiver];
+    if (block.timestamp > startsAt + largeCapDelay) {
+      personalWeiLimit = safeAdd(personalWeiLimit, largeCapLimitOf[receiver]);
+    }
+    if (investedAmountOf[receiver] > personalWeiLimit) {
+      throw;
+    }
 
     // Update totals
-    weiRaised = weiRaised.plus(weiAmount);
-    tokensSold = tokensSold.plus(tokenAmount);
+    weiRaised = safeAdd(weiRaised, weiAmount);
+    tokensSold = safeAdd(tokensSold, tokenAmount);
 
     // Check that we did not bust the cap
     if (isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold)) {
@@ -419,16 +471,23 @@ contract Crowdsale is Haltable {
    *
    */
   function preallocate(address receiver, uint tokenAmount, uint weiAmount) public onlyOwner {
+    if (getState() != State.PreFunding) { throw; }
+
     // Free pre-allocations don't count as "sold tokens"
     if (weiAmount == 0) {
-      tokenAmountOf[receiver] = tokenAmountOf[receiver].plus(tokenAmount);
+      tokenAmountOf[receiver] = safeAdd(tokenAmountOf[receiver], tokenAmount);
       assignTokens(receiver, tokenAmount);
     } else {
-      weiRaised = weiRaised.plus(weiAmount);
-      tokensSold = tokensSold.plus(tokenAmount);
-      investedAmountOf[receiver] = investedAmountOf[receiver].plus(weiAmount);
-      tokenAmountOf[receiver] = tokenAmountOf[receiver].plus(tokenAmount);
-      investorCount++;
+
+      // new investor
+      if (investedAmountOf[receiver] == 0) {
+        investorCount++;
+      }
+
+      weiRaised = safeAdd(weiRaised, weiAmount);
+      tokensSold = safeAdd(tokensSold, tokenAmount);
+      investedAmountOf[receiver] = safeAdd(investedAmountOf[receiver], weiAmount);
+      tokenAmountOf[receiver] = safeAdd(tokenAmountOf[receiver], tokenAmount);
 
       assignTokens(receiver, tokenAmount);
 
@@ -549,7 +608,72 @@ contract Crowdsale is Haltable {
    */
   function setEarlyParticipantWhitelist(address addr, bool status) onlyOwner {
     earlyParticipantWhitelist[addr] = status;
-    Whitelisted(addr, status);
+    WhitelistedEarlyParticipant(addr, status);
+  }
+
+  /**
+   * Change to original: require all participants to be whitelisted, with individual token limits
+   */
+  function setSmallCapWhitelistParticipant(address addr, uint256 weiLimit) {
+    if (isWhitelistAgent[msg.sender]) {
+      smallCapLimitOf[addr] = weiLimit;
+      WhitelistedSmallCap(addr, weiLimit);
+    }
+  }
+  function setSmallCapWhitelistParticipants(address[] addrs, uint256 weiLimit) {
+    if (isWhitelistAgent[msg.sender]) {
+      for (uint i = 0; i < addrs.length; i++) {
+        var addr = addrs[i];
+        smallCapLimitOf[addr] = weiLimit;
+        WhitelistedSmallCap(addr, weiLimit);
+      }
+    }
+  }
+  function setSmallCapWhitelistParticipants(address[] addrs, uint256[] weiLimits) {
+    if (addrs.length != weiLimits.length) {
+      throw;
+    }
+    if (isWhitelistAgent[msg.sender]) {
+      for (uint i = 0; i < addrs.length; i++) {
+        var addr = addrs[i];
+        var weiLimit = weiLimits[i];
+        smallCapLimitOf[addr] = weiLimit;
+        WhitelistedSmallCap(addr, weiLimit);
+      }
+    }
+  }
+
+  function setLargeCapWhitelistParticipant(address addr, uint256 weiLimit) {
+    if (isWhitelistAgent[msg.sender]) {
+      largeCapLimitOf[addr] = weiLimit;
+      WhitelistedLargeCap(addr, weiLimit);
+    }
+  }
+  function setLargeCapWhitelistParticipants(address[] addrs, uint256 weiLimit) {
+    if (isWhitelistAgent[msg.sender]) {
+      for (uint i = 0; i < addrs.length; i++) {
+        var addr = addrs[i];
+        largeCapLimitOf[addr] = weiLimit;
+        WhitelistedLargeCap(addr, weiLimit);
+      }
+    }
+  }
+  function setLargeCapWhitelistParticipants(address[] addrs, uint256[] weiLimits) {
+    if (addrs.length != weiLimits.length) {
+      throw;
+    }
+    if (isWhitelistAgent[msg.sender]) {
+      for (uint i = 0; i < addrs.length; i++) {
+        var addr = addrs[i];
+        var weiLimit = weiLimits[i];
+        largeCapLimitOf[addr] = weiLimit;
+        WhitelistedLargeCap(addr, weiLimit);
+      }
+    }
+  }
+
+  function setWhitelistAgent(address addr, bool status) onlyOwner {
+    isWhitelistAgent[addr] = status;
   }
 
   /**
@@ -568,6 +692,19 @@ contract Crowdsale is Haltable {
 
     startsAt = time;
     StartsAtChanged(endsAt);
+  }
+
+  function setLargeCapDelay(uint secs) onlyOwner {
+    if (secs < 0) { throw; }
+
+    // Change endsAt first...
+    if (startsAt + secs > endsAt) { throw; }
+
+    // If large-cap sale has already started, the start can't be postponed anymore
+    if (startsAt + largeCapDelay < now) { throw; }
+
+    largeCapDelay = secs;
+    LargeCapStartTimeChanged(startsAt + largeCapDelay);
   }
 
   /**
@@ -628,7 +765,7 @@ contract Crowdsale is Haltable {
    */
   function loadRefund() public payable inState(State.Failure) {
     if(msg.value == 0) throw;
-    loadedRefund = loadedRefund.plus(msg.value);
+    loadedRefund = safeAdd(loadedRefund, msg.value);
   }
 
   /**
@@ -641,7 +778,7 @@ contract Crowdsale is Haltable {
     uint256 weiValue = investedAmountOf[msg.sender];
     if (weiValue == 0) throw;
     investedAmountOf[msg.sender] = 0;
-    weiRefunded = weiRefunded.plus(weiValue);
+    weiRefunded = safeAdd(weiRefunded, weiValue);
     Refund(msg.sender, weiValue);
     if (!msg.sender.send(weiValue)) throw;
   }
@@ -744,58 +881,6 @@ contract Crowdsale is Haltable {
 
 
 
-/**
- * Math operations with safety checks
- */
-contract SafeMath {
-  function safeMul(uint a, uint b) internal returns (uint) {
-    uint c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function safeDiv(uint a, uint b) internal returns (uint) {
-    assert(b > 0);
-    uint c = a / b;
-    assert(a == b * c + a % b);
-    return c;
-  }
-
-  function safeSub(uint a, uint b) internal returns (uint) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function safeAdd(uint a, uint b) internal returns (uint) {
-    uint c = a + b;
-    assert(c>=a && c>=b);
-    return c;
-  }
-
-  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a >= b ? a : b;
-  }
-
-  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a < b ? a : b;
-  }
-
-  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a >= b ? a : b;
-  }
-
-  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a < b ? a : b;
-  }
-
-  function assert(bool assertion) internal {
-    if (!assertion) {
-      throw;
-    }
-  }
-}
-
-
 
 /**
  * Standard ERC20 token with Short Hand Attack and approve() race condition mitigation.
@@ -861,7 +946,6 @@ contract StandardToken is ERC20, SafeMath {
 
 
 
-
 /**
  * A token that can increase its supply by another contract.
  *
@@ -871,14 +955,12 @@ contract StandardToken is ERC20, SafeMath {
  */
 contract MintableToken is StandardToken, Ownable {
 
-  using SafeMathLib for uint;
-
   bool public mintingFinished = false;
 
   /** List of agents that are allowed to create new tokens */
   mapping (address => bool) public mintAgents;
 
-  event MintingAgentChanged(address addr, bool state  );
+  event MintingAgentChanged(address addr, bool state);
 
   /**
    * Create new tokens and allocate them to an address..
@@ -886,8 +968,8 @@ contract MintableToken is StandardToken, Ownable {
    * Only callably by a crowdsale contract (mint agent).
    */
   function mint(address receiver, uint amount) onlyMintAgent canMint public {
-    totalSupply = totalSupply.plus(amount);
-    balances[receiver] = balances[receiver].plus(amount);
+    totalSupply = safeAdd(totalSupply, amount);
+    balances[receiver] = safeAdd(balances[receiver], amount);
 
     // This will make the mint transaction apper in EtherScan.io
     // We can remove this after there is a standardized minting event
