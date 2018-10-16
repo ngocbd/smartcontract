@@ -1,6 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Issuer at 0xda57fc370d6f446c6d24258a65f6853c0dd09298
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Issuer at 0x7110bb5e18842646438320ca56c0a064ccd99235
 */
+pragma solidity ^0.4.8;
+
+
+
+
+
 /*
  * ERC20 interface
  * see https://github.com/ethereum/EIPs/issues/20
@@ -80,11 +86,19 @@ contract SafeMath {
  */
 contract StandardToken is ERC20, SafeMath {
 
+  /* Token supply got increased and a new owner received these tokens */
+  event Minted(address receiver, uint amount);
+
+  /* Actual balances of token holders */
   mapping(address => uint) balances;
+
+  /* approve() allowances */
   mapping (address => mapping (address => uint)) allowed;
 
-  // Interface marker
-  bool public constant isToken = true;
+  /* Interface declaration */
+  function isToken() public constant returns (bool weAre) {
+    return true;
+  }
 
   /**
    *
@@ -106,11 +120,8 @@ contract StandardToken is ERC20, SafeMath {
     return true;
   }
 
-  function transferFrom(address _from, address _to, uint _value)  returns (bool success) {
-    var _allowance = allowed[_from][msg.sender];
-
-    // Check is not needed because safeSub(_allowance, _value) will already throw if this condition is not met
-    // if (_value > _allowance) throw;
+  function transferFrom(address _from, address _to, uint _value) returns (bool success) {
+    uint _allowance = allowed[_from][msg.sender];
 
     balances[_to] = safeAdd(balances[_to], _value);
     balances[_from] = safeSub(balances[_from], _value);
@@ -173,7 +184,6 @@ contract Ownable {
 }
 
 
-
 /**
  * Issuer manages token distribution after the crowdsale.
  *
@@ -187,7 +197,7 @@ contract Ownable {
  * Issuer contract gets allowance from the team multisig to distribute tokens.
  *
  */
-contract Issuer is Ownable, SafeMath {
+contract Issuer is Ownable {
 
   /** Map addresses whose tokens we have already issued. */
   mapping(address => bool) public issued;
@@ -196,35 +206,22 @@ contract Issuer is Ownable, SafeMath {
   StandardToken public token;
 
   /** Party (team multisig) who is in the control of the token pool. Note that this will be different from the owner address (scripted) that calls this contract. */
-  address public masterTokenBalanceHolder;
+  address public allower;
 
   /** How many addresses have received their tokens. */
   uint public issuedCount;
 
-  /**
-   *
-   * @param _issuerDeploymentAccount Ethereun account that controls the issuance process and pays the gas fee
-   * @param _token Token contract address
-   * @param _masterTokenBalanceHolder Multisig address that does StandardToken.approve() to give allowance for this contract
-   */
-  function Issuer(address _issuerDeploymentAccount, address _masterTokenBalanceHolder, StandardToken _token) {
-    owner = _issuerDeploymentAccount;
-    masterTokenBalanceHolder = _masterTokenBalanceHolder;
+  function Issuer(address _owner, address _allower, StandardToken _token) {
+    owner = _owner;
+    allower = _allower;
     token = _token;
   }
 
   function issue(address benefactor, uint amount) onlyOwner {
     if(issued[benefactor]) throw;
-    token.transferFrom(masterTokenBalanceHolder, benefactor, amount);
+    token.transferFrom(allower, benefactor, amount);
     issued[benefactor] = true;
-    issuedCount = safeAdd(amount, issuedCount);
-  }
-
-  /**
-   * How many tokens we have left in our approval pool.
-   */
-  function getApprovedTokenCount() public constant returns(uint tokens) {
-    return token.allowance(masterTokenBalanceHolder, address(this));
+    issuedCount += amount;
   }
 
 }
