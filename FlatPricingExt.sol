@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlatPricingExt at 0x80002ac729a5651da4db3b9dca8dc79044dafedc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlatPricingExt at 0xc7800586cf0a3f0d177318bdfa628ba9da705d76
 */
 // Created using ICO Wizard https://github.com/oraclesorg/ico-wizard by Oracles Network 
 pragma solidity ^0.4.11;
@@ -359,6 +359,10 @@ contract CrowdsaleExt is Haltable {
     if(isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold)) {
       throw;
     }
+    if(investedAmountOf[receiver] == 0) {
+       // A new investor
+       investorCount++;
+    }
     // Update investor
     investedAmountOf[receiver] = investedAmountOf[receiver].plus(weiAmount);
     tokenAmountOf[receiver] = tokenAmountOf[receiver].plus(tokenAmount);
@@ -367,10 +371,6 @@ contract CrowdsaleExt is Haltable {
     tokensSold = tokensSold.plus(tokenAmount);
     if(pricingStrategy.isPresalePurchase(receiver)) {
         presaleWeiRaised = presaleWeiRaised.plus(weiAmount);
-    }
-    if(investedAmountOf[receiver] == 0) {
-       // A new investor
-       investorCount++;
     }
     assignTokens(receiver, tokenAmount);
     // Pocket the money
