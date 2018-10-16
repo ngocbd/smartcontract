@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SharpeCrowdsale at 0x4a22459eabe46fbf2fd992f11487b6beda44673e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SharpeCrowdsale at 0x2f01018fe9f506bec9f58e6bd4daada9f4c6d55d
 */
 pragma solidity 0.4.15;
 
@@ -31,6 +31,7 @@ contract Owned {
         }
     }
 }
+
 
 /**
  * Math operations with safety checks
@@ -77,6 +78,192 @@ library SafeMath {
   }
 }
 
+
+contract DynamicCeiling is Owned {
+    using SafeMath for uint256;
+
+    struct Ceiling {
+        bytes32 hash;
+        uint256 limit;
+        uint256 slopeFactor;
+        uint256 collectMinimum;
+    }
+
+    address public saleAddress;
+
+    Ceiling[] public ceilings;
+    
+    uint256 public currentIndex;
+    uint256 public revealedCeilings;
+    bool public allRevealed;
+
+    modifier onlySaleAddress {
+        require(msg.sender == saleAddress);
+        _;
+    }
+
+    function DynamicCeiling(address _owner, address _saleAddress) {
+        owner = _owner;
+        saleAddress = _saleAddress;
+    }
+
+    /// @notice This should be called by the creator of the contract to commit
+    ///  all the ceilings.
+    /// @param _ceilingHashes Array of hashes of each ceiling. Each hash is calculated
+    ///  by the `calculateHash` method. More hashes than actual ceilings can be
+    ///  committed in order to hide also the number of ceilings.
+    ///  The remaining hashes can be just random numbers.
+    function setHiddenCeilings(bytes32[] _ceilingHashes) public onlyOwner {
+        require(ceilings.length == 0);
+
+        ceilings.length = _ceilingHashes.length;
+        for (uint256 i = 0; i < _ceilingHashes.length; i = i.add(1)) {
+            ceilings[i].hash = _ceilingHashes[i];
+        }
+    }
+
+    /// @notice Anybody can reveal the next ceiling if he knows it.
+    /// @param _limit Ceiling cap.
+    ///  (must be greater or equal to the previous one).
+    /// @param _last `true` if it's the last ceiling.
+    /// @param _salt Random number used to commit the ceiling
+    function revealCeiling(
+        uint256 _limit, 
+        uint256 _slopeFactor, 
+        uint256 _collectMinimum,
+        bool _last, 
+        bytes32 _salt) 
+        public 
+        {
+        require(!allRevealed);
+        require(
+            ceilings[revealedCeilings].hash == 
+            calculateHash(
+                _limit, 
+                _slopeFactor, 
+                _collectMinimum, 
+                _last, 
+                _salt
+            )
+        );
+
+        require(_limit != 0 && _slopeFactor != 0 && _collectMinimum != 0);
+        if (revealedCeilings > 0) {
+            require(_limit >= ceilings[revealedCeilings.sub(1)].limit);
+        }
+
+        ceilings[revealedCeilings].limit = _limit;
+        ceilings[revealedCeilings].slopeFactor = _slopeFactor;
+        ceilings[revealedCeilings].collectMinimum = _collectMinimum;
+        revealedCeilings = revealedCeilings.add(1);
+
+        if (_last) {
+            allRevealed = true;
+        }
+    }
+
+    /// @notice Reveal multiple ceilings at once
+    function revealMulti(
+        uint256[] _limits,
+        uint256[] _slopeFactors,
+        uint256[] _collectMinimums,
+        bool[] _lasts, 
+        bytes32[] _salts) 
+        public 
+        {
+        // Do not allow none and needs to be same length for all parameters
+        require(
+            _limits.length != 0 &&
+            _limits.length == _slopeFactors.length &&
+            _limits.length == _collectMinimums.length &&
+            _limits.length == _lasts.length &&
+            _limits.length == _salts.length
+        );
+
+        for (uint256 i = 0; i < _limits.length; i = i.add(1)) {
+            
+            revealCeiling(
+                _limits[i],
+                _slopeFactors[i],
+                _collectMinimums[i],
+                _lasts[i],
+                _salts[i]
+            );
+        }
+    }
+
+    /// @notice Move to ceiling, used as a failsafe
+    function moveToNextCeiling() public onlyOwner {
+
+        currentIndex = currentIndex.add(1);
+    }
+
+    /// @return Return the funds to collect for the current point on the ceiling
+    ///  (or 0 if no ceilings revealed yet)
+    function availableAmountToCollect(uint256  totallCollected) public onlySaleAddress returns (uint256) {
+    
+        if (revealedCeilings == 0) {
+            return 0;
+        }
+
+        if (totallCollected >= ceilings[currentIndex].limit) {  
+            uint256 nextIndex = currentIndex.add(1);
+
+            if (nextIndex >= revealedCeilings) {
+                return 0; 
+            }
+            currentIndex = nextIndex;
+            if (totallCollected >= ceilings[currentIndex].limit) {
+                return 0;  
+            }
+        }        
+        uint256 remainedFromCurrentCeiling = ceilings[currentIndex].limit.sub(totallCollected);
+        uint256 reminderWithSlopeFactor = remainedFromCurrentCeiling.div(ceilings[currentIndex].slopeFactor);
+
+        if (reminderWithSlopeFactor > ceilings[currentIndex].collectMinimum) {
+            return reminderWithSlopeFactor;
+        }
+        
+        if (remainedFromCurrentCeiling > ceilings[currentIndex].collectMinimum) {
+            return ceilings[currentIndex].collectMinimum;
+        } else {
+            return remainedFromCurrentCeiling;
+        }
+    }
+
+    /// @notice Calculates the hash of a ceiling.
+    /// @param _limit Ceiling cap.
+    /// @param _last `true` if it's the last ceiling.
+    /// @param _collectMinimum the minimum amount to collect
+    /// @param _salt Random number that will be needed to reveal this ceiling.
+    /// @return The calculated hash of this ceiling to be used in the `setHiddenCurves` method
+    function calculateHash(
+        uint256 _limit, 
+        uint256 _slopeFactor, 
+        uint256 _collectMinimum,
+        bool _last, 
+        bytes32 _salt) 
+        public 
+        constant 
+        returns (bytes32) 
+        {
+        return keccak256(
+            _limit,
+            _slopeFactor, 
+            _collectMinimum,
+            _last,
+            _salt
+        );
+    }
+
+    /// @return Return the total number of ceilings committed
+    ///  (can be larger than the number of actual ceilings on the ceiling to hide
+    ///  the real number of ceilings)
+    function nCeilings() public constant returns (uint256) {
+        return ceilings.length;
+    }
+
+}
 
 /// @title Vesting trustee
 contract Trustee is Owned {
@@ -815,20 +1002,6 @@ contract MiniMeTokenFactory {
     }
 }
 
-contract SCD is MiniMeToken {
-    // @dev SCD constructor
-    function SCD(address _tokenFactory)
-            MiniMeToken(
-                _tokenFactory,
-                0x0,                             // no parent token
-                0,                               // no snapshot block number from parent
-                "Sharpe Crypto-Derivative",      // Token name
-                18,                              // Decimals
-                "SCD",                           // Symbol
-                true                             // Enable transfers
-            ) {}
-}
-
 contract SHP is MiniMeToken {
     // @dev SHP constructor
     function SHP(address _tokenFactory)
@@ -929,6 +1102,21 @@ contract AffiliateUtility is Owned {
     }
 }
 
+contract SCD is MiniMeToken {
+    // @dev SCD constructor
+    function SCD(address _tokenFactory)
+            MiniMeToken(
+                _tokenFactory,
+                0x0,                             // no parent token
+                0,                               // no snapshot block number from parent
+                "Sharpe Crypto-Derivative",      // Token name
+                18,                              // Decimals
+                "SCD",                           // Symbol
+                true                             // Enable transfers
+            ) {}
+}
+
+
 contract TokenSale is Owned, TokenController {
     using SafeMath for uint256;
     
@@ -939,6 +1127,7 @@ contract TokenSale is Owned, TokenController {
     address public etherEscrowAddress;
     address public bountyAddress;
     address public trusteeAddress;
+    address public apiAddress;
 
     uint256 public founderTokenCount = 0;
     uint256 public reserveTokenCount = 0;
@@ -968,6 +1157,11 @@ contract TokenSale is Owned, TokenController {
         _;
     }
 
+    modifier onlyApi() {
+        require(msg.sender == apiAddress);
+        _;
+    }
+
     modifier isValidated() {
         require(msg.sender != 0x0);
         require(msg.value > 0);
@@ -983,7 +1177,7 @@ contract TokenSale is Owned, TokenController {
 
     /// @notice Adds an approved address for the sale
     /// @param _addr The address to approve for contribution
-    function approveAddress(address _addr) public onlyOwner {
+    function approveAddress(address _addr) public onlyApi {
         approvedAddresses[_addr] = true;
     }
 
@@ -1042,11 +1236,13 @@ contract TokenSale is Owned, TokenController {
         address _etherEscrowAddress,
         address _bountyAddress,
         address _trusteeAddress,
-        address _affiliateUtilityAddress
+        address _affiliateUtilityAddress,
+        address _apiAddress
     ) {
         etherEscrowAddress = _etherEscrowAddress;
         bountyAddress = _bountyAddress;
         trusteeAddress = _trusteeAddress;
+        apiAddress = _apiAddress;
         affiliateUtility = AffiliateUtility(_affiliateUtilityAddress);
         trustee = Trustee(_trusteeAddress);
         paused = true;
@@ -1120,191 +1316,6 @@ contract TokenSale is Owned, TokenController {
     }
 }
 
-contract DynamicCeiling is Owned {
-    using SafeMath for uint256;
-
-    struct Ceiling {
-        bytes32 hash;
-        uint256 limit;
-        uint256 slopeFactor;
-        uint256 collectMinimum;
-    }
-
-    address public saleAddress;
-
-    Ceiling[] public ceilings;
-    
-    uint256 public currentIndex;
-    uint256 public revealedCeilings;
-    bool public allRevealed;
-
-    modifier onlySaleAddress {
-        require(msg.sender == saleAddress);
-        _;
-    }
-
-    function DynamicCeiling(address _owner, address _saleAddress) {
-        owner = _owner;
-        saleAddress = _saleAddress;
-    }
-
-    /// @notice This should be called by the creator of the contract to commit
-    ///  all the ceilings.
-    /// @param _ceilingHashes Array of hashes of each ceiling. Each hash is calculated
-    ///  by the `calculateHash` method. More hashes than actual ceilings can be
-    ///  committed in order to hide also the number of ceilings.
-    ///  The remaining hashes can be just random numbers.
-    function setHiddenCeilings(bytes32[] _ceilingHashes) public onlyOwner {
-        require(ceilings.length == 0);
-
-        ceilings.length = _ceilingHashes.length;
-        for (uint256 i = 0; i < _ceilingHashes.length; i = i.add(1)) {
-            ceilings[i].hash = _ceilingHashes[i];
-        }
-    }
-
-    /// @notice Anybody can reveal the next ceiling if he knows it.
-    /// @param _limit Ceiling cap.
-    ///  (must be greater or equal to the previous one).
-    /// @param _last `true` if it's the last ceiling.
-    /// @param _salt Random number used to commit the ceiling
-    function revealCeiling(
-        uint256 _limit, 
-        uint256 _slopeFactor, 
-        uint256 _collectMinimum,
-        bool _last, 
-        bytes32 _salt) 
-        public 
-        {
-        require(!allRevealed);
-        require(
-            ceilings[revealedCeilings].hash == 
-            calculateHash(
-                _limit, 
-                _slopeFactor, 
-                _collectMinimum, 
-                _last, 
-                _salt
-            )
-        );
-
-        require(_limit != 0 && _slopeFactor != 0 && _collectMinimum != 0);
-        if (revealedCeilings > 0) {
-            require(_limit >= ceilings[revealedCeilings.sub(1)].limit);
-        }
-
-        ceilings[revealedCeilings].limit = _limit;
-        ceilings[revealedCeilings].slopeFactor = _slopeFactor;
-        ceilings[revealedCeilings].collectMinimum = _collectMinimum;
-        revealedCeilings = revealedCeilings.add(1);
-
-        if (_last) {
-            allRevealed = true;
-        }
-    }
-
-    /// @notice Reveal multiple ceilings at once
-    function revealMulti(
-        uint256[] _limits,
-        uint256[] _slopeFactors,
-        uint256[] _collectMinimums,
-        bool[] _lasts, 
-        bytes32[] _salts) 
-        public 
-        {
-        // Do not allow none and needs to be same length for all parameters
-        require(
-            _limits.length != 0 &&
-            _limits.length == _slopeFactors.length &&
-            _limits.length == _collectMinimums.length &&
-            _limits.length == _lasts.length &&
-            _limits.length == _salts.length
-        );
-
-        for (uint256 i = 0; i < _limits.length; i = i.add(1)) {
-            
-            revealCeiling(
-                _limits[i],
-                _slopeFactors[i],
-                _collectMinimums[i],
-                _lasts[i],
-                _salts[i]
-            );
-        }
-    }
-
-    /// @notice Move to ceiling, used as a failsafe
-    function moveToNextCeiling() public onlyOwner {
-
-        currentIndex = currentIndex.add(1);
-    }
-
-    /// @return Return the funds to collect for the current point on the ceiling
-    ///  (or 0 if no ceilings revealed yet)
-    function availableAmountToCollect(uint256  totallCollected) public onlySaleAddress returns (uint256) {
-    
-        if (revealedCeilings == 0) {
-            return 0;
-        }
-
-        if (totallCollected >= ceilings[currentIndex].limit) {  
-            uint256 nextIndex = currentIndex.add(1);
-
-            if (nextIndex >= revealedCeilings) {
-                return 0; 
-            }
-            currentIndex = nextIndex;
-            if (totallCollected >= ceilings[currentIndex].limit) {
-                return 0;  
-            }
-        }        
-        uint256 remainedFromCurrentCeiling = ceilings[currentIndex].limit.sub(totallCollected);
-        uint256 reminderWithSlopeFactor = remainedFromCurrentCeiling.div(ceilings[currentIndex].slopeFactor);
-
-        if (reminderWithSlopeFactor > ceilings[currentIndex].collectMinimum) {
-            return reminderWithSlopeFactor;
-        }
-        
-        if (remainedFromCurrentCeiling > ceilings[currentIndex].collectMinimum) {
-            return ceilings[currentIndex].collectMinimum;
-        } else {
-            return remainedFromCurrentCeiling;
-        }
-    }
-
-    /// @notice Calculates the hash of a ceiling.
-    /// @param _limit Ceiling cap.
-    /// @param _last `true` if it's the last ceiling.
-    /// @param _collectMinimum the minimum amount to collect
-    /// @param _salt Random number that will be needed to reveal this ceiling.
-    /// @return The calculated hash of this ceiling to be used in the `setHiddenCurves` method
-    function calculateHash(
-        uint256 _limit, 
-        uint256 _slopeFactor, 
-        uint256 _collectMinimum,
-        bool _last, 
-        bytes32 _salt) 
-        public 
-        constant 
-        returns (bytes32) 
-        {
-        return keccak256(
-            _limit,
-            _slopeFactor, 
-            _collectMinimum,
-            _last,
-            _salt
-        );
-    }
-
-    /// @return Return the total number of ceilings committed
-    ///  (can be larger than the number of actual ceilings on the ceiling to hide
-    ///  the real number of ceilings)
-    function nCeilings() public constant returns (uint256) {
-        return ceilings.length;
-    }
-
-}
 
 contract SharpeCrowdsale is TokenSale {
 
@@ -1330,12 +1341,14 @@ contract SharpeCrowdsale is TokenSale {
         address _bountyAddress,
         address _trusteeAddress,
         address _affiliateUtilityAddress,
+        address _apiAddress,
         uint256 _minContributionInWei) 
         TokenSale (
         _etherEscrowAddress,
         _bountyAddress,
         _trusteeAddress,
-        _affiliateUtilityAddress) 
+        _affiliateUtilityAddress,
+        _apiAddress) 
     {
         minContributionInWei = _minContributionInWei;
         saleAddress = address(this);
