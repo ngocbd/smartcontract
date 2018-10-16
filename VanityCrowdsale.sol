@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VanityCrowdsale at 0xc4c4b7d1415caa8c19617b5dcb5686ed3ac6135b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract VanityCrowdsale at 0x111111150b873d4bc367c41f39325c01a7263ac5
 */
 pragma solidity ^0.4.11;
 
@@ -463,7 +463,7 @@ contract VanityCrowdsale is Ownable {
         } else if (totalUsdAmount > 10000) {
             bonusMultiplier = 2;
         } else if (totalUsdAmount == 0) {
-            bonusMultiplier = 0; //TODO: set 1
+            bonusMultiplier = 1;
         }
     }
 
