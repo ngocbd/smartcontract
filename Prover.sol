@@ -1,10 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Prover at 0x1f5cdff41fb9b17996d6f0fca6ab9c5bed96f20f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Prover at 0x117ca39dffc4da6fb3af6145dfff246830637fe2
 */
 pragma solidity ^0.4.18;
 
-// sets support up to 2^256-2 members
-// memberIndices stores the index of members + 1, not their actual index
 library Sets {
     // address set
     struct addressSet {
@@ -284,11 +282,9 @@ contract Prover {
         owner = msg.sender;
     }
 
-    // fallback: allow internal calls
+    // fallback
     function() internal {
-        if (! this.delegatecall(msg.data)) {
-            revert();
-        }
+        revert();
     }
 
 
@@ -303,13 +299,13 @@ contract Prover {
     function registeredUsers()
         external
         view
-        returns (uint number_unique_addresses, address[] unique_addresses) {
-        return (users.length(), users.members);
+        returns (address[] unique_addresses) {
+        return users.members;
     }
     function userEntries(address target)
         external
         view
-        returns (bytes32[]) {
+        returns (bytes32[] entries) {
         return accounts[target].entries.members;
     }
     function entryInformation(address target, bytes32 dataHash)
