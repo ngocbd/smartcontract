@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TOSKYTokenERC20 at 0x60626305EEC1477bab0b7a8dBd6036CF23d00494
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TOSKYTokenERC20 at 0x0C464F5646335f6243f41f17efB464D086eaA508
 */
 pragma solidity ^0.4.19;
 
@@ -65,7 +65,7 @@ contract TOSKYTokenERC20 is Ownable{
 		totalSupply = 2000000000 * 10 ** uint256(decimals);  				//Assignment of Token's total supply with decimals
         balanceOf[owner] = totalSupply;                					//Assignment of Token's creator initial tokens
         name = "TOSKY Share";                                   					//Set the name of Token
-        symbol = "TOSKY";                               					//Set the symbol of  Token
+        symbol = "TSS";                               					//Set the symbol of  Token
         
     }
 	//===================Contract Initialization Sequence definition end===================
