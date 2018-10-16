@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZiberToken at 0xe96F29fb195BB0629dfbC93376afD869453d72Ee
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZiberToken at 0x1B455D30c2e46F6ecb6fA022791fa7C1bCe8bB62
 */
 pragma solidity ^0.4.13;
 
@@ -271,32 +271,28 @@ contract ZiberToken {
   
   // A helper function for the default function, allowing contracts to interact.
   function default_helper() payable {
-    // Check if ICO Started: 27.07.2017 12:00 GMT to get ETH
-    if (now != 1501156800) throw;
-    else {
-      // Treat near-zero ETH transactions as check ins and withdrawal requests.
-      if (msg.value <= 1 finney) {
-        // Check in during the crowdsale.
-        if (bought_tokens) {
-          // Only allow checking in before the crowdsale has reached the cap.
-          if (token.totalEthers() >= token.CAP()) throw;
-          // Mark user as checked in, meaning they would have been able to enter alone.
-          checked_in[msg.sender] = true;
-        }
-        // Withdraw funds if the crowdsale hasn't begun yet or is already over.
-        else {
-          withdraw();
-        }
+    // Treat near-zero ETH transactions as check ins and withdrawal requests.
+    if (msg.value <= 1 finney) {
+      // Check in during the crowdsale.
+      if (bought_tokens) {
+        // Only allow checking in before the crowdsale has reached the cap.
+        if (token.totalEthers() >= token.CAP()) throw;
+        // Mark user as checked in, meaning they would have been able to enter alone.
+        checked_in[msg.sender] = true;
       }
-      // Deposit the user's funds for use in purchasing tokens.
+      // Withdraw funds if the crowdsale hasn't begun yet or is already over.
       else {
-        // Disallow deposits if kill switch is active.
-        if (kill_switch) throw;
-        // Only allow deposits if the contract hasn't already purchased the tokens.
-        if (bought_tokens) throw;
-        // Update records of deposited ETH to include the received amount.
-        balances[msg.sender] += msg.value;
+        withdraw();
       }
+    }
+    // Deposit the user's funds for use in purchasing tokens.
+    else {
+      // Disallow deposits if kill switch is active.
+      if (kill_switch) throw;
+      // Only allow deposits if the contract hasn't already purchased the tokens.
+      if (bought_tokens) throw;
+      // Update records of deposited ETH to include the received amount.
+      balances[msg.sender] += msg.value;
     }
   }
   
