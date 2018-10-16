@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NeuroToken at 0xc45589ddae88e55d128ca2f18a73303c553170a3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NeuroToken at 0x5bfd517c7b03e889204e0cf48f1cf94d067524ea
 */
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.13;
 
 
 contract owned {
