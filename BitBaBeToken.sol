@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitBaBeToken at 0x258dc26a550e69e8740d0e4a8781b56dad05ddc8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitbabeToken at 0x4e2358b4b134fecda0f7fa730fe7cdbcef5f7daf
 */
 pragma solidity ^0.4.21;
 
@@ -67,13 +67,13 @@ contract StandardToken is ERC20, SafeMath {
 }
 
 
-contract BitBaBeToken is StandardToken {
-    string public name = "BitBaBeToken";
+contract BitbabeToken is StandardToken {
+    string public name = "BitbabeToken";
     string public symbol = "BTBE";
     uint public decimals = 18;
     uint public totalSupply = 420 * 1000 * 1000 ether;
 
-    function BitBaBeToken() public {
+    function BitbabeToken() public {
         balances[msg.sender] = totalSupply;
     }
 }
