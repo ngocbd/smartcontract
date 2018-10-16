@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dice at 0x8d5f5af45d70794c3758cee3130123d2898939e5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dice at 0xe2c122847767effbb3f306724cded7e93a9dd9b9
 */
 // <ORACLIZE_API>
 /*
@@ -1219,12 +1219,12 @@ contract usingOraclize {
 // </ORACLIZE_API>
 
 contract Dice is usingOraclize {
-    uint constant pwin = 5000; //probability of winning (10000 = 100%)
-    uint constant edge = 190; //edge percentage (10000 = 100%)
-    uint constant maxWin = 100; //max win (before edge is taken) as percentage of bankroll (10000 = 100%)
-    uint constant minBet = 200 finney;
+    uint constant pwin = 5000;
+    uint constant edge = 190;
+    uint constant maxWin = 10000;
+    uint constant minBet = 100 finney;
 
-    uint safeGas = 2300;
+    uint safeGas = 25000;
     uint constant ORACLIZE_GAS_LIMIT = 175000;
     uint constant INVALID_BET_MARKER = 99999;
 
@@ -1235,7 +1235,7 @@ contract Dice is usingOraclize {
     }
 
     address public owner;
-    bool public isStopped;
+    bool public isStopped = false;
 
     mapping (bytes32 => Bet) public bets;
     bytes32[] public betsKeys;
@@ -1476,8 +1476,8 @@ contract Dice is usingOraclize {
     }
 
     function changeGasLimitOfSafeSend(uint newGasLimit) public onlyOwner onlyIfValidGas(newGasLimit) {
-        safeGas = newGasLimit;
         LOG_GasLimitChanged(safeGas, newGasLimit);
+        safeGas = newGasLimit;
     }
 
     function withdraw(uint amount) public onlyOwner onlyIfStopped returns(bool) {
