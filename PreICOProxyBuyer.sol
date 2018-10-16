@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreICOProxyBuyer at 0x3b2150afd63266f46fbebbea4964d3b8c69b27eb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreICOProxyBuyer at 0xcf3dbc9dcaeb6936b8cefbf9f81b655651a92485
 */
 /**
  * Math operations with safety checks
@@ -257,6 +257,9 @@ contract FractionalERC20 is ERC20 {
  *
  */
 contract Crowdsale is Haltable {
+
+  /* Max investment count when we are still allowed to change the multisig address */
+  uint public MAX_INVESTMENTS_BEFORE_MULTISIG_CHANGE = 5;
 
   using SafeMathLib for uint;
 
@@ -637,6 +640,23 @@ contract Crowdsale is Haltable {
   }
 
   /**
+   * Allow to change the team multisig address in the case of emergency.
+   *
+   * This allows to save a deployed crowdsale wallet in the case the crowdsale has not yet begun
+   * (we have done only few test transactions). After the crowdsale is going
+   * then multisig address stays locked for the safety reasons.
+   */
+  function setMultisig(address addr) public onlyOwner {
+
+    // Change
+    if(investorCount > MAX_INVESTMENTS_BEFORE_MULTISIG_CHANGE) {
+      throw;
+    }
+
+    multisigWallet = addr;
+  }
+
+  /**
    * Allow load refunds back on the contract for the refunding.
    *
    * The team can transfer the funds back on the smart contract in the case the minimum goal was not reached..
@@ -779,7 +799,7 @@ contract StandardToken is ERC20, SafeMath {
    * http://vessenes.com/the-erc20-short-address-attack-explained/
    */
   modifier onlyPayloadSize(uint size) {
-     if(msg.data.length != size + 4) {
+     if(msg.data.length < size + 4) {
        throw;
      }
      _;
