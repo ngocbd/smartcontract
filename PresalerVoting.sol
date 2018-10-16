@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalerVoting at 0xe0e3Fa169fC59DbB5ee29A3c19920BFdAB29480f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalerVoting at 0x29b0de42b6495d48ec80126eb78591a756aac001
 */
 pragma solidity ^0.4.11;
 
@@ -38,7 +38,7 @@ contract TokenStorage {
 
 contract PresalerVoting {
 
-    string public constant VERSION = "0.0.7";
+    string public constant VERSION = "0.0.6";
 
     /* ====== configuration START ====== */
 
@@ -62,10 +62,10 @@ contract PresalerVoting {
 
     address public owner;
     address[] public voters;
-    uint16 public stakeVoted_Eth;
-    uint16 public stakeRemainingToVote_Eth;
-    uint16 public stakeWaived_Eth;
-    uint16 public stakeConfirmed_Eth;
+    uint public stakeVoted_Eth;
+    uint public stakeRemainingToVote_Eth;
+    uint public stakeWaived_Eth;
+    uint public stakeConfirmed_Eth;
 
     //constructors
     function PresalerVoting () {
@@ -82,21 +82,21 @@ contract PresalerVoting {
         if (msg.value > 1 ether || !msg.sender.send(msg.value)) throw;
         if (rawVotes[msg.sender] == 0) {
             voters.push(msg.sender);
-            stakeVoted_Eth += uint16(bonus / 1 ether);
+            stakeVoted_Eth += bonus;
         } else {
             //clear statistik related to old voting state for this sender
             bonusVoted           = votedPerCent(msg.sender) * bonus / 100;
-            stakeWaived_Eth     -= uint16((bonus - bonusVoted) / 1 ether);
-            stakeConfirmed_Eth  -= uint16(bonusVoted / 1 ether);
+            stakeWaived_Eth     -= (bonus - bonusVoted) / 1 ether;
+            stakeConfirmed_Eth  -= bonusVoted / 1 ether;
         }
         //special treatment for 0-ether payment
         rawVotes[msg.sender] = msg.value > 0 ? msg.value : 1 wei;
 
         bonusVoted           = votedPerCent(msg.sender) * bonus / 100;
-        stakeWaived_Eth     += uint16((bonus - bonusVoted) / 1 ether);
-        stakeConfirmed_Eth  += uint16(bonusVoted / 1 ether);
+        stakeWaived_Eth     += (bonus - bonusVoted) / 1 ether;
+        stakeConfirmed_Eth  += bonusVoted / 1 ether;
 
-        stakeRemainingToVote_Eth -= uint16(TOTAL_BONUS_SUPPLY_ETH - stakeConfirmed_Eth);
+        stakeRemainingToVote_Eth -= TOTAL_BONUS_SUPPLY_ETH - stakeConfirmed_Eth;
 
     }
 
