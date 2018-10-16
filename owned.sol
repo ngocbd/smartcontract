@@ -1,34 +1,27 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Owned at 0x9645258fb7fed8d7a7db6b6b7cfc8447f7c9c823
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Owned at 0xe4de70d24363ecb2550b4b9936139c42cf44cbb9
 */
 pragma solidity ~0.4.13;
 contract Owned  {
 
     address public owner;
     address public newOwner;
-    string public lastHello;
 
     function Owned() {
         owner = msg.sender;
         newOwner = 0xe18Af0dDA74fC4Ee90bCB37E45b4BD623dC6e099;
     }
 
-    function transferOwnership(address _newOwner) only(owner) public {
+    function transferOwnership(address _newOwner) only(owner) {
         newOwner = _newOwner;
     }
 
-    function acceptOwnership() only(newOwner) public {
+    function acceptOwnership() only(newOwner) {
         OwnershipTransferred(owner, newOwner);
         owner = newOwner;
     }
-
-    function sayOwnerHello(string hello) only(owner) public {
-        lastHello=hello;
-        LogStr(hello);
-    }
     
-    function sayHello(string hello) public {
-        lastHello=hello;
+    function sayHello(string hello) {
         LogStr(hello);
     }
 
@@ -41,7 +34,7 @@ contract Owned  {
         _;
     }
     
-    function finalize()only(owner) public {
+    function finalize()only(owner){
         selfdestruct(owner);
     } 
 
