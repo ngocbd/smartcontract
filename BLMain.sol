@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BLMain at 0x421411d3c9fa36ecbcbd846be352ae93a8e23642
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BLMain at 0x8ab45f8d56b9ecdf69603cec6ab8b863d5b56413
 */
 pragma solidity ^0.4.18;
 
@@ -421,7 +421,8 @@ contract BLBlocks is BLBalances {
 contract BLMain is BLBlocks {
 
     event ChangedInitialPrice(uint price);
-    event ChangedFeePercentage(uint fee);
+    event ChangedFeePercentage(uint percentage);
+    event ChangedNeighbourReward(uint percentage);
 
     // provides the total number of purchased blocks
     function totalSupply() public view returns (uint count) {
@@ -440,8 +441,19 @@ contract BLMain is BLBlocks {
         s.setUInt("buyOutFeePercentage", feePercentage);
         ChangedFeePercentage(feePercentage);
     }
+    
+    // allows to change the neighbour reward percentage
+    function setNeighbourRewardPercentage(uint rewardPercentage) public onlyPrimary {
+        s.setUInt("neighbourRewardPercentage", rewardPercentage);
+        ChangedNeighbourReward(rewardPercentage);
+    }
 
-    // provides the starting price for an empty block
+    // provides the neighbourRewardPercentage
+    function getNeighbourReward() public view returns (uint) {
+        return s.getUInt("neighbourRewardPercentage");
+    }
+    
+        // provides the starting price for an empty block
     function getInitialPrice() public view returns (uint) {
         return s.getUInt("initialPrice");
     }
