@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xc801E2cA666FDfcb43CF29B972d7f3731436E4A1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xD3E672BA55F355E4017ed694Cd83D4dc865c00dF
 */
 pragma solidity ^0.4.16;
 
