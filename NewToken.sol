@@ -1,44 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NewToken at 0x81b4d08645da11374a03749ab170836e4e539767
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NewToken at 0xc0bd05407fbe1fb6461ce6f33e487a573551b927
 */
 pragma solidity ^0.4.11;
 
-//------------------------------------------------------------------------------------------------
-// ERC20 Standard Token Implementation, based on ERC Standard:
-// https://github.com/ethereum/EIPs/issues/20
-// With some inspiration from ConsenSys HumanStandardToken as well
-// Copyright 2017 BattleDrome
-//------------------------------------------------------------------------------------------------
-
-//------------------------------------------------------------------------------------------------
-// LICENSE
-//
-// This file is part of BattleDrome.
-// 
-// BattleDrome is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-// 
-// BattleDrome is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-// 
-// You should have received a copy of the GNU General Public License
-// along with BattleDrome.  If not, see <http://www.gnu.org/licenses/>.
-//------------------------------------------------------------------------------------------------
-
-contract NewToken {
-	function NewToken() {
-		totalSupply = 1000000000000000000;
-		name = "Paymon Token";
-		decimals = 9;
-		symbol = "PMNT";
-		version = "1.0";
-		balances[msg.sender] = totalSupply;
-	}
-
+contract ERC20Standard {
 	uint public totalSupply;
 	
 	string public name;
@@ -97,4 +62,15 @@ contract NewToken {
 		uint _value
 		);
 
+}
+
+contract NewToken is ERC20Standard {
+	function NewToken() {
+		totalSupply = 10000000000;
+		name = "Realty Crypto Investment";
+		decimals = 2;
+		symbol = "RCI";
+		version = "1.0";
+		balances[msg.sender] = totalSupply;
+	}
 }
