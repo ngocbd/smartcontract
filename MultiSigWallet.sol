@@ -1,12 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x723f74668599c9327138bc97bff04eb9ad44a3fa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x930ba3ca7ed61e59f9c1833dcff1866257150443
 */
-pragma solidity 0.4.15;
-
-// File: contracts/wallet/MultiSigWallet.sol
-
-/// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
-/// @author Stefan George - <stefan.george@consensys.net>
 contract MultiSigWallet {
 
     /*
@@ -233,7 +227,7 @@ contract MultiSigWallet {
         Revocation(msg.sender, transactionId);
     }
 
-    /// @dev Allows anyone to execute a confirmed transaction.
+    /// @dev Allows owner to execute a confirmed transaction.
     /// @param transactionId Transaction ID.
     function executeTransaction(uint transactionId)
         public
