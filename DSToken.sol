@@ -1,30 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DSToken at 0x86fa049857e0209aa7d9e616f7eb3b3b78ecfdb0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DSToken at 0x59adcf176ed2f6788a41b8ea4c4904518e62b6a4
 */
-contract DSNote {
-    event LogNote(
-        bytes4   indexed  sig,
-        address  indexed  guy,
-        bytes32  indexed  foo,
-        bytes32  indexed  bar,
-	uint	 	  wad,
-        bytes             fax
-    ) anonymous;
-
-    modifier note {
-        bytes32 foo;
-        bytes32 bar;
-
-        assembly {
-            foo := calldataload(4)
-            bar := calldataload(36)
-        }
-
-        LogNote(msg.sig, msg.sender, foo, bar, msg.value, msg.data);
-
-        _;
-    }
-}
+pragma solidity ^0.4.10;
 
 contract DSAuthority {
     function canCall(
@@ -65,11 +42,6 @@ contract DSAuth is DSAuthEvents {
         _;
     }
 
-    modifier authorized(bytes4 sig) {
-        assert(isAuthorized(msg.sender, sig));
-        _;
-    }
-
     function isAuthorized(address src, bytes4 sig) internal returns (bool) {
         if (src == address(this)) {
             return true;
@@ -84,6 +56,31 @@ contract DSAuth is DSAuthEvents {
 
     function assert(bool x) internal {
         if (!x) throw;
+    }
+}
+
+contract DSNote {
+    event LogNote(
+        bytes4   indexed  sig,
+        address  indexed  guy,
+        bytes32  indexed  foo,
+        bytes32  indexed  bar,
+	uint	 	  wad,
+        bytes             fax
+    ) anonymous;
+
+    modifier note {
+        bytes32 foo;
+        bytes32 bar;
+
+        assembly {
+            foo := calldataload(4)
+            bar := calldataload(36)
+        }
+
+        LogNote(msg.sig, msg.sender, foo, bar, msg.value, msg.data);
+
+        _;
     }
 }
 
@@ -104,6 +101,19 @@ contract DSStop is DSAuth, DSNote {
 
 }
 
+contract ERC20 {
+    function totalSupply() constant returns (uint supply);
+    function balanceOf( address who ) constant returns (uint value);
+    function allowance( address owner, address spender ) constant returns (uint _allowance);
+
+    function transfer( address to, uint value) returns (bool ok);
+    function transferFrom( address from, address to, uint value) returns (bool ok);
+    function approve( address spender, uint value ) returns (bool ok);
+
+    event Transfer( address indexed from, address indexed to, uint value);
+    event Approval( address indexed owner, address indexed spender, uint value);
+}
+
 contract DSMath {
     
     /*
@@ -119,7 +129,8 @@ contract DSMath {
     }
 
     function mul(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        assert((z = x * y) >= x);
+        z = x * y;
+        assert(x == 0 || z / x == y);
     }
 
     function div(uint256 x, uint256 y) constant internal returns (uint256 z) {
@@ -147,7 +158,8 @@ contract DSMath {
     }
 
     function hmul(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        assert((z = x * y) >= x);
+        z = x * y;
+        assert(x == 0 || z / x == y);
     }
 
     function hdiv(uint128 x, uint128 y) constant internal returns (uint128 z) {
@@ -262,19 +274,6 @@ contract DSMath {
         assert((z = uint128(x)) == x);
     }
 
-}
-
-contract ERC20 {
-    function totalSupply() constant returns (uint supply);
-    function balanceOf( address who ) constant returns (uint value);
-    function allowance( address owner, address spender ) constant returns (uint _allowance);
-
-    function transfer( address to, uint value) returns (bool ok);
-    function transferFrom( address from, address to, uint value) returns (bool ok);
-    function approve( address spender, uint value ) returns (bool ok);
-
-    event Transfer( address indexed from, address indexed to, uint value);
-    event Approval( address indexed owner, address indexed spender, uint value);
 }
 
 contract DSTokenBase is ERC20, DSMath {
