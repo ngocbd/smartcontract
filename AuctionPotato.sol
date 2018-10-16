@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AuctionPotato at 0x17478cc05e51da20a27bbdf66fbe4a16aae81842
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AuctionPotato at 0xa84a51c521cd87beb3f9330819d10f3d84de3df1
 */
 // based on Bryn Bellomy code
 // https://medium.com/@bryn.bellomy/solidity-tutorial-building-a-simple-auction-contract-fcc918b0878a
@@ -114,7 +114,7 @@ contract AuctionPotato {
         
         started = false;
         
-        name = "Minotaur";
+        name = "Stomper";
         infoUrl = "https://chibifighters.io";
         
     }
