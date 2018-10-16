@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NSCDistributionContract at 0x8ae546782bd5c25715afaffb028ce9ee2cbe7bec
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NSCDistributionContract at 0x827b67176c20edf0f0d3eb76b0c53aa925018f2b
 */
 pragma solidity ^0.4.18;
 library SafeMath {
@@ -75,8 +75,8 @@ contract NSCDistributionContract is ERC20Interface, Owned {
     mapping(address => mapping(address => uint)) allowed;
 
     function NSCDistributionContract() public {
-        symbol = 'Pobeda';
-        name = 'PB';
+        symbol = 'NSC';
+        name = 'NSC';
         decimals = 18;
         _totalSupply = 500000000 * 10**uint(decimals);
         _initialDistribution = 1000000 * 10**uint(decimals);
