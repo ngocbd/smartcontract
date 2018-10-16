@@ -1,8 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LifCrowdsale at 0xda4c0f8f17d8dd536da23f8942758d6e7cb72d27
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LifCrowdsale at 0x66734d6103442d898986EED8fAd848B2680D9f5e
 */
 pragma solidity ^0.4.18;
 
+// File: zeppelin-solidity/contracts/ownership/Ownable.sol
 
 /**
  * @title Ownable
@@ -43,6 +44,8 @@ contract Ownable {
   }
 
 }
+
+// File: zeppelin-solidity/contracts/math/SafeMath.sol
 
 /**
  * @title SafeMath
@@ -90,6 +93,7 @@ library SafeMath {
   }
 }
 
+// File: zeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
 
 /**
  * @title ERC20Basic
@@ -103,33 +107,7 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-/**
-   @title ERC827 interface, an extension of ERC20 token standard
-
-   Interface of a ERC827 token, following the ERC20 standard with extra
-   methods to transfer value and data and execute calls in transfers and
-   approvals.
- */
-contract ERC827 is ERC20 {
-
-  function approve( address _spender, uint256 _value, bytes _data ) public returns (bool);
-  function transfer( address _to, uint256 _value, bytes _data ) public returns (bool);
-  function transferFrom( address _from, address _to, uint256 _value, bytes _data ) public returns (bool);
-
-}
-
+// File: zeppelin-solidity/contracts/token/ERC20/BasicToken.sol
 
 /**
  * @title Basic token
@@ -176,6 +154,20 @@ contract BasicToken is ERC20Basic {
 
 }
 
+// File: zeppelin-solidity/contracts/token/ERC20/ERC20.sol
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+// File: zeppelin-solidity/contracts/token/ERC20/StandardToken.sol
 
 /**
  * @title Standard ERC20 token
@@ -272,128 +264,7 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-/**
-   @title ERC827, an extension of ERC20 token standard
-
-   Implementation the ERC827, following the ERC20 standard with extra
-   methods to transfer value and data and execute calls in transfers and
-   approvals.
-   Uses OpenZeppelin StandardToken.
- */
-contract ERC827Token is ERC827, StandardToken {
-
-  /**
-     @dev Addition to ERC20 token methods. It allows to
-     approve the transfer of value and execute a call with the sent data.
-
-     Beware that changing an allowance with this method brings the risk that
-     someone may use both the old and the new allowance by unfortunate
-     transaction ordering. One possible solution to mitigate this race condition
-     is to first reduce the spender's allowance to 0 and set the desired value
-     afterwards:
-     https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-
-     @param _spender The address that will spend the funds.
-     @param _value The amount of tokens to be spent.
-     @param _data ABI-encoded contract call to call `_to` address.
-
-     @return true if the call function was executed successfully
-   */
-  function approve(address _spender, uint256 _value, bytes _data) public returns (bool) {
-    require(_spender != address(this));
-
-    super.approve(_spender, _value);
-
-    require(_spender.call(_data));
-
-    return true;
-  }
-
-  /**
-     @dev Addition to ERC20 token methods. Transfer tokens to a specified
-     address and execute a call with the sent data on the same transaction
-
-     @param _to address The address which you want to transfer to
-     @param _value uint256 the amout of tokens to be transfered
-     @param _data ABI-encoded contract call to call `_to` address.
-
-     @return true if the call function was executed successfully
-   */
-  function transfer(address _to, uint256 _value, bytes _data) public returns (bool) {
-    require(_to != address(this));
-
-    super.transfer(_to, _value);
-
-    require(_to.call(_data));
-    return true;
-  }
-
-  /**
-     @dev Addition to ERC20 token methods. Transfer tokens from one address to
-     another and make a contract call on the same transaction
-
-     @param _from The address which you want to send tokens from
-     @param _to The address which you want to transfer to
-     @param _value The amout of tokens to be transferred
-     @param _data ABI-encoded contract call to call `_to` address.
-
-     @return true if the call function was executed successfully
-   */
-  function transferFrom(address _from, address _to, uint256 _value, bytes _data) public returns (bool) {
-    require(_to != address(this));
-
-    super.transferFrom(_from, _to, _value);
-
-    require(_to.call(_data));
-    return true;
-  }
-
-  /**
-   * @dev Addition to StandardToken methods. Increase the amount of tokens that
-   * an owner allowed to a spender and execute a call with the sent data.
-   *
-   * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _addedValue The amount of tokens to increase the allowance by.
-   * @param _data ABI-encoded contract call to call `_spender` address.
-   */
-  function increaseApproval(address _spender, uint _addedValue, bytes _data) public returns (bool) {
-    require(_spender != address(this));
-
-    super.increaseApproval(_spender, _addedValue);
-
-    require(_spender.call(_data));
-
-    return true;
-  }
-
-  /**
-   * @dev Addition to StandardToken methods. Decrease the amount of tokens that
-   * an owner allowed to a spender and execute a call with the sent data.
-   *
-   * approve should be called when allowed[_spender] == 0. To decrement
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _subtractedValue The amount of tokens to decrease the allowance by.
-   * @param _data ABI-encoded contract call to call `_spender` address.
-   */
-  function decreaseApproval(address _spender, uint _subtractedValue, bytes _data) public returns (bool) {
-    require(_spender != address(this));
-
-    super.decreaseApproval(_spender, _subtractedValue);
-
-    require(_spender.call(_data));
-
-    return true;
-  }
-
-}
-
+// File: zeppelin-solidity/contracts/token/ERC20/MintableToken.sol
 
 /**
  * @title Mintable token
@@ -438,6 +309,7 @@ contract MintableToken is StandardToken, Ownable {
   }
 }
 
+// File: zeppelin-solidity/contracts/lifecycle/Pausable.sol
 
 /**
  * @title Pausable
@@ -483,6 +355,7 @@ contract Pausable is Ownable {
   }
 }
 
+// File: zeppelin-solidity/contracts/token/ERC20/PausableToken.sol
 
 /**
  * @title Pausable token
@@ -511,6 +384,7 @@ contract PausableToken is StandardToken, Pausable {
   }
 }
 
+// File: contracts/LifToken.sol
 
 /**
    @title Líf, the Winding Tree token
@@ -520,7 +394,7 @@ contract PausableToken is StandardToken, Pausable {
    on transfer.
    Uses OpenZeppelin StandardToken, ERC827Token, MintableToken and PausableToken.
  */
-contract LifToken is StandardToken, ERC827Token, MintableToken, PausableToken {
+contract LifToken is StandardToken, MintableToken, PausableToken {
   // Token Name
   string public constant NAME = "Líf";
 
@@ -568,103 +442,7 @@ contract LifToken is StandardToken, ERC827Token, MintableToken, PausableToken {
   }
 }
 
-
-/**
-   @title Vested Payment Schedule for LifToken
-
-   An ownable vesting schedule for the LifToken, the tokens can only be
-   claimed by the owner. The contract has a start timestamp, a duration
-   of each period in seconds (it can be days, months, years), a total
-   amount of periods and a cliff. The available amount of tokens will
-   be calculated based on the balance of LifTokens of the contract at
-   that time.
- */
-
-contract VestedPayment is Ownable {
-  using SafeMath for uint256;
-
-  // When the vested schedule starts
-  uint256 public startTimestamp;
-
-  // How many seconds each period will last
-  uint256 public secondsPerPeriod;
-
-  // How many periods will have in total
-  uint256 public totalPeriods;
-
-  // The amount of tokens to be vested in total
-  uint256 public tokens;
-
-  // How many tokens were claimed
-  uint256 public claimed;
-
-  // The token contract
-  LifToken public token;
-
-  // Duration (in periods) of the initial cliff in the vesting schedule
-  uint256 public cliffDuration;
-
-  /**
-     @dev Constructor.
-
-     @param _startTimestamp see `startTimestamp`
-     @param _secondsPerPeriod see `secondsPerPeriod`
-     @param _totalPeriods see `totalPeriods
-     @param _cliffDuration see `cliffDuration`
-     @param _tokens see `tokens`
-     @param tokenAddress the address of the token contract
-   */
-  function VestedPayment(
-    uint256 _startTimestamp, uint256 _secondsPerPeriod,
-    uint256 _totalPeriods, uint256 _cliffDuration,
-    uint256 _tokens, address tokenAddress
-  ) {
-    require(_startTimestamp >= block.timestamp);
-    require(_secondsPerPeriod > 0);
-    require(_totalPeriods > 0);
-    require(tokenAddress != address(0));
-    require(_cliffDuration < _totalPeriods);
-    require(_tokens > 0);
-
-    startTimestamp = _startTimestamp;
-    secondsPerPeriod = _secondsPerPeriod;
-    totalPeriods = _totalPeriods;
-    cliffDuration = _cliffDuration;
-    tokens = _tokens;
-    token = LifToken(tokenAddress);
-  }
-
-  /**
-     @dev Get how many tokens are available to be claimed
-   */
-  function getAvailableTokens() public view returns (uint256) {
-    uint256 period = block.timestamp.sub(startTimestamp)
-      .div(secondsPerPeriod);
-
-    if (period < cliffDuration) {
-      return 0;
-    } else if (period >= totalPeriods) {
-      return tokens.sub(claimed);
-    } else {
-      return tokens.mul(period.add(1)).div(totalPeriods).sub(claimed);
-    }
-  }
-
-  /**
-     @dev Claim the tokens, they can be claimed only by the owner
-     of the contract
-
-     @param amount how many tokens to be claimed
-   */
-  function claimTokens(uint256 amount) public onlyOwner {
-    assert(getAvailableTokens() >= amount);
-
-    claimed = claimed.add(amount);
-    token.transfer(owner, amount);
-  }
-
-}
-
+// File: contracts/LifMarketValidationMechanism.sol
 
 /**
    @title Market Validation Mechanism (MVM)
@@ -781,6 +559,13 @@ contract LifMarketValidationMechanism is Ownable {
       div(originalTotalSupply);
 
     funded = true;
+  }
+
+  /**
+     @dev Change the LifToken address
+    */
+  function changeToken(address newToken) public onlyOwner {
+    lifToken = LifToken(newToken);
   }
 
   /**
@@ -969,6 +754,113 @@ contract LifMarketValidationMechanism is Ownable {
   }
 
 }
+
+// File: contracts/VestedPayment.sol
+
+/**
+   @title Vested Payment Schedule for LifToken
+
+   An ownable vesting schedule for the LifToken, the tokens can only be
+   claimed by the owner. The contract has a start timestamp, a duration
+   of each period in seconds (it can be days, months, years), a total
+   amount of periods and a cliff. The available amount of tokens will
+   be calculated based on the balance of LifTokens of the contract at
+   that time.
+ */
+
+contract VestedPayment is Ownable {
+  using SafeMath for uint256;
+
+  // When the vested schedule starts
+  uint256 public startTimestamp;
+
+  // How many seconds each period will last
+  uint256 public secondsPerPeriod;
+
+  // How many periods will have in total
+  uint256 public totalPeriods;
+
+  // The amount of tokens to be vested in total
+  uint256 public tokens;
+
+  // How many tokens were claimed
+  uint256 public claimed;
+
+  // The token contract
+  LifToken public token;
+
+  // Duration (in periods) of the initial cliff in the vesting schedule
+  uint256 public cliffDuration;
+
+  /**
+     @dev Constructor.
+
+     @param _startTimestamp see `startTimestamp`
+     @param _secondsPerPeriod see `secondsPerPeriod`
+     @param _totalPeriods see `totalPeriods
+     @param _cliffDuration see `cliffDuration`
+     @param _tokens see `tokens`
+     @param tokenAddress the address of the token contract
+   */
+  function VestedPayment(
+    uint256 _startTimestamp, uint256 _secondsPerPeriod,
+    uint256 _totalPeriods, uint256 _cliffDuration,
+    uint256 _tokens, address tokenAddress
+  ) {
+    require(_startTimestamp >= block.timestamp);
+    require(_secondsPerPeriod > 0);
+    require(_totalPeriods > 0);
+    require(tokenAddress != address(0));
+    require(_cliffDuration < _totalPeriods);
+    require(_tokens > 0);
+
+    startTimestamp = _startTimestamp;
+    secondsPerPeriod = _secondsPerPeriod;
+    totalPeriods = _totalPeriods;
+    cliffDuration = _cliffDuration;
+    tokens = _tokens;
+    token = LifToken(tokenAddress);
+  }
+
+  /**
+     @dev Change the LifToken address
+    */
+  function changeToken(address newToken) public onlyOwner {
+    token = LifToken(newToken);
+  }
+
+  /**
+     @dev Get how many tokens are available to be claimed
+   */
+  function getAvailableTokens() public view returns (uint256) {
+    uint256 period = block.timestamp.sub(startTimestamp)
+      .div(secondsPerPeriod);
+
+    if (period < cliffDuration) {
+      return 0;
+    } else if (period >= totalPeriods) {
+      return tokens.sub(claimed);
+    } else {
+      return tokens.mul(period.add(1)).div(totalPeriods).sub(claimed);
+    }
+  }
+
+  /**
+     @dev Claim the tokens, they can be claimed only by the owner
+     of the contract
+
+     @param amount how many tokens to be claimed
+   */
+  function claimTokens(uint256 amount) public onlyOwner {
+    assert(getAvailableTokens() >= amount);
+
+    claimed = claimed.add(amount);
+    token.transfer(owner, amount);
+  }
+
+}
+
+// File: contracts/LifCrowdsale.sol
 
 /**
    @title Crowdsale for the Lif Token Generation Event
@@ -1228,17 +1120,18 @@ contract LifCrowdsale is Ownable, Pausable {
      @dev Internal. Forwards funds to the foundation wallet and in case the soft
      cap was exceeded it also creates and funds the Market Validation Mechanism.
    */
-  function forwardFunds() internal {
+  function forwardFunds(bool deployMVM) internal {
 
     // calculate the max amount of wei for the foundation
     uint256 foundationBalanceCapWei = maxFoundationCapUSD.mul(weiPerUSDinTGE);
 
-    // If the minimiun cap for the MVM is not reached transfer all funds to foundation
-    // else if the min cap for the MVM is reached, create it and send the remaining funds.
+    // If the minimiun cap for the MVM is not reached or the MVM cant be deployed
+    // transfer all funds to foundation else if the min cap for the MVM is reached,
+    // create it and send the remaining funds.
     // We use weiRaised to compare becuase that is the total amount of wei raised in all TGE
     // but we have to distribute the balance using `this.balance` because thats the amount
     // raised by the crowdsale
-    if (weiRaised <= foundationBalanceCapWei) {
+    if ((weiRaised <= foundationBalanceCapWei) || !deployMVM) {
 
       foundationWallet.transfer(this.balance);
 
@@ -1256,7 +1149,7 @@ contract LifCrowdsale is Ownable, Pausable {
       foundationWallet.transfer(foundationBalanceCapWei);
 
       MVM = new LifMarketValidationMechanism(
-        address(token), block.timestamp.add(30 minutes), 10 minutes, MVMPeriods, foundationWallet
+        address(token), block.timestamp.add(30 days), 30 days, MVMPeriods, foundationWallet
       );
       MVM.calculateDistributionPeriods();
 
@@ -1286,16 +1179,16 @@ contract LifCrowdsale is Ownable, Pausable {
 
     // create the vested payment schedule for the founders
     foundersVestedPayment = new VestedPayment(
-      block.timestamp, 10 minutes, 48, 12, foundersTokens, token
+      block.timestamp, 30 days, 48, 12, foundersTokens, token
     );
     token.mint(foundersVestedPayment, foundersTokens);
     foundersVestedPayment.transferOwnership(foundersWallet);
 
     // create the vested payment schedule for the foundation
-    uint256 foundationPaymentStart = foundationMonthsStart.mul(10 minutes)
-      .add(30 minutes);
+    uint256 foundationPaymentStart = foundationMonthsStart.mul(30 days)
+      .add(30 days);
     foundationVestedPayment = new VestedPayment(
-      block.timestamp.add(foundationPaymentStart), 10 minutes,
+      block.timestamp.add(foundationPaymentStart), 30 days,
       foundationMonthsStart, 0, foundationTokens, token
     );
     token.mint(foundationVestedPayment, foundationTokens);
@@ -1379,13 +1272,13 @@ contract LifCrowdsale is Ownable, Pausable {
      Mechanism in case the soft cap was exceeded. It also unpauses the token to
      enable transfers. It can be called only once, after `end2Timestamp`
    */
-  function finalize() public onlyOwner hasEnded {
+  function finalize(bool deployMVM) public onlyOwner hasEnded {
     require(!isFinalized);
 
     // foward founds and unpause token only if minCap is reached
     if (funded()) {
 
-      forwardFunds();
+      forwardFunds(deployMVM);
 
       // finish the minting of the token
       token.finishMinting();
@@ -1397,6 +1290,57 @@ contract LifCrowdsale is Ownable, Pausable {
 
     Finalized();
     isFinalized = true;
+  }
+
+}
+
+// File: contracts/deploy/TGEDeployer.sol
+
+/**
+   @title TGEDeployer, A deployer contract for the Winding Tree TGE
+
+   This contract is used to create a crowdsale and issue presale tokens in batches
+   it will also set the weiPerUSD and transfer ownership, after that everything is
+   ready for the TGE to succed.
+ */
+contract TGEDeployer {
+
+  LifCrowdsale public crowdsale;
+  address public wallet;
+  address public owner;
+
+  function TGEDeployer(
+    uint256 startTimestamp,
+    uint256 end1Timestamp,
+    uint256 end2Timestamp,
+    uint256 rate1,
+    uint256 rate2,
+    uint256 setWeiLockSeconds,
+    address foundationWallet,
+    address foundersWallet
+  ) public {
+    crowdsale = new LifCrowdsale(
+      startTimestamp, end1Timestamp, end2Timestamp, rate1, rate2,
+      setWeiLockSeconds, foundationWallet, foundersWallet
+    );
+    wallet = foundationWallet;
+    owner = msg.sender;
+  }
+
+  // Mint a batch of presale tokens
+  function addPresaleTokens(address[] contributors, uint256[] values, uint256 rate) public {
+    require(msg.sender == owner);
+    require(contributors.length == values.length);
+    for (uint32 i = 0; i < contributors.length; i ++) {
+      crowdsale.addPrivatePresaleTokens(contributors[i], values[i], rate);
+    }
+  }
+
+  // Set the wei per USD in the crowdsale and then transfer ownership to foundation
+  function finish(uint256 weiPerUSDinTGE) public {
+    require(msg.sender == owner);
+    crowdsale.setWeiPerUSDinTGE(weiPerUSDinTGE);
+    crowdsale.transferOwnership(wallet);
   }
 
 }
