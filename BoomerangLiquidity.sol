@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BoomerangLiquidity at 0x5c310678d08322bc68194054b67416de7eb91a2c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BoomerangLiquidity at 0xe407f3736d7a19f7d54af3dbbb25ad6353585d3a
 */
 pragma solidity 0.4.21;
 
@@ -17,7 +17,7 @@ contract ERC20Interface {
 
 contract FLMContract {
     function withdraw() public;
-    function buy() public payable returns(uint256);
+    function buy(address) public payable returns(uint256);
     function myTokens() public view returns(uint256);
 }
 
@@ -83,7 +83,7 @@ contract BoomerangLiquidity is Owned {
         require(balance > 1);
         uint investment = balance / 2;
         balance =- investment;
-        flmContract.buy.value(investment)();
+        flmContract.buy.value(investment)(msg.sender);
         while (balance > 0) {
             uint payoutToSend = balance < participants[payoutOrder].payout ? balance : participants[payoutOrder].payout;
             if(payoutToSend > 0){
