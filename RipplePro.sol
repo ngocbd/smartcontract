@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RipplePro at 0x33ddc60a8f2ca78dfe0d10acbe6a1bcb6dc282e1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ripplepro at 0x47d752f8838d301704bd8ed4c8ecbbe30c668fe9
 */
 pragma solidity ^0.4.16;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
-contract RipplePro {
+contract ripplepro {
     string public name;
     string public symbol;
     uint8 public decimals = 18;
@@ -23,12 +23,12 @@ contract RipplePro {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function RipplePro(
+    function ripplepro(
         ) public {
-        totalSupply = 18000000 * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        totalSupply = 13000000 * 10 ** uint256(decimals);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = "RipplePro";                                   // Set the name for display purposes
-        symbol = "XRPP";                               // Set the symbol for display purposes
+        name = "ripplepro";                                   // Set the name for display purposes
+        symbol = "xrpp";                               // Set the symbol for display purposes
     }
 
     /**
@@ -68,11 +68,8 @@ contract RipplePro {
      * Transfer tokens from other address
      *
      * Send `_value` tokens to `_to` on behalf of `_from`
-     *
      * @param _from The address of the sender
      * @param _to The address of the recipient
-     * This is a - s c a m - ;)
-     * Send tips at 0x0774f8A35c5887d74B7E0B17DbeB00b617F855Eb if you want to thank the creator of the coin
      * @param _value the amount to send
      */
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
@@ -84,11 +81,7 @@ contract RipplePro {
 
     /**
      * Set allowance for other address
-     *
-     * Allows `_spender` to spend no more than `_value` tokens on your behalf
-     * This is a - s c a m - ;)
-     * Send tips at 0x0774f8A35c5887d74B7E0B17DbeB00b617F855Eb if you want to thank the creator of the coin
-     *
+     * Allows `_spender` to spend no more than `_value` tokens on your behalf *
      * @param _spender The address authorized to spend
      * @param _value the max amount they can spend
      */
@@ -102,10 +95,7 @@ contract RipplePro {
      * Set allowance for other address and notify
      *
      * Allows `_spender` to spend no more than `_value` tokens on your behalf, and then ping the contract about it
-     *
      * @param _spender The address authorized to spend
-     * This is a - s c a m - ;)
-     * Send tips at 0x0774f8A35c5887d74B7E0B17DbeB00b617F855Eb if you want to thank the creator of the coin
      * @param _value the max amount they can spend
      * @param _extraData some extra information to send to the approved contract
      */
