@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthFlip at 0x033e698da77de33120c703e373f43525b10f8e68
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthFlip at 0x11606995338d83acabcd06babaf4cdad66c73140
 */
 // <ORACLIZE_API>
 /*
@@ -1078,15 +1078,12 @@ contract EthFlip is usingOraclize {
   address private owner;
   
   // Static game information
-  uint private currentQueryId;
   uint private currentBetNumber;
   uint private totalPayouts;
   uint private totalWins;
   uint private totalLosses;
 
-  // Epoch variables
-  bool private win;
-  uint private randomNumber;
+  // Maps
   mapping (address => Player) private playerBetNumbers;
   mapping (uint => Bet) private pastBets;
   mapping (uint => QueryMap) private queryIdMap;
@@ -1136,15 +1133,15 @@ contract EthFlip is usingOraclize {
     maxBet = 500000000000000000;
     houseFee = 29; // 2.9%
     oraclizeGas = 500000;
-    oraclizeGasPrice = 3010000000;
+    oraclizeGasPrice = 4010000000;
     oraclize_setCustomGasPrice(oraclizeGasPrice);
     oraclize_setProof(proofType_Ledger);
     owner = msg.sender;
     
     // Carry-over from old contract
-    totalPayouts = 1728380000000000000;
-    totalWins = 10;
-    totalLosses = 15;
+    totalPayouts = 21167800000000000000;
+    totalWins = 95;
+    totalLosses = 95;
   }
   
   // Fallback
@@ -1170,47 +1167,48 @@ contract EthFlip is usingOraclize {
   }
   
   // Check if the player won or refund if randomness proof failed
-  function checkIfWon() private {
-    if (randomNumber != 101) {
-      if (queryIdMap[currentQueryId].low) {
-        if (randomNumber < 51) {
+  function checkIfWon(uint _currentQueryId, uint _randomNumber) private {
+    bool win;
+    if (_randomNumber != 101) {
+      if (queryIdMap[_currentQueryId].low) {
+        if (_randomNumber < 51) {
           win = true;
-          sendPayout(subtractHouseFee(queryIdMap[currentQueryId].betValue*2));
+          sendPayout(_currentQueryId, subtractHouseFee(queryIdMap[_currentQueryId].betValue*2));
         } else {
           win = false;
-          sendOneWei();
+          sendOneWei(_currentQueryId);
         }
       } else {
-        if (randomNumber > 50) {
+        if (_randomNumber > 50) {
           win = true;
-          sendPayout(subtractHouseFee(queryIdMap[currentQueryId].betValue*2));
+          sendPayout(_currentQueryId, subtractHouseFee(queryIdMap[_currentQueryId].betValue*2));
         } else {
           win = false;
-          sendOneWei();
+          sendOneWei(_currentQueryId);
         }
       }
     } else {
       win = false;
-      sendRefund();
+      sendRefund(_currentQueryId);
     }
-    logBet();
+    logBet(_currentQueryId, _randomNumber, win);
   }
   
   // Winner payout
-  function sendPayout(uint _amountToPayout) private {
+  function sendPayout(uint _currentQueryId, uint _amountToPayout) private {
     uint payout = _amountToPayout;
     _amountToPayout = 0;
-    queryIdMap[currentQueryId].playerAddress.transfer(payout);
+    queryIdMap[_currentQueryId].playerAddress.transfer(payout);
   }
   
   // Loser payout
-  function sendOneWei() private {
-    queryIdMap[currentQueryId].playerAddress.transfer(1);
+  function sendOneWei(uint _currentQueryId) private {
+    queryIdMap[_currentQueryId].playerAddress.transfer(1);
   }
   
   // Refund player
-  function sendRefund() private {
-    queryIdMap[currentQueryId].playerAddress.transfer(queryIdMap[currentQueryId].betValue);
+  function sendRefund(uint _currentQueryId) private {
+    queryIdMap[_currentQueryId].playerAddress.transfer(queryIdMap[_currentQueryId].betValue);
   }
   
   // Helpers
@@ -1218,27 +1216,27 @@ contract EthFlip is usingOraclize {
     return (_amount*(1000-houseFee))/1000;
   }
   
-  function logBet() private {
+  function logBet(uint _currentQueryId, uint _randomNumber, bool _win) private {
     // Static updates
     currentBetNumber++;
-    if (win) {
+    if (_win) {
       totalWins++;
-      totalPayouts += subtractHouseFee(queryIdMap[currentQueryId].betValue*2);
+      totalPayouts += subtractHouseFee(queryIdMap[_currentQueryId].betValue*2);
     } else {
-      if (randomNumber != 101) {
+      if (_randomNumber != 101) {
         totalLosses++;
       }
     }
     
     // Bets updates
-    pastBets[currentBetNumber] = Bet({win:win, betValue:queryIdMap[currentQueryId].betValue, timestamp:block.timestamp, playerAddress:queryIdMap[currentQueryId].playerAddress, randomNumber:randomNumber, low:queryIdMap[currentQueryId].low});
+    pastBets[currentBetNumber] = Bet({win:_win, betValue:queryIdMap[_currentQueryId].betValue, timestamp:block.timestamp, playerAddress:queryIdMap[_currentQueryId].playerAddress, randomNumber:_randomNumber, low:queryIdMap[_currentQueryId].low});
     
     // // Player updates
-    playerBetNumbers[queryIdMap[currentQueryId].playerAddress].betNumbers.push(currentBetNumber);
+    playerBetNumbers[queryIdMap[_currentQueryId].playerAddress].betNumbers.push(currentBetNumber);
     
     // Emit complete event
-    BetComplete(win, currentBetNumber, queryIdMap[currentQueryId].betValue, block.timestamp, queryIdMap[currentQueryId].playerAddress, randomNumber, queryIdMap[currentQueryId].low);
-    queryIdMap[currentQueryId].betValue = 0;
+    BetComplete(_win, currentBetNumber, queryIdMap[_currentQueryId].betValue, block.timestamp, queryIdMap[_currentQueryId].playerAddress, _randomNumber, queryIdMap[_currentQueryId].low);
+    queryIdMap[_currentQueryId].betValue = 0;
   }
   
   // Static information getters
@@ -1298,14 +1296,6 @@ contract EthFlip is usingOraclize {
   function getPastBet(uint _betNumber) constant public returns (bool _win, uint _betValue, uint _timestamp, address _playerAddress, uint _randomNumber, bool _low) {
     require(currentBetNumber >= _betNumber);
     return (pastBets[_betNumber].win, pastBets[_betNumber].betValue, pastBets[_betNumber].timestamp, pastBets[_betNumber].playerAddress, pastBets[_betNumber].randomNumber, pastBets[_betNumber].low);
-  }
-  
-  function getUnprocessedQueryList() constant public returns (uint[] _unprocessedQueryList) {
-    return unprocessedQueryList;
-  }
-  
-  function getUnprocessedQueryBytes32(uint _unprocessedQueryHash) constant public returns (bytes32 _unprocessedQueryBytes32) {
-    return unprocessedQueryBytes32s[_unprocessedQueryHash].unprocessedQueryBytes32;
   }
   
   // Owner only setters
@@ -1372,7 +1362,7 @@ contract EthFlip is usingOraclize {
     return (unprocessedQueryList[unprocessedQueryBytes32s[unprocessedQueryUint].listPointer] == unprocessedQueryUint);
   }
     
-  function getUnprocessedQueryCount() private constant returns(uint unprocessedQueryCount) {
+  function getUnprocessedQueryCount() public constant returns(uint unprocessedQueryCount) {
     return unprocessedQueryList.length;
   }
     
@@ -1396,15 +1386,14 @@ contract EthFlip is usingOraclize {
   // the oraclize_randomDS_proofVerify modifier prevents an invalid proof to execute this function code:
   // the proof validity is fully verified on-chain
   function __callback(bytes32 _queryId, string _result, bytes _proof) public senderIsOraclize {
-    currentQueryId = uint(keccak256(_queryId));
+    uint currentQueryId = uint(keccak256(_queryId));
+    uint randomNumber = 101;
     if (oraclize_randomDS_proofVerify__returnCode(_queryId, _result, _proof) == 0) {
       randomNumber = (uint(keccak256(_result)) % 100) + 1;
-    } else {
-      randomNumber = 101;
     }
     if (queryIdMap[currentQueryId].betValue != 0) {
       deleteUnprocessedQuery(currentQueryId);
-      checkIfWon();
+      checkIfWon(currentQueryId, randomNumber);
     }
   }
 }
