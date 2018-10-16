@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract cryptoChallenge at 0x545ef6db327e0861f199222c0c2d162a0f63e723
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoChallenge at 0xff58b2da0414b4fc4cf18f4ec7230ba7b82677e2
 */
 pragma solidity ^0.4.20;
 
@@ -70,7 +70,7 @@ contract ERC721 {
     // function supportsInterface(bytes4 _interfaceID) external view returns (bool);
 }
 
-contract cryptoChallenge is ERC721{
+contract CryptoChallenge is ERC721{
   using SafeMath for uint256;
 
   event Bought (uint256 indexed _tokenId, address indexed _owner, uint256 _price);
@@ -104,7 +104,7 @@ contract cryptoChallenge is ERC721{
   mapping (uint256 => address) private approvedOfToken;
   mapping (uint256 => uint256) private indexOfId;
   
-  function cryptoChallenge () public {
+  function CryptoChallenge () public {
     owner = msg.sender;
     admins[owner] = true;    
   }
@@ -364,33 +364,6 @@ contract cryptoChallenge is ERC721{
     return witnessOfToken[_tokenId];
   }
 
-  function bet1Of (uint256 _tokenId) public view returns (uint256 _bet1) {
-    return bet1OfToken[_tokenId];
-  }
-
-
-  function bet2Of (uint256 _tokenId) public view returns (uint256 _bet2) {
-    return bet2OfToken[_tokenId];
-  }
-
-
-  function bet1deltaOf (uint256 _tokenId) public view returns (uint256 _bet1delta) {
-    return bet1deltaOfToken[_tokenId];
-  }
-
-  function bet2deltaOf (uint256 _tokenId) public view returns (uint256 _bet2delta) {
-    return bet2deltaOfToken[_tokenId];
-  }
-
-  function p1Of (uint256 _tokenId) public view returns (address _p1Of) {
-    return p1OfToken[_tokenId];
-  }
-
-
-  function p2Of (uint256 _tokenId) public view returns (address _p2Of) {
-    return p2OfToken[_tokenId];
-  }
-
   function allOf (uint256 _tokenId) external view returns (address _owner1, address _owner2, uint256 _price1, uint256 _price2, uint256 _free1, uint256 _free2, address _witness) {
     return (owner1Of(_tokenId), owner2Of(_tokenId), price1Of(_tokenId), price2Of(_tokenId), free1Of(_tokenId), free2Of(_tokenId), witnessOf(_tokenId));
   }
@@ -402,26 +375,27 @@ contract cryptoChallenge is ERC721{
     return size > 0;
   }
   
-function judge(uint256 _tokenId, bool _isP1Win) onlyWitness(_tokenId) public {
+  function judge(uint256 _tokenId, bool _isP1Win) onlyWitness(_tokenId) public {
     require(price2OfToken[_tokenId] != 0);
     require(now > free2OfToken[_tokenId]);
-
-    uint reward = bet1OfToken[_tokenId] + bet2OfToken[_tokenId];
+    uint reward = bet1OfToken[_tokenId] + bet2OfToken[_tokenId] + calculateDevCut(price1OfToken[_tokenId] + price2OfToken[_tokenId]);
     reward -= calculateDevCut(reward);
     if (_isP1Win == true) {
-      p1OfToken[_tokenId].transfer(reward.mul(bet1OfToken[_tokenId]).div(bet1OfToken[_tokenId] + price1OfToken[_tokenId]));
-      owner1OfToken[_tokenId].transfer(reward.mul(price1OfToken[_tokenId]).div(bet1OfToken[_tokenId] + price1OfToken[_tokenId]));
+      reward = reward.div(bet1OfToken[_tokenId] + price1OfToken[_tokenId]);
+      p1OfToken[_tokenId].transfer(reward.mul(bet1OfToken[_tokenId]));
+      owner1OfToken[_tokenId].transfer(reward.mul(price1OfToken[_tokenId]));
     } else {
-      p2OfToken[_tokenId].transfer(reward.mul(bet2OfToken[_tokenId]).div(bet2OfToken[_tokenId] + price2OfToken[_tokenId]));
-      owner2OfToken[_tokenId].transfer(reward.mul(price2OfToken[_tokenId]).div(bet2OfToken[_tokenId] + price2OfToken[_tokenId]));
+      reward = reward.div(bet2OfToken[_tokenId] + price2OfToken[_tokenId]);
+      p2OfToken[_tokenId].transfer(reward.mul(bet2OfToken[_tokenId]));
+      owner2OfToken[_tokenId].transfer(reward.mul(price2OfToken[_tokenId]));
     }
   }
 
-  function accept1(uint256 _tokenId, uint256 _price2) public payable {
-    require(msg.sender == p2OfToken[_tokenId]);
-    require(msg.value >= bet2OfToken[_tokenId]);
-    require(_price2 > 0);
-    price2OfToken[_tokenId] = _price2;
+  function accept1(uint256 _tokenId, uint256 _price1) public payable {
+    require(msg.sender == p1OfToken[_tokenId]);
+    require(msg.value >= bet1OfToken[_tokenId]);
+    require(_price1 > 0);
+    price2OfToken[_tokenId] = _price1;
   }
 
   function accept2(uint256 _tokenId) public payable {
@@ -439,19 +413,18 @@ function judge(uint256 _tokenId, bool _isP1Win) onlyWitness(_tokenId) public {
   
   function cancel2(uint256 _tokenId) public {
     require(msg.sender == p1OfToken[_tokenId]);
-    require(bet1deltaOfToken[_tokenId] != 0);
+    require(price2OfToken[_tokenId] == 0);
     msg.sender.transfer(bet1deltaOfToken[_tokenId]);
     bet1deltaOfToken[_tokenId] = 0; 
   }
   
-  function issueToken(address p2, address witness, uint256 bet2, uint256 price1, uint256 frozen1, uint256 frozen2) payable public {
+  function issueToken(address p2, address witness, uint256 price1, uint256 frozen1, uint256 frozen2) payable public {
     require(msg.value >= 1000);
     require(witness != msg.sender);
     require(witness != p2);
     require(price1 > 0);
     uint i = listedTokens.length;
     bet1OfToken[i] = msg.value;
-    bet2OfToken[i] = bet2;
     witnessOfToken[i] = witness;
     p1OfToken[i] = owner1OfToken[i] = msg.sender;  
     p2OfToken[i] = owner2OfToken[i] = p2;    
@@ -460,6 +433,7 @@ function judge(uint256 _tokenId, bool _isP1Win) onlyWitness(_tokenId) public {
     free2OfToken[i] = now + frozen1 + frozen2;
     listedTokens.push(i);
   }
+
 
   function addBet(uint256 _tokenId, uint256 _bet2delta) public payable {
     require(msg.sender == p1OfToken[_tokenId]);
