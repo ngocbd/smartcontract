@@ -1,103 +1,239 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x2d1d4548d5bf0e2feb9f21084753f2f2ca60209c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x7fe52904070ef775e87c0b6c24575f8119a29154
 */
-pragma solidity ^0.4.23;
-
-
-contract Owned {
-    address public owner;
-    function Owned() public {
-        owner = msg.sender;
+pragma solidity ^0.4.18;
+ 
+contract Token {
+    string public symbol = "";
+    string public name = "";
+    uint8 public constant decimals = 18;
+	string public constant ICOFactoryVersion = "1.0";
+    uint256 _totalSupply = 0;
+	uint256 _oneEtherEqualsInWei = 0;	
+	uint256 _maxICOpublicSupply = 0;
+	uint256 _ownerICOsupply = 0;
+	uint256 _currentICOpublicSupply = 0;
+	uint256 _blockICOdatetime = 0;
+	address _ICOfundsReceiverAddress = 0;
+	address _remainingTokensReceiverAddress = 0;
+    address owner = 0;	
+    bool setupDone = false;
+	bool isICOrunning = false;
+	bool ICOstarted = false;
+	uint256 ICOoverTimestamp = 0;
+   
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+	event Burn(address indexed _owner, uint256 _value);
+ 
+    mapping(address => uint256) balances;
+ 
+    mapping(address => mapping (address => uint256)) allowed;
+ 
+    function Token(address adr) public {
+        owner = adr;        
     }
-
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
-
-    function transferOwnership(address newOwner) onlyOwner public {
-        owner = newOwner;
-    }
-}
-
-
-interface tokenRecipient { function receiveApproval(address _from, uint _value, address _token, bytes _extraData) public; }
-
-
-contract TokenBase is Owned {
-    string public name;
-    string public symbol;
-    uint8 public decimals = 18;
-    uint public totalSupply;
-    uint public tokenUnit = 10 ** uint(decimals);
-    uint public wanUnit = 10000 * tokenUnit;
-    uint public foundingTime;
-
-    mapping (address => uint) public balanceOf;
-    mapping (address => mapping (address => uint)) public allowance;
-
-    event Transfer(address indexed _from, address indexed _to, uint _value);
-
-    function TokenBase() public {
-        foundingTime = now;
-    }
-
-    function _transfer(address _from, address _to, uint _value) internal {
-        require(_to != 0x0);
-        require(balanceOf[_from] >= _value);
-        require(balanceOf[_to] + _value > balanceOf[_to]);
-        uint previousBalances = balanceOf[_from] + balanceOf[_to];
-        balanceOf[_from] -= _value;
-        balanceOf[_to] += _value;
-        Transfer(_from, _to, _value);
-        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
-    }
-
-    function transfer(address _to, uint _value) public {
-        _transfer(msg.sender, _to, _value);
-    }
-
-    function transferFrom(address _from, address _to, uint _value) public returns (bool success) {
-        require(_value <= allowance[_from][msg.sender]);
-        allowance[_from][msg.sender] -= _value;
-        _transfer(_from, _to, _value);
-        return true;
-    }
-
-    function approve(address _spender, uint _value) public returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
-        return true;
-    }
-
-    function approveAndCall(address _spender, uint _value, bytes _extraData) public returns (bool success) {
-        tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
+	
+	function() public payable
+	{
+		if ((isICOrunning && _blockICOdatetime == 0) || (isICOrunning && _blockICOdatetime > 0 && now <= _blockICOdatetime))
+		{
+			uint256 _amount = ((msg.value * _oneEtherEqualsInWei) / 1000000000000000000);
+			
+			if (((_currentICOpublicSupply + _amount) > _maxICOpublicSupply) && _maxICOpublicSupply > 0) revert();
+			
+			if(!_ICOfundsReceiverAddress.send(msg.value)) revert();					
+			
+			_currentICOpublicSupply += _amount;
+			
+			balances[msg.sender] += _amount;
+			
+			_totalSupply += _amount;			
+			
+			Transfer(this, msg.sender, _amount);
+		}
+		else
+		{
+			revert();
+		}
+	}
+   
+    function SetupToken(string tokenName, string tokenSymbol, uint256 oneEtherEqualsInWei, uint256 maxICOpublicSupply, uint256 ownerICOsupply, address remainingTokensReceiverAddress, address ICOfundsReceiverAddress, uint256 blockICOdatetime) public
+    {
+        if (msg.sender == owner && !setupDone)
+        {
+            symbol = tokenSymbol;
+            name = tokenName;
+			_oneEtherEqualsInWei = oneEtherEqualsInWei;
+			_maxICOpublicSupply = maxICOpublicSupply * 1000000000000000000;									
+			if (ownerICOsupply > 0)
+			{
+				_ownerICOsupply = ownerICOsupply * 1000000000000000000;
+				_totalSupply = _ownerICOsupply;
+				balances[owner] = _totalSupply;
+				Transfer(this, owner, _totalSupply);
+			}			
+			_ICOfundsReceiverAddress = ICOfundsReceiverAddress;
+			if (_ICOfundsReceiverAddress == 0) _ICOfundsReceiverAddress = owner;
+			_remainingTokensReceiverAddress = remainingTokensReceiverAddress;
+			_blockICOdatetime = blockICOdatetime;			
+            setupDone = true;
         }
     }
-}
-
-
-
-contract Token is TokenBase {
-    uint public initialSupply = 1000000 * wanUnit;
-    uint public reserveSupply = 0 * wanUnit;
-
-    function Token() public {
-        totalSupply = initialSupply;
-        balanceOf[msg.sender] = initialSupply;
-        name = "EXC";
-        symbol = "EXC";
+	
+	function StartICO() public returns (bool success)
+    {
+        if (msg.sender == owner && !ICOstarted && setupDone)
+        {
+            ICOstarted = true;			
+			isICOrunning = true;			
+        }
+		else
+		{
+			revert();
+		}
+		return true;
     }
-
-    function releaseReserve(uint value) onlyOwner public {
-        require(reserveSupply >= value);
-        balanceOf[owner] += value;
-        totalSupply += value;
-        reserveSupply -= value;
-        Transfer(0, this, value);
-        Transfer(this, owner, value);
+	
+	function StopICO() public returns (bool success)
+    {
+        if (msg.sender == owner && isICOrunning)
+        {            
+			if (_remainingTokensReceiverAddress != 0 && _maxICOpublicSupply > 0)
+			{
+				uint256 _remainingAmount = _maxICOpublicSupply - _currentICOpublicSupply;
+				if (_remainingAmount > 0)
+				{
+					balances[_remainingTokensReceiverAddress] += _remainingAmount;
+					_totalSupply += _remainingAmount;
+					Transfer(this, _remainingTokensReceiverAddress, _remainingAmount);	
+				}
+			}				
+			isICOrunning = false;	
+			ICOoverTimestamp = now;
+        }
+		else
+		{
+			revert();
+		}
+		return true;
     }
-
+	
+	function BurnTokens(uint256 amountInWei) public returns (bool success)
+    {
+		if (balances[msg.sender] >= amountInWei)
+		{
+			balances[msg.sender] -= amountInWei;
+			_totalSupply -= amountInWei;
+			Burn(msg.sender, amountInWei);
+			Transfer(msg.sender, 0, amountInWei);
+		}
+		else
+		{
+			revert();
+		}
+		return true;
+    }
+ 
+    function totalSupply() public constant returns (uint256 totalSupplyValue) {        
+        return _totalSupply;
+    }
+	
+	function OneEtherEqualsInWei() public constant returns (uint256 oneEtherEqualsInWei) {        
+        return _oneEtherEqualsInWei;
+    }
+	
+	function MaxICOpublicSupply() public constant returns (uint256 maxICOpublicSupply) {        
+        return _maxICOpublicSupply;
+    }
+	
+	function OwnerICOsupply() public constant returns (uint256 ownerICOsupply) {        
+        return _ownerICOsupply;
+    }
+	
+	function CurrentICOpublicSupply() public constant returns (uint256 currentICOpublicSupply) {        
+        return _currentICOpublicSupply;
+    }
+	
+	function RemainingTokensReceiverAddress() public constant returns (address remainingTokensReceiverAddress) {        
+        return _remainingTokensReceiverAddress;
+    }
+	
+	function ICOfundsReceiverAddress() public constant returns (address ICOfundsReceiver) {        
+        return _ICOfundsReceiverAddress;
+    }
+	
+	function Owner() public constant returns (address ownerAddress) {        
+        return owner;
+    }
+	
+	function SetupDone() public constant returns (bool setupDoneFlag) {        
+        return setupDone;
+    }
+    
+	function IsICOrunning() public constant returns (bool isICOrunningFalg) {        
+        return isICOrunning;
+    }
+	
+	function IsICOstarted() public constant returns (bool isICOstartedFlag) {        
+        return ICOstarted;
+    }
+	
+	function ICOoverTimeStamp() public constant returns (uint256 ICOoverTimestampCheck) {        
+        return ICOoverTimestamp;
+    }
+	
+	function BlockICOdatetime() public constant returns (uint256 blockStopICOdate) {        
+        return _blockICOdatetime;
+    }
+	
+	function TimeNow() public constant returns (uint256 timenow) {        
+        return now;
+    }
+	 
+    function balanceOf(address _owner) public constant returns (uint256 balance) {
+        return balances[_owner];
+    }
+ 
+    function transfer(address _to, uint256 _amount) public returns (bool success) {
+        if (balances[msg.sender] >= _amount
+            && _amount > 0
+            && balances[_to] + _amount > balances[_to]) {
+            balances[msg.sender] -= _amount;
+            balances[_to] += _amount;
+            Transfer(msg.sender, _to, _amount);
+            return true;
+        } else {
+            return false;
+        }
+    }
+ 
+    function transferFrom(
+        address _from,
+        address _to,
+        uint256 _amount
+    ) public returns (bool success) {
+        if (balances[_from] >= _amount
+            && allowed[_from][msg.sender] >= _amount
+            && _amount > 0
+            && balances[_to] + _amount > balances[_to]) {
+            balances[_from] -= _amount;
+            allowed[_from][msg.sender] -= _amount;
+            balances[_to] += _amount;
+            Transfer(_from, _to, _amount);
+            return true;
+        } else {
+            return false;
+        }
+    }
+ 
+    function approve(address _spender, uint256 _amount) public returns (bool success) {
+        allowed[msg.sender][_spender] = _amount;
+        Approval(msg.sender, _spender, _amount);
+        return true;
+    }
+ 
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+        return allowed[_owner][_spender];
+    }
 }
