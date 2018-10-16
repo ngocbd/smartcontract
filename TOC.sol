@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TOC at 0xbe58de221d35b39b1e143e749805c2c9fd8dcc74
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TOC at 0x19d6eb7013504e384cd4d440e0ec674d0b636d7f
 */
 pragma solidity ^0.4.16;
 
@@ -25,13 +25,13 @@ mapping(address => mapping (address => uint256)) public allowed;
 
 /*EVENTS*/		
 /*broadcast token transfers on the blockchain*/
-event BroadcastTransfer(address indexed from, address indexed to, uint256 value);
+event Transfer(address indexed from, address indexed to, uint256 value);
 /*broadcast token spend approvals on the blockchain*/
-event BroadcastApproval(address indexed _owner, address indexed _spender, uint _value);
+event Approval(address indexed _owner, address indexed _spender, uint _value);
 
 /*MINT TOKEN*/
-function TOC() public {
-name = "TOC";
+constructor() public {
+name = "TokenChanger";
 symbol = "TOC";
 decimals = 18;
 /*one billion base units*/
@@ -56,7 +56,7 @@ balances[_to] += _value;
 /*check integrity of transfer operation*/
 assert(balances[_from] + balances[_to] == PreviousBalances);
 /*broadcast transaction*/
-emit BroadcastTransfer(_from, _to, _value); 
+emit Transfer(_from, _to, _value); 
 }
 
 /*PUBLIC TRANSFERS*/
@@ -70,7 +70,7 @@ function approve(address _spender, uint256 _value) public returns (bool success)
 /*update allowance record*/    
 allowed[msg.sender][_spender] = _value;
 /*broadcast approval*/
-emit BroadcastApproval(msg.sender, _spender, _value); 
+emit Approval(msg.sender, _spender, _value); 
 return true;                                        
 }
 
@@ -97,4 +97,8 @@ spender.receiveApproval(msg.sender, _value, this, _extraData);
 return true;
 }
 
+/*INVALID TRANSACTIONS*/
+function () payable external{
+revert();  
+}
 }/////////////////////////////////end of toc token contract
