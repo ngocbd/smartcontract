@@ -1,56 +1,45 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMath at 0x081286304202e8967d3de0bdaf1d77d7d0a291ea
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMath at 0xfe1e365ebbb792dab452b94d07a46e8a628d5881
 */
 pragma solidity ^0.4.11;
 
-/*
-    Overflow protected math functions
-*/
-contract SafeMath {
-    /**
-        constructor
-    */
-    function SafeMath() {
+
+library SafeMath {
+  function mul(uint a, uint b) internal returns (uint) {
+    uint c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+  function div(uint a, uint b) internal returns (uint) {
+    assert(b > 0);
+    uint c = a / b;
+    assert(a == b * c + a % b);
+    return c;
+  }
+  function sub(uint a, uint b) internal returns (uint) {
+    assert(b <= a);
+    return a - b;
+  }
+  function add(uint a, uint b) internal returns (uint) {
+    uint c = a + b;
+    assert(c >= a);
+    return c;
+  }
+  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a >= b ? a : b;
+  }
+  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
+    return a < b ? a : b;
+  }
+  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a >= b ? a : b;
+  }
+  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
+    return a < b ? a : b;
+  }
+  function assert(bool assertion) internal {
+    if (!assertion) {
+      throw;
     }
-
-    /**
-        @dev returns the sum of _x and _y, asserts if the calculation overflows
-
-        @param _x   value 1
-        @param _y   value 2
-
-        @return sum
-    */
-    function safeAdd(uint256 _x, uint256 _y) internal returns (uint256) {
-        uint256 z = _x + _y;
-        assert(z >= _x);
-        return z;
-    }
-
-    /**
-        @dev returns the difference of _x minus _y, asserts if the subtraction results in a negative number
-
-        @param _x   minuend
-        @param _y   subtrahend
-
-        @return difference
-    */
-    function safeSub(uint256 _x, uint256 _y) internal returns (uint256) {
-        assert(_x >= _y);
-        return _x - _y;
-    }
-
-    /**
-        @dev returns the product of multiplying _x by _y, asserts if the calculation overflows
-
-        @param _x   factor 1
-        @param _y   factor 2
-
-        @return product
-    */
-    function safeMul(uint256 _x, uint256 _y) internal returns (uint256) {
-        uint256 z = _x * _y;
-        assert(_x == 0 || z / _x == _y);
-        return z;
-    }
+  }
 }
