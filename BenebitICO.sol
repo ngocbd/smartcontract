@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BenebitICO at 0x1a853aa1e872d330f9e743777e02c3ced98b56cc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BenebitICO at 0xc1d55f2a28527f779c15340866a15bcf33623bac
 */
 pragma solidity ^0.4.11;
 /**
@@ -333,9 +333,9 @@ contract Crowdsale is Ownable {
     preStartTime = _startTime;
     
     // Pre-ICO end time
-     preEndTime = 1521637200;
+     preEndTime = 1519045200;
     // // ICO start Time
-     ICOstartTime = 1521982800;
+     ICOstartTime = 1519304400;
     // ICO end Time
     ICOEndTime = _endTime;
     // Base Rate of BNE Token
@@ -413,6 +413,8 @@ contract Crowdsale is Ownable {
         remainingPublicSupply = remainingPublicSupply.sub(tokens);
     } else if ((accessTime > preEndTime) && (accessTime < ICOstartTime)){
       revert();
+    } else {
+      revert();
     }
     // update state
     weiRaised = weiRaised.add(weiAmount);
@@ -441,10 +443,10 @@ contract Crowdsale is Ownable {
   function burnToken() onlyOwner public returns (bool) {
     require(hasEnded());
     require(!checkBurnTokens);
+    checkBurnTokens = true;
     token.burnTokens(remainingPublicSupply);
     totalSupply = SafeMath.sub(totalSupply, remainingPublicSupply);
     remainingPublicSupply = 0;
-    checkBurnTokens = true;
     return true;
   }
   /** 
@@ -507,10 +509,11 @@ contract Crowdsale is Ownable {
    * @param tokens value of token
  */
   function transferToken(address beneficiary, uint256 tokens) onlyOwner public {
-    require(ICOEndTime > now);
+   
+    require ((now >= preStartTime) && (now <= ICOEndTime));
     tokens = SafeMath.mul(tokens,1 ether);
     require(remainingPublicSupply >= tokens);
-    remainingPublicSupply = SafeMath.sub(remainingPublicSupply,tokens);
+    remainingPublicSupply = SafeMath.sub(remainingPublicSupply, tokens);
     token.mint(beneficiary, tokens);
   }
   function getTokenAddress() onlyOwner public returns (address) {
@@ -689,10 +692,10 @@ contract BenebitToken is MintableToken {
 }
 contract BenebitICO is Crowdsale, CappedCrowdsale, RefundableCrowdsale {
     uint256 _startTime = 1516626000;
-    uint256 _endTime = 1525093200; 
-    uint256 _rate = 3000;
+    uint256 _endTime = 1523365200; 
+    uint256 _rate = 5800;
     uint256 _goal = 5000 * 1 ether;
-    uint256 _cap = 40000 * 1 ether;
+    uint256 _cap = 22500 * 1 ether;
     address _wallet  = 0x88BfBd2B464C15b245A9f7a563D207bd8A161054;   
     /** Constructor BenebitICO */
     function BenebitICO() 
