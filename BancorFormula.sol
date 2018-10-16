@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorFormula at 0x6f7df45eb955b2f7d18e73b332e89088fdda4fc7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorFormula at 0xb04ef665f3e7ca5b1cddb67cc7a1143381c17799
 */
 pragma solidity ^0.4.11;
 
@@ -75,19 +75,21 @@ contract Utils {
     }
 }
 
+
 /*
     Bancor Formula interface
 */
 contract IBancorFormula {
-    function calculatePurchaseReturn(uint256 _supply, uint256 _reserveBalance, uint32 _reserveRatio, uint256 _depositAmount) public constant returns (uint256);
-    function calculateSaleReturn(uint256 _supply, uint256 _reserveBalance, uint32 _reserveRatio, uint256 _sellAmount) public constant returns (uint256);
+    function calculatePurchaseReturn(uint256 _supply, uint256 _connectorBalance, uint32 _connectorWeight, uint256 _depositAmount) public constant returns (uint256);
+    function calculateSaleReturn(uint256 _supply, uint256 _connectorBalance, uint32 _connectorWeight, uint256 _sellAmount) public constant returns (uint256);
 }
 
-contract BancorFormula is IBancorFormula, Utils {
-    string public version = '0.2';
 
-    uint32 private constant MAX_CRR = 1000000;
+contract BancorFormula is IBancorFormula, Utils {
+    string public version = '0.3';
+
     uint256 private constant ONE = 1;
+    uint32 private constant MAX_WEIGHT = 1000000;
     uint8 private constant MIN_PRECISION = 32;
     uint8 private constant MAX_PRECISION = 127;
 
@@ -113,12 +115,12 @@ contract BancorFormula is IBancorFormula, Utils {
     uint256[128] private maxExpArray;
 
     function BancorFormula() {
-    //  maxExpArray[  0] = 0x60ffffffffffffffffffffffffffffffff;
-    //  maxExpArray[  1] = 0x5ebfffffffffffffffffffffffffffffff;
-    //  maxExpArray[  2] = 0x5cbfffffffffffffffffffffffffffffff;
-    //  maxExpArray[  3] = 0x5abfffffffffffffffffffffffffffffff;
-    //  maxExpArray[  4] = 0x58dfffffffffffffffffffffffffffffff;
-    //  maxExpArray[  5] = 0x56ffffffffffffffffffffffffffffffff;
+    //  maxExpArray[  0] = 0x6bffffffffffffffffffffffffffffffff;
+    //  maxExpArray[  1] = 0x67ffffffffffffffffffffffffffffffff;
+    //  maxExpArray[  2] = 0x637fffffffffffffffffffffffffffffff;
+    //  maxExpArray[  3] = 0x5f6fffffffffffffffffffffffffffffff;
+    //  maxExpArray[  4] = 0x5b77ffffffffffffffffffffffffffffff;
+    //  maxExpArray[  5] = 0x57b3ffffffffffffffffffffffffffffff;
     //  maxExpArray[  6] = 0x5419ffffffffffffffffffffffffffffff;
     //  maxExpArray[  7] = 0x50a2ffffffffffffffffffffffffffffff;
     //  maxExpArray[  8] = 0x4d517fffffffffffffffffffffffffffff;
@@ -240,56 +242,60 @@ contract BancorFormula is IBancorFormula, Utils {
         maxExpArray[124] = 0x00976bd9952c7aa957f5937d790ef65037;
         maxExpArray[125] = 0x009131271922eaa6064b73a22d0bd4f2bf;
         maxExpArray[126] = 0x008b380f3558668c46c91c49a2f8e967b9;
-        maxExpArray[127] = 0x006ae67b5f2f528d5f3189036ee0f27453;
+        maxExpArray[127] = 0x00857ddf0117efa215952912839f6473e6;
     }
 
     /**
-        @dev given a token supply, reserve, CRR and a deposit amount (in the reserve token), calculates the return for a given change (in the main token)
+        @dev given a token supply, connector balance, weight and a deposit amount (in the connector token),
+        calculates the return for a given conversion (in the main token)
 
         Formula:
-        Return = _supply * ((1 + _depositAmount / _reserveBalance) ^ (_reserveRatio / 1000000) - 1)
+        Return = _supply * ((1 + _depositAmount / _connectorBalance) ^ (_connectorWeight / 1000000) - 1)
 
-        @param _supply             token total supply
-        @param _reserveBalance     total reserve
-        @param _reserveRatio       constant reserve ratio, represented in ppm, 1-1000000
-        @param _depositAmount      deposit amount, in reserve token
+        @param _supply              token total supply
+        @param _connectorBalance    total connector balance
+        @param _connectorWeight     connector weight, represented in ppm, 1-1000000
+        @param _depositAmount       deposit amount, in connector token
 
         @return purchase return amount
     */
-    function calculatePurchaseReturn(uint256 _supply, uint256 _reserveBalance, uint32 _reserveRatio, uint256 _depositAmount) public constant returns (uint256) {
+    function calculatePurchaseReturn(uint256 _supply, uint256 _connectorBalance, uint32 _connectorWeight, uint256 _depositAmount) public constant returns (uint256) {
         // validate input
-        require(_supply > 0 && _reserveBalance > 0 && _reserveRatio > 0 && _reserveRatio <= MAX_CRR);
+        require(_supply > 0 && _connectorBalance > 0 && _connectorWeight > 0 && _connectorWeight <= MAX_WEIGHT);
 
         // special case for 0 deposit amount
         if (_depositAmount == 0)
             return 0;
 
-        // special case if the CRR = 100%
-        if (_reserveRatio == MAX_CRR)
-            return safeMul(_supply, _depositAmount) / _reserveBalance;
+        // special case if the weight = 100%
+        if (_connectorWeight == MAX_WEIGHT)
+            return safeMul(_supply, _depositAmount) / _connectorBalance;
 
-        uint256 baseN = safeAdd(_depositAmount, _reserveBalance);
-        var (result, precision) = power(baseN, _reserveBalance, _reserveRatio, MAX_CRR);
+        uint256 result;
+        uint8 precision;
+        uint256 baseN = safeAdd(_depositAmount, _connectorBalance);
+        (result, precision) = power(baseN, _connectorBalance, _connectorWeight, MAX_WEIGHT);
         uint256 temp = safeMul(_supply, result) >> precision;
         return temp - _supply;
      }
 
     /**
-        @dev given a token supply, reserve, CRR and a sell amount (in the main token), calculates the return for a given change (in the reserve token)
+        @dev given a token supply, connector balance, weight and a sell amount (in the main token),
+        calculates the return for a given conversion (in the connector token)
 
         Formula:
-        Return = _reserveBalance * (1 - (1 - _sellAmount / _supply) ^ (1 / (_reserveRatio / 1000000)))
+        Return = _connectorBalance * (1 - (1 - _sellAmount / _supply) ^ (1 / (_connectorWeight / 1000000)))
 
-        @param _supply             token total supply
-        @param _reserveBalance     total reserve
-        @param _reserveRatio       constant reserve ratio, represented in ppm, 1-1000000
-        @param _sellAmount         sell amount, in the token itself
+        @param _supply              token total supply
+        @param _connectorBalance    total connector
+        @param _connectorWeight     constant connector Weight, represented in ppm, 1-1000000
+        @param _sellAmount          sell amount, in the token itself
 
         @return sale return amount
     */
-    function calculateSaleReturn(uint256 _supply, uint256 _reserveBalance, uint32 _reserveRatio, uint256 _sellAmount) public constant returns (uint256) {
+    function calculateSaleReturn(uint256 _supply, uint256 _connectorBalance, uint32 _connectorWeight, uint256 _sellAmount) public constant returns (uint256) {
         // validate input
-        require(_supply > 0 && _reserveBalance > 0 && _reserveRatio > 0 && _reserveRatio <= MAX_CRR && _sellAmount <= _supply);
+        require(_supply > 0 && _connectorBalance > 0 && _connectorWeight > 0 && _connectorWeight <= MAX_WEIGHT && _sellAmount <= _supply);
 
         // special case for 0 sell amount
         if (_sellAmount == 0)
@@ -297,16 +303,18 @@ contract BancorFormula is IBancorFormula, Utils {
 
         // special case for selling the entire supply
         if (_sellAmount == _supply)
-            return _reserveBalance;
+            return _connectorBalance;
 
-        // special case if the CRR = 100%
-        if (_reserveRatio == MAX_CRR)
-            return safeMul(_reserveBalance, _sellAmount) / _supply;
+        // special case if the weight = 100%
+        if (_connectorWeight == MAX_WEIGHT)
+            return safeMul(_connectorBalance, _sellAmount) / _supply;
 
+        uint256 result;
+        uint8 precision;
         uint256 baseD = _supply - _sellAmount;
-        var (result, precision) = power(_supply, baseD, MAX_CRR, _reserveRatio);
-        uint256 temp1 = safeMul(_reserveBalance, result);
-        uint256 temp2 = _reserveBalance << precision;
+        (result, precision) = power(_supply, baseD, MAX_WEIGHT, _connectorWeight);
+        uint256 temp1 = safeMul(_connectorBalance, result);
+        uint256 temp2 = _connectorBalance << precision;
         return (temp1 - temp2) / result;
     }
 
@@ -315,6 +323,7 @@ contract BancorFormula is IBancorFormula, Utils {
             Determine a value of precision.
             Calculate an integer approximation of (_baseN / _baseD) ^ (_expN / _expD) * 2 ^ precision.
             Return the result along with the precision used.
+
         Detailed Description:
             Instead of calculating "base ^ exp", we calculate "e ^ (ln(base) * exp)".
             The value of "ln(base)" is represented with an integer slightly smaller than "ln(base) * 2 ^ precision".
@@ -419,81 +428,80 @@ contract BancorFormula is IBancorFormula, Utils {
 
     /**
         This function can be auto-generated by the script 'PrintFunctionFixedExp.py'.
-        It approximates "e ^ x" via maclauren summation: "(x^0)/0! + (x^1)/1! + ... + (x^n)/n!".
-        It returns "e ^ (x >> precision) << precision", that is, the result is upshifted for accuracy.
+        It approximates "e ^ x" via maclaurin summation: "(x^0)/0! + (x^1)/1! + ... + (x^n)/n!".
+        It returns "e ^ (x / 2 ^ precision) * 2 ^ precision", that is, the result is upshifted for accuracy.
         The global "maxExpArray" maps each "precision" to "((maximumExponent + 1) << (MAX_PRECISION - precision)) - 1".
         The maximum permitted value for "x" is therefore given by "maxExpArray[precision] >> (MAX_PRECISION - precision)".
     */
     function fixedExp(uint256 _x, uint8 _precision) internal constant returns (uint256) {
         uint256 xi = _x;
-        uint256 res = uint256(0xde1bc4d19efcac82445da75b00000000) << _precision;
+        uint256 res = 0;
 
-        res += xi * 0xde1bc4d19efcac82445da75b00000000;
         xi = (xi * _x) >> _precision;
-        res += xi * 0x6f0de268cf7e5641222ed3ad80000000;
+        res += xi * 0x03442c4e6074a82f1797f72ac0000000; // add x^2 * (33! / 2!)
         xi = (xi * _x) >> _precision;
-        res += xi * 0x2504a0cd9a7f7215b60f9be480000000;
+        res += xi * 0x0116b96f757c380fb287fd0e40000000; // add x^3 * (33! / 3!)
         xi = (xi * _x) >> _precision;
-        res += xi * 0x9412833669fdc856d83e6f920000000;
+        res += xi * 0x0045ae5bdd5f0e03eca1ff4390000000; // add x^4 * (33! / 4!)
         xi = (xi * _x) >> _precision;
-        res += xi * 0x1d9d4d714865f4de2b3fafea0000000;
+        res += xi * 0x000defabf91302cd95b9ffda50000000; // add x^5 * (33! / 5!)
         xi = (xi * _x) >> _precision;
-        res += xi * 0x4ef8ce836bba8cfb1dff2a70000000;
+        res += xi * 0x0002529ca9832b22439efff9b8000000; // add x^6 * (33! / 6!)
         xi = (xi * _x) >> _precision;
-        res += xi * 0xb481d807d1aa66d04490610000000;
+        res += xi * 0x000054f1cf12bd04e516b6da88000000; // add x^7 * (33! / 7!)
         xi = (xi * _x) >> _precision;
-        res += xi * 0x16903b00fa354cda08920c2000000;
+        res += xi * 0x00000a9e39e257a09ca2d6db51000000; // add x^8 * (33! / 8!)
         xi = (xi * _x) >> _precision;
-        res += xi * 0x281cdaac677b334ab9e732000000;
+        res += xi * 0x0000012e066e7b839fa050c309000000; // add x^9 * (33! / 9!)
         xi = (xi * _x) >> _precision;
-        res += xi * 0x402e2aad725eb8778fd85000000;
+        res += xi * 0x0000001e33d7d926c329a1ad1a800000; // add x^10 * (33! / 10!)
         xi = (xi * _x) >> _precision;
-        res += xi * 0x5d5a6c9f31fe2396a2af000000;
+        res += xi * 0x00000002bee513bdb4a6b19b5f800000; // add x^11 * (33! / 11!)
         xi = (xi * _x) >> _precision;
-        res += xi * 0x7c7890d442a82f73839400000;
+        res += xi * 0x000000003a9316fa79b88eccf2a00000; // add x^12 * (33! / 12!)
         xi = (xi * _x) >> _precision;
-        res += xi * 0x9931ed54034526b58e400000;
+        res += xi * 0x00000000048177ebe1fa812375200000; // add x^13 * (33! / 13!)
         xi = (xi * _x) >> _precision;
-        res += xi * 0xaf147cf24ce150cf7e00000;
+        res += xi * 0x00000000005263fe90242dcbacf00000; // add x^14 * (33! / 14!)
         xi = (xi * _x) >> _precision;
-        res += xi * 0xbac08546b867cdaa200000;
+        res += xi * 0x0000000000057e22099c030d94100000; // add x^15 * (33! / 15!)
         xi = (xi * _x) >> _precision;
-        res += xi * 0xbac08546b867cdaa20000;
+        res += xi * 0x00000000000057e22099c030d9410000; // add x^16 * (33! / 16!)
         xi = (xi * _x) >> _precision;
-        res += xi * 0xafc441338061b2820000;
+        res += xi * 0x000000000000052b6b54569976310000; // add x^17 * (33! / 17!)
         xi = (xi * _x) >> _precision;
-        res += xi * 0x9c3cabbc0056d790000;
+        res += xi * 0x000000000000004985f67696bf748000; // add x^18 * (33! / 18!)
         xi = (xi * _x) >> _precision;
-        res += xi * 0x839168328705c30000;
+        res += xi * 0x0000000000000003dea12ea99e498000; // add x^19 * (33! / 19!)
         xi = (xi * _x) >> _precision;
-        res += xi * 0x694120286c049c000;
+        res += xi * 0x000000000000000031880f2214b6e000; // add x^20 * (33! / 20!)
         xi = (xi * _x) >> _precision;
-        res += xi * 0x50319e98b3d2c000;
+        res += xi * 0x0000000000000000025bcff56eb36000; // add x^21 * (33! / 21!)
         xi = (xi * _x) >> _precision;
-        res += xi * 0x3a52a1e36b82000;
+        res += xi * 0x0000000000000000001b722e10ab1000; // add x^22 * (33! / 22!)
         xi = (xi * _x) >> _precision;
-        res += xi * 0x289286e0fce000;
+        res += xi * 0x00000000000000000001317c70077000; // add x^23 * (33! / 23!)
         xi = (xi * _x) >> _precision;
-        res += xi * 0x1b0c59eb53400;
+        res += xi * 0x000000000000000000000cba84aafa00; // add x^24 * (33! / 24!)
         xi = (xi * _x) >> _precision;
-        res += xi * 0x114f95b55400;
+        res += xi * 0x000000000000000000000082573a0a00; // add x^25 * (33! / 25!)
         xi = (xi * _x) >> _precision;
-        res += xi * 0xaa7210d200;
+        res += xi * 0x000000000000000000000005035ad900; // add x^26 * (33! / 26!)
         xi = (xi * _x) >> _precision;
-        res += xi * 0x650139600;
+        res += xi * 0x0000000000000000000000002f881b00; // add x^27 * (33! / 27!)
         xi = (xi * _x) >> _precision;
-        res += xi * 0x39b78e80;
+        res += xi * 0x00000000000000000000000001b29340; // add x^28 * (33! / 28!)
         xi = (xi * _x) >> _precision;
-        res += xi * 0x1fd8080;
+        res += xi * 0x000000000000000000000000000efc40; // add x^29 * (33! / 29!)
         xi = (xi * _x) >> _precision;
-        res += xi * 0x10fbc0;
+        res += xi * 0x00000000000000000000000000007fe0; // add x^30 * (33! / 30!)
         xi = (xi * _x) >> _precision;
-        res += xi * 0x8c40;
+        res += xi * 0x00000000000000000000000000000420; // add x^31 * (33! / 31!)
         xi = (xi * _x) >> _precision;
-        res += xi * 0x462;
+        res += xi * 0x00000000000000000000000000000021; // add x^32 * (33! / 32!)
         xi = (xi * _x) >> _precision;
-        res += xi * 0x22;
+        res += xi * 0x00000000000000000000000000000001; // add x^33 * (33! / 33!)
 
-        return res / 0xde1bc4d19efcac82445da75b00000000;
+        return res / 0x688589cc0e9505e2f2fee5580000000 + _x + (ONE << _precision); // divide by 33! and then add x^1 / 1! + x^0 / 0!
     }
 }
