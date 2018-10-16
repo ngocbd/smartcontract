@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IcoOKOToken at 0xd234ddf335917c7a170ad13b748f52ae5791e064
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IcoOKOToken at 0x169e59a41ba10600fddd1b0a72921f503b31d96b
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
 /**
  * Math operations with safety checks
@@ -256,12 +256,12 @@ contract IcoOKOToken is Ownable, SafeMath {
   address public allTokenAddress;
   bool public emergencyFlagAndHiddenCap = false;
   // UNIX format
-  uint256 public startTime = 1513278000; // 14 Dec 2017 19:00:00 GMT
-  uint256 public endTime =   1515870000; // 13 Jan 2018 19:00:00 GMT
+  uint256 public startTime = 1516838400; // 25 Jan 2017 00:00:00 GMT
+  uint256 public endTime =   1524700800; // 26 Apr 2018 00:00:00 GMT
 
-  uint256 public USDto1ETH = 654; // 1 ether = 654$
+  uint256 public USDto1ETH = 1100; // 1 ether = 1100$
   uint256 public price; 
-  uint256 public totalTokensSold = 0;
+  uint256 public totalTokensSold = 524380060997;
   uint256 public constant maxTokensToSold = 84000000000000; // 35% * (240 000 000.000 000)
   OKOToken public token;
 
@@ -269,10 +269,10 @@ contract IcoOKOToken is Ownable, SafeMath {
     wallet = _wallet;
     token = _token;
     allTokenAddress = token.allTokenOwnerOnStart();
-    price = 1 ether / USDto1ETH / 1000000;
+    price = 1 ether / USDto1ETH / 1000000 * 27 / 10;
   }
 
-  function () public payable {
+  function () external payable {
     require(now <= endTime && now >= startTime);
     require(!emergencyFlagAndHiddenCap);
     require(totalTokensSold < maxTokensToSold);
@@ -297,18 +297,8 @@ contract IcoOKOToken is Ownable, SafeMath {
 
   function ChangePrice() onlyOwner public {
     uint256 priceWeiToUSD = 1 ether / USDto1ETH;
-    uint256 price1mToken = priceWeiToUSD / 1000000; // decimals = 6
-    if ( now <= startTime + 5 days) {
-      price = price1mToken; // 1.000000Token = 1$ first 5 days
-    } 
-    else {
-      if ( now <= startTime + 10 days ) {
-        price = price1mToken * 9 / 5; // 1.000000Token = 1.8$ next
-      } 
-      else {
-        price = price1mToken * 27 / 10; // 1.000000Token = 2.7$ to end
-      }
-    }
+    price = priceWeiToUSD / 1000000 * 27 / 10 + priceWeiToUSD / 1000000 * 1 / 2 * ((now - startTime ) / 604800); // 2.7$ on start + 0.5$ per week
+    
 
   }
 
