@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GameOne at 0x918becb3a725caaa5f8e277bb0b914d271331e99
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GameOne at 0x3238db085a2853442e3d74ad47e73ef63bfbc507
 */
 pragma solidity ^0.4.18;
 
@@ -88,9 +88,9 @@ contract Token is SafeMath, owned {
 
     mapping (address => uint) public balanceOf;
     mapping (address => mapping (address => uint)) public allowance;
-    mapping (address => uint) limitAddress;
+    mapping (address => uint) public limitAddress;
 
-    uint public totalSupply = 1 * 10000 * 10000 * 10 ** uint256(decimals);
+    uint public totalSupply = 10 * 10000 * 10000 * 10 ** uint256(decimals);
 
     modifier validAddress(address _address) {
         assert(0x0 != _address);
@@ -189,8 +189,8 @@ contract Token is SafeMath, owned {
 
     function mint(address _to, uint _amount) public validAddress(_to)
     {
-
         if(limitAddress[msg.sender] != 1) return;
+        if(balanceOf[this] == 0) return;
 
         uint supply = _amount;
 
@@ -380,6 +380,9 @@ contract GameOne is SafeMath, Random, owned {
     {
         require(this.balance >= _value);
         _to.transfer(_value);
+        Transfer(this, _to, _value);
         return true;
     }
+
+    event Transfer(address indexed _from, address indexed _to, uint _value);
 }
