@@ -1,11 +1,28 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x75bdaa663281c51bbfb54e060ead4183e37cae49
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xbb3404EAc5fAc754872C42c2a0b711FA14A5b306
 */
 pragma solidity ^0.4.16;
 
+contract owned {
+    address public owner;
+
+    function owned() public {
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function transferOwnership(address newOwner) onlyOwner public {
+        owner = newOwner;
+    }
+}
+
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
-contract TokenERC20 {
+contract TokenERC20 is owned{
     // Public variables of the token
     string public name;
     string public symbol;
@@ -20,8 +37,6 @@ contract TokenERC20 {
     // This generates a public event on the blockchain that will notify clients
     event Transfer(address indexed from, address indexed to, uint256 value);
 
-    // This notifies clients about the amount burnt
-    event Burn(address indexed from, uint256 value);
 
     /**
      * Constrctor function
@@ -37,6 +52,10 @@ contract TokenERC20 {
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
         name = tokenName;                                   // Set the name for display purposes
         symbol = tokenSymbol;                               // Set the symbol for display purposes
+    }
+	
+    function balanceOf(address _owner) public constant returns (uint256 balance) {
+        return balanceOf[_owner];
     }
 
     /**
@@ -75,7 +94,7 @@ contract TokenERC20 {
     /**
      * Transfer tokens from other address
      *
-     * Send `_value` tokens to `_to` on behalf of `_from`
+     * Send `_value` tokens to `_to` in behalf of `_from`
      *
      * @param _from The address of the sender
      * @param _to The address of the recipient
@@ -91,7 +110,7 @@ contract TokenERC20 {
     /**
      * Set allowance for other address
      *
-     * Allows `_spender` to spend no more than `_value` tokens on your behalf
+     * Allows `_spender` to spend no more than `_value` tokens in your behalf
      *
      * @param _spender The address authorized to spend
      * @param _value the max amount they can spend
@@ -105,7 +124,7 @@ contract TokenERC20 {
     /**
      * Set allowance for other address and notify
      *
-     * Allows `_spender` to spend no more than `_value` tokens on your behalf, and then ping the contract about it
+     * Allows `_spender` to spend no more than `_value` tokens in your behalf, and then ping the contract about it
      *
      * @param _spender The address authorized to spend
      * @param _value the max amount they can spend
@@ -120,37 +139,8 @@ contract TokenERC20 {
             return true;
         }
     }
-
-    /**
-     * Destroy tokens
-     *
-     * Remove `_value` tokens from the system irreversibly
-     *
-     * @param _value the amount of money to burn
-     */
-    function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-        balanceOf[msg.sender] -= _value;            // Subtract from the sender
-        totalSupply -= _value;                      // Updates totalSupply
-        Burn(msg.sender, _value);
-        return true;
-    }
-
-    /**
-     * Destroy tokens from other account
-     *
-     * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
-     *
-     * @param _from the address of the sender
-     * @param _value the amount of money to burn
-     */
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
-        require(_value <= allowance[_from][msg.sender]);    // Check allowance
-        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
-        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
-        totalSupply -= _value;                              // Update totalSupply
-        Burn(_from, _value);
-        return true;
+	
+	function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+        return allowance[_owner][_spender];
     }
 }
