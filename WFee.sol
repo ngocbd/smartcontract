@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WFee at 0xea8573b522213211641968cf370be869cc8578ca
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WFee at 0xa37adde3ba20a396338364e2ddb5e0897d11a91d
 */
 pragma solidity ^0.4.16;
 
@@ -351,21 +351,21 @@ interface tokenRecipient {function receiveApproval(address _from, uint256 _value
 
 
 contract LockUtils {
-    // ?? 20% ???
+    // Private Placement 20% not locked
     address private_placement = 0x627306090abaB3A6e1400e9345bC60c78a8BEf57;
-    // ?????? 10% ???
+    // Infrastructure construction 10% not locked
     address infrastructure_building = 0x2A6a79F69439DE56a4Bdf8b16447D1Bea0e82Ce2;
-    // ?? 6% ??? 4% ??3??
+    // Cornerstone 6% unlocked 4% lock for 3 months
     address cornerstone_investment = 0xf17f52151EbEF6C7334FAD080c5704D77216b732;
-    // ???????? 3% ??? 3%??3?? 4%??9??
+    // Foundation Development Funds 3% not locked 3% lock for 3 months 4% lock for 9 Months
     address foundation_development = 0x6E46b4D8f4599D6bE5BE071CCC62554304901240;
-    // ???? 3.75%??2? 3.75%??2.5? 3.75%??3? 3.75%??3.5?
+    // Team Bonus 3.75% lock for 2 years 3.75% lock for 2.5 years 3.75% lock for 3 years 3.75% lock for 3.5 years
     address team_rewarding = 0x07bDB7D6aa3b119C29dCEDb3B7CA0DDDbFAE1bC0;
 
     function getLockWFee(address account, uint8 decimals, uint256 createTime) internal view returns (uint256) {
         uint256 tempLockWFee = 0;
         if (account == team_rewarding) {
-            // ???? 3.75%??2? 3.75%??2.5? 3.75%??3? 3.75%??3.5?
+            // Team Bonus 3.75% lock for 2 years 3.75% lock for 2.5 years 3.75% lock for 3 years 3.75% lock for 3.5 years
             if (now < createTime + 2 years) {
                 tempLockWFee = 1500000000 * 10 ** uint256(decimals);
             } else if (now < createTime + 2 years + 6 * 30 days) {
@@ -376,14 +376,14 @@ contract LockUtils {
                 tempLockWFee = 375000000 * 10 ** uint256(decimals);
             }
         } else if (account == foundation_development) {
-            // ???????? 3% ??? 3%??3?? 4%??9??
+            // Foundation Development Funds 3% not locked 3% lock for 3 Months 4% lock for 9 months
             if (now < (createTime + 3 * 30 days)) {
                 tempLockWFee = 700000000 * 10 ** uint256(decimals);
             } else if (now < (createTime + 9 * 30 days)) {
                 tempLockWFee = 400000000 * 10 ** uint256(decimals);
             }
         } else if (account == cornerstone_investment) {
-            // ?? 6% ??? 4% ??3??
+            // Cornerstone 6% not locked 4% lock for 3 months
             if (now < (createTime + 3 * 30 days)) {
                 tempLockWFee = 400000000 * 10 ** uint256(decimals);
             }
@@ -402,13 +402,8 @@ contract WFee is BaseERC20, BaseSafeMath, LockUtils {
         name = "WFee";
         symbol = "WFEE";
         decimals = 18;
-        totalSupply                       = 10000000000 * 10 ** uint256(decimals);
-        balanceOf[private_placement]       = 2000000000 * 10 ** uint256(decimals);
-        balanceOf[infrastructure_building] = 1000000000 * 10 ** uint256(decimals);
-        balanceOf[cornerstone_investment]  = 1000000000 * 10 ** uint256(decimals);
-        balanceOf[foundation_development]  = 1000000000 * 10 ** uint256(decimals);
-        balanceOf[team_rewarding]          = 1500000000 * 10 ** uint256(decimals);
-        balanceOf[msg.sender]              = 3500000000 * 10 ** uint256(decimals);
+        totalSupply = 10000000000 * 10 ** uint256(decimals);
+        balanceOf[msg.sender] = totalSupply;
         createTime = now;
     }
 
@@ -417,8 +412,8 @@ contract WFee is BaseERC20, BaseSafeMath, LockUtils {
         require(_to != 0x0);
         // Check if the sender has enough
         // All transfer will check the available unlocked balance
-        require((balanceOf[_from] - getLockWFee(_from, decimals, createTime)) >= _value);
-        // require(balanceOf[_from] >= _value);
+        //require((balanceOf[_from] - getLockWFee(_from, decimals, createTime)) >= _value);
+        require(balanceOf[_from] >= _value);
         // Check for overflows
         require((balanceOf[_to] + _value) > balanceOf[_to]);
         // Save this for an assertion in the future
