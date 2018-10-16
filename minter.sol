@@ -1,10 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Minter at 0x5f3469aa7298bc88723b53dbb11df291257ca5f1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Minter at 0x903a61bc9ff163138959f9f7b00f4b00ca0f3210
 */
-/* Token - simple token for PreICO and ICO
+/* Simple token - simple token for PreICO and ICO
    Copyright (C) 2017  Sergey Sherkunov <leinlawun@leinlawun.org>
+   Copyright (C) 2017  OOM.AG <info@oom.ag>
 
-   This file is part of Token.
+   This file is part of simple token.
 
    Token is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -22,421 +23,378 @@
 pragma solidity ^0.4.18;
 
 library SafeMath {
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a + b;
+    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        c = a + b;
 
-    assert (c >= a);
-  }
+        assert(c >= a);
+    }
 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    assert(b <= a);
+    function sub(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        assert(b <= a);
 
-    c = a - b;
-  }
+        c = a - b;
+    }
 
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a * b;
+    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        c = a * b;
 
-    assert (c / a == b);
-  }
+        assert(c / a == b);
+    }
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256 c) {
-    c = a / b;
-  }
+    function div(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        c = a / b;
+    }
+
+    function mod(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        c = a % b;
+    }
+
+    function min(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        c = a;
+
+        if(a > b)
+           c = b;
+    }
 }
 
-contract ERC20MintableToken {
-  using SafeMath for uint256;
+contract ABXToken {
+    using SafeMath for uint256;
 
-  address public owner;
+    address public owner;
 
-  Minter public minter;
+    address public minter;
 
-  string constant public name = "PayAll";
+    string public name;
 
-  string constant public symbol = "PLL";
+    string public symbol;
 
-  uint8 constant public decimals = 0;
+    uint8 public decimals;
 
-  uint256 public totalSupply;
+    uint256 public totalSupply;
 
-  mapping (address => uint256) public balanceOf;
+    mapping(address => uint256) public balanceOf;
 
-  mapping (address => mapping (address => uint256)) public allowance;
+    mapping(address => mapping(address => uint256)) public allowance;
 
-  event Transfer(address indexed _oldTokensHolder,
-                 address indexed _newTokensHolder, uint256 _tokensNumber);
+    event Transfer(address indexed oldTokensHolder,
+                   address indexed newTokensHolder, uint256 tokensNumber);
 
-  //https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-  event Transfer(address indexed _tokensSpender,
-                 address indexed _oldTokensHolder,
-                 address indexed _newTokensHolder, uint256 _tokensNumber);
+    //An Attack Vector on Approve/TransferFrom Methods:
+    //https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    event Transfer(address indexed tokensSpender,
+                   address indexed oldTokensHolder,
+                   address indexed newTokensHolder, uint256 tokensNumber);
 
-  event Approval(address indexed _tokensHolder, address indexed _tokensSpender,
-                 uint256 _newTokensNumber);
+    event Approval(address indexed tokensHolder, address indexed tokensSpender,
+                   uint256 newTokensNumber);
 
-  //https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-  event Approval(address indexed _tokensHolder, address indexed _tokensSpender,
-                 uint256 _oldTokensNumber, uint256 _newTokensNumber);
+    //An Attack Vector on Approve/TransferFrom Methods:
+    //https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    event Approval(address indexed tokensHolder, address indexed tokensSpender,
+                   uint256 oldTokensNumber, uint256 newTokensNumber);
 
-  modifier onlyOwner {
-    require (owner == msg.sender);
+    modifier onlyOwner {
+        require(owner == msg.sender);
 
-    _;
-  }
+        _;
+    }
 
-  modifier onlyMinter {
-    require (minter == msg.sender);
+    //ERC20 Short Address Attack:
+    //https://vessenes.com/the-erc20-short-address-attack-explained
+    //https://blog.golemproject.net/how-to-find-10m-by-just-reading-blockchain-6ae9d39fcd95
+    //https://ericrafaloff.com/analyzing-the-erc20-short-address-attack
+    modifier checkPayloadSize(uint256 size) {
+        require(msg.data.length == size + 4);
 
-    _;
-  }
+        _;
+    }
 
-  //https://vessenes.com/the-erc20-short-address-attack-explained
-  //https://blog.golemproject.net/how-to-find-10m-by-just-reading-blockchain-6ae9d39fcd95
-  //https://ericrafaloff.com/analyzing-the-erc20-short-address-attack
-  modifier checkPayloadSize(uint256 size) {
-     require (msg.data.length == size + 4);
+    modifier onlyNotNullTokenHolder(address tokenHolder) {
+        require(tokenHolder != address(0));
 
-     _;
-  }
+        _;
+    }
 
-  function setOwner(address _owner) public onlyOwner {
-    uint256 _allowance = allowance[this][owner];
+    function ABXToken(string _name, string _symbol, uint8 _decimals,
+                      uint256 _totalSupply) public {
+        owner = msg.sender;
+        name = _name;
+        symbol = _symbol;
+        decimals = _decimals;
+        totalSupply = _totalSupply.mul(10 ** uint256(decimals));
 
-    _approve(this, owner, 0);
+        require(decimals <= 77);
 
-    owner = _owner;
+        balanceOf[this] = totalSupply;
+    }
 
-    _approve(this, owner, _allowance);
-  }
+    function setOwner(address _owner) public onlyOwner returns(bool) {
+        owner = _owner;
 
-  function setMinter(Minter _minter) public onlyOwner {
-    uint256 _allowance = allowance[this][minter];
+        return true;
+    }
 
-    _approve(this, minter, 0);
+    function setMinter(address _minter) public onlyOwner returns(bool) {
+        safeApprove(this, minter, 0);
 
-    minter = _minter;
+        minter = _minter;
 
-    _approve(this, minter, _allowance);
-  }
+        safeApprove(this, minter, balanceOf[this]);
 
-  function ERC20MintableToken(Minter _minter) public {
-    owner = tx.origin;
-    minter = _minter;
-  }
+        return true;
+    }
 
-  function _transfer(address _oldTokensHolder, address _newTokensHolder,
-                     uint256 _tokensNumber) private {
-    balanceOf[_oldTokensHolder] =
-      balanceOf[_oldTokensHolder].sub(_tokensNumber);
+    //ERC20 Short Address Attack:
+    //https://vessenes.com/the-erc20-short-address-attack-explained
+    //https://blog.golemproject.net/how-to-find-10m-by-just-reading-blockchain-6ae9d39fcd95
+    //https://ericrafaloff.com/analyzing-the-erc20-short-address-attack
+    function transfer(address newTokensHolder, uint256 tokensNumber) public
+                     checkPayloadSize(2 * 32) returns(bool) {
+        transfer(msg.sender, newTokensHolder, tokensNumber);
 
-    balanceOf[_newTokensHolder] =
-      balanceOf[_newTokensHolder].add(_tokensNumber);
+        return true;
+    }
 
-    Transfer(_oldTokensHolder, _newTokensHolder, _tokensNumber);
-  }
+    //An Attack Vector on Approve/TransferFrom Methods:
+    //https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    //
+    //ERC20 Short Address Attack:
+    //https://vessenes.com/the-erc20-short-address-attack-explained
+    //https://blog.golemproject.net/how-to-find-10m-by-just-reading-blockchain-6ae9d39fcd95
+    //https://ericrafaloff.com/analyzing-the-erc20-short-address-attack
+    function transferFrom(address oldTokensHolder, address newTokensHolder,
+                          uint256 tokensNumber) public checkPayloadSize(3 * 32)
+                         returns(bool) {
+        allowance[oldTokensHolder][msg.sender] =
+            allowance[oldTokensHolder][msg.sender].sub(tokensNumber);
 
-  //https://vessenes.com/the-erc20-short-address-attack-explained
-  //https://blog.golemproject.net/how-to-find-10m-by-just-reading-blockchain-6ae9d39fcd95
-  //https://ericrafaloff.com/analyzing-the-erc20-short-address-attack
-  function transfer(address _newTokensHolder, uint256 _tokensNumber) public
-                   checkPayloadSize(2 * 32) returns (bool) {
-    _transfer(msg.sender, _newTokensHolder, _tokensNumber);
+        transfer(oldTokensHolder, newTokensHolder, tokensNumber);
 
-    return true;
-  }
+        Transfer(msg.sender, oldTokensHolder, newTokensHolder, tokensNumber);
 
-  //https://vessenes.com/the-erc20-short-address-attack-explained
-  //https://blog.golemproject.net/how-to-find-10m-by-just-reading-blockchain-6ae9d39fcd95
-  //https://ericrafaloff.com/analyzing-the-erc20-short-address-attack
-  //https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-  function transferFrom(address _oldTokensHolder, address _newTokensHolder,
-                        uint256 _tokensNumber) public checkPayloadSize(3 * 32)
-                       returns (bool) {
-    allowance[_oldTokensHolder][msg.sender] =
-      allowance[_oldTokensHolder][msg.sender].sub(_tokensNumber);
+        return true;
+    }
 
-    _transfer(_oldTokensHolder, _newTokensHolder, _tokensNumber);
+    //ERC20 Short Address Attack:
+    //https://vessenes.com/the-erc20-short-address-attack-explained
+    //https://blog.golemproject.net/how-to-find-10m-by-just-reading-blockchain-6ae9d39fcd95
+    //https://ericrafaloff.com/analyzing-the-erc20-short-address-attack
+    function approve(address tokensSpender, uint256 newTokensNumber) public
+                    checkPayloadSize(2 * 32) returns(bool) {
+        safeApprove(msg.sender, tokensSpender, newTokensNumber);
 
-    Transfer(msg.sender, _oldTokensHolder, _newTokensHolder, _tokensNumber);
+        return true;
+    }
 
-    return true;
-  }
+    //An Attack Vector on Approve/TransferFrom Methods:
+    //https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    //
+    //ERC20 Short Address Attack:
+    //https://vessenes.com/the-erc20-short-address-attack-explained
+    //https://blog.golemproject.net/how-to-find-10m-by-just-reading-blockchain-6ae9d39fcd95
+    //https://ericrafaloff.com/analyzing-the-erc20-short-address-attack
+    function approve(address tokensSpender, uint256 oldTokensNumber,
+                     uint256 newTokensNumber) public checkPayloadSize(3 * 32)
+                    returns(bool) {
+        require(allowance[msg.sender][tokensSpender] == oldTokensNumber);
 
-  function _approve(address _tokensHolder, address _tokensSpender,
-                    uint256 _newTokensNumber) private {
-    allowance[_tokensHolder][_tokensSpender] = _newTokensNumber;
+        unsafeApprove(msg.sender, tokensSpender, newTokensNumber);
 
-    Approval(msg.sender, _tokensSpender, _newTokensNumber);
-  }
+        Approval(msg.sender, tokensSpender, oldTokensNumber, newTokensNumber);
 
-  //https://vessenes.com/the-erc20-short-address-attack-explained
-  //https://blog.golemproject.net/how-to-find-10m-by-just-reading-blockchain-6ae9d39fcd95
-  //https://ericrafaloff.com/analyzing-the-erc20-short-address-attack
-  //https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-  function approve(address _tokensSpender, uint256 _newTokensNumber) public
-                  checkPayloadSize(2 * 32) returns (bool) {
-    require (allowance[msg.sender][_tokensSpender] == 0 ||
-             _newTokensNumber == 0);
+        return true;
+    }
 
-    _approve(msg.sender, _tokensSpender, _newTokensNumber);
+    function transfer(address oldTokensHolder, address newTokensHolder,
+                      uint256 tokensNumber) private
+                      onlyNotNullTokenHolder(oldTokensHolder) {
+        balanceOf[oldTokensHolder] =
+            balanceOf[oldTokensHolder].sub(tokensNumber);
 
-    return true;
-  }
+        balanceOf[newTokensHolder] =
+            balanceOf[newTokensHolder].add(tokensNumber);
 
-  //https://vessenes.com/the-erc20-short-address-attack-explained
-  //https://blog.golemproject.net/how-to-find-10m-by-just-reading-blockchain-6ae9d39fcd95
-  //https://ericrafaloff.com/analyzing-the-erc20-short-address-attack
-  //https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-  function approve(address _tokensSpender, uint256 _oldTokensNumber,
-                   uint256 _newTokensNumber) public checkPayloadSize(3 * 32)
-                  returns (bool) {
-    require (allowance[msg.sender][_tokensSpender] == _oldTokensNumber);
+        Transfer(oldTokensHolder, newTokensHolder, tokensNumber);
+    }
 
-    _approve(msg.sender, _tokensSpender, _newTokensNumber);
+    //An Attack Vector on Approve/TransferFrom Methods:
+    //https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    function unsafeApprove(address tokensHolder, address tokensSpender,
+                           uint256 newTokensNumber) private
+                          onlyNotNullTokenHolder(tokensHolder) {
+        allowance[tokensHolder][tokensSpender] = newTokensNumber;
 
-    Approval(msg.sender, _tokensSpender, _oldTokensNumber, _newTokensNumber);
+        Approval(msg.sender, tokensSpender, newTokensNumber);
+    }
+    
+    //An Attack Vector on Approve/TransferFrom Methods:
+    //https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    function safeApprove(address tokensHolder, address tokensSpender,
+                         uint256 newTokensNumber) private {
+        require(allowance[tokensHolder][tokensSpender] == 0 ||
+                newTokensNumber == 0);
 
-    return true;
-  }
-
-  function () public {
-    revert();
-  }
-
-  function mint(uint256 _tokensNumber) public onlyMinter {
-    totalSupply = totalSupply.add(_tokensNumber);
-
-    balanceOf[this] = balanceOf[this].add(_tokensNumber);
-
-    uint256 _allowance = allowance[this][msg.sender].add(_tokensNumber);
-
-    _approve(this, minter, _allowance);
-
-    _approve(this, owner, _allowance);
-  }
-
-  function burnUndistributed() public onlyMinter {
-    _approve(this, minter, 0);
-
-    _approve(this, owner, 0);
-
-    totalSupply = totalSupply.sub(balanceOf[this]);
-
-    balanceOf[this] = 0;
-  }
+        unsafeApprove(tokensHolder, tokensSpender, newTokensNumber);
+    }
 }
 
 contract Minter {
-  using SafeMath for uint256;
+    using SafeMath for uint256;
 
-  enum MinterState {
-    PreICOWait,
-    PreICOStarted,
-    ICOWait,
-    ICOStarted,
-    Over
-  }
-
-  struct Tokensale {
-    uint256 startTime;
-    uint256 endTime;
-    uint256 tokensMinimumNumberForBuy;
-    uint256 tokensCost;
-    uint256 tokensNumberForMint;
-    bool tokensMinted;
-    uint256 tokensStepOneBountyTime;
-    uint256 tokensStepTwoBountyTime;
-    uint256 tokensStepThreeBountyTime;
-    uint256 tokensStepFourBountyTime;
-    uint8 tokensStepOneBounty;
-    uint8 tokensStepTwoBounty;
-    uint8 tokensStepThreeBounty;
-    uint8 tokensStepFourBounty;
-  }
-
-  address public owner;
-
-  ERC20MintableToken public token;
-
-  Tokensale public PreICO =
-    Tokensale(1511193600, 1513785600, 150, 340000000000000 wei, 10000000, false,
-              1 weeks, 2 weeks, 3 weeks, 4 weeks + 2 days, 25, 15, 10, 5);
-
-  Tokensale public ICO =
-    Tokensale(1526828400, 1529506800, 150, 340000000000000 wei, 290000000,
-              false, 1 weeks, 2 weeks, 3 weeks, 4 weeks + 3 days, 20, 10, 5, 0);
-
-  bool public paused = false;
-
-  modifier onlyOwner {
-    require (owner == msg.sender);
-
-    _;
-  }
-
-  modifier onlyDuringTokensale {
-    MinterState _minterState_ = _minterState();
-
-    require (_minterState_ == MinterState.PreICOStarted ||
-             _minterState_ == MinterState.ICOStarted);
-
-    _;
-  }
-
-  modifier onlyAfterTokensaleOver {
-    MinterState _minterState_ = _minterState();
-
-    require (_minterState_ == MinterState.Over);
-
-    _;
-  }
-
-  modifier onlyNotPaused {
-    require (!paused);
-
-    _;
-  }
-
-  modifier checkLimitsToBuyTokens {
-    MinterState _minterState_ = _minterState();
-
-    require (_minterState_ == MinterState.PreICOStarted &&
-             PreICO.tokensMinimumNumberForBuy <= msg.value / PreICO.tokensCost ||
-             _minterState_ == MinterState.ICOStarted &&
-             ICO.tokensMinimumNumberForBuy <= msg.value / ICO.tokensCost);
-
-    _;
-  }
-
-  function setOwner(address _owner) public onlyOwner {
-    owner = _owner;
-  }
-
-  function setPaused(bool _paused) public onlyOwner {
-    paused = _paused;
-  }
-
-  function Minter() public {
-    owner = msg.sender;
-    token = new ERC20MintableToken(this);
-  }
-
-  function _minterState() private constant returns (MinterState) {
-    if (PreICO.startTime > now) {
-      return MinterState.PreICOWait;
-    } else if (PreICO.endTime > now) {
-      return MinterState.PreICOStarted;
-    } else if (ICO.startTime > now) {
-      return MinterState.ICOWait;
-    } else if (ICO.endTime > now) {
-      return MinterState.ICOStarted;
-    } else {
-      return MinterState.Over;
-    }
-  }
-
-  function _tokensaleCountTokensNumber(Tokensale _tokensale, uint256 _timestamp,
-                                       uint256 _wei, uint256 _totalTokensNumber,
-                                       uint256 _totalTokensNumberAllowance)
-                                      private pure
-                                      returns (uint256, uint256) {
-    uint256 _tokensNumber = _wei.div(_tokensale.tokensCost);
-
-    require (_tokensNumber >= _tokensale.tokensMinimumNumberForBuy);
-
-    uint256 _aviableTokensNumber =
-      _totalTokensNumber <= _totalTokensNumberAllowance ?
-        _totalTokensNumber : _totalTokensNumberAllowance;
-
-    uint256 _restWei = 0;
-
-    if (_tokensNumber >= _aviableTokensNumber) {
-      uint256 _restTokensNumber = _tokensNumber.sub(_aviableTokensNumber);
-
-      _restWei = _restTokensNumber.mul(_tokensale.tokensCost);
-
-      _tokensNumber = _aviableTokensNumber;
-    } else {
-      uint256 _timePassed = _timestamp.sub(_tokensale.startTime);
-
-      uint256 _tokensNumberBounty = 0;
-
-      if (_timePassed < _tokensale.tokensStepOneBountyTime) {
-        _tokensNumberBounty = _tokensNumber.mul(_tokensale.tokensStepOneBounty)
-                                           .div(100);
-      } else if (_timePassed < _tokensale.tokensStepTwoBountyTime) {
-        _tokensNumberBounty = _tokensNumber.mul(_tokensale.tokensStepTwoBounty)
-                                           .div(100);
-      } else if (_timePassed < _tokensale.tokensStepThreeBountyTime) {
-        _tokensNumberBounty =
-          _tokensNumber.mul(_tokensale.tokensStepThreeBounty).div(100);
-      } else if (_timePassed < _tokensale.tokensStepFourBountyTime) {
-        _tokensNumberBounty = _tokensNumber.mul(_tokensale.tokensStepFourBounty)
-                                           .div(100);
-      }
-
-      _tokensNumber = _tokensNumber.add(_tokensNumberBounty);
-
-      if (_tokensNumber > _aviableTokensNumber) {
-        _tokensNumber = _aviableTokensNumber;
-      }
+    enum MinterState {
+        tokenSaleWait,
+        tokenSaleStarted,
+        Over
     }
 
-    return (_tokensNumber, _restWei);
-  }
-
-  function _tokensaleStart(Tokensale storage _tokensale) private {
-    if (!_tokensale.tokensMinted) {
-      token.mint(_tokensale.tokensNumberForMint);
-
-      _tokensale.tokensMinted = true;
+    struct Tokensale {
+        uint256 startTime;
+        uint256 endTime;
+        uint256 tokensMinimumNumberForBuy;
+        uint256 tokensCost;
     }
 
-    uint256 _totalTokensNumber = token.balanceOf(token);
+    address public owner;
 
-    uint256 _totalTokensNumberAllowance = token.allowance(token, this);
+    address public manager;
 
-    var (_tokensNumber, _restWei) =
-      _tokensaleCountTokensNumber(_tokensale, now, msg.value,
-                                  _totalTokensNumber,
-                                  _totalTokensNumberAllowance);
+    bool public paused = false;
 
-    token.transferFrom(token, msg.sender, _tokensNumber);
+    mapping(address => bool) public whiteList;
 
-    if (_restWei > 0) {
-      msg.sender.transfer(_restWei);
+    ABXToken public token;
+
+    Tokensale public tokenSale;
+
+    modifier onlyOwner {
+        require(owner == msg.sender);
+
+        _;
     }
-  }
 
-  function _tokensaleSelect() private constant returns (Tokensale storage) {
-    MinterState _minterState_ = _minterState();
+    modifier onlyNotPaused {
+        require(!paused);
 
-    if (_minterState_ == MinterState.PreICOStarted) {
-      return PreICO;
-    } else if (_minterState_ == MinterState.ICOStarted) {
-      return ICO;
-    } else {
-      revert();
+        _;
     }
-  }
 
-  function () public payable onlyDuringTokensale onlyNotPaused
-    checkLimitsToBuyTokens {
-    Tokensale storage _tokensale = _tokensaleSelect();
+    modifier onlyDuringTokensale {
+        require(minterState() == MinterState.tokenSaleStarted);
 
-    _tokensaleStart(_tokensale);
-  }
+        _;
+    }
 
-  function mint(uint256 _tokensNumber) public onlyOwner onlyDuringTokensale {
-    token.mint(_tokensNumber);
-  }
+    modifier onlyAfterTokensaleOver {
+        require(minterState() == MinterState.Over);
 
-  function burnUndistributed() public onlyAfterTokensaleOver {
-    token.burnUndistributed();
-  }
+        _;
+    }
 
-  function withdraw() public onlyOwner {
-    msg.sender.transfer(this.balance);
-  }
+    modifier onlyWhiteList {
+        require(whiteList[msg.sender]);
+
+        _;
+    }
+
+    modifier checkLimitsToBuyTokens {
+        require(tokenSale.tokensMinimumNumberForBuy <=
+                tokensNumberForBuy().div(10 ** uint256(token.decimals())));
+
+        _;
+    }
+
+    function Minter(address _manager, ABXToken _token,
+                    uint256 tokenSaleStartTime, uint256 tokenSaleEndTime,
+                    uint256 tokenSaleTokensMinimumNumberForBuy) public {
+        owner = msg.sender;
+        manager = _manager;
+        token = _token;
+        tokenSale.startTime = tokenSaleStartTime;
+        tokenSale.endTime = tokenSaleEndTime;
+        tokenSale.tokensMinimumNumberForBuy =
+            tokenSaleTokensMinimumNumberForBuy;
+    }
+
+    function setOwner(address _owner) public onlyOwner {
+        owner = _owner;
+    }
+
+    function setManager(address _manager) public onlyOwner {
+        manager = _manager;
+    }
+
+    function setPaused(bool _paused) public onlyOwner {
+        paused = _paused;
+    }
+
+    function addWhiteList(address tokensHolder) public onlyOwner {
+        whiteList[tokensHolder] = true;
+    }
+
+    function removeWhiteList(address tokensHolder) public onlyOwner {
+        whiteList[tokensHolder] = false;
+    }
+
+    function setTokenSaleStartTime(uint256 timestamp) public onlyOwner {
+        tokenSale.startTime = timestamp;
+    }
+
+    function setTokenSaleEndTime(uint256 timestamp) public onlyOwner {
+        tokenSale.endTime = timestamp;
+    }
+
+    function setTokenSaleTokensMinimumNumberForBuy(uint256 tokensNumber) public
+                                               onlyOwner {
+        tokenSale.tokensMinimumNumberForBuy = tokensNumber;
+    }
+
+    function setTokenSaleTokensCost(uint256 tokensCost) public onlyOwner {
+        tokenSale.tokensCost = tokensCost;
+    }
+
+    function transferRestTokensToOwner() public onlyOwner
+                                      onlyAfterTokensaleOver {
+        token.transferFrom(token, msg.sender, token.allowance(token, this));
+    }
+
+    function () public payable onlyDuringTokensale onlyNotPaused onlyWhiteList
+                checkLimitsToBuyTokens {
+        uint256 tokensNumber = tokensNumberForBuy();
+
+        uint256 aviableTokensNumber =
+            token.balanceOf(token).min(token.allowance(token, this));
+
+        uint256 restCoins = 0;
+
+        if(tokensNumber >= aviableTokensNumber) {
+            uint256 restTokensNumber = tokensNumber.sub(aviableTokensNumber);
+
+            restCoins =
+                restTokensNumber.mul(tokenSale.tokensCost)
+                                .div(10 ** uint256(token.decimals()));
+
+            tokensNumber = aviableTokensNumber;
+        }
+
+        token.transferFrom(token, msg.sender, tokensNumber);
+
+        msg.sender.transfer(restCoins);
+
+        manager.transfer(msg.value.sub(restCoins));
+    }
+
+    function minterState() private constant returns(MinterState) {
+        if(tokenSale.startTime > now) {
+            return MinterState.tokenSaleWait;
+        } else if(tokenSale.endTime > now) {
+            return MinterState.tokenSaleStarted;
+        } else {
+            return MinterState.Over;
+        }
+    }
+
+    function tokensNumberForBuy() private constant returns(uint256) {
+        return msg.value.mul(10 ** uint256(token.decimals()))
+                        .div(tokenSale.tokensCost);
+    }
 }
