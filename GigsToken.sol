@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GigsToken at 0x58c60fdba15376c44699c2858a498ac159ffd8cb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GigsToken at 0x7c8db6eefa66f5fca3343bd10f7d4932b0c152f7
 */
 pragma solidity ^0.4.16;
 
@@ -8,29 +8,29 @@ pragma solidity ^0.4.16;
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-    function add(uint256 a, uint256 b) internal returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }  
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
-    function div(uint256 a, uint256 b) internal returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
-  
-    function mul(uint256 a, uint256 b) internal returns (uint256) {
-        uint256 c = a * b;
-        assert(a == 0 || c / a == b);
-        return c;
-    }
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
 
-    function sub(uint256 a, uint256 b) internal returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
 contract GigsToken {
@@ -62,12 +62,12 @@ contract GigsToken {
         createTokens();
     }
     
-    function GigsToken() {
+    function GigsToken() public {
         balances[msg.sender] = totalSupply;
         owner = msg.sender;
     }
     
-    function createTokens() payable {
+    function createTokens() public payable {
         require(msg.value > 0);
         uint256 tokens = msg.value.mul(RATE);
         balances[msg.sender] = balances[msg.sender].add(tokens);
@@ -77,17 +77,17 @@ contract GigsToken {
         owner.transfer(msg.value);
     }
     
-    function balanceOf(address _owner) constant returns (uint256 balance){
+    function balanceOf(address _owner) internal view returns (uint256 balance){
         return balances[_owner];
     }
-    function transfer(address _to, uint256 _value) returns (bool success) {
+    function transfer(address _to, uint256 _value) public returns (bool success) {
         require(balances[msg.sender] >= _value && _value > 0);
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
         Transfer(msg.sender, _to, _value);
         return true;
     }
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success){
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success){
         require(allowed [_from][msg.sender] >= 0 && balances[_from] >= _value && _value > 0);
         balances[_from] = balances[_from].sub(_value);
         balances[_to] = balances[_to].add(_value);
@@ -96,12 +96,12 @@ contract GigsToken {
         return true;
         
     }
-    function approve(address _spender, uint256 _value) returns (bool success){
+    function approve(address _spender, uint256 _value) public returns (bool success){
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
     }
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining){
+    function allowance(address _owner, address _spender) constant public returns (uint256 remaining){
         return allowed[_owner][_spender];
     }
     
