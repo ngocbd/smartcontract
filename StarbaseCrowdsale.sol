@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StarbaseCrowdsale at 0xce23395cebe802ae6d397d06d35eb250b907ff2d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StarbaseCrowdsale at 0xd9ecb0271877147df323ed7ad8486b9e138d18f0
 */
 library SafeMath {
   function mul(uint256 a, uint256 b) internal constant returns (uint256) {
