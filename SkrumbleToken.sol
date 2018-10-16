@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SkrumbleToken at 0xd99b8a7fa48e25cce83b81812220a3e03bf64e5f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SkrumbleToken at 0x0fd34a4bdbc6633d613be0ca3316c0d2e6521c85
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.21;
 
 /**
  * @title SafeMath
@@ -49,7 +49,6 @@ library SafeMath {
     }
 }
 
-
 /**
  * @title ERC20Basic
  * @dev Simpler version of ERC20 interface
@@ -60,6 +59,17 @@ contract ERC20Basic {
     function balanceOf(address who) public view returns (uint256);
     function transfer(address to, uint256 value) public returns (bool);
     event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+    function allowance(address owner, address spender) public view returns (uint256);
+    function transferFrom(address from, address to, uint256 value) public returns (bool);
+    function approve(address spender, uint256 value) public returns (bool);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 /**
@@ -92,7 +102,7 @@ contract BasicToken is ERC20Basic {
         // SafeMath.sub will throw if there is not enough balance.
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
+        emit Transfer(msg.sender, _to, _value);
         return true;
     }
 
@@ -105,17 +115,6 @@ contract BasicToken is ERC20Basic {
         return balances[_owner];
     }
 
-}
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-    function allowance(address owner, address spender) public view returns (uint256);
-    function transferFrom(address from, address to, uint256 value) public returns (bool);
-    function approve(address spender, uint256 value) public returns (bool);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 /**
@@ -144,7 +143,7 @@ contract StandardToken is ERC20, BasicToken {
         balances[_from] = balances[_from].sub(_value);
         balances[_to] = balances[_to].add(_value);
         allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        Transfer(_from, _to, _value);
+        emit Transfer(_from, _to, _value);
         return true;
     }
 
@@ -160,7 +159,7 @@ contract StandardToken is ERC20, BasicToken {
     */
     function approve(address _spender, uint256 _value) public returns (bool) {
         allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
@@ -186,7 +185,7 @@ contract StandardToken is ERC20, BasicToken {
     */
     function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
         allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
         return true;
     }
 
@@ -207,51 +206,38 @@ contract StandardToken is ERC20, BasicToken {
         } else {
             allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
         }
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
         return true;
     }
-
 }
 
 contract SkrumbleToken is StandardToken {
 
     string  public name     = "Skrumble Token";
     string  public symbol   = "SKM";
-    uint8 public decimals = 18;
+    uint256 public decimals = 18;
 
-
-    /**
-    * @dev Constructor, takes intial Token.
-    */
     function SkrumbleToken() public {
-        totalSupply_ = 1500000000 * 1 ether;
+        totalSupply_ = 15000000 * 1 ether;
         balances[msg.sender] = totalSupply_;
     }
 
-    /**
-    * @dev Batch transfer some tokens to some addresses, address and value is one-on-one.
-    * @param _dests Array of addresses
-    * @param _values Array of transfer tokens number
-    */
-    function batchTransfer(address[] _dests, uint256[] _values) public {
+    function batchTransfer(address[] _dests, uint256[] _values) public returns(uint256) {
         require(_dests.length == _values.length);
         uint256 i = 0;
         while (i < _dests.length) {
             transfer(_dests[i], _values[i]);
             i += 1;
         }
+        return(i);
     }
 
-    /**
-    * @dev Batch transfer equal tokens amout to some addresses
-    * @param _dests Array of addresses
-    * @param _value Number of transfer tokens amount
-    */
-    function batchTransferSingleValue(address[] _dests, uint256 _value) public {
+    function batchTransferSingleValue(address[] _dests, uint256 _value) public returns(uint256) {
         uint256 i = 0;
         while (i < _dests.length) {
             transfer(_dests[i], _value);
             i += 1;
         }
+        return(i);
     }
 }
