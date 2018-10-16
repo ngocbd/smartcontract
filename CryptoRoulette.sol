@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoRoulette at 0x8685631276cfcf17a973d92f6dc11645e5158c0c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoRoulette at 0x559be9a89db88794645abb93e3bfc1af2ee0be40
 */
 pragma solidity ^0.4.23;
 
@@ -30,7 +30,7 @@ contract CryptoRoulette {
 
     function shuffle() internal {
         // randomly set secretNumber with a value between 1 and 10
-        secretNumber = 6;
+        secretNumber = uint8(sha3(now, block.blockhash(block.number-1))) % 10 + 1;
     }
 
     function play(uint256 number) payable public {
