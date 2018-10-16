@@ -1,155 +1,142 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xead7adf1bf0df9f03b15429d82ea1f70ebd619f1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x2dfcae4bc1b5468d6fa6e508da666ca5cde56ccf
 */
-pragma solidity ^0.4.13;
-contract token { 
-   function mintToken(address target, uint256 mintedAmount);
+pragma solidity ^0.4.11;
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-contract owned { 
-    address public owner;
-    
-    function owned() {
-        owner = msg.sender;
+/**
+ * @title Crowdsale
+ * @dev Crowdsale is a base contract for managing a token crowdsale.
+ * Crowdsales have a start and end timestamps, where investors can make
+ * token purchases and the crowdsale will assign them tokens based
+ * on a token per ETH rate. Funds collected are forwarded to a wallet
+ * as they arrive.
+ */
+contract token { function transfer(address receiver, uint amount){  } }
+contract Crowdsale {
+  using SafeMath for uint256;
+
+  // uint256 durationInMinutes;
+  // address where funds are collected
+  address public wallet;
+  // token address
+  address public addressOfTokenUsedAsReward;
+
+  token tokenReward;
+
+
+
+  // start and end timestamps where investments are allowed (both inclusive)
+  uint256 public startTime;
+  uint256 public endTime;
+  // amount of raised money in wei
+  uint256 public weiRaised;
+
+  /**
+   * event for token purchase logging
+   * @param purchaser who paid for the tokens
+   * @param beneficiary who got the tokens
+   * @param value weis paid for purchase
+   * @param amount amount of tokens purchased
+   */
+  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+
+
+  function Crowdsale() {
+    // wallet = 0x06e8e1c94a03bf157f04FA6528D67437Cb2EBA10;
+    wallet = 0x7f863e49e4F04851f28af6C6E77cE4E8bb7F9486;
+    // durationInMinutes = _durationInMinutes;
+    addressOfTokenUsedAsReward = 0xA35E4a5C0C228a342c197e3440dFF1A584cc479C;
+
+
+    tokenReward = token(addressOfTokenUsedAsReward);
+    startTime = now + 435 * 1 minutes;
+    endTime = startTime + 15*24*60 * 1 minutes;
+  }
+
+  // fallback function can be used to buy tokens
+  function () payable {
+    buyTokens(msg.sender);
+  }
+
+  // low level token purchase function
+  // mapping (address => uint) public BALANCE;
+
+  function buyTokens(address beneficiary) payable {
+    require(beneficiary != 0x0);
+    require(validPurchase());
+
+    uint256 weiAmount = msg.value;
+    if(weiAmount <  10**18) throw;
+
+    // calculate token amount to be sent
+    uint _price;
+
+    if(now < startTime + 7*24*60 * 1 minutes)
+      _price = 1200;
+    else _price = 750;
+    uint256 tokens = (weiAmount / 100) * _price;
+
+    // update state
+    weiRaised = weiRaised.add(weiAmount);
+
+    tokenReward.transfer(beneficiary, tokens);
+    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+    forwardFunds();
+  }
+
+  // send ether to the fund collection wallet
+  // override to create custom fund forwarding mechanisms
+  function forwardFunds() internal {
+    // wallet.transfer(msg.value);
+    if (!wallet.send(msg.value)) {
+      throw;
     }
+  }
 
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
+  // @return true if the transaction can buy tokens
+  function validPurchase() internal constant returns (bool) {
+    bool withinPeriod = now >= startTime && now <= endTime;
+    bool nonZeroPurchase = msg.value != 0;
+    return withinPeriod && nonZeroPurchase;
+  }
 
-    function transferOwnership(address newOwner) onlyOwner {
-        owner = newOwner;
-    }
-}
+  // @return true if crowdsale event has ended
+  function hasEnded() public constant returns (bool) {
+    return now > endTime;
+  }
 
-contract Crowdsale is owned {
-    address public beneficiary;
-    
-    uint256 public preICOLimit;
-    uint256 public totalLimit;
-    
-    uint256 public pricePreICO;
-    uint256 public priceICO;
-
-    bool preICOClosed = false;
-    bool ICOClosed = false;
-
-    bool preICOWithdrawn = false;
-    bool ICOWithdrawn = false;
-
-    bool public preICOActive = false;
-    bool public ICOActive = false;
-
-    uint256 public preICORaised; 
-    uint256 public ICORaised; 
-    uint256 public totalRaised; 
-
-    token public tokenReward;
-
-    event FundTransfer(address backer, uint256 amount, bool isContribution);
-
-    mapping(address => uint256) public balanceOf;
-
-    function Crowdsale() {
-        preICOLimit = 5000000 * 1 ether;
-        totalLimit = 45000000 * 1 ether; //50m hard cap minus 2.5m for mining and minus 2.5m for bounty
-        pricePreICO = 375;
-        priceICO = 250;
-    }
-
-    function init(address beneficiaryAddress, token tokenAddress)  onlyOwner {
-        beneficiary = beneficiaryAddress;
-        tokenReward = token(tokenAddress);
-    }
-
-    function () payable {
-        require (preICOActive || ICOActive);
-        uint256 amount = msg.value;
-
-        require (amount >= 0.05 * 1 ether); //0.05 - minimum contribution limit
-
-        //mintToken method will work only for owner of the token.
-        //So we need to execute transferOwnership from the token contract and pass ICO contract address as a parameter.
-        //By doing so we will lock minting function to ICO contract only (so no minting will be available after ICO).
-        if(preICOActive)
-        {
-    	    tokenReward.mintToken(msg.sender, amount * pricePreICO);
-            preICORaised += amount;
-        }
-        if(ICOActive)
-        {
-    	    tokenReward.mintToken(msg.sender, amount * priceICO);
-            ICORaised += amount;
-        }
-
-        balanceOf[msg.sender] += amount;
-        totalRaised += amount;
-        FundTransfer(msg.sender, amount, true);
-
-        if(preICORaised >= preICOLimit)
-        {
-            preICOActive = false;
-            preICOClosed = true;
-        }
-        
-        if(totalRaised >= totalLimit)
-        {
-            preICOActive = false;
-            ICOActive = false;
-            preICOClosed = true;
-            ICOClosed = true;
-        }
-    }
-    
-    function startPreICO() onlyOwner {
-        require(!preICOClosed);
-        require(!preICOActive);
-        require(!ICOClosed);
-        require(!ICOActive);
-        
-        preICOActive = true;
-    }
-    function stopPreICO() onlyOwner {
-        require(preICOActive);
-        
-        preICOActive = false;
-        preICOClosed = true;
-    }
-    function startICO() onlyOwner {
-        require(preICOClosed);
-        require(!ICOClosed);
-        require(!ICOActive);
-        
-        ICOActive = true;
-    }
-    function stopICO() onlyOwner {
-        require(ICOActive);
-        
-        ICOActive = false;
-        ICOClosed = true;
-    }
-
-
-    //withdrawal raised funds to beneficiary
-    function withdrawFunds() onlyOwner {
-	require ((!preICOWithdrawn && preICOClosed) || (!ICOWithdrawn && ICOClosed));
-
-            //withdraw results of preICO
-            if(!preICOWithdrawn && preICOClosed)
-            {
-                if (beneficiary.send(preICORaised)) {
-                    preICOWithdrawn = true;
-                    FundTransfer(beneficiary, preICORaised, false);
-                }
-            }
-            //withdraw results of ICO
-            if(!ICOWithdrawn && ICOClosed)
-            {
-                if (beneficiary.send(ICORaised)) {
-                    ICOWithdrawn = true;
-                    FundTransfer(beneficiary, ICORaised, false);
-                }
-            }
-    }
+  function withdrawTokens(uint256 _amount) {
+    if(msg.sender!=wallet) throw;
+    tokenReward.transfer(wallet,_amount);
+  }
 }
