@@ -1,32 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnableCrowdsaleToken at 0xa4d9170f44ea9e14424843b713361c7e2fac672f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnableCrowdsaleToken at 0xa047fb4ca629e7cae5cfcbeb45d4155499fbe707
 */
-// (C) 2017 TokenMarket Ltd. (https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt) Commit: d9e308ff22556a8f40909b1f89ec0f759d1337e0
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-
-
-
-
+/* This is popular token code taken from https://github.com/TokenMarketNet/ico, released under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt */
+/* This token is not affiliated with Tokenmarket in any way */
 
 /**
  * @title ERC20Basic
@@ -195,23 +171,6 @@ contract BurnableToken is StandardToken {
  */
 
 
-
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-
-
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
 /**
  * Upgrade agent interface inspired by Lunyr.
  *
@@ -357,14 +316,6 @@ contract UpgradeableToken is StandardToken {
 
 }
 
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-
 
 /**
  * @title Ownable
@@ -490,15 +441,6 @@ contract ReleasableToken is ERC20, Ownable {
   }
 
 }
-
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-
 
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
@@ -701,8 +643,6 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
  */
 contract BurnableCrowdsaleToken is BurnableToken, CrowdsaleToken {
 
-  function BurnableCrowdsaleToken(string _name, string _symbol, uint _initialSupply, uint _decimals, bool _mintable)
-    CrowdsaleToken(_name, _symbol, _initialSupply, _decimals, _mintable) {
-
+  function BurnableCrowdsaleToken() CrowdsaleToken("Correfoc", "COR", 15000000000000000000000000000000, 18, true) {
   }
 }
