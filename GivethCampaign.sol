@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GivethCampaign at 0x37831fc12f8e9b1193212597fde74ecd0fc9e33c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GivethCampaign at 0x9224a19ebe5af1747351fdad29b6861c7ca6fced
 */
 pragma solidity ^0.4.18;
 
@@ -708,7 +708,7 @@ contract Escapable is Owned {
     /// @param _escapeHatchDestination The address of a safe location (usu a
     ///  Multisig) to send the ether held in this contract; if a neutral address
     ///  is required, the WHG Multisig is an option:
-    ///  <a title="See this address on the blockchain explorer" href="https://etherscan.io/address/0x8Ff920020c8AD673661c8117f2855C384758C572" class="ext-etheraddresslookup-link" target="_self">0x8Ff920020c8AD673661c8117f2855C384758C572</a>
+    ///  0x8Ff920020c8AD673661c8117f2855C384758C572 
     function Escapable(address _escapeHatchCaller, address _escapeHatchDestination) {
         escapeHatchCaller = _escapeHatchCaller;
         escapeHatchDestination = _escapeHatchDestination;
