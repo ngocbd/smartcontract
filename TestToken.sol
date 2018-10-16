@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestToken at 0xdd664290facffb6b0bf14420d30345359a256f37
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestToken at 0x6a7566b5d088e424124f96f7fd7ff7a8c3c305ae
 */
 pragma solidity ^0.4.21;
-
 
 /**
  * @title ERC20Basic
@@ -117,6 +116,7 @@ contract ERC20 is ERC20Basic {
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
+
 /**
  * @title Standard ERC20 token
  *
@@ -213,16 +213,81 @@ contract StandardToken is ERC20, BasicToken {
 }
 
 
-contract TestToken is StandardToken {
-  string public name;
-  string public symbol;
-  uint8 public decimals;
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
 
-  function TestToken(string _name, string _symbol, uint8 _decimals, uint256 _totalSupply) public {
-    name = _name;
-    symbol = _symbol;
-    decimals = _decimals;
-    totalSupply_ = _totalSupply;
-    balances[msg.sender] = _totalSupply;
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
   }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+contract TestToken is StandardToken, Ownable {
+
+  string public constant name = "TestToken";
+  string public constant symbol = "TEST";
+  uint8 public constant decimals = 18;
+  
+  uint256 public constant INITIAL_SUPPLY = 100000000000 * (10 ** uint256(decimals));
+  
+  uint256 public unitsOneEthCanBuy = 1000;
+
+  // total funds
+  uint256 internal totalWeiRaised;
+
+  function TestToken () public {
+    require(address(this).balance == 0);
+    totalSupply_ = INITIAL_SUPPLY;
+    balances[msg.sender] = INITIAL_SUPPLY;
+  }
+
+  function() public payable {
+    require(msg.sender != owner);
+
+    // number of tokens to sale in wei
+    uint256 amount = msg.value * unitsOneEthCanBuy;
+    
+    require(balances[owner] >= amount);
+    
+    totalWeiRaised = totalWeiRaised + msg.value;
+    
+    balances[owner] = balances[owner].sub(amount);
+    balances[msg.sender] = balances[msg.sender].add(amount);    
+
+    //Transfer ether to owner
+    owner.transfer(msg.value);
+    emit Transfer(owner, msg.sender, amount); // Broadcast a message to the blockchain
+  }
+
 }
