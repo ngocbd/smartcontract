@@ -1,13 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenAuction at 0x8E1a99D8dBE5687F74C74f18295C4928Ce2F676d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenAuction at 0xd7cf8eae66f26e13a400772a054b19fb3d98c269
 */
 pragma solidity ^0.4.15;
 
 /**
  *
- * @author  David Rosen <kaandoit@mcon.org>
+ * @author  <newtwist@protonmail.com>
  *
- * Version Test-D
+ * Version E
  *
  * Overview:
  * This contract impliments a blind auction for burnable tokens. Each secret bid consists
@@ -53,7 +53,6 @@ pragma solidity ^0.4.15;
  * of them. With this rule, all bids must be executed.
  *
  */
-
 // Token standard API
 // https://github.com/ethereum/EIPs/issues/20
 
@@ -70,13 +69,10 @@ contract iERC20Token {
   event Approval( address indexed owner, address indexed spender, uint value);
 }
 
-//Burnable Token interface
-
 contract iBurnableToken is iERC20Token {
   function burnTokens(uint _burnCount) public;
   function unPaidBurnTokens(uint _burnCount) public;
 }
-
 
 /*
     Overflow protected math functions
@@ -129,6 +125,7 @@ contract SafeMath {
         return z;
     }
 }
+
 
 contract TokenAuction is SafeMath {
 
@@ -318,8 +315,9 @@ contract TokenAuction is SafeMath {
   // to the hash that is generated from the encyrpted bid tuple. when a disqualified bid is
   // executed all the deposited funds will be returned to the bidder, as if the bid was below
   // the strike-price.
+  //
   function disqualifyBid(address _from) public ownerOnly duringAuction {
-    secretBids[msg.sender].disqualified = true;
+    secretBids[_from].disqualified = true;
   }
 
 
@@ -341,8 +339,9 @@ contract TokenAuction is SafeMath {
     if (secretBids[_addr].deposit > 0) {
       uint _cost = 0;
       uint _refund = 0;
-      if (_price >= strikePrice && !secretBids[_addr].disqualified) {
-        uint256 _purchaseCount = (_price > strikePrice) ? _quantity : (safeMul(strikePricePctX10, _quantity) / 1000);
+      uint _priceWei = safeMul(_price, 1 szabo);
+      if (_priceWei >= strikePrice && !secretBids[_addr].disqualified) {
+        uint256 _purchaseCount = (_priceWei > strikePrice) ? _quantity : (safeMul(strikePricePctX10, _quantity) / 1000);
         var _maxPurchase = token.balanceOf(this) - developerReserve;
         if (_purchaseCount > _maxPurchase)
           _purchaseCount = _maxPurchase;
