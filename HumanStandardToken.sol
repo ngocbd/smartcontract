@@ -1,31 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0x0f4ca92660efad97a9a70cb0fe969c755439772c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0xd6e49800decb64c0e195f791348c1e87a5864fd7
 */
-library SafeMath {
-  function mul(uint256 a, uint256 b) pure internal  returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) pure internal  returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) pure internal  returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) pure internal  returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
+pragma solidity ^0.4.8;
 
 contract Token {
     /* This is a slight change to the ERC20 base standard.
@@ -39,12 +15,10 @@ contract Token {
     */
     /// total amount of tokens
     uint256 public totalSupply;
-    address public sale;
-    bool public transfersAllowed;
-    
+
     /// @param _owner The address from which the balance will be retrieved
     /// @return The balance
-    function balanceOf(address _owner) constant public returns (uint256 balance);
+    function balanceOf(address _owner) public constant returns (uint256 balance);
 
     /// @notice send `_value` token to `_to` from `msg.sender`
     /// @param _to The address of the recipient
@@ -68,7 +42,7 @@ contract Token {
     /// @param _owner The address of the account owning tokens
     /// @param _spender The address of the account able to transfer the tokens
     /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) constant public returns (uint256 remaining);
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
@@ -76,43 +50,39 @@ contract Token {
 
 contract StandardToken is Token {
 
-    function transfer(address _to, uint256 _value)
-        public
-        validTransfer
-       	returns (bool success) 
-    {
+    uint256 constant MAX_UINT256 = 2**256 - 1;
+
+    function transfer(address _to, uint256 _value) public returns (bool success) {
         //Default assumes totalSupply can't be over max (2^256 - 1).
         //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
         //Replace the if with this one instead.
         //require(balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]);
-    	require(balances[msg.sender] >= _value);
-        balances[msg.sender] = SafeMath.sub(balances[msg.sender], _value);
-        balances[_to] = SafeMath.add(balances[_to],_value);
+        require(balances[msg.sender] >= _value);
+        balances[msg.sender] -= _value;
+        balances[_to] += _value;
         Transfer(msg.sender, _to, _value);
         return true;
     }
 
-    function transferFrom(address _from, address _to, uint256 _value)
-        public
-        validTransfer
-      	returns (bool success)
-      {
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
         //same as above. Replace this line with the following if you want to protect against wrapping uints.
         //require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]);
-	    require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
-        balances[_to] = SafeMath.add(balances[_to], _value);
-        balances[_from] = SafeMath.sub(balances[_from], _value);
-        allowed[_from][msg.sender] = SafeMath.sub(allowed[_from][msg.sender], _value);
+        uint256 allowance = allowed[_from][msg.sender];
+        require(balances[_from] >= _value && allowance >= _value);
+        balances[_to] += _value;
+        balances[_from] -= _value;
+        if (allowance < MAX_UINT256) {
+            allowed[_from][msg.sender] -= _value;
+        }
         Transfer(_from, _to, _value);
         return true;
     }
 
-    function balanceOf(address _owner) public constant returns (uint256 balance) {
+    function balanceOf(address _owner) constant public returns (uint256 balance) {
         return balances[_owner];
     }
 
     function approve(address _spender, uint256 _value) public returns (bool success) {
-        require(balances[msg.sender] >= _value);
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
         return true;
@@ -124,12 +94,6 @@ contract StandardToken is Token {
 
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
-
-    modifier validTransfer()
-    {
-        require(msg.sender == sale || transfersAllowed);
-        _;
-    }   
 }
 
 contract HumanStandardToken is StandardToken {
@@ -147,21 +111,17 @@ contract HumanStandardToken is StandardToken {
     string public symbol;                 //An identifier: eg SBX
     string public version = 'H0.1';       //human 0.1 standard. Just an arbitrary versioning scheme.
 
-    function HumanStandardToken(
+     function HumanStandardToken(
         uint256 _initialAmount,
         string _tokenName,
         uint8 _decimalUnits,
-        string _tokenSymbol,
-        address _sale)
-        public
-    {
+        string _tokenSymbol
+        ) public {
         balances[msg.sender] = _initialAmount;               // Give the creator all initial tokens
         totalSupply = _initialAmount;                        // Update total supply
         name = _tokenName;                                   // Set the name for display purposes
         decimals = _decimalUnits;                            // Amount of decimals for display purposes
         symbol = _tokenSymbol;                               // Set the symbol for display purposes
-        sale = _sale;
-        transfersAllowed = false;
     }
 
     /* Approves and then calls the receiving contract */
@@ -171,133 +131,8 @@ contract HumanStandardToken is StandardToken {
 
         //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
         //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
-        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
+        //it is assumed when one does this that the call *should* succeed, otherwise one would use vanilla approve instead.
         require(_spender.call(bytes4(bytes32(keccak256("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData));
         return true;
-    }
-
-    function reversePurchase(address _tokenHolder)
-        public
-        onlySale
-    {
-        require(!transfersAllowed);
-        uint value = balances[_tokenHolder];
-        balances[_tokenHolder] = SafeMath.sub(balances[_tokenHolder], value);
-        balances[sale] = SafeMath.add(balances[sale], value);
-        Transfer(_tokenHolder, sale, value);
-    }
-
-    function removeTransferLock()
-        public
-        onlySale
-    {
-        transfersAllowed = true;
-    }
-
-    modifier onlySale()
-    {
-        require(msg.sender == sale);
-        _;
-    }
-}
-
-contract Disbursement {
-
-    /*
-     *  Storage
-     */
-    address public owner;
-    address public receiver;
-    uint public disbursementPeriod;
-    uint public startDate;
-    uint public withdrawnTokens;
-    Token public token;
-
-    /*
-     *  Modifiers
-     */
-    modifier isOwner() {
-        if (msg.sender != owner)
-            // Only owner is allowed to proceed
-            revert();
-        _;
-    }
-
-    modifier isReceiver() {
-        if (msg.sender != receiver)
-            // Only receiver is allowed to proceed
-            revert();
-        _;
-    }
-
-    modifier isSetUp() {
-        if (address(token) == 0)
-            // Contract is not set up
-            revert();
-        _;
-    }
-
-    /*
-     *  Public functions
-     */
-    /// @dev Constructor function sets contract owner
-    /// @param _receiver Receiver of vested tokens
-    /// @param _disbursementPeriod Vesting period in seconds
-    /// @param _startDate Start date of disbursement period (cliff)
-    function Disbursement(address _receiver, uint _disbursementPeriod, uint _startDate)
-        public
-    {
-        if (_receiver == 0 || _disbursementPeriod == 0)
-            // Arguments are null
-            revert();
-        owner = msg.sender;
-        receiver = _receiver;
-        disbursementPeriod = _disbursementPeriod;
-        startDate = _startDate;
-        if (startDate == 0)
-            startDate = now;
-    }
-
-    /// @dev Setup function sets external contracts' addresses
-    /// @param _token Token address
-    function setup(Token _token)
-        public
-        isOwner
-    {
-        if (address(token) != 0 || address(_token) == 0)
-            // Setup was executed already or address is null
-            revert();
-        token = _token;
-    }
-
-    /// @dev Transfers tokens to a given address
-    /// @param _to Address of token receiver
-    /// @param _value Number of tokens to transfer
-    function withdraw(address _to, uint256 _value)
-        public
-        isReceiver
-        isSetUp
-    {
-        uint maxTokens = calcMaxWithdraw();
-        if (_value > maxTokens)
-            revert();
-        withdrawnTokens = SafeMath.add(withdrawnTokens, _value);
-        token.transfer(_to, _value);
-    }
-
-    /// @dev Calculates the maximum amount of vested tokens
-    /// @return Number of vested tokens to withdraw
-    function calcMaxWithdraw()
-        public
-        constant
-        returns (uint)
-    {
-        uint maxTokens = SafeMath.mul(SafeMath.add(token.balanceOf(this), withdrawnTokens), SafeMath.sub(now,startDate)) / disbursementPeriod;
-        //uint maxTokens = (token.balanceOf(this) + withdrawnTokens) * (now - startDate) / disbursementPeriod;
-        if (withdrawnTokens >= maxTokens || startDate > now)
-            return 0;
-        if (SafeMath.sub(maxTokens, withdrawnTokens) > token.totalSupply())
-            return token.totalSupply();
-        return SafeMath.sub(maxTokens, withdrawnTokens);
     }
 }
