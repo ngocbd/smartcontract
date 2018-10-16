@@ -1,61 +1,92 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Whitelist at 0x2b5edb5876a37816c505fed23df07aa44b0eba66
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Whitelist at 0xd99c17fc653176A32734031Be3000bc82F261EB0
 */
-/*
- * Ownable
- *
- * Base contract with an owner.
- * Provides onlyOwner modifier, which prevents function from running if it is called by anyone other than the owner.
+pragma solidity ^0.4.18;
+
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
  */
-
 contract Ownable {
-    address public owner;
 
-    function Ownable() {
-        owner = msg.sender;
-    }
+  address public owner;
 
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-    function transferOwnership(address newOwner) onlyOwner {
-        if (newOwner != address(0)) {
-            owner = newOwner;
-        }
-    }
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
 }
 
 
+/**
+  *  Whitelist contract
+  */
 contract Whitelist is Ownable {
-    mapping (address => uint128) whitelist;
 
-    event Whitelisted(address who, uint128 nonce);
+   mapping (address => bool) public whitelist;
+   event Registered(address indexed _addr);
+   event Unregistered(address indexed _addr);
 
-    function Whitelist() Ownable() {
-      // This is here for our verification code only
-    }
+   modifier onlyWhitelisted(address _addr) {
+     require(whitelist[_addr]);
+     _;
+   }
 
-    function setWhitelisting(address who, uint128 nonce) internal {
-        whitelist[who] = nonce;
+   function isWhitelist(address _addr) public view returns (bool listed) {
+     return whitelist[_addr];
+   }
 
-        Whitelisted(who, nonce);
-    }
+   function registerAddress(address _addr) public onlyOwner {
+     require(_addr != address(0) && whitelist[_addr] == false);
+     whitelist[_addr] = true;
+     Registered(_addr);
+   }
 
-    function whitelistUser(address who, uint128 nonce) external onlyOwner {
-        setWhitelisting(who, nonce);
-    }
+   function registerAddresses(address[] _addrs) public onlyOwner {
+     for(uint256 i = 0; i < _addrs.length; i++) {
+       require(_addrs[i] != address(0) && whitelist[_addrs[i]] == false);
+       whitelist[_addrs[i]] = true;
+       Registered(_addrs[i]);
+     }
+   }
 
-    function whitelistMe(uint128 nonce, uint8 v, bytes32 r, bytes32 s) external {
-        bytes32 hash = keccak256(msg.sender, nonce);
-        require(ecrecover(hash, v, r, s) == owner);
-        require(whitelist[msg.sender] == 0);
+   function unregisterAddress(address _addr) public onlyOwner onlyWhitelisted(_addr) {
+       whitelist[_addr] = false;
+       Unregistered(_addr);
+   }
 
-        setWhitelisting(msg.sender, nonce);
-    }
+   function unregisterAddresses(address[] _addrs) public onlyOwner {
+     for(uint256 i = 0; i < _addrs.length; i++) {
+       require(whitelist[_addrs[i]]);
+       whitelist[_addrs[i]] = false;
+       Unregistered(_addrs[i]);
+     }
+   }
 
-    function isWhitelisted(address who) external view returns(bool) {
-        return whitelist[who] > 0;
-    }
 }
