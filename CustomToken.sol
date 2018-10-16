@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x9a6b5c47af48d6a8fb7e815b26dbd1b6d59e592e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x78a26e428694e79b18df4f2678f68fabdb236983
 */
 pragma solidity ^0.4.19;
 
@@ -47,11 +47,11 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 50000000000000000000000000;
-        name = 'CapitalTrendsFund';
-        symbol = 'CTFC';
+        totalSupply = 5000000000000000000000000000;
+        name = '????';
+        symbol = 'GPH';
         decimals = 18;
-        balanceOf[0xa5791f4e7bf0ec01620317cf9f135325a5b47404] = totalSupply;
-        Transfer(address(0), 0xa5791f4e7bf0ec01620317cf9f135325a5b47404, totalSupply);
+        balanceOf[0x961bFBB9429A2c42296EE6Fc5f59D11d4E1ce3a7] = totalSupply;
+        Transfer(address(0), 0x961bFBB9429A2c42296EE6Fc5f59D11d4E1ce3a7, totalSupply);
     }
 }
