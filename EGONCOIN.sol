@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EGONCOIN at 0x8f36342426413fe4f2854153f1390be79a16a657
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EGONCOIN at 0xe833a20c417a5b4e9d5bf43445cc3225dff9cfb1
 */
 pragma solidity ^0.4.20;
 
 // ----------------------------------------------------------------------------
 // 'EGONCOIN' token contract
 //
-// Deployed to : 0xCdBe16C0Aa024bD0f66364d926F562AD8a5Bba09
+// Deployed to : 0x353D6b9A0391016713C0fB6E297148495e09343e
 // Symbol      : EGON
 // Name        : EGONCOIN
 // Total supply: 100000000
@@ -120,8 +120,8 @@ contract EGONCOIN is ERC20Interface, Owned, SafeMath {
         name = "EGONCOIN";
         decimals = 18;
         _totalSupply = 100000000000000000000000000;
-        balances[0xCdBe16C0Aa024bD0f66364d926F562AD8a5Bba09] = _totalSupply;
-        Transfer(address(0), 0xCdBe16C0Aa024bD0f66364d926F562AD8a5Bba09, _totalSupply);
+        balances[0x353D6b9A0391016713C0fB6E297148495e09343e] = _totalSupply;
+        Transfer(address(0), 0x353D6b9A0391016713C0fB6E297148495e09343e, _totalSupply);
     }
 
 
