@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SlotTicket at 0x0a25400e0b185077bd0d52a1cac7e46e38aa585e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SlotTicket at 0x8629903cfa7daee813bb3c5531d0acf0a5b09a46
 */
 pragma solidity ^0.4.17;
 
@@ -231,10 +231,9 @@ contract SlotTicket is StandardMintableToken {
     string public name = "Slot Ticket";
     uint8 public decimals = 0;
     string public symbol = "TICKET";
-    string public version = "0.6";
+    string public version = "0.7";
 
     function destroy() onlyOwner {
-        // Transfer Eth to owner and terminate contract
         selfdestruct(owner);
     }
 }
@@ -249,13 +248,13 @@ contract SlotTicket is StandardMintableToken {
 contract Slot is Ownable {
     using SafeMath for uint256;
 
-    uint8   constant public SIZE =           100;        // size of the lottery
-    uint32  constant public JACKPOT_CHANCE = 1000000;    // one in a million
-    uint32  constant public INACTIVITY =     160000;     // blocks after which refunds can be claimed
-    uint256 constant public PRICE =          100 finney;
-    uint256 constant public JACK_DIST =      249 finney;
-    uint256 constant public DIV_DIST =       249 finney;
-    uint256 constant public GAS_REFUND =     2 finney;
+    uint8   constant SIZE =           100;        // size of the lottery
+    uint32  constant JACKPOT_CHANCE = 1000000;    // one in a million
+    uint32  constant INACTIVITY =     160000;     // blocks after which refunds can be claimed
+    uint256 constant PRICE =          100 finney;
+    uint256 constant JACK_DIST =      249 finney;
+    uint256 constant DIV_DIST =       249 finney;
+    uint256 constant GAS_REFUND =     2 finney;
 
     /* 
     *  every participant has an account index, the winners are picked from here
@@ -265,8 +264,8 @@ contract Slot is Ownable {
     mapping (uint => mapping (uint => address)) public participants; // game number => counter => address
     SlotTicket public ticket; // this is a receipt for the ticket, it wont affect the prize distribution
     uint256 public jackpotAmount;
-    uint256 public gameNumber;
-    uint256 public gameStartedAt;
+    uint256 public gameIndex;
+    uint256 public gameStartedAtBlock;
     address public fund; // address to send dividends
     uint256[8] public prizes = [4 ether, 
                                 2 ether,
@@ -284,18 +283,16 @@ contract Slot is Ownable {
     event GameRefunded(uint256 _game);
 
     function Slot(address _fundAddress) payable { // address _ticketAddress
-        // ticket = SlotTicket(_ticketAddress); // still need to change owner
         ticket = new SlotTicket();
         fund = _fundAddress;
 
         jackpotAmount = msg.value;
-        gameNumber = 0;
+        gameIndex = 0;
         counter = 0;
-        gameStartedAt = block.number;
+        gameStartedAtBlock = block.number;
     }
 
     function() payable {
-        // fallback function to buy tickets
         buyTicketsFor(msg.sender);
     }
 
@@ -320,9 +317,9 @@ contract Slot is Ownable {
         // if number of tickets exceeds the size of the game, tickets are added to next game
 
         for (uint256 i = 0; i < _numberOfTickets; i++) {
-            // using gameNumber instead of counter/SIZE since games can be cancelled
-            participants[gameNumber][counter%SIZE] = _participant; 
-            ParticipantAdded(_participant, gameNumber, counter%SIZE);
+            // using gameIndex instead of counter/SIZE since games can be cancelled
+            participants[gameIndex][counter%SIZE] = _participant; 
+            ParticipantAdded(_participant, gameIndex, counter%SIZE);
 
             // msg.sender triggers the drawing of lots
             if (++counter%SIZE == 0) {
@@ -336,11 +333,13 @@ contract Slot is Ownable {
     }
     
     function awardPrizes() private {
-        // get the winning number, no need to hash, since it is a deterministical function anyway
-        uint256 winnerIndex = uint256(block.blockhash(block.number-1))%SIZE;
+        uint256 hashNumber = uint256(keccak256(block.blockhash(block.number-1)));
+
+        // get the winning number
+        uint256 winnerIndex = hashNumber%SIZE;
 
         // get jackpot winner, hash result of last two digit number (index) with 4 preceding zeroes will win
-        uint256 jackpotNumber = uint256(block.blockhash(block.number-1))%JACKPOT_CHANCE;
+        uint256 jackpotNumber = hashNumber%JACKPOT_CHANCE;
         if (winnerIndex == jackpotNumber) {
             distributeJackpot(winnerIndex);
         }
@@ -348,8 +347,8 @@ contract Slot is Ownable {
         // loop throught the prizes 
         for (uint8 i = 0; i < prizes.length; i++) {
             // GAS: 21000 Paid for every transaction. (prizes.length)
-            participants[gameNumber][winnerIndex%SIZE].transfer(prizes[i]); // msg.sender pays the gas, he's refunded later, % to wrap around
-            PrizeAwarded(gameNumber, participants[gameNumber][winnerIndex%SIZE], prizes[i]);
+            participants[gameIndex][winnerIndex%SIZE].transfer(prizes[i]); // msg.sender pays the gas, he's refunded later, % to wrap around
+            PrizeAwarded(gameIndex, participants[gameIndex][winnerIndex%SIZE], prizes[i]);
 
             // increment index to the next winner to receive the next prize
             winnerIndex++;
@@ -360,30 +359,29 @@ contract Slot is Ownable {
         uint256 amount = jackpotAmount;
         jackpotAmount = 0; // later on in the code sequence funds will be added
 
-        participants[gameNumber][_winnerIndex].transfer(amount);
-        JackpotAwarded(gameNumber,  participants[gameNumber][_winnerIndex], amount);
+        participants[gameIndex][_winnerIndex].transfer(amount);
+        JackpotAwarded(gameIndex,  participants[gameIndex][_winnerIndex], amount);
     }
 
     function distributeRemaining() private {
-        // GAS: 21000 Paid for every transaction. (3)
         jackpotAmount = jackpotAmount.add(JACK_DIST);   // add to jackpot
-        fund.transfer(DIV_DIST);                        // *cash register sound* dividends are paid to SLOT token owners
+        fund.transfer(DIV_DIST);                        // dividends are paid to SLOT investors
         msg.sender.transfer(GAS_REFUND);                // repay gas to msg.sender
     }
 
     function increaseGame() private {
-        gameNumber++;
-        gameStartedAt = block.number;
+        gameIndex++;
+        gameStartedAtBlock = block.number;
     }
 
-    // public functions
+    /* public functions */
 
     function spotsLeft() public constant returns (uint8 spots) {
         return SIZE - uint8(counter%SIZE);
     }
 
-    function refundGameAfterLongInactivity() public {
-        require(block.number.sub(gameStartedAt) >= INACTIVITY);
+    function refundPlayersAfterVeryLongGame() public {
+        require(block.number.sub(gameStartedAtBlock) >= INACTIVITY);
         require(counter%SIZE != 0); // nothing to refund
         // refunds for everybody can be requested after the game has gone (INACTIVITY) blocks without a conclusion
         
@@ -392,36 +390,35 @@ contract Slot is Ownable {
         counter -= _size;
 
         for (uint8 i = 0; i < _size; i++) {
-            // GAS: default 21000 paid for every transaction.
-            participants[gameNumber][i].transfer(PRICE);
+            participants[gameIndex][i].transfer(PRICE);
         }
 
-        GameRefunded(gameNumber);
+        GameRefunded(gameIndex);
         increaseGame();
     }
 
     function destroy() public onlyOwner {
-        require(jackpotAmount < 25 ether);
-
-        // Transfer Ether funds to owner and terminate contract
-        // It would be unfair to allow ourselves to destroy a contract with more than 25 ether and claim the jackpot,
-        // lower than that we would consider it still a beta (any Ether would be transfered to the newer contract)
+        require(this.balance < 1 ether);
 
         ticket.destroy();
         selfdestruct(owner);
     }
     
     function changeTicketOwner(address _newOwner) public onlyOwner {
+        require(_newOwner != 0x0);
         // in case of new contract, old token can still be used
         // the token contract owner is the slot contract itself
         ticket.transferOwnership(_newOwner);
     }
     
     function changeFund(address _newFund) public onlyOwner {
+        require(_newFund != 0x0);
+        // changes the place to send dividends to SLOT investors
         fund = _newFund;
     }
     
     function changeTicket(address _newTicket) public onlyOwner {
-        ticket = SlotTicket(_newTicket); // still need to change owner to work
+        require(_newTicket != 0x0);
+        ticket = SlotTicket(_newTicket); // still owner of the ticket needs to changed to work
     }
 }
