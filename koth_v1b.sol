@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract koth_v1b at 0x5745b21F6365b379451F2f327274812D7A5D3d0D
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract koth_v1b at 0xB71Cd8f21D5C21edcd113CA2807189ddcAf9DD44
 */
 pragma solidity ^0.4.16;
 
@@ -10,7 +10,9 @@ contract koth_v1b {
         address bettor,
         uint bet,
         uint pot,
-        uint lastBlock
+        uint lastBlock,
+        uint minBet,
+        uint maxBet
     );
 
     event KothWin(
@@ -37,8 +39,6 @@ contract koth_v1b {
     uint public firstBlock;
     uint public lastBlock;
     address public koth;
-    uint public minBet;
-    uint public maxBet;
 
     // Initialization
     function koth_v1b() public {
@@ -47,11 +47,6 @@ contract koth_v1b {
     }
 
     function () payable public {
-        // Current KOTH can't bet over themselves
-        if (msg.sender == koth) {
-            return;
-        }
-
         // We're past the block target, but new game hasn't been activated
         if (lastBlock > 0 && block.number > lastBlock) {
             msg.sender.transfer(msg.value);
@@ -59,9 +54,18 @@ contract koth_v1b {
         }
 
         // Check for minimum bet (at least minRaise over current highestBet)
+        uint minBet = highestBet + minRaise;
         if (msg.value < minBet) {
             msg.sender.transfer(msg.value);
             return;
+        }
+
+        // Check for maximum bet
+        uint maxBet;
+        if (pot < 1 ether) {
+            maxBet = 3 * pot;
+        } else {
+            maxBet = 5 * pot / 4;
         }
 
         // Check for maximum bet
@@ -70,19 +74,11 @@ contract koth_v1b {
             return;
         }
 
-        // Bet was successful, crown new KOTH
+        // Bet was successful
         betId++;
         highestBet = msg.value;
         koth = msg.sender;
         pot += highestBet;
-
-        // New bets
-        minBet = highestBet + minRaise;
-        if (pot < 1 ether) {
-            maxBet = 3 * pot;
-        } else {
-            maxBet = 5 * pot / 4;
-        }
 
         // Equation expects pot to be in Ether
         uint potEther = pot/1000000000000000000;
@@ -93,7 +89,7 @@ contract koth_v1b {
 
         lastBlock = block.number + blocksRemaining;
 
-        NewKoth(gameId, betId, koth, highestBet, pot, lastBlock);
+        NewKoth(gameId, betId, koth, highestBet, pot, lastBlock, minBet, maxBet);
     }
 
     function resetKoth() private {
@@ -104,8 +100,6 @@ contract koth_v1b {
         lastBlock = 0;
         betId = 0;
         firstBlock = block.number;
-        minBet = minRaise;
-        maxBet = 3 * minPot;
     }
 
     // Called to reward current KOTH winner and start new game
