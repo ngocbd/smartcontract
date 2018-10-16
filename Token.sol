@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xc42209accc14029c1012fb5680d95fbd6036e2a0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x73a09f1c47eb18629662f876aba0e4ea529d43b8
 */
 pragma solidity ^ 0.4.17;
 
@@ -105,8 +105,8 @@ contract Token is ERC20, SafeMath, Ownable {
         decimals = 18; // Amount of decimals for display purposes        
         preSaleAddress = 0xf8A15b1540d5f9D002D9cCb7FD1F23E795c2859d;      
 
-        // Allocate tokens for pre-sale customers - private sale 
-        balances[preSaleAddress] = 82499870672369211638818601 - 2534559883e16;
+        // Allocate tokens for pre-sale customers        
+        balances[preSaleAddress] = 82499870672369211638818601;
         // Allocate tokens for the team/reserve/advisors/
         balances[0xF821Fd99BCA2111327b6a411C90BE49dcf78CE0f] = totalSupply - balances[preSaleAddress];       
     }
