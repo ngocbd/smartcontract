@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleToken at 0xda94da8b4f280d0673cc137ce3f3777834f1f59a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleToken at 0x55cdbdeb00037563de4e082575704b3606b7ffa9
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.17;
 
 
 /**
@@ -50,12 +50,6 @@ library SafeMath {
   }
 }
 
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
 contract ERC20Basic {
   function totalSupply() public view returns (uint256);
   function balanceOf(address who) public view returns (uint256);
@@ -63,11 +57,13 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
- */
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
 
@@ -109,31 +105,6 @@ contract BasicToken is ERC20Basic {
 
 }
 
-
-
-
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-
-
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
 contract StandardToken is ERC20, BasicToken {
 
   mapping (address => mapping (address => uint256)) internal allowed;
@@ -222,21 +193,13 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-
-
-/**
- * @title SimpleToken
- * @dev Very simple ERC20 Token example, where all tokens are pre-assigned to the creator.
- * Note they can later distribute these tokens as they wish using `transfer` and other
- * `StandardToken` functions.
- */
 contract SimpleToken is StandardToken {
 
-  string public constant name = "BTZ001"; // solium-disable-line uppercase
-  string public constant symbol = "BTZ"; // solium-disable-line uppercase
-  uint8 public constant decimals = 18; // solium-disable-line uppercase
+  string public constant name = "Sovereign"; // solium-disable-line uppercase
+  string public constant symbol = "SOV"; // solium-disable-line uppercase
+  uint8 public constant decimals = 6; // solium-disable-line uppercase
 
-  uint256 public constant INITIAL_SUPPLY = 200000000 * (10 ** uint256(decimals));
+  uint256 public constant INITIAL_SUPPLY = 100000000000000000;
 
   /**
    * @dev Constructor that gives msg.sender all of existing tokens.
