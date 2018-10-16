@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FundsKeeper at 0x340c5a30af64ce1e7b6aab09bcc44d46d48c782d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FundsKeeper at 0x65b6b495730371a807915441ed337f09d039bc66
 */
 pragma solidity 0.4.19;
 
@@ -20,7 +20,7 @@ contract FundsKeeper {
     bool public started = false;
 
     // address of tokens
-    address public deuseth;
+    address public deusETH;
 
     uint256 public weiReceived;
 
@@ -57,6 +57,7 @@ contract FundsKeeper {
         address winner = msg.sender;
 
         uint256 gain = calcGain();
+
         require(gain != 0);
         require(this.balance >= gain);
 
@@ -69,14 +70,14 @@ contract FundsKeeper {
     function setLottery(address _lottery) public onlyOwner {
         require(!started);
         lottery = InterfaceDeusETH(_lottery);
-        deuseth = _lottery;
+        deusETH = _lottery;
         started = true;
     }
 
     function getTeamSalary() public onlyOwner {
         require(!salarySent);
-        require(msg.sender == owner);
         require(lottery.gameOver());
+        require(!lottery.gameOverByUser());
         salarySent = true;
         weiReceived = this.balance;
         uint256 salary = weiReceived/10;
