@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StarbaseToken at 0x2b25741c1e8bc08cfffc7286a88604a6d800dcb1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StarbaseToken at 0xf70a642bd387f94380ffb90451c2c81d4eb82cbc
 */
+pragma solidity ^0.4.13;
+
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
@@ -38,8 +40,8 @@ library SafeMath {
  */
 contract ERC20Basic {
   uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
+  function balanceOf(address who) public constant returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
@@ -79,8 +81,6 @@ contract BasicToken is ERC20Basic {
 
 }
 
-
-
 /**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
@@ -92,7 +92,13 @@ contract ERC20 is ERC20Basic {
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
 contract StandardToken is ERC20, BasicToken {
 
   mapping (address => mapping (address => uint256)) allowed;
@@ -172,7 +178,6 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-
 contract AbstractStarbaseCrowdsale {
     function startDate() constant returns (uint256) {}
     function endedAt() constant returns (uint256) {}
@@ -222,8 +227,8 @@ contract StarbaseToken is StandardToken {
     /*
      *  Constants / Token meta data
      */
-    string constant public name = "TESTER";  // Token name
-    string constant public symbol = "TESTAR";  // Token symbol
+    string constant public name = "Starbase";  // Token name
+    string constant public symbol = "STAR";  // Token symbol
     uint8 constant public decimals = 18;
     uint256 constant public initialSupply = 1000000000e18; // 1B STAR tokens
     uint256 constant public initialCompanysTokenAllocation = 750000000e18;  // 750M
@@ -295,15 +300,18 @@ contract StarbaseToken is StandardToken {
 
         // Tokens for crowdsale and early purchasers
         balances[address(starbaseCrowdsale)] = initialBalanceForCrowdsale;
+        Transfer(0, address(starbaseCrowdsale), initialBalanceForCrowdsale);
 
         // Tokens for marketing campaign supporters
         balances[address(starbaseMarketingCampaign)] = initialBalanceForMarketingCampaign;
+        Transfer(0, address(starbaseMarketingCampaign), initialBalanceForMarketingCampaign);
 
         // Tokens for early contributors, should be allocated by function
         balances[0] = 62500000e18; // 62.5M
 
         // Starbase company holds untransferrable tokens initially
         balances[starbaseCompanyAddr] = initialCompanysTokenAllocation; // 750M
+        Transfer(0, starbaseCompanyAddr, initialCompanysTokenAllocation);
 
         totalSupply = initialSupply;    // 1B
     }
