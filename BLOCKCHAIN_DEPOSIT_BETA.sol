@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BLOCKCHAIN_DEPOSIT_BETA at 0xdd39457768927c7d13b7854931eb4e800fb1f347
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BLOCKCHAIN_DEPOSIT_BETA at 0x8d5ede2af16e4dd5b7fd6c4f2b33bf685fffd584
 */
 pragma solidity ^0.4.11;
 
@@ -10,7 +10,7 @@ contract BLOCKCHAIN_DEPOSIT_BETA {
 	uint constant PAYOUT_INTERVAL = 1 days;
 
 	/* NB: Solidity doesn't support fixed or floats yet, so we use promille instead of percent */	
-	uint constant DEPOSITOR_INTEREST= 10;
+	uint constant DEPONENT_INTEREST= 10;
 	uint constant INTEREST_DENOMINATOR = 1000;
 
 	/* DATA TYPES */
@@ -26,6 +26,13 @@ contract BLOCKCHAIN_DEPOSIT_BETA {
 		uint depositTime;
 	}
 
+	/* FUNCTION MODIFIERS */
+	modifier founderOnly { if (msg.sender == contract_founder) _; }
+
+	/* VARIABLE DECLARATIONS */
+
+	/* the contract founder*/
+	address private contract_founder;
 
 	/* the time of last payout */
 	uint private contract_latestPayoutTime;
@@ -39,6 +46,7 @@ contract BLOCKCHAIN_DEPOSIT_BETA {
 	/* contract constructor */
 	function BLOCKCHAIN_DEPOSIT_BETA() 
 	{
+		contract_founder = msg.sender;
 		contract_latestPayoutTime = now;		
 	}
 
@@ -53,9 +61,9 @@ contract BLOCKCHAIN_DEPOSIT_BETA {
 		addDepositor();	
 	}
 
-	function status() constant returns (uint deposit_fund_sum, uint depositorsCount, uint unpaidTime, uint unpaidIntervals)
+	function status() constant returns (uint deposit_fond_sum, uint depositorsCount, uint unpaidTime, uint unpaidIntervals)
 	{
-		deposit_fund_sum = this.balance;
+		deposit_fond_sum = this.balance;
 		depositorsCount = contract_depositors.length;
 		unpaidTime = now - contract_latestPayoutTime;
 		unpaidIntervals = unpaidTime / PAYOUT_INTERVAL;
@@ -78,7 +86,7 @@ contract BLOCKCHAIN_DEPOSIT_BETA {
 			{
 				if(contract_depositors[idx].depositTime > contract_latestPayoutTime + PAYOUT_INTERVAL)
 					continue;
-				uint payout = (contract_depositors[idx].deposit * DEPOSITOR_INTEREST) / INTEREST_DENOMINATOR;
+				uint payout = (contract_depositors[idx].deposit * DEPONENT_INTEREST) / INTEREST_DENOMINATOR;
 				if(!contract_depositors[idx].etherAddress.send(payout))
 					throw;
 				depositorsDepositPayout += payout;	
@@ -99,5 +107,11 @@ contract BLOCKCHAIN_DEPOSIT_BETA {
 		contract_depositors.push(Depositor(msg.sender, msg.value, now));
 	}
 
+	/* ADMIN FUNCTIONS */
 
+	/* pass the admin rights to another address */
+	function changeFounderAddress(address newFounder) founderOnly 
+	{
+		contract_founder = newFounder;
+	}
 }
