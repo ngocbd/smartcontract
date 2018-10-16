@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0x78898682fc04ffa59ebd367feda4b5cfe429ed0e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0x073d13fe4d79896a59fe904b8d8ebf7a2f607378
 */
 pragma solidity ^0.4.13;
 
@@ -153,8 +153,8 @@ contract StandardToken is ERC20, BasicToken {
  * Created specifically for TokenDone.io
  */
 contract ApprovedTokenDone is StandardToken {
-	string public name = 'AEROFLOT';
-	string public symbol = 'AEROFLOT';
+	string public name = 'GAZPROM';
+	string public symbol = 'GAZPROM';
 	uint public decimals = 3;
 	uint public initialSupply = 99999999999;
 	string public publishier = 'TokenDone.io';
