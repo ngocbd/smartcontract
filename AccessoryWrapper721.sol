@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AccessoryWrapper721 at 0x510663b433ca7c0860c206eb8ed80472146d992e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AccessoryWrapper721 at 0xea3be67a30325e665a86ea4149c781b20a81e07f
 */
 pragma solidity ^0.4.18;
 
@@ -8,6 +8,52 @@ pragma solidity ^0.4.18;
  * @dev see https://github.com/ethereum/eips/issues/721
  */
 
+
+contract SafeMath {
+    function safeAdd(uint x, uint y) pure internal returns(uint) {
+      uint z = x + y;
+      assert((z >= x) && (z >= y));
+      return z;
+    }
+
+    function safeSubtract(uint x, uint y) pure internal returns(uint) {
+      assert(x >= y);
+      uint z = x - y;
+      return z;
+    }
+
+    function safeMult(uint x, uint y) pure internal returns(uint) {
+      uint z = x * y;
+      assert((x == 0)||(z/x == y));
+      return z;
+    }
+
+    function getRandomNumber(uint16 maxRandom, uint8 min, address privateAddress) constant public returns(uint8) {
+        uint256 genNum = uint256(block.blockhash(block.number-1)) + uint256(privateAddress);
+        return uint8(genNum % (maxRandom - min + 1)+min);
+    }
+}
+
+contract Enums {
+    enum ResultCode {
+        SUCCESS,
+        ERROR_CLASS_NOT_FOUND,
+        ERROR_LOW_BALANCE,
+        ERROR_SEND_FAIL,
+        ERROR_NOT_OWNER,
+        ERROR_NOT_ENOUGH_MONEY,
+        ERROR_INVALID_AMOUNT
+    }
+
+    enum AngelAura { 
+        Blue, 
+        Yellow, 
+        Purple, 
+        Orange, 
+        Red, 
+        Green 
+    }
+}
 
 contract AccessControl {
     address public creatorAddress;
@@ -58,52 +104,6 @@ contract AccessControl {
   
 } 
 
-contract SafeMath {
-    function safeAdd(uint x, uint y) pure internal returns(uint) {
-      uint z = x + y;
-      assert((z >= x) && (z >= y));
-      return z;
-    }
-
-    function safeSubtract(uint x, uint y) pure internal returns(uint) {
-      assert(x >= y);
-      uint z = x - y;
-      return z;
-    }
-
-    function safeMult(uint x, uint y) pure internal returns(uint) {
-      uint z = x * y;
-      assert((x == 0)||(z/x == y));
-      return z;
-    }
-
-    function getRandomNumber(uint16 maxRandom, uint8 min, address privateAddress) constant public returns(uint8) {
-        uint256 genNum = uint256(block.blockhash(block.number-1)) + uint256(privateAddress);
-        return uint8(genNum % (maxRandom - min + 1)+min);
-    }
-}
-
-contract Enums {
-    enum ResultCode {
-        SUCCESS,
-        ERROR_CLASS_NOT_FOUND,
-        ERROR_LOW_BALANCE,
-        ERROR_SEND_FAIL,
-        ERROR_NOT_OWNER,
-        ERROR_NOT_ENOUGH_MONEY,
-        ERROR_INVALID_AMOUNT
-    }
-
-    enum AngelAura { 
-        Blue, 
-        Yellow, 
-        Purple, 
-        Orange, 
-        Red, 
-        Green 
-    }
-}
-
 contract IAccessoryData is AccessControl, Enums {
     uint8 public totalAccessorySeries;    
     uint32 public totalAccessories;
@@ -129,7 +129,6 @@ contract IAccessoryData is AccessControl, Enums {
     function getAccessoryLockStatus(uint64 _acessoryId) constant public returns (bool);
 }
 
-
  
 contract AccessoryWrapper721 {
   //Events
@@ -139,7 +138,7 @@ contract AccessoryWrapper721 {
 
 
 //Storage
-    address public ownerAddress;
+    address public creatorAddress;
     uint16 public totalMarketplaces = 0;
     mapping (address => bool) public marketplaces;
     address public accessoryDataContract = 0x466c44812835f57b736ef9F63582b8a6693A14D0;
@@ -153,30 +152,23 @@ contract AccessoryWrapper721 {
 
       // Constructor
     function AcceessoryWrapper721() public {
-        ownerAddress = msg.sender;
+        creatorAddress = msg.sender;
     }
     
 
-    modifier onlyOWNER() {
-        require(msg.sender == ownerAddress);
+    modifier onlyCREATOR() {
+        require(msg.sender == creatorAddress);
         _;
     }
 
- function addMARKETPLACE(address _newMarketplace) onlyOWNER public {
+ function addMARKETPLACE(address _newMarketplace) onlyCREATOR public {
         if (marketplaces[_newMarketplace] == false) {
            marketplaces[_newMarketplace] = true;
            totalMarketplaces += 1;
         }
     }
     
-     function removeMARKETPLACE(address _oldMarketplace) onlyOWNER public {
-        if (marketplaces[_oldMarketplace] == true) {
-            marketplaces[_oldMarketplace] = false;
-            totalMarketplaces -= 1;
-        }
-    }
-    
-    function SetAccessoryDataContact(address _accessoryDataContract) onlyOWNER external {
+    function SetAccessoryDataContact(address _accessoryDataContract) onlyCREATOR external {
        accessoryDataContract = _accessoryDataContract;
     }
 
@@ -207,11 +199,9 @@ contract AccessoryWrapper721 {
     }
     function getTokenLockStatus(uint64 _tokenId) constant public returns (bool) {
        IAccessoryData accessoryData = IAccessoryData(accessoryDataContract);
-       return accessoryData.getAccessoryLockStatus(_tokenId);
+       accessoryData.getAccessoryLockStatus(_tokenId);
        
     }
-    
-   
 
  
   function transfer(address _to, uint256 _tokenId) public {
@@ -240,7 +230,5 @@ contract AccessoryWrapper721 {
      //this function should never be called - instead use transfer
      revert();
   }
-    function kill() onlyOWNER external {
-        selfdestruct(ownerAddress);
-    }
+  
     }
