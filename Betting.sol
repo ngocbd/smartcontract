@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Betting at 0x716d8d76baa029479df0f0604169950153b8f268
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Betting at 0xefc391aba7600da1964b9ae330e3f901d1306188
 */
 pragma solidity ^0.4.20;
 
@@ -1171,7 +1171,8 @@ contract Betting is usingOraclize {
         coin_pointer = oraclizeIndex[myid];
 
         if (myid == coinIndex[coin_pointer].preOraclizeId) {
-            if (now >= chronus.starting_time+chronus.betting_duration+ 5 minutes) {
+            if (coinIndex[coin_pointer].pre > 0) {
+            } else if (now >= chronus.starting_time+chronus.betting_duration+ 15 minutes) {
                 forceVoidRace();
             } else {
                 coinIndex[coin_pointer].pre = stringToUintNormalize(result);
@@ -1179,7 +1180,8 @@ contract Betting is usingOraclize {
             }
         } else if (myid == coinIndex[coin_pointer].postOraclizeId){
             if (coinIndex[coin_pointer].pre > 0 ){
-                if (now >= chronus.starting_time+chronus.race_duration+ 5 minutes) {
+                if (coinIndex[coin_pointer].post > 0) {
+                } else if (now >= chronus.starting_time+chronus.race_duration+ 15 minutes) {
                     forceVoidRace();
                 } else {
                     coinIndex[coin_pointer].post = stringToUintNormalize(result);
