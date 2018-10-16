@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EplusCoinToken at 0x02e3083a51e8632e571fbd6a62ac396c10c653ba
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EplusCoinToken at 0x0dffe2e82d6175bc5cb2ef4ef0f67939ecfdbe3e
 */
 pragma solidity ^0.4.8;
 
@@ -108,7 +108,7 @@ contract StandardToken is ERC20, SafeMath {
 contract EplusCoinToken is StandardToken {
 
     string public name = "EplusCoin";          // name of the token
-    string public symbol = "EPLUS";
+    string public symbol = "EPC";
     uint256 public decimals = 8;                  // token has 8 digit precision
     string public version = 'H0.1';
 
