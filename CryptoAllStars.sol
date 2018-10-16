@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoAllStars at 0x0dea9b8e6bf08d6859e29256942916f0cfb884fb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoAllStars at 0xa3fa17c51a77a79808f3c21948de3ea70391ce6a
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
@@ -135,7 +135,7 @@ contract CryptoAllStars is ERC721 {
 
   /// @dev Creates a new Person with the given name.
   function createContractPerson(string _name) public onlyCeo {
-    _createPerson(_name, msg.sender, startingPrice);
+    _createPerson(_name, address(this), startingPrice);
   }
 
   /// @notice Returns all the relevant information about a specific person.
