@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AAA at 0xfc2b25309d02819e86351068ac3e77d8730867ca
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AAA at 0xaca43f6ff5185b0dafa0e2791756891f6dbe1ce5
 */
 pragma solidity ^0.4.19;
 
@@ -93,26 +93,23 @@ contract AAA is StandardToken {
         throw;
     }
 
-    /* Public variables of the token */
-
     /*
     NOTE:
     The following variables are OPTIONAL vanities. One does not have to include them.
     They allow one to customise the token contract & in no way influences the core functionality.
     Some wallets/interfaces might not even bother to look at this information.
     */
-    string public name;                   //fancy name: eg Simon Bucks
-    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol;                 //An identifier: eg SBX
-    string public version = 'H0.1';       //human 0.1 standard. Just an arbitrary versioning scheme.
+    string public name;                   //token name
+    uint8 public decimals;                //Decimals
+    string public symbol;                 //Identifier of token
+    string public version = 'A1.0';       //Version of AAA
 
-    function AAA(
-        ) {
-        balances[msg.sender] = 2100000000000000000;               // Give the creator all initial tokens
-        totalSupply = 2100000000000000000;                        // Update total supply
-        name = 'App Advertising Alliance';                                   // Set the name for display purposes
-        decimals = 8;                            // Amount of decimals for display purposes
-        symbol = 'AAA';                               // Set the symbol for display purposes
+    function AAA() {
+        balances[msg.sender] = 210000000000000000000;  // Give the creator all initial tokens
+        totalSupply = 210000000000000000000;  // Total supply
+        name = 'App Advertising Alliance';  // Set the name for display purposes
+        decimals = 10;   // Amount of decimals for display purposes
+        symbol = 'AAA';  // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
