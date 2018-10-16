@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PowerToken at 0x3c7916a935faedd57bd8e3a91daf5c081f723855
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PowerToken at 0xe270b271da6766e6e4d6015b67f0b3f33f266a22
 */
 pragma solidity ^0.4.18;
 /** ----------------------------------------------------------------------------------------------
@@ -256,7 +256,7 @@ contract TokenERC20 is ERC20, Ownable{
 
 contract PowerToken is TokenERC20 {
 
-    function PowerToken() TokenERC20(100000000, "PowerCoin", "LHF", 18) public {
+    function PowerToken() TokenERC20(20000000, "CapricornCoin", "3C", 18) public {
 
     }
 }
