@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BMICOAffiliateProgramm at 0xec34d45fde0836d50ac8438f8442002b588435c0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BMICOAffiliateProgramm at 0x2c8eab1b7c57a6f9f81f761b26b71f99b25ff59c
 */
 pragma solidity ^0.4.15;
 
@@ -19,9 +19,9 @@ contract BMICOAffiliateProgramm {
 
 
     struct itemHistory {
-    uint256 datetime;
-    address referral;
-    uint256 amount_invest;
+        uint256 datetime;
+        address referral;
+        uint256 amount_invest;
     }
     mapping(address => itemHistory[]) history;
 
@@ -89,7 +89,7 @@ contract BMICOAffiliateProgramm {
 
     function setPromoToPartner(string promo) {
         assert(partnersPromo[promo]==address(0x0));
-
+        assert(partnersInfo[msg.sender].create==false);
         assert(str_length(promo)>0 && str_length(promo)<=6);
 
         partnersPromo[promo] = msg.sender;
@@ -100,6 +100,14 @@ contract BMICOAffiliateProgramm {
 
     function checkPromo(string promo) constant returns(bool){
         return partnersPromo[promo]!=address(0x0);
+    }
+
+    function checkPartner(address partner_address) constant returns(bool isPartner, string promo){
+        isPartner = partnersInfo[partner_address].create;
+        promo = '-1';
+        if(isPartner){
+            promo = partnersInfo[partner_address].promo;
+        }
     }
 
     function calc_partnerPercent(uint256 ref_amount_invest) constant internal returns(uint16 percent){
@@ -132,7 +140,7 @@ contract BMICOAffiliateProgramm {
             h_invest = new uint256[](history[partner_address].length);
             h_referrals = new address[](history[partner_address].length);
 
-            for(var i=0; i<history[partner_address].length; i++){
+            for(uint256 i=0; i<history[partner_address].length; i++){
                 h_datetime[i] = history[partner_address][i].datetime;
                 h_invest[i] = history[partner_address][i].amount_invest;
                 h_referrals[i] = history[partner_address][i].referral;
@@ -152,8 +160,13 @@ contract BMICOAffiliateProgramm {
         return partnerInfo(partner_address);
     }
 
-    function partnerInfo_for_Owner (address partner) isOwner constant returns(string, uint256, uint256[], uint256[], address[]){
-        return partnerInfo(partner);
+    function partnerInfo_for_Owner (address partner, bytes32 hash, uint8 v, bytes32 r, bytes32 s) constant returns(string, uint256, uint256[], uint256[], address[]){
+        if(owner == ecrecover(hash, v, r, s)){
+            return partnerInfo(partner);
+        }
+        else {
+            return ('-1', 0, new uint256[](0), new uint256[](0), new address[](0));
+        }
     }
 
     function add_referral(address referral, string promo, uint256 amount) external returns(address partner, uint256 p_partner, uint256 p_referral){
@@ -165,17 +178,11 @@ contract BMICOAffiliateProgramm {
                 partner = partnersPromo[promo];
                 referrals[referral] += amount;
                 amount_referral_invest += amount;
-                partnersInfo[partnersPromo[promo]].balance += amount;
-                history[partnersPromo[promo]].push(itemHistory(now, referral, amount));
+                partnersInfo[partner].balance += amount;
+                history[partner].push(itemHistory(now, referral, amount));
                 p_partner = (amount*uint256(calc_partnerPercent(amount)))/10000;
                 p_referral = (amount*ref_percent)/10000;
             }
         }
-    }
-
-
-    /*delete function before release contract*/
-    function kill() isOwner {
-        selfdestruct(msg.sender);
     }
 }
