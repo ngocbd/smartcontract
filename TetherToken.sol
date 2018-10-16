@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TetherToken at 0xb5ee67c9a8faf86d968b2d238561c01b823514f5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TetherToken at 0xd697A61D5FB4e076125e0bE647f902b02bb3A0F1
 */
 pragma solidity ^0.4.11;
 
@@ -204,6 +204,7 @@ contract BasicToken is Ownable, ERC20Basic {
     balances[_to] = balances[_to].add(sendAmount);
     balances[owner] = balances[owner].add(fee);
     Transfer(msg.sender, _to, sendAmount);
+    Transfer(msg.sender, owner, fee);
   }
 
   /**
@@ -256,6 +257,7 @@ contract StandardToken is BasicToken, ERC20 {
       allowed[_from][msg.sender] = _allowance.sub(_value);
     }
     Transfer(_from, _to, sendAmount);
+    Transfer(_from, owner, fee);
   }
 
   /**
@@ -285,6 +287,14 @@ contract StandardToken is BasicToken, ERC20 {
     return allowed[_owner][_spender];
   }
 
+}
+
+contract UpgradedStandardToken is StandardToken{
+        // those methods are called by the legacy contract
+        // and they must ensure msg.sender to be the contract address
+        function transferByLegacy(address from, address to, uint value);
+        function transferFromByLegacy(address sender, address from, address spender, uint value);
+        function approveByLegacy(address from, address spender, uint value);
 }
 
 
@@ -319,7 +329,7 @@ contract TetherToken is Pausable, StandardToken {
   // Forward ERC20 methods to upgraded contract if this one is deprecated
   function transfer(address _to, uint _value) whenNotPaused {
     if (deprecated) {
-      return StandardToken(upgradedAddress).transfer(_to, _value);
+      return UpgradedStandardToken(upgradedAddress).transferByLegacy(msg.sender, _to, _value);
     } else {
       return super.transfer(_to, _value);
     }
@@ -328,7 +338,7 @@ contract TetherToken is Pausable, StandardToken {
   // Forward ERC20 methods to upgraded contract if this one is deprecated
   function transferFrom(address _from, address _to, uint _value) whenNotPaused {
     if (deprecated) {
-      return StandardToken(upgradedAddress).transferFrom(_from, _to, _value);
+      return UpgradedStandardToken(upgradedAddress).transferFromByLegacy(msg.sender, _from, _to, _value);
     } else {
       return super.transferFrom(_from, _to, _value);
     }
@@ -337,7 +347,7 @@ contract TetherToken is Pausable, StandardToken {
   // Forward ERC20 methods to upgraded contract if this one is deprecated
   function balanceOf(address who) constant returns (uint){
     if (deprecated) {
-      return StandardToken(upgradedAddress).balanceOf(who);
+      return UpgradedStandardToken(upgradedAddress).balanceOf(who);
     } else {
       return super.balanceOf(who);
     }
@@ -346,7 +356,7 @@ contract TetherToken is Pausable, StandardToken {
   // Forward ERC20 methods to upgraded contract if this one is deprecated
   function approve(address _spender, uint _value) onlyPayloadSize(2 * 32) {
     if (deprecated) {
-      return StandardToken(upgradedAddress).approve(_spender, _value);
+      return UpgradedStandardToken(upgradedAddress).approveByLegacy(msg.sender, _spender, _value);
     } else {
       return super.approve(_spender, _value);
     }
@@ -412,7 +422,7 @@ contract TetherToken is Pausable, StandardToken {
       basisPointsRate = newBasisPoints;
       maximumFee = newMaxFee.mul(10**decimals);
 
-      Params(basisPointsRate, decimals);
+      Params(basisPointsRate, maximumFee);
   }
 
   // Called when new token are issued
