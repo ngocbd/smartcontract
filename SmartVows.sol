@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartVows at 0x1b5a535502c519987115ebe5892666f4102bdf9f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartVows at 0xc5aaeeac76eb1d44f9e0d1a899db8fd5e7079069
 */
 pragma solidity ^0.4.17;
 
@@ -66,6 +66,12 @@ contract Util{
         return strConcat(_a, _b, "", "", "");
     }
 
+    function toString(address x) internal pure returns (string) {
+        bytes memory b = new bytes(20);
+        for (uint i = 0; i < 20; i++)
+        b[i] = byte(uint8(uint(x) / (2**(8*(19 - i)))));
+        return string(b);
+    }
 }
 
 contract SmartVows is Ownable, Util {
