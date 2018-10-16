@@ -1,18 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ContingencyToken at 0xc96eec418b50c538c3f3e32e71575da068a97401
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ContingencyToken at 0x4a78ace8fe213f4eb57f0de5911525fdb490feff
 */
-/**
- *  _____             _   _                                   
- * /  __ \           | | (_)                                  
- * | /  \/ ___  _ __ | |_ _ _ __   __ _  ___ _ __   ___ _   _ 
- * | |    / _ \| '_ \| __| | '_ \ / _` |/ _ \ '_ \ / __| | | |
- * | \__/\ (_) | | | | |_| | | | | (_| |  __/ | | | (__| |_| |
- *  \____/\___/|_| |_|\__|_|_| |_|\__, |\___|_| |_|\___|\__, |
- *                                 __/ |                 __/ |
- *                                |___/                 |___/ 
- *
- */
-
 /**
  * Overflow aware uint math functions.
  *
@@ -180,6 +168,7 @@ contract ContingencyToken is StandardToken, SafeMath {
     event Buy(address indexed sender, uint eth, uint fbt);
     event Withdraw(address indexed sender, address to, uint eth);
     event AllocateFounderTokens(address indexed sender);
+    event AllocateBountyAndEcosystemTokens(address indexed sender);
 
     /**
      * Security review
