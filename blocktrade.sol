@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract blocktrade at 0x36c0da7d81684f8edfe415a6e74492086d88df41
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract blocktrade at 0xfa456cf55250a839088b27ee32a424d7dacb54ff
 */
 pragma solidity ^0.4.21;
 
@@ -12,7 +12,7 @@ contract controlled{
   mapping (address => bool) restrictedAddresses;
 
   // @dev Constructor function that sets freeze parameters so they don't unintentionally hinder operations.
-  function Constructor() public{
+  function controlled() public{
     owner = 0x24bF9FeCA8894A78d231f525c054048F5932dc6B;
     tokenFrozenSinceBlock = (2 ** 256) - 1;
     tokenFrozenUntilBlock = 0;
@@ -76,7 +76,7 @@ contract controlled{
 }
 
 contract blocktrade is controlled{
-  string public name = "blocktrade";
+  string public name = "blocktrade.com";
   string public symbol = "BTT";
   uint8 public decimals = 18;
   uint256 public initialSupply = 57746762*(10**18);
@@ -97,7 +97,7 @@ contract blocktrade is controlled{
   /*
   * @dev Constructor function.
   */
-  function Constructor() public{
+  function blocktrade() public{
     supply = 57746762*(10**18);
     airDropFinished = false;
     balances[owner] = 57746762*(10**18);
