@@ -1,8 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnableOpenPaymentFactory at 0x7c52209718662dde9e18690e5ce435aa81502edd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnableOpenPaymentFactory at 0x1442a8fd038e0253ab07fd0e6aa70413d961f315
 */
-//A BurnableOpenPaymet is instantiated with a specified payer and a commitThreshold.
-//The recipient not set when the contract is instantiated.
+//A BurnableOpenPayment is instantiated with a specified payer and a commitThreshold.
+//The recipient is not set when the contract is instantiated.
+
+//The constructor is payable, so the contract can be instantiated with initial funds.
+//Only the payer can fund the Payment after instantiation.
 
 //All behavior of the contract is directed by the payer, but
 //the payer can never directly recover the payment unless he becomes the recipient.
@@ -12,75 +15,201 @@
 
 //The payer can at any time choose to burn or release to the recipient any amount of funds.
 
-pragma solidity ^0.4.1;
+pragma solidity ^0.4.10;
 
 contract BurnableOpenPayment {
     address public payer;
     address public recipient;
-    address public burnAddress = 0xdead;
+    address constant burnAddress = 0x0;
+    
+    string public payerString;
+    string public recipientString;
+    
     uint public commitThreshold;
     
-    modifier onlyPayer() {
-        if (msg.sender != payer) throw;
-        _;
-    }
+    enum DefaultAction {None, Release, Burn}
+    DefaultAction public defaultAction;
+    uint public defaultTimeoutLength;
+    uint public defaultTriggerTime;
     
-    modifier onlyWithRecipient() {
-        if (recipient == address(0x0)) throw;
-        _;
-    }
+    enum State {Open, Committed, Expended}
+    State public state;
     
-    //Only allowing the payer to fund the contract ensures that the contract's
-    //balance is at most as difficult to predict or interpret as the payer.
-    //If the payer is another smart contract or script-based, balance changes
-    //could reliably indicate certain intentions, judgements or states of the payer.
-    function () payable onlyPayer { }
+    modifier inState(State s) { if (s != state) throw; _; }
+    modifier onlyPayer() { if (msg.sender != payer) throw; _; }
+    modifier onlyRecipient() { if (msg.sender != recipient) throw; _; }
+    modifier onlyPayerOrRecipient() { if ((msg.sender != payer) && (msg.sender != recipient)) throw; _; }
     
-    function BurnableOpenPayment(address _payer, uint _commitThreshold) payable {
+    event FundsAdded(uint amount);
+    event PayerStringUpdated(string newPayerString);
+    event RecipientStringUpdated(string newRecipientString);
+    event FundsRecovered();
+    event Committed(address recipient);
+    event FundsBurned(uint amount);
+    event FundsReleased(uint amount);
+    event Expended();
+    event Unexpended();
+    event DefaultActionDelayed();
+    event DefaultActionCalled();
+    
+    function BurnableOpenPayment(address _payer, string _payerString, uint _commitThreshold, DefaultAction _defaultAction, uint _defaultTimeoutLength)
+    public
+    payable {
+        state = State.Open;
         payer = _payer;
+        payerString = _payerString;
+        PayerStringUpdated(payerString);
         commitThreshold = _commitThreshold;
+        defaultAction = _defaultAction;
+        defaultTimeoutLength = _defaultTimeoutLength;
     }
     
-    function getPayer() returns (address) {
-        return payer;
+    function addFunds()
+    public
+    onlyPayer()
+    payable {
+        if (msg.value == 0) throw;
+        FundsAdded(msg.value);
+        if (state == State.Expended) {
+            state = State.Committed;
+            Unexpended();
+        }
     }
     
-    function getRecipient() returns (address) {
-        return recipient;
-    }
-    
-    function getCommitThreshold() returns (uint) {
-        return commitThreshold;
+    function recoverFunds()
+    public
+    onlyPayer()
+    inState(State.Open)
+    {
+        FundsRecovered();
+        selfdestruct(payer);
     }
     
     function commit()
+    public
+    inState(State.Open)
     payable
     {
-        if (recipient != address(0x0)) throw;
         if (msg.value < commitThreshold) throw;
         recipient = msg.sender;
+        state = State.Committed;
+        Committed(recipient);
+        
+        if (this.balance == 0) {
+            state = State.Expended;
+            Expended();
+        }
+        
+        if (defaultAction != DefaultAction.None) {
+            defaultTriggerTime = now + defaultTimeoutLength;
+        }
+    }
+    
+    function internalBurn(uint amount)
+    private
+    inState(State.Committed)
+    returns (bool)
+    {
+        bool success = burnAddress.send(amount);
+        if (success) {
+            FundsBurned(amount);
+        }
+        if (this.balance == 0) {
+            state = State.Expended;
+            Expended();
+        }
+        return success;
     }
     
     function burn(uint amount)
+    public
+    inState(State.Committed)
     onlyPayer()
-    onlyWithRecipient()
     returns (bool)
     {
-        return burnAddress.send(amount);
+        return internalBurn(amount);
+    }
+    
+    function internalRelease(uint amount)
+    private
+    inState(State.Committed)
+    returns (bool)
+    {
+        bool success = recipient.send(amount);
+        if (success) {
+            FundsReleased(amount);
+        }
+        if (this.balance == 0) {
+            state = State.Expended;
+            Expended();
+        }
+        return success;
     }
     
     function release(uint amount)
+    public
+    inState(State.Committed)
     onlyPayer()
-    onlyWithRecipient()
     returns (bool)
     {
-        return recipient.send(amount);
+        return internalRelease(amount);
+    }
+    
+    function setPayerString(string _string)
+    public
+    onlyPayer()
+    {
+        payerString = _string;
+        PayerStringUpdated(payerString);
+    }
+    
+    function setRecipientString(string _string)
+    public
+    onlyRecipient()
+    {
+        recipientString = _string;
+        RecipientStringUpdated(recipientString);
+    }
+    
+    function delayDefaultAction()
+    public
+    onlyPayerOrRecipient()
+    inState(State.Committed)
+    {
+        if (defaultAction == DefaultAction.None) throw;
+        
+        DefaultActionDelayed();
+        defaultTriggerTime = now + defaultTimeoutLength;
+    }
+    
+    function callDefaultAction()
+    public
+    onlyPayerOrRecipient()
+    inState(State.Committed)
+    {
+        if (defaultAction == DefaultAction.None) throw;
+        if (now < defaultTriggerTime) throw;
+        
+        DefaultActionCalled();
+        if (defaultAction == DefaultAction.Burn) {
+            internalBurn(this.balance);
+        }
+        else if (defaultAction == DefaultAction.Release) {
+            internalRelease(this.balance);
+        }
     }
 }
 
 contract BurnableOpenPaymentFactory {
-    function newBurnableOpenPayment(address payer, uint commitThreshold) payable returns (address) {
+    event NewBOP(address newBOPAddress);
+    
+    function newBurnableOpenPayment(address payer, string payerString, uint commitThreshold, BurnableOpenPayment.DefaultAction defaultAction, uint defaultTimeoutLength)
+    public
+    payable
+    returns (address) {
         //pass along any ether to the constructor
-        return (new BurnableOpenPayment).value(msg.value)(payer, commitThreshold);
+        address newBOPAddr = (new BurnableOpenPayment).value(msg.value)(payer, payerString, commitThreshold, defaultAction, defaultTimeoutLength);
+        NewBOP(newBOPAddr);
+        return newBOPAddr;
     }
 }
