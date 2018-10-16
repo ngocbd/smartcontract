@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Control at 0x634e9d02bcb9bc7c02a8706c3b9ca3107e73651c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Control at 0xeb161f6FAE3B7451e946c1478Ab1d43EEaB20958
 */
 pragma solidity ^0.4.18;
     library SafeMath {
@@ -93,17 +93,17 @@ pragma solidity ^0.4.18;
     	        Transfer(this, msg.sender, tokens);
     	    }
     	}
-    contract ARMOR is Crowdsale {
+    contract QUASI is Crowdsale {
         
             using SafeMath for uint256;
-            string  public name        = 'ARMOR';
-    	    string  public symbol      = 'ARMOR';
-    	    string  public standard    = 'ARMOR 0.1';
+            string  public name        = 'QUASI';
+    	    string  public symbol      = 'QUASI';
+    	    string  public standard    = 'CryptoQ 0.1';
             
     	    uint8   public decimals    = 18;
     	    mapping (address => mapping (address => uint256)) internal allowed;
     	    
-    	    function ARMOR() payable Crowdsale() public {}
+    	    function QUASI() payable Crowdsale() public {}
     	    
     	    function transfer(address _to, uint256 _value) public {
     	        require(balanceOf[msg.sender] >= _value);
@@ -112,12 +112,12 @@ pragma solidity ^0.4.18;
     	        Transfer(msg.sender, _to, _value);
     	    }
     	}
-    contract Control is ARMOR {
-    	    function Control() payable ARMOR() public {}
+    contract Control is QUASI {
+    	    function Control() payable QUASI() public {}
     	    function withdraw() onlyOwner {    
     	        owner.transfer(this.balance);  
     	    }
-    	    function killMe()  onlyOwner {
+    	    function killMe() public onlyOwner {
     	        selfdestruct(owner);
     	    }
     	}
