@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GoTDragonFarm at 0x97cf3a98ee3c81a3a73b16b799d2523a1b095add
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GoTDragonFarm at 0x416768387836bd8715d127ef9065975325cfad14
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
@@ -105,8 +105,7 @@ contract GoTDragonFarm {
         return SafeMath.div(SafeMath.mul(amount,4),100);
     }
     
-    function seedMarket(uint256 eggs) public payable {
-        require(msg.sender == ceoAddress);
+    function seedMarket(uint256 eggs) public payable{
         require(marketEggs == 0);
         initialized = true;
         marketEggs = eggs;
