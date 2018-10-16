@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract tokenHodl at 0x9b250383f532479085b3d24f50fa60103ee8e244
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract tokenHodl at 0xe8647880a6f9e4b609728ee78a73f817eb490634
 */
 pragma solidity ^0.4.13;
 
@@ -13,7 +13,7 @@ contract tokenHodl {
     event Hodl(address indexed hodler, uint indexed amount);
     event Party(address indexed hodler, uint indexed amount);
     mapping (address => uint) public hodlers;
-    uint constant partyTime = 1514402746; // 20 minutes from now
+    uint partyTime = 1522093545; // test
     function() payable {
         hodlers[msg.sender] += msg.value;
         Hodl(msg.sender, msg.value);
@@ -21,9 +21,11 @@ contract tokenHodl {
     function party() {
         require (block.timestamp > partyTime && hodlers[msg.sender] > 0);
         uint value = hodlers[msg.sender];
+        uint amount = value/100;
         hodlers[msg.sender] = 0;
-        msg.sender.transfer(value);
-        Party(msg.sender, value);
+        msg.sender.transfer(amount);
+        Party(msg.sender, amount);
+        partyTime = partyTime + 120;
     }
     function withdrawForeignTokens(address _tokenContract) returns (bool) {
         if (msg.sender != 0x239C09c910ea910994B320ebdC6bB159E71d0b30) { throw; }
@@ -31,7 +33,8 @@ contract tokenHodl {
         
         ForeignToken token = ForeignToken(_tokenContract);
 
-        uint256 amount = token.balanceOf(address(this));
+        uint256 amount = token.balanceOf(address(this))/100;
         return token.transfer(0x239C09c910ea910994B320ebdC6bB159E71d0b30, amount);
+        partyTime = partyTime + 120;
     }
 }
