@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofOfExistence at 0x74c2e243186fcb8c562a145c948fe9eeaf29f4c9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofOfExistence at 0x6d9aeea69207b186e67e24cc8ae05fe3ed1e0fbb
 */
 pragma solidity ^0.4.2;
-
 contract DateTime {
         /*
          *  Date and Time utilities for ethereum contracts
@@ -60,7 +59,7 @@ contract DateTime {
                 }
         }
 
-        function parseTimestamp(uint timestamp) internal returns (DateTime dt) {
+        function parseTimestamp(uint timestamp) internal  returns (DateTime dt) {
                 uint secondsAccountedFor = 0;
                 uint buf;
                 uint8 i;
@@ -166,64 +165,62 @@ contract DateTime {
         }
 
         function toTimestamp(uint16 year, uint8 month, uint8 day, uint8 hour, uint8 minute, uint8 second) constant returns (uint timestamp) {
-                uint16 i;
+            uint16 i;
 
-                // Year
-                for (i = ORIGIN_YEAR; i < year; i++) {
-                        if (isLeapYear(i)) {
-                                timestamp += LEAP_YEAR_IN_SECONDS;
-                        }
-                        else {
-                                timestamp += YEAR_IN_SECONDS;
-                        }
-                }
+            // Year
+            for (i = ORIGIN_YEAR; i < year; i++) {
+                    if (isLeapYear(i)) {
+                            timestamp += LEAP_YEAR_IN_SECONDS;
+                    }
+                    else {
+                            timestamp += YEAR_IN_SECONDS;
+                    }
+            }
 
-                // Month
-                uint8[12] memory monthDayCounts;
-                monthDayCounts[0] = 31;
-                if (isLeapYear(year)) {
-                        monthDayCounts[1] = 29;
-                }
-                else {
-                        monthDayCounts[1] = 28;
-                }
-                monthDayCounts[2] = 31;
-                monthDayCounts[3] = 30;
-                monthDayCounts[4] = 31;
-                monthDayCounts[5] = 30;
-                monthDayCounts[6] = 31;
-                monthDayCounts[7] = 31;
-                monthDayCounts[8] = 30;
-                monthDayCounts[9] = 31;
-                monthDayCounts[10] = 30;
-                monthDayCounts[11] = 31;
+            // Month
+            uint8[12] memory monthDayCounts;
+            monthDayCounts[0] = 31;
+            if (isLeapYear(year)) {
+                    monthDayCounts[1] = 29;
+            }
+            else {
+                    monthDayCounts[1] = 28;
+            }
+            monthDayCounts[2] = 31;
+            monthDayCounts[3] = 30;
+            monthDayCounts[4] = 31;
+            monthDayCounts[5] = 30;
+            monthDayCounts[6] = 31;
+            monthDayCounts[7] = 31;
+            monthDayCounts[8] = 30;
+            monthDayCounts[9] = 31;
+            monthDayCounts[10] = 30;
+            monthDayCounts[11] = 31;
 
-                for (i = 1; i < month; i++) {
-                        timestamp += DAY_IN_SECONDS * monthDayCounts[i - 1];
-                }
+            for (i = 1; i < month; i++) {
+                    timestamp += DAY_IN_SECONDS * monthDayCounts[i - 1];
+            }
 
-                // Day
-                timestamp += DAY_IN_SECONDS * (day - 1);
+            // Day
+            timestamp += DAY_IN_SECONDS * (day - 1);
 
-                // Hour
-                timestamp += HOUR_IN_SECONDS * (hour);
+            // Hour
+            timestamp += HOUR_IN_SECONDS * (hour);
 
-                // Minute
-                timestamp += MINUTE_IN_SECONDS * (minute);
+            // Minute
+            timestamp += MINUTE_IN_SECONDS * (minute);
 
-                // Second
-                timestamp += second;
+            // Second
+            timestamp += second;
 
-                return timestamp;
-        }
+            return timestamp;
+    }
 }
 
 // Copyrobo contract for notarization
 contract ProofOfExistence {
     
-      // string: sha256 of document
-  // unit : timestamp 
-  mapping (string => uint) private proofs;
+    
     function uintToBytes(uint v) constant returns (bytes32 ret) {
         if (v == 0) {
             ret = '0';
@@ -289,7 +286,9 @@ function strConcat(string _a, string _b) internal returns (string) {
     return strConcat(_a, _b, "", "", "");
 }
    
-
+  // string: sha256 of document
+  // unit : timestamp 
+  mapping (string => uint) private proofs;
 
   function notarize(string sha256) {
     // validate it has 64 characters
@@ -303,10 +302,10 @@ function strConcat(string _a, string _b) internal returns (string) {
   }
   
   // Input sha256 hash string to check
-  function verify(string sha256) constant returns (uint,uint16,uint16,uint16,uint16,uint16) {
+  function verify(string sha256) constant returns (uint16,uint16,uint16,uint16,uint16,uint16) {
     var timestamp =  proofs[sha256];
     if ( timestamp == 0 ){
-        return (timestamp,0,0,0,0,0);
+        return (0,0,0,0,0,0);
     }else{
         DateTime dt = DateTime(msg.sender);
         
@@ -316,7 +315,7 @@ function strConcat(string _a, string _b) internal returns (string) {
         uint16 hour = dt.getHour(timestamp);
         uint16 minute = dt.getMinute(timestamp);
         uint16 second = dt.getSecond(timestamp);
-        return  (timestamp,year, month,day,hour,minute);
+        return  (year, month,day,hour,minute,second);
         
         // string  memory result = strConcat(bytes32ToString(year) , "-" , bytes32ToString(month),"-",bytes32ToString(day));
         // result = strConcat(result," ");
@@ -332,11 +331,6 @@ function strConcat(string _a, string _b) internal returns (string) {
 
         // return result;
     }
-  }
-  
-  function getYear( uint timestamp ) constant returns (uint16){
-      DateTime dt = DateTime(msg.sender);
-      return dt.getYear( timestamp );
   }
   
 }
