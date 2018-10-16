@@ -1,136 +1,78 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreIco at 0x3563fe3f874b1243794cb6cbb6c11535bbd61527
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreICO at 0xd1f70c4962cb9a7db3e4245345e2c7d481859598
 */
-pragma solidity ^0.4.15;
-
-contract Ownable {
-  address public owner;
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
-    }
-  }
-
-}
-
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
+contract SafeMath {
+  function safeMul(uint a, uint b) internal constant returns (uint) {
+    uint c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+  function safeDiv(uint a, uint b) internal constant returns (uint) {
+    require(b > 0);
+    uint c = a / b;
+    assert(a == b * c + a % b);
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
+  function safeSub(uint a, uint b) internal constant returns (uint) {
+    require(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
+  function safeAdd(uint a, uint b) internal constant returns (uint) {
+    uint c = a + b;
+    assert(c>=a && c>=b);
     return c;
   }
 }
 
+contract PreICO is SafeMath {
+  mapping (address => uint) public balance;
+  uint public tokensIssued;
 
+  address public ethWallet = 0x412790a9E6A6Dd5b201Bfa29af8d589CB85Ff20c;
 
-contract PreIco is Ownable {
-    using SafeMath for uint;
+  // Blocks
+  uint public startPreico = 4307708;
+  uint public endPreico = 4369916;
 
-    uint public decimals = 18;
+  // Tokens with decimals
+  uint public limit = 100000000000000000000000000;
 
-    uint256 public initialSupply;
+  event e_Purchase(address who, uint amount);
 
-    uint256 public remainingSupply;
+  modifier onTime() {
+    require(block.number >= startPreico && block.number <= endPreico);
 
-    uint256 public tokenValue;  // value in wei
+    _;
+  }
 
-    address public updater;  // account in charge of updating the token value
+  function() payable {
+    buy();
+  }
 
-    uint256 public startBlock;  // block number of contract deploy
+  function buy() onTime payable {
+    uint numTokens = safeDiv(safeMul(msg.value, getPrice(msg.value)), 1 ether);
+    assert(tokensIssued + numTokens <= limit);
 
-    uint256 public endTime;  // seconds from 1970-01-01T00:00:00Z
+    ethWallet.transfer(msg.value);
+    balance[msg.sender] += numTokens;
+    tokensIssued += numTokens;
 
-    function PreIco(uint256 _initialSupply, uint256 initialValue, address initialUpdater, uint256 end) {
-        initialSupply = _initialSupply;
-        remainingSupply = initialSupply;
-        tokenValue = initialValue;
-        updater = initialUpdater;
-        startBlock = block.number;
-        endTime = end;
-    }
+    e_Purchase(msg.sender, numTokens);
+  }
 
-    event UpdateValue(uint256 newValue);
-
-    function updateValue(uint256 newValue) {
-        require(msg.sender == updater || msg.sender == owner);
-        tokenValue = newValue;
-        UpdateValue(newValue);
-    }
-
-    function updateUpdater(address newUpdater) onlyOwner {
-        updater = newUpdater;
-    }
-
-    function updateEndTime(uint256 newEnd) onlyOwner {
-        endTime = newEnd;
-    }
-
-    event Withdraw(address indexed to, uint value);
-
-    function withdraw(address to, uint256 value) onlyOwner {
-        to.transfer(value);
-        Withdraw(to, value);
-    }
-
-    modifier beforeEndTime() {
-        require(now < endTime);
-        _;
-    }
-
-    event AssignToken(address indexed to, uint value);
-
-    function () payable beforeEndTime {
-        require(remainingSupply > 0);
-        address sender = msg.sender;
-        uint256 value = msg.value.mul(10 ** decimals).div(tokenValue);
-        if (remainingSupply >= value) {
-            AssignToken(sender, value);
-            remainingSupply = remainingSupply.sub(value);
-        } else {
-            AssignToken(sender, remainingSupply);
-            remainingSupply = 0;
-        }
-    }
+  function getPrice(uint value) constant returns (uint price) {
+    if(value < 150 ether)
+      revert();
+    else if(value < 300 ether)
+      price = 5800;
+    else if(value < 1500 ether)
+      price = 6000;
+    else if(value < 3000 ether)
+      price = 6200;
+    else if(value >= 3000 ether)
+      price = 6400;
+  }
 }
