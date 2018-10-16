@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Migrations at 0xc02a152f5f5448e47624ca30f41b6540be30008f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Migrations at 0x8473671723b0bd2a73150d1d647980811b2a99e8
 */
-pragma solidity 0.4.19;
+pragma solidity ^0.4.17;
 
 contract Migrations {
   address public owner;
