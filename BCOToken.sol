@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BCOToken at 0x5fb0cdf8f647e44e8ca96009c9a479df92c0744e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BCOToken at 0x729e7f1fbb752d09dfdc3bc1ee4d097a983aa6c8
 */
 /*
  * ERC20 interface
