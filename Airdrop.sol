@@ -1,100 +1,59 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDrop at 0x851ba7347b3d7f873267fe597c8efd187de29a77
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDrop at 0x9f751aaacc74e55a27a19419c332e02aa96ed961
 */
-pragma solidity ^0.4.19;
-
-/**
- * @title Token
- * @dev Simpler version of ERC20 interface
- */
-contract Token {
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
+pragma solidity ^0.4.18;
 
 contract Ownable {
+
   address public owner;
 
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
+  function Ownable() public {
     owner = msg.sender;
   }
 
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
   modifier onlyOwner() {
     require(msg.sender == owner);
     _;
   }
 
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner public {
+  function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
+}
 
+contract ERC20Basic {
+  function transfer(address _to, uint256 _value)external returns (bool);
+  function balanceOf(address _owner)external constant returns (uint256 balance);
 }
 
 contract AirDrop is Ownable {
 
-  // This declares a state variable that would store the contract address
-  Token public tokenInstance;
+  ERC20Basic token;
 
-  /*
-    constructor function to set token address
-   */
-  function AirDrop(address _tokenAddress){
-    tokenInstance = Token(_tokenAddress);
+  event TransferredToken(address indexed to, uint256 value);
+
+  function AirDrop (address _tokenAddr) public {
+      token = ERC20Basic(_tokenAddr);
   }
 
-  /*
-    Airdrop function which take up a array of address,token amount and eth amount and call the
-    transfer function to send the token plus send eth to the address is balance is 0
-   */
-  function doAirDrop(address[] _address, uint256 _amount, uint256 _ethAmount) onlyOwner public returns (bool) {
-    uint256 count = _address.length;
-    for (uint256 i = 0; i < count; i++)
-    {
-      /* calling transfer function from contract */
-      tokenInstance.transfer(_address [i],_amount);
-      if((_address [i].balance == 0) && (this.balance >= _ethAmount))
-      {
-        require(_address [i].send(_ethAmount));
-      }
+  // Function given below is used when you want to send same number of tokens to all the recipients
+  function sendTokens(address[] recipient, uint256 value) onlyOwner external {
+    for (uint256 i = 0; i < recipient.length; i++) {
+        token.transfer(recipient[i],value * 10**8);
+        emit TransferredToken(recipient[i], value);
     }
   }
 
 
-  function transferEthToOnwer() onlyOwner public returns (bool) {
-    require(owner.send(this.balance));
+  function tokensAvailable()public constant returns (uint256) {
+    return token.balanceOf(this);
   }
 
-  /*
-    function to add eth to the contract
-   */
-  function() payable {
 
-  }
-
-  /*
-    function to kill contract
-  */
-
-  function kill() onlyOwner {
+  function destroy() public onlyOwner {
+    uint256 balance = tokensAvailable();
+    token.transfer(owner, balance);
     selfdestruct(owner);
   }
 }
