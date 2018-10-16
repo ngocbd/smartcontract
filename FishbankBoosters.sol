@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FishbankBoosters at 0xf15f61643eea73be40ad9b72c09ed381fac7a256
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FishbankBoosters at 0x37c7d59a4f5af2dbd9bdf822aeed0ce08c6e0b62
 */
 pragma solidity ^0.4.18;
 
