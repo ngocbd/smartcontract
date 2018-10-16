@@ -1,75 +1,82 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RigIdle at 0xe93a7627f43052dd239318d5686e6a86db636b46
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RigIdle at 0xd731c88890ca047cd1bed2e6ea1562c7a425c29d
 */
 pragma solidity ^0.4.18;
 
+library SafeMath {
+    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        c = a + b;
+        require(c >= a);
+    }
+
+    function sub(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        require(b <= a);
+        c = a - b;
+    }
+
+    function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        c = a * b;
+        require(a == 0 || c / a == b);
+    }
+}
+
 library NumericSequence
 {
-    function sumOfN(uint basePrice, uint pricePerLevel, uint owned, uint count) internal pure returns (uint price)
+    using SafeMath for uint256;
+    function sumOfN(uint256 basePrice, uint256 pricePerLevel, uint256 owned, uint256 count) internal pure returns (uint256 price)
     {
         require(count > 0);
         
         price = 0;
-        price += (basePrice + pricePerLevel * owned) * count;
-        price += pricePerLevel * ((count-1) * count) / 2;
+        price += SafeMath.mul((basePrice + pricePerLevel * owned), count);
+        price += pricePerLevel * (count.mul((count-1))) / 2;
     }
 }
 
-contract ERC20 {
-    function totalSupply() public constant returns (uint);
-    function balanceOf(address tokenOwner) public constant returns (uint balance);
-    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
-    function transfer(address to, uint tokens) public returns (bool success);
-    function approve(address spender, uint tokens) public returns (bool success);
-    function transferFrom(address from, address to, uint tokens) public returns (bool success);
-
-    event Transfer(address indexed from, address indexed to, uint tokens);
-    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
-}
-
 //-----------------------------------------------------------------------
-contract RigIdle is ERC20  {
+contract RigIdle  {
     using NumericSequence for uint;
+    using SafeMath for uint;
 
     struct MinerData 
     {
-        uint[9]   rigs; // rig types and their upgrades
-        uint8[3]  hasUpgrade;
-        uint      money;
-        uint      lastUpdateTime;
-        uint      premamentMineBonusPct;
-        uint      unclaimedPot;
-        uint      lastPotShare;
+        uint256[9]   rigs; // rig types and their upgrades
+        uint8[3]     hasUpgrade;
+        uint256      money;
+        uint256      lastUpdateTime;
+        uint256      premamentMineBonusPct;
+        uint256      unclaimedPot;
+        uint256      lastPotClaimIndex;
     }
     
     struct RigData
     {
-        uint basePrice;
-        uint baseOutput;
-        uint pricePerLevel;
-        uint priceInETH;
-        uint limit;
+        uint256 basePrice;
+        uint256 baseOutput;
+        uint256 pricePerLevel;
+        uint256 priceInETH;
+        uint256 limit;
     }
     
     struct BoostData
     {
-        uint percentBonus;
-        uint priceInWEI;
+        uint256 percentBonus;
+        uint256 priceInWEI;
     }
     
     struct PVPData
     {
-        uint[6] troops;
-        uint immunityTime;
-        uint exhaustTime;
+        uint256[6] troops;
+        uint256    immunityTime;
+        uint256    exhaustTime;
     }
     
     struct TroopData
     {
-        uint attackPower;
-        uint defensePower;
-        uint priceGold;
-        uint priceETH;
+        uint256 attackPower;
+        uint256 defensePower;
+        uint256 priceGold;
+        uint256 priceETH;
     }
     
     uint8 private constant NUMBER_OF_RIG_TYPES = 9;
@@ -86,31 +93,28 @@ contract RigIdle is ERC20  {
     TroopData[6] private troopData;
 
     // honey pot variables
-    uint private honeyPotAmount;
-    uint private honeyPotSharePct;
-    uint private jackPot;
-    uint private devFund;
-    uint private nextPotDistributionTime;
+    uint256 private honeyPotAmount;
+    uint256 private honeyPotSharePct; // 90%
+    uint256 private jackPot;
+    uint256 private devFund;
+    uint256 private nextPotDistributionTime;
+    mapping(address => mapping(uint256 => uint256)) private minerICOPerCycle;
+    uint256[] private honeyPotPerCycle;
+    uint256[] private globalICOPerCycle;
+    uint256 private cycleCount;
     
     //booster info
-    uint public constant NUMBER_OF_BOOSTERS = 5;
-    uint       boosterIndex;
-    uint       nextBoosterPrice;
-    address[5] boosterHolders;
+    uint256 private constant NUMBER_OF_BOOSTERS = 5;
+    uint256 private boosterIndex;
+    uint256 private nextBoosterPrice;
+    address[5] private boosterHolders;
     
     mapping(address => MinerData) private miners;
     mapping(address => PVPData)   private pvpMap;
-    mapping(uint => address)  private indexes;
-    uint private topindex;
+    mapping(uint256 => address)   private indexes;
+    uint256 private topindex;
     
-    address public owner;
-    
-    // ERC20 functionality
-    mapping(address => mapping(address => uint256)) private allowed;
-    string public constant name  = "RigWarsIdle";
-    string public constant symbol = "RIG";
-    uint8 public constant decimals = 8;
-    uint256 private estimatedSupply;
+    address private owner;
     
     // ------------------------------------------------------------------------
     // Constructor
@@ -138,7 +142,6 @@ contract RigIdle is ERC20  {
         devFund = 0;
         jackPot = 0;
         nextPotDistributionTime = block.timestamp;
-        // default 90% honeypot, 8% for DevFund + transaction fees, 2% safe deposit
         honeyPotSharePct = 90;
         
         // has to be set to a value
@@ -159,30 +162,17 @@ contract RigIdle is ERC20  {
         troopData[4] = TroopData(0,      1500,   80000000, 0);
         troopData[5] = TroopData(0,      150000, 0,        0.01 ether);
         
-        estimatedSupply = 80000000;
+        honeyPotPerCycle.push(0);
+        globalICOPerCycle.push(1);
+        cycleCount = 0;
     }
     
     //--------------------------------------------------------------------------
     // Data access functions
     //--------------------------------------------------------------------------
-    function GetNumberOfRigs() public pure returns (uint8 rigNum)
-    {
-        rigNum = NUMBER_OF_RIG_TYPES;
-    }
-    
-    function GetRigData(uint8 rigIdx) public constant returns (uint price, uint production, uint upgrade, uint limit, uint priceETH)
-    {
-        require(rigIdx < NUMBER_OF_RIG_TYPES);
-        price =      rigData[rigIdx].basePrice;
-        production = rigData[rigIdx].baseOutput;
-        upgrade =    rigData[rigIdx].pricePerLevel;
-        limit =      rigData[rigIdx].limit;
-        priceETH =   rigData[rigIdx].priceInETH;
-    }
-    
     function GetMinerData(address minerAddr) public constant returns 
-        (uint money, uint lastupdate, uint prodPerSec, 
-         uint[9] rigs, uint[3] upgrades, uint unclaimedPot, uint lastPot, bool hasBooster, uint unconfirmedMoney)
+        (uint256 money, uint256 lastupdate, uint256 prodPerSec, 
+         uint256[9] rigs, uint[3] upgrades, uint256 unclaimedPot, bool hasBooster, uint256 unconfirmedMoney)
     {
         uint8 i = 0;
         
@@ -201,31 +191,23 @@ contract RigIdle is ERC20  {
         }
         
         unclaimedPot = miners[minerAddr].unclaimedPot;
-        lastPot = miners[minerAddr].lastPotShare;
         hasBooster = HasBooster(minerAddr);
         
         unconfirmedMoney = money + (prodPerSec * (now - lastupdate));
     }
     
-    function GetTotalMinerCount() public constant returns (uint count)
+    function GetTotalMinerCount() public constant returns (uint256 count)
     {
         count = topindex;
     }
     
-    function GetMinerAt(uint idx) public constant returns (address minerAddr)
+    function GetMinerAt(uint256 idx) public constant returns (address minerAddr)
     {
         require(idx < topindex);
         minerAddr = indexes[idx];
     }
     
-    function GetPriceOfRigs(uint rigIdx, uint count, uint owned) public constant returns (uint price)
-    {
-        require(rigIdx < NUMBER_OF_RIG_TYPES);
-        require(count > 0);
-        price = NumericSequence.sumOfN(rigData[rigIdx].basePrice, rigData[rigIdx].pricePerLevel, owned, count); 
-    }
-    
-    function GetPotInfo() public constant returns (uint _honeyPotAmount, uint _devFunds, uint _jackPot, uint _nextDistributionTime)
+    function GetPotInfo() public constant returns (uint256 _honeyPotAmount, uint256 _devFunds, uint256 _jackPot, uint256 _nextDistributionTime)
     {
         _honeyPotAmount = honeyPotAmount;
         _devFunds = devFund;
@@ -233,12 +215,12 @@ contract RigIdle is ERC20  {
         _nextDistributionTime = nextPotDistributionTime;
     }
     
-    function GetProductionPerSecond(address minerAddr) public constant returns (uint personalProduction)
+    function GetProductionPerSecond(address minerAddr) public constant returns (uint256 personalProduction)
     {
         MinerData storage m = miners[minerAddr];
         
         personalProduction = 0;
-        uint productionSpeed = 100 + m.premamentMineBonusPct;
+        uint256 productionSpeed = 100 + m.premamentMineBonusPct;
         
         if(HasBooster(minerAddr)) // 500% bonus
             productionSpeed += 500;
@@ -251,7 +233,7 @@ contract RigIdle is ERC20  {
         personalProduction = personalProduction * productionSpeed / 100;
     }
     
-    function GetGlobalProduction() public constant returns (uint globalMoney, uint globalHashRate)
+    function GetGlobalProduction() public constant returns (uint256 globalMoney, uint256 globalHashRate)
     {
         globalMoney = 0;
         globalHashRate = 0;
@@ -264,7 +246,7 @@ contract RigIdle is ERC20  {
         }
     }
     
-    function GetBoosterData() public constant returns (address[5] _boosterHolders, uint currentPrice, uint currentIndex)
+    function GetBoosterData() public constant returns (address[5] _boosterHolders, uint256 currentPrice, uint256 currentIndex)
     {
         for(uint i = 0; i < NUMBER_OF_BOOSTERS; ++i)
         {
@@ -284,8 +266,8 @@ contract RigIdle is ERC20  {
         return false;
     }
     
-    function GetPVPData(address addr) public constant returns (uint attackpower, uint defensepower, uint immunityTime, uint exhaustTime,
-    uint[6] troops)
+    function GetPVPData(address addr) public constant returns (uint256 attackpower, uint256 defensepower, uint256 immunityTime, uint256 exhaustTime,
+    uint256[6] troops)
     {
         PVPData storage a = pvpMap[addr];
             
@@ -303,18 +285,63 @@ contract RigIdle is ERC20  {
         }
     }
     
-    function GetPriceOfTroops(uint idx, uint count, uint owned) public constant returns (uint price, uint priceETH)
+    function GetCurrentICOCycle() public constant returns (uint256)
     {
-        require(idx < NUMBER_OF_TROOPS);
-        require(count > 0);
-        price = NumericSequence.sumOfN(troopData[idx].priceGold, troopData[idx].priceGold, owned, count);
-        priceETH = troopData[idx].priceETH * count;
+        return cycleCount;
+    }
+    
+    function GetICOData(uint256 idx) public constant returns (uint256 ICOFund, uint256 ICOPot)
+    {
+        require(idx <= cycleCount);
+        ICOFund = globalICOPerCycle[idx];
+        if(idx < cycleCount)
+        {
+            ICOPot = honeyPotPerCycle[idx];
+        } else
+        {
+            ICOPot =  honeyPotAmount / 5; // actual day estimate
+        }
+    }
+    
+    function GetMinerICOData(address miner, uint256 idx) public constant returns (uint256 ICOFund, uint256 ICOShare, uint256 lastClaimIndex)
+    {
+        require(idx <= cycleCount);
+        ICOFund = minerICOPerCycle[miner][idx];
+        if(idx < cycleCount)
+        {
+            ICOShare = (honeyPotPerCycle[idx] * minerICOPerCycle[miner][idx]) / globalICOPerCycle[idx];
+        } else 
+        {
+            ICOShare = (honeyPotAmount / 5) * minerICOPerCycle[miner][idx] / globalICOPerCycle[idx];
+        }
+        lastClaimIndex = miners[miner].lastPotClaimIndex;
+    }
+    
+    function GetMinerUnclaimedICOShare(address miner) public constant returns (uint256 unclaimedPot)
+    {
+        MinerData storage m = miners[miner];
+        
+        require(m.lastUpdateTime != 0);
+        require(m.lastPotClaimIndex < cycleCount);
+        
+        uint256 i = m.lastPotClaimIndex;
+        uint256 limit = cycleCount;
+        
+        if((limit - i) > 30) // more than 30 iterations(days) afk
+            limit = i + 30;
+        
+        unclaimedPot = 0;
+        for(; i < cycleCount; ++i)
+        {
+            if(minerICOPerCycle[msg.sender][i] > 0)
+                unclaimedPot += (honeyPotPerCycle[i] * minerICOPerCycle[miner][i]) / globalICOPerCycle[i];
+        }
     }
     
     // -------------------------------------------------------------------------
     // RigWars game handler functions
     // -------------------------------------------------------------------------
-    function StartNewMiner() public
+    function StartNewMiner() external
     {
         require(miners[msg.sender].lastUpdateTime == 0);
         
@@ -322,14 +349,8 @@ contract RigIdle is ERC20  {
         miners[msg.sender].money = 0;
         miners[msg.sender].rigs[0] = 1;
         miners[msg.sender].unclaimedPot = 0;
-        miners[msg.sender].lastPotShare = 0;
+        miners[msg.sender].lastPotClaimIndex = cycleCount;
         
-        pvpMap[msg.sender].troops[0] = 0;
-        pvpMap[msg.sender].troops[1] = 0;
-        pvpMap[msg.sender].troops[2] = 0;
-        pvpMap[msg.sender].troops[3] = 0;
-        pvpMap[msg.sender].troops[4] = 0;
-        pvpMap[msg.sender].troops[5] = 0;
         pvpMap[msg.sender].immunityTime = block.timestamp + 28800;
         pvpMap[msg.sender].exhaustTime  = block.timestamp;
         
@@ -337,10 +358,11 @@ contract RigIdle is ERC20  {
         ++topindex;
     }
     
-    function UpgradeRig(uint8 rigIdx, uint count) public
+    function UpgradeRig(uint8 rigIdx, uint16 count) external
     {
         require(rigIdx < NUMBER_OF_RIG_TYPES);
         require(count > 0);
+        require(count <= 256);
         
         MinerData storage m = miners[msg.sender];
         
@@ -349,25 +371,30 @@ contract RigIdle is ERC20  {
         UpdateMoney();
      
         // the base of geometrical sequence
-        uint price = NumericSequence.sumOfN(rigData[rigIdx].basePrice, rigData[rigIdx].pricePerLevel, m.rigs[rigIdx], count); 
+        uint256 price = NumericSequence.sumOfN(rigData[rigIdx].basePrice, rigData[rigIdx].pricePerLevel, m.rigs[rigIdx], count); 
        
         require(m.money >= price);
         
         m.rigs[rigIdx] = m.rigs[rigIdx] + count;
+        
+        if(m.rigs[rigIdx] > rigData[rigIdx].limit)
+            m.rigs[rigIdx] = rigData[rigIdx].limit;
+        
         m.money -= price;
     }
     
-    function UpgradeRigETH(uint8 rigIdx, uint count) public payable
+    function UpgradeRigETH(uint8 rigIdx, uint256 count) external payable
     {
         require(rigIdx < NUMBER_OF_RIG_TYPES);
         require(count > 0);
+        require(count <= 256);
         require(rigData[rigIdx].priceInETH > 0);
         
         MinerData storage m = miners[msg.sender];
         
         require(rigData[rigIdx].limit >= (m.rigs[rigIdx] + count));
       
-        uint price = rigData[rigIdx].priceInETH * count; 
+        uint256 price = (rigData[rigIdx].priceInETH).mul(count); 
        
         require(msg.value >= price);
         
@@ -376,15 +403,19 @@ contract RigIdle is ERC20  {
         UpdateMoney();
         
         m.rigs[rigIdx] = m.rigs[rigIdx] + count;
+        
+        if(m.rigs[rigIdx] > rigData[rigIdx].limit)
+            m.rigs[rigIdx] = rigData[rigIdx].limit;
     }
     
-    function UpdateMoney() public
+    function UpdateMoney() private
     {
         require(miners[msg.sender].lastUpdateTime != 0);
+        require(block.timestamp >= miners[msg.sender].lastUpdateTime);
         
         MinerData storage m = miners[msg.sender];
-        uint diff = block.timestamp - m.lastUpdateTime;
-        uint revenue = GetProductionPerSecond(msg.sender);
+        uint256 diff = block.timestamp - m.lastUpdateTime;
+        uint256 revenue = GetProductionPerSecond(msg.sender);
    
         m.lastUpdateTime = block.timestamp;
         if(revenue > 0)
@@ -395,13 +426,14 @@ contract RigIdle is ERC20  {
         }
     }
     
-    function UpdateMoneyAt(address addr) internal
+    function UpdateMoneyAt(address addr) private
     {
         require(miners[addr].lastUpdateTime != 0);
+        require(block.timestamp >= miners[addr].lastUpdateTime);
         
         MinerData storage m = miners[addr];
-        uint diff = block.timestamp - m.lastUpdateTime;
-        uint revenue = GetProductionPerSecond(addr);
+        uint256 diff = block.timestamp - m.lastUpdateTime;
+        uint256 revenue = GetProductionPerSecond(addr);
    
         m.lastUpdateTime = block.timestamp;
         if(revenue > 0)
@@ -412,7 +444,7 @@ contract RigIdle is ERC20  {
         }
     }
     
-    function BuyUpgrade(uint idx) public payable
+    function BuyUpgrade(uint256 idx) external payable
     {
         require(idx < NUMBER_OF_UPGRADES);
         require(msg.value >= boostData[idx].priceInWEI);
@@ -430,7 +462,7 @@ contract RigIdle is ERC20  {
     //--------------------------------------------------------------------------
     // BOOSTER handlers
     //--------------------------------------------------------------------------
-    function BuyBooster() public payable 
+    function BuyBooster() external payable 
     {
         require(msg.value >= nextBoosterPrice);
         require(miners[msg.sender].lastUpdateTime != 0);
@@ -443,11 +475,12 @@ contract RigIdle is ERC20  {
         
         MinerData storage m = miners[beneficiary];
         
-        // 95% goes to the owner (21% interest after 5 buys)
-        m.unclaimedPot += nextBoosterPrice * 95 / 100;
+        // 20% interest after 5 buys
+        m.unclaimedPot += (msg.value * 9403) / 10000;
         
-        // 5% to the pot
-        BuyHandler((nextBoosterPrice / 20));
+        // distribute the rest
+        honeyPotAmount += (msg.value * 597) / 20000;
+        devFund += (msg.value * 597) / 20000;
         
         // increase price by 5%
         nextBoosterPrice += nextBoosterPrice / 20;
@@ -468,7 +501,7 @@ contract RigIdle is ERC20  {
     // PVP handler
     //--------------------------------------------------------------------------
     // 0 for attacker 1 for defender
-    function BuyTroop(uint idx, uint count) public payable
+    function BuyTroop(uint256 idx, uint256 count) external payable
     {
         require(idx < NUMBER_OF_TROOPS);
         require(count > 0);
@@ -477,10 +510,10 @@ contract RigIdle is ERC20  {
         PVPData storage pvp = pvpMap[msg.sender];
         MinerData storage m = miners[msg.sender];
         
-        uint owned = pvp.troops[idx];
+        uint256 owned = pvp.troops[idx];
         
-        uint priceGold = NumericSequence.sumOfN(troopData[idx].priceGold, troopData[idx].priceGold, owned, count); 
-        uint priceETH = troopData[idx].priceETH * count;
+        uint256 priceGold = NumericSequence.sumOfN(troopData[idx].priceGold, troopData[idx].priceGold, owned, count); 
+        uint256 priceETH = (troopData[idx].priceETH).mul(count);
         
         UpdateMoney();
         
@@ -496,7 +529,7 @@ contract RigIdle is ERC20  {
         pvp.troops[idx] += count;
     }
     
-    function Attack(address defenderAddr) public
+    function Attack(address defenderAddr) external
     {
         require(msg.sender != defenderAddr);
         require(miners[msg.sender].lastUpdateTime != 0);
@@ -505,7 +538,7 @@ contract RigIdle is ERC20  {
         PVPData storage attacker = pvpMap[msg.sender];
         PVPData storage defender = pvpMap[defenderAddr];
         uint i = 0;
-        uint count = 0;
+        uint256 count = 0;
         
         require(block.timestamp > attacker.exhaustTime);
         require(block.timestamp > defender.immunityTime);
@@ -516,12 +549,12 @@ contract RigIdle is ERC20  {
             
         attacker.exhaustTime = block.timestamp + 7200;
         
-        uint attackpower = 0;
-        uint defensepower = 0;
-        for(i = 0; i < NUMBER_OF_TROOPS; ++i)
+        uint256 attackpower = 0;
+        uint256 defensepower = 0;
+        for(i = 0; i < ATTACKER_END_IDX; ++i)
         {
             attackpower  += attacker.troops[i] * troopData[i].attackPower;
-            defensepower += defender.troops[i] * troopData[i].defensePower;
+            defensepower += defender.troops[i + DEFENDER_START_IDX] * troopData[i + DEFENDER_START_IDX].defensePower;
         }
         
         if(attackpower > defensepower)
@@ -533,7 +566,7 @@ contract RigIdle is ERC20  {
             
             MinerData storage m = miners[defenderAddr];
             MinerData storage m2 = miners[msg.sender];
-            uint moneyStolen = m.money / 2;
+            uint256 moneyStolen = m.money / 2;
          
             for(i = DEFENDER_START_IDX; i < DEFENDER_END_IDX; ++i)
             {
@@ -582,16 +615,77 @@ contract RigIdle is ERC20  {
     }
     
     //--------------------------------------------------------------------------
+    // ICO/Pot share functions
+    //--------------------------------------------------------------------------
+    function ReleaseICO() external
+    {
+        require(miners[msg.sender].lastUpdateTime != 0);
+        require(nextPotDistributionTime <= block.timestamp);
+        require(honeyPotAmount > 0);
+        require(globalICOPerCycle[cycleCount] > 0);
+
+        nextPotDistributionTime = block.timestamp + 86400;
+
+        honeyPotPerCycle[cycleCount] = honeyPotAmount / 5; // 20% of the pot
+        
+        honeyPotAmount -= honeyPotAmount / 5;
+
+        honeyPotPerCycle.push(0);
+        globalICOPerCycle.push(0);
+        cycleCount = cycleCount + 1;
+
+        MinerData storage jakpotWinner = miners[msg.sender];
+        jakpotWinner.unclaimedPot += jackPot;
+        jackPot = 0;
+    }
+    
+    function FundICO(uint amount) external
+    {
+        require(miners[msg.sender].lastUpdateTime != 0);
+        require(amount > 0);
+        
+        MinerData storage m = miners[msg.sender];
+        
+        UpdateMoney();
+        
+        require(m.money >= amount);
+        
+        m.money = (m.money).sub(amount);
+        
+        globalICOPerCycle[cycleCount] = globalICOPerCycle[cycleCount].add(uint(amount));
+        minerICOPerCycle[msg.sender][cycleCount] = minerICOPerCycle[msg.sender][cycleCount].add(uint(amount));
+    }
+    
+    function WithdrawICOEarnings() external
+    {
+        MinerData storage m = miners[msg.sender];
+        
+        require(miners[msg.sender].lastUpdateTime != 0);
+        require(miners[msg.sender].lastPotClaimIndex < cycleCount);
+        
+        uint256 i = m.lastPotClaimIndex;
+        uint256 limit = cycleCount;
+        
+        if((limit - i) > 30) // more than 30 iterations(days) afk
+            limit = i + 30;
+        
+        m.lastPotClaimIndex = limit;
+        for(; i < cycleCount; ++i)
+        {
+            if(minerICOPerCycle[msg.sender][i] > 0)
+                m.unclaimedPot += (honeyPotPerCycle[i] * minerICOPerCycle[msg.sender][i]) / globalICOPerCycle[i];
+        }
+    }
+    
+    //--------------------------------------------------------------------------
     // ETH handler functions
     //--------------------------------------------------------------------------
-    function BuyHandler(uint amount) public payable
+    function BuyHandler(uint amount) private
     {
-        // add 2% to jakcpot
-        // add 90% (default) to honeyPot
+        // add 90% to honeyPot
         honeyPotAmount += (amount * honeyPotSharePct) / 100;
-        jackPot += amount / 50;
-        // default 100 - (90+2) = 8%
-        devFund += (amount * (100-(honeyPotSharePct+2))) / 100;
+        jackPot += amount / 100;
+        devFund += (amount * (100-(honeyPotSharePct+1))) / 100;
     }
     
     function WithdrawPotShare() public
@@ -599,8 +693,9 @@ contract RigIdle is ERC20  {
         MinerData storage m = miners[msg.sender];
         
         require(m.unclaimedPot > 0);
+        require(m.lastUpdateTime != 0);
         
-        uint amntToSend = m.unclaimedPot;
+        uint256 amntToSend = m.unclaimedPot;
         m.unclaimedPot = 0;
         
         if(msg.sender.send(amntToSend))
@@ -609,119 +704,18 @@ contract RigIdle is ERC20  {
         }
     }
     
-    function WithdrawDevFunds(uint amount) public
+    function WithdrawDevFunds() public
     {
         require(msg.sender == owner);
-        
-        if(amount == 0)
+
+        if(owner.send(devFund))
         {
-            if(owner.send(devFund))
-            {
-                devFund = 0;
-            }
-        } else
-        {
-            // should never be used! this is only in case of emergency
-            // if some error happens with distribution someone has to access
-            // and distribute the funds manually
-            owner.transfer(amount);
+            devFund = 0;
         }
-    }
-    
-    function SnapshotAndDistributePot() public
-    {
-        require(honeyPotAmount > 0);
-        require(gasleft() >= 1000000);
-        require(nextPotDistributionTime <= block.timestamp);
-        
-        uint globalMoney = 1;
-        uint i = 0;
-        for(i = 0; i < topindex; ++i)
-        {
-            globalMoney += miners[indexes[i]].money;
-        }
-        
-        estimatedSupply = globalMoney;
-        
-        uint remainingPot = honeyPotAmount;
-        
-        // 20% of the total pot
-        uint potFraction = honeyPotAmount / 5;
-                
-        honeyPotAmount -= potFraction;
-        
-        potFraction /= 10000;
-        
-        for(i = 0; i < topindex; ++i)
-        {
-            // lowest limit of pot share is 0.01%
-            MinerData storage m = miners[indexes[i]];
-            uint share = (m.money * 10000) / globalMoney;
-            if(share > 0)
-            {
-                uint newPot = potFraction * share;
-                
-                if(newPot <= remainingPot)
-                {
-                    m.unclaimedPot += newPot;
-                    m.lastPotShare = newPot;
-                    remainingPot   -= newPot;
-                }
-            }
-        }
-        
-        nextPotDistributionTime = block.timestamp + 86400;
-        
-        MinerData storage jakpotWinner = miners[msg.sender];
-        jakpotWinner.unclaimedPot += jackPot;
-        jackPot = 0;
     }
     
     // fallback payment to pot
     function() public payable {
-    }
-    
-    //--------------------------------------------------------------------------
-    // ERC20 support
-    //--------------------------------------------------------------------------
-    function totalSupply() public constant returns(uint256) {
-        return estimatedSupply;
-    }
-    
-    function balanceOf(address miner) public constant returns(uint256) {
-        return miners[miner].money;
-    }
-    
-     function transfer(address recipient, uint256 amount) public returns (bool) {
-        require(amount <= miners[msg.sender].money);
-        require(miners[recipient].lastUpdateTime != 0);
-        
-        miners[msg.sender].money -= amount * (10**uint(decimals));
-        miners[recipient].money += amount * (10**uint(decimals));
-        
-        emit Transfer(msg.sender, recipient, amount);
-        return true;
-    }
-    
-    function transferFrom(address miner, address recipient, uint256 amount) public returns (bool) {
-        require(amount <= allowed[miner][msg.sender] && amount <= balanceOf(miner));
-        require(miners[recipient].lastUpdateTime != 0);
-        
-        miners[miner].money -= amount * (10**uint(decimals));
-        miners[recipient].money += amount * (10**uint(decimals));
-        allowed[miner][msg.sender] -= amount * (10**uint(decimals));
-        
-        emit Transfer(miner, recipient, amount);
-        return true;
-    }
-    
-    function approve(address approvee, uint256 amount) public returns (bool){
-        allowed[msg.sender][approvee] = amount * (10**uint(decimals));
-        emit Approval(msg.sender, approvee, amount);
-        return true;
-    }
-    
-    function allowance(address miner, address approvee) public constant returns(uint256){
-        return allowed[miner][approvee];
+         devFund += msg.value;
     }
 }
