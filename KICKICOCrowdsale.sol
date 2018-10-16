@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KickicoCrowdsale at 0xd48E165b0027E8055B3B7016A35078b23527a95d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KickicoCrowdsale at 0x3AA5FA4FBF18d19548680a5f2BbA061b18Fed26b
 */
 pragma solidity ^0.4.2;
 
@@ -61,8 +61,8 @@ contract KickicoCrowdsale is owned {
 
 	bool public IcoClosedManually = false;
 
-	uint public threshold = 200000 ether;
-	uint public goal = 50000 ether;
+	uint public threshold = 160000 ether;
+	uint public goal = 15500 ether;
 
 	uint public totalCollected = 0;
 
@@ -147,6 +147,7 @@ contract KickicoCrowdsale is owned {
 		tokenReward.mintToken(angelInvestors, 30000000 * tokenMultiplier, 0);
 		tokenReward.mintToken(prPool, 23000000 * tokenMultiplier, 0);
 		tokenReward.mintToken(china, 8000000 * tokenMultiplier, 0);
+		tokenReward.mintToken(founders, 5000000 * tokenMultiplier, 0);
 
 		tokenReward.addAgingTime(agingTime);
 		tokenReward.addAgingTime(prPoolAgingTime);
@@ -244,13 +245,6 @@ contract KickicoCrowdsale is owned {
 	}
 
 	function getBonusByRaised() internal returns (uint256) {
-		uint raisedInPercent = totalCollected * 100 / goal;
-		if (raisedInPercent > 50) return 0;
-		for (uint i = 0; i < bonusesAfterClose.length; i++) {
-			if (i * 10 <= raisedInPercent && (i + 1) * 10 > raisedInPercent) {
-				return bonusesAfterClose[i];
-			}
-		}
 		return 0;
 	}
 
@@ -277,18 +271,6 @@ contract KickicoCrowdsale is owned {
 
 	function isIcoClosed() constant returns (bool closed) {
 		return (now >= IcoStagePeriod[1] || IcoClosedManually || isReachedThreshold());
-	}
-
-	function customPayment(address _recipient, uint256 _amount) onlyServer {
-		require(parametersHaveBeenSet);
-		require(_amount >= 10 finney);
-
-		// validate by stage periods
-		require(now >= IcoStagePeriod[0] && now < IcoStagePeriod[1]);
-		// validate if closed manually or reached the threshold
-		require(!IcoClosedManually);
-		require(!isReachedThreshold());
-		processPayment(_recipient, _amount, true);
 	}
 
 	bool public allowManuallyMintTokens = true;
@@ -318,6 +300,10 @@ contract KickicoCrowdsale is owned {
 
 	function changeTokenOwner(address _owner) onlyOwner {
 		tokenReward.changeOwner(_owner);
+	}
+
+	function changeOldTokenReward(address _token) onlyOwner {
+		oldTokenReward = CSToken(_token);
 	}
 
 	function kill() onlyOwner {
