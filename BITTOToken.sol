@@ -1,13 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BITTOToken at 0xb48690d52fdd201895b349bc610fa61028588349
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BITTOToken at 0x0cf55facee33ed2827d78ad2d113efe0aa80a92b
 */
 pragma solidity ^0.4.18;
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
 contract Ownable {
   address public owner;
 
@@ -43,33 +38,7 @@ contract Ownable {
 
 }
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  function totalSupply() public view returns (uint256);
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
 
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
 library SafeMath {
 
   /**
@@ -112,6 +81,19 @@ library SafeMath {
   }
 }
 
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
 /**
  * @title PoSTokenStandard
@@ -131,7 +113,7 @@ contract PoSTokenStandard {
 contract BITTOToken is ERC20,PoSTokenStandard,Ownable {
     using SafeMath for uint256;
 
-    string public name = "BITTO Token";
+    string public name = "BITTO";
     string public symbol = "BITTO";
     uint public decimals = 18;
 
