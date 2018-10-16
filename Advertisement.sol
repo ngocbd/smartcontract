@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Advertisement at 0xfb4df13c45f04780b04310852ebeada7d168d46d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Advertisement at 0x2b3b93e6a7c56a90c6679da2e8e522fb292f4b89
 */
-pragma solidity ^0.4.8;
+pragma solidity ^0.4.21;
 
 
 contract AppCoins {
@@ -74,7 +74,7 @@ contract Advertisement {
     function Advertisement () public {
         rules = ValidationRules(false, true, true, 2, 1);
         owner = msg.sender;
-        appc = AppCoins(0x1a7a8bd9106f2b8d977e08582dc7d24c723ab0db);
+	appc = AppCoins(0x1a7a8bd9106f2b8d977e08582dc7d24c723ab0db);
     }
 
 
@@ -84,7 +84,7 @@ contract Advertisement {
 	*/
 	function createCampaign (string packageName, string countries,
 							uint[] vercodes, uint price, uint budget,
-							uint startDate, uint endDate) external {
+				 uint startDate, uint endDate) external {
 		Campaign memory newCampaign;
 		newCampaign.filters.packageName = packageName;
 		newCampaign.filters.countries = countries;
@@ -168,9 +168,10 @@ contract Advertisement {
 	function registerPoA (string packageName, bytes32 bidId,
 						uint64[] timestampList, uint64[] nonces,
 						address appstore, address oem,
-						string walletName) external {
+			      string walletName) external {
 
-        require (isCampaignValid(bidId));
+
+         require (isCampaignValid(bidId));
 		require (timestampList.length == nonces.length);
 		//Expect ordered array arranged in ascending order
 		for(uint i = 0; i < timestampList.length-1; i++){
@@ -178,7 +179,7 @@ contract Advertisement {
 			require((timestamp_diff / 1000) == 10);
 		}
 
-		verifyNonces(bytes(packageName),timestampList,nonces);
+	 	// verifyNonces(bytes(packageName),timestampList,nonces);
 
 		require(!userAttributions[msg.sender][bidId]);
 		//atribute
@@ -296,7 +297,7 @@ contract Advertisement {
         return campaign.valid && campaign.startDate < nowInMilliseconds && campaign.endDate > nowInMilliseconds;
 	}
 
-	function payFromCampaign (bytes32 bidId, address appstore, address oem)
+    function payFromCampaign (bytes32 bidId, address appstore, address oem)
 			internal{
 		uint dev_share = 85;
                 uint appstore_share = 10;
@@ -317,7 +318,7 @@ contract Advertisement {
 		campaign.budget -= campaign.price;
 	}
 
-	function verifyNonces (bytes packageName,uint64[] timestampList, uint64[] nonces) internal {
+    function verifyNonces (bytes packageName,uint64[] timestampList, uint64[] nonces) internal {
 
 		for(uint i = 0; i < nonces.length; i++){
 			bytes8 timestamp = bytes8(timestampList[i]);
