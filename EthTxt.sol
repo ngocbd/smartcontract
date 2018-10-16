@@ -1,8 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthTxt at 0xbb06f9cc9d19f13a9deaf2bcc3c5ab893c982a51
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthTxt at 0xe928788c7bc75bbb3f2fc982474a8440540101f1
 */
 pragma solidity ^0.4.18;
 
+/* String utility library */
 library strUtils {
     /* Converts given number to base58, limited by _maxLength symbols */
     function toBase58(uint256 _value, uint8 _maxLength) internal pure returns (string) {
@@ -57,7 +58,7 @@ library strUtils {
 
 contract EthTxt {
 
-  event NewText(string text, string code, address submitter, uint timestamp);
+  event NewText(string text, string code, address indexed submitter, uint timestamp);
 
   struct StoredText {
       string text;
@@ -68,14 +69,9 @@ contract EthTxt {
   uint storedTextCount = 0;
 
   // change this to 0 for testnet / ropsten
-  uint blockoffset = 4000000;
+  uint blockoffset = 5000000;
 
   mapping (string => StoredText) texts;
-
-  // this is the constructor
-  function EthTxt() public {
-      // do nothing here
-  }
 
   function archiveText(string _text) public {
     // make sure _text is not an empty string
@@ -93,6 +89,10 @@ contract EthTxt {
 
   function getText(string _code) public view returns (string) {
     return texts[_code].text;
+  }
+
+  function getDataFromCode(string _code) public view returns (string, address, uint) {
+    return (texts[_code].text, texts[_code].submitter, texts[_code].timestamp);
   }
 
   function getTextCount() public view returns (uint) {
