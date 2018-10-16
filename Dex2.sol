@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dex2 at 0x6843db7ec91184d526251b07123198e05d2b365e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dex2 at 0xdd7283ea985a030c66e85ed63e9dde4f5eab56d5
 */
 pragma solidity 0.4.21;
 pragma experimental "v0.5.0";
