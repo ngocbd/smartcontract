@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JoyToken at 0xF0075a106B3f11E5c85e5497B03AB8bc2725de1e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JoyToken at 0xdde12a12a6f67156e0da672be05c374e1b0a3e57
 */
 pragma solidity ^0.4.18;
 
@@ -216,13 +216,13 @@ contract Ownable {
 }
 
 contract JoyToken is StandardToken, Ownable {
-    string constant public name = "T1JOYSO Token";
-    string constant public symbol = "T1JOY";
+    string constant public name = "JOYSO";
+    string constant public symbol = "JOY";
     uint8 constant public decimals = 6;
     bool public isLocked = true;
 
     function JoyToken(address joysoWallet) public {
-        totalSupply = 4 * 10 ** (8+6);
+        totalSupply = 2 * 10 ** (8+6);
         balances[joysoWallet] = totalSupply;
     }
 
