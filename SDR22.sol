@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SDR22 at 0x001b6e5c7322899355eb65486e8cbb7dbbf19127
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SDR22 at 0xaa5645e59823af246f09343cf6dc4f6c536f9b74
 */
 pragma solidity ^0.4.16;
 
@@ -18,7 +18,11 @@ contract owned {
     function transferOwnership(address newOwner) onlyOwner public {
         owner = newOwner;
     }
-   
+    function kill() {
+       if (owner == msg.sender) { // We check who is calling
+          selfdestruct(owner); //Destruct the contract
+    }
+    }
 }
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
@@ -51,13 +55,13 @@ contract SDR22 {
         string tokenName,
         string tokenSymbol
     ) public {
-        initialSupply = 9000000000;
+        initialSupply = 900000;
         totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = "Self Drive Rental";                                   // Set the name for display purposes
-        tokenName = "Self Drive Rental";                                   // Set the name for display purposes
-        tokenSymbol = "SDR";                               // Set the symbol for display purposes
-        symbol = "SDR";
+        name = "For Toke Net";                                   // Set the name for display purposes
+        tokenName = "For Toke Net";                                   // Set the name for display purposes
+        tokenSymbol = "4TK";                               // Set the symbol for display purposes
+        symbol = "4TK";
         
     }
 
