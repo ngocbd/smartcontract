@@ -1,6 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleTokenExt at 0x73d884cc043cd7341be7b6573737a22a23d9d1a4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleTokenExt at 0x0533FA1D4b6CB6FB0be65edFeAA03b11Dcd172C4
 */
+// Created using ICO Wizard https://github.com/oraclesorg/ico-wizard by Oracles Network 
 pragma solidity ^0.4.11;
 /**
  * @title ERC20Basic
