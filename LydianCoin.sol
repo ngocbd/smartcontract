@@ -1,14 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LydianCoin at 0x644a8775b0b515522f2b433b4727ead12279a545
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LydianCoin at 0x34166bea3096cfbf51dd924694401f04f4e84cc0
 */
-// This is the smart contract for LydianCoin (LDN)
-// LydianCoin is a utility token engineered to meet the digital marketing needs of the crypto and blockchain space. 
-
-//Please see - https://lydian.io, for more details
-//The whitepaper is available here - ldn.im/whitepaper
-
-
-
 // Abstract contract for the full ERC 20 Token standard
 // https://github.com/ethereum/EIPs/issues/20
 pragma solidity ^0.4.18;
@@ -67,11 +59,10 @@ contract LydianCoin is EIP20Interface {
     string public symbol = "LDN";                 
     uint256 initialAmount = 40000000000000000;
     
-    
     function LydianCoin(
     ) public {
         balances[0x899B8d6a1D410A6dc15F7066e54231348ec38eeD] = initialAmount;               // Give the creator all initial tokens
-        totalSupply = initialAmount;                     
+                                     
     }
 
     function transfer(address _to, uint256 _value) public returns (bool success) {
