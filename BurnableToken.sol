@@ -1,11 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnableToken at 0xdF35D37907D70b896DD602E71B6e22339f0c62D9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnableToken at 0x138e8f61c1e1908e145c02a12879f68051499d21
 */
+pragma solidity ^0.4.15;
+
 /**
  *
- * @author  David Rosen <kaandoit@mcon.org>
+ * @author  <newtwist@protonmail.com>
  *
- * Version A
+ * Version B
  *
  * Overview:
  * This is an implimentation of a `burnable` token. The tokens do not pay any dividends; however if/when tokens
@@ -68,6 +70,13 @@ contract SafeMath {
         return z;
     }
 }
+
+
+//Burnable Token interface
+
+// Token standard API
+// https://github.com/ethereum/EIPs/issues/20
+
 contract iERC20Token {
   function totalSupply() constant returns (uint supply);
   function balanceOf( address who ) constant returns (uint value);
@@ -80,11 +89,11 @@ contract iERC20Token {
   event Transfer( address indexed from, address indexed to, uint value);
   event Approval( address indexed owner, address indexed spender, uint value);
 }
+
 contract iBurnableToken is iERC20Token {
   function burnTokens(uint _burnCount) public;
   function unPaidBurnTokens(uint _burnCount) public;
 }
-
 
 contract BurnableToken is iBurnableToken, SafeMath {
 
@@ -105,25 +114,25 @@ contract BurnableToken is iBurnableToken, SafeMath {
   mapping (address => mapping (address => uint)) approvals;  //transfer approvals, from -> to
 
 
-  modifier ownerOnly {                                                                                                                                                                                             
-    require(msg.sender == owner);                                                                                                                                                                                  
-    _;                                                                                                                                                                                                             
-  }                                                                                                                                                                                                                
-                                                                                                                                                                                                                   
-  modifier unlockedOnly {                                                                                                                                                                                          
-    require(!isLocked);                                                                                                                                                                                            
-    _;                                                                                                                                                                                                             
-  }                                                                                                                                                                                                                
-                                                                                                                                                                                                                   
-  modifier preventRestricted {                                                                                                                                                                                     
-    require((msg.sender != restrictedAcct) || (now >= restrictUntil));                                                                                                                                             
-    _;                                                                                                                                                                                                             
-  }                                                                                                                                                                                                                
-                                                                                                                                                                                                                   
-                                                                                                                                                                                                                   
-  //                                                                                                                                                                                                               
-  //constructor                                                                                                                                                                                                    
-  //                                                                                                                                                                                                               
+  modifier ownerOnly {
+    require(msg.sender == owner);
+    _;
+  }
+
+  modifier unlockedOnly {
+    require(!isLocked);
+    _;
+  }
+
+  modifier preventRestricted {
+    require((msg.sender != restrictedAcct) || (now >= restrictUntil));
+    _;
+  }
+
+
+  //
+  //constructor
+  //
   function BurnableToken() {
     owner = msg.sender;
   }
@@ -197,6 +206,12 @@ contract BurnableToken is iBurnableToken, SafeMath {
     require(tokenSupply == 0);
     tokenSupply = _tokenSupply;
     balances[owner] = tokenSupply;
+  }
+
+  function setName(string _name, string _symbol, uint _decimals) public ownerOnly {
+    name = _name;
+    symbol = _symbol;
+    decimals = _decimals;
   }
 
   function lock() public ownerOnly {
