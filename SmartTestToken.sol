@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartTestToken at 0xd90790daea219ca3a286c5488083262c7180f483
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartTestToken at 0x77f7f94e24de94f61a85cc29460dd8154daa66e5
 */
 pragma solidity ^0.4.16;
 
@@ -211,7 +211,7 @@ contract BurnableToken is StandardToken {
 
 contract SmartTestToken is BurnableToken {
     
-  string public constant name = "Smart Test Token";
+  string public constant name = " Smart Test Token";
    
   string public constant symbol = "STT";
     
@@ -222,61 +222,6 @@ contract SmartTestToken is BurnableToken {
   function SmartTestToken() {
     totalSupply = INITIAL_SUPPLY;
     balances[msg.sender] = INITIAL_SUPPLY;
-  }
-    
-}
-
-contract Crowdsale is Ownable {
-    
-  using SafeMath for uint;
-    
-  address multisig;
-
-  uint restrictedPercent;
-
-  address restricted;
-
-  SmartTestToken public token = new SmartTestToken();
-
-  uint start;
-    
-  uint period;
-
-  uint rate;
-
-  function Crowdsale() {
-    multisig = 0x89158F8E063785f841d658F112C058f1b1cFf7bc;
-    restricted = 0x89158F8E063785f841d658F112C058f1b1cFf7bc;
-    restrictedPercent = 0;
-    rate = 1430000000000000000000;
-    start = 1509465651;
-    period = 2;
-  }
-
-  modifier saleIsOn() {
-    require(now > start && now < start + period * 1 days);
-    _;
-  }
-
-  function createTokens() saleIsOn payable {
-    multisig.transfer(msg.value);
-    uint tokens = rate.mul(msg.value).div(1 ether);
-    uint bonusTokens = 0;
-    if(now < start + (period * 1 days).div(4)) {
-      bonusTokens = tokens.div(4);
-    } else if(now >= start + (period * 1 days).div(4) && now < start + (period * 1 days).div(4).mul(2)) {
-      bonusTokens = tokens.div(10);
-    } else if(now >= start + (period * 1 days).div(4).mul(2) && now < start + (period * 1 days).div(4).mul(3)) {
-      bonusTokens = tokens.div(20);
-    }
-    uint tokensWithBonus = tokens.add(bonusTokens);
-    token.transfer(msg.sender, tokensWithBonus);
-    uint restrictedTokens = tokens.mul(restrictedPercent).div(100 - restrictedPercent);
-    token.transfer(restricted, restrictedTokens);
-  }
-
-  function() external payable {
-    createTokens();
   }
     
 }
