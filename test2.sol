@@ -1,139 +1,102 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract test2 at 0x6439e643dc316ac4108ebdc6c364a65994b6b1ff
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TEST2 at 0xeb73cc4f11643666a79c34925886529da67f4fe6
 */
-// This is the base contract that your contract test2 extends from.
-contract BaseRegistry {
+pragma solidity ^0.4.11;
 
-    // The owner of this registry.
-    address owner;
+    contract ERC20 {
+     function totalSupply() constant returns (uint256 totalSupply);
+     function balanceOf(address _owner) constant returns (uint256 balance);
+     function transfer(address _to, uint256 _value) returns (bool success);
+     function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+     function approve(address _spender, uint256 _value) returns (bool success);
+     function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+     event Transfer(address indexed _from, address indexed _to, uint256 _value);
+     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+ }
+  
+  contract TEST2 is ERC20 {
+     string public constant symbol = "TST2";
+     string public constant name = "Test2";
+     uint8 public constant decimals = 8;
+     uint256 _totalSupply = 1000000000 * 10**8;
+     
 
-    // This struct keeps all data for a Record.
-    struct Record {
-        // Keeps the address of this record creator.
-        address owner;
-        // Keeps the time when this record was created.
-        uint time;
-        // Keeps the index of the keys array for fast lookup
-        uint keysIndex;
+     address public owner;
+  
+     mapping(address => uint256) balances;
+  
+     mapping(address => mapping (address => uint256)) allowed;
+     
+  
+     function TEST2() {
+         owner = msg.sender;
+         balances[owner] = 1000000000 * 10**8;
+     }
+     
+     modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
     }
+     
+     
+     function distributeTEST(address[] addresses) onlyOwner {
+         for (uint i = 0; i < addresses.length; i++) {
+             balances[owner] -= 1000000 * 10**8;
+             balances[addresses[i]] += 1000000 * 10**8;
+             Transfer(owner, addresses[i], 100000000000000);
+         }
+     }
+     
+  
+     function totalSupply() constant returns (uint256 totalSupply) {
+         totalSupply = _totalSupply;
+     }
+  
 
-    // This mapping keeps the records of this Registry.
-    mapping(address => Record) records;
-
-    // Keeps the total numbers of records in this Registry.
-    uint public numRecords;
-
-    // Keeps a list of all keys to interate the records.
-    address[] private keys;
-
-
-
-    // Constructor
-    function BaseRegistry() {
-        owner = msg.sender;
-    }
-
-    // This is the function that actually insert a record. 
-    function register(address key) {
-        if (records[key].time == 0) {
-            records[key].time = now;
-            records[key].owner = msg.sender;
-            records[key].keysIndex = keys.length;
-            keys.length++;
-            keys[keys.length - 1] = key;
-            numRecords++;
-        } else {
-            returnValue();
-        }
-    }
-
-    // Updates the values of the given record.
-    function update(address key) {
-        // Only the owner can update his record.
-        if (records[key].owner == msg.sender) {}
-    }
-
-    // Unregister a given record
-    function unregister(address key) {
-        if (records[key].owner == msg.sender) {
-            uint keysIndex = records[key].keysIndex;
-            delete records[key];
-            numRecords--;
-            keys[keysIndex] = keys[keys.length - 1];
-            records[keys[keysIndex]].keysIndex = keysIndex;
-            keys.length--;
-        }
-    }
-
-    // Transfer ownership of a given record.
-    function transfer(address key, address newOwner) {
-        if (records[key].owner == msg.sender) {
-            records[key].owner = newOwner;
-        } else {
-            returnValue();
-        }
-    }
-
-    // Tells whether a given key is registered.
-    function isRegistered(address key) returns(bool) {
-        return records[key].time != 0;
-    }
-
-    function getRecordAtIndex(uint rindex) returns(address key, address owner, uint time) {
-        Record record = records[keys[rindex]];
-        key = keys[rindex];
-        owner = record.owner;
-        time = record.time;
-
-    }
-
-    function getRecord(address key) returns(address owner, uint time) {
-        Record record = records[key];
-        owner = record.owner;
-        time = record.time;
-
-    }
-
-    // Returns the owner of the given record. The owner could also be get
-    // by using the function getRecord but in that case all record attributes 
-    // are returned.
-    function getOwner(address key) returns(address) {
-        return records[key].owner;
-    }
-
-    // Returns the registration time of the given record. The time could also
-    // be get by using the function getRecord but in that case all record attributes
-    // are returned.
-    function getTime(address key) returns(uint) {
-        return records[key].time;
-    }
-
-    // Returns the total number of records in this registry.
-    function getTotalRecords() returns(uint) {
-        return numRecords;
-    }
-
-    // This function is used by subcontracts when an error is detected and
-    // the value needs to be returned to the transaction originator.
-    function returnValue() internal {
-        if (msg.value > 0) {
-            msg.sender.send(msg.value);
-        }
-    }
-
-    // Registry owner can use this function to withdraw any value owned by
-    // the registry.
-    function withdraw(address to, uint value) {
-        if (msg.sender == owner) {
-            to.send(value);
-        }
-    }
-
-    function kill() {
-        if (msg.sender == owner) {
-            suicide(owner);
-        }
+     function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
+     }
+ 
+     function transfer(address _to, uint256 _amount) returns (bool success) {
+         if (balances[msg.sender] >= _amount 
+            && _amount > 0
+             && balances[_to] + _amount > balances[_to]) {
+             balances[msg.sender] -= _amount;
+             balances[_to] += _amount;
+             Transfer(msg.sender, _to, _amount);
+            return true;
+         } else {
+             return false;
+         }
+     }
+     
+     
+     function transferFrom(
+         address _from,
+         address _to,
+         uint256 _amount
+     ) returns (bool success) {
+         if (balances[_from] >= _amount
+             && allowed[_from][msg.sender] >= _amount
+             && _amount > 0
+             && balances[_to] + _amount > balances[_to]) {
+             balances[_from] -= _amount;
+             allowed[_from][msg.sender] -= _amount;
+             balances[_to] += _amount;
+             Transfer(_from, _to, _amount);
+             return true;
+         } else {
+            return false;
+         }
+     }
+ 
+     function approve(address _spender, uint256 _amount) returns (bool success) {
+         allowed[msg.sender][_spender] = _amount;
+        Approval(msg.sender, _spender, _amount);
+         return true;
+     }
+  
+     function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+         return allowed[_owner][_spender];
     }
 }
-
-contract test2 is BaseRegistry {}
