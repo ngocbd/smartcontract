@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MusereumToken at 0x1aca0b031bc99a59d49b9eecfbec300c9fcff8ea
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MusereumToken at 0x2ce1c13f89f824d328ad94bfc39268e7b05b117e
 */
 pragma solidity ^0.4.18;
 
@@ -216,25 +216,56 @@ contract TokenRecipient {
   function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public;
 }
 
-contract MusereumToken is StandardToken {
+contract ApproveAndCallToken is StandardToken {
+
+  function approveAndCall(address _spender, uint _value, bytes _data) public returns (bool) {
+    TokenRecipient spender = TokenRecipient(_spender);
+    if (approve(_spender, _value)) {
+      spender.receiveApproval(msg.sender, _value, this, _data);
+      return true;
+    }
+    return false;
+  }
+
+  // ERC223 Token improvement to send tokens to smart-contracts
+  function transfer(address _to, uint _value) public returns (bool success) { 
+    //standard function transfer similar to ERC20 transfer with no _data
+    //added due to backwards compatibility reasons
+    bytes memory empty;
+    if (isContract(_to)) {
+        return transferToContract(_to, _value, empty);
+    }
+    else {
+        return super.transfer(_to, _value);
+    }
+  }
+
+  //assemble the given address bytecode. If bytecode exists then the _addr is a contract.
+  function isContract(address _addr) private view returns (bool) {
+    uint length;
+    assembly {
+      //retrieve the size of the code on target address, this needs assembly
+      length := extcodesize(_addr)
+    }
+    return (length>0);
+  }
+
+  //function that is called when transaction target is a contract
+  function transferToContract(address _to, uint _value, bytes _data) private returns (bool success) {
+    return approveAndCall(_to, _value, _data);
+  }
+}
+
+contract MusereumToken is ApproveAndCallToken {
   string public constant name = "Musereum Token"; // solium-disable-line uppercase
   string public constant symbol = "ETM"; // solium-disable-line uppercase
   uint8 public constant decimals = 18; // solium-disable-line uppercase
 
-  uint256 public constant INITIAL_SUPPLY = 10000000 * (10 ** uint256(decimals));
+  uint256 public constant INITIAL_SUPPLY = 110000000 * (10 ** uint256(decimals));
 
   function MusereumToken() public {
     totalSupply_ = INITIAL_SUPPLY;
     balances[msg.sender] = INITIAL_SUPPLY;
     Transfer(0x0, msg.sender, INITIAL_SUPPLY);
-  }
-
-  function approveAndCall(address _spender, uint _value, bytes _data) public returns (bool) {
-    TokenRecipient spender = TokenRecipient(_spender);
-    if (approve(_spender, _value)) {
-      spender.receiveApproval(msg.sender, _value, address(this), _data);
-      return true;
-    }
-    return false;
   }
 }
