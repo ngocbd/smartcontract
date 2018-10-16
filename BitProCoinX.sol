@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitProCoinX at 0x50f7c95b7e82ea5e0953de8c7ead20a9dd289ec2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BitProCoinX at 0x5e70d48f207c52b981e476cb70bc39ad6570c2e1
 */
 pragma solidity ^0.4.16;
 contract owned {
@@ -148,7 +148,7 @@ contract BitProCoinX is StandardToken, owned {
         totalSupply = 1000000000000;                        // Update total supply (100000 for example)
         name = "BitProCoinX";                                   // Set the name for display purposes
         decimals = 4;                            // Amount of decimals for display purposes
-        symbol = "BPCX";                               // Set the symbol for display purposes
+        symbol = "BPCVX";                               // Set the symbol for display purposes
         sellPrice = 7668200000;                         // price of subtoken , i.e. main token price need to be divided by (10 ** uint256(decimals)), here 1000
         buyPrice =  7668200000;                         // price of subtoken , i.e. main token price need to be divided by (10 ** uint256(decimals)), here 1000
         remaining = 0;
