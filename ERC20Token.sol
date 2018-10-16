@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xa65ac2ffe6597fbc0a79cf38ba68514f8be8372a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xad47c816c992560091f7318ae7f1837f2125d18a
 */
 pragma solidity ^0.4.4;
 
@@ -106,9 +106,9 @@ contract ERC20Token is StandardToken {
     They allow one to customise the token contract & in no way influences the core functionality.
     Some wallets/interfaces might not even bother to look at this information.
     */
-    string public name = "DisapPoints";                   //fancy name: eg Simon Bucks
-    uint8 public decimals = 2;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol = "DSP";                 //An identifier: eg SBX
+    string public name;                   //fancy name: eg Simon Bucks
+    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
+    string public symbol;                 //An identifier: eg SBX
     string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
 
 //
@@ -119,11 +119,11 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 1000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 1000000;                        // Update total supply (100000 for example)
-        name = "DisapPoints";                                   // Set the name for display purposes
-        decimals = 1;                            // Amount of decimals for display purposes
-        symbol = "DSP";                               // Set the symbol for display purposes
+        balances[msg.sender] = 50000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 50000000000000000000000000;                        // Update total supply (100000 for example)
+        name = "Quod Erat Demonstrandum";                                   // Set the name for display purposes
+        decimals = 18;                            // Amount of decimals for display purposes
+        symbol = "QED";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
