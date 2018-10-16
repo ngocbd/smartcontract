@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x252604bf9f47ac3bd1e3c4bb47402fd415ae8e6f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x70105d91ac8fa51c3128f076b059e9b3ea402562
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
 
