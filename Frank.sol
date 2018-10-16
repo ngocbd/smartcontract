@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Frank at 0x843d0a4524c7b13e333781f8716a891c8248277f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Frank at 0xfc51dddea8e49be11ad1fc1bc0dd31f7f0d285be
 */
 pragma solidity ^0.4.16;
 
@@ -8,7 +8,7 @@ interface tokenRecipient { function receiveApproval(address _from, uint256 _valu
 contract Frank {
     string public name;
     string public symbol;
-    uint8 public decimals = 0;
+    uint8 public decimals = 10;
     uint256 public totalSupply;
 
     mapping (address => uint256) public balanceOf;
