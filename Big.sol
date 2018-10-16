@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BIG at 0x5b1fd3040f888fd23b272d8cacfa4a8b57d46e56
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BIG at 0x48453e7a54a420781b1ffbeed223bfbfdecd33b8
 */
 pragma solidity ^0.4.4;
 
@@ -115,15 +115,15 @@ contract BIG is StandardToken {
 // CHANGE THESE VALUES FOR YOUR TOKEN
 //
 
-//make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of BIG
+//make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
 
     function BIG(
         ) {
         balances[msg.sender] = 1000000;               // Give the creator all initial tokens (100000 for example)
         totalSupply = 1000000;                        // Update total supply (100000 for example)
-        name = "BIG";                        // Set the name for display purposes
-        decimals = 0;                                // Amount of decimals for display purposes
-        symbol = "BIG";                              // Set the symbol for display purposes
+        name = "BIG";                                   // Set the name for display purposes
+        decimals = 18;                            // Amount of decimals for display purposes
+        symbol = "BIG";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
