@@ -1,86 +1,200 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xd93bc824fe11d6ac608a7096b75466b6968d1b99
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x2bbd2e4dbb0ea3832efaa9877e061d3ed1f87543
 */
 pragma solidity ^0.4.11;
- 
-contract Token {
-    string public symbol = "";
-    string public name = "";
-    uint8 public constant decimals = 18;
-    uint256 _totalSupply = 0;
-    address owner = 0;
-    bool setupDone = false;
-	
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
- 
-    mapping(address => uint256) balances;
- 
-    mapping(address => mapping (address => uint256)) allowed;
- 
-    function Token(address adr) {
-		owner = adr;        
+
+library SafeMath {
+    function mul(uint a, uint b) internal returns (uint) {
+        uint c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
     }
-	
-	function SetupToken(string tokenName, string tokenSymbol, uint256 tokenSupply)
-	{
-		if (msg.sender == owner && setupDone == false)
-		{
-			symbol = tokenSymbol;
-			name = tokenName;
-			_totalSupply = tokenSupply * 1000000000000000000;
-			balances[owner] = _totalSupply;
-			setupDone = true;
-		}
-	}
- 
-    function totalSupply() constant returns (uint256 totalSupply) {        
-		return _totalSupply;
+
+    function div(uint a, uint b) internal returns (uint) {
+        assert(b > 0);
+        uint c = a / b;
+        assert(a == b * c + a % b);
+        return c;
     }
- 
-    function balanceOf(address _owner) constant returns (uint256 balance) {
+
+    function sub(uint a, uint b) internal returns (uint) {
+        assert(b <= a);
+        return a - b;
+    }
+
+    function add(uint a, uint b) internal returns (uint) {
+        uint c = a + b;
+        assert(c >= a);
+        return c;
+    }
+
+    function max64(uint64 a, uint64 b) internal constant returns (uint64) {
+        return a >= b ? a : b;
+    }
+
+    function min64(uint64 a, uint64 b) internal constant returns (uint64) {
+        return a < b ? a : b;
+    }
+
+    function max256(uint256 a, uint256 b) internal constant returns (uint256) {
+        return a >= b ? a : b;
+    }
+
+    function min256(uint256 a, uint256 b) internal constant returns (uint256) {
+        return a < b ? a : b;
+    }
+
+    function assert(bool assertion) internal {
+        if (!assertion) {
+            throw;
+        }
+    }
+}
+
+contract ownable {
+
+    address public owner;
+
+    modifier onlyOwner {
+        if (!isOwner(msg.sender)) throw;
+        _;
+    }
+
+    function ownable() {
+        owner = msg.sender;
+    }
+
+    function transferOwnership(address _newOwner) onlyOwner {
+        owner = _newOwner;
+    }
+
+    function isOwner(address _address) returns (bool) {
+        return owner == _address;
+    }
+}
+
+
+contract Burnable {
+
+    event Burn(address indexed owner, uint amount);
+    function burn(address _owner, uint _amount) public;
+
+}
+
+
+contract ERC20 {
+    uint public totalSupply;
+    
+    function totalSupply() constant returns (uint);
+    function balanceOf(address _owner) constant returns (uint);
+    function allowance(address _owner, address _spender) constant returns (uint);
+    function transfer(address _to, uint _value) returns (bool);
+    function transferFrom(address _from, address _to, uint _value) returns (bool);
+    function approve(address _spender, uint _value) returns (bool);
+    
+    event Approval(address indexed owner, address indexed spender, uint value);
+    event Transfer(address indexed from, address indexed to, uint value);
+}
+
+
+contract Mintable {
+
+    event Mint(address indexed to, uint value);
+    function mint(address _to, uint _amount) public;
+}
+
+contract Token is ERC20, Mintable, Burnable, ownable {
+    using SafeMath for uint;
+
+    string public name;
+    string public symbol;
+
+    uint public decimals = 18;
+    uint public maxSupply;
+    uint public totalSupply;
+    uint public freezeMintUntil;
+
+    mapping (address => mapping (address => uint)) allowed;
+    mapping (address => uint) balances;
+
+    modifier canMint {
+        require(totalSupply < maxSupply);
+        _;
+    }
+
+    modifier mintIsNotFrozen {
+        require(freezeMintUntil < now);
+        _;
+    }
+
+    function Token(string _name, string _symbol, uint _maxSupply) {
+        name = _name;
+        symbol = _symbol;
+        maxSupply = _maxSupply;
+        totalSupply = 0;
+        freezeMintUntil = 0;
+    }
+
+    function totalSupply() constant returns (uint) {
+        return totalSupply;
+    }
+
+    function balanceOf(address _owner) constant returns (uint) {
         return balances[_owner];
     }
- 
-    function transfer(address _to, uint256 _amount) returns (bool success) {
-        if (balances[msg.sender] >= _amount 
-            && _amount > 0
-            && balances[_to] + _amount > balances[_to]) {
-            balances[msg.sender] -= _amount;
-            balances[_to] += _amount;
-            Transfer(msg.sender, _to, _amount);
-            return true;
-        } else {
+
+    function allowance(address _owner, address _spender) constant returns (uint) {
+        return allowed[_owner][_spender];
+    }
+
+    function transfer(address _to, uint _value) returns (bool) {
+        if (_value <= 0) {
             return false;
         }
-    }
- 
-    function transferFrom(
-        address _from,
-        address _to,
-        uint256 _amount
-    ) returns (bool success) {
-        if (balances[_from] >= _amount
-            && allowed[_from][msg.sender] >= _amount
-            && _amount > 0
-            && balances[_to] + _amount > balances[_to]) {
-            balances[_from] -= _amount;
-            allowed[_from][msg.sender] -= _amount;
-            balances[_to] += _amount;
-            Transfer(_from, _to, _amount);
-            return true;
-        } else {
-            return false;
-        }
-    }
- 
-    function approve(address _spender, uint256 _amount) returns (bool success) {
-        allowed[msg.sender][_spender] = _amount;
-        Approval(msg.sender, _spender, _amount);
+
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+
+        Transfer(msg.sender, _to, _value);
         return true;
     }
- 
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
+
+    function transferFrom(address _from, address _to, uint _value) returns (bool) {
+        if (_value <= 0) {
+            return false;
+        }
+
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        Transfer(_from, _to, _value);
+        return true;
+    }
+
+    function approve(address _spender, uint _value) returns (bool) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function mint(address _to, uint _amount) public canMint mintIsNotFrozen onlyOwner {
+        if (maxSupply < totalSupply.add(_amount)) throw;
+
+        totalSupply = totalSupply.add(_amount);
+        balances[_to] = balances[_to].add(_amount);
+
+        Mint(_to, _amount);
+    }
+
+    function burn(address _owner, uint _amount) public onlyOwner {
+        totalSupply = totalSupply.sub(_amount);
+        balances[_owner] = balances[_owner].sub(_amount);
+
+        Burn(_owner, _amount);
+    }
+
+    function freezeMintingFor(uint _weeks) public onlyOwner {
+        freezeMintUntil = now + _weeks * 1 weeks;
     }
 }
