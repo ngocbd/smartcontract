@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distribution at 0x188eaed79dd3a4b3c0a745f99beacd0860ebb084
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Distribution at 0xc62a0b4dfdbcce38b6431f9e1609c6b9bce9e461
 */
 pragma solidity ^0.4.18;
 
@@ -31,7 +31,7 @@ contract Distribution {
  
   address admin;
   ERC20 tokenContract;
-  State state;
+  State public state;
   uint256 actualTotalTokens;
   uint256 tokensTransferred;
 
@@ -48,9 +48,8 @@ contract Distribution {
     state = State.AwaitingTokens;
   }
 
-  function handleTokensReceived() public {
+  function _handleTokensReceived(uint256 totalTokens) internal {
     require(state == State.AwaitingTokens);
-    uint256 totalTokens = tokenContract.balanceOf(this);
     require(totalTokens > 0);
 
     tokensTransferred = 0;
@@ -62,6 +61,15 @@ contract Distribution {
     }
   }
 
+  function handleTokensReceived() public {
+    _handleTokensReceived(tokenContract.balanceOf(this));
+  }
+
+  function tokenFallback(address /*_from*/, uint _value, bytes /*_data*/) public {
+    require(msg.sender == address(tokenContract));
+    _handleTokensReceived(_value);
+  }
+
   function _numTokensForContributor(uint256 contributorExpectedTokens,
                                     uint256 _tokensTransferred, State _state)
       internal view returns (uint256) {
@@ -70,7 +78,6 @@ contract Distribution {
     } else if (_state == State.DistributingProRata) {
       uint256 tokens = actualTotalTokens.mul(contributorExpectedTokens) / expectedTotalTokens;
 
-      // Handle roundoff on last contributor.
       uint256 tokensRemaining = actualTotalTokens - _tokensTransferred;
       if (tokens < tokensRemaining) {
         return tokens;
@@ -80,23 +87,6 @@ contract Distribution {
     } else {
       revert();
     }
-  }
-
-  function doDistribution(uint256 contributorIndex, address contributor,
-                          uint256 contributorExpectedTokens)
-      public {
-    // Make sure the arguments match the compressed storage.
-    require(contributionHashes[contributorIndex] == keccak256(contributor, contributorExpectedTokens));
-
-    uint256 numTokens = _numTokensForContributor(contributorExpectedTokens,
-                                                 tokensTransferred, state);
-    contributionHashes[contributorIndex] = 0x00000000000000000000000000000000;
-    tokensTransferred += numTokens;
-    if (tokensTransferred == actualTotalTokens) {
-      state = State.Done;
-    }
-
-    require(tokenContract.transfer(contributor, numTokens));
   }
 
   function doDistributionRange(uint256 start, address[] contributors,
@@ -131,11 +121,5 @@ contract Distribution {
   function temporaryEscapeHatch(address to, uint256 value, bytes data) public {
     require(msg.sender == admin);
     require(to.call.value(value)(data));
-  }
-
-  function temporaryKill(address to) public {
-    require(msg.sender == admin);
-    require(tokenContract.balanceOf(this) == 0);
-    selfdestruct(to);
   }
 }
