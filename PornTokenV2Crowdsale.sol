@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PornTokenV2Crowdsale at 0xaa0e1bc5163293c2e335977d9478d741f3a4e372
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PornTokenV2Crowdsale at 0x8e5a41d13c04028add9ccacd0a56af2df778543b
 */
 pragma solidity ^0.4.16;
 
@@ -23,6 +23,7 @@ contract PornTokenV2Crowdsale {
     bool crowdsaleClosed = false;
 
     event GoalReached(address recipient, uint totalAmountRaised);
+    event FundTransfer(address backer, uint amount, bool isContribution);
 
     /**
      * Constrctor function
@@ -38,8 +39,7 @@ contract PornTokenV2Crowdsale {
         beneficiary = sendTo;
         fundingGoal = fundingGoalInEthers * 1 ether;
         deadline = now + durationInMinutes * 1 minutes;
-        /* 0.00001337 x 1 ether in wei */
-        price = 13370000000000;
+        price = 0.00001337 * 1 ether;
         tokenReward = token(addressOfTokenUsedAsReward);
     }
 
@@ -51,12 +51,10 @@ contract PornTokenV2Crowdsale {
     function () payable {
         require(!crowdsaleClosed);
         uint amount = msg.value;
-        if (amount > 0) {
-            balanceOf[msg.sender] += amount;
-            amountRaised += amount;
-            tokenReward.transfer(msg.sender, amount / price);
-            beneficiary.send(amount);
-        }
+        balanceOf[msg.sender] += amount;
+        amountRaised += amount;
+        tokenReward.transfer(msg.sender, amount / price);
+        FundTransfer(beneficiary, amount, false);
     }
 
     modifier afterDeadline() { if (now >= deadline) _; }
@@ -76,9 +74,21 @@ contract PornTokenV2Crowdsale {
 
 
     /**
-     * Not Used
+     * Withdraw the funds
+     *
+     * Checks to see if goal or time limit has been reached, and if so, and the funding goal was reached,
+     * sends the entire amount to the beneficiary. If goal was not reached, each contributor can withdraw
+     * the amount they contributed.
      */
     function safeWithdrawal() afterDeadline {
-        /* no implementation needed */
+        
+        if (beneficiary == msg.sender) {
+            if (beneficiary.send(amountRaised)) {
+                FundTransfer(beneficiary, amountRaised, false);
+            } else {
+                //If we fail to send the funds to beneficiary, unlock funders balance
+                fundingGoalReached = false;
+            }
+        }
     }
 }
