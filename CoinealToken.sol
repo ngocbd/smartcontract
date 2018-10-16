@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoinealToken at 0xeab986049bb33743d23dac2adeb525c6cb98a176
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoinealToken at 0xAcCe88F5A63A5e65DB9AA7303720bE16b556E751
 */
 pragma solidity ^0.4.16;
 
@@ -58,9 +58,9 @@ contract CoinealToken is SafeMath{
 	
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function CoinealToken() public {
-		totalSupply = 10*10**27; // Update total supply
+	    totalSupply = 10*10**27; // Update total supply
         balanceOf[msg.sender] = totalSupply;              // Give the creator all initial tokens
-        name = "Coineal";                                   // Set the name for display purposes
+        name = "Coineal Token";                                   // Set the name for display purposes
         symbol = "NEAL";                               // Set the symbol for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
     }
@@ -82,7 +82,6 @@ contract CoinealToken is SafeMath{
         balanceOf[_from] -= _value;
         // Add the same to the recipient
         balanceOf[_to] += _value;
-        Transfer(_from, _to, _value);
         // Asserts are used to use static analysis to find bugs in your code. They should never fail
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
