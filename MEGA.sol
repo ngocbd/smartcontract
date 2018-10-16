@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MEGA at 0x1b2a2414f80bff80f76255aa11bf847a37b0d5be
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MEGA at 0xbebc55c70663c6a3edd616f5695e819adbc30e42
 */
 pragma solidity 0.4.23;
 ///////////////////////////////
@@ -296,25 +296,27 @@ contract MEGA is admined,IERC20Token { //Standar definition of an ERC20Token
 	IERC20Token ELFRelay = IERC20Token(0x0F2318565f1996CB1eD2F88e172135791BC1FcBf);
 	IERC20Token ELFToken = IERC20Token(0xbf2179859fc6D5BEE9Bf9158632Dc51678a4100e);
 
-	IERC20Token OMGRelay = IERC20Token(0x99eBD396Ce7AA095412a4Cd1A0C959D6Fd67B340);
-	IERC20Token OMGToken = IERC20Token(0xd26114cd6EE289AccF82350c8d8487fedB8A0C07);
+	IERC20Token OMGToken = IERC20Token(0x99eBD396Ce7AA095412a4Cd1A0C959D6Fd67B340);
+	IERC20Token OMGRelay = IERC20Token(0xd26114cd6EE289AccF82350c8d8487fedB8A0C07);
 
-	IERC20Token POARelay = IERC20Token(0x564c07255AFe5050D82c8816F78dA13f2B17ac6D);
-	IERC20Token POAToken = IERC20Token(0x6758B7d441a9739b98552B373703d8d3d14f9e62);
+	IERC20Token POAToken = IERC20Token(0x564c07255AFe5050D82c8816F78dA13f2B17ac6D);
+	IERC20Token POARelay = IERC20Token(0x6758B7d441a9739b98552B373703d8d3d14f9e62);
 
-	IERC20Token DRGNRelay = IERC20Token(0xa7774F9386E1653645E1A08fb7Aae525B4DeDb24);
-	IERC20Token DRGNToken = IERC20Token(0x419c4dB4B9e25d6Db2AD9691ccb832C8D9fDA05E);
+	IERC20Token DRGNToken = IERC20Token(0xa7774F9386E1653645E1A08fb7Aae525B4DeDb24);
+	IERC20Token DRGNRelay = IERC20Token(0x419c4dB4B9e25d6Db2AD9691ccb832C8D9fDA05E);
 
-	IERC20Token SRNRelay = IERC20Token(0xd2Deb679ed81238CaeF8E0c32257092cEcc8888b);
-	IERC20Token SRNToken = IERC20Token(0x68d57c9a1C35f63E2c83eE8e49A64e9d70528D25);
+	IERC20Token SRNToken = IERC20Token(0xd2Deb679ed81238CaeF8E0c32257092cEcc8888b);
+	IERC20Token SRNRelay = IERC20Token(0x68d57c9a1C35f63E2c83eE8e49A64e9d70528D25);
 
-	IERC20Token WAXRelay = IERC20Token(0x67563E7A0F13642068F6F999e48c690107A4571F);
-	IERC20Token WAXToken = IERC20Token(0x39Bb259F66E1C59d5ABEF88375979b4D20D98022);
+	IERC20Token WAXToken = IERC20Token(0x67563E7A0F13642068F6F999e48c690107A4571F);
+	IERC20Token WAXRelay = IERC20Token(0x39Bb259F66E1C59d5ABEF88375979b4D20D98022);
 
-	IERC20Token POWRRelay = IERC20Token(0x168D7Bbf38E17941173a352f1352DF91a7771dF3);
-	IERC20Token POWRToken = IERC20Token(0x595832F8FC6BF59c85C527fEC3740A1b7a361269);
+
+	IERC20Token POWRToken = IERC20Token(0x168D7Bbf38E17941173a352f1352DF91a7771dF3);
+	IERC20Token POWRRelay = IERC20Token(0x595832F8FC6BF59c85C527fEC3740A1b7a361269);
 
 	bool buyFlag = false; //False = set rate - True = auto rate
+	uint256 constant internal magnitude = 2**64;
 	//Path to exchanges
 	mapping(uint8 => IERC20Token[]) paths;
 	mapping(uint8 => IERC20Token[]) reversePaths;
@@ -324,10 +326,10 @@ contract MEGA is admined,IERC20Token { //Standar definition of an ERC20Token
 	address public feeWallet;
 	uint256 public rate = 6850;
 	//token related
-	string public name = "MEGAINVEST v3";
+	string public name = "MEGAINVEST v2";
     uint8 public decimals = 18;
-    string public symbol = "MEG3";
-    string public version = '3';
+    string public symbol = "MEG2";
+    string public version = '2';
 
 	constructor(address _feeWallet) public {
 		feeWallet = _feeWallet;
@@ -348,21 +350,6 @@ contract MEGA is admined,IERC20Token { //Standar definition of an ERC20Token
     	reversePaths[5] = [SRNToken,SRNRelay,SRNRelay,SRNRelay,BNTToken,BNTToken,ETHToken];
     	reversePaths[6] = [WAXToken,WAXRelay,WAXRelay,WAXRelay,BNTToken,BNTToken,ETHToken];
     	reversePaths[7] = [POWRToken,POWRRelay,POWRRelay,POWRRelay,BNTToken,BNTToken,ETHToken];
-	}
-
-	function updateBancorContracts(
-		IBancorConverter _BancorConverter,
-		IBancorQuickConverter _Bancor,
-		IBancorGasPriceLimit _BancorGas) public onlyAdmin{
-
-		BancorConverter = _BancorConverter;
-		Bancor = _Bancor;
-		BancorGas = _BancorGas;
-	}
-
-	function updatePath(IERC20Token[] _path, IERC20Token[] _reversePath, uint8 _index) public onlyAdmin{
-		paths[_index] = _path;
-		reversePaths[_index] = _reversePath;
 	}
 
 	function changeBuyFlag(bool _flag) public onlyAdmin {
@@ -455,7 +442,7 @@ contract MEGA is admined,IERC20Token { //Standar definition of an ERC20Token
 		uint256 tempBalance;
 		uint256 tempFee;
 		IERC20Token tempToken;
-		uint256 dividedSupply = totalSupply.div(1e5); //ethereum is not decimals friendly
+		uint256 dividedSupply = totalSupply.div(magnitude); //ethereum is not decimals friendly
 
 		if(dividedSupply == 0 || _amount < dividedSupply) revert();
 		
@@ -465,10 +452,10 @@ contract MEGA is admined,IERC20Token { //Standar definition of an ERC20Token
 
 		for(uint8 i=0; i<8; i++){ 
 	
-			tempToken = reversePaths[i][0];
+			tempToken = IERC20Token(paths[i][paths[i].length - 1]);
 			tempBalance = tempToken.balanceOf(this);
 			tempBalance = tempBalance.mul(factor);
-			tempBalance = tempBalance.div(1e5);
+			tempBalance = tempBalance.div(magnitude);
 			tempFee = tempBalance.mul(5);
 			tempFee = tempFee.div(1000); //0.5%
 			tempBalance = tempBalance.sub(tempFee);
@@ -479,18 +466,7 @@ contract MEGA is admined,IERC20Token { //Standar definition of an ERC20Token
 	}
 	
 	function emergency() onlyAdmin public{
-	    uint256 tempBalance;
-		uint256 tempFee;
-		IERC20Token tempToken;
 	    msg.sender.transfer(address(this).balance);
-	    for(uint8 i=0; i<8; i++){ 
-	
-			tempToken = reversePaths[i][0];
-			tempBalance = tempToken.balanceOf(this);
-			tempBalance = tempBalance.sub(tempFee);
-			tempToken.transfer(admin,tempBalance);
-
-		}
 	}
 	
     function claimTokens(IERC20Token _address, address _to) onlyAdmin public  {
