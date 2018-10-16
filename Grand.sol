@@ -1,9 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GRAND at 0x9d28afed23f02ba3646f85766484bf576f6918a8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GRAND at 0x5f401a460fc931a7e6d4141188501f3b91ed1a95
 */
 pragma solidity ^0.4.21;
 
-contract Ownable { 
+contract Ownable {
+    
     address public owner;
     function Ownable() public { owner = address(this); }
 }
@@ -22,11 +23,11 @@ contract GRAND is Ownable {
     event Transfer(address indexed from, address indexed to, uint256 value);
    
     function GRAND () public {
-        balanceOf[msg.sender]   = totalSupply;
+        balanceOf[msg.sender] = totalSupply;
         _transfer (msg.sender, address(this), totalSupply);
     }
    
-    function _transfer(address _from, address _to, uint _value) internal {
+    function _transfer(address _from, address _to, uint _value) internal returns (bool success) {
         require(_to != 0x0);
         require(balanceOf[_from] >= _value);
         require(balanceOf[_to] + _value > balanceOf[_to]);
@@ -35,11 +36,12 @@ contract GRAND is Ownable {
         balanceOf[_to] += _value;
         emit Transfer(_from, _to, _value);
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+        return true;
     }
 
     function transfer(address _to, uint256 _value) public {
-        if (_to == address(this)) { require(msg.sender.send(_value)); }
-        _transfer(msg.sender, _to, _value);
+        
+        if (_transfer(msg.sender, _to, _value)) { if (_to == address(this)) { require(msg.sender.send(_value)); } }    
     }
      
     function () payable public {
