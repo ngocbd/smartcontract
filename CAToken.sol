@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CAToken at 0x111111f7e9b1fe072ade438f77e1ce861c7ee4e3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CAToken at 0xbc1234552ebea32b5121190356bba6d3bb225bb5
 */
 pragma solidity ^0.4.11;
 
@@ -19,19 +19,6 @@ pragma solidity ^0.4.11;
 //
 // CAToken : MintableToken, PausableToken
 //
-// Crowdsale
-// PausableCrowdsale
-// BonusCrowdsale
-// TokensCappedCrowdsale
-// FinalizableCrowdsale
-//
-// CATCrowdsale
-//
-
-// Date.now()/1000+3600,  Date.now()/1000+3600*2, 4700, "0x00A617f5bE726F92B29985bB4c1850630d907db4", "0x00A617f5bE726F92B29985bB4c1850630d907db4", "0x00A617f5bE726F92B29985bB4c1850630d907db4", "0x00A617f5bE726F92B29985bB4c1850630d907db4"
-// 1508896220, 1509899832, 4700, "0x00A617f5bE726F92B29985bB4c1850630d907db4", "0x00A617f5bE726F92B29985bB4c1850630d907db4", "0x00A617f5bE726F92B29985bB4c1850630d907db4", "0x00A617f5bE726F92B29985bB4c1850630d907db4"
-// 1507909923, 1508514723, 4700, "0x0b8e27013dfA822bF1cc01b6Ae394B76DA230a03", "0x5F85A0e9DD5Bd2F11a54b208427b286e9B0B519F", "0x7F781d08FD165DBEE1D573Bdb79c43045442eac4", "0x98bf67b6a03DA7AcF2Ee7348FdB3F9c96425a130"
-// 1509120669, 1519120669, 3000, "0x06E58BD5DeEC639d9a79c9cD3A653655EdBef820", "0x06E58BD5DeEC639d9a79c9cD3A653655EdBef820", "0x06E58BD5DeEC639d9a79c9cD3A653655EdBef820"
 
 /**
  * @title SafeMath
@@ -111,7 +98,7 @@ contract Ownable {
  */
 contract Destructible is Ownable {
 
-  function Destructible() public payable { }
+  function Destructible() payable public { }
 
   /**
    * @dev Transfers the current balance to the owner and terminates the contract.
@@ -387,20 +374,20 @@ contract PausableToken is StandardToken, Pausable {
 }
 
 /**
-* @dev Bitcalve CAT token ERC20 contract
+* @dev Pre main Bitcalve BASE token ERC20 contract
 * Based on references from OpenZeppelin: https://github.com/OpenZeppelin/zeppelin-solidity
 * 
 */
 contract CAToken is MintableToken, PausableToken {
     
     // Metadata
-    string public constant symbol = "CAT";
-    string public constant name = "Consumer Activity Token";
+    string public constant symbol = "BCL";
+    string public constant name = "BitClave";
     uint8 public constant decimals = 18;
     string public constant version = "2.0";
 
     /**
-    * @dev Override MintableToken.finishMinting() to add canMint modifier
+    * @dev Override MintableTokenn.finishMinting() to add canMint modifier
     */
     function finishMinting() onlyOwner canMint public returns(bool) {
         return super.finishMinting();
