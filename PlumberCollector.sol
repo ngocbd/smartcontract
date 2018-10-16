@@ -1,17 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlumberCollector at 0x1054bf40be3e021e26fa5f6d627fe395a3fd3f26
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PlumberCollector at 0x5585f99a9af13b73a6210ea9c8ca98b69f4a4b31
 */
 pragma solidity ^0.4.24; 
 
 // similar as shrimpfarmer, with two changes:
 // A. half of your plumbers leave when you sell pooh
-// B. the "free" 300 plumber cost 0.001 eth (in line with the mining fee)
+// B. the "free" 100 plumber cost 0.001 eth (in line with the mining fee)
 
 // bots should have a harder time
 
 contract PlumberCollector{
     uint256 public POOH_TO_CALL_1PLUMBER=86400;//for final version should be seconds in a day
-    uint256 public STARTING_POOH=300;
+    uint256 public STARTING_POOH=100;
     uint256 PSN=10000;
     uint256 PSNH=5000;
     bool public initialized=false;
@@ -44,7 +44,7 @@ contract PlumberCollector{
         //send referral poohs
         claimedPoohs[referrals[msg.sender]]=SafeMath.add(claimedPoohs[referrals[msg.sender]],SafeMath.div(poohsUsed,5));
         
-        //boost market to nerf shrimp hoarding
+        //boost market to nerf pooh hoarding
         marketPoohs=SafeMath.add(marketPoohs,SafeMath.div(poohsUsed,10));
     }
 
