@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BLUECoin at 0x539efe69bcdd21a83efd9122571a64cc25e0282b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BLUECoin at 0x23f33968033dff12fcbef5d4a46389952e4b908e
 */
 pragma solidity ^0.4.13;
 
@@ -182,11 +182,11 @@ contract StandardToken is ERC20, BasicToken {
 
 contract BLUECoin is StandardToken, Ownable {
 
-  string public constant name = "Ethereum Blue";
-  string public constant symbol = "BLUE";
+  string public constant name = "LiteCoinW";
+  string public constant symbol = "LTCW";
   uint8 public constant decimals = 8;
 
-  uint256 public constant SUPPLY_CAP = 42000000 * (10 ** uint256(decimals));
+  uint256 public constant SUPPLY_CAP = 100000 * (10 ** uint256(decimals));
 
   address NULL_ADDRESS = address(0);
 
