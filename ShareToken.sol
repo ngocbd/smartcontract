@@ -1,140 +1,140 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShareToken at 0x2cf1093158d4197e84d842122fc4fa34ccd46220
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShareToken at 0x4c7e8e14626249eea89b3d643ebe68795b49a6f1
 */
-contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
+pragma solidity ^0.4.19;
 
-contract ShareToken {
-    /* Public variables of the token */
-    string public standard = 'Token 0.1';
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-    uint256 public totalSupply;
+contract Token {
 
-    address public corporationContract;
-    mapping (address => bool) public identityApproved;
-    mapping (address => bool) public voteLock; // user must keep at least 1 share if they are involved in voting  True=locked
+    /// @return total amount of tokens
+    function totalSupply() constant returns (uint256 supply) {}
 
-    /* This creates an array with all balances */
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
-    /* This generates a public event on the blockchain that will notify clients */
-    //event Transfer(address indexed from, address indexed to, uint256 beforesender, uint256 beforereceiver, uint256 value, uint256 time);
+    /// @param _owner The address from which the balance will be retrieved
+    /// @return The balance
+    function balanceOf(address _owner) constant returns (uint256 balance) {}
 
-    uint256 public transferCount = 0;
+    /// @notice send `_value` token to `_to` from `msg.sender`
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transfer(address _to, uint256 _value) returns (bool success) {}
+
+    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+    /// @param _from The address of the sender
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
+
+    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @param _value The amount of wei to be approved for transfer
+    /// @return Whether the approval was successful or not
+    function approve(address _spender, uint256 _value) returns (bool success) {}
+
+    /// @param _owner The address of the account owning tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @return Amount of remaining tokens allowed to spent
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    
+}
 
 
-    struct pasttransfer {
-      address  from;
-      address  to;
-      uint256 beforesender;
-      uint256 beforereceiver;
-      uint256 value;
-      uint256 time;
-    }
 
-    pasttransfer[] transfers;
+contract StandardToken is Token {
 
-    modifier onlyCorp() {
-        require(msg.sender == corporationContract);
-        _;
-    }
-    // Sender: Corporation  --->
-    function ShareToken() {
-
-    }
-
-    function init(uint256 initialSupply, string tokenName, uint8 decimalUnits, string tokenSymbol, address _owner) {
-      corporationContract = msg.sender;
-      balanceOf[_owner] = initialSupply;                     // Give the creator all initial tokens
-      identityApproved[_owner] = true;
-      totalSupply = initialSupply;                        // Update total supply
-      allowance[_owner][corporationContract] = (totalSupply - 1);   // Allow corporation to sell shares to new members if approved
-      name = tokenName;                                   // Set the name for display purposes
-      symbol = tokenSymbol;                               // Set the symbol for display purposes
-      decimals = decimalUnits;                            // Amount of decimals for display purposes
-    }
-
-    function approveMember(address _newMember) public  returns (bool) {
-        identityApproved[_newMember] = true;
-        return true;
-    }
-
-    function Transfer(address from, address to, uint256 beforesender, uint256 beforereceiver, uint256 value, uint256 time) {
-      transferCount++;
-      pasttransfer memory t;
-      t.from = from;
-      t.to = to;
-      t.beforesender = beforesender;
-      t.beforereceiver = beforereceiver;
-      t.value = value;
-      t.time = time;
-      transfers.push(t);
-    }
-
-    // /* Send coins */
-    //  must have identityApproved + can't sell last token using transfer
-    function transfer(address _to, uint256 _value) public {
-        if (balanceOf[msg.sender] < (_value + 1)) revert();           // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) revert(); // Check for overflows
-        require(identityApproved[_to]);
-        uint256 receiver = balanceOf[_to];
-        uint256 sender = balanceOf[msg.sender];
-        balanceOf[msg.sender] -= _value;                     // Subtract from the sender
-        balanceOf[_to] += _value;                            // Add the same to the recipient
-        Transfer(msg.sender, _to, sender, receiver, _value, now);                   // Notify anyone listening that this transfer took place
-    }
-    /* Allow another contract to spend some tokens in your behalf */
-    function approve(address _spender, uint256 _value) public returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
-        return true;
-    }
-    /* Approve and then comunicate the approved contract in a single tx */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) public returns (bool success) {
-        tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
+    function transfer(address _to, uint256 _value) returns (bool success) {
+        //Default assumes totalSupply can't be over max (2^256 - 1).
+        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
+        //Replace the if with this one instead.
+        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        if (balances[msg.sender] >= _value && _value > 0) {
+            balances[msg.sender] -= _value;
+            balances[_to] += _value;
+            Transfer(msg.sender, _to, _value);
             return true;
+        } else { return false; }
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        //same as above. Replace this line with the following if you want to protect against wrapping uints.
+        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
+            balances[_to] += _value;
+            balances[_from] -= _value;
+            allowed[_from][msg.sender] -= _value;
+            Transfer(_from, _to, _value);
+            return true;
+        } else { return false; }
+    }
+
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
+    }
+
+    function approve(address _spender, uint256 _value) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+      return allowed[_owner][_spender];
+    }
+
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+    uint256 public totalSupply;
+}
+
+
+//name this contract whatever you'd like
+contract ShareToken is StandardToken {
+
+    function () {
+        //if ether is sent to this address, send it back.
+        throw;
+    }
+
+    /* Public variables of the token */
+
+    /*
+    NOTE:
+    The following variables are OPTIONAL vanities. One does not have to include them.
+    They allow one to customise the token contract & in no way influences the core functionality.
+    Some wallets/interfaces might not even bother to look at this information.
+    */
+    string public name;                   //fancy name: eg Simon Bucks
+    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
+    string public symbol;                 //An identifier: eg SBX
+    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
+
+//
+// CHANGE THESE VALUES FOR YOUR TOKEN
+//
+
+//make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also ShareToken instead of ERC20Token
+
+    function ShareToken(
+        ) {
+        balances[msg.sender] = 10000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply =          10000000000000;                        // Update total supply (100000 for example)
+        name = "Sharecoin";                                   // Set the name for display purposes
+        decimals = 3;                            // Amount of decimals for display purposes
+        symbol = "SHR";                               // Set the symbol for display purposes
+    }
+
+    /* Approves and then calls the receiving contract */
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+
+        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
+        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
+        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
+        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
+        return true;
         }
     }
-    /* A contract attempts to get the coins */
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        if (balanceOf[_from] < (_value + 1)) revert();                 // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) revert();  // Check for overflows
-        if (_value > allowance[_from][msg.sender]) revert();   // Check allowance
-        require(identityApproved[_to]);
-        uint256 receiver = balanceOf[_to];
-        uint256 sender = balanceOf[_from];
-        balanceOf[_from] -= _value;
-        balanceOf[_to] += _value;                            // Add the same to the recipient
-        allowance[_from][msg.sender] -= _value;
-        Transfer(_from, _to,sender, receiver, _value, now);
-        return true;
-    }
-    /* This unnamed function is called whenever someone tries to send ether to it */
-    function () {
-        revert();     // Prevents accidental sending of ether
-    }
-
-    function isApproved(address _user) constant returns (bool) {
-        return identityApproved[_user];
-    }
-
-    function getTransferCount() public view returns (uint256 count) {
-      return transferCount;
-    }
-
-    function getTransfer(uint256 i) public view returns (address from, address to, uint256 beforesender, uint256 beforereceiver, uint256 value, uint256 time) {
-      pasttransfer memory t = transfers[i];
-      return (t.from, t.to, t.beforesender, t.beforereceiver, t.value, t.time);
-    }
-
-    /**
-    * @dev Gets the balance of the specified address.
-    * @param _owner The address to query the the balance of.
-    * @return An uint256 representing the amount owned by the passed address.
-    */
-    function getBalance(address _owner) public view returns (uint256 balance) {
-      return balanceOf[_owner];
-    }
-}
