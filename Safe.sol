@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Safe at 0x4548014e7657d235d1bb200c82b11ac4ee448a4a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Safe at 0x98e6b07fe87148b4de4d69caf1d322e8e22e4f31
 */
 pragma solidity ^0.4.15;
 
@@ -8,8 +8,8 @@ contract Token {
 }
 
 contract Safe {
+    uint256 public lock = 1541422740;
     address public owner;
-    uint256 public lock;
 
     function Safe() {
         owner = msg.sender;
@@ -19,14 +19,6 @@ contract Safe {
         require(msg.sender == owner);
         require(to != address(0));
         owner = to;
-        return true;
-    }
-
-    function lock(uint256 timestamp) returns (bool) {
-        require(msg.sender == owner);
-        require(timestamp > lock);
-        require(timestamp > block.timestamp);
-        lock = timestamp;
         return true;
     }
 
