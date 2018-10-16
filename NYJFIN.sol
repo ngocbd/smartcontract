@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NYJFIN at 0xA07709C49F97f4b717e3b6770A02be85Ed71a86E
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NYJFIN at 0xD2924eb2FC2bF9E0109d86f8068AdaF5269797B3
 */
 pragma solidity ^0.4.4;
 
@@ -63,14 +63,14 @@ contract NYJFIN is StandardToken {
     string public name;
     uint8 public decimals;
     string public symbol;
-    string public version = 'M1.1';
+    string public version = 'M1.2';
 
     function NYJFIN () {
         balances[msg.sender] = 100000000000000000000000000;
         totalSupply = 100000000000000000000000000;
-        name = "Veroneum";
+        name = "JFincoin";
         decimals = 18;
-        symbol = "JFIN";
+        symbol = "JFin";
     }
 
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
