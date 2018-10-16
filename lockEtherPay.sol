@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract lockEtherPay at 0x856fe3812c92194b025bb2f39de688c523b97bf1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract lockEtherPay at 0x97c049ff441cea1ca80ed0ddad66074f8212e16b
 */
 pragma solidity ^0.4.18;
 
@@ -74,13 +74,13 @@ contract lockEtherPay is Ownable {
   bool public isReleased = false;
   uint256 public start_time;
   uint256 public end_time;
-  uint256 public fifty_two_weeks = 30672000;
+  uint256 public fifty_two_weeks = 30844800;
 
   event TokenReleased(address beneficiary, uint256 token_amount);
 
   constructor() public{
     token_reward = token(0xAa1ae5e57dc05981D83eC7FcA0b3c7ee2565B7D6);
-    beneficiary = 0x62e875332f07Fc58C370a83377b16A3942bC0a0D;
+    beneficiary = 0x4E3f71A03239A52Eaf0De4be934dbCFDa6Bf5593;
   }
 
   function tokenBalance() constant public returns (uint256){
