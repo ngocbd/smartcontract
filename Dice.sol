@@ -1,10 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dice at 0x67df3e4661ab79ec8570aa7af86d5bc4de687490
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dice at 0x5dfdc8168c8cf48cd174fad3f8881289929b1f94
 */
-pragma solidity ^0.4.11;
-
-//import "./oraclizeAPI_0.4.sol";
-//import "github.com/oraclize/ethereum-api/oraclizeAPI.sol";
 // <ORACLIZE_API>
 /*
 Copyright (c) 2015-2016 Oraclize SRL
@@ -35,7 +31,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-//pragma solidity ^0.4.0;//please import oraclizeAPI_pre0.4.sol when solidity < 0.4.0
+pragma solidity >=0.4.1;//please import oraclizeAPI_pre0.4.sol when solidity < 0.4.x
 
 contract OraclizeI {
     address public cbAddress;
@@ -53,9 +49,245 @@ contract OraclizeI {
     function setCustomGasPrice(uint _gasPrice);
     function randomDS_getSessionPubKeyHash() returns(bytes32);
 }
+
 contract OraclizeAddrResolverI {
     function getAddress() returns (address _addr);
 }
+
+/*
+Begin solidity-cborutils
+
+https://github.com/smartcontractkit/solidity-cborutils
+
+MIT License
+
+Copyright (c) 2018 SmartContract ChainLink, Ltd.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+ */
+
+library Buffer {
+    struct buffer {
+        bytes buf;
+        uint capacity;
+    }
+
+    function init(buffer memory buf, uint capacity) internal constant {
+        if(capacity % 32 != 0) capacity += 32 - (capacity % 32);
+        // Allocate space for the buffer data
+        buf.capacity = capacity;
+        assembly {
+            let ptr := mload(0x40)
+            mstore(buf, ptr)
+            mstore(0x40, add(ptr, capacity))
+        }
+    }
+
+    function resize(buffer memory buf, uint capacity) private constant {
+        bytes memory oldbuf = buf.buf;
+        init(buf, capacity);
+        append(buf, oldbuf);
+    }
+
+    function max(uint a, uint b) private constant returns(uint) {
+        if(a > b) {
+            return a;
+        }
+        return b;
+    }
+
+    /**
+     * @dev Appends a byte array to the end of the buffer. Reverts if doing so
+     *      would exceed the capacity of the buffer.
+     * @param buf The buffer to append to.
+     * @param data The data to append.
+     * @return The original buffer.
+     */
+    function append(buffer memory buf, bytes data) internal constant returns(buffer memory) {
+        if(data.length + buf.buf.length > buf.capacity) {
+            resize(buf, max(buf.capacity, data.length) * 2);
+        }
+
+        uint dest;
+        uint src;
+        uint len = data.length;
+        assembly {
+            // Memory address of the buffer data
+            let bufptr := mload(buf)
+            // Length of existing buffer data
+            let buflen := mload(bufptr)
+            // Start address = buffer address + buffer length + sizeof(buffer length)
+            dest := add(add(bufptr, buflen), 32)
+            // Update buffer length
+            mstore(bufptr, add(buflen, mload(data)))
+            src := add(data, 32)
+        }
+
+        // Copy word-length chunks while possible
+        for(; len >= 32; len -= 32) {
+            assembly {
+                mstore(dest, mload(src))
+            }
+            dest += 32;
+            src += 32;
+        }
+
+        // Copy remaining bytes
+        uint mask = 256 ** (32 - len) - 1;
+        assembly {
+            let srcpart := and(mload(src), not(mask))
+            let destpart := and(mload(dest), mask)
+            mstore(dest, or(destpart, srcpart))
+        }
+
+        return buf;
+    }
+
+    /**
+     * @dev Appends a byte to the end of the buffer. Reverts if doing so would
+     * exceed the capacity of the buffer.
+     * @param buf The buffer to append to.
+     * @param data The data to append.
+     * @return The original buffer.
+     */
+    function append(buffer memory buf, uint8 data) internal constant {
+        if(buf.buf.length + 1 > buf.capacity) {
+            resize(buf, buf.capacity * 2);
+        }
+
+        assembly {
+            // Memory address of the buffer data
+            let bufptr := mload(buf)
+            // Length of existing buffer data
+            let buflen := mload(bufptr)
+            // Address = buffer address + buffer length + sizeof(buffer length)
+            let dest := add(add(bufptr, buflen), 32)
+            mstore8(dest, data)
+            // Update buffer length
+            mstore(bufptr, add(buflen, 1))
+        }
+    }
+
+    /**
+     * @dev Appends a byte to the end of the buffer. Reverts if doing so would
+     * exceed the capacity of the buffer.
+     * @param buf The buffer to append to.
+     * @param data The data to append.
+     * @return The original buffer.
+     */
+    function appendInt(buffer memory buf, uint data, uint len) internal constant returns(buffer memory) {
+        if(len + buf.buf.length > buf.capacity) {
+            resize(buf, max(buf.capacity, len) * 2);
+        }
+
+        uint mask = 256 ** len - 1;
+        assembly {
+            // Memory address of the buffer data
+            let bufptr := mload(buf)
+            // Length of existing buffer data
+            let buflen := mload(bufptr)
+            // Address = buffer address + buffer length + sizeof(buffer length) + len
+            let dest := add(add(bufptr, buflen), len)
+            mstore(dest, or(and(mload(dest), not(mask)), data))
+            // Update buffer length
+            mstore(bufptr, add(buflen, len))
+        }
+        return buf;
+    }
+}
+
+library CBOR {
+    using Buffer for Buffer.buffer;
+
+    uint8 private constant MAJOR_TYPE_INT = 0;
+    uint8 private constant MAJOR_TYPE_NEGATIVE_INT = 1;
+    uint8 private constant MAJOR_TYPE_BYTES = 2;
+    uint8 private constant MAJOR_TYPE_STRING = 3;
+    uint8 private constant MAJOR_TYPE_ARRAY = 4;
+    uint8 private constant MAJOR_TYPE_MAP = 5;
+    uint8 private constant MAJOR_TYPE_CONTENT_FREE = 7;
+
+    function shl8(uint8 x, uint8 y) private constant returns (uint8) {
+        return x * (2 ** y);
+    }
+
+    function encodeType(Buffer.buffer memory buf, uint8 major, uint value) private constant {
+        if(value <= 23) {
+            buf.append(uint8(shl8(major, 5) | value));
+        } else if(value <= 0xFF) {
+            buf.append(uint8(shl8(major, 5) | 24));
+            buf.appendInt(value, 1);
+        } else if(value <= 0xFFFF) {
+            buf.append(uint8(shl8(major, 5) | 25));
+            buf.appendInt(value, 2);
+        } else if(value <= 0xFFFFFFFF) {
+            buf.append(uint8(shl8(major, 5) | 26));
+            buf.appendInt(value, 4);
+        } else if(value <= 0xFFFFFFFFFFFFFFFF) {
+            buf.append(uint8(shl8(major, 5) | 27));
+            buf.appendInt(value, 8);
+        }
+    }
+
+    function encodeIndefiniteLengthType(Buffer.buffer memory buf, uint8 major) private constant {
+        buf.append(uint8(shl8(major, 5) | 31));
+    }
+
+    function encodeUInt(Buffer.buffer memory buf, uint value) internal constant {
+        encodeType(buf, MAJOR_TYPE_INT, value);
+    }
+
+    function encodeInt(Buffer.buffer memory buf, int value) internal constant {
+        if(value >= 0) {
+            encodeType(buf, MAJOR_TYPE_INT, uint(value));
+        } else {
+            encodeType(buf, MAJOR_TYPE_NEGATIVE_INT, uint(-1 - value));
+        }
+    }
+
+    function encodeBytes(Buffer.buffer memory buf, bytes value) internal constant {
+        encodeType(buf, MAJOR_TYPE_BYTES, value.length);
+        buf.append(value);
+    }
+
+    function encodeString(Buffer.buffer memory buf, string value) internal constant {
+        encodeType(buf, MAJOR_TYPE_STRING, bytes(value).length);
+        buf.append(bytes(value));
+    }
+
+    function startArray(Buffer.buffer memory buf) internal constant {
+        encodeIndefiniteLengthType(buf, MAJOR_TYPE_ARRAY);
+    }
+
+    function startMap(Buffer.buffer memory buf) internal constant {
+        encodeIndefiniteLengthType(buf, MAJOR_TYPE_MAP);
+    }
+
+    function endSequence(Buffer.buffer memory buf) internal constant {
+        encodeIndefiniteLengthType(buf, MAJOR_TYPE_CONTENT_FREE);
+    }
+}
+
+/*
+End solidity-cborutils
+ */
+
 contract usingOraclize {
     uint constant day = 60*60*24;
     uint constant week = 60*60*24*7;
@@ -675,90 +907,28 @@ contract usingOraclize {
         return string(bstr);
     }
 
-    function stra2cbor(string[] arr) internal returns (bytes) {
-            uint arrlen = arr.length;
-
-            // get correct cbor output length
-            uint outputlen = 0;
-            bytes[] memory elemArray = new bytes[](arrlen);
-            for (uint i = 0; i < arrlen; i++) {
-                elemArray[i] = (bytes(arr[i]));
-                outputlen += elemArray[i].length + (elemArray[i].length - 1)/23 + 3; //+3 accounts for paired identifier types
-            }
-            uint ctr = 0;
-            uint cborlen = arrlen + 0x80;
-            outputlen += byte(cborlen).length;
-            bytes memory res = new bytes(outputlen);
-
-            while (byte(cborlen).length > ctr) {
-                res[ctr] = byte(cborlen)[ctr];
-                ctr++;
-            }
-            for (i = 0; i < arrlen; i++) {
-                res[ctr] = 0x5F;
-                ctr++;
-                for (uint x = 0; x < elemArray[i].length; x++) {
-                    // if there's a bug with larger strings, this may be the culprit
-                    if (x % 23 == 0) {
-                        uint elemcborlen = elemArray[i].length - x >= 24 ? 23 : elemArray[i].length - x;
-                        elemcborlen += 0x40;
-                        uint lctr = ctr;
-                        while (byte(elemcborlen).length > ctr - lctr) {
-                            res[ctr] = byte(elemcborlen)[ctr - lctr];
-                            ctr++;
-                        }
-                    }
-                    res[ctr] = elemArray[i][x];
-                    ctr++;
-                }
-                res[ctr] = 0xFF;
-                ctr++;
-            }
-            return res;
+    using CBOR for Buffer.buffer;
+    function stra2cbor(string[] arr) internal constant returns (bytes) {
+        Buffer.buffer memory buf;
+        Buffer.init(buf, 1024);
+        buf.startArray();
+        for (uint i = 0; i < arr.length; i++) {
+            buf.encodeString(arr[i]);
         }
+        buf.endSequence();
+        return buf.buf;
+    }
 
-    function ba2cbor(bytes[] arr) internal returns (bytes) {
-            uint arrlen = arr.length;
-
-            // get correct cbor output length
-            uint outputlen = 0;
-            bytes[] memory elemArray = new bytes[](arrlen);
-            for (uint i = 0; i < arrlen; i++) {
-                elemArray[i] = (bytes(arr[i]));
-                outputlen += elemArray[i].length + (elemArray[i].length - 1)/23 + 3; //+3 accounts for paired identifier types
-            }
-            uint ctr = 0;
-            uint cborlen = arrlen + 0x80;
-            outputlen += byte(cborlen).length;
-            bytes memory res = new bytes(outputlen);
-
-            while (byte(cborlen).length > ctr) {
-                res[ctr] = byte(cborlen)[ctr];
-                ctr++;
-            }
-            for (i = 0; i < arrlen; i++) {
-                res[ctr] = 0x5F;
-                ctr++;
-                for (uint x = 0; x < elemArray[i].length; x++) {
-                    // if there's a bug with larger strings, this may be the culprit
-                    if (x % 23 == 0) {
-                        uint elemcborlen = elemArray[i].length - x >= 24 ? 23 : elemArray[i].length - x;
-                        elemcborlen += 0x40;
-                        uint lctr = ctr;
-                        while (byte(elemcborlen).length > ctr - lctr) {
-                            res[ctr] = byte(elemcborlen)[ctr - lctr];
-                            ctr++;
-                        }
-                    }
-                    res[ctr] = elemArray[i][x];
-                    ctr++;
-                }
-                res[ctr] = 0xFF;
-                ctr++;
-            }
-            return res;
+    function ba2cbor(bytes[] arr) internal constant returns (bytes) {
+        Buffer.buffer memory buf;
+        Buffer.init(buf, 1024);
+        buf.startArray();
+        for (uint i = 0; i < arr.length; i++) {
+            buf.encodeBytes(arr[i]);
         }
-
+        buf.endSequence();
+        return buf.buf;
+    }
 
     string oraclize_network_name;
     function oraclize_setNetworkName(string _network_name) internal {
@@ -772,7 +942,7 @@ contract usingOraclize {
     function oraclize_newRandomDSQuery(uint _delay, uint _nbytes, uint _customGasLimit) internal returns (bytes32){
         if ((_nbytes == 0)||(_nbytes > 32)) throw;
 	// Convert from seconds to ledger timer ticks
-        _delay *= 10; 
+        _delay *= 10;
         bytes memory nbytes = new bytes(1);
         nbytes[0] = byte(_nbytes);
         bytes memory unonce = new bytes(32);
@@ -785,18 +955,18 @@ contract usingOraclize {
             mstore(add(sessionKeyHash, 0x20), sessionKeyHash_bytes32)
         }
         bytes memory delay = new bytes(32);
-        assembly { 
-            mstore(add(delay, 0x20), _delay) 
+        assembly {
+            mstore(add(delay, 0x20), _delay)
         }
-        
+
         bytes memory delay_bytes8 = new bytes(8);
         copyBytes(delay, 24, 8, delay_bytes8, 0);
 
         bytes[4] memory args = [unonce, nbytes, sessionKeyHash, delay];
         bytes32 queryId = oraclize_query("random", args, _customGasLimit);
-        
+
         bytes memory delay_bytes8_left = new bytes(8);
-        
+
         assembly {
             let x := mload(add(delay_bytes8, 0x20))
             mstore8(add(delay_bytes8_left, 0x27), div(x, 0x100000000000000000000000000000000000000000000000000000000000000))
@@ -809,11 +979,11 @@ contract usingOraclize {
             mstore8(add(delay_bytes8_left, 0x20), div(x, 0x1000000000000000000000000000000000000000000000000))
 
         }
-        
+
         oraclize_randomDS_setCommitment(queryId, sha3(delay_bytes8_left, args[1], sha256(args[0]), args[2]));
         return queryId;
     }
-    
+
     function oraclize_randomDS_setCommitment(bytes32 queryId, bytes32 commitment) internal {
         oraclize_randomDS_args[queryId] = commitment;
     }
@@ -906,9 +1076,9 @@ contract usingOraclize {
 
     function matchBytes32Prefix(bytes32 content, bytes prefix, uint n_random_bytes) internal returns (bool){
         bool match_ = true;
-	
+
 	if (prefix.length != n_random_bytes) throw;
-	        
+
         for (uint256 i=0; i< n_random_bytes; i++) {
             if (content[i] != prefix[i]) match_ = false;
         }
@@ -1057,498 +1227,273 @@ contract usingOraclize {
 }
 // </ORACLIZE_API>
 
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
 
-contract Dice is usingOraclize {
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-    //Definition of Constant======================================================================================================
-    uint constant INVALID_BETPRICE_ID = 999999;//Invalid bet amount ID
-    uint constant INVALID_BET_ID = 0;//Invalid bet ID
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  constructor() public {
+    owner = msg.sender;
+  }
 
-    //Bet Status
-    uint constant BET_STATE_WAITPAIR = 0;//Wait for a challenger
-    uint constant BET_STATE_WAITORACLIZE = 1;//Wait for the result
-    uint constant BET_STATE_END = 2;//End successfully
-    uint constant BET_STATE_CANCEL_BY_PLAYER = 3;//Canceled by the player
-    uint constant BET_STATE_CANCEL_BY_OWNER = 4;//Canceled by the contract owner
-    uint constant BET_STATE_CANCEL_BY_ORACLIZE_ERROR_RANDOM_NUMBER = 5;//Canceled due to random number not being verified
-    uint constant BET_STATE_CANCEL_BY_ORACLIZE_ERROR_FEE = 6;//Canceled due to service fee is more than the bet amount
-    uint constant BET_STATE_CANCEL_BY_RANDOM_NUMBER_A_EUQAL_B = 7;//Canceled due to ending in a draw
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
 
-    
-    //Variables of Contract Management===================================================================================================
-    address public owner;//Contract Owner
-    bool public isStopped;//Pause the Contract
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    emit OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+}
 
-    //Variables of Bet===================================================================================================
-    //Definition of Bet Storage Structure
-    struct Bet {
-        uint betPrice;//Bet Amount
-        uint betState;//Bet Status
-        address playerAddressA;//Address of Player A
-        address playerAddressB;//Address of Player B
-        uint numberRolled;//Returned random numbers from Oraclize
-        uint oraclizeFee;//Service fee of random number
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+contract Dice is usingOraclize, Ownable {
+  using SafeMath for uint256;
+
+  uint256 constant INVALID_ROLL = 0;
+
+  // Depends on slider
+  uint256 constant MIN_ROLL = 1;
+  uint256 constant MAX_ROLL = 100;
+  bytes32 constant DEFAULT_BYTES32 = 0x0000000000000000000000000000000000000000000000000000000000000000;
+
+  // This governs how much gas we'll have for the oraclize callback
+  uint256 constant ORACLIZE_GAS_COST = 500000;
+
+  // Tuneable by admin
+  uint256 public maxBet = 0.5 ether;
+
+  struct GameData {
+    address player;
+    uint256 odds; // represents the roll under which all winning rolls must lie
+    uint256 wager;
+    uint256 trueWager;
+    uint256 roll; // only populated when game is complete
+    uint256 maxProfit; // max profit calculated at roll time
+  }
+
+  mapping(bytes32 => GameData) _queryToGameData;
+
+  // For display purposes only
+  uint256 public completedGames = 0;
+
+  event RollCompleted(
+    address indexed player,
+    uint256 wager,
+    uint256 trueWager,
+    uint256 odds,
+    uint256 roll,
+    uint256 totalPayout
+  );
+
+  event RollSubmitted(
+    address indexed player,
+    uint256 odds,
+    uint256 trueWager
+  );
+
+  event PlayerPaidOut(
+    address indexed player,
+    uint256 payout
+  );
+
+  constructor() public {}
+
+  ////////////////
+  // ADMIN ACTIONS
+  ////////////////
+
+  function withdrawBalance() external onlyOwner {
+    uint256 balance = address(this).balance;
+
+    // No withdrawal necessary if <= 0 balance
+    require(balance > 0);
+
+    msg.sender.transfer(balance);
+  }
+
+  function addBalance() external payable {}
+
+  function setMaxBet(uint256 newMax) external onlyOwner {
+    maxBet = newMax;
+  }
+
+  ///////////////
+  // USER ACTIONS
+  ///////////////
+
+  // NOTE: Currently 5% of contract balance. Can be tuned
+  function getMaxProfit() public view returns(uint256) {
+    return address(this).balance / 20;
+  }
+
+  function rollDice(uint256 odds) external payable {
+    // Cannot send a bet along > maxBet
+    require(msg.value <= maxBet);
+
+    uint256 queryPrice = oraclize_getPrice("URL");
+
+    // player's wager
+    require(msg.value > queryPrice);
+    uint256 wagerAfterQuery = msg.value.sub(queryPrice);
+    uint256 fee = _computeRollFee(wagerAfterQuery);
+    uint256 trueWager = wagerAfterQuery.sub(fee);
+
+    // NOTE: Can probably simplify this to something static
+    string memory queryStr = _getQueryStr(MIN_ROLL, MAX_ROLL);
+
+    // TODO: When we need to encrypt random.org encryption key, this will need to become a 'nested' query
+    bytes32 qId = oraclize_query("URL", queryStr, ORACLIZE_GAS_COST);
+
+    emit RollSubmitted(msg.sender, odds, trueWager);
+
+    _queryToGameData[qId] = GameData(
+      msg.sender,
+      odds,
+      msg.value,
+      trueWager,
+      INVALID_ROLL,
+      getMaxProfit()
+    );
+  }
+
+  // NOTE: 1%, can be modified!
+  function _computeRollFee(uint256 wagerAfterQuery) private pure returns (uint256) {
+    return SafeMath.div(wagerAfterQuery, 100);
+  }
+
+  // NOTE: Doesn't use API key so that we don't have to do all the fancy encryption stuff.
+  function _getQueryStr(uint256 min, uint256 max) internal returns(string) {
+    return strConcat("https://www.random.org/integers/?num=1&min=", uint2str(min), "&max=", uint2str(max), "&col=1&base=10&format=plain&rnd=new");
+  }
+
+  function __callback(bytes32 qId, string result, bytes proof) public {
+    // Must be called by oraclize
+    require(msg.sender == oraclize_cbAddress());
+
+    GameData memory game = _queryToGameData[qId];
+
+    // Game must not already have a roll associated with it
+    require(game.roll == INVALID_ROLL);
+
+    // Payout player
+    uint256 roll = _resultToRoll(result);
+    uint256 payout = _calculatePayout(qId, roll);
+    address player = game.player;
+    if (payout > 0) {
+      player.transfer(payout);
+      emit PlayerPaidOut(player, payout);
     }
 
-    uint public betFee = 200; //Bet Transaction Fee (10000 = 100%)
-    uint[] public betPrices = [  200 finney , 500 finney, 1000 finney];//Bet Amount Option
-    uint[] public waitPairBetIDs = [ INVALID_BET_ID , INVALID_BET_ID ,INVALID_BET_ID];//Current Bet ID that waiting for matching of each option
-    uint public oraclizeCallbackGasLimit = 200000;//GasLimit of Oraclize
-    Bet[] public bets ;//Save all bet data in chronological order
-    mapping (bytes32 => uint) public oraclizeQueryID2BetID;// Mapping of random number query ID to Bet ID
-    mapping (address => uint) public address2SendErrorValue;// Mapping of address to SendErrorValue
+    // TODO: Delete game in the future to save space
+    game.roll = roll;
 
-    //Event Notification======================================================================================================
-    event LOG_ORACLIZE_CALLBACK(uint indexed betid , bytes32 _queryId, string _result, bytes _proof);
-    event LOG_SEND_ERROR(uint indexed betid , address indexed player, uint value);
-    event LOG_SET_SEND_ERROR_VALUE(address indexed player, uint value);
+    // game completed!
+    completedGames = completedGames.add(1);
+    emit RollCompleted(player, game.wager, game.trueWager, game.odds, roll, payout);
+  }
 
-    //Constructor =====================================================================================================
-    function Dice() {
-        oraclize_setProof(proofType_Ledger); // sets the Ledger authenticity proof in the constructor
-        owner = msg.sender;
-        bets.push(Bet(0,0,address(0x0),address(0x0),0,0));//Bet 0 is invalid
+  function _calculatePayout(bytes32 qId, uint256 roll) internal view returns(uint256) {
+    GameData memory game = _queryToGameData[qId];
+
+    uint256 odds = game.odds;
+    if (roll >= odds) {
+      return 0;
+    } else {
+      uint256 wager = game.trueWager;
+      uint256 maxProfit = game.maxProfit;
+
+      // payout = wager + winningsMultiple * wager
+      // winnings = (100 - x) / x
+      uint256 probabilityOdds = odds.sub(1);
+      uint256 invOdds = MAX_ROLL.sub(probabilityOdds);
+      uint256 winnings = wager.mul(invOdds).div(probabilityOdds);
+      uint256 defaultWinnings = wager.add(winnings);
+
+      uint256 availableBalance = _getAvailableBalance() ;
+      if (defaultWinnings > availableBalance) {
+        return availableBalance;
+      }
+
+      else if (winnings > maxProfit) {
+        return wager.add(maxProfit);
+      }
+
+      else {
+        return defaultWinnings;
+      }
     }
-
-    //Function Modification=====================================================================================================
-    modifier onlyIfNotStopped {
-        if (isStopped) throw;
-        _;
-    }
-
-    modifier onlyOwner {
-        if (owner != msg.sender) throw;
-        _;
-    }
-
-    modifier onlyBetCanCancel(uint betid) {
-        if((bets[betid].betState != BET_STATE_WAITPAIR)&&
-        (bets[betid].betState != BET_STATE_WAITORACLIZE)
-        ) throw;//Cannot cancel
-        _;
-    }
-
-    //Contract Management=====================================================================================================
-
-    function stopContract() public
-        onlyOwner {
-        isStopped = true;
-    }
-
-    function resumeContract() public
-        onlyOwner {
-        isStopped = false;
-    }
-
-    function changeOwnerAddress(address newOwner) public
-        onlyOwner {
-        if (newOwner == address(0x0)) throw;
-        owner = newOwner;
-    }
-
-    //Bet Management=====================================================================================================    
-    function setBetFee(uint newfee) public
-        onlyOwner
-    {
-        betFee = newfee;
-    }
-
-    function setOraclizeCallbackGasLimit(uint newgaslimit) public
-        onlyOwner
-    {
-        oraclizeCallbackGasLimit = newgaslimit;
-    }
-
-
-    function setOraclizeCallbackGasPrice(uint newgasprice) public
-		onlyOwner
-	{
-        oraclize_setCustomGasPrice(newgasprice);
-    }     
-    
-
-    //Contract Owner withdraws the profit from the contract and sent to the specific account
-    function getProfitToAddress(uint profit , address receiver) public
-        onlyOwner
-    {
-        //Cannot withdraw the pending bets
-        if(this.balance - profit < getBetWaitEndEther()) throw;
-
-        receiver.transfer(profit);
-    }
-
-    //Withdraw all profit to the owner
-    function getProfit() public
-        onlyOwner
-    {
-        owner.transfer(this.balance - getBetWaitEndEther());
-    }
-
-    //Cancel all pending bets to modify the bet options
-    function clearWaitPairBets() public
-        onlyOwner
-    {
-        for( uint i = 0 ;i<waitPairBetIDs.length;i++){
-            //Cancel all pending bets of this amount option
-            while(waitPairBetIDs[i] != INVALID_BET_ID){
-                cancelBetByOwner(waitPairBetIDs[i]);
-            }
-        }
-    }
-
-
-    function setBetPrices(uint[] newprices) public
-        onlyOwner
-    {
-        //Set new amount option only while no bet pending
-        uint i=0;
-        for( ;i<waitPairBetIDs.length;i++){
-            if(waitPairBetIDs[i] != INVALID_BET_ID)
-                throw;
-        }
-
-        //Set new bet amount option
-        betPrices = newprices;
-        //Reset pending bet ID after setting up new bet amount option
-        waitPairBetIDs = new uint[](betPrices.length);
-        for(i = 0 ;i<waitPairBetIDs.length;i++){
-            waitPairBetIDs[i] = INVALID_BET_ID;
-        }
-    }
-
-
-    function setSendErrorValue(address player , uint value) public
-        onlyOwner
-    {
-        address2SendErrorValue[player] = value;
-        LOG_SET_SEND_ERROR_VALUE(player,value);
-    }
-
-
-
-    //Place the Bet=====================================================================================================
-    
-    function() public
-        payable 
-    {
-
-        bet();
-    }
-
-    function bet() public
-        payable
-        onlyIfNotStopped 
-    {
-        //Verify the Bet
-        uint betpriceid = getBetPriceID(msg.value);
-        if(betpriceid != INVALID_BETPRICE_ID){
-            //Verified; place the bet
-            doBet(betpriceid);
-        }else{
-            //Refund If invalid bet and not from the contract owner; if it is from the contract owner, do not refund (for funding purpose)
-            if (owner != msg.sender) throw;
-        }
-    }
-
-    function doBet(uint betpriceid)
-        private
-    {
-
-
-        //Start matching if there is pending bet that not from you
-        uint waitpairbetid = waitPairBetIDs[betpriceid];
-        if ((waitpairbetid != INVALID_BET_ID )&&(bets[waitpairbetid].playerAddressA != msg.sender)){
-
-            bets[waitpairbetid].betState = BET_STATE_WAITORACLIZE;
-            bets[waitpairbetid].playerAddressB = msg.sender;
-
-            uint oraclizeFee = getOraclizePrice();
-            if (oraclizeFee > msg.value ) {
-                //Invalid if the service fee of random number is more than the bet amount; cancel the bet without deducting the commission
-                cancelBet(waitpairbetid,false,BET_STATE_CANCEL_BY_ORACLIZE_ERROR_FEE);
-            }else{
-                //Random Number Query
-                bytes32 oraclizeQueryID = oraclize_newRandomDSQuery(0, 2, oraclizeCallbackGasLimit); // this function internally generates the correct oraclize_query and returns its queryId
-                oraclizeQueryID2BetID[ oraclizeQueryID ] = waitpairbetid;//Save the mapping of Query ID to Bet ID
-                bets[waitpairbetid].oraclizeFee = oraclizeFee;
-
-                //Update waitPairBetIDs
-                findNextwaitPairBetIDs(betpriceid , waitpairbetid);
-            }
-        }else {
-            //Generate New Bet
-            bets.push( Bet(
-                msg.value,//Bet Amount
-                BET_STATE_WAITPAIR,//Bet Status
-                msg.sender,//Address of Player A
-                address(0x0),//Address of Player B
-                0,//Random Number
-                0//Service Fee of Random Number Query
-            ));
-
-            //Update waitPairBetIDs    
-            if (waitpairbetid == INVALID_BET_ID )
-                waitPairBetIDs[betpriceid] = bets.length - 1;
-                        
-        }
-
-    }
-
-
-
-    function getBetPriceID(uint sendvalue)
-        private
-        returns (uint)
-    {
-        for(uint i = 0;i < betPrices.length;i++){
-            if(betPrices[i]==sendvalue)
-                return i;
-        }
-        return INVALID_BETPRICE_ID;
-    }
-
-    function findNextwaitPairBetIDs(uint betpriceid,uint betid)
-        private
-    {
-
-        for(uint i = betid+1 ; i< bets.length ; i++){
-            if( ( bets[i].betPrice == betPrices[betpriceid])&&(bets[i].betState == BET_STATE_WAITPAIR)){
-                waitPairBetIDs[betpriceid] = i;
-                return;
-            }
-        }
-
-        //No new pending bet
-        waitPairBetIDs[betpriceid] = INVALID_BET_ID;
-    }
-
-
-    //Callback of Oraclize Random Number=========================================================================================
-    function __callback(bytes32 _queryId, string _result, bytes _proof) public
-    { 
-        //Only Oraclize can use callback
-        if (msg.sender != oraclize_cbAddress()) throw;
-
-        uint betid = oraclizeQueryID2BetID[_queryId];
-
-        //Verify the Bet
-        if(bets[betid].playerAddressA == address(0x0)) throw;
-        if(bets[betid].playerAddressB == address(0x0)) throw;
-        if(bets[betid].betState != BET_STATE_WAITORACLIZE) throw;
-
-        //Record the log of Oraclize callback data
-        LOG_ORACLIZE_CALLBACK(betid,_queryId,_result,_proof);
-
-        if ( oraclize_randomDS_proofVerify__returnCode(_queryId, _result, _proof) != 0) {
-            //Invalid random number; cancel the bet and deduct the service fee
-            cancelBet(betid,false,BET_STATE_CANCEL_BY_ORACLIZE_ERROR_RANDOM_NUMBER);
-        } else {
-            // the proof verification has passed
-            uint maxRange = 2**(8 * 2); // this is the highest uint we want to get. It should never be greater than 2^(8*N), where N is the number of random bytes we had asked the datasource to return
-            uint randomNumber = uint(sha3(_result)) % maxRange; // this is an efficient way to get the uint out in the [0, maxRange] range
-            
-            //The left 8 digits is A’s result and the right 8 digits is B’s result
-            //The bigger number wins; equal means a draw
-            uint randomA = randomNumber >> 8;
-            uint randomB = randomNumber & 0x00FF;
-            
-            //Save Bet Result
-            bets[betid].numberRolled = randomNumber;
-
-            //Send Prize
-            //Prize = Bet Amount - Transaction Fee - Service Fee
-            uint winAmount = 2 * bets[betid].betPrice  -  2 * ( bets[betid].betPrice * betFee / 10000 ) - bets[betid].oraclizeFee;
-            bool senderror = false;
-            if(randomA == randomB){
-                //A game ended in a draw will deduct the commission
-                cancelBet(betid,true,BET_STATE_CANCEL_BY_RANDOM_NUMBER_A_EUQAL_B);                
-            }else{
-                address win;
-                address lose;
-                if(randomA > randomB){
-                    win = bets[betid].playerAddressA;
-                    lose = bets[betid].playerAddressB;
-                }else{
-                    win = bets[betid].playerAddressB;
-                    lose = bets[betid].playerAddressA;
-                }
-
-                //Send coin to the winner
-                if(!win.send(winAmount)){
-                    //Failed to send coin
-                    address2SendErrorValue[win] += winAmount;
-                    LOG_SEND_ERROR(betid,win,winAmount);
-                }
-
-                //Send coin to the loser
-                if(!lose.send(1)){
-                    //Failed to send coin
-                    address2SendErrorValue[lose] += 1;
-                    LOG_SEND_ERROR(betid,lose,1);                    
-                }
-                
-                //Successfully ended
-                bets[betid].betState = BET_STATE_END;
-            }
-        }
-    }
-
-    
-
-    //Cancel the Bet=====================================================================================================
-    //Player cancels the bet
-    function cancelBetByPlayer(uint betid) public
-            onlyBetCanCancel(betid)  
-    {                
-        if (bets[betid].playerAddressA == msg.sender) 
-            cancelBetByA(betid);
-        else if (bets[betid].playerAddressB == msg.sender)
-            cancelBetByB(betid);
-        else
-            throw;
-    }
-
-    function cancelBetByA(uint betid)
-        private
-    {
-        if(bets[betid].playerAddressB != address(0x0)){
-            //If there is a Player B, the Player B turns into a Player A and waits for the matching
-            bets[betid].playerAddressA = bets[betid].playerAddressB;
-            bets[betid].playerAddressB = address(0x0);
-            bets[betid].betState = BET_STATE_WAITPAIR;
-            //Update waitPairBetIDs    
-            uint betpriceid = getBetPriceID(bets[betid].betPrice);
-            waitPairBetIDs[betpriceid] = betid;
-        }else{
-            //if there is no Player B, cancel the bet and update waitPairBetIDs
-            bets[betid].betState = BET_STATE_CANCEL_BY_PLAYER;
-            refreshWaitPairBetIDsByCancelBet(betid);
-        }
-
-        //Refund to Player A
-        sendCancelValue(bets[betid].playerAddressA ,betid,false);
-
-
-    }
-
-    function cancelBetByB(uint betid)
-        private
-    {
-        //If Player B cancels the bet, Player A restarts the waiting of the matching
-        bets[betid].playerAddressB = address(0x0);
-        bets[betid].betState = BET_STATE_WAITPAIR;
-        //Update waitPairBetIDs
-        uint betpriceid = getBetPriceID(bets[betid].betPrice);
-        waitPairBetIDs[betpriceid] = betid;
-
-        //Refund to Player B
-        sendCancelValue(bets[betid].playerAddressB ,betid,false);
-    }
-
-    function cancelBetByOwner(uint betid) public
-        onlyOwner
-    {
-        //Cancel the bet and update pending Bet IDs
-        cancelBet(betid,false,BET_STATE_CANCEL_BY_OWNER);
-    }
-
-    function cancelBet(uint betid,bool fee,uint betstate)
-        private
-        onlyBetCanCancel(betid)        
-    {
-
-        //Cancel Player A
-        sendCancelValue(bets[betid].playerAddressA ,betid,fee);
-
-        //Cancel Player B if there is one
-        if(bets[betid].playerAddressB != address(0x0)){
-            sendCancelValue(bets[betid].playerAddressB ,betid,fee);
-        }
-
-        bets[betid].betState = betstate;
-
-        //Update waitPairBetIDs
-        refreshWaitPairBetIDsByCancelBet(betid);
-    }
-
-    function refreshWaitPairBetIDsByCancelBet(uint betid)
-        private
-    {
-        for( uint i = 0 ;i<waitPairBetIDs.length;i++){
-            if(waitPairBetIDs[i] == betid){                
-                findNextwaitPairBetIDs(i , betid);
-                break;
-            }
-        }
-    }
-
-    function sendCancelValue(address receiver,uint betid,bool fee)
-        private
-    {
-        //Refund = Bet Amount – Transaction Fee – Service Fee
-        uint cancelAmount = bets[betid].betPrice  -  bets[betid].betPrice * (fee ? betFee : 0) / 10000 - bets[betid].oraclizeFee / 2;
-        if(!receiver.send(cancelAmount)){
-            address2SendErrorValue[receiver] += cancelAmount;
-            LOG_SEND_ERROR(betid,receiver,cancelAmount);            
-        }
-
-    }
-
-    //Auxiliary Function of Contract Query=======================================================================================================
-    //Get Bet Info
-    function getBets(uint start , uint length) public
-        constant
-        returns(uint[])
-    {   
-        //Verify the Parameter
-        if(start >= bets.length) throw;      
-        if(length == 0) throw;  
-
-        if(start+length > bets.length)
-            length = bets.length - start;
-
-        uint[] memory result = new uint[](length*6);
-        for (uint i = 0; i < length; i++){
-            result[i*6] = bets[start+i].betPrice;
-	    result[i*6+1] = bets[start+i].betState;
-	    result[i*6+2] = uint(bets[start+i].playerAddressA);
-	    result[i*6+3] = uint(bets[start+i].playerAddressB);
-	    result[i*6+4] = bets[start+i].numberRolled;
-	    result[i*6+5] = bets[start+i].oraclizeFee;
-	}
-        return result;
-    }
-
-    function getBetsLength() public
-        constant
-        returns(uint)
-    {
-        return bets.length;
-    }
-
-    //Get the amount of pending bets
-    function getBetWaitEndEther() public
-        constant
-        returns(uint result)
-    {
-        for(uint i=1; i < bets.length ; i++){
-            if(  bets[i].betState == BET_STATE_WAITPAIR  ){
-                result += bets[i].betPrice;
-            }else if ( bets[i].betState == BET_STATE_WAITORACLIZE ){
-                result += bets[i].betPrice * 2;                
-            }
-        }
-
-        return result;
-
-    }    
-
-    //Get Service Fee of Random Number
-    function getOraclizePrice() public
-        constant
-        returns (uint)
-    {
-        return oraclize_getPrice("random", oraclizeCallbackGasLimit);
-    }
-
+  }
+
+  // NOTE: Set to less than total balance so contract balance can't ever be drained
+  function _getAvailableBalance() internal returns(uint256) {
+    return address(this).balance;
+  }
+
+  function _resultToRoll(string result) internal returns(uint256) {
+    return parseInt(result);
+  }
 }
