@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiToken at 0x586516364543255e2c1d808034d0cb91e114a77c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiToken at 0xc627b23b5fa02aef1aa35b868309acac7f463580
 */
 pragma solidity ^0.4.23;
 
@@ -341,7 +341,7 @@ contract BasicMultiToken is StandardToken, DetailedERC20 {
     function _mint(address _to, uint256 _amount, uint256[] _tokenAmounts) internal {
         require(tokens.length == _tokenAmounts.length, "Lenghts of tokens and _tokenAmounts array should be equal");
         for (uint i = 0; i < tokens.length; i++) {
-            require(tokens[i].transferFrom(msg.sender, this, _tokenAmounts[i]));
+            tokens[i].transferFrom(msg.sender, this, _tokenAmounts[i]);
         }
 
         totalSupply_ = totalSupply_.add(_amount);
@@ -359,7 +359,7 @@ contract BasicMultiToken is StandardToken, DetailedERC20 {
 
         for (uint i = 0; i < someTokens.length; i++) {
             uint256 tokenAmount = _value.mul(someTokens[i].balanceOf(this)).div(totalSupply_);
-            require(someTokens[i].transfer(msg.sender, tokenAmount));
+            someTokens[i].transfer(msg.sender, tokenAmount);
         }
         
         balances[msg.sender] = balances[msg.sender].sub(_value);
@@ -417,9 +417,22 @@ contract MultiToken is BasicMultiToken, ERC228 {
     function change(address _fromToken, address _toToken, uint256 _amount, uint256 _minReturn) public returns(uint256 returnAmount) {
         returnAmount = getReturn(_fromToken, _toToken, _amount);
         require(returnAmount >= _minReturn, "The return amount is less than _minReturn value");
-        require(ERC20(_fromToken).transferFrom(msg.sender, this, _amount));
-        require(ERC20(_toToken).transfer(msg.sender, returnAmount));
+        ERC20(_fromToken).transferFrom(msg.sender, this, _amount);
+        ERC20(_toToken).transfer(msg.sender, returnAmount);
         emit Change(_fromToken, _toToken, msg.sender, _amount, returnAmount);
+    }
+
+}
+
+contract ManageableMultiToken is Ownable, MultiToken {
+
+    constructor(ERC20[] _tokens, uint256[] _weights, string _name, string _symbol, uint8 _decimals) public 
+        MultiToken(_tokens, _weights, _name, _symbol, _decimals)
+    {
+    }
+
+    function setWeights(uint256[] _weights) public onlyOwner {
+        _setWeights(_weights);
     }
 
 }
