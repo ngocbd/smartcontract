@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MOT at 0x612fc8ede4000c51d31f1dcdac85b1407724275d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MOT at 0x5183fe7cd4fde19bed92dbebf8a7fad8d276015b
 */
 pragma solidity ^0.4.15;
 
@@ -12,9 +12,6 @@ contract Token {
     function allowance(address _owner, address _spender) constant returns (uint256 remaining);
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    function () public payable {
-        revert();
-    }
 }
 
 
@@ -61,17 +58,9 @@ contract StandardToken is Token {
 
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
-    function () public payable {
-        revert();
-    }
 }
-contract SafeMath {
 
-    /* function assert(bool assertion) internal { */
-    /*   if (!assertion) { */
-    /*     throw; */
-    /*   } */
-    /* }      // assert no longer needed once solidity is on 0.4.10 */
+contract SafeMath {
 
     function safeAdd(uint256 x, uint256 y) internal returns(uint256) {
         uint256 z = x + y;
@@ -91,11 +80,8 @@ contract SafeMath {
         return z;
     }
 
-    function () public payable {
-        revert();
-    }
-
 }
+
 contract Owner {
 
 	/// @dev `owner` is the only address that can call a function with this
@@ -128,10 +114,6 @@ contract Owner {
 		}
 	}
 
-	function () public payable {
-		revert();
-	}
-
 }
 
 contract MOT is Owner, StandardToken, SafeMath {
@@ -141,14 +123,11 @@ contract MOT is Owner, StandardToken, SafeMath {
 	string public version = "1.0";
 
 
-	uint256 public constant total = 1 * (10**8) * 10**decimals;   // 1*10^8 OPT total
+	uint256 public constant total = 1 * (10**8) * 10**decimals;   // 1*10^8 MOT total
 
 	function MOT() {
 
 		totalSupply = total;
 		balances[msg.sender] = total;             // Give the creator all initial tokens
-	}
-	function () public payable {
-		revert();
 	}
 }
