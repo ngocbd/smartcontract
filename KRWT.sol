@@ -1,15 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KRWT at 0x1e61529215ebeeb967f6d799058382cdddb148b1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KRWT at 0xd77f340e1d631c64d5ff1efb32617e891d4d187e
 */
 pragma solidity ^0.4.21;
 
 // ----------------------------------------------------------------------------
 // TOKENMOM Korean Won(KRWT) Smart contract Token V.10
-//
+// ??? ??? Korean Won ??? ???? ??
 // Deployed to : 0x8af2d2e23f0913af81abc6ccaa6200c945a161b4
 // Symbol      : BETA
 // Name        : TOKENMOM Korean Won
-// Total supply: 100000000000
+// Total supply: 10000000000
 // Decimals    : 8
 // ----------------------------------------------------------------------------
 
@@ -20,15 +20,8 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
 library SafeMath {
 
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     if (a == 0) {
       return 0;
@@ -38,9 +31,6 @@ library SafeMath {
     return c;
   }
 
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     // uint256 c = a / b;
@@ -142,38 +132,19 @@ contract StandardToken is ERC20, BasicToken {
   }
 }
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
 contract Ownable {
   address public owner;
-
-
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
   function Ownable() public {
     owner = msg.sender;
   }
 
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
   modifier onlyOwner() {
     require(msg.sender == owner);
     _;
   }
 
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
   function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
     emit OwnershipTransferred(owner, newOwner);
@@ -194,12 +165,6 @@ contract MintableToken is StandardToken, Ownable {
     _;
   }
 
-  /**
-   * @dev Function to mint tokens
-   * @param _to The address that will receive the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
-   */
   function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
     totalSupply_ = totalSupply_.add(_amount);
     balances[_to] = balances[_to].add(_amount);
@@ -208,10 +173,6 @@ contract MintableToken is StandardToken, Ownable {
     return true;
   }
 
-  /**
-   * @dev Function to stop minting new tokens.
-   * @return True if the operation was successful.
-   */
   function finishMinting() onlyOwner canMint public returns (bool) {
     mintingFinished = true;
     emit MintFinished();
@@ -219,23 +180,12 @@ contract MintableToken is StandardToken, Ownable {
   }
 }
 
-/**
- * @title Burnable Token
- * @dev Token that can be irreversibly burned (destroyed).
- */
 contract BurnableToken is BasicToken {
 
   event Burn(address indexed burner, uint256 value);
 
-  /**
-   * @dev Burns a specific amount of tokens.
-   * @param _value The amount of token to be burned.
-   */
   function burn(uint256 _value) public {
     require(_value <= balances[msg.sender]);
-    // no need to require value <= totalSupply, since that would imply the
-    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
-
     address burner = msg.sender;
     balances[burner] = balances[burner].sub(_value);
     totalSupply_ = totalSupply_.sub(_value);
@@ -244,10 +194,6 @@ contract BurnableToken is BasicToken {
   }
 }
 
-/**
- * @title Capped token
- * @dev Mintable token with a token cap.
- */
 contract CappedToken is MintableToken {
 
   uint256 public cap;
@@ -257,12 +203,6 @@ contract CappedToken is MintableToken {
     cap = _cap;
   }
 
-  /**
-   * @dev Function to mint tokens
-   * @param _to The address that will receive the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
-   */
   function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
     require(totalSupply_.add(_amount) <= cap);
 
@@ -271,44 +211,27 @@ contract CappedToken is MintableToken {
 
 }
 
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
 contract Pausable is Ownable {
   event Pause();
   event Unpause();
 
   bool public paused = false;
 
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
   modifier whenNotPaused() {
     require(!paused);
     _;
   }
 
-  /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
   modifier whenPaused() {
     require(paused);
     _;
   }
 
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
   function pause() onlyOwner whenNotPaused public {
     paused = true;
     emit Pause();
   }
 
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
   function unpause() onlyOwner whenPaused public {
     paused = false;
     emit Unpause();
@@ -413,26 +336,18 @@ contract ERC827Token is ERC827, StandardToken {
 
 }
 
-contract KRWT is  StandardToken, MintableToken, BurnableToken, PausableToken, ERC827Token {
+contract KRWT is StandardToken, MintableToken, BurnableToken, PausableToken {
     string constant public name = "Korean Won";
     string constant public symbol = "KRWT";
     uint8 constant public decimals = 8;
-    uint public totalSupply = 100000000000 * 10**uint(decimals);
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
-
-    /* This generates a public event on the blockchain that will notify clients */
+    uint256 public totalSupply = 10000000000  * (10 ** uint256(decimals));
     event Transfer(address indexed from, address indexed to, uint256 value);
-
-    /* This notifies clients about the amount burnt */
     event Burn(address indexed from, uint256 value);
-    
-    uint256 public constant INITIAL_SUPPLY = 100000000000 * (10 ** uint256(decimals));
+    event Pause(address indexed from, uint256 value);
+    event Mint(address indexed to, uint256 amount);
 
-    function KWRT () public {
-        totalSupply_ = INITIAL_SUPPLY;
-        balances[msg.sender] = INITIAL_SUPPLY;
-        emit Transfer(0x0, msg.sender, INITIAL_SUPPLY);
+    function KRWT () public {
+        balances[msg.sender] = totalSupply;
+        Transfer(address(0), msg.sender, totalSupply);
     }
-
 }
