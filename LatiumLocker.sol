@@ -1,12 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LatiumLocker at 0xE54c1B8F295cbB00a9845FEB1ff76365EaEa7610
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LatiumLocker at 0x85e0ffc8f68b638e73a4c113f69e8dc9deb0d77d
 */
-contract Latium {
-    string public constant name = "Latium";
-    string public constant symbol = "LAT";
-    uint8 public constant decimals = 16;
+pragma solidity ^0.4.17;
+
+contract LatiumX {
+    string public constant name = "LatiumX";
+    string public constant symbol = "LATX";
+    uint8 public constant decimals = 8;
     uint256 public constant totalSupply =
-        30000000 * 10 ** uint256(decimals);
+        300000000 * 10 ** uint256(decimals);
 
     // owner of this contract
     address public owner;
@@ -18,7 +20,7 @@ contract Latium {
     event Transfer(address indexed _from, address indexed _to, uint _value);
 
     // constructor
-    function Latium() {
+    function LatiumX() {
         owner = msg.sender;
         balanceOf[owner] = totalSupply;
     }
@@ -43,11 +45,11 @@ contract Latium {
 }
 
 contract LatiumLocker {
-    address private constant _latiumAddress = 0xBb31037f997553BEc50510a635d231A35F8EC640;
-    Latium private constant _latium = Latium(_latiumAddress);
+    address private constant _latiumAddress = 0x2f85E502a988AF76f7ee6D83b7db8d6c0A823bf9;
+    LatiumX private constant _latium = LatiumX(_latiumAddress);
 
     // total amount of Latium tokens that can be locked with this contract
-    uint256 private _lockLimit = 10000000;
+    uint256 private _lockLimit = 0;
 
     // variables for release tiers and iteration thru them
     uint32[] private _timestamps = [
@@ -55,12 +57,14 @@ contract LatiumLocker {
         , 1525089600 // 2018-04-30 12:00:00 UTC
         , 1533038400 // 2018-07-31 12:00:00 UTC
         , 1540987200 // 2018-10-31 12:00:00 UTC
+        
     ];
     uint32[] private _tokensToRelease = [ // without decimals
-        2500000
-        , 2500000
-        , 2500000
-        , 2500000
+        15000000
+        , 15000000
+        , 15000000
+        , 15000000
+       
     ];
     mapping (uint32 => uint256) private _releaseTiers;
 
