@@ -1,14 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KpopItem at 0x2FF9c09beCD301bCf7d5FA057e01c39A370985CB
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KpopItem at 0xbb0002850a8b3f7cffefbe56804cf864332039d6
 */
+// KpopItem is a ERC-721 item (https://github.com/ethereum/eips/issues/721)
+// Each KpopItem has its connected KpopToken itemrity card
+// Kpop.io is the official website
+
 pragma solidity ^0.4.18;
 
-// https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/math/SafeMath.sol
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
 library SafeMath {
 
   /**
@@ -51,236 +49,22 @@ library SafeMath {
   }
 }
 
-// KpopItem is a ERC-721 token (https://github.com/ethereum/eips/issues/721)
-// Each KpopItem has its connected KpopToken celebrity card
-// Kpop.io is the official website
-
 contract ERC721 {
-  function approve(address _to, uint _tokenId) public;
+  function approve(address _to, uint _itemId) public;
   function balanceOf(address _owner) public view returns (uint balance);
   function implementsERC721() public pure returns (bool);
-  function ownerOf(uint _tokenId) public view returns (address addr);
-  function takeOwnership(uint _tokenId) public;
+  function ownerOf(uint _itemId) public view returns (address addr);
+  function takeOwnership(uint _itemId) public;
   function totalSupply() public view returns (uint total);
-  function transferFrom(address _from, address _to, uint _tokenId) public;
-  function transfer(address _to, uint _tokenId) public;
+  function transferFrom(address _from, address _to, uint _itemId) public;
+  function transfer(address _to, uint _itemId) public;
 
-  event Transfer(address indexed from, address indexed to, uint tokenId);
-  event Approval(address indexed owner, address indexed approved, uint tokenId);
+  event Transfer(address indexed from, address indexed to, uint itemId);
+  event Approval(address indexed owner, address indexed approved, uint itemId);
 }
 
-contract KpopToken is ERC721 {
-  address public author;
-  address public coauthor;
-
-  string public constant NAME = "Kpopio";
-  string public constant SYMBOL = "KpopToken";
-
-  uint public GROWTH_BUMP = 0.1 ether;
-  uint public MIN_STARTING_PRICE = 0.002 ether;
-  uint public PRICE_INCREASE_SCALE = 120; // 120% of previous price
-
-  struct Celeb {
-    string name;
-  }
-
-  Celeb[] public celebs;
-
-  mapping(uint => address) public tokenIdToOwner;
-  mapping(uint => uint) public tokenIdToPrice; // in wei
-  mapping(address => uint) public userToNumCelebs;
-  mapping(uint => address) public tokenIdToApprovedRecipient;
-
-  event Transfer(address indexed from, address indexed to, uint tokenId);
-  event Approval(address indexed owner, address indexed approved, uint tokenId);
-  event CelebSold(uint tokenId, uint oldPrice, uint newPrice, string celebName, address prevOwner, address newOwner);
-
-  function KpopToken() public {
-    author = msg.sender;
-    coauthor = msg.sender;
-  }
-
-  function _transfer(address _from, address _to, uint _tokenId) private {
-    require(ownerOf(_tokenId) == _from);
-    require(!isNullAddress(_to));
-    require(balanceOf(_from) > 0);
-
-    uint prevBalances = balanceOf(_from) + balanceOf(_to);
-    tokenIdToOwner[_tokenId] = _to;
-    userToNumCelebs[_from]--;
-    userToNumCelebs[_to]++;
-
-    // Clear outstanding approvals
-    delete tokenIdToApprovedRecipient[_tokenId];
-
-    Transfer(_from, _to, _tokenId);
-
-    assert(balanceOf(_from) + balanceOf(_to) == prevBalances);
-  }
-
-  function buy(uint _tokenId) payable public {
-    address prevOwner = ownerOf(_tokenId);
-    uint currentPrice = tokenIdToPrice[_tokenId];
-
-    require(prevOwner != msg.sender);
-    require(!isNullAddress(msg.sender));
-    require(msg.value >= currentPrice);
-
-    // Take a cut off the payment
-    uint payment = uint(SafeMath.div(SafeMath.mul(currentPrice, 92), 100));
-    uint leftover = SafeMath.sub(msg.value, currentPrice);
-    uint newPrice;
-
-    _transfer(prevOwner, msg.sender, _tokenId);
-
-    if (currentPrice < GROWTH_BUMP) {
-      newPrice = SafeMath.mul(currentPrice, 2);
-    } else {
-      newPrice = SafeMath.div(SafeMath.mul(currentPrice, PRICE_INCREASE_SCALE), 100);
-    }
-
-    tokenIdToPrice[_tokenId] = newPrice;
-
-    if (prevOwner != address(this)) {
-      prevOwner.transfer(payment);
-    }
-
-    CelebSold(_tokenId, currentPrice, newPrice,
-      celebs[_tokenId].name, prevOwner, msg.sender);
-
-    msg.sender.transfer(leftover);
-  }
-
-  function balanceOf(address _owner) public view returns (uint balance) {
-    return userToNumCelebs[_owner];
-  }
-
-  function ownerOf(uint _tokenId) public view returns (address addr) {
-    return tokenIdToOwner[_tokenId];
-  }
-
-  function totalSupply() public view returns (uint total) {
-    return celebs.length;
-  }
-
-  function transfer(address _to, uint _tokenId) public {
-    _transfer(msg.sender, _to, _tokenId);
-  }
-
-  /** START FUNCTIONS FOR AUTHORS **/
-
-  function createCeleb(string _name, uint _price) public onlyAuthors {
-    require(_price >= MIN_STARTING_PRICE);
-
-    uint tokenId = celebs.push(Celeb(_name)) - 1;
-    tokenIdToOwner[tokenId] = author;
-    tokenIdToPrice[tokenId] = _price;
-    userToNumCelebs[author]++;
-  }
-
-  function withdraw(uint _amount, address _to) public onlyAuthors {
-    require(!isNullAddress(_to));
-    require(_amount <= this.balance);
-
-    _to.transfer(_amount);
-  }
-
-  function withdrawAll() public onlyAuthors {
-    require(author != 0x0);
-    require(coauthor != 0x0);
-
-    uint halfBalance = uint(SafeMath.div(this.balance, 2));
-
-    author.transfer(halfBalance);
-    coauthor.transfer(halfBalance);
-  }
-
-  function setCoAuthor(address _coauthor) public onlyAuthor {
-    require(!isNullAddress(_coauthor));
-
-    coauthor = _coauthor;
-  }
-
-  /** END FUNCTIONS FOR AUTHORS **/
-
-  function getCeleb(uint _tokenId) public view returns (
-    string name,
-    uint price,
-    address owner
-  ) {
-    name = celebs[_tokenId].name;
-    price = tokenIdToPrice[_tokenId];
-    owner = tokenIdToOwner[_tokenId];
-  }
-
-  /** START FUNCTIONS RELATED TO EXTERNAL CONTRACT INTERACTIONS **/
-
-  function approve(address _to, uint _tokenId) public {
-    require(msg.sender == ownerOf(_tokenId));
-
-    tokenIdToApprovedRecipient[_tokenId] = _to;
-
-    Approval(msg.sender, _to, _tokenId);
-  }
-
-  function transferFrom(address _from, address _to, uint _tokenId) public {
-    require(ownerOf(_tokenId) == _from);
-    require(isApproved(_to, _tokenId));
-    require(!isNullAddress(_to));
-
-    _transfer(_from, _to, _tokenId);
-  }
-
-  function takeOwnership(uint _tokenId) public {
-    require(!isNullAddress(msg.sender));
-    require(isApproved(msg.sender, _tokenId));
-
-    address currentOwner = tokenIdToOwner[_tokenId];
-
-    _transfer(currentOwner, msg.sender, _tokenId);
-  }
-
-  /** END FUNCTIONS RELATED TO EXTERNAL CONTRACT INTERACTIONS **/
-
-  function implementsERC721() public pure returns (bool) {
-    return true;
-  }
-
-  /** MODIFIERS **/
-
-  modifier onlyAuthor() {
-    require(msg.sender == author);
-    _;
-  }
-
-  modifier onlyAuthors() {
-    require(msg.sender == author || msg.sender == coauthor);
-    _;
-  }
-
-  /** FUNCTIONS THAT WONT BE USED FREQUENTLY **/
-
-  function setMinStartingPrice(uint _price) public onlyAuthors {
-    MIN_STARTING_PRICE = _price;
-  }
-
-  function setGrowthBump(uint _bump) public onlyAuthors {
-    GROWTH_BUMP = _bump;
-  }
-
-  function setPriceIncreaseScale(uint _scale) public onlyAuthors {
-    PRICE_INCREASE_SCALE = _scale;
-  }
-
-  /** PRIVATE FUNCTIONS **/
-
-  function isApproved(address _to, uint _tokenId) private view returns (bool) {
-    return tokenIdToApprovedRecipient[_tokenId] == _to;
-  }
-
-  function isNullAddress(address _addr) private pure returns (bool) {
-    return _addr == 0x0;
-  }
+contract KpopCeleb is ERC721 {
+  function ownerOf(uint _celebId) public view returns (address addr);
 }
 
 contract KpopItem is ERC721 {
@@ -291,54 +75,57 @@ contract KpopItem is ERC721 {
   string public constant NAME = "KpopItem";
   string public constant SYMBOL = "KpopItem";
 
-  uint public GROWTH_BUMP = 0.1 ether;
-  uint public MIN_STARTING_PRICE = 0.002 ether;
+  uint public GROWTH_BUMP = 0.4 ether;
+  uint public MIN_STARTING_PRICE = 0.001 ether;
   uint public PRICE_INCREASE_SCALE = 120; // 120% of previous price
   uint public DIVIDEND = 3;
-  address public KPOPIO_CONTRACT_ADDRESS = 0xB2eE4ACf44b12f85885F23494A739357575a1760;
+
+  address public KPOP_CELEB_CONTRACT_ADDRESS = 0x0;
+  address public KPOP_ARENA_CONTRACT_ADDRESS = 0x0;
 
   struct Item {
     string name;
-    uint[6] traits;
   }
 
   Item[] public items;
 
-  mapping(uint => address) public tokenIdToOwner;
-  mapping(uint => uint) public tokenIdToCelebId; // celeb from KpopIO
-  mapping(uint => uint) public tokenIdToPrice; // in wei
+  mapping(uint => address) public itemIdToOwner;
+  mapping(uint => uint) public itemIdToPrice;
   mapping(address => uint) public userToNumItems;
-  mapping(uint => address) public tokenIdToApprovedRecipient;
+  mapping(uint => address) public itemIdToApprovedRecipient;
+  mapping(uint => uint[6]) public itemIdToTraitValues;
+  mapping(uint => uint) public itemIdToCelebId;
 
-  event Transfer(address indexed from, address indexed to, uint tokenId);
-  event Approval(address indexed owner, address indexed approved, uint tokenId);
-  event ItemSold(uint tokenId, uint oldPrice, uint newPrice, string celebName, address prevOwner, address newOwner);
+  event Transfer(address indexed from, address indexed to, uint itemId);
+  event Approval(address indexed owner, address indexed approved, uint itemId);
+  event ItemSold(uint itemId, uint oldPrice, uint newPrice, string itemName, address prevOwner, address newOwner);
+  event TransferToWinner(uint itemId, uint oldPrice, uint newPrice, string itemName, address prevOwner, address newOwner);
 
   function KpopItem() public {
     author = msg.sender;
     coauthor = msg.sender;
   }
 
-  function _transfer(address _from, address _to, uint _tokenId) private {
-    require(ownerOf(_tokenId) == _from);
+  function _transfer(address _from, address _to, uint _itemId) private {
+    require(ownerOf(_itemId) == _from);
     require(!isNullAddress(_to));
     require(balanceOf(_from) > 0);
 
     uint prevBalances = balanceOf(_from) + balanceOf(_to);
-    tokenIdToOwner[_tokenId] = _to;
+    itemIdToOwner[_itemId] = _to;
     userToNumItems[_from]--;
     userToNumItems[_to]++;
 
-    delete tokenIdToApprovedRecipient[_tokenId];
+    delete itemIdToApprovedRecipient[_itemId];
 
-    Transfer(_from, _to, _tokenId);
-    
+    Transfer(_from, _to, _itemId);
+
     assert(balanceOf(_from) + balanceOf(_to) == prevBalances);
   }
 
-  function buy(uint _tokenId) payable public {
-    address prevOwner = ownerOf(_tokenId);
-    uint currentPrice = tokenIdToPrice[_tokenId];
+  function buy(uint _itemId) payable public {
+    address prevOwner = ownerOf(_itemId);
+    uint currentPrice = itemIdToPrice[_itemId];
 
     require(prevOwner != msg.sender);
     require(!isNullAddress(msg.sender));
@@ -353,7 +140,7 @@ contract KpopItem is ERC721 {
     uint leftover = SafeMath.sub(msg.value, currentPrice);
     uint newPrice;
 
-    _transfer(prevOwner, msg.sender, _tokenId);
+    _transfer(prevOwner, msg.sender, _itemId);
 
     if (currentPrice < GROWTH_BUMP) {
       newPrice = SafeMath.mul(currentPrice, 2);
@@ -361,7 +148,7 @@ contract KpopItem is ERC721 {
       newPrice = SafeMath.div(SafeMath.mul(currentPrice, PRICE_INCREASE_SCALE), 100);
     }
 
-    tokenIdToPrice[_tokenId] = newPrice;
+    itemIdToPrice[_itemId] = newPrice;
 
     // Pay the prev owner of the item
     if (prevOwner != address(this)) {
@@ -369,15 +156,15 @@ contract KpopItem is ERC721 {
     }
 
     // Pay dividend to the current owner of the celeb that's connected to the item
-    uint celebId = celebOf(_tokenId);
-    KpopToken KPOPIO = KpopToken(KPOPIO_CONTRACT_ADDRESS);
-    address celebOwner = KPOPIO.ownerOf(celebId);
+    uint celebId = celebOf(_itemId);
+    KpopCeleb KPOP_CELEB = KpopCeleb(KPOP_CELEB_CONTRACT_ADDRESS);
+    address celebOwner = KPOP_CELEB.ownerOf(celebId);
     if (celebOwner != address(this) && !isNullAddress(celebOwner)) {
       celebOwner.transfer(dividend);
     }
 
-    ItemSold(_tokenId, currentPrice, newPrice,
-      items[_tokenId].name, prevOwner, msg.sender);
+    ItemSold(_itemId, currentPrice, newPrice,
+      items[_itemId].name, prevOwner, msg.sender);
 
     msg.sender.transfer(leftover);
   }
@@ -386,31 +173,32 @@ contract KpopItem is ERC721 {
     return userToNumItems[_owner];
   }
 
-  function ownerOf(uint _tokenId) public view returns (address addr) {
-    return tokenIdToOwner[_tokenId];
+  function ownerOf(uint _itemId) public view returns (address addr) {
+    return itemIdToOwner[_itemId];
   }
 
-  function celebOf(uint _tokenId) public view returns (uint celebId) {
-    return tokenIdToCelebId[_tokenId];
+  function celebOf(uint _itemId) public view returns (uint celebId) {
+    return itemIdToCelebId[_itemId];
   }
 
   function totalSupply() public view returns (uint total) {
     return items.length;
   }
 
-  function transfer(address _to, uint _tokenId) public {
-    _transfer(msg.sender, _to, _tokenId);
+  function transfer(address _to, uint _itemId) public {
+    _transfer(msg.sender, _to, _itemId);
   }
 
   /** START FUNCTIONS FOR AUTHORS **/
 
-  function createItem(string _name, uint _price, uint _celebId, uint[6] _traits) public onlyManufacturer {
+  function createItem(string _name, uint _price, uint _celebId, uint[6] _traitValues) public onlyManufacturer {
     require(_price >= MIN_STARTING_PRICE);
 
-    uint tokenId = items.push(Item({name: _name, traits:_traits})) - 1;
-    tokenIdToOwner[tokenId] = author;
-    tokenIdToPrice[tokenId] = _price;
-    tokenIdToCelebId[tokenId] = _celebId;
+    uint itemId = items.push(Item(_name)) - 1;
+    itemIdToOwner[itemId] = author;
+    itemIdToPrice[itemId] = _price;
+    itemIdToCelebId[itemId] = _celebId;
+    itemIdToTraitValues[itemId] = _traitValues; // TODO: fetch celeb traits later
     userToNumItems[author]++;
   }
 
@@ -440,50 +228,65 @@ contract KpopItem is ERC721 {
   function setManufacturer(address _manufacturer) public onlyAuthors {
     require(!isNullAddress(_manufacturer));
 
-    coauthor = _manufacturer;
+    manufacturer = _manufacturer;
   }
 
   /** END FUNCTIONS FOR AUTHORS **/
 
-  function getItem(uint _tokenId) public view returns (
+  function getItem(uint _itemId) public view returns (
     string name,
     uint price,
-    uint[6] traits,
     address owner,
+    uint[6] traitValues,
     uint celebId
   ) {
-    name = items[_tokenId].name;
-    price = tokenIdToPrice[_tokenId];
-    traits = items[_tokenId].traits;
-    owner = tokenIdToOwner[_tokenId];
-    celebId = celebOf(_tokenId);
+    name = items[_itemId].name;
+    price = itemIdToPrice[_itemId];
+    owner = itemIdToOwner[_itemId];
+    traitValues = itemIdToTraitValues[_itemId];
+    celebId = celebOf(_itemId);
   }
 
   /** START FUNCTIONS RELATED TO EXTERNAL CONTRACT INTERACTIONS **/
 
-  function approve(address _to, uint _tokenId) public {
-    require(msg.sender == ownerOf(_tokenId));
+  function approve(address _to, uint _itemId) public {
+    require(msg.sender == ownerOf(_itemId));
 
-    tokenIdToApprovedRecipient[_tokenId] = _to;
+    itemIdToApprovedRecipient[_itemId] = _to;
 
-    Approval(msg.sender, _to, _tokenId);
+    Approval(msg.sender, _to, _itemId);
   }
 
-  function transferFrom(address _from, address _to, uint _tokenId) public {
-    require(ownerOf(_tokenId) == _from);
-    require(isApproved(_to, _tokenId));
+  function transferFrom(address _from, address _to, uint _itemId) public {
+    require(ownerOf(_itemId) == _from);
+    require(isApproved(_to, _itemId));
     require(!isNullAddress(_to));
 
-    _transfer(_from, _to, _tokenId);
+    _transfer(_from, _to, _itemId);
   }
 
-  function takeOwnership(uint _tokenId) public {
+  function takeOwnership(uint _itemId) public {
     require(!isNullAddress(msg.sender));
-    require(isApproved(msg.sender, _tokenId));
+    require(isApproved(msg.sender, _itemId));
 
-    address currentOwner = tokenIdToOwner[_tokenId];
+    address currentOwner = itemIdToOwner[_itemId];
 
-    _transfer(currentOwner, msg.sender, _tokenId);
+    _transfer(currentOwner, msg.sender, _itemId);
+  }
+
+  function transferToWinner(address _winner, address _loser, uint _itemId) public onlyArena {
+    require(!isNullAddress(_winner));
+    require(!isNullAddress(_loser));
+    require(ownerOf(_itemId) == _loser);
+
+    // Reset item price
+    uint oldPrice = itemIdToPrice[_itemId];
+    uint newPrice = MIN_STARTING_PRICE;
+    itemIdToPrice[_itemId] = newPrice;
+
+    _transfer(_loser, _winner, _itemId);
+
+    TransferToWinner(_itemId, oldPrice, newPrice, items[_itemId].name, _loser, _winner);
   }
 
   /** END FUNCTIONS RELATED TO EXTERNAL CONTRACT INTERACTIONS **/
@@ -509,6 +312,11 @@ contract KpopItem is ERC721 {
     _;
   }
 
+  modifier onlyArena() {
+    require(msg.sender == KPOP_ARENA_CONTRACT_ADDRESS);
+    _;
+  }
+
   /** FUNCTIONS THAT WONT BE USED FREQUENTLY **/
 
   function setMinStartingPrice(uint _price) public onlyAuthors {
@@ -527,14 +335,18 @@ contract KpopItem is ERC721 {
     PRICE_INCREASE_SCALE = _scale;
   }
 
-  function setKpopioContractAddress(address _address) public onlyAuthors {
-    KPOPIO_CONTRACT_ADDRESS = _address;
+  function setKpopCelebContractAddress(address _address) public onlyAuthors {
+    KPOP_CELEB_CONTRACT_ADDRESS = _address;
+  }
+
+  function setKpopArenaContractAddress(address _address) public onlyAuthors {
+    KPOP_ARENA_CONTRACT_ADDRESS = _address;
   }
 
   /** PRIVATE FUNCTIONS **/
 
-  function isApproved(address _to, uint _tokenId) private view returns (bool) {
-    return tokenIdToApprovedRecipient[_tokenId] == _to;
+  function isApproved(address _to, uint _itemId) private view returns (bool) {
+    return itemIdToApprovedRecipient[_itemId] == _to;
   }
 
   function isNullAddress(address _addr) private pure returns (bool) {
