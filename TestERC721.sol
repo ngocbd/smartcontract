@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestERC721 at 0xb25d33239faa29aa9c8f3b378764888e9ca8dbbe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestERC721 at 0x61c2d5cf5fb2096348e78f71315b9d42cf42082f
 */
 pragma solidity ^0.4.16;
 
@@ -25,8 +25,8 @@ contract TestERC721 {
     event Transfer(address indexed _from, address indexed _to, uint256 _tokenId);
     event Approval(address indexed _from, address indexed _to, uint256 _tokenId);
 
-    function TestERC721() public {
-        _admin = msg.sender;
+    constructor() public {
+        _admin = 0xa06507041083cFfC7aB1E89f3c59d0AD49Bf384D;
     }
     
     function admin() public constant returns (address) {
@@ -95,6 +95,7 @@ contract TestERC721 {
     }
     
     function createtoken(string _name, string _link, uint256 _price) public returns (bool success) {
+        require(msg.sender == _admin);
         tokens[index] = token(_name, _link, _price);
         tokenOwners[index] = msg.sender;
         tokenExists[index] = true;
