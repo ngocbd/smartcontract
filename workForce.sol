@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract workForce at 0xf886c9d089103f9af130c857bd58cc56f4b989b7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract workForce at 0xea10e348a32d0e8984c4fec3735813777bc0cb5b
 */
 pragma solidity ^0.4.11;
 
@@ -68,6 +68,7 @@ contract workForce
 
     ERC20 antToken = ERC20(antAddr);
     ERC20 usdToken = ERC20(usdAddr);
+    /* set to 1 Ether equals 275.00 USD */
     uint oneUsdToEtherRate;
 
 
@@ -151,26 +152,26 @@ contract workForce
         usdToken.transfer( owner, (usdToken.balanceOf(address(this))));
     }
 
-    function getEmployeeCount() constant returns (uint)
+    function getEmployeeCount() constant onlyOwner returns (uint)
     {
         return workcrew.length;
     }
 
-    function getEmployeeInfoById(uint _employeeId) constant returns (uint, string, uint, address, uint)
+    function getEmployeeInfoById(uint _employeeId) constant onlyOwner returns (uint, string, uint, address, uint)
     {
         uint x = employeeIdIndex[_employeeId];
         return (workcrew[x].employeeId, workcrew[x].employeeName, workcrew[x].startDate,
                 workcrew[x].employeeAddress, workcrew[x].yearlySalaryUSD );
     }
     
-    function getEmployeeInfoByName(string _employeeName) constant returns (uint, string, uint, address, uint)
+    function getEmployeeInfoByName(string _employeeName) constant onlyOwner returns (uint, string, uint, address, uint)
     {
         uint x = employeeNameIndex[_employeeName];
         return (workcrew[x].employeeId, workcrew[x].employeeName, workcrew[x].startDate,
                 workcrew[x].employeeAddress, workcrew[x].yearlySalaryUSD );
     }
 
-    function calculatePayrollBurnrate() constant returns (uint)
+    function calculatePayrollBurnrate() constant onlyOwner returns (uint)
     {
         uint monthlyPayout;
         for( uint x = 0; x < workcrew.length; x++ )
@@ -180,7 +181,7 @@ contract workForce
         return monthlyPayout;
     }
 
-    function calculatePayrollRunway() constant returns (uint)
+    function calculatePayrollRunway() constant onlyOwner returns (uint)
     {
         uint dailyPayout = calculatePayrollBurnrate() / 30;
         
