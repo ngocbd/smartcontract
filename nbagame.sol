@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract nbagame at 0xa3f8e01c97c497a92c055d0fc91177f2589c57fd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract nbagame at 0x53e61d54469eae9f5487f1e61e0cda3d566e2f86
 */
 pragma solidity 0.4.20;
 
@@ -1036,8 +1036,8 @@ contract nbagame is usingOraclize {
   address public currentOwner = 0x0161C8d35f0B603c7552017fe9642523f70d7B6A;
 
   uint8 public constant NUM_TEAMS = 2;
-  string[NUM_TEAMS] public TEAM_NAMES = ["Boston Celtics", "Washington Wizards"];
-  enum TeamType { BCeltics, WWizards, None }
+  string[NUM_TEAMS] public TEAM_NAMES = ["Golden State Warriors", "Washington Wizards"];
+  enum TeamType { GSWarriors, WWizards, None }
   TeamType public winningTeam = TeamType.None;
 
   uint public constant TOTAL_POOL_COMMISSION = 10; // Total pool commission psuedo 5% (10% from losing side bet)
@@ -1046,10 +1046,10 @@ contract nbagame is usingOraclize {
   
   uint public constant MINIMUM_BET = 0.01 ether; // 0.01 ETH is min bet
 
-  uint public constant BETTING_OPENS = 1518905100; // Currently before deployment
-  uint public constant BETTING_CLOSES = 1519519000; // Close 5 minutes after scheduled game start (5:35pm)
-  uint public constant PAYOUT_ATTEMPT_INTERVAL = 300; // 12 hours (5 min)
-  uint public constant BET_RELEASE_DATE = 1519520000; // Release funds if invalid result 48 hours later (5:52pm)
+  uint public constant BETTING_OPENS = 1519599600; // This wave of contracts opens on Feb 25, 6:00EST
+  uint public constant BETTING_CLOSES = 1519866300; // Close 5 minutes after scheduled game start (3:53am)
+  uint public constant PAYOUT_ATTEMPT_INTERVAL = 64800; // 16 hours for each ping attempt
+  uint public constant BET_RELEASE_DATE = 1520039100; // Release funds if invalid result 48 hours later
   uint public constant PAYOUT_DATE = BETTING_CLOSES + PAYOUT_ATTEMPT_INTERVAL; // First payout attempt
   
   uint public constant STAGE_ONE_BET_LIMIT = 0.2 ether; // Staged limits for commission incentive
@@ -1071,9 +1071,9 @@ contract nbagame is usingOraclize {
   uint[NUM_TEAMS] public totalAmountsBetStage2;
   uint public numberOfBets;
   uint public totalBetAmount;
-  uint public numberOfPingsAttempted;
-  uint public numberOfPingsReceived;
-  uint public numberOfSuccessfulPings;
+  //uint public numberOfPingsAttempted;
+  //uint public numberOfPingsReceived;
+  //uint public numberOfSuccessfulPings;
   uint public contractPrice = 0.05 ether;		// Starting price of 0.05 ETH for contract
   
   uint private firstStepLimit = 0.1 ether;      // Step price increase to exit smaller numbers quicker
@@ -1108,7 +1108,6 @@ contract nbagame is usingOraclize {
     );
     _;
   }
-
   
   /* Functions */
   
@@ -1116,6 +1115,14 @@ contract nbagame is usingOraclize {
   function nbagame() public {
     owner = msg.sender;
     pingOracle(PAYOUT_DATE - now); // Schedule and pay for first oracle call
+  }
+
+  // If something terrible happens and we are past the BET_RELEASE_DATE, just release bet back to the bettors
+  // Creator only, failsafe in case everything fails, we can give everyone their money back.
+  function triggerRelease() public onlyCreatorLevel {
+    require(now > BET_RELEASE_DATE);
+    
+    releaseBets();
   }
 
  // PRIVATE functions for safety checks
@@ -1126,18 +1133,18 @@ contract nbagame is usingOraclize {
   
   function pingOracle(uint pingDelay) private {
     // Ping oracle after pingDelay time to query result
-    oraclize_query(pingDelay, "WolframAlpha", "Celtics vs Wizards on February 8, 2018 Winner");
-    numberOfPingsAttempted++;
+    oraclize_query(pingDelay, "WolframAlpha", "Warriors vs Wizards February 28, 2018 Winner");
+    //numberOfPingsAttempted++;
   }
 
   // Callback from Oraclize
   function __callback(bytes32 queryId, string result, bytes proof) public {
-	numberOfPingsReceived++;
+	//numberOfPingsReceived++;
 	  
     require(payoutCompleted == false);
     require(msg.sender == oraclize_cbAddress());
     
-    numberOfSuccessfulPings++;
+    //numberOfSuccessfulPings++;
     
     // Determine winning team index based
     // on its name that the request returned
@@ -1187,7 +1194,7 @@ contract nbagame is usingOraclize {
   // Function for user to bet on team idx,
   function bet(uint teamIdx) public payable {
     require(canBet() == true);
-    require(TeamType(teamIdx) == TeamType.BCeltics || TeamType(teamIdx) == TeamType.WWizards);
+    require(TeamType(teamIdx) == TeamType.GSWarriors || TeamType(teamIdx) == TeamType.WWizards);
     require(msg.value >= MINIMUM_BET);
 
     // Add bettor to bettor list if they are not on it
@@ -1274,13 +1281,13 @@ contract nbagame is usingOraclize {
     uint currentOwnerPayoutCommission = uint256(SafeMath.div(SafeMath.mul(OWNER_POOL_COMMISSION, losingChunk), 100)); // 6% commission
     uint eachStageCommission = uint256(SafeMath.div(SafeMath.mul(1, losingChunk), 100)); // 1% commission for each stage
     // Calculate portion of commission owed to all interested parties
-
+   
     // Weighted payout to bettors based on
     // their contribution to the winning pool
     for (uint k = 0; k < bettors.length; k++) {
       uint betOnWinner = bettorInfo[bettors[k]].amountsBet[uint(winningTeam)];
-      uint payout = betOnWinner + ((betOnWinner * (losingChunk - currentOwnerPayoutCommission)) / totalAmountsBet[uint(winningTeam)]);
-
+      uint payout = betOnWinner + ((betOnWinner * (losingChunk - currentOwnerPayoutCommission - (4 * eachStageCommission))) / totalAmountsBet[uint(winningTeam)]);
+      
 	  // Pull and calculate the commission payout from stage 1 and stage 2 commission bonuses
 	  // Currently hard coded for 2 team system, check for non zero divisor
 	  if (totalAmountsBetStage1[0] > 0) {
@@ -1302,6 +1309,7 @@ contract nbagame is usingOraclize {
 		  uint stageTwoCommissionPayoutTeam1 = ((bettorInfo[bettors[k]].amountsBetStage2[1] * eachStageCommission) / totalAmountsBetStage2[1]);
 		  payout += stageTwoCommissionPayoutTeam1;
 	  }
+	  
 	  
 	  if (payout > 0)
         bettors[k].transfer(payout);
