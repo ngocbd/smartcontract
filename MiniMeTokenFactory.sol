@@ -1,7 +1,29 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MiniMeTokenFactory at 0x277597d760e91cd83fcdc74b4808486d485230d9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MiniMeTokenFactory at 0x6a1372fbd5e9b2be5ad1a23e2332cb029246e7a8
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.6;
+
+contract Ownable {
+  address public owner;
+
+  function Ownable() {
+    owner = msg.sender;
+  }
+
+  modifier onlyOwner() {
+    if (msg.sender != owner) {
+      throw;
+    }
+    _;
+  }
+
+  function transferOwnership(address newOwner) onlyOwner {
+    if (newOwner != address(0)) {
+      owner = newOwner;
+    }
+  }
+
+}
 
 /*
     Copyright 2016, Jordi Baylina
@@ -27,57 +49,6 @@ pragma solidity ^0.4.11;
 ///  and DApps to upgrade their features in a decentralized manner without
 ///  affecting the original token
 /// @dev It is ERC20 compliant, but still needs to under go further testing.
-
-contract ERC20 {
-  /// @notice Send `_amount` tokens to `_to` from `msg.sender`
-  /// @param _to The address of the recipient
-  /// @param _amount The amount of tokens to be transferred
-  /// @return Whether the transfer was successful or not
-  function transfer(address _to, uint256 _amount) returns (bool success);
-
-  /// @notice Send `_amount` tokens to `_to` from `_from` on the condition it
-  ///  is approved by `_from`
-  /// @param _from The address holding the tokens being transferred
-  /// @param _to The address of the recipient
-  /// @param _amount The amount of tokens to be transferred
-  /// @return True if the transfer was successful
-  function transferFrom(address _from, address _to, uint256 _amount
-  ) returns (bool success);
-
-  /// @param _owner The address that's balance is being requested
-  /// @return The balance of `_owner` at the current block
-  function balanceOf(address _owner) constant returns (uint256 balance);
-
-  /// @notice `msg.sender` approves `_spender` to spend `_amount` tokens on
-  ///  its behalf. This is a modified version of the ERC20 approve function
-  ///  to be a little bit safer
-  /// @param _spender The address of the account able to transfer the tokens
-  /// @param _amount The amount of tokens to be approved for transfer
-  /// @return True if the approval was successful
-  function approve(address _spender, uint256 _amount) returns (bool success);
-
-  /// @dev This function makes it easy to read the `allowed[]` map
-  /// @param _owner The address of the account that owns the token
-  /// @param _spender The address of the account able to transfer the tokens
-  /// @return Amount of remaining tokens of _owner that _spender is allowed
-  ///  to spend
-  function allowance(address _owner, address _spender
-  ) constant returns (uint256 remaining);
-
-  /// @notice `msg.sender` approves `_spender` to send `_amount` tokens on
-  ///  its behalf, and then a function is triggered in the contract that is
-  ///  being approved, `_spender`. This allows users to use their tokens to
-  ///  interact with contracts in one function call instead of two
-  /// @param _spender The address of the contract able to transfer the tokens
-  /// @param _amount The amount of tokens to be approved for transfer
-  /// @return True if the function call was successful
-  function approveAndCall(address _spender, uint256 _amount, bytes _extraData
-  ) returns (bool success);
-
-  /// @dev This function makes it easy to get the total number of tokens
-  /// @return The total number of tokens
-  function totalSupply() constant returns (uint);
-}
 
 
 /// @dev The token controller contract must implement these functions
@@ -128,13 +99,12 @@ contract ApproveAndCallFallBack {
 /// @dev The actual token contract, the default controller is the msg.sender
 ///  that deploys the contract, so usually this token will be deployed by a
 ///  token controller contract, which Giveth will call a "Campaign"
-contract MiniMeToken is Controlled {
+contract MiniMeToken is Controlled, Ownable {
 
     string public name;                //The Token's name: e.g. DigixDAO Tokens
     uint8 public decimals;             //Number of decimals of the smallest unit
     string public symbol;              //An identifier: e.g. REP
     string public version = 'MMT_0.1'; //An arbitrary versioning scheme
-
 
     /// @dev `Checkpoint` is the structure that attaches a block number to a
     ///  given value, the block number attached is the one that last changed the
@@ -584,30 +554,10 @@ contract MiniMeToken is Controlled {
         }
     }
 
-//////////
-// Safety Methods
-//////////
-
-    /// @notice This method can be used by the controller to extract mistakenly
-    ///  sent tokens to this contract.
-    /// @param _token The address of the token contract that you want to recover
-    ///  set to 0 in case you want to extract ether.
-    function claimTokens(address _token) public onlyController {
-      if (_token == 0x0) {
-        controller.transfer(this.balance);
-        return;
-      }
-
-      ERC20 token = ERC20(_token);
-      uint256 balance = token.balanceOf(this);
-      token.transfer(controller, balance);
-      ClaimedTokens(_token, controller, balance);
-    }
 
 ////////////////
 // Events
 ////////////////
-    event ClaimedTokens(address indexed _token, address indexed _controller, uint256 _amount);
     event Transfer(address indexed _from, address indexed _to, uint256 _amount);
     event NewCloneToken(address indexed _cloneToken, uint _snapshotBlock);
     event Approval(
