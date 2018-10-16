@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HashBux at 0xca96dead1ee8f1bb0a314e358dc56c54314c1a21
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HashBux at 0xec6d49ebeb6d30cec13f8d07d3b266a59aacdf46
 */
 //
 // compiler: solcjs
