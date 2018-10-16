@@ -1,192 +1,367 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Oryza at 0x5efb77e90fefe667108e2a060dacaaf392fc8c02
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Oryza at 0x4469ff660a532af026939689199685d1ed61d8c4
 */
 pragma solidity ^0.4.16;
 
-contract owned {
-    address public owner;
+library SafeMath {
 
-    function owned() {
-        owner = msg.sender;
-    }
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
 
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a / b;
+    return c;
+  }
 
-    function transferOwnership(address newOwner) onlyOwner {
-        owner = newOwner;
-    }
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-contract tokenRecipient {
-    event receivedEther(address sender, uint amount);
-    event receivedTokens(address _from, uint256 _value, address _token, bytes _extraData);
+contract ERC20Basic {
 
-    function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData){
-        Token t = Token(_token);
-        require(t.transferFrom(_from, this, _value));
-        receivedTokens(_from, _value, _token, _extraData);
-    }
-
-    function () payable {
-        receivedEther(msg.sender, msg.value);
-    }
+  uint256 public totalSupply;
+  function balanceOf(address who) public constant returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-contract Token {
-    mapping (address => uint256) public balanceOf;
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+contract BasicToken is ERC20Basic {
+
+  using SafeMath for uint256;
+
+  mapping(address => uint256) balances;
+
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  function balanceOf(address _owner) public constant returns (uint256 balance) {
+    return balances[_owner];
+  }
 }
 
-contract Oryza is owned, tokenRecipient {
+contract ERC20 is ERC20Basic {
 
-    uint public minimumQuorum;
-    uint public debatingPeriodInMinutes;
-    Proposal[] public proposals;
-    uint public numProposals;
-    Token public sharesTokenAddress;
+  function allowance(address owner, address spender) public constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
-    event ProposalAdded(uint proposalID, address recipient, uint amount, string description);
-    event Voted(uint proposalID, bool position, address voter);
-    event ProposalTallied(uint proposalID, uint result, uint quorum, bool active);
-    event ChangeOfRules(uint newMinimumQuorum, uint newDebatingPeriodInMinutes, address newSharesTokenAddress);
+contract StandardToken is ERC20, BasicToken {
 
-    struct Proposal {
-        address recipient;
-        uint amount;
-        string description;
-        uint votingDeadline;
-        bool executed;
-        bool proposalPassed;
-        uint numberOfVotes;
-        bytes32 proposalHash;
-        Vote[] votes;
-        mapping (address => bool) voted;
+  mapping (address => mapping (address => uint256)) allowed;
+
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+
+    uint256 _allowance = allowed[_from][msg.sender];
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+    return allowed[_owner][_spender];
+  }
+
+  function increaseApproval (address _spender, uint _addedValue)
+    returns (bool success) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  function decreaseApproval (address _spender, uint _subtractedValue)
+    returns (bool success) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+}
+
+contract Ownable {
+
+  address public owner;
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+  function Ownable() {
+    owner = msg.sender;
+  }
+
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  function transferOwnership(address newOwner) onlyOwner public {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+}
+
+contract MintableToken is StandardToken, Ownable {
+
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
+
+  bool public mintingFinished = false;
+
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
+
+  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+    totalSupply = totalSupply.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    Mint(_to, _amount);
+    Transfer(0x0, _to, _amount);
+    return true;
+  }
+
+  function finishMinting() onlyOwner public returns (bool) {
+    mintingFinished = true;
+    MintFinished();
+    return true;
+  }
+}
+
+contract Crowdsale {
+
+  using SafeMath for uint256;
+
+  MintableToken public token;
+
+  uint256 public startTime;
+  uint256 public endTime;
+
+  address public wallet;
+
+  uint256 public rate;
+
+  uint256 public weiRaised;
+
+  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+
+  function Crowdsale(uint256 _startTime, uint256 _endTime, uint256 _rate, address _wallet) {
+    require(_startTime >= now);
+    require(_endTime >= _startTime);
+    require(_rate > 0);
+    require(_wallet != 0x0);
+
+    token = createTokenContract();
+    startTime = _startTime;
+    endTime = _endTime;
+    rate = _rate;
+    wallet = _wallet;
+  }
+
+  function createTokenContract() internal returns (MintableToken) {
+    return new MintableToken();
+  }
+
+  function () payable {
+    buyTokens(msg.sender);
+  }
+
+  function buyTokens(address beneficiary) public payable {
+    require(beneficiary != 0x0);
+    require(validPurchase());
+
+    uint256 weiAmount = msg.value;
+
+    uint256 tokens = weiAmount.mul(rate);
+
+    weiRaised = weiRaised.add(weiAmount);
+
+    token.mint(beneficiary, tokens);
+    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+
+    forwardFunds();
+  }
+
+  function forwardFunds() internal {
+    wallet.transfer(msg.value);
+  }
+
+  function validPurchase() internal constant returns (bool) {
+    bool withinPeriod = now >= startTime && now <= endTime;
+    bool nonZeroPurchase = msg.value != 0;
+    return withinPeriod && nonZeroPurchase;
+  }
+
+  function hasEnded() public constant returns (bool) {
+    return now > endTime;
+  }
+}
+
+contract CappedCrowdsale is Crowdsale {
+
+  using SafeMath for uint256;
+
+  uint256 public cap;
+
+  function CappedCrowdsale(uint256 _cap) {
+    require(_cap > 0);
+    cap = _cap;
+  }
+
+  function validPurchase() internal constant returns (bool) {
+    bool withinCap = weiRaised.add(msg.value) <= cap;
+    return super.validPurchase() && withinCap;
+  }
+
+  function hasEnded() public constant returns (bool) {
+    bool capReached = weiRaised >= cap;
+    return super.hasEnded() || capReached;
+  }
+}
+
+contract FinalizableCrowdsale is Crowdsale, Ownable {
+
+  using SafeMath for uint256;
+
+  bool public isFinalized = false;
+
+  event Finalized();
+
+  function finalize() onlyOwner public {
+    require(!isFinalized);
+    require(hasEnded());
+
+    finalization();
+    Finalized();
+
+    isFinalized = true;
+  }
+
+  function finalization() internal {
+  }
+}
+
+contract RefundVault is Ownable {
+
+  using SafeMath for uint256;
+
+  enum State { Active, Refunding, Closed }
+
+  mapping (address => uint256) public deposited;
+  address public wallet;
+  State public state;
+
+  event Closed();
+  event RefundsEnabled();
+  event Refunded(address indexed beneficiary, uint256 weiAmount);
+
+  function RefundVault(address _wallet) {
+    require(_wallet != 0x0);
+    wallet = _wallet;
+    state = State.Active;
+  }
+
+  function deposit(address investor) onlyOwner public payable {
+    require(state == State.Active);
+    deposited[investor] = deposited[investor].add(msg.value);
+  }
+
+  function close() onlyOwner public {
+    require(state == State.Active);
+    state = State.Closed;
+    Closed();
+    wallet.transfer(this.balance);
+  }
+
+  function enableRefunds() onlyOwner public {
+    require(state == State.Active);
+    state = State.Refunding;
+    RefundsEnabled();
+  }
+
+  function refund(address investor) public {
+    require(state == State.Refunding);
+    uint256 depositedValue = deposited[investor];
+    deposited[investor] = 0;
+    investor.transfer(depositedValue);
+    Refunded(investor, depositedValue);
+  }
+}
+
+contract RefundableCrowdsale is FinalizableCrowdsale {
+
+  using SafeMath for uint256;
+
+  uint256 public goal;
+
+  RefundVault public vault;
+
+  function RefundableCrowdsale(uint256 _goal) {
+    require(_goal > 0);
+    vault = new RefundVault(wallet);
+    goal = _goal;
+  }
+
+  function forwardFunds() internal {
+    vault.deposit.value(msg.value)(msg.sender);
+  }
+
+  function claimRefund() public {
+    require(isFinalized);
+    require(!goalReached());
+
+    vault.refund(msg.sender);
+  }
+
+  function finalization() internal {
+    if (goalReached()) {
+      vault.close();
+    } else {
+      vault.enableRefunds();
     }
 
-    struct Vote {
-        bool inSupport;
-        address voter;
-    }
+    super.finalization();
+  }
 
-    modifier onlyShareholders {
-        require(sharesTokenAddress.balanceOf(msg.sender) > 0);
-        _;
-    }
+  function goalReached() public constant returns (bool) {
+    return weiRaised >= goal;
+  }
+}
 
-    function Oryza(Token sharesAddress, uint minimumSharesToPassAVote, uint minutesForDebate) payable {
-        changeVotingRules(sharesAddress, minimumSharesToPassAVote, minutesForDebate);
-    }
+contract Oryza is MintableToken {
 
-    function changeVotingRules(Token sharesAddress, uint minimumSharesToPassAVote, uint minutesForDebate) onlyOwner {
-        sharesTokenAddress = Token(sharesAddress);
-        if (minimumSharesToPassAVote == 0 ) minimumSharesToPassAVote = 1;
-        minimumQuorum = minimumSharesToPassAVote;
-        debatingPeriodInMinutes = minutesForDebate;
-        ChangeOfRules(minimumQuorum, debatingPeriodInMinutes, sharesTokenAddress);
-    }
-
-    function newProposal(
-        address beneficiary,
-        uint weiAmount,
-        string jobDescription,
-        bytes transactionBytecode
-    )
-        onlyShareholders
-        returns (uint proposalID)
-    {
-        proposalID = proposals.length++;
-        Proposal storage p = proposals[proposalID];
-        p.recipient = beneficiary;
-        p.amount = weiAmount;
-        p.description = jobDescription;
-        p.proposalHash = sha3(beneficiary, weiAmount, transactionBytecode);
-        p.votingDeadline = now + debatingPeriodInMinutes * 1 minutes;
-        p.executed = false;
-        p.proposalPassed = false;
-        p.numberOfVotes = 0;
-        ProposalAdded(proposalID, beneficiary, weiAmount, jobDescription);
-        numProposals = proposalID+1;
-
-        return proposalID;
-    }
-
-    function newProposalInEther(
-        address beneficiary,
-        uint etherAmount,
-        string jobDescription,
-        bytes transactionBytecode
-    )
-        onlyShareholders
-        returns (uint proposalID)
-    {
-        return newProposal(beneficiary, etherAmount * 1 ether, jobDescription, transactionBytecode);
-    }
-
-    function checkProposalCode(
-        uint proposalNumber,
-        address beneficiary,
-        uint weiAmount,
-        bytes transactionBytecode
-    )
-        constant
-        returns (bool codeChecksOut)
-    {
-        Proposal storage p = proposals[proposalNumber];
-        return p.proposalHash == sha3(beneficiary, weiAmount, transactionBytecode);
-    }
-
-    function vote(
-        uint proposalNumber,
-        bool supportsProposal
-    )
-        onlyShareholders
-        returns (uint voteID)
-    {
-        Proposal storage p = proposals[proposalNumber];
-        require(p.voted[msg.sender] != true);
-
-        voteID = p.votes.length++;
-        p.votes[voteID] = Vote({inSupport: supportsProposal, voter: msg.sender});
-        p.voted[msg.sender] = true;
-        p.numberOfVotes = voteID +1;
-        Voted(proposalNumber,  supportsProposal, msg.sender);
-        return voteID;
-    }
-
-    function executeProposal(uint proposalNumber, bytes transactionBytecode) {
-        Proposal storage p = proposals[proposalNumber];
-
-        require(now > p.votingDeadline && !p.executed && p.proposalHash == sha3(p.recipient, p.amount, transactionBytecode));
-
-        uint quorum = 0;
-        uint yea = 0;
-        uint nay = 0;
-
-        for (uint i = 0; i <  p.votes.length; ++i) {
-            Vote storage v = p.votes[i];
-            uint voteWeight = sharesTokenAddress.balanceOf(v.voter);
-            quorum += voteWeight;
-            if (v.inSupport) {
-                yea += voteWeight;
-            } else {
-                nay += voteWeight;
-            }
-        }
-
-        require(quorum >= minimumQuorum);
-
-        if (yea > nay ) {
-            p.executed = true;
-            require(p.recipient.call.value(p.amount)(transactionBytecode));
-
-            p.proposalPassed = true;
-        } else {
-            p.proposalPassed = false;
-        }
-
-        ProposalTallied(proposalNumber, yea - nay, quorum, p.proposalPassed);
-    }
+  string public constant name = "Oryza";
+  string public constant symbol = "?";
+  uint256 public constant decimals = 0;
 }
