@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DistrictBuyer at 0x0f82c7eab8f7efb577a2de9d2b7e1da1d0b6870e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DistrictBuyer at 0x4ab8510410a3a66b44631e403bdc1b4c799887ac
 */
 pragma solidity ^0.4.13;
 
@@ -51,7 +51,7 @@ contract DistrictBuyer {
     // Store the claimed bounty in a temporary variable.
     uint256 claimed_bounty = bounty;
     // Update bounty prior to sending to prevent recursive call.
-    bounty = 0;
+    uint256 bounty = 0;
     // Irreversibly activate the kill switch.
     kill_switch = true;
     // Send the caller their bounty for activating the kill switch.
