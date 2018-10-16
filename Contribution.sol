@@ -1,8 +1,118 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Contribution at 0xc22462d4bc50952b061c9e6c585fdd9a04d0d75a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Contribution at 0xea0c348a297084bffbddad7f89216f24a2106e58
 */
 pragma solidity ^0.4.15;
 
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+
+contract ERC20 {
+  /// @notice Send `_amount` tokens to `_to` from `msg.sender`
+  /// @param _to The address of the recipient
+  /// @param _amount The amount of tokens to be transferred
+  /// @return Whether the transfer was successful or not
+  function transfer(address _to, uint256 _amount) returns (bool success);
+
+  /// @notice Send `_amount` tokens to `_to` from `_from` on the condition it
+  ///  is approved by `_from`
+  /// @param _from The address holding the tokens being transferred
+  /// @param _to The address of the recipient
+  /// @param _amount The amount of tokens to be transferred
+  /// @return True if the transfer was successful
+  function transferFrom(address _from, address _to, uint256 _amount
+  ) returns (bool success);
+
+  /// @param _owner The address that's balance is being requested
+  /// @return The balance of `_owner` at the current block
+  function balanceOf(address _owner) constant returns (uint256 balance);
+
+  /// @notice `msg.sender` approves `_spender` to spend `_amount` tokens on
+  ///  its behalf. This is a modified version of the ERC20 approve function
+  ///  to be a little bit safer
+  /// @param _spender The address of the account able to transfer the tokens
+  /// @param _amount The amount of tokens to be approved for transfer
+  /// @return True if the approval was successful
+  function approve(address _spender, uint256 _amount) returns (bool success);
+
+  /// @dev This function makes it easy to read the `allowed[]` map
+  /// @param _owner The address of the account that owns the token
+  /// @param _spender The address of the account able to transfer the tokens
+  /// @return Amount of remaining tokens of _owner that _spender is allowed
+  ///  to spend
+  function allowance(address _owner, address _spender
+  ) constant returns (uint256 remaining);
+
+  /// @notice `msg.sender` approves `_spender` to send `_amount` tokens on
+  ///  its behalf, and then a function is triggered in the contract that is
+  ///  being approved, `_spender`. This allows users to use their tokens to
+  ///  interact with contracts in one function call instead of two
+  /// @param _spender The address of the contract able to transfer the tokens
+  /// @param _amount The amount of tokens to be approved for transfer
+  /// @return True if the function call was successful
+  function approveAndCall(address _spender, uint256 _amount, bytes _extraData
+  ) returns (bool success);
+
+  /// @dev This function makes it easy to get the total number of tokens
+  /// @return The total number of tokens
+  function totalSupply() constant returns (uint);
+}
+
+
+/*
+    Copyright 2016, Jordi Baylina
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/// @title MiniMeToken Contract
+/// @author Jordi Baylina
+/// @dev This token contract's goal is to make it easy for anyone to clone this
+///  token using the token distribution at a given block, this will allow DAO's
+///  and DApps to upgrade their features in a decentralized manner without
+///  affecting the original token
+/// @dev It is ERC20 compliant, but still needs to under go further testing.
+
+
+/// @dev The token controller contract must implement these functions
 contract TokenController {
     /// @notice Called when `_owner` sends ether to the MiniMe Token contract
     /// @param _owner The address that sent the ether to create tokens
@@ -47,6 +157,9 @@ contract ApproveAndCallFallBack {
     function receiveApproval(address from, uint256 _amount, address _token, bytes _data);
 }
 
+/// @dev The actual token contract, the default controller is the msg.sender
+///  that deploys the contract, so usually this token will be deployed by a
+///  token controller contract, which Giveth will call a "Campaign"
 contract MiniMeToken is Controlled {
 
     string public name;                //The Token's name: e.g. DigixDAO Tokens
@@ -233,7 +346,8 @@ contract MiniMeToken is Controlled {
         //  allowance to zero by calling `approve(_spender,0)` if it is not
         //  already 0 to mitigate the race condition described here:
         //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-        require((_amount == 0) || (allowed[msg.sender][_spender] == 0));
+        // Recommended by Bokky Poobah to remove this check
+        // require((_amount == 0) || (allowed[msg.sender][_spender] == 0));
 
         // Alerts the token controller of the approve function call
         if (isContract(controller)) {
@@ -505,7 +619,7 @@ contract MiniMeToken is Controlled {
     ///  sent tokens to this contract.
     /// @param _token The address of the token contract that you want to recover
     ///  set to 0 in case you want to extract ether.
-    function claimTokens(address _token) public onlyController {
+    function claimTokens(address _token) onlyController {
         if (_token == 0x0) {
             controller.transfer(this.balance);
             return;
@@ -531,28 +645,14 @@ contract MiniMeToken is Controlled {
 
 }
 
-contract CND is MiniMeToken {
-  /**
-    * @dev Constructor
-  */
-  uint256 public constant IS_CND_CONTRACT_MAGIC_NUMBER = 0x1338;
-  function CND(address _tokenFactory)
-    MiniMeToken(
-      _tokenFactory,
-      0x0,                      // no parent token
-      0,                        // no snapshot block number from parent
-      "Cindicator Token",   // Token name
-      18,                       // Decimals
-      "CND",                    // Symbol
-      true                      // Enable transfers
-    ) 
-    {}
 
-    function() payable {
-      require(false);
-    }
-}
+////////////////
+// MiniMeTokenFactory
+////////////////
 
+/// @dev This contract is used to generate clone contracts from a contract.
+///  In solidity this is the way to create a contract from a contract of the
+///  same class
 contract MiniMeTokenFactory {
 
     /// @notice Update the DApp by creating a new token with new functionalities
@@ -588,85 +688,68 @@ contract MiniMeTokenFactory {
     }
 }
 
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
+/**
+ * @title Aigang Contribution contract
+ *
+ *  By contributing ETH to this smart contract you agree to the following terms and conditions:
+ *  https://github.com/AigangNetwork/aigang-crowdsale-contracts/Aigang-T&Cs(171020_clean).docx
+ *
+ */
 
 contract Contribution is Controlled, TokenController {
   using SafeMath for uint256;
 
-  struct WhitelistedInvestor {
-    uint256 tier;
-    bool status;
-    uint256 contributedAmount;
-  }
-
-  mapping(address => WhitelistedInvestor) investors;
-  Tier[4] public tiers;
-  uint256 public tierCount;
-
-  MiniMeToken public cnd;
-  bool public transferable = false;
-  uint256 public October12_2017 = 1507830400;
+  MiniMeToken public aix;
+  bool public transferable;
   address public contributionWallet;
-  address public foundersWallet;
-  address public advisorsWallet;
-  address public bountyWallet;
-  bool public finalAllocation;
+  address public remainderHolder;
+  address public devHolder;
+  address public communityHolder;
+  address public exchanger;
 
-  uint256 public totalTokensSold;
+  address public collector;
+  uint256 public collectorWeiCap;
+  uint256 public collectorWeiCollected;
 
-  bool public paused = false;
+  uint256 public totalWeiCap;             // Total Wei to be collected
+  uint256 public totalWeiCollected;       // How much Wei has been collected
+  uint256 public weiPreCollected;
+  uint256 public notCollectedAmountAfter24Hours;
+  uint256 public twentyPercentWithBonus;
+  uint256 public thirtyPercentWithBonus;
 
-  modifier notAllocated() {
-    require(finalAllocation == false);
-    _;
-  }
+  uint256 public minimumPerTransaction = 0.01 ether;
 
-  modifier endedSale() {
-    require(tierCount == 4); //when last one finished it should be equal to 4
-    _;
-  }
+  uint256 public numWhitelistedInvestors;
+  mapping (address => bool) public canPurchase;
+  mapping (address => uint256) public individualWeiCollected;
 
-  modifier tokenInitialized() {
-    assert(address(cnd) != 0x0);
-    _;
-  }
+  uint256 public startTime;
+  uint256 public endTime;
+
+  uint256 public initializedTime;
+  uint256 public finalizedTime;
+
+  uint256 public initializedBlock;
+  uint256 public finalizedBlock;
+
+  bool public paused;
 
   modifier initialized() {
-    Tier tier = tiers[tierCount];
-    assert(tier.initializedTime() != 0);
+    require(initializedBlock != 0);
     _;
   }
-  /// @notice Provides information if contribution is open
-  /// @return False if the contribuion is closed
-  function contributionOpen() public constant returns(bool) {
-    Tier tier = tiers[tierCount];
-    return (getBlockTimestamp() >= tier.startTime() && 
-           getBlockTimestamp() <= tier.endTime() &&
-           tier.finalizedTime() == 0);
+
+  modifier contributionOpen() {
+    // collector can start depositing 2 days prior
+    if (msg.sender == collector) {
+      require(getBlockTimestamp().add(2 days) >= startTime);
+    } else {
+      require(getBlockTimestamp() >= startTime);
+    }
+    require(getBlockTimestamp() <= endTime);
+    require(finalizedTime == 0);
+    _;
   }
 
   modifier notPaused() {
@@ -674,217 +757,283 @@ contract Contribution is Controlled, TokenController {
     _;
   }
 
-  function Contribution(address _contributionWallet, address _foundersWallet, address _advisorsWallet, address _bountyWallet) {
-    require(_contributionWallet != 0x0);
-    require(_foundersWallet != 0x0);
-    require(_advisorsWallet != 0x0);
-    require(_bountyWallet != 0x0);
-    contributionWallet = _contributionWallet;
-    foundersWallet = _foundersWallet;
-    advisorsWallet =_advisorsWallet;
-    bountyWallet = _bountyWallet;
-    tierCount = 0;
-  }
-  /// @notice Initializes CND token to contribution
-  /// @param _cnd The address of the token contract that you want to set
-  function initializeToken(address _cnd) public onlyController {
-    assert(CND(_cnd).controller() == address(this));
-    assert(CND(_cnd).IS_CND_CONTRACT_MAGIC_NUMBER() == 0x1338);
-    require(_cnd != 0x0);
-    cnd = CND(_cnd);
-  }
-  /// @notice Initializes Tier contribution
-  /// @param _tierNumber number of tier to initialize
-  /// @param _tierAddress address of deployed tier
-  function initializeTier(
-    uint256 _tierNumber,
-    address _tierAddress
-  ) public onlyController tokenInitialized
-  {
-    Tier tier = Tier(_tierAddress);
-    assert(tier.controller() == address(this));
-    //cannot be more than 4 tiers
-    require(_tierNumber >= 0 && _tierNumber <= 3);
-    assert(tier.IS_TIER_CONTRACT_MAGIC_NUMBER() == 0x1337);
-    // check if tier is not defined
-    assert(tiers[_tierNumber] == address(0));
-    tiers[_tierNumber] = tier;
-    InitializedTier(_tierNumber, _tierAddress);
+  function Contribution(address _aix) {
+    require(_aix != 0x0);
+    aix = MiniMeToken(_aix);
   }
 
-  /// @notice If anybody sends Ether directly to this contract, consider the sender will
-  /// be rejected.
-  function () public {
-    require(false);
+  function initialize(
+      address _apt,
+      address _exchanger,
+      address _contributionWallet,
+      address _remainderHolder,
+      address _devHolder,
+      address _communityHolder,
+      address _collector,
+      uint256 _collectorWeiCap,
+      uint256 _totalWeiCap,
+      uint256 _startTime,
+      uint256 _endTime
+  ) public onlyController {
+    // Initialize only once
+    require(initializedBlock == 0);
+    require(initializedTime == 0);
+    assert(aix.totalSupply() == 0);
+    assert(aix.controller() == address(this));
+    assert(aix.decimals() == 18);  // Same amount of decimals as ETH
+
+    require(_contributionWallet != 0x0);
+    contributionWallet = _contributionWallet;
+
+    require(_remainderHolder != 0x0);
+    remainderHolder = _remainderHolder;
+
+    require(_devHolder != 0x0);
+    devHolder = _devHolder;
+
+    require(_communityHolder != 0x0);
+    communityHolder = _communityHolder;
+
+    require(_collector != 0x0);
+    collector = _collector;
+
+    require(_collectorWeiCap > 0);
+    require(_collectorWeiCap <= _totalWeiCap);
+    collectorWeiCap = _collectorWeiCap;
+
+    assert(_startTime >= getBlockTimestamp());
+    require(_startTime < _endTime);
+    startTime = _startTime;
+    endTime = _endTime;
+
+    require(_totalWeiCap > 0);
+    totalWeiCap = _totalWeiCap;
+
+    initializedBlock = getBlockNumber();
+    initializedTime = getBlockTimestamp();
+
+    require(_apt != 0x0);
+    require(_exchanger != 0x0);
+
+    weiPreCollected = MiniMeToken(_apt).totalSupplyAt(initializedBlock);
+
+    // Exchangerate from apt to aix 2500 considering 25% bonus.
+    require(aix.generateTokens(_exchanger, weiPreCollected.mul(2500)));
+    exchanger = _exchanger;
+
+    Initialized(initializedBlock);
   }
-  /// @notice Amount of tokens an investor can purchase
-  /// @param _investor investor address
-  /// @return number of tokens  
-  function investorAmountTokensToBuy(address _investor) public constant returns(uint256) {
-    WhitelistedInvestor memory investor = investors[_investor];
-    Tier tier = tiers[tierCount];
-    uint256 leftToBuy = tier.maxInvestorCap().sub(investor.contributedAmount).mul(tier.exchangeRate());
-    return leftToBuy;
-  }
-  /// @notice Notifies if an investor is whitelisted for contribution
-  /// @param _investor investor address
-  /// @param _tier tier Number
-  /// @return number of tokens 
-  function isWhitelisted(address _investor, uint256 _tier) public constant returns(bool) {
-    WhitelistedInvestor memory investor = investors[_investor];
-    return (investor.tier <= _tier && investor.status);
-  }
-  /// @notice interface for founders to whitelist investors
-  /// @param _addresses array of investors
-  /// @param _tier tier Number
-  /// @param _status enable or disable
-  function whitelistAddresses(address[] _addresses, uint256 _tier, bool _status) public onlyController {
-    for (uint256 i = 0; i < _addresses.length; i++) {
-        address investorAddress = _addresses[i];
-        require(investors[investorAddress].contributedAmount == 0);
-        investors[investorAddress] = WhitelistedInvestor(_tier, _status, 0);
+
+  /// @notice interface for founders to blacklist investors
+  /// @param _investors array of investors
+  function blacklistAddresses(address[] _investors) public onlyController {
+    for (uint256 i = 0; i < _investors.length; i++) {
+      blacklist(_investors[i]);
     }
-   }
-  /// @notice Public function to buy tokens
-   function buy() public payable {
-     proxyPayment(msg.sender);
-   }
-  /// use buy function instead of proxyPayment
-  /// the param address is useless, it always reassigns to msg.sender
-  function proxyPayment(address) public payable 
-    notPaused
-    initialized
-    returns (bool) 
-  {
-    assert(isCurrentTierCapReached() == false);
-    assert(contributionOpen());
-    require(isWhitelisted(msg.sender, tierCount));
-    doBuy();
+  }
+
+  /// @notice interface for founders to whitelist investors
+  /// @param _investors array of investors
+  function whitelistAddresses(address[] _investors) public onlyController {
+    for (uint256 i = 0; i < _investors.length; i++) {
+      whitelist(_investors[i]);
+    }
+  }
+
+  function whitelist(address investor) public onlyController {
+    if (canPurchase[investor]) return;
+    numWhitelistedInvestors++;
+    canPurchase[investor] = true;
+  }
+
+  function blacklist(address investor) public onlyController {
+    if (!canPurchase[investor]) return;
+    numWhitelistedInvestors--;
+    canPurchase[investor] = false;
+  }
+
+  // ETH-AIX exchange rate
+  function exchangeRate() constant public initialized returns (uint256) {
+    if (getBlockTimestamp() <= startTime + 1 hours) {
+      // 15% Bonus
+      return 2300;
+    }
+
+    if (getBlockTimestamp() <= startTime + 2 hours) {
+      // 10% Bonus
+      return 2200;
+    }
+
+    if (getBlockTimestamp() <= startTime + 1 days) {
+      return 2000;
+    }
+
+    uint256 collectedAfter24Hours = notCollectedAmountAfter24Hours.sub(weiToCollect());
+
+    if (collectedAfter24Hours <= twentyPercentWithBonus) {
+      // 15% Bonus
+      return 2300;
+    }
+
+    if (collectedAfter24Hours <= twentyPercentWithBonus + thirtyPercentWithBonus) {
+      // 10% Bonus
+      return 2200;
+    }
+
+    return 2000;
+  }
+
+  function tokensToGenerate(uint256 toFund) constant public returns (uint256) {
+    // collector gets 15% bonus
+    if (msg.sender == collector) {
+      return toFund.mul(2300);
+    }
+
+    return toFund.mul(exchangeRate());
+  }
+
+  /// @notice If anybody sends Ether directly to this contract, consider he is
+  /// getting AIXs.
+  function () public payable notPaused {
+    proxyPayment(msg.sender);
+  }
+
+  //////////
+  // TokenController functions
+  //////////
+
+  /// @notice This method will generally be called by the AIX token contract to
+  ///  acquire AIXs. Or directly from third parties that want to acquire AIXs in
+  ///  behalf of a token holder.
+  /// @param _th AIX holder where the AIXs will be minted.
+  function proxyPayment(address _th) public payable notPaused initialized contributionOpen returns (bool) {
+    require(_th != 0x0);
+    doBuy(_th);
     return true;
   }
 
-  /// @notice Notifies the controller about a token transfer allowing the
-  ///  controller to react if desired
-  /// @return False if the controller does not authorize the transfer
-  function onTransfer(address /* _from */, address /* _to */, uint256 /* _amount */) returns(bool) {
-    return (transferable || getBlockTimestamp() >= October12_2017 );
-  } 
-
-  /// @notice Notifies the controller about an approval allowing the
-  ///  controller to react if desired
-  /// @return False if the controller does not authorize the approval
-  function onApprove(address /* _owner */, address /* _spender */, uint /* _amount */) returns(bool) {
-    return (transferable || getBlockTimestamp() >= October12_2017);
+  function onTransfer(address _from, address, uint256) public returns (bool) {
+    if (_from == exchanger) {
+      return true;
+    }
+    return transferable;
   }
-  /// @notice Allows founders to set transfers before October12_2017
-  /// @param _transferable set True if founders want to let people make transfers
+
+  function onApprove(address _from, address, uint256) public returns (bool) {
+    if (_from == exchanger) {
+      return true;
+    }
+    return transferable;
+  }
+
   function allowTransfers(bool _transferable) onlyController {
     transferable = _transferable;
   }
-  /// @notice calculates how many tokens left for sale
-  /// @return Number of tokens left for tier
-  function leftForSale() public constant returns(uint256) {
-    Tier tier = tiers[tierCount];
-    uint256 weiLeft = tier.cap().sub(tier.totalInvestedWei());
-    uint256 tokensLeft = weiLeft.mul(tier.exchangeRate());
-    return tokensLeft;
-  }
-  /// @notice actual method that funds investor and contribution wallet
-  function doBuy() internal {
-    Tier tier = tiers[tierCount];
-    assert(msg.value <= tier.maxInvestorCap());
-    address caller = msg.sender;
-    WhitelistedInvestor storage investor = investors[caller];
-    uint256 investorTokenBP = investorAmountTokensToBuy(caller);
-    require(investorTokenBP > 0);
 
-    if(investor.contributedAmount == 0) {
-      assert(msg.value >= tier.minInvestorCap());  
+  function doBuy(address _th) internal {
+    // whitelisting only during the first day
+    if (getBlockTimestamp() <= startTime + 1 days) {
+      require(canPurchase[_th] || msg.sender == collector);
+    } else if (notCollectedAmountAfter24Hours == 0) {
+      notCollectedAmountAfter24Hours = weiToCollect();
+      twentyPercentWithBonus = notCollectedAmountAfter24Hours.mul(20).div(100);
+      thirtyPercentWithBonus = notCollectedAmountAfter24Hours.mul(30).div(100);
     }
 
-    uint256 toFund = msg.value;  
-    uint256 tokensGenerated = toFund.mul(tier.exchangeRate());
-    // check that at least 1 token will be generated
-    require(tokensGenerated >= 1);
-    uint256 tokensleftForSale = leftForSale();    
+    require(msg.value >= minimumPerTransaction);
+    uint256 toFund = msg.value;
+    uint256 toCollect = weiToCollectByInvestor(_th);
 
-    if(tokensleftForSale > investorTokenBP ) {
-      if(tokensGenerated > investorTokenBP) {
-        tokensGenerated = investorTokenBP;
-        toFund = investorTokenBP.div(tier.exchangeRate());
+    if (toCollect > 0) {
+      // Check total supply cap reached, sell the all remaining tokens
+      if (toFund > toCollect) {
+        toFund = toCollect;
       }
+      uint256 tokensGenerated = tokensToGenerate(toFund);
+      require(tokensGenerated > 0);
+      require(aix.generateTokens(_th, tokensGenerated));
+
+      contributionWallet.transfer(toFund);
+      individualWeiCollected[_th] = individualWeiCollected[_th].add(toFund);
+      totalWeiCollected = totalWeiCollected.add(toFund);
+      NewSale(_th, toFund, tokensGenerated);
+    } else {
+      toFund = 0;
     }
-
-    if(investorTokenBP > tokensleftForSale) {
-      if(tokensGenerated > tokensleftForSale) {
-        tokensGenerated = tokensleftForSale;
-        toFund = tokensleftForSale.div(tier.exchangeRate());
-      }
-    }
-
-    investor.contributedAmount = investor.contributedAmount.add(toFund);
-    tier.increaseInvestedWei(toFund);
-    if (tokensGenerated == tokensleftForSale) {
-      finalize();
-    }
-    
-    assert(cnd.generateTokens(caller, tokensGenerated));
-    totalTokensSold = totalTokensSold.add(tokensGenerated);
-
-    contributionWallet.transfer(toFund);
-
-    NewSale(caller, toFund, tokensGenerated);
 
     uint256 toReturn = msg.value.sub(toFund);
     if (toReturn > 0) {
-      caller.transfer(toReturn);
-      Refund(toReturn);
+      _th.transfer(toReturn);
     }
   }
-  /// @notice This method will can be called by the anybody to make final allocation
-  /// @return result if everything went succesfully
-  function allocate() public notAllocated endedSale returns(bool) {
-    finalAllocation = true;
-    uint256 totalSupplyCDN = totalTokensSold.mul(100).div(75); // calculate 100%
-    uint256 foundersAllocation = totalSupplyCDN.div(5); // 20% goes to founders
-    assert(cnd.generateTokens(foundersWallet, foundersAllocation));
-    
-    uint256 advisorsAllocation = totalSupplyCDN.mul(38).div(1000); // 3.8% goes to advisors
-    assert(cnd.generateTokens(advisorsWallet, advisorsAllocation));
-    uint256 bountyAllocation = totalSupplyCDN.mul(12).div(1000); // 1.2% goes to  bounty program
-    assert(cnd.generateTokens(bountyWallet, bountyAllocation));
-    return true;
-  }
 
-  /// @notice This method will can be called by the controller after the contribution period
+  /// @notice This method will can be called by the controller before the contribution period
   ///  end or by anybody after the `endTime`. This method finalizes the contribution period
+  ///  by creating the remaining tokens and transferring the controller to the configured
+  ///  controller.
   function finalize() public initialized {
-    Tier tier = tiers[tierCount];
-    assert(tier.finalizedTime() == 0);
-    assert(getBlockTimestamp() >= tier.startTime());
-    assert(msg.sender == controller || getBlockTimestamp() > tier.endTime() || isCurrentTierCapReached());
+    require(finalizedBlock == 0);
+    require(finalizedTime == 0);
+    require(getBlockTimestamp() >= startTime);
+    require(msg.sender == controller || getBlockTimestamp() > endTime || weiToCollect() == 0);
 
-    tier.finalize();
-    tierCount++;
+    // remainder will be minted and locked for 1 year.
+    // This was decided to be removed.
+    // aix.generateTokens(remainderHolder, weiToCollect().mul(2000));
 
-    FinalizedTier(tierCount, tier.finalizedTime());
+    // AIX generated so far is 51% of total
+    uint256 tokenCap = aix.totalSupply().mul(100).div(51);
+    // dev Wallet will have 20% of the total Tokens and will be able to retrieve quarterly.
+    aix.generateTokens(devHolder, tokenCap.mul(20).div(100));
+    // community Wallet will have access to 29% of the total Tokens.
+    aix.generateTokens(communityHolder, tokenCap.mul(29).div(100));
+
+    finalizedBlock = getBlockNumber();
+    finalizedTime = getBlockTimestamp();
+
+    Finalized(finalizedBlock);
   }
-  /// @notice check if tier cap has reached
-  /// @return False if it's still open
-  function isCurrentTierCapReached() public constant returns(bool) {
-    Tier tier = tiers[tierCount];
-    return tier.isCapReached();
+
+  //////////
+  // Constant functions
+  //////////
+
+  /// @return Total eth that still available for collection in weis.
+  function weiToCollect() public constant returns(uint256) {
+    return totalWeiCap > totalWeiCollected ? totalWeiCap.sub(totalWeiCollected) : 0;
+  }
+
+  /// @return Total eth that still available for collection in weis.
+  function weiToCollectByInvestor(address investor) public constant returns(uint256) {
+    uint256 cap;
+    uint256 collected;
+    // adding 1 day as a placeholder for X hours.
+    // This should change into a variable or coded into the contract.
+    if (investor == collector) {
+      cap = collectorWeiCap;
+      collected = individualWeiCollected[investor];
+    } else if (getBlockTimestamp() <= startTime + 1 days) {
+      cap = totalWeiCap.div(numWhitelistedInvestors);
+      collected = individualWeiCollected[investor];
+    } else {
+      cap = totalWeiCap;
+      collected = totalWeiCollected;
+    }
+    return cap > collected ? cap.sub(collected) : 0;
   }
 
   //////////
   // Testing specific methods
   //////////
 
+  /// @notice This function is overridden by the test Mocks.
+  function getBlockNumber() internal constant returns (uint256) {
+    return block.number;
+  }
+
   function getBlockTimestamp() internal constant returns (uint256) {
     return block.timestamp;
   }
-
-
 
   //////////
   // Safety Methods
@@ -895,8 +1044,8 @@ contract Contribution is Controlled, TokenController {
   /// @param _token The address of the token contract that you want to recover
   ///  set to 0 in case you want to extract ether.
   function claimTokens(address _token) public onlyController {
-    if (cnd.controller() == address(this)) {
-      cnd.claimTokens(_token);
+    if (aix.controller() == address(this)) {
+      aix.claimTokens(_token);
     }
 
     if (_token == 0x0) {
@@ -904,7 +1053,7 @@ contract Contribution is Controlled, TokenController {
       return;
     }
 
-    CND token = CND(_token);
+    ERC20 token = ERC20(_token);
     uint256 balance = token.balanceOf(this);
     token.transfer(controller, balance);
     ClaimedTokens(_token, controller, balance);
@@ -917,90 +1066,6 @@ contract Contribution is Controlled, TokenController {
 
   event ClaimedTokens(address indexed _token, address indexed _controller, uint256 _amount);
   event NewSale(address indexed _th, uint256 _amount, uint256 _tokens);
-  event InitializedTier(uint256 _tierNumber, address _tierAddress);
-  event FinalizedTier(uint256 _tierCount, uint256 _now);
-  event Refund(uint256 _amount);
-  
-}
-
-contract Tier is Controlled {
-  using SafeMath for uint256;
-  uint256 public cap;
-  uint256 public exchangeRate;
-  uint256 public minInvestorCap;
-  uint256 public maxInvestorCap;
-  uint256 public startTime;
-  uint256 public endTime;
-  uint256 public initializedTime;
-  uint256 public finalizedTime;
-  uint256 public totalInvestedWei;
-  uint256 public constant IS_TIER_CONTRACT_MAGIC_NUMBER = 0x1337;
-
-  modifier notFinished() {
-    require(finalizedTime == 0);
-    _;
-  }
-
-  function Tier(
-    uint256 _cap,
-    uint256 _minInvestorCap,
-    uint256 _maxInvestorCap,
-    uint256 _exchangeRate,
-    uint256 _startTime,
-    uint256 _endTime
-  )
-  {
-    require(initializedTime == 0);
-    assert(_startTime >= getBlockTimestamp());
-    require(_startTime < _endTime);
-    startTime = _startTime;
-    endTime = _endTime;
-
-    require(_cap > 0);
-    require(_cap > _maxInvestorCap);
-    cap = _cap;
-
-    require(_minInvestorCap < _maxInvestorCap && _maxInvestorCap > 0);
-    minInvestorCap = _minInvestorCap;
-    maxInvestorCap = _maxInvestorCap;
-
-    require(_exchangeRate > 0);
-    exchangeRate = _exchangeRate;
-
-    initializedTime = getBlockTimestamp();
-    InitializedTier(_cap, _minInvestorCap, maxInvestorCap, _startTime, _endTime);
-  }
-
-  function getBlockTimestamp() internal constant returns (uint256) {
-    return block.timestamp;
-  }
-
-  function isCapReached() public constant returns(bool) {
-    return totalInvestedWei == cap;
-  }
-
-  function finalize() public onlyController {
-    require(finalizedTime == 0);
-    uint256 currentTime = getBlockTimestamp();
-    assert(cap == totalInvestedWei || currentTime > endTime || msg.sender == controller);
-    finalizedTime = currentTime;
-  }
-
-  function increaseInvestedWei(uint256 _wei) external onlyController notFinished {
-    totalInvestedWei = totalInvestedWei.add(_wei);
-    IncreaseInvestedWeiAmount(_wei, totalInvestedWei);
-  }
-
-  event InitializedTier(
-   uint256 _cap,
-   uint256 _minInvestorCap, 
-   uint256 _maxInvestorCap, 
-   uint256 _startTime,
-   uint256 _endTime
-  );
-
-  function () public {
-    require(false);
-  }
-  event IncreaseInvestedWeiAmount(uint256 _amount, uint256 _newWei);
+  event Initialized(uint _now);
+  event Finalized(uint _now);
 }
