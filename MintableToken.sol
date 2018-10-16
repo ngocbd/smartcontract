@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintableToken at 0x5297471c61af38a47c66111585d34668c9ec467c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintableToken at 0x4c073c892083fcf6b416169b73c1df5f6570347a
 */
 pragma solidity ^0.4.18;
-
 
 /**
  * @title SafeMath
@@ -295,6 +294,14 @@ contract Crowdsale {
     // amount of raised money in wei
     uint256 public weiRaised;
 
+    // march 1 00:00 GMT
+    uint public bonus20end = 1519862400;
+    // april 1 00:00 GMT
+    uint public bonus15end = 1522540800;
+    // may 1 00:00 GMT
+    uint public bonus10end = 1525132800;
+
+
     /**
      * event for token purchase logging
      * @param purchaser who paid for the tokens
@@ -316,7 +323,6 @@ contract Crowdsale {
         return new MintableToken();
     }
 
-
     // fallback function can be used to buy tokens
     function () external payable {
         buyTokens(msg.sender);
@@ -331,14 +337,14 @@ contract Crowdsale {
         uint256 weiAmount = msg.value;
 
         // calculate token amount to be created
-        uint256 tokens = weiAmount.mul(rate);
+        uint256 tokens = weiAmount.mul(rate).mul(getCurrentBonus()).div(100);
 
         // update state
         weiRaised = weiRaised.add(weiAmount);
 
         token.mint(beneficiary, tokens);
         TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
-        wallet.transfer(msg.value);
+        forwardFunds();
     }
 
     // send ether to the fund collection wallet
@@ -356,5 +362,12 @@ contract Crowdsale {
     // @return true if crowdsale event has ended
     function hasEnded() public view returns (bool) {
         return token.totalSupply() >= hardCap;
+    }
+
+    function getCurrentBonus() public view returns (uint) {
+        if (now < bonus20end) return 120;
+        if (now < bonus15end) return 115;
+        if (now < bonus10end) return 110;
+        return 100;
     }
 }
