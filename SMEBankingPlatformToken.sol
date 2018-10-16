@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SMEBankingPlatformToken at 0x941dbfc9983d6caf958dc40a79f42251d409b3f1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SMEBankingPlatformToken at 0xdfe7351c291bc0e49079c62212587244e1c666ba
 */
 pragma solidity ^0.4.18;
 
