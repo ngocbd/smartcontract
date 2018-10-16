@@ -1,19 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SpaceChain at 0xe7dfa3fd5cefd9c07fe88485b6f196ba7f8ac48b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SpaceChain at 0x439935b1060c7f48e5f59f92aeb52fdbc5faff29
 */
-/* Create by www.hestart.com */
 pragma solidity ^0.4.8;
 contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
 
-contract SpaceChain {
-    /* Public variables of the token */
+contract SpaceChain   {
     string public standard = 'SpaceChain 0.1';
     string public name;
     string public symbol;
     uint8 public decimals;
     uint256 public totalSupply;
 
-    /* This creates an array with all balances . */
+    /* This creates an array with all balances */
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
 
@@ -25,10 +23,10 @@ contract SpaceChain {
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function SpaceChain() {
-        balanceOf[msg.sender] =  1000000000000 * 1000000000000000000;              // Give the creator all initial tokens
-        totalSupply =  1000000000000 * 1000000000000000000;                        // Update total supply
+        balanceOf[msg.sender] =  300000000 * 1000000000000000000;              // Give the creator all initial tokens
+        totalSupply =  300000000 * 1000000000000000000;                        // Update total supply
         name = "SpaceChain";                                   // Set the name for display purposes
-        symbol = "SPACE";                               // Set the symbol for display purposes
+        symbol = "SChain";                               // Set the symbol for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
     }
 
