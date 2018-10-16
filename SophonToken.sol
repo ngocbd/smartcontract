@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SophonToken at 0x8005e968f848fa0c06bf24c221874fbc70d396bc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SophonToken at 0xf10848650b0c023abf0a4d92772b85aac4402cac
 */
 pragma solidity ^0.4.18;
 
@@ -45,9 +45,9 @@ contract IERC20Token {
 }
 
 contract ERC20Token is IERC20Token, Utils {
-    string public standard = "ERC20Token";
-    string public name = "Sophon";
-    string public symbol = "SSS";
+    string public standard = "ERC20TOKEN";
+    string public name = "SUPERSTRING SOPHON";
+    string public symbol = "SOPHON";
     uint8 public decimals = 18;
     uint256 public totalSupply = 0;
     mapping (address => uint256) public balanceOf;
