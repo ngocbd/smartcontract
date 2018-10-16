@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BITToken at 0x1dc75212ca6489dd26f8dedb9411f230a4e493cc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BITToken at 0x0ea14614ffa69a7feb51511e03d9e09f3d976bdb
 */
 pragma solidity ^0.4.13;
 
@@ -379,22 +379,33 @@ contract PausableToken is StandardToken, Pausable {
 contract BITToken is MintableToken, PausableToken {
 
     event Vested(address indexed beneficiary, address indexed vestingContract, uint256 releaseDate, uint256 amount);
-    event TransferWithData(address indexed _from, address indexed _to, uint256 _value, bytes32 data);
+    event BITTransfer(address indexed _from, address indexed _to, uint256 _value, bytes32 data);
 
     uint256 public constant decimals = 18;
-    string public constant name = "TempToken2";
-    string public constant symbol = "TEMP2";
+    string public constant name = "TempToken";
+    string public constant symbol = "TEMP";
 
-    function transferWithData (address _to, uint256 _value, bytes32 _data) public returns(bool res) {
-        if (super.transfer(_to, _value)) {
-            emit TransferWithData(msg.sender, _to, _value, _data);
+    /**
+     * This function creates vesting fund for `_beneficiary` and mints
+     * `_amount` tokens to its account. Minted tokens will remain frozen
+     * for `_releaseDate` blocks.
+     */
+
+    function BITToken () public MintableToken() {
+
+    }
+
+
+    function transfer (address _to, uint256 _value, bytes32 _data) public returns(bool res) {
+        if (PausableToken.transfer(_to, _value)) {
+            emit BITTransfer(msg.sender, _to, _value, _data);
             return true;
         }
     }
 
-    function transferFromWithData (address _from, address _to, uint256 _value, bytes32 _data) public returns(bool res) {
-        if (super.transferFrom(_from, _to, _value)) {
-            emit TransferWithData(_from, _to, _value, _data);
+    function transferFrom (address _from, address _to, uint256 _value, bytes32 _data) public returns(bool res) {
+        if (PausableToken.transferFrom(_from, _to, _value)) {
+            emit BITTransfer(_from, _to, _value, _data);
             return true;
         }
     }
