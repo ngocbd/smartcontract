@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NTVToken at 0x47cfba6dba7999949055f91b7e71ef12e34ae2a3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NTVToken at 0xeaed30a1854260b8cf773ec332b40bf6f415f396
 */
 pragma solidity ^0.4.18;
 
@@ -541,8 +541,6 @@ contract NTVUToken is BasicToken, Ownable, Auction {
 contract NTVToken is Ownable {
     using SafeMath for uint256;
 
-    uint8 public MAX_TIME_RANGE_COUNT = 66; // ????66?????
-
     bool public isRunning; // ??????
 
     uint public onlineTime; // ???????????????
@@ -657,7 +655,6 @@ contract NTVToken is Ownable {
      */
     function createNTVU() public onlyOwner {
         require(isRunning);
-        require(totalTimeRange < MAX_TIME_RANGE_COUNT);
 
         uint8 number = totalTimeRange++;
         uint8 day = number / 6;
