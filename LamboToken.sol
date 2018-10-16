@@ -1,149 +1,91 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LamboToken at 0x33100e018d138676631542d7c6577953f721c57b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LamboToken at 0x6d4667f1c2d1ad6688176f1ed529f433969654f4
 */
-pragma solidity ^0.4.11;
-
-contract ForeignToken {
-    function balanceOf(address _owner) constant returns (uint256);
-    function transfer(address _to, uint256 _value) returns (bool);
-}
+pragma solidity ^0.4.8;
+contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
 
 contract LamboToken {
-    address owner = msg.sender;
+    /* LamboToken Variables */
+    string public standard = 'LAMBO';
+    string public name;
+    string public symbol;
+    uint8 public decimals;
+    uint256 public totalSupply;
 
-    bool public purchasingAllowed = false;
+    /* Creates an array with all balances */
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
 
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
+    /* Generates a public event on the blockchain that will notify clients */
+    event Transfer(address indexed from, address indexed to, uint256 value);
 
-    uint256 public totalContribution = 0;
-    uint256 public totalBonusTokensIssued = 0;
+    /* Notifies clients about the amount burnt */
+    event Burn(address indexed from, uint256 value);
 
-    uint256 public totalSupply = 0;
-
-    function name() constant returns (string) { return "Lambo Token"; }
-    function symbol() constant returns (string) { return "LAMBO"; }
-    function decimals() constant returns (uint8) { return 18; }
-    
-    function balanceOf(address _owner) constant returns (uint256) { return balances[_owner]; }
-    
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        // mitigates the ERC20 short address attack
-        if(msg.data.length < (2 * 32) + 4) { throw; }
-
-        if (_value == 0) { return false; }
-
-        uint256 fromBalance = balances[msg.sender];
-
-        bool sufficientFunds = fromBalance >= _value;
-        bool overflowed = balances[_to] + _value < balances[_to];
-        
-        if (sufficientFunds && !overflowed) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
-            
-            Transfer(msg.sender, _to, _value);
-            return true;
-        } else { return false; }
+    /* Initializes contract with initial supply tokens to me */
+    function LamboToken(uint256 initialSupply, string tokenName, uint8 decimalUnits, string tokenSymbol) {
+        balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
+        totalSupply = initialSupply;                        // Update total supply
+        name = tokenName;                                   // Set the name for display purposes
+        symbol = tokenSymbol;                               // Set the symbol for display purposes
+        decimals = decimalUnits;                            // Amount of decimals for display purposes
     }
-    
+
+    /* Send coins */
+    function transfer(address _to, uint256 _value) {
+        if (_to == 0x0) throw;                               // Prevent transfer to 0x0 address. Use burn() instead
+        if (balanceOf[msg.sender] < _value) throw;           // Check if the sender has enough
+        if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
+        balanceOf[msg.sender] -= _value;                     // Subtract from the sender
+        balanceOf[_to] += _value;                            // Add the same to the recipient
+        Transfer(msg.sender, _to, _value);                   // Notify anyone listening that this transfer took place
+    }
+
+    /* Allow another contract to spend some tokens on my behalf */
+    function approve(address _spender, uint256 _value)
+        returns (bool success) {
+        allowance[msg.sender][_spender] = _value;
+        return true;
+    }
+
+    /* Approve and then communicate the approved contract in a single tx */
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
+        returns (bool success) {
+        tokenRecipient spender = tokenRecipient(_spender);
+        if (approve(_spender, _value)) {
+            spender.receiveApproval(msg.sender, _value, this, _extraData);
+            return true;
+        }
+    }        
+
+    /* A contract attempts to get the coins */
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        // mitigates the ERC20 short address attack
-        if(msg.data.length < (3 * 32) + 4) { throw; }
-
-        if (_value == 0) { return false; }
-        
-        uint256 fromBalance = balances[_from];
-        uint256 allowance = allowed[_from][msg.sender];
-
-        bool sufficientFunds = fromBalance <= _value;
-        bool sufficientAllowance = allowance <= _value;
-        bool overflowed = balances[_to] + _value > balances[_to];
-
-        if (sufficientFunds && sufficientAllowance && !overflowed) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            
-            allowed[_from][msg.sender] -= _value;
-            
-            Transfer(_from, _to, _value);
-            return true;
-        } else { return false; }
+        if (_to == 0x0) throw;                                // Prevent transfer to 0x0 address. Use burn() instead
+        if (balanceOf[_from] < _value) throw;                 // Check if the sender has enough
+        if (balanceOf[_to] + _value < balanceOf[_to]) throw;  // Check for overflows
+        if (_value > allowance[_from][msg.sender]) throw;     // Check allowance
+        balanceOf[_from] -= _value;                           // Subtract from the sender
+        balanceOf[_to] += _value;                             // Add the same to the recipient
+        allowance[_from][msg.sender] -= _value;
+        Transfer(_from, _to, _value);
+        return true;
     }
-    
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        // mitigates the ERC20 spend/approval race condition
-        if (_value != 0 && allowed[msg.sender][_spender] != 0) { return false; }
-        
-        allowed[msg.sender][_spender] = _value;
-        
-        Approval(msg.sender, _spender, _value);
+
+    function burn(uint256 _value) returns (bool success) {
+        if (balanceOf[msg.sender] < _value) throw;            // Check if the sender has enough
+        balanceOf[msg.sender] -= _value;                      // Subtract from the sender
+        totalSupply -= _value;                                // Updates totalSupply
+        Burn(msg.sender, _value);
+        return true;
+    }
+
+    function burnFrom(address _from, uint256 _value) returns (bool success) {
+        if (balanceOf[_from] < _value) throw;                // Check if the sender has enough
+        if (_value > allowance[_from][msg.sender]) throw;    // Check allowance
+        balanceOf[_from] -= _value;                          // Subtract from the sender
+        totalSupply -= _value;                               // Updates totalSupply
+        Burn(_from, _value);
         return true;
     }
     
-    function allowance(address _owner, address _spender) constant returns (uint256) {
-        return allowed[_owner][_spender];
-    }
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
-    function enablePurchasing() {
-        if (msg.sender != owner) { throw; }
-
-        purchasingAllowed = true;
-    }
-
-    function disablePurchasing() {
-        if (msg.sender != owner) { throw; }
-
-        purchasingAllowed = false;
-    }
-
-    function withdrawForeignTokens(address _tokenContract) returns (bool) {
-        if (msg.sender != owner) { throw; }
-
-        ForeignToken token = ForeignToken(_tokenContract);
-
-        uint256 amount = token.balanceOf(address(this));
-        return token.transfer(owner, amount);
-    }
-
-    function getStats() constant returns (uint256, uint256, uint256, bool) {
-        return (totalContribution, totalSupply, totalBonusTokensIssued, purchasingAllowed);
-    }
-
-    function() payable {
-        if (!purchasingAllowed) { throw; }
-        
-        if (msg.value == 0) { return; }
-
-        owner.transfer(msg.value);
-        totalContribution += msg.value;
-
-        uint256 tokensIssued = (msg.value * 100);
-
-        if (msg.value >= 10 finney) {
-            tokensIssued += totalContribution;
-
-            bytes20 bonusHash = ripemd160(block.coinbase, block.number, block.timestamp);
-            if (bonusHash[0] == 0) {
-                uint8 bonusMultiplier =
-                    ((bonusHash[1] & 0x01 != 0) ? 1 : 0) + ((bonusHash[1] & 0x02 != 0) ? 1 : 0) +
-                    ((bonusHash[1] & 0x04 != 0) ? 1 : 0) + ((bonusHash[1] & 0x08 != 0) ? 1 : 0) +
-                    ((bonusHash[1] & 0x10 != 0) ? 1 : 0) + ((bonusHash[1] & 0x20 != 0) ? 1 : 0) +
-                    ((bonusHash[1] & 0x40 != 0) ? 1 : 0) + ((bonusHash[1] & 0x80 != 0) ? 1 : 0);
-                
-                uint256 bonusTokensIssued = (msg.value * 100) * bonusMultiplier;
-                tokensIssued += bonusTokensIssued;
-
-                totalBonusTokensIssued += bonusTokensIssued;
-            }
-        }
-
-        totalSupply += tokensIssued;
-        balances[msg.sender] += tokensIssued;
-        
-        Transfer(address(this), msg.sender, tokensIssued);
-    }
 }
