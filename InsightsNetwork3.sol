@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract InsightsNetwork3 at 0xb3aac808b10eb65b74b59deb4f1998b52327bd1a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract InsightsNetwork3 at 0xc72fe8e3dd5bef0f9f31f259399f301272ef2a2d
 */
 pragma solidity ^0.4.18;
 
@@ -519,12 +519,14 @@ contract InsightsNetwork2Base is DetailedERC20("Insights Network", "INSTAR", 18)
     address public predecessor;
     address public successor;
 
+    uint constant MAX_LENGTH = 1024;
     uint constant MAX_PURCHASES = 64;
+
     mapping (address => uint256[]) public lockedBalances;
     mapping (address => uint256[]) public unlockTimes;
     mapping (address => bool) public imported;
 
-    event Import(address indexed account, uint256 amount, uint256 unlockTime);    
+    event Import(address indexed account, uint256 amount, uint256 unlockTime);
 
     function InsightsNetwork2Base() public CappedToken(300*1000000*ATTOTOKEN_FACTOR) {
         paused = true;
@@ -548,6 +550,14 @@ contract InsightsNetwork2Base is DetailedERC20("Insights Network", "INSTAR", 18)
         return amount;
     }
 
+    function mintBatch(address[] accounts, uint256[] amounts) public onlyOwner canMint returns (bool) {
+        require(accounts.length == amounts.length);
+        require(accounts.length <= MAX_LENGTH);
+        for (uint index = 0; index < accounts.length; index++)
+            require(mint(accounts[index], amounts[index]));
+        return true;
+    }
+
     function mintUnlockTime(address account, uint256 amount, uint256 unlockTime) public onlyOwner canMint returns (bool) {
         require(unlockTime > now);
         require(lockedBalances[account].length < MAX_PURCHASES);
@@ -556,20 +566,28 @@ contract InsightsNetwork2Base is DetailedERC20("Insights Network", "INSTAR", 18)
         return super.mint(account, amount);
     }
 
+    function mintUnlockTimeBatch(address[] accounts, uint256[] amounts, uint256 unlockTime) public onlyOwner canMint returns (bool) {
+        require(accounts.length == amounts.length);
+        require(accounts.length <= MAX_LENGTH);
+        for (uint index = 0; index < accounts.length; index++)
+            require(mintUnlockTime(accounts[index], amounts[index], unlockTime));
+        return true;
+    }
+
     function mintLockPeriod(address account, uint256 amount, uint256 lockPeriod) public onlyOwner canMint returns (bool) {
         return mintUnlockTime(account, amount, now + lockPeriod);
     }
 
-    function mint(address account, uint256 amount) public onlyOwner canMint returns (bool) {
-        return mintLockPeriod(account, amount, 1 years);
+    function mintLockPeriodBatch(address[] accounts, uint256[] amounts, uint256 lockPeriod) public onlyOwner canMint returns (bool) {
+        return mintUnlockTimeBatch(accounts, amounts, now + lockPeriod);
     }
 
-    function importBalanceOf(address account) public onlyOwner canMint returns (bool);
+    function importBalance(address account) public onlyOwner canMint returns (bool);
 
-    function importBalancesOf(address[] accounts) public onlyOwner canMint returns (bool) {
-        require(accounts.length <= 1024);
+    function importBalanceBatch(address[] accounts) public onlyOwner canMint returns (bool) {
+        require(accounts.length <= MAX_LENGTH);
         for (uint index = 0; index < accounts.length; index++)
-            require(importBalanceOf(accounts[index]));
+            require(importBalance(accounts[index]));
         return true;
     }
 
@@ -589,30 +607,37 @@ contract InsightsNetwork2Base is DetailedERC20("Insights Network", "INSTAR", 18)
         selfdestruct(owner);
     }
 
-    function predecessorDeactivated(address _predecessor) internal onlyOwner returns (bool);
+    function predecessorDeactivated(address _predecessor) internal view onlyOwner returns (bool);
 
 }
 
 // File: contracts/InsightsNetwork3.sol
+
 contract InsightsNetwork3 is InsightsNetwork2Base {
 
-    function importBalanceOf(address account) public onlyOwner canMint returns (bool) {
+    function importBalance(address account) public onlyOwner canMint returns (bool) {
         require(!imported[account]);
         InsightsNetwork2Base source = InsightsNetwork2Base(predecessor);
         uint256 amount = source.balanceOf(account);
         require(amount > 0);
         imported[account] = true;
+        uint256 mintAmount = amount - source.lockedBalanceOf(account);
+        Import(account, mintAmount, now);
+        assert(mint(account, mintAmount));
+        amount -= mintAmount;
         for (uint index = 0; amount > 0; index++) {
-            uint256 mintAmount = source.lockedBalances(account, index);
             uint256 unlockTime = source.unlockTimes(account, index);
-            Import(account, mintAmount, unlockTime);
-            assert(mintUnlockTime(account, mintAmount, unlockTime));
-            amount -= mintAmount;
+            if ( unlockTime > now ) {
+                mintAmount = source.lockedBalances(account, index);
+                Import(account, mintAmount, unlockTime);
+                assert(mintUnlockTime(account, mintAmount, unlockTime));
+                amount -= mintAmount;
+            }
         }
         return true;
     }
 
-    function predecessorDeactivated(address _predecessor) internal onlyOwner returns (bool) {
+    function predecessorDeactivated(address _predecessor) internal view onlyOwner returns (bool) {
         return InsightsNetwork2Base(_predecessor).paused() && InsightsNetwork2Base(_predecessor).mintingFinished();
     }
 
