@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZipToken at 0x3b96990a8ef293cdd37c8e1ad3d210a0166f40e1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZipToken at 0xedd7c94fd7b4971b916d15067bc454b9e1bad980
 */
 pragma solidity ^0.4.18;
 
@@ -342,16 +342,17 @@ contract PausableToken is StandardToken, Pausable {
 // File: contracts/ZipToken.sol
 
 contract ZipToken is PausableToken {
-    string public constant NAME = "ZIPT Convertible";
-    string public constant SYMBOL = "ZIPTC";
-    uint8 public constant DECIMALS = 18;
+    string public constant name = "Zippie";
+    string public constant symbol = "ZIPT";
+    uint8 public constant decimals = 18;
     uint public constant TOTAL_TOKEN_AMOUNT = 1000000000;
-    uint public constant INITIAL_SUPPLY = TOTAL_TOKEN_AMOUNT * 10**uint(DECIMALS);
+    uint public constant INITIAL_SUPPLY = TOTAL_TOKEN_AMOUNT * 10**uint(decimals);
     bool public filled = false;
 
     function ZipToken() public {
         totalSupply_ = INITIAL_SUPPLY;
         balances[msg.sender] = INITIAL_SUPPLY;
+        Transfer(0x0, msg.sender, INITIAL_SUPPLY);
     }
 
     function distributeTokens(address[] addresses, uint[] values) public onlyOwner {
@@ -359,13 +360,7 @@ contract ZipToken is PausableToken {
         for (uint i = 0; i < addresses.length; i++) {
             address a = addresses[i];
             uint v = values[i];
-            if (balanceOf(a) == 0) {
-                transfer(a, v);
-            }
+            transfer(a, v);
         }
-    }
-
-    function die() public onlyOwner {
-      selfdestruct(msg.sender);
     }
 }
