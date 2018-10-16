@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SolarDaoTokenCrowdsale at 0x1103849f41222a4c348515331f0e734d4bd9ad34
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SolarDaoTokenCrowdsale at 0x2b08f3aB8986075F8691ea9abC393642964e64c5
 */
 pragma solidity ^0.4.13;
 
@@ -279,7 +279,7 @@ contract SolarDaoTokenCrowdsale is Haltable, Killable, SafeMath {
   uint constant public PRICE = 100;
 
   /// Duration of the pre-ICO stage
-  uint constant public PRE_ICO_DURATION = 5 weeks;
+  uint constant public PRE_ICO_DURATION = 6 weeks;
 
   /// The token we are selling
   SolarDaoToken public token;
@@ -392,7 +392,7 @@ contract SolarDaoTokenCrowdsale is Haltable, Killable, SafeMath {
     endsAt = _end;
     preInvestStart = _preInvestStart;
 
-    var preIcoBonuses = [uint(100), 80, 70, 60, 50];
+    var preIcoBonuses = [uint(100), 80, 70, 60, 50, 50];
     for (uint i = 0; i < preIcoBonuses.length; i++) {
       milestones.push(Milestone(preInvestStart + i * 1 weeks, preInvestStart + (i + 1) * 1 weeks, preIcoBonuses[i]));
     }
@@ -445,7 +445,7 @@ contract SolarDaoTokenCrowdsale is Haltable, Killable, SafeMath {
     tokenAmountOf[receiver] = safeAdd(tokenAmountOf[receiver], tokensAmount);
     // Update totals
     weiRaised = safeAdd(weiRaised, weiAmount);
-    tokensSold = safeAdd(tokensSold, tokensAmount);   
+    tokensSold = safeAdd(tokensSold, tokensAmount);
 
     assignTokens(receiver, tokensAmount);
     var teamBonusTokens = safeDiv(safeMul(tokensAmount, TEAM_BONUS_PERCENT), 100 - TEAM_BONUS_PERCENT);
@@ -476,7 +476,7 @@ contract SolarDaoTokenCrowdsale is Haltable, Killable, SafeMath {
   }
 
   /// @dev Finalize a succcesful crowdsale.
-  function finalizeCrowdsale() internal {    
+  function finalizeCrowdsale() internal {
     token.releaseTokenTransfer();
   }
 
@@ -501,19 +501,19 @@ contract SolarDaoTokenCrowdsale is Haltable, Killable, SafeMath {
      exchangeRateAgent = newAgent;
    }
  }
- 
+
   /// @dev Method set data from migrated contract
   /// @param _tokensSold tokens sold
   /// @param _weiRaised _wei raised
   /// @param _investorCount investor count
- function setCrowdsaleData(uint _tokensSold, uint _weiRaised, uint _investorCount) onlyOwner {  
+ function setCrowdsaleData(uint _tokensSold, uint _weiRaised, uint _investorCount) onlyOwner {
 	require(_tokensSold > 0);
 	require(_weiRaised > 0);
 	require(_investorCount > 0);
-	
+
 	tokensSold = _tokensSold;
 	weiRaised = _weiRaised;
-	investorCount = _investorCount;	
+	investorCount = _investorCount;
  }
 
   function getDifference(int one, int two) private constant returns (uint) {
@@ -588,7 +588,7 @@ contract SolarDaoTokenCrowdsale is Haltable, Killable, SafeMath {
     assert (usdAmount >= PRICE);
 
     return safeMul(usdAmount, safeDiv(multiplier, PRICE));
-  }  
+  }
 
    /// @dev Check if the pre ICO goal was reached.
    /// @return true if the preICO has raised enough money to be a success
