@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract InsightChainToken at 0x724cabeba74268e339f13b66cce8fc97aa3eea73
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract InsightChainToken at 0x17aa18a4b64a55abed7fa543f2ba4e91f2dce482
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.18;
 
 library SafeMath {
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -63,7 +63,7 @@ contract Ownable {
    */
   function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
+    OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
 
@@ -97,7 +97,7 @@ contract Pausable is Ownable {
    */
   function pause() onlyOwner whenNotPaused public {
     paused = true;
-    emit Pause();
+    Pause();
   }
 
   /**
@@ -105,13 +105,8 @@ contract Pausable is Ownable {
    */
   function unpause() onlyOwner whenPaused public {
     paused = false;
-    emit Unpause();
+    Unpause();
   }
-}
-
-contract Burnable {
-  function burn(uint256 value) public returns (bool);
-  event Burn(address indexed from, uint256 value);
 }
 
 contract ERC20Basic {
@@ -145,7 +140,7 @@ contract BasicToken is ERC20Basic {
     // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
-    emit Transfer(msg.sender, _to, _value);
+    Transfer(msg.sender, _to, _value);
     return true;
   }
 
@@ -179,7 +174,7 @@ contract StandardToken is ERC20, BasicToken {
     balances[_from] = balances[_from].sub(_value);
     balances[_to] = balances[_to].add(_value);
     allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    emit Transfer(_from, _to, _value);
+    Transfer(_from, _to, _value);
     return true;
   }
 
@@ -195,7 +190,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function approve(address _spender, uint256 _value) public returns (bool) {
     allowed[msg.sender][_spender] = _value;
-    emit Approval(msg.sender, _spender, _value);
+    Approval(msg.sender, _spender, _value);
     return true;
   }
 
@@ -221,7 +216,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
@@ -242,13 +237,13 @@ contract StandardToken is ERC20, BasicToken {
     } else {
       allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
-    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
 }
 
-contract PausableToken is StandardToken, Pausable, Burnable {
+contract PausableToken is StandardToken, Pausable {
 
   function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
     return super.transfer(_to, _value);
@@ -257,7 +252,7 @@ contract PausableToken is StandardToken, Pausable, Burnable {
   function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
     return super.transferFrom(_from, _to, _value);
   }
-  
+
   function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
     return super.approve(_spender, _value);
   }
@@ -269,36 +264,10 @@ contract PausableToken is StandardToken, Pausable, Burnable {
   function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool success) {
     return super.decreaseApproval(_spender, _subtractedValue);
   }
-
-  function burn(uint256 _value) public onlyOwner whenNotPaused returns (bool success) {
-    // Check if the sender has enough
-    require(balances[msg.sender] >= _value);
-    require(_value > 0);
-    // Subtract from the sender
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    // Updates totalSupply
-    totalSupply = totalSupply.sub(_value);
-    emit Burn(msg.sender, _value);
-    return true;
-  }
-
-  function batchTransfer(address[] _receivers, uint256 _value) public whenNotPaused returns (bool) {
-    uint cnt = _receivers.length;
-    uint256 amount = uint256(cnt) * _value;
-    require(cnt > 0 && cnt <= 20);
-    require(_value > 0 && balances[msg.sender] >= amount);
-
-    balances[msg.sender] = balances[msg.sender].sub(amount);
-    for (uint i = 0; i < cnt; i++) {
-        balances[_receivers[i]] = balances[_receivers[i]].add(_value);
-        emit Transfer(msg.sender, _receivers[i], _value);
-    }
-    return true;
-  }
 }
 
 contract InsightChainToken is PausableToken {
-    string public name = "InsightChain";
+    string public name = "Insight Chain";
     string public symbol = "INB";
     uint public decimals = 18;
     uint public INITIAL_SUPPLY = 10000000000000000000000000000;
