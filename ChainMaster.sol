@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChainMaster at 0x6519af44237b17f67f8915666daf96f21dfcb0b4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChainMaster at 0x7f9697c2d71f933904f3420344ec8b22004f85fa
 */
 // Abstract contract for the full ERC 20 Token standard
 // https://github.com/ethereum/EIPs/issues/20
@@ -111,7 +111,7 @@ contract ChainMaster is StandardToken {
 
     address public founder; // The address of the founder
 
-    function ChainMaster() {
+    function EightteenToken() {
         founder = msg.sender;
         totalSupply = 3141592653 * 10 ** uint256(decimals);
         balances[founder] = totalSupply;
