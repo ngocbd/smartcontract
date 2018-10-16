@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xe3a654b7cd8fa52f01a1f01dec794719ba53c1af
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xc4d6f5bfd149faf37a0decee946251820fe4816b
 */
 pragma solidity ^0.4.4;
 
@@ -106,9 +106,10 @@ contract ERC20Token is StandardToken {
     They allow one to customise the token contract & in no way influences the core functionality.
     Some wallets/interfaces might not even bother to look at this information.
     */
-    
-   
-
+    string public name;                   //fancy name: eg Simon Bucks
+    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
+    string public symbol;                 //An identifier: eg SBX
+    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
 
 //
 // CHANGE THESE VALUES FOR YOUR TOKEN
@@ -116,13 +117,13 @@ contract ERC20Token is StandardToken {
 
 //make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
 
-        function Opulentos(
+    function ERC20Token(
         ) {
-        balances[msg.sender] = 999500;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 999500;                        // Update total supply (100000 for example)
-        "Opulentos";                                   // Set the name for display purposes
-        18;                            // Amount of decimals for display purposes
-        "OPES";                               // Set the symbol for display purposes
+        balances[msg.sender] = 100000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 100000000000000000;                        // Update total supply (100000 for example)
+        name = "GvCoin";                                   // Set the name for display purposes
+        decimals = 6;                            // Amount of decimals for display purposes
+        symbol = "GVC";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
