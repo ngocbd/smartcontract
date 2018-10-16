@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MarriageContract at 0x693d0fe44aee808ef83eb87aea978ca6a5de1433
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MarriageContract at 0xc4261fb59f8b790185135be45033223921319e51
 */
 pragma solidity ^0.4.21;
 
@@ -25,19 +25,19 @@ contract MarriageContract {
         agreement = _agreement;
     }
 
-    function getA() constant returns (address) {
+    function getA() returns (address) {
         return a;
     }
 
-    function getB() constant returns (address) {
+    function getB() returns (address) {
         return b;
     }
 
-    function getTill() constant returns (uint256){
+    function getTill() returns (uint256){
         return till;
     }
 
-    function getAgreement() constant returns (string) {
+    function getAgreement() returns (string) {
         return agreement;
     }
 
