@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EnjinBuyer at 0x2d52d1517f47e1ab7be6377a1f11fbd2c49978db
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EnjinBuyer at 0x6c1bcb34142bffd35f57db626e0ac427af616a4d
 */
 pragma solidity ^0.4.13;
 
@@ -69,33 +69,31 @@ contract EnjinBuyer {
     }
   }
 
-
-  // Use with caution - use this withdraw function if you do not trust the
-  // contract's token setting. You can only use this once, so if you
-  // put in the wrong token address you will burn the Enjin on the contract.
-  function withdraw_token(address _token){
-    ERC20 myToken = ERC20(_token);
-    if (balances_after_buy[msg.sender]>0 && msg.sender != sale) {
-        uint256 eth_to_withdraw_after_buy = balances_after_buy[msg.sender];
-        balances_after_buy[msg.sender] = 0;
-        msg.sender.transfer(eth_to_withdraw_after_buy);
+  function withdraw(address user){
+    require(bought_tokens || kill_switch);
+    // We don't allow the crowdsale to withdraw its funds back (or anyone to do that on their behalf).
+    require(user != sale);
+    if (balances_after_buy[user]>0 && user != sale) {
+        uint256 eth_to_withdraw_after_buy = balances_after_buy[user];
+        balances_after_buy[user] = 0;
+        user.transfer(eth_to_withdraw_after_buy);
     }
-    if (balances[msg.sender] == 0) return;
-    require(msg.sender != sale);
+    if (balances[user] == 0) return;
     if (!bought_tokens || refunded) {
-      uint256 eth_to_withdraw = balances[msg.sender];
-      balances[msg.sender] = 0;
-      msg.sender.transfer(eth_to_withdraw);
+      uint256 eth_to_withdraw = balances[user];
+      balances[user] = 0;
+      user.transfer(eth_to_withdraw);
     }
     else {
-      uint256 contract_token_balance = myToken.balanceOf(address(this));
+      require(token_set);
+      uint256 contract_token_balance = token.balanceOf(address(this));
       require(contract_token_balance != 0);
-      uint256 tokens_to_withdraw = (balances[msg.sender] * contract_token_balance) / contract_eth_value;
-      contract_eth_value -= balances[msg.sender];
-      balances[msg.sender] = 0;
+      uint256 tokens_to_withdraw = (balances[user] * contract_token_balance) / contract_eth_value;
+      contract_eth_value -= balances[user];
+      balances[user] = 0;
       uint256 fee = tokens_to_withdraw / 100;
-      require(myToken.transfer(developer, fee));
-      require(myToken.transfer(msg.sender, tokens_to_withdraw - fee));
+      require(token.transfer(developer, fee));
+      require(token.transfer(user, tokens_to_withdraw - fee));
     }
   }
 
