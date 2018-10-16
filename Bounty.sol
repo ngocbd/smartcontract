@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bounty at 0x973ca13a94eadebaf51dc9b3f74bd646fec5da96
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bounty at 0x72cd732dcce35ae8f1bb8f0b57db644b8b2b3d7c
 */
 pragma solidity ^0.4.0;
 
@@ -9,22 +9,12 @@ contract Bounty {
         mapping(address => uint) witnessedPresenter;
         mapping(address => bool) witnessedBy;
     }
-    
-    event TalkBounty (bytes32 title);
-    
     mapping(bytes32 => Talk) public talks;
-    
-    modifier onlywitness {
-        require(msg.sender == 0x07114957EdBcCc1DA265ea2Aa420a1a22e6afF58
-        || msg.sender == 0x75427E62EB560447165a54eEf9B6367d87F98418);
-        _;
-    }
-    
+
     function add(bytes32 title) payable {
         talks[title].balance += msg.value;
-        TalkBounty(title);
     }
-    
+
     function witness(bytes32 title, address presenter) onlywitness returns (uint) {
         if (talks[title].witnessedBy[msg.sender]) {
             revert();
@@ -33,7 +23,12 @@ contract Bounty {
         talks[title].witnessedPresenter[presenter] += 1;
         return talks[title].witnessedPresenter[presenter];
     }
-    
+
+    modifier onlywitness {
+        require(msg.sender == 0xa4e15612af5434f05b22405c574d015e54a5e13e);
+        _;
+    }
+
     function claim(bytes32 title) {
         if (talks[title].witnessedPresenter[msg.sender] < 2) {
             revert();
