@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PiperToken at 0x6f59c5e4a98bbeca595cd8f44d4ae6c1f055edbc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PiperToken at 0x6c2fa6691b237c9e453926d8d484d4c5ab635db5
 */
-pragma solidity ^0.4.23;
+pragma solidity ^0.4.9;
 
 //import "./Receiver_Interface.sol";
  contract ContractReceiver {
@@ -85,16 +85,14 @@ contract PiperToken is ERC223, SafeMath {
   string public name = "Peid Piper Token";
   string public symbol = "PIP";
   uint8 public decimals = 18;
-  uint256 public totalSupply = 0;
+  uint256 public totalSupply = 1000000000000000000000000;
   uint256 exchange = 1000000;
-  uint256 endICO = 0;
+  uint256 endICO = 1527812056;
   address admin;
   
-  constructor() public {
+  function PiperToken() public {
       balances[msg.sender]=1000000000000000000000000;
       admin = msg.sender;
-      
-      endICO=block.timestamp+(60*60*24*31); // 31 days
   }
   
   // Function to access name of token .
@@ -116,7 +114,7 @@ contract PiperToken is ERC223, SafeMath {
   
   function () public payable{
       
-      if(block.timestamp>endICO)revert("ICO OVER");
+      if(block.timestamp>endICO)revert();
       balances[msg.sender]=safeAdd(balances[msg.sender],safeMul(msg.value,exchange));
       totalSupply=safeAdd(totalSupply,safeMul(msg.value,exchange)); // increase the supply
       admin.transfer(address(this).balance);
