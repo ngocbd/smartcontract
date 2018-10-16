@@ -1,40 +1,44 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xdd5a3aeef473401c23f24c4c6b9cd1b0808fbb36
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x551b2ea966e9d352f239c7132be04f50efd8b5ed
 */
 pragma solidity ^0.4.16;
- 
+
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
- 
+
 contract TokenERC20 {
     // Public variables of the token
-    string public name = "MiCars";
-    string public symbol = "MCR";
+    string public name;
+    string public symbol;
     uint8 public decimals = 18;
-    // 3 decimals is the strongly suggested default, avoid changing it
-    uint256 public totalSupply = 100000000;
- 
+    // 18 decimals is the strongly suggested default, avoid changing it
+    uint256 public totalSupply;
+
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
- 
+
     // This generates a public event on the blockchain that will notify clients
     event Transfer(address indexed from, address indexed to, uint256 value);
- 
+
     // This notifies clients about the amount burnt
     event Burn(address indexed from, uint256 value);
- 
+
     /**
      * Constrctor function
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function TokenERC20() public {
-        totalSupply = totalSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+    function TokenERC20(
+        uint256 initialSupply,
+        string tokenName,
+        string tokenSymbol
+    ) public {
+        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = name;                                   // Set the name for display purposes
-        symbol = symbol;                               // Set the symbol for display purposes
+        name = tokenName;                                   // Set the name for display purposes
+        symbol = tokenSymbol;                               // Set the symbol for display purposes
     }
- 
+
     /**
      * Internal transfer, only can be called by this contract
      */
@@ -55,7 +59,7 @@ contract TokenERC20 {
         // Asserts are used to use static analysis to find bugs in your code. They should never fail
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
- 
+
     /**
      * Transfer tokens
      *
@@ -67,7 +71,7 @@ contract TokenERC20 {
     function transfer(address _to, uint256 _value) public {
         _transfer(msg.sender, _to, _value);
     }
- 
+
     /**
      * Transfer tokens from other address
      *
@@ -83,7 +87,7 @@ contract TokenERC20 {
         _transfer(_from, _to, _value);
         return true;
     }
- 
+
     /**
      * Set allowance for other address
      *
@@ -97,7 +101,7 @@ contract TokenERC20 {
         allowance[msg.sender][_spender] = _value;
         return true;
     }
- 
+
     /**
      * Set allowance for other address and notify
      *
@@ -116,7 +120,7 @@ contract TokenERC20 {
             return true;
         }
     }
- 
+
     /**
      * Destroy tokens
      *
@@ -131,7 +135,7 @@ contract TokenERC20 {
         Burn(msg.sender, _value);
         return true;
     }
- 
+
     /**
      * Destroy tokens from other account
      *
