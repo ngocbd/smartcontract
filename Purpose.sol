@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Purpose at 0x7641b2ca9ddd58addf6e3381c1f994aac5f1a32f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Purpose at 0xd94f2778e2b3913c53637ae60647598be588c570
 */
 pragma solidity 0.4.18;
 
@@ -326,6 +326,50 @@ contract BurnableToken is BasicToken {
     }
 }
 
+// File: zeppelin-solidity/contracts/ownership/Ownable.sol
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
 // File: zeppelin-solidity/contracts/token/ERC20.sol
 
 /**
@@ -436,34 +480,62 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
+// File: zeppelin-solidity/contracts/token/MintableToken.sol
+
+/**
+ * @title Mintable token
+ * @dev Simple ERC20 Token example, with mintable token creation
+ * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
+ * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
+ */
+
+contract MintableToken is StandardToken, Ownable {
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
+
+  bool public mintingFinished = false;
+
+
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
+
+  /**
+   * @dev Function to mint tokens
+   * @param _to The address that will receive the minted tokens.
+   * @param _amount The amount of tokens to mint.
+   * @return A boolean that indicates if the operation was successful.
+   */
+  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+    totalSupply = totalSupply.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    Mint(_to, _amount);
+    Transfer(address(0), _to, _amount);
+    return true;
+  }
+
+  /**
+   * @dev Function to stop minting new tokens.
+   * @return True if the operation was successful.
+   */
+  function finishMinting() onlyOwner canMint public returns (bool) {
+    mintingFinished = true;
+    MintFinished();
+    return true;
+  }
+}
+
 // File: contracts/Purpose.sol
 
-contract Purpose is StandardToken, BurnableToken, RBAC {
+contract Purpose is StandardToken, BurnableToken, MintableToken, RBAC {
   string public constant name = "Purpose";
   string public constant symbol = "PRPS";
   uint8 public constant decimals = 18;
-  string constant public ROLE_BURN = "burn";
   string constant public ROLE_TRANSFER = "transfer";
-  address public supplier;
 
-  function Purpose(address _supplier) public {
-    supplier = _supplier;
-    totalSupply = 1000000000 ether;
-    balances[supplier] = totalSupply;
-  }
-  
-  // used by burner contract to burn athenes tokens
-  function supplyBurn(uint256 _value) external onlyRole(ROLE_BURN) returns (bool) {
-    require(_value > 0);
-
-    // update state
-    balances[supplier] = balances[supplier].sub(_value);
-    totalSupply = totalSupply.sub(_value);
-
-    // logs
-    Burn(supplier, _value);
-
-    return true;
+  function Purpose() public {
+    totalSupply = 0;
   }
 
   // used by hodler contract to transfer users tokens to it
