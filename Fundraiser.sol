@@ -1,67 +1,177 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fundraiser at 0x7fE4D5E37b83C0DF81E370C95ae814E23C378E4A
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fundraiser at 0xa60ea337ac5c771e4c04630e3bd052e373b40067
 */
-pragma solidity 0.4.11;
+pragma solidity ^0.4.11;
 
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+//! Fundraiser contract. Just records who sent what.
+//! By Parity Technologies, 2017.
+//! Released under the Apache Licence 2.
+//! Modified by the Musereum.
+
+
+
+
+
+/// Will accept Ether "contributions" and records each both as a log and in a
+/// queryable records.
 contract Fundraiser {
+    using SafeMath for uint;
 
-  /* State */
+    // How much is enough?
+    uint public constant dust = 100 finney;
 
-  address public signer1;
-  address public signer2;
+    // Special addresses:
+    //  administrator can halt/unhalt/kill/adjustRate;
+    //  treasury receives all the funds
+    address public admin;
+    address public treasury;
 
-  enum Action {
-    None,
-    Withdraw
-  }
-  
-  struct Proposal {
-    Action action;
-    address destination;
-    uint256 amount;
-  }
-  
-  Proposal public signer1_proposal;
-  Proposal public signer2_proposal;
+    // Begin and end block for the fundraising period
+    //uint public beginBlock;
+    //uint public endBlock;
 
-  /* Constructor, choose signers. Those cannot be changed */
-  function Fundraiser(address init_signer1,
-                      address init_signer2) {
-    signer1 = init_signer1;
-    signer2 = init_signer2;
-    signer1_proposal.action = Action.None;
-    signer2_proposal.action = Action.None;
-  }
+    // Number of wei per btc
+    uint public weiPerBtc;
 
-  /* Entry points for signers */
+    // Default number of etm per btc
+    uint public EtmPerBtc;
 
-  function Withdraw(address proposed_destination,
-                    uint256 proposed_amount) {
-    /* check amount */
-    if (proposed_amount > this.balance) { throw; }
-    /* update action */
-    if (msg.sender == signer1) {
-      signer1_proposal.action = Action.Withdraw;
-      signer1_proposal.destination = proposed_destination;
-      signer1_proposal.amount = proposed_amount;
-    } else if (msg.sender == signer2) {
-      signer2_proposal.action = Action.Withdraw;
-      signer2_proposal.destination = proposed_destination;
-      signer2_proposal.amount = proposed_amount;
-    } else { throw; }
-    /* perform action */
-    MaybePerformWithdraw();
-  }
+    // Are contributions abnormally halted?
+    bool public isHalted = false;
 
-  function MaybePerformWithdraw() internal {
-    if (signer1_proposal.action == Action.Withdraw
-        && signer2_proposal.action == Action.Withdraw
-        && signer1_proposal.amount == signer2_proposal.amount
-        && signer1_proposal.destination == signer2_proposal.destination) {
-      signer1_proposal.action = Action.None;
-      signer2_proposal.action = Action.None;
-      signer1_proposal.destination.transfer(signer1_proposal.amount);
+    // The `records` mapping maps musereum addresses to the amount of ETM.
+    mapping (address => uint) public records;
+
+    // The total amount of ether raised
+    uint public totalWei = 0;
+    // The total amount of ETM suggested for allocation
+    uint public totalETM = 0;
+    // The number of donation
+    uint public numDonations = 0;
+
+    /// Constructor. `_admin` has the ability to pause the
+    /// contribution period and, eventually, kill this contract. `_treasury`
+    /// receives all funds. `_beginBlock` and `_endBlock` define the begin and
+    /// end of the period. `_weiPerBtc` is the ratio of ETM to ether.
+    function Fundraiser(
+        address _admin,
+        address _treasury,
+        //uint _beginBlock,
+        //uint _endBlock,
+        uint _weiPerBtc,
+        uint _EtmPerBtc
+    ) {
+        require(_weiPerBtc > 0);
+        require(_EtmPerBtc > 0);
+
+        admin = _admin;
+        treasury = _treasury;
+        //beginBlock = _beginBlock;
+        //endBlock = _endBlock;
+
+        weiPerBtc = _weiPerBtc;
+        EtmPerBtc = _EtmPerBtc;
     }
-  }
 
+    // Can only be called by admin.
+    modifier only_admin { require(msg.sender == admin); _; }
+    // Can only be called by prior to the period.
+    //modifier only_before_period { require(block.number < beginBlock); _; }
+    // Can only be called during the period when not halted.
+    modifier only_during_period { require(/*block.number >= beginBlock || block.number < endBlock && */!isHalted); _; }
+    // Can only be called during the period when halted.
+    modifier only_during_halted_period { require(/*block.number >= beginBlock || block.number < endBlock && */isHalted); _; }
+    // Can only be called after the period.
+    //modifier only_after_period { require(block.number >= endBlock); _; }
+    // The value of the message must be sufficiently large to not be considered dust.
+    modifier is_not_dust { require(msg.value >= dust); _; }
+
+    /// Some contribution `amount` received from `recipient` at rate of `currentRate` with emergency return of `returnAddr`.
+    event Received(address indexed recipient, address returnAddr, uint weiAmount, uint currentRate);
+    /// Period halted abnormally.
+    event Halted();
+    /// Period restarted after abnormal halt.
+    event Unhalted();
+    event RateChanged(uint newRate);
+
+    // Is the fundraiser active?
+    function isActive() public constant returns (bool active) {
+        return (/*block.number >= beginBlock && block.number < endBlock && */ !isHalted);
+    }
+
+    /// Receive a contribution for a donor musereum address.
+    function donate(address _donor, address _returnAddress, bytes4 checksum) public payable only_during_period is_not_dust {
+        // checksum is the first 4 bytes of the sha3 of the xor of the bytes32 versions of the musereum address and the return address
+        require( bytes4(sha3( bytes32(_donor)^bytes32(_returnAddress) )) == checksum );
+
+        // forward the funds to the treasure
+        require( treasury.send(msg.value) );
+
+        // calculate the number of ETM at the current rate
+        uint weiPerETM = weiPerBtc.div(EtmPerBtc);
+        uint ETM = msg.value.div(weiPerETM);
+
+        // update the donor details
+        records[_donor] = records[_donor].add(ETM);
+
+        // update the totals
+        totalWei = totalWei.add(msg.value);
+        totalETM = totalETM.add(ETM);
+        numDonations = numDonations.add(1);
+
+        Received(_donor, _returnAddress, msg.value, weiPerETM);
+    }
+
+    /// Adjust the weiPerBtc rate
+    function adjustRate(uint newRate) public only_admin {
+        weiPerBtc = newRate;
+        RateChanged(newRate);
+    }
+
+    /// Halt the contribution period. Any attempt at contributing will fail.
+    function halt() public only_admin only_during_period {
+        isHalted = true;
+        Halted();
+    }
+
+    /// Unhalt the contribution period.
+    function unhalt() public only_admin only_during_halted_period {
+        isHalted = false;
+        Unhalted();
+    }
+
+    /// Kill this contract.
+    function kill() public only_admin /*only_after_period*/ {
+        suicide(treasury);
+    }
 }
