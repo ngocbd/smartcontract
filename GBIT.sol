@@ -1,139 +1,314 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GBIT at 0x1cff439e724fa1690d5b346ddedb3ed55013aad4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GBIT at 0x9e1a813ee8ac44d581b241605d7d9eb99af89f09
 */
-pragma solidity ^0.4.4;
+pragma solidity ^0.4.19;
 
-contract Token {
-    /// @return total amount of tokens
-    function totalSupply() constant returns (uint256 supply) {}
+contract SafeMath {
+    function safeMul(uint256 a, uint256 b) internal returns (uint256) {
+        uint c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
+    }
 
-    /// @param _owner The address from which the balance will be retrieved
-    /// @return The balance
-    function balanceOf(address _owner) constant returns (uint256 balance) {}
+    function safeSub(uint256 a, uint256 b) internal returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
 
-    /// @notice send `_value` token to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _value) returns (bool success) {}
+    function safeAdd(uint256 a, uint256 b) internal returns (uint256) {
+        uint c = a + b;
+        assert(c >= a && c >= b);
+        return c;
+    }
 
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
+}
 
-    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of wei to be approved for transfer
-    /// @return Whether the approval was successful or not
-    function approve(address _spender, uint256 _value) returns (bool success) {}
+contract ERC20Interface {
+    // Get the total token supply
+    function totalSupply() public constant returns (uint256 totalSupply);
 
-    /// @param _owner The address of the account owning tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
+    // Get the account balance of another account with address _owner
+    function balanceOf(address _owner) public constant returns (uint256 balance);
 
+    // Send _value amount of tokens to address _to
+    function transfer(address _to, uint256 _value) public returns (bool success);
+
+    // Send _value amount of tokens from address _from to address _to
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+
+    // Allow _spender to withdraw from your account, multiple times, up to the _value amount.
+    // If this function is called again it overwrites the current allowance with _value.
+    // this function is required for some DEX functionality
+    function approve(address _spender, uint256 _value) public returns (bool success);
+
+    // Returns the amount which _spender is still allowed to withdraw from _owner
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining);
+
+    // Triggered when tokens are transferred.
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
+
+    // Triggered whenever approve(address _spender, uint256 _value) is called.
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    
 }
 
 
-
-contract StandardToken is Token {
-
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        //Default assumes totalSupply can't be over max (2^256 - 1).
-        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
-        //Replace the if with this one instead.
-        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[msg.sender] >= _value && _value > 0) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
-            return true;
-        } else { return false; }
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        //same as above. Replace this line with the following if you want to protect against wrapping uints.
-        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
-            return true;
-        } else { return false; }
-    }
-
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
-    }
-
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
-    }
-
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-    uint256 public totalSupply;
+contract GBT is ERC20Interface {
+    uint256 public expirationBlock;
+    function isActive(address _owner) public returns (bool activated);
 }
 
 
-//name this contract whatever you'd like
-contract GBIT is StandardToken {
+contract GBIT is SafeMath {
+    address public admin = 0xb772725c0e453aF4c93fcD00A4cF005C73889126; //the admin address
+    address public feeAccount = 0xe04F320bCc0e8796e2e6092B3796C722a1220Bf5; //the account that will receive fees
+    address public gbtAddress = 0xe04F320bCc0e8796e2e6092B3796C722a1220Bf5;
 
-    function () {
-        //if ether is sent to this address, send it back.
-        throw;
+    uint256 public makeFee = 0; //percentage times (1 ether)
+    uint256 public takeFee = 1; //percentage times (1 ether)
+    uint256 public lastFreeBlock = 500000000;
+
+    mapping (bytes32 => uint256) public sellOrderBalances; //a hash of available order balances holds a number of tokens
+    mapping (bytes32 => uint256) public buyOrderBalances; //a hash of available order balances. holds a number of eth
+
+    event MakeBuyOrder(bytes32 orderHash, address indexed token, uint256 tokenAmount, uint256 weiAmount, address indexed buyer);
+
+    event MakeSellOrder(bytes32 orderHash, address indexed token, uint256 tokenAmount, uint256 weiAmount, address indexed seller);
+
+    event CancelBuyOrder(bytes32 orderHash, address indexed token, uint256 tokenAmount, uint256 weiAmount, address indexed buyer);
+
+    event CancelSellOrder(bytes32 orderHash, address indexed token, uint256 tokenAmount, uint256 weiAmount, address indexed seller);
+
+    event TakeBuyOrder(bytes32 orderHash, address indexed token, uint256 tokenAmount, uint256 weiAmount, uint256 totalTransactionTokens, address indexed buyer, address indexed seller);
+
+    event TakeSellOrder(bytes32 orderHash, address indexed token, uint256 tokenAmount, uint256 weiAmount, uint256 totalTransactionWei, address indexed buyer, address indexed seller);
+
+    function() public {
+        revert();
     }
 
-    /* Public variables of the token */
-
-    /*
-    NOTE:
-    The following variables are OPTIONAL vanities. One does not have to include them.
-    They allow one to customise the token contract & in no way influences the core functionality.
-    Some wallets/interfaces might not even bother to look at this information.
-    */
-    string public name;                   //fancy name: eg Simon Bucks
-    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol;                 //An identifier: eg SBX
-    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
-
-//
-// CHANGE THESE VALUES FOR YOUR TOKEN
-//
-
-//make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
-
-    function GBIT(
-        ) {
-        balances[msg.sender] = 500000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 500000000;                        // Update total supply (100000 for example)
-        name = "GBIT";                                   // Set the name for display purposes
-        decimals = 2;                            // Amount of decimals for display purposes
-        symbol = "GBT";                               // Set the symbol for display purposes
+    function changeAdmin(address admin_) public {
+        require(msg.sender == admin);
+        admin = admin_;
     }
 
-    /* Approves and then calls the receiving contract */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+    function changeGBTAddress(address gbtAddress_) public {
+        require(msg.sender == admin);
+        require(block.number > GBT(gbtAddress).expirationBlock());
+        gbtAddress = gbtAddress_;
+    }
 
-        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
-        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
-        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
-        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
-        return true;
+    function changeLastFreeBlock(uint256 _lastFreeBlock) public {
+        require(msg.sender == admin);
+        require(_lastFreeBlock > block.number + 100); //announce at least 100 blocks ahead
+        lastFreeBlock = _lastFreeBlock;
+    }
+
+    function changeFeeAccount(address feeAccount_) public {
+        require(msg.sender == admin);
+        feeAccount = feeAccount_;
+    }
+
+    function changeMakeFee(uint256 makeFee_) public {
+        require(msg.sender == admin);
+        require(makeFee_ < makeFee);
+        makeFee = makeFee_;
+    }
+
+    function changeTakeFee(uint256 takeFee_) public {
+        require(msg.sender == admin);
+        require(takeFee_ < takeFee);
+        takeFee = takeFee_;
+    }
+
+    function feeFromTotalCostForAccount(uint256 totalCost, uint256 feeAmount, address account) public constant returns (uint256) {
+        return feeFromTotalCost(totalCost, feeAmount);
+    }
+
+    function feeFromTotalCost(uint256 totalCost, uint256 feeAmount) public constant returns (uint256) {
+
+        uint256 cost = safeMul(totalCost, (1 ether)) / safeAdd((1 ether), feeAmount);
+
+        // Calculate ceil(cost).
+        uint256 remainder = safeMul(totalCost, (1 ether)) % safeAdd((1 ether), feeAmount);
+        if (remainder != 0) {
+            cost = safeAdd(cost, 1);
+        }
+
+        uint256 fee = safeSub(totalCost, cost);
+        return fee;
+    }
+
+    function calculateFeeForAccount(uint256 cost, uint256 feeAmount, address account) public constant returns (uint256) {
+        return calculateFee(cost, feeAmount);
+    }
+
+    function calculateFee(uint256 cost, uint256 feeAmount) public constant returns (uint256) {
+        uint256 fee = safeMul(cost, feeAmount) / (1 ether);
+        return fee;
+    }
+
+    // Makes an offer to trade tokenAmount of ERC20 token, token, for weiAmount of wei.
+    function makeSellOrder(address token, uint256 tokenAmount, uint256 weiAmount) public {
+        require(tokenAmount != 0);
+        require(weiAmount != 0);
+
+        bytes32 h = sha256(token, tokenAmount, weiAmount, msg.sender);
+
+
+        // Update balance.
+        sellOrderBalances[h] = safeAdd(sellOrderBalances[h], tokenAmount);
+
+        // Check allowance.  -- Done after updating balance bc it makes a call to an untrusted contract.
+        require(tokenAmount <= ERC20Interface(token).allowance(msg.sender, this));
+
+        // Grab the token.
+        if (!ERC20Interface(token).transferFrom(msg.sender, this, tokenAmount)) {
+            revert();
+        }
+
+
+        MakeSellOrder(h, token, tokenAmount, weiAmount, msg.sender);
+    }
+
+    // Makes an offer to trade msg.value wei for tokenAmount of token (an ERC20 token).
+    function makeBuyOrder(address token, uint256 tokenAmount) public payable {
+        require(tokenAmount != 0);
+        require(msg.value != 0);
+
+        uint256 fee = feeFromTotalCost(msg.value, makeFee);
+        uint256 valueNoFee = safeSub(msg.value, fee);
+        bytes32 h = sha256(token, tokenAmount, valueNoFee, msg.sender);
+
+        //put ether in the buyOrderBalances map
+        buyOrderBalances[h] = safeAdd(buyOrderBalances[h], msg.value);
+
+        // Notify all clients.
+        MakeBuyOrder(h, token, tokenAmount, valueNoFee, msg.sender);
+    }
+
+
+    // Cancels all previous offers by msg.sender to trade tokenAmount of tokens for weiAmount of wei.
+    function cancelAllSellOrders(address token, uint256 tokenAmount, uint256 weiAmount) public {
+        bytes32 h = sha256(token, tokenAmount, weiAmount, msg.sender);
+        uint256 remain = sellOrderBalances[h];
+        delete sellOrderBalances[h];
+
+        ERC20Interface(token).transfer(msg.sender, remain);
+
+        CancelSellOrder(h, token, tokenAmount, weiAmount, msg.sender);
+    }
+
+    // Cancels any previous offers to trade weiAmount of wei for tokenAmount of tokens. Refunds the wei to sender.
+    function cancelAllBuyOrders(address token, uint256 tokenAmount, uint256 weiAmount) public {
+        bytes32 h = sha256(token, tokenAmount, weiAmount, msg.sender);
+        uint256 remain = buyOrderBalances[h];
+        delete buyOrderBalances[h];
+
+        if (!msg.sender.send(remain)) {
+            revert();
+        }
+
+        CancelBuyOrder(h, token, tokenAmount, weiAmount, msg.sender);
+    }
+
+    // Take some (or all) of the ether (minus fees) in the buyOrderBalances hash in exchange for totalTokens tokens.
+    function takeBuyOrder(address token, uint256 tokenAmount, uint256 weiAmount, uint256 totalTokens, address buyer) public {
+        require(tokenAmount != 0);
+        require(weiAmount != 0);
+        require(totalTokens != 0);
+
+        bytes32 h = sha256(token, tokenAmount, weiAmount, buyer);
+
+        // How many wei for the amount of tokens being sold?
+        uint256 transactionWeiAmountNoFee = safeMul(totalTokens, weiAmount) / tokenAmount;
+
+        // Does the buyer (maker) have enough money in the contract?
+        uint256 unvestedMakeFee = calculateFee(transactionWeiAmountNoFee, makeFee);
+        uint256 totalTransactionWeiAmount = safeAdd(transactionWeiAmountNoFee, unvestedMakeFee);
+        require(buyOrderBalances[h] >= totalTransactionWeiAmount);
+
+
+        // Calculate the actual vested fees.
+        uint256 currentTakeFee = calculateFeeForAccount(transactionWeiAmountNoFee, takeFee, msg.sender);
+        uint256 currentMakeFee = calculateFeeForAccount(transactionWeiAmountNoFee, makeFee, buyer);
+
+        // Proceed with transferring balances.
+
+        // Update our internal accounting.
+        buyOrderBalances[h] = safeSub(buyOrderBalances[h], totalTransactionWeiAmount);
+
+
+        // Did the seller send enough tokens?  -- This check is here bc it calls to an untrusted contract.
+        require(ERC20Interface(token).allowance(msg.sender, this) >= totalTokens);
+
+        // Send buyer their tokens and any fee refund.
+        if (currentMakeFee < unvestedMakeFee) {// the buyer got a fee discount. Send the refund.
+            uint256 refundAmount = safeSub(unvestedMakeFee, currentMakeFee);
+            if (!buyer.send(refundAmount)) {
+                revert();
+            }
+        }
+        if (!ERC20Interface(token).transferFrom(msg.sender, buyer, totalTokens)) {
+            revert();
+        }
+
+        // Grab our fee.
+        if (safeAdd(currentTakeFee, currentMakeFee) > 0) {
+            if (!feeAccount.send(safeAdd(currentTakeFee, currentMakeFee))) {
+                revert();
+            }
+        }
+
+        // Send seller the proceeds.
+        if (!msg.sender.send(safeSub(transactionWeiAmountNoFee, currentTakeFee))) {
+            revert();
+        }
+
+        TakeBuyOrder(h, token, tokenAmount, weiAmount, totalTokens, buyer, msg.sender);
+    }
+
+
+    function takeSellOrder(address token, uint256 tokenAmount, uint256 weiAmount, address seller) public payable {
+
+        require(tokenAmount != 0);
+        require(weiAmount != 0);
+
+        bytes32 h = sha256(token, tokenAmount, weiAmount, seller);
+
+        // Check that the contract has enough token to satisfy this order.
+        uint256 currentTakeFee = feeFromTotalCostForAccount(msg.value, takeFee, msg.sender);
+        uint256 transactionWeiAmountNoFee = safeSub(msg.value, currentTakeFee);
+        uint256 totalTokens = safeMul(transactionWeiAmountNoFee, tokenAmount) / weiAmount;
+        require(sellOrderBalances[h] >= totalTokens);
+
+        // Calculate total vested fee.
+        uint256 currentMakeFee = calculateFeeForAccount(transactionWeiAmountNoFee, makeFee, seller);
+        uint256 totalFee = safeAdd(currentMakeFee, currentTakeFee);
+
+        uint256 makerProceedsAfterFee = safeSub(transactionWeiAmountNoFee, currentMakeFee);
+
+        // Transfer.
+
+        // Update internal accounting.
+        sellOrderBalances[h] = safeSub(sellOrderBalances[h], totalTokens);
+
+        // Send buyer the tokens.
+        if (!ERC20Interface(token).transfer(msg.sender, totalTokens)) {
+            revert();
+        }
+
+        // Take our fee.
+        if (totalFee > 0) {
+            if (!feeAccount.send(totalFee)) {
+                revert();
+            }
+        }
+
+        // Send seller the proceeds.
+        if (!seller.send(makerProceedsAfterFee)) {
+            revert();
+        }
+
+        TakeSellOrder(h, token, tokenAmount, weiAmount, transactionWeiAmountNoFee, msg.sender, seller);
     }
 }
