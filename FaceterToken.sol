@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FaceterToken at 0x55dab76c74cce8fc64b9f7de91afdfb76eaef7b3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FaceterToken at 0x1ccaa0f2a7210d76e1fdec740d5f323e2e1b1672
 */
 pragma solidity 0.4.20;
 
@@ -289,8 +289,8 @@ contract StandardToken is ERC20, BasicToken {
 
 
 contract FaceterToken is Ownable, BurnableToken, StandardToken {
-	string public constant name = "TEST1101 Token";
-	string public constant symbol = "TEST1101";
+	string public constant name = "Faceter Token";
+	string public constant symbol = "FACE";
 	uint8 public constant decimals = 18;
 
 	bool public paused = true;
