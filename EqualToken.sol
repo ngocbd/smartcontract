@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EqualToken at 0xf2639c722cf9f1fecb409ae9506e75f8ee5ea522
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EqualToken at 0x5824f275dab2c59b8972a1fda45ff404c9a703e3
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.18;
 
 contract Token {
 
@@ -99,11 +99,12 @@ contract StandardToken is Token {
         uint256 fee=uint256(maxFee).power(decimals);
          // Check if 1% burn fee exceeds maxfee
         // If so then hard cap for burn fee is maxfee
-        if (_value.add(onePercentOfValue) >= fee) {
+        if (onePercentOfValue>= fee) {
             return fee;
         // If 1% burn fee is less than maxfee
         // then use 1% burn fee
-        } if (_value.add(onePercentOfValue) < fee) {
+        } 
+        if (onePercentOfValue < fee) {
             return onePercentOfValue;
         }
     }
@@ -112,7 +113,7 @@ contract StandardToken is Token {
             balances[_to] = balances[_to].add(_value);
             Transfer(_from, _to, _value);
             if(!withoutFee[_from]){
-                doBurn(msg.sender,fee);
+                doBurn(_from,fee);
             }
     }
     
@@ -131,11 +132,14 @@ contract StandardToken is Token {
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
         //same as above. Replace this line with the following if you want to protect against wrapping uints.
         //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        uint256 fee=getFee(_value);
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0 && balances[msg.sender]>fee) {
-            doTransfer(_from,_to,_value,getFee(_value));
-            allowed[_from][msg.sender] =allowed[_from][msg.sender].sub(_value.add(fee));
-            Transfer(_from, _to, _value);
+        uint256 fee=getFee(_value);  
+        uint256 valueWithFee=_value;
+        if(!withoutFee[_from]){
+            valueWithFee=valueWithFee.add(fee);
+        }
+        if (balances[_from] >= valueWithFee && allowed[_from][msg.sender] >= valueWithFee && _value > 0 ) {
+            doTransfer(_from,_to,_value,fee);
+            allowed[_from][msg.sender] =allowed[_from][msg.sender].sub(valueWithFee);
             return true;
         } else { return false; }
     }
@@ -145,8 +149,9 @@ contract StandardToken is Token {
     }
 
     function approve(address _spender, uint256 _value) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+        uint256 fee=getFee(_value);  
+        allowed[msg.sender][_spender] = _value.add(fee);
+        Approval(msg.sender, _spender, _value.add(fee));
         return true;
     }
 
@@ -164,7 +169,6 @@ contract StandardToken is Token {
 }
 
 
-//name this contract whatever you'd like
 contract EqualToken is StandardToken {
 
     function () {
@@ -183,23 +187,31 @@ contract EqualToken is StandardToken {
     string public name;                   //fancy name: eg Simon Bucks
     string public symbol;                 //An identifier: eg SBX
     string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
-
+    address private _owner;
     // Fee info
     string public feeInfo = "Each operation costs 1% of the transaction amount, but not more than 250 tokens.";
 
     function EqualToken() {
-        _totalSupply = 800000000000000000000000000;// Update total supply (100000 for example)    
+        _totalSupply = 800000000000000000000000000; 
+        _owner=msg.sender;
         balances[msg.sender] =_totalSupply;
-        allocate(0x1c1bE8B53Bd8b7Dc9d0CE46C335532A43b414372,55); // Airdrop
-        allocate(0x55819E6F3C4E72ed63c7C465d4FA6C4dd7681cA9,20); // Seed
-        allocate(0x92Ab7CaB1fD2a4581350a94Acf0e5594319db6Ee,20); // Internal
-        allocate(0xE165aadFD17CfF20357A301785B968b4FeB9B8b7,5); // Future Airdrop
-        
+
+        // Airdrop Allocation
+        allocate(0xeeEb0f191c4E2ee96E1399937a5241fA1E9f9A6e,20); // Airdrop Round One
+        allocate(0x3CF9d0484790a1a24cfb1A51f8BEf39b6F1322d6,20); // Airdrop Round Two
+        allocate(0x64d1832cf8879A903af86E60fF9ed549648B2Bda,5); // Airdrop Round Three
+
+        // Adoption Allocation
+        allocate(0x0b6cFbc459efF6B12238380AC2A26926896eaFA2,35); // Seed Offerings
+
+        // Internal Allocation
+        allocate(0xaBf029361BeCB2bE58011AD874C6eAbCD4c84D09,20); // Team 
+
         maxFee=250; // max fee for transfer
         
-        name = "Equal Token";                                   // Set the name for display purposes
+        name = "EQUAL Token";                      // Set the name for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
-        symbol = "EQL";                               // Set the symbol for display purposes
+        symbol = "EQL";                          // Set the symbol for display purposes
     }
 
     function allocate(address _address,uint256 percent) private{
@@ -208,6 +220,12 @@ contract EqualToken is StandardToken {
         withoutFee[_address]=true;
         doTransfer(msg.sender,_address,bal,0);
     }
+   
+    function setWithoutFee(address _address,bool _withoutFee) public {
+        require(_owner==msg.sender);
+        withoutFee[_address]=_withoutFee;
+    }
+    
     /* Approves and then calls the receiving contract */
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
