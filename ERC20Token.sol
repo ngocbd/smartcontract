@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xbf3b68c475398fd3d64d5f688334b0427820e836
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x889c09dcb04d62543dc1970db442ca766a6f0058
 */
 pragma solidity ^0.4.4;
 
@@ -119,10 +119,10 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 300000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 300000000000;                        // Update total supply (100000 for example)
+        balances[msg.sender] = 30000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 30000000;                        // Update total supply (100000 for example)
         name = "Terracash";                                   // Set the name for display purposes
-        decimals = 4;                            // Amount of decimals for display purposes
+        decimals = 8;                            // Amount of decimals for display purposes
         symbol = "TRCH";                               // Set the symbol for display purposes
     }
 
