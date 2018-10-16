@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x5bf4796c4e69204ca2cef6906cdde7be6761b372
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x05d86af519cf2017d82103c2c2dcc7db5becd641
 */
 pragma solidity ^0.4.18;
 
@@ -20,9 +20,7 @@ contract ZipperMultisigFactory
         
         MultiSigWallet a = new MultiSigWallet(addys, 2);
         
-        MultisigCreated(address(a), msg.sender, zipper);
-        
-        return address(a);
+        MultisigCreated(a, msg.sender, zipper);
     }
     
     function changeZipper(address _newZipper) public
