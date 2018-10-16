@@ -1,18 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProxySender at 0xa3c0ef6f2c8a42e2210bf352814c006286388c84
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProxySender at 0x19076Bd01E86fA3D76334e27D4b8E6789688A42d
 */
-pragma solidity 0.4.10;
+pragma solidity ^0.4.4;
 
-
-contract DutchAuction {
+contract DutchAuctionInterface {
     function bid(address receiver) payable returns (uint);
     function claimTokens(address receiver);
     function stage() returns (uint);
-    Token public gnosisToken;
+    TokenInterface public gnosisToken;
 }
 
 
-contract Token {
+contract TokenInterface {
     function transfer(address to, uint256 value) returns (bool success);
     function balanceOf(address owner) constant returns (uint256 balance);
 }
@@ -21,21 +20,23 @@ contract Token {
 contract ProxySender {
 
     event BidSubmission(address indexed sender, uint256 amount);
+    event RefundSubmission(address indexed sender, uint256 amount);
     event RefundReceived(uint256 amount);
 
     uint public constant AUCTION_STARTED = 2;
     uint public constant TRADING_STARTED = 4;
 
-    DutchAuction public dutchAuction;
-    Token public gnosisToken;
-    uint totalContributions;
-    uint totalTokens;
-    uint totalBalance;
-    mapping (address => uint) contributions;
+    DutchAuctionInterface public dutchAuction;
+    TokenInterface public gnosisToken;
+    uint public totalContributions;
+    uint public totalTokens;
+    uint public totalBalance;
+    mapping (address => uint) public contributions;
     Stages public stage;
 
     enum Stages {
         ContributionsCollection,
+        ContributionsSent,
         TokensClaimed
     }
 
@@ -48,10 +49,10 @@ contract ProxySender {
     function ProxySender(address _dutchAuction)
         public
     {
-        if (_dutchAuction == 0)
-            throw;
-        dutchAuction = DutchAuction(_dutchAuction);
+        if (_dutchAuction == 0) throw;
+        dutchAuction = DutchAuctionInterface(_dutchAuction);
         gnosisToken = dutchAuction.gnosisToken();
+        if (address(gnosisToken) == 0) throw;
         stage = Stages.ContributionsCollection;
     }
 
@@ -63,7 +64,7 @@ contract ProxySender {
             RefundReceived(msg.value);
         else if (stage == Stages.ContributionsCollection)
             contribute();
-        else if (stage == Stages.TokensClaimed)
+        else if(stage == Stages.TokensClaimed)
             transfer();
         else
             throw;
@@ -74,18 +75,39 @@ contract ProxySender {
         payable
         atStage(Stages.ContributionsCollection)
     {
+        contributions[msg.sender] += msg.value;
+        totalContributions += msg.value;
+        BidSubmission(msg.sender, msg.value);
+    }
+
+    function refund()
+        public
+        atStage(Stages.ContributionsCollection)
+    {
+        uint contribution = contributions[msg.sender];
+        contributions[msg.sender] = 0;
+        totalContributions -= contribution;
+        RefundSubmission(msg.sender, contribution);
+        if (!msg.sender.send(contribution)) throw;
+    }
+
+    function bidProxy()
+        public
+        atStage(Stages.ContributionsCollection)
+        returns(bool)
+    {
         // Check auction has started
         if (dutchAuction.stage() != AUCTION_STARTED)
             throw;
-        contributions[msg.sender] += msg.value;
-        totalContributions += msg.value;
+        // Send all money to auction contract
+        stage = Stages.ContributionsSent;
         dutchAuction.bid.value(this.balance)(0);
-        BidSubmission(msg.sender, msg.value);
+        return true;
     }
 
     function claimProxy()
         public
-        atStage(Stages.ContributionsCollection)
+        atStage(Stages.ContributionsSent)
     {
         // Auction is over
         if (dutchAuction.stage() != TRADING_STARTED)
@@ -109,6 +131,6 @@ contract ProxySender {
         // Send possible refund share
         uint refund = totalBalance * contribution / totalContributions;
         if (refund > 0)
-            msg.sender.send(refund);
+            if (!msg.sender.send(refund)) throw;
     }
 }
