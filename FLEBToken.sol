@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FLEBToken at 0xf50d193eb6761fb3189be46b9165d4aec20e05f0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FLEBToken at 0x82c46169b9f390ddfef57832a1d65f60e2878e22
 */
 pragma solidity ^0.4.24;
 
@@ -10,7 +10,7 @@ contract FLEBToken{
  address public owner;
  string public name = "FLEBToken"; //Token name
  string public symbol = "FLB";
- uint8 public decimals = 8;       //????? 18? ?? ??.
+ uint8 public decimals = 18;       //????? 18? ?? ??.
  uint256 public totalSupply = 0; 
  
  mapping(address => uint256) balances;
@@ -145,6 +145,7 @@ function approveAndCall(address _spender, uint256 _value, bytes _extraData)  pub
  }
  
  function mint(address _to, uint256 _amount) public returns (bool) {
+ 
      require(msg.sender == owner);
      
      totalSupply = totalSupply + _amount;
@@ -169,6 +170,12 @@ function approveAndCall(address _spender, uint256 _value, bytes _extraData)  pub
      
      return true;
      
+ }
+ 
+ function close() public {
+     
+     require(msg.sender == owner);
+     selfdestruct(owner);
  }
  
  event Transfer(address indexed from, address indexed to, uint256 value);
