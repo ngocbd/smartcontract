@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MineBlocks at 0x09f0df05fa9a047ba5ed6a3a0fd730f527ed024c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MineBlocks at 0xcfd9c7074ca3c9b6190ebb26cb2115346851fcbd
 */
 pragma solidity ^0.4.19;
 
@@ -268,9 +268,7 @@ contract MineBlocks is Ownable {
 
 
     function buy() public payable status{
-      require (msg.sender.balance >= msg.value);  // Check if the sender has enought eth to buy
-      assert (msg.sender.balance + msg.value >= msg.sender.balance); //check for overflows
-         
+
       uint256 tokenAmount = (msg.value / buyPrice)*tokenUnit ;  // calculates the amount
 
       transferBuy(msg.sender, tokenAmount);
