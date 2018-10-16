@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AsspaceToken at 0xafa59ea4399b5f55135ea535962efb796b7981f9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AsspaceToken at 0xceaa5b1899c49f8d70d9b0fd017ff2a74861bc9b
 */
 pragma solidity ^0.4.18;
 
@@ -145,7 +145,7 @@ contract AsspaceToken is Owned, BaseToken {
 	bool preIco = true;
     
 	function AsspaceToken() 
-		BaseToken("ASSPACE Token", "ASP", 0, 100000000000, "1.0") {
+		BaseToken("ASSPACE Token Dev", "ASPD", 0, 100000000000, "1.0") {
             balance[msg.sender] = initialTokens;    
             setPrice(2500000);
             deadline = now - 1 days;
