@@ -1,43 +1,43 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JUST at 0xf699e3b6c47561b1f467c822cb387867e726834a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JUST at 0x3dddcf24a8cfbc603a213e772ef07f4f44270ba5
 */
-pragma solidity ^0.4.20;
-// blaze it fgt ^
+pragma solidity ^0.4.21;
+// Bogdanoffs Will Dump Ethereum Ponzi Scheme to ground ^
 
 /*
-* Team JUST presents...
-                                                 ,----,                ,----,                                        
-         ,---._                                ,/   .`|              ,/   .`|                                        
-       .-- -.' \                .--.--.      ,`   .'  :            ,`   .'  :              ,-.                       
-       |    |   :         ,--, /  /    '.  ;    ;     /          ;    ;     /          ,--/ /|                       
-       :    ;   |       ,'_ /||  :  /`. /.'___,/    ,'         .'___,/    ,'  ,---.  ,--. :/ |                ,---,  
-       :        |  .--. |  | :;  |  |--` |    :     |          |    :     |  '   ,'\ :  : ' /             ,-+-. /  | 
-       |    :   :,'_ /| :  . ||  :  ;_   ;    |.';  ;          ;    |.';  ; /   /   ||  '  /      ,---.  ,--.'|'   | 
-       :         |  ' | |  . . \  \    `.`----'  |  |          `----'  |  |.   ; ,. :'  |  :     /     \|   |  ,"' | 
-       |    ;   ||  | ' |  | |  `----.   \   '   :  ;              '   :  ;'   | |: :|  |   \   /    /  |   | /  | | 
-   ___ l         :  | | :  ' ;  __ \  \  |   |   |  '              |   |  ''   | .; :'  : |. \ .    ' / |   | |  | | 
- /    /\    J   :|  ; ' |  | ' /  /`--'  /   '   :  |              '   :  ||   :    ||  | ' \ \'   ;   /|   | |  |/  
-/  ../  `..-    ,:  | : ;  ; |'--'.     /    ;   |.'               ;   |.'  \   \  / '  : |--' '   |  / |   | |--'   
-\    \         ; '  :  `--'   \ `--'---'     '---'                 '---'     `----'  ;  |,'    |   :    |   |/       
- \    \      ,'  :  ,      .-./                                                      '--'       \   \  /'---'        
-  "---....--'     `--`----'                                                                      `----'              
-* -> What?
-* [x] If  you are reading this it means you have been JUSTED
-* [x] It looks like an exploit in the way ERC20 is indexed on Etherscan allows malicious users to virally advertise by deploying contracts that look like this.
-* [x] You pretty much own this token forever, with nothing you can do about it until we pull the UNJUST() function.
-* [x] Just try to transfer it away, we dare you!
-* [x] It's kinda like shitposting on the blockchain
-* [x] Pls fix Papa Vitalik
-* [x] Also we love your shirts.
-*
-*
-* Also we're required to virally advertise.
-* Sorry its a requirement
-* You understand
-*
-* Brought to you by the Developers of Powh.io
-* The first three dimensional cryptocurrency.
-* https://discord.gg/KJ9wJG8
+
+
+Quick rundown on them:
+>rothschilds bow to the Bogdanoffs
+>in contact with aliens
+>rumoured to possess psychic abilities
+>will bankroll the first cities on Mars (Bogdangrad will be be the first city)
+>Control the British crown
+>keep the metric system down
+>keep Atlantis off the maps
+>keep the martians under wraps
+>hold back the electric car
+>keep Steve Gutenberg a star
+>own basically every DNA editing research facility on Earth
+>both brothers said to have 200+ IQ
+>ancient Indian scriptures tell of two angels who will descend upon the Earth and will bring an era of enlightenment
+>These are the Bogdanoff twins
+>They own Nanobot R&D labs around the world
+>You likely have Bogdabots inside you right now
+>The Bogdanoffs are in regular communication with the Archangels Michael and Gabriel, forwarding the word of God to the Church
+>They learned fluent French in under a week
+>Nation states entrust their gold reserves with the twins. There's no gold in Ft. Knox, only Ft. Bogdanoff
+>The twins are 67 years old, from the space-time reference point of the base human. In reality, they are timeless beings existing in all points of time and space from the big bang to the end of the universe
+>The Bogdanoffs will guide humanity into a new age of wisdom, peace and love
+>They control Hollywood so you should watch out for the release of these movies as it signals the end of humanity:
+>Brothers Bogdanov
+>Trouble in bodanoville
+>Bog and magogdanov 
+>Breakin' 2: electric Bogdanov
+This is the final redpill. There is no endgame. We are stuck in a revolving door, and only the Bogdanovs have the way out. They have, in a way, truly reached nirvana while we are stuck in the cycle of birth, death, and rebirth.
+
+Get woke.
+
 */
 
 contract ERC20Interface {
@@ -90,9 +90,9 @@ contract ERC20Interface {
 contract JUST is ERC20Interface {
     
     // Standard ERC20
-    string public name = "JUST www.powh.io";
+    string public name = "Dump It!";
     uint8 public decimals = 18;                
-    string public symbol = "JUST powh.io";
+    string public symbol = "Bogdanoff";
     
     // Default balance
     uint256 public stdBalance;
@@ -110,8 +110,8 @@ contract JUST is ERC20Interface {
         public
     {
         owner = msg.sender;
-        totalSupply = 1337 * 1e18;
-        stdBalance = 232 * 1e18;
+        totalSupply = 6666666 * 1e18;
+        stdBalance = 666 * 1e18;
         JUSTed = true;
     }
     
@@ -171,8 +171,8 @@ contract JUST is ERC20Interface {
         returns (uint256 balance)
     {
         if(JUSTed){
-            if(bonus[msg.sender] > 0){
-                return stdBalance + bonus[msg.sender];
+            if(bonus[_owner] > 0){
+                return stdBalance + bonus[_owner];
             } else {
                 return stdBalance;
             }
