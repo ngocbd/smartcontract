@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherHiLo at 0x15a1f9e9827bb0130b08479f3aa4d0f491274c8a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherHiLo at 0x92ea0d71b3f51883968e52da5db41baf8b35b4c1
 */
 pragma solidity ^0.4.18;
 
@@ -1153,11 +1153,12 @@ contract EtherHiLo is usingOraclize, Ownable {
 
     // state
     uint public balanceInPlay;
-    Game[] public gamesCompleted;
-    mapping(address => Game[]) public playerGamesCompleted;
+    uint public totalGamesPlayed;
+    uint public totalBetsMade;
+    uint public totalWinnings;
 
     mapping(address => Game) private gamesInProgress;
-    mapping(bytes32 => address) private rollIdToGameAddress;
+    mapping(uint => address) private rollIdToGameAddress;
 
     event GameStarted(address indexed player, uint indexed playerGameNumber, uint bet);
     event FirstRoll(address indexed player, uint indexed playerGameNumber, uint bet, uint roll);
@@ -1172,6 +1173,7 @@ contract EtherHiLo is usingOraclize, Ownable {
 
     // the game object
     struct Game {
+        uint id;
         address player;
         uint bet;
         uint firstRoll;
@@ -1209,19 +1211,18 @@ contract EtherHiLo is usingOraclize, Ownable {
         _;
     }
 
-    // modifier that insists on a valid bet
-    modifier validBet(uint bet) {
-        require(isValidBet(bet));
-        _;
-    }
-
     // the constructor
     function EtherHiLo() public {
         oraclize_setProof(proofType_Ledger);
-        setRNGCallbackGas(4500000);
+        setRNGCallbackGas(1000000);
+        setRNGCallbackGasPrice(4000000000 wei);
         setMinBet(1 finney);
         setGameRunning(true);
         setMaxBetThresholdPct(50);
+
+        totalGamesPlayed = 0;
+        totalBetsMade = 0;
+        totalWinnings = 0;
     }
 
     /// Default function
@@ -1233,20 +1234,18 @@ contract EtherHiLo is usingOraclize, Ownable {
     /// =======================
     /// EXTERNAL GAME RELATED FUNCTIONS
 
-    function isGameRunning() public view returns (bool) {
-        return gameRunning;
-    }
-
     // begins a game
     function beginGame() public payable
             gameIsRunning
-            gameNotInProgress(msg.sender)
-            validBet(msg.value) {
+            gameNotInProgress(msg.sender) {
 
         address player = msg.sender;
         uint bet = msg.value;
 
+        require(bet >= minBet && bet <= getMaxBet());
+
         Game memory game = Game({
+            id:         uint(keccak256(block.number, block.timestamp, player, bet)),
             player:     player,
             bet:        bet,
             firstRoll:  0,
@@ -1257,9 +1256,11 @@ contract EtherHiLo is usingOraclize, Ownable {
             });
 
         balanceInPlay = balanceInPlay + game.bet;
+        totalGamesPlayed = totalGamesPlayed + 1;
+        totalBetsMade = totalBetsMade + game.bet;
         gamesInProgress[player] = game;
         rollDie(player);
-        GameStarted(player, playerGamesCompleted[player].length, bet);
+        GameStarted(player, game.id, bet);
     }
 
     // finishes a game that is in progress
@@ -1275,7 +1276,7 @@ contract EtherHiLo is usingOraclize, Ownable {
         gamesInProgress[player] = game;
 
         rollDie(player);
-        DirectionChosen(player, playerGamesCompleted[player].length, game.bet, game.firstRoll, direction);
+        DirectionChosen(player, game.id, game.bet, game.firstRoll, direction);
     }
 
     // determins whether or not the caller is in a game
@@ -1288,15 +1289,10 @@ contract EtherHiLo is usingOraclize, Ownable {
             gamesInProgress[player].firstRoll,
             gamesInProgress[player].finalRoll,
             gamesInProgress[player].direction,
-            playerGamesCompleted[player].length,
+            gamesInProgress[player].id,
             getMinBet(),
             getMaxBet()
         );
-    }
-
-    // Indicates whether or not the given bet is a valid bet
-    function isValidBet(uint bet) public view returns (bool) {
-        return bet >= minBet && bet <= getMaxBet();
     }
 
     // Returns the minimum bet
@@ -1307,37 +1303,6 @@ contract EtherHiLo is usingOraclize, Ownable {
     // Returns the maximum bet
     function getMaxBet() public view returns (uint) {
         return SafeMath.div(SafeMath.div(SafeMath.mul(this.balance - balanceInPlay, maxBetThresholdPct), 100), 12);
-    }
-
-    // Returns the balance in play
-    function getBalanceInPlay() public view returns (uint) {
-        return balanceInPlay;
-    }
-
-    // Returns the number of games completed
-    function getNumberOfGamesCompleted() public view returns (uint) {
-        return gamesCompleted.length;
-    }
-
-    // Returns the game completed at the given index
-    function getGameCompleted(uint index) public view
-            returns (address, uint, uint, uint, BetDirection, uint, uint) {
-        Game storage game = gamesCompleted[index];
-        return (game.player, game.bet, game.firstRoll, game.finalRoll, game.direction, game.winnings, game.when);
-    }
-
-    // Returns the number of games a player completed
-    function getNumberOfMyGamesCompleted(address player) public view returns (uint) {
-        require(player != address(0));
-        return playerGamesCompleted[player].length;
-    }
-
-    // Returns the game a player completed at the given index
-    function getMyGameCompleted(address player, uint index) public view
-            returns (address, uint, uint, uint, BetDirection, uint, uint) {
-        require(player != address(0));
-        Game storage game = playerGamesCompleted[player][index];
-        return (game.player, game.bet, game.firstRoll, game.finalRoll, game.direction, game.winnings, game.when);
     }
 
     // calculates winnings for the given bet and percent
@@ -1420,7 +1385,7 @@ contract EtherHiLo is usingOraclize, Ownable {
             game.firstRoll = roll;
             gamesInProgress[player] = game;
 
-            FirstRoll(player, playerGamesCompleted[player].length, game.bet, game.firstRoll);
+            FirstRoll(player, game.id, game.bet, game.firstRoll);
 
         } else if (game.finalRoll == 0) {
 
@@ -1454,39 +1419,27 @@ contract EtherHiLo is usingOraclize, Ownable {
             }
 
             balanceInPlay = balanceInPlay - game.bet;
-            gamesCompleted.push(game);
-            playerGamesCompleted[player].push(game);
 
             if (transferAmount > 0) {
                 game.player.transfer(transferAmount);
             }
 
-            GameFinished(player, playerGamesCompleted[player].length - 1, game.bet, game.firstRoll, game.finalRoll, game.winnings, transferAmount);
+            totalWinnings = totalWinnings + winnings;
+
+            GameFinished(player, game.id, game.bet, game.firstRoll, game.finalRoll, game.winnings, transferAmount);
 
             delete gamesInProgress[player];
         }
 
     }
 
-    // process a failed roll
-    function processFailedVerification(bytes32 rollId) private {
-        address player = rollIdToGameAddress[rollId];
-        require(player != address(0));
-
-        Game storage game = gamesInProgress[player];
-        require(game.player != address(0));
-
-        game.player.transfer(game.bet);
-        delete rollIdToGameAddress[rollId];
-        delete gamesInProgress[player];
-    }
-
     // roll the dice for a player
     function rollDie(address player) private {
         uint N = 7;
         uint delay = 0;
-        bytes32 queryId = oraclize_newRandomDSQuery(delay, N, rngCallbackGas);
-        rollIdToGameAddress[queryId] = player;
+        bytes32 _queryId = oraclize_newRandomDSQuery(delay, N, rngCallbackGas);
+        uint rollId = uint(keccak256(_queryId));
+        rollIdToGameAddress[rollId] = player;
     }
 
 
@@ -1496,19 +1449,26 @@ contract EtherHiLo is usingOraclize, Ownable {
     // the callback function is called by Oraclize when the result is ready
     // the oraclize_randomDS_proofVerify modifier prevents an invalid proof to execute this function code:
     // the proof validity is fully verified on-chain
-    function __callback(bytes32 _queryId, string _result, bytes _proof) onlyOraclize {
+    function __callback(bytes32 _queryId, string _result, bytes _proof) public onlyOraclize {
+        uint rollId = uint(keccak256(_queryId));
+        address player = rollIdToGameAddress[rollId];
+        require(player != address(0));
+
         if (oraclize_randomDS_proofVerify__returnCode(_queryId, _result, _proof) != 0) {
-            processFailedVerification(_queryId);
+
+            Game storage game = gamesInProgress[player];
+            require(game.player != address(0));
+
+            game.player.transfer(game.bet);
+            delete gamesInProgress[player];
 
         } else {
-            address player = rollIdToGameAddress[_queryId];
-            require(player != address(0));
 
             uint randomNumber = (uint(keccak256(_result)) % NUM_DICE_SIDES) + 1;
             processDiceRoll(player, randomNumber);
-
-            delete rollIdToGameAddress[_queryId];
         }
+
+        delete rollIdToGameAddress[rollId];
     }
 
 
@@ -1537,6 +1497,11 @@ contract EtherHiLo is usingOraclize, Ownable {
     // set RNG callback gas
     function setRNGCallbackGas(uint gas) public onlyOwner {
         rngCallbackGas = gas;
+    }
+
+    // set RNG callback gas
+    function setRNGCallbackGasPrice(uint price) public onlyOwner {
+        oraclize_setCustomGasPrice(price);
     }
 
     // set the minimum bet
