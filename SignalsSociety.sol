@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SignalsSociety at 0xf50f781ab39bb29b75ebe3fe765c71c8a9defa70
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SignalsSociety at 0x7275f61c3abfba3596ae71f7128bdc3b0fc01fa9
 */
 pragma solidity ^0.4.17;
 
@@ -79,11 +79,12 @@ contract SignalsSociety is Ownable, Memberships {
   mapping (address => uint) public balances;
 
   // allows user to withdraw his balance
-  function withdraw() public {
-    uint amount = balances[msg.sender];
+  function withdraw(address user) public {
+    require(user == msg.sender);    
+    uint amount = balances[user];
     // zero the pending refund before sending to prevent re-entrancy attacks
-    balances[msg.sender] = 0;
-    msg.sender.transfer(amount);
+    balances[user] = 0;
+    user.transfer(amount);
   }
   // deposits ETH to a user's account
   function deposit(address account, uint amount) public {
