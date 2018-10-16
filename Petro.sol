@@ -1,101 +1,50 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Petro at 0x2955f4a4cdc4a06ba31f3df5662db9b8149b9c7d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PETRO at 0x7d102ED54B0097FDcdC8EA92825893A8d7cADe2c
 */
-pragma solidity ^0.4.8;
+contract PETRO {
+    /* Public variables of the token */
+    string public standard = 'Token 0.1';
+    string public name;
+    string public symbol;
+    uint8 public decimals;
+    uint256 public initialSupply;
+    uint256 public totalSupply;
 
-interface ERC20Interface {
+    /* This creates an array with all balances */
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
 
-    function totalSupply() constant returns (uint256 totalSupply) ;
-    
-    function balanceOf(address _owner) constant returns (uint256 balance);
-    
-    function transfer(address _to, uint256 _value) returns (bool success);
-    
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
-    
-    function approve(address _spender, uint256 _value) returns (bool success);
-    
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
-    
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    
- }
   
- contract Petro is ERC20Interface {
-      string public constant symbol = "PTR";
-      string public constant name = "Petro";
-      uint8 public constant decimals = 8;
-      uint256 _totalSupply = 2100000000000000;
- 
-      address public owner;
-   
-      mapping(address => uint256) balances;
-   
- 
-      mapping(address => mapping (address => uint256)) allowed;
-   
+    /* Initializes contract with initial supply tokens to the creator of the contract */
+    function PETRO() {
+
+         initialSupply = 500000000000000000;
+         name ="PETRO";
+        decimals = 8;
+         symbol = "PTRO";
+        
+        balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
+        totalSupply = initialSupply;                        // Update total supply
+                                   
+    }
+
+    /* Send coins */
+    function transfer(address _to, uint256 _value) {
+        if (balanceOf[msg.sender] < _value) throw;           // Check if the sender has enough
+        if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
+        balanceOf[msg.sender] -= _value;                     // Subtract from the sender
+        balanceOf[_to] += _value;                            // Add the same to the recipient
       
-      modifier onlyOwner() {
-          if (msg.sender != owner) {
-              throw;
-          }
-          _;
-      }
-   
-      function Petro() {
-          owner = msg.sender;
-          balances[owner] = _totalSupply;
-      }
-   
-      function totalSupply() constant returns (uint256 totalSupply) {
-          totalSupply = _totalSupply;
-      }
-   
-      function balanceOf(address _owner) constant returns (uint256 balance) {
-          return balances[_owner];
-      }
-   
-      function transfer(address _to, uint256 _amount) returns (bool success) {
-          if (balances[msg.sender] >= _amount 
-              && _amount > 0
-              && balances[_to] + _amount > balances[_to]) {
-              balances[msg.sender] -= _amount;
-              balances[_to] += _amount;
-              Transfer(msg.sender, _to, _amount);
-              return true;
-          } else {
-              return false;
-          }
-      }
-   
-      function transferFrom(
-          address _from,
-          address _to,
-          uint256 _amount
-     ) returns (bool success) {
-         if (balances[_from] >= _amount
-             && allowed[_from][msg.sender] >= _amount
-             && _amount > 0
-             && balances[_to] + _amount > balances[_to]) {
-             balances[_from] -= _amount;
-             allowed[_from][msg.sender] -= _amount;
-             balances[_to] += _amount;
-             Transfer(_from, _to, _amount);
-             return true;
-         } else {
-             return false;
-         }
-     }
+    }
 
-     function approve(address _spender, uint256 _amount) returns (bool success) {
-         allowed[msg.sender][_spender] = _amount;
-         Approval(msg.sender, _spender, _amount);
-         return true;
-     }
-  
-     function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-         return allowed[_owner][_spender];
-     }
- }
+   
+
+    
+
+   
+
+    /* This unnamed function is called whenever someone tries to send ether to it */
+    function () {
+        throw;     // Prevents accidental sending of ether
+    }
+}
