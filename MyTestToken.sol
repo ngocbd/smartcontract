@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyTestToken at 0xe72e96162204097b325e2a99bef050824cc17fdb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyTestToken at 0x9d8ccb797d92296104f9c1d5676e4de843726462
 */
 pragma solidity ^0.4.16;
 
@@ -25,8 +25,8 @@ interface tokenRecipient { function receiveApproval(address _from, uint256 _valu
 contract MyTestToken is owned {
     /* This creates an array with all balances */
     mapping (address => uint256) public balanceOf;
-    bool b_enableTransfer = true;
-    uint256 creationDate;
+    bool private b_enableTransfer = true;
+    uint256 public creationDate;
     string public name;
     string public symbol;
     uint8 public decimals = 18;    
@@ -34,8 +34,6 @@ contract MyTestToken is owned {
     uint8 public tipoCongelamento = 0;
         // 0 = unfreeze; 1 = frozen by 10 minutes; 2 = frozen by 30 minutes; 3 = frozen by 1 hour
         // 4 = frozen by 2 hours; 5 = frozen by 1 day; 6 = frozen by 2 days
-        
-    event Transfer(address indexed from, address indexed to, uint256 value);        
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function MyTestToken (
@@ -55,8 +53,7 @@ contract MyTestToken is owned {
     function transfer2(address _to, uint256 _value) public
     {
         require(b_enableTransfer); 
-        //require(balanceOf[msg.sender] >= _value);           // Check if the sender has enough
-        //require(balanceOf[_to] + _value >= balanceOf[_to]); // Check for overflows
+        
         
         _transfer(_to, _value);
     }
@@ -121,10 +118,8 @@ contract MyTestToken is owned {
     {
         require(balanceOf[msg.sender] >= _value);           // Check if the sender has enough
         require(balanceOf[_to] + _value >= balanceOf[_to]); // Check for overflows
-        
         balanceOf[msg.sender] -= _value;                    // Subtract from the sender
         balanceOf[_to] += _value;                           // Add the same to the recipient
-        Transfer(msg.sender, _to, _value);
     }
     
     function enableTransfer(bool _enableTransfer) onlyOwner public
