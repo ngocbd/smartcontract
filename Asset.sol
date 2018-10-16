@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Asset at 0x2edd9a38d9554ade350f1ba1bdc935f6c0628b81
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Asset at 0xabf1411106314b22307ef99c6f8e7d39775b0a95
 */
-pragma solidity ^0.4.18;
+pragma solidity 0.4.20;
 /**
 * TOKEN Contract
 * ERC-20 Token Standard Compliant
@@ -199,7 +199,7 @@ contract Asset is ERC20Token {
     string public name = 'Equitybase';
     uint8 public decimals = 18;
     string public symbol = 'BASE';
-    string public version = '1';
+    string public version = '2';
 
     /**
     * @dev Asset constructor.
