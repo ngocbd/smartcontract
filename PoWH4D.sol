@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PoWH4D at 0x92b353c4f6286a9f9359c1d124406d3f0b8a2c95
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PoWH4D at 0x5e78b5a8d6bb2eff65b3eb03925a7c5450e0af27
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.16;
 
 
 /**
