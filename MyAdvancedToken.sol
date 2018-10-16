@@ -1,14 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x23112b6822adc16544d3cb11896cb5d28a097e60
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0xf6e83fed8c4b636aaa057fc087200044bf010038
 */
-pragma solidity ^0.4.18;
-/**
- * MyAdvancedToken
- * edisonlee55/ethereum-org (https://github.com/edisonlee55/ethereum-org/blob/master/solidity/token-advanced.sol)
- *
- * Copyright (c) 2017 MING-CHIEN LEE
- * Forked from ethereum/ethereum-org (https://github.com/ethereum/ethereum-org/blob/master/solidity/token-advanced.sol)
- */
+pragma solidity ^0.4.16;
+
 contract owned {
     address public owner;
 
@@ -51,11 +45,15 @@ contract TokenERC20 {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function TokenERC20() public {
-        totalSupply = 1000000000 * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+    function TokenERC20(
+        uint256 initialSupply,
+        string tokenName,
+        string tokenSymbol
+    ) public {
+        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = "LoliCoin";                                   // Set the name for display purposes
-        symbol = "LOLI";                               // Set the symbol for display purposes
+        name = tokenName;                                   // Set the name for display purposes
+        symbol = tokenSymbol;                               // Set the symbol for display purposes
     }
 
     /**
@@ -189,7 +187,11 @@ contract MyAdvancedToken is owned, TokenERC20 {
     event FrozenFunds(address target, bool frozen);
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function MyAdvancedToken() TokenERC20() public {}
+    function MyAdvancedToken(
+        uint256 initialSupply,
+        string tokenName,
+        string tokenSymbol
+    ) TokenERC20(initialSupply, tokenName, tokenSymbol) public {}
 
     /* Internal transfer, only can be called by this contract */
     function _transfer(address _from, address _to, uint _value) internal {
