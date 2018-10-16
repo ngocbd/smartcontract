@@ -1,23 +1,61 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MaxCoin at 0x86667bfafadef8f169b6e2908f29b344b98cdd3a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Maxcoin at 0xCae98Ae8044273AcF7a39791227068235AA39d3a
 */
-pragma solidity ^0.4.9; 
- library SafeMath { 
- function mul(uint256 a, uint256 b) internal constant returns (uint256) { uint256 c = a * b; assert(a == 0 || c / a == b); return c; } 
- function div(uint256 a, uint256 b) internal constant returns (uint256) { uint256 c = a / b; return c; } 
- function sub(uint256 a, uint256 b) internal constant returns (uint256) { assert(b <= a); return a - b; } 
- function add(uint256 a, uint256 b) internal constant returns (uint256) { uint256 c = a + b; assert(c >= a); return c; } 
-} 
- contract MaxCoin { using SafeMath for uint256; mapping (address => mapping (address => uint256)) allowed; mapping(address => uint256) balances; uint256 public totalSupply; uint256 public decimals; address public owner; bytes32 public symbol; 
- event Transfer(address indexed from, address indexed to, uint256 value); 
- event Approval(address indexed _owner, address indexed spender, uint256 value); 
- function MaxCoin(){ totalSupply = 10000000; symbol = 'MaxCoin'; owner =0x70f7edb8b3ef4425ad535d6dd2df074ceb2728b3; balances[owner] = totalSupply; decimals = 0; } 
- function balanceOf(address _owner) constant returns (uint256 balance) { return balances[_owner]; } 
- function allowance(address _owner, address _spender) constant returns (uint256 remaining) { return allowed[_owner][_spender]; } 
- function transfer(address _to, uint256 _value) returns (bool) { balances[msg.sender] = balances[msg.sender].sub(_value); balances[_to] = balances[_to].add(_value); 
- Transfer(msg.sender, _to, _value); return true; } 
- function transferFrom(address _from, address _to, uint256 _value) returns (bool) { var _allowance = allowed[_from][msg.sender]; balances[_to] = balances[_to].add(_value); balances[_from] = balances[_from].sub(_value); allowed[_from][msg.sender] = _allowance.sub(_value); 
- Transfer(_from, _to, _value); return true; } 
- function approve(address _spender, uint256 _value) returns (bool) { require((_value == 0) || (allowed[msg.sender][_spender] == 0)); allowed[msg.sender][_spender] = _value; Approval(msg.sender, _spender, _value); return true; } 
- function (){ revert(); } 
- }
+pragma solidity ^0.4.11;
+
+contract Maxcoin {
+
+    string public name = "Maxcoin";      //  token name
+    string public symbol = "MAX";           //  token symbol
+    uint256 public decimals = 8;            //  token digit
+
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
+
+    uint256 public totalSupply = 21000000 * (10**decimals);
+    address owner;
+
+    modifier isOwner {
+        assert(owner == msg.sender);
+        _;
+    }
+    function Maxcoin() {
+        owner = msg.sender;
+        balanceOf[owner] = totalSupply;
+    }
+
+    function transfer(address _to, uint256 _value) returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);
+        require(balanceOf[_to] + _value >= balanceOf[_to]);
+        balanceOf[msg.sender] -= _value;
+        balanceOf[_to] += _value;
+        Transfer(msg.sender, _to, _value);
+        return true;
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        require(balanceOf[_from] >= _value);
+        require(balanceOf[_to] + _value >= balanceOf[_to]);
+        require(allowance[_from][msg.sender] >= _value);
+        balanceOf[_to] += _value;
+        balanceOf[_from] -= _value;
+        allowance[_from][msg.sender] -= _value;
+        Transfer(_from, _to, _value);
+        return true;
+    }
+
+    function approve(address _spender, uint256 _value) returns (bool success)
+    {
+        require(_value == 0 || allowance[msg.sender][_spender] == 0);
+        allowance[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+    
+    function setName(string _name) isOwner 
+    {
+        name = _name;
+    }
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+}
