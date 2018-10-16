@@ -1,9 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LCToken at 0xd9c58ef8afcfe2df9884724de1614205a7b5f3f5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LCToken at 0xeef69ecf4851f7ee36196f26da23f6229855076b
 */
 pragma solidity ^0.4.11;
 
 contract Token {
+    uint256 public totalSupply;
     function transfer(address _to, uint256 _value) returns (bool success);
     function balanceOf(address _owner) constant returns (uint256 balance) ;
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
@@ -21,7 +22,7 @@ contract StandardToken is Token {
 
         uint index;
         bytes32 indexHash;
-        uint lotteryNum;
+        uint8 lotteryNum;
     }
 
     function transfer(address _to, uint256 _value) returns (bool success) {
@@ -48,17 +49,13 @@ contract StandardToken is Token {
         return balances[_owner].lockTime;
     }
 
-    function balanceOfLotteryNum(address _owner) constant returns (uint256 balance) {
-        return balances[_owner].lotteryNum;
-    }
-
     mapping (address => LCBalance) balances;
 }
 
 contract LCToken is StandardToken {
     // metadata
-    string public constant name = "Bulls and Cows";
-    string public constant symbol = "BAC";
+    string public constant name = "Lottery Coin";
+    string public constant symbol = "SaberLC";
     uint256 public constant decimals = 18;
     string public version = "1.0";
 
@@ -73,7 +70,7 @@ contract LCToken is StandardToken {
 
     uint256 public constant LOCKPERIOD          = 365 days;
     uint256 public constant ICOPERIOD           = 120 days;
-    uint256 public constant SHAREPERIOD         = 30 days;
+    uint256 public constant SHAREPERIOD           = 30 days;
     uint256 public constant LOCKAMOUNT          = 3000000 * 10**decimals;
     uint256 public constant AMOUNT_ICO          = 5000000 * 10**decimals;
     uint256 public constant AMOUNT_TeamSupport  = 2000000 * 10**decimals;
@@ -102,46 +99,50 @@ contract LCToken is StandardToken {
     uint256 public shareLimit = 10000*val4;
 
 
+    function addHash (bytes32 _hashValue) {
+        if(endIndex+1==firstIndex)
+        {
+            endIndex++;
+            blockhash[endIndex]=_hashValue;
+            if(firstIndex<999)
+            {
+                firstIndex++;
+            }
+            else
+            {
+                firstIndex=0;
+            }
+        }
+        else
+        {
+            if(firstIndex==0 && 999==endIndex)
+            {
+                endIndex=0;
+                blockhash[endIndex]=_hashValue;
+                firstIndex=1;
+            }
+            else
+            {
+                if(999<=endIndex)
+                {
+                    endIndex=0;
+                }
+                else
+                {
+                    endIndex++;
+                }
+                blockhash[endIndex]=_hashValue;
+            }
+        }
+    }
+
     function buyLottery (uint8 _lotteryNum) payable {
         if ( msg.value >=val3*10 && _lotteryNum>=0 &&  _lotteryNum<=9 )
         {
             bytes32 currentHash=block.blockhash(block.number-1);
             if(blockhash[endIndex]!=currentHash)
             {
-                if(endIndex+1==firstIndex)
-                {
-                    endIndex++;
-                    blockhash[endIndex]=currentHash;
-                    if(firstIndex<999)
-                    {
-                        firstIndex++;
-                    }
-                    else
-                    {
-                        firstIndex=0;
-                    }
-                }
-                else
-                {
-                    if(firstIndex==0 && 999==endIndex)
-                    {
-                        endIndex=0;
-                        blockhash[endIndex]=currentHash;
-                        firstIndex=1;
-                    }
-                    else
-                    {
-                        if(999<=endIndex)
-                        {
-                            endIndex=0;
-                        }
-                        else
-                        {
-                            endIndex++;
-                        }
-                        blockhash[endIndex]=currentHash;
-                    }
-                }
+                addHash(currentHash);
             }
             balances[msg.sender].ethValue+=msg.value;
             balances[msg.sender].index=endIndex;
@@ -161,40 +162,7 @@ contract LCToken is StandardToken {
         bytes32 currentHash=block.blockhash(block.number-1);
         if(blockhash[endIndex]!=currentHash)
         {
-            if(endIndex+1==firstIndex)
-            {
-                endIndex++;
-                blockhash[endIndex]=currentHash;
-                if(firstIndex<999)
-                {
-                    firstIndex++;
-                }
-                else
-                {
-                    firstIndex=0;
-                }
-            }
-            else
-            {
-                if(firstIndex==0 && 999==endIndex)
-                {
-                    endIndex=0;
-                    blockhash[endIndex]=currentHash;
-                    firstIndex=1;
-                }
-                else
-                {
-                    if(999<=endIndex)
-                    {
-                        endIndex=0;
-                    }
-                    else
-                    {
-                        endIndex++;
-                    }
-                    blockhash[endIndex]=currentHash;
-                }
-            }
+            addHash(currentHash);
         }
         if ( balances[msg.sender].ethValue >=val3*10 && balances[msg.sender].indexHash!=currentHash)
         {
@@ -225,12 +193,10 @@ contract LCToken is StandardToken {
                 {
                     balances[msg.sender].ethValue=0;
                 }
-                balances[msg.sender].lotteryNum=100+temuint;
             }
             else
             {
                 balances[msg.sender].ethValue=0;
-                balances[msg.sender].lotteryNum=999;
             }
         }
     }
@@ -239,9 +205,10 @@ contract LCToken is StandardToken {
 
         if(shareTime+SHAREPERIOD<now)
         {
-            uint _jumpc=(now - shareTime)/SHAREPERIOD;
-            shareTime += (_jumpc * SHAREPERIOD);
-            
+            while(shareTime+SHAREPERIOD<now)
+            {
+                shareTime+=SHAREPERIOD;
+            }
             if(totalLotteryValue>currentLotteryValue)
             {
                 currentProfit=totalLotteryValue-currentLotteryValue;
@@ -252,7 +219,7 @@ contract LCToken is StandardToken {
             }
         }
 
-        if (balances[msg.sender].lockTime!=0 && balances[msg.sender].lockTime+SHAREPERIOD <=shareTime && currentProfit>0 && balances[msg.sender].lcValue >=shareLimit)
+        if (balances[msg.sender].lockTime!=0 && balances[msg.sender].lockTime+SHAREPERIOD <=shareTime && currentLotteryValue<totalLotteryValue && balances[msg.sender].lcValue >=shareLimit)
         {
             uint _sharevalue=balances[msg.sender].lcValue/val4*currentProfit/1000;
             if(_sharevalue>totalLotteryValue)
@@ -261,7 +228,7 @@ contract LCToken is StandardToken {
             }
             totalLotteryValue-=_sharevalue;
             msg.sender.transfer(_sharevalue);
-            balances[msg.sender].lockTime=shareTime;
+            balances[msg.sender].lockTime=now;
         }
     }
 
@@ -353,10 +320,7 @@ contract LCToken is StandardToken {
     function endThisContact () {
         if(msg.sender==creator && balances[msg.sender].lcValue >=9000000 * val4)
         {
-            if(balances[msg.sender].lcValue >=9000000 * val4 || gcSupply >= 4990000 * 10**decimals)
-            {
-                selfdestruct(creator);
-            }
+            selfdestruct(creator);
         }
     }
 
