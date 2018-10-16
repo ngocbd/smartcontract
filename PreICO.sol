@@ -1,25 +1,22 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreICO at 0xc2065c868006cc417b8d604874e47d58937f4f39
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreICO at 0x9ea321bff0f872eddcdbcfb1fe9ac3d644c82a12
 */
-pragma solidity ^0.4.15;
+pragma solidity 0.4.18;
+
 
 /**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
  */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
+
+
 
 /**
  * @title Ownable
@@ -27,16 +24,20 @@ library SafeMath {
  * functions, this simplifies the implementation of "user permissions".
  */
 contract Ownable {
-
   address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
 
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() {
+  function Ownable() public {
     owner = msg.sender;
   }
+
 
   /**
    * @dev Throws if called by any account other than the owner.
@@ -46,118 +47,236 @@ contract Ownable {
     _;
   }
 
+
   /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) onlyOwner {
+  function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
+
 }
+
+
+
+
 
 /**
- * @title Token
- * @dev API interface for interacting with the WILD Token contract 
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
  */
-interface Token {
-  function transfer(address _to, uint256 _value) returns (bool);
-  function balanceOf(address _owner) constant returns (uint256 balance);
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-contract PreICO is Ownable {
 
+
+
+
+
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+
+
+
+/**
+ * @title Crowdsale
+ * @dev Crowdsale is a base contract for managing a token crowdsale.
+ * Crowdsales have a start and end timestamps, where investors can make
+ * token purchases and the crowdsale will assign them tokens based
+ * on a token per ETH rate. Funds collected are forwarded to a wallet
+ * as they arrive.
+ */
+contract Crowdsale is Ownable {
   using SafeMath for uint256;
 
-  Token token;
+  // The token being sold
+  ERC20 public token;
+  uint256 private transactionNum;
 
-  uint256 public constant RATE = 2332; // Number of tokens per Ether with 40% bonus
-  uint256 public constant CAP = 228703; // Cap in Ether
-  uint256 public constant START = 1523692800; // start date in epoch timestamp
-  uint256 public constant DAYS = 21; // 21 days/ 3 weeks
-  uint256 public constant Bonus = 40; //40% bonus during preICO
-  uint256 public constant initialTokens =  5333333333 * 10**17; // Initial number of tokens available
-  bool public initialized = false;
-  uint256 public raisedAmount = 0;
-  
-  mapping (address => uint256) buyers;
+  // start and end timestamps where investments are allowed (both inclusive)
+  uint256 public startTime;
+  uint256 public endTime;
 
-  event BoughtTokens(address indexed to, uint256 value);
+  // address where funds are collected
+  address public wallet;
 
-  modifier whenSaleIsActive() {
-    // Check if sale is active
-    assert(isActive());
+  // how many token units a buyer gets per wei
+  uint256 public rate;
+  uint256 public discountRate = 3333;
 
-    _;
-  }
-
-  function PreICO() {
-      
-      
-      token = Token(0xb55cbc064fa6662029753b68d89037f284af658c);//GREENBIT TOKEN ADDRESS
-  }
-  
-  function initialize() onlyOwner {
-      require(initialized == false); // Can only be initialized once
-      require(tokensAvailable() == initialTokens); // Must have enough tokens allocated
-      initialized = true;
-  }
-
-  function isActive() constant returns (bool) {
-    return (
-        initialized == true &&
-        now >= START && // Must be after the START date
-        now <= START.add(DAYS * 1 days) && // Must be before the end date
-        goalReached() == false // Goal must not already be reached
-    );
-  }
-
-  function goalReached() constant returns (bool) {
-    return (raisedAmount >= CAP * 1 ether);
-  }
-
-  function () payable {
-    buyTokens();
-  }
+  // amount of raised money in wei
+  uint256 public weiRaised;
 
   /**
-  * @dev function that sells available tokens
-  */
-  function buyTokens() payable whenSaleIsActive {
-    // Calculate tokens to sell
+   * event for token purchase logging
+   * @param purchaser who paid for the tokens
+   * @param beneficiary who got the tokens
+   * @param value weis paid for purchase
+   * @param amount amount of tokens purchased
+   */
+  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+
+
+  function Crowdsale(uint256 _startTime, uint256 _endTime, uint256 _rate, address _wallet, address _token) public {
+    require(_startTime >= now);
+    require(_endTime >= _startTime);
+    require(_rate > 0);
+    require(_wallet != address(0));
+
+    token = ERC20(_token);
+    startTime = _startTime;
+    endTime = _endTime;
+    rate = _rate;
+    wallet = _wallet;
+  }
+
+  // fallback function can be used to buy tokens
+  function () external payable {
+    buyTokens(msg.sender);
+  }
+
+  // low level token purchase function
+  function buyTokens(address beneficiary) public payable {
+    require(beneficiary != address(0));
+    require(validPurchase());
+
     uint256 weiAmount = msg.value;
-    uint256 tokens = weiAmount.mul(RATE);
+    uint256 tokens;
+    if(transactionNum < 100) {
+      tokens = weiAmount.mul(discountRate);
+    } else {
+      tokens = weiAmount.mul(rate);
+    }
 
-    BoughtTokens(msg.sender, tokens);
 
-    // Increment raised amount
-    raisedAmount = raisedAmount.add(msg.value);
-    
-    // Send tokens to buyer
-    token.transfer(msg.sender, tokens);
-    
-    // Send money to owner
-    owner.transfer(msg.value);
+    uint256 tokenBalance = token.balanceOf(this);
+    require(tokenBalance >= tokens);
+
+    transactionNum = transactionNum + 1;
+    // update state
+    weiRaised = weiRaised.add(weiAmount);
+
+    token.transfer(beneficiary, tokens);
+    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+
+    forwardFunds();
   }
 
-  /**
-   * @dev returns the number of tokens allocated to this contract
-   */
-  function tokensAvailable() constant returns (uint256) {
-    return token.balanceOf(this);
+  // @return true if crowdsale event has ended
+  function hasEnded() public view returns (bool) {
+    return now > endTime;
   }
 
-  /**
-   * @notice Terminate contract and refund to owner
-   */
-  function destroy() onlyOwner {
-    // Transfer tokens back to owner
-    uint256 balance = token.balanceOf(this);
-    assert(balance > 0);
-    token.transfer(owner, balance);
 
-    // There should be no ether in the contract but just in case
-    selfdestruct(owner);
+
+  // send ether to the fund collection wallet
+  // override to create custom fund forwarding mechanisms
+  function forwardFunds() internal {
+    wallet.transfer(msg.value);
+  }
+
+  // @return true if the transaction can buy tokens
+  function validPurchase() internal view returns (bool) {
+    bool withinPeriod = now >= startTime && now <= endTime;
+    bool nonZeroPurchase = msg.value != 0;
+
+    return withinPeriod && nonZeroPurchase;
+  }
+
+  function finalization() internal {
+    token.transfer(owner, token.balanceOf(this));
+  }
+
+}
+
+
+
+
+contract PreICO is Crowdsale {
+  using SafeMath for uint256;
+  uint256 public cap;
+  bool public isFinalized;
+
+  uint256 public minContribution = 100000000000000000;
+  uint256 public maxContribution = 1000 ether;
+  function PreICO(uint256 _startTime, uint256 _endTime, uint256 _rate, uint256 _cap, address _wallet, address _token) public
+  Crowdsale(_startTime, _endTime, _rate, _wallet, _token)
+  {
+      cap = _cap;
+  }
+
+  function hasEnded() public view returns (bool) {
+    bool capReached = weiRaised >= cap;
+    return capReached || super.hasEnded();
+  }
+
+  // overriding Crowdsale#validPurchase to add extra cap logic
+  // @return true if investors can buy at the moment
+  function validPurchase() internal view returns (bool) {
+    //0.1 eth and 1000 eth
+    bool withinRange = msg.value >= minContribution && msg.value <= maxContribution;
+    bool withinCap = weiRaised.add(msg.value) <= cap;
+    return withinRange && withinCap && super.validPurchase();
+  }
+
+  function changeMinContribution(uint256 _minContribution) public onlyOwner {
+    require(_minContribution > 0);
+    minContribution = _minContribution;
+  }
+
+  function changeMaxContribution(uint256 _maxContribution) public onlyOwner {
+    require(_maxContribution > 0);
+    maxContribution = _maxContribution;
+  }
+
+  function finalize() onlyOwner public {
+    require(!isFinalized);
+    require(hasEnded());
+    super.finalization();
+    isFinalized = true;
+  }
+
+  function setNewWallet(address _newWallet) onlyOwner public {
+    wallet = _newWallet;
   }
 
 }
