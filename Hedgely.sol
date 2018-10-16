@@ -1,11 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hedgely at 0x1fdedef5c2da1ed9db44d80003a9592dfa18163c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hedgely at 0x0326ade59900f4e99e029362a076063a6d542a58
 */
 pragma solidity ^0.4.19;
 
 
-// Hedgely - v2
+// Hedgely - v3
 // radamosch@gmail.com
+// https://hedgely.net
 
 /**
  * @title Ownable
@@ -50,11 +51,9 @@ contract Ownable {
 
 
 /**
- * @title Syndicate
- * @dev Syndicated profit sharing - for early adopters
- * Shares are not transferable -
+ * Core Hedgely Contract
  */
-contract Syndicate is Ownable{
+contract Hedgely is Ownable {
 
     uint256 public numberSyndicateMembers;
     uint256 public totalSyndicateShares = 20000;
@@ -65,8 +64,7 @@ contract Syndicate is Ownable{
     uint256 public shareCycleSessionSize = 1000; // number of sessions in a share cycle
     uint256 public shareCycleIndex = 0; // current position in share cycle
     uint256 public shareCycle = 1;
-    uint256 public currentSyndicateValue = 0; // total value of syndicate to be divided among members
-    uint256 public precision = 1000000000000000;
+    uint256 public currentSyndicateValue = 150000000000000000; // total value of syndicate to be divided among members
 
     // limit players/cycle to protect contract from multi-addres DOS gas attack (first 100 players on board counted)
     // will monitor this at share distribution execution and adjust if there are gas problems due to high numbers of players.
@@ -99,12 +97,37 @@ contract Syndicate is Ownable{
           uint256 _profitPerShare
     );
 
-    function Syndicate() public {
-        members[msg.sender].numShares = 10000; // owner portion
-        members[msg.sender].profitShare = 0;
-        numberSyndicateMembers = 1;
-        syndicateMembers.push(msg.sender);
-    }
+    event Invest(
+          address _from,
+          uint256 _option,
+          uint256 _value,
+          uint256[10] _marketOptions,
+          uint _blockNumber
+    );
+
+    event Winning(
+          address _to,
+          uint256 _amount,
+          uint256 _session,
+          uint256 _winningOption,
+          uint _blockNumber
+    );
+
+    event EndSession(
+          address _sessionEnder,
+          uint256 _sessionNumber,
+          uint256 _winningOption,
+          uint256[10] _marketOptions,
+          uint256 _blockNumber
+    );
+
+    event StartSession(
+          uint256 _sessionNumber,
+          uint256 _sessionEndTime,
+          uint256[10] _marketOptions,
+          uint256 _blockNumber
+    );
+
 
     // shareholder profit claim
     function claimProfit() public {
@@ -130,6 +153,13 @@ contract Syndicate is Ownable{
     function claimPlayerWinnings() public {
       if (allPlayers[msg.sender].winnings==0) revert();
       uint256 winnings = allPlayers[msg.sender].winnings;
+
+      if (now > sessionEndTime && playerPortfolio[msg.sender][currentLowest]>0){
+          // session has ended, this player may have winnings not yet allocated, but they should show up
+         winnings+= SafeMath.mul(playerPortfolio[msg.sender][currentLowest],winningMultiplier);
+         playerPortfolio[msg.sender][currentLowest]=0;
+      }
+
       if (winnings>0){
         allPlayers[msg.sender].winnings = 0;
         msg.sender.transfer(winnings);
@@ -153,7 +183,7 @@ contract Syndicate is Ownable{
     function distributeProfit() internal {
 
       uint256 totalOwnedShares = totalSyndicateShares-(playersShareAllocation+availableBuyInShares);
-      uint256 profitPerShare = roundIt(SafeMath.div(currentSyndicateValue,totalOwnedShares));
+      uint256 profitPerShare = SafeMath.div(currentSyndicateValue,totalOwnedShares);
 
       if (profitPerShare>0){
           // foreach member , calculate their profitshare
@@ -288,20 +318,18 @@ contract Syndicate is Ownable{
     function playerStatus(address _playerAddress) public constant returns(uint256, uint256, uint256, uint256) {
          uint256 playCount = allPlayers[_playerAddress].playCount;
          if (allPlayers[_playerAddress].shareCycle!=shareCycle){playCount=0;}
-        return (playCount, allPlayers[_playerAddress].shareCycle, allPlayers[_playerAddress].profitShare , allPlayers[_playerAddress].winnings);
+         uint256 winnings = allPlayers[_playerAddress].winnings;
+           if (now >sessionEndTime){
+             // session has ended, this player may have winnings not yet allocated, but they should show up
+              winnings+=  SafeMath.mul(playerPortfolio[_playerAddress][currentLowest],winningMultiplier);
+           }
+        return (playCount, allPlayers[_playerAddress].shareCycle, allPlayers[_playerAddress].profitShare , winnings);
     }
 
     function min(uint a, uint b) private pure returns (uint) {
            return a < b ? a : b;
     }
 
-}
-
-
-/**
- * Core Hedgely Contract
- */
-contract Hedgely is Ownable, Syndicate {
 
    // Array of players
    address[] private players;
@@ -325,9 +353,6 @@ contract Hedgely is Ownable, Syndicate {
    uint256 public numberWinner;
 
    // current session information
-   uint256 public startingBlock;
-   uint256 public endingBlock;
-   uint256 public sessionBlockSize;
    uint256 public sessionNumber;
    uint256 public currentLowest;
    uint256 public currentLowestCount; // should count the number of currentLowest to prevent a tie
@@ -337,42 +362,15 @@ contract Hedgely is Ownable, Syndicate {
 
    uint256 public winningMultiplier; // what this session will yield 5x - 8x
 
-
-     event Invest(
-           address _from,
-           uint256 _option,
-           uint256 _value,
-           uint256[10] _marketOptions,
-           uint _blockNumber
-     );
-
-     event Winning(
-           address _to,
-           uint256 _amount,
-           uint256 _session,
-           uint256 _winningOption,
-           uint _blockNumber
-     );
-
-     event EndSession(
-           address _sessionEnder,
-           uint256 _sessionNumber,
-           uint256 _winningOption,
-           uint256[10] _marketOptions,
-           uint256 _blockNumber
-     );
-
-     event StartSession(
-           uint256 _sessionNumber,
-           uint256 _sessionBlockSize,
-           uint256[10] _marketOptions,
-           uint256 _blockNumber
-     );
-
+   uint256 public sessionDuration = 20 minutes;
+   uint256 public sessionEndTime = 0;
 
    function Hedgely() public {
      owner = msg.sender;
-     sessionBlockSize = 100;
+     members[msg.sender].numShares = 10000; // owner portion
+     members[msg.sender].profitShare = 0;
+     numberSyndicateMembers = 1;
+     syndicateMembers.push(msg.sender);
      sessionNumber = 0;
      numPlayers = 0;
      resetMarket();
@@ -413,9 +411,7 @@ contract Hedgely is Ownable, Syndicate {
      }
 
     sessionNumber ++;
-    winningMultiplier = random(3)+6; // random between 6-8 b) Proposal change
-    startingBlock = block.number;
-    endingBlock = startingBlock + sessionBlockSize; // approximately every 5 minutes - can play with this
+    winningMultiplier = 8; // always 8 better incentive to play
     numPlayers = 0;
 
     // randomize the initial market values
@@ -428,12 +424,12 @@ contract Hedgely is Ownable, Syndicate {
     startingOptions[1]=0;
     startingOptions[2]=0;
     startingOptions[3]=precision*(random(2)); // between 0 and 1
-    startingOptions[4]=precision*(random(3)); // between 0 and 2
-    startingOptions[5]=precision*(random(3)+1); // between 1 and 3
-    startingOptions[6]=precision*(random(2)+3); // between 3 and 4
-    startingOptions[7]=precision*(random(2)+3); // between 3 and 4
-    startingOptions[8]=precision*(random(4)+5); // between 5 and 8
-    startingOptions[9]=precision*(random(4)+5); // between 5 and 8
+    startingOptions[4]=precision*(random(3)+1); // between 1 and 3
+    startingOptions[5]=precision*(random(2)+3); // between 3 and 4
+    startingOptions[6]=precision*(random(3)+4); // between 4 and 6
+    startingOptions[7]=precision*(random(3)+5); // between 5 and 7
+    startingOptions[8]=precision*(random(3)+8); // between 8 and 10
+    startingOptions[9]=precision*(random(3)+8); // between 8 and 10
 
     // shuffle the deck
 
@@ -463,7 +459,8 @@ contract Hedgely is Ownable, Syndicate {
      numberOfInvestments = 10;
 
      currentLowest = findCurrentLowest();
-     StartSession(sessionNumber, sessionBlockSize, marketOptions , startingBlock);
+     sessionEndTime = now + sessionDuration;
+     StartSession(sessionNumber, sessionEndTime, marketOptions , now);
 
    }
 
@@ -476,11 +473,10 @@ contract Hedgely is Ownable, Syndicate {
       uint256 amount = roundIt(msg.value); // round to precision
       assert(amount >= minimumStake);
 
-       // check for zero tie-breaker transaction
-       // in this case nobody wins and investment goes into next session.
-      if (block.number >= endingBlock && currentLowestCount>1 && marketOptions[currentLowest]==0){
+       // is this a new session starting?
+      if (now> sessionEndTime){
         endSession();
-        // auto invest them in the lowest market option  - reward for
+        // auto invest them in the lowest market option (only fair, they missed transaction or hit start button)
         optionNumber = currentLowest;
       }
 
@@ -500,12 +496,6 @@ contract Hedgely is Ownable, Syndicate {
       Invest(msg.sender, optionNumber, amount, marketOptions, block.number);
       updatePlayCount(); // rank the player in leaderboard
       currentLowest = findCurrentLowest();
-
-      // overtime and there's a winner
-      if (block.number >= endingBlock && currentLowestCount==1){
-          // somebody wins here.
-          endSession();
-      }
 
     } // end invest
 
@@ -584,8 +574,8 @@ contract Hedgely is Ownable, Syndicate {
 
 
     // ----- admin functions in event of an issue --
-    function setSessionBlockSize (uint256 blockCount) public onlyOwner {
-        sessionBlockSize = blockCount;
+    function setSessionDurationMinutes (uint256 _m) public onlyOwner {
+        sessionDuration = _m * 1 minutes ;
     }
 
     function withdraw(uint256 amount) public onlyOwner {
