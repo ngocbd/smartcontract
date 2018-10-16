@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Configurator at 0x78465d9dffd2d20945c94acdb04e3ab6a063e973
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Configurator at 0xdd70a308ed4b507e76da1f956c72c71d0a98dfa5
 */
 pragma solidity ^0.4.17;
 
@@ -716,7 +716,6 @@ contract Configurator is Ownable {
 
     function deploy() public onlyOwner {
         mainsale = new Mainsale();
-        token = CovestingToken(0xE2FB6529EF566a080e6d23dE0bd351311087D567);
         mainsale.setToken(token);
         mainsale.addStage(5000,200);
         mainsale.addStage(5000,180);
@@ -735,6 +734,9 @@ contract Configurator is Ownable {
         mainsale.setBountyTokensPercent(5);
         mainsale.setNotifier(owner);
         mainsale.transferOwnership(owner);
+
+        token = CovestingToken(0xE2FB6529EF566a080e6d23dE0bd351311087D567);
+        token.setSaleAgent(mainsale);
     }
 
 }
