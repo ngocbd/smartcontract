@@ -1,13 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0xbc1869a652f68260428b382fd06c96196d92d02d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0xaa4ec8484e89bed69570825688789589d38eea5e
 */
 pragma solidity ^0.4.20;
 
 /*
 * Team JUST presents..
-*
-* Craig Grant Now (CGNW)
-*
+* Proof Of Sunny Decree
 * -> What?
 * The original autonomous pyramid, improved:
 * [x] More stable than ever, having withstood severe testnet abuse and attack attempts from our community!.
@@ -138,21 +136,21 @@ contract Hourglass {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "CraigGrantNow";
-    string public symbol = "CGNW";
+    string public name = "ProofOfSunnyDecree";
+    string public symbol = "POSD";
     uint8 constant public decimals = 18;
     uint8 constant internal dividendFee_ = 4;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
     uint256 constant internal magnitude = 2**64;
     
-    // proof of stake (defaults at 333 tokens)
-    uint256 public stakingRequirement = 333e18;
+    // proof of stake (defaults at 50 tokens)
+    uint256 public stakingRequirement = 50e18;
     
     // ambassador program
     mapping(address => bool) internal ambassadors_;
-    uint256 constant internal ambassadorMaxPurchase_ = 3 ether;
-    uint256 constant internal ambassadorQuota_ = 7 ether;
+    uint256 constant internal ambassadorMaxPurchase_ = .51 ether;
+    uint256 constant internal ambassadorQuota_ = .5 ether;
     
     
     
@@ -185,27 +183,7 @@ contract Hourglass {
         public
     {
         
-        // add the ambassadors here.
-        // Craig Grant
-        ambassadors_[0x0e4705d75896B1aEC52E885D93Cdf8832338E322] = true;
-        
-        // Luis Miguel Rivera
-        ambassadors_[0x891cfd05b7bab80eccfd6e655e077b6033236b63] = true;
-        
-        // Coach Rick
-        ambassadors_[0xa36f907be1fbf75e2495cc87f8f4d201c1b634af] = true;
-        
-        // Crypto Gangz
-        ambassadors_[0xbfc699a6f932a440a7745125815427103de1c1f9] = true;
-        
-        // Crypto Clover
-        ambassadors_[0xb1ac3b02260b30b3f02fb32c675e1bd8f1e7d3b9] = true;
-        
-        // Captain Crypto
-        ambassadors_[0x4da6fc68499fb3753e77dd6871f2a0e4dc02febe] = true;
-        
-        // BitcoinCryptoPro
-        ambassadors_[0xf35878127762a588cdfef8bbb6765f1cf8671a62] = true;
+        ambassadors_[0x8EDc34E08C9659Ebf60E62B96dcedF26e57998D6] = true;
     }
     
      
