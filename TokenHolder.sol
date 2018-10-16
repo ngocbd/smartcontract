@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenHolder at 0xb88a04948549be0193f7dafd4afa10a58dd1cfff
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenHolder at 0x57cf28470d31306bc4154f07a15b2fd79c91536f
 */
 pragma solidity ^0.4.0;
 
@@ -53,78 +53,6 @@ contract OwnableImpl is Ownable {
 }
 
 /**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Ownable {
-    event Pause();
-    event Unpause();
-
-    bool public paused = false;
-
-
-    /**
-     * @dev Modifier to make a function callable only when the contract is not paused.
-     */
-    modifier whenNotPaused() {
-        require(!paused);
-        _;
-    }
-
-    /**
-     * @dev Modifier to make a function callable only when the contract is paused.
-     */
-    modifier whenPaused() {
-        require(paused);
-        _;
-    }
-
-    /**
-     * @dev called by the owner to pause, triggers stopped state
-     */
-    function pause() onlyOwner whenNotPaused public {
-        paused = true;
-        Pause();
-    }
-
-    /**
-     * @dev called by the owner to unpause, returns to normal state
-     */
-    function unpause() onlyOwner whenPaused public {
-        paused = false;
-        Unpause();
-    }
-}
-
-/**
- * @title Read-only ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ReadOnlyToken {
-    uint256 public totalSupply;
-    function balanceOf(address who) public constant returns (uint256);
-    function allowance(address owner, address spender) public constant returns (uint256);
-}
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract Token is ReadOnlyToken {
-  function transfer(address to, uint256 value) public returns (bool);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-contract MintableToken is Token {
-    event Mint(address indexed to, uint256 amount);
-
-    function mint(address _to, uint256 _amount) public returns (bool);
-}
-
-/**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
  * @dev this version copied from zeppelin-solidity, constant changed to pure
@@ -156,6 +84,28 @@ library SafeMath {
         assert(c >= a);
         return c;
     }
+}
+
+/**
+ * @title Read-only ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ReadOnlyToken {
+    uint256 public totalSupply;
+    function balanceOf(address who) public constant returns (uint256);
+    function allowance(address owner, address spender) public constant returns (uint256);
+}
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract Token is ReadOnlyToken {
+  function transfer(address to, uint256 value) public returns (bool);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 contract ReadOnlyTokenImpl is ReadOnlyToken {
@@ -271,7 +221,35 @@ contract TokenImpl is Token, ReadOnlyTokenImpl {
 
 }
 
-contract MintableTokenImpl is TokenImpl, MintableToken, Ownable {
+contract BurnableToken is Token {
+	event Burn(address indexed burner, uint256 value);
+	function burn(uint256 _value) public;
+}
+
+contract BurnableTokenImpl is TokenImpl, BurnableToken {
+	/**
+	 * @dev Burns a specific amount of tokens.
+	 * @param _value The amount of token to be burned.
+	 */
+	function burn(uint256 _value) public {
+		require(_value <= balances[msg.sender]);
+		// no need to require value <= totalSupply, since that would imply the
+		// sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+		address burner = msg.sender;
+		balances[burner] = balances[burner].sub(_value);
+		totalSupply = totalSupply.sub(_value);
+		Burn(burner, _value);
+	}
+}
+
+contract MintableToken is Token {
+    event Mint(address indexed to, uint256 amount);
+
+    function mint(address _to, uint256 _amount) public returns (bool);
+}
+
+contract MintableTokenImpl is Ownable, TokenImpl, MintableToken {
     /**
      * @dev Function to mint tokens
      * @param _to The address that will receive the minted tokens.
@@ -291,54 +269,88 @@ contract MintableTokenImpl is TokenImpl, MintableToken, Ownable {
     }
 }
 
-contract Eticket4Token is Pausable, OwnableImpl, MintableTokenImpl {
-    string public constant name = "Eticket4";
-    string public constant symbol = "ET4";
-    uint8 public constant decimals = 18;
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+    event Pause();
+    event Unpause();
 
-    function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
-        return super.transfer(_to, _value);
-    }
+    bool public paused = false;
 
-    function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
-        return super.transferFrom(_from, _to, _value);
-    }
-
-    function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
-        return super.approve(_spender, _value);
-    }
-
-    function increaseApproval(address _spender, uint _addedValue) public whenNotPaused returns (bool success) {
-        return super.increaseApproval(_spender, _addedValue);
-    }
-
-    function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool success) {
-        return super.decreaseApproval(_spender, _subtractedValue);
-    }
-
-    event Burn(address indexed burner, uint256 value);
 
     /**
-	 * @dev Burns a specific amount of tokens.
-	 * @param _value The amount of token to be burned.
-	 */
-    function burn(uint256 _value) public {
-        require(_value <= balances[msg.sender]);
-        // no need to require value <= totalSupply, since that would imply the
-        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+     * @dev Modifier to make a function callable only when the contract is not paused.
+     */
+    modifier whenNotPaused() {
+        require(!paused);
+        _;
+    }
 
-        address burner = msg.sender;
-        balances[burner] = balances[burner].sub(_value);
-        totalSupply = totalSupply.sub(_value);
-        Burn(burner, _value);
+    /**
+     * @dev Modifier to make a function callable only when the contract is paused.
+     */
+    modifier whenPaused() {
+        require(paused);
+        _;
+    }
+
+    /**
+     * @dev called by the owner to pause, triggers stopped state
+     */
+    function pause() onlyOwner whenNotPaused public {
+        paused = true;
+        Pause();
+    }
+
+    /**
+     * @dev called by the owner to unpause, returns to normal state
+     */
+    function unpause() onlyOwner whenPaused public {
+        paused = false;
+        Unpause();
     }
 }
 
+contract PausableToken is Pausable, TokenImpl {
+
+	function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
+		return super.transfer(_to, _value);
+	}
+
+	function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
+		return super.transferFrom(_from, _to, _value);
+	}
+
+	function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
+		return super.approve(_spender, _value);
+	}
+
+	function increaseApproval(address _spender, uint _addedValue) public whenNotPaused returns (bool success) {
+		return super.increaseApproval(_spender, _addedValue);
+	}
+
+	function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool success) {
+		return super.decreaseApproval(_spender, _subtractedValue);
+	}
+}
+
+contract GawooniToken is OwnableImpl, PausableToken, MintableTokenImpl, BurnableTokenImpl {
+	string public constant name = "GAWOONI";
+	string public constant symbol = "GWON";
+	uint8 public constant decimals = 18;
+
+	function burn(uint256 _value) public whenNotPaused {
+		super.burn(_value);
+	}
+}
+
 contract TokenHolder is OwnableImpl {
-	Eticket4Token public token;
+	GawooniToken public token;
 
 	function TokenHolder(address _token) {
-		token = Eticket4Token(_token);
+		token = GawooniToken(_token);
 	}
 
 	function transfer(address beneficiary, uint256 amount) onlyOwner public {
