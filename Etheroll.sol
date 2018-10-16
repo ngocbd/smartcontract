@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etheroll at 0x3ad2bfea535bf1673f22de61b19f758a2dd0efff
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etheroll at 0xddf0d0b9914d530e0b743808249d9af901f1bd01
 */
 pragma solidity ^0.4.18;
 
@@ -1834,12 +1834,12 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
     uint public maxProfitAsPercentOfHouse;                    
     uint public minBet; 
     //init discontinued contract data        
-    int public totalBets = 226184;
+    int public totalBets = 244612;
     uint public maxPendingPayouts;
     //init discontinued contract data 
-    uint public totalWeiWon = 97037822074607185291695;
+    uint public totalWeiWon = 110633844560463069959901;
     //init discontinued contract data  
-    uint public totalWeiWagered = 294285212316680739767696;    
+    uint public totalWeiWagered = 316486087709317593009320;    
 
     /*
      * player vars
@@ -1909,7 +1909,7 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
         * only the apiKey is encrypted 
         * integer query is in plain text
         */                            
-        bytes32 rngId = oraclize_query("nested", "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random[\"serialNumber\",\"data\"]', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BLNKnDonH2nBxsJnmHXTLN8SURCK+0MAzA3J1XgWbLcujYGFs9Pb6UyNVDEj1a6C5vH4JjJbrZHFoMiNbOtQZNfkf5UCAQhhOkBNM01C8eSeIXkGR7KpN6nSpwoLvBQ95bIv8MQm8BM/+Sv61f+ICeaEnDQ91vg=},\"n\":1,\"min\":1,\"max\":100,\"replacement\":true,\"base\":10${[identity] \"}\"},\"id\":1${[identity] \"}\"}']", gasForOraclize);
+        bytes32 rngId = oraclize_query("nested", "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random[\"serialNumber\",\"data\"]', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BKg3TCs7lkzNr1kR6pxjPCM2SOejcFojUPMTOsBkC/47HHPf1sP2oxVLTjNBu+slR9SgZyqDtjVOV5Yzg12iUkbubp0DpcjCEdeJTHnGwC6gD729GUVoGvo96huxwRoZlCjYO80rWq2WGYoR/LC3WampDuvv2Bo=},\"n\":1,\"min\":1,\"max\":100,\"replacement\":true,\"base\":10${[identity] \"}\"},\"id\":1${[identity] \"}\"}']", gasForOraclize);
         	    
         /* map bet id to this oraclize query */
 		playerBetId[rngId] = rngId;
