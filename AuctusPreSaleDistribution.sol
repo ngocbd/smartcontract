@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AuctusPreSaleDistribution at 0x2ce4fab9f313f1df0978869c5d302768f1bb471d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AuctusPreSaleDistribution at 0xa39ca2768a7b76aa3bcab68c4d4debf9a32c5434
 */
 pragma solidity ^0.4.21;
 
@@ -36,7 +36,7 @@ contract ContractReceiver {
 contract AuctusPreSaleDistribution is ContractReceiver {
 	using SafeMath for uint256;
 
-	address public auctusTokenAddress = 0xfD89de68b246eB3e21B06e9B65450AC28D222488;
+	address public auctusTokenAddress = 0xc12d099be31567add4e4e4d0D45691C3F58f5663;
 	address public auctusPreSaleAddress = 0x84D45E60f7036F0DE7dF8ed68E1Ee50471B963BA;
 	uint256 public escrowedTokens;
 	address public owner;
