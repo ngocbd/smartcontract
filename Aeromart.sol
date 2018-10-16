@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Aeromart at 0x440e45f3aa670caea84ab50786fd4b2c99feb82b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Aeromart at 0x405a83311b0c8730e6f9d59bc3357f3645078392
 */
 pragma solidity ^0.4.18;
 
@@ -23,7 +23,7 @@ contract Aeromart is Owned {
         string text;
     }
     
-    uint public notesLength;
+    uint nextNoteID;
     mapping (uint256 => Note) public notes;
     
     event noteInfo(
@@ -32,15 +32,15 @@ contract Aeromart is Owned {
     );
     
     function addNote(bytes20 _serialNumber, string _text) onlyOwner public returns (uint) {
-        var note = notes[notesLength];
+        var note = notes[nextNoteID];
         
         note.serialNumber = _serialNumber;
         note.text = _text;
         
         noteInfo(_serialNumber, _text);
         
-        notesLength++;
-        return notesLength;
+        nextNoteID++;
+        return nextNoteID;
     }
     
     function setNote(uint256 _id, bytes20 _serialNumber, string _text) onlyOwner public {
