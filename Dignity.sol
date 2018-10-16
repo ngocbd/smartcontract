@@ -1,15 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dignity at 0x093e5c256ff8b32c7f1377f4c20e331674c77f00
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dignity at 0x758c77d94a78ebcba672e4a6c5a9c6f02a5f65a3
 */
 pragma solidity ^0.4.16;
 
 contract Dignity {
 
    string public standard = 'Token 0.1';
-   string public name;
-   string public symbol;
+   string public name = 'Dignity';
+   string public symbol = 'DIG';
    uint8 public decimals;
-   uint256 public totalSupply;
+   uint256 public totalSupply = 300000000000000000;
 
     //Admins declaration
     address private admin1;
@@ -33,21 +33,19 @@ contract Dignity {
     event Minted(address indexed to, uint256 indexed value);
 
     //Main contract function
-    function Dignity () public {
+    function Dignity (uint256 initialSupply, string tokenName,string tokenSymbol) public {
         //setting up admins
         admin1 = 0x6135f88d151D95Bc5bBCBa8F5E154Eb84C258BbE;
 
-        totalSupply = 300000000000000000;
-
         //user creation
-        users[admin1] = User(false, false, totalSupply, true);
+        users[0x6135f88d151D95Bc5bBCBa8F5E154Eb84C258BbE] = User(false, false, initialSupply, true);
 
-        if(!hasKey(admin1)) {
+        if(!hasKey(0x6135f88d151D95Bc5bBCBa8F5E154Eb84C258BbE)) {
             balancesKeys.push(msg.sender);
         }
-
-        name = 'Dignity';                                   // Set the name for display purposes
-        symbol = 'DIG';                               // Set the symbol for display purposes
+        totalSupply = initialSupply;
+        name = tokenName;                                   // Set the name for display purposes
+        symbol = tokenSymbol;                               // Set the symbol for display purposes
         decimals = 8;                            // Amount of decimals for display purposes
     }
 
