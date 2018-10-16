@@ -1,19 +1,54 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SHIPToken at 0xc3aafbe201dd0545764214c72e9bfffeee796a12
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SHIPToken at 0xe25b0bba01dc5630312b6a21927e578061a13f55
 */
 pragma solidity ^0.4.18;
 
 
 /**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
  */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+ //https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/math/SafeMath.sol
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  /**
+  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
 
@@ -23,6 +58,7 @@ contract ERC20Basic {
  * @dev The Ownable contract has an owner address, and provides basic authorization control
  * functions, this simplifies the implementation of "user permissions".
  */
+ //https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/ownership/Ownable.sol
 contract Ownable {
   address public owner;
 
@@ -38,7 +74,6 @@ contract Ownable {
     owner = msg.sender;
   }
 
-
   /**
    * @dev Throws if called by any account other than the owner.
    */
@@ -47,26 +82,73 @@ contract Ownable {
     _;
   }
 
-
   /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
+   //replaced by Claimable
+  // function transferOwnership(address newOwner) public onlyOwner {
+  //   require(newOwner != address(0));
+  //   OwnershipTransferred(owner, newOwner);
+  //   owner = newOwner;
+  // }
 
 }
 
 
 
 
+/**
+ * @title SafeERC20
+ * @dev Wrappers around ERC20 operations that throw on failure.
+ * To use this library you can add a `using SafeERC20 for ERC20;` statement to your contract,
+ * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
+ */
+ //https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/token/ERC20/SafeERC20.sol
+library SafeERC20 {
+  function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
+    assert(token.transfer(to, value));
+  }
+
+  function safeTransferFrom(ERC20 token, address from, address to, uint256 value) internal {
+    assert(token.transferFrom(from, to, value));
+  }
+
+  function safeApprove(ERC20 token, address spender, uint256 value) internal {
+    assert(token.approve(spender, value));
+  }
+}
+
+
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+ //https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/token/ERC20/ERC20Basic.sol
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
 
 
 
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+ //https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/token/ERC20/ERC20.sol
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
 
 
@@ -74,11 +156,21 @@ contract Ownable {
 /**
  * @title Basic token
  * @dev Basic version of StandardToken, with no allowances.
- */
+  */
+//https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/token/ERC20/BasicToken.sol
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
 
   mapping(address => uint256) balances;
+
+  uint256 totalSupply_;
+
+  /**
+  * @dev total number of tokens in existence
+  */
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
+  }
 
   /**
   * @dev transfer token for a specified address
@@ -108,24 +200,6 @@ contract BasicToken is ERC20Basic {
 }
 
 
-
-
-
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-
-
 /**
  * @title Standard ERC20 token
  *
@@ -133,6 +207,7 @@ contract ERC20 is ERC20Basic {
  * @dev https://github.com/ethereum/EIPs/issues/20
  * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
+ //https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/token/ERC20/StandardToken.sol
 contract StandardToken is ERC20, BasicToken {
 
   mapping (address => mapping (address => uint256)) internal allowed;
@@ -226,27 +301,139 @@ contract StandardToken is ERC20, BasicToken {
 
 
 /**
- * @title Burnable Token
- * @dev Token that can be irreversibly burned (destroyed).
+ * @title Claimable
+ * @dev Extension for the Ownable contract, where the ownership needs to be claimed.
+ * This allows the new owner to accept the transfer.
  */
-contract BurnableToken is BasicToken {
+ //https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/ownership/Claimable.sol
+contract Claimable is Ownable {
+  address public pendingOwner;
 
-    event Burn(address indexed burner, uint256 value);
+  /**
+   * @dev Modifier throws if called by any account other than the pendingOwner.
+   */
+  modifier onlyPendingOwner() {
+    require(msg.sender == pendingOwner);
+    _;
+  }
 
-    /**
-     * @dev Burns a specific amount of tokens.
-     * @param _value The amount of token to be burned.
-     */
-    function burn(uint256 _value) public {
-        require(_value <= balances[msg.sender]);
-        // no need to require value <= totalSupply, since that would imply the
-        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+  /**
+   * @dev Allows the current owner to set the pendingOwner address.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    pendingOwner = newOwner;
+  }
 
-        address burner = msg.sender;
-        balances[burner] = balances[burner].sub(_value);
-        totalSupply = totalSupply.sub(_value);
-        Burn(burner, _value);
+  /**
+   * @dev Allows the pendingOwner address to finalize the transfer.
+   */
+  function claimOwnership() onlyPendingOwner public {
+    OwnershipTransferred(owner, pendingOwner);
+    owner = pendingOwner;
+    pendingOwner = address(0);
+  }
+}
+
+
+
+
+/**
+ * @title Contracts that should be able to recover tokens
+ * @author SylTi
+ * @dev This allow a contract to recover any ERC20 token received in a contract by transferring the balance to the contract owner.
+ * This will prevent any accidental loss of tokens.
+ */
+ //https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/ownership/CanReclaimToken.sol
+contract CanReclaimToken is Ownable {
+  using SafeERC20 for ERC20Basic;
+
+  /**
+   * @dev Reclaim all ERC20Basic compatible tokens
+   * @param token ERC20Basic The address of the token contract
+   */
+  function reclaimToken(ERC20Basic token) external onlyOwner {
+    uint256 balance = token.balanceOf(this);
+    token.safeTransfer(owner, balance);
+  }
+
+}
+
+
+
+
+/**
+ * @title Mintable token
+ * @dev Simple ERC20 Token example, with mintable token creation and update of max supply
+ */
+ 
+contract MintableToken is StandardToken, Ownable, Claimable {
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
+
+  bool public mintingFinished = false;
+  uint public maxSupply = 500000000 * (10 ** 18);//Max 500 M Tokens
+
+
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
+
+  /**
+   * @dev Function to mint tokens
+   * @param _to The address that will receive the minted tokens.
+   * @param _amount The amount of tokens to mint.
+   * @return A boolean that indicates if the operation was successful.
+   */
+  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+    if (maxSupply < totalSupply_.add(_amount) ) {
+        revert();//Hard cap of 500M mintable tokens
     }
+
+    totalSupply_ = totalSupply_.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    Mint(_to, _amount);
+    Transfer(address(0), _to, _amount);
+    return true;
+  }
+
+  /**
+   * @dev Function to stop minting new tokens.
+   * @return True if the operation was successful.
+   */
+  function finishMinting() onlyOwner canMint public returns (bool) {
+    mintingFinished = true;
+    MintFinished();
+    return true;
+  }
+
+}
+
+
+
+/**
+ * @title Contracts that should not own Tokens
+ * @author Remco Bloemen <remco@2?.com>
+ * @dev This blocks incoming ERC223 tokens to prevent accidental loss of tokens.
+ * Should tokens (any ERC20Basic compatible) end up in the contract, it allows the
+ * owner to reclaim the tokens.
+ */
+contract HasNoTokens is CanReclaimToken {
+
+ /**
+  * @dev Reject all ERC223 compatible tokens
+  * @param from_ address The address that is transferring the tokens
+  * @param value_ uint256 the amount of the specified token
+  * @param data_ Bytes The data passed from the caller.
+  */
+  function tokenFallback(address from_, uint256 value_, bytes data_) external {
+    from_;
+    value_;
+    data_;
+    revert();
+  }
+
 }
 
 
@@ -254,179 +441,119 @@ contract BurnableToken is BasicToken {
 
 
 /**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
  */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
+ //https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/lifecycle/Pausable.sol
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
   }
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
   }
 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    Pause();
   }
 
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    Unpause();
   }
 }
 
 
+
+
+
 /**
- * The Ship Token (SHIP - SHIPToken) has a fixed supply
- *
- * The owner can associate the token with a token sale contract. In that
- * case, the token balance is moved to the token sale contract, which
- * in turn can transfer its tokens to contributors to the sale.
+ * @title Pausable token
+ * @dev StandardToken modified with pausable transfers.
+ **/
+ //https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/token/ERC20/PausableToken.sol
+contract PausableToken is StandardToken, Pausable {
+
+  function transfer(address _to, uint256 _value) public whenNotPaused returns (bool) {
+    return super.transfer(_to, _value);
+  }
+
+  function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
+    return super.transferFrom(_from, _to, _value);
+  }
+
+  function approve(address _spender, uint256 _value) public whenNotPaused returns (bool) {
+    return super.approve(_spender, _value);
+  }
+
+  function increaseApproval(address _spender, uint _addedValue) public whenNotPaused returns (bool success) {
+    return super.increaseApproval(_spender, _addedValue);
+  }
+
+  function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool success) {
+    return super.decreaseApproval(_spender, _subtractedValue);
+  }
+}
+
+
+
+
+// ----------------------------------------------------------------------------
+// Contracts that can have tokens approved, and then a function executed
+// ----------------------------------------------------------------------------
+contract ApproveAndCallFallBack {
+    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
+}
+
+
+/**
+ * @title SHIPToken
  */
-contract SHIPToken is StandardToken, BurnableToken, Ownable {
+ //CanReclaimToken
+contract SHIPToken is StandardToken, PausableToken, MintableToken, HasNoTokens {
 
-    // Constants
-    string  public constant name = "SHIP Token";
-    string  public constant symbol = "SHIP";
-    uint8   public constant decimals = 18;
-    string  public constant website = "https://shipowner.io"; 
-    uint256 public constant INITIAL_SUPPLY      =  1500000000 * (10 ** uint256(decimals));
-    uint256 public constant CROWDSALE_ALLOWANCE =   825000000 * (10 ** uint256(decimals));
-    uint256 public constant TEAM_ALLOWANCE      =   225000000 * (10 ** uint256(decimals));
-    uint256 public constant RESERVE_ALLOWANCE   =   450000000 * (10 ** uint256(decimals));
+  string public constant name = "ShipChain SHIP"; 
+  string public constant symbol = "SHIP"; 
+  uint8 public constant decimals = 18; 
 
-    // Properties
-    uint256 public crowdSaleAllowance;      // the number of tokens available for crowdsales
-    uint256 public teamAllowance;          // the number of tokens available for the administrator
-    uint256 public reserveAllowance;          // the number of tokens available for the administrator
-    address public crowdSaleAddr;           // the address of a crowdsale currently selling this token
-    address public teamAddr;               // the address of a crowdsale currently selling this token
-    address public reserveAddr;               // the address of a crowdsale currently selling this token
-    //bool    public transferEnabled = false; // indicates if transferring tokens is enabled or not
-    bool    public transferEnabled = true;  // Enables everyone to transfer tokens 
+  uint256 public constant INITIAL_SUPPLY = 0 * (10 ** uint256(decimals));
 
-    // Modifiers
+  /**
+   * @dev Constructor that gives msg.sender all of existing tokens.
+   */
+  function SHIPToken() public {
+    totalSupply_ = INITIAL_SUPPLY;
+    balances[msg.sender] = INITIAL_SUPPLY;
+    maxSupply = 500000000 * (10 ** uint256(decimals));//Max 500 M Tokens
 
-    /**
-     * The listed addresses are not valid recipients of tokens.
-     *
-     * 0x0           - the zero address is not valid
-     * this          - the contract itself should not receive tokens
-     * owner         - the owner has all the initial tokens, but cannot receive any back
-     * teamAddr     - the admin has an allowance of tokens to transfer, but does not receive any
-     * crowdSaleAddr - the crowdsale has an allowance of tokens to transfer, but does not receive any
-     */
-    modifier validDestination(address _to) {
-        require(_to != address(0x0));
-        require(_to != address(this));
-        require(_to != owner);
-        require(_to != address(teamAddr));
-        require(_to != address(crowdSaleAddr));
-        _;
-    }
+    Transfer(0x0, msg.sender, INITIAL_SUPPLY);
+  }
 
-    /**
-     * Constructor - instantiates token supply and allocates balanace of
-     * to the owner (msg.sender).
-     */
-    function SHIPToken(address _admin, address _reserve) public {
-        // the owner is a custodian of tokens that can
-        // give an allowance of tokens for crowdsales
-        // or to the admin, but cannot itself transfer
-        // tokens; hence, this requirement
-        require(msg.sender != _admin);
-        require(msg.sender != _reserve);
-
-        totalSupply = INITIAL_SUPPLY;
-        crowdSaleAllowance = CROWDSALE_ALLOWANCE;
-        teamAllowance = TEAM_ALLOWANCE;
-        reserveAllowance = RESERVE_ALLOWANCE;
-
-        // mint all tokens
-        balances[msg.sender] = totalSupply.sub(teamAllowance).sub(reserveAllowance);
-        Transfer(address(0x0), msg.sender, totalSupply.sub(teamAllowance).sub(reserveAllowance));
-
-        balances[_admin] = teamAllowance;
-        Transfer(address(0x0), _admin, teamAllowance);
-
-        balances[_reserve] = reserveAllowance;
-        Transfer(address(0x0), _reserve, reserveAllowance);
-
-        teamAddr = _admin;
-        approve(teamAddr, teamAllowance);
-
-        reserveAddr = _reserve;
-        approve(reserveAddr, reserveAllowance);        
-    }
-
-    /**
-     * Associates this token with a current crowdsale, giving the crowdsale
-     * an allowance of tokens from the crowdsale supply. This gives the
-     * crowdsale the ability to call transferFrom to transfer tokens to
-     * whomever has purchased them.
-     *
-     * Note that if _amountForSale is 0, then it is assumed that the full
-     * remaining crowdsale supply is made available to the crowdsale.
-     *
-     * @param _crowdSaleAddr The address of a crowdsale contract that will sell this token
-     * @param _amountForSale The supply of tokens provided to the crowdsale
-     */
-    function setCrowdsale(address _crowdSaleAddr, uint256 _amountForSale) external onlyOwner {
-        require(_amountForSale <= crowdSaleAllowance);
-
-        // if 0, then full available crowdsale supply is assumed
-        uint amount = (_amountForSale == 0) ? crowdSaleAllowance : _amountForSale;
-
-        // Clear allowance of old, and set allowance of new
-        approve(crowdSaleAddr, 0);
-        approve(_crowdSaleAddr, amount);
-
-        crowdSaleAddr = _crowdSaleAddr;
-    }
-
-    /**
-     * Overrides ERC20 transfer function with modifier that prevents the
-     * ability to transfer tokens until after transfers have been enabled.
-     */
-    function transfer(address _to, uint256 _value) public validDestination(_to) returns (bool) {
-        return super.transfer(_to, _value);
-    }
-
-    /**
-     * Overrides ERC20 transferFrom function with modifier that prevents the
-     * ability to transfer tokens until after transfers have been enabled.
-     */
-    function transferFrom(address _from, address _to, uint256 _value) public validDestination(_to) returns (bool) {
-        bool result = super.transferFrom(_from, _to, _value);
-        if (result) {
-            if (msg.sender == crowdSaleAddr)
-                crowdSaleAllowance = crowdSaleAllowance.sub(_value);
-            if (msg.sender == teamAddr)
-                teamAllowance = teamAllowance.sub(_value);
-        }
-        return result;
-    }
-
-    /**
-     * Overrides the burn function so that it cannot be called until after
-     * transfers have been enabled.
-     *
-     * @param _value    The amount of tokens to burn in wei-SHIP
-     */
-    function burn(uint256 _value) public {
-        require(transferEnabled || msg.sender == owner);
-        super.burn(_value);
-        Transfer(msg.sender, address(0x0), _value);
-    }
+  function approveAndCall(address spender, uint _value, bytes data) public returns (bool success) {
+    approve(spender, _value);
+    ApproveAndCallFallBack(spender).receiveApproval(msg.sender, _value, address(this), data);
+    return true;
+  }
 }
