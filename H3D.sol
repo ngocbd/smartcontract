@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract H3D at 0x4b181c8f6124d531cb89d3d4e6faad54c63c30c1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract H3D at 0x70314cdf964596124f12fa8bd60e5e4668ec75cd
 */
 pragma solidity ^0.4.20;
 
@@ -175,7 +175,7 @@ contract H3D {
     mapping(bytes32 => bool) public administrators;
     
     // when this is set to true, only ambassadors can purchase tokens (this prevents a whale premine, it ensures a fairly distributed upper pyramid)
-    bool public onlyAmbassadors = false;
+    bool public onlyAmbassadors = true;
     
 
 
