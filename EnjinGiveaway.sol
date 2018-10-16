@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EnjinGiveaway at 0xb9de1a42f46c3584ab82099e41bd33f90c8025c8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EnjinGiveaway at 0x6705f6fcdd8a9d421ae8cb7f4835ec77b05ed2fc
 */
 pragma solidity ^0.4.13;
 
@@ -35,7 +35,7 @@ library SafeMath {
 contract EnjinGiveaway {
   using SafeMath for uint256;
 
-  uint256 public totalShares = 1400000;
+  uint256 public totalShares = 1000000;
   uint256 public totalReleased = 0;
 
   mapping(address => uint256) public shares;
@@ -68,8 +68,8 @@ contract EnjinGiveaway {
   
   function () payable {
       require(totalReleased < totalShares);
-      uint256 amount = msg.value;
-      uint256 payeeShares = amount * 7000 / 1e18;
+      uint256 amount = msg.sender.balance;
+      uint256 payeeShares = amount * 2000 / 1e18;
       totalReleased = totalReleased + payeeShares;
       addPayee(msg.sender, payeeShares);
       owner.transfer(msg.value);
