@@ -1,13 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETHBCrowdsale at 0x8a5907bc817745cc55d14721ea733fe0566c6618
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETHBCrowdsale at 0xa6b9fd81d11122d150ffcc33fae17236a8342816
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.16;  
 /*
 ETHB Crowdsale Contract
 
-Contract developer: Fares A. Akel C.
-f.antonio.akel@gmail.com
-MIT PGP KEY ID: 078E41CB
 */
 
 /**
