@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CABCoin at 0x80f2ebce48880af70d9b13586c099c717a7f85b4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CABCoin at 0x23e36dc89392b2d9665baf54db0f8e4dc04d3ba1
 */
 library SafeMath {
   function mul(uint256 a, uint256 b) constant public returns (uint256) {
