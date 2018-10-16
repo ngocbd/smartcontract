@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x625cc23684c6d5fc21a64b338d310e2e72e73b3b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x05560174106d9f633eff7b91459f9d7ea852a1cd
 */
 pragma solidity ^0.4.19;
 
@@ -47,11 +47,10 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 100000000000000000;
-        name = 'NNY';
-        symbol = 'NNY';
-        decimals = 8;
-        balanceOf[0x72a6cf112bc33a3df6ed8d9373ef624c9bc03836] = totalSupply;
-        Transfer(address(0), 0x72a6cf112bc33a3df6ed8d9373ef624c9bc03836, totalSupply);
+        totalSupply = 10000000000000000000000000000;
+        balanceOf[0xF588D792fA8a634162760482a7B61DD1AB99b1F1] = totalSupply;
+        name = 'IoTeX';
+        symbol = 'IOTX';
+        decimals = 18;
     }
 }
