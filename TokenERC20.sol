@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xcb5ea3c190d8f82deadf7ce5af855ddbf33e3962
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x29fa00dcf17689c8654d07780f9e222311d6bf0c
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
@@ -9,7 +9,7 @@ contract TokenERC20 {
     // Public variables of the token
     string public name;
     string public symbol;
-    uint8 public decimals = 6;
+    uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
 
@@ -29,12 +29,14 @@ contract TokenERC20 {
      * Initializes contract with initial supply tokens to the creator of the contract
      */
     function TokenERC20(
-
+        uint256 initialSupply,
+        string tokenName,
+        string tokenSymbol
     ) public {
-        totalSupply = 10000000000000;  // Update total supply with the decimal amount
+        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = "Qubitica";                                   // Set the name for display purposes
-        symbol = "QBIT";                               // Set the symbol for display purposes
+        name = tokenName;                                   // Set the name for display purposes
+        symbol = tokenSymbol;                               // Set the symbol for display purposes
     }
 
     /**
