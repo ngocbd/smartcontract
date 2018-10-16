@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AIAcrowdsale at 0x969e98cC8c4CF426Ec3b2B649fad0eE565d947DD
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AIAcrowdsale at 0xe39a50eb53bf2d9cfae7dd6a33238d75468d54c1
 */
 pragma solidity ^0.4.18;
 
@@ -49,10 +49,10 @@ contract AIAcrowdsale is myOwned {
 
     function getRateAt(uint256 at) public constant returns (uint256) {
         if (at < startDate) {return 0;} 
-        else if (at < (startDate + 168 hours)) {return 10000;} 
-        else if (at < (startDate + 336 hours)) {return 9000;} 
-        else if (at < (startDate + 528 hours)) {return 8100;} 
-        else if (at <= stopDate) {return 7300;} 
+        else if (at < (startDate + 48 hours)) {return 7500;} 
+        else if (at < (startDate + 216 hours)) {return 6500;} 
+        else if (at < (startDate + 384 hours)) {return 6000;} 
+        else if (at <= stopDate) {return 5000;} 
         else if (at > stopDate) {return 0;}
     }
 
