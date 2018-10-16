@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LifToken at 0xada83270510b6284e27c757096d660f0fcf6a90b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LifToken at 0x275a9048bf6d775a7f8b200cb2e258c33dbf6bdf
 */
 pragma solidity ^0.4.18;
 
