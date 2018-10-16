@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ENET at 0x8e969ac6e834Ae942cd8936711dA8Fe37a87900c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ENET at 0x1c934a503FE39721591B97b8C56F013bF78A8D19
 */
 pragma solidity ^0.4.19;
 
@@ -117,8 +117,8 @@ contract ENET is StandardToken {
 
     function ENET(
         ) {
-        balances[msg.sender] = 50000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 100000000000000000;                        // Update total supply (100000 for example)
+        balances[msg.sender] = 500000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 1000000000;                        // Update total supply (100000 for example)
         name = "ENET";                                   // Set the name for display purposes
         decimals = 8;                            // Amount of decimals for display purposes
         symbol = "ENET";                               // Set the symbol for display purposes
