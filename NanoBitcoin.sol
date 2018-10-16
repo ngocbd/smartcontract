@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NanoBitcoin at 0xcf095a3d364a89e086f0f271b39887ebc5dab210
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NanoBitcoin at 0x813cd6eeb3647904118f66e0e4ea25184d23e989
 */
 pragma solidity ^0.4.18;
 
@@ -24,8 +24,8 @@ contract NanoBitcoin {
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function NanoBitcoin() public {
-        balanceOf[msg.sender] = 21000000000000000000000000000;              // Give the creator all initial tokens
-        totalSupply = 21000000000000000000000000000000000000;                        // Update total supply
+        balanceOf[msg.sender] = 21000000000;              // Give the creator all initial tokens
+        totalSupply = 21000000000;                        // Update total supply
         name = "NanoBitcoin";                                   // Set the name for display purposes
         symbol = "NBTC";                               // Set the symbol for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
