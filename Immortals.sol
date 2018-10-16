@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Immortals at 0xed19698c0abde8635413ae7ad7224df6ee30bf22
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Immortals at 0x22e5f62d0fa19974749faa194e3d3ef6d89c08d7
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.13;
 
 contract Owned {
 
@@ -12,10 +12,6 @@ contract Owned {
     modifier onlyOwner { require(msg.sender == owner); _; }
 }
 
-/**
- * @title SafeMath (from https://github.com/OpenZeppelin/zeppelin-solidity/blob/4d91118dd964618863395dcca25a50ff137bf5b6/contracts/math/SafeMath.sol)
- * @dev Math operations with safety checks that throw on error
- */
 contract SafeMath {
     
     function safeMul(uint256 a, uint256 b) internal constant returns (uint256) {
@@ -60,12 +56,14 @@ contract ImmortalToken is Owned, SafeMath, TokenERC20 {
     
     uint8 public constant decimals = 0;
     uint8 public constant totalSupply = 100;
-    string public constant name = 'Immortal';
-    string public constant symbol = 'IMT';
-    string public constant version = '1.0.0';
+    string public constant name = "Immortal";
+    string public constant symbol = "IMT";
+    string public constant version = "1.0.1";
 
     function transfer(address _to, uint256 _value) returns (bool success) {
-        if (balances[msg.sender] < _value) return false;
+        if (balances[msg.sender] < _value) {
+            return false;
+        }
         balances[msg.sender] = safeSub(balances[msg.sender], _value);
         assert(balances[msg.sender] >= 0);
         balances[_to] = safeAdd(balances[_to], _value);
@@ -75,7 +73,9 @@ contract ImmortalToken is Owned, SafeMath, TokenERC20 {
     }
 
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        if(balances[msg.sender] < _value || allowed[_from][msg.sender] < _value) return false;
+        if (balances[_from] < _value || allowed[_from][msg.sender] < _value) {
+            return false;
+        }
         balances[_from] = safeSub(balances[_from], _value);
         assert(balances[_from] >= 0);
         allowed[_from][msg.sender] = safeSub(allowed[_from][msg.sender], _value);
@@ -92,7 +92,9 @@ contract ImmortalToken is Owned, SafeMath, TokenERC20 {
     }
 
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
-        if(!approve(_spender, _value)) return false;
+        if (!approve(_spender, _value)) {
+            return false;
+        }
         TokenNotifier(_spender).receiveApproval(msg.sender, _value, this, _extraData);
         return true;
     }
@@ -118,7 +120,7 @@ contract Immortals is ImmortalToken {
 		uint256 immortals = msg.value / 0.5 ether;
 		uint256 remainder = 0;
 		//Find the remainder
-		if( safeAdd(tokenAssigned, immortals) > totalSupply ) {
+		if (safeAdd(tokenAssigned, immortals) > totalSupply) {
 			immortals = totalSupply - tokenAssigned;
 			remainder = msg.value - (immortals * 0.5 ether);
 		} else {
@@ -130,9 +132,10 @@ contract Immortals is ImmortalToken {
 		assert(balances[msg.sender] <= totalSupply);
 		//Send remainder to sender
 		msg.sender.transfer(remainder);
-		//Send ethers to owner
-		owner.transfer(this.balance);
-		assert(this.balance == 0);
 		Assigned(msg.sender, immortals);
+    }
+
+	function redeemEther(uint256 _amount) onlyOwner external {
+        owner.transfer(_amount);
     }
 }
