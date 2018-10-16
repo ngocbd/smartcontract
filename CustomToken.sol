@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x22fd67695550a300f1f82a306569797109965127
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x6f540c6c815ac073aa903cf10336509b95993705
 */
 pragma solidity ^0.4.19;
 
@@ -47,10 +47,10 @@ contract BaseToken {
 
 contract CustomToken is BaseToken {
     function CustomToken() public {
-        totalSupply = 800000000000000000;
-        name = 'COOP';
-        symbol = 'COOP';
-        decimals = 10;
+        totalSupply = 319000000000000000000000000;
+        name = 'Amnesty International Alternating Current';
+        symbol = 'AIAC';
+        decimals = 18;
         balanceOf[0x5ebc4B61A0E0187d9a72Da21bfb8b45F519cb530] = totalSupply;
         Transfer(address(0), 0x5ebc4B61A0E0187d9a72Da21bfb8b45F519cb530, totalSupply);
     }
