@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresaleFundCollector at 0x6022c6c5de7c4ab22b070c36c3d5763669777f68
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresaleFundCollector at 0x78c6b7f1f5259406be3bc73eca1eaa859471b9f3
 */
 /**
  * Safe unsigned safe math.
@@ -387,7 +387,7 @@ contract Crowdsale is Haltable {
   /**
    * Allow to (re)set finalize agent.
    *
-   * Design choice: no state restrictions on setting this, so that we can fix fat finger mistakes.
+   * Design choice: no state restrictions on the set, so that we can fix fat finger mistakes.
    */
   function setFinalizeAgent(FinalizeAgent addr) onlyOwner {
     finalizeAgent = addr;
@@ -411,6 +411,8 @@ contract Crowdsale is Haltable {
       throw;
     }
   }
+
+
 
   /**
    * Allow load refunds back on the contract for the refunding.
