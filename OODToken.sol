@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OODToken at 0xa9e49917b55e0f3e305e69f71f06de5a4388be0d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OODToken at 0xb033362bb061d84110bfae42a22b2f0b2f6ae649
 */
 pragma solidity ^0.4.18;
 
@@ -259,7 +259,7 @@ contract OODToken is StandardToken, Ownable {
   uint256 public initialSupply;
 
   constructor() public {
-    name = 'Blood Bitcoin Token';
+    name = 'Bitcoin Blood Token';
     symbol = 'OOD';
     decimals = 18;
     initialSupply = 2100000000 * 10 ** uint256(decimals);
