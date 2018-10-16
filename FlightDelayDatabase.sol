@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlightDelayDatabase at 0x7019823fbea7613d98b4ed43473e50a9f6392590
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FlightDelayDatabase at 0x0304ca88ec05853c4fd1adf44c6f354fad927a83
 */
+// File: contracts/FlightDelayAccessControllerInterface.sol
+
 /**
  * FlightDelay with Oraclized Underwriting and Payout
  *
@@ -129,6 +131,10 @@ contract FlightDelayConstants {
     /*
     * General constants
     */
+    // contracts release version
+    uint public constant MAJOR_VERSION = 1;
+    uint public constant MINOR_VERSION = 0;
+    uint public constant PATCH_VERSION = 2;
 
     // minimum observations for valid prediction
     uint constant MIN_OBSERVATIONS = 10;
@@ -162,8 +168,8 @@ contract FlightDelayConstants {
     // WEIGHT_PATTERN[0] is not used, just to be consistent
     uint8[6] WEIGHT_PATTERN = [
         0,
-        10,
-        20,
+        0,
+        0,
         30,
         50,
         50
@@ -205,13 +211,13 @@ contract FlightDelayConstants {
         // ratings api is v1, see https://developer.flightstats.com/api-docs/ratings/v1
         "[URL] json(https://api.flightstats.com/flex/ratings/rest/v1/json/flight/";
     string constant ORACLIZE_RATINGS_QUERY =
-        "?${[decrypt] BAr6Z9QolM2PQimF/pNC6zXldOvZ2qquOSKm/qJkJWnSGgAeRw21wBGnBbXiamr/ISC5SlcJB6wEPKthdc6F+IpqM/iXavKsalRUrGNuBsGfaMXr8fRQw6gLzqk0ecOFNeCa48/yqBvC/kas+jTKHiYxA3wTJrVZCq76Y03lZI2xxLaoniRk}).ratings[0]['observations','late15','late30','late45','cancelled','diverted','arrivalAirportFsCode','departureAirportFsCode']";
+        "?${[decrypt] BJoM0BfTe82RtghrzzCbNA7b9E9tQIX8LtM+pRRh22RfQ5QhnVAv6Kk4SyaMwQKczC7YtinJ/Xm6PZMgKnWN7+/pFUfI2YcxaAW0vYuXJF4zCTxPYXa6j4shhce60AMBeKoZZsgn6Og+olgSpgpfi4MwkmmytwdCLHqat3gGUPklBhM1HR0x}).ratings[0]['observations','late15','late30','late45','cancelled','diverted','arrivalAirportFsCode','departureAirportFsCode']";
     string constant ORACLIZE_STATUS_BASE_URL =
         // flight status api is v2, see https://developer.flightstats.com/api-docs/flightstatus/v2/flight
         "[URL] json(https://api.flightstats.com/flex/flightstatus/rest/v2/json/flight/status/";
     string constant ORACLIZE_STATUS_QUERY =
         // pattern:
-        "?${[decrypt] BJxpwRaHujYTT98qI5slQJplj/VbfV7vYkMOp/Mr5D/5+gkgJQKZb0gVSCa6aKx2Wogo/cG7yaWINR6vnuYzccQE5yVJSr7RQilRawxnAtZXt6JB70YpX4xlfvpipit4R+OmQTurJGGwb8Pgnr4LvotydCjup6wv2Bk/z3UdGA7Sl+FU5a+0}&utc=true).flightStatuses[0]['status','delays','operationalTimes']";
+        "?${[decrypt] BA3YyqF4iMQszBawvgG82bqX3fw7JoWA1thFsboUECR/L8JkBCgvaThg1LcUWbIntosEKs/kvqyzOtvdQfMgjYPV0c6hsq/gKQkmJYILZmLY4SgBebH8g0qbfrrjxF5gEbfCi2qoR6PSxcQzKIjgd4HvAaumlQd4CkJLmY463ymqNN9B8/PL}&utc=true).flightStatuses[0]['status','delays','operationalTimes']";
 // <-- prod-mode
 
 // --> test-mode
@@ -400,7 +406,6 @@ pragma solidity ^0.4.11;
 
 
 
-
 contract FlightDelayControlledContract is FlightDelayDatabaseModel {
 
     address public controller;
@@ -439,7 +444,6 @@ contract FlightDelayControlledContract is FlightDelayDatabaseModel {
  */
 
 pragma solidity ^0.4.11;
-
 
 
 
@@ -538,7 +542,6 @@ contract FlightDelayDatabaseInterface is FlightDelayDatabaseModel {
  */
 
 pragma solidity ^0.4.11;
-
 
 
 
