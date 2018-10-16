@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EncryptedToken at 0xb8a037660cb36ff8d261d85f84c5a9e1077652b2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EncryptedToken at 0x06aa06fba11a2b423e7672653418ee13bcd3676a
 */
 pragma solidity ^0.4.16;
 
@@ -116,13 +116,13 @@ contract TokenERC20 {
 }
 
 contract EncryptedToken is owned, TokenERC20 {
-  uint256 INITIAL_SUPPLY = 880000000;
-  uint256 public buyPrice = 25000;
+  uint256 INITIAL_SUPPLY = 120000000;
+  uint256 public buyPrice = 1;
   mapping (address => bool) public frozenAccount;
 
     event FrozenFunds(address target, bool frozen);
 	
-	function EncryptedToken() TokenERC20(INITIAL_SUPPLY, 'CCAR', 'CCAR') payable public {}
+	function EncryptedToken() TokenERC20(INITIAL_SUPPLY, 'HIS', 'HIS') payable public {}
     
     function _transfer(address _from, address _to, uint _value) internal {
         require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
@@ -147,21 +147,7 @@ contract EncryptedToken is owned, TokenERC20 {
         FrozenFunds(target, freeze);
     }
 
-    function setPrices(uint256 newBuyPrice) onlyOwner public {
-        buyPrice = newBuyPrice;
-    }
 
-    function buy() payable public {
-        uint amount = msg.value / buyPrice;               // calculates the amount
-        _transfer(this, msg.sender, amount);              // makes the transfers
-    }
-    
-    function () payable public {
-    		uint amount = msg.value * buyPrice;               // calculates the amount
-    		_transfer(owner, msg.sender, amount);
-    		owner.send(msg.value);//
-    }
-    
     function selfdestructs() onlyOwner payable public {
     		selfdestruct(owner);
     }
