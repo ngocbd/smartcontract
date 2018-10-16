@@ -1,393 +1,223 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TosToken at 0xfb5a551374b656c6e39787b1d3a03feab7f3a98e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TOSToken at 0xdca50347529f31c02855a48ed2b05262c41a29e2
 */
-/**
- * Copyright 2018 TosChain Foundation.
- */
+pragma solidity ^0.4.18;
 
-pragma solidity ^0.4.16;
+contract SafeMath {
+  function mulSafe(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+       return 0;
+     }
+     uint256 c = a * b;
+     assert(c / a == b);
+     return c;
+   }
 
-/** Owner permissions */
-contract owned {
+  function divSafe(uint256 a, uint256 b) internal pure returns (uint256) {
+     uint256 c = a / b;
+     return c;
+  }
+
+  function subSafe(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+     return a - b;
+   }
+
+  function addSafe(uint256 a, uint256 b) internal pure returns (uint256) {
+     uint256 c = a + b;
+    assert(c >= a);
+     return c;
+   }
+}
+
+contract Owned {
     address public owner;
-
-    function owned() public {
-        owner = msg.sender;
-    }
-
+    address public newOwner;
+    event OwnershipTransferred(address indexed _from, address indexed _to);
+    function Constructor() public { owner = msg.sender; }
     modifier onlyOwner {
         require(msg.sender == owner);
         _;
     }
 
-    function transferOwnership(address newOwner) onlyOwner public {
+    function transferOwnership(address _newOwner) public onlyOwner {
+        newOwner = _newOwner;
+    }
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        OwnershipTransferred(owner, newOwner);
         owner = newOwner;
+        newOwner = address(0);
     }
 }
 
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
-
-/// ERC20 standard?Define the minimum unit of money to 18 decimal places,
-/// transfer out, destroy coins, others use your account spending pocket money.
-contract TokenERC20 {
-    uint256 public totalSupply;
-    // This creates an array with all balances.
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
-
-    // This generates a public event on the blockchain that will notify clients.
-    event Transfer(address indexed from, address indexed to, uint256 value);
-
-    // This notifies clients about the amount burnt.
-    event Burn(address indexed from, uint256 value);
-
-    /**
-     * Internal transfer, only can be called by this contract.
-     */
-    function _transfer(address _from, address _to, uint _value) internal {
-        // Prevent transfer to 0x0 address. Use burn() instead.
-        require(_to != 0x0);
-        // Check if the sender has enough.
-        require(balanceOf[_from] >= _value);
-        // Check for overflows.
-        require(balanceOf[_to] + _value > balanceOf[_to]);
-        // Save this for an assertion in the future.
-        uint previousBalances = balanceOf[_from] + balanceOf[_to];
-        // Subtract from the sender.
-        balanceOf[_from] -= _value;
-        // Add the same to the recipient.
-        balanceOf[_to] += _value;
-        Transfer(_from, _to, _value);
-        // Asserts are used to use static analysis to find bugs in your code. They should never fail.
-        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
-    }
-
-    /**
-     * Transfer tokens
-     *
-     * Send `_value` tokens to `_to` from your account.
-     *
-     * @param _to The address of the recipient.
-     * @param _value the amount to send.
-     */
-    function transfer(address _to, uint256 _value) public {
-        _transfer(msg.sender, _to, _value);
-    }
-
-    /**
-     * Transfer tokens from other address.
-     *
-     * Send `_value` tokens to `_to` in behalf of `_from`.
-     *
-     * @param _from The address of the sender.
-     * @param _to The address of the recipient.
-     * @param _value the amount to send.
-     */
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        // Check allowance
-        require(_value <= allowance[_from][msg.sender]);
-        allowance[_from][msg.sender] -= _value;
-        _transfer(_from, _to, _value);
-        return true;
-    }
-
-    /**
-     * Set allowance for other address.
-     *
-     * Allows `_spender` to spend no more than `_value` tokens in your behalf.
-     *
-     * @param _spender The address authorized to spend.
-     * @param _value the max amount they can spend.
-     */
-    function approve(address _spender, uint256 _value) public
-        returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
-        return true;
-    }
-
-    /**
-     * Set allowance for other address and notify.
-     *
-     * Allows `_spender` to spend no more than `_value` tokens in your behalf, and then ping the contract about it.
-     *
-     * @param _spender The address authorized to spend.
-     * @param _value the max amount they can spend.
-     * @param _extraData some extra information to send to the approved contract.
-     */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
-        public
-        returns (bool success) {
-        tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
-        }
-    }
-
-    /**
-     * Destroy tokens
-     *
-     * Remove `_value` tokens from the system irreversibly.
-     *
-     * @param _value the amount of money to burn.
-     */
-    function burn(uint256 _value) public returns (bool success) {
-        // Check if the sender has enough
-        require(balanceOf[msg.sender] >= _value);
-        // Subtract from the sender
-        balanceOf[msg.sender] -= _value;
-        // Updates totalSupply
-        totalSupply -= _value;
-        Burn(msg.sender, _value);
-        return true;
-    }
-
-    /**
-     * Destroy tokens from other account.
-     *
-     * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
-     *
-     * @param _from the address of the sender.
-     * @param _value the amount of money to burn.
-     */
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        // Check if the targeted balance is enough.
-        require(balanceOf[_from] >= _value);
-        // Check allowance
-        require(_value <= allowance[_from][msg.sender]);
-        // Subtract from the targeted balance.
-        balanceOf[_from] -= _value;
-        // Subtract from the sender's allowance.
-        allowance[_from][msg.sender] -= _value;
-        // Update totalSupply
-        totalSupply -= _value;
-        Burn(_from, _value);
-        return true;
-    }
+contract ERC20 {
+   uint256 public totalSupply;
+   function balanceOf(address who) public view returns (uint256);
+   function transfer(address to, uint256 value) public returns (bool);
+   event Transfer(address indexed from, address indexed to, uint256 value);
+   function allowance(address owner, address spender) public view returns (uint256);
+   function transferFrom(address from, address to, uint256 value) public returns (bool);
+   function approve(address spender, uint256 value) public returns (bool);
+   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-/******************************************/
-/*       TOS TOKEN STARTS HERE       */
-/******************************************/
+contract ERC223 {
+    function transfer(address to, uint value, bytes data) public;
+    event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
+}
 
-/// @title TOS Protocol Token.
-contract TosToken is owned, TokenERC20 {
+contract ERC223ReceivingContract { 
+    function tokenFallback(address _from, uint _value, bytes _data) public;
+}
 
-    /// The full name of the TOS token.
-    string public constant name = "ThingsOpreatingSystem";
-    /// Symbol of the TOS token.
-    string public constant symbol = "TOS";
-    /// 18 decimals is the strongly suggested default, avoid changing it.
-    uint8 public constant decimals = 18;
+contract StandardToken is ERC20, ERC223, SafeMath, Owned {
+  event ReleaseSupply(address indexed receiver, uint256 value, uint256 releaseTime);
+  mapping(address => uint256) balances;
+  mapping (address => mapping (address => uint256)) internal allowed;
 
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+    balances[msg.sender] = subSafe(balances[msg.sender], _value);
+    balances[_to] = addSafe(balances[_to], _value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
 
-    uint256 public totalSupply = 1000000000 * 10 ** uint256(decimals);
-    /// Amount of TOS token to first issue.
-    uint256 public MAX_FUNDING_SUPPLY = totalSupply * 500 / 1000;
+  function balanceOf(address _owner) public view returns (uint256 balance) {
+    return balances[_owner];
+   }
 
-    /**
-     *  Locked tokens system
-     */
-    /// Stores the address of the locked tokens.
-    address public lockJackpots;
-    /// Reward for depositing the TOS token into a locked tokens.
-    /// uint256 public totalLockReward = totalSupply * 50 / 1000;
-    /// Remaining rewards in the locked tokens.
-    uint256 public remainingReward;
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
 
-    /// The start time to lock tokens. 2018/03/15 0:0:0
-    uint256 public lockStartTime = 1521043200;
-    /// The last time to lock tokens. 2018/04/29 0:0:0
-    uint256 public lockDeadline = 1524931200;
-    /// Release tokens lock time,Timestamp format 1544803200 ==  2018/12/15 0:0:0
-    uint256 public unLockTime = 1544803200;
+    balances[_from] = subSafe(balances[_from], _value);
+     balances[_to] = addSafe(balances[_to], _value);
+     allowed[_from][msg.sender] = subSafe(allowed[_from][msg.sender], _value);
+    Transfer(_from, _to, _value);
+     return true;
+   }
 
-    /// Reward factor for locked tokens 
-    uint public constant NUM_OF_PHASE = 3;
-    uint[3] public lockRewardsPercentages = [
-        1000,   //100%
-        500,    //50%
-        300    //30%
-    ];
+   function approve(address _spender, uint256 _value) public returns (bool) {
+     allowed[msg.sender][_spender] = _value;
+     Approval(msg.sender, _spender, _value);
+     return true;
+   }
 
-    /// Locked account details
-    mapping (address => uint256) public lockBalanceOf;
+  function allowance(address _owner, address _spender) public view returns (uint256) {
+     return allowed[_owner][_spender];
+   }
 
-    /**
-     *  Freeze the account system
-     */
-    /* This generates a public event on the blockchain that will notify clients. */
-    mapping (address => bool) public frozenAccount;
-    event FrozenFunds(address target, bool frozen);
+   function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
+     allowed[msg.sender][_spender] = addSafe(allowed[msg.sender][_spender], _addedValue);
+     Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+     return true;
+   }
 
-    /* Initializes contract with initial supply tokens to the creator of the contract. */
-    function TosToken() public {
-        /// Give the creator all initial tokens.
-        balanceOf[msg.sender] = totalSupply;
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
+     uint oldValue = allowed[msg.sender][_spender];
+     if (_subtractedValue > oldValue) {
+       allowed[msg.sender][_spender] = 0;
+     } else {
+       allowed[msg.sender][_spender] = subSafe(oldValue, _subtractedValue);
     }
+     Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+     return true;
+   }
 
-    /**
-     * transfer token for a specified address.
-     *
-     * @param _to The address to transfer to.
-     * @param _value The amount to be transferred.
-     */
-    function transfer(address _to, uint256 _value) public {
-        /// Locked account can not complete the transfer.
-        require(!(lockJackpots != 0x0 && msg.sender == lockJackpots));
-
-        /// Transponding the TOS token to a locked tokens account will be deemed a lock-up activity.
-        if (lockJackpots != 0x0 && _to == lockJackpots) {
-            _lockToken(_value);
+    function transfer(address _to, uint _value, bytes _data) public {
+        require(_value > 0 );
+        if(isContract(_to)) {
+            ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
+            receiver.tokenFallback(msg.sender, _value, _data);
         }
-        else {
-            /// To unlock the time, automatically unlock tokens.
-            if (unLockTime <= now && lockBalanceOf[msg.sender] > 0) {
-                lockBalanceOf[msg.sender] = 0;
-            }
+        balances[msg.sender] = subSafe(balances[msg.sender], _value);
+        balances[_to] = addSafe(balances[_to], _value);
+        Transfer(msg.sender, _to, _value, _data);
+    }
 
-            _transfer(msg.sender, _to, _value);
+    function isContract(address _addr) private view returns (bool is_contract) {
+      uint length;
+      assembly {
+            //retrieve the size of the code on target address, this needs assembly
+            length := extcodesize(_addr)
+      }
+      return (length>0);
+    }
+
+}
+
+contract TOSToken is StandardToken {
+  string public name = 'TOSToken';
+  string public symbol = 'TOS';
+  uint public decimals = 18;
+
+  uint256 public createTime         = 1527436800;  //20180528 //1528128000;  //20180605 00:00:00
+  uint256 public bonusEnds          = 1528646400;  //20180611 00:00:00
+  uint256 public endDate            = 1529078400;  //20180616 00:00:00
+  uint256 firstAnnual               = 1559318400;
+  uint256 secondAnnual              = 1590940800;
+  uint256 thirdAnnual               = 1622476800;
+
+  uint256 public INITIAL_SUPPLY     = 1000000000;
+  uint256 public frozenForever      =  400000000;
+
+  uint256 firstAnnualReleasedAmount =  150000000;
+  uint256 secondAnnualReleasedAmount=  150000000;
+  uint256 thirdAnnualReleasedAmount =  100000000;
+
+  function TOSToken() public {
+    totalSupply = 200000000 ; 
+    balances[msg.sender] = totalSupply * 10 ** uint256(decimals);
+    owner = msg.sender;
+  }
+
+  function releaseSupply() public onlyOwner returns(uint256 _actualRelease) {
+    uint256 releaseAmount = getReleaseAmount();
+    require(releaseAmount > 0);
+    balances[owner] = addSafe(balances[owner], releaseAmount * 10 ** uint256(decimals));
+    totalSupply = addSafe(totalSupply, releaseAmount);
+    Transfer(address(0), msg.sender, releaseAmount);
+    return releaseAmount;
+  }
+
+  function getReleaseAmount() internal returns(uint256 _actualRelease) {
+        uint256 _amountToRelease;
+        if (    now >= firstAnnual
+             && now < secondAnnual
+             && firstAnnualReleasedAmount > 0) {
+            _amountToRelease = firstAnnualReleasedAmount;
+            firstAnnualReleasedAmount = 0;
+        } else if (    now >= secondAnnual 
+                    && now < thirdAnnual
+                    && secondAnnualReleasedAmount > 0) {
+            _amountToRelease = secondAnnualReleasedAmount;
+            secondAnnualReleasedAmount = 0;
+        } else if (    now >= thirdAnnual 
+                    && thirdAnnualReleasedAmount > 0) {
+            _amountToRelease = thirdAnnualReleasedAmount;
+            thirdAnnualReleasedAmount = 0;
+        } else {
+            _amountToRelease = 0;
         }
+        return _amountToRelease;
     }
 
-    /**
-     * transfer token for a specified address.Internal transfer, only can be called by this contract.
-     *
-     * @param _from The address to transfer from.
-     * @param _to The address to transfer to.
-     * @param _value The amount to be transferred.
-     */
-    function _transfer(address _from, address _to, uint _value) internal {
-        // Prevent transfer to 0x0 address. Use burn() instead.
-        require(_to != 0x0);
-        //Check for overflows.
-        require(lockBalanceOf[_from] + _value > lockBalanceOf[_from]);
-        // Check if the sender has enough.
-        require(balanceOf[_from] >= lockBalanceOf[_from] + _value);
-        // Check for overflows.
-        require(balanceOf[_to] + _value > balanceOf[_to]);
-        // Check if sender is frozen.
-        require(!frozenAccount[_from]);
-        // Check if recipient is frozen.
-        require(!frozenAccount[_to]);
-        // Subtract from the sender.
-        balanceOf[_from] -= _value;
-        // Add the same to the recipient.
-        balanceOf[_to] += _value;
-        Transfer(_from, _to, _value);
-    }
-
-    /**
-     * `freeze? Prevent | Allow` `target` from sending & receiving tokens.
-     *
-     * @param target Address to be frozen.
-     * @param freeze either to freeze it or not.
-     */
-    function freezeAccount(address target, bool freeze) onlyOwner public {
-        frozenAccount[target] = freeze;
-        FrozenFunds(target, freeze);
-    }
-
-    /**
-     * Increase the token reward.
-     *
-     * @param _value Increase the amount of tokens awarded.
-     */
-    function increaseLockReward(uint256 _value) public{
-        require(_value > 0);
-        _transfer(msg.sender, lockJackpots, _value * 10 ** uint256(decimals));
-        _calcRemainReward();
-    }
-
-    /**
-     * Locked tokens, in the locked token reward calculation and distribution.
-     *
-     * @param _lockValue Lock token reward.
-     */
-    function _lockToken(uint256 _lockValue) internal {
-        /// Lock the tokens necessary safety checks.
-        require(lockJackpots != 0x0);
-        require(now >= lockStartTime);
-        require(now <= lockDeadline);
-        require(lockBalanceOf[msg.sender] + _lockValue > lockBalanceOf[msg.sender]);
-        /// Check account tokens must be sufficient.
-        require(balanceOf[msg.sender] >= lockBalanceOf[msg.sender] + _lockValue);
-
-        uint256 _reward =  _lockValue * _calcLockRewardPercentage() / 1000;
-        /// Distribute bonus tokens.
-        _transfer(lockJackpots, msg.sender, _reward);
-
-        /// Save locked accounts and rewards.
-        lockBalanceOf[msg.sender] += _lockValue + _reward;
-        _calcRemainReward();
-    }
-
-    uint256 lockRewardFactor;
-    /* Calculate locked token reward percentage?Actual value: rewardFactor/1000 */
-    function _calcLockRewardPercentage() internal returns (uint factor){
-
-        uint phase = NUM_OF_PHASE * (now - lockStartTime)/( lockDeadline - lockStartTime);
-        if (phase  >= NUM_OF_PHASE) {
-            phase = NUM_OF_PHASE - 1;
+    function () public payable {
+        require(now >= createTime && now <= endDate);
+        uint tokens;
+        if (now <= bonusEnds) {
+            tokens = msg.value * 2480;
+        } else {
+            tokens = msg.value * 2000;
         }
-    
-        lockRewardFactor = lockRewardsPercentages[phase];
-        return lockRewardFactor;
-    }
-
-    /** The activity is over and the token in the prize pool is sent to the manager for fund development. */
-    function rewardActivityEnd() onlyOwner public {
-        /// The activity is over.
-        require(unLockTime < now);
-        /// Send the token from the prize pool to the manager.
-        _transfer(lockJackpots, owner, balanceOf[lockJackpots]);
-        _calcRemainReward();
-    }
-
-    function() payable public {}
-
-    /**
-     * Set lock token address,only once.
-     *
-     * @param newLockJackpots The lock token address.
-     */
-    function setLockJackpots(address newLockJackpots) onlyOwner public {
-        require(lockJackpots == 0x0 && newLockJackpots != 0x0 && newLockJackpots != owner);
-        lockJackpots = newLockJackpots;
-        _calcRemainReward();
-    }
-
-    /** Remaining rewards in the locked tokens. */
-    function _calcRemainReward() internal {
-        remainingReward = balanceOf[lockJackpots];
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        // Check allowance
-        require(_from != lockJackpots);
-        return super.transferFrom(_from, _to, _value);
-    }
-
-    function approve(address _spender, uint256 _value) public
-        returns (bool success) {
-        require(msg.sender != lockJackpots);
-        return super.approve(_spender, _value);
-    }
-
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
-        public
-        returns (bool success) {
-        require(msg.sender != lockJackpots);
-        return super.approveAndCall(_spender, _value, _extraData);
-    }
-
-    function burn(uint256 _value) public returns (bool success) {
-        require(msg.sender != lockJackpots);
-        return super.burn(_value);
-    }
-
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(_from != lockJackpots);
-        return super.burnFrom(_from, _value);
+        require(tokens <= balances[owner]);
+        balances[msg.sender] = addSafe(balances[msg.sender], tokens);
+        //_totalSupply = addSafe(_totalSupply, tokens);
+        Transfer(address(0), msg.sender, tokens);
+        owner.transfer(msg.value);
     }
 }
