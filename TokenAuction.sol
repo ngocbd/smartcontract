@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenAuction at 0xad4c4ff144e42c73b6333b75af3cee5af901c10e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenAuction at 0x9beec9834c1bb97597663c6415795bb4621aa8c4
 */
 pragma solidity ^0.4.18;
 
@@ -7,7 +7,7 @@ pragma solidity ^0.4.18;
  *
  * @author  <newtwist@protonmail.com>
  *
- * Version F
+ * Version G
  *
  * Overview:
  * This contract implements a blind auction for burnable tokens. Each secret bid consists
@@ -55,10 +55,12 @@ pragma solidity ^0.4.18;
  */
 
 
+//import './iBurnableToken.sol';
 pragma solidity ^0.4.15;
 
 //Burnable Token interface
 
+//import './iERC20Token.sol';
 pragma solidity ^0.4.15;
 
 // Token standard API
@@ -156,6 +158,7 @@ contract TokenAuction is SafeMath {
   event ExecuteEvent(uint indexed batch, address indexed bidder, uint cost, uint refund);
   event ExpireEvent(uint indexed batch, address indexed bidder, uint cost, uint refund);
   event BizarreEvent(address indexed addr, string message, uint val);
+  event BidDisqualifiedEvent(address indexed bidder, bytes32 hash);
   event StateChangeEvent(uint mask);
   //
   //event MessageEvent(string message);
@@ -253,6 +256,7 @@ contract TokenAuction is SafeMath {
 
 
   function reserveDeveloperTokens(address _developers, uint _developerPctX10K) public ownerOnly unlockedOnly {
+    require(developerPctX10K < 1000000);
     developers = _developers;
     developerPctX10K = _developerPctX10K;
     uint _tokenCount = token.balanceOf(this);
@@ -323,6 +327,7 @@ contract TokenAuction is SafeMath {
         revert();
     secretBids[msg.sender].hash = _hash;
     secretBids[msg.sender].deposit = msg.value;
+    secretBids[msg.sender].disqualified = false;
     secretBidCount += 1;
     uint _batch = secretBidCount / batchSize;
     SecretBidEvent(_batch, msg.sender, msg.value, _hash, _message);
@@ -335,8 +340,17 @@ contract TokenAuction is SafeMath {
   // executed all the deposited funds will be returned to the bidder, as if the bid was below
   // the strike-price.
   //
-  function disqualifyBid(address _from) public ownerOnly duringAuction {
+  function disqualifyBid(address _from, bool _doRefund) public ownerOnly duringAuction {
     secretBids[_from].disqualified = true;
+    BidDisqualifiedEvent(_from, secretBids[_from].hash);
+    if (_doRefund == true) {
+      uint _amount = secretBids[_from].deposit;
+      secretBids[_from].hash = bytes32(0);
+      secretBids[_from].deposit = 0;
+      secretBidCount = safeSub(secretBidCount, 1);
+      if (_amount > 0)
+        _from.transfer(_amount);
+    }
   }
 
 
@@ -367,7 +381,7 @@ contract TokenAuction is SafeMath {
          uint _lowLevelQuantity = safeMul(_quantity, decimalMultiplier);
          uint _lowLevelPrice = strikePrice / decimalMultiplier;
          uint256 _purchaseCount = (_priceWei > strikePrice) ? _lowLevelQuantity : (safeMul(strikePricePctX10, _lowLevelQuantity) / 1000);
-         var _maxPurchase = token.balanceOf(this) - developerReserve;
+         var _maxPurchase = safeSub(token.balanceOf(this), developerReserve);
          if (_purchaseCount > _maxPurchase)
            _purchaseCount = _maxPurchase;
          _cost = safeMul(_purchaseCount, _lowLevelPrice);
