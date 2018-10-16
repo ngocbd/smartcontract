@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherShrimpFutures at 0xdfa8c502b826da290c90e370b378a73b3dba355b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherShrimpFutures at 0x3fd7332ea471e876327926b30bd945773c706133
 */
 pragma solidity ^0.4.24;
 
@@ -27,6 +27,7 @@ contract EtherShrimpFutures{
     mapping (address => address) public referrals;
     mapping (address => uint256) public lastHatchPrice;
     address[] farmers;
+    
     constructor() public{
         ceoAddress=msg.sender;
         market = Oasis(0x14FBCA95be7e99C15Cc2996c6C9d841e54B79425);
@@ -35,6 +36,10 @@ contract EtherShrimpFutures{
         require(initialized);
         if(referrals[msg.sender]==0 && referrals[msg.sender]!=msg.sender){
             referrals[msg.sender]=ref;
+        }
+        if(hatcheryShrimp[msg.sender] == 0){
+            numberOfFarmers += 1;
+            farmers.push(msg.sender);
         }
         uint256 eggsUsed=getMyEggs();
         uint256 newShrimp=SafeMath.div(eggsUsed,EGGS_TO_HATCH_1SHRIMP);
@@ -46,12 +51,12 @@ contract EtherShrimpFutures{
         claimedEggs[referrals[msg.sender]]=SafeMath.add(claimedEggs[referrals[msg.sender]],SafeMath.div(eggsUsed,5));
         //boost market to nerf shrimp hoarding
         marketEggs=SafeMath.add(marketEggs,SafeMath.div(eggsUsed,10));
+        
     }
     function sellEggs() public{
         require(initialized);
         uint256 hasEggs=getMyEggs();
         uint256 eggValue=calculateEggSell(hasEggs,msg.sender);
-        require(eggValue>0);
         uint256 fee=devFee(eggValue);
         claimedEggs[msg.sender]=0;
         lastHatch[msg.sender]=now;
@@ -61,10 +66,6 @@ contract EtherShrimpFutures{
     }
     function buyEggs() public payable{
         require(initialized);
-        if(hatcheryShrimp[msg.sender] == 0){
-            numberOfFarmers += 1;
-            farmers.push(msg.sender);
-        }
         uint256 eggsBought=calculateEggBuy(msg.value,SafeMath.sub(address(this).balance,msg.value));
         eggsBought=SafeMath.sub(eggsBought,devFee(eggsBought));
         ceoAddress.transfer(devFee(msg.value));
@@ -79,7 +80,7 @@ contract EtherShrimpFutures{
         uint sellValue = calculateTrade(eggs,marketEggs,address(this).balance);
         uint currentPrice = getPrice();
         uint diff = getDiff(currentPrice,lastHatchPrice[adr]);
-        uint bonusFactor = SafeMath.mul(diff,7);
+        uint bonusFactor = SafeMath.mul(diff,5);
         if(bonusFactor > 1e18) {
             bonusFactor = 1e18; //at max stay true to original
         }
