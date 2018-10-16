@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MulTraToken at 0x1a7b00404b755ff80126f1d66a90f5aedded25da
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultraToken at 0x9610165fa8f3883ebd8bef7f3d0860657ea4e6d9
 */
 pragma solidity ^0.4.12;
 
@@ -245,7 +245,7 @@ contract BurnableToken is StandardToken {
     }
 }
 
-contract MulTraToken is BurnableToken, Ownable {
+contract MultraToken is BurnableToken, Ownable {
 
     string public constant name = "MulTra Token";
     string public constant symbol = "MTT";
