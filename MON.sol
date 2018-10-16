@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MON at 0x1cbd8da707f5ea04ca7cb8bd9ee922ddbce2a8a5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MON at 0xb49e984a83d7a638e7f2889fc8328952ba951abe
 */
 library SafeMath {
   function mul(uint256 a, uint256 b) constant public returns (uint256) {
@@ -399,8 +399,8 @@ contract MON is MintableToken{
       
     _amount = _amount.div(10**10);
   	if(totalSupply.add(_amount)<maxTokenSupply){
-  	  super.mint(_to,_amount);
-  	  super.mint(address(beneficiary),(_amount.mul(20)).div(80));
+  	  super.mint(_to,_amount.mul(75).div(100));
+  	  super.mint(address(beneficiary),_amount.mul(25).div(100));
   	  
   	  return true;
   	}
