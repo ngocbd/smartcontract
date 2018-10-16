@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etherumble at 0x013620bf5142f9d8487e92c1d514c38e1b086613
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etherumble at 0xe85b52e670713be8a6ae230eeda539975066d0d0
 */
 pragma solidity ^ 0.4 .18;
 
@@ -41,7 +41,7 @@ contract Etherumble {
         _;
     }
 
-    function Lottery() public {
+    function Etherumble() public {
         owner = msg.sender;
     }
     
