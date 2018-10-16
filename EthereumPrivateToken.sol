@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumPrivateToken at 0xeaf8fb21896c3257abcc3569115049b5501c005d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumPrivateToken at 0x6b523cf4bec2603e70861ccf97a684e983e87a5e
 */
 pragma solidity ^0.4.4;
 
@@ -68,8 +68,8 @@ contract EthereumPrivateToken is StandardToken {
         totalSupply = 50000000000000000000000000;              
         name = "Ethereum Private Token";                       
         decimals = 18;                                         
-        symbol = "ETHPT";                                       
-        unitsOneEthCanBuy = 10000;                              
+        symbol = "ETHP";                                       
+        unitsOneEthCanBuy = 2800;                              
         fundsWallet = msg.sender;                              
     }
 
