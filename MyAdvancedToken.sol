@@ -1,8 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x5602586601e6b066780c78f1843192138d0d70da
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyAdvancedToken at 0x87a643e8f3258bf222ec3cc88ce00ab767bfb213
 */
-pragma solidity ^0.4.16;
-
+pragma solidity ^0.4.18;
+/**
+ * MyAdvancedToken
+ * edisonlee55/ethereum-org (https://github.com/edisonlee55/ethereum-org/blob/master/solidity/token-advanced.sol)
+ *
+ * Copyright (c) 2017 MING-CHIEN LEE
+ * Forked from ethereum/ethereum-org (https://github.com/ethereum/ethereum-org/blob/master/solidity/token-advanced.sol)
+ */
 contract owned {
     address public owner;
 
@@ -26,7 +32,7 @@ contract TokenERC20 {
     // Public variables of the token
     string public name;
     string public symbol;
-    uint8 public decimals = 18;
+    uint8 public decimals = 0;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
 
@@ -45,15 +51,11 @@ contract TokenERC20 {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function TokenERC20(
-        uint256 initialSupply,
-        string tokenName,
-        string tokenSymbol
-    ) public {
-        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+    function TokenERC20() public {
+        totalSupply = 42000000 * 10 ** uint256(decimals);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = tokenName;                                   // Set the name for display purposes
-        symbol = tokenSymbol;                               // Set the symbol for display purposes
+        name = "ETHEREUMDIAMOND";                                   // Set the name for display purposes
+        symbol = "ETD";                               // Set the symbol for display purposes
     }
 
     /**
@@ -187,16 +189,12 @@ contract MyAdvancedToken is owned, TokenERC20 {
     event FrozenFunds(address target, bool frozen);
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function MyAdvancedToken(
-        uint256 initialSupply,
-        string tokenName,
-        string tokenSymbol
-    ) TokenERC20(initialSupply, tokenName, tokenSymbol) public {}
+    function MyAdvancedToken() TokenERC20() public {}
 
     /* Internal transfer, only can be called by this contract */
     function _transfer(address _from, address _to, uint _value) internal {
         require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
-        require (balanceOf[_from] >= _value);               // Check if the sender has enough
+        require (balanceOf[_from] > _value);                // Check if the sender has enough
         require (balanceOf[_to] + _value > balanceOf[_to]); // Check for overflows
         require(!frozenAccount[_from]);                     // Check if sender is frozen
         require(!frozenAccount[_to]);                       // Check if recipient is frozen
@@ -235,13 +233,6 @@ contract MyAdvancedToken is owned, TokenERC20 {
     function buy() payable public {
         uint amount = msg.value / buyPrice;               // calculates the amount
         _transfer(this, msg.sender, amount);              // makes the transfers
-    }
-    uint currentChallenge = 1; // Can you figure out the cubic root of this number?
-
-    function rewardMathGeniuses(uint answerToCurrentReward, uint nextChallenge) {
-        require(answerToCurrentReward**3 == currentChallenge); // If answer is wrong do not continue
-        balanceOf[msg.sender] += 1;         // Reward the player
-        currentChallenge = nextChallenge;   // Set the next challenge
     }
 
     /// @notice Sell `amount` tokens to contract
