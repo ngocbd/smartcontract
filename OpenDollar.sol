@@ -1,9 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OpenDollar at 0x448fae87f7f5b58c6f215abd53d5cd8125e733c5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OpenDollar at 0xc3113bcda42b1824c07f8317b40152d6730a6f37
 */
+contract EtherTreasuryInterface {
+    function withdraw(address _to, uint _value) returns(bool);
+    function withdrawWithReference(address _to, uint _value, string _reference) returns(bool);
+}
+
 contract MultiAsset {
-    function isCreated(bytes32 _symbol) constant returns(bool);
     function owner(bytes32 _symbol) constant returns(address);
+    function isCreated(bytes32 _symbol) constant returns(bool);
     function totalSupply(bytes32 _symbol) constant returns(uint);
     function balanceOf(address _holder, bytes32 _symbol) constant returns(uint);
     function transfer(address _to, uint _value, bytes32 _symbol) returns(bool);
@@ -11,103 +16,121 @@ contract MultiAsset {
     function proxyTransferToICAPWithReference(bytes32 _icap, uint _value, string _reference) returns(bool);
     function proxyApprove(address _spender, uint _value, bytes32 _symbol) returns(bool);
     function allowance(address _from, address _spender, bytes32 _symbol) constant returns(uint);
-    function transferFromWithReference(address _from, address _to, uint _value, bytes32 _symbol, string _reference) returns(bool);
-    function transferFromToICAPWithReference(address _from, bytes32 _icap, uint _value, string _reference) returns(bool);
     function proxyTransferFromWithReference(address _from, address _to, uint _value, bytes32 _symbol, string _reference) returns(bool);
     function proxyTransferFromToICAPWithReference(address _from, bytes32 _icap, uint _value, string _reference) returns(bool);
     function proxySetCosignerAddress(address _address, bytes32 _symbol) returns(bool);
 }
 
-contract Ambi {
-    function getNodeAddress(bytes32 _name) constant returns (address);
-    function addNode(bytes32 _name, address _addr) external returns (bool);
-    function hasRelation(bytes32 _from, bytes32 _role, address _to) constant returns (bool);
-}
+contract Asset {
+    event Transfer(address indexed from, address indexed to, uint value);
+    event Approve(address indexed from, address indexed spender, uint value);
 
-contract EtherTreasuryInterface {
-    function withdraw(address _to, uint _value) returns(bool);
-}
+    MultiAsset public multiAsset;
+    bytes32 public symbol;
 
-contract Safe {
-    // Should always be placed as first modifier!
-    modifier noValue {
-        if (msg.value > 0) {
-            // Internal Out Of Gas/Throw: revert this transaction too;
-            // Call Stack Depth Limit reached: revert this transaction too;
-            // Recursive Call: safe, no any changes applied yet, we are inside of modifier.
-            _safeSend(msg.sender, msg.value);
+    function init(address _multiAsset, bytes32 _symbol) returns(bool) {
+        MultiAsset ma = MultiAsset(_multiAsset);
+        if (address(multiAsset) != 0x0 || !ma.isCreated(_symbol)) {
+            return false;
         }
-        _
-    }
-
-    modifier onlyHuman {
-        if (_isHuman()) {
-            _
-        }
-    }
-
-    modifier noCallback {
-        if (!isCall) {
-            _
-        }
-    }
-
-    modifier immutable(address _address) {
-        if (_address == 0) {
-            _
-        }
-    }
-
-    address stackDepthLib;
-    function setupStackDepthLib(address _stackDepthLib) immutable(address(stackDepthLib)) returns(bool) {
-        stackDepthLib = _stackDepthLib;
+        multiAsset = ma;
+        symbol = _symbol;
         return true;
     }
 
-    modifier requireStackDepth(uint16 _depth) {
-        if (stackDepthLib == 0x0) {
-            throw;
-        }
-        if (_depth > 1023) {
-            throw;
-        }
-        if (!stackDepthLib.delegatecall(0x32921690, stackDepthLib, _depth)) {
-            throw;
-        }
-        _
-    }
-
-    // Must not be used inside the functions that have noValue() modifier!
-    function _safeFalse() internal noValue() returns(bool) {
-        return false;
-    }
-
-    function _safeSend(address _to, uint _value) internal {
-        if (!_unsafeSend(_to, _value)) {
-            throw;
+    modifier onlyMultiAsset() {
+        if (msg.sender == address(multiAsset)) {
+            _
         }
     }
 
-    function _unsafeSend(address _to, uint _value) internal returns(bool) {
-        return _to.call.value(_value)();
+    function totalSupply() constant returns(uint) {
+        return multiAsset.totalSupply(symbol);
     }
 
-    function _isContract() constant internal returns(bool) {
-        return msg.sender != tx.origin;
+    function balanceOf(address _owner) constant returns(uint) {
+        return multiAsset.balanceOf(_owner, symbol);
     }
 
-    function _isHuman() constant internal returns(bool) {
-        return !_isContract();
+    function allowance(address _from, address _spender) constant returns(uint) {
+        return multiAsset.allowance(_from, _spender, symbol);
     }
 
-    bool private isCall = false;
-    function _setupNoCallback() internal {
-        isCall = true;
+    function transfer(address _to, uint _value) returns(bool) {
+        return transferWithReference(_to, _value, "");
     }
 
-    function _finishNoCallback() internal {
-        isCall = false;
+    function transferWithReference(address _to, uint _value, string _reference) returns(bool) {
+        if (!multiAsset.proxyTransferWithReference(_to, _value, symbol, _reference)) {
+            return false;
+        }
+        return true;
     }
+
+    function transferToICAP(bytes32 _icap, uint _value) returns(bool) {
+        return transferToICAPWithReference(_icap, _value, "");
+    }
+
+    function transferToICAPWithReference(bytes32 _icap, uint _value, string _reference) returns(bool) {
+        if (!multiAsset.proxyTransferToICAPWithReference(_icap, _value, _reference)) {
+            return false;
+        }
+        return true;
+    }
+    
+    function transferFrom(address _from, address _to, uint _value) returns(bool) {
+        return transferFromWithReference(_from, _to, _value, "");
+    }
+
+    function transferFromWithReference(address _from, address _to, uint _value, string _reference) returns(bool) {
+        if (!multiAsset.proxyTransferFromWithReference(_from, _to, _value, symbol, _reference)) {
+            return false;
+        }
+        return true;
+    }
+
+    function transferFromToICAP(address _from, bytes32 _icap, uint _value) returns(bool) {
+        return transferFromToICAPWithReference(_from, _icap, _value, "");
+    }
+
+    function transferFromToICAPWithReference(address _from, bytes32 _icap, uint _value, string _reference) returns(bool) {
+        if (!multiAsset.proxyTransferFromToICAPWithReference(_from, _icap, _value, _reference)) {
+            return false;
+        }
+        return true;
+    }
+
+    function approve(address _spender, uint _value) returns(bool) {
+        if (!multiAsset.proxyApprove(_spender, _value, symbol)) {
+            return false;
+        }
+        return true;
+    }
+
+    function setCosignerAddress(address _cosigner) returns(bool) {
+        if (!multiAsset.proxySetCosignerAddress(_cosigner, symbol)) {
+            return false;
+        }
+        return true;
+    }
+
+    function emitTransfer(address _from, address _to, uint _value) onlyMultiAsset() {
+        Transfer(_from, _to, _value);
+    }
+
+    function emitApprove(address _from, address _spender, uint _value) onlyMultiAsset() {
+        Approve(_from, _spender, _value);
+    }
+
+    function sendToOwner() returns(bool) {
+        return multiAsset.transfer(multiAsset.owner(symbol), balanceOf(address(this)), symbol);
+    }
+}
+
+contract Ambi {
+    function getNodeAddress(bytes32) constant returns(address);
+    function addNode(bytes32, address) external returns(bool);    
+    function hasRelation(bytes32, bytes32, address) constant returns(bool);
 }
 
 contract AmbiEnabled {
@@ -145,121 +168,7 @@ contract AmbiEnabled {
     }
 }
 
-contract Asset is Safe, AmbiEnabled {
-    event Transfer(address indexed from, address indexed to, uint value);
-    event Approve(address indexed from, address indexed spender, uint value);
-
-    MultiAsset public multiAsset;
-    bytes32 public symbol;
-
-    function init(address _multiAsset, bytes32 _symbol) noValue() returns(bool) {
-        MultiAsset ma = MultiAsset(_multiAsset);
-        if (address(multiAsset) != 0x0 || !ma.isCreated(_symbol)) {
-            return false;
-        }
-        multiAsset = ma;
-        symbol = _symbol;
-        return true;
-    }
-
-    modifier onlyMultiAsset() {
-        if (msg.sender == address(multiAsset)) {
-            _
-        }
-    }
-
-    function totalSupply() constant returns(uint) {
-        return multiAsset.totalSupply(symbol);
-    }
-
-    function balanceOf(address _owner) constant returns(uint) {
-        return multiAsset.balanceOf(_owner, symbol);
-    }
-
-    function allowance(address _from, address _spender) constant returns(uint) {
-        return multiAsset.allowance(_from, _spender, symbol);
-    }
-
-    function transfer(address _to, uint _value) returns(bool) {
-        return __transferWithReference(_to, _value, "");
-    }
-
-    function transferWithReference(address _to, uint _value, string _reference) returns(bool) {
-        return __transferWithReference(_to, _value, _reference);
-    }
-
-    function __transferWithReference(address _to, uint _value, string _reference) private noValue() returns(bool) {
-        return _isHuman() ?
-            multiAsset.proxyTransferWithReference(_to, _value, symbol, _reference) :
-            multiAsset.transferFromWithReference(msg.sender, _to, _value, symbol, _reference);
-    }
-
-    function transferToICAP(bytes32 _icap, uint _value) returns(bool) {
-        return __transferToICAPWithReference(_icap, _value, "");
-    }
-
-    function transferToICAPWithReference(bytes32 _icap, uint _value, string _reference) returns(bool) {
-        return __transferToICAPWithReference(_icap, _value, _reference);
-    }
-
-    function __transferToICAPWithReference(bytes32 _icap, uint _value, string _reference) private noValue() returns(bool) {
-        return _isHuman() ?
-            multiAsset.proxyTransferToICAPWithReference(_icap, _value, _reference) :
-            multiAsset.transferFromToICAPWithReference(msg.sender, _icap, _value, _reference);
-    }
-    
-    function transferFrom(address _from, address _to, uint _value) returns(bool) {
-        return __transferFromWithReference(_from, _to, _value, "");
-    }
-
-    function transferFromWithReference(address _from, address _to, uint _value, string _reference) returns(bool) {
-        return __transferFromWithReference(_from, _to, _value, _reference);
-    }
-
-    function __transferFromWithReference(address _from, address _to, uint _value, string _reference) private noValue() onlyHuman() returns(bool) {
-        return multiAsset.proxyTransferFromWithReference(_from, _to, _value, symbol, _reference);
-    }
-
-    function transferFromToICAP(address _from, bytes32 _icap, uint _value) returns(bool) {
-        return __transferFromToICAPWithReference(_from, _icap, _value, "");
-    }
-
-    function transferFromToICAPWithReference(address _from, bytes32 _icap, uint _value, string _reference) returns(bool) {
-        return __transferFromToICAPWithReference(_from, _icap, _value, _reference);
-    }
-
-    function __transferFromToICAPWithReference(address _from, bytes32 _icap, uint _value, string _reference) private noValue() onlyHuman() returns(bool) {
-        return multiAsset.proxyTransferFromToICAPWithReference(_from, _icap, _value, _reference);
-    }
-
-    function approve(address _spender, uint _value) noValue() onlyHuman() returns(bool) {
-        return multiAsset.proxyApprove(_spender, _value, symbol);
-    }
-
-    function setCosignerAddress(address _cosigner) noValue() onlyHuman() returns(bool) {
-        return multiAsset.proxySetCosignerAddress(_cosigner, symbol);
-    }
-
-    function emitTransfer(address _from, address _to, uint _value) onlyMultiAsset() {
-        Transfer(_from, _to, _value);
-    }
-
-    function emitApprove(address _from, address _spender, uint _value) onlyMultiAsset() {
-        Approve(_from, _spender, _value);
-    }
-
-    function sendToOwner() noValue() returns(bool) {
-        address owner = multiAsset.owner(symbol);
-        uint balance = this.balance;
-        bool success = true;
-        if (balance > 0) {
-            success = _unsafeSend(owner, balance);
-        }
-        return multiAsset.transfer(owner, balanceOf(owner), symbol) && success;
-    }
-}
-
-contract OpenDollar is Asset {
+contract OpenDollar is Asset, AmbiEnabled {
     uint public txGasPriceLimit = 21000000000;
     uint public refundGas = 40000;
     uint public transferCallGas = 21000;
@@ -274,16 +183,14 @@ contract OpenDollar is Asset {
     uint public forwardCallGas = 21000;
     uint public setCosignerCallGas = 21000;
     EtherTreasuryInterface public treasury;
-    mapping(bytes32 => address) public allowedForwards;
+    mapping(uint32 => address) public allowedForwards;
 
-    function updateRefundGas() noValue() checkAccess("setup") returns(uint) {
+    function updateRefundGas() checkAccess("setup") returns(uint) {
         uint startGas = msg.gas;
-        // just to simulate calculations
         uint refund = (startGas - msg.gas + refundGas) * tx.gasprice;
         if (tx.gasprice > txGasPriceLimit) {
             return 0;
         }
-        // end.
         if (!_refund(1)) {
             return 0;
         }
@@ -304,7 +211,7 @@ contract OpenDollar is Asset {
             uint _approve,
             uint _forward,
             uint _setCosigner
-        ) noValue() checkAccess("setup") returns(bool)
+        ) checkAccess("setup") returns(bool)
     {
         transferCallGas = _transfer;
         transferFromCallGas = _transferFrom;
@@ -326,19 +233,19 @@ contract OpenDollar is Asset {
         }
         treasury = EtherTreasuryInterface(_treasury);
         txGasPriceLimit = _txGasPriceLimit;
-        if (msg.value > 0) {
-            _safeSend(_treasury, msg.value);
+        if (msg.value > 0 && !address(treasury).send(msg.value)) {
+            throw;
         }
         return true;
     }
 
-    function setForward(bytes4 _msgSig, address _forward) noValue() checkAccess("admin") returns(bool) {
-        allowedForwards[sha3(_msgSig)] = _forward;
+    function setForward(bytes4 _msgSig, address _forward) checkAccess("admin") returns(bool) {
+        allowedForwards[uint32(_msgSig)] = _forward;
         return true;
     }
 
     function _stringGas(string _string) constant internal returns(uint) {
-        return bytes(_string).length * 75; // ~75 gas per byte, empirical shown 68-72.
+        return bytes(_string).length * 75;
     }
 
     function _applyRefund(uint _startGas) internal returns(bool) {
@@ -355,7 +262,7 @@ contract OpenDollar is Asset {
 
     function _transfer(address _to, uint _value) internal returns(bool, bool) {
         uint startGas = msg.gas + transferCallGas;
-        if (!super.transfer(_to, _value)) {
+        if (!multiAsset.proxyTransferWithReference(_to, _value, symbol, "")) {
             return (false, false);
         }
         return (true, _applyRefund(startGas));
@@ -363,7 +270,7 @@ contract OpenDollar is Asset {
 
     function _transferFrom(address _from, address _to, uint _value) internal returns(bool, bool) {
         uint startGas = msg.gas + transferFromCallGas;
-        if (!super.transferFrom(_from, _to, _value)) {
+        if (!multiAsset.proxyTransferFromWithReference(_from, _to, _value, symbol, "")) {
             return (false, false);
         }
         return (true, _applyRefund(startGas));
@@ -371,7 +278,7 @@ contract OpenDollar is Asset {
 
     function _transferToICAP(bytes32 _icap, uint _value) internal returns(bool, bool) {
         uint startGas = msg.gas + transferToICAPCallGas;
-        if (!super.transferToICAP(_icap, _value)) {
+        if (!multiAsset.proxyTransferToICAPWithReference(_icap, _value, "")) {
             return (false, false);
         }
         return (true, _applyRefund(startGas));
@@ -379,7 +286,7 @@ contract OpenDollar is Asset {
 
     function _transferFromToICAP(address _from, bytes32 _icap, uint _value) internal returns(bool, bool) {
         uint startGas = msg.gas + transferFromToICAPCallGas;
-        if (!super.transferFromToICAP(_from, _icap, _value)) {
+        if (!multiAsset.proxyTransferFromToICAPWithReference(_from, _icap, _value, "")) {
             return (false, false);
         }
         return (true, _applyRefund(startGas));
@@ -387,7 +294,7 @@ contract OpenDollar is Asset {
 
     function _transferWithReference(address _to, uint _value, string _reference) internal returns(bool, bool) {
         uint startGas = msg.gas + transferWithReferenceCallGas + _stringGas(_reference);
-        if (!super.transferWithReference(_to, _value, _reference)) {
+        if (!multiAsset.proxyTransferWithReference(_to, _value, symbol, _reference)) {
             return (false, false);
         }
         return (true, _applyRefund(startGas));
@@ -395,7 +302,7 @@ contract OpenDollar is Asset {
 
     function _transferFromWithReference(address _from, address _to, uint _value, string _reference) internal returns(bool, bool) {
         uint startGas = msg.gas + transferFromWithReferenceCallGas + _stringGas(_reference);
-        if (!super.transferFromWithReference(_from, _to, _value, _reference)) {
+        if (!multiAsset.proxyTransferFromWithReference(_from, _to, _value, symbol, _reference)) {
             return (false, false);
         }
         return (true, _applyRefund(startGas));
@@ -403,7 +310,7 @@ contract OpenDollar is Asset {
 
     function _transferToICAPWithReference(bytes32 _icap, uint _value, string _reference) internal returns(bool, bool) {
         uint startGas = msg.gas + transferToICAPWithReferenceCallGas + _stringGas(_reference);
-        if (!super.transferToICAPWithReference(_icap, _value, _reference)) {
+        if (!multiAsset.proxyTransferToICAPWithReference(_icap, _value, _reference)) {
             return (false, false);
         }
         return (true, _applyRefund(startGas));
@@ -411,7 +318,7 @@ contract OpenDollar is Asset {
 
     function _transferFromToICAPWithReference(address _from, bytes32 _icap, uint _value, string _reference) internal returns(bool, bool) {
         uint startGas = msg.gas + transferFromToICAPWithReferenceCallGas + _stringGas(_reference);
-        if (!super.transferFromToICAPWithReference(_from, _icap, _value, _reference)) {
+        if (!multiAsset.proxyTransferFromToICAPWithReference(_from, _icap, _value, _reference)) {
             return (false, false);
         }
         return (true, _applyRefund(startGas));
@@ -419,7 +326,7 @@ contract OpenDollar is Asset {
 
     function _approve(address _spender, uint _value) internal returns(bool, bool) {
         uint startGas = msg.gas + approveCallGas;
-        if (!super.approve(_spender, _value)) {
+        if (!multiAsset.proxyApprove(_spender, _value, symbol)) {
             return (false, false);
         }
         return (true, _applyRefund(startGas));
@@ -427,7 +334,7 @@ contract OpenDollar is Asset {
 
     function _setCosignerAddress(address _cosigner) internal returns(bool, bool) {
         uint startGas = msg.gas + setCosignerCallGas;
-        if (!super.setCosignerAddress(_cosigner)) {
+        if (!multiAsset.proxySetCosignerAddress(_cosigner, symbol)) {
             return (false, false);
         }
         return (true, _applyRefund(startGas));
@@ -533,29 +440,16 @@ contract OpenDollar is Asset {
         return _setCosignerAddress(_cosigner);
     }
 
-    function checkForward(bytes _data) constant returns(bool, bool) {
-        bytes memory sig = new bytes(4);
-        sig[0] = _data[0];
-        sig[1] = _data[1];
-        sig[2] = _data[2];
-        sig[3] = _data[3];
-        return _forward(allowedForwards[sha3(sig)], _data);
-    }
-
-    function _forward(address _to, bytes _data) internal returns(bool, bool) {
-        uint startGas = msg.gas + forwardCallGas + (_data.length * 50); // 50 gas per byte;
+    function _forward(address _to, bytes _data) internal returns(bool) {
+        uint startGas = msg.gas + forwardCallGas + (_data.length * 50);
         if (_to == 0x0) {
-            return (false, _safeFalse());
+            return false;
         }
-        if (!_to.call.value(msg.value)(_data)) {
-            return (false, _safeFalse());
-        }
-        return (true, _applyRefund(startGas));
+        _to.call.value(msg.value)(_data);
+        return _applyRefund(startGas);
     }
 
     function () returns(bool) {
-        bool success;
-        (success,) = _forward(allowedForwards[sha3(msg.sig)], msg.data);
-        return success;
+        return _forward(allowedForwards[uint32(msg.sig)], msg.data);
     }
 }
