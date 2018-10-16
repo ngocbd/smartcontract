@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethraffle at 0xd173cBB6324c88B6Ec969eb055124349181812c1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethraffle at 0x0248f089a622b74cebaa62573605af9a44966bf1
 */
 pragma solidity ^0.4.15;
 
@@ -7,13 +7,15 @@ contract Ethraffle {
     struct Contestant {
         address addr;
         uint raffleId;
-        uint remainingGas;
     }
 
     event RaffleResult(
         uint indexed raffleId,
         uint winningNumber,
-        address winningAddress
+        address winningAddress,
+        uint remainingGas,
+        uint gasPrice,
+        bytes32 sha
     );
 
     event TicketPurchase(
@@ -37,13 +39,10 @@ contract Ethraffle {
 
     // Other internal variables
     uint public raffleId = 1;
-    uint public nextTicket = 0;
+    uint public nextTicket = 1;
     mapping (uint => Contestant) public contestants;
     uint[] public gaps;
     bool public paused = false;
-    Contestant randCt1;
-    Contestant randCt2;
-    Contestant randCt3;
 
     // Initialization
     function Ethraffle() public {
@@ -63,7 +62,7 @@ contract Ethraffle {
 
         uint moneySent = msg.value;
 
-        while (moneySent >= pricePerTicket && nextTicket < totalTickets) {
+        while (moneySent >= pricePerTicket && nextTicket <= totalTickets) {
             uint currTicket = 0;
             if (gaps.length > 0) {
                 currTicket = gaps[gaps.length-1];
@@ -72,13 +71,13 @@ contract Ethraffle {
                 currTicket = nextTicket++;
             }
 
-            contestants[currTicket] = Contestant(msg.sender, raffleId, msg.gas);
+            contestants[currTicket] = Contestant(msg.sender, raffleId);
             TicketPurchase(raffleId, msg.sender, currTicket);
             moneySent -= pricePerTicket;
         }
 
         // Choose winner if we sold all the tickets
-        if (nextTicket == totalTickets) {
+        if (nextTicket > totalTickets) {
             chooseWinner();
         }
 
@@ -90,18 +89,30 @@ contract Ethraffle {
 
     function chooseWinner() private {
         // Pseudorandom number generator
-        randCt1 = contestants[uint(msg.gas) % totalTickets];
-        randCt2 = contestants[uint(block.coinbase) % totalTickets];
-        randCt3 = contestants[(randCt1.remainingGas + randCt2.remainingGas) % totalTickets];
-        bytes32 sha = sha3(randCt1.addr, randCt2.addr, randCt3.addr, randCt3.remainingGas);
+        uint remainingGas = msg.gas;
+        uint gasPrice = tx.gasprice;
 
-        uint winningNumber = uint(sha) % totalTickets;
+        bytes32 sha = sha3(
+            block.coinbase,
+            msg.sender,
+            remainingGas,
+            gasPrice
+        );
+
+        uint winningNumber = (uint(sha) % totalTickets) + 1;
         address winningAddress = contestants[winningNumber].addr;
-        RaffleResult(raffleId, winningNumber, winningAddress);
+        RaffleResult(
+            raffleId,
+            winningNumber,
+            winningAddress,
+            remainingGas,
+            gasPrice,
+            sha
+        );
 
         // Start next raffle and distribute prize
         raffleId++;
-        nextTicket = 0;
+        nextTicket = 1;
         winningAddress.transfer(prize);
         rakeAddress.transfer(rake);
     }
@@ -109,10 +120,10 @@ contract Ethraffle {
     // Get your money back before the raffle occurs
     function getRefund() public {
         uint refunds = 0;
-        for (uint i = 0; i < totalTickets; i++) {
+        for (uint i = 1; i <= totalTickets; i++) {
             if (msg.sender == contestants[i].addr && raffleId == contestants[i].raffleId) {
                 refunds++;
-                contestants[i] = Contestant(address(0), 0, 0);
+                contestants[i] = Contestant(address(0), 0);
                 gaps.push(i);
                 TicketRefund(raffleId, msg.sender, i);
             }
@@ -128,16 +139,16 @@ contract Ethraffle {
         if (msg.sender == rakeAddress) {
             paused = true;
 
-            for (uint i = 0; i < totalTickets; i++) {
+            for (uint i = 1; i <= totalTickets; i++) {
                 if (raffleId == contestants[i].raffleId) {
                     TicketRefund(raffleId, contestants[i].addr, i);
                     contestants[i].addr.transfer(pricePerTicket);
                 }
             }
 
-            RaffleResult(raffleId, totalTickets + 1, address(0));
+            RaffleResult(raffleId, 0, address(0), 0, 0, 0);
             raffleId++;
-            nextTicket = 0;
+            nextTicket = 1;
             gaps.length = 0;
         }
     }
