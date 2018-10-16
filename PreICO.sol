@@ -1,47 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreIco at 0x9697C90f963486409Ae57c13DB9c74C5CaE3fb29
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreICO at 0xfed8dfb896ff7081851c56a2652240568d2c513f
 */
-pragma solidity ^0.4.13;
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
-    }
-  }
-
-}
-
+pragma solidity ^0.4.15;
 
 /**
  * @title SafeMath
@@ -54,18 +14,6 @@ library SafeMath {
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
   function add(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
@@ -73,70 +21,140 @@ library SafeMath {
   }
 }
 
-contract PreIco is Ownable {
-    using SafeMath for uint;
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
 
-    uint public decimals = 18;
+  address public owner;
 
-    uint256 public initialSupply = 4000000 * 10 ** decimals;  // 4 milions XCC
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() {
+    owner = msg.sender;
+  }
 
-    uint256 public remainingSupply = initialSupply;
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
 
-    uint256 public tokenValue;  // value in wei
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner {
+    require(newOwner != address(0));
+    owner = newOwner;
+  }
+}
 
-    address public updater;  // account in charge of updating the token value
+/**
+ * @title Token
+ * @dev API interface for interacting with the WILD Token contract 
+ */
+interface Token {
+  function transfer(address _to, uint256 _value) returns (bool);
+  function balanceOf(address _owner) constant returns (uint256 balance);
+}
 
-    uint256 public startBlock;  // block number of contract deploy
+contract PreICO is Ownable {
 
-    uint256 public endTime;  // seconds from 1970-01-01T00:00:00Z
+  using SafeMath for uint256;
 
-    function PreIco(uint256 initialValue, address initialUpdater, uint256 end) {
-        tokenValue = initialValue;
-        updater = initialUpdater;
-        startBlock = block.number;
-        endTime = end;
-    }
+  Token token;
 
-    event UpdateValue(uint256 newValue);
+  uint256 public constant RATE = 3000; // Number of tokens per Ether
+  uint256 public constant CAP = 2000; // Cap in Ether
+  uint256 public constant START = 1504357200; // Sep 2, 2017 @ 09:00 EST
+  uint256 public constant DAYS = 1; // 1 Day
+  
+  uint256 public constant initialTokens = 6000000 * 10**18; // Initial number of tokens available
+  bool public initialized = false;
+  uint256 public raisedAmount = 0;
 
-    function updateValue(uint256 newValue) {
-        require(msg.sender == updater || msg.sender == owner);
-        tokenValue = newValue;
-        UpdateValue(newValue);
-    }
+  event BoughtTokens(address indexed to, uint256 value);
 
-    function updateUpdater(address newUpdater) onlyOwner {
-        updater = newUpdater;
-    }
+  modifier whenSaleIsActive() {
+    // Check if sale is active
+    assert(isActive());
 
-    function updateEndTime(uint256 newEnd) onlyOwner {
-        endTime = newEnd;
-    }
+    _;
+  }
 
-    event Withdraw(address indexed to, uint value);
+  function PreICO(address _tokenAddr) {
+      require(_tokenAddr != 0);
+      token = Token(_tokenAddr);
+  }
+  
+  function initialize() onlyOwner {
+      require(initialized == false); // Can only be initialized once
+      require(tokensAvailable() == initialTokens); // Must have enough tokens allocated
+      initialized = true;
+  }
 
-    function withdraw(address to, uint256 value) onlyOwner {
-        to.transfer(value);
-        Withdraw(to, value);
-    }
+  function isActive() constant returns (bool) {
+    return (
+        initialized == true &&
+        now >= START && // Must be after the START date
+        now <= START.add(DAYS * 1 days) && // Must be before the end date
+        goalReached() == false // Goal must not already be reached
+    );
+  }
 
-    modifier beforeEndTime() {
-        require(now < endTime);
-        _;
-    }
+  function goalReached() constant returns (bool) {
+    return (raisedAmount >= CAP * 1 ether);
+  }
 
-    event AssignToken(address indexed to, uint value);
+  function () payable {
+    buyTokens();
+  }
 
-    function () payable beforeEndTime {
-        require(remainingSupply > 0);
-        address sender = msg.sender;
-        uint256 value = msg.value.mul(10 ** decimals).div(tokenValue);
-        if (remainingSupply >= value) {
-            AssignToken(sender, value);
-            remainingSupply = remainingSupply.sub(value);
-        } else {
-            AssignToken(sender, remainingSupply);
-            remainingSupply = 0;
-        }
-    }
+  /**
+  * @dev function that sells available tokens
+  */
+  function buyTokens() payable whenSaleIsActive {
+    // Calculate tokens to sell
+    uint256 weiAmount = msg.value;
+    uint256 tokens = weiAmount.mul(RATE);
+
+    BoughtTokens(msg.sender, tokens);
+
+    // Increment raised amount
+    raisedAmount = raisedAmount.add(msg.value);
+    
+    // Send tokens to buyer
+    token.transfer(msg.sender, tokens);
+    
+    // Send money to owner
+    owner.transfer(msg.value);
+  }
+
+  /**
+   * @dev returns the number of tokens allocated to this contract
+   */
+  function tokensAvailable() constant returns (uint256) {
+    return token.balanceOf(this);
+  }
+
+  /**
+   * @notice Terminate contract and refund to owner
+   */
+  function destroy() onlyOwner {
+    // Transfer tokens back to owner
+    uint256 balance = token.balanceOf(this);
+    assert(balance > 0);
+    token.transfer(owner, balance);
+
+    // There should be no ether in the contract but just in case
+    selfdestruct(owner);
+  }
+
 }
