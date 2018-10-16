@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GoldFee at 0x2fe7408cef927cc48878bb05fd23879a9427cd0b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GoldFee at 0xb2840a743ae4f304d5a423febc067fd95b2ede17
 */
 pragma solidity ^0.4.19;
 
@@ -124,6 +124,8 @@ contract GoldFee is CreatorEnabled {
 
     function calculateFee(address _sender, bool _isMigrationStarted, bool _isMigrationFinished, uint _mntpBalance, uint _value) public constant returns(uint)
     {
+       return 0; 
+        
        //if this is an excaptional address
        if (exceptAddresses[_sender]) {
             return 0;
