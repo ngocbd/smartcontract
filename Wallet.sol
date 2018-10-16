@@ -1,270 +1,18 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Wallet at 0xb1021477444c6566509e1b80d2c99e9603a31c47
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Wallet at 0x8fc489fb4999c57c4ffb31b8df2388666797239b
 */
-pragma solidity ^0.4.11;
-/*
-This FYN token contract is derived from the vSlice ICO contract, based on the ERC20 token contract. 
-Additional functionality has been integrated:
-* the function mintTokens() only callable from wallet, which makes use of the currentSwapRate() and safeToAdd() helpers
-* the function mintReserve() only callable from wallet, which at the end of the crowdsale will allow the owners to claim the unsold tokens
-* the function stopToken() only callable from wallet, which in an emergency, will trigger a complete and irrecoverable shutdown of the token
-* Contract tokens are locked when created, and no tokens including pre-mine can be moved until the crowdsale is over.
-*/
+//sol Wallet
+// Multi-sig, daily-limited account proxy/wallet.
+// @authors:
+// Gav Wood <g@ethdev.com>
+// inheritable "property" contract that enables methods to be protected by requiring the acquiescence of either a
+// single, or, crucially, each of a number of, designated owners.
+// usage:
+// use modifiers onlyowner (just own owned) or onlymanyowners(hash), whereby the same hash must be provided by
+// some number (specified in constructor) of the set of owners (specified in the constructor, modifiable) before the
+// interior is executed.
 
-
-// ERC20 Token Standard Interface
-// https://github.com/ethereum/EIPs/issues/20
-contract ERC20 {
-    function totalSupply() constant returns (uint);
-    function balanceOf(address who) constant returns (uint);
-    function allowance(address owner, address spender) constant returns (uint);
-
-    function transfer(address to, uint value) returns (bool ok);
-    function transferFrom(address from, address to, uint value) returns (bool ok);
-    function approve(address spender, uint value) returns (bool ok);
-
-    event Transfer(address indexed from, address indexed to, uint value);
-    event Approval(address indexed owner, address indexed spender, uint value);
-}
-
-contract Token is ERC20 {
-
-  string public constant name = "FundYourselfNow Token";
-  string public constant symbol = "FYN";
-  uint8 public constant decimals = 18;  // 18 is the most common number of decimal places
-  uint256 public tokenCap = 12500000e18; // 12.5 million FYN cap 
-
-  address public walletAddress;
-  uint256 public creationTime;
-  bool public transferStop;
- 
-  mapping( address => uint ) _balances;
-  mapping( address => mapping( address => uint ) ) _approvals;
-  uint _supply;
-
-  event TokenMint(address newTokenHolder, uint amountOfTokens);
-  event TokenSwapOver();
-  event EmergencyStopActivated();
-
-  modifier onlyFromWallet {
-      if (msg.sender != walletAddress) throw;
-      _;
-  }
-
-  // Check if transfer should stop
-  modifier checkTransferStop {
-      if (transferStop == true) throw;
-      _;
-  }
- 
-
-  /**
-   *
-   * Fix for the ERC20 short address attack
-   *
-   * http://vessenes.com/the-erc20-short-address-attack-explained/
-   */
-
-  modifier onlyPayloadSize(uint size) {
-     if (!(msg.data.length == size + 4)) throw;
-     _;
-   } 
- 
-  function Token( uint initial_balance, address wallet, uint256 crowdsaleTime) {
-    _balances[msg.sender] = initial_balance;
-    _supply = initial_balance;
-    walletAddress = wallet;
-    creationTime = crowdsaleTime;
-    transferStop = true;
-  }
-
-  function totalSupply() constant returns (uint supply) {
-    return _supply;
-  }
-
-  function balanceOf( address who ) constant returns (uint value) {
-    return _balances[who];
-  }
-
-  function allowance(address owner, address spender) constant returns (uint _allowance) {
-    return _approvals[owner][spender];
-  }
-
-  // A helper to notify if overflow occurs
-  function safeToAdd(uint a, uint b) private constant returns (bool) {
-    return (a + b >= a && a + b >= b);
-  }
-  
-  // A helper to notify if overflow occurs for multiplication
-  function safeToMultiply(uint _a, uint _b) private constant returns (bool) {
-    return (_b == 0 || ((_a * _b) / _b) == _a);
-  }
-
-  // A helper to notify if underflow occurs for subtraction
-  function safeToSub(uint a, uint b) private constant returns (bool) {
-    return (a >= b);
-  }
-
-
-  function transfer( address to, uint value)
-    checkTransferStop
-    onlyPayloadSize(2 * 32)
-    returns (bool ok) {
-
-    if (to == walletAddress) throw; // Reject transfers to wallet (wallet cannot interact with token contract)
-    if( _balances[msg.sender] < value ) {
-        throw;
-    }
-    if( !safeToAdd(_balances[to], value) ) {
-        throw;
-    }
-
-    _balances[msg.sender] -= value;
-    _balances[to] += value;
-    Transfer( msg.sender, to, value );
-    return true;
-  }
-
-  function transferFrom( address from, address to, uint value)
-    checkTransferStop
-    returns (bool ok) {
-
-    if (to == walletAddress) throw; // Reject transfers to wallet (wallet cannot interact with token contract)
-
-    // if you don't have enough balance, throw
-    if( _balances[from] < value ) {
-        throw;
-    }
-    // if you don't have approval, throw
-    if( _approvals[from][msg.sender] < value ) {
-        throw;
-    }
-    if( !safeToAdd(_balances[to], value) ) {
-        throw;
-    }
-    // transfer and return true
-    _approvals[from][msg.sender] -= value;
-    _balances[from] -= value;
-    _balances[to] += value;
-    Transfer( from, to, value );
-    return true;
-  }
-
-  function approve(address spender, uint value)
-    checkTransferStop
-    returns (bool ok) {
-
-    // To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender,0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    //
-    // Note that this doesn't prevent attacks; the user will have to personally
-    //  check to ensure that the token count has not changed, before issuing
-    //  a new approval. Increment/decrement is not commonly spec-ed, and 
-    //  changing to a check-my-approvals-before-changing would require user
-    //  to find out his current approval for spender and change expected
-    //  behaviour for ERC20.
-
-
-    if ((value!=0) && (_approvals[msg.sender][spender] !=0)) throw;
-
-    _approvals[msg.sender][spender] = value;
-    Approval( msg.sender, spender, value );
-    return true;
-  }
-
-  // The function currentSwapRate() returns the current exchange rate
-  // between FYN tokens and Ether during the token swap period
-  function currentSwapRate() constant returns(uint) {
-      uint presalePeriod = 3 days;
-      uint presaleTransitionWindow = 3 hours;
-      if (creationTime + presalePeriod > now) {  // 2017-06-10 11am GMT+8
-          return 140; // Presale Window is triggered by both time and "Start Token Swap / End Token Swap". Restricted to announement range and basic testing.
-      } 
-      else if (creationTime + presalePeriod + 3 weeks > now) { // 2017-06-13 11am GMT+8, but we will only Start Token Swap at 2pm
-          return 120;
-      }
-      else if (creationTime + presalePeriod + 6 weeks + 6 days + 3 hours + presaleTransitionWindow + 1 days > now) { // 2017-07-31 5pm GMT+8 (+1 day window  )
-          // 1 day buffer to allow one final transaction from anyone to close everything
-          // otherwise wallet will receive ether but send 0 tokens
-          // we cannot throw as we will lose the state change to start swappability of tokens 
-          // This is actually just a price guide, actual closing is done at the Wallet level
-          return 100;
-      }
-      else {
-          return 0;
-      }
-  }
-
-  // The function mintTokens is only usable by the chosen wallet
-  // contract to mint a number of tokens proportional to the
-  // amount of ether sent to the wallet contract. The function
-  // can only be called during the tokenswap period
-  function mintTokens(address newTokenHolder, uint etherAmount)
-    external
-    onlyFromWallet {
-        if (!safeToMultiply(currentSwapRate(), etherAmount)) throw;
-        uint tokensAmount = currentSwapRate() * etherAmount;
-
-        if(!safeToAdd(_balances[newTokenHolder],tokensAmount )) throw;
-        if(!safeToAdd(_supply,tokensAmount)) throw;
-
-        if ((_supply + tokensAmount) > tokenCap) throw;
-
-        _balances[newTokenHolder] += tokensAmount;
-        _supply += tokensAmount;
-
-        TokenMint(newTokenHolder, tokensAmount);
-  }
-
-  function mintReserve(address beneficiary) 
-    external
-    onlyFromWallet {
-        if (tokenCap <= _supply) throw;
-        if(!safeToSub(tokenCap,_supply)) throw;
-        uint tokensAmount = tokenCap - _supply;
-
-        if(!safeToAdd(_balances[beneficiary], tokensAmount )) throw;
-        if(!safeToAdd(_supply,tokensAmount)) throw;
-
-        _balances[beneficiary] += tokensAmount;
-        _supply += tokensAmount;
-        
-        TokenMint(beneficiary, tokensAmount);
-  }
-
-  // The function disableTokenSwapLock() is called by the wallet
-  // contract once the token swap has reached its end conditions
-  function disableTokenSwapLock()
-    external
-    onlyFromWallet {
-        transferStop = false;
-        TokenSwapOver();
-  }
-
-  // Once activated, a new token contract will need to be created, mirroring the current token holdings. 
-  function stopToken() onlyFromWallet {
-    transferStop = true;
-    EmergencyStopActivated();
-  }
-}
-
-
-/*
-The standard Wallet contract, retrievable at
-https://github.com/ethereum/dapp-bin/blob/master/wallet/wallet.sol has been
-modified to include additional functionality, in particular:
-* An additional parent of wallet contract called tokenswap, implementing almost
-all the changes:
-    - Functions for starting and stopping the tokenswap
-    - A set-only-once function for the token contract
-    - buyTokens(), which calls mintTokens() in the token contract
-    - Modifiers for enforcing tokenswap time limits, max ether cap, and max token cap
-    - withdrawEther(), for withdrawing unsold tokens after time cap
-* the wallet fallback function calls the buyTokens function
-* the wallet contract cannot selfdestruct during the tokenswap
-*/
+pragma solidity ^0.4.10;
 
 contract multiowned {
 
@@ -294,15 +42,15 @@ contract multiowned {
 
     // simple single-sig function modifier.
     modifier onlyowner {
-        if (isOwner(msg.sender))
-            _;
+        require(isOwner(msg.sender));
+        _;
     }
     // multi-sig function modifier: the operation must have an intrinsic hash in order
     // that later attempts can be realised as the same underlying operation and
     // thus count as confirmations.
     modifier onlymanyowners(bytes32 _operation) {
-        if (confirmAndCheck(_operation))
-            _;
+        require(confirmAndCheck(_operation));
+        _;
     }
 
 	// METHODS
@@ -320,7 +68,7 @@ contract multiowned {
         }
         m_required = _required;
     }
-
+    
     // Revokes a prior confirmation of the given operation
     function revoke(bytes32 _operation) external {
         uint ownerIndex = m_ownerIndex[uint(msg.sender)];
@@ -334,7 +82,7 @@ contract multiowned {
             Revoke(msg.sender, _operation);
         }
     }
-
+    
     // Replaces an owner `_from` with another `_to`.
     function changeOwner(address _from, address _to) onlymanyowners(sha3(msg.data)) external {
         if (isOwner(_to)) return;
@@ -347,7 +95,7 @@ contract multiowned {
         m_ownerIndex[uint(_to)] = ownerIndex;
         OwnerChanged(_from, _to);
     }
-
+    
     function addOwner(address _owner) onlymanyowners(sha3(msg.data)) external {
         if (isOwner(_owner)) return;
 
@@ -361,7 +109,7 @@ contract multiowned {
         m_ownerIndex[uint(_owner)] = m_numOwners;
         OwnerAdded(_owner);
     }
-
+    
     function removeOwner(address _owner) onlymanyowners(sha3(msg.data)) external {
         uint ownerIndex = m_ownerIndex[uint(_owner)];
         if (ownerIndex == 0) return;
@@ -373,7 +121,7 @@ contract multiowned {
         reorganizeOwners(); //make sure m_numOwner is equal to the number of owners and always points to the optimal free slot
         OwnerRemoved(_owner);
     }
-
+    
     function changeRequirement(uint _newRequired) onlymanyowners(sha3(msg.data)) external {
         if (_newRequired > m_numOwners) return;
         m_required = _newRequired;
@@ -389,7 +137,7 @@ contract multiowned {
     function isOwner(address _addr) returns (bool) {
         return m_ownerIndex[uint(_addr)] > 0;
     }
-
+    
     function hasConfirmed(bytes32 _operation, address _owner) constant returns (bool) {
         var pending = m_pending[_operation];
         uint ownerIndex = m_ownerIndex[uint(_owner)];
@@ -401,7 +149,7 @@ contract multiowned {
         uint ownerIndexBit = 2**ownerIndex;
         return !(pending.ownersDone & ownerIndexBit == 0);
     }
-
+    
     // INTERNAL METHODS
 
     function confirmAndCheck(bytes32 _operation) internal returns (bool) {
@@ -455,7 +203,7 @@ contract multiowned {
             }
         }
     }
-
+    
     function clearPending() internal {
         uint length = m_pendingIndex.length;
         for (uint i = 0; i < length; ++i)
@@ -463,14 +211,14 @@ contract multiowned {
                 delete m_pending[m_pendingIndex[i]];
         delete m_pendingIndex;
     }
-
+        
    	// FIELDS
 
     // the number of owners that must confirm the same operation before it is run.
     uint public m_required;
     // pointer used to find a free slot in m_owners
     uint public m_numOwners;
-
+    
     // list of owners
     uint[256] m_owners;
     uint constant c_maxOwners = 250;
@@ -490,8 +238,8 @@ contract daylimit is multiowned {
 
     // simple modifier for daily limit.
     modifier limitedDaily(uint _value) {
-        if (underLimit(_value))
-            _;
+        require(underLimit(_value));
+        _;
     }
 
 	// METHODS
@@ -505,13 +253,13 @@ contract daylimit is multiowned {
     function setDailyLimit(uint _newLimit) onlymanyowners(sha3(msg.data)) external {
         m_dailyLimit = _newLimit;
     }
-    // resets the amount already spent today. needs many of the owners to confirm.
+    // resets the amount already spent today. needs many of the owners to confirm. 
     function resetSpentToday() onlymanyowners(sha3(msg.data)) external {
         m_spentToday = 0;
     }
-
+    
     // INTERNAL METHODS
-
+    
     // checks to see if there is at least `_value` left from the daily limit today. if there is, subtracts it and
     // returns true. otherwise just returns false.
     function underLimit(uint _value) internal onlyowner returns (bool) {
@@ -520,11 +268,8 @@ contract daylimit is multiowned {
             m_spentToday = 0;
             m_lastDay = today();
         }
-        // check if it's sending nothing (with or without data). This needs Multitransact
-        if (_value == 0) return false;
-
         // check to see if there's enough left - if so, subtract and return true.
-        // overflow protection                    // dailyLimit check
+        // overflow protection                    // dailyLimit check  
         if (m_spentToday + _value >= m_spentToday && m_spentToday + _value <= m_dailyLimit) {
             m_spentToday += _value;
             return true;
@@ -555,129 +300,19 @@ contract multisig {
     event MultiTransact(address owner, bytes32 operation, uint value, address to, bytes data);
     // Confirmation still needed for a transaction.
     event ConfirmationNeeded(bytes32 operation, address initiator, uint value, address to, bytes data);
-
+    
     // FUNCTIONS
-
+    
     // TODO: document
     function changeOwner(address _from, address _to) external;
     function execute(address _to, uint _value, bytes _data) external returns (bytes32);
     function confirm(bytes32 _h) returns (bool);
 }
 
-contract tokenswap is multisig, multiowned {
-    Token public tokenCtr;
-    bool public tokenSwap;
-    uint public constant PRESALE_LENGTH = 3 days;
-    uint public constant TRANSITION_WINDOW = 3 hours; // We will turn on tokenSwap in this period and it will 120 FYN / ETH
-    uint public constant SWAP_LENGTH = PRESALE_LENGTH + TRANSITION_WINDOW + 6 weeks + 6 days + 3 hours;
-    uint public constant MAX_ETH = 75000 ether; // Hard cap, capped otherwise by total tokens sold (max 7.5M FYN)
-    uint public amountRaised;
-
-    modifier isUnderPresaleMinimum {
-        if (tokenCtr.creationTime() + PRESALE_LENGTH > now) {
-            if (msg.value < 20 ether) throw;
-        }
-        _;
-    }
-
-    modifier isZeroValue {
-        if (msg.value == 0) throw;
-        _;
-    }
-
-    modifier isOverCap {
-    	if (amountRaised + msg.value > MAX_ETH) throw;
-        _;
-    }
-
-    modifier isOverTokenCap {
-        if (!safeToMultiply(tokenCtr.currentSwapRate(), msg.value)) throw;
-        uint tokensAmount = tokenCtr.currentSwapRate() * msg.value;
-        if(!safeToAdd(tokenCtr.totalSupply(),tokensAmount)) throw;
-        if (tokenCtr.totalSupply() + tokensAmount > tokenCtr.tokenCap()) throw;
-        _;
-
-    }
-
-    modifier isSwapStopped {
-        if (!tokenSwap) throw;
-        _;
-    }
-
-    modifier areConditionsSatisfied {
-        _;
-        // End token swap if sale period ended
-        // We can't throw to reverse the amount sent in or we will lose state
-        // , so we will accept it even though if it is after crowdsale
-        if (tokenCtr.creationTime() + SWAP_LENGTH < now) {
-            tokenCtr.disableTokenSwapLock();
-            tokenSwap = false;
-        }
-        // Check if cap has been reached in this tx
-        if (amountRaised == MAX_ETH) {
-            tokenCtr.disableTokenSwapLock();
-            tokenSwap = false;
-        }
-
-        // Check if token cap has been reach in this tx
-        if (tokenCtr.totalSupply() == tokenCtr.tokenCap()) {
-            tokenCtr.disableTokenSwapLock();
-            tokenSwap = false;
-        }
-    }
-
-    // A helper to notify if overflow occurs for addition
-    function safeToAdd(uint a, uint b) private constant returns (bool) {
-      return (a + b >= a && a + b >= b);
-    }
-  
-    // A helper to notify if overflow occurs for multiplication
-    function safeToMultiply(uint _a, uint _b) private constant returns (bool) {
-      return (_b == 0 || ((_a * _b) / _b) == _a);
-    }
-
-
-    function startTokenSwap() onlyowner {
-        tokenSwap = true;
-    }
-
-    function stopTokenSwap() onlyowner {
-        tokenSwap = false;
-    }
-
-    function setTokenContract(address newTokenContractAddr) onlyowner {
-        if (newTokenContractAddr == address(0x0)) throw;
-        // Allow setting only once
-        if (tokenCtr != address(0x0)) throw;
-
-        tokenCtr = Token(newTokenContractAddr);
-    }
-
-    function buyTokens(address _beneficiary)
-    payable
-    isUnderPresaleMinimum
-    isZeroValue
-    isOverCap
-    isOverTokenCap
-    isSwapStopped
-    areConditionsSatisfied {
-        Deposit(msg.sender, msg.value);
-        tokenCtr.mintTokens(_beneficiary, msg.value);
-        if (!safeToAdd(amountRaised, msg.value)) throw;
-        amountRaised += msg.value;
-    }
-
-    function withdrawReserve(address _beneficiary) onlyowner {
-	    if (tokenCtr.creationTime() + SWAP_LENGTH < now) {
-            tokenCtr.mintReserve(_beneficiary);
-        }
-    } 
-}
-
 // usage:
-// bytes32 h = Wallet(w).from(oneOwner).transact(to, value, data);
+// bytes32 h = Wallet(w).from(oneOwner).execute(to, value, data);
 // Wallet(w).from(anotherOwner).confirm(h);
-contract Wallet is multisig, multiowned, daylimit, tokenswap {
+contract Wallet is multisig, multiowned, daylimit {
 
 	// TYPES
 
@@ -695,46 +330,31 @@ contract Wallet is multisig, multiowned, daylimit, tokenswap {
     function Wallet(address[] _owners, uint _required, uint _daylimit)
             multiowned(_owners, _required) daylimit(_daylimit) {
     }
-
+    
     // kills the contract sending everything to `_to`.
     function kill(address _to) onlymanyowners(sha3(msg.data)) external {
-        // ensure owners can't prematurely stop token sale
-        if (tokenSwap) throw;
-        // ensure owners can't kill wallet without stopping token
-        //  otherwise token can never be stopped
-        if (tokenCtr.transferStop() == false) throw;
-        suicide(_to);
+        selfdestruct(_to);
     }
-
-    // Activates Emergency Stop for Token
-    function stopToken() onlymanyowners(sha3(msg.data)) external {
-       tokenCtr.stopToken();
-    }
-
+    
     // gets called when no other function matches
-    function()
-    payable {
-        buyTokens(msg.sender);
+    function() payable {
+        // just being sent some cash?
+        if (msg.value > 0)
+            Deposit(msg.sender, msg.value);
     }
-
+    
     // Outside-visible transact entry point. Executes transaction immediately if below daily spend limit.
     // If not, goes into multisig process. We provide a hash on return to allow the sender to provide
     // shortcuts for the other confirmations (allowing them to avoid replicating the _to, _value
     // and _data arguments). They still get the option of using them if they want, anyways.
     function execute(address _to, uint _value, bytes _data) external onlyowner returns (bytes32 _r) {
-        // Disallow the wallet contract from calling token contract once it's set
-        // so tokens can't be minted arbitrarily once the sale starts.
-        // Tokens can be minted for premine before the sale opens and tokenCtr is set.
-        if (_to == address(tokenCtr)) throw;
-
         // first, take the opportunity to check that we're under the daily limit.
         if (underLimit(_value)) {
             SingleTransact(msg.sender, _value, _to, _data);
             // yes - just execute the call.
-            if(!_to.call.value(_value)(_data))
+            require(_to.call.value(_value)(_data));
             return 0;
         }
-
         // determine our operation hash.
         _r = sha3(msg.data, block.number);
         if (!confirm(_r) && m_txs[_r].to == 0) {
@@ -744,21 +364,20 @@ contract Wallet is multisig, multiowned, daylimit, tokenswap {
             ConfirmationNeeded(_r, msg.sender, _value, _to, _data);
         }
     }
-
+    
     // confirm a transaction through just the hash. we use the previous transactions map, m_txs, in order
     // to determine the body of the transaction from the hash provided.
     function confirm(bytes32 _h) onlymanyowners(_h) returns (bool) {
         if (m_txs[_h].to != 0) {
-            if (!m_txs[_h].to.call.value(m_txs[_h].value)(m_txs[_h].data))   // Bugfix: If successful, MultiTransact event should fire; if unsuccessful, we should throw
-                throw;
+            require(m_txs[_h].to.call.value(m_txs[_h].value)(m_txs[_h].data));
             MultiTransact(msg.sender, _h, m_txs[_h].value, m_txs[_h].to, m_txs[_h].data);
             delete m_txs[_h];
             return true;
         }
     }
-
+    
     // INTERNAL METHODS
-
+    
     function clearPending() internal {
         uint length = m_pendingIndex.length;
         for (uint i = 0; i < length; ++i)
