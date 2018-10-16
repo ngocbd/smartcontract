@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVault at 0x36ab5e415602736134130bd48f5b9c1eee1d7b3a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVault at 0xe32ee8eddd2ea56dde0f08d0ea3d11ea219e15de
 */
 /*
  * ERC20 interface
@@ -94,7 +94,20 @@ contract StandardToken is ERC20, SafeMath {
     return true;
   }
 
-  function transfer(address _to, uint _value) returns (bool success) {
+  /**
+   *
+   * Fix for the ERC20 short address attack
+   *
+   * http://vessenes.com/the-erc20-short-address-attack-explained/
+   */
+  modifier onlyPayloadSize(uint size) {
+     if(msg.data.length < size + 4) {
+       throw;
+     }
+     _;
+  }
+
+  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) returns (bool success) {
     balances[msg.sender] = safeSub(balances[msg.sender], _value);
     balances[_to] = safeAdd(balances[_to], _value);
     Transfer(msg.sender, _to, _value);
