@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenResolver at 0x074d58c0a0903d4c7db9388205232602a0bf9bf0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenResolver at 0x5bd71097dacee261add8273132d2f9ab9b0ab945
 */
 pragma solidity ^0.4.0;
 
@@ -49,7 +49,7 @@ contract TokenResolver {
 
     function newToken(string name, address addr) only_owner {
         var label = sha3(name);
-        var node = sha3(ROOT_NODE, label);
+        var node = sha3(ROOT_NODE, name);
         
         ens.setSubnodeOwner(ROOT_NODE, label, this);
         ens.setResolver(node, this);
