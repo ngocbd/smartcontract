@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TrueUSD at 0x8dd5fbce2f6a956c3022ba3663759011dd51e73e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TrueUSD at 0x2424cb26cee4943fa58d05c392273f34b6980960
 */
 pragma solidity ^0.4.18;
 
@@ -300,7 +300,7 @@ contract ERC20Basic {
 contract BasicToken is ERC20Basic, Claimable {
   using SafeMath for uint256;
 
-  BalanceSheet public balances;
+  BalanceSheet balances;
 
   uint256 totalSupply_;
 
@@ -391,7 +391,7 @@ library SafeERC20 {
 
 contract StandardToken is ERC20, BasicToken {
 
-  AllowanceSheet public allowances;
+  AllowanceSheet allowances;
 
   function setAllowanceSheet(address sheet) external onlyOwner {
     allowances = AllowanceSheet(sheet);
