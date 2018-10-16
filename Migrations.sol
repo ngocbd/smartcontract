@@ -1,53 +1,26 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Migrations at 0x1a09bfbec6487fd11c75a60aa4d39ebf47da6eff
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Migrations at 0x88466d672c70920550da6038d69b952300d4d524
 */
 pragma solidity ^0.4.15;
 
-contract Ownable {
+contract Migrations {
   address public owner;
+  uint public last_completed_migration;
 
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
+  modifier restricted() {
+    if (msg.sender == owner)
     _;
   }
 
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner public {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
+  function Migrations() public {
+    owner = msg.sender;
   }
 
-}
-
-contract Migrations is Ownable{
-  uint public last_completed_migration;
-
-  function setCompleted(uint completed) onlyOwner {
+  function setCompleted(uint completed) restricted public {
     last_completed_migration = completed;
   }
 
-  function upgrade(address new_address) onlyOwner {
+  function upgrade(address new_address) restricted public {
     Migrations upgraded = Migrations(new_address);
     upgraded.setCompleted(last_completed_migration);
   }
