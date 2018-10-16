@@ -1,19 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Erc20TokenMarket at 0x754614fea204097fd934dc26784d837bc884b00d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Erc20TokenMarket at 0x50c798C86D714F58Ac08E5BaC49A127771E93234
 */
 // This is ERC 2.0 Token's Trading Market, Decentralized Exchange. 
 // by he.guanjun, email: he.d.d.shan@hotmail.com
-// 2017-09-27
-// TODO?
-//  1,???function????????????????????????????
-//  2,Token????????????owner????????????
-
+// 2017-09-03
 
 pragma solidity ^0.4.11; 
 
 // ERC Token Standard #20 Interface
 // https://github.com/ethereum/EIPs/issues/20
-interface Erc20Token {
+interface ERC20Token {
       function totalSupply() constant returns (uint256 totalSupply);
       function balanceOf(address _owner) constant returns (uint256 balance);
 
@@ -62,7 +58,7 @@ contract Base {
         uint256 amount = userEtherOf[_from];
         if(amount > 0){
             userEtherOf[_from] -= amount;
-            _to.transfer(amount);               //???????????????Token?????????? 2017-09-27
+            _to.transfer(amount); 
         }
     }
 
@@ -116,7 +112,7 @@ contract  Erc20TokenMarket is Base         //for exchange token
 
     struct SellingToken{                //TokenInfo???????????????????????????????????????????? TODO?
         uint256    thisAmount;          //currentAmount?????????????,??? this ??????
-        uint256    soldoutAmount;       //?????????????????????????????? 2017-09-27
+        uint256    soldoutAmount;       //
         uint256    price;      
         bool       cancel;              //?????????
         uint       lineTime;            //??????
@@ -135,7 +131,7 @@ contract  Erc20TokenMarket is Base         //for exchange token
         require(_token == msg.sender && msg.sender != tx.origin);   //????????????????????????????????????
         require(!isBadToken(msg.sender));                           //???????????????
 
-        Erc20Token token = Erc20Token(msg.sender);
+        ERC20Token token = ERC20Token(msg.sender);
         var sellingAmount = token.allowance(_from, this);   //_from == tx.origin != msg.sender = _token , _from == tx.origin ????????????????????
 
         //var sa = token.balanceOf(_from);        //?????????Token???????Token???????????????????????????
@@ -160,8 +156,8 @@ contract  Erc20TokenMarket is Base         //for exchange token
         require(!isBadToken(msg.sender));              //???
         require(checkSellerGuarantee(msg.sender));     //????
 
-        Erc20Token token = Erc20Token(_tokenAddress);
-        _sellingAmount = token.allowance(msg.sender,this);      //??????? 2017-09-27
+        ERC20Token token = ERC20Token(_tokenAddress);
+        _sellingAmount = token.allowance(msg.sender,this);
 
         //var sa = token.balanceOf(_from);        //?????????Token
         //if (sa < _sellingAmount){
@@ -177,15 +173,15 @@ contract  Erc20TokenMarket is Base         //for exchange token
         OnSetSellingToken(_tokenAddress, msg.sender, _sellingAmount, _price, _lineTime, st.cancel);
     }   
 
-    function cancelSellingToken(address _tokenAddress)  public{ // returns(bool _result) delete , 2017-09-27
+    function cancelSellingToken(address _tokenAddress)  public returns(bool _result){
         require(_tokenAddress != 0x0);    
-        //_result = false;       
+        _result = false;       
 
         var st = userSellingTokenOf[msg.sender][_tokenAddress];
         st.cancel = true;
         
-        Erc20Token token = Erc20Token(_tokenAddress);
-        var sellingAmount = token.allowance(msg.sender,this);   //??????? 2017-09-27
+        ERC20Token token = ERC20Token(_tokenAddress);
+        var sellingAmount = token.allowance(msg.sender,this);
         st.thisAmount = sellingAmount;
         
         OnSetSellingToken(_tokenAddress, msg.sender, sellingAmount, st.price, st.lineTime, st.cancel);
@@ -204,7 +200,7 @@ contract  Erc20TokenMarket is Base         //for exchange token
         require(_tokenAddress != 0x0);
         require(_buyerTokenPrice > 0);
 
-        require(!_isBuying);            //???????   //?????????????????????????????????????? 2017-09-27
+        require(!_isBuying);            //???????
         _isBuying = true;               //??
 
         userEtherOf[msg.sender] += msg.value;
@@ -213,7 +209,7 @@ contract  Erc20TokenMarket is Base         //for exchange token
             return; 
         }
 
-        Erc20Token token = Erc20Token(_tokenAddress);
+        ERC20Token token = ERC20Token(_tokenAddress);
         var sellingAmount = token.allowance(_seller, this);     //??? _spender   
         var st = userSellingTokenOf[_seller][_tokenAddress];    //???Token
 
@@ -246,18 +242,18 @@ contract  Erc20TokenMarket is Base         //for exchange token
                 canTokenAmount = sellingAmount; 
             }
             
-            var etherAmount =  canTokenAmount *  st.price;      //?????????? canTokenAmount =  userEtherOf[msg.sender]  / st.price;      2017-09-27
+            var etherAmount =  canTokenAmount *  st.price;
             userEtherOf[msg.sender] -= etherAmount;                     //??????
-            //require(userEtherOf[msg.sender] >= 0);                      //????: ???uint?????2017-09-27 delete
+            require(userEtherOf[msg.sender] >= 0);                      //????:
 
             token.transferFrom(_seller, msg.sender, canTokenAmount);    //???, ????? the dao ?????       
-            if(userEtherOf[_seller]  >= sellerGuaranteeEther){          //????????????????????????            
+            if(userEtherOf[_seller]  >= sellerGuaranteeEther){          //????????????????????????
                 _seller.transfer(etherAmount);                          //????????? the dao ?????      
             }   
             else{                                                       //???????
-                userEtherOf[_seller] +=  etherAmount;                   //?????????? //????????2017-09-27
+                userEtherOf[_seller] +=  etherAmount;                   //??????????
             }      
-            st.soldoutAmount += canTokenAmount;                         //?????     //???????????????????????????????? 2017-09-27
+            st.soldoutAmount += canTokenAmount;                         //?????
             st.thisAmount = token.allowance(_seller, this);             //?????????
 
             OnBuyToken(userEtherOf[msg.sender], msg.sender, _seller, _tokenAddress, canTokenAmount, st.price, st.thisAmount);     
@@ -271,7 +267,7 @@ contract  Erc20TokenMarket is Base         //for exchange token
         if (bigger && sellerGuaranteeEther > 0){                                  //?????Token??????
             if(checkSellerGuarantee(_seller)) {          //?????Token???????????, owner ? buyer ?????????????????
                 userEtherOf[owner] +=  sellerGuaranteeEther / 2; 
-                userEtherOf[msg.sender] +=   sellerGuaranteeEther - sellerGuaranteeEther / 2;   //?????2??????  2017-09-27
+                userEtherOf[msg.sender] +=   sellerGuaranteeEther / 2;
                 userEtherOf[_seller] -= sellerGuaranteeEther;
             }
             else if (userEtherOf[_seller] > 0)     //Buyer???????????????????????????????????????????????????????????gas??,???????0.1 ether??????
@@ -292,25 +288,19 @@ contract  Erc20TokenMarket is Base         //for exchange token
         }
     }
 
-    bool private isDisTokening = false;     //add 2017-09-27
-
     function disToken(address _token) public {          //???????Token????????????? this ??? token ??????Owner??????????????????????????????
-        require(!isDisTokening);            //??????? 2017-09-27
-        isDisTokening = true;               //?? 2017-09-27
-
-        Erc20Token token = Erc20Token(_token);  //????? ERC20 Token??????Token???????
-        var amount = token.balanceOf(this);     //??????2017-09-27
+        ERC20Token token = ERC20Token(_token);  //????? ERC20 Token??????Token???????
+        var amount = token.balanceOf(this);  
         if (amount > 0){
             var a1 = amount / 2;
             if (a1 > 0){
-                token.transfer(msg.sender, a1); //??????2017-09-27
+                token.transfer(msg.sender, a1);
             }
             var a2 = amount - a1;
             if (a2 > 0){
-                token.transfer(owner, a2);      //??????2017-09-27
+                token.transfer(owner, a1);
             }
         }
-        isDisTokening = false;
     }
 
 }
