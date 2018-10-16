@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalerVoting at 0x3302fea6fefb6eea9644a367da497c2b3dbc9f5c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalerVoting at 0x8EB0d17f99992Ae3225Cfff03CbB29Ca19d946c4
 */
 pragma solidity ^0.4.11;
 
@@ -38,7 +38,7 @@ interface TokenStorage {
 
 contract PresalerVoting {
 
-    string public constant VERSION = "0.0.2";
+    string public constant VERSION = "0.0.4";
 
     /* ====== configuration START ====== */
 
@@ -49,17 +49,17 @@ contract PresalerVoting {
 
     TokenStorage PRESALE_CONTRACT = TokenStorage(0x4Fd997Ed7c10DbD04e95d3730cd77D79513076F2);
 
-    string[5] private stateNames = ["BEFORE_START",  "VOTING_RUNNING", "CLOSED" ];
+    string[3] private stateNames = ["BEFORE_START",  "VOTING_RUNNING", "CLOSED" ];
     enum State { BEFORE_START,  VOTING_RUNNING, CLOSED }
 
     mapping (address => uint) public rawVotes;
 
-    uint private constant MAX_AMOUNT_EQU_0_PERCENT   = 1 finney;
+    uint private constant MAX_AMOUNT_EQU_0_PERCENT   = 10 finney;
     uint private constant MIN_AMOUNT_EQU_100_PERCENT = 1 ether ;
 
-    address owner;
+    address public owner;
 
-    //constructor
+    //constructors
     function PresalerVoting () {
         owner = msg.sender;
     }
@@ -70,7 +70,8 @@ contract PresalerVoting {
     onlyState(State.VOTING_RUNNING)
     payable {
         if (msg.value > 1 ether || !msg.sender.send(msg.value)) throw;
-        rawVotes[msg.sender] = msg.value;
+        //special treatment for 0-ether payments
+        rawVotes[msg.sender] = msg.value > 0 ? msg.value : 1 wei;
     }
 
     /// @notice start voting at `startBlockNr` for `durationHrs`.
@@ -94,9 +95,9 @@ contract PresalerVoting {
     }
 
     /// @notice return voting remaining time (hours, minutes).
-    function votingEndsInHHMM() constant returns (uint16, uint16) {
+    function votingEndsInHHMM() constant returns (uint8, uint8) {
         var tsec = VOTING_END_TIME - now;
-        return VOTING_END_TIME==0 ? (0,0) : (uint16(tsec / 1 hours), uint16(tsec % 1 hours / 1 minutes));
+        return VOTING_END_TIME==0 ? (0,0) : (uint8(tsec / 1 hours), uint8(tsec % 1 hours / 1 minutes));
     }
 
     function currentState() internal constant returns (State) {
