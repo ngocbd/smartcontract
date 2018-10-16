@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NullFinalizeAgent at 0x6216489e760cd535f7337fe386e9cc477c8e0fff
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NullFinalizeAgent at 0xf62c32e754d8dd658a8fb133a5368c58c62f0be2
 */
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
@@ -418,17 +418,18 @@ contract CrowdsaleBase is Haltable {
   }
 
   /**
-   * Make an investment.
+   * @dev Make an investment.
    *
    * Crowdsale must be running for one to invest.
    * We must have not pressed the emergency brake.
    *
    * @param receiver The Ethereum address who receives the tokens
    * @param customerId (optional) UUID v4 to track the successful payments on the server side'
+   * @param tokenAmount Amount of tokens which be credited to receiver
    *
-   * @return tokenAmount How mony tokens were bought
+   * @return tokensBought How mony tokens were bought
    */
-  function investInternal(address receiver, uint128 customerId) stopInEmergency internal returns(uint tokensBought) {
+  function buyTokens(address receiver, uint128 customerId, uint256 tokenAmount) stopInEmergency internal returns(uint tokensBought) {
 
     // Determine if it's a good time to accept investment from this participant
     if(getState() == State.PreFunding) {
@@ -445,9 +446,6 @@ contract CrowdsaleBase is Haltable {
     }
 
     uint weiAmount = msg.value;
-
-    // Account presale sales separately, so that they do not count against pricing tranches
-    uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised - presaleWeiRaised, tokensSold, msg.sender, token.decimals());
 
     // Dust transaction
     require(tokenAmount != 0);
@@ -481,6 +479,33 @@ contract CrowdsaleBase is Haltable {
     Invested(receiver, weiAmount, tokenAmount, customerId);
 
     return tokenAmount;
+  }
+
+  /**
+   * @dev Make an investment based on pricing strategy
+   *
+   * This is a wrapper for buyTokens(), but the amount of tokens receiver will
+   * have depends on the pricing strategy used.
+   *
+   * @param receiver The Ethereum address who receives the tokens
+   * @param customerId (optional) UUID v4 to track the successful payments on the server side'
+   *
+   * @return tokensBought How mony tokens were bought
+   */
+  function investInternal(address receiver, uint128 customerId) stopInEmergency internal returns(uint tokensBought) {
+    return buyTokens(receiver, customerId, pricingStrategy.calculatePrice(msg.value, weiRaised - presaleWeiRaised, tokensSold, msg.sender, token.decimals()));
+  }
+
+  /**
+   * @dev Calculate tokens user will have for theirr purchase
+   *
+   * @param weisTotal How much ethers (in wei) the user putssssss in
+   * @param pricePerToken What is the price for one token
+   *
+   * @return tokensTotal which is weisTotal divided by pricePerToken
+   */
+  function calculateTokens(uint256 weisTotal, uint256 pricePerToken) public constant returns(uint tokensTotal) {
+    return weisTotal/pricePerToken;
   }
 
   /**
@@ -1063,151 +1088,6 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-
-
-
-
-
-
-/**
-   @title ERC827 interface, an extension of ERC20 token standard
-
-   Interface of a ERC827 token, following the ERC20 standard with extra
-   methods to transfer value and data and execute calls in transfers and
-   approvals.
- */
-contract ERC827 is ERC20 {
-
-  function approve( address _spender, uint256 _value, bytes _data ) public returns (bool);
-  function transfer( address _to, uint256 _value, bytes _data ) public returns (bool);
-  function transferFrom( address _from, address _to, uint256 _value, bytes _data ) public returns (bool);
-
-}
-
-
-
-/**
-   @title ERC827, an extension of ERC20 token standard
-
-   Implementation the ERC827, following the ERC20 standard with extra
-   methods to transfer value and data and execute calls in transfers and
-   approvals.
-   Uses OpenZeppelin StandardToken.
- */
-contract ERC827Token is ERC827, StandardToken {
-
-  /**
-     @dev Addition to ERC20 token methods. It allows to
-     approve the transfer of value and execute a call with the sent data.
-
-     Beware that changing an allowance with this method brings the risk that
-     someone may use both the old and the new allowance by unfortunate
-     transaction ordering. One possible solution to mitigate this race condition
-     is to first reduce the spender's allowance to 0 and set the desired value
-     afterwards:
-     https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-
-     @param _spender The address that will spend the funds.
-     @param _value The amount of tokens to be spent.
-     @param _data ABI-encoded contract call to call `_to` address.
-
-     @return true if the call function was executed successfully
-   */
-  function approve(address _spender, uint256 _value, bytes _data) public returns (bool) {
-    require(_spender != address(this));
-
-    super.approve(_spender, _value);
-
-    require(_spender.call(_data));
-
-    return true;
-  }
-
-  /**
-     @dev Addition to ERC20 token methods. Transfer tokens to a specified
-     address and execute a call with the sent data on the same transaction
-
-     @param _to address The address which you want to transfer to
-     @param _value uint256 the amout of tokens to be transfered
-     @param _data ABI-encoded contract call to call `_to` address.
-
-     @return true if the call function was executed successfully
-   */
-  function transfer(address _to, uint256 _value, bytes _data) public returns (bool) {
-    require(_to != address(this));
-
-    super.transfer(_to, _value);
-
-    require(_to.call(_data));
-    return true;
-  }
-
-  /**
-     @dev Addition to ERC20 token methods. Transfer tokens from one address to
-     another and make a contract call on the same transaction
-
-     @param _from The address which you want to send tokens from
-     @param _to The address which you want to transfer to
-     @param _value The amout of tokens to be transferred
-     @param _data ABI-encoded contract call to call `_to` address.
-
-     @return true if the call function was executed successfully
-   */
-  function transferFrom(address _from, address _to, uint256 _value, bytes _data) public returns (bool) {
-    require(_to != address(this));
-
-    super.transferFrom(_from, _to, _value);
-
-    require(_to.call(_data));
-    return true;
-  }
-
-  /**
-   * @dev Addition to StandardToken methods. Increase the amount of tokens that
-   * an owner allowed to a spender and execute a call with the sent data.
-   *
-   * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _addedValue The amount of tokens to increase the allowance by.
-   * @param _data ABI-encoded contract call to call `_spender` address.
-   */
-  function increaseApproval(address _spender, uint _addedValue, bytes _data) public returns (bool) {
-    require(_spender != address(this));
-
-    super.increaseApproval(_spender, _addedValue);
-
-    require(_spender.call(_data));
-
-    return true;
-  }
-
-  /**
-   * @dev Addition to StandardToken methods. Decrease the amount of tokens that
-   * an owner allowed to a spender and execute a call with the sent data.
-   *
-   * approve should be called when allowed[_spender] == 0. To decrement
-   * allowed value is better to use this function to avoid 2 calls (and wait until
-   * the first transaction is mined)
-   * From MonolithDAO Token.sol
-   * @param _spender The address which will spend the funds.
-   * @param _subtractedValue The amount of tokens to decrease the allowance by.
-   * @param _data ABI-encoded contract call to call `_spender` address.
-   */
-  function decreaseApproval(address _spender, uint _subtractedValue, bytes _data) public returns (bool) {
-    require(_spender != address(this));
-
-    super.decreaseApproval(_spender, _subtractedValue);
-
-    require(_spender.call(_data));
-
-    return true;
-  }
-
-}
-
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
  *
@@ -1246,7 +1126,7 @@ contract Recoverable is Ownable {
  * @notice Interface marker is used by crowdsale contracts to validate that addresses point a good token contract.
  *
  */
-contract StandardTokenExt is StandardToken, ERC827Token, Recoverable {
+contract StandardTokenExt is StandardToken, Recoverable {
 
   /* Interface declaration */
   function isToken() public constant returns (bool weAre) {
