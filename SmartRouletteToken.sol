@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartRouletteToken at 0x2a650356bd894370cc1d6aba71b36c0ad6b3dc18
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartRouletteToken at 0xb961339f6f7f3b020255d9281fdd3bf2eb9b4d1e
 */
 pragma solidity ^0.4.8;
 
@@ -411,7 +411,7 @@ contract SmartRouletteToken {
 		}
 		if(value_send > (count_tokens*costOfOneToken)/decimals_token){				
 			if(msg.sender.send(value_send-((count_tokens*costOfOneToken)/decimals_token))==false) throw;
-			value_send = (count_tokens*costOfOneToken)/decimals_token;
+			value_send = value_send - ((count_tokens*costOfOneToken)/decimals_token);
 		}
 
 		if(!_balances[msg.sender].init){
@@ -423,7 +423,7 @@ contract SmartRouletteToken {
 			if(((_balances[msg.sender].tokens_count*costOfOneToken)/decimals_token)+((count_tokens*costOfOneToken)/decimals_token)>max_value_buyToken) {
 				count_tokens = ((max_value_buyToken*decimals_token)/costOfOneToken)-_balances[msg.sender].tokens_count;					
 				if(msg.sender.send(value_send-((count_tokens*costOfOneToken)/decimals_token))==false) throw;
-				value_send = (count_tokens*costOfOneToken)/decimals_token;
+				value_send = ((count_tokens*costOfOneToken)/decimals_token);
 			}
 
 			_balances[wallet_ICO].tokens_count -= count_tokens;
