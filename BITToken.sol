@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BITToken at 0xe65702283f5773e7e0f6bdd3594f502241676f1a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BITToken at 0x47da42696a866cdc61a4c809a515500a242909c1
 */
 pragma solidity ^0.4.13;
 
@@ -382,19 +382,12 @@ contract BITToken is MintableToken, PausableToken {
     event BITTransfer(address indexed _from, address indexed _to, uint256 _value, bytes32 data);
 
     uint256 public constant decimals = 18;
-    string public constant name = "TempToken";
-    string public constant symbol = "TEMP";
-
-    /**
-     * This function creates vesting fund for `_beneficiary` and mints
-     * `_amount` tokens to its account. Minted tokens will remain frozen
-     * for `_releaseDate` blocks.
-     */
+    string public constant name = "BitRewards Token";
+    string public constant symbol = "BIT";
 
     function BITToken () public MintableToken() {
 
     }
-
 
     function transfer (address _to, uint256 _value, bytes32 _data) public returns(bool res) {
         if (PausableToken.transfer(_to, _value)) {
