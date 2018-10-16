@@ -1,14 +1,49 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sivalicoin at 0xae6079d4D0b582E115aA72F17b146d870AF67b25
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Sivalicoin at 0xaFAb7F654fBe70337e39EdD4D6a7C2040d071A4C
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.16;
+
+
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+
 contract owned {
     address public owner;
-    mapping (address =>  bool) public admins;
 
     function owned() public {
         owner = msg.sender;
-        admins[msg.sender]=true;
     }
 
     modifier onlyOwner {
@@ -16,161 +51,68 @@ contract owned {
         _;
     }
 
-    modifier onlyAdmin   {
-        require(admins[msg.sender] == true);
-        _;
-    }
-
-    function transferOwnership(address newOwner) onlyOwner public{
+    function transferOwnership(address newOwner) onlyOwner public {
         owner = newOwner;
     }
-    function makeAdmin(address newAdmin, bool isAdmin) onlyOwner public{
-        admins[newAdmin] = isAdmin;
-    }
 }
 
-interface tokenRecipient {
-    function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public;
-}
+interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
-contract Sivalicoin is owned {
+contract TokenERC20 {
     // Public variables of the token
+    using SafeMath for uint;
+    using SafeMath for uint256;
     string public name;
     string public symbol;
-    uint8 public decimals;
+    uint8 public decimals = 18;
+    // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
-    uint256 minBalanceForAccounts;
-    bool public usersCanTrade;
-    bool public usersCanUnfreeze;
-
-    bool public ico = false; //turn ico on and of
-    mapping (address => bool) public admin;
-
-
-    modifier notICO {
-        require(admin[msg.sender] || !ico);
-        _;
-    }
-
 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
-
-
     mapping (address => mapping (address => uint256)) public allowance;
-    mapping (address =>  bool) public frozen;
-
-    mapping (address =>  bool) public canTrade; //user allowed to buy or sell
 
     // This generates a public event on the blockchain that will notify clients
     event Transfer(address indexed from, address indexed to, uint256 value);
 
-
     // This notifies clients about the amount burnt
     event Burn(address indexed from, uint256 value);
-
-    // This generates a public event on the blockchain that will notify clients
-    event Frozen(address indexed addr, bool frozen);
-
-    // This generates a public event on the blockchain that will notify clients
-    event Unlock(address indexed addr, address from, uint256 val);
-
-    // This generates a public event on the blockchain that will notify clients
-
-
-    // This generates a public event on the blockchain that will notify clients
-    // event Unfreeze(address indexed addr);
 
     /**
      * Constrctor function
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function Sivalicoin() public {
-        uint256 initialSupply = 26680000000000000000000000;
-        balanceOf[msg.sender] = initialSupply ;              // Give the creator all initial tokens
-        totalSupply = initialSupply;                        // Update total supply
-        name = "Sivalicoin";                                   // Set the name for display purposes
-        symbol = "SVC";                               // Set the symbol for display purposes
-        decimals = 18;                            // Amount of decimals for display purposes
-        minBalanceForAccounts = 1000000000000000;
-        usersCanTrade=false;
-        usersCanUnfreeze=false;
-        admin[msg.sender]=true;
-        canTrade[msg.sender]=true;
-
+    function TokenERC20(
+        uint256 initialSupply,
+        string tokenName,
+        string tokenSymbol
+    ) public {
+        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
+        name = tokenName;                                   // Set the name for display purposes
+        symbol = tokenSymbol;                               // Set the symbol for display purposes
     }
-
-    /**
-     * Increace Total Supply
-     *
-     * Increases the total coin supply
-     */
-    function increaseTotalSupply (address target,  uint256 increaseBy )  onlyOwner public {
-        balanceOf[target] += increaseBy;
-        totalSupply += increaseBy;
-        Transfer(0, owner, increaseBy);
-        Transfer(owner, target, increaseBy);
-    }
-
-    function  usersCanUnFreeze(bool can) public{
-        usersCanUnfreeze=can;
-    }
-
-    function setMinBalance(uint minimumBalanceInWei) onlyOwner public{
-        minBalanceForAccounts = minimumBalanceInWei;
-    }
-
-    /**
-     * transferAndFreeze
-     *
-     * Function to transfer to and freeze and account at the same time
-     */
-    function transferAndFreeze (address target,  uint256 amount )  onlyAdmin public{
-        _transfer(msg.sender, target, amount);
-        freeze(target, true);
-    }
-
-    /**
-     * _freeze internal
-     *
-     * function to freeze an account
-     */
-    function _freeze (address target, bool froze )  internal  {
-
-        frozen[target]=froze;
-        Frozen(target, froze);
-    }
-
-
-
-    /**
-     * freeze
-     *
-     * function to freeze an account
-     */
-    function freeze (address target, bool froze ) public  {
-        if(froze || (!froze && !usersCanUnfreeze)) {
-            require(admin[msg.sender]);
-        }
-
-        _freeze(target, froze);
-    }
-
-
 
     /**
      * Internal transfer, only can be called by this contract
      */
     function _transfer(address _from, address _to, uint _value) internal {
-        require(_to != 0x0);                                   // Prevent transfer to 0x0 address. Use burn() instead
-
-        require(!frozen[_from]);                       //prevent transfer from frozen address
-        require(balanceOf[_from] >= _value);                // Check if the sender has enough
-        require(balanceOf[_to] + _value > balanceOf[_to]); // Check for overflows
-        balanceOf[_from] -= _value;                         // Subtract from the sender
-        balanceOf[_to] += _value;                           // Add the same to the recipient
+        // Prevent transfer to 0x0 address. Use burn() instead
+        require(_to != 0x0);
+        // Check if the sender has enough
+        require(balanceOf[_from] >= _value);
+        // Check for overflows
+        require(balanceOf[_to] + _value > balanceOf[_to]);
+        // Save this for an assertion in the future
+        uint previousBalances = balanceOf[_from] + balanceOf[_to];
+        // Subtract from the sender
+        balanceOf[_from] = balanceOf[_from].sub(_value);
+        // Add the same to the recipient
+        balanceOf[_to] = balanceOf[_to].add(_value);
         Transfer(_from, _to, _value);
+        // Asserts are used to use static analysis to find bugs in your code. They should never fail
+        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
 
     /**
@@ -181,12 +123,9 @@ contract Sivalicoin is owned {
      * @param _to The address of the recipient
      * @param _value the amount to send
      */
-    function transfer(address _to, uint256 _value) notICO public{
-        require(!frozen[msg.sender]);                       //prevent transfer from frozen address
+    function transfer(address _to, uint256 _value) public {
         _transfer(msg.sender, _to, _value);
     }
-
-
 
     /**
      * Transfer tokens from other address
@@ -198,9 +137,8 @@ contract Sivalicoin is owned {
      * @param _value the amount to send
      */
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(!frozen[_from]);                       //prevent transfer from frozen address
         require(_value <= allowance[_from][msg.sender]);     // Check allowance
-        allowance[_from][msg.sender] -= _value;
+        allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(_value);
         _transfer(_from, _to, _value);
         return true;
     }
@@ -213,7 +151,8 @@ contract Sivalicoin is owned {
      * @param _spender The address authorized to spend
      * @param _value the max amount they can spend
      */
-    function approve(address _spender, uint256 _value) public returns (bool success) {
+    function approve(address _spender, uint256 _value) public
+        returns (bool success) {
         allowance[msg.sender][_spender] = _value;
         return true;
     }
@@ -227,113 +166,59 @@ contract Sivalicoin is owned {
      * @param _value the max amount they can spend
      * @param _extraData some extra information to send to the approved contract
      */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) onlyOwner public returns (bool success) {
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
+        public
+        returns (bool success) {
         tokenRecipient spender = tokenRecipient(_spender);
         if (approve(_spender, _value)) {
             spender.receiveApproval(msg.sender, _value, this, _extraData);
             return true;
         }
     }
+}
+contract Sivalicoin is owned, TokenERC20 {
+    using SafeMath for uint;
+    using SafeMath for uint256;
 
-    /**
-     * Destroy tokens
-     *
-     * Remove `_value` tokens from the system irreversibly
-     *
-     * @param _value the amount of money to burn
-     */
-    function burn(uint256 _value) onlyOwner public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-        balanceOf[msg.sender] -= _value;            // Subtract from the sender
-        totalSupply -= _value;                      // Updates totalSupply
-        Burn(msg.sender, _value);
-        return true;
+    uint256 public sellPrice;
+    uint256 public buyPrice;
+
+    mapping (address => bool) public frozenAccount;
+
+    /* This generates a public event on the blockchain that will notify clients */
+    event FrozenFunds(address target, bool frozen);
+
+    /* Initializes contract with initial supply tokens to the creator of the contract */
+    function Sivalicoin() TokenERC20(26680000, "SIVALICOIN", "SVC") public {}
+
+    /* Internal transfer, only can be called by this contract */
+    function _transfer(address _from, address _to, uint _value) internal {
+        require (_to != 0x0);                               // Prevent transfer to 0x0 address. Use burn() instead
+        require (balanceOf[_from] > _value);                // Check if the sender has enough
+        require (balanceOf[_to] + _value > balanceOf[_to]); // Check for overflows
+        require(!frozenAccount[_from]);                     // Check if sender is frozen
+        require(!frozenAccount[_to]);                       // Check if recipient is frozen
+        balanceOf[_from] = balanceOf[_from].sub(_value);                         // Subtract from the sender
+        balanceOf[_to] = balanceOf[_to].add(_value);                           // Add the same to the recipient
+        Transfer(_from, _to, _value);
     }
 
-    /**
-     * Destroy tokens from other ccount
-     *
-     * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
-     *
-     * @param _from the address of the sender
-     * @param _value the amount of money to burn
-     */
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
-        require(_value <= allowance[_from][msg.sender]);    // Check allowance
-        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
-        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
-        totalSupply -= _value;                              // Update totalSupply
-        Burn(_from, _value);
-        return true;
+    /// @notice Create `mintedAmount` tokens and send it to `target`
+    /// @param target Address to receive the tokens
+    /// @param mintedAmount the amount of tokens it will receive
+    function mintToken(address target, uint256 mintedAmount) onlyOwner public {
+        balanceOf[target] = balanceOf[target].add(mintedAmount);
+        totalSupply = totalSupply.add(mintedAmount);
+        Transfer(0, this, mintedAmount);
+        Transfer(this, target, mintedAmount);
     }
 
-    /*
-     function increaseSupply(address _from, uint256 _value) onlyOwner  returns (bool success)  {
-     balanceOf[_from] += _value;                         // Subtract from the targeted balance
-     totalSupply += _value;                              // Update totalSupply
-     // Burn(_from, _value);
-     return true;
-     }
-     */
-
-
-
-
-    uint256 public sellPrice = 1;
-    uint256 public buyPrice = 1000000000000000;
-
-    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) public onlyOwner {
-        sellPrice = newSellPrice;
-        buyPrice = newBuyPrice;
-    }
-    function setUsersCanTrade(bool trade) public onlyOwner {
-        usersCanTrade=trade;
-    }
-    function setCanTrade(address addr, bool trade) public onlyOwner {
-        canTrade[addr]=trade;
+    /// @notice `freeze? Prevent | Allow` `target` from sending & receiving tokens
+    /// @param target Address to be frozen
+    /// @param freeze either to freeze it or not
+    function freezeAccount(address target, bool freeze) onlyOwner public {
+        frozenAccount[target] = freeze;
+        FrozenFunds(target, freeze);
     }
 
-    //user is buying SVC
-    function buy() payable public returns (uint256 amount){
-        if(!usersCanTrade && !canTrade[msg.sender]) revert();
-        amount = msg.value * buyPrice;                    // calculates the amount
-
-        require(balanceOf[this] >= amount);               // checks if it has enough to sell
-        balanceOf[msg.sender] += amount;                  // adds the amount to buyer's balance
-        balanceOf[this] -= amount;                        // subtracts amount from seller's balance
-        Transfer(this, msg.sender, amount);               // execute an event reflecting the change
-        return amount;                                    // ends function and returns
-    }
-
-    //user is selling us SVC, we are selling eth to the user
-    function sell(uint256 amount) public returns (uint revenue){
-        require(!frozen[msg.sender]);
-        if(!usersCanTrade && !canTrade[msg.sender]) {
-            require(minBalanceForAccounts > amount/sellPrice);
-        }
-        require(balanceOf[msg.sender] >= amount);         // checks if the sender has enough to sell
-        balanceOf[this] += amount;                        // adds the amount to owner's balance
-        balanceOf[msg.sender] -= amount;                  // subtracts the amount from seller's balance
-        revenue = amount / sellPrice;
-        require(msg.sender.send(revenue));                // sends ether to the seller: it's important to do this last to prevent recursion attacks
-        Transfer(msg.sender, this, amount);               // executes an event reflecting on the change
-        return revenue;                                   // ends function and returns
-    }
-
-    function() payable public {
-    }
-    event Withdrawn(address indexed to, uint256 value);
-    function withdraw(address target, uint256 amount) public onlyOwner {
-        target.transfer(amount);
-        Withdrawn(target, amount);
-    }
-
-    function setAdmin(address addr, bool enabled) public onlyOwner {
-        admin[addr]=enabled;
-    }
-
-    function setICO(bool enabled) public onlyOwner {
-        ico=enabled;
-    }
 }
