@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TrueloveCore at 0xcfaafdd4ec90985108c3f4847b14e7c733eaf575
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TrueloveCore at 0xa61c86eea36c9ebe51b70c4a77ecbce0a6078d02
 */
 pragma solidity ^0.4.18;
 
@@ -711,9 +711,9 @@ contract TrueloveShop is TrueloveRegistration {
 	}
 
 	function currentFlowerPrice() public view returns(uint256) {
-		if (flower.current < 10 + REMAINING_AMOUNT) { // MARK: Modify it
+		if (flower.current < 100000 + REMAINING_AMOUNT) { // MARK: Modify it
 			return flower.price;
-		} else if (flower.current < 30 + REMAINING_AMOUNT) { // MARK: Modify it
+		} else if (flower.current < 300000 + REMAINING_AMOUNT) { // MARK: Modify it
 			return flower.price * 4;
 		} else {
 			return flower.price * 10;
@@ -865,8 +865,6 @@ contract TrueloveCore is TrueloveAuction {
 		);
 		
 	function TrueloveCore() public {
-		paused = true;
-
 		ceoAddress = msg.sender;
 		cooAddress = msg.sender;
 	}
