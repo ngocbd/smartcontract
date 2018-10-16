@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SolarDaoTokenCrowdsale at 0x1c9055f7ecc5c679b85393b970b17eefc3a8cf98
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SolarDaoTokenCrowdsale at 0xd60b700cefb4b1da1f09d6b4922ac2274ed10098
 */
 pragma solidity ^0.4.13;
 
@@ -271,7 +271,7 @@ contract SolarDaoTokenCrowdsale is Haltable, Killable, SafeMath {
   uint public constant MIN_ICO_GOAL = 1e7;
 
   /// Miminal investment value
-  uint public constant MIN_INVESTMENT = 5 ether;
+  uint public constant MIN_INVESTMENT = 1 ether;
 
   /// Percent of bonus tokens team receives from each investment
   uint public constant TEAM_BONUS_PERCENT = 25;
