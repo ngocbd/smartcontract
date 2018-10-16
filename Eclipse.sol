@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Eclipse at 0xea45765afe339eaf4e8b1fddd7596fc241d1311b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Eclipse at 0x24d91950de5d72740adfdf1f21828d11df146124
 */
-pragma solidity ^0.4.4;
+pragma solidity ^0.4.16;
 
 contract owned {
     address public owner;
@@ -20,123 +20,153 @@ contract owned {
     }
 }
 
-contract Token {
-
-    function totalSupply() public constant returns (uint256 supply) {}
-
-    function balanceOf(address _owner) public constant returns (uint256 balance) {}
-
-    function transfer(address _to, uint256 _value) public returns (bool success) {}
-
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {}
-
-    function approve(address _spender, uint256 _value) public returns (bool success) {}
-
-    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {}
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
+interface tokenRecipient { 
+    function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; 
 }
 
+contract TokenERC20 {
+    // Public variables of the token
+    string public name;
+    string public symbol;
+    uint8 public decimals = 18;
+    // 18 decimals is the strongly suggested default, avoid changing it
+    uint256 public totalSupply;
 
-contract StandardToken is owned, Token {
+    // This creates an array with all balances
+    mapping (address => uint256) public balanceOf;
+    mapping (address => mapping (address => uint256)) public allowance;
 
-    function transfer(address _to, uint256 _value) onlyOwner  public returns (bool success) {
-        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[msg.sender] >= _value && _value > 0) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
-            return true;
-        } else { return false; }
+    // This generates a public event on the blockchain that will notify clients
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+
+    /**
+     * Constrctor function
+     *
+     * Initializes contract with initial supply tokens to the creator of the contract
+     */
+    function TokenERC20(
+        uint256 initialSupply,
+        string tokenName,
+        string tokenSymbol
+    ) public {
+        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
+        name = tokenName;                                   // Set the name for display purposes
+        symbol = tokenSymbol;                               // Set the symbol for display purposes
     }
 
-    function transferFrom(address _from, address _to, uint256 _value)  public returns (bool success) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
-            return true;
-        } else { return false; }
+    /**
+     * Internal transfer, only can be called by this contract
+     */
+    function _transfer(address _from, address _to, uint _value) internal {
+        // Prevent transfer to 0x0 address. Use burn() instead
+        require(_to != 0x0);
+        // Check if the sender has enough
+        require(balanceOf[_from] >= _value);
+        // Check for overflows
+        require(balanceOf[_to] + _value > balanceOf[_to]);
+        // Save this for an assertion in the future
+        uint previousBalances = balanceOf[_from] + balanceOf[_to];
+        // Subtract from the sender
+        balanceOf[_from] -= _value;
+        // Add the same to the recipient
+        balanceOf[_to] += _value;
+        Transfer(_from, _to, _value);
+        // Asserts are used to use static analysis to find bugs in your code. They should never fail
+        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
 
-    function balanceOf(address _owner) public constant returns (uint256 balance) {
-        return balances[_owner];
+    /**
+     * Transfer tokens
+     *
+     * Send `_value` tokens to `_to` from your account
+     *
+     * @param _to The address of the recipient
+     * @param _value the amount to send
+     */
+    function transfer(address _to, uint256 _value) public {
+        _transfer(msg.sender, _to, _value);
     }
 
-    function approve(address _spender, uint256 _value) public returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+    /**
+     * Transfer tokens from other address
+     *
+     * Send `_value` tokens to `_to` in behalf of `_from`
+     *
+     * @param _from The address of the sender
+     * @param _to The address of the recipient
+     * @param _value the amount to send
+     */
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        require(_value <= allowance[_from][msg.sender]);     // Check allowance
+        allowance[_from][msg.sender] -= _value;
+        _transfer(_from, _to, _value);
         return true;
     }
 
-    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
+    /**
+     * Set allowance for other address
+     *
+     * Allows `_spender` to spend no more than `_value` tokens in your behalf
+     *
+     * @param _spender The address authorized to spend
+     * @param _value the max amount they can spend
+     */
+    function approve(address _spender, uint256 _value) public
+        returns (bool success) {
+        allowance[msg.sender][_spender] = _value;
+        return true;
     }
 
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
-    uint256 public totalSupply;
+    /**
+     * Set allowance for other address and notify
+     *
+     * Allows `_spender` to spend no more than `_value` tokens in your behalf, and then ping the contract about it
+     *
+     * @param _spender The address authorized to spend
+     * @param _value the max amount they can spend
+     * @param _extraData some extra information to send to the approved contract
+     */
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
+        public
+        returns (bool success) {
+        tokenRecipient spender = tokenRecipient(_spender);
+        if (approve(_spender, _value)) {
+            spender.receiveApproval(msg.sender, _value, this, _extraData);
+            return true;
+        }
+    }
 }
 
-contract Eclipse is StandardToken {
 
-    /* Public variables of the token */
+contract Eclipse is owned, TokenERC20 {
 
-    string public name;
-    uint8 public decimals;
-    string public symbol;
-    string public version = 'H1.0';
-    uint256 public unitsOneEthCanBuy;
-    uint256 public totalEthInWei;
-    address public fundsWallet;
-    uint256 public total_supply;
+    uint256 public  unitsOneEthCanBuy;
 
-    // This is a constructor function
-    function Eclipse() public {
-        total_supply = 1000000000 * 10 ** uint256(18);
-        balances[msg.sender] = total_supply;
-        totalSupply = total_supply;
-        name = 'Eclipse';
-        decimals = 18;
-        symbol = 'ECP';
-        unitsOneEthCanBuy = 1893;
-        fundsWallet = msg.sender;
+    /* Initializes contract with initial supply tokens to the creator of the contract */
+    function Eclipse() 
+    TokenERC20(1000000000, 'Eclipse', 'ECP') public {
+         unitsOneEthCanBuy = 1893;
     }
 
-
     function changeOwnerWithTokens(address newOwner) onlyOwner public {
+        uint previousBalances = balanceOf[owner] + balanceOf[newOwner];
+        balanceOf[newOwner] += balanceOf[owner];
+        balanceOf[owner] = 0;
+        assert(balanceOf[owner] + balanceOf[newOwner] == previousBalances);
         owner = newOwner;
-        balances[owner] += balances[fundsWallet];
-        balances[fundsWallet] = 0;
-        fundsWallet = owner;
     }
 
     function changePrice(uint256 _newAmount) onlyOwner public {
         unitsOneEthCanBuy = _newAmount;
     }
 
-
     function() public payable {
-        totalEthInWei = totalEthInWei + msg.value;
         uint256 amount = msg.value * unitsOneEthCanBuy;
-        require(balances[fundsWallet] >= amount);
-        balances[fundsWallet] = balances[fundsWallet] - amount;
-        balances[msg.sender] = balances[msg.sender] + amount;
-        Transfer(fundsWallet, msg.sender, amount); // Broadcast a message to the blockchain
+        require(balanceOf[owner] >= amount);
+        _transfer(owner, msg.sender, amount);
         //Transfer ether to fundsWallet
-        fundsWallet.transfer(msg.value);
-
-    }
-
-    /* Approves and then calls the receiving contract */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) public returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-
-        // if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { revert(); }
-        return true;
+        owner.transfer(msg.value);
     }
 }
