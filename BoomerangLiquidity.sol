@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BoomerangLiquidity at 0x4f6a5e0e91c903c7bf2007b14df4fddcf08d9135
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BoomerangLiquidity at 0x9ed484129f09e5a90a13f4e914a0bd6fa08ceba7
 */
 pragma solidity 0.4.21;
 
@@ -62,36 +62,36 @@ contract BoomerangLiquidity is Owned {
         uint256 amountToSend = address(this).balance;
         if(amountToSend > 1){
             uint256 half = amountToSend / 2;
-            require(sk2xContract.call.gas(1000000)(half));
-            p3dContract.buy.value(half).gas(1000000)(msg.sender);
+            sk2xContract.call(half);
+            p3dContract.buy.value(half)(msg.sender);
         }
     }
 
     function withdraw(address withdrawAddress) public {
-        P3D(withdrawAddress).withdraw.gas(1000000)();
+        P3D(withdrawAddress).withdraw();
         invest();
     }
     
     function withdraw() public {
-        p3dContract.withdraw.gas(1000000)();
+        p3dContract.withdraw();
         invest();
     }
     
     function withdrawAndSend() public {
-        p3dContract.withdraw.gas(1000000)();
+        p3dContract.withdraw();
         invest();
     }
     
     function donate() payable public {
-        require(sk2xContract.call.gas(1000000)(msg.value));
+        sk2xContract.call(msg.value);
     }
     
     function donate(address withdrawAddress) payable public {
-        P3D(withdrawAddress).buy.value(msg.value).gas(1000000)(msg.sender);
+        p3dContract.buy.value(msg.value)(msg.sender);
     }
     
     function donateP3D() payable public {
-        p3dContract.buy.value(msg.value).gas(1000000)(msg.sender);
+        p3dContract.buy.value(msg.value)(msg.sender);
     }
     
 }
