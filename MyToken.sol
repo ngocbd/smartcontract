@@ -1,114 +1,79 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x1f21d8395655fb262251897df7cb3c9358bec6a2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0x390a6a8c0f7ef5539a63b49cc58d6f33ca805cce
 */
-pragma solidity ^0.4.18;
+/*
+This creates a public tradeable fungible token in the Ethereum Blockchain.
+https://github.com/ethereum/wiki/wiki/Standardized_Contract_APIs
 
-contract SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-       return 0;
-     }
-     uint256 c = a * b;
-     assert(c / a == b);
-     return c;
-   }
+Unmodified this will create a cryptoasset with a fixed market cap
+wholly owned by the contract creator. You can create any function
+to change this contract, like allowing specific rules for the issuance,
+destruction and freezing of any assets. This contract is intended for
+educational purposes, you are fully responsible for compliance with
+present or future regulations of finance, communications and the
+universal rights of digital beings.
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-     uint256 c = a / b;
-     return c;
-  }
+Anyone is free to copy, modify, publish, use, compile, sell, or
+distribute this software, either in source code form or as a compiled
+binary, for any purpose, commercial or non-commercial, and by any
+means.
 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-     return a - b;
-   }
+In jurisdictions that recognize copyright laws, the author or authors
+of this software dedicate any and all copyright interest in the
+software to the public domain. We make this dedication for the benefit
+of the public at large and to the detriment of our heirs and
+successors. We intend this dedication to be an overt act of
+relinquishment in perpetuity of all present and future rights to this
+software under copyright law.
 
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-     uint256 c = a + b;
-    assert(c >= a);
-     return c;
-   }
-}
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
 
-contract ERC20 {
-   uint256 public totalSupply;
-   function balanceOf(address who) public view returns (uint256);
-   function transfer(address to, uint256 value) public returns (bool);
-   event Transfer(address indexed from, address indexed to, uint256 value);
-   function allowance(address owner, address spender) public view returns (uint256);
-   function transferFrom(address from, address to, uint256 value) public returns (bool);
-   function approve(address spender, uint256 value) public returns (bool);
-   event Approval(address indexed owner, address indexed spender, uint256 value);
-}
+For more information, please refer to <http://unlicense.org>
 
+*/
+contract MyToken {
+    /* Public variables of the token */
+    string public name;
+    string public symbol;
+    uint8 public decimals;
 
-contract StandardToken is ERC20, SafeMath {
+    /* This creates an array with all balances */
+    mapping (address => uint256) public balanceOf;
 
-   mapping(address => uint256) balances;
-   mapping (address => mapping (address => uint256)) internal allowed;
+    /* This generates a public event on the blockchain that will notify clients */
+    event Transfer(address indexed from, address indexed to, uint256 value);
 
-   function transfer(address _to, uint256 _value) public returns (bool) {
-     require(_to != address(0));
-     require(_value <= balances[msg.sender]);
-     balances[msg.sender] = sub(balances[msg.sender], _value);
-     balances[_to] = add(balances[_to], _value);
-     Transfer(msg.sender, _to, _value);
-     return true;
-   }
+    /* Initializes contract with initial supply tokens to the creator of the contract */
+    function MyToken(uint256 _supply, string _name, string _symbol, uint8 _decimals) {
+        /* if supply not given then generate 1 million of the smallest unit of the token */
+        if (_supply == 0) _supply = 1000000;
 
-  function balanceOf(address _owner) public view returns (uint256 balance) {
-    return balances[_owner];
-   }
+        /* Unless you add other functions these variables will never change */
+        balanceOf[msg.sender] = _supply;
+        name = _name;
+        symbol = _symbol;
 
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-     require(_value <= balances[_from]);
-     require(_value <= allowed[_from][msg.sender]);
-
-    balances[_from] = sub(balances[_from], _value);
-     balances[_to] = add(balances[_to], _value);
-     allowed[_from][msg.sender] = sub(allowed[_from][msg.sender], _value);
-    Transfer(_from, _to, _value);
-     return true;
-   }
-
-   function approve(address _spender, uint256 _value) public returns (bool) {
-     allowed[msg.sender][_spender] = _value;
-     Approval(msg.sender, _spender, _value);
-     return true;
-   }
-
-  function allowance(address _owner, address _spender) public view returns (uint256) {
-     return allowed[_owner][_spender];
-   }
-
-   function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
-     allowed[msg.sender][_spender] = add(allowed[msg.sender][_spender], _addedValue);
-     Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-     return true;
-   }
-
-  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
-     uint oldValue = allowed[msg.sender][_spender];
-     if (_subtractedValue > oldValue) {
-       allowed[msg.sender][_spender] = 0;
-     } else {
-       allowed[msg.sender][_spender] = sub(oldValue, _subtractedValue);
+        /* If you want a divisible token then add the amount of decimals the base unit has  */
+        decimals = _decimals;
     }
-     Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-     return true;
-   }
 
-}
+    /* Send coins */
+    function transfer(address _to, uint256 _value) {
+        /* if the sender doenst have enough balance then stop */
+        if (balanceOf[msg.sender] < _value) throw;
+        if (balanceOf[_to] + _value < balanceOf[_to]) throw;
 
-contract MyToken is StandardToken {
-   string public name = 'IRONCOIN';
-   string public symbol = 'IRC';
-   uint public decimals = 8;
-   uint public INITIAL_SUPPLY = 3000000000* 10**8;
+        /* Add and subtract new balances */
+        balanceOf[msg.sender] -= _value;
+        balanceOf[_to] += _value;
 
-   function MyToken() {
-     totalSupply = INITIAL_SUPPLY;
-     balances[msg.sender] = INITIAL_SUPPLY;
-   }
+        /* Notifiy anyone listening that this transfer took place */
+        Transfer(msg.sender, _to, _value);
+    }
 }
