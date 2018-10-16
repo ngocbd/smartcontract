@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Config at 0x0f1e2ffd515c24b3ed0a4a9df0f02e86d6755e03
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Config at 0x87d507e8758f86ce27d04ec4acfbf7a45426984b
 */
 pragma solidity ^0.4.20;
 
@@ -257,7 +257,7 @@ contract Config is Ownable, ConfigInterface
     function getCooldownIndexFromGeneration(uint16 _generation) public view returns (uint16)
     {
         uint16 result = _generation;
-        if (result > getCooldownIndexCount()) {
+        if (result >= getCooldownIndexCount()) {
             result = uint16(getCooldownIndexCount() - 1);
         }
         return result;
@@ -296,6 +296,6 @@ contract Config is Ownable, ConfigInterface
     {
         uint16 momGen = coreContract.getGeneration(_momId);
         uint16 dadGen = coreContract.getGeneration(_dadId);
-        return 500 szabo*(momGen+dadGen);
+        return 500 szabo*(momGen + dadGen + 10)/2;
     }
 }
