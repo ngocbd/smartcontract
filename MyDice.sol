@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyDice at 0x5cfa2f4ff77bbd15d6415e33c16c2c85096cce4a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyDice at 0x8f81eb4030968e2e13a8a182ef0d07673e48ef6f
 */
 pragma solidity ^0.4.2;
 
@@ -95,8 +95,6 @@ contract MyDice is DSSafeAddSub {
 	event LogResult(uint indexed BetID, address indexed PlayerAddress, uint indexed PlayerNumber, uint DiceResult, uint Value, int Status,uint BetValue,uint targetNumber);
     /* log owner transfers */
     event LogOwnerTransfer(address indexed SentToAddress, uint indexed AmountTransferred);
-    /*test*/
-    event LogRandom(uint result,uint randomNum);
 
     /*
      * init
@@ -105,16 +103,11 @@ contract MyDice is DSSafeAddSub {
 
         owner = msg.sender;
 
-
-        /* init 935 = 93.5% (6.5% houseEdge)*/
         ownerSetHouseEdge(935);
 
-        // 25,000 = 2.5% is our max profit of the house
-        ownerSetMaxProfitAsPercentOfHouse(25000);
-        /* init min bet (0.2 ether) */
-
-        ownerSetMinBet(200000000000000000);
-
+        ownerSetMaxProfitAsPercentOfHouse(20000);
+     
+        ownerSetMinBet(10000000000000000);
     }
 
     function GetRandomNumber() internal 
@@ -127,24 +120,22 @@ contract MyDice is DSSafeAddSub {
 
         randomNumber = uint(sha3(randomNumber,nonce,10 + 10*1000000000000000000/msg.value));
 
-        return (randomNumber % 10000 + 1);
+        return (maxNumber - randomNumber % maxNumber);
     }
 
     /*
      * public function
      * player submit bet
-     * only if game is active & bet is valid can query oraclize and set player vars
+     * only if game is active & bet is valid can query and set player vars
     */
-    function playerRollDice(uint rollUnder) public
+    function playerRollDice() public
         payable
         gameIsActive
-        betIsValid(msg.value, rollUnder)
+        betIsValid(msg.value, underNumber)
 	{
-    
         totalBets += 1;
 
         uint randReuslt = GetRandomNumber();
-        LogRandom(randReuslt,randomNumber);
 
         /*
         * pay winner
@@ -152,9 +143,9 @@ contract MyDice is DSSafeAddSub {
         * send reward
         * if send of reward fails save value to playerPendingWithdrawals
         */
-        if(randReuslt < rollUnder){
+        if(randReuslt < underNumber){
 
-            uint playerProfit = ((((msg.value * (maxNumber-(safeSub(rollUnder,1)))) / (safeSub(rollUnder,1))+msg.value))*houseEdge/houseEdgeDivisor)-msg.value;
+            uint playerProfit = ((((msg.value * (maxNumber-(safeSub(underNumber,1)))) / (safeSub(underNumber,1))+msg.value))*houseEdge/houseEdgeDivisor)-msg.value;
 
             /* safely reduce contract balance by player profit */
             contractBalance = safeSub(contractBalance, playerProfit);
@@ -189,7 +180,7 @@ contract MyDice is DSSafeAddSub {
         * send 1 wei to a losing bet
         * update contract balance to calculate new max bet
         */
-        if(randReuslt >= rollUnder){
+        if(randReuslt >= underNumber){
 
             LogResult(totalBets, msg.sender, underNumber, randReuslt, msg.value, 0, msg.value,underNumber);
 
@@ -257,7 +248,7 @@ contract MyDice is DSSafeAddSub {
     function ()
         payable
     {
-        playerRollDice(underNumber);
+        playerRollDice();
     }
 
     function setNonce(uint value) public
