@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CXTCContract at 0x014b5dc46658699e2af828c11bc5fe786edebaaa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CXTCContract at 0x1afafc35b364595f06e89a0429c5762452eb7ffd
 */
 pragma solidity ^0.4.18;
-
 
 /**
  * @title SafeMath
@@ -80,10 +79,9 @@ contract ERC20 is ERC20Basic {
  */
 contract Ownable {
     address public owner;
-
+    address public systemAcc; // charge fee
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
 
     /**
      * @dev The Ownable constructor sets the original `owner` of the contract to the sender
@@ -102,6 +100,14 @@ contract Ownable {
     }
 
     /**
+     * @dev Throws if called by any account other than the systemAcc.
+     */
+    modifier onlySys() {
+        require(systemAcc !=address(0) && msg.sender == systemAcc);
+        _;
+    }
+
+    /**
      * @dev Allows the current owner to transfer control of the contract to a newOwner.
      * @param newOwner The address to transfer ownership to.
      */
@@ -110,7 +116,6 @@ contract Ownable {
         OwnershipTransferred(owner, newOwner);
         owner = newOwner;
     }
-
 }
 
 /**
@@ -118,43 +123,42 @@ contract Ownable {
  * @dev Base contract which allows children to implement an emergency stop mechanism.
  */
 contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
+    event Pause();
+    event Unpause();
 
-  bool public paused = false;
+    bool public paused = false;
 
+    /**
+     * @dev Modifier to make a function callable only when the contract is not paused.
+     */
+    modifier whenNotPaused() {
+        require(!paused);
+        _;
+    }
 
-  /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
+    /**
+     * @dev Modifier to make a function callable only when the contract is paused.
+     */
+    modifier whenPaused() {
+        require(paused);
+        _;
+    }
 
-  /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
-  modifier whenPaused() {
-    require(paused);
-    _;
-  }
+    /**
+     * @dev called by the owner to pause, triggers stopped state
+     */
+    function pause() onlyOwner whenNotPaused public {
+        paused = true;
+        Pause();
+    }
 
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused public {
-    paused = true;
-    Pause();
-  }
-
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused public {
-    paused = false;
-    Unpause();
-  }
+    /**
+     * @dev called by the owner to unpause, returns to normal state
+     */
+    function unpause() onlyOwner whenPaused public {
+        paused = false;
+        Unpause();
+    }
 }
 
 /**
@@ -302,7 +306,6 @@ contract StandardToken is ERC20, BasicToken {
         Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
         return true;
     }
-
 }
 
 /**
@@ -320,30 +323,28 @@ contract CXTCContract is StandardToken {
     uint256 public constant freeSupply = 21000000 * (10 ** uint256(decimals)); // 10%???
     uint256 public constant frozenSupply = 189000000 * (10 ** uint256(decimals)); // 90%???
 
-    address public systemAcc; // charge fee
     address[] parterAcc;
-    uint256 internal fee;
-    
+
     struct ArtInfo {
         string idtReport;
         string evtReport;
         string escReport;
         string regReport;
     }
-    
-    mapping (string => ArtInfo) internal artInfos;
-    mapping (address => mapping (uint256 => uint256)) internal freezeRecord;
 
-    event Freeze(address indexed _addr, uint256 indexed _amount, uint256 _timestamp);
+    mapping (string => ArtInfo) internal artInfos;
+    mapping (address => mapping (uint256 => uint256)) public freezeRecord;
+
+    event Freeze(address indexed _addr, uint256 indexed _amount, uint256 indexed _timestamp);
+    event Defreeze(address indexed _addr, uint256 indexed _amount, uint256 indexed _timestamp);
     event Release(address indexed _addr, uint256 indexed _amount);
     event SetParter(address indexed _addr, uint256 indexed _amount);
-    event SetFoundAcc(address indexed _addr);
+    event SetSysAcc(address indexed _addr);
     event NewArt(string indexed _id);
     event SetArtIdt(string indexed _id, string indexed _idtReport);
     event SetArtEvt(string indexed _id, string indexed _evtReport);
     event SetArtEsc(string indexed _id, string indexed _escReport);
     event SetArtReg(string indexed _id, string indexed _regReport);
-    event SetFee(uint256 indexed _fee);
 
     /**
      * @dev Constructor
@@ -358,42 +359,34 @@ contract CXTCContract is StandardToken {
     /**
      * init parter
      */
-    function setParter(address _parter, uint256 _amount) public onlyOwner {
-        //require(_amount == 210000);
-        require(parterAcc.length <= 49);
+    function setParter(address _parter, uint256 _amount, uint256 _timestamp) public onlyOwner {
         parterAcc.push(_parter);
-        frozenBalances[_parter] = _amount;
+        frozenBalances[owner] = frozenBalances[owner].sub(_amount);
+        frozenBalances[_parter] = frozenBalances[_parter].add(_amount);
+        freezeRecord[_parter][_timestamp] = freezeRecord[_parter][_timestamp].add(_amount);
+        Freeze(_parter, _amount, _timestamp);
         SetParter(_parter, _amount);
     }
 
     /**
      * set systemAccount
      */
-    function setFoundAcc(address _sysAcc) public onlyOwner returns (bool) {
+    function setSysAcc(address _sysAcc) public onlyOwner returns (bool) {
         systemAcc = _sysAcc;
-        SetFoundAcc(_sysAcc);
+        SetSysAcc(_sysAcc);
         return true;
     }
-    
-    /**
-     * set fee
-     */
-    function setFee(uint256 _fee) public onlyOwner returns (bool) {
-        fee = _fee;
-        SetFee(_fee);
-        return true;
-    }
-    
+
     /**
      * new art hash info
      */
-    function newArt(string _id, string _regReport) public onlyOwner returns (bool) {
+    function newArt(string _id, string _regReport) public onlySys returns (bool) {
         ArtInfo memory info = ArtInfo({idtReport: "", evtReport: "", escReport: "", regReport: _regReport});
         artInfos[_id] = info;
         NewArt(_id);
         return true;
     }
-    
+
     /**
      * get artInfo
      */
@@ -401,11 +394,11 @@ contract CXTCContract is StandardToken {
         ArtInfo memory info = artInfos[_id];
         return (info.regReport, info.idtReport, info.evtReport, info.escReport);
     }
-    
+
     /**
      * set art idtReport
      */
-    function setArtIdt(string _id, string _idtReport) public onlyOwner returns (bool) {
+    function setArtIdt(string _id, string _idtReport) public onlySys returns (bool) {
         string idtReport = artInfos[_id].idtReport;
         bytes memory idtReportLen = bytes(idtReport);
         if (idtReportLen.length == 0){
@@ -416,11 +409,11 @@ contract CXTCContract is StandardToken {
             return false;
         }
     }
-    
+
     /**
      * set art evtReport
      */
-    function setArtEvt(string _id, string _evtReport) public onlyOwner returns (bool) {
+    function setArtEvt(string _id, string _evtReport) public onlySys returns (bool) {
         string evtReport = artInfos[_id].evtReport;
         bytes memory evtReportLen = bytes(evtReport);
         if (evtReportLen.length == 0){
@@ -431,11 +424,11 @@ contract CXTCContract is StandardToken {
             return false;
         }
     }
-    
+
     /**
      * set art escrow report
      */
-    function setArtEsc(string _id, string _escReport) public onlyOwner returns (bool) {
+    function setArtEsc(string _id, string _escReport) public onlySys returns (bool) {
         string escReport = artInfos[_id].escReport;
         bytes memory escReportLen = bytes(escReport);
         if (escReportLen.length == 0){
@@ -446,11 +439,11 @@ contract CXTCContract is StandardToken {
             return false;
         }
     }
-    
+
     /**
-     * distribute art coin to user.
+     * issue art coin to user.
      */
-    function issue(address _addr, uint256 _amount, uint256 _timestamp) public onlyOwner returns (bool) {
+    function issue(address _addr, uint256 _amount, uint256 _timestamp) public onlySys returns (bool) {
         // 2018/03/23 = 1521734400
         require(frozenBalances[owner] >= _amount);
         frozenBalances[owner] = frozenBalances[owner].sub(_amount);
@@ -461,20 +454,34 @@ contract CXTCContract is StandardToken {
     }
 
     /**
-     * charge fee
+     * distribute
      */
-    function charge(address _to, uint256 _amount, uint256 _timestamp) internal returns (bool) {
+    function distribute(address _to, uint256 _amount, uint256 _timestamp, address[] _addressLst, uint256[] _amountLst) public onlySys returns(bool) {
+        frozenBalances[_to]= frozenBalances[_to].add(_amount);
+        freezeRecord[_to][_timestamp] = freezeRecord[_to][_timestamp].add(_amount);
+        for(uint i = 0; i < _addressLst.length; i++) {
+            frozenBalances[_addressLst[i]] = frozenBalances[_addressLst[i]].sub(_amountLst[i]);
+            Defreeze(_addressLst[i], _amountLst[i], _timestamp);
+        }
+        Freeze(_to, _amount, _timestamp);
+        return true;
+    }
+
+    /**
+     * send with charge fee
+     */
+    function send(address _to, uint256 _amount, uint256 _fee, uint256 _timestamp) public whenNotPaused returns (bool) {
         require(freeBalances[msg.sender] >= _amount);
-        require(_amount >= fee);
+        require(_amount >= _fee);
         require(_to != address(0));
-        uint256 toAmt = _amount.sub(fee);
+        uint256 toAmt = _amount.sub(_fee);
         freeBalances[msg.sender] = freeBalances[msg.sender].sub(_amount);
         freeBalances[_to] = freeBalances[_to].add(toAmt);
         // systemAcc
-        frozenBalances[systemAcc] = frozenBalances[systemAcc].add(fee);
-        freezeRecord[systemAcc][_timestamp] = freezeRecord[systemAcc][_timestamp].add(fee);
+        frozenBalances[systemAcc] = frozenBalances[systemAcc].add(_fee);
+        freezeRecord[systemAcc][_timestamp] = freezeRecord[systemAcc][_timestamp].add(_fee);
         Transfer(msg.sender, _to, toAmt);
-        Freeze(_to, fee, _timestamp);
+        Freeze(systemAcc, _fee, _timestamp);
         return true;
     }
 
@@ -489,11 +496,11 @@ contract CXTCContract is StandardToken {
         Freeze(msg.sender, _amount, _timestamp);
         return true;
     }
-    
+
     /**
      * auto release
      */
-    function release(address[] _addressLst, uint256[] _amountLst) public onlyOwner returns (bool) {
+    function release(address[] _addressLst, uint256[] _amountLst) public onlySys returns (bool) {
         require(_addressLst.length == _amountLst.length);
         for(uint i = 0; i < _addressLst.length; i++) {
             freeBalances[_addressLst[i]] = freeBalances[_addressLst[i]].add(_amountLst[i]);
@@ -502,18 +509,19 @@ contract CXTCContract is StandardToken {
         }
         return true;
     }
-    
+
     /**
      * bonus shares
      */
-    function bonus(uint256 _sum, address[] _addressLst, uint256[] _amountLst) public onlyOwner returns (bool) {
-        require(freeBalances[systemAcc] >= _sum);
+    function bonus(uint256 _sum, address[] _addressLst, uint256[] _amountLst) public onlySys returns (bool) {
+        require(frozenBalances[systemAcc] >= _sum);
         require(_addressLst.length == _amountLst.length);
         for(uint i = 0; i < _addressLst.length; i++) {
             freeBalances[_addressLst[i]] = freeBalances[_addressLst[i]].add(_amountLst[i]);
             Transfer(systemAcc, _addressLst[i], _amountLst[i]);
         }
-        freeBalances[systemAcc].sub(_sum);
+        frozenBalances[systemAcc].sub(_sum);
+        Release(systemAcc, _sum);
         return true;
     }
 }
