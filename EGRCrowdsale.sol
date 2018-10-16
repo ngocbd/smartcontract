@@ -1,17 +1,19 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EGRCrowdsale at 0x3c7C6CaD6ed499Fc96e66d6b616A4c14De99a6e9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EGRCrowdsale at 0xc4c09770dc5b44f11ecb3ab78dfe563d28f03392
 */
-pragma solidity ^0.4.15;
+pragma solidity 0.4.18;
+
 
 contract EngravedToken {
     uint256 public totalSupply;
-    function issue(address, uint256) returns (bool) {}
-    function balanceOf(address) constant returns (uint256) {}
-    function unlock() returns (bool) {}
-    function startIncentiveDistribution() returns (bool) {}
-    function transferOwnership(address) {}
-    function owner() returns (address) {}
+    function issue(address, uint256) public returns (bool) {}
+    function balanceOf(address) public constant returns (uint256) {}
+    function unlock() public returns (bool) {}
+    function startIncentiveDistribution() public returns (bool) {}
+    function transferOwnership(address) public {}
+    function owner() public returns (address) {}
 }
+
 
 contract EGRCrowdsale {
     // Crowdsale details
@@ -34,7 +36,7 @@ contract EGRCrowdsale {
     uint256 public maxAirdropParticipants = 500;
 
     // Check if this is the first participation in the airdrop
-    mapping (address => bool) participatedInAirdrop;
+    mapping (address => bool) public participatedInAirdrop;
 
     // ETH to EGR rate
     uint256 public rateAngelsDay = 100000;
@@ -69,10 +71,10 @@ contract EGRCrowdsale {
     uint256 public raised;
 
     // EGR EngravedToken
-    EngravedToken public EGREngravedToken;
+    EngravedToken public engravedToken;
 
     // Invested balances
-    mapping (address => uint256) balances;
+    mapping (address => uint256) internal balances;
 
     struct Proposal {
         address engravedAddress;
@@ -91,17 +93,15 @@ contract EGRCrowdsale {
     // Time between proposals
     uint256 public transferProposalCooldown = 1 days;
 
-
     /**
      * Throw if at stage other than current stage
      *
      * @param _stage expected stage to test for
      */
     modifier atStage(Stages _stage) {
-		    require(stage == _stage);
+        require(stage == _stage);
         _;
     }
-
 
     /**
      * Throw if at stage other than current stage
@@ -110,48 +110,75 @@ contract EGRCrowdsale {
      * @param _stage2 expected stage to test for
      */
     modifier atStages(Stages _stage1, Stages _stage2) {
-		    require(stage == _stage1 || stage == _stage2);
+        require(stage == _stage1 || stage == _stage2);
         _;
     }
-
 
     /**
      * Throw if sender is not beneficiary
      */
     modifier onlyBeneficiary() {
-		    require(beneficiary == msg.sender);
+        require(beneficiary == msg.sender);
         _;
     }
-
 
     /**
      * Throw if sender has a EGR balance of zero
      */
     modifier onlyTokenholders() {
-		    require(EGREngravedToken.balanceOf(msg.sender) > 0);
+        require(engravedToken.balanceOf(msg.sender) > 0);
         _;
     }
-
 
     /**
      * Throw if the current transfer proposal's deadline
      * is in the past
      */
     modifier beforeDeadline() {
-		    require(now < transferProposal.deadline);
+        require(now < transferProposal.deadline);
         _;
     }
-
 
     /**
      * Throw if the current transfer proposal's deadline
      * is in the future
      */
     modifier afterDeadline() {
-		    require(now > transferProposal.deadline);
+        require(now > transferProposal.deadline);
         _;
     }
 
+    /**
+     * Most params are hardcoded for clarity
+     *
+     * @param _engravedTokenAddress The address of the EGR EngravedToken contact
+     * @param _beneficiary Company address
+     * @param _start airdrop start date
+     */
+    function EGRCrowdsale(address _engravedTokenAddress, address _beneficiary, uint256 _start) public {
+        engravedToken = EngravedToken(_engravedTokenAddress);
+        beneficiary = _beneficiary;
+        start = _start;
+        end = start + 42 days;
+    }
+
+    /**
+     * Receives ETH and issue EGR EngravedTokens to the sender
+     */
+    function() public payable atStage(Stages.InProgress) {
+        // Crowdsale not started and not ended yet
+        // Enforce min amount
+        require(now > start && now < end && msg.value >= minAcceptedAmount);
+
+        uint256 valueInEGR = toEGR(msg.value);
+
+        require((engravedToken.totalSupply() + valueInEGR) <= (maxSupply * 10**3));
+        require(engravedToken.issue(msg.sender, valueInEGR));
+
+        uint256 received = msg.value;
+        balances[msg.sender] += received;
+        raised += received;
+    }
 
     /**
      * Get balance of `_investor`
@@ -159,35 +186,18 @@ contract EGRCrowdsale {
      * @param _investor The address from which the balance will be retrieved
      * @return The balance
      */
-    function balanceOf(address _investor) constant returns (uint256 balance) {
+    function balanceOf(address _investor) public view returns (uint256 balance) {
         return balances[_investor];
     }
-
-
-    /**
-     * Most params are hardcoded for clarity
-     *
-     * @param _EngravedTokenAddress The address of the EGR EngravedToken contact
-     * @param _beneficiary Company address
-     * @param _start airdrop start date
-     */
-    function EGRCrowdsale(address _EngravedTokenAddress, address _beneficiary, uint256 _start) {
-        EGREngravedToken = EngravedToken(_EngravedTokenAddress);
-        beneficiary = _beneficiary;
-        start = _start;
-        end = start + 42 days;
-    }
-
 
     /**
      * For testing purposes
      *
      * @return The beneficiary address
      */
-    function confirmBeneficiary() onlyBeneficiary {
+    function confirmBeneficiary() public onlyBeneficiary {
         confirmedBy = msg.sender;
     }
-
 
     /**
      * Convert `_wei` to an amount in EGR using
@@ -196,64 +206,47 @@ contract EGRCrowdsale {
      * @param _wei amount of wei to convert
      * @return The amount in EGR
      */
-    function toEGR(uint256 _wei) returns (uint256 amount) {
+    function toEGR(uint256 _wei) public view returns (uint256 amount) {
         uint256 rate = 0;
         if (stage != Stages.Ended && now >= start && now <= end) {
-
             // Check for cool down after airdrop
             if (now <= start + airdropCooldownEnd) {
                 rate = 0;
-            }
-
             // Check for AngelsDay
-            else if (now <= start + rateAngelsDayEnd) {
+            } else if (now <= start + rateAngelsDayEnd) {
                 rate = rateAngelsDay;
-            }
-
             // Check for cool down after the angels day
-            else if (now <= start + angelsDayCooldownEnd) {
-      			    rate = 0;
-            }
-
+            } else if (now <= start + angelsDayCooldownEnd) {
+                rate = 0;
             // Check first week
-            else if (now <= start + rateFirstWeekEnd) {
+            } else if (now <= start + rateFirstWeekEnd) {
                 rate = rateFirstWeek;
-            }
-
             // Check second week
-            else if (now <= start + rateSecondWeekEnd) {
+            } else if (now <= start + rateSecondWeekEnd) {
                 rate = rateSecondWeek;
-            }
-
             // Check third week
-            else if (now <= start + rateThirdWeekEnd) {
+            } else if (now <= start + rateThirdWeekEnd) {
                 rate = rateThirdWeek;
-            }
-
             // Check last week
-            else if (now <= start + rateLastWeekEnd) {
+            } else if (now <= start + rateLastWeekEnd) {
                 rate = rateLastWeek;
             }
         }
-	      require(rate != 0); // Check for cool down periods
+        require(rate != 0); // Check for cool down periods
         return _wei * rate * 10**3 / 1 ether; // 10**3 for 3 decimals
     }
 
     /**
     * Function to participate in the airdrop
     */
-    function claim() atStage(Stages.Airdrop) {
-        require(airdropParticipants < maxAirdropParticipants);
+    function claim() public atStage(Stages.Airdrop) {
+        // Crowdsal not started yet nor Airdrop expired
+        // Only once per address
+        require(airdropParticipants < maxAirdropParticipants
+            && now > start && now < start + airdropEnd
+            && participatedInAirdrop[msg.sender] == false);
 
-        // Crowdsal not started yet
-        require(now > start);
-
-        // Airdrop expired
-        require(now < start + airdropEnd);
-
-        require(participatedInAirdrop[msg.sender] == false); // Only once per address
-
-        require(EGREngravedToken.issue(msg.sender, rateAirDrop * 10**3));
+        require(engravedToken.issue(msg.sender, rateAirDrop * 10**3));
 
         participatedInAirdrop[msg.sender] = true;
         airdropParticipants += 1;
@@ -262,9 +255,8 @@ contract EGRCrowdsale {
     /**
      * Function to end the airdrop and start crowdsale
      */
-    function endAirdrop() atStage(Stages.Airdrop) {
-	      require(now > start + airdropEnd);
-
+    function endAirdrop() public atStage(Stages.Airdrop) {
+        require(now > start + airdropEnd);
         stage = Stages.InProgress;
     }
 
@@ -272,21 +264,35 @@ contract EGRCrowdsale {
      * Function to end the crowdsale by setting
      * the stage to Ended
      */
-    function endCrowdsale() atStage(Stages.InProgress) {
-
+    function endCrowdsale() public atStage(Stages.InProgress) {
         // Crowdsale not ended yet
-	      require(now > end);
-
+        require(now > end);
         stage = Stages.Ended;
     }
-
 
     /**
      * Transfer raised amount to the company address
      */
-    function withdraw() onlyBeneficiary atStage(Stages.Ended) {
+    function withdraw() public onlyBeneficiary atStage(Stages.Ended) {
         require(beneficiary.send(raised));
+        stage = Stages.Withdrawn;
+    }
 
+    /**
+     * Transfer custom amount to a custom address
+     */
+    function withdrawCustom(uint256 amount, address addressee) public onlyBeneficiary atStage(Stages.Ended) {
+        require(addressee.send(amount));
+        raised = raised - amount;
+        if (raised == 0) {
+            stage = Stages.Withdrawn;
+        }
+    }
+
+    /**
+     * Emergency stage change to Withdrawn
+     */
+    function moveStageWithdrawn() public onlyBeneficiary atStage(Stages.Ended) {
         stage = Stages.Withdrawn;
     }
 
@@ -296,10 +302,10 @@ contract EGRCrowdsale {
      *
      * @param _engravedAddress the address of the proposed EngravedToken owner
      */
-    function proposeTransfer(address _engravedAddress) onlyBeneficiary atStages(Stages.Withdrawn, Stages.Proposed) {
-
+    function proposeTransfer(address _engravedAddress) public onlyBeneficiary
+    atStages(Stages.Withdrawn, Stages.Proposed) {
         // Check for a pending proposal
-	      require(stage != Stages.Proposed || now > transferProposal.deadline + transferProposalCooldown);
+        require(stage != Stages.Proposed || now > transferProposal.deadline + transferProposalCooldown);
 
         transferProposal = Proposal({
             engravedAddress: _engravedAddress,
@@ -311,7 +317,6 @@ contract EGRCrowdsale {
         stage = Stages.Proposed;
     }
 
-
     /**
      * Allows EGR holders to vote on the poposed transfer of
      * ownership. Weight is calculated directly, this is no problem
@@ -319,13 +324,12 @@ contract EGRCrowdsale {
      *
      * @param _approve indicates if the sender supports the proposal
      */
-    function vote(bool _approve) onlyTokenholders beforeDeadline atStage(Stages.Proposed) {
-
+    function vote(bool _approve) public onlyTokenholders beforeDeadline atStage(Stages.Proposed) {
         // One vote per proposal
-	      require(transferProposal.voted[msg.sender] < transferProposal.deadline - transferProposalEnd);
+        require(transferProposal.voted[msg.sender] < transferProposal.deadline - transferProposalEnd);
 
         transferProposal.voted[msg.sender] = now;
-        uint256 weight = EGREngravedToken.balanceOf(msg.sender);
+        uint256 weight = engravedToken.balanceOf(msg.sender);
 
         if (_approve) {
             transferProposal.approvedWeight += weight;
@@ -334,7 +338,6 @@ contract EGRCrowdsale {
         }
     }
 
-
     /**
      * Calculates the votes and if the majority weigt approved
      * the proposal the transfer of ownership is executed.
@@ -342,46 +345,17 @@ contract EGRCrowdsale {
      * The Crowdsale contact transferres the ownership of the
      * EngravedToken contract to Engraved
      */
-    function executeTransfer() afterDeadline atStage(Stages.Proposed) {
-
+    function executeTransfer() public afterDeadline atStage(Stages.Proposed) {
         // Check approved
-	      require(transferProposal.approvedWeight > transferProposal.disapprovedWeight);
+        require(transferProposal.approvedWeight > transferProposal.disapprovedWeight);
+        require(engravedToken.unlock());
+        require(engravedToken.startIncentiveDistribution());
 
-	      require(EGREngravedToken.unlock());
+        engravedToken.transferOwnership(transferProposal.engravedAddress);
 
-        require(EGREngravedToken.startIncentiveDistribution());
-
-        EGREngravedToken.transferOwnership(transferProposal.engravedAddress);
-	      require(EGREngravedToken.owner() == transferProposal.engravedAddress);
-
-        require(transferProposal.engravedAddress.send(this.balance));
+        require(engravedToken.owner() == transferProposal.engravedAddress);
 
         stage = Stages.Accepted;
     }
 
-
-    /**
-     * Receives ETH and issue EGR EngravedTokens to the sender
-     */
-    function () payable atStage(Stages.InProgress) {
-
-        // Crowdsale not started yet
-        require(now > start);
-
-        // Crowdsale expired
-        require(now < end);
-
-        // Enforce min amount
-	      require(msg.value >= minAcceptedAmount);
-
-        uint256 received = msg.value;
-        uint256 valueInEGR = toEGR(msg.value);
-
-        require((EGREngravedToken.totalSupply() + valueInEGR) <= (maxSupply * 10**3));
-
-        require(EGREngravedToken.issue(msg.sender, valueInEGR));
-
-        balances[msg.sender] += received;
-        raised += received;
-    }
 }
