@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenAdder at 0x7fad3012209454100947f7c0735575acf1dc1827
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenAdder at 0x0e1ecfeb0f609f0515021033917514e9bde95701
 */
 pragma solidity ^0.4.18;
 
@@ -81,7 +81,6 @@ contract TokenAdder {
 
         for( uint i = 0 ; i < newTokens.length ; i++ ) {
             conversionRate.addToken(newTokens[i]);
-            conversionRate.enableTokenTrade(newTokens[i]);
         }
 
         conversionRate.transferAdminQuickly(orgAdmin);
