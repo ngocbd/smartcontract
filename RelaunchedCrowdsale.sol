@@ -1,23 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RelaunchedCrowdsale at 0x9b4d2591f2e63bbfba469e14e81fa36088b93244
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RelaunchedCrowdsale at 0xca53e73938b5a3c484331b50d9f67aa7c878ac76
 */
-/*
- * ERC20 interface
- * see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 {
-  uint public totalSupply;
-  function balanceOf(address who) constant returns (uint);
-  function allowance(address owner, address spender) constant returns (uint);
-
-  function transfer(address to, uint value) returns (bool ok);
-  function transferFrom(address from, address to, uint value) returns (bool ok);
-  function approve(address spender, uint value) returns (bool ok);
-  event Transfer(address indexed from, address indexed to, uint value);
-  event Approval(address indexed owner, address indexed spender, uint value);
-}
-
-
 /**
  * Safe unsigned safe math.
  *
@@ -139,8 +122,16 @@ contract PricingStrategy {
 
   /**
    * When somebody tries to buy tokens for X eth, calculate how many tokens they get.
+   *
+   *
+   * @param value - What is the value of the transaction send in as wei
+   * @param tokensSold - how much tokens have been sold this far
+   * @param weiRaised - how much money has been raised this far
+   * @param msgSender - who is the investor of this transaction
+   * @param decimals - how many decimal units the token has
+   * @return Amount of tokens the investor receives
    */
-  function calculatePrice(uint value, uint tokensSold, uint weiRaised, address msgSender) public constant returns (uint tokenAmount);
+  function calculatePrice(uint value, uint tokensSold, uint weiRaised, address msgSender, uint decimals) public constant returns (uint tokenAmount);
 }
 
 
@@ -171,6 +162,35 @@ contract FinalizeAgent {
 
 
 
+
+/*
+ * ERC20 interface
+ * see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 {
+  uint public totalSupply;
+  function balanceOf(address who) constant returns (uint);
+  function allowance(address owner, address spender) constant returns (uint);
+
+  function transfer(address to, uint value) returns (bool ok);
+  function transferFrom(address from, address to, uint value) returns (bool ok);
+  function approve(address spender, uint value) returns (bool ok);
+  event Transfer(address indexed from, address indexed to, uint value);
+  event Approval(address indexed owner, address indexed spender, uint value);
+}
+
+
+/**
+ * A token that defines fractional units as decimals.
+ */
+contract FractionalERC20 is ERC20 {
+
+  uint public decimals;
+
+}
+
+
+
 /**
  * Abstract base contract for token sales.
  *
@@ -187,7 +207,7 @@ contract Crowdsale is Haltable {
   using SafeMathLib for uint;
 
   /* The token we are selling */
-  ERC20 public token;
+  FractionalERC20 public token;
 
   /* How we are going to price our offering */
   PricingStrategy public pricingStrategy;
@@ -253,7 +273,7 @@ contract Crowdsale is Haltable {
 
     owner = msg.sender;
 
-    token = ERC20(_token);
+    token = FractionalERC20(_token);
 
     setPricingStrategy(_pricingStrategy);
 
@@ -301,7 +321,7 @@ contract Crowdsale is Haltable {
   function invest(address receiver) inState(State.Funding) stopInEmergency payable public {
 
     uint weiAmount = msg.value;
-    uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised, tokensSold, msg.sender);
+    uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised, tokensSold, msg.sender, token.decimals());
 
     if(tokenAmount == 0) {
       // Dust transaction
@@ -367,7 +387,7 @@ contract Crowdsale is Haltable {
   /**
    * Allow to (re)set finalize agent.
    *
-   * Design choice: no state restrictions on the set, so that we can fix fat finger mistakes.
+   * Design choice: no state restrictions on setting this, so that we can fix fat finger mistakes.
    */
   function setFinalizeAgent(FinalizeAgent addr) onlyOwner {
     finalizeAgent = addr;
@@ -391,8 +411,6 @@ contract Crowdsale is Haltable {
       throw;
     }
   }
-
-
 
   /**
    * Allow load refunds back on the contract for the refunding.
@@ -697,21 +715,63 @@ contract MintedTokenCappedCrowdsale is Crowdsale {
  */
 contract RelaunchedCrowdsale is MintedTokenCappedCrowdsale {
 
-  function RelaunchedCrowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal, uint _maximumSellableTokens) MintedTokenCappedCrowdsale(_token, _pricingStrategy, _multisigWallet, _start, _end, _minimumFundingGoal, _maximumSellableTokens) {
+  // This transaction was restored from a previous crowdsale
+  event RestoredInvestment(address addr, uint originalTxHash);
 
+  mapping(uint => bool) public reissuedTransactions;
+
+  function RelaunchedCrowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal, uint _maximumSellableTokens) MintedTokenCappedCrowdsale(_token, _pricingStrategy, _multisigWallet, _start, _end, _minimumFundingGoal, _maximumSellableTokens) {
   }
 
   /**
-   * Rebuild invest data back to the crowdsale.
+   * Check if a particular transaction has already been written.
    */
-  function setInvestorData(address _addr, uint _weiAmount, uint _tokenAmount) onlyOwner public {
-    investedAmountOf[_addr] = _weiAmount;
-    tokenAmountOf[_addr] = _tokenAmount;
-    weiRaised += _weiAmount;
-    tokensSold += _tokenAmount;
-    investorCount++;
-    Invested(_addr, _weiAmount, _tokenAmount);
+  function getRestoredTransactionStatus(uint _originalTxHash) public constant returns(bool) {
+    return reissuedTransactions[_originalTxHash];
   }
 
+  /**
+   * Rebuild the previous invest data back to the crowdsale.
+   */
+  function setInvestorData(address _addr, uint _weiAmount, uint _tokenAmount, uint _originalTxHash) onlyOwner public {
+
+    if(investedAmountOf[_addr] == 0) {
+      investorCount++;
+    }
+
+    investedAmountOf[_addr] += _weiAmount;
+    tokenAmountOf[_addr] += _tokenAmount;
+
+    weiRaised += _weiAmount;
+    tokensSold += _tokenAmount;
+
+    Invested(_addr, _weiAmount, _tokenAmount);
+    RestoredInvestment(_addr, _originalTxHash);
+  }
+
+  /**
+   * Rebuild the previous invest data and do a token reissuance.
+   */
+  function setInvestorDataAndIssueNewToken(address _addr, uint _weiAmount, uint _tokenAmount, uint _originalTxHash) onlyOwner public {
+
+    // This transaction has already been rebuild
+    if(reissuedTransactions[_originalTxHash]) {
+      throw;
+    }
+
+    setInvestorData(_addr, _weiAmount, _tokenAmount, _originalTxHash);
+
+    // Check that we did not bust the cap in the restoration process
+    if(isBreakingCap(_tokenAmount, _weiAmount, weiRaised, tokensSold)) {
+      throw;
+    }
+
+    // Mark transaction processed
+    reissuedTransactions[_originalTxHash] = true;
+
+    // Mint new token to give it to the original investor
+    MintableToken mintableToken = MintableToken(token);
+    mintableToken.mint(_addr, _tokenAmount);
+  }
 
 }
