@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChargCoinContract at 0xc4a86561cb0b7ea1214904f26e6d50fd357c7986
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChargCoinContract at 0x65a9bc21b3150ffbcf3bb0e650c13ae0ed7280d1
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.16;
 
 
 /**
@@ -269,8 +269,8 @@ contract ChargCoinContract is StandardToken, Ownable {
     mapping (address => uint256) public reservedFundsCharging;
     mapping (address => uint256) public reservedFundsParking;
 
-    // 1 ETH = 800 CHARG tokens (1 CHARG = 0.59 USD)
-    uint PRICE = 800;
+    // 1 ETH = 500 CHARG tokens (1 CHARG = 0.59 USD)
+    uint PRICE = 500;
 
     struct ContributorData {
     uint contributionAmount;
@@ -300,26 +300,24 @@ contract ChargCoinContract is StandardToken, Ownable {
 
     event MaxCapReached(uint blockNumber);
 
-    uint public constant BEGIN_TIME = 1512319965;
+    uint public constant BEGIN_TIME = 1512305049;
 
     uint public constant END_TIME = 1514764800;
 
     uint public minCap = 1 ether;
 
-    uint public maxCap = 12500 ether;
+    uint public maxCap = 70200 ether;
 
     uint public ethRaised = 0;
 
     uint public totalSupply = 90000000 * 10 ** decimals;
 
-    uint crowdsaleTokenCap = 10000000 * 10 ** decimals; // 11.11%
+    uint crowdsaleTokenCap = 35100000 * 10 ** decimals; // 39%
     uint foundersAndTeamTokens = 9000000 * 10 ** decimals; // 10%
-    uint DistroFundTokens = 69000000 * 10 ** decimals; // 76.67%
-	uint BountyTokens = 2000000 * 10 ** decimals; // 2.22%
+    uint slushFundTokens = 45900000 * 10 ** decimals; // 51%
 
     bool foundersAndTeamTokensClaimed = false;
-    bool DistroFundTokensClaimed = false;
-	bool BountyTokensClaimed = false;
+    bool slushFundTokensClaimed = false;
 
     uint nextContributorToClaim;
 
@@ -336,7 +334,6 @@ contract ChargCoinContract is StandardToken, Ownable {
         if (crowdsaleState == state.crowdsale) {
             createTokens(msg.sender);
             // Process transaction and issue tokens
-
         }
         else {
             refundTransaction(stateChanged);
