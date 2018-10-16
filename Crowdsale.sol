@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xff030dca3c6d546328945b6c1bcdb4f5ba2b22da
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x22ff092fb751d2fabe23c6913e224ab3690b08cc
 */
 pragma solidity ^0.4.13;
 
@@ -198,7 +198,7 @@ contract EXH is ERC20, Ownable {
   
   // Lock transfer during Sale
   modifier onlyUnlocked() {
-    require(!locked || msg.sender == owner);
+    require(!locked);
     _;
   }
 
@@ -395,9 +395,9 @@ contract Crowdsale is EXH, Pausable {
     //At time of deployment crowdSale type is set to Presale
     crowdSaleType = 0;
     // Number of days after which sale will start since the starting of presale, a single value to replace the hardcoded
-    durationPreSale = 8 days + 1 hours;
+    durationPreSale = 2 hours + 30 minutes;
     // Number of days for which complete crowdsale will run, ie, presale and crowdsale period
-    durationCrowdSale = 28 days;
+    durationCrowdSale = 2 hours;
     // Investor count is 0 initially
     countTotalInvestors = 0;
     //Initially no investor has been refunded
@@ -511,7 +511,7 @@ contract Crowdsale is EXH, Pausable {
     if(crowdSaleType == 0){
       require(exhToSend.Add(totalSupplyPreSale) <= maxCapPreSale);
       totalSupplyPreSale = totalSupplyPreSale.Add(exhToSend);
-      if((maxCapPreSale.Sub(totalSupplyPreSale) < valueOneEther)||(now > (startBlock.Add(7 days + 1 hours)))){
+      if((maxCapPreSale.Sub(totalSupplyPreSale) < valueOneEther)||(now > (startBlock.Add(2 hours + 15 minutes)))){
         crowdsaleStatus = 2;
       }        
       investorStruct.weiReceivedCrowdsaleType0 = investorStruct.weiReceivedCrowdsaleType0.Add(msg.value);
@@ -586,7 +586,7 @@ contract Crowdsale is EXH, Pausable {
             return (PRICE.Mul(100)).Div(70);
       }
       if (crowdSaleType == 1) {
-          uint crowdsalePriceBracket = 1 weeks;
+          uint crowdsalePriceBracket = 15 minutes;
           uint startCrowdsale = startBlock.Add(durationPreSale);
             if (now > startCrowdsale && now <= startCrowdsale.Add(crowdsalePriceBracket)) {
                 return ((PRICE.Mul(100)).Div(80));
@@ -653,7 +653,7 @@ contract Crowdsale is EXH, Pausable {
   */
   function refund() public onlyOwner {
       assert(refundStatus == 2);
-      uint batchSize = countInvestorsRefunded.Add(50) < countTotalInvestors ? countInvestorsRefunded.Add(50): countTotalInvestors;
+      uint batchSize = countInvestorsRefunded.Add(30) < countTotalInvestors ? countInvestorsRefunded.Add(30): countTotalInvestors;
       for(uint i=countInvestorsRefunded.Add(1); i <= batchSize; i++){
           address investorAddress = investorList[i];
           Investor storage investorStruct = investors[investorAddress];
