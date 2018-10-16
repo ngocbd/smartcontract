@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PornTokenV2Crowdsale at 0x25c08bb7aa204d221288d9739899f4edf96f5fba
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PornTokenV2Crowdsale at 0xb33e35c8e3b46a747a5fd5ea78d901aabe3f4f96
 */
 pragma solidity ^0.4.16;
 
@@ -60,9 +60,9 @@ contract PornTokenV2Crowdsale {
             balanceOf[msg.sender] += amount;
             amountRaised += amount;
             currentBalance += amount;
-            uint tokenAmount = amount / price;
+            uint tokenAmount = (amount / price) * 1 ether;
             currentTokenAmount -= tokenAmount;
-            tokenReward.transfer(msg.sender, tokenAmount * 1 ether);
+            tokenReward.transfer(msg.sender, tokenAmount);
         }
     }
 
