@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReservationFund at 0xe926b39de602ac458a13bd2adf96f45bb445a759
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ReservationFund at 0x035611f47a13f3603109152952f0034c674959ba
 */
 pragma solidity ^0.4.21;
 
@@ -162,6 +162,28 @@ contract ReservationFund is ICrowdsaleReservationFund, Ownable, SafeMath {
         crowdsale = ISimpleCrowdsale(crowdsaleAddress);
     }
 
+    function onCrowdsaleEnd() external onlyCrowdsale {
+        crowdsaleFinished = true;
+        FinishCrowdsale();
+    }
+
+
+    function canCompleteContribution(address contributor) external returns(bool) {
+        if(crowdsaleFinished) {
+            return false;
+        }
+        if(!crowdsale.isContributorInLists(contributor)) {
+            return false;
+        }
+        if(contributions[contributor] == 0) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * @dev Function to check contributions by address
+     */
     function contributionsOf(address contributor) external returns(uint256) {
         return contributions[contributor];
     }
@@ -179,19 +201,9 @@ contract ReservationFund is ICrowdsaleReservationFund, Ownable, SafeMath {
         bonusTokensToIssue[contributor] = safeAdd(bonusTokensToIssue[contributor], _bonusTokensToIssue);
     }
 
-    function canCompleteContribution(address contributor) external returns(bool) {
-        if(crowdsaleFinished) {
-            return false;
-        }
-        if(!crowdsale.isContributorInLists(contributor)) {
-            return false;
-        }
-        if(contributions[contributor] == 0) {
-            return false;
-        }
-        return true;
-    }
-
+    /**
+     * @dev Complete contribution after if user is whitelisted
+     */
     function completeContribution(address contributor) external {
         require(!crowdsaleFinished);
         require(crowdsale.isContributorInLists(contributor));
@@ -209,11 +221,9 @@ contract ReservationFund is ICrowdsaleReservationFund, Ownable, SafeMath {
         TransferToFund(contributor, etherAmount);
     }
 
-    function onCrowdsaleEnd() external {
-        crowdsaleFinished = true;
-        FinishCrowdsale();
-    }
-
+    /**
+     * @dev Refund payments if crowdsale is finalized
+     */
     function refundPayment(address contributor) public {
         require(crowdsaleFinished);
         require(contributions[contributor] > 0 || tokensToIssue[contributor] > 0);
