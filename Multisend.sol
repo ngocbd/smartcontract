@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Multisend at 0x1a64f4b6ac7339468b24789e560c9eb1f9a82cf6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Multisend at 0xebe9320e07079e54d630c5eac9d7cdbb8f6f5508
 */
 contract Ownable {
   address public owner;
