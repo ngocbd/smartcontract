@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract onG at 0xd341d1680Eeee3255b8C4c75bCCE7EB57f144dAe
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract oNG at 0xbfc11b16d354dd03a28564e2d5fdee46af29577a
 */
 pragma solidity ^0.4.13;
 
@@ -266,9 +266,9 @@ contract MintableToken is StandardToken, Ownable {
   }
 }
 
-contract onG is MintableToken, BurnableToken, HasNoEther, HasNoTokens {
+contract oNG is MintableToken, BurnableToken, HasNoEther, HasNoTokens {
 
-	string public name = "onG";
+	string public name = "oNG";
 	string public symbol = "ONG";
 	uint256 public decimals = 18;
 
