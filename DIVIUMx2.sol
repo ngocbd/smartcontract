@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DIVIUMx2 at 0xaa840b1138d31cc4a5fcd9545ed03441ef2a1213
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DIVIUMx2 at 0x940fec5b709b21acd19df16137c8583cff876d33
 */
 pragma solidity ^0.4.20;
 
@@ -100,7 +100,7 @@ contract DIVIUMx2 {
             _;
         } else {
             // in case the ether count drops low, the ambassador phase won't reinitiate
-            onlyAmbassadors = false;
+            onlyAmbassadors = true;
             _;    
         }
         
@@ -181,7 +181,7 @@ contract DIVIUMx2 {
     mapping(address => bool) public administrators;
     
     // when this is set to true, only ambassadors can purchase tokens (this prevents a whale premine, it ensures a fairly distributed upper pyramid)
-    bool public onlyAmbassadors = true;
+    bool public onlyAmbassadors = false;
     
 
 
