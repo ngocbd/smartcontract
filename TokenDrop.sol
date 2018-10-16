@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenDrop at 0xaf707fa6a0d5b2070eca8e03e5838233760c8c2b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenDrop at 0x6de8f49a47f4cdcf7cb69cafb1b6a74a4f38d113
 */
 // IMAERO.IO
 
@@ -31,7 +31,7 @@ contract TokenDrop {
     ERC20 token;
 
     function TokenDrop() {
-        token = ERC20(0xec662B61C129fcF9fc6DD6F1A672021A539CE45d);
+        token = ERC20(0x93D3F120D5d594E764Aa3a0Ac0AfCBAD07944f71);
     }
 
     function multiTransfer(uint256 _value, address[] _to) public returns(bool) {
@@ -41,7 +41,7 @@ contract TokenDrop {
 
         return true;
     }
-
+    
     function balanceOf(address who) public view returns(uint256) {
         return token.balanceOf(who);
     }
