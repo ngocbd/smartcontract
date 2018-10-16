@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TBEToken at 0x647972c6a5bd977db85dc364d18cc05d3db70378
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TBEToken at 0xf18b97b312ef48c5d2b5c21c739d499b7c65cf96
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.21;
 
 contract TBEToken {
     string public name;
@@ -18,7 +18,7 @@ contract TBEToken {
     function TBEToken() public {
         totalSupply = 500000000 * 10 ** uint256(decimals);
         balanceOf[msg.sender] = totalSupply;
-        name = "Towerbee";
+        name = "TowerBee";
         symbol = "TBE";
     }
 
