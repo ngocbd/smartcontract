@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MercuryPresale at 0xb078ed7622695b49bdc8d297625d70339548f8d9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MercuryPresale at 0x12e4303bc6ad8ddb4e3edb3d632f3533261878e0
 */
 pragma solidity 0.4.15;
 
@@ -200,7 +200,7 @@ contract MercuryPresale is Pausable {
     wallet = 0x1dE159F3bb50992b78E06697B6273e326ADCcf75;
     rate = 6000;
     minInvestment = 1 * (10**16);
-    cap = 180000000 * (10**18); 
+    cap = 16600 * (10**18); 
 
   }
 
