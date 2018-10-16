@@ -1,178 +1,142 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AssetToken at 0x0bdbc0748ba09fbe9e9ed5938532e41446c2f033
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AssetToken at 0xa6ddf7e21fb1bb4a877a437f1f47b6928340915d
 */
-pragma solidity  0.4 .21;
+pragma solidity ^0.4.6;
+ 
+contract admined {
+  address public admin;
 
-// ----------------------------------------------------------------------------------------------
-// Sample fixed supply token contract
-// Enjoy. (c) BokkyPooBah 2017. The MIT Licence.
-// ----------------------------------------------------------------------------------------------
+  function admined(){
+    admin = msg.sender;
+  }
 
-// ERC Token Standard #20 Interface
-// https://github.com/ethereum/EIPs/issues/20
-contract Token {
-    // Get the total
-     //token supply
-    function totalSupply() constant returns(uint256 initialSupply);
+  modifier onlyAdmin(){
+    require(msg.sender == admin) ;
+    _;
+  }
 
-    // Get the account balance of another account with address _owner
-    function balanceOf(address _owner) constant returns(uint256 balance);
+  function transferAdminship(address newAdmin) onlyAdmin {
+    admin = newAdmin;
+  }
 
-    // Send _value amount of tokens to address _to
-    function transfer(address _to, uint256 _value) returns(bool success);
-
-    // Send _value amount of tokens from address _from to address _to
-    function transferFrom(address _from, address _to, uint256 _value) returns(bool success);
-
-    // Allow _spender to withdraw from your account, multiple times, up to the _value amount.
-    // If this function is called again it overwrites the current allowance with _value.
-    // this function is required for some DEX functionality
-    function approve(address _spender, uint256 _value) returns(bool success);
-
-    // Returns the amount which _spender is still allowed to withdraw from _owner
-    function allowance(address _owner, address _spender) constant returns(uint256 remaining);
-
-   
-
-    //Trigger when Tokens Burned
-        event Burn(address indexed from, uint256 value);
-
-
-    // Triggered when tokens are transferred.
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-
-    // Triggered whenever approve(address _spender, uint256 _value) is called.
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
-contract AssetToken is Token {
-    string public  symbol;
-    string public  name;
-    uint8 public  decimals;
-    uint256 _totalSupply;
-    address public centralAdmin;
-        uint256 public soldToken;
+contract ERC223Interface {
+       uint public totalSupply;
+       function totalSupply() constant  returns (uint256 _supply);
+	   function name() constant  returns (string _name);
+	   function symbol() constant  returns (string _symbol);
+	   function decimals() constant  returns (uint8 _decimals);
+	   function balanceOf(address who) constant returns (uint);
+	   function transfer(address to, uint value);
+	   
+	   event Transfers(address indexed from, address indexed to, uint256 value);  
+        event Transfer(address indexed from, address indexed to, uint value, bytes data);
+    
+	   event TokenFallback(address from, uint value, bytes _data);
+
+}
+contract ERC223ReceivingContract { 
+
+    function tokenFallback(address from, uint value, bytes _data);
+    event TokenFallback(address from, uint value, bytes _data);
+}
+
+contract AssetToken is admined,ERC223Interface{
+
+ mapping (address => uint256) public balanceOf;
+     mapping(address => mapping(address => uint256)) allowed;
+
+ uint256 public totalSupply;
+ string public name;
+  string public symbol;
+  uint8 public decimal; 
+  uint256 public soldToken;
+  event Transfer(address indexed from, address indexed to, uint256 value);
+   //Trigger when Tokens Burned
+        event Burn(address indexed from, uint256 value);
+
+ 
+
+  function AssetToken(uint256 initialSupply, string tokenName, string tokenSymbol, uint8 decimalUnits, address centralAdmin) {
+ balanceOf[msg.sender] = initialSupply;
+    totalSupply = initialSupply;
+    decimal = decimalUnits;
+    symbol = tokenSymbol;
+    name = tokenName;
+    soldToken=0;
+    
+    if(centralAdmin != 0)
+      admin = centralAdmin;
+    else
+      admin = msg.sender;
+    balanceOf[admin] = initialSupply;
+    totalSupply = initialSupply;  
+  }
+
+  function mintToken(address target, uint256 mintedAmount) onlyAdmin{
+    balanceOf[target] += mintedAmount;
+    totalSupply += mintedAmount;
+    Transfer(0, this, mintedAmount);
+    Transfer(this, target, mintedAmount);
+  }
 
 
+    function transfer(address _to, uint _value) {
+        uint codeLength;
+        bytes memory empty;
 
-    // Owner of this contract
-    address public owner;
-
-    // Balances for each account
-    mapping(address => uint256) balances;
-
-    // Owner of account approves the transfer of an amount to another account
-    mapping(address => mapping(address => uint256)) allowed;
-
-    // Functions with this modifier can only be executed by the owner
-   modifier onlyOwner(){
-        require(msg.sender == owner);
-        _;
-    }
-
-
-    // Constructor
-    function AssetToken(uint256 totalSupply,string tokenName,uint8 decimalUnits,string tokenSymbol,address centralAdmin) {
-           soldToken = 0;
-
-        if(centralAdmin != 0)
-            owner = centralAdmin;
-        else
-        owner = msg.sender;
-        balances[owner] = totalSupply;
-        symbol = tokenSymbol;
-        name = tokenName;
-        decimals = decimalUnits;
-        _totalSupply = totalSupply ;
-    }
-  function transferAdminship(address newAdmin) onlyOwner {
-        owner = newAdmin;
-    }
-    function totalSupply() constant returns(uint256 initialSupply) {
-        initialSupply = _totalSupply;
-    }
-
-    // What is the balance of a particular account?
-    function balanceOf(address _owner) constant returns(uint256 balance) {
-        return balances[_owner];
-    }
-
-     //Mint the Token 
-    function mintToken(address target, uint256 mintedAmount) onlyOwner{
-        balances[target] += mintedAmount;
-        _totalSupply += mintedAmount;
-        Transfer(0, this, mintedAmount);
-        Transfer(this, target, mintedAmount);
-    }
-
-    // Transfer the balance from owner's account to another account
-    function transfer(address _to, uint256 _amount) returns(bool success) {
-        if (balances[msg.sender] >= _amount &&
-            _amount > 0 &&
-            balances[_to] + _amount > balances[_to]) {
-            balances[msg.sender] -= _amount;
-            balances[_to] += _amount;
-            Transfer(msg.sender, _to, _amount);
-            return true;
-        } else {
-            return false;
+        assembly {
+            // Retrieve the size of the code on target address, this needs assembly .
+            codeLength := extcodesize(_to)
         }
-    }
 
-    // Send _value amount of tokens from address _from to address _to
-    // The transferFrom method is used for a withdraw workflow, allowing contracts to send
-    // tokens on your behalf, for example to "deposit" to a contract address and/or to charge
-    // fees in sub-currencies; the command should fail unless the _from account has
-    // deliberately authorized the sender of the message via some mechanism; we propose
-    // these standardized APIs for approval:
-    function transferFrom(
-        address _from,
-        address _to,
-        uint256 _amount
-    ) returns(bool success) {
-        if (balances[_from] >= _amount && allowed[_from][msg.sender] >= _amount && _amount > 0 &&
-            balances[_to] + _amount > balances[_to]) {
-            balances[_from] -= _amount;
-            allowed[_from][msg.sender] -= _amount;
-            balances[_to] += _amount;
-            Transfer(_from, _to, _amount);
-            return true;
-        } else {
-            return false;
-        }
+        balanceOf[msg.sender] -= _value;
+    balanceOf[_to] += _value;
+        if(codeLength>0) {
+            ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
+	
+            receiver.tokenFallback(msg.sender, _value, empty);
+
+}
+        soldToken+=_value;
+        Transfers(msg.sender, _to, _value);
     }
+  
+    
+    
+ function balanceOf(address _owner) constant  returns (uint balance) {
+    return balanceOf[_owner];
+  }
+
+    
     //Allow the owner to burn the token from their accounts
 function burn(uint256 _value) public returns (bool success) {
-        require(balances[msg.sender] >= _value);   
-        balances[msg.sender] -= _value;            
-        _totalSupply -= _value;                      
+        require(balanceOf[msg.sender] >= _value);   
+        balanceOf[msg.sender] -= _value;            
+        totalSupply -= _value;                      
         Burn(msg.sender, _value);
         return true;
     }
-//For calculating the sold tokens
-   function transferCrowdsale(address _to, uint256 _value){
-        require(balances[msg.sender] > 0);
-        require(balances[msg.sender] >= _value);
-        require(balances[_to] + _value >= balances[_to]);
-        //if(admin)
-        balances[msg.sender] -= _value;
-        balances[_to] += _value;
-         soldToken +=  _value;
-        Transfer(msg.sender, _to, _value);
-    }
 
 
-    // Allow _spender to withdraw from your account, multiple times, up to the _value amount.
-    // If this function is called again it overwrites the current allowance with _value.
-    function approve(address _spender, uint256 _amount) returns(bool success) {
-        allowed[msg.sender][_spender] = _amount;
-        Approval(msg.sender, _spender, _amount);
-        return true;
+  // Function to access name of token .
+  function name() constant  returns (string _name) {
+      return name;
+  }
+  // Function to access symbol of token .
+  function symbol() constant  returns (string _symbol) {
+      return symbol;
+  }
+  // Function to access decimals of token .
+  function decimals() constant  returns (uint8 _decimals) {
+      return decimal;
+  }
+  // Function to access total supply of tokens .
+   function totalSupply() constant returns(uint256 initialSupply) {
+        initialSupply = totalSupply;
     }
+  
 
-    function allowance(address _owner, address _spender) constant returns(uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
- 
 
 }
