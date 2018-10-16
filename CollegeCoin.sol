@@ -1,9 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CollegeCoin at 0x22c84ba1f050f4ed6eed40d8a982340d1a5832b4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Collegecoin at 0xb826e285eb1998181e11aed83b6617484d5cccaf
 */
-pragma solidity ^0.4.10;
-
-contract CollegeCoin {
+contract Collegecoin {
     address owner = msg.sender;
 
     bool public purchasingAllowed = true;
