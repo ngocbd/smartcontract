@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LINKFund at 0x8b168e46281e72d410717b27a6ca97bf9f301173
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LINKFund at 0x2ad1ce69ea75a79f6070394a1b712db14965e3b4
 */
 pragma solidity ^0.4.13;
 
@@ -55,8 +55,8 @@ contract LINKFund {
     // Buy-in allowed 3456 blocks (approx. 24 hours) after the contract is deployed.
     min_buy_block = block.number + 3456;
     
-    // ETH refund allowed 864000 blocks (approx. 24 days) after the contract is deployed.
-    min_refund_block = block.number + 864000;
+    // ETH refund allowed 86400 blocks (approx. 24 days) after the contract is deployed.
+    min_refund_block = block.number + 86400;
   }
   
   // Allows any user to withdraw his tokens.
@@ -87,7 +87,7 @@ contract LINKFund {
   
   // Allows any user to get his eth refunded before the purchase is made or after approx. 20 days in case the devs refund the eth.
   function refund_me() {
-    if (!bought_tokens) {
+    if (bought_tokens) {
       // Only allow refunds when the tokens have been bought if the minimum refund block has been reached.
       if (block.number < min_refund_block) throw;
     }
