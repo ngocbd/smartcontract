@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreICOProxyBuyer at 0x1c2e72abe1a7ca2d058e51872a45b39df5ea6b2a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreICOProxyBuyer at 0x9948c2e8efd59b8cce03d4fdd6256581dc37004a
 */
 /**
  * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
@@ -8,54 +8,36 @@
  */
 
 
-// Temporarily have SafeMath here until all contracts have been migrated to SafeMathLib version from OpenZeppelin
-
 
 
 /**
- * Math operations with safety checks
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
  */
-contract SafeMath {
-  function safeMul(uint a, uint b) internal returns (uint) {
-    uint c = a * b;
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
 
-  function safeDiv(uint a, uint b) internal returns (uint) {
-    assert(b > 0);
-    uint c = a / b;
-    assert(a == b * c + a % b);
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
-  function safeSub(uint a, uint b) internal returns (uint) {
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function safeAdd(uint a, uint b) internal returns (uint) {
-    uint c = a + b;
-    assert(c>=a && c>=b);
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
     return c;
   }
-
-  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a >= b ? a : b;
-  }
-
-  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a < b ? a : b;
-  }
-
-  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a >= b ? a : b;
-  }
-
-  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a < b ? a : b;
-  }
-
 }
 
 /**
@@ -703,6 +685,10 @@ contract Crowdsale is Haltable {
     if(now > time) {
       throw; // Don't change past
     }
+    
+    if(startsAt > time) {
+      throw; // Prevent human mistakes
+    }
 
     endsAt = time;
     EndsAtChanged(endsAt);
@@ -855,80 +841,6 @@ contract Crowdsale is Haltable {
   function assignTokens(address receiver, uint tokenAmount) private;
 }
 
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-
-
-
-
-
-/**
- * Standard ERC20 token with Short Hand Attack and approve() race condition mitigation.
- *
- * Based on code by FirstBlood:
- * https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
-contract StandardToken is ERC20, SafeMath {
-
-  /* Token supply got increased and a new owner received these tokens */
-  event Minted(address receiver, uint amount);
-
-  /* Actual balances of token holders */
-  mapping(address => uint) balances;
-
-  /* approve() allowances */
-  mapping (address => mapping (address => uint)) allowed;
-
-  /* Interface declaration */
-  function isToken() public constant returns (bool weAre) {
-    return true;
-  }
-
-  function transfer(address _to, uint _value) returns (bool success) {
-    balances[msg.sender] = safeSub(balances[msg.sender], _value);
-    balances[_to] = safeAdd(balances[_to], _value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  function transferFrom(address _from, address _to, uint _value) returns (bool success) {
-    uint _allowance = allowed[_from][msg.sender];
-
-    balances[_to] = safeAdd(balances[_to], _value);
-    balances[_from] = safeSub(balances[_from], _value);
-    allowed[_from][msg.sender] = safeSub(_allowance, _value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  function balanceOf(address _owner) constant returns (uint balance) {
-    return balances[_owner];
-  }
-
-  function approve(address _spender, uint _value) returns (bool success) {
-
-    // To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) throw;
-
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  function allowance(address _owner, address _spender) constant returns (uint remaining) {
-    return allowed[_owner][_spender];
-  }
-
-}
-
 
 
 /**
@@ -944,7 +856,8 @@ contract StandardToken is ERC20, SafeMath {
  * - All functions can be halted by owner if something goes wrong
  *
  */
-contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
+contract PreICOProxyBuyer is Ownable, Haltable {
+  using SafeMath for uint;
 
   /** How many investors we have now */
   uint public investorCount;
@@ -980,6 +893,9 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
   uint public claimCount;
 
   uint public totalClaimed;
+
+  /** If timeLock > 0, claiming is possible only after the time has passed **/
+  uint public timeLock;
 
   /** This is used to signal that we want the refund **/
   bool public forcedRefund;
@@ -1054,7 +970,7 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
 
     bool existing = balances[investor] > 0;
 
-    balances[investor] = safeAdd(balances[investor], msg.value);
+    balances[investor] = balances[investor].add(msg.value);
 
     // Need to satisfy minimum and maximum limits
     if(balances[investor] < weiMinimumLimit || balances[investor] > weiMaximumLimit) {
@@ -1067,7 +983,7 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
       investorCount++;
     }
 
-    weiRaised = safeAdd(weiRaised, msg.value);
+    weiRaised = weiRaised.add(msg.value);
     if(weiRaised > weiCap) {
       throw;
     }
@@ -1124,14 +1040,14 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
     if(getState() != State.Distributing) {
       throw;
     }
-    return safeMul(balances[investor], tokensBought) / weiRaised;
+    return balances[investor].mul(tokensBought) / weiRaised;
   }
 
   /**
    * How many tokens remain unclaimed for an investor.
    */
   function getClaimLeft(address investor) public constant returns (uint) {
-    return safeSub(getClaimAmount(investor), claimed[investor]);
+    return getClaimAmount(investor).sub(claimed[investor]);
   }
 
   /**
@@ -1146,6 +1062,8 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
    *
    */
   function claim(uint amount) stopInEmergency {
+    require (now > timeLock);
+
     address investor = msg.sender;
 
     if(amount == 0) {
@@ -1162,8 +1080,8 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
       claimCount++;
     }
 
-    claimed[investor] = safeAdd(claimed[investor], amount);
-    totalClaimed = safeAdd(totalClaimed, amount);
+    claimed[investor] = claimed[investor].add(amount);
+    totalClaimed = totalClaimed.add(amount);
     getToken().transfer(investor, amount);
 
     Distributed(investor, amount);
@@ -1193,6 +1111,12 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMath {
 
     // Check interface
     if(!crowdsale.isCrowdsale()) true;
+  }
+
+  /// @dev Setting timelock (delay) for claiming
+  /// @param _timeLock Time after which claiming is possible
+  function setTimeLock(uint _timeLock) public onlyOwner {
+    timeLock = _timeLock;
   }
 
   /// @dev This is used in the first case scenario, this will force the state
