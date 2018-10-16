@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x9f88aa955637deefd189195f70dc2f12ec818bce
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x86b19623a986df24a594014c49bfc68b134042d6
 */
 pragma solidity 0.4.15;
 
@@ -112,7 +112,7 @@ contract MultiSigWallet {
     function MultiSigWallet()
         public
     {
-        defaultOwners = [0xeF7c51D018B62985997a3755C734F0D1207eD3Fa, 0xc137de8E99992A77AD0377BA58d034f95c43dD68, 0x766e4e5290805a8a42b4a215c0b2b75F852eAF61];
+        defaultOwners = [0x4c1e2c589877Cd07dACFd940C74b84ff68d67576, 0x43Ba8d73F0832Da50f467AC777a821ACfa63025E, 0x5c176e54B4979baf3CB2B0Da7A743752270E90CE];
         for (uint i=0; i<defaultOwners.length; i++) {
             require(!isOwner[defaultOwners[i]] && defaultOwners[i] != 0);
             isOwner[defaultOwners[i]] = true;
