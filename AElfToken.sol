@@ -1,18 +1,48 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AElfToken at 0xe07c44a35650e445289cd9fdaaf7fb6a9d734471
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AElfToken at 0xbf2179859fc6d5bee9bf9158632dc51678a4100e
 */
 pragma solidity ^0.4.18;
 
-contract ERC20 {
-  uint256 public totalSupply;
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
+
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
   address public owner;
 
@@ -49,42 +79,30 @@ contract Ownable {
   }
 
 }
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 {
+  uint256 public totalSupply;
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
+
 contract AElfToken is ERC20, Ownable {
   using SafeMath for uint256;
 
   
   // the controller of minting and destroying tokens
-  address public aelfDevMultisig = 0x64ABa00510FEc9a0FE4B236648879f35030B7D9b;
+  address public aelfDevMultisig = 0x6d3E0B5abFc141cAa674a3c11e1580e6fff2a0B9;
   // the controller of approving of minting and withdraw tokens
-  address public aelfCommunityMultisig = 0x13828Fa672c52226071F27ea1869463bDEf2ecCB;
+  address public aelfCommunityMultisig = 0x4885B422656D4B316C9C7Abc0c0Ab31A2677d9f0;
 
   struct TokensWithLock {
     uint256 value;
@@ -102,8 +120,8 @@ contract AElfToken is ERC20, Ownable {
   // Token Cap
   uint256 public totalSupplyCap = 1e27;
   // Token Info
-  string public name = "\xC3\x86\x6C\x66\x20\x54\x6F\x6B\x65\x6E";
-  string public symbol = "ELFTEST2";
+  string public name = "ELF Token";
+  string public symbol = "ELF";
   uint8 public decimals = 18;
 
   bool public mintingFinished = false;
@@ -112,9 +130,13 @@ contract AElfToken is ERC20, Ownable {
   // the min threshold of lock time
   uint256 public constant TIMETHRESHOLD = 7200;
   // the time when mintTokensWithinTime can be called
-  uint256 public constant MINTTIME = 7200;
+  uint256 public constant MINTTIME = 216000;
   // the lock time of minted tokens
   uint256 public durationOfLock = 7200;
+  // True if transfers are allowed
+  bool public transferable = false;
+  // True if the transferable can be change
+  bool public canSetTransferable = true;
 
 
   modifier canMint() {
@@ -132,19 +154,28 @@ contract AElfToken is ERC20, Ownable {
     _;
   }
 
+  modifier canTransfer() {
+    require(transferable == true);
+    _;
+  }
+
   event SetDurationOfLock(address indexed _caller);
   event ApproveMintTokens(address indexed _owner, uint256 _amount);
   event WithdrawMintTokens(address indexed _owner, uint256 _amount);
   event MintTokens(address indexed _owner, uint256 _amount);
   event BurnTokens(address indexed _owner, uint256 _amount);
   event MintFinished(address indexed _caller);
+  event SetTransferable(address indexed _address, bool _transferable);
+  event SetAElfDevMultisig(address indexed _old, address indexed _new);
+  event SetAElfCommunityMultisig(address indexed _old, address indexed _new);
+  event DisableSetTransferable(address indexed _address, bool _canSetTransferable);
 
   /**
    * @dev transfer token for a specified address
    * @param _to The address to transfer to.
    * @param _value The amount to be transferred.
    */
-  function transfer(address _to, uint256 _value) public returns (bool) {
+  function transfer(address _to, uint256 _value) canTransfer public returns (bool) {
     require(_to != address(0));
     require(_value <= balances[msg.sender]);
 
@@ -170,7 +201,7 @@ contract AElfToken is ERC20, Ownable {
    * @param _to address The address which you want to transfer to
    * @param _value uint256 the amount of tokens to be transferred
    */
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+  function transferFrom(address _from, address _to, uint256 _value) canTransfer public returns (bool) {
     require(_to != address(0));
     require(_value <= balances[_from]);
     require(_value <= allowed[_from][msg.sender]);
@@ -192,7 +223,7 @@ contract AElfToken is ERC20, Ownable {
    * @param _spender The address which will spend the funds.
    * @param _value The amount of tokens to be spent.
    */
-  function approve(address _spender, uint256 _value) public returns (bool) {
+  function approve(address _spender, uint256 _value) canTransfer public returns (bool) {
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
     return true;
@@ -214,13 +245,13 @@ contract AElfToken is ERC20, Ownable {
    * the first transaction is mined)
    * From MonolithDAO Token.sol
    */
-  function increaseApproval(address _spender, uint256 _addedValue) public returns (bool) {
+  function increaseApproval(address _spender, uint256 _addedValue) canTransfer public returns (bool) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
     Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
-  function decreaseApproval(address _spender, uint256 _subtractedValue) public returns (bool) {
+  function decreaseApproval(address _spender, uint256 _subtractedValue) canTransfer public returns (bool) {
     uint256 oldValue = allowed[msg.sender][_spender];
     if (_subtractedValue > oldValue) {
       allowed[msg.sender][_spender] = 0;
@@ -231,11 +262,31 @@ contract AElfToken is ERC20, Ownable {
     return true;
   }
   /**
+   * @dev Enables token holders to transfer their tokens freely if true
+   * @param _transferable True if transfers are allowed
+   */
+  function setTransferable(bool _transferable) only(aelfDevMultisig) public {
+    require(canSetTransferable == true);
+    transferable = _transferable;
+    SetTransferable(msg.sender, _transferable);
+  }
+
+  /**
+   * @dev disable the canSetTransferable
+   */
+  function disableSetTransferable() only(aelfDevMultisig) public {
+    transferable = true;
+    canSetTransferable = false;
+    DisableSetTransferable(msg.sender, false);
+  }
+
+  /**
    * @dev Set the aelfMultisig
    * @param _aelfDevMultisig The new aelfMultisig
    */
-  function setAElfMultisig(address _aelfDevMultisig) only(aelfDevMultisig) nonZeroAddress(_aelfDevMultisig) public {
+  function setAElfDevMultisig(address _aelfDevMultisig) only(aelfDevMultisig) nonZeroAddress(_aelfDevMultisig) public {
     aelfDevMultisig = _aelfDevMultisig;
+    SetAElfDevMultisig(msg.sender, _aelfDevMultisig);
   }
   /**
    * @dev Set the aelfCommunityMultisig
@@ -243,6 +294,7 @@ contract AElfToken is ERC20, Ownable {
    */
   function setAElfCommunityMultisig(address _aelfCommunityMultisig) only(aelfCommunityMultisig) nonZeroAddress(_aelfCommunityMultisig) public {
     aelfCommunityMultisig = _aelfCommunityMultisig;
+    SetAElfCommunityMultisig(msg.sender, _aelfCommunityMultisig);
   }
   /**
    * @dev Set the duration of lock of tokens approved of minting
@@ -342,6 +394,25 @@ contract AElfToken is ERC20, Ownable {
     balances[_owner] = previousBalanceTo.add(_amount);
     MintTokens(_owner, _amount);
     Transfer(0, _owner, _amount);
+    return true;
+  }
+  /**
+   * @dev Transfer tokens to multiple addresses
+   * @param _addresses The addresses that will receieve tokens
+   * @param _amounts The quantity of tokens that will be transferred
+   * @return True if the tokens are transferred correctly
+   */
+  function transferForMultiAddresses(address[] _addresses, uint256[] _amounts) canTransfer public returns (bool) {
+    for (uint256 i = 0; i < _addresses.length; i++) {
+      require(_addresses[i] != address(0));
+      require(_amounts[i] <= balances[msg.sender]);
+      require(_amounts[i] > 0);
+
+      // SafeMath.sub will throw if there is not enough balance.
+      balances[msg.sender] = balances[msg.sender].sub(_amounts[i]);
+      balances[_addresses[i]] = balances[_addresses[i]].add(_amounts[i]);
+      Transfer(msg.sender, _addresses[i], _amounts[i]);
+    }
     return true;
   }
 
