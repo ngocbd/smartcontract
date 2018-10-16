@@ -1,37 +1,22 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShipToken at 0x85C28785003936a42b8E4127D483D25259B86bB1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SHIPToken at 0xc3aafbe201dd0545764214c72e9bfffeee796a12
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.18;
+
 
 /**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
  */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
+
+
 
 /**
  * @title Ownable
@@ -49,7 +34,7 @@ contract Ownable {
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() {
+  function Ownable() public {
     owner = msg.sender;
   }
 
@@ -67,7 +52,7 @@ contract Ownable {
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) onlyOwner public {
+  function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
     OwnershipTransferred(owner, newOwner);
     owner = newOwner;
@@ -75,28 +60,16 @@ contract Ownable {
 
 }
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public constant returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
 
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
+
+
+
+
+
+
+
+
+
 
 /**
  * @title Basic token
@@ -128,11 +101,30 @@ contract BasicToken is ERC20Basic {
   * @param _owner The address to query the the balance of.
   * @return An uint256 representing the amount owned by the passed address.
   */
-  function balanceOf(address _owner) public constant returns (uint256 balance) {
+  function balanceOf(address _owner) public view returns (uint256 balance) {
     return balances[_owner];
   }
 
 }
+
+
+
+
+
+
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+
 
 /**
  * @title Standard ERC20 token
@@ -186,23 +178,37 @@ contract StandardToken is ERC20, BasicToken {
    * @param _spender address The address which will spend the funds.
    * @return A uint256 specifying the amount of tokens still available for the spender.
    */
-  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+  function allowance(address _owner, address _spender) public view returns (uint256) {
     return allowed[_owner][_spender];
   }
 
   /**
+   * @dev Increase the amount of tokens that an owner allowed to a spender.
+   *
    * approve should be called when allowed[_spender] == 0. To increment
    * allowed value is better to use this function to avoid 2 calls (and wait until
    * the first transaction is mined)
    * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _addedValue The amount of tokens to increase the allowance by.
    */
-  function increaseApproval (address _spender, uint _addedValue) public returns (bool success) {
+  function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
     Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
-  function decreaseApproval (address _spender, uint _subtractedValue) public returns (bool success) {
+  /**
+   * @dev Decrease the amount of tokens that an owner allowed to a spender.
+   *
+   * approve should be called when allowed[_spender] == 0. To decrement
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   * @param _spender The address which will spend the funds.
+   * @param _subtractedValue The amount of tokens to decrease the allowance by.
+   */
+  function decreaseApproval(address _spender, uint _subtractedValue) public returns (bool) {
     uint oldValue = allowed[msg.sender][_spender];
     if (_subtractedValue > oldValue) {
       allowed[msg.sender][_spender] = 0;
@@ -215,69 +221,212 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
+
+
+
+
 /**
- * @title Mintable token
- * @dev Simple ERC20 Token example, with mintable token creation
- * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
- * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
+ * @title Burnable Token
+ * @dev Token that can be irreversibly burned (destroyed).
  */
+contract BurnableToken is BasicToken {
 
-contract MintableToken is StandardToken, Ownable {
-  event Mint(address indexed to, uint256 amount);
-  event MintFinished();
+    event Burn(address indexed burner, uint256 value);
 
-  bool public mintingFinished = false;
+    /**
+     * @dev Burns a specific amount of tokens.
+     * @param _value The amount of token to be burned.
+     */
+    function burn(uint256 _value) public {
+        require(_value <= balances[msg.sender]);
+        // no need to require value <= totalSupply, since that would imply the
+        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
 
-
-  modifier canMint() {
-    require(!mintingFinished);
-    _;
-  }
-
-  /**
-   * @dev Function to mint tokens
-   * @param _to The address that will receive the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
-   */
-  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
-    totalSupply = totalSupply.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    Mint(_to, _amount);
-    Transfer(address(0), _to, _amount);
-    return true;
-  }
-
-  /**
-   * @dev Function to stop minting new tokens.
-   * @return True if the operation was successful.
-   */
-  function finishMinting() onlyOwner public returns (bool) {
-    mintingFinished = true;
-    MintFinished();
-    return true;
+        address burner = msg.sender;
+        balances[burner] = balances[burner].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        Burn(burner, _value);
+    }
 }
-  }
+
+
+
+
 
 /**
- * @title SHIP Token
- * @dev ERC20 Token that can be minted.
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
  */
-contract ShipToken is MintableToken {
-
-  string public constant name = "SHIP Token";
-  string public constant symbol = "SHIP";
-  uint8 public constant decimals = 18;
-  uint256 baseValue = 1500000000;
-  uint256 public cap = baseValue.mul(1000000000000000000);
-  
-  function ShipToken() public {
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
   }
 
-  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
-    require(totalSupply.add(_amount) <= cap);
-
-    return super.mint(_to, _amount);
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
   }
-  
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+
+/**
+ * The Ship Token (SHIP - SHIPToken) has a fixed supply
+ *
+ * The owner can associate the token with a token sale contract. In that
+ * case, the token balance is moved to the token sale contract, which
+ * in turn can transfer its tokens to contributors to the sale.
+ */
+contract SHIPToken is StandardToken, BurnableToken, Ownable {
+
+    // Constants
+    string  public constant name = "SHIP Token";
+    string  public constant symbol = "SHIP";
+    uint8   public constant decimals = 18;
+    string  public constant website = "https://shipowner.io"; 
+    uint256 public constant INITIAL_SUPPLY      =  1500000000 * (10 ** uint256(decimals));
+    uint256 public constant CROWDSALE_ALLOWANCE =   825000000 * (10 ** uint256(decimals));
+    uint256 public constant TEAM_ALLOWANCE      =   225000000 * (10 ** uint256(decimals));
+    uint256 public constant RESERVE_ALLOWANCE   =   450000000 * (10 ** uint256(decimals));
+
+    // Properties
+    uint256 public crowdSaleAllowance;      // the number of tokens available for crowdsales
+    uint256 public teamAllowance;          // the number of tokens available for the administrator
+    uint256 public reserveAllowance;          // the number of tokens available for the administrator
+    address public crowdSaleAddr;           // the address of a crowdsale currently selling this token
+    address public teamAddr;               // the address of a crowdsale currently selling this token
+    address public reserveAddr;               // the address of a crowdsale currently selling this token
+    //bool    public transferEnabled = false; // indicates if transferring tokens is enabled or not
+    bool    public transferEnabled = true;  // Enables everyone to transfer tokens 
+
+    // Modifiers
+
+    /**
+     * The listed addresses are not valid recipients of tokens.
+     *
+     * 0x0           - the zero address is not valid
+     * this          - the contract itself should not receive tokens
+     * owner         - the owner has all the initial tokens, but cannot receive any back
+     * teamAddr     - the admin has an allowance of tokens to transfer, but does not receive any
+     * crowdSaleAddr - the crowdsale has an allowance of tokens to transfer, but does not receive any
+     */
+    modifier validDestination(address _to) {
+        require(_to != address(0x0));
+        require(_to != address(this));
+        require(_to != owner);
+        require(_to != address(teamAddr));
+        require(_to != address(crowdSaleAddr));
+        _;
+    }
+
+    /**
+     * Constructor - instantiates token supply and allocates balanace of
+     * to the owner (msg.sender).
+     */
+    function SHIPToken(address _admin, address _reserve) public {
+        // the owner is a custodian of tokens that can
+        // give an allowance of tokens for crowdsales
+        // or to the admin, but cannot itself transfer
+        // tokens; hence, this requirement
+        require(msg.sender != _admin);
+        require(msg.sender != _reserve);
+
+        totalSupply = INITIAL_SUPPLY;
+        crowdSaleAllowance = CROWDSALE_ALLOWANCE;
+        teamAllowance = TEAM_ALLOWANCE;
+        reserveAllowance = RESERVE_ALLOWANCE;
+
+        // mint all tokens
+        balances[msg.sender] = totalSupply.sub(teamAllowance).sub(reserveAllowance);
+        Transfer(address(0x0), msg.sender, totalSupply.sub(teamAllowance).sub(reserveAllowance));
+
+        balances[_admin] = teamAllowance;
+        Transfer(address(0x0), _admin, teamAllowance);
+
+        balances[_reserve] = reserveAllowance;
+        Transfer(address(0x0), _reserve, reserveAllowance);
+
+        teamAddr = _admin;
+        approve(teamAddr, teamAllowance);
+
+        reserveAddr = _reserve;
+        approve(reserveAddr, reserveAllowance);        
+    }
+
+    /**
+     * Associates this token with a current crowdsale, giving the crowdsale
+     * an allowance of tokens from the crowdsale supply. This gives the
+     * crowdsale the ability to call transferFrom to transfer tokens to
+     * whomever has purchased them.
+     *
+     * Note that if _amountForSale is 0, then it is assumed that the full
+     * remaining crowdsale supply is made available to the crowdsale.
+     *
+     * @param _crowdSaleAddr The address of a crowdsale contract that will sell this token
+     * @param _amountForSale The supply of tokens provided to the crowdsale
+     */
+    function setCrowdsale(address _crowdSaleAddr, uint256 _amountForSale) external onlyOwner {
+        require(_amountForSale <= crowdSaleAllowance);
+
+        // if 0, then full available crowdsale supply is assumed
+        uint amount = (_amountForSale == 0) ? crowdSaleAllowance : _amountForSale;
+
+        // Clear allowance of old, and set allowance of new
+        approve(crowdSaleAddr, 0);
+        approve(_crowdSaleAddr, amount);
+
+        crowdSaleAddr = _crowdSaleAddr;
+    }
+
+    /**
+     * Overrides ERC20 transfer function with modifier that prevents the
+     * ability to transfer tokens until after transfers have been enabled.
+     */
+    function transfer(address _to, uint256 _value) public validDestination(_to) returns (bool) {
+        return super.transfer(_to, _value);
+    }
+
+    /**
+     * Overrides ERC20 transferFrom function with modifier that prevents the
+     * ability to transfer tokens until after transfers have been enabled.
+     */
+    function transferFrom(address _from, address _to, uint256 _value) public validDestination(_to) returns (bool) {
+        bool result = super.transferFrom(_from, _to, _value);
+        if (result) {
+            if (msg.sender == crowdSaleAddr)
+                crowdSaleAllowance = crowdSaleAllowance.sub(_value);
+            if (msg.sender == teamAddr)
+                teamAllowance = teamAllowance.sub(_value);
+        }
+        return result;
+    }
+
+    /**
+     * Overrides the burn function so that it cannot be called until after
+     * transfers have been enabled.
+     *
+     * @param _value    The amount of tokens to burn in wei-SHIP
+     */
+    function burn(uint256 _value) public {
+        require(transferEnabled || msg.sender == owner);
+        super.burn(_value);
+        Transfer(msg.sender, address(0x0), _value);
+    }
 }
