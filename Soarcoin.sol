@@ -1,48 +1,155 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Soarcoin at 0x8af7243f9a173ad8ca6c8a3a053f0182c5352d15
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SoarCoin at 0xD65960FAcb8E4a2dFcb2C2212cb2e44a02e2a57E
 */
-pragma solidity ^0.4.8;
-contract Soarcoin {
+pragma solidity ^ 0.4.8;
 
-    mapping (address => uint256) balances;               // each address in this contract may have tokens. 
-    address internal owner = 0x4Bce8E9850254A86a1988E2dA79e41Bc6793640d;                // the owner is the creator of the smart contract
-    string public name = "Soarcoin";                     // name of this contract and investment fund
-    string public symbol = "SOAR";                       // token symbol
-    uint8 public decimals = 6;                           // decimals (for humans)
-    uint256 public totalSupply = 5000000000000000;  
-           
-    modifier onlyOwner()
-    {
-        if (msg.sender != owner) throw;
+contract ERC20 {
+
+    uint public totalSupply;
+    
+    function totalSupply() constant returns(uint totalSupply);
+
+    function balanceOf(address who) constant returns(uint256);
+
+    function allowance(address owner, address spender) constant returns(uint);
+
+    function transferFrom(address from, address to, uint value) returns(bool ok);
+
+    function approve(address spender, uint value) returns(bool ok);
+
+    function transfer(address to, uint value) returns(bool ok);
+
+    event Transfer(address indexed from, address indexed to, uint value);
+
+    event Approval(address indexed owner, address indexed spender, uint value);
+
+   }
+   
+  contract SoarCoin is ERC20
+  {
+      
+    // Name of the token
+    string public constant name = "Soarcoin";
+
+    // Symbol of token
+    string public constant symbol = "Soar";
+
+    uint public decimals = 6;
+    uint public totalSupply = 5000000000000000 ; //5 billion includes 6 zero for decimal
+    address central_account;
+    address owner;
+    mapping(address => uint) balances;
+    
+    mapping(address => mapping(address => uint)) allowed;
+    
+    // Functions with this modifier can only be executed by the owner
+    modifier onlyOwner() {
+        if (msg.sender != owner) {
+            revert();
+        }
         _;
     }
-
-    function Soarcoin() { balances[owner] = totalSupply; }    
-
-    // This generates a public event on the blockchain that will notify clients
-    event Transfer(address indexed from, address indexed to, uint256 value);
-
-    // query balance
-    function balanceOf(address _owner) constant returns (uint256 balance)
+    
+    modifier onlycentralAccount {
+        require(msg.sender == central_account);
+        _;
+    }
+    
+    function SoarCoin()
     {
-        return balances[_owner];
+        owner = msg.sender;
+        balances[owner] = totalSupply;
+    }
+    
+    
+    // erc20 function to return total supply
+    function totalSupply() constant returns(uint) {
+       return totalSupply;
+    }
+    
+    // erc20 function to return balance of give address
+    function balanceOf(address sender) constant returns(uint256 balance) {
+        return balances[sender];
     }
 
-    // transfer tokens from one address to another
-    function transfer(address _to, uint256 _value) returns (bool success)
+    // Transfer the balance from one account to another account
+    function transfer(address _to, uint256 _amount) returns(bool success) {
+        
+        if (balances[msg.sender] >= _amount &&
+            _amount > 0 &&
+            balances[_to] + _amount > balances[_to]) {
+            balances[msg.sender] -= _amount;
+            balances[_to] += _amount;
+            Transfer(msg.sender, _to, _amount);
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
+    function set_centralAccount(address central_Acccount) onlyOwner
     {
-        if(_value <= 0) throw;                                      // Check send token value > 0;
-        if (balances[msg.sender] < _value) throw;                   // Check if the sender has enough
-        if (balances[_to] + _value < balances[_to]) throw;          // Check for overflows                          
-        balances[msg.sender] -= _value;                             // Subtract from the sender
-        balances[_to] += _value;                                    // Add the same to the recipient, if it's the contact itself then it signals a sell order of those tokens                       
-        Transfer(msg.sender, _to, _value);                          // Notify anyone listening that this transfer took place
-        return true;      
+        central_account = central_Acccount;
     }
 
-    function mint(address _to, uint256 _value) onlyOwner
-    {
-    	balances[_to] += _value;
-    	totalSupply += _value;
+    // Send _value amount of tokens from address _from to address _to
+    // The transferFrom method is used for a withdraw workflow, allowing contracts to send
+    // tokens on your behalf, for example to "deposit" to a contract address and/or to charge
+    // fees in sub-currencies; the command should fail unless the _from account has
+    // deliberately authorized the sender of the message via some mechanism; we propose
+    // these standardized APIs for approval:
+
+    function transferFrom(
+        address _from,
+        address _to,
+        uint256 _amount
+    ) returns(bool success) {
+        if (balances[_from] >= _amount &&
+            allowed[_from][msg.sender] >= _amount &&
+            _amount > 0 &&
+            balances[_to] + _amount > balances[_to]) {
+            balances[_from] -= _amount;
+            allowed[_from][msg.sender] -= _amount;
+            balances[_to] += _amount;
+            Transfer(_from, _to, _amount);
+            return true;
+        } else {
+            return false;
+        }
     }
-}
+    
+    // Allow _spender to withdraw from your account, multiple times, up to the _value amount.
+    // If this function is called again it overwrites the current allowance with _value.
+    function approve(address _spender, uint256 _amount) returns(bool success) {
+        allowed[msg.sender][_spender] = _amount;
+        Approval(msg.sender, _spender, _amount);
+        return true;
+    }
+
+    function allowance(address _owner, address _spender) constant returns(uint256 remaining) {
+        return allowed[_owner][_spender];
+    }
+
+    // Failsafe drain only owner can call this function
+    function drain() onlyOwner {
+        if (!owner.send(this.balance)) revert();
+    }
+    // function called by owner only
+    function zero_fee_transaction(
+        address _from,
+        address _to,
+        uint256 _amount
+    ) onlycentralAccount returns(bool success) {
+        if (balances[_from] >= _amount &&
+            _amount > 0 &&
+            balances[_to] + _amount > balances[_to]) {
+            balances[_from] -= _amount;
+            balances[_to] += _amount;
+            Transfer(_from, _to, _amount);
+            return true;
+        } else {
+            return false;
+        }
+    }
+      
+  }
