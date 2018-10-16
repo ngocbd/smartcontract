@@ -1,9 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RGXToken at 0xc91c786929e86189ce1b4ab5a4ed9d892b8303d9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RGXToken at 0x1d5bd914b57aeb1ce91d37d8454dfa48be22eb60
 */
-// Abstract contract for the full ERC 20 Token standard
-// https://github.com/ethereum/EIPs/issues/20
-
 contract Token {
     /* This is a slight change to the ERC20 base standard.
     function totalSupply() constant returns (uint256 supply);
@@ -48,14 +45,6 @@ contract Token {
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
-/*
-You should inherit from StandardToken or, for a token like you would want to
-deploy in something like Mist, see HumanStandardToken.sol.
-(This implements ONLY the standard functions and NOTHING else.
-If you deploy this, you won't have anything useful.)
-
-Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20
-.*/
 
 contract StandardToken is Token {
 
@@ -101,6 +90,7 @@ contract StandardToken is Token {
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
 }
+
 /*
 
   Contract to implement ERC20 tokens for the crowdfunding of the Rouge Project (RGX tokens).
@@ -197,3 +187,11 @@ contract RGXToken is StandardToken {
     }
 
 }
+/*
+You should inherit from StandardToken or, for a token like you would want to
+deploy in something like Mist, see HumanStandardToken.sol.
+(This implements ONLY the standard functions and NOTHING else.
+If you deploy this, you won't have anything useful.)
+
+Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20
+.*/
