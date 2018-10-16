@@ -1,24 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorHandler at 0x8b22f14388f63f2541e640cdc9eb3a41a8525c43
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorHandler at 0x15deb30754babe5c25f11b56d2e29aad19c9d4f8
 */
-pragma solidity ^0.4.24;
+pragma solidity 0.4.21;
 
-// import { ERC20 as Token } from "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
-// import { ExchangeHandler } from "./ExchangeHandler.sol";
-
-// pragma solidity ^0.4.24;
-
-contract Token {
-    function totalSupply() public constant returns (uint);
-    function balanceOf(address tokenOwner) public constant returns (uint balance);
-    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
-    function transfer(address to, uint tokens) public returns (bool success);
-    function approve(address spender, uint tokens) public returns (bool success);
-    function transferFrom(address from, address to, uint tokens) public returns (bool success);
-
-    event Transfer(address indexed from, address indexed to, uint tokens);
-    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
-}
+// File: contracts/ExchangeHandler.sol
 
 /// @title Interface for all exchange handler contracts
 interface ExchangeHandler {
@@ -79,12 +64,42 @@ interface ExchangeHandler {
     ) external returns (uint256);
 }
 
+// File: openzeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+// File: openzeppelin-solidity/contracts/token/ERC20/ERC20.sol
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract Token is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+// File: contracts/Bancor.sol
 
 interface BancorConverter {
     function quickConvert(address[] _path, uint256 _amount, uint256 _minReturn) public payable returns (uint256);
 }
 
 contract BancorHandler is ExchangeHandler {
+    uint256 constant MAX_UINT = 2**256 - 1;
+    mapping(address => bool) public tokenAllowanceSet;
 
     // Public functions
     function getAvailableAmount(
@@ -135,15 +150,15 @@ contract BancorHandler is ExchangeHandler {
         uint256 len;
         for(len = 1; len < orderAddresses.length; len++) {
             if(orderAddresses[len] == 0) {
-                require(len > 1, "First element in conversion path was 0");
+                require(len > 1);
                 destinationToken = orderAddresses[len - 1];
+                len--;
                 break;
             } else if(len == orderAddresses.length - 1) {
                 destinationToken = orderAddresses[len];
-                len++;
+                break;
             }
         }
-        len--;
         // Create an array of that length
         address[] memory conversionPath = new address[](len);
 
@@ -157,7 +172,7 @@ contract BancorHandler is ExchangeHandler {
     }
 
     function transferTokenToSender(address token, uint256 amount) internal {
-        Token(token).transfer(msg.sender, amount);
+        require(Token(token).transfer(msg.sender, amount));
     }
 
     function transferEtherToSender(uint256 amount) internal {
@@ -165,7 +180,10 @@ contract BancorHandler is ExchangeHandler {
     }
 
     function approveExchange(address exchange, address token, uint256 amount) internal {
-        Token(token).approve(exchange, amount);
+        if(!tokenAllowanceSet[token]) {
+            require(Token(token).approve(exchange, MAX_UINT));
+            tokenAllowanceSet[token] = true;
+        }
     }
 
     function() public payable {
