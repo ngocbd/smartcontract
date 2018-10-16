@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bqt_Token at 0x588e225acf2ded5867f738b1245bd2bddb76927f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bqt_Token at 0x986ad7884422864a1c3c139dc3b4a44c83008bc4
 */
 // ----------------------------------------------------------------------------------------------
 // Developer Nechesov Andrey: Facebook.com/Nechesov   
@@ -9,59 +9,33 @@
 // ERC Token Standard #20 Interface
 // https://github.com/ethereum/EIPs/issues/20
 
-pragma solidity ^0.4.16;    
+pragma solidity ^0.4.18;    
 
-/**
-* Math operations with safety checks
-*/
+  library SafeMath {
+    function mul(uint256 a, uint256 b) internal returns (uint256) {
+      uint256 c = a * b;
+      assert(a == 0 || c / a == b);
+      return c;
+    }
 
-library SafeMath {
-  function mul(uint a, uint b) internal returns (uint) {
-    uint c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
+    function div(uint256 a, uint256 b) internal returns (uint256) {
+      // assert(b > 0); // Solidity automatically throws when dividing by 0
+      uint256 c = a / b;
+      // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+      return c;
+    }
 
-  function div(uint a, uint b) internal returns (uint) {
-    assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint c = a / b;
-    assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+    function sub(uint256 a, uint256 b) internal returns (uint256) {
+      assert(b <= a);
+      return a - b;
+    }
 
-  function sub(uint a, uint b) internal returns (uint) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint a, uint b) internal returns (uint) {
-    uint c = a + b;
-    assert(c >= a);
-    return c;
-  }
-
-  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a >= b ? a : b;
-  }
-
-  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a < b ? a : b;
-  }
-
-  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a >= b ? a : b;
-  }
-
-  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a < b ? a : b;
-  }
-
-  function assert(bool assertion) internal {
-    if (!assertion) {
-      throw;
+    function add(uint256 a, uint256 b) internal returns (uint256) {
+      uint256 c = a + b;
+      assert(c >= a);
+      return c;
     }
   }
-}
 
   contract ERC20Interface {
       // Get the total token supply
@@ -103,8 +77,8 @@ library SafeMath {
 
       uint256 public constant token_price = 10**18*1/250; 
       uint256 public pre_ico_start = 1506729600;
-      uint256 public ico_start = 1512691200;
-      uint256 public ico_finish = 1518134400; 
+      uint256 public ico_start = 1518048000;
+      uint256 public ico_finish = 1521936000; 
       uint public constant minValuePre = 10**18*1/1000000; 
       uint public constant minValue = 10**18*1/1000000; 
       uint public constant maxValue = 3000*10**18;
@@ -148,7 +122,7 @@ library SafeMath {
       // Constructor
       function Bqt_Token() {
           //owner = msg.sender;
-          owner = 0x2eee6534bfa5512ded7f700d8d26e88c1688c854;
+          owner = 0xC73e37cbf5120E4Fa112ec6751B72d4aC02CEACa;
           balances[owner] = ownerSupply;
       }
       
