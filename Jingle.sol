@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Jingle at 0x5af7af54e8bc34b293e356ef11fffe51d6f9ae78
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Jingle at 0x5b6660ca047cc351bfedca4fc864d0a88f551485
 */
 pragma solidity ^0.4.18;
 
@@ -44,15 +44,15 @@ contract SampleStorage is Ownable {
         uint rarity;
     }
     
-    mapping (uint => Sample) sampleTypes;
+    mapping (uint32 => Sample) public sampleTypes;
     
-    uint public numOfSampleTypes;
+    uint32 public numOfSampleTypes;
     
-    uint public numOfCommon;
-    uint public numOfRare;
-    uint public numOfLegendary;
-    uint public numOfMythical;
-    
+    uint32 public numOfCommon;
+    uint32 public numOfRare;
+    uint32 public numOfLegendary;
+
+    // The mythical sample is a type common that appears only once in a 1000
     function addNewSampleType(string _ipfsHash, uint _rarityType) public onlyOwner {
         
         if (_rarityType == 0) {
@@ -62,7 +62,7 @@ contract SampleStorage is Ownable {
         } else if(_rarityType == 2) {
             numOfLegendary++;
         } else if(_rarityType == 3) {
-            numOfMythical++;
+            numOfCommon++;
         }
         
         sampleTypes[numOfSampleTypes] = Sample({
@@ -73,19 +73,19 @@ contract SampleStorage is Ownable {
         numOfSampleTypes++;
     }
     
-    function getType(uint _randomNum) public view returns (uint) {
-        uint range = 0;
+    function getType(uint _randomNum) public view returns (uint32) {
+        uint32 range = 0;
         
         if (_randomNum > 0 && _randomNum < 600) {
             range = 600 / numOfCommon;
-            return _randomNum / range;
+            return uint32(_randomNum) / range;
             
         } else if(_randomNum >= 600 && _randomNum < 900) {
             range = 300 / numOfRare;
-            return _randomNum / range;
+            return uint32(_randomNum) / range;
         } else {
             range = 100 / numOfLegendary;
-            return _randomNum / range;
+            return uint32(_randomNum) / range;
         }
     }
     
@@ -108,7 +108,8 @@ contract Jingle is Ownable, ERC721 {
     
     mapping(bytes32 => bool) public uniqueJingles;
     
-    mapping(uint => uint[]) public soundEffects;
+    mapping(uint => uint8[]) public soundEffects;
+    mapping(uint => uint8[20]) public settings;
     
     uint public numOfJingles;
     
@@ -117,16 +118,13 @@ contract Jingle is Ownable, ERC721 {
     
     event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
     event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
-    event EffectAdded(uint indexed jingleId, uint[] effectParams);
-    event Composed(uint indexed jingleId, address indexed owner, 
-                uint[5] samples, uint[5] jingleTypes, string name, string author);
+    event EffectAdded(uint indexed jingleId, uint8[] effectParams);
+    event Composed(uint indexed jingleId, address indexed owner, uint32[5] samples, uint32[5] jingleTypes,
+            string name, string author, uint8[20] settings);
     
     modifier onlyCryptoJingles() {
         require(msg.sender == cryptoJingles);
         _;
-    }
-    
-    function Jingle() public {
     }
     
     function transfer(address _to, uint256 _jingleId) public {
@@ -176,8 +174,8 @@ contract Jingle is Ownable, ERC721 {
         marketplaceContract.sell(msg.sender, _jingleId, _amount);
     }
     
-    function composeJingle(address _owner, uint[5] jingles, 
-            uint[5] jingleTypes, string name, string author) public onlyCryptoJingles {
+    function composeJingle(address _owner, uint32[5] jingles, 
+    uint32[5] jingleTypes, string name, string author, uint8[20] _settings) public onlyCryptoJingles {
         
         uint _jingleId = numOfJingles;
         
@@ -188,6 +186,7 @@ contract Jingle is Ownable, ERC721 {
         tokensOwned[_owner].push(_jingleId);
         
         samplesInJingle[_jingleId] = jingles;
+        settings[_jingleId] = _settings;
         
         tokenPosInArr[_jingleId] = tokensOwned[_owner].length - 1;
         
@@ -200,12 +199,13 @@ contract Jingle is Ownable, ERC721 {
             author: author
         });
         
-        Composed(numOfJingles, _owner, jingles, jingleTypes, name, author);
+        Composed(numOfJingles, _owner, jingles, jingleTypes, 
+        name, author, _settings);
         
         numOfJingles++;
     }
     
-    function addSoundEffect(uint _jingleId, uint[] _effectParams) external {
+    function addSoundEffect(uint _jingleId, uint8[] _effectParams) external {
         require(msg.sender == ownerOf(_jingleId));
         
         soundEffects[_jingleId] = _effectParams;
@@ -293,11 +293,13 @@ contract Sample is Ownable {
     mapping (address => uint[]) internal tokensOwned;
     mapping (uint => uint) internal tokenPosInArr;
     
-    mapping (uint => uint) public tokenType;
+    mapping (uint => uint32) public tokenType;
     
     uint public numOfSamples;
     
     address public cryptoJingles;
+    address public sampleRegistry;
+
 
     SampleStorage public sampleStorage;
     
@@ -314,7 +316,7 @@ contract Sample is Ownable {
     
     function mint(address _owner, uint _randomNum) public onlyCryptoJingles {
         
-        uint sampleType = sampleStorage.getType(_randomNum);
+        uint32 sampleType = sampleStorage.getType(_randomNum);
         
         addSample(_owner, sampleType, numOfSamples);
         
@@ -323,9 +325,16 @@ contract Sample is Ownable {
         numOfSamples++;
     }
     
-    //TODO: check this again
-    // find who owns that sample and at what position is it in the owners arr 
-    // Swap that token with the last one in arr and delete the end of arr
+    function mintForSampleRegitry(address _owner, uint32 _type) public {
+        require(msg.sender == sampleRegistry);
+        
+        addSample(_owner, _type, numOfSamples);
+        
+        Mint(_owner, numOfSamples);
+        
+        numOfSamples++;
+    }
+    
     function removeSample(address _owner, uint _sampleId) public onlyCryptoJingles {
         uint length = tokensOwned[_owner].length;
         uint index = tokenPosInArr[_sampleId];
@@ -371,7 +380,7 @@ contract Sample is Ownable {
     
     // Internal functions of the contract
     
-    function addSample(address _owner, uint _sampleType, uint _sampleId) internal {
+    function addSample(address _owner, uint32 _sampleType, uint _sampleId) internal {
         tokensForOwner[_sampleId] = _owner;
         
         tokensOwned[_owner].push(_sampleId);
@@ -387,6 +396,10 @@ contract Sample is Ownable {
         require(cryptoJingles == 0x0);
         
         cryptoJingles = _cryptoJingles;
+    }
+    
+    function setSampleRegistry(address _sampleRegistry) public onlyOwner {
+        sampleRegistry = _sampleRegistry;
     }
 }
 
@@ -426,6 +439,7 @@ contract CryptoJingles is Ownable {
     function buySamples(uint _numSamples, address _to) public payable {
         require(_numSamples <= MAX_SAMPLES_PER_PURCHASE);
         require(msg.value >= (SAMPLE_PRICE * _numSamples));
+        require(_to != 0x0);
         
          for (uint i = 0; i < _numSamples; ++i) {
             
@@ -440,8 +454,10 @@ contract CryptoJingles is Ownable {
         numOfPurchases++;
     }
     
-    function composeJingle(string name, uint[5] samples) public {
+    function composeJingle(string name, uint32[5] samples, uint8[20] settings) public {
         require(jingleContract.uniqueJingles(keccak256(samples)) == false);
+        
+        uint32[5] memory sampleTypes;
         
         //check if you own all the 5 samples 
         for (uint i = 0; i < SAMPLES_PER_JINGLE; ++i) {
@@ -450,18 +466,14 @@ contract CryptoJingles is Ownable {
             require(isOwner == true && isAlreadyUsed[samples[i]] == false);
             
             isAlreadyUsed[samples[i]] = true;
-        }
-        
-        uint[5] memory sampleTypes;
-        
-        // remove all the samples from your Ownership
-        for (uint j = 0; j < SAMPLES_PER_JINGLE; ++j) {
-            sampleTypes[j] = sampleContract.tokenType(samples[j]);
-            sampleContract.removeSample(msg.sender, samples[j]);
+            
+            sampleTypes[i] = sampleContract.tokenType(samples[i]);
+            sampleContract.removeSample(msg.sender, samples[i]);
         }
         
         //create a new jingle containing those 5 samples
-        jingleContract.composeJingle(msg.sender, samples, sampleTypes, name, authors[msg.sender]);
+        jingleContract.composeJingle(msg.sender, samples, sampleTypes, name,
+                            authors[msg.sender], settings);
     }
     
     // Addresses can set their name when composing jingles
@@ -595,6 +607,10 @@ contract Marketplace is Ownable {
 
         delete jinglesOnSale[length - 1];
         jinglesOnSale.length--;
+    }
+    
+    function getAllJinglesOnSale() public view returns(uint[]) {
+        return jinglesOnSale;
     }
     
     //Owners functions 
