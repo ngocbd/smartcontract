@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract tokensale at 0x15c86d7ad0f5cc99346f8e98345160fbdf165d09
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract tokensale at 0x5af9af89535d0b0fc43cd4b9c69f5662fac4c8f8
 */
 pragma solidity ^0.4.10;
 
@@ -291,6 +291,11 @@ contract tokensale {
     
     function updatePresaleNumbers() {
         if(msg.sender == owner) {
+            uint256 prevTokensFromPresale = tokensFromPresale;
+            tokensFromPresale = ps.numberOfTokens() - ps.numberOfTokensLeft();
+            uint256 dif = tokensFromPresale - prevTokensFromPresale;
+            numberOfTokensLeft -= dif * 100;
+            
             uint256 prevTokensFromPreviousTokensale = tokensFromPreviousTokensale;
             tokensFromPreviousTokensale = pts.numberOfTokens() - pts.numberOfTokensLeft();
             uint256 diff = tokensFromPreviousTokensale - prevTokensFromPreviousTokensale;
@@ -301,6 +306,11 @@ contract tokensale {
     }
     
     function () payable {
+        uint256 prevTokensFromPresale = tokensFromPresale;
+        tokensFromPresale = ps.numberOfTokens() - ps.numberOfTokensLeft();
+        uint256 dif = tokensFromPresale - prevTokensFromPresale;
+        numberOfTokensLeft -= dif * 100;
+        
         uint256 prevTokensFromPreviousTokensale = tokensFromPreviousTokensale;
         tokensFromPreviousTokensale = pts.numberOfTokens() - pts.numberOfTokensLeft();
         uint256 diff = tokensFromPreviousTokensale - prevTokensFromPreviousTokensale;
