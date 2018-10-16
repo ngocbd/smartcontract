@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoSprites at 0x4d7edd5f94515b0f35b38f6fb2ea975a20823465
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoSprites at 0x3365845e915fb3ba57d8901de971ae9ec8223d90
 */
 pragma solidity ^0.4.2;
 
@@ -226,9 +226,7 @@ contract CryptoSprites is ERC721 {
             
             require (msg.value >= (priceIfAny * priceMultiplier / priceDivider) + _ownerCut + _charityCut);
             
-            // Get the owner of the Kitty for sale
-            
-            var (kittyOwner,,,,) = SaleClockAuction(SaleClockAuctionAddress).getAuction(spriteId);
+            address kittyOwner = KittyCore(KittyCoreAddress).ownerOf(spriteId);
             
             kittyOwner.transfer(priceIfAny * priceMultiplier / priceDivider);
             
