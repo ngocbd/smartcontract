@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XENTToken at 0xda74e59ab4f4d6a5ddd1b4bf426f3faf435870a3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract XENTToken at 0xeb9e96b7e6ed26e234d868978aa84a4e81cca0e0
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'XENT' token contract
+// 'XENT' CROWDSALE Token Contract
 //
 // Deployed to : 0x98C7f5CA06204bE8Ee76C45E2336D142321d6747
 // Symbol      : XENT
@@ -22,19 +22,19 @@ pragma solidity ^0.4.18;
 // Safe maths
 // ----------------------------------------------------------------------------
 contract SafeMath {
-    function safeAdd(uint a, uint b) public pure returns (uint c) {
+    function safeAdd(uint a, uint b) internal pure returns (uint c) {
         c = a + b;
         require(c >= a);
     }
-    function safeSub(uint a, uint b) public pure returns (uint c) {
+    function safeSub(uint a, uint b) internal pure returns (uint c) {
         require(b <= a);
         c = a - b;
     }
-    function safeMul(uint a, uint b) public pure returns (uint c) {
+    function safeMul(uint a, uint b) internal pure returns (uint c) {
         c = a * b;
         require(a == 0 || c / a == b);
     }
-    function safeDiv(uint a, uint b) public pure returns (uint c) {
+    function safeDiv(uint a, uint b) internal pure returns (uint c) {
         require(b > 0);
         c = a / b;
     }
@@ -107,6 +107,9 @@ contract XENTToken is ERC20Interface, Owned, SafeMath {
     string public  name;
     uint8 public decimals;
     uint public _totalSupply;
+    uint public startDate;
+    uint public bonusEnds;
+    uint public endDate;
 
     mapping(address => uint) balances;
     mapping(address => mapping(address => uint)) allowed;
@@ -119,9 +122,9 @@ contract XENTToken is ERC20Interface, Owned, SafeMath {
         symbol = "XENT";
         name = "XENT Token";
         decimals = 18;
-        _totalSupply = 100000000000000000000000000000;
-        balances[0x98C7f5CA06204bE8Ee76C45E2336D142321d6747] = _totalSupply;
-        Transfer(address(0), 0x98C7f5CA06204bE8Ee76C45E2336D142321d6747, _totalSupply);
+        bonusEnds = now + 5 weeks;
+        endDate = now + 7 weeks;
+
     }
 
 
@@ -134,7 +137,7 @@ contract XENTToken is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Get the token balance for account tokenOwner
+    // Get the token balance for account `tokenOwner`
     // ------------------------------------------------------------------------
     function balanceOf(address tokenOwner) public constant returns (uint balance) {
         return balances[tokenOwner];
@@ -142,7 +145,7 @@ contract XENTToken is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Transfer the balance from token owner's account to to account
+    // Transfer the balance from token owner's account to `to` account
     // - Owner's account must have sufficient balance to transfer
     // - 0 value transfers are allowed
     // ------------------------------------------------------------------------
@@ -155,7 +158,7 @@ contract XENTToken is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Token owner can approve for spender to transferFrom(...) tokens
+    // Token owner can approve for `spender` to transferFrom(...) `tokens`
     // from the token owner's account
     //
     // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
@@ -170,10 +173,10 @@ contract XENTToken is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Transfer tokens from the from account to the to account
+    // Transfer `tokens` from the `from` account to the `to` account
     //
     // The calling account must already have sufficient tokens approve(...)-d
-    // for spending from the from account and
+    // for spending from the `from` account and
     // - From account must have sufficient balance to transfer
     // - Spender must have sufficient allowance to transfer
     // - 0 value transfers are allowed
@@ -197,9 +200,9 @@ contract XENTToken is ERC20Interface, Owned, SafeMath {
 
 
     // ------------------------------------------------------------------------
-    // Token owner can approve for spender to transferFrom(...) tokens
-    // from the token owner's account. The spender contract function
-    // receiveApproval(...) is then executed
+    // Token owner can approve for `spender` to transferFrom(...) `tokens`
+    // from the token owner's account. The `spender` contract function
+    // `receiveApproval(...)` is then executed
     // ------------------------------------------------------------------------
     function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
@@ -208,13 +211,23 @@ contract XENTToken is ERC20Interface, Owned, SafeMath {
         return true;
     }
 
-
     // ------------------------------------------------------------------------
-    // Don't accept ETH
+    // 1,000 XENT Tokens per 1 ETH
     // ------------------------------------------------------------------------
     function () public payable {
-        revert();
+        require(now >= startDate && now <= endDate);
+        uint tokens;
+        if (now <= bonusEnds) {
+            tokens = msg.value * 1200;
+        } else {
+            tokens = msg.value * 1000;
+        }
+        balances[msg.sender] = safeAdd(balances[msg.sender], tokens);
+        _totalSupply = safeAdd(_totalSupply, tokens);
+        Transfer(address(0), msg.sender, tokens);
+        owner.transfer(msg.value);
     }
+
 
 
     // ------------------------------------------------------------------------
