@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CtdToken at 0x230c2a140e758087f7107dd31943c5c03b819e55
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CtdToken at 0xfd9683e9f2c62e08b6bf68123e18e527efa8fbbc
 */
 pragma solidity 0.4.15;
 
@@ -481,8 +481,8 @@ contract CtdToken is UpgradableToken, PausableOnce, Withdrawable {
     */
     enum Phases {PreStart, PreIcoA, PreIcoB, MainIco, AfterIco}
 
-    uint64 constant internal PRE_ICO_DURATION = 745 hours;
-    uint64 constant internal ICO_DURATION = 2423 hours + 59 minutes;
+    uint64 constant internal PRE_ICO_DURATION = 30 days;
+    uint64 constant internal ICO_DURATION = 82 days;
     uint64 constant internal RETURN_WEI_PAUSE = 30 days;
 
     // Main ICO rate in CTD(s) per 1 ETH:
