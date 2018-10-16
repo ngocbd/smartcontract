@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SYCPrivateEarlyPurchase at 0xf9533353c20495527e0499ac71e1507b418b9314
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SYCPrivateEarlyPurchase at 0xca3c1f193284d65777be83274b65181210419e41
 */
 pragma solidity ^0.4.7;
 
@@ -46,7 +46,7 @@ contract SYCPrivateEarlyPurchase {
     }
 
     modifier onlyEarlyPurchaseTerm() {
-        if (earlyPurchaseClosedAt > 0 || now < STARTING_TIME || now > ENDING_TIME) {
+        if (earlyPurchaseClosedAt > 0 && now >= STARTING_TIME && now <= ENDING_TIME) {
             throw;
         }
         _;
