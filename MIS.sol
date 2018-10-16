@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MIS at 0x26124a688ff05e88256694b999df7c8526fa83e6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MIS at 0x4ec0a558bc3c0f640119fb2944d98de805a26803
 */
 pragma solidity ^0.4.18;
 
@@ -8,7 +8,7 @@ pragma solidity ^0.4.18;
 //
 // Symbol      : MIS
 // Name        : SIM Network
-// Total supply: 1,000,000,000.000000000000000000
+// Total supply: 50,000,000,000.000000000000000000
 // Decimals    : 18
 //
 // The MIT Licence.
@@ -118,7 +118,7 @@ contract MIS is ERC20Interface, Owned {
         symbol = "MIS";
         name = "SIM Network";
         decimals = 18;
-        _totalSupply = 1000000000 * 10**uint(decimals);
+        _totalSupply = 50000000000 * 10**uint(decimals);
         balances[owner] = _totalSupply;
         Transfer(address(0), owner, _totalSupply);
     }
