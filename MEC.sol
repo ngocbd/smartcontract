@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MEC at 0xf08f56e84c86f37022030d7103fde0365338688f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MEC at 0x5f4f69c2560031a981f033d67a0ac00c3af30e1b
 */
 pragma solidity ^0.4.4;
 contract Token {
@@ -56,9 +56,9 @@ contract MEC is StandardToken {
     uint256 public totalEthInWei;         
     address public fundsWallet;           
     function MEC() {
-        balances[msg.sender] = 20000000;               
-        totalSupply = 20000000;                        
-        name = "MEC";                                   
+        balances[msg.sender] = 50000000000000000000000000;               
+        totalSupply = 50000000000000000000000000;                        
+        name = "PALLET";                                   
         decimals = 18;                                               
         symbol = "MEC";                                            
         unitsOneEthCanBuy = 20;                                      
