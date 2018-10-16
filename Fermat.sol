@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fermat at 0xcbb447cc78f646Af29Df035A4aDe69AB1eEa22d4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fermat at 0xdfab9f43f279bd8bd87026b84105c5d1543ae99e
 */
 pragma solidity ^0.4.18;
 
@@ -16,11 +16,11 @@ contract Fermat {
     *  The owner will be able to withdraw the
     *  bounty after the releaseTime has passed.
 
-    *  The release time is set to 8640000 seconds (= 100 days)
+    *  The release time is set to 17280000 seconds (= 200 days)
     *  in the future from the timestamp of the contract creation
     */
     address public owner = msg.sender;
-    uint releaseTime = now + 8640000;
+    uint releaseTime = now + 17280000;
 
     /**
     * This function is used to increase the bounty
@@ -77,6 +77,9 @@ contract Fermat {
      */
     function solve(int256 a, int256 b, int256 c, int256 n) pure public returns (uint256) {
         assert(n > 2);
+        assert(a > 0);
+        assert(b > 0);
+        assert(c > 0);
         uint256 aExp = power(a, n);
         uint256 bExp = power(b, n);
         uint256 cExp = power(c, n);
@@ -89,10 +92,13 @@ contract Fermat {
     /*
      A safe way to handle exponentiation. Throws error on overflow.
     */
-    function power(int256 a, int256 pow) internal pure returns (uint256) {
+    function power(int256 a, int256 pow)  pure public returns (uint256) {
         assert(a >= 0);
         assert(pow >= 0);
         int256 result = 1;
+        if(a == 0) {
+            return 1;
+        }
         for (int256 i = 0; i < pow; i++) {
             result = result * a;
             assert(result >= a);
