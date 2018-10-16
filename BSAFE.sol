@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BSAFE at 0xa659f537db8cd64292736e9ef4b9c917db0253a6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BSAFE at 0x14fda3b1e131ad2d40e98cff2722e7d22b96f88e
 */
-pragma solidity ^ 0.4 .19;
+pragma solidity ^ 0.4 .21;
 
 contract ERC223ReceivingContract { 
 /**
@@ -64,6 +64,7 @@ contract ERC20 {
 
     function allowance(address owner, address spender) constant returns(uint);
     event Transfer(address indexed from, address indexed to, uint value);
+    event Transfer(address indexed from, address indexed to, uint value, bytes data);
     event Approval(address indexed owner, address indexed spender, uint value);
 
 }
@@ -74,7 +75,7 @@ contract BSAFE is ERC20  {
     using SafeMath
     for uint256;
     /* Public variables of the token */
-    string public standard = 'BSAFE 1.0';
+    string public standard = 'BSAFE 1.1';
     string public name;
     string public symbol;
     uint8 public decimals;
@@ -96,7 +97,7 @@ contract BSAFE is ERC20  {
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function BSAFE() {
 
-        uint256 _initialSupply = 10000000000000000 ; 
+        uint256 _initialSupply = 12000000000000000 ; 
         uint8 decimalUnits = 8;
         balanceOf[msg.sender] = _initialSupply; // Give the creator all initial tokens
         totalSupply = _initialSupply; // Update total supply
