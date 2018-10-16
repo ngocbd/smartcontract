@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafePromo at 0x2077db08d450d842189b94dea8e3eb95980a8b61
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafePromo at 0x43151cf189e07e1fd75b79731d1f5608df8beb13
 */
 /*                   -:////:-.                    
               `:ohmMMMMMMMMMMMMmho:`              
@@ -28,7 +28,7 @@
 
 */
 
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.19;
 
 contract SafePromo {
 
