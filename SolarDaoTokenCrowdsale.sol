@@ -1,74 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SolarDaoTokenCrowdsale at 0x80647a3b0ea039dd077c10128558a948fc0d9276
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SolarDaoTokenCrowdsale at 0x1103849f41222a4c348515331f0e734d4bd9ad34
 */
 pragma solidity ^0.4.13;
 
- /// @title Ownable contract - base contract with an owner
- /// @author dev@smartcontracteam.com
-contract Ownable {
-  address public owner;
-
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-  modifier onlyOwner() {
-    require(msg.sender == owner);  
-    _;
-  }
-
-  function transferOwnership(address newOwner) onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
-    }
-  }
-}
-
-/// @title Haltable contract - abstract contract that allows children to implement an emergency stop mechanism.
-/// @author dev@smartcontracteam.com
-/// Originally envisioned in FirstBlood ICO contract.
-contract Haltable is Ownable {
-  bool public halted;
-
-  modifier stopInEmergency {
-    require(!halted);
-    _;
-  }
-
-  modifier onlyInEmergency {
-    require(halted);       
-    _;
-  }
-
-  /// called by the owner on emergency, triggers stopped state
-  function halt() external onlyOwner {
-    halted = true;
-  }
-
-  /// called by the owner on end of emergency, returns to normal state
-  function unhalt() external onlyOwner onlyInEmergency {
-    halted = false;
-  }
-}
-
-
-
- /// @title ERC20 interface see https://github.com/ethereum/EIPs/issues/20
- /// @author dev@smartcontracteam.com
-contract ERC20 {
-  uint public totalSupply;
-  function balanceOf(address who) constant returns (uint);
-  function allowance(address owner, address spender) constant returns (uint);
-  function mint(address receiver, uint amount);
-  function transfer(address to, uint value) returns (bool ok);
-  function transferFrom(address from, address to, uint value) returns (bool ok);
-  function approve(address spender, uint value) returns (bool ok);
-  event Transfer(address indexed from, address indexed to, uint value);
-  event Approval(address indexed owner, address indexed spender, uint value);
-}
 
  /// @title SafeMath contract - math operations with safety checks
- /// @author dev@smartcontracteam.com
 contract SafeMath {
   function safeMul(uint a, uint b) internal returns (uint) {
     uint c = a * b;
@@ -111,13 +47,78 @@ contract SafeMath {
   }
 
   function assert(bool assertion) internal {
-    require(assertion);  
+    require(assertion);
   }
 }
 
 
+
+ /// @title Ownable contract - base contract with an owner
+contract Ownable {
+  address public owner;
+
+  function Ownable() {
+    owner = msg.sender;
+  }
+
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  function transferOwnership(address newOwner) onlyOwner {
+    if (newOwner != address(0)) {
+      owner = newOwner;
+    }
+  }
+}
+
+
+/// @title Haltable contract - abstract contract that allows children to implement an emergency stop mechanism.
+/// Originally envisioned in FirstBlood ICO contract.
+contract Haltable is Ownable {
+  bool public halted;
+
+  modifier stopInEmergency {
+    require(!halted);
+    _;
+  }
+
+  modifier onlyInEmergency {
+    require(halted);
+    _;
+  }
+
+  /// called by the owner on emergency, triggers stopped state
+  function halt() external onlyOwner {
+    halted = true;
+  }
+
+  /// called by the owner on end of emergency, returns to normal state
+  function unhalt() external onlyOwner onlyInEmergency {
+    halted = false;
+  }
+}
+
+
+
+
+ /// @title ERC20 interface see https://github.com/ethereum/EIPs/issues/20
+contract ERC20 {
+  uint public totalSupply;
+  function balanceOf(address who) constant returns (uint);
+  function allowance(address owner, address spender) constant returns (uint);
+  function mint(address receiver, uint amount);
+  function transfer(address to, uint value) returns (bool ok);
+  function transferFrom(address from, address to, uint value) returns (bool ok);
+  function approve(address spender, uint value) returns (bool ok);
+  event Transfer(address indexed from, address indexed to, uint value);
+  event Approval(address indexed owner, address indexed spender, uint value);
+}
+
+
+
 /// @title SolarDaoToken contract - standard ERC20 token with Short Hand Attack and approve() race condition mitigation.
-/// @author dev@smartcontracteam.com
 contract SolarDaoToken is SafeMath, ERC20, Ownable {
  string public name = "Solar DAO Token";
  string public symbol = "SDAO";
@@ -251,11 +252,16 @@ contract SolarDaoToken is SafeMath, ERC20, Ownable {
    return allowed[_owner][_spender];
  }
 }
+/// @title Killable contract - base contract that can be killed by owner. All funds in contract will be sent to the owner.
+contract Killable is Ownable {
+ function kill() onlyOwner {
+   selfdestruct(owner);
+ }
+}
 
 
 /// @title SolarDaoTokenCrowdsale contract - contract for token sales.
-/// @author dev@smartcontracteam.com
-contract SolarDaoTokenCrowdsale is Haltable, SafeMath {
+contract SolarDaoTokenCrowdsale is Haltable, Killable, SafeMath {
 
   /// Prefunding goal in USD cents, if the prefunding goal is reached, ico will start
   uint public constant PRE_FUNDING_GOAL = 4e6 * PRICE;
@@ -371,7 +377,7 @@ contract SolarDaoTokenCrowdsale is Haltable, SafeMath {
   /// @param _preInvestStart preICO start date
   /// @param _start token ICO start date
   /// @param _end token ICO end date
-  function Crowdsale(address _token, address _multisigWallet, uint _preInvestStart, uint _start, uint _end) {
+  function SolarDaoTokenCrowdsale(address _token, address _multisigWallet, uint _preInvestStart, uint _start, uint _end) {
     require(_multisigWallet != 0);
     require(_preInvestStart != 0);
     require(_start != 0);
@@ -379,7 +385,6 @@ contract SolarDaoTokenCrowdsale is Haltable, SafeMath {
     require(_start < _end);
     require(_end > _preInvestStart + PRE_ICO_DURATION);
 
-    owner = msg.sender;
     token = SolarDaoToken(_token);
 
     multisigWallet = _multisigWallet;
@@ -440,13 +445,7 @@ contract SolarDaoTokenCrowdsale is Haltable, SafeMath {
     tokenAmountOf[receiver] = safeAdd(tokenAmountOf[receiver], tokensAmount);
     // Update totals
     weiRaised = safeAdd(weiRaised, weiAmount);
-    tokensSold = safeAdd(tokensSold, tokensAmount);
-
-    // Check that we did not bust the cap
-    /*
-    if(isBreakingCap(weiAmount, tokensAmount, weiRaised, tokensSold)) {
-      throw;
-    }*/
+    tokensSold = safeAdd(tokensSold, tokensAmount);   
 
     assignTokens(receiver, tokensAmount);
     var teamBonusTokens = safeDiv(safeMul(tokensAmount, TEAM_BONUS_PERCENT), 100 - TEAM_BONUS_PERCENT);
@@ -477,8 +476,7 @@ contract SolarDaoTokenCrowdsale is Haltable, SafeMath {
   }
 
   /// @dev Finalize a succcesful crowdsale.
-  function finalizeCrowdsale() internal {
-    //assignTokens(owner, safeAdd(safeSub(uint(MAX_TOKENS_TO_SOLD), tokensSold), TEAM_TOKENS_AMOUNT));
+  function finalizeCrowdsale() internal {    
     token.releaseTokenTransfer();
   }
 
@@ -502,6 +500,20 @@ contract SolarDaoTokenCrowdsale is Haltable, SafeMath {
    if (newAgent != address(0)) {
      exchangeRateAgent = newAgent;
    }
+ }
+ 
+  /// @dev Method set data from migrated contract
+  /// @param _tokensSold tokens sold
+  /// @param _weiRaised _wei raised
+  /// @param _investorCount investor count
+ function setCrowdsaleData(uint _tokensSold, uint _weiRaised, uint _investorCount) onlyOwner {  
+	require(_tokensSold > 0);
+	require(_weiRaised > 0);
+	require(_investorCount > 0);
+	
+	tokensSold = _tokensSold;
+	weiRaised = _weiRaised;
+	investorCount = _investorCount;	
  }
 
   function getDifference(int one, int two) private constant returns (uint) {
@@ -553,7 +565,7 @@ contract SolarDaoTokenCrowdsale is Haltable, SafeMath {
   function getState() public constant returns (State) {
     if (finalized)
       return State.Finalized;
-    if (address(token) == 0 || address(multisigWallet) == 0)
+    if (address(token) == 0 || address(multisigWallet) == 0 || now < preInvestStart)
       return State.Preparing;
     if (preInvestStart <= now && now < startsAt && !isMaximumPreFundingGoalReached())
       return State.PreFunding;
@@ -576,17 +588,7 @@ contract SolarDaoTokenCrowdsale is Haltable, SafeMath {
     assert (usdAmount >= PRICE);
 
     return safeMul(usdAmount, safeDiv(multiplier, PRICE));
-  }
-
-   /// @dev Check if the current invested breaks our cap rules.
-   /// @param weiAmount The amount of wei the investor tries to invest in the current transaction
-   /// @param tokenAmount The amount of tokens we try to give to the investor in the current transaction
-   /// @param weiRaisedTotal What would be our total raised balance after this transaction
-   /// @param tokensSoldTotal What would be our total sold tokens count after this transaction
-   /// @return result
-   function isBreakingCap(uint weiAmount, uint tokenAmount, uint weiRaisedTotal, uint tokensSoldTotal) constant returns (bool limitBroken) {
-     return false;
-   }
+  }  
 
    /// @dev Check if the pre ICO goal was reached.
    /// @return true if the preICO has raised enough money to be a success
