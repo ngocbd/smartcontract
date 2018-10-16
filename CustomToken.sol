@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xdb7ad50a39346a78f272ac286e78430061949b2a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x2AF9a4864464Feb6fF4364367366FCF15c562100
 */
 pragma solidity ^0.4.19;
 
@@ -68,23 +68,61 @@ contract AirdropToken is BaseToken {
     }
 }
 
-contract CustomToken is BaseToken, AirdropToken {
-    function CustomToken() public {
-        totalSupply = 200000000000000000000000000;
-        name = 'BadischeAnilinundSodaFabrik';
-        symbol = 'BASF';
-        decimals = 18;
-        balanceOf[0x8f1e8c7050d9bd74d7658cbf3b437826b9fb4bf8] = totalSupply;
-        Transfer(address(0), 0x8f1e8c7050d9bd74d7658cbf3b437826b9fb4bf8, totalSupply);
+contract ICOToken is BaseToken {
+    // 1 ether = icoRatio token
+    uint256 public icoRatio;
+    uint256 public icoBegintime;
+    uint256 public icoEndtime;
+    address public icoSender;
+    address public icoHolder;
 
-        airAmount = 58000000000000000000;
-        airBegintime = 1527912000;
-        airEndtime = 1541131200;
-        airSender = 0x6e9d989e1585defefd16b9d3a22ba8640f1ea9c7;
+    event ICO(address indexed from, uint256 indexed value, uint256 tokenValue);
+    event Withdraw(address indexed from, address indexed holder, uint256 value);
+
+    function ico() public payable {
+        require(now >= icoBegintime && now <= icoEndtime);
+        uint256 tokenValue = (msg.value * icoRatio * 10 ** uint256(decimals)) / (1 ether / 1 wei);
+        if (tokenValue == 0 || balanceOf[icoSender] < tokenValue) {
+            revert();
+        }
+        _transfer(icoSender, msg.sender, tokenValue);
+        ICO(msg.sender, msg.value, tokenValue);
+    }
+
+    function withdraw() public {
+        uint256 balance = this.balance;
+        icoHolder.transfer(balance);
+        Withdraw(msg.sender, icoHolder, balance);
+    }
+}
+
+contract CustomToken is BaseToken, AirdropToken, ICOToken {
+    function CustomToken() public {
+        totalSupply = 10000000000000000;
+        name = 'NetWorkChain';
+        symbol = 'NETC';
+        decimals = 8;
+        balanceOf[0xc5056fd216652f266714af1b32d1a93c3321c184] = totalSupply;
+        Transfer(address(0), 0xc5056fd216652f266714af1b32d1a93c3321c184, totalSupply);
+
+        airAmount = 50000000000;
+        airBegintime = 1530374400;
+        airEndtime = 1533052800;
+        airSender = 0x3a87dc1301cb8e1a68a8c3eba1c9a3fe144f6fa5;
         airLimitCount = 1;
+
+        icoRatio = 30000;
+        icoBegintime = 1533052800;
+        icoEndtime = 1546185600;
+        icoSender = 0xc078d3404c714279d3a6e7c21338dc2abd1805eb;
+        icoHolder = 0xaff2a3dade690baf337ab10c410ec98f12483cb1;
     }
 
     function() public payable {
-        airdrop();
+        if (msg.value == 0) {
+            airdrop();
+        } else {
+            ico();
+        }
     }
 }
