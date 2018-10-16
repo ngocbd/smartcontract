@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0x4fd997ed7c10dbd04e95d3730cd77d79513076f2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Presale at 0x3cf853facae392c3e4310ab805da30a1da508609
 */
 pragma solidity ^0.4.6;
 
@@ -34,17 +34,18 @@ pragma solidity ^0.4.6;
 
 contract Presale {
 
-    string public constant VERSION = "0.1.4";
+    string public constant VERSION = "0.1.4-beta";
 
     /* ====== configuration START ====== */
-    uint public constant PRESALE_START  = 3172723; /* approx. 12.02.2017 23:50 */
-    uint public constant PRESALE_END    = 3302366; /* approx. 06.03.2017 00:00 */
-    uint public constant WITHDRAWAL_END = 3678823; /* approx. 06.05.2017 00:00 */
+    uint public constant PRESALE_START  = 3151809; /* approx. 09.02.2017 14:30 */
+    uint public constant PRESALE_END    = 3152066; /* approx. 09.02.2017 15:30 */
+    uint public constant WITHDRAWAL_END = 3152323; /* approx. 09.02.2017 16:30 */
+
 
     address public constant OWNER = 0xE76fE52a251C8F3a5dcD657E47A6C8D16Fdf4bFA;
 
-    uint public constant MIN_TOTAL_AMOUNT_TO_RECEIVE_ETH = 4000;
-    uint public constant MAX_TOTAL_AMOUNT_TO_RECEIVE_ETH = 12000;
+    uint public constant MIN_TOTAL_AMOUNT_TO_RECEIVE_ETH = 1;
+    uint public constant MAX_TOTAL_AMOUNT_TO_RECEIVE_ETH = 5;
     uint public constant MIN_ACCEPTED_AMOUNT_FINNEY = 1;
 
     /* ====== configuration END ====== */
