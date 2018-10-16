@@ -1,7 +1,27 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SubscriptionModuleImpl at 0x2376f06047f161257fda663b071c76c52239ddcd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SubscriptionModuleImpl at 0xa53b9b044bb919db3e06a35d57a06d057f3e0424
 */
 pragma solidity ^0.4.11;
+
+// ==== DISCLAIMER ====
+//
+// ETHEREUM IS STILL AN EXPEREMENTAL TECHNOLOGY.
+// ALTHOUGH THIS SMART CONTRACT WAS CREATED WITH GREAT CARE AND IN THE HOPE OF BEING USEFUL, NO GUARANTEES OF FLAWLESS OPERATION CAN BE GIVEN.
+// IN PARTICULAR - SUBTILE BUGS, HACKER ATTACKS OR MALFUNCTION OF UNDERLYING TECHNOLOGY CAN CAUSE UNINTENTIONAL BEHAVIOUR.
+// YOU ARE STRONGLY ENCOURAGED TO STUDY THIS SMART CONTRACT CAREFULLY IN ORDER TO UNDERSTAND POSSIBLE EDGE CASES AND RISKS.
+// DON'T USE THIS SMART CONTRACT IF YOU HAVE SUBSTANTIAL DOUBTS OR IF YOU DON'T KNOW WHAT YOU ARE DOING.
+//
+// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
+// OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+// OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// ====
+//
+
+/// @author ethernian for Santiment LLC
+/// @title  Subscription Module for SAN - santiment token
+/// @notice report bugs to: bugs@ethernian.com
 
 contract Base {
 
@@ -150,8 +170,6 @@ contract ERC20 is Owned {
 // 3 - Service providers are responsible for firing events in case of offer changes;
 //     it is theirs decision to inform DApps about offer changes or not.
 //
-//ToDo:
-// 8 - validate linking modules and deployment process: attachToken(address token) public
 
 
 ///@dev an base class to implement by Service Provider contract to be notified about subscription changes (in-Tx notification).
@@ -261,11 +279,13 @@ contract SubscriptionBase {
     struct Deposit {
         uint value;         // value on deposit
         address owner;      // usually a customer
+        uint createdOn;     // deposit created timestamp
+        uint lockTime;      // deposit locked for time period
         bytes descriptor;   // service related descriptor to be evaluated by service provider
     }
 
     event NewSubscription(address customer, address service, uint offerId, uint subId);
-    event NewDeposit(uint depositId, uint value, address sender);
+    event NewDeposit(uint depositId, uint value, uint lockTime, address sender);
     event NewXRateProvider(address addr, uint16 xRateProviderId, address sender);
     event DepositReturned(uint depositId, address returnedTo);
     event SubscriptionDepositReturned(uint subId, uint amount, address returnedTo, address sender);
@@ -273,6 +293,7 @@ contract SubscriptionBase {
     event OfferCanceled(uint offerId, address sender);
     event SubOnHold(uint offerId, bool onHold, address sender);
     event SubCanceled(uint subId, address sender);
+    event SubModuleSuspended(uint suspendUntil);
 
 }
 
@@ -312,7 +333,7 @@ contract SubscriptionModule is SubscriptionBase, Base {
     function cancelSubscriptionOffer(uint offerId) public returns (bool);
 
     ///@dev ***** simple deposit handling *****
-    function createDeposit(uint _value, bytes _descriptor) public returns (uint subId);
+    function createDeposit(uint _value, uint lockTime, bytes _descriptor) public returns (uint subId);
     function claimDeposit(uint depositId) public;
 
     ///@dev ***** ExchangeRate provider *****
@@ -361,11 +382,15 @@ contract ERC20ModuleSupport {
 //@dev implementation
 contract SubscriptionModuleImpl is SubscriptionModule, Owned  {
 
-    string public constant VERSION = "0.1.0";
+    string public constant VERSION = "0.2.0";
 
     // *************************************************
     // *              contract states                  *
     // *************************************************
+
+    ///@dev suspend all module operation until this time (if in future); if the time is in past (or zero) - operates normally.
+    uint public suspendedUntil = 0;
+    function isSuspended() public constant returns(bool) { return suspendedUntil > now; }
 
     ///@dev list of all registered service provider contracts implemented as a map for better lookup.
     mapping (address=>bool) public providerRegistry;
@@ -421,22 +446,27 @@ contract SubscriptionModuleImpl is SubscriptionModule, Owned  {
 
 
     ///@dev register a new service provider to the platform.
-    function enableServiceProvider(ServiceProvider addr, bytes moreInfo) public only(owner) {
+    function enableServiceProvider(ServiceProvider addr, bytes moreInfo) public notSuspended only(owner) {
         providerRegistry[addr] = true;
         ServiceProviderEnabled(addr, moreInfo);
     }
 
 
     ///@dev de-register the service provider with given `addr`.
-    function disableServiceProvider(ServiceProvider addr, bytes moreInfo) public only(owner) {
+    function disableServiceProvider(ServiceProvider addr, bytes moreInfo) public notSuspended only(owner) {
         delete providerRegistry[addr];
         ServiceProviderDisabled(addr, moreInfo);
     }
 
+    ///@dev suspend all module operations for given time.
+    function suspend(uint suspendTimeSec) public only(owner) {
+        suspendedUntil = now + suspendTimeSec;
+        SubModuleSuspended(suspendedUntil);
+    }
 
     ///@dev register new exchange rate provider.
     ///     XRateProvider can't be de-registered, because they could be still in use by some subscription.
-    function registerXRateProvider(XRateProvider addr) public only(owner) returns (uint16 xrateProviderId) {
+    function registerXRateProvider(XRateProvider addr) public notSuspended only(owner) returns (uint16 xrateProviderId) {
         xrateProviderId = uint16(xrateProviders.length);
         xrateProviders.push(addr);
         NewXRateProvider(addr, xrateProviderId, msg.sender);
@@ -459,7 +489,7 @@ contract SubscriptionModuleImpl is SubscriptionModule, Owned  {
     ///@param _to - service provider contract
     ///@return `true` on success; `false` of failure (if caller is a contract) or throw an exception (if caller is not a contract)
     //
-    function paymentTo(uint _value, bytes _paymentData, ServiceProvider _to) public reentrant returns (bool success) {
+    function paymentTo(uint _value, bytes _paymentData, ServiceProvider _to) public notSuspended reentrant returns (bool success) {
         if (san._fulfillPayment(msg.sender, _to, _value, 0, msg.sender)) {
             // a ServiceProvider (a ServiceProvider) has here an opportunity verify and reject the payment
             assert (ServiceProvider(_to).onPayment(msg.sender, _value, _paymentData));                      // <=== possible reentrancy
@@ -477,7 +507,7 @@ contract SubscriptionModuleImpl is SubscriptionModule, Owned  {
     ///@param _to - service provider contract
     ///@return `true` on success; `false` of failure (if caller is a contract) or throw an exception (if caller is not a contract)
     //
-    function paymentFrom(uint _value, bytes _paymentData, address _from, ServiceProvider _to) public reentrant returns (bool success) {
+    function paymentFrom(uint _value, bytes _paymentData, address _from, ServiceProvider _to) public notSuspended reentrant returns (bool success) {
         if (san._fulfillPreapprovedPayment(_from, _to, _value, msg.sender)) {
             // a ServiceProvider (a ServiceProvider) has here an opportunity verify and reject the payment
             assert (ServiceProvider(_to).onPayment(_from, _value, _paymentData));                           // <=== possible reentrancy
@@ -531,7 +561,7 @@ contract SubscriptionModuleImpl is SubscriptionModule, Owned  {
     ///@param subId - subscription to be charged.
     ///@return `true` on success; `false` of failure (if caller is a contract) or throw an exception (if caller is not a contract)
     //
-    function executeSubscription(uint subId) public noReentrancy(L00) returns (bool) {
+    function executeSubscription(uint subId) public notSuspended noReentrancy(L00) returns (bool) {
         Subscription storage sub = subscriptions[subId];
         assert (msg.sender == sub.transferFrom || msg.sender == sub.transferTo || msg.sender == owner);
         if (_subscriptionState(sub)==SubState.CHARGEABLE) {
@@ -557,7 +587,7 @@ contract SubscriptionModuleImpl is SubscriptionModule, Owned  {
     ///@param newDueDate - new `paidUntil` datetime; require `newDueDate > paidUntil`.
     ///@return `true` on success; `false` of failure (if caller is a contract) or throw an exception (if caller is not a contract)
     //
-    function postponeDueDate(uint subId, uint newDueDate) public returns (bool success){
+    function postponeDueDate(uint subId, uint newDueDate) public notSuspended returns (bool success){
         Subscription storage sub = subscriptions[subId];
         assert (_isSubscription(sub));
         assert (sub.transferTo == msg.sender); //only Service Provider is allowed to postpone the DueDate
@@ -642,6 +672,7 @@ contract SubscriptionModuleImpl is SubscriptionModule, Owned  {
     public
     noReentrancy(L01)
     onlyRegisteredProvider
+    notSuspended
     returns (uint subId) {
         assert (_startOn < _expireOn);
         assert (_chargePeriod <= 10 years); //sanity check
@@ -673,7 +704,7 @@ contract SubscriptionModuleImpl is SubscriptionModule, Owned  {
     ///        Other offer's parameter can't be updated because they are considered to be a public offer reviewed by customers.
     ///        The service provider should recreate the offer as a new one in case of other changes.
     //
-    function updateSubscriptionOffer(uint _offerId, uint _offerLimit) public {
+    function updateSubscriptionOffer(uint _offerId, uint _offerLimit) public notSuspended {
         Subscription storage offer = subscriptions[_offerId];
         assert (_isOffer(offer));
         assert (offer.transferTo == msg.sender); //only Provider is allowed to update the offer.
@@ -691,7 +722,7 @@ contract SubscriptionModuleImpl is SubscriptionModule, Owned  {
     ///@param _startOn   - subscription start time; no charges are possible before this time.
     ///                    If the `_startOn` is in the past or is zero, it means start the subscription ASAP.
     //
-    function createSubscription(uint _offerId, uint _expireOn, uint _startOn) public noReentrancy(L02) returns (uint newSubId) {
+    function createSubscription(uint _offerId, uint _expireOn, uint _startOn) public notSuspended noReentrancy(L02) returns (uint newSubId) {
         assert (_startOn < _expireOn);
         Subscription storage offer = subscriptions[_offerId];
         assert (_isOffer(offer));
@@ -722,7 +753,7 @@ contract SubscriptionModuleImpl is SubscriptionModule, Owned  {
     ///@dev sets offer.`expireOn` to `expireOn`.
     ///@return `true` on success; `false` of failure (if caller is a contract) or throw an exception (if caller is not a contract)
     //
-    function cancelSubscriptionOffer(uint offerId) public returns (bool) {
+    function cancelSubscriptionOffer(uint offerId) public notSuspended returns (bool) {
         Subscription storage offer = subscriptions[offerId];
         assert (_isOffer(offer));
         assert (offer.transferTo == msg.sender || owner == msg.sender); //only service provider or platform owner is allowed to cancel the offer
@@ -741,7 +772,7 @@ contract SubscriptionModuleImpl is SubscriptionModule, Owned  {
     ///        If so, use `cancelSubscription(uint subId, uint gasReserve)` as the forced version.
     ///         see `cancelSubscription(uint subId, uint gasReserve)` for more documentation.
     //
-    function cancelSubscription(uint subId) public {
+    function cancelSubscription(uint subId) public notSuspended {
         return cancelSubscription(subId, 0);
     }
 
@@ -757,7 +788,7 @@ contract SubscriptionModuleImpl is SubscriptionModule, Owned  {
     ///@param subId - subscription to be cancelled
     ///@param gasReserve - gas reserved for call finalization (minimum reservation is 10000 gas)
     //
-    function cancelSubscription(uint subId, uint gasReserve) public noReentrancy(L03) {
+    function cancelSubscription(uint subId, uint gasReserve) public notSuspended noReentrancy(L03) {
         Subscription storage sub = subscriptions[subId];
         assert (sub.transferFrom == msg.sender || owner == msg.sender); //only subscription owner or platform owner is allowed to cancel it
         assert (_isSubscription(sub));
@@ -781,7 +812,7 @@ contract SubscriptionModuleImpl is SubscriptionModule, Owned  {
     ///@param offerId - id of the offer to be placed on hold.
     ///@return `true` on success; `false` of failure (if caller is a contract) or throw an exception (if caller is not a contract)
     //
-    function holdSubscriptionOffer(uint offerId) public returns (bool success) {
+    function holdSubscriptionOffer(uint offerId) public notSuspended returns (bool success) {
         Subscription storage offer = subscriptions[offerId];
         assert (_isOffer(offer));
         require (msg.sender == offer.transferTo || msg.sender == owner); //only owner or service provider can place the offer on hold.
@@ -800,7 +831,7 @@ contract SubscriptionModuleImpl is SubscriptionModule, Owned  {
     ///@param offerId - id of the offer to be resumed.
     ///@return `true` on success; `false` of failure (if caller is a contract) or throw an exception (if caller is not a contract)
     //
-    function unholdSubscriptionOffer(uint offerId) public returns (bool success) {
+    function unholdSubscriptionOffer(uint offerId) public notSuspended returns (bool success) {
         Subscription storage offer = subscriptions[offerId];
         assert (_isOffer(offer));
         require (msg.sender == offer.transferTo || msg.sender == owner); //only owner or service provider can reactivate the offer.
@@ -820,7 +851,7 @@ contract SubscriptionModuleImpl is SubscriptionModule, Owned  {
     ///        During hold time a subscription preserve remaining paid time period, which becomes available after unhold.
     ///@return `true` on success; `false` of failure (if caller is a contract) or throw an exception (if caller is not a contract)
     //
-    function holdSubscription(uint subId) public noReentrancy(L04) returns (bool success) {
+    function holdSubscription(uint subId) public notSuspended noReentrancy(L04) returns (bool success) {
         Subscription storage sub = subscriptions[subId];
         assert (_isSubscription(sub));
         var _to = sub.transferTo;
@@ -843,7 +874,7 @@ contract SubscriptionModuleImpl is SubscriptionModule, Owned  {
     ///        During hold time a subscription preserve remaining paid time period, which becomes available after unhold.
     ///@return `true` on success; `false` of failure (if caller is a contract) or throw an exception (if caller is not a contract)
     //
-    function unholdSubscription(uint subId) public noReentrancy(L05) returns (bool success) {
+    function unholdSubscription(uint subId) public notSuspended noReentrancy(L05) returns (bool success) {
         Subscription storage sub = subscriptions[subId];
         assert (_isSubscription(sub));
         var _to = sub.transferTo;
@@ -870,7 +901,7 @@ contract SubscriptionModuleImpl is SubscriptionModule, Owned  {
     ///        Customer can anyway collect his deposit after `paidUntil` period is over.
     ///@param subId - subscription holding the deposit
     //
-    function returnSubscriptionDesposit(uint subId) public {
+    function returnSubscriptionDesposit(uint subId) public notSuspended {
         Subscription storage sub = subscriptions[subId];
         assert (_subscriptionState(sub) == SubState.CANCELED);
         assert (sub.depositAmount > 0); //sanity check
@@ -884,7 +915,7 @@ contract SubscriptionModuleImpl is SubscriptionModule, Owned  {
     ///        Customer can anyway collect his deposit after `paidUntil` period is over.
     ///@param subId - subscription holding the deposit
     //
-    function claimSubscriptionDeposit(uint subId) public {
+    function claimSubscriptionDeposit(uint subId) public notSuspended {
         Subscription storage sub = subscriptions[subId];
         assert (_subscriptionState(sub) == SubState.EXPIRED);
         assert (sub.transferFrom == msg.sender);
@@ -910,15 +941,17 @@ contract SubscriptionModuleImpl is SubscriptionModule, Owned  {
     ///        Service Provider should reject deposit with unknown descriptor, because most probably it is in use for some another service.
     ///@return depositId - a handle to claim back the deposit later.
     //
-    function createDeposit(uint _value, bytes _descriptor) public returns (uint depositId) {
+    function createDeposit(uint _value, uint _lockTime, bytes _descriptor) public notSuspended returns (uint depositId) {
         require (_value > 0);
         assert (san._burnForDeposit(msg.sender,_value));
         deposits[++depositCounter] = Deposit ({
             owner : msg.sender,
             value : _value,
+            createdOn : now,
+            lockTime : _lockTime,
             descriptor : _descriptor
         });
-        NewDeposit(depositCounter, _value, msg.sender);
+        NewDeposit(depositCounter, _value, _lockTime, msg.sender);
         return depositCounter;
     }
 
@@ -927,9 +960,10 @@ contract SubscriptionModuleImpl is SubscriptionModule, Owned  {
     ///        The service provider is responsible to check the deposit before providing the service.
     ///@param _depositId - an id of the deposit to be collected.
     //
-    function claimDeposit(uint _depositId) public {
+    function claimDeposit(uint _depositId) public notSuspended {
         var deposit = deposits[_depositId];
         require (deposit.owner == msg.sender);
+        assert (deposit.lockTime == 0 || deposit.createdOn +  deposit.lockTime < now);
         var value = deposits[_depositId].value;
         delete deposits[_depositId];
         san._mintFromDeposit(msg.sender, value);
@@ -970,6 +1004,11 @@ contract SubscriptionModuleImpl is SubscriptionModule, Owned  {
 
     modifier onlyRegisteredProvider(){
         if (!providerRegistry[msg.sender]) throw;
+        _;
+    }
+
+    modifier notSuspended {
+        if (suspendedUntil > now) throw;
         _;
     }
 
