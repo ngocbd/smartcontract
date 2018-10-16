@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etheroll at 0xf0cfB6e33aF9A0bBF70b37662C0f5B3C7483B16D
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Etheroll at 0x77d7536EB289F61C47C728142Bda4da54cA9C71F
 */
 //just updated the encrypted api key
 //updated contractBalance -= 57245901639344;
@@ -1333,7 +1333,6 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
     uint public maxPendingPayouts;
     uint public costToCallOraclizeInWei;
     uint public totalWeiWon;
-    uint public totalWeiWagered;    
 
     /*
      * player vars
@@ -1399,7 +1398,6 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
 	{        
         
         /* safely update contract balance to account for cost to call oraclize*/
-        //todo - update in live contract
         contractBalance = safeSub(contractBalance, oraclize_getPrice("URL", 235000));
 
         /*
@@ -1407,8 +1405,10 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
         * only the apiKey is encrypted 
         * integer query is in plain text
         */
-        bytes32 rngId = oraclize_query("nested", "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random[\"serialNumber\",\"data\"]', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BG0h2Eq52kQGHpizBkhqFa5eOiyQYblrxW86+7PvZ+aoyZAnNn10qTPEdl0859NmNCR4T156AnmbNiQVzgek+5hBod7JK1JBDxyWbWQzBlZnRsOMJbVPWvwpy92sc3z62xepI8Dp/pHnYOR/aER+Z21A9C+vxAE=},\"n\":1,\"min\":1,\"max\":100,\"replacement\":true,\"base\":10${[identity] \"}\"},\"id\":1${[identity] \"}\"}']", gasForOraclize);
+        bytes32 rngId = oraclize_query("nested", "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random[\"serialNumber\",\"data\"]', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BHj7ngJtNNHD286q2h43E4WAsH5zo0N4YnhTFSgR5/L2p6sFXub8on2ikpTBt3BZoMzm57LzGjap0KMNRAa1KQ6nmLVd5G8S43mOPPs3IFwyJnJnzgp6bNyEm90HbxUhKzfjSgIO8Eak4AL6/ha0kHcyanAdUEo=},\"n\":1,\"min\":1,\"max\":100,\"replacement\":true,\"base\":10${[identity] \"}\"},\"id\":1${[identity] \"}\"}']", gasForOraclize);
         	        
+        /* total number of bets */
+        //totalBets += 1;
         /* map bet id to this oraclize query */
 		playerBetId[rngId] = rngId;
         /* map player lucky number to this oraclize query */
@@ -1440,14 +1440,6 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
 
         /* player address mapped to query id does not exist */
         if (playerAddress[myid]==0x0) throw;
-
-        /* total number of bets */
-        //todo - update in live contract
-        totalBets += 1;
-
-        /* total wagered */
-        //todo - update in live contract
-        totalWeiWagered += playerBetValue[myid];    
         
         /* keep oraclize honest by retrieving the serialNumber from random.org result */
         var sl_result = result.toSlice();
@@ -1627,11 +1619,11 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
     	gasForOraclize = newSafeGasToOraclize;
     }
 
-    /* only owner adjust contract balance variable (only used for max profit calc) */
-    function ownerUpdateContractBalance(uint newContractBalanceInWei) public 
+    /* set house cost to call oraclize query */
+    function ownerUpdateCostToCallOraclize(uint newCostToCallOraclizeInWei) public 
 		onlyOwner
     {        
-       contractBalance = newContractBalanceInWei;
+       costToCallOraclizeInWei = newCostToCallOraclizeInWei;
     }     
 
     /* only owner address can set houseEdge */
@@ -1722,8 +1714,7 @@ contract Etheroll is usingOraclize, DSSafeAddSub {
 		onlyOwner
 	{
 		suicide(owner);
-	}  
-      
+	}    
 
 
 }
