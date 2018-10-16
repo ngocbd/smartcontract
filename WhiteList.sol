@@ -1,14 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WhiteList at 0x9411cf70f97c2ed09325e58629d48401aed50f89
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WhiteList at 0x7dcb72ad13f89a3e6a97943073b03e65935e976e
 */
 pragma solidity ^0.4.11;
 contract WhiteList {
-    string public constant VERSION = "0.1.1";
+    string public constant VERSION = "0.1.0";
 
     mapping(address=>bool) public contains;
-    uint public chunkNr = 0;
-    uint public recordNr=0;
-    uint public controlSum = 0;
+    uint16  public chunkNr = 0;
+    uint256 public controlSum = 0;
     bool public isSetupMode = true;
     address admin = msg.sender;
 
@@ -23,7 +22,6 @@ contract WhiteList {
             contains[addrs[i]] = true;
             controlSum += uint160(addrs[i]);
         }
-        recordNr += addrs.length;
     }
 
     //disable setup mode
