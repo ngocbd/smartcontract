@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UnicornRefunds at 0x2f490751589db68f3c406bf9c14c95ec7fa26840
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UnicornRefunds at 0xcef8feebbdc278c0c81e07b87abf96b22d08fa6e
 */
 pragma solidity ^0.4.11;
 
@@ -73,17 +73,12 @@ contract UnicornRefunds {
 
   event RewardClaimed(address indexed _who, uint _bookingIndex);
   event UnicornsSold(address indexed _who, uint _unicornCount, uint _unicornCost, uint _paymentTotal);
-  event DonationReceived(address indexed _who, uint _amount, uint _allowanceEarned);
 
   modifier onlyOwner {
     require(msg.sender == owner);
     _;
   }
   
-  function getAllowedAmount(address _who) constant returns (uint _amount) {
-    return allowedAmounts[_who];
-  }
-
   function claimReward(uint _bookingIndex) {
     UnicornRanch ranch = UnicornRanch(unicornRanchAddress);
     var (unicornCount, visitType, , , state, , completedCount) = ranch.getBooking(msg.sender, _bookingIndex);
@@ -108,15 +103,11 @@ contract UnicornRefunds {
     cardboardUnicorns.transferFrom(msg.sender, owner, _unicornCount); // Transfer the actual asset
     uint total = pricePerUnicorn.mul(_unicornCount);
     msg.sender.transfer(total);
-    
     UnicornsSold(msg.sender, _unicornCount, pricePerUnicorn, total);
   }
   
   function() payable {
-    uint count = (msg.value).div(pricePerUnicorn);
-    allowedAmounts[msg.sender] = allowedAmounts[msg.sender].add(count);
-    
-    DonationReceived(msg.sender, msg.value, count);
+    // Thanks for the donation!
   }
   
   /**
