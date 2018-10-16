@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KRWT at 0x040a05e50007873f8d527b2e4e63c41bf723665d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KRWT at 0x8e629f8ec677b05052538b18b0fff50b04bc8bd5
 */
 pragma solidity ^0.4.21;
 
@@ -413,11 +413,11 @@ contract ERC827Token is ERC827, StandardToken {
 
 }
 
-contract KRWT is StandardToken, MintableToken, BurnableToken, PausableToken, ERC827Token {
+contract KRWT is  StandardToken {
     string constant public name = "Korean Won";
     string constant public symbol = "KRWT";
     uint8 constant public decimals = 8;
-    uint public totalSupply_ = 100000000000 * 10**uint(decimals);
+    uint public totalSupply = 100000000000 * 10**uint(decimals);
 
     /* This generates a public event on the blockchain that will notify clients */
     event Transfer(address indexed from, address indexed to, uint256 value);
@@ -428,8 +428,7 @@ contract KRWT is StandardToken, MintableToken, BurnableToken, PausableToken, ERC
     uint256 public constant INITIAL_SUPPLY = 100000000000 * (10 ** uint256(decimals));
 
     function KWRT () public {
-        balances[msg.sender] = totalSupply_;
-        emit Transfer(address(0),0x8aF2D2E23f0913AF81ABc6CcAA6200c945A161B4, totalSupply_);
+        balances[msg.sender] = totalSupply;
         totalSupply_ = INITIAL_SUPPLY;
         balances[msg.sender] = INITIAL_SUPPLY;
         emit Transfer(0x0, msg.sender, INITIAL_SUPPLY);
