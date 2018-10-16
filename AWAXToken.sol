@@ -1,24 +1,25 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AWAXToken at 0x2e728224429ed5cf9bc564f5d9632e73f8f44745
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AWAXToken at 0x10d3b05468f384258630e4fe142c830efe4120ca
 */
 pragma solidity ^0.4.16;
 
 contract AWAXToken {
     string public name;
     string public symbol;
-    uint8 public decimals = 8;
+    uint8 public decimals = 18;
     uint256 public totalSupply;
 
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
 
     event Transfer(address indexed from, address indexed to, uint256 value);
+    event Burn(address indexed from, uint256 value);
 
-    function AWAXToken() public {
-        totalSupply = 30000000000 * 10 ** uint256(decimals); 
-        balanceOf[msg.sender] = totalSupply;                
-        name = "AWAX Token";                                   
-        symbol = "AWAX";                               
+    constructor() public {
+        totalSupply = 30000000000 * 10 ** uint256(decimals);
+        balanceOf[msg.sender] = totalSupply;
+        name = "AWAX";
+        symbol = "AWAX";
     }
 
     function _transfer(address _from, address _to, uint _value) internal {
@@ -28,7 +29,7 @@ contract AWAXToken {
         uint previousBalances = balanceOf[_from] + balanceOf[_to];
         balanceOf[_from] -= _value;
         balanceOf[_to] += _value;
-        Transfer(_from, _to, _value);
+        emit Transfer(_from, _to, _value);
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
 
@@ -37,15 +38,32 @@ contract AWAXToken {
     }
 
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(_value <= allowance[_from][msg.sender]);
+        require(_value <= allowance[_from][msg.sender]);     
         allowance[_from][msg.sender] -= _value;
         _transfer(_from, _to, _value);
         return true;
     }
 
-    function approve(address _spender, uint256 _value) public
-        returns (bool success) {
+    function approve(address _spender, uint256 _value) public returns (bool success) {
         allowance[msg.sender][_spender] = _value;
+        return true;
+    }
+
+    function burn(uint256 _value) public returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);   
+        balanceOf[msg.sender] -= _value;            
+        totalSupply -= _value;                      
+        emit Burn(msg.sender, _value);
+        return true;
+    }
+
+    function burnFrom(address _from, uint256 _value) public returns (bool success) {
+        require(balanceOf[_from] >= _value);                
+        require(_value <= allowance[_from][msg.sender]);    
+        balanceOf[_from] -= _value;                         
+        allowance[_from][msg.sender] -= _value;             
+        totalSupply -= _value;                              
+        emit Burn(_from, _value);
         return true;
     }
 }
