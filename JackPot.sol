@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JackPot at 0xB61fb596B0cC9FA829d678eb0B8a0e058c3f1b91
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JackPot at 0x6CaFdC06177F6f4B4B4638c987397b07Cd948aed
 */
 contract JackPot {
     address public host;
 	uint minAmount;
     uint[] public contributions;
     address[] public contributors;
-	uint public numPlayers = 0;
+	uint public numPlayers;
 	uint public nextDraw;
-	bytes32 seedHash;
+	bytes32 public seedHash;
 	bytes32 random;	
 
     struct Win {
@@ -19,7 +19,7 @@ contract JackPot {
     }
 
     Win[] public recentWins;
-    uint recentWinsCount;
+    uint recentWinsCount = 10;
 	
 	function insert_contribution(address addr, uint value) internal {
 		// check if array needs extending
@@ -48,12 +48,11 @@ contract JackPot {
     }
 	
 	function JackPot() {
-
         host = msg.sender;
-		seedHash = sha3(1111);
+		seedHash = sha3('aaaa');
 		minAmount = 10 * 1 finney;
         recentWinsCount = 10;
-		nextDraw = 1234; // Initialize to start time of the block
+		nextDraw = 1234;
     }
 
     function() {
@@ -84,28 +83,29 @@ contract JackPot {
     }
 	
 	//drawPot triggered from Host after time has passed or pot is matured.
-	function drawPot(bytes32 seed, bytes32 newSeed) {
+	function drawPot(string seed, string newSeed) {
 		if(msg.sender != host) throw;
-		
-		// check that seed given is the same as the seedHash so operators of jackpot can not cheat 
 		if (sha3(seed) == seedHash) {
+			
+			// Initialize seedHash for next draw
 			seedHash = sha3(newSeed);
 			// Choose a winner using the seed as random
-            uint winner_index = selectWinner(seed);
+			uint winner_index = selectWinner(seed);
 
-            // Send the developer a 1% fee
-            host.send(this.balance / 100);
+			// Send the developer a 1% fee
+			host.send(this.balance / 100);
 			
 			uint amountWon = this.balance; 
 			
-            // Send the winner the remaining balance on the contract.
-            contributors[winner_index].send(this.balance);
+			// Send the winner the remaining balance on the contract.
+			contributors[winner_index].send(this.balance);
 			
 			// Make a note that someone won, then start all over!
-            recordWin(winner_index, amountWon);
+			recordWin(winner_index, amountWon);
 
-            reset();
+			reset();
 			nextDraw = now + 7 days;	
+
 		}
 	}
 
@@ -115,7 +115,7 @@ contract JackPot {
 	}
 	
 	
-    function selectWinner(bytes32 seed) internal returns (uint winner_index) {
+    function selectWinner(string seed) internal returns (uint winner_index) {
 
         uint semirandom = uint(sha3(random, seed)) % this.balance;
         for(uint i = 0; i < numPlayers; ++i) {
