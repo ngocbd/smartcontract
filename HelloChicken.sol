@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HelloChicken at 0x4dc6d9a5d03e3ccee4d4f01c41d242dbd780eae3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HelloChicken at 0x1a1759d929041ec22a826edc71e60b4b4ec856e0
 */
 pragma solidity ^0.4.18;
 
@@ -9,9 +9,9 @@ contract HelloChicken {
 
   string public constant name = "Chicken";
   string public constant symbol = "CHK";
-  uint256 public constant decimals = 0;
 
   uint256 totalSupply_;
+  uint256 dailyLimit_;
 
   mapping(address => uint256) balances_;
   mapping(address => uint256) lastDay_;
@@ -19,6 +19,7 @@ contract HelloChicken {
 
   function Chicken() public {
     totalSupply_ = 0;
+    dailyLimit_ = 5;
   }
 
   function underLimit(uint256 _value) internal returns (bool) {
@@ -26,7 +27,7 @@ contract HelloChicken {
       spentToday_[msg.sender] = 0;
       lastDay_[msg.sender] = today();
     }
-    if (spentToday_[msg.sender] + _value >= spentToday_[msg.sender] && spentToday_[msg.sender] + _value <= 5) {
+    if (spentToday_[msg.sender] + _value >= spentToday_[msg.sender] && spentToday_[msg.sender] + _value <= dailyLimit_) {
       spentToday_[msg.sender] += _value;
       return true;
     }
