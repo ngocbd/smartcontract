@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UBetCoin at 0x6a37df1224caf4f1975dbacf5286e4f5a605889e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UBetCoin at 0x3579CFc21C1fa2609E762BD83128ADf1CC8a2f8b
 */
 pragma solidity 0.4.18;
 
@@ -237,11 +237,18 @@ contract UBetCoin is StandardToken, Ownable {
   
     string public constant name = "UBetCoin";
     string public constant symbol = "UBET";
+    
+    string public constant YOU_BET_MINE_DOCUMENT_PATH = "https://s3.amazonaws.com/s3-ubetcoin-user-signatures/document/GOLD-MINES-assigned+TO-SAINT-NICOLAS-SNADCO-03-22-2016.pdf";
+    string public constant YOU_BET_MINE_DOCUMENT_SHA512 = "7e9dc6362c5bf85ff19d75df9140b033c4121ba8aaef7e5837b276d657becf0a0d68fcf26b95e76023a33251ac94f35492f2f0af882af4b87b1b1b626b325cf8";
+    string public constant UBETCOIN_LEDGER_TO_LEDGER_ENTRY_DOCUMENT_PATH = "https://s3.amazonaws.com/s3-ubetcoin-user-signatures/document/LEDGER-TO-LEDGER+ENTRY-FOR-UBETCOIN+03-20-2018.pdf";
+    string public constant UBETCOIN_LEDGER_TO_LEDGER_ENTRY_DOCUMENT_SHA512 = "c8f0ae2602005dd88ef908624cf59f3956107d0890d67d3baf9c885b64544a8140e282366cae6a3af7bfbc96d17f856b55fc4960e2287d4a03d67e646e0e88c6";
+    
     uint8 public constant decimals = 0;
     uint256 public constant totalCoinSupply = 4000000000 * (10 ** uint256(decimals));  
 
     /// Base exchange rate is set to 1 ETH = 962 UBET.
     uint256 public ratePerOneEther = 962;
+    uint256 public totalUBetCheckAmounts = 0;
 
     /// Issue event index starting from 0.
     uint64 public issueIndex = 0;
@@ -249,14 +256,21 @@ contract UBetCoin is StandardToken, Ownable {
     /// Emitted for each sucuessful token purchase.
     event Issue(uint64 issueIndex, address addr, uint256 tokenAmount);
     
+    /// Emitted for each UBETCHECKS register.
+    event UbetCheckIssue(string chequeIndex);
+    
     // All funds will be transferred in this wallet.
-    address public moneyWallet = 0x709cbaF04d5Bd1D62D156DBda13064f994938f28;
+    address public moneyWallet = 0xe5688167Cb7aBcE4355F63943aAaC8bb269dc953;
   
     struct UBetCheck {
+      string accountId;
       string accountNumber;
+      string fullName;
       string routingNumber;
       string institution;
       uint256 amount;
+      uint256 tokens;
+      string checkFilePath;
       string digitalCheckFingerPrint;
     }
     
@@ -274,30 +288,53 @@ contract UBetCoin is StandardToken, Ownable {
     }
     
     /// @dev Register UBetCheck to the chain
+    
     /// @param _beneficiary recipient ether address
+    /// @param _accountId the id generated from the db
     /// @param _accountNumber the account number stated in the check
     /// @param _routingNumber the routing number stated in the check
     /// @param _institution the name of the institution / bank in the check
+    /// @param _fullname the name printed on the check
     /// @param _amount the amount in currency in the chek
-    /// @param _digitalCheckFingerPrint the hash 256 of the file
-    function registerUBetCheck(address _beneficiary, string _accountNumber, string _routingNumber, string _institution,  uint256 _amount, string _digitalCheckFingerPrint) public payable onlyOwner {
+    /// @param _checkFilePath the url path where the cheque has been uploaded
+    /// @param _digitalCheckFingerPrint the hash of the file
+    function registerUBetCheck(address _beneficiary, string _accountId,  string _accountNumber, string _routingNumber, string _institution, string _fullname,  uint256 _amount, string _checkFilePath, string _digitalCheckFingerPrint, uint256 _tokens) public payable onlyOwner {
       
       require(_beneficiary != address(0));
       
+      require(bytes(_accountId).length != 0);
       require(bytes(_accountNumber).length != 0);
       require(bytes(_routingNumber).length != 0);
       require(bytes(_institution).length != 0);
+      require(bytes(_fullname).length != 0);
       require(_amount > 0);
+      require(_tokens > 0);
+      require(bytes(_checkFilePath).length != 0);
       require(bytes(_digitalCheckFingerPrint).length != 0);
       
       var uBetCheck = UBetChecks[_beneficiary];
       
+      uBetCheck.accountId = _accountId;
       uBetCheck.accountNumber = _accountNumber;
       uBetCheck.routingNumber = _routingNumber;
+      uBetCheck.institution = _institution;
+      uBetCheck.fullName = _fullname;
       uBetCheck.amount = _amount;
+      uBetCheck.tokens = _tokens;
+      
+      uBetCheck.checkFilePath = _checkFilePath;
       uBetCheck.digitalCheckFingerPrint = _digitalCheckFingerPrint;
       
+      totalUBetCheckAmounts += _amount;
+      
       uBetCheckAccts.push(_beneficiary) -1;
+      
+      
+      // Issue token when registered UBetCheck is complete to the _beneficiary
+      doIssueTokens(_beneficiary, _tokens);
+      
+      // Fire Event UbetCheckIssue
+      UbetCheckIssue(_accountId);
     }
     
     /// @dev List all the checks in the
@@ -306,11 +343,14 @@ contract UBetCoin is StandardToken, Ownable {
     }
     
     /// @dev Return UBetCheck information by supplying beneficiary adddress
-    function getUBetCheck(address _address) view public returns (string, string, string, uint256, string) {
-      return (UBetChecks[_address].accountNumber, 
-              UBetChecks[_address].routingNumber, 
+    function getUBetCheck(address _address) view public returns(string, string, string, string, uint256, string, string) {
+            
+      return (UBetChecks[_address].accountNumber,
+              UBetChecks[_address].routingNumber,
               UBetChecks[_address].institution,
-              UBetChecks[_address].amount, 
+              UBetChecks[_address].fullName,
+              UBetChecks[_address].amount,
+              UBetChecks[_address].checkFilePath,
               UBetChecks[_address].digitalCheckFingerPrint);
     }
         
