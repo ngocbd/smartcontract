@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TKRToken at 0xb45a50545beeab73f38f31e5973768c421805e5e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TKRToken at 0x08f63c012Ad7A1CfAaDDd401a34c5e8E31167a55
 */
 pragma solidity ^0.4.11;
 
