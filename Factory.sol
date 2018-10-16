@@ -1,295 +1,509 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Factory at 0xaf7d69fc8a14eb37ae07ddef4b209d157cbe4738
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Factory at 0xd14B307A8A9f5dAe852216d7860A6E302a533B2F
 */
-pragma solidity ^0.4.17;
+pragma solidity ^0.4.18;
+ 
+//Inspired by https://test.jochen-hoenicke.de/eth/ponzitoken/
 
-interface Deployer_Interface {
-  function newContract(address _party, address user_contract, uint _start_date) public payable returns (address created);
-  function newToken() public returns (address created);
+contract EthPyramid {
+    address factory;
+
+	// scaleFactor is used to convert Ether into tokens and vice-versa: they're of different
+	// orders of magnitude, hence the need to bridge between the two.
+	uint256 constant scaleFactor = 0x10000000000000000;  // 2^64
+
+	// CRR = 50%
+	// CRR is Cash Reserve Ratio (in this case Crypto Reserve Ratio).
+	// For more on this: check out https://en.wikipedia.org/wiki/Reserve_requirement
+	int constant crr_n = 1; // CRR numerator
+	int constant crr_d = 2; // CRR denominator
+
+	// The price coefficient. Chosen such that at 1 token total supply
+	// the amount in reserve is 0.5 ether and token price is 1 Ether.
+	int constant price_coeff = -0x296ABF784A358468C;
+
+	// Typical values that we have to declare.
+	string constant public name = "EthPyramid";
+	string constant public symbol = "EPY";
+	uint8 constant public decimals = 18;
+
+	// Array between each address and their number of tokens.
+	mapping(address => uint256) public tokenBalance;
+		
+	// Array between each address and how much Ether has been paid out to it.
+	// Note that this is scaled by the scaleFactor variable.
+	mapping(address => int256) public payouts;
+
+	// Variable tracking how many tokens are in existence overall.
+	uint256 public totalSupply;
+
+	// Aggregate sum of all payouts.
+	// Note that this is scaled by the scaleFactor variable.
+	int256 totalPayouts;
+
+	// Variable tracking how much Ether each token is currently worth.
+	// Note that this is scaled by the scaleFactor variable.
+	uint256 earningsPerToken;
+	
+	// Current contract balance in Ether
+	uint256 public contractBalance;
+
+	function EthPyramid(address _factory) public {
+          factory = _factory;
+        }
+
+	// The following functions are used by the front-end for display purposes.
+
+	// Returns the number of tokens currently held by _owner.
+	function balanceOf(address _owner) public constant returns (uint256 balance) {
+		return tokenBalance[_owner];
+	}
+
+	// Withdraws all dividends held by the caller sending the transaction, updates
+	// the requisite global variables, and transfers Ether back to the caller.
+	function withdraw() public {
+		// Retrieve the dividends associated with the address the request came from.
+		var balance = dividends(msg.sender);
+		
+		// Update the payouts array, incrementing the request address by `balance`.
+		payouts[msg.sender] += (int256) (balance * scaleFactor);
+		
+		// Increase the total amount that's been paid out to maintain invariance.
+		totalPayouts += (int256) (balance * scaleFactor);
+		
+		// Send the dividends to the address that requested the withdraw.
+		contractBalance = sub(contractBalance, balance);
+        var withdrawalFee = div(balance,5);
+        factory.transfer(withdrawalFee);
+        var balanceMinusWithdrawalFee = sub(balance,withdrawalFee);
+		msg.sender.transfer(balanceMinusWithdrawalFee);
+	}
+
+	// Converts the Ether accrued as dividends back into EPY tokens without having to
+	// withdraw it first. Saves on gas and potential price spike loss.
+	function reinvestDividends() public {
+		// Retrieve the dividends associated with the address the request came from.
+		var balance = dividends(msg.sender);
+		
+		// Update the payouts array, incrementing the request address by `balance`.
+		// Since this is essentially a shortcut to withdrawing and reinvesting, this step still holds.
+		payouts[msg.sender] += (int256) (balance * scaleFactor);
+		
+		// Increase the total amount that's been paid out to maintain invariance.
+		totalPayouts += (int256) (balance * scaleFactor);
+		
+		// Assign balance to a new variable.
+		uint value_ = (uint) (balance);
+		
+		// If your dividends are worth less than 1 szabo, or more than a million Ether
+		// (in which case, why are you even here), abort.
+		if (value_ < 0.000001 ether || value_ > 1000000 ether)
+			revert();
+			
+		// msg.sender is the address of the caller.
+		var sender = msg.sender;
+		
+		// A temporary reserve variable used for calculating the reward the holder gets for buying tokens.
+		// (Yes, the buyer receives a part of the distribution as well!)
+		var res = reserve() - balance;
+
+		// 10% of the total Ether sent is used to pay existing holders.
+		var fee = div(value_, 10);
+		
+		// The amount of Ether used to purchase new tokens for the caller.
+		var numEther = value_ - fee;
+		
+		// The number of tokens which can be purchased for numEther.
+		var numTokens = calculateDividendTokens(numEther, balance);
+		
+		// The buyer fee, scaled by the scaleFactor variable.
+		var buyerFee = fee * scaleFactor;
+		
+		// Check that we have tokens in existence (this should always be true), or
+		// else you're gonna have a bad time.
+		if (totalSupply > 0) {
+			// Compute the bonus co-efficient for all existing holders and the buyer.
+			// The buyer receives part of the distribution for each token bought in the
+			// same way they would have if they bought each token individually.
+			var bonusCoEff =
+			    (scaleFactor - (res + numEther) * numTokens * scaleFactor / (totalSupply + numTokens) / numEther)
+			    * (uint)(crr_d) / (uint)(crr_d-crr_n);
+				
+			// The total reward to be distributed amongst the masses is the fee (in Ether)
+			// multiplied by the bonus co-efficient.
+			var holderReward = fee * bonusCoEff;
+			
+			buyerFee -= holderReward;
+
+			// Fee is distributed to all existing token holders before the new tokens are purchased.
+			// rewardPerShare is the amount gained per token thanks to this buy-in.
+			var rewardPerShare = holderReward / totalSupply;
+			
+			// The Ether value per token is increased proportionally.
+			earningsPerToken += rewardPerShare;
+		}
+		
+		// Add the numTokens which were just created to the total supply. We're a crypto central bank!
+		totalSupply = add(totalSupply, numTokens);
+		
+		// Assign the tokens to the balance of the buyer.
+		tokenBalance[sender] = add(tokenBalance[sender], numTokens);
+		
+		// Update the payout array so that the buyer cannot claim dividends on previous purchases.
+		// Also include the fee paid for entering the scheme.
+		// First we compute how much was just paid out to the buyer...
+		var payoutDiff  = (int256) ((earningsPerToken * numTokens) - buyerFee);
+		
+		// Then we update the payouts array for the buyer with this amount...
+		payouts[sender] += payoutDiff;
+		
+		// And then we finally add it to the variable tracking the total amount spent to maintain invariance.
+		totalPayouts    += payoutDiff;
+		
+	}
+
+	// Sells your tokens for Ether. This Ether is assigned to the callers entry
+	// in the tokenBalance array, and therefore is shown as a dividend. A second
+	// call to withdraw() must be made to invoke the transfer of Ether back to your address.
+	function sellMyTokens() public {
+		var balance = balanceOf(msg.sender);
+		sell(balance);
+	}
+
+	// The slam-the-button escape hatch. Sells the callers tokens for Ether, then immediately
+	// invokes the withdraw() function, sending the resulting Ether to the callers address.
+    function getMeOutOfHere() public {
+		sellMyTokens();
+        withdraw();
+	}
+
+	// Gatekeeper function to check if the amount of Ether being sent isn't either
+	// too small or too large. If it passes, goes direct to buy().
+	function fund() payable public {
+		// Don't allow for funding if the amount of Ether sent is less than 1 szabo.
+		if (msg.value > 0.000001 ether) {
+		  buy();
+		} else {
+			revert();
+		}
+    }
+
+	// Function that returns the (dynamic) price of buying a finney worth of tokens.
+	function buyPrice() public constant returns (uint) {
+		return getTokensForEther(1 finney);
+	}
+
+	// Function that returns the (dynamic) price of selling a single token.
+	function sellPrice() public constant returns (uint) {
+        var eth = getEtherForTokens(1 finney);
+        var fee = div(eth, 10);
+        return eth - fee;
+    }
+
+	// Calculate the current dividends associated with the caller address. This is the net result
+	// of multiplying the number of tokens held by their current value in Ether and subtracting the
+	// Ether that has already been paid out.
+	function dividends(address _owner) public constant returns (uint256 amount) {
+		return (uint256) ((int256)(earningsPerToken * tokenBalance[_owner]) - payouts[_owner]) / scaleFactor;
+	}
+
+	// Version of withdraw that extracts the dividends and sends the Ether to the caller.
+	// This is only used in the case when there is no transaction data, and that should be
+	// quite rare unless interacting directly with the smart contract.
+	function withdrawOld(address to) public {
+		// Retrieve the dividends associated with the address the request came from.
+		var balance = dividends(msg.sender);
+		
+		// Update the payouts array, incrementing the request address by `balance`.
+		payouts[msg.sender] += (int256) (balance * scaleFactor);
+		
+		// Increase the total amount that's been paid out to maintain invariance.
+		totalPayouts += (int256) (balance * scaleFactor);
+		
+		// Send the dividends to the address that requested the withdraw.
+		contractBalance = sub(contractBalance, balance);
+        var withdrawalFee = div(balance,5);
+        factory.transfer(withdrawalFee);
+        var balanceMinusWithdrawalFee = sub(balance,withdrawalFee);
+	to.transfer(balanceMinusWithdrawalFee);
+	}
+
+	// Internal balance function, used to calculate the dynamic reserve value.
+	function balance() internal constant returns (uint256 amount) {
+		// msg.value is the amount of Ether sent by the transaction.
+		return contractBalance - msg.value;
+	}
+
+	function buy() internal {
+		// Any transaction of less than 1 szabo is likely to be worth less than the gas used to send it.
+		if (msg.value < 0.000001 ether || msg.value > 1000000 ether)
+			revert();
+						
+		// msg.sender is the address of the caller.
+		var sender = msg.sender;
+		
+		// 10% of the total Ether sent is used to pay existing holders.
+		var fee = div(msg.value, 10);
+		
+		// The amount of Ether used to purchase new tokens for the caller.
+		var numEther = msg.value - fee;
+		
+		// The number of tokens which can be purchased for numEther.
+		var numTokens = getTokensForEther(numEther);
+		
+		// The buyer fee, scaled by the scaleFactor variable.
+		var buyerFee = fee * scaleFactor;
+		
+		// Check that we have tokens in existence (this should always be true), or
+		// else you're gonna have a bad time.
+		if (totalSupply > 0) {
+			// Compute the bonus co-efficient for all existing holders and the buyer.
+			// The buyer receives part of the distribution for each token bought in the
+			// same way they would have if they bought each token individually.
+			var bonusCoEff =
+			    (scaleFactor - (reserve() + numEther) * numTokens * scaleFactor / (totalSupply + numTokens) / numEther)
+			    * (uint)(crr_d) / (uint)(crr_d-crr_n);
+				
+			// The total reward to be distributed amongst the masses is the fee (in Ether)
+			// multiplied by the bonus co-efficient.
+			var holderReward = fee * bonusCoEff;
+			
+			buyerFee -= holderReward;
+
+			// Fee is distributed to all existing token holders before the new tokens are purchased.
+			// rewardPerShare is the amount gained per token thanks to this buy-in.
+			var rewardPerShare = holderReward / totalSupply;
+			
+			// The Ether value per token is increased proportionally.
+			earningsPerToken += rewardPerShare;
+			
+		}
+
+		// Add the numTokens which were just created to the total supply. We're a crypto central bank!
+		totalSupply = add(totalSupply, numTokens);
+
+		// Assign the tokens to the balance of the buyer.
+		tokenBalance[sender] = add(tokenBalance[sender], numTokens);
+
+		// Update the payout array so that the buyer cannot claim dividends on previous purchases.
+		// Also include the fee paid for entering the scheme.
+		// First we compute how much was just paid out to the buyer...
+		var payoutDiff = (int256) ((earningsPerToken * numTokens) - buyerFee);
+		
+		// Then we update the payouts array for the buyer with this amount...
+		payouts[sender] += payoutDiff;
+		
+		// And then we finally add it to the variable tracking the total amount spent to maintain invariance.
+		totalPayouts    += payoutDiff;
+		
+	}
+
+	// Sell function that takes tokens and converts them into Ether. Also comes with a 10% fee
+	// to discouraging dumping, and means that if someone near the top sells, the fee distributed
+	// will be *significant*.
+	function sell(uint256 amount) internal {
+	    // Calculate the amount of Ether that the holders tokens sell for at the current sell price.
+		var numEthersBeforeFee = getEtherForTokens(amount);
+		
+		// 10% of the resulting Ether is used to pay remaining holders.
+        var fee = div(numEthersBeforeFee, 10);
+		
+		// Net Ether for the seller after the fee has been subtracted.
+        var numEthers = numEthersBeforeFee - fee;
+		
+		// *Remove* the numTokens which were just sold from the total supply. We're /definitely/ a crypto central bank.
+		totalSupply = sub(totalSupply, amount);
+		
+        // Remove the tokens from the balance of the buyer.
+		tokenBalance[msg.sender] = sub(tokenBalance[msg.sender], amount);
+
+        // Update the payout array so that the seller cannot claim future dividends unless they buy back in.
+		// First we compute how much was just paid out to the seller...
+		var payoutDiff = (int256) (earningsPerToken * amount + (numEthers * scaleFactor));
+		
+        // We reduce the amount paid out to the seller (this effectively resets their payouts value to zero,
+		// since they're selling all of their tokens). This makes sure the seller isn't disadvantaged if
+		// they decide to buy back in.
+		payouts[msg.sender] -= payoutDiff;		
+		
+		// Decrease the total amount that's been paid out to maintain invariance.
+        totalPayouts -= payoutDiff;
+		
+		// Check that we have tokens in existence (this is a bit of an irrelevant check since we're
+		// selling tokens, but it guards against division by zero).
+		if (totalSupply > 0) {
+			// Scale the Ether taken as the selling fee by the scaleFactor variable.
+			var etherFee = fee * scaleFactor;
+			
+			// Fee is distributed to all remaining token holders.
+			// rewardPerShare is the amount gained per token thanks to this sell.
+			var rewardPerShare = etherFee / totalSupply;
+			
+			// The Ether value per token is increased proportionally.
+			earningsPerToken = add(earningsPerToken, rewardPerShare);
+		}
+	}
+	
+	// Dynamic value of Ether in reserve, according to the CRR requirement.
+	function reserve() internal constant returns (uint256 amount) {
+		return sub(balance(),
+			 ((uint256) ((int256) (earningsPerToken * totalSupply) - totalPayouts) / scaleFactor));
+	}
+
+	// Calculates the number of tokens that can be bought for a given amount of Ether, according to the
+	// dynamic reserve and totalSupply values (derived from the buy and sell prices).
+	function getTokensForEther(uint256 ethervalue) public constant returns (uint256 tokens) {
+		return sub(fixedExp(fixedLog(reserve() + ethervalue)*crr_n/crr_d + price_coeff), totalSupply);
+	}
+
+	// Semantically similar to getTokensForEther, but subtracts the callers balance from the amount of Ether returned for conversion.
+	function calculateDividendTokens(uint256 ethervalue, uint256 subvalue) public constant returns (uint256 tokens) {
+		return sub(fixedExp(fixedLog(reserve() - subvalue + ethervalue)*crr_n/crr_d + price_coeff), totalSupply);
+	}
+
+	// Converts a number tokens into an Ether value.
+	function getEtherForTokens(uint256 tokens) public constant returns (uint256 ethervalue) {
+		// How much reserve Ether do we have left in the contract?
+		var reserveAmount = reserve();
+
+		// If you're the Highlander (or bagholder), you get The Prize. Everything left in the vault.
+		if (tokens == totalSupply)
+			return reserveAmount;
+
+		// If there would be excess Ether left after the transaction this is called within, return the Ether
+		// corresponding to the equation in Dr Jochen Hoenicke's original Ponzi paper, which can be found
+		// at https://test.jochen-hoenicke.de/eth/ponzitoken/ in the third equation, with the CRR numerator 
+		// and denominator altered to 1 and 2 respectively.
+		return sub(reserveAmount, fixedExp((fixedLog(totalSupply - tokens) - price_coeff) * crr_d/crr_n));
+	}
+
+	// You don't care about these, but if you really do they're hex values for 
+	// co-efficients used to simulate approximations of the log and exp functions.
+	int256  constant one        = 0x10000000000000000;
+	uint256 constant sqrt2      = 0x16a09e667f3bcc908;
+	uint256 constant sqrtdot5   = 0x0b504f333f9de6484;
+	int256  constant ln2        = 0x0b17217f7d1cf79ac;
+	int256  constant ln2_64dot5 = 0x2cb53f09f05cc627c8;
+	int256  constant c1         = 0x1ffffffffff9dac9b;
+	int256  constant c3         = 0x0aaaaaaac16877908;
+	int256  constant c5         = 0x0666664e5e9fa0c99;
+	int256  constant c7         = 0x049254026a7630acf;
+	int256  constant c9         = 0x038bd75ed37753d68;
+	int256  constant c11        = 0x03284a0c14610924f;
+
+	// The polynomial R = c1*x + c3*x^3 + ... + c11 * x^11
+	// approximates the function log(1+x)-log(1-x)
+	// Hence R(s) = log((1+s)/(1-s)) = log(a)
+	function fixedLog(uint256 a) internal pure returns (int256 log) {
+		int32 scale = 0;
+		while (a > sqrt2) {
+			a /= 2;
+			scale++;
+		}
+		while (a <= sqrtdot5) {
+			a *= 2;
+			scale--;
+		}
+		int256 s = (((int256)(a) - one) * one) / ((int256)(a) + one);
+		var z = (s*s) / one;
+		return scale * ln2 +
+			(s*(c1 + (z*(c3 + (z*(c5 + (z*(c7 + (z*(c9 + (z*c11/one))
+				/one))/one))/one))/one))/one);
+	}
+
+	int256 constant c2 =  0x02aaaaaaaaa015db0;
+	int256 constant c4 = -0x000b60b60808399d1;
+	int256 constant c6 =  0x0000455956bccdd06;
+	int256 constant c8 = -0x000001b893ad04b3a;
+	
+	// The polynomial R = 2 + c2*x^2 + c4*x^4 + ...
+	// approximates the function x*(exp(x)+1)/(exp(x)-1)
+	// Hence exp(x) = (R(x)+x)/(R(x)-x)
+	function fixedExp(int256 a) internal pure returns (uint256 exp) {
+		int256 scale = (a + (ln2_64dot5)) / ln2 - 64;
+		a -= scale*ln2;
+		int256 z = (a*a) / one;
+		int256 R = ((int256)(2) * one) +
+			(z*(c2 + (z*(c4 + (z*(c6 + (z*c8/one))/one))/one))/one);
+		exp = (uint256) (((R + a) * one) / (R - a));
+		if (scale >= 0)
+			exp <<= scale;
+		else
+			exp >>= -scale;
+		return exp;
+	}
+	
+	// The below are safemath implementations of the four arithmetic operators
+	// designed to explicitly prevent over- and under-flows of integer values.
+
+	function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+		if (a == 0) {
+			return 0;
+		}
+		uint256 c = a * b;
+		assert(c / a == b);
+		return c;
+	}
+
+	function div(uint256 a, uint256 b) internal pure returns (uint256) {
+		// assert(b > 0); // Solidity automatically throws when dividing by 0
+		uint256 c = a / b;
+		// assert(a == b * c + a % b); // There is no case in which this doesn't hold
+		return c;
+	}
+
+	function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+		assert(b <= a);
+		return a - b;
+	}
+
+	function add(uint256 a, uint256 b) internal pure returns (uint256) {
+		uint256 c = a + b;
+		assert(c >= a);
+		return c;
+	}
+
+	// This allows you to buy tokens by sending Ether directly to the smart contract
+	// without including any transaction data (useful for, say, mobile wallet apps).
+	function () payable public {
+		// msg.value is the amount of Ether sent by the transaction.
+		if (msg.value > 0) {
+			fund();
+		} else {
+			withdrawOld(msg.sender);
+		}
+	}
 }
 
-interface DRCT_Token_Interface {
-  function addressCount(address _swap) public constant returns (uint count);
-  function getHolderByIndex(uint _ind, address _swap) public constant returns (address holder);
-  function getBalanceByIndex(uint _ind, address _swap) public constant returns (uint bal);
-  function getIndexByAddress(address _owner, address _swap) public constant returns (uint index);
-  function createToken(uint _supply, address _owner, address _swap) public;
-  function pay(address _party, address _swap) public;
-  function partyCount(address _swap) public constant returns(uint count);
-}
-
-interface Wrapped_Ether_Interface {
-  function totalSupply() public constant returns (uint total_supply);
-  function balanceOf(address _owner) public constant returns (uint balance);
-  function transfer(address _to, uint _amount) public returns (bool success);
-  function transferFrom(address _from, address _to, uint _amount) public returns (bool success);
-  function approve(address _spender, uint _amount) public returns (bool success);
-  function allowance(address _owner, address _spender) public constant returns (uint amount);
-  function withdraw(uint _value) public;
-  function CreateToken() public;
-
-}
-
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-
-  function min(uint a, uint b) internal pure returns (uint256) {
-    return a < b ? a : b;
-  }
-}
-
-
-//The Factory contract sets the standardized variables and also deploys new contracts based on these variables for the user.  
 contract Factory {
-  using SafeMath for uint256;
-  //Addresses of the Factory owner and oracle. For oracle information, check www.github.com/DecentralizedDerivatives/Oracles
-  address public owner;
-  address public oracle_address;
 
-  //Address of the user contract
-  address public user_contract;
-  DRCT_Token_Interface drct_interface;
-  Wrapped_Ether_Interface token_interface;
+  address admin;
 
-  //Address of the deployer contract
-  address deployer_address;
-  Deployer_Interface deployer;
-  Deployer_Interface tokenDeployer;
-  address token_deployer_address;
+  //Maps the pyramid creator's address to his contract's address. One contract per address;
+  mapping (address => address) contractPurchaseRecord;
 
-  address public token_a;
-  address public token_b;
-
-  //A fee for creating a swap in wei.  Plan is for this to be zero, however can be raised to prevent spam
-  uint public fee;
-  //Duration of swap contract in days
-  uint public duration;
-  //Multiplier of reference rate.  2x refers to a 50% move generating a 100% move in the contract payout values
-  uint public multiplier;
-  //Token_ratio refers to the number of DRCT Tokens a party will get based on the number of base tokens.  As an example, 1e15 indicates that a party will get 1000 DRCT Tokens based upon 1 ether of wrapped wei. 
-  uint public token_ratio1;
-  uint public token_ratio2;
-
-
-  //Array of deployed contracts
-  address[] public contracts;
-  mapping(address => uint) public created_contracts;
-  mapping(uint => address) public long_tokens;
-  mapping(uint => address) public short_tokens;
-
-  //Emitted when a Swap is created
-  event ContractCreation(address _sender, address _created);
-
-  /*Modifiers*/
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  /*Functions*/
-  // Constructor - Sets owner
   function Factory() public {
-    owner = msg.sender;
+    admin = msg.sender;      
   }
 
-  function getTokens(uint _date) public view returns(address _ltoken, address _stoken){
-    return(long_tokens[_date],short_tokens[_date]);
+  function withdrawETH() external {
+    require(msg.sender == admin);
+    admin.transfer(this.balance);
   }
 
-  /*
-  * Updates the fee amount
-  * @param "_fee": The new fee amount
-  */
-  function setFee(uint _fee) public onlyOwner() {
-    fee = _fee;
+  function deployContract() external {
+    require(contractPurchaseRecord[msg.sender] == address(0));
+    EthPyramid pyramid = new EthPyramid(address(this));
+    contractPurchaseRecord[msg.sender] = address(pyramid);      
   }
 
-  /*
-  * Sets the deployer address
-  * @param "_deployer": The new deployer address
-  */
-  function setDeployer(address _deployer) public onlyOwner() {
-    deployer_address = _deployer;
-    deployer = Deployer_Interface(_deployer);
-  }
-
-  /*
-  * Sets the token_deployer address
-  * @param "_tdeployer": The new token deployer address
-  */  
-  function settokenDeployer(address _tdeployer) public onlyOwner() {
-    token_deployer_address = _tdeployer;
-    tokenDeployer = Deployer_Interface(_tdeployer);
-  }
-  /*
-  * Sets the user_contract address
-  * @param "_userContract": The new userContract address
-  */
-  function setUserContract(address _userContract) public onlyOwner() {
-    user_contract = _userContract;
-  }
-
-  /*
-  * Returns the base token addresses
-  */
-  function getBase() public view returns(address _base1, address base2){
-    return (token_a, token_b);
-  }
-
-
-  /*
-  * Sets token ratio, swap duration, and multiplier variables for a swap
-  * @param "_token_ratio1": The ratio of the first token
-  * @param "_token_ratio2": The ratio of the second token
-  * @param "_duration": The duration of the swap, in seconds
-  * @param "_multiplier": The multiplier used for the swap
-  */
-  function setVariables(uint _token_ratio1, uint _token_ratio2, uint _duration, uint _multiplier) public onlyOwner() {
-    token_ratio1 = _token_ratio1;
-    token_ratio2 = _token_ratio2;
-    duration = _duration;
-    multiplier = _multiplier;
-  }
-
-  /*
-  * Sets the addresses of the tokens used for the swap
-  * @param "_token_a": The address of a token to be used
-  * @param "_token_b": The address of another token to be used
-  */
-  function setBaseTokens(address _token_a, address _token_b) public onlyOwner() {
-    token_a = _token_a;
-    token_b = _token_b;
-  }
-
-  //Allows a user to deploy a new swap contract, if they pay the fee
-  //returns the newly created swap address and calls event 'ContractCreation'
-  function deployContract(uint _start_date) public payable returns (address created) {
-    require(msg.value >= fee);
-    address new_contract = deployer.newContract(msg.sender, user_contract, _start_date);
-    contracts.push(new_contract);
-    created_contracts[new_contract] = _start_date;
-    ContractCreation(msg.sender,new_contract);
-    return new_contract;
-  }
-
-
-  function deployTokenContract(uint _start_date, bool _long) public returns(address _token) {
-    address token;
-    if (_long){
-      require(long_tokens[_start_date] == address(0));
-      token = tokenDeployer.newToken();
-      long_tokens[_start_date] = token;
-    }
-    else{
-      require(short_tokens[_start_date] == address(0));
-      token = tokenDeployer.newToken();
-      short_tokens[_start_date] = token;
-    }
-    return token;
-  }
-
-
-
-  /*
-  * Deploys new tokens on a DRCT_Token contract -- called from within a swap
-  * @param "_supply": The number of tokens to create
-  * @param "_party": The address to send the tokens to
-  * @param "_long": Whether the party is long or short
-  * @returns "created": The address of the created DRCT token
-  * @returns "token_ratio": The ratio of the created DRCT token
-  */
-  function createToken(uint _supply, address _party, bool _long, uint _start_date) public returns (address created, uint token_ratio) {
-    require(created_contracts[msg.sender] > 0);
-    address ltoken = long_tokens[_start_date];
-    address stoken = short_tokens[_start_date];
-    require(ltoken != address(0) && stoken != address(0));
-    if (_long) {
-      drct_interface = DRCT_Token_Interface(ltoken);
-      drct_interface.createToken(_supply.div(token_ratio1), _party,msg.sender);
-      return (ltoken, token_ratio1);
-    } else {
-      drct_interface = DRCT_Token_Interface(stoken);
-      drct_interface.createToken(_supply.div(token_ratio2), _party,msg.sender);
-      return (stoken, token_ratio2);
-    }
+  function checkContractAddress(address creator) external view returns(address) {
+    return contractPurchaseRecord[creator];  
   }
   
-
-  //Allows the owner to set a new oracle address
-  function setOracleAddress(address _new_oracle_address) public onlyOwner() { oracle_address = _new_oracle_address; }
-
-  //Allows the owner to set a new owner address
-  function setOwner(address _new_owner) public onlyOwner() { owner = _new_owner; }
-
-  //Allows the owner to pull contract creation fees
-  function withdrawFees() public onlyOwner() returns(uint atok, uint btok, uint _eth){
-   token_interface = Wrapped_Ether_Interface(token_a);
-   uint aval = token_interface.balanceOf(address(this));
-   if(aval > 0){
-      token_interface.withdraw(aval);
-    }
-   token_interface = Wrapped_Ether_Interface(token_b);
-   uint bval = token_interface.balanceOf(address(this));
-   if (bval > 0){
-    token_interface.withdraw(bval);
-  }
-   owner.transfer(this.balance);
-   return(aval,bval,this.balance);
-   }
-
-   function() public payable {
-
-   }
-
-  /*
-  * Returns a tuple of many private variables
-  * @returns "_oracle_adress": The address of the oracle
-  * @returns "_operator": The address of the owner and operator of the factory
-  * @returns "_duration": The duration of the swap
-  * @returns "_multiplier": The multiplier for the swap
-  * @returns "token_a_address": The address of token a
-  * @returns "token_b_address": The address of token b
-  * @returns "start_date": The start date of the swap
-  */
-  function getVariables() public view returns (address oracle_addr, uint swap_duration, uint swap_multiplier, address token_a_addr, address token_b_addr){
-    return (oracle_address,duration, multiplier, token_a, token_b);
-  }
-
-  /*
-  * Pays out to a DRCT token
-  * @param "_party": The address being paid
-  * @param "_long": Whether the _party is long or not
-  */
-  function payToken(address _party, address _token_add) public {
-    require(created_contracts[msg.sender] > 0);
-    drct_interface = DRCT_Token_Interface(_token_add);
-    drct_interface.pay(_party, msg.sender);
-  }
-
-  //Returns the number of contracts created by this factory
-    function getCount() public constant returns(uint count) {
-      return contracts.length;
-  }
+  //Donations
+  function() external payable {
+     admin.transfer(msg.value);      
+  }  
+ 
 }
