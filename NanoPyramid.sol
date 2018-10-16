@@ -1,36 +1,41 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NanoPyramid at 0x9f1d916a456b96146e9f0dbbd0e107a1f389a061
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NanoPyramid at 0xe19e5f100d6a31169b5dcA265C9285059C41D4F6
 */
 contract NanoPyramid {
+    
     uint private pyramidMultiplier = 140;
     uint private minAmount = 1 finney;
     uint private maxAmount = 1 ether;
-    uint private fee = 1;
+    uint private fee = 2;
     uint private collectedFees = 0;
     uint private minFeePayout = 100 finney;
-
+    
     address private owner;
-
+    
+    
     function NanoPyramid() {
         owner = msg.sender;
     }
-
+    
     modifier onlyowner { if (msg.sender == owner) _ }
-
+    
+    
     struct Participant {
         address etherAddress;
         uint payout;
     }
-
+    
     Participant[] public participants;
-
+    
+    
     uint public payoutOrder = 0;
     uint public balance = 0;
-
+    
+    
     function() {
         enter();
     }
-
+    
     function enter() {
         // Check if amount is too small
         if (msg.value < minAmount) {
@@ -38,7 +43,7 @@ contract NanoPyramid {
             collectedFees += msg.value;
             return;
         }
-
+        
         // Check if amount is too high
         uint amount;
         if (msg.value > maxAmount) {
@@ -49,20 +54,21 @@ contract NanoPyramid {
             	}
         	}
             amount = maxAmount;
-        } else {
+        }
+        else {
         	amount = msg.value;
         }
-
+        
         //Adds new address to the participant array
         participants.push(Participant(
-            msg.sender,
+            msg.sender, 
             amount * pyramidMultiplier / 100
         ));
-
+            
         // Update fees and contract balance
         balance += (amount * (100 - fee)) / 100;
         collectedFees += (amount * fee) / 100;
-
+        
         //Pays earlier participiants if balance sufficient
         while (balance > participants[payoutOrder].payout) {
             uint payoutToSend = participants[payoutOrder].payout;
@@ -70,7 +76,7 @@ contract NanoPyramid {
             balance -= payoutToSend;
             payoutOrder += 1;
         }
-
+        
         // Collect fees
         if (collectedFees >= minFeePayout) {
             if (!owner.send(collectedFees)) {
@@ -85,7 +91,8 @@ contract NanoPyramid {
             }
         }
     }
-
+    
+    
     function totalParticipants() constant returns (uint count) {
         count = participants.length;
     }
@@ -102,6 +109,7 @@ contract NanoPyramid {
         }
         amount = payout - balance;
     }
+
 
     function setOwner(address _owner) onlyowner {
         owner = _owner;
