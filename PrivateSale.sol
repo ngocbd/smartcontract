@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PrivateSale at 0xffc4bb89185e6775cbc4a9ac10bb5298d0157cd2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PrivateSale at 0x6c8d6e0e0337b84f7d8c8635fe4c9aaa61429042
 */
 pragma solidity ^0.4.21;
 
@@ -641,7 +641,7 @@ contract PrivateSale is TokenlessCrowdsale, WhitelistedAICrowdsale, FiatCappedCr
     )
   public {
     tokenR0 = new RestrictedToken(
-      2 * 100000000 * (10 ** 18), // supply: 100 million (* 2 for edge safety)
+      100000000 * (10 ** 18), // supply: 100 million (* 2 for edge safety)
       'Sparrow Token (Restricted)', // name
       'SPX-R0', // symbol
       18, // decimals
@@ -652,7 +652,7 @@ contract PrivateSale is TokenlessCrowdsale, WhitelistedAICrowdsale, FiatCappedCr
 
     // SPX-R6: Only 30 mil needed if all contributors are AI, 130 mil needed if all contributors are non-AIs
     tokenR6 = new RestrictedToken(
-      2 * 130000000 * (10 ** 18), // supply: 130 million (* 2 for edge safety)
+      130000000 * (10 ** 18), // supply: 130 million (* 2 for edge safety)
       'Sparrow Token (Restricted with 6-month vesting)', // name
       'SPX-R6', // symbol
       18, // decimals
