@@ -1,9 +1,37 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SwarmRedistribution at 0x0f170120733474c6ec7daf6ae6aeeeb8b645e92c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SwarmRedistribution at 0x1926a3254d6bb48f983d1890a993d618d1b6c9cf
 */
 pragma solidity ^0.4.6;
 
-contract RES { 
+contract Campaign {
+    
+    address public JohanNygren;
+    bool campaignOpen;
+    
+    function Campaign() {
+        JohanNygren = msg.sender;
+        campaignOpen = true;
+    }
+    
+    modifier onlyJohan {
+      if(msg.sender != JohanNygren) throw;
+      _;
+    }
+
+    modifier isOpen {
+      if(campaignOpen != true) throw;
+      _;
+    }
+    
+    function closeCampaign() onlyJohan {
+        campaignOpen = false;
+    }
+    
+}
+
+
+
+contract RES is Campaign { 
 
     /* Public variables of the token */
     string public name;
@@ -18,7 +46,6 @@ contract RES {
     /* This generates a public event on the blockchain that will notify clients */
     event Transfer(address indexed from, address indexed to, uint256 value);
     
-
     /* Bought or sold */
 
     event Bought(address from, uint amount);
@@ -31,19 +58,28 @@ contract RES {
         symbol = "RES";
         decimals = 18;
     }
-
-    function buy() public payable {
-      balanceOf[msg.sender] = msg.value;
+    
+    function buy() isOpen public payable {
+      balanceOf[msg.sender] += msg.value;
       totalSupply += msg.value;
       Bought(msg.sender, msg.value);
     }  
 
+    function sell(uint256 _value) public {
+      if(balanceOf[msg.sender] < _value) throw;
+      balanceOf[msg.sender] -= _value;
+    
+      if (!msg.sender.send(_value)) throw;
+
+      totalSupply -= _value;
+      Sold(msg.sender, _value);
+
+    }
+
 }
 
-contract SwarmRedistribution is RES {
+contract SwarmRedistribution is Campaign, RES {
     
-    address JohanNygren;
-        
     struct dividendPathway {
       address from;
       uint amount;
@@ -52,53 +88,30 @@ contract SwarmRedistribution is RES {
 
     mapping(address => dividendPathway[]) public dividendPathways;
     
+    mapping(address => bool) public isHuman;
+    
     mapping(address => uint256) public totalBasicIncome;
 
     uint taxRate;
-
-    struct Node {
-      address node;
-      address parent;
-      uint index;
-    }
+    uint exchangeRate;
     
-    /* Generate a swarm tree */
-    Node[] public swarmTree;
+    address[] humans;
+    mapping(address => bool) inHumans;
     
-    mapping(address => bool) inSwarmTree;
-    
-    bool JohanInSwarm;
-
     event Swarm(address indexed leaf, address indexed node, uint256 share);
 
     function SwarmRedistribution() {
       
     /* Tax-rate in parts per thousand */
     taxRate = 20;
-    JohanNygren = 0x948176CB42B65d835Ee4324914B104B66fB93B52;
-    }
     
-    modifier onlyJohan {
-      if(msg.sender != JohanNygren) throw;
-      _;
-    }
+    /* Exchange-rate in parts per thousand */
+    exchangeRate = 0;
     
-    function changeJohanNygrensAddress(address _newAddress) onlyJohan {
-      JohanNygren = _newAddress;
-    }
-
-    
-    function sell(uint256 _value) public {
-      if(balanceOf[msg.sender] < _value) throw;
-      balanceOf[msg.sender] -= _value;
-
-      totalSupply -= _value;
-      Sold(msg.sender, _value);
-
     }
 
     /* Send coins */
-    function transfer(address _to, uint256 _value) {
+    function transfer(address _to, uint256 _value) isOpen {
         /* reject transaction to self to prevent dividend pathway loops*/
         if(_to == msg.sender) throw;
         
@@ -116,91 +129,69 @@ contract SwarmRedistribution is RES {
                                         amount:  _value,
                                         timeStamp: now
                                       }));
-        
-        if(swarmRedistribution(_to, taxCollected) == true) {
-          sentAmount = _value;
-        }
-        else {
-          /* Return tax */
-          sentAmount = _value - taxCollected;
-        }
-        
-          /* Add and subtract new balances */
+                                      
+        iterateThroughSwarm(_to, now, taxCollected);
 
-          balanceOf[msg.sender] -= sentAmount;
-          balanceOf[_to] += _value - taxCollected;
+        if(humans.length > 0) {
+            doSwarm(_to, taxCollected);
+            sentAmount = _value;
+        }
+        else sentAmount = _value - taxCollected; /* Return tax */
         
+
+        /* Add and subtract new balances */
+
+        balanceOf[msg.sender] -= sentAmount;
+        balanceOf[_to] += _value - taxCollected;
 
         /* Notifiy anyone listening that this transfer took place */
         Transfer(msg.sender, _to, sentAmount);
     }
-
-    function swarmRedistribution(address _to, uint256 _taxCollected) internal returns (bool) {
-           iterateThroughSwarm(_to, now);
-           if(swarmTree.length != 0) {
-           return doSwarm(_to, _taxCollected);
-           }
-           else return false;
-      }
-
-    function iterateThroughSwarm(address _node, uint _timeStamp) internal {
-      if(dividendPathways[_node].length != 0) {
+    
+    
+    function iterateThroughSwarm(address _node, uint _timeStamp, uint _taxCollected) internal {
         for(uint i = 0; i < dividendPathways[_node].length; i++) {
-          if(inSwarmTree[dividendPathways[_node][i].from] == false) { 
             
             uint timeStamp = dividendPathways[_node][i].timeStamp;
             if(timeStamp <= _timeStamp) {
                 
-              if(dividendPathways[_node][i].from == JohanNygren) JohanInSwarm = true;
-    
-                Node memory node = Node({
-                            node: dividendPathways[_node][i].from, 
-                            parent: _node,
-                            index: i
-                          });
-                          
-                  swarmTree.push(node);
-                  iterateThroughSwarm(node.node, timeStamp);
+                address node = dividendPathways[_node][i].from;
+                
+              if(
+                  isHuman[node] == true 
+                  && 
+                  inHumans[node] == false
+                ) 
+                {
+                    humans.push(node);
+                    inHumans[node] = true;
+                }
+
+              if(dividendPathways[_node][i].amount - _taxCollected > 0) {
+                dividendPathways[_node][i].amount -= _taxCollected; 
               }
-          }
+              else removeDividendPathway(_node, i);
+                                
+              iterateThroughSwarm(node, timeStamp, _taxCollected);
+            }
         }
-      }
     }
 
-    function doSwarm(address _leaf, uint256 _taxCollected) internal returns (bool) {
+    function doSwarm(address _leaf, uint256 _taxCollected) internal {
       
-      uint256 share;
-      if(JohanInSwarm) share = _taxCollected;
-      else share = 0;
+      uint256 share = _taxCollected / humans.length;
     
-      for(uint i = 0; i < swarmTree.length; i++) {
-        
-        address node = swarmTree[i].node;
-        address parent = swarmTree[i].parent;
-        uint index = swarmTree[i].index;
-        
-        bool isJohan;
-        if(node == JohanNygren) isJohan = true;
+      for(uint i = 0; i < humans.length; i++) {
 
-        if(isJohan) {
-          balanceOf[swarmTree[i].node] += share;
-        totalBasicIncome[node] += share;
-        }
-          
-        if(dividendPathways[parent][index].amount - _taxCollected > 0) {
-          dividendPathways[parent][index].amount -= _taxCollected; 
-        }
-        else removeDividendPathway(parent, index);
+        balanceOf[humans[i]] += share;
+        totalBasicIncome[humans[i]] += share;
+        
+        inHumans[humans[i]] = false;
         
         /* Notifiy anyone listening that this swarm took place */
-        if(isJohan) Swarm(_leaf, swarmTree[i].node, share);
+        Swarm(_leaf, humans[i], share);
       }
-      delete swarmTree;
-      bool JohanWasInSwarm = JohanInSwarm;
-      delete JohanInSwarm;
-
-      if(!JohanWasInSwarm) return false;
-      return true;
+      delete humans;
     }
     
     function removeDividendPathway(address node, uint index) internal {
@@ -210,5 +201,29 @@ contract SwarmRedistribution is RES {
                 }
                 dividendPathways[node].length--;
         }
+
+}
+
+contract CampaignBeneficiary is Campaign, RES, SwarmRedistribution {
+
+    event BuyWithPathwayFromBeneficiary(address from, uint amount);
+
+    function CampaignBeneficiary() {
+      isHuman[JohanNygren] = true;
+    }
+
+    function simulatePathwayFromBeneficiary() isOpen public payable {
+      balanceOf[msg.sender] += msg.value;
+      totalSupply += msg.value;  
+
+      /* Create the dividend pathway */
+      dividendPathways[msg.sender].push(dividendPathway({
+                                      from: JohanNygren, 
+                                      amount:  msg.value,
+                                      timeStamp: now
+                                    }));
+
+      BuyWithPathwayFromBeneficiary(msg.sender, msg.value);
+    }
 
 }
