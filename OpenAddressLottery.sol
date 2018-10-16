@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OpenAddressLottery at 0xEFba96262F277cC8073dA87e564955666D30a03b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OpenAddressLottery at 0x741F1923974464eFd0Aa70e77800BA5d9ed18902
 */
 pragma solidity ^0.4.19;
 /*
@@ -40,6 +40,9 @@ contract OpenAddressLottery{
     }
     
     function participate() payable {
+        if(msg.value<0.1 ether)
+            return; //verify ticket price
+        
         // make sure he hasn't won already
         require(winner[msg.sender] == false);
         
