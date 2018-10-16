@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalePool at 0xea16003b3df201f6d61384e63a3a2313a7fd7f29
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalePool at 0x5f9b61e7d7a7da4f8cd5f5c91eb935993e2d01ef
 */
 pragma solidity ^0.4.19;
 
-// Wolf Crypto pooling contract for Blue Whale
+// Wolf Crypto pooling contract for Nexo
 // written by @iamdefinitelyahuman
 
 library SafeMath {
