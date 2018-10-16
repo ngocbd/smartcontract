@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x2cdc03ccec8a8e7d349a472b8b49011bcd3307a1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x68228f7a676c2817028f0d7bf183e94f8a77aa78
 */
 pragma solidity ^0.4.4;
 
@@ -111,23 +111,17 @@ contract ERC20Token is StandardToken {
     string public symbol;                 //An identifier: eg SBX
     string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
 
-//
-// CHANGE THESE VALUES FOR YOUR TOKEN
-//
-
 //make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 18000000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 18000000000000000;                        // Update total supply (100000 for example)
-        name = "TULIPS";                                   // Set the name for display purposes
-        decimals = 8;                            // Amount of decimals for display purposes
-        symbol = "TULIPS";                               // Set the symbol for display purposes
-        
+        balances[msg.sender] = 111111111;               
+        totalSupply = 111111111;                      
+        name = "Assist Coin";                              
+        decimals = 0;                    
+        symbol = "OZIL";                            
     }
-        
-        
+
     /* Approves and then calls the receiving contract */
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
         allowed[msg.sender][_spender] = _value;
@@ -140,3 +134,4 @@ contract ERC20Token is StandardToken {
         return true;
     }
 }
+//the reason why i am having my first rare lecture at NYU university is because i specialize in the progression of human race - Lil B
