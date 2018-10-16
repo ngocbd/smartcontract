@@ -1,21 +1,38 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChronoBankAsset at 0xc7c5d612536d167627b217d08b9ff05da1db75f7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChronoBankAsset at 0xfc2bf6440163760cf957d29ee79e76b8712715e9
 */
+pragma solidity ^0.4.11;
+
 contract ChronoBankAssetInterface {
     function __transferWithReference(address _to, uint _value, string _reference, address _sender) returns(bool);
     function __transferFromWithReference(address _from, address _to, uint _value, string _reference, address _sender) returns(bool);
     function __approve(address _spender, uint _value, address _sender) returns(bool);
     function __process(bytes _data, address _sender) payable {
-        throw;
+        revert();
     }
 }
 
 contract ChronoBankAssetProxy {
+    address public chronoBankPlatform;
     function __transferWithReference(address _to, uint _value, string _reference, address _sender) returns(bool);
     function __transferFromWithReference(address _from, address _to, uint _value, string _reference, address _sender) returns(bool);
     function __approve(address _spender, uint _value, address _sender) returns(bool);    
+    function getLatestVersion() returns(address);
+    function init(address _chronoBankPlatform, string _symbol, string _name);
+    function proposeUpgrade(address _newVersion) returns (bool);
 }
 
+
+/**
+ * @title ChronoBank Asset implementation contract.
+ *
+ * Basic asset implementation contract, without any additional logic.
+ * Every other asset implementation contracts should derive from this one.
+ * Receives calls from the proxy, and calls back immediatly without arguments modification.
+ *
+ * Note: all the non constant functions return false instead of throwing in case if state change
+ * didn't happen yet.
+ */
 contract ChronoBankAsset is ChronoBankAssetInterface {
     // Assigned asset proxy contract, immutable.
     ChronoBankAssetProxy public proxy;
