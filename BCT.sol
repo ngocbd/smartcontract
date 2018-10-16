@@ -1,435 +1,172 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BCT at 0xa42c5aa9735eca0db714f02de9dc2a56e405dae7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BCT at 0x7e4f418365360cc9b2b3c4d71030bf4faed95eb2
 */
-pragma solidity ^ 0.4.16;
-contract owned {
-    address public owner;
-    mapping (address =>  bool) public admins;
+pragma solidity ^0.4.17;
 
-    function owned() {
-        owner = msg.sender;
-        admins[msg.sender]=true;
+library SafeMathMod {// Partial SafeMath Library
+
+    function sub(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        require((c = a - b) < a);
     }
 
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
-
-    modifier onlyAdmin   {
-        require(admins[msg.sender] == true);
-        _;
-    }
-
-    function transferOwnership(address newOwner) onlyOwner {
-        owner = newOwner;
-    }
-    function makeAdmin(address newAdmin, bool isAdmin) onlyOwner {
-        admins[newAdmin] = isAdmin;
+    function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+        require((c = a + b) > a);
     }
 }
 
-interface tokenRecipient {
-    function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData);
-}
+contract BCT {//is inherently ERC20
+    using SafeMathMod for uint256;
 
-contract BCT is owned {
-    // Public variables of the token
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-    uint256 public totalSupply;
-    uint256 minBalanceForAccounts;
-    bool public usersCanTrade;
-    bool public usersCanUnfreeze;
+    /**
+    * @constant name The name of the token
+    * @constant symbol  The symbol used to display the currency
+    * @constant decimals  The number of decimals used to dispay a balance
+    * @constant totalSupply The total number of tokens times 10^ of the number of decimals
+    * @constant MAX_UINT256 Magic number for unlimited allowance
+    * @storage balanceOf Holds the balances of all token holders
+    * @storage allowed Holds the allowable balance to be transferable by another address.
+    */
 
-    bool public ico = true; //turn ico on and of
-    mapping (address => bool) public admin;
+    string constant public name = "BlockChain Community Token";
 
+    string constant public symbol = "BCT";
 
-    modifier notICO {
-        require(admin[msg.sender] || !ico);
-        _;
-    }
+    uint8 constant public decimals = 8;
 
+    uint256 constant public totalSupply = 100000000e8;
 
-    // This creates an array with all balances
+    uint256 constant private MAX_UINT256 = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+
     mapping (address => uint256) public balanceOf;
 
+    mapping (address => mapping (address => uint256)) public allowed;
 
-    mapping (address => mapping (address => uint256)) public allowance;
-    mapping (address =>  bool) public frozen;
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
 
-    mapping (address =>  bool) public canTrade; //user allowed to buy or sell
+    event TransferFrom(address indexed _spender, address indexed _from, address indexed _to, uint256 _value);
 
-    // This generates a public event on the blockchain that will notify clients
-    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
-    //This generates a public even on the blockhcain when an address is reward
-    event Reward(address from, address to, uint256 value, string data, uint256 time);
-
-    // This notifies clients about the amount burnt
-    event Burn(address indexed from, uint256 value);
-
-    // This generates a public event on the blockchain that will notify clients
-    event Frozen(address indexed addr, bool frozen);
-
-    // This generates a public event on the blockchain that will notify clients
-    event Unlock(address indexed addr, address from, uint256 val);
-
-    // This generates a public event on the blockchain that will notify clients
-
-
-    // This generates a public event on the blockchain that will notify clients
-    // event Unfreeze(address indexed addr);
+    function BCT() public {balanceOf[msg.sender] = totalSupply;}
 
     /**
-     * Constrctor function
-     *
-     * Initializes contract with initial supply tokens to the creator of the contract
-     */
-    function BCT() {
-        uint256 initialSupply = 20000000000000000000000000;
-        balanceOf[msg.sender] = initialSupply ;              // Give the creator all initial tokens
-        totalSupply = initialSupply;                        // Update total supply
-        name = "BotConnect";                                   // Set the name for display purposes
-        symbol = "BCT";                               // Set the symbol for display purposes
-        decimals = 18;                            // Amount of decimals for display purposes
-        minBalanceForAccounts = 1000000000000000;
-        usersCanTrade=false;
-        usersCanUnfreeze=false;
-        admin[msg.sender]=true;
-        canTrade[msg.sender]=true;
+    * @notice send `_value` token to `_to` from `msg.sender`
+    *
+    * @param _to The address of the recipient
+    * @param _value The amount of token to be transferred
+    * @return Whether the transfer was successful or not
+    */
+    function transfer(address _to, uint256 _value) public returns (bool success) {
+        /* Ensures that tokens are not sent to address "0x0" */
+        require(_to != address(0));
 
-    }
-
-    /**
-     * Increace Total Supply
-     *
-     * Increases the total coin supply
-     */
-    function increaseTotalSupply (address target,  uint256 increaseBy )  onlyOwner {
-        balanceOf[target] += increaseBy;
-        totalSupply += increaseBy;
-        Transfer(0, owner, increaseBy);
-        Transfer(owner, target, increaseBy);
-    }
-
-    function  usersCanUnFreeze(bool can) {
-        usersCanUnfreeze=can;
-    }
-
-    function setMinBalance(uint minimumBalanceInWei) onlyOwner {
-        minBalanceForAccounts = minimumBalanceInWei;
-    }
-
-    /**
-     * transferAndFreeze
-     *
-     * Function to transfer to and freeze and account at the same time
-     */
-    function transferAndFreeze (address target,  uint256 amount )  onlyAdmin {
-        _transfer(msg.sender, target, amount);
-        freeze(target, true);
-    }
-
-    /**
-     * _freeze internal
-     *
-     * function to freeze an account
-     */
-    function _freeze (address target, bool froze )  internal  {
-
-        frozen[target]=froze;
-        Frozen(target, froze);
-    }
-
-
-
-    /**
-     * freeze
-     *
-     * function to freeze an account
-     */
-    function freeze (address target, bool froze )   {
-        if(froze || (!froze && !usersCanUnfreeze)) {
-            require(admin[msg.sender]);
-        }
-
-        _freeze(target, froze);
-    }
-
-
-
-    /**
-     * Internal transfer, only can be called by this contract
-     */
-    function _transfer(address _from, address _to, uint _value) internal {
-        require(_to != 0x0);                                   // Prevent transfer to 0x0 address. Use burn() instead
-
-        require(!frozen[_from]);                       //prevent transfer from frozen address
-        require(balanceOf[_from] >= _value);                // Check if the sender has enough
-        require(balanceOf[_to] + _value > balanceOf[_to]); // Check for overflows
-        balanceOf[_from] -= _value;                         // Subtract from the sender
-        balanceOf[_to] += _value;                           // Add the same to the recipient
-        Transfer(_from, _to, _value);
-    }
-
-    /**
-     * Transfer tokens
-     *
-     * Send `_value` tokens to `_to` from your account
-     *
-     * @param _to The address of the recipient
-     * @param _value the amount to send
-     */
-    function transfer(address _to, uint256 _value) notICO {
-        require(!frozen[msg.sender]);                       //prevent transfer from frozen address
-        if (msg.sender.balance  < minBalanceForAccounts) {
-            sell((minBalanceForAccounts - msg.sender.balance) * sellPrice);
-        }
-        _transfer(msg.sender, _to, _value);
-    }
-
-
-
-    mapping (address => uint256) public totalLockedRewardsOf;
-    mapping (address => mapping (address => uint256)) public lockedRewardsOf; //balance of a locked reward
-    mapping (address => mapping (uint32  => address)) public userRewarders; //indexed list of rewardees rewarder
-    mapping (address => mapping (address => uint32)) public userRewardCount; //a list of number of times a customer has received reward from a given merchant
-    mapping (address => uint32) public userRewarderCount; //number of rewarders per customer
-
-    //merchant
-    mapping (address =>  uint256  ) public totalRewardIssuedOut;
-
-    /**
-     * Reward tokens - tokens go to
-     *
-     * Send `_value` tokens to `_to` from your account
-     *
-     * @param _to The address of the recipient
-     * @param _value the amount to send
-     */
-    function reward(address _to, uint256 _value, bool locked, string data) {
-        require(_to != 0x0);
-        require(!frozen[msg.sender]);                       //prevent transfer from frozen address
-        if (msg.sender.balance  < minBalanceForAccounts) {
-            sell((minBalanceForAccounts - msg.sender.balance) * sellPrice);
-        }
-        if(!locked) {
-            _transfer(msg.sender, _to, _value);
-        }else{
-            //prevent transfer from frozen address
-            require(balanceOf[msg.sender] >= _value);                // Check if the sender has enough
-            require(totalLockedRewardsOf[_to] + _value > totalLockedRewardsOf[_to]); // Check for overflows
-            balanceOf[msg.sender] -= _value;                         // Subtract from the sender
-            totalLockedRewardsOf[_to] += _value;                           // Add the same to the recipient
-            lockedRewardsOf[_to][msg.sender] += _value;
-            if(userRewardCount[_to][msg.sender]==0) {
-                userRewarderCount[_to] += 1;
-                userRewarders[_to][userRewarderCount[_to]]=msg.sender;
-            }
-            userRewardCount[_to][msg.sender]+=1;
-            totalRewardIssuedOut[msg.sender]+= _value;
-            Transfer(msg.sender, _to, _value);
-        }
-
-        Reward(msg.sender, _to, _value, data, now);
-    }
-
-    /**
-     * Transfer locked rewards
-     *
-     * Send `_value` tokens to `_to` merchant
-     *
-     * @param _to The address of the recipient
-     * @param _value the amount to send
-     */
-    function transferReward(address _to, uint256 _value) {
-        require(!frozen[msg.sender]);                       //prevent transfer from frozen address
-        require(lockedRewardsOf[msg.sender][_to] >= _value );
-        require(totalLockedRewardsOf[msg.sender] >= _value);
-
-        if (msg.sender.balance  < minBalanceForAccounts) {
-            sell((minBalanceForAccounts - msg.sender.balance) * sellPrice);
-        }
-        totalLockedRewardsOf[msg.sender] -= _value;                           // Add the same to the recipient
-        lockedRewardsOf[msg.sender][_to] -= _value;
-        balanceOf[_to] += _value;
+        /* SafeMathMOd.sub will throw if there is not enough balance and if the transfer value is 0. */
+        balanceOf[msg.sender] = balanceOf[msg.sender].sub(_value);
+        balanceOf[_to] = balanceOf[_to].add(_value);
         Transfer(msg.sender, _to, _value);
+        return true;
     }
 
     /**
-     * Unlocked locked rewards by merchant
-     *
-     * Unlock `_value` tokens of `add`
-     *
-     * @param addr The address of the recipient
-     * @param _value the amount to unlock
-     */
-    function unlockReward(address addr, uint256 _value) {
-        require(totalLockedRewardsOf[addr] > _value);                       //prevent transfer from frozen address
-        require(lockedRewardsOf[addr][msg.sender] >= _value );
-        if(_value==0) _value=lockedRewardsOf[addr][msg.sender];
-        if (msg.sender.balance  < minBalanceForAccounts) {
-            sell((minBalanceForAccounts - msg.sender.balance) * sellPrice);
+    * @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+    *
+    * @param _from The address of the sender
+    * @param _to The address of the recipient
+    * @param _value The amount of token to be transferred
+    * @return Whether the transfer was successful or not
+    */
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        /* Ensures that tokens are not sent to address "0x0" */
+        require(_to != address(0));
+        
+        uint256 allowance = allowed[_from][msg.sender];
+        /* Ensures sender has enough available allowance OR sender is balance holder allowing single transsaction send to contracts*/
+        require(_value <= allowance || _from == msg.sender);
+
+        /* Use SafeMathMod to add and subtract from the _to and _from addresses respectively. Prevents under/overflow and 0 transfers */
+        balanceOf[_to] = balanceOf[_to].add(_value);
+        balanceOf[_from] = balanceOf[_from].sub(_value);
+
+        /* Only reduce allowance if not MAX_UINT256 in order to save gas on unlimited allowance */
+        /* Balance holder does not need allowance to send from self. */
+        if (allowed[_from][msg.sender] != MAX_UINT256 && _from != msg.sender) {
+            allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
         }
-        totalLockedRewardsOf[addr] -= _value;                           // Add the same to the recipient
-        lockedRewardsOf[addr][msg.sender] -= _value;
-        balanceOf[addr] += _value;
-        Unlock(addr, msg.sender, _value);
-    }
-
-
-
-    /**
-     * Transfer tokens from other address
-     *
-     * Send `_value` tokens to `_to` in behalf of `_from`
-     *
-     * @param _from The address of the sender
-     * @param _to The address of the recipient
-     * @param _value the amount to send
-     */
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        require(!frozen[_from]);                       //prevent transfer from frozen address
-        require(_value <= allowance[_from][msg.sender]);     // Check allowance
-        allowance[_from][msg.sender] -= _value;
-        _transfer(_from, _to, _value);
+        Transfer(_from, _to, _value);
         return true;
     }
 
     /**
-     * Set allowance for other address
-     *
-     * Allows `_spender` to spend no more than `_value` tokens in your behalf
-     *
-     * @param _spender The address authorized to spend
-     * @param _value the max amount they can spend
-     */
-    function approve(address _spender, uint256 _value)
-    returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
-        return true;
-    }
+    * @dev Transfer the specified amounts of tokens to the specified addresses.
+    * @dev Be aware that there is no check for duplicate recipients.
+    *
+    * @param _toAddresses Receiver addresses.
+    * @param _amounts Amounts of tokens that will be transferred.
+    */
+    function multiPartyTransfer(address[] _toAddresses, uint256[] _amounts) public {
+        /* Ensures _toAddresses array is less than or equal to 255 */
+        require(_toAddresses.length <= 255);
+        /* Ensures _toAddress and _amounts have the same number of entries. */
+        require(_toAddresses.length == _amounts.length);
 
-    /**
-     * Set allowance for other address and notify
-     *
-     * Allows `_spender` to spend no more than `_value` tokens in your behalf, and then ping the contract about it
-     *
-     * @param _spender The address authorized to spend
-     * @param _value the max amount they can spend
-     * @param _extraData some extra information to send to the approved contract
-     */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) onlyOwner
-    returns (bool success) {
-        tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
+        for (uint8 i = 0; i < _toAddresses.length; i++) {
+            transfer(_toAddresses[i], _amounts[i]);
         }
     }
 
     /**
-     * Destroy tokens
-     *
-     * Remove `_value` tokens from the system irreversibly
-     *
-     * @param _value the amount of money to burn
-     */
-    function burn(uint256 _value) onlyOwner returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-        balanceOf[msg.sender] -= _value;            // Subtract from the sender
-        totalSupply -= _value;                      // Updates totalSupply
-        Burn(msg.sender, _value);
+    * @dev Transfer the specified amounts of tokens to the specified addresses from authorized balance of sender.
+    * @dev Be aware that there is no check for duplicate recipients.
+    *
+    * @param _from The address of the sender
+    * @param _toAddresses The addresses of the recipients (MAX 255)
+    * @param _amounts The amounts of tokens to be transferred
+    */
+    function multiPartyTransferFrom(address _from, address[] _toAddresses, uint256[] _amounts) public {
+        /* Ensures _toAddresses array is less than or equal to 255 */
+        require(_toAddresses.length <= 255);
+        /* Ensures _toAddress and _amounts have the same number of entries. */
+        require(_toAddresses.length == _amounts.length);
+
+        for (uint8 i = 0; i < _toAddresses.length; i++) {
+            transferFrom(_from, _toAddresses[i], _amounts[i]);
+        }
+    }
+
+    /**
+    * @notice `msg.sender` approves `_spender` to spend `_value` tokens
+    *
+    * @param _spender The address of the account able to transfer the tokens
+    * @param _value The amount of tokens to be approved for transfer
+    * @return Whether the approval was successful or not
+    */
+    function approve(address _spender, uint256 _value) public returns (bool success) {
+        /* Ensures address "0x0" is not assigned allowance. */
+        require(_spender != address(0));
+
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
         return true;
     }
 
     /**
-     * Destroy tokens from other ccount
-     *
-     * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
-     *
-     * @param _from the address of the sender
-     * @param _value the amount of money to burn
-     */
-    function burnFrom(address _from, uint256 _value)  returns (bool success) {
-        require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
-        require(_value <= allowance[_from][msg.sender]);    // Check allowance
-        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
-        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
-        totalSupply -= _value;                              // Update totalSupply
-        Burn(_from, _value);
-        return true;
+    * @param _owner The address of the account owning tokens
+    * @param _spender The address of the account able to transfer the tokens
+    * @return Amount of remaining tokens allowed to spent
+    */
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
+        remaining = allowed[_owner][_spender];
     }
 
-    /*
-     function increaseSupply(address _from, uint256 _value) onlyOwner  returns (bool success)  {
-     balanceOf[_from] += _value;                         // Subtract from the targeted balance
-     totalSupply += _value;                              // Update totalSupply
-     // Burn(_from, _value);
-     return true;
-     }
-     */
-
-
-
-
-    uint256 public sellPrice = 608;
-    uint256 public buyPrice = 760;
-
-    function setPrices(uint256 newSellPrice, uint256 newBuyPrice) onlyOwner {
-        sellPrice = newSellPrice;
-        buyPrice = newBuyPrice;
-    }
-    function setUsersCanTrade(bool trade) onlyOwner {
-        usersCanTrade=trade;
-    }
-    function setCanTrade(address addr, bool trade) onlyOwner {
-        canTrade[addr]=trade;
-    }
-
-    //user is buying grx
-    function buy() payable returns (uint256 amount){
-        if(!usersCanTrade && !canTrade[msg.sender]) revert();
-        amount = msg.value * buyPrice;                    // calculates the amount
-
-        require(balanceOf[this] >= amount);               // checks if it has enough to sell
-        balanceOf[msg.sender] += amount;                  // adds the amount to buyer's balance
-        balanceOf[this] -= amount;                        // subtracts amount from seller's balance
-        Transfer(this, msg.sender, amount);               // execute an event reflecting the change
-        return amount;                                    // ends function and returns
-    }
-
-    //user is selling us grx, we are selling eth to the user
-    function sell(uint256 amount) returns (uint revenue){
-        require(!frozen[msg.sender]);
-        if(!usersCanTrade && !canTrade[msg.sender]) {
-            require(minBalanceForAccounts > amount/sellPrice);
+    function isNotContract(address _addr) private view returns (bool) {
+        uint length;
+        assembly {
+        /* retrieve the size of the code on target address, this needs assembly */
+        length := extcodesize(_addr)
         }
-        require(balanceOf[msg.sender] >= amount);         // checks if the sender has enough to sell
-        balanceOf[this] += amount;                        // adds the amount to owner's balance
-        balanceOf[msg.sender] -= amount;                  // subtracts the amount from seller's balance
-        revenue = amount / sellPrice;
-        require(msg.sender.send(revenue));                // sends ether to the seller: it's important to do this last to prevent recursion attacks
-        Transfer(msg.sender, this, amount);               // executes an event reflecting on the change
-        return revenue;                                   // ends function and returns
+        return (length == 0);
     }
 
-    function() payable {
-    }
-    event Withdrawn(address indexed to, uint256 value);
-    function withdraw(address target, uint256 amount) onlyOwner {
-        target.transfer(amount);
-        Withdrawn(target, amount);
-    }
-
-    function setAdmin(address addr, bool enabled) onlyOwner {
-        admin[addr]=enabled;
-    }
-
-    function setICO(bool enabled) onlyOwner {
-        ico=enabled;
-    }
+    // revert on eth transfers to this contract
+    function() public payable {revert();}
 }
