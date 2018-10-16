@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NYXToken at 0xddbb8546b50a94d961fe38f1518ce366cac322ea
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NYXToken at 0x8d06cbfdaf7066c739c71d70a2261d96d00d2d52
 */
 /*
  * NYX Token smart contract
@@ -11,7 +11,7 @@
  */
 
 
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.18;
 
 
 /*************************************************************************
@@ -259,7 +259,7 @@ contract Ownable {
 
 contract MintableToken is StandardToken, Ownable {
     uint public totalSupply = 0;
-    address private minter;
+    address minter;
 
     modifier onlyMinter(){
         require(minter == msg.sender);
@@ -370,21 +370,25 @@ contract ERC23PayableToken is BasicToken, ERC23{
 contract NYXToken is MintableToken, ERC23PayableToken {
     string public constant name = "NYX Token";
     string public constant symbol = "NYX";
-    uint public constant decimals = 0;
+    uint constant decimals = 0;
 
-    bool public transferEnabled = false;
+    bool public transferEnabled = true;
 
-    //The cap is 150 mln NYX
-    uint private constant CAP = 150*(10**6);
+    //The cap is 15 mln NYX
+    uint private constant CAP = 15*(10**6);
 
     function mint(address _to, uint _amount){
         require(totalSupply.add(_amount) <= CAP);
         super.mint(_to, _amount);
     }
 
-    function NYXToken(address multisigOwner) {
-        //Transfer ownership on the token to multisig on creation
-        transferOwnership(multisigOwner);
+    function NYXToken(address team) {
+        //Transfer ownership on the token to team on creation
+        transferOwnership(team);
+        // minter is the TokenSale contract
+        minter = msg.sender; 
+        /// Preserve 3 000 000 tokens for the team
+        mint(team, 3000000);
     }
 
     /**
