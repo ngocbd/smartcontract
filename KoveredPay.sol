@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KoveredPay at 0x298e56b430536e42b64caba4a47bbd54c7642667
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KoveredPay at 0x2abb88d483ec7c4f5ae078670f156434a5129f40
 */
 pragma solidity 0.4.19;
 
@@ -7,6 +7,8 @@ contract Admin {
 
     address public owner;
     mapping(address => bool) public AdminList;
+    uint256 public ClaimAmount = 350000000000000000000;
+    uint256 public ClaimedAmount = 0;
 
     event AdministratorAdded(address indexed _invoker, address indexed _newAdministrator);
     event AdministratorRemoved(address indexed _invoker, address indexed _removedAdministrator);
@@ -23,6 +25,11 @@ contract Admin {
 
     modifier OnlyOwner() {
         require(msg.sender == owner);
+        _;
+    }
+    
+    modifier AirdropStatus() {
+        require(ClaimAmount != 0);
         _;
     }
 
@@ -56,6 +63,14 @@ contract Admin {
         owner = AddressToMake;
         OwnershipChanged(msg.sender, AddressToMake);
 
+        return true;
+
+    }
+
+    function ChangeClaimAmount(uint256 NewAmount) public OnlyAdmin() returns (bool success) {
+
+        ClaimAmount = NewAmount;
+        
         return true;
 
     }
@@ -104,6 +119,7 @@ contract KoveredPay is Admin {
         uint256 _time;
     }
 
+    mapping(address => bool) public Claims;
     mapping(uint256 => TrustlessTransaction) public TrustlessTransactions_Log;
     mapping(uint256 => MediatedTransaction) public MediatedTransactions_Log;
 
@@ -145,6 +161,21 @@ contract KoveredPay is Admin {
         LockInExpiry = add(block.timestamp, 15778463);
         TransfersEnabled = true;
 
+    }
+    
+    function AirdropClaim() public AirdropStatus returns (uint256 AmountClaimed) {
+        
+        require(Claims[msg.sender] == false);
+        require(ClaimedAmount < 35000000000000000000000000);   
+        require(TransferValidation(owner, msg.sender, ClaimAmount) == true);
+        ClaimedAmount = ClaimedAmount + ClaimAmount;
+        UserBalances[msg.sender] = add(UserBalances[msg.sender], ClaimAmount);
+        UserBalances[owner] = sub(UserBalances[owner], ClaimAmount);
+        Claims[msg.sender] = true;
+        Transfer(msg.sender, owner, ClaimAmount);
+
+        return ClaimAmount;
+        
     }
 
     function AlterMediatorSettings(address _newAddress, uint128 _fees) public OnlyAdmin returns (bool success) {
@@ -193,7 +224,7 @@ contract KoveredPay is Admin {
 
     }
 
-    function MultiTransfer(address[] _destinations, uint256[] _values) public OnlyAdmin returns (uint256) {
+    function MultiTransfer(address[] _destinations, uint256[] _values) public returns (uint256) {
 
         uint256 i = 0;
 
@@ -219,7 +250,7 @@ contract KoveredPay is Admin {
     function transferFrom(address _owner, address _receiver, uint256 _amount) public returns (bool _status) {
 
         require(TransferValidation(_owner, _receiver, _amount));
-        require(sub(Allowance[_owner][msg.sender], _amount) >= _amount);
+        require(sub(Allowance[_owner][msg.sender], _amount) >= 0);
         Allowance[_owner][msg.sender] = sub(Allowance[_owner][msg.sender], _amount);
         UserBalances[_owner] = sub(UserBalances[_owner], _amount);
         UserBalances[_receiver] = add(UserBalances[_receiver], _amount);
@@ -466,8 +497,6 @@ contract KoveredPay is Admin {
     }
 
     function approve(address spender, uint256 amount) public returns (bool approved) {
-        require(amount > 0);
-        require(UserBalances[spender] > 0);
         Allowance[msg.sender][spender] = amount;
         Approval(msg.sender, spender, amount);
         return true;
@@ -477,7 +506,7 @@ contract KoveredPay is Admin {
         return UserBalances[_address];
     }
 
-    function allowance(address owner, address spender) public view returns (uint256 smount_allowed) {
+    function allowance(address owner, address spender) public view returns (uint256 amount_allowed) {
         return Allowance[owner][spender];
     }
 
