@@ -1,73 +1,100 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20 at 0xe697a883c3a9feb713b69fc06fb9b3421f978dc1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20 at 0xab09f0fb6ff4bd4788b8187736b7ad94a77506fe
 */
-pragma solidity ^ 0.4.2;
+pragma solidity ^0.4.12;
+contract ERC {
+     function totalSupply() constant public returns (uint _totalSupply);
+     function balanceOf(address _owner) constant  public returns (uint _balance);
+     function transfer(address _to, uint _value)  public returns (bool success);
+     function transferFrom(address _from, address _to, uint _value)  public returns (bool _success);
+     function approve(address _spender, uint _value)  public returns (bool success);
+     function allowance(address _owner, address _spender)  public constant returns (uint _remaining);
+     event Transfer(address indexed _from, address indexed _to, uint _value);
+     event Approval(address indexed _owner, address indexed _spender, uint _value);
+ }
+contract ERC20 is ERC {
+	uint public totalSupply;
+	string public name;
+	string public symbol;
+	uint8 public decimals;
+	address public owner;
+	uint   token;
+	
+	mapping(address=>uint) balance;
+	mapping (address => mapping (address => uint)) allowed;
+	event Transfer(address indexed _from, address indexed _to, uint _value);
+	event Approval(address indexed _owner, address indexed _spender, uint _value);
+	
+	function ERC20()  public {
+	    owner=msg.sender;
+        totalSupply=1000000000;
+        name="Aasim";
+        symbol="AA";
+        decimals=18;
+		
+	}
+	modifier checkAdmin(){
+		if (msg.sender!=owner)revert();
+		_;
+		}
+			
+    
+	function totalSupply() constant public returns (uint _totalSupply){
+		return totalSupply;
 
-contract tokenRecipient {
-    function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData);
-}
+	}
+	function balanceOf(address _owner) constant public  returns (uint _balance ){
+		return balance[_owner];
 
-contract ERC20 {
-    /* Public variables of the token */
-    string public standard = 'TOMT';
-    string public name = 'TOMT';
-    string public symbol = 'TOMT';
-    uint8 public decimals = 6;
-    uint256 public totalSupply = 100000000000000;
+	}
+	function transfer(address _to, uint _value)  public returns (bool _success){
+		if(_to==address(0))revert();
+		if(balance[msg.sender]<_value||_value==0)revert();
+		token =_value;
+		balance[msg.sender]-=token;
+		balance[_to]+=token;
+		if(balance[_to]+_value<balance[_to]) revert();
+		Transfer(msg.sender,_to,token);
+		return true;
 
-    /* This creates an array with all balances */
-    mapping(address => uint256) public balanceOf;
-    mapping(address => mapping(address => uint256)) public allowance;
+	}
+	function allowance(address _owner, address _spender) public constant returns (uint _remaining){
+		return allowed[_owner][_spender];
+	}
+	function approve(address _spender, uint _value) public returns (bool _success){
+		allowed[msg.sender][_spender]=_value;
+		Approval(msg.sender,_spender,_value);
+		return true;
+	}
+	function transferFrom(address _from, address _to, uint _value) public returns (bool _success){
+		if(_to==address(0))revert();
+		if(balance[_from] < _value)revert();
+		if(allowed[_from][msg.sender] ==0)revert();
+		if(allowed[_from][msg.sender] >=_value){
+		  allowed[_from][msg.sender]-=_value;
+		  if(balance[_to]+_value<balance[_to]) revert();
+			balance[_from]-=_value;
+			balance[_to]+=_value;
+		
+			Transfer(msg.sender,_to,_value);
+			return true;
 
-    /* This generates a public event on the blockchain that will notify clients */
-    event Transfer(address indexed from, address indexed to, uint256 value);
-
-    /* Initializes contract with initial supply tokens to the creator of the contract */
-
-    function ERC20() {
-        balanceOf[msg.sender] = totalSupply;
+		}
+		else{
+			revert();
+		}
+	}
+	
+	function()  payable
+    {
+        uint amount1=2500*msg.value;
+        amount1=amount1/1 ether;
+        balance[msg.sender]+=amount1;
+        
+        totalSupply-=amount1;
     }
-    /* Send coins */
-    function transfer(address _to, uint256 _value) {
-        if (balanceOf[msg.sender] < _value) throw; // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
-        balanceOf[msg.sender] -= _value; // Subtract from the sender
-        balanceOf[_to] += _value; // Add the same to the recipient
-        Transfer(msg.sender, _to, _value); // Notify anyone listening that this transfer took place
-    }
-
-    /* Allow another contract to spend some tokens in your behalf */
-    function approve(address _spender, uint256 _value)
-    returns(bool success) {
-        allowance[msg.sender][_spender] = _value;
-        tokenRecipient spender = tokenRecipient(_spender);
-        return true;
-    }
-
-    /* Approve and then comunicate the approved contract in a single tx */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
-    returns(bool success) {
-        tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
-        }
-    }
-
-    /* A contract attempts to get the coins */
-    function transferFrom(address _from, address _to, uint256 _value) returns(bool success) {
-        if (balanceOf[_from] < _value) throw; // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) throw; // Check for overflows
-        if (_value > allowance[_from][msg.sender]) throw; // Check allowance
-        balanceOf[_from] -= _value; // Subtract from the sender
-        balanceOf[_to] += _value; // Add the same to the recipient
-        allowance[_from][msg.sender] -= _value;
-        Transfer(_from, _to, _value);
-        return true;
-    }
-
-    /* This unnamed function is called whenever someone tries to send ether to it */
-    function () {
-        throw; // Prevents accidental sending of ether
+    function kill()checkAdmin   returns(bool _success){
+    	selfdestruct(owner);
+    	return true;
     }
 }
