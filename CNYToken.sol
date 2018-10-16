@@ -1,312 +1,366 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CNYToken at 0x041b3eb05560ba2670def3cc5eec2aeef8e5d14b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CNYToken at 0xe3050daeca9ef42e2549ba8d9cfb89d9080846d5
 */
-// Abstract contract for the full ERC 20 Token standard
-// https://github.com/ethereum/EIPs/issues/20
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.23;
 
-contract Token {
-    /* This is a slight change to the ERC20 base standard.
-    function totalSupply() constant returns (uint256 supply);
-    is replaced with:
-    uint256 public totalSupply;
-    This automatically creates a getter function for the totalSupply.
-    This is moved to the base contract since public getter functions are not
-    currently recognised as an implementation of the matching abstract
-    function by the compiler.
-    */
-    /// total amount of tokens
-    uint256 public totalSupply;
+/**
+ * Math operations with safety checks
+ */
+ library SafeMath {
+   /**
+   * @dev Multiplies two numbers, revert()s on overflow.
+   */
+   function mul(uint256 a, uint256 b) internal returns (uint256 c) {
+     if (a == 0) {
+       return 0;
+     }
+     c = a * b;
+     assert(c / a == b);
+     return c;
+   }
 
-    /// @param _owner The address from which the balance will be retrieved
-    /// @return The balance
-    function balanceOf(address _owner) constant returns (uint256 balance);
+   /**
+   * @dev Integer division of two numbers, truncating the quotient.
+   */
+   function div(uint256 a, uint256 b) internal returns (uint256) {
+     // assert(b > 0); // Solidity automatically revert()s when dividing by 0
+     // uint256 c = a / b;
+     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+     return a / b;
+   }
 
-    /// @notice send `_value` token to `_to` from `msg.sender`
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transfer(address _to, uint256 _value) returns (bool success);
+   /**
+   * @dev Subtracts two numbers, revert()s on overflow (i.e. if subtrahend is greater than minuend).
+   */
+   function sub(uint256 a, uint256 b) internal returns (uint256) {
+     assert(b <= a);
+     return a - b;
+   }
 
-    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
-    /// @param _from The address of the sender
-    /// @param _to The address of the recipient
-    /// @param _value The amount of token to be transferred
-    /// @return Whether the transfer was successful or not
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success);
+   /**
+   * @dev Adds two numbers, revert()s on overflow.
+   */
+   function add(uint256 a, uint256 b) internal returns (uint256 c) {
+     c = a + b;
+     assert(c >= a && c >= b);
+     return c;
+   }
 
-    /// @notice `msg.sender` approves `_spender` to spend `_value` tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @param _value The amount of tokens to be approved for transfer
-    /// @return Whether the approval was successful or not
-    function approve(address _spender, uint256 _value) returns (bool success);
+   function assert(bool assertion) internal {
+     if (!assertion) {
+       revert();
+     }
+   }
+ }
 
-    /// @param _owner The address of the account owning tokens
-    /// @param _spender The address of the account able to transfer the tokens
-    /// @return Amount of remaining tokens allowed to spent
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining);
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20Basic {
+  function balanceOf(address who) constant returns (uint);
+  function transfer(address to, uint value);
+  event Transfer(address indexed from, address indexed to, uint value);
+}
 
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances.
+ */
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint;
+
+  mapping(address => uint) balances;
+
+  /**
+   * @dev Fix for the ERC20 short address attack.
+   */
+  modifier onlyPayloadSize(uint size) {
+     if(msg.data.length < size.add(4)) {
+       revert();
+     }
+     _;
+  }
+
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) {
+    require(_to != 0x0);
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    emit Transfer(msg.sender, _to, _value);
+  }
+
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) constant returns (uint balance) {
+    return balances[_owner];
+  }
+}
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint);
+  function transferFrom(address from, address to, uint value);
+  function approve(address spender, uint value);
+  event Approval(address indexed owner, address indexed spender, uint value);
+}
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implemantation of the basic standart token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is BasicToken, ERC20 {
+
+  mapping (address => mapping (address => uint)) allowed;
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint the amout of tokens to be transfered
+   */
+  function transferFrom(address _from, address _to, uint _value) onlyPayloadSize(3 * 32) {
+    require(_to != 0x0);
+    uint _allowance = allowed[_from][msg.sender];
+
+    // Check is not needed because sub(_allowance, _value) will already revert() if this condition is not met
+    // if (_value > _allowance) revert();
+
+    balances[_to] = balances[_to].add(_value);
+    balances[_from] = balances[_from].sub(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
+    emit Transfer(_from, _to, _value);
+  }
+
+  /**
+   * @dev Aprove the passed address to spend the specified amount of tokens on beahlf of msg.sender.
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint _value) {
+
+    // To change the approve amount you first have to reduce the addresses`
+    //  allowance to zero by calling `approve(_spender, 0)` if it is not
+    //  already 0 to mitigate the race condition described here:
+    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) revert();
+
+    allowed[msg.sender][_spender] = _value;
+    emit Approval(msg.sender, _spender, _value);
+  }
+
+  /**
+   * @dev Function to check the amount of tokens than an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint specifing the amount of tokens still avaible for the spender.
+   */
+  function allowance(address _owner, address _spender) constant returns (uint remaining) {
+    return allowed[_owner][_spender];
+  }
+}
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() {
+    owner = msg.sender;
+  }
+
+  /**
+   * @dev revert()s if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    if (msg.sender != owner) {
+      revert();
+    }
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner {
+    if (newOwner != address(0)) {
+      owner = newOwner;
+    }
+  }
+}
+
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+  /**
+   * @dev modifier to allow actions only when the contract IS paused
+   */
+  modifier whenNotPaused() {
+    if (paused) revert();
+    _;
+  }
+
+  /**
+   * @dev modifier to allow actions only when the contract IS NOT paused
+   */
+  modifier whenPaused {
+    if (!paused) revert();
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused returns (bool) {
+    paused = true;
+    emit Pause();
+    return true;
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused returns (bool) {
+    paused = false;
+    emit Unpause();
+    return true;
+  }
 }
 
 
-contract StandardToken is Token {
+/**
+ * Pausable token
+ *
+ * Simple ERC20 Token example, with pausable token creation
+ **/
 
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
-            return true;
-        } else { return false; }
-    }
+contract PausableToken is StandardToken, Pausable {
 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
-            return true;
-        } else { return false; }
-    }
+  function transfer(address _to, uint _value) whenNotPaused {
+    super.transfer(_to, _value);
+  }
 
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
-    }
-
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
-    }
-
-    mapping (address => uint256) balances;
-    mapping (address => mapping (address => uint256)) allowed;
+  function transferFrom(address _from, address _to, uint _value) whenNotPaused {
+    super.transferFrom(_from, _to, _value);
+  }
 }
 
-contract CNYToken is StandardToken {
+/**
+ * @title CNYToken
+ * @dev CNY Token contract
+ */
+contract CNYToken is PausableToken {
+  using SafeMath for uint256;
 
-    function () {
-        //if ether is sent to this address, send it back.
-        throw;
-    }
+  function () {
+      //if ether is sent to this address, send it back.
+      revert();
+  }
 
-    address public founder;               // The address of the founder
-    string public name;                   // fancy name: eg Simon Bucks
-    uint8 public decimals;                // How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
-    string public symbol;                 // An identifier: eg SBX
-    string public version = 'CNY1.0';     // CNY 0.1 standard. Just an arbitrary versioning scheme.
-    
+  string public name = "CNYToken";
+  string public symbol = "CNYt";
+  uint8 public decimals = 18;
+  uint public totalSupply = 100000000000000000000000000;
+  string public version = 'CNYt 2.0';
+  // The nonce for avoid transfer replay attacks
+  mapping(address => uint256) nonces;
 
-    // The nonce for avoid transfer replay attacks
-    mapping(address => uint256) nonces;
+  event Burn(address indexed burner, uint256 value);
 
-    // The last comment for address
-    mapping(address => string) lastComment;
+  function CNYToken() {
+      balances[msg.sender] = totalSupply;              // Give the creator all initial tokens
+  }
 
-    // The comments for transfers per address
-    mapping (address => mapping (uint256 => string)) comments;
+  /**
+   * @dev Burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   */
+  function burn(uint256 _value) onlyOwner whenNotPaused {
+    _burn(msg.sender, _value);
+  }
 
-    function CNYToken(
-        uint256 _initialAmount,
-        string _tokenName,
-        uint8 _decimalUnits,
-        string _tokenSymbol) {
-        founder = msg.sender;                                // Save the creator address
-        balances[msg.sender] = _initialAmount;               // Give the creator all initial tokens
-        totalSupply = _initialAmount;                        // Update total supply
-        name = _tokenName;                                   // Set the name for display purposes
-        decimals = _decimalUnits;                            // Amount of decimals for display purposes
-        symbol = _tokenSymbol;                               // Set the symbol for display purposes  
-    }
+  function _burn(address _who, uint256 _value) internal {
+    require(_value <= balances[_who]);
+    // no need to require value <= totalSupply, since that would imply the
+    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
 
-   function transferWithComment(address _to, uint256 _value, string _comment) returns (bool success) {
-        if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
-            lastComment[msg.sender] = _comment;
-            Transfer(msg.sender, _to, _value);
-            return true;
-        } else { return false; }
-    }
+    balances[_who] = balances[_who].sub(_value);
+    totalSupply = totalSupply.sub(_value);
+    emit Burn(_who, _value);
+    emit Transfer(_who, address(0), _value);
+  }
 
-    function transferFromWithComment(address _from, address _to, uint256 _value, string _comment) returns (bool success) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            lastComment[_from] = _comment;
-            Transfer(_from, _to, _value);
-            return true;
-        } else { return false; }
-    }
+  /*
+   * Proxy transfer HC token. When some users of the ethereum account don't have ether,
+   * Who can authorize the agent for broadcast transactions, the agents may charge fees
+   * @param _from
+   * @param _to
+   * @param _value
+   * @param fee
+   * @param _v
+   * @param _r
+   * @param _s
+   * @param _comment
+   */
+  function transferProxy(address _from, address _to, uint256 _value, uint256 _fee,
+      uint8 _v, bytes32 _r, bytes32 _s) whenNotPaused {
 
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
-    }
+      require((balances[_from] >= _fee.add(_value)));
+      require(balances[_to].add(_value) >= balances[_to]);
+      require(balances[msg.sender].add(_fee) >= balances[msg.sender]);
 
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
+      uint256 nonce = nonces[_from];
+      bytes32 hash = keccak256(_from,_to,_value,_fee,nonce);
+      bytes memory prefix = "\x19Ethereum Signed Message:\n32";
+      bytes32 prefixedHash = keccak256(prefix, hash);
+      require(_from == ecrecover(prefixedHash,_v,_r,_s));
 
-    /*
-     * Proxy transfer CNY token. When some users of the ethereum account has no ether,
-     * he or she can authorize the agent for broadcast transactions, and agents may charge agency fees
-     * @param _from
-     * @param _to
-     * @param _value
-     * @param fee
-     * @param _v
-     * @param _r
-     * @param _s
-     * @param _comment
-     */
-    function transferProxy(address _from, address _to, uint256 _value, uint256 _fee,
-        uint8 _v,bytes32 _r, bytes32 _s, string _comment) returns (bool){
+      balances[_from] = balances[_from].sub(_value.add(_fee));
+      balances[_to] = balances[_to].add(_value);
+      balances[msg.sender] = balances[msg.sender].add(_fee);
+      nonces[_from] = nonce.add(1);
 
-        if(balances[_from] < _fee + _value) throw;
+      emit Transfer(_from, _to, _value);
+      emit Transfer(_from, msg.sender, _fee);
+  }
 
-        uint256 nonce = nonces[_from];
-                
-        bytes32 hash = sha3(_from,_to,_value,_fee,nonce);
-        bytes memory prefix = "\x19Ethereum Signed Message:\n32";
-        bytes32 prefixedHash = sha3(prefix, hash);
-        if(_from != ecrecover(prefixedHash,_v,_r,_s)) throw;
+  // Allocate tokens to the users
+  // @param _to The owner of the token
+  // @param _value The value of the token
+  function allocateTokens(address _to, uint256 _value) onlyOwner {
+      require(totalSupply.add(_value) > totalSupply);
+      require(balances[_to].add(_value) > balances[_to]);
 
-        if(balances[_to] + _value < balances[_to]
-            || balances[msg.sender] + _fee < balances[msg.sender]) throw;
-        balances[_to] += _value;
-        Transfer(_from, _to, _value);
-
-        balances[msg.sender] += _fee;
-        Transfer(_from, msg.sender, _fee);
-
-        balances[_from] -= _value + _fee;
-        lastComment[_from] = _comment;
-        comments[_from][nonce] = _comment;
-        nonces[_from] = nonce + 1;
-        
-        return true;
-    }
-
-    /*
-     * Proxy approve that some one can authorize the agent for broadcast transaction
-     * which call approve method, and agents may charge agency fees
-     * @param _from The  address which should tranfer CNY to others
-     * @param _spender The spender who allowed by _from
-     * @param _value The value that should be tranfered.
-     * @param _v
-     * @param _r
-     * @param _s
-     * @param _comment
-     */
-    function approveProxy(address _from, address _spender, uint256 _value,
-        uint8 _v,bytes32 _r, bytes32 _s, string _comment) returns (bool success) {
-
-        if(balances[_from] < _value) throw;
-        
-        uint256 nonce = nonces[_from];
-        
-        bytes32 hash = sha3(_from,_spender,_value,nonce);
-        bytes memory prefix = "\x19Ethereum Signed Message:\n32";
-        bytes32 prefixedHash = sha3(prefix, hash);
-        if(_from != ecrecover(prefixedHash,_v,_r,_s)) throw;
-
-        allowed[_from][_spender] = _value;
-        Approval(_from, _spender, _value);
-        lastComment[_from] = _comment;
-        comments[_from][nonce] = _comment;
-        nonces[_from] = nonce + 1;
-        return true;
-    }
-
-
-    /*
-     * Get the nonce
-     * @param _addr
-     */
-    function getNonce(address _addr) constant returns (uint256){
-        return nonces[_addr];
-    }
-
-    /*
-     * Get last comment
-     * @param _addr
-     */
-    function getLastComment(address _addr) constant returns (string){
-        return lastComment[_addr];
-    }
-
-    /*
-     * Get specified comment
-     * @param _addr
-     */
-    function getSpecifiedComment(address _addr, uint256 _nonce) constant returns (string){
-        if (nonces[_addr] < _nonce) throw;
-        return comments[_addr][_nonce];
-    }
-
-    /* Approves and then calls the receiving contract */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-
-        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
-        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
-        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
-        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
-        return true;
-    }
-
-    /* Approves and then calls the contract code*/
-    function approveAndCallcode(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-
-        //Call the contract code
-        if(!_spender.call(_extraData)) { throw; }
-        return true;
-    }
-
-    /* This notifies clients about the amount burnt */
-    event Burn(address indexed from, uint256 value);
-
-    function burn(uint256 _value) returns (bool success) {
-        if (balances[msg.sender] < _value) throw;            // Check if the sender has enough
-        balances[msg.sender] -= _value;                      // Subtract from the sender
-        totalSupply -= _value;                                // Updates totalSupply
-        Burn(msg.sender, _value);
-        return true;
-    }
-
-    function burnFrom(address _from, uint256 _value) returns (bool success) {
-        if (balances[_from] < _value) throw;                // Check if the sender has enough
-        if (_value > allowed[_from][msg.sender]) throw;    // Check allowance
-        balances[_from] -= _value;                          // Subtract from the sender
-        totalSupply -= _value;                               // Updates totalSupply
-        Burn(_from, _value);
-        return true;
-    }
-
-    /* This notifies clients about the amount increament */
-    event Increase(address _to, uint256 _value);
-
-    // Allocate tokens to the users
-    // @param _to The owner of the token
-    // @param _value The value of the token
-    function allocateTokens(address _to, uint256 _value) {
-        if(msg.sender != founder) throw;            // only the founder have the authority
-        if(totalSupply + _value <= totalSupply || balances[_to] + _value <= balances[_to]) throw;
-        totalSupply += _value;
-        balances[_to] += _value;
-        Increase(_to,_value);
-    }
+      totalSupply =  totalSupply.add(_value);
+      balances[_to] = balances[_to].add(_value);
+      emit Transfer(msg.sender, _to, _value);
+  }
 }
