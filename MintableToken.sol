@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintableToken at 0x91fe28b2e059cb89aab4c763fc059bdb73e6bdc8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintableToken at 0xbdfcdf0ad3c89df471808c687be20c169dffebd8
 */
 pragma solidity ^0.4.14;
 
@@ -138,22 +138,13 @@ contract MintableToken is StandardToken {
     address public owner = msg.sender;
 	uint256 public tokenAmount;
   
-    function name() constant returns (string) { return "kkTest104"; }
-    function symbol() constant returns (string) { return "kT104"; }
+    function name() constant returns (string) { return "kkTest103"; }
+    function symbol() constant returns (string) { return "kT103"; }
     function decimals() constant returns (uint8) { return 0; }
 	
 
 
   function mint(address receiver, uint amount) public {
-
-      if (amount != ((msg.value*rate)/1 ether)) {
-          revert();
-      }
-      
-      if (amount < 1) {
-          revert();
-      }
-
     totalSupply = safeAdd(totalSupply, amount);
     balances[receiver] = safeAdd(balances[receiver], amount);
 
@@ -174,13 +165,7 @@ function () payable {
 		
 	tokenAmount = 0;									//set the 'amount' var back to zero
 	tokenAmount = ((msg.value*rate)/(1 ether));		//calculate the amount of tokens to give
-	
-	if (tokenAmount < 1) {
-        revert();
-    }
-      
 	mint(msg.sender, tokenAmount);
-	tokenAmount = 0;
 		
 		
 	owner.transfer(msg.value);					//Send the ETH to founder.
