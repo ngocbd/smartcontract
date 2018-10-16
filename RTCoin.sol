@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RTCoin at 0xef8c1338d35251f16777d42d559284fef8351aaa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RTcoin at 0x3d9ef820804c88f2d2cd86d15f0c189600336bed
 */
 pragma solidity ^0.4.18;
 
@@ -41,7 +41,8 @@ library SafeMath {
   }
 }
 
-contract RTCoin {
+
+contract RTcoin {
     using SafeMath for uint256;
     
 	address public owner;
@@ -54,14 +55,14 @@ contract RTCoin {
 	mapping (address => uint256) balances;
     
     
-    function RTCoin(string _name, string _symbol, uint8 _decimals) public {
+    function RTcoin(string _name, string _symbol, uint8 _decimals) public {
 		decimals = _decimals;
 		name = _name;
 		symbol = _symbol;
 		owner = msg.sender;
 	}
 	
-
+	
     function changeSaleAgent(address newSaleAgent) public onlyOwner {
         require (newSaleAgent!=address(0));
         uint256 tokenAmount = balances[saleAgent];
@@ -83,7 +84,7 @@ contract RTCoin {
 		allowEmission = false;
 	}
     
-   
+    
     function burn(uint256 _value) public {
         require(_value > 0);
         address burner;
@@ -95,7 +96,7 @@ contract RTCoin {
         totalSupply = totalSupply.sub(_value);
         Burn(burner, _value);
     }
-    
+     
     event Burn(address indexed burner, uint indexed value);
 	
 	
@@ -116,11 +117,6 @@ contract RTCoin {
         require(newOwner != address(0));
         owner = newOwner; 
     }
-	
-	
-	function close() public onlyOwner {
-        selfdestruct(owner);
-    }
     
     modifier onlyOwner() {
         require(msg.sender == owner);
@@ -140,18 +136,18 @@ contract Crowdsale {
     
     using SafeMath for uint256;
     address fundsWallet;
-    RTCoin public token;
+    RTcoin public token;
     address public owner;
 	bool public open = false;
     uint256 public tokenLimit;
     
-    uint256 public rate = 20000; //
+    uint256 public rate = 20000;  
     
-   
+    
     function Crowdsale(address _fundsWallet, address tokenAddress, 
                        uint256 _rate, uint256 _tokenLimit) public {
         fundsWallet = _fundsWallet;
-        token = RTCoin(tokenAddress);
+        token = RTcoin(tokenAddress);
         rate = _rate;
         owner = msg.sender;
         tokenLimit = _tokenLimit * (uint256(10) ** token.decimals());
@@ -178,7 +174,7 @@ contract Crowdsale {
         rate = newRate;
     }
     
-   
+    
     function calculateTokenAmount(uint256 weiAmount) public constant returns(uint256) {
         if (token.decimals()!=18){
             uint256 tokenAmount = weiAmount.mul(rate).div(uint256(10) ** (18-token.decimals())); 
@@ -197,7 +193,7 @@ contract Crowdsale {
         open = true;
     }
     
-    
+   
     function disallowSale() public onlyOwner {
         open = false;
     }
