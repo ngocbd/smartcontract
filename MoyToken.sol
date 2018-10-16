@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MoyToken at 0x5dc6d8a603a5c48d6a6a322bc027ce42357d0e4d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MoyToken at 0x83812eea2a6781e44553cfc18fa0bd455cf0c953
 */
 pragma solidity ^0.4.18;
 /**
@@ -188,16 +188,13 @@ contract MoyToken is StandardToken {
 
   string public constant name = "MOYToken";
   string public constant symbol = "MOY";
-  uint8 public constant decimals = 18; // 18 decimal to fully comply with ERC20 Standard.
+  uint8 public constant decimals = 18; // 18 decimal to fully comply with exchanges and wallets.
 
-  uint256 public constant totalSupplyWithDecimals = 60000000000000000000000000; //60 million unique tokens for a single distribution and 18 decimal places to fully comply with ERC20 Standard. 
-  
-  address public mineableTokenStorageContract;
-  address public openDistributionContract;
-  uint256 public openSaleSupply;
-  uint256 public mineableSupply;
-  string public tokenCreationDate;
-          
+  uint256 public constant totalSupplyWithDecimals = 60000000000000000000000000; //60 million unique tokens for a single distribution and 18 decimal places to fully comply on exchanges and wallets. 
+  uint256 public constant openSaleSupply = 30000000000000000000000000;
+  uint256 public constant mineableSupply = 30000000000000000000000000;
+  //string public constant tokenIssueDate = "12-27-2017"
+
   /**
    * @dev Contructor that gives msg.sender all of existing tokens.
    */
@@ -206,21 +203,4 @@ contract MoyToken is StandardToken {
     balances[msg.sender] = totalSupplyWithDecimals;
 
   }
-
-
-// setup contract addresses.
-  function setupFunctionalAddresses(address _mineableTokenStorageContract, address _OpenDistributionContract) public returns (bytes32 response) {
-      
-      
-          mineableTokenStorageContract = _mineableTokenStorageContract;
-          openDistributionContract = _OpenDistributionContract;
-          openSaleSupply = 30000000000000000000000000;
-          mineableSupply = 30000000000000000000000000;
-          tokenCreationDate = "12-27-2017";
-          
-          return "Addresses setup.";
-
-      
-    }
-    
 }
