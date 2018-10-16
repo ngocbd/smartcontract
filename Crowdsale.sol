@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x54c2d2d4d8b34178548a8b22e55de1a16912fc41
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xcfbfd9167f0335045dee6955906377172eb9e2a1
 */
 pragma solidity ^0.4.15;
 
@@ -232,13 +232,13 @@ contract MintableToken is StandardToken, Ownable {
   
 }
 
-contract Apiary is MintableToken {
+contract ApiaryToken is MintableToken {
     
     string public constant name = "Apiary";
     
     string public constant symbol = "API";
     
-    uint32 public constant decimals = 4;
+    uint32 public constant decimals = 18;
     
 }
 
@@ -253,7 +253,7 @@ contract Crowdsale is Ownable {
     
     uint devs_percent;
 
-    Apiary public token = new Apiary();
+    ApiaryToken public token = new ApiaryToken();
 
     uint start_ico;
     
@@ -265,10 +265,9 @@ contract Crowdsale is Ownable {
 
     function Crowdsale() {
         eth_addr = 0x785862CEBCEcE601c6E1f79315c9320A6721Ea92;
-        devs_addr = 0x18A09596E20A84EC5915DC1EBdC0B13312C924cD;
         start_ico = 1527854400;
         period = 30;
-        rate = 5000e4;
+        rate = 5000e18;
         hardcap = 500 ether;
         devs_percent = 3;
     }
@@ -286,7 +285,7 @@ contract Crowdsale is Ownable {
     function finishMinting() public onlyOwner {
 	uint issuedTokenSupply = token.totalSupply();
 	uint restrictedTokens = issuedTokenSupply.mul(devs_percent).div(100 - devs_percent);
-	token.mint(devs_addr, restrictedTokens);
+	token.mint(eth_addr, restrictedTokens);
         token.finishMinting();
     }
  
