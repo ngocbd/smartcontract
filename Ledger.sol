@@ -1,381 +1,379 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ledger at 0xee57D52408BE2fe49999FE09a16DC0A9e0545AeB
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ledger at 0x025db0ad4f49ae49102246bbb5120a619e9562c0
 */
-pragma solidity ^0.4.8;
+// Copyright New Alchemy Limited, 2017. All rights reserved.
+
+pragma solidity >=0.4.10;
+
+// from Zeppelin
+contract SafeMath {
+    function safeMul(uint a, uint b) internal returns (uint) {
+        uint c = a * b;
+        require(a == 0 || c / a == b);
+        return c;
+    }
+
+    function safeSub(uint a, uint b) internal returns (uint) {
+        require(b <= a);
+        return a - b;
+    }
+
+    function safeAdd(uint a, uint b) internal returns (uint) {
+        uint c = a + b;
+        require(c>=a && c>=b);
+        return c;
+    }
+}
 
 contract Owned {
-    address public owner;
+	address public owner;
+	address newOwner;
 
-    function changeOwner(address _addr) onlyOwner {
-        if (_addr == 0x0) throw;
-        owner = _addr;
-    }
+	function Owned() {
+		owner = msg.sender;
+	}
 
-    modifier onlyOwner {
-        if (msg.sender != owner) throw;
-        _;
-    }
+	modifier onlyOwner() {
+		require(msg.sender == owner);
+		_;
+	}
+
+	function changeOwner(address _newOwner) onlyOwner {
+		newOwner = _newOwner;
+	}
+
+	function acceptOwnership() {
+		if (msg.sender == newOwner) {
+			owner = newOwner;
+		}
+	}
 }
 
-contract Mutex is Owned {
-    bool locked = false;
-    modifier mutexed {
-        if (locked) throw;
-        locked = true;
-        _;
-        locked = false;
-    }
+contract Pausable is Owned {
+	bool public paused;
 
-    function unMutex() onlyOwner {
-        locked = false;
-    }
+	function pause() onlyOwner {
+		paused = true;
+	}
+
+	function unpause() onlyOwner {
+		paused = false;
+	}
+
+	modifier notPaused() {
+		require(!paused);
+		_;
+	}
 }
 
+contract Finalizable is Owned {
+	bool public finalized;
 
-contract Rental is Owned {
-    function Rental(address _owner) {
-        if (_owner == 0x0) throw;
-        owner = _owner;
-    }
+	function finalize() onlyOwner {
+		finalized = true;
+	}
 
-    function offer(address from, uint num) {
-
-    }
-
-    function claimBalance(address) returns(uint) {
-        return 0;
-    }
-
-    function exec(address dest) onlyOwner {
-        if (!dest.call(msg.data)) throw;
-    }
+	modifier notFinalized() {
+		require(!finalized);
+		_;
+	}
 }
 
-contract Token is Owned, Mutex {
-    uint ONE = 10**8;
-    uint price = 5000;
-    Ledger ledger;
-    Rental rentalContract;
-    uint8 rollOverTime = 4;
-    uint8 startTime = 8;
-    bool live = false;
-    address club;
-    uint lockedSupply = 0;
-    string public name;
-    uint8 public decimals; 
-    string public symbol;     
-    string public version = '0.1';  
-    bool transfersOn = false;
-
-
-
-    function Token(address _owner, string _tokenName, uint8 _decimals, string _symbol, address _ledger, address _rental) {
-        if (_owner == 0x0) throw;
-        owner = _owner;
-
-        name = _tokenName;
-        decimals = _decimals;
-        symbol = _symbol;
-        ONE = 10**uint(decimals);
-        ledger = Ledger(_ledger);
-        rentalContract = Rental(_rental);
-    }
-
-    /*
-    *	Bookkeeping and Admin Functions
-    */
-
-    event LedgerUpdated(address,address);
-
-    function changeClub(address _addr) onlyOwner {
-        if (_addr == 0x0) throw;
-
-        club = _addr;
-    }
-
-    function changePrice(uint _num) onlyOwner {
-        price = _num;
-    }
-
-    function safeAdd(uint a, uint b) returns (uint) {
-        if ((a + b) < a) throw;
-        return (a + b);
-    }
-
-    function changeLedger(address _addr) onlyOwner {
-        if (_addr == 0x0) throw;
-
-        LedgerUpdated(msg.sender, _addr);
-        ledger = Ledger(_addr);
-    }
-
-    function changeRental(address _addr) onlyOwner {
-        if (_addr == 0x0) throw;
-        rentalContract = Rental(_addr);
-    }
-
-    function changeTimes(uint8 _rollOver, uint8 _start) onlyOwner {
-        rollOverTime = _rollOver;
-        startTime = _start;
-    }
-
-    /*
-    * Locking is a feature that turns a user's balances into
-    * un-issued tokens, taking them out of an account and reducing the supply.
-    * Diluting is so named to remind the caller that they are changing the money supply.
-        */
-
-    function lock(address _seizeAddr) onlyOwner mutexed {
-        uint myBalance = ledger.balanceOf(_seizeAddr);
-
-        lockedSupply += myBalance;
-        ledger.setBalance(_seizeAddr, 0);
-    }
-
-    event Dilution(address, uint);
-
-    function dilute(address _destAddr, uint amount) onlyOwner {
-        if (amount > lockedSupply) throw;
-
-        Dilution(_destAddr, amount);
-
-        lockedSupply -= amount;
-
-        uint curBalance = ledger.balanceOf(_destAddr);
-        curBalance = safeAdd(amount, curBalance);
-        ledger.setBalance(_destAddr, curBalance);
-    }
-
-    /* 
-     * Crowdsale -- 
-     *
-     */
-    function completeCrowdsale() onlyOwner {
-        // Lock unsold tokens
-        // allow transfers for arbitrary owners
-        transfersOn = true;
-        lock(owner);
-    }
-
-    function pauseTransfers() onlyOwner {
-        transfersOn = false;
-    }
-
-    function resumeTransfers() onlyOwner {
-        transfersOn = true;
-    }
-
-    /*
-    * Renting -- Logic TBD later. For now, we trust the rental contract
-    * to manage everything about the rentals, including bookkeeping on earnings
-    * and returning tokens.
-    */
-
-    function rentOut(uint num) {
-        if (ledger.balanceOf(msg.sender) < num) throw;
-        rentalContract.offer(msg.sender, num);
-        ledger.tokenTransfer(msg.sender, rentalContract, num);
-    }
-
-    function claimUnrented() {  
-        uint amount = rentalContract.claimBalance(msg.sender); // this should reduce sender's claimableBalance to 0
-
-        ledger.tokenTransfer(rentalContract, msg.sender, amount);
-    }
-
-    /*
-    * Burning -- We allow any user to burn tokens.
-    *
-     */
-
-    function burn(uint _amount) {
-        uint balance = ledger.balanceOf(msg.sender);
-        if (_amount > balance) throw;
-
-        ledger.setBalance(msg.sender, balance - _amount);
-    }
-
-    /*
-    Entry
-    */
-    function checkIn(uint _numCheckins) returns(bool) {
-        int needed = int(price * ONE* _numCheckins);
-        if (int(ledger.balanceOf(msg.sender)) > needed) {
-            ledger.changeUsed(msg.sender, needed);
-            return true;
-        }
-        return false;
-    }
-
-    // ERC20 Support. This could also use the fallback but
-    // I prefer the control for now.
-
-    event Transfer(address, address, uint);
-    event Approval(address, address, uint);
-
-    function totalSupply() constant returns(uint) {
-        return ledger.totalSupply();
-    }
-
-    function transfer(address _to, uint _amount) returns(bool) {
-        if (!transfersOn && msg.sender != owner) return false;
-        if (! ledger.tokenTransfer(msg.sender, _to, _amount)) { return false; }
-
-        Transfer(msg.sender, _to, _amount);
-        return true;
-    }
-
-    function transferFrom(address _from, address _to, uint _amount) returns (bool) {
-        if (!transfersOn && msg.sender != owner) return false;
-        if (! ledger.tokenTransferFrom(msg.sender, _from, _to, _amount) ) { return false;}
-
-        Transfer(msg.sender, _to, _amount);
-        return true;
-    }
-
-    function allowance(address _from, address _to) constant returns(uint) {
-        return ledger.allowance(_from, _to); 
-    }
-
-    function approve(address _spender, uint _value) returns (bool) {
-        if ( ledger.tokenApprove(msg.sender, _spender, _value) ) {
-            Approval(msg.sender, _spender, _value);
-            return true;
-        }
-        return false;
-    }
-
-    function balanceOf(address _addr) constant returns(uint) {
-        return ledger.balanceOf(_addr);
-    }
+contract IToken {
+	function transfer(address _to, uint _value) returns (bool);
+	function balanceOf(address owner) returns(uint);
 }
 
-contract Ledger is Owned {
-    mapping (address => uint) balances;
-    mapping (address => uint) usedToday;
+// In case someone accidentally sends token to one of these contracts,
+// add a way to get them back out.
+contract TokenReceivable is Owned {
+	function claimTokens(address _token, address _to) onlyOwner returns (bool) {
+		IToken token = IToken(_token);
+		return token.transfer(_to, token.balanceOf(this));
+	}
+}
 
-    mapping (address => bool) seenHere;
-    address[] public seenHereA;
+contract EventDefinitions {
+	event Transfer(address indexed from, address indexed to, uint value);
+	event Approval(address indexed owner, address indexed spender, uint value);
+}
 
-    mapping (address => mapping (address => uint256)) allowed;
-    address token;
-    uint public totalSupply = 0;
+contract Token is Finalizable, TokenReceivable, SafeMath, EventDefinitions, Pausable {
+	string constant public name = "Token Report";
+	uint8 constant public decimals = 8;
+	string constant public symbol = "DATA";
+	Controller public controller;
+	string public motd;
+	event Motd(string message);
 
-    function Ledger(address _owner, uint _preMined, uint ONE) {
-        if (_owner == 0x0) throw;
-        owner = _owner;
+	// functions below this line are onlyOwner
 
-        seenHere[_owner] = true;
-        seenHereA.push(_owner);
+	// set "message of the day"
+	function setMotd(string _m) onlyOwner {
+		motd = _m;
+		Motd(_m);
+	}
 
-        totalSupply = _preMined *ONE;
-        balances[_owner] = totalSupply;
-    }
+	function setController(address _c) onlyOwner notFinalized {
+		controller = Controller(_c);
+	}
 
-    modifier onlyToken {
-        if (msg.sender != token) throw;
-        _;
-    }
+	// functions below this line are public
 
-    modifier onlyTokenOrOwner {
-        if (msg.sender != token && msg.sender != owner) throw;
-        _;
-    }
+	function balanceOf(address a) constant returns (uint) {
+		return controller.balanceOf(a);
+	}
 
+	function totalSupply() constant returns (uint) {
+		return controller.totalSupply();
+	}
 
-    function tokenTransfer(address _from, address _to, uint amount) onlyToken returns(bool) {
-        if (amount > balances[_from]) return false;
-        if ((balances[_to] + amount) < balances[_to]) return false;
-        if (amount == 0) { return false; }
+	function allowance(address _owner, address _spender) constant returns (uint) {
+		return controller.allowance(_owner, _spender);
+	}
 
-        balances[_from] -= amount;
-        balances[_to] += amount;
+	function transfer(address _to, uint _value) onlyPayloadSize(2) notPaused returns (bool success) {
+		if (controller.transfer(msg.sender, _to, _value)) {
+			Transfer(msg.sender, _to, _value);
+			return true;
+		}
+		return false;
+	}
 
-        if (seenHere[_to] == false) {
-            seenHereA.push(_to);
-            seenHere[_to] = true;
-        }
+	function transferFrom(address _from, address _to, uint _value) onlyPayloadSize(3) notPaused returns (bool success) {
+		if (controller.transferFrom(msg.sender, _from, _to, _value)) {
+			Transfer(_from, _to, _value);
+			return true;
+		}
+		return false;
+	}
 
-        return true;
-    }
+	function approve(address _spender, uint _value) onlyPayloadSize(2) notPaused returns (bool success) {
+		// promote safe user behavior
+		if (controller.approve(msg.sender, _spender, _value)) {
+			Approval(msg.sender, _spender, _value);
+			return true;
+		}
+		return false;
+	}
 
-    function tokenTransferFrom(address _sender, address _from, address _to, uint amount) onlyToken returns(bool) {
-        if (allowed[_from][_sender] <= amount) return false;
-        if (amount > balanceOf(_from)) return false;
-        if (amount == 0) return false;
+	function increaseApproval (address _spender, uint _addedValue) onlyPayloadSize(2) notPaused returns (bool success) {
+		if (controller.increaseApproval(msg.sender, _spender, _addedValue)) {
+			uint newval = controller.allowance(msg.sender, _spender);
+			Approval(msg.sender, _spender, newval);
+			return true;
+		}
+		return false;
+	}
 
-        if ((balances[_to] + amount) < amount) return false;
+	function decreaseApproval (address _spender, uint _subtractedValue) onlyPayloadSize(2) notPaused returns (bool success) {
+		if (controller.decreaseApproval(msg.sender, _spender, _subtractedValue)) {
+			uint newval = controller.allowance(msg.sender, _spender);
+			Approval(msg.sender, _spender, newval);
+			return true;
+		}
+		return false;
+	}
 
-        balances[_from] -= amount;
-        balances[_to] += amount;
-        allowed[_from][_sender] -= amount;
+	modifier onlyPayloadSize(uint numwords) {
+		assert(msg.data.length >= numwords * 32 + 4);
+		_;
+	}
 
-        if (seenHere[_to] == false) {
-            seenHereA.push(_to);
-            seenHere[_to] = true;
-        }
+	function burn(uint _amount) notPaused {
+		controller.burn(msg.sender, _amount);
+		Transfer(msg.sender, 0x0, _amount);
+	}
 
-        return true;
-    }
+	// functions below this line are onlyController
 
+	modifier onlyController() {
+		assert(msg.sender == address(controller));
+		_;
+	}
 
-    function changeUsed(address _addr, int amount) onlyToken {
-        int myToday = int(usedToday[_addr]) + amount;
-        usedToday[_addr] = uint(myToday);
-    }
+	// In the future, when the controller supports multiple token
+	// heads, allow the controller to reconstitute the transfer and
+	// approval history.
 
-    function resetUsedToday(uint8 startI, uint8 numTimes) onlyTokenOrOwner returns(uint8) {
-        uint8 numDeleted;
-        for (uint i = 0; i < numTimes && i + startI < seenHereA.length; i++) {
-            if (usedToday[seenHereA[i+startI]] != 0) { 
-                delete usedToday[seenHereA[i+startI]];
-                numDeleted++;
-            }
-        }
-        return numDeleted;
-    }
+	function controllerTransfer(address _from, address _to, uint _value) onlyController {
+		Transfer(_from, _to, _value);
+	}
 
-    function balanceOf(address _addr) constant returns (uint) {
-        // don't forget to subtract usedToday
-        if (usedToday[_addr] >= balances[_addr]) { return 0;}
-        return balances[_addr] - usedToday[_addr];
-    }
+	function controllerApprove(address _owner, address _spender, uint _value) onlyController {
+		Approval(_owner, _spender, _value);
+	}
+}
 
-    event Approval(address, address, uint);
+contract Controller is Owned, Finalizable {
+	Ledger public ledger;
+	Token public token;
 
-    function tokenApprove(address _from, address _spender, uint256 _value) onlyToken returns (bool) {
-        allowed[_from][_spender] = _value;
-        Approval(_from, _spender, _value);
-        return true;
-    }
+	function Controller() {
+	}
 
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
+	// functions below this line are onlyOwner
 
-    function changeToken(address _token) onlyOwner {
-        token = Token(_token);
-    }
+	function setToken(address _token) onlyOwner {
+		token = Token(_token);
+	}
 
-    function reduceTotalSupply(uint amount) onlyToken {
-        if (amount > totalSupply) throw;
+	function setLedger(address _ledger) onlyOwner {
+		ledger = Ledger(_ledger);
+	}
 
-        totalSupply -= amount;    
-    }
+	modifier onlyToken() {
+		require(msg.sender == address(token));
+		_;
+	}
 
-    function setBalance(address _addr, uint amount) onlyTokenOrOwner {
-        if (balances[_addr] == amount) { return; }
-        if (balances[_addr] < amount) {
-            // increasing totalSupply
-            uint increase = amount - balances[_addr];
-            totalSupply += increase;
-        } else {
-            // decreasing totalSupply
-            uint decrease = balances[_addr] - amount;
-            //TODO: safeSub
-            totalSupply -= decrease;
-        }
-        balances[_addr] = amount;
-    }
+	modifier onlyLedger() {
+		require(msg.sender == address(ledger));
+		_;
+	}
 
+	// public functions
+
+	function totalSupply() constant returns (uint) {
+		return ledger.totalSupply();
+	}
+
+	function balanceOf(address _a) constant returns (uint) {
+		return ledger.balanceOf(_a);
+	}
+
+	function allowance(address _owner, address _spender) constant returns (uint) {
+		return ledger.allowance(_owner, _spender);
+	}
+
+	// functions below this line are onlyLedger
+
+	// let the ledger send transfer events (the most obvious case
+	// is when we mint directly to the ledger and need the Transfer()
+	// events to appear in the token)
+	function ledgerTransfer(address from, address to, uint val) onlyLedger {
+		token.controllerTransfer(from, to, val);
+	}
+
+	// functions below this line are onlyToken
+
+	function transfer(address _from, address _to, uint _value) onlyToken returns (bool success) {
+		return ledger.transfer(_from, _to, _value);
+	}
+
+	function transferFrom(address _spender, address _from, address _to, uint _value) onlyToken returns (bool success) {
+		return ledger.transferFrom(_spender, _from, _to, _value);
+	}
+
+	function approve(address _owner, address _spender, uint _value) onlyToken returns (bool success) {
+		return ledger.approve(_owner, _spender, _value);
+	}
+
+	function increaseApproval (address _owner, address _spender, uint _addedValue) onlyToken returns (bool success) {
+		return ledger.increaseApproval(_owner, _spender, _addedValue);
+	}
+
+	function decreaseApproval (address _owner, address _spender, uint _subtractedValue) onlyToken returns (bool success) {
+		return ledger.decreaseApproval(_owner, _spender, _subtractedValue);
+	}
+
+	function burn(address _owner, uint _amount) onlyToken {
+		ledger.burn(_owner, _amount);
+	}
+}
+
+contract Ledger is Owned, SafeMath, Finalizable {
+	Controller public controller;
+	mapping(address => uint) public balanceOf;
+	mapping (address => mapping (address => uint)) public allowance;
+	uint public totalSupply;
+	uint public mintingNonce;
+	bool public mintingStopped;
+
+	// functions below this line are onlyOwner
+
+	function Ledger() {
+	}
+
+	function setController(address _controller) onlyOwner notFinalized {
+		controller = Controller(_controller);
+	}
+
+	function stopMinting() onlyOwner {
+		mintingStopped = true;
+	}
+
+	function multiMint(uint nonce, uint256[] bits) onlyOwner {
+		require(!mintingStopped);
+		if (nonce != mintingNonce) return;
+		mintingNonce += 1;
+		uint256 lomask = (1 << 96) - 1;
+		uint created = 0;
+		for (uint i=0; i<bits.length; i++) {
+			address a = address(bits[i]>>96);
+			uint value = bits[i]&lomask;
+			balanceOf[a] = balanceOf[a] + value;
+			controller.ledgerTransfer(0, a, value);
+			created += value;
+		}
+		totalSupply += created;
+	}
+
+	// functions below this line are onlyController
+
+	modifier onlyController() {
+		require(msg.sender == address(controller));
+		_;
+	}
+
+	function transfer(address _from, address _to, uint _value) onlyController returns (bool success) {
+		if (balanceOf[_from] < _value) return false;
+
+		balanceOf[_from] = safeSub(balanceOf[_from], _value);
+		balanceOf[_to] = safeAdd(balanceOf[_to], _value);
+		return true;
+	}
+
+	function transferFrom(address _spender, address _from, address _to, uint _value) onlyController returns (bool success) {
+		if (balanceOf[_from] < _value) return false;
+
+		var allowed = allowance[_from][_spender];
+		if (allowed < _value) return false;
+
+		balanceOf[_to] = safeAdd(balanceOf[_to], _value);
+		balanceOf[_from] = safeSub(balanceOf[_from], _value);
+		allowance[_from][_spender] = safeSub(allowed, _value);
+		return true;
+	}
+
+	function approve(address _owner, address _spender, uint _value) onlyController returns (bool success) {
+		// require user to set to zero before resetting to nonzero
+		if ((_value != 0) && (allowance[_owner][_spender] != 0)) {
+			return false;
+		}
+
+		allowance[_owner][_spender] = _value;
+		return true;
+	}
+
+	function increaseApproval (address _owner, address _spender, uint _addedValue) onlyController returns (bool success) {
+		uint oldValue = allowance[_owner][_spender];
+		allowance[_owner][_spender] = safeAdd(oldValue, _addedValue);
+		return true;
+	}
+
+	function decreaseApproval (address _owner, address _spender, uint _subtractedValue) onlyController returns (bool success) {
+		uint oldValue = allowance[_owner][_spender];
+		if (_subtractedValue > oldValue) {
+			allowance[_owner][_spender] = 0;
+		} else {
+			allowance[_owner][_spender] = safeSub(oldValue, _subtractedValue);
+		}
+		return true;
+	}
+
+	function burn(address _owner, uint _amount) onlyController {
+		balanceOf[_owner] = safeSub(balanceOf[_owner], _amount);
+		totalSupply = safeSub(totalSupply, _amount);
+	}
 }
