@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StarToken at 0x7b6054262d9ac537110a434ae75c880192faac25
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StarToken at 0x2bbf4f7b8ab300db01d45662769821da6e400ef4
 */
 pragma solidity ^0.4.16;
 
@@ -54,7 +54,7 @@ contract Token {
 }
 
 
-contract StandardToken is Token {
+contract StandardToken is Token, Owned {
 
     bool public locked;
 
@@ -65,10 +65,20 @@ contract StandardToken is Token {
     function balanceOf(address _owner) constant returns (uint256 balance) {
         return balances[_owner];
     }
+    
+    mapping (address => bool) public frozenAccount;
+    event FrozenFunds(address target, bool frozen);
+    
+    function freezeAccount(address target, bool freeze) onlyOwner {
+        frozenAccount[target] = freeze;
+        FrozenFunds(target, freeze);
+    }
 
     function transfer(address _to, uint256 _value) returns (bool success) {
 
         require(!locked);
+      
+        require(!frozenAccount[msg.sender]);
         
         require(balances[msg.sender] >= _value);
         
@@ -88,6 +98,9 @@ contract StandardToken is Token {
         require(!locked);
         
         require(balances[_from] >= _value);
+        require(!frozenAccount[msg.sender]);
+        require(!frozenAccount[_from]);
+        
              
         require(balances[_to] + _value >= balances[_to]);    
        
@@ -108,6 +121,8 @@ contract StandardToken is Token {
         require(!locked);
 
         allowed[msg.sender][_spender] = _value;
+        require(!frozenAccount[msg.sender]);
+        require(!frozenAccount[_spender]);
 
         Approval(msg.sender, _spender, _value);
         return true;
@@ -115,6 +130,9 @@ contract StandardToken is Token {
 
 
     function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+      require(!frozenAccount[_spender]);
+      require(!frozenAccount[_owner]);
+      require(!frozenAccount[msg.sender]);
       return allowed[_owner][_spender];
     }
 }
