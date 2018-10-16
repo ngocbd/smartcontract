@@ -1,13 +1,23 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PureLoop at 0xb6346ce38af410a9dae2e827ba21c413aee36658
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PureLoop at 0xf20d09c6368ed472123057e7c29460ef7a1ecda7
 */
 pragma solidity ^0.4.19;
 
 contract PureLoop
 {
-    function execute() public pure returns (uint output) {
+    function executePure() public pure returns (uint output) {
         uint num;
-        num +=execute();
-        return num++;
+        while(true) {
+            num++;
+        }
+        return num;
+    }
+    
+    function executeConstant() public constant returns (uint output) {
+        uint num;
+        while(true) {
+            num++;
+        }
+        return num;
     }
 }
