@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoSprites at 0x69294da06fe22d2e1bfe59467ba22e31c0953dcf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoSprites at 0xf3c8ed6c721774c022c530e813a369dfe78a6e85
 */
 pragma solidity ^0.4.2;
 
@@ -119,8 +119,7 @@ contract CryptoSprites is ERC721 {
         bytes4(keccak256('transferFrom(address,address,uint256)'));
 
     function() payable {
-        etherForOwner += msg.value / 2;
-        etherForCharity += msg.value / 2;
+        etherForOwner += msg.value;
     }
     
     function adjustDefaultSpritePrice (uint _priceMultiplier, uint _priceDivider) onlyOwner {
@@ -159,19 +158,24 @@ contract CryptoSprites is ERC721 {
         broughtSprites[spriteId].featured = true;
 
         if (broughtSprites[spriteId].timesTraded == 0) {
-            address kittyOwner = KittyCore(KittyCoreAddress).ownerOf(spriteId);
+            var (kittyOwner,,,,) = SaleClockAuction(SaleClockAuctionAddress).getAuction(spriteId);
             uint priceIfAny = SaleClockAuction(SaleClockAuctionAddress).getCurrentPrice(spriteId);
+            address kittyOwnerNotForSale = KittyCore(KittyCoreAddress).ownerOf(spriteId);
             
             // When featuring a Sprite that hasn't been traded before, if the original Kitty is for sale, update this Sprite with a price and set forSale = true - as long as msg.sender is the owner of the Kitty. Otherwise it could be that the owner of the Kitty removed the Sprite for sale and a different user could feature the Sprite and have it listed for sale
             if (priceIfAny > 0 && msg.sender == kittyOwner) {
                 broughtSprites[spriteId].price = priceIfAny * priceMultiplier / priceDivider;
                 broughtSprites[spriteId].forSale = true;
+                broughtSprites[spriteId].owner = kittyOwner;
+                numberOfSpritesOwnedByUser[msg.sender]++;
+            } else if (kittyOwnerNotForSale == msg.sender) {
+                // User featuring the sprite owns its kitty, but hasn't listed the kitty for sale
+                broughtSprites[spriteId].owner = kittyOwnerNotForSale;
+                numberOfSpritesOwnedByUser[msg.sender]++;
             }
             
-            broughtSprites[spriteId].owner = kittyOwner;
             broughtSprites[spriteId].spriteImageID = uint(block.blockhash(block.number-1))%360 + 1;
             
-            numberOfSpritesOwnedByUser[kittyOwner]++;
         }
         
         totalFeatures++;
@@ -270,9 +274,14 @@ contract CryptoSprites is ERC721 {
             require (broughtSprites[spriteId].timesTraded == 0);
             
             // This will be the owner of a Crypto Kitty, who can control the price of their unbrought Sprite
-            address kittyOwner = KittyCore(KittyCoreAddress).ownerOf(spriteId);
-            require (kittyOwner == msg.sender);
+            var (kittyOwner,,,,) = SaleClockAuction(SaleClockAuctionAddress).getAuction(spriteId);
             
+            if (kittyOwner != msg.sender) {
+                // May be that the kitty owner hasn't listed it for sale, in which case the owner of the kitty has to be retrieved from the KittyCore contract
+                address kittyOwnerNotForSale = KittyCore(KittyCoreAddress).ownerOf(spriteId);
+                require (kittyOwnerNotForSale == msg.sender);
+            }
+
             broughtSprites[spriteId].owner = msg.sender;
             broughtSprites[spriteId].spriteImageID = uint(block.blockhash(block.number-1))%360 + 1; 
         }
@@ -283,8 +292,13 @@ contract CryptoSprites is ERC721 {
     function removeSpriteFromSale (uint spriteId) {
         if (broughtSprites[spriteId].owner != msg.sender) {
             require (broughtSprites[spriteId].timesTraded == 0);
-            address kittyOwner = KittyCore(KittyCoreAddress).ownerOf(spriteId);
-            require (kittyOwner == msg.sender);
+            var (kittyOwner,,,,) = SaleClockAuction(SaleClockAuctionAddress).getAuction(spriteId);
+            
+            if (kittyOwner != msg.sender) {
+                address kittyOwnerNotForSale = KittyCore(KittyCoreAddress).ownerOf(spriteId);
+                require (kittyOwnerNotForSale == msg.sender);
+            }
+            
             broughtSprites[spriteId].price = 1; // When a user buys a Sprite Id that isn't for sale in the buySprite() function (ie. would be a Sprite that's never been brought before, for a Crypto Kitty that's for sale), one of the requirements is broughtSprites[spriteId].price == 0, which will be the case by default. By making the price = 1 this will throw and the Sprite won't be able to be brought
         } 
         broughtSprites[spriteId].forSale = false;
