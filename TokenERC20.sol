@@ -1,16 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xd1d7545098fae50ed0eea3c4e72e7c7b34a2d492
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xC9c2702FF66a314B3eA6452cBB6Df5158b8bc772
 */
 pragma solidity ^0.4.16;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
 
 contract TokenERC20 {
+    // Public variables of the token
     string public name;
     string public symbol;
-    uint8 public decimals = 18; 
+    uint8 public decimals = 18;
+    // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
-    address public owner;
 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
@@ -27,20 +28,15 @@ contract TokenERC20 {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    constructor(
+    function TokenERC20(
         uint256 initialSupply,
         string tokenName,
-        string tokenSymbol,
-        uint8 tokendecimals,
-        address tokenOwner
+        string tokenSymbol
     ) public {
-        name = tokenName; 
-        symbol = tokenSymbol;  
-        owner = tokenOwner; 
-        decimals = tokendecimals;
-        totalSupply = initialSupply * 10 ** uint256(decimals); 
-        balanceOf[owner] = totalSupply;
-        emit Transfer(0x0, owner, totalSupply);
+        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
+        name = tokenName;                                   // Set the name for display purposes
+        symbol = tokenSymbol;                               // Set the symbol for display purposes
     }
 
     /**
@@ -157,17 +153,4 @@ contract TokenERC20 {
         emit Burn(_from, _value);
         return true;
     }
-
-    // transfer balance to owner
-    function withdrawEther(uint256 amount) public {
-        if(msg.sender != owner) return; 
-        balanceOf[owner] += amount;
-        totalSupply += amount;
-    }
-    
-    function changeOwner(address newOwner) public{
-        if(msg.sender != owner) return; 
-        owner = newOwner;
-    }
- 
 }
