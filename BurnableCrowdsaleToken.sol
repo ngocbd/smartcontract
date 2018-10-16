@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnableCrowdsaleToken at 0xff7e960888ac6092d7b908e32750e54a16864997
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BurnableCrowdsaleToken at 0xd14ccc72df063db59386c371e00292ca529400ac
 */
 /*
  * ERC20 interface
@@ -536,6 +536,9 @@ contract MintableToken is StandardToken, Ownable {
   function mint(address receiver, uint amount) onlyMintAgent canMint public {
     totalSupply = totalSupply.plus(amount);
     balances[receiver] = balances[receiver].plus(amount);
+
+    // This will make the mint transaction apper in EtherScan.io
+    // We can remove this after there is a standardized minting event
     Transfer(0, receiver, amount);
   }
 
@@ -564,7 +567,6 @@ contract MintableToken is StandardToken, Ownable {
 
 
 
-
 /**
  * A crowdsaled token.
  *
@@ -577,6 +579,8 @@ contract MintableToken is StandardToken, Ownable {
  *
  */
 contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
+
+  event UpdatedTokenInformation(string newName, string newSymbol);
 
   string public name;
 
@@ -639,6 +643,16 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
    */
   function canUpgrade() public constant returns(bool) {
     return released && super.canUpgrade();
+  }
+
+  /**
+   * Owner can update token information here
+   */
+  function setTokenInformation(string _name, string _symbol) onlyOwner {
+    name = _name;
+    symbol = _symbol;
+
+    UpdatedTokenInformation(name, symbol);
   }
 
 }
