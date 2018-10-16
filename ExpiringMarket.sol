@@ -1,26 +1,77 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExpiringMarket at 0xc350ebf34b6d83b64ea0ee4e39b6ebe18f02ad2f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ExpiringMarket at 0x83ce340889c15a3b4d38cfcd1fc93e5d8497691f
 */
-/*
-   Copyright 2016, 2017 Nexus Development, LLC
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-*/
-
 pragma solidity ^0.4.8;
 
-// Token standard API
-// https://github.com/ethereum/EIPs/issues/20
+/// auth.sol -- widely-used access control pattern for Ethereum
+
+// Copyright (C) 2015, 2016, 2017  Nexus Development, LLC
+
+// Licensed under the Apache License, Version 2.0 (the "License").
+// You may not use this file except in compliance with the License.
+
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND (express or implied).
+
+contract DSAuthority {
+    function canCall(
+        address src, address dst, bytes4 sig
+    ) constant returns (bool);
+}
+
+contract DSAuthEvents {
+    event LogSetAuthority (address indexed authority);
+    event LogSetOwner     (address indexed owner);
+}
+
+contract DSAuth is DSAuthEvents {
+    DSAuthority  public  authority;
+    address      public  owner;
+
+    function DSAuth() {
+        owner = msg.sender;
+        LogSetOwner(msg.sender);
+    }
+
+    function setOwner(address owner_)
+        auth
+    {
+        owner = owner_;
+        LogSetOwner(owner);
+    }
+
+    function setAuthority(DSAuthority authority_)
+        auth
+    {
+        authority = authority_;
+        LogSetAuthority(authority);
+    }
+
+    modifier auth {
+        assert(isAuthorized(msg.sender, msg.sig));
+        _;
+    }
+
+    modifier authorized(bytes4 sig) {
+        assert(isAuthorized(msg.sender, sig));
+        _;
+    }
+
+    function isAuthorized(address src, bytes4 sig) internal returns (bool) {
+        if (src == owner) {
+            return true;
+        } else if (authority == DSAuthority(0)) {
+            return false;
+        } else {
+            return authority.canCall(src, this, sig);
+        }
+    }
+
+    function assert(bool x) internal {
+        if (!x) throw;
+    }
+}
 
 contract ERC20 {
     function totalSupply() constant returns (uint supply);
@@ -41,6 +92,17 @@ contract EventfulMarket {
                  uint buy_how_much, address indexed buy_which_token );
 
     event LogMake(
+        bytes32  indexed  id,
+        bytes32  indexed  pair,
+        address  indexed  maker,
+        ERC20             haveToken,
+        ERC20             wantToken,
+        uint128           haveAmount,
+        uint128           wantAmount,
+        uint64            timestamp
+    );
+
+    event LogBump(
         bytes32  indexed  id,
         bytes32  indexed  pair,
         address  indexed  maker,
@@ -96,6 +158,7 @@ contract SimpleMarket is EventfulMarket {
         ERC20    buy_which_token;
         address  owner;
         bool     active;
+        uint64   timestamp;
     }
 
     mapping (uint => OfferInfo) public offers;
@@ -193,6 +256,7 @@ contract SimpleMarket is EventfulMarket {
         info.buy_which_token = buy_which_token;
         info.owner = msg.sender;
         info.active = true;
+        info.timestamp = uint64(now);
         id = next_id();
         offers[id] = info;
 
@@ -209,6 +273,22 @@ contract SimpleMarket is EventfulMarket {
             uint128(sell_how_much),
             uint128(buy_how_much),
             uint64(now)
+        );
+    }
+
+    function bump(bytes32 id_)
+        can_buy(uint256(id_))
+    {
+        var id = uint256(id_);
+        LogBump(
+            id_,
+            sha3(offers[id].sell_which_token, offers[id].buy_which_token),
+            offers[id].owner,
+            offers[id].sell_which_token,
+            offers[id].buy_which_token,
+            uint128(offers[id].sell_how_much),
+            uint128(offers[id].buy_how_much),
+            offers[id].timestamp
         );
     }
 
@@ -312,9 +392,14 @@ contract SimpleMarket is EventfulMarket {
 // Simple Market with a market lifetime. When the lifetime has elapsed,
 // offers can only be cancelled (offer and buy will throw).
 
-contract ExpiringMarket is SimpleMarket {
+contract ExpiringMarket is DSAuth, SimpleMarket {
     uint public lifetime;
     uint public close_time;
+    bool public stopped;
+
+    function stop() auth {
+        stopped = true;
+    }
 
     function ExpiringMarket(uint lifetime_) {
         lifetime = lifetime_;
@@ -325,7 +410,7 @@ contract ExpiringMarket is SimpleMarket {
         return block.timestamp;
     }
     function isClosed() constant returns (bool closed) {
-        return (getTime() > close_time);
+        return stopped || (getTime() > close_time);
     }
 
     // after market lifetime has elapsed, no new offers are allowed
