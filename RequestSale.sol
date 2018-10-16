@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RequestSale at 0x915671b817bb779f41e605590e400514c8b63fff
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RequestSale at 0x81b0853bec4b8ced6d2df03f363c06ec4ce0883f
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.13;
 
 // Original author: Cintix
 // Modified by: Moonlambos, yakois
@@ -88,7 +88,7 @@ contract RequestSale {
     // Record the amount of ETH sent as the contract's current value.
     contract_eth_value = this.balance;
     // Transfer all the funds to the crowdsale address.
-    require(sale.call.value(contract_eth_value)());
+    sale.transfer(contract_eth_value);
   }
 
   function upgrade_cap() {
@@ -104,7 +104,7 @@ contract RequestSale {
     // Only allow deposits if the contract hasn't already purchased the tokens.
     require(!bought_tokens);
     // Only allow deposits that won't exceed the contract's ETH cap.
-    require(this.balance + msg.value < eth_cap);
+    require(this.balance < eth_cap);
     // Update records of deposited ETH to include the received amount.
     balances[msg.sender] += msg.value;
   }
