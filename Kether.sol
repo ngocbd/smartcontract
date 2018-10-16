@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Kether at 0x9a44ecec4a9551d7bd054d771c351595ad1c0793
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Kether at 0x1516edb45519c2ba46e47159601ffcee90b1b4f3
 */
 pragma solidity ^0.4.8;
 
@@ -139,7 +139,7 @@ contract BurnableToken is BasicToken {
 contract Kether is StandardToken, BurnableToken {
 
   string public constant name = "Kether"; 
-  string public constant symbol = "MYRK"; 
+  string public constant symbol = "IDRK"; 
   uint8 public constant decimals = 2; 
 
   uint256 public constant INITIAL_SUPPLY = 21000000000000 * (10 ** uint256(decimals));
