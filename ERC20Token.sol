@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xb8bdcb4f84b8b89b4067632286b09c6ab00a696b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x4fce19caa366f69ed6cc2793b83050e24d2c82e2
 */
 pragma solidity ^0.4.4;
 
@@ -109,7 +109,7 @@ contract ERC20Token is StandardToken {
     string public name;                   //fancy name: eg Simon Bucks
     uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
     string public symbol;                 //An identifier: eg SBX
-    string public version = 'Final Version';       //human 0.1 standard. Just an arbitrary versioning scheme.
+    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
 
 //
 // CHANGE THESE VALUES FOR YOUR TOKEN
@@ -119,11 +119,11 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 23000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 23000000000000000000000000;                        // Update total supply (100000 for example)
-        name = "Anonymous";                                   // Set the name for display purposes
+        balances[msg.sender] = 999999999000000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 999999999000000000000000000;                        // Update total supply (100000 for example)
+        name = "AGRONEUM";                                   // Set the name for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
-        symbol = "ANN";                               // Set the symbol for display purposes
+        symbol = "AGRO";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
