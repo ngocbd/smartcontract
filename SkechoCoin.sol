@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SkechoCoin at 0xcbe2c3076b33554b713c8c503869fec2e0671d33
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SkechoCoin at 0x5422accf785aeec6f12740b3c04f2c70327784a3
 */
 contract SkechoCoin {
     /* Public variables of the token */
@@ -17,7 +17,7 @@ contract SkechoCoin {
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function SkechoCoin() {
          initialSupply = 21000000000000000000000000000;
-         name ="SkechoCoin";
+         name ="SkechCoin";
         decimals = 18;
          symbol = "SCC";
         
