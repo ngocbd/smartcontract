@@ -1,96 +1,19 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TemplateCrowdsale at 0xb3f959713a058426921646a52fec9d73ec0f20e1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TemplateCrowdsale at 0x1be6ff0d69f43f401cd2ff0cbc200d2f7ecee452
 */
-pragma solidity ^0.4.0;
+pragma solidity ^0.4.18;
 
 
 /**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
  */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-
-
-
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
-
-  bool public paused = false;
-
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
-  modifier whenPaused() {
-    require(paused);
-    _;
-  }
-
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused public {
-    paused = true;
-    Pause();
-  }
-
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused public {
-    paused = false;
-    Unpause();
-  }
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
 
@@ -127,33 +50,6 @@ library SafeMath {
     return c;
   }
 }
-
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
 
 
 
@@ -194,88 +90,16 @@ contract BasicToken is ERC20Basic {
 }
 
 
+
 /**
- * @title SafeERC20
- * @dev Wrappers around ERC20 operations that throw on failure.
- * To use this library you can add a `using SafeERC20 for ERC20;` statement to your contract,
- * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
  */
-library SafeERC20 {
-  function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
-    assert(token.transfer(to, value));
-  }
-
-  function safeTransferFrom(ERC20 token, address from, address to, uint256 value) internal {
-    assert(token.transferFrom(from, to, value));
-  }
-
-  function safeApprove(ERC20 token, address spender, uint256 value) internal {
-    assert(token.approve(spender, value));
-  }
-}
-
-
-contract Checkable {
-    address private serviceAccount;
-    /**
-     * Flag means that contract accident already occurs.
-     */
-    bool private triggered = false;
-
-    // Occurs when accident happened.
-    event Triggered(uint balance);
-
-    function Checkable() public {
-        serviceAccount = msg.sender;
-    }
-
-    /**
-     * @dev Replace service account with new one.
-     * @param _account Valid service account address.
-     */
-    function changeServiceAccount(address _account) onlyService public {
-        assert(_account != 0);
-        serviceAccount = _account;
-    }
-
-    /**
-     * @dev Is caller (sender) service account.
-     */
-    function isServiceAccount() constant public returns (bool) {
-        return msg.sender == serviceAccount;
-    }
-
-    /**
-     * Public check method.
-     */
-    function check() onlyService notTriggered payable public {
-        if (internalCheck()) {
-            Triggered(this.balance);
-            triggered = true;
-            internalAction();
-        }
-    }
-
-    /**
-     * @dev Do inner check.
-     * @return bool true of accident triggered, false otherwise.
-     */
-    function internalCheck() internal returns (bool);
-
-    /**
-     * @dev Do inner action if check was success.
-     */
-    function internalAction() internal;
-
-    modifier onlyService {
-        require(msg.sender == serviceAccount);
-        _;
-    }
-
-    modifier notTriggered() {
-        require(!triggered);
-        _;
-    }
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 
@@ -363,6 +187,49 @@ contract StandardToken is ERC20, BasicToken {
 
 
 
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+
 
 /**
  * @title Mintable token
@@ -409,85 +276,218 @@ contract MintableToken is StandardToken, Ownable {
 }
 
 
-
 /**
- * @title Burnable Token
- * @dev Token that can be irreversibly burned (destroyed).
+ * @title Crowdsale
+ * @dev Crowdsale is a base contract for managing a token crowdsale.
+ * Crowdsales have a start and end timestamps, where investors can make
+ * token purchases and the crowdsale will assign them tokens based
+ * on a token per ETH rate. Funds collected are forwarded to a wallet
+ * as they arrive.
  */
-contract BurnableToken is StandardToken {
+contract Crowdsale {
+  using SafeMath for uint256;
 
-    event Burn(address indexed burner, uint256 value);
+  // The token being sold
+  MintableToken public token;
 
-    /**
-     * @dev Burns a specific amount of tokens.
-     * @param _value The amount of token to be burned.
-     */
-    function burn(uint256 _value) public {
-        require(_value > 0);
-        require(_value <= balances[msg.sender]);
-        // no need to require value <= totalSupply, since that would imply the
-        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+  // start and end timestamps where investments are allowed (both inclusive)
+  uint256 public startTime;
+  uint256 public endTime;
 
-        address burner = msg.sender;
-        balances[burner] = balances[burner].sub(_value);
-        totalSupply = totalSupply.sub(_value);
-        Burn(burner, _value);
-    }
+  // address where funds are collected
+  address public wallet;
+
+  // how many token units a buyer gets per wei
+  uint256 public rate;
+
+  // amount of raised money in wei
+  uint256 public weiRaised;
+
+  /**
+   * event for token purchase logging
+   * @param purchaser who paid for the tokens
+   * @param beneficiary who got the tokens
+   * @param value weis paid for purchase
+   * @param amount amount of tokens purchased
+   */
+  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+
+
+  function Crowdsale(uint256 _startTime, uint256 _endTime, uint256 _rate, address _wallet) public {
+    require(_startTime >= now);
+    require(_endTime >= _startTime);
+    require(_rate > 0);
+    require(_wallet != address(0));
+
+    token = createTokenContract();
+    startTime = _startTime;
+    endTime = _endTime;
+    rate = _rate;
+    wallet = _wallet;
+  }
+
+  // creates the token to be sold.
+  // override this method to have crowdsale of a specific mintable token.
+  function createTokenContract() internal returns (MintableToken) {
+    return new MintableToken();
+  }
+
+
+  // fallback function can be used to buy tokens
+  function () external payable {
+    buyTokens(msg.sender);
+  }
+
+  // low level token purchase function
+  function buyTokens(address beneficiary) public payable {
+    require(beneficiary != address(0));
+    require(validPurchase());
+
+    uint256 weiAmount = msg.value;
+
+    // calculate token amount to be created
+    uint256 tokens = weiAmount.mul(rate);
+
+    // update state
+    weiRaised = weiRaised.add(weiAmount);
+
+    token.mint(beneficiary, tokens);
+    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+
+    forwardFunds();
+  }
+
+  // send ether to the fund collection wallet
+  // override to create custom fund forwarding mechanisms
+  function forwardFunds() internal {
+    wallet.transfer(msg.value);
+  }
+
+  // @return true if the transaction can buy tokens
+  function validPurchase() internal view returns (bool) {
+    bool withinPeriod = now >= startTime && now <= endTime;
+    bool nonZeroPurchase = msg.value != 0;
+    return withinPeriod && nonZeroPurchase;
+  }
+
+  // @return true if crowdsale event has ended
+  function hasEnded() public view returns (bool) {
+    return now > endTime;
+  }
+
+
 }
 
 
-
-
 /**
- * @title TokenTimelock
- * @dev TokenTimelock is a token holder contract that will allow a
- * beneficiary to extract the tokens after a given release time
+ * @title FinalizableCrowdsale
+ * @dev Extension of Crowdsale where an owner can do extra work
+ * after finishing.
  */
-contract TokenTimelock {
-  using SafeERC20 for ERC20Basic;
+contract FinalizableCrowdsale is Crowdsale, Ownable {
+  using SafeMath for uint256;
 
-  // ERC20 basic token contract being held
-  ERC20Basic public token;
+  bool public isFinalized = false;
 
-  // beneficiary of tokens after they are released
-  address public beneficiary;
+  event Finalized();
 
-  // timestamp when token release is enabled
-  uint64 public releaseTime;
+  /**
+   * @dev Must be called after crowdsale ends, to do some extra finalization
+   * work. Calls the contract's finalization function.
+   */
+  function finalize() onlyOwner public {
+    require(!isFinalized);
+    require(hasEnded());
 
-  function TokenTimelock(ERC20Basic _token, address _beneficiary, uint64 _releaseTime) public {
-    require(_releaseTime > now);
-    token = _token;
-    beneficiary = _beneficiary;
-    releaseTime = _releaseTime;
+    finalization();
+    Finalized();
+
+    isFinalized = true;
   }
 
   /**
-   * @notice Transfers tokens held by timelock to beneficiary.
+   * @dev Can be overridden to add finalization logic. The overriding function
+   * should call super.finalization() to ensure the chain of finalization is
+   * executed entirely.
    */
-  function release() public {
-    require(now >= releaseTime);
-
-    uint256 amount = token.balanceOf(this);
-    require(amount > 0);
-
-    token.safeTransfer(beneficiary, amount);
+  function finalization() internal {
   }
 }
 
 
-contract usingConsts {
-    uint constant TOKEN_DECIMALS = 18;
-    uint8 constant TOKEN_DECIMALS_UINT8 = 18;
-    uint constant TOKEN_DECIMAL_MULTIPLIER = 10 ** TOKEN_DECIMALS;
+/**
+ * @title RefundVault
+ * @dev This contract is used for storing funds while a crowdsale
+ * is in progress. Supports refunding the money if crowdsale fails,
+ * and forwarding it if crowdsale is successful.
+ */
+contract RefundVault is Ownable {
+  using SafeMath for uint256;
 
-    string constant TOKEN_NAME = "Cronos";
-    string constant TOKEN_SYMBOL = "CRS";
-    bool constant PAUSED = true;
-    address constant TARGET_USER = 0x216C619CB44BeEe746DC781740C215Bce23fA892;
-    uint constant START_TIME = 1518697500;
-    bool constant CONTINUE_MINTING = false;
+  enum State { Active, Refunding, Closed }
+
+  mapping (address => uint256) public deposited;
+  address public wallet;
+  State public state;
+
+  event Closed();
+  event RefundsEnabled();
+  event Refunded(address indexed beneficiary, uint256 weiAmount);
+
+  function RefundVault(address _wallet) public {
+    require(_wallet != address(0));
+    wallet = _wallet;
+    state = State.Active;
+  }
+
+  function deposit(address investor) onlyOwner public payable {
+    require(state == State.Active);
+    deposited[investor] = deposited[investor].add(msg.value);
+  }
+
+  function close() onlyOwner public {
+    require(state == State.Active);
+    state = State.Closed;
+    Closed();
+    wallet.transfer(this.balance);
+  }
+
+  function enableRefunds() onlyOwner public {
+    require(state == State.Active);
+    state = State.Refunding;
+    RefundsEnabled();
+  }
+
+  function refund(address investor) public {
+    require(state == State.Refunding);
+    uint256 depositedValue = deposited[investor];
+    deposited[investor] = 0;
+    investor.transfer(depositedValue);
+    Refunded(investor, depositedValue);
+  }
 }
+
+
+/**
+ * @title SafeERC20
+ * @dev Wrappers around ERC20 operations that throw on failure.
+ * To use this library you can add a `using SafeERC20 for ERC20;` statement to your contract,
+ * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
+ */
+library SafeERC20 {
+  function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
+    assert(token.transfer(to, value));
+  }
+
+  function safeTransferFrom(ERC20 token, address from, address to, uint256 value) internal {
+    assert(token.transferFrom(from, to, value));
+  }
+
+  function safeApprove(ERC20 token, address spender, uint256 value) internal {
+    assert(token.approve(spender, value));
+  }
+}
+
 
 
 contract FreezableToken is StandardToken {
@@ -632,9 +632,115 @@ contract FreezableToken is StandardToken {
     }
 }
 
+/**
+ * @title Burnable Token
+ * @dev Token that can be irreversibly burned (destroyed).
+ */
+contract BurnableToken is StandardToken {
+
+    event Burn(address indexed burner, uint256 value);
+
+    /**
+     * @dev Burns a specific amount of tokens.
+     * @param _value The amount of token to be burned.
+     */
+    function burn(uint256 _value) public {
+        require(_value > 0);
+        require(_value <= balances[msg.sender]);
+        // no need to require value <= totalSupply, since that would imply the
+        // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+        address burner = msg.sender;
+        balances[burner] = balances[burner].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        Burn(burner, _value);
+    }
+}
 
 
 
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    Pause();
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    Unpause();
+  }
+}
+
+
+
+/**
+ * @title TokenTimelock
+ * @dev TokenTimelock is a token holder contract that will allow a
+ * beneficiary to extract the tokens after a given release time
+ */
+contract TokenTimelock {
+  using SafeERC20 for ERC20Basic;
+
+  // ERC20 basic token contract being held
+  ERC20Basic public token;
+
+  // beneficiary of tokens after they are released
+  address public beneficiary;
+
+  // timestamp when token release is enabled
+  uint64 public releaseTime;
+
+  function TokenTimelock(ERC20Basic _token, address _beneficiary, uint64 _releaseTime) public {
+    require(_releaseTime > now);
+    token = _token;
+    beneficiary = _beneficiary;
+    releaseTime = _releaseTime;
+  }
+
+  /**
+   * @notice Transfers tokens held by timelock to beneficiary.
+   */
+  function release() public {
+    require(now >= releaseTime);
+
+    uint256 amount = token.balanceOf(this);
+    require(amount > 0);
+
+    token.safeTransfer(beneficiary, amount);
+  }
+}
 
 
 
@@ -656,110 +762,50 @@ contract FreezableMintableToken is FreezableToken, MintableToken {
     }
 }
 
+contract usingConsts {
+    uint constant TOKEN_DECIMALS = 18;
+    uint8 constant TOKEN_DECIMALS_UINT8 = 18;
+    uint constant TOKEN_DECIMAL_MULTIPLIER = 10 ** TOKEN_DECIMALS;
 
-
-/**
- * @title Crowdsale
- * @dev Crowdsale is a base contract for managing a token crowdsale.
- * Crowdsales have a start and end timestamps, where investors can make
- * token purchases and the crowdsale will assign them tokens based
- * on a token per ETH rate. Funds collected are forwarded to a wallet
- * as they arrive.
- */
-contract Crowdsale {
-  using SafeMath for uint256;
-
-  // The token being sold
-  MintableToken public token;
-
-  // start and end timestamps where investments are allowed (both inclusive)
-  uint256 public startTime;
-  uint256 public endTime;
-
-  // address where funds are collected
-  address public wallet;
-
-  // how many token units a buyer gets per wei
-  uint256 public rate;
-
-  // amount of raised money in wei
-  uint256 public weiRaised;
-
-  /**
-   * event for token purchase logging
-   * @param purchaser who paid for the tokens
-   * @param beneficiary who got the tokens
-   * @param value weis paid for purchase
-   * @param amount amount of tokens purchased
-   */
-  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
-
-
-  function Crowdsale(uint256 _startTime, uint256 _endTime, uint256 _rate, address _wallet) public {
-    require(_startTime >= now);
-    require(_endTime >= _startTime);
-    require(_rate > 0);
-    require(_wallet != address(0));
-
-    token = createTokenContract();
-    startTime = _startTime;
-    endTime = _endTime;
-    rate = _rate;
-    wallet = _wallet;
-  }
-
-  // creates the token to be sold.
-  // override this method to have crowdsale of a specific mintable token.
-  function createTokenContract() internal returns (MintableToken) {
-    return new MintableToken();
-  }
-
-
-  // fallback function can be used to buy tokens
-  function () external payable {
-    buyTokens(msg.sender);
-  }
-
-  // low level token purchase function
-  function buyTokens(address beneficiary) public payable {
-    require(beneficiary != address(0));
-    require(validPurchase());
-
-    uint256 weiAmount = msg.value;
-
-    // calculate token amount to be created
-    uint256 tokens = weiAmount.mul(rate);
-
-    // update state
-    weiRaised = weiRaised.add(weiAmount);
-
-    token.mint(beneficiary, tokens);
-    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
-
-    forwardFunds();
-  }
-
-  // send ether to the fund collection wallet
-  // override to create custom fund forwarding mechanisms
-  function forwardFunds() internal {
-    wallet.transfer(msg.value);
-  }
-
-  // @return true if the transaction can buy tokens
-  function validPurchase() internal view returns (bool) {
-    bool withinPeriod = now >= startTime && now <= endTime;
-    bool nonZeroPurchase = msg.value != 0;
-    return withinPeriod && nonZeroPurchase;
-  }
-
-  // @return true if crowdsale event has ended
-  function hasEnded() public view returns (bool) {
-    return now > endTime;
-  }
-
-
+    string constant TOKEN_NAME = "DAYToken";
+    string constant TOKEN_SYMBOL = "DAYT";
+    bool constant PAUSED = false;
+    address constant TARGET_USER = 0xA8eBce443fdDd76cC1AB018D96B4F5E3b629f1E6;
+    uint constant START_TIME = 1519858800;
+    bool constant CONTINUE_MINTING = false;
 }
 
+
+
+contract MainToken is usingConsts, FreezableMintableToken, BurnableToken, Pausable {
+    function MainToken() {
+        if (PAUSED) {
+            pause();
+        }
+    }
+
+    function name() constant public returns (string _name) {
+        return TOKEN_NAME;
+    }
+
+    function symbol() constant public returns (string _symbol) {
+        return TOKEN_SYMBOL;
+    }
+
+    function decimals() constant public returns (uint8 _decimals) {
+        return TOKEN_DECIMALS_UINT8;
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool _success) {
+        require(!paused);
+        return super.transferFrom(_from, _to, _value);
+    }
+
+    function transfer(address _to, uint256 _value) returns (bool _success) {
+        require(!paused);
+        return super.transfer(_to, _value);
+    }
+}
 
 
 /**
@@ -790,96 +836,6 @@ contract CappedCrowdsale is Crowdsale {
     return super.hasEnded() || capReached;
   }
 
-}
-
-
-
-/**
- * @title FinalizableCrowdsale
- * @dev Extension of Crowdsale where an owner can do extra work
- * after finishing.
- */
-contract FinalizableCrowdsale is Crowdsale, Ownable {
-  using SafeMath for uint256;
-
-  bool public isFinalized = false;
-
-  event Finalized();
-
-  /**
-   * @dev Must be called after crowdsale ends, to do some extra finalization
-   * work. Calls the contract's finalization function.
-   */
-  function finalize() onlyOwner public {
-    require(!isFinalized);
-    require(hasEnded());
-
-    finalization();
-    Finalized();
-
-    isFinalized = true;
-  }
-
-  /**
-   * @dev Can be overridden to add finalization logic. The overriding function
-   * should call super.finalization() to ensure the chain of finalization is
-   * executed entirely.
-   */
-  function finalization() internal {
-  }
-}
-
-
-/**
- * @title RefundVault
- * @dev This contract is used for storing funds while a crowdsale
- * is in progress. Supports refunding the money if crowdsale fails,
- * and forwarding it if crowdsale is successful.
- */
-contract RefundVault is Ownable {
-  using SafeMath for uint256;
-
-  enum State { Active, Refunding, Closed }
-
-  mapping (address => uint256) public deposited;
-  address public wallet;
-  State public state;
-
-  event Closed();
-  event RefundsEnabled();
-  event Refunded(address indexed beneficiary, uint256 weiAmount);
-
-  function RefundVault(address _wallet) public {
-    require(_wallet != address(0));
-    wallet = _wallet;
-    state = State.Active;
-  }
-
-  function deposit(address investor) onlyOwner public payable {
-    require(state == State.Active);
-    deposited[investor] = deposited[investor].add(msg.value);
-  }
-
-  function close() onlyOwner public {
-    require(state == State.Active);
-    state = State.Closed;
-    Closed();
-    wallet.transfer(this.balance);
-  }
-
-  function enableRefunds() onlyOwner public {
-    require(state == State.Active);
-    state = State.Refunding;
-    RefundsEnabled();
-  }
-
-  function refund(address investor) public {
-    require(state == State.Refunding);
-    uint256 depositedValue = deposited[investor];
-    deposited[investor] = 0;
-    investor.transfer(depositedValue);
-    Refunded(investor, depositedValue);
-  }
 }
 
 
@@ -938,53 +894,6 @@ contract RefundableCrowdsale is FinalizableCrowdsale {
 }
 
 
-
-
-
-contract BonusableCrowdsale is usingConsts, Crowdsale {
-
-    function buyTokens(address beneficiary) public payable {
-        require(beneficiary != address(0));
-        require(validPurchase());
-
-        uint256 weiAmount = msg.value;
-
-        // calculate token amount to be created
-        uint256 bonusRate = getBonusRate(weiAmount);
-        uint256 tokens = weiAmount.mul(bonusRate).div(1 ether);
-
-        // update state
-        weiRaised = weiRaised.add(weiAmount);
-
-        token.mint(beneficiary, tokens);
-        TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
-
-        forwardFunds();
-    }
-
-    function getBonusRate(uint256 weiAmount) internal returns (uint256) {
-        uint256 bonusRate = rate;
-
-        
-
-        
-        // apply amount
-        uint[2] memory weiAmountBoundaries = [uint(4333000000000000000000),uint(10000000000000000000)];
-        uint[2] memory weiAmountRates = [uint(0),uint(150)];
-
-        for (uint j = 0; j < 2; j++) {
-            if (weiAmount >= weiAmountBoundaries[j]) {
-                bonusRate += bonusRate * weiAmountRates[j] / 1000;
-                break;
-            }
-        }
-        
-
-        return bonusRate;
-    }
-}
-
-
 contract MainCrowdsale is usingConsts, FinalizableCrowdsale {
     function hasStarted() public constant returns (bool) {
         return now >= startTime;
@@ -1030,51 +939,136 @@ contract MainCrowdsale is usingConsts, FinalizableCrowdsale {
 }
 
 
-contract MainToken is usingConsts, FreezableMintableToken, BurnableToken, Pausable {
-    function MainToken() {
-        if (PAUSED) {
-            pause();
+contract Checkable {
+    address private serviceAccount;
+    /**
+     * Flag means that contract accident already occurs.
+     */
+    bool private triggered = false;
+
+    // Occurs when accident happened.
+    event Triggered(uint balance);
+
+    function Checkable() public {
+        serviceAccount = msg.sender;
+    }
+
+    /**
+     * @dev Replace service account with new one.
+     * @param _account Valid service account address.
+     */
+    function changeServiceAccount(address _account) onlyService public {
+        assert(_account != 0);
+        serviceAccount = _account;
+    }
+
+    /**
+     * @dev Is caller (sender) service account.
+     */
+    function isServiceAccount() constant public returns (bool) {
+        return msg.sender == serviceAccount;
+    }
+
+    /**
+     * Public check method.
+     */
+    function check() onlyService notTriggered payable public {
+        if (internalCheck()) {
+            Triggered(this.balance);
+            triggered = true;
+            internalAction();
         }
     }
 
-    function name() constant public returns (string _name) {
-        return TOKEN_NAME;
+    /**
+     * @dev Do inner check.
+     * @return bool true of accident triggered, false otherwise.
+     */
+    function internalCheck() internal returns (bool);
+
+    /**
+     * @dev Do inner action if check was success.
+     */
+    function internalAction() internal;
+
+    modifier onlyService {
+        require(msg.sender == serviceAccount);
+        _;
     }
 
-    function symbol() constant public returns (string _symbol) {
-        return TOKEN_SYMBOL;
-    }
-
-    function decimals() constant public returns (uint8 _decimals) {
-        return TOKEN_DECIMALS_UINT8;
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool _success) {
-        require(!paused);
-        return super.transferFrom(_from, _to, _value);
-    }
-
-    function transfer(address _to, uint256 _value) returns (bool _success) {
-        require(!paused);
-        return super.transfer(_to, _value);
+    modifier notTriggered() {
+        require(!triggered);
+        _;
     }
 }
 
+
+contract BonusableCrowdsale is usingConsts, Crowdsale {
+
+    function buyTokens(address beneficiary) public payable {
+        require(beneficiary != address(0));
+        require(validPurchase());
+
+        uint256 weiAmount = msg.value;
+
+        // calculate token amount to be created
+        uint256 bonusRate = getBonusRate(weiAmount);
+        uint256 tokens = weiAmount.mul(bonusRate).div(1 ether);
+
+        // update state
+        weiRaised = weiRaised.add(weiAmount);
+
+        token.mint(beneficiary, tokens);
+        TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+
+        forwardFunds();
+    }
+
+    function getBonusRate(uint256 weiAmount) internal returns (uint256) {
+        uint256 bonusRate = rate;
+
+        
+
+        
+        // apply amount
+        uint[2] memory weiAmountBoundaries = [uint(5000000000000000000000),uint(10000000000000000000)];
+        uint[2] memory weiAmountRates = [uint(0),uint(150)];
+
+        for (uint j = 0; j < 2; j++) {
+            if (weiAmount >= weiAmountBoundaries[j]) {
+                bonusRate += bonusRate * weiAmountRates[j] / 1000;
+                break;
+            }
+        }
+        
+
+        return bonusRate;
+    }
+}
+
+
+
 contract TemplateCrowdsale is usingConsts, MainCrowdsale
-
-, BonusableCrowdsale
-
-
-, CappedCrowdsale
-
+    
+    , BonusableCrowdsale
+    
+    
+    , RefundableCrowdsale
+    
+    , CappedCrowdsale
+    
+    , Checkable
+    
 {
     event Initialized();
     bool public initialized = false;
 
     function TemplateCrowdsale(MintableToken _token)
-    Crowdsale(START_TIME > now ? START_TIME : now, 1518708780, 2500 * TOKEN_DECIMAL_MULTIPLIER, TARGET_USER)
-    CappedCrowdsale(6000000000000000000000)
-
+        Crowdsale(START_TIME > now ? START_TIME : now, 1526162400, 3000 * TOKEN_DECIMAL_MULTIPLIER, TARGET_USER)
+        CappedCrowdsale(5000000000000000000000)
+        
+        RefundableCrowdsale(1000000000000000000000)
+        
     {
         token = _token;
     }
@@ -1083,10 +1077,10 @@ contract TemplateCrowdsale is usingConsts, MainCrowdsale
         require(!initialized);
         initialized = true;
 
-
-        address[4] memory addresses = [address(0x47ad6812bd3b10464f88738ab305a12dc404e693),address(0xf5b0e286a93cabb5bf110e8b588f5d876a46ada4),address(0x38cfa2e5e94a51f6365d39f4529e5aef351ef035),address(0x3fc1a9e59b416f8f9e550bba6136e7b510b6205b)];
-        uint[4] memory amounts = [uint(300000000000000000000000),uint(1600000000000000000000000),uint(500000000000000000000000),uint(800000000000000000000000)];
-        uint64[4] memory freezes = [uint64(0),uint64(0),uint64(0),uint64(0)];
+        
+        address[1] memory addresses = [address(0x0c24c748ddab4afe06bc44988f5fe6e788c019f3)];
+        uint[1] memory amounts = [uint(1500000000000000000000000)];
+        uint64[1] memory freezes = [uint64(0)];
 
         for (uint i = 0; i < addresses.length; i ++) {
             if (freezes[i] == 0) {
@@ -1096,7 +1090,7 @@ contract TemplateCrowdsale is usingConsts, MainCrowdsale
                 FreezableMintableToken(token).mintAndFreeze(addresses[i], amounts[i], freezes[i]);
             }
         }
-
+        
 
         transferOwnership(TARGET_USER);
         Initialized();
@@ -1111,8 +1105,26 @@ contract TemplateCrowdsale is usingConsts, MainCrowdsale
 
     function finalization() internal {
         super.finalization();
-
+        
     }
 
+    
+    /**
+     * @dev Do inner check.
+     * @return bool true of accident triggered, false otherwise.
+     */
+    function internalCheck() internal returns (bool) {
+        return !isFinalized && hasEnded();
+    }
 
+    /**
+     * @dev Do inner action if check was success.
+     */
+    function internalAction() internal {
+        finalization();
+        Finalized();
+
+        isFinalized = true;
+    }
+    
 }
