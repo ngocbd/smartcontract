@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreFund at 0x8FBB7Bd244440673328970484A96C5E9D95f6865
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreFund at 0x2b989b91967f75eb13ef34bfccd85d371feacd4a
 */
 pragma solidity ^0.4.18;
 
@@ -142,6 +142,8 @@ contract PreFund is Ownable {
   // how many token units a buyer gets per wei
   uint256 public rate;
 
+  bool public refundEnabled;
+
   event Refunded(address indexed beneficiary, uint256 weiAmount);
   event AddDeposit(address indexed beneficiary, uint256 value);
   event LogClaim(address indexed holder, uint256 amount);
@@ -162,6 +164,9 @@ contract PreFund is Ownable {
     rate = _rate;
   }
 
+  function setRefundEnabled(bool _refundEnabled) public onlyOwner{
+    refundEnabled = _refundEnabled;
+  }
 
   function PreFund(uint256 _startTime, uint256 _endTime, address _wallet, ElementhToken _token) public {
     require(_startTime >= now);
@@ -173,11 +178,14 @@ contract PreFund is Ownable {
     startTime = _startTime;
     endTime = _endTime;
     wallet = _wallet;
+    refundEnabled = false;
   }
 
   function () external payable {
     deposit(msg.sender);
   }
+
+  function addFunds() public payable onlyOwner {}
 
   // low level token purchase function
   function deposit(address beneficiary) public payable {
@@ -204,15 +212,14 @@ contract PreFund is Ownable {
     wallet.transfer(this.balance);
   }
 
-  function claimToken () public {
+  function claimToken() public {
     require (msg.sender != address(0));
     require (now >= endTime);
-    require (deposited[msg.sender] != 0);
-    
-    uint tokens = deposited[msg.sender] * rate;
+    require (deposited[msg.sender] > 0);
+    require (claimed[msg.sender] == 0);
 
+    uint tokens = deposited[msg.sender] * rate;
     token.mint(msg.sender, tokens);
-    deposited[msg.sender] = 0;
     claimed[msg.sender] = tokens;
 
     LogClaim(msg.sender, tokens);
@@ -224,21 +231,29 @@ contract PreFund is Ownable {
   }
 
   function claimRefund() public {
-  	require(now <= endTime);
     refundFunds(msg.sender);
   }
 
   function refundFunds(address _wallet) internal {
     require(_wallet != address(0));
-    require(deposited[_wallet] != 0);
+    require(deposited[_wallet] > 0);
+
+    if(claimed[msg.sender] > 0){
+      require(now > endTime);
+      require(refundEnabled);
+      token.burn(_wallet, claimed[_wallet]);
+      claimed[_wallet] = 0;
+    } else {
+      require(now < endTime);
+    }
+
     uint256 depositedValue = deposited[_wallet];
     deposited[_wallet] = 0;
+    
     _wallet.transfer(depositedValue);
-    if(claimed[_wallet] != 0){
-    	token.burn(_wallet, claimed[_wallet]);
-    	claimed[_wallet] = 0;
-    }
+    
     Refunded(_wallet, depositedValue);
+
   }
 
 }
