@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvanceCrowdsale at 0xfc3F49e53fE76aB97dee93a53fE78f1a61d2A35a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AdvanceCrowdsale at 0xBd3aC1dE8FBA11227e5e4393E62390cfEc7302cc
 */
 pragma solidity ^0.4.21;
 
@@ -144,7 +144,7 @@ contract BaseCrowdsale{
 
 contract AdvanceCrowdsale is BaseCrowdsale, Ownable{
     using SafeMath for uint256;
-    uint constant MAX_FUND_SIZE = 20;
+    uint constant MAX_FUND_SIZE = 3;
 
     uint256[MAX_FUND_SIZE] public fundingGoalInToken;
     uint256[MAX_FUND_SIZE] public amountRaisedInToken;
