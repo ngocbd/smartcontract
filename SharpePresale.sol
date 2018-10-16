@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SharpePresale at 0xc203b577f0e1769ec2b5dfee67d0d04713314a8b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SharpePresale at 0x0e00cd655487a90d243dcf49a92541a9e63d5857
 */
 pragma solidity 0.4.15;
 
@@ -1129,6 +1129,22 @@ contract TokenSale is Owned, TokenController {
     }
 }
 
+/*    
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+ 
 
 contract SharpePresale is TokenSale {
     using SafeMath for uint256;
@@ -1241,20 +1257,12 @@ contract SharpePresale is TokenSale {
     /// @param _caller the address sending the Ether
     function processPreSale(address _caller) private {
         var (allowedContribution, refundAmount) = processContribution();
-        assert(msg.value==allowedContribution.add(refundAmount));
+        require(msg.value == allowedContribution.add(refundAmount));
         if (allowedContribution > 0) {
             doBuy(_caller, allowedContribution);
             if (refundAmount > 0) {
                 msg.sender.transfer(refundAmount);
-                closePreSale();
             }
-
-            // Covering the edge case where the last contribution equals the remaining cap
-            uint256 tillCap = remainingCap();
-            if (tillCap == 0) {
-                closePreSale();
-            }
-
         } else {
             revert();
         }
@@ -1273,21 +1281,27 @@ contract SharpePresale is TokenSale {
         return honourWhitelist;
     }
 
+    event PresaleCapUpdated(uint256 newPresaleCap);
+
     /// @notice Returns the contribution to be used as part of the transaction, and any refund value if expected.  
     function processContribution() private isValidContribution returns (uint256, uint256) {
-        var (allowedContribution, refundAmount) = getAllowedContribution();
-        
         if (!honourWhitelist()) {
+            var (allowedContribution, refundAmount) = getAllowedContribution();
             AllowedContributionCheck(allowedContribution, AllowedContributionState.WhitelistClosed);
+            preSaleCap = preSaleCap.sub(allowedContribution);
+            PresaleCapUpdated(preSaleCap);
             return (allowedContribution, refundAmount);
         }
         
+        var (whiteListedAllowedContribution, whiteListedRefundAmount) = getAllowedContribution();
         if (whitelist[msg.sender] > 0) {
-            return processWhitelistedContribution(allowedContribution, refundAmount);
+            return processWhitelistedContribution(whiteListedAllowedContribution, whiteListedRefundAmount);
         } 
 
-        AllowedContributionCheck(allowedContribution, AllowedContributionState.NotWhitelisted);
-        return (allowedContribution, refundAmount);
+        // TODO: revert
+        revert();
+        // AllowedContributionCheck(whiteListedAllowedContribution, AllowedContributionState.NotWhitelisted);
+        // return (whiteListedAllowedContribution, whiteListedRefundAmount);
     }
 
     /// @notice Returns the contribution to be used for a sender that had previously been whitelisted, and any refund value if expected.
@@ -1320,16 +1334,13 @@ contract SharpePresale is TokenSale {
     /// Note that only in this case, the refund value will not be 0.
     function handleAbovePlannedWhitelistedContribution(uint256 allowedContribution, uint256 plannedContribution, uint256 refundAmount) private returns (uint256, uint256) {
         updateWhitelistedContribution(plannedContribution);
-        AllowedContributionCheck(allowedContribution, AllowedContributionState.AboveWhitelisted);
-        return (allowedContribution, refundAmount);
+        AllowedContributionCheck(plannedContribution, AllowedContributionState.AboveWhitelisted);
+        return (plannedContribution, msg.value.sub(plannedContribution));
     }
 
     /// @notice Returns the contribution and refund value to be used when the transaction value is lower than the whitelisted contribution for the sender.
     /// Note that refund value will always be 0 in this case, as transaction value is below the planned contribution for this sender.
-    function handleBelowPlannedWhitelistedContribution(uint256 plannedContribution) private returns (uint256, uint256) {
-        uint256 belowPlanned = plannedContribution.sub(msg.value);
-        preSaleCap = preSaleCap.add(belowPlanned);
-        
+    function handleBelowPlannedWhitelistedContribution(uint256 plannedContribution) private returns (uint256, uint256) {    
         updateWhitelistedContribution(msg.value);
         AllowedContributionCheck(msg.value, AllowedContributionState.BelowWhitelisted);
         return (msg.value, 0);
@@ -1359,7 +1370,7 @@ contract SharpePresale is TokenSale {
     /// @notice Returns the Ether amount remaining until the hard-cap
     /// @return the remaining cap in WEI
     function remainingCap() private returns (uint256) {
-        return preSaleCap.sub(preSaleEtherPaid);
+        return preSaleCap;
     }
 
     /// @notice Public function enables closing of the pre-sale manually if necessary
