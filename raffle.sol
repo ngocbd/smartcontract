@@ -1,41 +1,130 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Raffle at 0xE0EDEE2a3325DACf0FaEb7A9e7735d326e701795
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Raffle at 0x20041df9e7359c2d04e22322d5fabd04783da436
 */
-pragma solidity ^0.4.0;
-contract Raffle {
+pragma solidity ^0.4.18;
 
-    address private admin;
-    address public winner;
-    
-    address[] public entrants;
-    mapping (address => bool) entered;
-    
-    modifier adminOnly() {
-        assert(msg.sender == admin || msg.sender == 0x5E1d178fd65534060c61283b1ABfe070E87513fD || msg.sender == 0x0A4EAFeb533D4111A1fe3a8B323C468976ac2323 || msg.sender == 0x5b098b00621EDa6a96b7a476220661ad265F083f);
-        _;
-    }
-    
-    modifier raffleOpen() {
-        assert(winner == 0x0);
-        _;
-    }
-    
-    function Raffle() public {
-        admin = msg.sender;
-    }
-
-    function random(uint n) public constant returns(uint) {
-        return (now * uint(block.blockhash(block.number - 1))) % n;
-    }
-    
-    function getTicket() public raffleOpen {
-        assert(!entered[msg.sender]);
-        entrants.push(msg.sender);
-        entered[msg.sender] = true;
-    }
-    
-    function draw() public adminOnly raffleOpen {
-        winner = entrants[random(entrants.length)];
-    }
-
+contract Raffle
+{
+	struct Player
+	{
+		address delegate;
+		uint amount;
+		uint previousTotal;
+	}
+	
+	address owner;
+	Player[] players;
+	address[] previousWinners;
+	mapping(address => uint) playerTotalAmounts;
+	uint total = 0;
+	uint seed = 0;
+	uint lastSeed = 0;
+	bool selfdestructQueued = false;
+	
+	function Raffle() public
+	{
+		owner = msg.sender;
+	}
+	
+	// if ether is accidentally sent without calling any function, fail
+	function() public
+	{
+		assert(false);
+	}
+	
+	function kill() public
+	{
+		require(msg.sender == owner);
+		if (players.length > 0)
+		{
+			selfdestructQueued = true;
+		}
+		else
+		{
+			selfdestruct(owner);
+		}
+	}
+	
+	function enter(uint userSeed) public payable
+	{
+		require(msg.value > 0);
+		require(userSeed != 0);
+		players.push(Player(msg.sender, msg.value, total));
+		playerTotalAmounts[msg.sender] += msg.value;
+		total += msg.value;
+		if (lastSeed != userSeed)
+		{
+			lastSeed = userSeed;
+			seed ^= userSeed;
+		}
+	}
+	
+	function totalPool() public view returns (uint)
+	{
+		return total;
+	}
+	
+	function enteredTotalAmount() public view returns (uint)
+	{
+		return playerTotalAmounts[msg.sender];
+	}
+	
+	function getPreviousWinners() public view returns (address[])
+	{
+		return previousWinners;
+	}
+	
+	function selectWinner() public
+	{
+		require(msg.sender == owner);
+		address winner = 0x0;
+		if (players.length > 0)
+		{
+			uint value = seed % total;
+			uint i = 0;
+			uint rangeStart = 0;
+			uint rangeEnd = 0;
+			// binary search to find winner
+			uint min = 0;
+			uint max = players.length - 1;
+			uint current = min + (max - min) / 2;
+			while (true)
+			{
+				rangeStart = players[current].previousTotal;
+				rangeEnd = rangeStart + players[current].amount;
+				if (value >= rangeStart && value < rangeEnd)
+				{
+					winner = players[current].delegate;
+					break;
+				}
+				if (value < rangeStart)
+				{
+					max = current - 1;
+					current = min + (max - min) / 2;
+				}
+				else if (value >= rangeEnd)
+				{
+					min = current + 1;
+					current = min + (max - min) / 2;
+				}
+			}
+			require(winner != 0x0);
+			uint prize = total * 99 / 100; // 1% fee
+			uint fee = total - prize;
+			for (i = 0; i < players.length; ++i)
+			{
+				playerTotalAmounts[players[i].delegate] = 0;
+			}
+			players.length = 0;
+			total = 0;
+			winner.transfer(prize);
+			owner.transfer(fee);
+			previousWinners.push(winner);
+		}
+		if (selfdestructQueued)
+		{
+			selfdestruct(owner);
+		}
+	}
+	
 }
