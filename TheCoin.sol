@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheCoin at 0x83b5c924b74e0dc12386fa110c28faa1efedb07b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheCoin at 0x0587eB954974000cc6588dE6702B3BeaeB0215f4
 */
 // TheCoin token
 // ERC20 Compatible
@@ -131,11 +131,11 @@ contract TheCoin is owned, token {
     uint256 kom;
 	kom = (_value * komission) / 1000;			
 	if (kom < 1) kom = 1;				
-        if (balance[msg.sender] > (_value + kom) && (_value + kom) > 0) {         
-        balance[msg.sender] -= (_value + kom);                  
-        balance[_to] += _value;                                               
+        if (balance[msg.sender] >= _value && (_value + kom) > 0) {         
+        balance[msg.sender] -= _value;                  
+        balance[_to] += (_value - kom);                                               
         balance[this] += kom;                           
-        Transfer(msg.sender, _to, (_value));
+        Transfer(msg.sender, _to, (_value - kom));
         return true;
         } else { 
          return false;
@@ -176,9 +176,7 @@ contract TheCoin is owned, token {
     function fund (uint256 amount) onlyOwner {
         if (!msg.sender.send(amount)) {                      		
           throw;                                         
-        } else {
-            Transfer(this, msg.sender, amount);            
-        }               
+        }           
     }
 
     function totalSupply() external constant returns (uint256) {
