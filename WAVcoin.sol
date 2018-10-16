@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WAVcoin at 0xe3ff729f9a801168c120ffc1d7ab2267f5881bf2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WAVcoin at 0x7c12e49245731a2e33dbd4ef0f723cf7f2db24a0
 */
 pragma solidity ^0.4.4;
 
@@ -119,10 +119,10 @@ contract WAVcoin is StandardToken {
 
     function WAVcoin(
         ) {
-        balances[msg.sender] = 1550000000.000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 1550000000.000;                        // Update total supply (100000 for example)
+        balances[msg.sender] = 1550000000000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 1550000000000000000000000;                        // Update total supply (100000 for example)
         name = "WAVcoin";                                   // Set the name for display purposes
-        decimals = 3;                            // Amount of decimals for display purposes
+        decimals = 18;                            // Amount of decimals for display purposes
         symbol = "WAV";                               // Set the symbol for display purposes
     }
 
