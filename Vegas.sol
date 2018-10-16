@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vegas at 0x2dc1d0fbcdbf1b08bedd2354f67b134a2285b6c5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vegas at 0x9b97195085d2b54c8c892c5c69d5f9045ea674de
 */
 pragma solidity ^0.4.21;
 
@@ -53,6 +53,8 @@ contract RNG{
 
 contract Poker is RNG{
     // warning; number 0 is a non-existing card; means empty;
+    
+
 
     uint8[5] public HouseCards;
     
@@ -91,7 +93,7 @@ contract Poker is RNG{
     
    // event pushifo(uint8, uint8, uint8,uint8,uint8);
     // resets game 
-    function DrawHouse() internal{
+    function DrawHouse() internal {
         // Draw table cards 
         uint8 i;
         uint8 rank;
@@ -342,12 +344,12 @@ contract Poker is RNG{
             }
             else if(CardTracker[i] >= 2){
                 if (suit == 0){
-                    suit = CardTracker[i];
+                    suit = i;
                 }
                 else{
                     // double nice 
                     if (startcard==0){
-                        startcard=CardTracker[i];
+                        startcard=i;
                     }
                 }
             }
@@ -504,11 +506,11 @@ contract Vegas is Poker{
     
     function Vegas() public{
         owner=msg.sender;
-        feesend=0xC1086FA97549CEA7acF7C2a7Fa7820FD06F3e440;
+        feesend=0x09470436BD5b44c7EbDb75eEe2478eC172eAaBF6;
         // withdraw also setups new game. 
         // pays out 0 eth of course to owner, no eth in contract. 
         Timer = 1; // makes sure withdrawal runs
-        //Withdraw("Game init", "Admin");
+        Withdraw("Game init", "Admin");
     }
     
     // all contract calls are banned from buying 
@@ -722,7 +724,6 @@ contract Vegas is Poker{
         }
         else if (setting == 2){
             require(newv <= 10000);
-           
             PokerPayout = newv;
             JackpotPayout = 10000-newv;
         }
