@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumPot at 0xb57b9206d75c1bb02cb64f97fb5176eae731a62d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumPot at 0xc797f7d82962157b4c73d43dc7723df0f82c0194
 */
 pragma solidity ^0.4.0;
 
@@ -1056,10 +1056,9 @@ contract EthereumPot is usingOraclize {
         owner = msg.sender;
     }
     
-    function Kill() public {
-        if(owner == msg.sender)
-            selfdestruct(owner);
-    }
+    // function Kill() public {
+    //     selfdestruct(owner);
+    // }
     
     function __callback(bytes32 _queryId, string _result, bytes _proof) oraclize_randomDS_proofVerify(_queryId, _result, _proof)
     {
