@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Spineth at 0xdc9f9a21219bdd887dc4ae923d2c293a1fe4b2bc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Spineth at 0xee44B11148486c05112d6418b987D8B8C2632E8f
 */
 pragma solidity ^0.4.19;
 
@@ -375,10 +375,21 @@ contract Spineth
                           ^ uint32(hashResult >> 224);
 
         uint32 randomNumber = randomSeed;
-        randomNumber ^= (randomNumber >> 11);
-        randomNumber ^= (randomNumber << 7) & 0x9D2C5680;
-        randomNumber ^= (randomNumber << 15) & 0xEFC60000;
-        randomNumber ^= (randomNumber >> 18);
+        uint32 randMax = 0xFFFFFFFF; // We use the whole 32 bit range
+
+        // Generate random numbers until we get a value in the unbiased range (see below)
+        do
+        {
+            randomNumber ^= (randomNumber >> 11);
+            randomNumber ^= (randomNumber << 7) & 0x9D2C5680;
+            randomNumber ^= (randomNumber << 15) & 0xEFC60000;
+            randomNumber ^= (randomNumber >> 18);
+        }
+        // Since WHEEL_SIZE is not divisible by randMax, using modulo below will introduce bias for
+        // numbers at the end of the randMax range. To remedy this, we discard these out of range numbers
+        // and generate additional numbers until we are in the largest range divisble by WHEEL_SIZE.
+        // This range will ensure we do not introduce any modulo bias
+        while(randomNumber >= (randMax - (randMax % WHEEL_SIZE)));
 
         // Update game state        
         game.wheelResult = randomNumber % WHEEL_SIZE;
