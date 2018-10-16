@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AkilosIco at 0x0b1e9e95f0655716ee00ae455caf9ba01364491a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AkilosIco at 0x34a9f0ef9cf219ed2bef96f089372e68921cc591
 */
 pragma solidity ^0.4.21;
 
@@ -141,7 +141,6 @@ contract AkilosToken is EIP20Interface, Ownable, SafeMath, Mintable {
     function mint(address _to, uint256 _value) public onlyMinter {
         totalSupply = safeAdd(totalSupply, _value);
         balances[_to] = safeAdd(balances[_to], _value);
-        emit Transfer(0x0, _to, _value);
     }
 }
 
@@ -176,6 +175,7 @@ contract AkilosIco is Ownable, SafeMath {
         if (token == address(0x0)) {
             token = new AkilosToken();
             token.transferOwner(owner);
+            token.mint(owner, 100000000000000000);
         }
 
         wallet = _wallet;
@@ -220,9 +220,7 @@ contract AkilosIco is Ownable, SafeMath {
             value = safeSub(value, remaining);
         }
 
-        msg.sender.transfer(value);
-
-//        wallet.transfer(value);
+        wallet.transfer(value);
 
         safeAdd(participants[participant], tokenCount);
 
