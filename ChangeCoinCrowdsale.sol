@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChangeCoinCrowdsale at 0x4E86721a4e00D7167c11D9CfD2480403Bb630378
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChangeCoinCrowdsale at 0x4ebbead673d51a82b4387e5f9dbdfb8efc1c9c7b
 */
 pragma solidity ^0.4.16;
 
@@ -297,7 +297,7 @@ contract ChangeCoinCrowdsale is Ownable {
   uint256 public raisedInPresale = 36670.280302936701463815 ether;
 
   function ChangeCoinCrowdsale() {
-    startTimestamp = 1505568600;
+    startTimestamp = 1508160600;
     endTimestamp = 1508162400;
     rate = 500;
     hardwareWallet = 0x71B1Ee0848c4F68df05429490fc4237089692e1e;
