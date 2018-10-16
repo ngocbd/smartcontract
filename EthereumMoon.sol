@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumMoon at 0x9d2e27323def57e293c47e4241717dda22e1045f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumMoon at 0x3adbf78bf966f53b5a72bb5d20e0bd7c53fa1358
 */
 pragma solidity ^0.4.18;
 
@@ -7,7 +7,6 @@ pragma solidity ^0.4.18;
         string public name;
         string public symbol;
         uint8 public decimals;
-        uint256 public totalSupply;
         /* This creates an array with all balances */
         mapping (address => uint256) public balanceOf;
         
@@ -30,5 +29,4 @@ pragma solidity ^0.4.18;
 		        /* Notify anyone listening that this transfer took place */
         Transfer(msg.sender, _to, _value);
 	}
-	
 }
