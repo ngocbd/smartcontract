@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleMinter at 0xa643a2272b6170994872bb24759f4d928631d940
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleMinter at 0xe86b6cd49bcf43f94e3566cfaf5e0d136e3cf8fd
 */
 pragma solidity ^0.4.11;
 
@@ -127,7 +127,7 @@ contract PresaleBonusVoting {
 
 contract CrowdsaleMinter is Owned {
 
-    string public constant VERSION = "0.2.1-TEST.ET.1";
+    string public constant VERSION = "0.2.1-TEST.MAX.3";
 
     /* ====== configuration START ====== */
     uint public constant COMMUNITY_SALE_START = 3972380; /* approx. 04.07.2017 12:00 */
