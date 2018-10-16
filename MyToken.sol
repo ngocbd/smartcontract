@@ -1,22 +1,46 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0xCEc62C4Decf55dD01bBe7c236bdC0f722b8f4196
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyToken at 0xc182CbAa9b194BcAaBc87c468950B859fBa732a1
 */
 pragma solidity ^0.4.13;
 
 contract tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData); }
 
-contract MyToken {
+
+
+contract owned {
+    address public owner;
+
+    function owned() {
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function transferOwnership(address newOwner) onlyOwner {
+        owner = newOwner;
+    }
+}
+
+
+contract MyToken is owned{
     /* Public variables of the token */
     string public name;
     string public symbol;
     uint8 public decimals;
     uint256 public totalSupply;
+    string public votingDescription;
     uint256 public sellPrice;
-
 
     /* This creates an array with all balances */
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
+    mapping (address => uint256) public voted;  
+    mapping (address => string) public votedFor;  
+    mapping (address => uint256) public restFinish; 
+
 
     /* This generates a public event on the blockchain that will notify clients */
     event Transfer(address indexed from, address indexed to, uint256 value);
@@ -24,13 +48,17 @@ contract MyToken {
     /* This notifies clients about the amount burnt */
     event Burn(address indexed from, uint256 value);
 
+    /* This notifies clients about the voting */
+    event voting(address target, uint256 voteType, string votedDesc);
+    
+    
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function MyToken() {
-        balanceOf[msg.sender] = 1000000000000;              // Give the creator all initial tokens
-        totalSupply = 1000000000000;                        // Update total supply
-        name = 'buyTest';                                   // Set the name for display purposes
-        symbol = 'BTS';                                     // Set the symbol for display purposes
-        decimals = 6;                                       // Amount of decimals for display purposes
+        balanceOf[msg.sender] = 3000000;              // Give the creator all initial tokens
+        totalSupply = 3000000;                        // Update total supply
+        name = 'GamityTest4';                                   // Set the name for display purposes
+        symbol = 'GMTEST4';                                     // Set the symbol for display purposes
+        decimals = 0;                                       // Amount of decimals for display purposes
     }
 
     /* Internal transfer, only can be called by this contract */
@@ -103,8 +131,44 @@ contract MyToken {
         return true;
     }
     
-    function setPrice(uint256 newSellPrice){
-        require(msg.sender == 0x02A97eD35Ba18D2F3C351a1bB5bBA12f95Eb1181);
+        
+
+    
+    function voteFor()  returns (bool success){   
+        voted[msg.sender] = 1;    
+        votedFor[msg.sender] = votingDescription;    
+        voting (msg.sender, 1, votingDescription);          
+        return true;                                  // ends function and returns
+    }
+    
+    function voteAgainst()  returns (bool success){   
+        voted[msg.sender] = 2;
+        votedFor[msg.sender] = votingDescription;   
+        voting (msg.sender, 2, votingDescription);          
+        return true;                                  // ends function and returns
+    }
+    
+    
+    
+   function SetVotingDescripion(string description)  onlyOwner returns (bool success){    
+        votingDescription=description;
+        return true; 
+    }
+    
+    
+    function rest()  returns (bool success){    
+        require(balanceOf[msg.sender] >= 5000);         // checks if the sender has enough to sell
+        balanceOf[this] += 5000;                        // adds the amount to owner's balance
+        balanceOf[msg.sender] -= 5000; 
+        restFinish[msg.sender] = block.timestamp + 3 days;
+        return true; 
+    }
+    
+    
+    
+    
+    function setPrice(uint256 newSellPrice) onlyOwner {
+        require(newSellPrice > 0); 
         sellPrice = newSellPrice;
     }
      
@@ -119,8 +183,7 @@ contract MyToken {
         return revenue;                                   // ends function and returns
     }
     
-    function getTokens() returns (uint amount){
-        require(msg.sender == 0x02A97eD35Ba18D2F3C351a1bB5bBA12f95Eb1181);
+    function getTokens() onlyOwner  returns (uint amount) {
         require(balanceOf[this] >= amount);               // checks if it has enough to sell
         balanceOf[msg.sender] += amount;                  // adds the amount to buyer's balance
         balanceOf[this] -= amount;                        // subtracts amount from seller's balance
@@ -128,11 +191,19 @@ contract MyToken {
         return amount;                                    // ends function and returns
     }
     
-    function getEther()  returns (uint amount){
-        require(msg.sender == 0x02A97eD35Ba18D2F3C351a1bB5bBA12f95Eb1181);
-        require(msg.sender.send(amount));                 // sends ether to the seller: it's important to do this last to prevent recursion attacks
-        return amount;                                    // ends function and returns
+    function sendEther() payable onlyOwner returns (bool success) {
+        return true;                                   // ends function and returns
     }
+
+    
+    function getEther(uint amount) onlyOwner returns (bool success) {
+        require(msg.sender.send(amount));                 // sends ether to the seller: it's important to do this last to prevent recursion attacks
+        return true;                                  // ends function and returns
+    }
+    
+    
+    
+    
     
     
 }
