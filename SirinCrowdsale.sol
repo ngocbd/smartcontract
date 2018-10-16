@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SirinCrowdsale at 0x313f29ea49a9e6ca3b3e254335d4ec32ef5045f8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SirinCrowdsale at 0x29afa3443f752eb29d814d9042fd88a4a2dc0f1e
 */
 pragma solidity ^0.4.18;
 
@@ -670,19 +670,6 @@ contract RefundVault is Claimable {
         }
 
         TokensClaimed(investor, tokensToClaim);
-    }
-    
-    //@dev Transfer tokens from the vault to the investor while releasing proportional amount of ether
-    //to Sirin`s wallet.
-    //Can be triggerd by the owner of the vault (in our case - Sirin`s owner after 60 days)
-    function claimAllInvestorTokensByOwner(address investor) isCloseState onlyOwner public {
-        uint256 depositedTokenValue = depositedToken[investor];
-        require(depositedTokenValue > 0);
-        
-
-        token.transfer(investor, depositedTokenValue);
-        
-        TokensClaimed(investor, depositedTokenValue);
     }
 
     // @dev investors can claim tokens by calling the function
