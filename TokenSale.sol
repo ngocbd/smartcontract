@@ -1,463 +1,327 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0x5070832e17e2042754ccd86f28b9d21fcb0e1567
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract tokensale at 0xc5a26dd5e7eafda81c9bae02f12ad44d9026799d
 */
-/*************************************************************************
- * This contract has been merged with solidify
- * https://github.com/tiesnetwork/solidify
- *************************************************************************/
- 
-/** 
-	Ties.Network TokenSale contract
-	@author Dmitry Kochin <k@ties.network>
-*/
+pragma solidity ^0.4.10;
 
-
-pragma solidity ^0.4.14;
-
-
-/*************************************************************************
- * import "./include/MintableToken.sol" : start
- *************************************************************************/
-
-/*************************************************************************
- * import "zeppelin/contracts/token/StandardToken.sol" : start
- *************************************************************************/
-
-
-/*************************************************************************
- * import "./BasicToken.sol" : start
- *************************************************************************/
-
-
-/*************************************************************************
- * import "./ERC20Basic.sol" : start
- *************************************************************************/
-
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-/*************************************************************************
- * import "./ERC20Basic.sol" : end
- *************************************************************************/
-/*************************************************************************
- * import "../math/SafeMath.sol" : start
- *************************************************************************/
-
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-/*************************************************************************
- * import "../math/SafeMath.sol" : end
- *************************************************************************/
-
-
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances. 
- */
-contract BasicToken is ERC20Basic {
-  using SafeMath for uint256;
-
-  mapping(address => uint256) balances;
-
-  /**
-  * @dev transfer token for a specified address
-  * @param _to The address to transfer to.
-  * @param _value The amount to be transferred.
-  */
-  function transfer(address _to, uint256 _value) returns (bool) {
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  /**
-  * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of. 
-  * @return An uint256 representing the amount owned by the passed address.
-  */
-  function balanceOf(address _owner) constant returns (uint256 balance) {
-    return balances[_owner];
-  }
-
-}
-/*************************************************************************
- * import "./BasicToken.sol" : end
- *************************************************************************/
-/*************************************************************************
- * import "./ERC20.sol" : start
- *************************************************************************/
-
-
-
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-/*************************************************************************
- * import "./ERC20.sol" : end
- *************************************************************************/
-
-
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
-contract StandardToken is ERC20, BasicToken {
-
-  mapping (address => mapping (address => uint256)) allowed;
-
-
-  /**
-   * @dev Transfer tokens from one address to another
-   * @param _from address The address which you want to send tokens from
-   * @param _to address The address which you want to transfer to
-   * @param _value uint256 the amout of tokens to be transfered
-   */
-  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
-    var _allowance = allowed[_from][msg.sender];
-
-    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-    // require (_value <= _allowance);
-
-    balances[_to] = balances[_to].add(_value);
-    balances[_from] = balances[_from].sub(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  /**
-   * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
-   * @param _spender The address which will spend the funds.
-   * @param _value The amount of tokens to be spent.
-   */
-  function approve(address _spender, uint256 _value) returns (bool) {
-
-    // To change the approve amount you first have to reduce the addresses`
-    //  allowance to zero by calling `approve(_spender, 0)` if it is not
-    //  already 0 to mitigate the race condition described here:
-    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  /**
-   * @dev Function to check the amount of tokens that an owner allowed to a spender.
-   * @param _owner address The address which owns the funds.
-   * @param _spender address The address which will spend the funds.
-   * @return A uint256 specifing the amount of tokens still avaible for the spender.
-   */
-  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-    return allowed[_owner][_spender];
-  }
-
-}
-/*************************************************************************
- * import "zeppelin/contracts/token/StandardToken.sol" : end
- *************************************************************************/
-/*************************************************************************
- * import "zeppelin/contracts/ownership/Ownable.sol" : start
- *************************************************************************/
-
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
+contract Token {
+    
+    mapping (address => uint256) public balanceOf;
+    mapping (uint256 => address) public addresses;
+    mapping (address => bool) public addressExists;
+    mapping (address => uint256) public addressIndex;
+    uint256 public numberOfAddress = 0;
+    
+    string public physicalString;
+    string public cryptoString;
+    
+    bool public isSecured;
+    string public name;
+    string public symbol;
+    uint256 public totalSupply;
+    bool public canMintBurn;
+    uint256 public txnTax;
+    uint256 public holdingTax;
+    //In Weeks, on Fridays
+    uint256 public holdingTaxInterval;
+    uint256 public lastHoldingTax;
+    uint256 public holdingTaxDecimals = 2;
+    bool public isPrivate;
+    
+    address public owner;
+    
+    function Token(string n, string a, uint256 totalSupplyToUse, bool isSecured, bool cMB, string physical, string crypto, uint256 txnTaxToUse, uint256 holdingTaxToUse, uint256 holdingTaxIntervalToUse, bool isPrivateToUse) {
+        name = n;
+        symbol = a;
+        totalSupply = totalSupplyToUse;
+        balanceOf[msg.sender] = totalSupplyToUse;
+        isSecured = isSecured;
+        physicalString = physical;
+        cryptoString = crypto;
+        canMintBurn = cMB;
+        owner = msg.sender;
+        txnTax = txnTaxToUse;
+        holdingTax = holdingTaxToUse;
+        holdingTaxInterval = holdingTaxIntervalToUse;
+        if(holdingTaxInterval!=0) {
+            lastHoldingTax = now;
+            while(getHour(lastHoldingTax)!=21) {
+                lastHoldingTax -= 1 hours;
+            }
+            while(getWeekday(lastHoldingTax)!=5) {
+                lastHoldingTax -= 1 days;
+            }
+            lastHoldingTax -= getMinute(lastHoldingTax) * (1 minutes) + getSecond(lastHoldingTax) * (1 seconds);
+        }
+        isPrivate = isPrivateToUse;
+        
+        addAddress(owner);
     }
-  }
-
-}
-/*************************************************************************
- * import "zeppelin/contracts/ownership/Ownable.sol" : end
- *************************************************************************/
-
-/**
- * Mintable token
- */
-
-contract MintableToken is StandardToken, Ownable {
-    uint public totalSupply = 0;
-    address private minter;
-
-    modifier onlyMinter(){
-        require(minter == msg.sender);
-        _;
-    }
-
-    function setMinter(address _minter) onlyOwner {
-        minter = _minter;
-    }
-
-    function mint(address _to, uint _amount) onlyMinter {
-        totalSupply = totalSupply.add(_amount);
-        balances[_to] = balances[_to].add(_amount);
-        Transfer(address(0x0), _to, _amount);
-    }
-}
-/*************************************************************************
- * import "./include/MintableToken.sol" : end
- *************************************************************************/
-
-
-
-contract TokenSale is Ownable {
-    using SafeMath for uint;
-
-    // Constants
-    // =========
-
-    uint private constant fractions = 1e18;
-    uint private constant millions = 1e6*fractions;
-
-    uint private constant CAP = 200*millions;
-    uint private constant SALE_CAP = 140*millions;
-    uint private constant BONUS_STEP = 14*millions;
-
-    uint public price = 0.0008 ether;
-
-    // Events
-    // ======
-
-    event AltBuy(address holder, uint tokens, string txHash);
-    event Buy(address holder, uint tokens);
-    event RunSale();
-    event PauseSale();
-    event FinishSale();
-    event PriceSet(uint weiPerTIE);
-
-    // State variables
-    // ===============
-
-    MintableToken public token;
-    address authority; //An account to control the contract on behalf of the owner
-    address robot; //An account to purchase tokens for altcoins
-    bool public isOpen = false;
-
-    // Constructor
-    // ===========
-
-    function TokenSale(address _token, address _multisig, address _authority, address _robot){
-        token = MintableToken(_token);
-        authority = _authority;
-        robot = _robot;
-        transferOwnership(_multisig);
-    }
-
-    // Public functions
-    // ================
-
-    function getCurrentBonus() constant returns (uint){
-        return getBonus(token.totalSupply());
-    }
-
-    /**
-    * Gets the bonus for the specified total supply
-    */
-    function getBonus(uint totalSupply) constant returns (uint){
-        bytes10 bonuses = "\x14\x11\x0F\x0C\x0A\x08\x06\x04\x02\x00";
-        uint level = totalSupply/BONUS_STEP;
-        if(level < bonuses.length)
-            return uint(bonuses[level]);
-        return 0;
-    }
-
-    /**
-    * Computes number of tokens with bonus for the specified ether. Correctly
-    * adds bonuses if the sum is large enough to belong to several bonus intervals
-    */
-    function getTokensAmount(uint etherVal) constant returns (uint) {
-        uint tokens = 0;
-        uint totalSupply = token.totalSupply();
-        while(true){
-            //How much we have before next bonus interval
-            uint gap = BONUS_STEP - totalSupply%BONUS_STEP;
-            //Bonus at the current interval
-            uint bonus = 100 + getBonus(totalSupply);
-            //The cost of the entire remainder of this interval
-            uint gapCost = gap*(price*100)/fractions/bonus;
-            if(gapCost >= etherVal){
-                //If the gap is large enough just sell the necessary amount of tokens
-                tokens += etherVal.mul(bonus).mul(fractions)/(price*100);
-                break;
-            }else{
-                //If the gap is too small sell it and diminish the price by its cost for the next iteration
-                tokens += gap;
-                etherVal -= gapCost;
-                totalSupply += gap;
+    
+    function transfer(address _to, uint256 _value) payable {
+        chargeHoldingTax();
+        if (balanceOf[msg.sender] < _value) throw;
+        if (balanceOf[_to] + _value < balanceOf[_to]) throw;
+        if (msg.sender != owner && _to != owner && txnTax != 0) {
+            if(!owner.send(txnTax)) {
+                throw;
             }
         }
-        return tokens;
+        if(isPrivate && msg.sender != owner && !addressExists[_to]) {
+            throw;
+        }
+        balanceOf[msg.sender] -= _value;
+        balanceOf[_to] += _value;
+        addAddress(_to);
+        Transfer(msg.sender, _to, _value);
+    }
+    
+    function changeTxnTax(uint256 _newValue) {
+        if(msg.sender != owner) throw;
+        txnTax = _newValue;
+    }
+    
+    function mint(uint256 _value) {
+        if(canMintBurn && msg.sender == owner) {
+            if (balanceOf[msg.sender] + _value < balanceOf[msg.sender]) throw;
+            balanceOf[msg.sender] += _value;
+            totalSupply += _value;
+            Transfer(0, msg.sender, _value);
+        }
+    }
+    
+    function burn(uint256 _value) {
+        if(canMintBurn && msg.sender == owner) {
+            if (balanceOf[msg.sender] < _value) throw;
+            balanceOf[msg.sender] -= _value;
+            totalSupply -= _value;
+            Transfer(msg.sender, 0, _value);
+        }
+    }
+    
+    function chargeHoldingTax() {
+        if(holdingTaxInterval!=0) {
+            uint256 dateDif = now - lastHoldingTax;
+            bool changed = false;
+            while(dateDif >= holdingTaxInterval * (1 weeks)) {
+                changed=true;
+                dateDif -= holdingTaxInterval * (1 weeks);
+                for(uint256 i = 0;i<numberOfAddress;i++) {
+                    if(addresses[i]!=owner) {
+                        uint256 amtOfTaxToPay = ((balanceOf[addresses[i]]) * holdingTax)  / (10**holdingTaxDecimals)/ (10**holdingTaxDecimals);
+                        balanceOf[addresses[i]] -= amtOfTaxToPay;
+                        balanceOf[owner] += amtOfTaxToPay;
+                    }
+                }
+            }
+            if(changed) {
+                lastHoldingTax = now;
+                while(getHour(lastHoldingTax)!=21) {
+                    lastHoldingTax -= 1 hours;
+                }
+                while(getWeekday(lastHoldingTax)!=5) {
+                    lastHoldingTax -= 1 days;
+                }
+                lastHoldingTax -= getMinute(lastHoldingTax) * (1 minutes) + getSecond(lastHoldingTax) * (1 seconds);
+            }
+        }
+    }
+    
+    function changeHoldingTax(uint256 _newValue) {
+        if(msg.sender != owner) throw;
+        holdingTax = _newValue;
+    }
+    
+    function changeHoldingTaxInterval(uint256 _newValue) {
+        if(msg.sender != owner) throw;
+        holdingTaxInterval = _newValue;
+    }
+    
+    function addAddress (address addr) private {
+        if(!addressExists[addr]) {
+            addressIndex[addr] = numberOfAddress;
+            addresses[numberOfAddress++] = addr;
+            addressExists[addr] = true;
+        }
+    }
+    
+    function addAddressManual (address addr) {
+        if(msg.sender == owner && isPrivate) {
+            addAddress(addr);
+        } else {
+            throw;
+        }
+    }
+    
+    function removeAddress (address addr) private {
+        if(addressExists[addr]) {
+            numberOfAddress--;
+            addresses[addressIndex[addr]] = 0x0;
+            addressExists[addr] = false;
+        }
+    }
+    
+    function removeAddressManual (address addr) {
+        if(msg.sender == owner && isPrivate) {
+            removeAddress(addr);
+        } else {
+            throw;
+        }
+    }
+    
+    function getWeekday(uint timestamp) returns (uint8) {
+            return uint8((timestamp / 86400 + 4) % 7);
+    }
+    
+    function getHour(uint timestamp) returns (uint8) {
+            return uint8((timestamp / 60 / 60) % 24);
     }
 
-    function buy(address to) onlyOpen payable{
-        uint amount = msg.value;
-        uint tokens = getTokensAmountUnderCap(amount);
-
-        owner.transfer(amount);
-        token.mint(to, tokens);
-
-        Buy(to, tokens);
+    function getMinute(uint timestamp) returns (uint8) {
+            return uint8((timestamp / 60) % 60);
     }
 
-    function () payable{
-        buy(msg.sender);
+    function getSecond(uint timestamp) returns (uint8) {
+            return uint8(timestamp % 60);
     }
 
-    // Modifiers
-    // =================
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+}
 
-    modifier onlyAuthority() {
-        require(msg.sender == authority || msg.sender == owner);
-        _;
+contract tokensale {
+    
+    Token public token;
+    uint256 public totalSupply;
+    uint256 public numberOfTokens;
+    uint256 public numberOfTokensLeft;
+    uint256 public pricePerToken;
+    uint256 public tokensFromPresale = 0;
+    uint8 public decimals = 2;
+    
+    address public owner;
+    string public name;
+    string public symbol;
+    
+    address public finalAddress = 0x5904957d25D0c6213491882a64765967F88BCCC7;
+    
+    mapping (address => uint256) public balanceOf;
+    mapping (address => bool) public addressExists;
+    mapping (uint256 => address) public addresses;
+    mapping (address => uint256) public addressIndex;
+    uint256 public numberOfAddress = 0;
+    
+    mapping (uint256 => uint256) public dates;
+    mapping (uint256 => uint256) public percents;
+    uint256 public numberOfDates = 8;
+    
+    tokensale ps = tokensale(0xa67d97d75eE175e05BB1FB17529FD772eE8E9030);
+    
+    function tokensale(address tokenAddress, uint256 noOfTokens, uint256 prPerToken) {
+        dates[0] = 1505520000;
+        dates[1] = 1506038400;
+        dates[2] = 1506124800;
+        dates[3] = 1506816000;
+        dates[4] = 1507420800;
+        dates[5] = 1508112000;
+        dates[6] = 1508630400;
+        dates[7] = 1508803200;
+        percents[0] = 35000;
+        percents[1] = 20000;
+        percents[2] = 10000;
+        percents[3] = 5000;
+        percents[4] = 2500;
+        percents[5] = 0;
+        percents[6] = 9001;
+        percents[7] = 9001;
+        token = Token(tokenAddress);
+        numberOfTokens = noOfTokens * 100;
+        totalSupply = noOfTokens * 100;
+        numberOfTokensLeft = noOfTokens * 100;
+        pricePerToken = prPerToken;
+        owner = msg.sender;
+        name = "Autonio ICO";
+        symbol = "NIO";
+        updatePresaleNumbers();
     }
-
-    modifier onlyRobot() {
-        require(msg.sender == robot);
-        _;
+    
+    function addAddress (address addr) private {
+        if(!addressExists[addr]) {
+            addressIndex[addr] = numberOfAddress;
+            addresses[numberOfAddress++] = addr;
+            addressExists[addr] = true;
+        }
     }
-
-    modifier onlyOpen() {
-        require(isOpen);
-        _;
+    
+    function endPresale() {
+        if(msg.sender == owner) {
+            if(now > dates[numberOfDates-1]) {
+                finish();
+            } else if(numberOfTokensLeft == 0) {
+                finish();
+            } else {
+                throw;
+            }
+        } else {
+            throw;
+        }
     }
-
-    // Priveleged functions
-    // ====================
-
-    /**
-    * Used to buy tokens for altcoins.
-    * Robot may call it before TokenSale officially starts to migrate early investors
-    */
-    function buyAlt(address to, uint etherAmount, string _txHash) onlyRobot {
-        uint tokens = getTokensAmountUnderCap(etherAmount);
-        token.mint(to, tokens);
-        AltBuy(to, tokens, _txHash);
+    
+    function finish() private {
+        if(!finalAddress.send(this.balance)) {
+            throw;
+        }
     }
-
-    function setAuthority(address _authority) onlyOwner {
-        authority = _authority;
+    
+    function updatePresaleNumbers() {
+        if(msg.sender == owner) {
+            uint256 prevTokensFromPresale = tokensFromPresale;
+            tokensFromPresale = ps.numberOfTokens() - ps.numberOfTokensLeft();
+            uint256 dif = tokensFromPresale - prevTokensFromPresale;
+            numberOfTokensLeft -= dif * 100;
+        } else {
+            throw;
+        }
     }
-
-    function setRobot(address _robot) onlyAuthority {
-        robot = _robot;
+    
+    function () payable {
+        uint256 prevTokensFromPresale = tokensFromPresale;
+        tokensFromPresale = ps.numberOfTokens() - ps.numberOfTokensLeft();
+        uint256 dif = tokensFromPresale - prevTokensFromPresale;
+        numberOfTokensLeft -= dif * 100;
+        uint256 weiSent = msg.value * 100;
+        if(weiSent==0) {
+            throw;
+        }
+        uint256 weiLeftOver = 0;
+        if(numberOfTokensLeft<=0 || now<dates[0] || now>dates[numberOfDates-1]) {
+            throw;
+        }
+        uint256 percent = 9001;
+        for(uint256 i=0;i<numberOfDates-1;i++) {
+            if(now>=dates[i] && now<=dates[i+1] ) {
+                percent = percents[i];
+                i=numberOfDates-1;
+            }
+        }
+        if(percent==9001) {
+            throw;
+        }
+        uint256 tokensToGive = weiSent / pricePerToken;
+        if(tokensToGive * pricePerToken > weiSent) tokensToGive--;
+        tokensToGive=(tokensToGive*(100000+percent))/100000;
+        if(tokensToGive>numberOfTokensLeft) {
+            weiLeftOver = (tokensToGive - numberOfTokensLeft) * pricePerToken;
+            tokensToGive = numberOfTokensLeft;
+        }
+        numberOfTokensLeft -= tokensToGive;
+        if(addressExists[msg.sender]) {
+            balanceOf[msg.sender] += tokensToGive;
+        } else {
+            addAddress(msg.sender);
+            balanceOf[msg.sender] = tokensToGive;
+        }
+        Transfer(0x0,msg.sender,tokensToGive);
+        if(weiLeftOver/100>0)msg.sender.send(weiLeftOver/100);
     }
-
-    function setPrice(uint etherPerTie) onlyAuthority {
-        //Ether is not expected to rate less than $96 and more than $480 during token sale
-        require(0.0005 ether <= etherPerTie && etherPerTie <= 0.0025 ether);
-        price = etherPerTie;
-        PriceSet(price);
-    }
-
-    // SALE state management: start / pause / finalize
-    // --------------------------------------------
-    function open(bool open) onlyAuthority {
-        isOpen = open;
-        open ? RunSale() : PauseSale();
-    }
-
-    function finalize() onlyAuthority {
-        uint diff = CAP.sub(token.totalSupply());
-        if(diff > 0) //The unsold capacity moves to team
-            token.mint(owner, diff);
-        selfdestruct(owner);
-        FinishSale();
-    }
-
-    // Private functions
-    // =========================
-
-    /**
-    * Gets tokens for specified ether provided that they are still under the cap
-    */
-    function getTokensAmountUnderCap(uint etherAmount) private constant returns (uint){
-        uint tokens = getTokensAmount(etherAmount);
-        require(tokens > 0);
-        require(tokens.add(token.totalSupply()) <= SALE_CAP);
-        return tokens;
-    }
-
+    
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
 }
