@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SAATCoin at 0x82b99c8a12b6ee50191b9b2a03b9c7aef663d527
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SAATCoin at 0x0f42d209fc46f678e8d31717d7ce14c69724a60e
 */
 pragma solidity ^0.4.12;
 
