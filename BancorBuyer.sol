@@ -1,84 +1,216 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorBuyer at 0xceffdb3f1aed635e94a0b565239d4353ae44c744
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BancorBuyer at 0x77a77eca75445841875ebb67a33d0a97dc34d924
 */
 pragma solidity ^0.4.11;
 
 /*
-
-Bancor Buyer
-========================
-
-Buys Bancor tokens from the crowdsale on your behalf.
-Author: /u/Cintix
-
+    Owned contract interface
 */
+contract IOwned {
+    // this function isn't abstract since the compiler emits automatically generated getter functions as external
+    function owner() public constant returns (address owner) { owner; }
 
-// ERC20 Interface: https://github.com/ethereum/EIPs/issues/20
-contract ERC20 {
-  function transfer(address _to, uint _value) returns (bool success);
+    function transferOwnership(address _newOwner) public;
+    function acceptOwnership() public;
 }
 
-contract BancorBuyer {
-  // Store the amount of ETH deposited or BNT owned by each account.
-  mapping (address => uint) public balances;
-  // Track whether the contract has bought the tokens yet.
-  bool public bought_tokens;
-  // Record the time the contract bought the tokens.
-  uint public time_bought;
-  
-  // The Bancor Token Sale address.
-  address sale = 0xBbc79794599b19274850492394004087cBf89710;
-  // Bancor Smart Token Contract address.
-  address token = 0x1F573D6Fb3F13d689FF844B4cE37794d79a7FF1C;
-  // The developer address.
-  address developer = 0x4e6A1c57CdBfd97e8efe831f8f4418b1F2A09e6e;
-  
-  // Withdraws all ETH deposited by the sender.
-  // Called to cancel a user's participation in the sale.
-  function withdraw(){
-    // Store the user's balance prior to withdrawal in a temporary variable.
-    uint amount = balances[msg.sender];
-    // Update the user's balance prior to sending ETH to prevent recursive call.
-    balances[msg.sender] = 0;
-    // Return the user's funds.  Throws on failure to prevent loss of funds.
-    msg.sender.transfer(amount);
-  }
-  
-  // Buys tokens in the crowdsale, callable by anyone.
-  function buy(){
-    // Transfer all funds to the Bancor crowdsale contract to buy tokens.
-    // Throws if the crowdsale hasn't started yet or has
-    // already completed, preventing loss of funds.
-    sale.transfer(this.balance);
-    // Record that the contract has bought the tokens.
-    bought_tokens = true;
-    // Record the time the contract bought the tokens.
-    time_bought = now;
-  }
-  
-  function () payable {
-    // Only allow deposits if the contract hasn't already purchased the tokens.
-    if (!bought_tokens) {
-      // Update records of deposited ETH to include the received amount.
-      balances[msg.sender] += msg.value;
+/*
+    Provides support and utilities for contract ownership
+*/
+contract Owned is IOwned {
+    address public owner;
+    address public newOwner;
+
+    event OwnerUpdate(address _prevOwner, address _newOwner);
+
+    /**
+        @dev constructor
+    */
+    function Owned() {
+        owner = msg.sender;
     }
-    // Withdraw the sender's tokens if the contract has already purchased them.
-    else {
-      // Store the user's BNT balance in a temporary variable (1 ETHWei -> 100 BNTWei).
-      uint amount = balances[msg.sender] * 100;
-      // Update the user's balance prior to sending BNT to prevent recursive call.
-      balances[msg.sender] = 0;
-      // No fee for withdrawing during the crowdsale.
-      uint fee = 0;
-      // 1% fee for withdrawing after the crowdsale has ended.
-      if (now > time_bought + 1 hours) {
-        fee = amount / 100;
-      }
-      // Transfer the tokens to the sender and the developer.
-      ERC20(token).transfer(msg.sender, amount - fee);
-      ERC20(token).transfer(developer, fee);
-      // Refund any ETH sent after the contract has already purchased tokens.
-      msg.sender.transfer(msg.value);
+
+    // allows execution by the owner only
+    modifier ownerOnly {
+        assert(msg.sender == owner);
+        _;
     }
-  }
+
+    /**
+        @dev allows transferring the contract ownership
+        the new owner still need to accept the transfer
+        can only be called by the contract owner
+
+        @param _newOwner    new contract owner
+    */
+    function transferOwnership(address _newOwner) public ownerOnly {
+        require(_newOwner != owner);
+        newOwner = _newOwner;
+    }
+
+    /**
+        @dev used by a new owner to accept an ownership transfer
+    */
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        OwnerUpdate(owner, newOwner);
+        owner = newOwner;
+        newOwner = 0x0;
+    }
+}
+
+/*
+    ERC20 Standard Token interface
+*/
+contract IERC20Token {
+    // these functions aren't abstract since the compiler emits automatically generated getter functions as external
+    function name() public constant returns (string name) { name; }
+    function symbol() public constant returns (string symbol) { symbol; }
+    function decimals() public constant returns (uint8 decimals) { decimals; }
+    function totalSupply() public constant returns (uint256 totalSupply) { totalSupply; }
+    function balanceOf(address _owner) public constant returns (uint256 balance) { _owner; balance; }
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) { _owner; _spender; remaining; }
+
+    function transfer(address _to, uint256 _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+    function approve(address _spender, uint256 _value) public returns (bool success);
+}
+
+/*
+    Token Holder interface
+*/
+contract ITokenHolder is IOwned {
+    function withdrawTokens(IERC20Token _token, address _to, uint256 _amount) public;
+}
+
+/*
+    We consider every contract to be a 'token holder' since it's currently not possible
+    for a contract to deny receiving tokens.
+
+    The TokenHolder's contract sole purpose is to provide a safety mechanism that allows
+    the owner to send tokens that were sent to the contract by mistake back to their sender.
+*/
+contract TokenHolder is ITokenHolder, Owned {
+    /**
+        @dev constructor
+    */
+    function TokenHolder() {
+    }
+
+    // validates an address - currently only checks that it isn't null
+    modifier validAddress(address _address) {
+        require(_address != 0x0);
+        _;
+    }
+
+    // verifies that the address is different than this contract address
+    modifier notThis(address _address) {
+        require(_address != address(this));
+        _;
+    }
+
+    /**
+        @dev withdraws tokens held by the contract and sends them to an account
+        can only be called by the owner
+
+        @param _token   ERC20 token contract address
+        @param _to      account to receive the new amount
+        @param _amount  amount to withdraw
+    */
+    function withdrawTokens(IERC20Token _token, address _to, uint256 _amount)
+        public
+        ownerOnly
+        validAddress(_token)
+        validAddress(_to)
+        notThis(_to)
+    {
+        assert(_token.transfer(_to, _amount));
+    }
+}
+
+/*
+    EIP228 Token Changer interface
+*/
+contract ITokenChanger {
+    function changeableTokenCount() public constant returns (uint16 count);
+    function changeableToken(uint16 _tokenIndex) public constant returns (address tokenAddress);
+    function getReturn(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount) public constant returns (uint256 amount);
+    function change(IERC20Token _fromToken, IERC20Token _toToken, uint256 _amount, uint256 _minReturn) public returns (uint256 amount);
+}
+
+/*
+    Smart Token interface
+*/
+contract ISmartToken is ITokenHolder, IERC20Token {
+    function disableTransfers(bool _disable) public;
+    function issue(address _to, uint256 _amount) public;
+    function destroy(address _from, uint256 _amount) public;
+}
+
+/*
+    Bancor Changer interface
+*/
+contract IBancorChanger is ITokenChanger {
+    function token() public constant returns (ISmartToken _token) { _token; }
+    function getReserveBalance(IERC20Token _reserveToken) public constant returns (uint256 balance);
+}
+
+/*
+    Ether Token interface
+*/
+contract IEtherToken is ITokenHolder, IERC20Token {
+    function deposit() public payable;
+    function withdraw(uint256 _amount) public;
+}
+
+/*
+    BancorBuyer v0.1
+
+    The bancor buyer contract is a simple bancor changer wrapper that allows buying smart tokens with ETH
+
+    WARNING: the contract will make the purchase using the current price at transaction mining time
+*/
+contract BancorBuyer is TokenHolder {
+    string public version = '0.1';
+    IBancorChanger public tokenChanger; // bancor ETH <-> smart token changer
+    IEtherToken public etherToken;      // ether token
+
+    /**
+        @dev constructor
+
+        @param _changer     bancor token changer that actually does the purchase
+        @param _etherToken  ether token used as a reserve in the token changer
+    */
+    function BancorBuyer(IBancorChanger _changer, IEtherToken _etherToken)
+        validAddress(_changer)
+        validAddress(_etherToken)
+    {
+        tokenChanger = _changer;
+        etherToken = _etherToken;
+
+        // ensure that the ether token is used as one of the changer's reserves
+        tokenChanger.getReserveBalance(etherToken);
+    }
+
+    /**
+        @dev buys the smart token with ETH
+        note that the purchase will use the price at the time of the purchase
+
+        @return tokens issued in return
+    */
+    function buy() public payable returns (uint256 amount) {
+        etherToken.deposit.value(msg.value)(); // deposit ETH in the reserve
+        assert(etherToken.approve(tokenChanger, 0)); // need to reset the allowance to 0 before setting a new one
+        assert(etherToken.approve(tokenChanger, msg.value)); // approve the changer to use the ETH amount for the purchase
+
+        ISmartToken smartToken = tokenChanger.token();
+        uint256 returnAmount = tokenChanger.change(etherToken, smartToken, msg.value, 1); // do the actual change using the current price
+        assert(smartToken.transfer(msg.sender, returnAmount)); // transfer the tokens to the sender
+        return returnAmount;
+    }
+
+    // fallback
+    function() payable {
+        buy();
+    }
 }
