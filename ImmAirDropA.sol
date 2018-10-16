@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ImmAirDropA at 0x64b0dd2191622a9fc2300cf467fde6e329605042
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ImmAirDropA at 0x6deadd308810cd081d4a789bcd2161ffa64e62ff
 */
 pragma solidity ^0.4.21;
 
@@ -50,9 +50,7 @@ contract ImmAirDropA{
     address public owner;
     address public wallet;
     ERC20 public token;
-    address[] public bountyaddress;
     mapping (address => bool) public admins;
-    mapping (address => bool) public bounty;
 	
     modifier onlyOwner {
        require(msg.sender == owner);
@@ -91,18 +89,12 @@ contract ImmAirDropA{
     function signupUserWhitelist(address[] _userlist) public onlyAdmin{
     	require(_userlist.length > 0);
     	for (uint256 i = 0; i < _userlist.length; i++) {
-    		if(_userlist[i] != address(0) && !bounty[_userlist[i]]){
-            	bounty[_userlist[i]] = true;
-            	bountyaddress.push(_userlist[i]) -1;
+    		if(_userlist[i] != address(0)){
     			token.transfer(_userlist[i], fixamt);
     		}
     	}
     }
 	
-	function getBountyAddress() view public onlyAdmin returns(address[]){
-		return bountyaddress;
-	}
-
 	function () external payable {
 		revert();
 	}
