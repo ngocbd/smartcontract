@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthLottery at 0x47414a04f29930c8e1c10f0b4791a9ddf3836efd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthLottery at 0x1bb9e4b787e100d4827cf94866e30ea6e1d75709
 */
 pragma solidity ^0.4.18;
 
@@ -1089,7 +1089,7 @@ contract EthLottery is usingOraclize, Withdrawable, Ownable {
         address finalizer;
         
         uint16[] ticketsSold;
-        address[] ticketOwners;
+        address[] tiketOwners;
     }
 
     mapping (uint32 => Lottery) lotteries;
@@ -1122,7 +1122,7 @@ contract EthLottery is usingOraclize, Withdrawable, Ownable {
         address winner,
         address finalizer,
         uint16[] ticketsSold, 
-        address[] ticketOwners
+        address[] tiketOwners
     ) {
         ownerCut = lotteries[lottId].ownerCut;
         ticketPrice = lotteries[lottId].ticketPrice;
@@ -1133,13 +1133,13 @@ contract EthLottery is usingOraclize, Withdrawable, Ownable {
         winner = lotteries[lottId].winner;
         finalizer = lotteries[lottId].finalizer;
         ticketsSold = lotteries[lottId].ticketsSold;
-        ticketOwners = lotteries[lottId].ticketOwners;
+        tiketOwners = lotteries[lottId].tiketOwners;
     }
 
     function purchaseTicket(uint16[] tickets) public payable {
         
         require(tickets.length > 0);
-        require(tickets.length <= lotteries[lotteryId].numTickets);
+        require(tickets.length < lotteries[lotteryId].numTickets);
         require(tickets.length * lotteries[lotteryId].ticketPrice == msg.value);
         require(lotteries[lotteryId].ticketsSold.length < lotteries[lotteryId].numTickets);
 
@@ -1148,12 +1148,12 @@ contract EthLottery is usingOraclize, Withdrawable, Ownable {
             uint16 ticket = tickets[i];
 
             // Check number is OK and not Sold
-            require(lotteries[lotteryId].numTickets > ticket);
+            require(lotteries[lotteryId].numTickets >= ticket);
             require(lotteries[lotteryId].tickets[ticket] == 0);
             
             // Ticket checks passed OK
             lotteries[lotteryId].ticketsSold.push(ticket);
-            lotteries[lotteryId].ticketOwners.push(msg.sender);
+            lotteries[lotteryId].tiketOwners.push(msg.sender);
 
             lotteries[lotteryId].tickets[ticket] = msg.sender;
         }
@@ -1199,7 +1199,7 @@ contract EthLottery is usingOraclize, Withdrawable, Ownable {
 
         // this is the highest uint we want to get. It should never be greater than 2^(8*N), 
         // where N is the number of random bytes we had asked the datasource to return
-        uint randomNumber = uint(sha3(result)) % lotteries[lotteryId].numTickets;
+        uint randomNumber = uint(sha3(result)) % (lotteries[lotteryId].numTickets - 1);
         
          // this is the resulting random number (uint)
         uint16 winningTicket = uint16(randomNumber);
