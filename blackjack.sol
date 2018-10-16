@@ -1,301 +1,390 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlackJack at 0xa65d59708838581520511d98fb8b5d1f76a96cad
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract blackjack at 0x7450f90f3e020e964829187697fcbc6d82735644
 */
-pragma solidity ^0.4.2;
+/**
+ * The Edgeless blackjack contract only allows calls from the authorized casino proxy contracts. 
+ * The proxy contract only forward moves if called by an authorized wallet owned by the Edgeless casino, but the game
+ * data has to be signed by the player to show his approval. This way, Edgeless can provide a fluid game experience
+ * without having to wait for transaction confirmations.
+ * author: Julia Altenried
+ **/
 
-library Deck {
-	// returns random number from 0 to 51
-	// let's say 'value' % 4 means suit (0 - Hearts, 1 - Spades, 2 - Diamonds, 3 - Clubs)
-	//			 'value' / 4 means: 0 - King, 1 - Ace, 2 - 10 - pip values, 11 - Jacket, 12 - Queen
+pragma solidity ^ 0.4 .17;
 
-	function deal(address player, uint8 cardNumber) internal returns (uint8) {
-		uint b = block.number;
-		uint timestamp = block.timestamp;
-		return uint8(uint256(keccak256(block.blockhash(b), player, cardNumber, timestamp)) % 52);
-	}
+contract owned {
+  address public owner;
+  modifier onlyOwner {
+    require(msg.sender == owner);
+    _;
+  }
 
-	function valueOf(uint8 card, bool isBigAce) internal constant returns (uint8) {
-		uint8 value = card / 4;
-		if (value == 0 || value == 11 || value == 12) { // Face cards
-			return 10;
-		}
-		if (value == 1 && isBigAce) { // Ace is worth 11
-			return 11;
-		}
-		return value;
-	}
+  function owned() public {
+    owner = msg.sender;
+  }
 
-	function isAce(uint8 card) internal constant returns (bool) {
-		return card / 4 == 1;
-	}
-
-	function isTen(uint8 card) internal constant returns (bool) {
-		return card / 4 == 10;
-	}
+  function changeOwner(address newOwner) onlyOwner public {
+    owner = newOwner;
+  }
 }
 
+contract mortal is owned {
+  function close() onlyOwner public {
+    selfdestruct(owner);
+  }
+}
 
-contract BlackJack {
-	using Deck for *;
+contract casino is mortal {
+  /** the minimum bet**/
+  uint public minimumBet;
+  /** the maximum bet **/
+  uint public maximumBet;
+  /** tells if an address is authorized to call game functions **/
+  mapping(address => bool) public authorized;
 
-	uint public minBet = 50 finney; // 0.05 eth
-	uint public maxBet = 5 ether;
+  /** notify listeners that an error occurred**/
+  event Error(uint8 errorCode);
 
-	uint8 BLACKJACK = 21;
+  /** 
+   * constructur. initialize the contract with initial values. 
+   * @param minBet         the minimum bet
+   *        maxBet         the maximum bet
+   **/
+  function casino(uint minBet, uint maxBet) public {
+    minimumBet = minBet;
+    maximumBet = maxBet;
+  }
 
-  enum GameState { Ongoing, Player, Tie, House }
+  /** 
+   * allows the owner to change the minimum bet
+   * @param newMin the new minimum bet
+   **/
+  function setMinimumBet(uint newMin) onlyOwner public {
+    minimumBet = newMin;
+  }
 
-	struct Game {
-		address player; // address ??????
-		uint bet; // ??????
+  /** 
+   * allows the owner to change the maximum bet
+   * @param newMax the new maximum bet
+   **/
+  function setMaximumBet(uint newMax) onlyOwner public {
+    maximumBet = newMax;
+  }
 
-		uint8[] houseCards; // ????? ???????
-		uint8[] playerCards; // ????? ??????
 
-		GameState state; // ?????????
-		uint8 cardsDealt;
-	}
+  /**
+   * authorize a address to call game functions.
+   * @param addr the address to be authorized
+   **/
+  function authorize(address addr) onlyOwner public {
+    authorized[addr] = true;
+  }
 
-	mapping (address => Game) public games;
+  /**
+   * deauthorize a address to call game functions.
+   * @param addr the address to be deauthorized
+   **/
+  function deauthorize(address addr) onlyOwner public {
+    authorized[addr] = false;
+  }
 
-	modifier gameIsGoingOn() {
-		if (games[msg.sender].player == 0 || games[msg.sender].state != GameState.Ongoing) {
-			throw; // game doesn't exist or already finished
-		}
-		_;
-	}
 
-	event Deal(
-        bool isUser,
-        uint8 _card
-    );
+  /**
+   * checks if an address is authorized to call game functionality
+   **/
+  modifier onlyAuthorized {
+    require(authorized[msg.sender]);
+    _;
+  }
+}
 
-    event GameStatus(
-    	uint8 houseScore,
-    	uint8 houseScoreBig,
-    	uint8 playerScore,
-    	uint8 playerScoreBig
-    );
+contract blackjack is casino {
+  struct Game {
+    /** the hash of the (partial) deck **/
+    bytes32 deck;
+    /** the hash of the casino seed used for randomness generation and deck-hashing, also serves as id**/
+    bytes32 seedHash;
+    /** the player address **/
+    address player;
+    /** the bet **/
+    uint bet;
+  }
 
-    event Log(
-    	uint8 value
-    );
+  /** the value of the cards: Ace, 2, 3, 4, 5, 6, 7, 8, 9, 10, J, Q, K . Ace can be 1 or 11, of course. 
+   *   the value of a card can be determined by looking up cardValues[cardId%13]**/
+  uint8[13] cardValues = [11, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10];
 
-	function BlackJack() {
+  /** use the game id to reference the games **/
+  mapping(bytes32 => Game) games;
+  /** list of splits per game - length 0 in most cases **/
+  mapping(bytes32 => uint8[]) splits;
+  /** tells if a hand of a given game has been doubled **/
+  mapping(bytes32 => mapping(uint8 => bool)) doubled;
+  /** tells if the player already claimed his win **/
+  mapping(bytes32 => bool) over;
 
-	}
+  /** notify listeners that a new round of blackjack started **/
+  event NewGame(bytes32 indexed id, bytes32 deck, bytes32 srvSeed, bytes32 cSeed, address player, uint bet);
+  /** notify listeners of the game outcome **/
+  event Result(bytes32 indexed id, address player, uint win);
+  /** notify listeners that the player doubled **/
+  event Double(bytes32 indexed id, uint8 hand);
+  /** notify listeners that the player split **/
+  event Split(bytes32 indexed id, uint8 hand);
 
-	function () payable {
-		
-	}
+  /** 
+   * constructur. initialize the contract with a minimum bet and a signer address. 
+   * @param minBet         the minimum bet
+   *        maxBet         the maximum bet
+   *        bankroll       the lower bound for profit sharing
+   *        lotteryAddress the address of the lottery contract
+   *        profitAddress  the address to send 60% of the profit to on payday
+   **/
+  function blackjack(uint minBet, uint maxBet) casino(minBet, maxBet) public {
 
-	// starts a new game
-	function deal() public payable {
-		if (games[msg.sender].player != 0 && games[msg.sender].state == GameState.Ongoing) {
-			throw; // game is already going on
-		}
+  }
 
-		if (msg.value < minBet || msg.value > maxBet) {
-			throw; // incorrect bet
-		}
+  /** 
+   *   initializes a round of blackjack with an id, the hash of the (partial) deck and the hash of the server seed. 
+   *   accepts the bet.
+   *   throws an exception if the bet is too low or a game with the given id already exists.
+   *   @param player  the address of the player
+   *          value   the value of the bet in tokens
+   *          deck    the hash of the deck
+   *          srvSeed the hash of the server seed
+   *          cSeed   the plain client seed
+   **/
+  function initGame(address player, uint value, bytes32 deck, bytes32 srvSeed, bytes32 cSeed) onlyAuthorized public {
+    //throw if game with id already exists. later maybe throw only if game with id is still running
+    assert(value >= minimumBet && value <= maximumBet);
+    assert(!gameExists(srvSeed));
+    games[srvSeed] = Game(deck, srvSeed, player, value);
+    NewGame(srvSeed, deck, srvSeed, cSeed, player, value);
+  }
 
-		uint8[] memory houseCards = new uint8[](1);
-		uint8[] memory playerCards = new uint8[](2);
+  /**
+   *   doubles the bet of the game with the given id if the correct amount is sent and the player did not double the hand yet.
+   *   @param id    the game id
+   *          hand  the index of the hand being doubled
+   *          value the number of tokens sent by the player
+   **/
+  function double(bytes32 id, uint8 hand, uint value) onlyAuthorized public {
+    Game storage game = games[id];
+    require(value == game.bet);
+    require(hand <= splits[id].length && !doubled[id][hand]);
+    doubled[id][hand] = true;
+    Double(id, hand);
+  }
 
-		// deal the cards
-		playerCards[0] = Deck.deal(msg.sender, 0);
-		Deal(true, playerCards[0]);
-		houseCards[0] = Deck.deal(msg.sender, 1);
-		Deal(false, houseCards[0]);
-		playerCards[1] = Deck.deal(msg.sender, 2);
-		Deal(true, playerCards[1]);
+  /**
+   *   splits the hands of the game with the given id if the correct amount is sent from the player address and the player
+   *   did not split yet.
+   *   @param id    the game id
+   *          hand  the index of the hand being split
+   *          value the number of tokens sent by the player
+   **/
+  function split(bytes32 id, uint8 hand, uint value) onlyAuthorized public {
+    Game storage game = games[id];
+    require(value == game.bet);
+    require(splits[id].length < 3);
+    splits[id].push(hand);
+    Split(id, hand);
+  }
 
-		games[msg.sender] = Game({
-			player: msg.sender,
-			bet: msg.value,
-			houseCards: houseCards,
-			playerCards: playerCards,
-			state: GameState.Ongoing,
-			cardsDealt: 3,
-		});
 
-		checkGameResult(games[msg.sender], false);
-	}
+  /**
+   * by surrendering half the bet is returned to the player.
+   * send the plain server seed to check if it's correct
+   * @param seed the server seed
+   **/
+  function surrender(bytes32 seed) onlyAuthorized public {
+    var id = keccak256(seed);
+    Game storage game = games[id];
+    require(id == game.seedHash);
+    require(!over[id]);
+    over[id] = true;
+    assert(msg.sender.call(bytes4(keccak256("shift(address,uint256)")), game.player, game.bet / 2));
+    Result(id, game.player, game.bet / 2);
+  }
 
-	// deals one more card to the player
-	function hit() public gameIsGoingOn {
-		uint8 nextCard = games[msg.sender].cardsDealt;
-		games[msg.sender].playerCards.push(Deck.deal(msg.sender, nextCard));
-		games[msg.sender].cardsDealt = nextCard + 1;
-		Deal(true, games[msg.sender].playerCards[games[msg.sender].playerCards.length - 1]);
-		checkGameResult(games[msg.sender], false);
-	}
+  /** 
+   * first checks if deck and the player's number of cards are correct, then checks if the player won and if so, sends the win.
+   * @param deck      the partial deck
+   *        seed      the plain server seed
+   *        numCards  the number of cards per hand
+   **/
+  function stand(uint8[] deck, bytes32 seed, uint8[] numCards) onlyAuthorized public {
+    var gameId = keccak256(seed); //if seed is incorrect the first condition will already fail
+    Game storage game = games[gameId];
+    assert(!over[gameId]);
+    assert(checkDeck(gameId, deck, seed));
+    assert(splits[gameId].length == numCards.length - 1);
+    over[gameId] = true;
+    uint win = determineOutcome(gameId, deck, numCards);
+    if (win > 0) assert(msg.sender.call(bytes4(keccak256("shift(address,uint256)")), game.player, win));
+    Result(gameId, game.player, win);
+  }
 
-	// finishes the game
-	function stand() public gameIsGoingOn {
+  /**
+   * checks if a game with the given id already exists
+   * @param id the game id
+   **/
+  function gameExists(bytes32 id) constant public returns(bool success) {
+    if (games[id].player != 0x0) return true;
+    return false;
+  }
 
-		var (houseScore, houseScoreBig) = calculateScore(games[msg.sender].houseCards);
+  /**
+   * check if deck and casino seed are correct.
+   * @param gameId the game id
+   *        deck   the partial deck
+   *        seed   the server seed
+   * @return true if correct
+   **/
+  function checkDeck(bytes32 gameId, uint8[] deck, bytes32 seed) constant public returns(bool correct) {
+    if (keccak256(convertToBytes(deck), seed) != games[gameId].deck) return false;
+    return true;
+  }
 
-		while (houseScoreBig < 17) {
-			uint8 nextCard = games[msg.sender].cardsDealt;
-			uint8 newCard = Deck.deal(msg.sender, nextCard);
-			games[msg.sender].houseCards.push(newCard);
-			games[msg.sender].cardsDealt = nextCard + 1;
-			houseScoreBig += Deck.valueOf(newCard, true);
-			Deal(false, newCard);
-		}
+  /**
+   * converts an uint8 array to bytes
+   * @param byteArray the uint8 array to be converted
+   * @return the bytes
+   **/
+  function convertToBytes(uint8[] byteArray) internal constant returns(bytes b) {
+    b = new bytes(byteArray.length);
+    for (uint8 i = 0; i < byteArray.length; i++)
+      b[i] = byte(byteArray[i]);
+  }
 
-		checkGameResult(games[msg.sender], true);
-	}
+  /**
+   * determines the outcome of a game and returns the win. 
+   * in case of a loss, win is 0.
+   * @param gameId    the id of the game
+   *        cards     the cards / partial deck
+   *        numCards  the number of cards per hand
+   * @return the total win of all hands
+   **/
+  function determineOutcome(bytes32 gameId, uint8[] cards, uint8[] numCards) constant public returns(uint totalWin) {
+    Game storage game = games[gameId];
+    var playerValues = getPlayerValues(cards, numCards, splits[gameId]);
+    var (dealerValue, dealerBJ) = getDealerValue(cards, sum(numCards));
+    uint win;
+    for (uint8 h = 0; h < numCards.length; h++) {
+      uint8 playerValue = playerValues[h];
+      //bust if value > 21
+      if (playerValue > 21) win = 0;
+      //player blackjack but no dealer blackjack
+      else if (numCards.length == 1 && playerValue == 21 && numCards[h] == 2 && !dealerBJ) {
+        win = game.bet * 5 / 2; //pay 3 to 2
+      }
+      //player wins regularly
+      else if (playerValue > dealerValue || dealerValue > 21)
+        win = game.bet * 2;
+      //tie
+      else if (playerValue == dealerValue)
+        win = game.bet;
+      //player looses
+      else
+        win = 0;
 
-	// @param finishGame - whether to finish the game or not (in case of Blackjack the game finishes anyway)
-	function checkGameResult(Game game, bool finishGame) private {
-		// calculate house score
-		var (houseScore, houseScoreBig) = calculateScore(game.houseCards);
-		// calculate player score
-		var (playerScore, playerScoreBig) = calculateScore(game.playerCards);
+      if (doubled[gameId][h]) win *= 2;
+      totalWin += win;
+    }
+  }
 
-		GameStatus(houseScore, houseScoreBig, playerScore, playerScoreBig);
+  /**
+   *   calculates the value of the player's hands.
+   *   @param cards     holds the (partial) deck.
+   *          numCards  the number of cards per player hand
+   *          pSplits   the player's splits (hand index)
+   *   @return the values of the player's hands
+   **/
+  function getPlayerValues(uint8[] cards, uint8[] numCards, uint8[] pSplits) constant internal returns(uint8[5] playerValues) {
+    uint8 cardIndex;
+    uint8 splitIndex;
+    (cardIndex, splitIndex, playerValues) = playHand(0, 0, 0, playerValues, cards, numCards, pSplits);
+  }
 
-		if (houseScoreBig == BLACKJACK || houseScore == BLACKJACK) {
-			if (playerScore == BLACKJACK || playerScoreBig == BLACKJACK) {
-				// TIE
-				if (!msg.sender.send(game.bet)) throw; // return bet to the player
-				games[msg.sender].state = GameState.Tie; // finish the game
-				return;
-			} else {
-				// HOUSE WON
-				games[msg.sender].state = GameState.House; // simply finish the game
-				return;
-			}
-		} else {
-			if (playerScore == BLACKJACK || playerScoreBig == BLACKJACK) {
-				// PLAYER WON
-				if (game.playerCards.length == 2 && (Deck.isTen(game.playerCards[0]) || Deck.isTen(game.playerCards[1]))) {
-					// Natural blackjack => return x2.5
-					if (!msg.sender.send((game.bet * 5) / 2)) throw; // send prize to the player
-				} else {
-					// Usual blackjack => return x2
-					if (!msg.sender.send(game.bet * 2)) throw; // send prize to the player
-				}
-				games[msg.sender].state = GameState.Player; // finish the game
-				return;
-			} else {
+  /**
+   *   recursively plays the player's hands.
+   *   @param hIndex        the hand index
+   *          cIndex        the index of the next card to draw
+   *          sIndex        the index of the next split, if there is any
+   *          playerValues  the values of the player's hands (not yet complete)
+   *          cards         holds the (partial) deck.
+   *          numCards      the number of cards per player hand
+   *          pSplits        the array of splits
+   *   @return the values of the player's hands and the current card index
+   **/
+  function playHand(uint8 hIndex, uint8 cIndex, uint8 sIndex, uint8[5] playerValues, uint8[] cards, uint8[] numCards, uint8[] pSplits) constant internal returns(uint8, uint8, uint8[5]) {
+    playerValues[hIndex] = cardValues[cards[cIndex] % 13];
+    cIndex = cIndex < 4 ? cIndex + 2 : cIndex + 1;
+    while (sIndex < pSplits.length && pSplits[sIndex] == hIndex) {
+      sIndex++;
+      (cIndex, sIndex, playerValues) = playHand(sIndex, cIndex, sIndex, playerValues, cards, numCards, pSplits);
+    }
+    uint8 numAces = playerValues[hIndex] == 11 ? 1 : 0;
+    uint8 card;
+    for (uint8 i = 1; i < numCards[hIndex]; i++) {
+      card = cards[cIndex] % 13;
+      playerValues[hIndex] += cardValues[card];
+      if (card == 0) numAces++;
+      cIndex = cIndex < 4 ? cIndex + 2 : cIndex + 1;
+    }
+    while (numAces > 0 && playerValues[hIndex] > 21) {
+      playerValues[hIndex] -= 10;
+      numAces--;
+    }
+    return (cIndex, sIndex, playerValues);
+  }
 
-				if (playerScore > BLACKJACK) {
-					// BUST, HOUSE WON
-					Log(1);
-					games[msg.sender].state = GameState.House; // finish the game
-					return;
-				}
 
-				if (!finishGame) {
-					return; // continue the game
-				}
-				
-                // ???????
-				uint8 playerShortage = 0; 
-				uint8 houseShortage = 0;
 
-				// player decided to finish the game
-				if (playerScoreBig > BLACKJACK) {
-					if (playerScore > BLACKJACK) {
-						// HOUSE WON
-						games[msg.sender].state = GameState.House; // simply finish the game
-						return;
-					} else {
-						playerShortage = BLACKJACK - playerScore;
-					}
-				} else {
-					playerShortage = BLACKJACK - playerScoreBig;
-				}
+  /**
+   *   calculates the value of a dealer's hand.
+   *   @param cards     holds the (partial) deck.
+   *          numCards  the number of cards the player holds
+   *   @return the value of the dealer's hand and a flag indicating if the dealer has got a blackjack
+   **/
+  function getDealerValue(uint8[] cards, uint8 numCards) constant internal returns(uint8 dealerValue, bool bj) {
 
-				if (houseScoreBig > BLACKJACK) {
-					if (houseScore > BLACKJACK) {
-						// PLAYER WON
-						if (!msg.sender.send(game.bet * 2)) throw; // send prize to the player
-						games[msg.sender].state = GameState.Player;
-						return;
-					} else {
-						houseShortage = BLACKJACK - houseScore;
-					}
-				} else {
-					houseShortage = BLACKJACK - houseScoreBig;
-				}
-				
-                // ?????????????????????? ?????? ???? ??????????????
-				if (houseShortage == playerShortage) {
-					// TIE
-					if (!msg.sender.send(game.bet)) throw; // return bet to the player
-					games[msg.sender].state = GameState.Tie;
-				} else if (houseShortage > playerShortage) {
-					// PLAYER WON
-					if (!msg.sender.send(game.bet * 2)) throw; // send prize to the player
-					games[msg.sender].state = GameState.Player;
-				} else {
-					games[msg.sender].state = GameState.House;
-				}
-			}
-		}
-	}
+    //dealer always receives second and forth card
+    uint8 card = cards[1] % 13;
+    uint8 card2 = cards[3] % 13;
+    dealerValue = cardValues[card] + cardValues[card2];
+    uint8 numAces;
+    if (card == 0) numAces++;
+    if (card2 == 0) numAces++;
+    if (dealerValue > 21) { //2 aces,count as 12
+      dealerValue -= 10;
+      numAces--;
+    } else if (dealerValue == 21) {
+      return (21, true);
+    }
+    //take cards until value reaches 17 or more. 
+    uint8 i;
+    while (dealerValue < 17) {
+      card = cards[numCards + i + 2] % 13;
+      dealerValue += cardValues[card];
+      if (card == 0) numAces++;
+      if (dealerValue > 21 && numAces > 0) {
+        dealerValue -= 10;
+        numAces--;
+      }
+      i++;
+    }
+  }
 
-	function calculateScore(uint8[] cards) private constant returns (uint8, uint8) {
-		uint8 score = 0;
-		uint8 scoreBig = 0; // in case of Ace there could be 2 different scores
-		bool bigAceUsed = false;
-		for (uint i = 0; i < cards.length; ++i) {
-			uint8 card = cards[i];
-			if (Deck.isAce(card) && !bigAceUsed) { // doesn't make sense to use the second Ace as 11, because it leads to the losing
-				scoreBig += Deck.valueOf(card, true);
-				bigAceUsed = true;
-			} else {
-				scoreBig += Deck.valueOf(card, false);
-			}
-			score += Deck.valueOf(card, false);
-		}
-		return (score, scoreBig);
-	}
-
-	function getPlayerCard(uint8 id) public gameIsGoingOn constant returns(uint8) {
-		if (id < 0 || id > games[msg.sender].playerCards.length) {
-			throw;
-		}
-		return games[msg.sender].playerCards[id];
-	}
-
-	function getHouseCard(uint8 id) public gameIsGoingOn constant returns(uint8) {
-		if (id < 0 || id > games[msg.sender].houseCards.length) {
-			throw;
-		}
-		return games[msg.sender].houseCards[id];
-	}
-
-	function getPlayerCardsNumber() public gameIsGoingOn constant returns(uint) {
-		return games[msg.sender].playerCards.length;
-	}
-
-	function getHouseCardsNumber() public gameIsGoingOn constant returns(uint) {
-		return games[msg.sender].houseCards.length;
-	}
-
-	function getGameState() public constant returns (uint8) {
-		if (games[msg.sender].player == 0) {
-			throw; // game doesn't exist
-		}
-
-		Game game = games[msg.sender];
-
-		if (game.state == GameState.Player) {
-			return 1;
-		}
-		if (game.state == GameState.House) {
-			return 2;
-		}
-		if (game.state == GameState.Tie) {
-			return 3;
-		}
-
-		return 0; // the game is still going on
-	}
+  /**
+   * sums up the given numbers
+   * note:  player will always hold less than 100 cards
+   * @param numbers   the numbers to sum up
+   * @return the sum of the numbers
+   **/
+  function sum(uint8[] numbers) constant internal returns(uint8 s) {
+    for (uint i = 0; i < numbers.length; i++) {
+      s += numbers[i];
+    }
+  }
 
 }
