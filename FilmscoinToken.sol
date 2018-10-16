@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FilmscoinToken at 0x5976f7dac1525ef3277836043ba474a35e6b4272
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FilmscoinToken at 0x04cc783b450b8d11f3c7d00dd03fdf7fb51fe9f2
 */
 pragma solidity ^0.4.18;
 
@@ -175,8 +175,8 @@ contract MintableToken is StandardToken, Ownable {
 contract FilmscoinToken is MintableToken, BurnableToken {
   string public name = 'Filmscoin';
   string public symbol = 'FLMC';
-  uint8 public decimals = 0;
-  uint public totalSupply = 31000000;
+  uint8 public decimals = 18;
+  uint256 public totalSupply = 31000000 * 10 ** uint256(decimals);
 
   function FilmscoinToken() public {
     balances[msg.sender] = totalSupply;
