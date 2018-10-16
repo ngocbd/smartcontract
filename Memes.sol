@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Memes at 0x6aa03faa7856c5fb8671a174d742eedb46b12d66
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Memes at 0x437e27d8a8cc41d4d77dba15a8c82141b18952d4
 */
 pragma solidity ^0.4.21;
 
@@ -9,10 +9,10 @@ pragma solidity ^0.4.21;
 
 contract Memes{
     address owner;
-    address helper=0x26581d1983ced8955C170eB4d3222DCd3845a092;
+    address helper=0x690F34053ddC11bdFF95D44bdfEb6B0b83CBAb58;
 
     uint256 public TimeFinish = 0;
-    uint256 TimerResetTime = 7200; // 2 hours cooldown @ new game 
+    uint256 TimerResetTime = 7200000; // 2 hours cooldown @ new game 
     uint256 TimerStartTime = 360000; 
     uint256 public Pot = 0;
     // Price increase in percent divided (10k = 100% = 2x increase.)
@@ -28,19 +28,19 @@ contract Memes{
     uint16 public DEVP = 500;
     // Helper factor fee 
     uint16 public HVAL = 5000;
-    uint256 BasicPrice = 1 finney;
+    uint256 BasicPrice = .00666 ether;
     struct Item{
         address owner;
         uint256 CPrice;
         bool reset;
     }
-    uint8 constant SIZE = 9;
+    uint8 constant SIZE = 17;
     Item[SIZE] public ItemList;
     
     address public PotOwner;
     
     
-    event ItemBought(address owner, uint256 newPrice, uint256 newPot, uint256 Timer, string says, uint8 id);
+    event ItemBought(address owner, uint256 newPrice, string says, uint8 id);
     // owner wins paid , new pot is npot
     event GameWon(address owner, uint256 paid, uint256 npot);
     
@@ -82,22 +82,18 @@ contract Memes{
         ItemList[6] = ITM;
         ItemList[7] = ITM;
         ItemList[8] = ITM;
+        ItemList[9] = ITM;
+        ItemList[10] = ITM;
+        ItemList[11] = ITM;
+        ItemList[12] = ITM;
+        ItemList[13] = ITM;
+        ItemList[14] = ITM;
+        ItemList[15] = ITM;
+        ItemList[16] = ITM;
         owner=msg.sender;
     }
     
-    function Payout() public {
-        require(TimeFinish < block.timestamp);
-        require(TimeFinish > 1);
-        uint256 pay = (Pot * WPOTPART)/10000;
-        Pot = Pot - pay;
-        PotOwner.transfer(pay);
-        TimeFinish = 1; // extra setting time never 1 due miners. reset count
-        // too much gas
-        for (uint8 i = 0; i <SIZE; i++ ){
-           ItemList[i].reset= true;
-        }
-        emit GameWon(PotOwner, pay, Pot);
-    }
+    
     
     function Buy(uint8 ID, string says) public payable {
         require(ID < SIZE);
@@ -117,12 +113,7 @@ contract Memes{
             
         }
         
-        if (TimeFinish < block.timestamp){
-            // game done 
-           Payout();
-           msg.sender.transfer(msg.value);
-        }
-        else if (msg.value >= price){
+        if (msg.value >= price){
             if (!ITM.reset){
                 require(msg.sender != ITM.owner); // do not buy own item
             }
@@ -135,13 +126,24 @@ contract Memes{
             // first item all LEFT goes to POT 
             // not previous owner small fee .
             uint256 pot_val = LEFT;
+            
+            address sender_target = owner;
+            
             if (!ITM.reset){
                 prev_val = (DIVP * LEFT)  / 10000;
                 pot_val = (POTP * LEFT) / 10000;
+                sender_target = ITM.owner; // we set sender_target to item owner
+            }
+            else{
+                // Item is reset, send stuff to dev
+                // Actually we can just send everything here aka LEFT
+                prev_val = LEFT;
+                pot_val = 0; // nothing in pot
+                // no need to set sender value
             }
             
             Pot = Pot + pot_val;
-            ITM.owner.transfer(prev_val);
+            sender_target.transfer(prev_val); // send stuff to sender_target
             ITM.owner = msg.sender;
             uint256 incr = PIncr; // weird way of passing other types to new types.
             ITM.CPrice = (price * (10000 + incr)) / 10000;
@@ -158,7 +160,7 @@ contract Memes{
             }
             PotOwner = msg.sender;
             // says is for later, for quotes in log. no gas used to save
-            emit ItemBought(msg.sender, ITM.CPrice, Pot, TimeFinish, says, ID);
+            emit ItemBought(msg.sender, ITM.CPrice, says, ID);
         }  
         else{
             revert(); // user knows fail.
