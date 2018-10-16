@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Halo3DShrimpFarmer at 0x7d7238460fbc191d512fe11b35af8e4d56df12ff
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Halo3DShrimpFarmer at 0x293ed09bfc80b93cdf5a64306aaedcfad3c64955
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
@@ -44,7 +44,6 @@ contract AcceptsHalo3D {
 }
 
 // 50 Tokens, seeded market of 8640000000 Eggs
-// start give out 300 Shrimps
 contract Halo3DShrimpFarmer is AcceptsHalo3D {
     //uint256 EGGS_PER_SHRIMP_PER_SECOND=1;
     uint256 public EGGS_TO_HATCH_1SHRIMP=86400;//for final version should be seconds in a day
@@ -69,8 +68,7 @@ contract Halo3DShrimpFarmer is AcceptsHalo3D {
      * Fallback function for the contract, protect investors
      */
     function() payable public {
-      // Not accepting Ether directly
-      revert();
+      /* revert(); */
     }
 
     /**
@@ -93,6 +91,7 @@ contract Halo3DShrimpFarmer is AcceptsHalo3D {
 
         uint256 eggsBought=calculateEggBuy(_value, SafeMath.sub(halo3DBalance, _value));
         eggsBought=SafeMath.sub(eggsBought,devFee(eggsBought));
+        reinvest();
         tokenContract.transfer(ceoAddress, devFee(_value));
         claimedEggs[_from]=SafeMath.add(claimedEggs[_from],eggsBought);
 
@@ -125,6 +124,7 @@ contract Halo3DShrimpFarmer is AcceptsHalo3D {
         claimedEggs[msg.sender]=0;
         lastHatch[msg.sender]=now;
         marketEggs=SafeMath.add(marketEggs,hasEggs);
+        reinvest();
         tokenContract.transfer(ceoAddress, fee);
         tokenContract.transfer(msg.sender, SafeMath.sub(eggValue,fee));
     }
@@ -141,7 +141,9 @@ contract Halo3DShrimpFarmer is AcceptsHalo3D {
     // All the dividends this contract makes will be used to grow token fund for players
     // of the Halo3D Schrimp Farm
     function reinvest() public {
-       tokenContract.reinvest();
+       if(tokenContract.myDividends(true) > 1) {
+         tokenContract.reinvest();
+       }
     }
 
     //magic trade balancing algorithm
@@ -188,7 +190,7 @@ contract Halo3DShrimpFarmer is AcceptsHalo3D {
 
     // Collect information about doge farm dividents amount
     function getContractDividends() public view returns(uint256) {
-      return tokenContract.myDividends(true);
+      return tokenContract.myDividends(true); // + this.balance;
     }
 
     // Get tokens balance of the doge farm
