@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GoodTimeCoin at 0xaa4832b9d8e784ccf8b2aae438e67267828912f7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GoodTimeCoin at 0x584a0ec8a7a3fcfed27db5c234a9062863883778
 */
 pragma solidity ^0.4.16;
 
@@ -60,7 +60,6 @@ contract StandardToken {
         Transfer(_from, _to, _value);
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
-
 
     function transfer(address _to, uint256 _value) public returns (bool success) 
 	{
