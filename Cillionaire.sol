@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cillionaire at 0xdaff1F98299b12d475b4725a2635e5bA291aA651
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Cillionaire at 0x663a5cA0295231B0d88afB1C557a8D8f4C1B6459
 */
 // <ORACLIZE_API>
 /*
@@ -1045,11 +1045,20 @@ contract owned {
     }
 }
  
-contract Cillionaire is owned, usingOraclize {
+contract mortal is owned {
+    
+    function kill() onlyOwner {
+        selfdestruct(owner);
+    }
+}
+
+contract Cillionaire is mortal, usingOraclize {
 
     enum State { ENDED, DONATE }
     uint public constant maxFeePercentage = 10;
     uint public constant retainBalance = 0.01 ether;
+    uint public constant oraclizeMinCallbackGas = 210000;
+    uint public constant oraclizeMinCallbackGasPrice = 20000000000 wei; // 20 gwei
     
     // state vars for current round
     address public beneficiary;
@@ -1062,6 +1071,7 @@ contract Cillionaire is owned, usingOraclize {
     uint public donation;
     uint public fee;
     uint public donationSum;
+    uint public numDonors;
     
     // parameter vars that can be set by owner
     uint public nextRoundMaxDonors;
@@ -1088,63 +1098,79 @@ contract Cillionaire is owned, usingOraclize {
     function Cillionaire() {
         oraclize_setProof(proofType_Ledger);
         state = State.ENDED;
-        oraclizeCallbackGas = 400000;
-        nextRoundMaxDonors = 1000;
-    	nextRoundDuration = 1800; // seconds
-    	nextRoundDonation = 0.01 ether;
-    	nextRoundFee = 0.001 ether;
-    	startRound(owner);
+        oraclizeCallbackGas = oraclizeMinCallbackGas;
+        setOraclizeCallbackGasPrice(oraclizeMinCallbackGasPrice);
+        nextRoundMaxDonors = 100000;
+        nextRoundDuration = 2 days;
+        nextRoundDonation = 0.01 ether;
+        nextRoundFee = 0.0003 ether;
+        startRound(0x632485f482cf86b098fd4e75f6b99f7a04d3ee71); // a donor from the old contract 0x02b97cca6d6a5227e464b2a60ee1a580ea4f7da9
     }
 
     function startRound(address _beneficiary) internal onlyState(State.ENDED) {
-    	delete donors;
-    	donationSum = 0;
-    	beneficiary = _beneficiary;
-    	maxDonors = nextRoundMaxDonors;
-    	duration = nextRoundDuration;
-    	donation = nextRoundDonation;
-    	fee = nextRoundFee;
-    	startTimestamp = block.timestamp;
-    	endTimestamp = startTimestamp + duration;
-    	state = State.DONATE;
-    	NewRoundStarted(beneficiary, startTimestamp, endTimestamp, maxDonors, duration, donation, fee);
+        numDonors = 0;
+        donationSum = 0;
+        beneficiary = _beneficiary;
+        maxDonors = nextRoundMaxDonors;
+        duration = nextRoundDuration;
+        donation = nextRoundDonation;
+        fee = nextRoundFee;
+        startTimestamp = block.timestamp;
+        endTimestamp = startTimestamp + duration;
+        state = State.DONATE;
+        NewRoundStarted(beneficiary, startTimestamp, endTimestamp, maxDonors, duration, donation, fee);
     }
 
     function donate() external payable onlyState(State.DONATE) {
-    	require(msg.value == donation);
-    	uint amountAfterFee = msg.value - fee;
-    	donationSum += amountAfterFee;
-    	donors.push(msg.sender);
-    	NewDonor(msg.sender, amountAfterFee, fee);
-    	if ((block.timestamp >= endTimestamp) || (donors.length >= maxDonors)) {
-    	    state = State.ENDED;
-    	    RoundEnded(beneficiary, donationSum);
-            bytes32 queryId = oraclize_newRandomDSQuery(0, 7, oraclizeCallbackGas);
-    	}
-    	beneficiary.transfer(amountAfterFee);
+        require(msg.value == donation);
+        uint amountAfterFee = msg.value - fee;
+        donationSum += amountAfterFee; 
+        if (numDonors == donors.length) { // https://ethereum.stackexchange.com/questions/3373/how-to-clear-large-arrays-without-blowing-the-gas-limit
+            donors.length += 1;
+        }
+        donors[numDonors++] = msg.sender;
+        NewDonor(msg.sender, amountAfterFee, fee);
+        if ((block.timestamp >= endTimestamp) || (donors.length >= maxDonors)) {
+            endRoundAndStartNextRound();
+        }
+        // try sending money to beneficiary. If that doesn't work e.g. because the beneficiary is a malicous gas-draining contract, then end the round and give the money back to the donor.
+        require(this.balance >= amountAfterFee); // fail if there's not enough balance left. that would be the case if Oraclize cost would be taken from this donation.
+        if (!beneficiary.send(amountAfterFee)) {
+            if (state != State.ENDED) { // don't end round twice.
+                endRoundAndStartNextRound();
+            }
+            msg.sender.send(msg.value); // refund everything. 
+        }
     }
-    
+
+    function endRoundAndStartNextRound() internal { 
+        state = State.ENDED;
+        RoundEnded(beneficiary, donationSum);
+        bytes32 queryId = oraclize_newRandomDSQuery(0, 7, oraclizeCallbackGas);
+    }
+
     function __callback(bytes32 _queryId, string _result, bytes _proof) onlyOraclize onlyState(State.ENDED) oraclize_randomDS_proofVerify(_queryId, _result, _proof) {
         uint randomNumber = uint(sha3(_result)); // https://gitter.im/oraclize/ethereum-api?at=595b98d7329651f46e5105b7
         RandomNumber(randomNumber);
-        address nextBeneficiary = donors[randomNumber % donors.length];
+        address nextBeneficiary = numDonors == 0 ? owner : donors[randomNumber % numDonors];
         startRound(nextBeneficiary);
     }
-    
+
     // Owner functions and setters for parameter vars
     
-    // Fail-safe in case callback doesn't work the first time. In this case the owner can trigger random number generation again, thereby starting the next round.
+    // Fail-safe in case callback doesn't work the first time. In this case the owner can trigger random number generation again, thereby starting the next round. 
+	// It can be called in ENDED state or if it is time to end the round.
     function startNextRound() external payable onlyOwner onlyState(State.ENDED) {
-        bytes32 queryId = oraclize_newRandomDSQuery(0, 7, oraclizeCallbackGas);
+        endRoundAndStartNextRound();
     }
     
     function deposit() external payable onlyOwner {
-        // allow to deposit ehter in case we run out of money for the Oraclize calls.
+        // allow to deposit ether in case we run out of money for the Oraclize calls.
     }
     
     function withdraw() external onlyOwner {
         require(this.balance > retainBalance);
-        uint amount = this.balance - retainBalance; // leave enough ether for Oraclize
+        uint amount = this.balance - retainBalance; // prevent owner from starving Oraclize
         owner.transfer(amount);
     }
     
@@ -1153,7 +1179,7 @@ contract Cillionaire is owned, usingOraclize {
     }
 
     function setNextRoundDuration(uint _nextRoundDuration) external onlyOwner {
-    	nextRoundDuration = _nextRoundDuration;
+        nextRoundDuration = _nextRoundDuration;
     }
 
     function setNextRoundDonation(uint _nextRoundDonation) external onlyOwner {
@@ -1169,8 +1195,12 @@ contract Cillionaire is owned, usingOraclize {
     }
 
     function setOraclizeCallbackGas(uint _oraclizeCallbackGas) external onlyOwner {
-        require(_oraclizeCallbackGas > 200000); // prevent owner from starving Oraclize
+        require(_oraclizeCallbackGas >= oraclizeMinCallbackGas); // prevent owner from starving Oraclize
         oraclizeCallbackGas = _oraclizeCallbackGas;
     }
 
+    function setOraclizeCallbackGasPrice(uint _oraclizeCallbackGasPrice) public onlyOwner {
+        require(_oraclizeCallbackGasPrice >= oraclizeMinCallbackGasPrice); // prevent owner from starving Oraclize
+        oraclize_setCustomGasPrice(_oraclizeCallbackGasPrice); // default is 20 Gwei, i.e. 20000000000 wei
+    }
 }
