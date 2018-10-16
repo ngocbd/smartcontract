@@ -1,11 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EIP20 at 0xc612cd825dc6d8377e6ffd5ef97731d023fc78b7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EIP20 at 0xc9f9764097220f325762d0c5c0ff43513071833a
 */
-/*
-Implements EIP20 token standard: https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
-.*/
-
-
+// https://github.com/ConsenSys/Tokens/blob/master/contracts/eip20/EIP20.sol
 // Abstract contract for the full ERC 20 Token standard
 // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
 pragma solidity ^0.4.18;
@@ -52,12 +48,10 @@ contract EIP20Interface {
     /// @return Amount of remaining tokens allowed to spent
     function allowance(address _owner, address _spender) public view returns (uint256 remaining);
 
-    // solhint-disable-next-line no-simple-event-func-name  
-    event Transfer(address indexed _from, address indexed _to, uint256 _value); 
+    // solhint-disable-next-line no-simple-event-func-name
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
-
-
 
 contract EIP20 is EIP20Interface {
 
@@ -71,15 +65,17 @@ contract EIP20 is EIP20Interface {
     Some wallets/interfaces might not even bother to look at this information.
     */
     string public name;                   //fancy name: eg Simon Bucks
-    uint8 public decimals;                //How many decimals to show.
+    uint8 public decimals = 8;                //How many decimals to show.
     string public symbol;                 //An identifier: eg SBX
 
-    function EIP20(uint256 _initialAmount, string _tokenName, uint8 _decimalUnits, string _tokenSymbol) public 
-    {
-        balances[msg.sender] = _initialAmount;               // Give the creator all initial tokens
-        totalSupply = _initialAmount;                        // Update total supply
+    function EIP20(
+        uint256 _initialAmount,
+        string _tokenName,
+        string _tokenSymbol
+    ) public {
+        totalSupply = _initialAmount * 10 ** uint256(decimals); // Update total supply
+        balances[msg.sender] = totalSupply;               // Give the creator all initial tokens
         name = _tokenName;                                   // Set the name for display purposes
-        decimals = _decimalUnits;                            // Amount of decimals for display purposes
         symbol = _tokenSymbol;                               // Set the symbol for display purposes
     }
 
@@ -115,5 +111,5 @@ contract EIP20 is EIP20Interface {
 
     function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
         return allowed[_owner][_spender];
-    }   
+    }
 }
