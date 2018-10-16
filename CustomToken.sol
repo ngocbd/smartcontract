@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x3eef3e3c07684a13be09073598cde5ce9ff6c494
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xc559d2901afe996aa5397058b84f9ea8d0720ad3
 */
 pragma solidity ^0.4.19;
 
@@ -45,12 +45,34 @@ contract BaseToken {
     }
 }
 
-contract CustomToken is BaseToken {
+contract BurnToken is BaseToken {
+    event Burn(address indexed from, uint256 value);
+
+    function burn(uint256 _value) public returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);
+        balanceOf[msg.sender] -= _value;
+        totalSupply -= _value;
+        Burn(msg.sender, _value);
+        return true;
+    }
+
+    function burnFrom(address _from, uint256 _value) public returns (bool success) {
+        require(balanceOf[_from] >= _value);
+        require(_value <= allowance[_from][msg.sender]);
+        balanceOf[_from] -= _value;
+        allowance[_from][msg.sender] -= _value;
+        totalSupply -= _value;
+        Burn(_from, _value);
+        return true;
+    }
+}
+
+contract CustomToken is BaseToken, BurnToken {
     function CustomToken() public {
-        totalSupply = 1300000000000000000000000000;
-        balanceOf[0x8e0c500cb5ee5b02668bfd80cd25129194420243] = totalSupply;
-        name = 'Tubohotel';
-        symbol = 'TUBO';
-        decimals = 18;
+        totalSupply = 8000000000000000;
+        balanceOf[0x1dd91123acc8a51392b35b310b2f0bed6ff082f2] = totalSupply;
+        name = 'Teamothers';
+        symbol = 'TOS';
+        decimals = 8;
     }
 }
