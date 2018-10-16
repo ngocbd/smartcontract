@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZEROCoin at 0x967081d634f01003b2c5b3d8ea5aa2c55000722e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZEROCoin at 0xb95f51faa72f154092b9ff84fd723452f13e575e
 */
-pragma solidity 0.4.19;
+pragma solidity 0.4.20;
 
 /**
  * @title SafeMath
@@ -76,9 +76,13 @@ contract ZEROCoin is ERC20
     uint256 maxCap_public = 777000000 * 10 **18;  //  777 million in Public Sale
     mapping(address => uint) balances;
     mapping(address => mapping(address => uint)) allowed;
-
+    /** Who are our advisors (iterable) */
+    mapping (address => bool) private Advisors;
     
-     enum Stages {
+     /** How many advisors we have now */
+    uint public advisorCount;
+
+    enum Stages {
         NOTSTARTED,
         PREICO,
         ICO,
@@ -239,7 +243,13 @@ contract ZEROCoin is ERC20
      // these standardized APIs for approval:
      function transferFrom( address _from, address _to, uint256 _amount )public returns (bool success) {
      require( _to != 0x0);
+     require(stage == Stages.ENDED);
      require(balances[_from] >= _amount && allowed[_from][msg.sender] >= _amount && _amount >= 0);
+     
+     if(isAdvisor(_to)) {
+         require(now > ico1_startdate + 150 days);
+     }
+     
      balances[_from] = (balances[_from]).sub(_amount);
      allowed[_from][msg.sender] = (allowed[_from][msg.sender]).sub(_amount);
      balances[_to] = (balances[_to]).add(_amount);
@@ -247,7 +257,7 @@ contract ZEROCoin is ERC20
      return true;
          }
     
-   // Allow _spender to withdraw from your account, multiple times, up to the _value amount.
+    // Allow _spender to withdraw from your account, multiple times, up to the _value amount.
      // If this function is called again it overwrites the current allowance with _value.
      function approve(address _spender, uint256 _amount)public returns (bool success) {
          require( _spender != 0x0);
@@ -259,11 +269,12 @@ contract ZEROCoin is ERC20
      function allowance(address _owner, address _spender)public view returns (uint256 remaining) {
          require( _owner != 0x0 && _spender !=0x0);
          return allowed[_owner][_spender];
-   }
+    }
 
      // Transfer the balance from owner's account to another account
      function transfer(address _to, uint256 _amount)public returns (bool success) {
         require( _to != 0x0);
+        require(stage == Stages.ENDED);
         require(balances[msg.sender] >= _amount && _amount >= 0);
         balances[msg.sender] = (balances[msg.sender]).sub(_amount);
         balances[_to] = (balances[_to]).add(_amount);
@@ -271,7 +282,7 @@ contract ZEROCoin is ERC20
              return true;
          }
     
-          // Transfer the balance from owner's account to another account
+    // Transfer the balance from owner's account to another account
     function transferTokens(address _to, uint256 _amount) private returns(bool success) {
         require( _to != 0x0);       
         require(balances[address(this)] >= _amount && _amount > 0);
@@ -279,8 +290,32 @@ contract ZEROCoin is ERC20
         balances[_to] = (balances[_to]).add(_amount);
         Transfer(address(this), _to, _amount);
         return true;
-        }
+    }
  
+    // Transfer the balance from owner's account to advisor's account
+    function transferToAdvisors(address _to, uint256 _amount) private returns(bool success) {
+        require( _to != 0x0);       
+        require(balances[address(this)] >= _amount && _amount > 0);
+        balances[address(this)] = (balances[address(this)]).sub(_amount);
+        
+        // if this is a new advisor
+        if(!isAdvisor(_to)) {
+          addAdvisor(_to);
+          advisorCount++;
+        }
+        
+        balances[_to] = (balances[_to]).add(_amount);
+        Transfer(address(this), _to, _amount);
+        return true;
+    }
+ 
+    function addAdvisor(address _advisor) public {
+        Advisors[_advisor]=true;
+    }
+
+    function isAdvisor(address _advisor) public returns(bool ){
+        return Advisors[_advisor];
+    }
     
     function drain() external onlyOwner {
         owner.transfer(this.balance);
