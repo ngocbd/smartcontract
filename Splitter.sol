@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Splitter at 0x447c927451ff6e12cf1f189563a59de8050af36b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Splitter at 0x98150dcb2c86b2e7fcd859e54ae8b627b385c28e
 */
 pragma solidity ^0.4.18;
 
@@ -13,7 +13,7 @@ pragma solidity ^0.4.18;
 
 contract Splitter {
     address public owner;   // Owner of the contract, will get `percent` of all transferred funds
-    address public payee = 0xAc71D3aC1fd7a56f731fb28E5F582cC6042cB61B;   // Payee of the contract, will get 100 - `percent` of all transferred funds
+    address public payee = 0xE413239e62f25Cc6746cD393920d123322aCa948;   // Payee of the contract, will get 100 - `percent` of all transferred funds
     uint    public percent = 10; // Percent of the funds to transfer to the payee (range: 1 - 99)
     
     // Splitter creates a fund splitter, forwarding 'percent' of any received funds
