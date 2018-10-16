@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Aeron at 0xBA5F11b16B155792Cf3B2E6880E8706859A8AEB6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Aeron at 0xad86ef88e72f87ca2b4476d9fc4b0b0cbf1f3d8d
 */
 pragma solidity ^0.4.8;
 
@@ -64,8 +64,8 @@ contract Aeron is SafeMath {
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function Aeron() {
-        balanceOf[msg.sender] = 10000000000000000;       // Give the creator all initial tokens
-        totalSupply = 10000000000000000;                 // Update total supply
+        balanceOf[msg.sender] = 100000000;       // Give the creator all initial tokens
+        totalSupply = 100000000;                 // Update total supply
         name = 'Aeron';                          // Set the name for display purposes
         symbol = 'ARN';                          // Set the symbol for display purposes
         decimals = 8;                            // Amount of decimals for display purposes
@@ -77,7 +77,7 @@ contract Aeron is SafeMath {
         if (_to == 0x0) revert();                               // Prevent transfer to 0x0 address. Use burn() instead
 	if (_value <= 0) revert();
         if (balanceOf[msg.sender] < _value) revert();           // Check if the sender has enough
-        if (balanceOf[_to] + _value < balanceOf[_to]) revert(); // Check for overflows
+        if (balanceOf[_to] + _value < balanceOf[_to]) revert();   // Check for overflows
         balanceOf[msg.sender] = SafeMath.safeSub(balanceOf[msg.sender], _value);              // Subtract from the sender
         balanceOf[_to] = SafeMath.safeAdd(balanceOf[_to], _value);                            // Add the same to the recipient
         Transfer(msg.sender, _to, _value);                      // Notify anyone listening that this transfer took place
@@ -85,7 +85,7 @@ contract Aeron is SafeMath {
 
     /* Allow another contract to spend some tokens in your behalf */
     function approve(address _spender, uint256 _value) returns (bool success) {
-	if (_value <= 0) revert();
+        if (_value <= 0) revert();
         allowance[msg.sender][_spender] = _value;
         return true;
     }
@@ -93,7 +93,7 @@ contract Aeron is SafeMath {
     /* Transfer tokens */
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
         if (_to == 0x0) revert();                                // Prevent transfer to 0x0 address. Use burn() instead
-	 if (_value <= 0) revert();
+	if (_value <= 0) revert();
         if (balanceOf[_from] < _value) revert();                 // Check if the sender has enough
         if (balanceOf[_to] + _value < balanceOf[_to]) revert();  // Check for overflows
         if (_value > allowance[_from][msg.sender]) revert();     // Check allowance
@@ -127,7 +127,7 @@ contract Aeron is SafeMath {
         if (freezeOf[msg.sender] < _value) revert();            // Check if the sender has enough
 	if (_value <= 0) revert();
         freezeOf[msg.sender] = SafeMath.safeSub(freezeOf[msg.sender], _value);              // Updates frozen tokens
-	balanceOf[msg.sender] = SafeMath.safeAdd(balanceOf[msg.sender], _value);            // Add to the sender
+	balanceOf[msg.sender] = SafeMath.safeAdd(balanceOf[msg.sender], _value);           // Add to the sender
         Unfreeze(msg.sender, _value);
         return true;
     }
