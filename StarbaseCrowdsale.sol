@@ -1,6 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StarbaseCrowdsale at 0xd9ecb0271877147df323ed7ad8486b9e138d18f0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StarbaseCrowdsale at 0x4f4e76761eb0a5a2992a6f3ab1c90a874450ecca
 */
+pragma solidity ^0.4.13;
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
   function mul(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a * b;
@@ -27,7 +33,11 @@ library SafeMath {
   }
 }
 
-
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
   address public owner;
 
@@ -65,6 +75,13 @@ contract Ownable {
 
 }
 
+contract AbstractStarbaseToken {
+    function isFundraiser(address fundraiserAddress) public returns (bool);
+    function company() public returns (address);
+    function allocateToCrowdsalePurchaser(address to, uint256 value) public returns (bool);
+    function allocateToMarketingSupporter(address to, uint256 value) public returns (bool);
+}
+
 contract AbstractStarbaseCrowdsale {
     function startDate() constant returns (uint256) {}
     function endedAt() constant returns (uint256) {}
@@ -74,15 +91,8 @@ contract AbstractStarbaseCrowdsale {
     function numOfPurchasedTokensOnEpBy(address purchaser) constant returns (uint256);
 }
 
-
-contract AbstractStarbaseToken {
-    function isFundraiser(address fundraiserAddress) public returns (bool);
-    function company() public returns (address);
-    function allocateToCrowdsalePurchaser(address to, uint256 value) public returns (bool);
-    function allocateToMarketingSupporter(address to, uint256 value) public returns (bool);
-}
-
-
+/// @title EarlyPurchase contract - Keep track of purchased amount by Early Purchasers
+/// @author Starbase PTE. LTD. - <info@starbase.co>
 contract StarbaseEarlyPurchase {
     /*
      *  Constants
@@ -245,7 +255,8 @@ contract StarbaseEarlyPurchase {
     }
 }
 
-
+/// @title EarlyPurchaseAmendment contract - Amend early purchase records of the original contract
+/// @author Starbase PTE. LTD. - <support@starbase.co>
 contract StarbaseEarlyPurchaseAmendment {
     /*
      *  Events
@@ -557,6 +568,9 @@ contract StarbaseEarlyPurchaseAmendment {
     }
 }
 
+//! Certifier contract.
+//! By Parity Technologies, 2017.
+//! Released under the Apache Licence 2.
 
 contract Certifier {
 	event Confirmed(address indexed who);
@@ -566,7 +580,6 @@ contract Certifier {
 	function getAddress(address, string) public constant returns (address);
 	function getUint(address, string) public constant returns (uint);
 }
-
 
 /**
  * @title Crowdsale contract - Starbase crowdsale to create STAR.
