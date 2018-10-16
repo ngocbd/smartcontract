@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LoveToken at 0xe6efd46eb6cdd73a7fe1e760fa0c25a299755a4b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LoveToken at 0xb510788cbb9aea54221d3dc8cce2dff629a1dbf7
 */
 pragma solidity ^0.4.18;
 
@@ -270,26 +270,111 @@ contract Pausable is Ownable {
 }
 
 
-contract PausableToken is StandardToken, Pausable {
+contract Freezable is Ownable {
+  event AccountFrozen(address indexed token_owner);
+  event AccountReleased(address indexed token_owner);
+  event FreezingAgentChanged(address indexed addr, bool state);
+  
+  // freeze status of addresses
+  mapping(address=>bool) public addressFreezeStatus;
+  
+  // agents who have privilege to freeze
+  mapping (address => bool) freezingAgents;
+  
+   /**
+   * @dev Modifier to make a function callable only when the address is frozen.
+   */
+  modifier whenFrozen(address target) {
+    require(addressFreezeStatus[target] == true);
+    _;
+  }
+  
+  /**
+   * @dev Modifier to make a function callable only when the address is not frozen.
+   */
+  modifier whenNotFrozen(address target) {
+    require(addressFreezeStatus[target] == false);
+    _;
+  }
+  
+  /**
+   * @dev Modifier to make a function callable only by owner or freezing agent
+   */
+  modifier onlyOwnerOrFreezingAgent() {
+        require((msg.sender == owner ) || (freezingAgents[msg.sender] == true));
+        _;
+    }    
 
-  function transfer(address _to, uint256 _value) public whenNotPaused  returns (bool) {
+  /**
+   * @dev Function to freeze an account from transactions
+   */
+  function freeze(address target) public onlyOwnerOrFreezingAgent whenNotFrozen(target) returns (bool) {
+    addressFreezeStatus[target] = true;
+    AccountFrozen(target);
+    return true;
+  }
+
+  /**
+   * @dev Function to release an account form frozen state
+   */
+  function release(address target) public onlyOwnerOrFreezingAgent whenFrozen(target) returns (bool) {
+    addressFreezeStatus[target] = false;
+    AccountReleased(target);
+    return true;
+  }
+  
+  /**
+   * @dev Function to allow a contract to freeze addresses
+   */
+  function setFreezeAgent(address addr, bool state) public onlyOwner {
+    freezingAgents[addr] = state;
+    FreezingAgentChanged(addr, state);
+  }
+ 
+}
+
+contract PausableToken is StandardToken, Pausable, Freezable {
+
+  function transfer(address _to, uint256 _value) public whenNotPaused whenNotFrozen(msg.sender) returns (bool) {
     return super.transfer(_to, _value);
   }
 
-  function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused returns (bool) {
+  function transferFrom(address _from, address _to, uint256 _value) public whenNotPaused whenNotFrozen(_from) returns (bool) {
     return super.transferFrom(_from, _to, _value);
   } 
 
-  function approve(address _spender, uint256 _value) public whenNotPaused  returns (bool) {
+  function approve(address _spender, uint256 _value) public whenNotPaused whenNotFrozen(msg.sender) returns (bool) {
     return super.approve(_spender, _value);
   }
 
-  function increaseApproval(address _spender, uint _addedValue) public whenNotPaused  returns (bool success) {
+  function increaseApproval(address _spender, uint _addedValue) public whenNotPaused whenNotFrozen(msg.sender) returns (bool success) {
     return super.increaseApproval(_spender, _addedValue);
   }
 
-  function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused   returns (bool success) {
+  function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused whenNotFrozen(msg.sender) returns (bool success) {
     return super.decreaseApproval(_spender, _subtractedValue);
+  }
+}
+
+
+contract BurnableToken is BasicToken {
+
+  event Burn(address indexed burner, uint256 value);
+
+  /**
+   * @dev Burns a specific amount of tokens.
+   * @param _value The amount of token to be burned.
+   */
+  function burn(uint256 _value) public {
+    require(_value <= balances[msg.sender]);
+    // no need to require value <= totalSupply, since that would imply the
+    // sender's balance is greater than the totalSupply, which *should* be an assertion failure
+
+    address burner = msg.sender;
+    balances[burner] = balances[burner].sub(_value);
+    totalSupply_ = totalSupply_.sub(_value);
+    Burn(burner, _value);
+    Transfer(burner, address(0), _value);
   }
 }
 
@@ -331,7 +416,7 @@ contract MintableToken is StandardToken, Ownable {
   }
 }
 
-contract LoveToken is PausableToken,MintableToken {
+contract LoveToken is PausableToken, MintableToken, BurnableToken {
 
   string public constant name = "LoveToken";
   string public constant symbol = "Love";
