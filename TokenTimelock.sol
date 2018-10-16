@@ -1,45 +1,68 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTimelock at 0xbe46c02996de94b1fb47c99bbec5f42a73c7f934
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTimelock at 0xbc931c181fd9444bd7909d1308deedbc11111ccf
 */
 pragma solidity ^0.4.23;
 
-contract ERC20Basic {
-  // events
-  event Transfer(address indexed from, address indexed to, uint256 value);
 
-  // public functions
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
   function totalSupply() public view returns (uint256);
-  function balanceOf(address addr) public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
   function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-contract Ownable {
 
-  // public variables
-  address public owner;
 
-  // internal variables
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender)
+    public view returns (uint256);
 
-  // events
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  function transferFrom(address from, address to, uint256 value)
+    public returns (bool);
 
-  // public functions
-  constructor() public {
-    owner = msg.sender;
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(
+    address indexed owner,
+    address indexed spender,
+    uint256 value
+  );
+}
+
+
+/**
+ * @title SafeERC20
+ * @dev Wrappers around ERC20 operations that throw on failure.
+ * To use this library you can add a `using SafeERC20 for ERC20;` statement to your contract,
+ * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
+ */
+library SafeERC20 {
+  function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
+    assert(token.transfer(to, value));
   }
 
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
+  function safeTransferFrom(
+    ERC20 token,
+    address from,
+    address to,
+    uint256 value
+  )
+    internal
+  {
+    assert(token.transferFrom(from, to, value));
   }
 
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
+  function safeApprove(ERC20 token, address spender, uint256 value) internal {
+    assert(token.approve(spender, value));
   }
-
-  // internal functions
 }
 
 /**
@@ -47,106 +70,42 @@ contract Ownable {
  * @dev TokenTimelock is a token holder contract that will allow a
  * beneficiary to extract the tokens after a given release time
  */
-contract TokenTimelock is Ownable {
+contract TokenTimelock {
+  using SafeERC20 for ERC20Basic;
+
   // ERC20 basic token contract being held
   ERC20Basic public token;
 
-  uint8 public decimals = 8;
-
+  // beneficiary of tokens after they are released
   address public beneficiary;
-  
-  uint256 public releaseTime1 = 1543593600; // 2018.12.1
-  uint256 public releaseTime2 = 1559318400; // 2019.6.1
-  uint256 public releaseTime3 = 1575129600; // 2019.12.1
-  uint256 public releaseTime4 = 1590940800; // 2020.6.1
-  
-  uint256 public releaseValue1 = 1500000000 * (10 ** uint256(decimals)); 
-  uint256 public releaseValue2 = 1500000000 * (10 ** uint256(decimals)); 
-  uint256 public releaseValue3 = 1500000000 * (10 ** uint256(decimals)); 
-  uint256 public releaseValue4 = 1500000000 * (10 ** uint256(decimals)); 
 
-  bool public releaseState1 = false;
-  bool public releaseState2 = false;
-  bool public releaseState3 = false;
-  bool public releaseState4 = false;
+  // timestamp when token release is enabled
+  uint256 public releaseTime;
 
   constructor(
     ERC20Basic _token,
-    address _beneficiary
-
+    address _beneficiary,
+    uint256 _releaseTime
   )
     public
   {
-    require(block.timestamp < releaseTime1);
-    require(block.timestamp < releaseTime2);
-    require(block.timestamp < releaseTime3);
-    require(block.timestamp < releaseTime4);
-    
-    require(_beneficiary != address(0));
-    require(_token != address(0));
-
+    // solium-disable-next-line security/no-block-members
+    require(_releaseTime > block.timestamp);
     token = _token;
     beneficiary = _beneficiary;
-
-
-  }
-    // fallback function
-    function() public payable {
-        revert();
-    }
-  function checkCanRelease(bool rState, uint256 rTime, uint256 rAmount) private 
-  {
-    require(block.timestamp >= rTime);
-    require(false == rState);
-    uint256 amount = token.balanceOf(this);
-    require(amount > 0);
-    require(amount >= rAmount);
-  }
-  function releaseImpl(uint256 rAmount) private 
-  {
-    require( token.transfer(beneficiary, rAmount) );
+    releaseTime = _releaseTime;
   }
 
-  function release_1() onlyOwner public 
-  {
-    checkCanRelease(releaseState1, releaseTime1, releaseValue1);
-    
-    releaseState1 = true;
-    releaseImpl(releaseValue1);
-  }
-
-  function release_2() onlyOwner public 
-  {
-    checkCanRelease(releaseState2, releaseTime2, releaseValue2);
-
-    releaseState2 = true;
-    releaseImpl(releaseValue2);
-  }
-
-  function release_3() onlyOwner public 
-  {
-    checkCanRelease(releaseState3, releaseTime3, releaseValue3);
-    releaseState3 = true;
-    releaseImpl(releaseValue3);   
-  }
-
-  function release_4() onlyOwner public 
-  {
-    checkCanRelease(releaseState4, releaseTime4, releaseValue4);
-    releaseState4 = true;
-    releaseImpl(releaseValue4);
-  }
-  
-  function release_remain() onlyOwner public 
-  {
-    require(true == releaseState1);
-    require(true == releaseState2);
-    require(true == releaseState3);
-    require(true == releaseState4);
+  /**
+   * @notice Transfers tokens held by timelock to beneficiary.
+   */
+  function release() public {
+    // solium-disable-next-line security/no-block-members
+    require(block.timestamp >= releaseTime);
 
     uint256 amount = token.balanceOf(this);
     require(amount > 0);
 
-    releaseImpl(amount);
+    token.safeTransfer(beneficiary, amount);
   }
 }
