@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MINDTokenCrowdSale at 0x76cbff8f07687bc952b1f7b7066b8ee46ff3e971
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MINDTokenCrowdSale at 0xb9738cb78ab1c0e052da1a8376d0065a0db8d8d0
 */
 pragma solidity ^0.4.11;
-
 
 /**
  * @title SafeMath
@@ -76,7 +75,6 @@ contract Ownable {
 
 }
 
-
 /**
  * @title ERC20Basic
  * @dev Simpler version of ERC20 interface
@@ -89,9 +87,6 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-
-
-
 /**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
@@ -102,9 +97,6 @@ contract ERC20 is ERC20Basic {
   function approve(address spender, uint256 value) public returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
-
-
-
 
 /**
  * @title Basic token
@@ -140,8 +132,6 @@ contract BasicToken is ERC20Basic {
   }
 
 }
-
-
 
 
 /**
@@ -230,7 +220,6 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-
 /**
  * @title StandardCrowdsale 
  * @dev StandardCrowdsale is a base contract for managing a token crowdsale.
@@ -243,7 +232,7 @@ contract StandardCrowdsale {
     using SafeMath for uint256;
 
     // The token being sold
-    StandardToken public token; // Request Modification : change to not mintable
+    StandardToken public token; 
 
     // start and end timestamps where investments are allowed (both inclusive)
     uint256 public startTime;
@@ -282,11 +271,10 @@ contract StandardCrowdsale {
         rate = _rate;
         wallet = _wallet;
         
-        token = createTokenContract(); // Request Modification : change to StandardToken + position
+        token = createTokenContract(); 
     }
 
     // creates the token to be sold.
-    // Request Modification : change to StandardToken
     // override this method to have crowdsale of a specific mintable token.
     function createTokenContract() 
         internal 
@@ -303,7 +291,6 @@ contract StandardCrowdsale {
     }
 
     // low level token purchase function
-    // Request Modification : change to not mint but transfer from this contract
     function buyTokens() 
        public 
        payable 
@@ -319,7 +306,7 @@ contract StandardCrowdsale {
         // update state
         weiRaised = weiRaised.add(weiAmount);
 
-        require(token.transfer(msg.sender, tokens)); // Request Modification : changed here - tranfer instead of mintable
+        require(token.transfer(msg.sender, tokens)); 
         TokenPurchase(msg.sender, weiAmount, tokens);
 
         forwardFunds();
@@ -365,7 +352,6 @@ contract StandardCrowdsale {
         _;
     }
 
-    // Request Modification : Add check 24hours before token sale
     modifier only24HBeforeSale() {
         require(now < startTime.sub(1 days));
         _;
@@ -375,7 +361,6 @@ contract StandardCrowdsale {
         return 0;
     }
 }
-
 
 /**
  * @title CappedCrowdsale
@@ -393,7 +378,6 @@ contract CappedCrowdsale is StandardCrowdsale {
 
   // overriding Crowdsale#validPurchase to add extra cap logic
   // @return true if investors can buy at the moment
-  // Request Modification : delete constant because needed in son contract
   function validPurchase() internal returns (bool) {
     bool withinCap = weiRaised.add(msg.value) <= cap;
     return super.validPurchase() && withinCap;
@@ -407,7 +391,6 @@ contract CappedCrowdsale is StandardCrowdsale {
   }
 
 }
-
 
 /**
  * @title The MINDToken contract
@@ -557,7 +540,6 @@ contract MINDToken is StandardToken, Ownable {
 
 }
 
-
 /**
  * @title MINDTokenCrowdSale
  * @dev 
@@ -565,7 +547,7 @@ contract MINDToken is StandardToken, Ownable {
  * We are using the following extensions:
  * CappedCrowdsale - sets a max boundary for raised funds
  *
- * The code is based on the contracts of Open Zeppelin and we add our contracts : MINDTokenPreSale and the Request Token
+ * The code is based on the contracts of Open Zeppelin and we add our contracts : MINDTokenCrowdSale and the MIND Token
  *
  */
 contract MINDTokenCrowdSale is Ownable, CappedCrowdsale {
@@ -579,10 +561,6 @@ contract MINDTokenCrowdSale is Ownable, CappedCrowdsale {
     // wallet use also to gather the ether of the token sale
     address private constant MIND_CROWDSALE_WALLET = 0x942b56E5A6e92B39643dCB5F232EF583680F0B01;
 
-    // Token initialy distributed for the full token sale (20%)
-    address public constant FULL_TOKEN_WALLET = 0x8759A03B3BEB1aa1A7bA765792cF83CaAe4f28E9;
-    uint public constant FULL_TOKEN_AMOUNT = 20000000e18;
-
     event CrowdSaleTokenSoldout();
 
     function MINDTokenCrowdSale(uint256 _startTime, uint256 _endTime, address _tokenAddr)
@@ -590,6 +568,10 @@ contract MINDTokenCrowdSale is Ownable, CappedCrowdsale {
       StandardCrowdsale(_startTime, _endTime, RATE_ETH_MIND, MIND_CROWDSALE_WALLET)
     {
         token = MINDToken(_tokenAddr);
+    }
+
+    function getToken() constant returns (address){
+      return token;
     }
 
     /**
@@ -600,7 +582,6 @@ contract MINDTokenCrowdSale is Ownable, CappedCrowdsale {
       internal 
       returns(StandardToken) 
     {
-        // Point to the MINDToken Contract created in Presale
         return MINDToken(0x0); // No token is created
     }
 
@@ -651,5 +632,13 @@ contract MINDTokenCrowdSale is Ownable, CappedCrowdsale {
         {
             CrowdSaleTokenSoldout();
         }
+    }
+
+    // @return true if the transaction can buy tokens
+    function validPurchase() 
+        internal 
+        returns(bool) 
+    {
+        return super.validPurchase() && msg.value >= 0.1 ether;
     }
 }
