@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FIN at 0xcf44843682cDeF271f90f02becF66062503A735c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FIN at 0xcd764700d7ead9c830808ce0e0c8e84d12d8d49c
 */
 pragma solidity ^0.4.23;
 
@@ -225,22 +225,25 @@ contract FIN is StandardToken {
   string public constant symbol = "FIN";
   uint8 public constant decimals = 18; // solium-disable-line uppercase
 
-  uint256 private OFFSET = 10 ** uint256(decimals);
+  uint256 private constant OFFSET = 10 ** uint256(decimals);
+  uint256 private constant BILLION = (10 ** 9) * OFFSET; // 1 billion is a 1 followed by 9 zeroes
+  
+  uint256 private TOTAL_SUPPLY;
 
   constructor(address _holderA, address _holderB, address _holderC) public {
-    uint256 billion = (10 ** 10) * OFFSET;
+    balances[_holderA] = BILLION;
+    emit Transfer(0x0, _holderA, BILLION);
 
-    balances[_holderA] = billion;
-    emit Transfer(0x0, _holderA, billion);
+    balances[_holderB] = BILLION;
+    emit Transfer(0x0, _holderB, BILLION);
 
-    balances[_holderB] = billion;
-    emit Transfer(0x0, _holderB, billion);
-
-    balances[_holderC] = billion / 2;
-    emit Transfer(0x0, _holderC, billion / 2);
+    balances[_holderC] = BILLION / 2;
+    emit Transfer(0x0, _holderC, BILLION / 2);
+    
+    TOTAL_SUPPLY = balances[_holderA] + balances[_holderB] + balances[_holderC];
   }
   
   function totalSupply() public view returns (uint256) {
-      return 2500000000 * OFFSET;
+      return TOTAL_SUPPLY;
   }
 }
