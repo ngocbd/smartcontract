@@ -1,90 +1,339 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0x3587822cf6a78a714b18a3bd5f01b7dc61e9fc23
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0x808f92faedfd51643d7c7107bda0604dbd74bc30
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.19;
+ 
+ 
+ 
+ contract Lottery {
+     
+     address owner;
+     string public constant name = "BETA ETHEREUM LOTTERY";
+     uint public tickets;
+     uint public round;
+     string public status;
+     string public constant about = "Send exactly 0.05 ether directly to this contract address to buy a lottery ticket. Once 22 tickets are sold this contract will pick a random winner and pay the lucky winner 1 whole ether, and the lottery automatically restarts the next round with a new set of 22 tickets. 0.1 Ether (10%) is kept by the house which also covers gas costs.";
+     uint public lastWiningTicketNumber;
+     address public lastWinner;
+     address ticket1;
+     address ticket2;
+     address ticket3;
+     address ticket4;
+     address ticket5;
+     address ticket6;
+     address ticket7;
+     address ticket8;
+     address ticket9;
+     address ticket10;
+     address ticket11;
+     address ticket12;
+     address ticket13;
+     address ticket14;
+     address ticket15;
+     address ticket16;
+     address ticket17;
+     address ticket18;
+     address ticket19;
+     address ticket20;
+     address ticket21;
+     address ticket22;
+     uint winner;
+     uint random_number = uint(block.blockhash(block.number-1))%22 + 1;
+     uint constant price = 0.05 ether; 
+     uint constant amount = 1; 
+     
+     
+     
+     function Lottery() {
+         
+         owner = msg.sender;
+         tickets = 22;
+         round = 1;
+         lastWinner = 0;
+         lastWiningTicketNumber = 0;
+         status = "Running";
+         ticket1 = 0;
+         ticket2 = 0;
+         ticket3 = 0;
+         ticket4 = 0;
+         ticket5 = 0;
+         ticket6 = 0;
+         ticket7 = 0;
+         ticket8 = 0;
+         ticket9 = 0;
+         ticket10 = 0;
+         ticket11 = 0;
+         ticket12 = 0;
+         ticket13 = 0;
+         ticket14 = 0;
+         ticket15 = 0;
+         ticket16 = 0;
+         ticket17 = 0;
+         ticket18 = 0;
+         ticket19 = 0;
+         ticket20 = 0;
+         ticket21 = 0;
+         ticket22 = 0;
+     }
+     
+     event purchasedTicket(address a); 
+     event winningTicket(address a); 
+     event winningTicketNumber(uint a); 
+     
+     modifier onlyOwner {
+         
+         require(msg.sender == owner);
+         _;
+     }
+     
+     function changeStatus(string w) onlyOwner {
+         status = w;
+     }
+     
+     function () payable {
+         
+         buyTickets();
+     }
+     
+     function buyTickets() payable {
+         
+         if (msg.value != (price)) {
+             
+             throw;
+         }
 
-// Contract that:
-//      Lets anyone bet with x ethers
-//      When it reaches y bets, it chooses a gambler at random and sends z% of the ethers received. other v% goes to GiveDirectly
+         
+         if (ticket1 == 0) {
+             ticket1 = msg.sender;
 
+         }
+         else if(ticket2 == 0) {
+             ticket2 = msg.sender;
+         }
+         else if(ticket3 == 0) {
+             ticket3 = msg.sender;
+         }
+         else if(ticket4 == 0) {
+             ticket4 = msg.sender;
+         }
+         else if(ticket5 == 0) {
+             ticket5 = msg.sender;
+         }
+         else if(ticket6 == 0) {
+             ticket6 = msg.sender;
+         }
+         else if(ticket7 == 0) {
+             ticket7 = msg.sender;
+         }
+         else if(ticket8 == 0) {
+             ticket8 = msg.sender;
+         }
+         else if(ticket9 == 0) {
+             ticket9 = msg.sender;
+         }
+         else if(ticket10 == 0) {
+             ticket10 = msg.sender;
+         }
+         else if(ticket11 == 0) {
+             ticket11 = msg.sender;
+         }
+         else if(ticket12 == 0) {
+             ticket12 = msg.sender;
+         }
+         else if(ticket13 == 0) {
+             ticket13 = msg.sender;
+         }
+         else if(ticket14 == 0) {
+             ticket14 = msg.sender;
+         }
+         else if(ticket15 == 0) {
+             ticket15 = msg.sender;
+         }
+         else if(ticket16 == 0) {
+             ticket16 = msg.sender;
+         }
+         else if(ticket17 == 0) {
+             ticket17 = msg.sender;
+         }
+         else if(ticket18 == 0) {
+             ticket18 = msg.sender;
+         }
+         else if(ticket19 == 0) {
+             ticket19 = msg.sender;
+         }
+         else if(ticket20 == 0) {
+             ticket20 = msg.sender;
+         }
+         else if(ticket21 == 0) {
+             ticket21 = msg.sender;
+         }
+         else if(ticket22 == 0) {
+             ticket22 = msg.sender;
+         }
+         
+         tickets -= amount;
+         
+         purchasedTicket(msg.sender); 
+         
+         if (tickets == 0) {
+             
 
-contract Lottery {
-
-
-
-    mapping(uint => address) public gamblers;// A mapping to store ethereum addresses of the gamblers
-    uint8 public player_count; //keep track of how many people are signed up.
-    uint public ante; //how big is the bet per person (in ether)
-    uint8 public required_number_players; //how many sign ups trigger the lottery
-    uint8 public next_round_players; //how many sign ups trigger the lottery
-    uint random; //random number
-    uint public winner_percentage; // how much does the winner get (in percentage)
-    address owner; // owner of the contract
-    uint bet_blocknumber; //block number on the moment the required number of players signed up
-
-
-    //constructor
-    function Lottery(){
-        owner = msg.sender;
-        player_count = 0;
-        ante = 0.01 ether;
-        required_number_players = 100;
-        winner_percentage = 90;
-    }
-
-function refund() {
-    if (msg.sender == owner) {
-        while (this.balance > ante) {
-                gamblers[player_count].transfer(ante);
-                player_count -=1;    
+             tickets = 22; 
+             round += 1; 
+             
+            
+            random_number = uint(block.blockhash(block.number-1))%22 + 1;
+            lastWiningTicketNumber = random_number; 
+            winningTicketNumber(random_number); 
+            
+            
+            if (random_number == 1) {
+                ticket1.transfer(price * 20); 
+                winningTicket(ticket1); 
+                lastWinner = ticket1; 
+             }
+             else if(random_number == 2) {
+                 ticket2.transfer(price * 20); 
+                 winningTicket(ticket2); 
+                 lastWinner = ticket2; 
+             }
+             else if(random_number == 3) {
+                 ticket3.transfer(price * 20); 
+                 winningTicket(ticket3); 
+                 lastWinner = ticket3; 
+             }
+             else if(random_number == 4) {
+                 ticket4.transfer(price * 20); 
+                 winningTicket(ticket4); 
+                 lastWinner = ticket4; 
+             }
+             else if(random_number == 5) {
+                 ticket5.transfer(price * 20); 
+                 winningTicket(ticket5); 
+                 lastWinner = ticket5; 
+             }
+             else if(random_number == 6) {
+                 ticket6.transfer(price * 20); 
+                 winningTicket(ticket6); 
+                 lastWinner = ticket6; 
+             }
+             else if(random_number == 7) {
+                 ticket7.transfer(price * 20);
+                 winningTicket(ticket7); 
+                 lastWinner = ticket7; 
+             }
+             else if(random_number == 8) {
+                 ticket8.transfer(price * 20); 
+                 winningTicket(ticket8); 
+                 lastWinner = ticket8; 
+             }
+             else if(random_number == 9) {
+                 ticket9.transfer(price * 20); 
+                 winningTicket(ticket9); 
+                 lastWinner = ticket9; 
+             }
+             else if(random_number == 10) {
+                 ticket10.transfer(price * 20); 
+                 winningTicket(ticket10); 
+                 lastWinner = ticket10; 
+             }
+             else if(random_number == 11) {
+                 ticket11.transfer(price * 20); 
+                 winningTicket(ticket11); 
+                 lastWinner = ticket11; 
+             }
+             else if(random_number == 12) {
+                 ticket12.transfer(price * 20); 
+                 winningTicket(ticket12); 
+                 lastWinner = ticket12; 
+             }
+             else if(random_number == 13) {
+                 ticket13.transfer(price * 20); 
+                 winningTicket(ticket13); 
+                 lastWinner = ticket13; 
+             }
+             else if(random_number == 14) {
+                 ticket14.transfer(price * 20); 
+                 winningTicket(ticket14); 
+                 lastWinner = ticket14; 
+             }
+             else if(random_number == 15) {
+                 ticket15.transfer(price * 20); 
+                 winningTicket(ticket15); 
+                 lastWinner = ticket15; 
+             }
+             else if(random_number == 16) {
+                 ticket16.transfer(price * 20); 
+                 winningTicket(ticket16); 
+                 lastWinner = ticket16; 
+             }
+             else if(random_number == 17) {
+                 ticket17.transfer(price * 20);
+                 winningTicket(ticket17); 
+                 lastWinner = ticket17; 
+             }
+             else if(random_number == 18) {
+                 ticket18.transfer(price * 20); 
+                 winningTicket(ticket18); 
+                 lastWinner = ticket18; 
+             }
+             else if(random_number == 19) {
+                 ticket19.transfer(price * 20); 
+                 winningTicket(ticket19); 
+                 lastWinner = ticket19; 
+             }
+             else if(random_number == 20) {
+                 ticket20.transfer(price * 20); 
+                 winningTicket(ticket20); 
+                 lastWinner = ticket20; 
+             }
+             else if(random_number == 21) {
+                 ticket21.transfer(price * 20); 
+                 winningTicket(ticket21); 
+                 lastWinner = ticket21; 
+             }
+             else if(random_number == 22) {
+                 ticket22.transfer(price * 20); 
+                 winningTicket(ticket22); 
+                 lastWinner = ticket22; 
+             }
+            
+            
+            owner.transfer(this.balance); 
+            
+            
+            
+             ticket1 = 0;
+             ticket2 = 0;
+             ticket3 = 0;
+             ticket4 = 0;
+             ticket5 = 0;
+             ticket6 = 0;
+             ticket7 = 0;
+             ticket8 = 0;
+             ticket9 = 0;
+             ticket10 = 0;
+             ticket11 = 0;
+             ticket12 = 0;
+             ticket13 = 0;
+             ticket14 = 0;
+             ticket15 = 0;
+             ticket16 = 0;
+             ticket17 = 0;
+             ticket18 = 0;
+             ticket19 = 0;
+             ticket20 = 0;
+             ticket21 = 0;
+             ticket22 = 0;
+            
+            
+            if (keccak256(status) != keccak256("Running")) {
+                
+                selfdestruct(owner);
             }
-            gamblers[1].transfer(this.balance);
-    }
-}
-// announce the winner with an event
-event Announce_winner(
-    address indexed _from,
-    address indexed _to,
-    uint _value
-    );
-
-// function when someone gambles a.k.a sends ether to the contract
-function () payable {
-    // No arguments are necessary, all
-    // information is already part of
-    // the transaction. The keyword payable
-    // is required for the function to
-    // be able to receive Ether.
-
-    // If the bet is not equal to the ante, send the
-    // money back.
-    if(msg.value != ante) throw; // give it back, revert state changes, abnormal stop
-    player_count +=1;
-
-    gamblers[player_count] = msg.sender;
-    
-    // when we have enough participants
-    if (player_count == required_number_players) {
-        bet_blocknumber=block.number;
-    }
-    if (player_count > required_number_players) {
-        if (block.number>bet_blocknumber){
-            // pick a random number between 1 and 5
-            random = uint(block.blockhash(block.number-1))%required_number_players + 1;
-            // more secure way to move funds: make the winners withdraw them. Will implement later.
-            //asyncSend(gamblers[random],winner_payout);
-            gamblers[random].transfer(ante*required_number_players*winner_percentage/100);
-            0x4b0044E50E074A86aFAbA6eac1872c4Ce5af7712.transfer(ante*required_number_players - ante*required_number_players*winner_percentage/100);
-            // move the gamblers who have joined the lottery but did not participate on this draw down on the mapping structure for next bets
-            next_round_players = player_count-required_number_players;
-            while (player_count > required_number_players) {
-                gamblers[player_count-required_number_players] = gamblers[player_count];
-                player_count -=1;    
-            }
-            player_count = next_round_players;
-        }
-        else throw;
-    }
-    
-}
-}
+             
+         }
+     }
+     
+     
+ }
