@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xca64a1f5437e74bb1b77c9a7618838e55f9ddf2d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x1a7f7770de7fbbfe242db161e69bdf96e155f136
 */
 pragma solidity ^0.4.16;
 
@@ -27,11 +27,11 @@ contract Crowdsale {
      * Setup the owner
      */
     function Crowdsale () public {
-        beneficiary = 0x3d9285A330A350ae57F466c316716A1Fb4D3773d;
-        fundingGoal = 0.0011 * 1 ether;
-        deadline = now + 2900 * 1 minutes;
+        beneficiary = 0x1e19E36928bA65184669d8A7e7A37d8B061B9022;
+        fundingGoal = 0.0022 * 1 ether;
+        deadline = now + 120 * 1 minutes;
         price = 0.00058 * 1 ether;
-        tokenReward = token(0x6278ae7b2954ba53925EA940165214da30AFa261);
+        tokenReward = token(0xb93AF293CD29BD6352bc710b92b577B343D864aD);
     }
 
     /**
