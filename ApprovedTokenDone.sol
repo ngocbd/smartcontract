@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0x6634eabc0be8e3a9af82a90356aef773650992a5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0xefae4121d87318c51af2a26ae615e8e2f134f9a1
 */
 pragma solidity ^0.4.13;
 
@@ -153,8 +153,8 @@ contract StandardToken is ERC20, BasicToken {
  * Created specifically for TokenDone.io
  */
 contract ApprovedTokenDone is StandardToken {
-	string public name = 'DORA';
-	string public symbol = 'DORA';
+	string public name = 'POCOYO';
+	string public symbol = 'POCOYO';
 	uint public decimals = 3;
 	uint public initialSupply = 99999999999;
 	string public publisher = 'TokenDone.io';
