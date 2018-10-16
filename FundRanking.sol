@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FundRanking at 0x046c29984bebce5326e04dd16d23f33b527b0845
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FundRanking at 0x1013D5F34d934b052768799efa18cf1aC7423778
 */
 pragma solidity ^0.4.13;
 
@@ -55,15 +55,6 @@ interface FundInterface {
 }
 
 contract FundRanking {
-
-    Version public version;
-
-    /// @dev Instantiate according to a specific Melon protocol version
-    /// @param ofVersion Address of Melon protocol version contract
-    function FundRanking(address ofVersion) {
-        version = Version(ofVersion);
-    }
-
     /**
     @notice Returns an array of fund addresses and associated arrays of share prices and creation times
     @dev Return value only w.r.t. specified version contract
@@ -73,7 +64,7 @@ contract FundRanking {
       "creationTimes": "Array of uints representing the unix timestamp for creation of each Fund"
     }
     */
-    function getAddressAndSharePriceOfFunds()
+    function getAddressAndSharePriceOfFunds(address ofVersion)
         view
         returns(
             address[],
@@ -81,6 +72,7 @@ contract FundRanking {
             uint[]
         )
     {
+        Version version = Version(ofVersion);
         uint nofFunds = version.getLastFundId() + 1;
         address[] memory fundAddrs = new address[](nofFunds);
         uint[] memory sharePrices = new uint[](nofFunds);
@@ -383,11 +375,15 @@ contract Version is DBC, Owned, VersionInterface {
     // FIELDS
 
     // Constant fields
-    bytes32 public constant TERMS_AND_CONDITIONS = 0x47173285a8d7341e5e972fc677286384f802f8ef42a5ec5f03bbfa254cb01fad; // Hashed terms and conditions as displayed on IPFS.
+    bytes32 public constant TERMS_AND_CONDITIONS = 0xAA9C907B0D6B4890E7225C09CBC16A01CB97288840201AA7CDCB27F4ED7BF159; // Hashed terms and conditions as displayed on IPFS, decoded from base 58
+    address public COMPLIANCE = 0xFb5978C7ca78074B2044034CbdbC3f2E03Dfe2bA; // restrict to OnlyManager compliance module for this version
+
     // Constructor fields
     string public VERSION_NUMBER; // SemVer of Melon protocol version
     address public NATIVE_ASSET; // Address of wrapped native asset contract
     address public GOVERNANCE; // Address of Melon protocol governance contract
+    bool public IS_MAINNET;  // whether this contract is on the mainnet (to use hardcoded module)
+
     // Methods fields
     bool public isShutDown; // Governance feature, if yes than setupFund gets blocked and shutDownFund gets opened
     address[] public listOfFunds; // A complete list of fund addresses created using this version
@@ -407,11 +403,13 @@ contract Version is DBC, Owned, VersionInterface {
     function Version(
         string versionNumber,
         address ofGovernance,
-        address ofNativeAsset
+        address ofNativeAsset,
+        bool isMainnet
     ) {
         VERSION_NUMBER = versionNumber;
         GOVERNANCE = ofGovernance;
         NATIVE_ASSET = ofNativeAsset;
+        IS_MAINNET = isMainnet;
     }
 
     // EXTERNAL METHODS
@@ -450,6 +448,12 @@ contract Version is DBC, Owned, VersionInterface {
         require(termsAndConditionsAreSigned(v, r, s));
         // Either novel fund name or previous owner of fund name
         require(managerToFunds[msg.sender] == 0); // Add limitation for simpler migration process of shutting down and setting up fund
+        address complianceModule;
+        if (IS_MAINNET) {
+            complianceModule = COMPLIANCE;  // only for this version, with restricted compliance module on mainnet
+        } else {
+            complianceModule = ofCompliance;
+        }
         address ofFund = new Fund(
             msg.sender,
             ofFundName,
