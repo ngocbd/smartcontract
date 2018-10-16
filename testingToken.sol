@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract testingToken at 0x1654d540616bfb3f13973ed6019e43005be43219
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract testingToken at 0x693399aae96a88b966b05394774cfb7b880355b4
 */
 pragma solidity ^0.4.8;
 
@@ -26,9 +26,9 @@ contract testingToken {
 	}
 	
 	function transfer(address _to, uint256 _value) returns (bool success) { //give tokens to someone
-		if (balanceOf[msg.sender]<_value) return false;
-		if (balanceOf[_to]+_value<balanceOf[_to]) return false;
-		if (_value<0) return false;
+		if (balanceOf[msg.sender]<_value) throw;
+		if (balanceOf[_to]+_value<balanceOf[_to]) throw;
+		if (_value<0) throw;
 		balanceOf[msg.sender] -= _value;
 		balanceOf[_to] += (_value*(100-tokenTaxRate))/100;
 		balanceOf[bank] += (_value*tokenTaxRate)/100;
@@ -40,10 +40,10 @@ contract testingToken {
 	
 	mapping (address => mapping (address=>uint256)) approvalList;
 	function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-		if (balanceOf[_from]<_value) return false;
-		if (balanceOf[_to]+_value<balanceOf[_to]) return false;
-		if (_value<0) return false;
-		if (approvalList[_from][msg.sender]<_value) return false;
+		if (balanceOf[_from]<_value) throw;
+		if (balanceOf[_to]+_value<balanceOf[_to]) throw;
+		if (_value<0) throw;
+		if (approvalList[_from][msg.sender]<_value) throw;
 		approvalList[_from][msg.sender]-=_value;
 		balanceOf[_from] -= _value;
 		balanceOf[_to] += (_value*(100-tokenTaxRate))/100;
