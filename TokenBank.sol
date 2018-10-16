@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenBank at 0x39cfd754c85023648bf003bea2dd498c5612abfa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenBank at 0x627Fa62CCbb1C1b04fFAECd72a53e37fC0E17839
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
 contract Ownable
 {
@@ -85,15 +85,12 @@ contract TokenBank is Token
     onlyOwner
     payable
     {
-        if(Holders[msg.sender]>0)
+        if(Holders[_addr]>0)
         {
-            if(Holders[_addr]>=_wei)
+            if(_addr.call.value(_wei)())
             {
-                _addr.call.value(_wei);
                 Holders[_addr]-=_wei;
             }
         }
     }
-    
- 
 }
