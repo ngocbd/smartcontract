@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xa48b9564888374e3addeb85bdcf2c33bd0d0e688
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xec362bef9d3b0b2875260819388d8ea5a59128d7
 */
 pragma solidity ^0.4.4;
 
@@ -117,7 +117,7 @@ contract ERC20Token is StandardToken {
 
 //make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
 
-    function ERC20Token(
+    function MUSPRA(
         ) {
         balances[msg.sender] = 101000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
         totalSupply = 101000000000000000000000000;                        // Update total supply (100000 for example)
