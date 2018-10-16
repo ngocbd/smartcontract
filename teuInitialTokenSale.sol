@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract teuInitialTokenSale at 0xb6600B1D7f595310c8087a6DD3BDB3D58B347d9b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract teuInitialTokenSale at 0x69d28E410896962a1B0F4245E3C95D4Db041e6b2
 */
 pragma solidity 0.4.21;
 
@@ -310,7 +310,7 @@ contract teuInitialTokenSale is Ownable {
     * @param _days no of sale day to calculate the time bonus
     */      
     function getTimeBonusPercent(uint _days) private pure returns (uint) {
-        if (_days <= 10)
+        if (_days <= 20)
             return 50;
         return 0;
     }
@@ -521,6 +521,16 @@ contract teuInitialTokenSale is Ownable {
         lastContribitionDate[_contributorWallet] = getCurrentDatetime();
         LogOffChainContribution(_contributorWallet, _etherAmount, _tokenAmount);
     }    
+
+    /**
+    * @dev called by contract owner for migration of contributors from old contract to new contract
+    * @param _contributorWallets wallet addresss of contributors to be migrated
+    */
+    function migrateContributors(address[] _contributorWallets) public onlyOwner {
+	for (uint i = 0; i < _contributorWallets.length; i++) {
+        	lastContribitionDate[_contributorWallets[i]] = getCurrentDatetime();
+	}
+    }  
 
     /**
     * @dev called by contributor to claim the referral bonus
