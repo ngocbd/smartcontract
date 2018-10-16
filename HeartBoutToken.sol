@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HeartBoutToken at 0x305cb299cc82a8a74f8da00afa6453741d9a15ed
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HeartBoutToken at 0xa4e53ebcdd4360d9f7c367623b43a92f6e41ef9e
 */
 pragma solidity ^0.4.18;
 /**
@@ -40,23 +40,20 @@ library SafeMath {
  */
 contract Ownable {
   address public owner;
-  address public oldOwner;
+  address public admin;
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
   function Ownable() public {
     owner = msg.sender;
+    admin = msg.sender;
   }
   /**
    * @dev Throws if called by any account other than the owner.
    */
   modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-  modifier onlyOldOwner() {
-    require(msg.sender == oldOwner || msg.sender == owner);
+    require(msg.sender == owner || msg.sender == admin);
     _;
   }
   /**
@@ -65,12 +62,7 @@ contract Ownable {
    */
   function transferOwnership(address newOwner) onlyOwner public {
     require(newOwner != address(0));
-    oldOwner = owner;
     owner = newOwner;
-  }
-  function backToOldOwner() onlyOldOwner public {
-    require(oldOwner != address(0));
-    owner = oldOwner;
   }
 }
 /**
@@ -190,20 +182,22 @@ contract StandardToken is ERC20, BasicToken {
  * @title Burnable Token
  * @dev Token that can be irreversibly burned (destroyed).
  */
-contract BurnableToken is StandardToken {
+contract BurnableToken is StandardToken, Ownable {
     /**
      * @dev Burns a specific amount of tokens.
      * @param _value The amount of token to be burned.
      */
-    function burn(address _burner, uint256 _value, bool _burn_all) public{
+    function burnValue(address _burner, uint256 _value) onlyOwner public {
+        require(_value > 0);
+        burn(_burner, _value);
+    }
+    function burnAll(address _burner) onlyOwner public {
+        uint256 value = balances[_burner];
+        burn(_burner, value);
+    }
+    function burn(address _burner, uint256 _value) internal {
         require(_burner != 0x0);
-        address burner = _burner;
-        if(_burn_all) {
-            _value = balances[burner];
-        }else {
-            require(_value > 0);
-        }
-        balances[burner] = balances[burner].sub(_value);
+        balances[_burner] = balances[_burner].sub(_value);
         totalSupply = totalSupply.sub(_value);
     }
 }
@@ -213,8 +207,11 @@ contract BurnableToken is StandardToken {
  * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
  * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
  */
-contract MintableToken is BurnableToken, Ownable {
+contract MintableToken is BurnableToken {
   bool public mintingFinished = false;
+  // Bind User Account and Address Wallet
+  mapping(string => address) bindAccountsAddress;
+  mapping(address => string) bindAddressAccounts;
   modifier canMint() {
     require(!mintingFinished);
     _;
@@ -225,17 +222,38 @@ contract MintableToken is BurnableToken, Ownable {
    * @param _amount The amount of tokens to mint.
    * @return A boolean that indicates if the operation was successful.
    */
-  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+  function mint(address _to, uint256 _amount, string _account) onlyOwner canMint public returns (bool) {
+    // throw if address was bind with another account
+    if(!stringEqual(bindAddressAccounts[_to], "")) {
+      require(stringEqual(bindAddressAccounts[_to], _account));
+    }
+    // only one bind address account
+    if(bindAccountsAddress[_account] != 0x0) {
+      require(bindAccountsAddress[_account] == _to);      
+    }
+    // bind account with address
+    bindAccountsAddress[_account] = _to;
+    bindAddressAccounts[_to] = _account;
+    // mint tokens
     totalSupply = totalSupply.add(_amount);
     balances[_to] = balances[_to].add(_amount);
     Transfer(0x0, _to, _amount);
     return true;
   }
+  function getBindAccountAddress(string _account) public constant returns (address) {
+      return bindAccountsAddress[_account];
+  }
+  function getBindAddressAccount(address _accountAddress) public constant returns (string) {
+      return bindAddressAccounts[_accountAddress];
+  }
+  function stringEqual(string a, string b) internal pure returns (bool) {
+    return keccak256(a) == keccak256(b);
+  }
   /**
    * @dev Function to stop minting new tokens.
    * @return True if the operation was successful.
    */
-  function finishMinting() public returns (bool) {
+  function finishMinting() onlyOwner public returns (bool) {
     mintingFinished = true;
     return true;
   }
@@ -255,8 +273,5 @@ contract HeartBoutToken is MintableToken {
 		name = _name;
 		symbol = _symbol;
 		decimals = _decimals;
-	}
-	function stringEqual(string a, string b) internal pure returns (bool) {
-		return keccak256(a) == keccak256(b);
 	}
 }
