@@ -1,146 +1,144 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x50325b5527eb8299581bce2eeb6c53b5661e1346
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xB7ca96345f44E8b6C5B18c94DedB742803a20809
 */
-pragma solidity ^0.4.15;
+//File: contracts/common/Controlled.sol
+pragma solidity ^0.4.21;
 
-contract Base {
-    
-    modifier only(address allowed) {
-        require(msg.sender == allowed);
-        _;
-    }
+contract Controlled {
+    modifier onlyController { require(msg.sender == controller); _; }
 
-    // *************************************************
-    // *          reentrancy handling                  *
-    // *************************************************
+    address public controller;
 
-    uint private bitlocks = 0;
-    modifier noReentrancy(uint m) {
-        var _locks = bitlocks;
-        require(_locks & m <= 0);
-        bitlocks |= m;
-        _;
-        bitlocks = _locks;
-    }
+    function Controlled() public { controller = msg.sender;}
 
-    modifier noAnyReentrancy {
-        var _locks = bitlocks;
-        require(_locks <= 0);
-        bitlocks = uint(-1);
-        _;
-        bitlocks = _locks;
-    }
-
-    modifier reentrant { _; }
-}
-
-contract Owned {
-    address public owner;
-    address public newOwner;
-    
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
-    function Owned() public {
-        owner = msg.sender;
-    }
-
-    function transferOwnership(address _newOwner) onlyOwner public {
-        newOwner = _newOwner;
-    }
-
-    function acceptOwnership() onlyOwner public {
-        OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-    }
-
-    event OwnershipTransferred(address indexed _from, address indexed _to);
-}
-
-library SafeMath {
-    function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-        uint256 c = a * b;
-        assert(a == 0 || c / a == b);
-        return c;
-    }
-
-    function div(uint256 a, uint256 b) internal constant returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
-
-    function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-
-    function add(uint256 a, uint256 b) internal constant returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
+    function changeController(address _newController) public onlyController {
+        controller = _newController;
     }
 }
 
-contract ERC20 {
-    uint256 public totalSupply;
-  
-    function balanceOf(address who) public constant returns (uint256);
-    function transfer(address to, uint256 value) public returns (bool);
-    function allowance(address owner, address spender) public constant returns (uint256);
-    function transferFrom(address from, address to, uint256 value) public returns (bool);
-    function approve(address spender, uint256 value) public returns (bool);
-  
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-    event Transfer(address indexed from, address indexed to, uint256 value);
+//File: contracts/common/TokenController.sol
+pragma solidity ^0.4.21;
+
+contract TokenController {
+    function proxyPayment(address _owner) public payable returns(bool);
+
+    function onTransfer(address _from, address _to, uint _amount) public returns(bool);
+
+    function onApprove(address _owner, address _spender, uint _amount) public returns(bool);
 }
 
-contract StandartToken is ERC20 {
-    using SafeMath for uint256;
+//File: contracts/common/ApproveAndCallFallBack.sol
+pragma solidity ^0.4.21;
 
-    mapping(address => uint256) balances;
+contract ApproveAndCallFallBack {
+    function receiveApproval(address from, uint256 _amount, address _token, bytes _data) public;
+}
+
+//File: ./contracts/Token.sol
+pragma solidity ^0.4.21;
+
+
+
+
+
+
+contract Token is Controlled {
+
+    string public name = "ShineCoin";
+    uint8 public decimals = 9;
+    string public symbol = "SHINE";
+
+    struct  Checkpoint {
+        uint128 fromBlock;
+        uint128 value;
+    }
+
+    uint public creationBlock;
+
+    mapping (address => Checkpoint[]) balances;
+
     mapping (address => mapping (address => uint256)) allowed;
-    
-    bool public isStarted = false;
-    
-    modifier isStartedOnly() {
-        require(isStarted);
-        _;
+
+    Checkpoint[] totalSupplyHistory;
+
+    bool public transfersEnabled = true;
+
+    address public frozenReserveTeamWallet;
+
+    uint public unfreezeTeamWalletBlock;
+
+    function Token(address _frozenReserveTeamWallet) public {
+        creationBlock = block.number;
+        frozenReserveTeamWallet = _frozenReserveTeamWallet;
+        unfreezeTeamWalletBlock = block.number + ((365 * 24 * 3600) / 15); // ~ 396 days
     }
 
-    function transfer(address _to, uint256 _value) isStartedOnly public returns (bool) {
-        require(_to != address(0));
-        require(_value <= balances[msg.sender]);
 
-        // SafeMath.sub will throw if there is not enough balance.
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
+///////////////////
+// ERC20 Methods
+///////////////////
+
+    function transfer(address _to, uint256 _amount) public returns (bool success) {
+        require(transfersEnabled);
+
+        if (address(msg.sender) == frozenReserveTeamWallet) {
+            require(block.number > unfreezeTeamWalletBlock);
+        }
+
+        doTransfer(msg.sender, _to, _amount);
         return true;
+    }
+
+    function transferFrom(address _from, address _to, uint256 _amount) public returns (bool success) {
+        if (msg.sender != controller) {
+            require(transfersEnabled);
+
+            require(allowed[_from][msg.sender] >= _amount);
+            allowed[_from][msg.sender] -= _amount;
+        }
+        doTransfer(_from, _to, _amount);
+        return true;
+    }
+
+
+    function doTransfer(address _from, address _to, uint _amount) internal {
+
+           if (_amount <= 0) {
+               emit Transfer(_from, _to, _amount);
+               return;
+           }
+
+           require((_to != 0) && (_to != address(this)));
+
+           uint256 previousBalanceFrom = balanceOfAt(_from, block.number);
+
+           require(previousBalanceFrom >= _amount);
+
+           updateValueAtNow(balances[_from], previousBalanceFrom - _amount);
+
+           uint256 previousBalanceTo = balanceOfAt(_to, block.number);
+           require(previousBalanceTo + _amount >= previousBalanceTo);
+           updateValueAtNow(balances[_to], previousBalanceTo + _amount);
+
+           emit Transfer(_from, _to, _amount);
+
     }
 
     function balanceOf(address _owner) public constant returns (uint256 balance) {
-        return balances[_owner];
-    }
-  
-    function transferFrom(address _from, address _to, uint256 _value) isStartedOnly public returns (bool) {
-        require(_to != address(0));
-        require(_value <= balances[_from]);
-        require(_value <= allowed[_from][msg.sender]);
-
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        Transfer(_from, _to, _value);
-        return true;
+        return balanceOfAt(_owner, block.number);
     }
 
-    function approve(address _spender, uint256 _value) isStartedOnly public returns (bool) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+    function approve(address _spender, uint256 _amount) public returns (bool success) {
+        require(transfersEnabled);
+
+        require((_amount == 0) || (allowed[msg.sender][_spender] == 0));
+
+        if (isContract(controller)) {
+            require(TokenController(controller).onApprove(msg.sender, _spender, _amount));
+        }
+
+        allowed[msg.sender][_spender] = _amount;
+        emit Approval(msg.sender, _spender, _amount);
         return true;
     }
 
@@ -148,57 +146,127 @@ contract StandartToken is ERC20 {
         return allowed[_owner][_spender];
     }
 
-    function increaseApproval (address _spender, uint _addedValue) isStartedOnly public returns (bool success) {
-        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    function approveAndCall(address _spender, uint256 _amount, bytes _extraData
+    ) public returns (bool success) {
+        require(approve(_spender, _amount));
+
+        ApproveAndCallFallBack(_spender).receiveApproval(
+            msg.sender,
+            _amount,
+            this,
+            _extraData
+        );
+
         return true;
     }
 
-    function decreaseApproval (address _spender, uint _subtractedValue) isStartedOnly public returns (bool success) {
-        uint oldValue = allowed[msg.sender][_spender];
-        if (_subtractedValue > oldValue) {
-            allowed[msg.sender][_spender] = 0;
+    function totalSupply() public constant returns (uint) {
+        return totalSupplyAt(block.number);
+    }
+
+    function balanceOfAt(address _owner, uint _blockNumber) public constant returns (uint) {
+
+        if ((balances[_owner].length == 0)
+            || (balances[_owner][0].fromBlock > _blockNumber)) {
+            return 0;
         } else {
-            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+            return getValueAt(balances[_owner], _blockNumber);
         }
-        Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
-}
-
-//Contract belongs to Aridika Corporation OU
-//Nominal (initial) cost of one token = 1$
-
-contract Token is Owned, StandartToken {
-    string public name = "INTRADAY";
-    string public symbol = "INTRA";
-    uint public decimals = 0;
-    address public constant company = 0xC01aed0F75f117d1f47f9146E41C9A6E0870350e;
-    
-    function Token() public {
-        mint(msg.sender, 10 ** 9);
-        mint(company, 10 * 10 ** 6);
-        start();
     }
 
-    function () public {
-        revert();
+    function totalSupplyAt(uint _blockNumber) public constant returns(uint) {
+
+        if ((totalSupplyHistory.length == 0)
+            || (totalSupplyHistory[0].fromBlock > _blockNumber)) {
+            return 0;
+
+        } else {
+            return getValueAt(totalSupplyHistory, _blockNumber);
+        }
     }
 
-    function mint(address _to, uint256 _amount)
-        internal
-        returns (bool)
-    {
-        totalSupply = totalSupply.add(_amount);
-        balances[_to] = balances[_to].add(_amount);
+    function generateTokens(address _owner, uint _amount) public onlyController returns (bool) {
+        uint curTotalSupply = totalSupply();
+        require(curTotalSupply + _amount >= curTotalSupply); // Check for overflow
+        uint previousBalanceTo = balanceOf(_owner);
+        require(previousBalanceTo + _amount >= previousBalanceTo); // Check for overflow
+        updateValueAtNow(totalSupplyHistory, curTotalSupply + _amount);
+        updateValueAtNow(balances[_owner], previousBalanceTo + _amount);
+        emit Transfer(0, _owner, _amount);
         return true;
     }
 
-    function start()
-        internal
-        returns (bool)
-    {
-        isStarted = true;
+    function destroyTokens(address _owner, uint _amount) onlyController public returns (bool) {
+        uint curTotalSupply = totalSupply();
+        require(curTotalSupply >= _amount);
+        uint previousBalanceFrom = balanceOf(_owner);
+        require(previousBalanceFrom >= _amount);
+        updateValueAtNow(totalSupplyHistory, curTotalSupply - _amount);
+        updateValueAtNow(balances[_owner], previousBalanceFrom - _amount);
+        emit Transfer(_owner, 0, _amount);
         return true;
     }
+
+    function enableTransfers(bool _transfersEnabled) public onlyController {
+        transfersEnabled = _transfersEnabled;
+    }
+
+
+    function getValueAt(Checkpoint[] storage checkpoints, uint _block) constant internal returns (uint) {
+        if (checkpoints.length == 0) return 0;
+
+        if (_block >= checkpoints[checkpoints.length-1].fromBlock)
+            return checkpoints[checkpoints.length-1].value;
+        if (_block < checkpoints[0].fromBlock) return 0;
+
+        uint min = 0;
+        uint max = checkpoints.length-1;
+        while (max > min) {
+            uint mid = (max + min + 1)/ 2;
+            if (checkpoints[mid].fromBlock<=_block) {
+                min = mid;
+            } else {
+                max = mid-1;
+            }
+        }
+        return checkpoints[min].value;
+    }
+
+    function updateValueAtNow(Checkpoint[] storage checkpoints, uint _value) internal  {
+        if ((checkpoints.length == 0)
+        || (checkpoints[checkpoints.length -1].fromBlock < block.number)) {
+               Checkpoint storage newCheckPoint = checkpoints[ checkpoints.length++ ];
+               newCheckPoint.fromBlock =  uint128(block.number);
+               newCheckPoint.value = uint128(_value);
+           } else {
+               Checkpoint storage oldCheckPoint = checkpoints[checkpoints.length-1];
+               oldCheckPoint.value = uint128(_value);
+           }
+    }
+
+    function isContract(address _addr) constant internal returns(bool) {
+        uint size;
+        if (_addr == 0) return false;
+        assembly {
+            size := extcodesize(_addr)
+        }
+        return size>0;
+    }
+
+    function min(uint a, uint b) pure internal returns (uint) {
+        return a < b ? a : b;
+    }
+
+    function () public payable {
+        require(isContract(controller));
+        require(TokenController(controller).proxyPayment.value(msg.value)(msg.sender));
+    }
+
+    event Transfer(address indexed _from, address indexed _to, uint256 _amount);
+    event Approval(
+        address indexed _owner,
+        address indexed _spender,
+        uint256 _amount
+        );
+
 }
