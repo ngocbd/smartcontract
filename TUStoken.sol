@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TUStoken at 0x1cb93cb1ad0301de44844369d3c6fd50301e578c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TUStoken at 0x293a7b4e8ad029ee50e52081b10df266fb1cb99d
 */
 pragma solidity ^0.4.18;
 /*https://hashnode.com/post/how-to-build-your-own-ethereum-based-erc20-token-and-launch-an-ico-in-next-20-minutes-cjbcpwzec01c93awtbij90uzn*/
@@ -44,7 +44,7 @@ contract Token {
 }
 
 contract TUStoken is Token {
-    string public version = "0x01"; 
+    string public version = "0x02"; 
 
     string public name;
     uint8 public decimals;
@@ -67,7 +67,7 @@ contract TUStoken is Token {
         symbol = "TU$";
 
         totalEthInWei = 0;
-        stopsale = 1519867200;   // 1.03.2018 |__4:20__| MSK (GMT+3)
+        stopsale = 1522804800;   // 04.04.2018 |__4:20__| MSK (GMT+3)
 
         JP_sum = 0;
         JP_winner = hommie;
