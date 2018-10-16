@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SiamCoin at 0x75a018effdedd4619abd1e29f154cf7ea0d41e58
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SiamCoin at 0x479710f58438a159b5046de0e8627f8c310c237c
 */
 pragma solidity ^0.4.4;
 
@@ -88,10 +88,10 @@ contract SiamCoin is StandardToken {
 
     function SiamCoin(
         ) {
-        balances[msg.sender] = 168000000;               
-        totalSupply = 314159265;                        
+        balances[msg.sender] = 1680000000;               
+        totalSupply = 3141592650;                        
         name = "SiamCoin";                                   
-        decimals = 8;                            
+        decimals = 0;                            
         symbol = "Siam";                               
     }
 
