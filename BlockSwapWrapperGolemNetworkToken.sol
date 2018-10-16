@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlockSwapWrapperGolemNetworkToken at 0x326eDb1CdE4DC98d2b2640C67CAcfa0874432Eb7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BlockSwapWrapperGolemNetworkToken at 0x5656913C2a5917866A167d7cb792BfE250966Aa1
 */
 pragma solidity ^0.4.8;
 
@@ -46,9 +46,6 @@ contract BlockSwapWrapperGolemNetworkToken is TokenConfig {
 
     // Owner of this contract
     address public owner;
-    function BlockSwapWrapperGolemNetworkToken(){
-        owner = msg.sender;
-    }
 
     function decimals() constant returns (uint8) {
         return gntContractAddress.decimals();
