@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TimeLockedController at 0xb8e63ef835b54fcd60282271212c75a32adb615c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TimeLockedController at 0xe8ae472e4e8d769a7697ecd20c878098fccb8c96
 */
 pragma solidity ^0.4.18;
 
@@ -304,17 +304,21 @@ contract TimeLockedController is HasNoEther, HasNoTokens, Claimable {
         uint deferBlock;
     }
 
+    struct ChangeTrueUSDOperation {
+        TrueUSD newContract;
+        address admin;
+        uint deferBlock;
+    }
+
     address public admin;
     TrueUSD public trueUSD;
-    AddressList public canBurnWhiteList;
-    AddressList public canReceiveMintWhitelist;
-    AddressList public blackList;
     MintOperation[] public mintOperations;
     TransferChildOperation[] public transferChildOperations;
     ChangeBurnBoundsOperation public changeBurnBoundsOperation;
     ChangeStakingFeesOperation public changeStakingFeesOperation;
     ChangeStakerOperation public changeStakerOperation;
     DelegateOperation public delegateOperation;
+    ChangeTrueUSDOperation public changeTrueUSDOperation;
 
     modifier onlyAdminOrOwner() {
         require(msg.sender == admin || msg.sender == owner);
@@ -330,11 +334,8 @@ contract TimeLockedController is HasNoEther, HasNoTokens, Claimable {
     }
 
     // starts with no admin
-    function TimeLockedController(address _trueUSD, address _canBurnWhiteList, address _canReceiveMintWhitelist, address _blackList) public {
+    function TimeLockedController(address _trueUSD) public {
         trueUSD = TrueUSD(_trueUSD);
-        canBurnWhiteList = AddressList(_canBurnWhiteList);
-        canReceiveMintWhitelist = AddressList(_canReceiveMintWhitelist);
-        blackList = AddressList(_blackList);
     }
 
     event MintOperationEvent(address indexed _to, uint256 amount, uint deferBlock, uint opIndex);
@@ -351,6 +352,7 @@ contract TimeLockedController is HasNoEther, HasNoTokens, Claimable {
                                             uint deferBlock);
     event ChangeStakerOperationEvent(address newStaker, uint deferBlock);
     event DelegateOperationEvent(DelegateERC20 delegate, uint deferBlock);
+    event ChangeTrueUSDOperationEvent(TrueUSD newContract, uint deferBlock);
     event AdminshipTransferred(address indexed previousAdmin, address indexed newAdmin);
 
     // admin initiates a request to mint _amount TrueUSD for account _to
@@ -423,6 +425,13 @@ contract TimeLockedController is HasNoEther, HasNoTokens, Claimable {
         DelegateOperationEvent(_delegate, deferBlock);
     }
 
+    // admin initiates a request that this contract's trueUSD pointer be updated to newContract
+    function requestReplaceTrueUSD(TrueUSD newContract) public onlyAdminOrOwner {
+        uint deferBlock = computeDeferBlock();
+        changeTrueUSDOperation = ChangeTrueUSDOperation(newContract, admin, deferBlock);
+        ChangeTrueUSDOperationEvent(newContract, deferBlock);
+    }
+
     // after a day, admin finalizes mint request by providing the
     // index of the request (visible in the MintOperationEvent accompanying the original request)
     function finalizeMint(uint index) public onlyAdminOrOwner {
@@ -493,9 +502,17 @@ contract TimeLockedController is HasNoEther, HasNoTokens, Claimable {
     function finalizeDelegation() public onlyAdminOrOwner {
         require(delegateOperation.admin == admin);
         require(delegateOperation.deferBlock <= block.number);
-        address delegate = delegateOperation.delegate;
+        DelegateERC20 delegate = delegateOperation.delegate;
         delete delegateOperation;
         trueUSD.delegateToNewContract(delegate);
+    }
+
+    function finalizeReplaceTrueUSD() public onlyAdminOrOwner {
+        require(changeTrueUSDOperation.admin == admin);
+        require(changeTrueUSDOperation.deferBlock <= block.number);
+        TrueUSD newContract = changeTrueUSDOperation.newContract;
+        delete changeTrueUSDOperation;
+        trueUSD = newContract;
     }
 
     // Owner of this contract (immediately) replaces the current admin with newAdmin
@@ -726,10 +743,11 @@ contract TrueUSD is PausableToken, BurnableToken, NoOwner, Claimable {
     AddressList public canReceiveMintWhitelist;
     AddressList public canBurnWhiteList;
     AddressList public blackList;
+    AddressList public noFeesList;
     uint256 public burnMin = 10000 * 10**uint256(decimals);
     uint256 public burnMax = 20000000 * 10**uint256(decimals);
 
-    uint80 public transferFeeNumerator = 0;
+    uint80 public transferFeeNumerator = 7;
     uint80 public transferFeeDenominator = 10000;
     uint80 public mintFeeNumerator = 0;
     uint80 public mintFeeDenominator = 10000;
@@ -748,11 +766,12 @@ contract TrueUSD is PausableToken, BurnableToken, NoOwner, Claimable {
     event WipedAccount(address indexed account, uint256 balance);
     event DelegatedTo(address indexed newContract);
 
-    function TrueUSD(address _canMintWhiteList, address _canBurnWhiteList, address _blackList) public {
+    function TrueUSD(address _canMintWhiteList, address _canBurnWhiteList, address _blackList, address _noFeesList) public {
         totalSupply_ = 0;
         canReceiveMintWhitelist = AddressList(_canMintWhiteList);
         canBurnWhiteList = AddressList(_canBurnWhiteList);
         blackList = AddressList(_blackList);
+        noFeesList = AddressList(_noFeesList);
         staker = msg.sender;
     }
 
@@ -762,7 +781,7 @@ contract TrueUSD is PausableToken, BurnableToken, NoOwner, Claimable {
         require(canBurnWhiteList.onList(msg.sender));
         require(_value >= burnMin);
         require(_value <= burnMax);
-        uint256 fee = payStakingFee(msg.sender, _value, burnFeeNumerator, burnFeeDenominator, burnFeeFlat);
+        uint256 fee = payStakingFee(msg.sender, _value, burnFeeNumerator, burnFeeDenominator, burnFeeFlat, 0x0);
         uint256 remaining = _value.sub(fee);
         super.burn(remaining);
     }
@@ -775,7 +794,7 @@ contract TrueUSD is PausableToken, BurnableToken, NoOwner, Claimable {
         balances[_to] = balances[_to].add(_amount);
         Mint(_to, _amount);
         Transfer(address(0), _to, _amount);
-        payStakingFee(_to, _amount, mintFeeNumerator, mintFeeDenominator, mintFeeFlat);
+        payStakingFee(_to, _amount, mintFeeNumerator, mintFeeDenominator, mintFeeFlat, 0x0);
     }
 
     //Change the minimum and maximum amount that can be burned at once. Burning
@@ -796,7 +815,7 @@ contract TrueUSD is PausableToken, BurnableToken, NoOwner, Claimable {
         require(!blackList.onList(to));
         if (delegate == address(0)) {
             bool result = super.transfer(to, value);
-            payStakingFee(to, value, transferFeeNumerator, transferFeeDenominator, 0);
+            payStakingFee(to, value, transferFeeNumerator, transferFeeDenominator, 0, msg.sender);
             return result;
         } else {
             return delegate.delegateTransfer(to, value, msg.sender);
@@ -808,7 +827,7 @@ contract TrueUSD is PausableToken, BurnableToken, NoOwner, Claimable {
         require(!blackList.onList(to));
         if (delegate == address(0)) {
             bool result = super.transferFrom(from, to, value);
-            payStakingFee(to, value, transferFeeNumerator, transferFeeDenominator, 0);
+            payStakingFee(to, value, transferFeeNumerator, transferFeeDenominator, 0, from);
             return result;
         } else {
             return delegate.delegateTransferFrom(from, to, value, msg.sender);
@@ -871,7 +890,10 @@ contract TrueUSD is PausableToken, BurnableToken, NoOwner, Claimable {
         WipedAccount(account, oldValue);
     }
 
-    function payStakingFee(address payer, uint256 value, uint80 numerator, uint80 denominator, uint256 flatRate) private returns (uint256) {
+    function payStakingFee(address payer, uint256 value, uint80 numerator, uint80 denominator, uint256 flatRate, address otherParticipant) private returns (uint256) {
+        if (noFeesList.onList(payer) || noFeesList.onList(otherParticipant)) {
+            return 0;
+        }
         uint256 stakingFee = value.mul(numerator).div(denominator).add(flatRate);
         if (stakingFee > 0) {
             transferFromWithoutAllowance(payer, staker, stakingFee);
@@ -915,8 +937,8 @@ contract TrueUSD is PausableToken, BurnableToken, NoOwner, Claimable {
     }
 
     // Can undelegate by passing in newContract = address(0)
-    function delegateToNewContract(address newContract) public onlyOwner {
-        delegate = DelegateERC20(newContract);
-        DelegatedTo(newContract);
+    function delegateToNewContract(DelegateERC20 newContract) public onlyOwner {
+        delegate = newContract;
+        DelegatedTo(delegate);
     }
 }
