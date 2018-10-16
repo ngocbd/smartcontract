@@ -1,15 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheeraToken at 0x558b10202c474f37f9b49b7ec75cf9c4f28c5b7e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheeraToken at 0xf7bc84a0e505cd424ce7706a67046271ace20ec8
 */
-/**
- * Developer Team: 
- * Hira Siddiqui
- * connect on: https://www.linkedin.com/in/hira-siddiqui-96b60a74/
- * 
- * Mujtaba Idrees
- * connect on: https://www.linkedin.com/in/mujtabaidrees94/
- **/
-
 pragma solidity ^0.4.11;
 
 /**
@@ -151,7 +142,8 @@ contract EtheeraToken is BasicToken,Ownable {
       require(tokenBalances[wallet] >= tokenAmount);               // checks if it has enough to sell
       tokenBalances[buyer] = tokenBalances[buyer].add(tokenAmount);                  // adds the amount to buyer's balance
       tokenBalances[wallet] = tokenBalances[wallet].sub(tokenAmount);                        // subtracts amount from seller's balance
-      Transfer(wallet, buyer, tokenAmount); 
+      Transfer(wallet, buyer, tokenAmount);
+      totalSupply = totalSupply.sub(tokenAmount);
     }
     
     function showMyTokenBalance(address addr) public view onlyOwner returns (uint tokenBalance) {
@@ -159,7 +151,4 @@ contract EtheeraToken is BasicToken,Ownable {
         return tokenBalance;
     }
     
-    function showMyEtherBalance(address addr) public view onlyOwner returns (uint etherBalance) {
-        etherBalance = addr.balance;
-    }
 }
