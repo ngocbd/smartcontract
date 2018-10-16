@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0x76fdc56071e37aad79bec53ab015d7087c5b02df
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0x42d6622dece394b54999fbd73d108123806f6a18
 */
 // Abstract contract for the full ERC 20 Token standard
 // https://github.com/ethereum/EIPs/issues/20
-pragma solidity ^0.4.8;
+pragma solidity 0.4.15;
 
 contract Token {
     /* This is a slight change to the ERC20 base standard.
@@ -50,6 +50,7 @@ contract Token {
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
+
 /*
 You should inherit from StandardToken or, for a token like you would want to
 deploy in something like Mist, see HumanStandardToken.sol.
@@ -58,32 +59,29 @@ If you deploy this, you won't have anything useful.)
 
 Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20
 .*/
-
 contract StandardToken is Token {
 
     function transfer(address _to, uint256 _value) returns (bool success) {
         //Default assumes totalSupply can't be over max (2^256 - 1).
         //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
         //Replace the if with this one instead.
-        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[msg.sender] >= _value && _value > 0) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
-            return true;
-        } else { return false; }
+        //require(balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]);
+        require(balances[msg.sender] >= _value);
+        balances[msg.sender] -= _value;
+        balances[_to] += _value;
+        Transfer(msg.sender, _to, _value);
+        return true;
     }
 
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
         //same as above. Replace this line with the following if you want to protect against wrapping uints.
-        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
-            return true;
-        } else { return false; }
+        //require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]);
+        require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
+        balances[_to] += _value;
+        balances[_from] -= _value;
+        allowed[_from][msg.sender] -= _value;
+        Transfer(_from, _to, _value);
+        return true;
     }
 
     function balanceOf(address _owner) constant returns (uint256 balance) {
@@ -104,12 +102,19 @@ contract StandardToken is Token {
     mapping (address => mapping (address => uint256)) allowed;
 }
 
-contract HumanStandardToken is StandardToken {
+/*
+This Token Contract implements the standard token functionality (https://github.com/ethereum/EIPs/issues/20) as well as the following OPTIONAL extras intended for use by humans.
 
-    function () {
-        //if ether is sent to this address, send it back.
-        throw;
-    }
+In other words. This is intended for deployment in something like a Token Factory or Mist wallet, and then used by humans.
+Imagine coins, currencies, shares, voting weight, etc.
+Machine-based, rapid creation of many tokens would not necessarily need these extra features or will be minted in other manners.
+
+1) Initial Finite Supply (upon creation one specifies how much is minted).
+2) In the absence of a token registry: Optional Decimal, Symbol & Name.
+3) Optional approveAndCall() functionality to notify a contract if an approval() has occurred.
+
+.*/
+contract HumanStandardToken is StandardToken {
 
     /* Public variables of the token */
 
@@ -123,17 +128,18 @@ contract HumanStandardToken is StandardToken {
     uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
     string public symbol;                 //An identifier: eg SBX
     string public version = 'H0.1';       //human 0.1 standard. Just an arbitrary versioning scheme.
-    uint256 public initialAmount = 400000000 * (10 ** 18);
-    string tokenName = "Oneroot Network Token";
-    uint8 decimalUnits =18;
-    string tokenSymbol="RNT";
 
-    function HumanStandardToken() {
-        balances[msg.sender] = initialAmount;               // Give the creator all initial tokens
-        totalSupply = initialAmount;                        // Update total supply
-        name = tokenName;                                   // Set the name for display purposes
-        decimals = decimalUnits;                            // Amount of decimals for display purposes
-        symbol = tokenSymbol;                               // Set the symbol for display purposes
+    function HumanStandardToken(
+        uint256 _initialAmount,
+        string _tokenName,
+        uint8 _decimalUnits,
+        string _tokenSymbol
+        ) {
+        balances[msg.sender] = _initialAmount;               // Give the creator all initial tokens
+        totalSupply = _initialAmount;                        // Update total supply
+        name = _tokenName;                                   // Set the name for display purposes
+        decimals = _decimalUnits;                            // Amount of decimals for display purposes
+        symbol = _tokenSymbol;                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
@@ -144,7 +150,7 @@ contract HumanStandardToken is StandardToken {
         //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
         //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
         //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
-        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
+        require(_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData));
         return true;
     }
 }
