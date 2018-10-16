@@ -1,166 +1,377 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x2aefe4251e5041112fb76f73503b097cee86816e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x92c513b5234b0b4fef431300db44133c5f26109f
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.16;
 
 /**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
+* @title ERC20Basic
+* @dev Simpler version of ERC20 interface
+* @dev see https://github.com/ethereum/EIPs/issues/179
+*/
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public constant returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+/**
+* @title ERC20 interface
+* @dev see https://github.com/ethereum/EIPs/issues/20
+*/
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+/**
+* @title SafeMath
+* @dev Math operations with safety checks that throw on error
+*/
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0 uint256 c = a / b;
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
   }
+
 }
 
 /**
- * @title Crowdsale
- * @dev Crowdsale is a base contract for managing a token crowdsale.
- * Crowdsales have a start and end timestamps, where investors can make
- * token purchases and the crowdsale will assign them tokens based
- * on a token per ETH rate. Funds collected are forwarded 
- to a wallet
- * as they arrive.
- */
-contract token { function transfer(address receiver, uint amount){  } }
-contract Crowdsale {
+* @title Basic token
+* @dev Basic version of StandardToken, with no allowances.
+*/
+contract BasicToken is ERC20Basic {
+
   using SafeMath for uint256;
 
-  // uint256 durationInMinutes;
-  // address where funds are collected
-  address public wallet;
-  // token address
-  address public addressOfTokenUsedAsReward;
-
-  uint256 public price = 1600;
-
-  token tokenReward;
-
-  // mapping (address => uint) public contributions;
-  
-
-
-  // start and end timestamps where investments are allowed (both inclusive)
-  // uint256 public startTime;
-  // uint256 public endTime;
-  // amount of raised money in wei
-  uint256 public weiRaised;
+  mapping(address => uint256) balances;
 
   /**
-   * event for token purchase logging
-   * @param purchaser who paid for the tokens
-   * @param beneficiary who got the tokens
-   * @param value weis paid for purchase
-   * @param amount amount of tokens purchased
-   */
-  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
-
-
-  function Crowdsale() {
-    //You will change this to your wallet where you need the ETH 
-    wallet = 0xe08E9e1606faC93C07Fa7Ecd9415437FAC501Fb4;
-    // durationInMinutes = _durationInMinutes;
-    //Here will come the checksum address we got
-    addressOfTokenUsedAsReward = 0xF6656610be1FB3142F2620d04A416925b6aeD8bD;
-
-
-    tokenReward = token(addressOfTokenUsedAsReward);
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
   }
 
-  bool public started = true;
-
-  function startSale(){
-    if (msg.sender != wallet) throw;
-    started = true;
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public constant returns (uint256 balance) {
+    return balances[_owner];
   }
 
-  function stopSale(){
-    if(msg.sender != wallet) throw;
-    started = false;
+}
+
+/**
+* @title Standard ERC20 token
+*
+* @dev Implementation of the basic standard token.
+* @dev https://github.com/ethereum/EIPs/issues/20
+* @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+*/
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) allowed;
+
+  /**
+  * @dev Transfer tokens from one address to another
+  * @param _from address The address which you want to send tokens from
+  * @param _to address The address which you want to transfer to
+  * @param _value uint256 the amout of tokens to be transfered
+  */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    var _allowance = allowed[_from][msg.sender];
+
+    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
+    // require (_value <= _allowance);
+
+    balances[_to] = balances[_to].add(_value);
+    balances[_from] = balances[_from].sub(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
   }
 
-  function setPrice(uint256 _price){
-    if(msg.sender != wallet) throw;
-    price = _price;
-  }
-  function changeWallet(address _wallet){
-  	if(msg.sender != wallet) throw;
-  	wallet = _wallet;
-  }
+  /**
+  * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
+  * @param _spender The address which will spend the funds.
+  * @param _value The amount of tokens to be spent.
+  */
+  function approve(address _spender, uint256 _value) public returns (bool) {
 
-  function changeTokenReward(address _token){
-    if(msg.sender!=wallet) throw;
-    tokenReward = token(_token);
-  }
+    // To change the approve amount you first have to reduce the addresses`
+    //  allowance to zero by calling `approve(_spender, 0)` if it is not
+    //  already 0 to mitigate the race condition described here:
+    //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
 
-  // fallback function can be used to buy tokens
-  function () payable {
-    buyTokens(msg.sender);
-  }
-
-  // low level token `purchase function
-  function buyTokens(address beneficiary) payable {
-    require(beneficiary != 0x0);
-    require(validPurchase());
-
-    uint256 weiAmount = msg.value;
-
-    // if(weiAmount < 10**16) throw;
-    // if(weiAmount > 50*10**18) throw;
-
-    // calculate token amount to be sent
-    uint256 tokens = (weiAmount) * price;//weiamount * price 
-    // uint256 tokens = (weiAmount/10**(18-decimals)) * price;//weiamount * price 
-
-    // update state
-    weiRaised = weiRaised.add(weiAmount);
-    
-    // if(contributions[msg.sender].add(weiAmount)>10*10**18) throw;
-    // contributions[msg.sender] = contributions[msg.sender].add(weiAmount);
-
-    tokenReward.transfer(beneficiary, tokens);
-    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
-    forwardFunds();
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
   }
 
-  // send ether to the fund collection wallet
-  // override to create custom fund forwarding mechanisms
-  function forwardFunds() internal {
-    // wallet.transfer(msg.value);
-    if (!wallet.send(msg.value)) {
-      throw;
+  /**
+  * @dev Function to check the amount of tokens that an owner allowed to a spender.
+  * @param _owner address The address which owns the funds.
+  * @param _spender address The address which will spend the funds.
+  * @return A uint256 specifing the amount of tokens still available for the spender.
+  */
+  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+    return allowed[_owner][_spender];
+  }
+
+}
+
+/**
+* @title Ownable
+* @dev The Ownable contract has an owner address, and provides basic authorization control
+* functions, this simplifies the implementation of "user permissions".
+*/
+contract Ownable {
+
+  address public owner;
+
+  /**
+  * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+  * account.
+  */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+  /**
+  * @dev Throws if called by any account other than the owner.
+  */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+  * @dev Allows the current owner to transfer control of the contract to a newOwner.
+  * @param newOwner The address to transfer ownership to.
+  */
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    owner = newOwner;
+  }
+
+}
+
+/**
+* @title Mintable token
+* @dev Simple ERC20 Token example, with mintable token creation
+* @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
+* Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
+*/
+
+contract MintableToken is StandardToken, Ownable {
+
+  event Mint(address indexed to, uint256 amount);
+
+  event MintFinished();
+
+  bool public mintingFinished = false;
+
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
+
+  /**
+  * @dev Function to mint tokens
+  * @param _to The address that will recieve the minted tokens.
+  * @param _amount The amount of tokens to mint.
+  * @return A boolean that indicates if the operation was successful.
+  */
+  function mint(address _to, uint256 _amount) public onlyOwner canMint returns (bool) {
+    totalSupply = totalSupply.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    Mint(_to, _amount);
+    return true;
+  }
+
+  /**
+  * @dev Function to stop minting new tokens.
+  * @return True if the operation was successful.
+  */
+  function finishMinting() public onlyOwner returns (bool) {
+    mintingFinished = true;
+    MintFinished();
+    return true;
+  }
+
+}
+
+contract DbiCapitalToken is MintableToken {
+
+  string public constant name = "DBI Capital Token";
+
+  string public constant symbol = "DBI";
+
+  uint32 public constant decimals = 18;
+
+}
+
+contract Crowdsale is Ownable {
+
+  using SafeMath for uint;
+
+  address multisig; //address for ETH
+  address bounty;   //address for bounty tokens
+  uint bountyCount = 1000000000000000000000; //1,000 tokens for bounty
+
+  DbiCapitalToken public token = new DbiCapitalToken();
+
+  uint startDate = 0; //UNIX timestamp
+  uint endDate = 0;   //UNIX timestamp
+  uint hardcap = 0;   //in ether
+  uint rate = 0;      //tokens for 1 eth
+
+  uint tokensSold = 0;
+  uint etherReceived = 0;
+
+  uint hardcapStage1 = 2000 ether;  //Pre-ICO, Research & Lega
+  uint hardcapStage2 = 20000 ether; //Pre-ICO, MVP + START
+  uint hardcapStage3 = 150000 ether; //ICO, SCALE
+
+  uint rateStage1 = 100; //Pre-ICO, Research & Lega
+  uint rateStage2 = 70;  //Pre-ICO, MVP + START
+  uint rateStage3 = 50;  //ICO, SCALE
+
+  uint crowdsaleStage = 0;
+  bool crowdsaleStarted = false;
+  bool crowdsaleFinished = false;
+
+  event CrowdsaleStageStarted(uint stage, uint startDate, uint endDate, uint rate, uint hardcap);
+  event CrowdsaleFinished(uint tokensSold, uint etherReceived);
+  event TokenSold(uint tokens, uint ethFromTokens, uint rate, uint hardcap);
+  event HardcapGoalReached(uint tokensSold, uint etherReceived, uint hardcap, uint stage);
+
+
+  function Crowdsale() public {
+    multisig = 0x70C39CC41a3852e20a8B1a59A728305758e3aa37;
+    bounty = 0x11404c733254d66612765B5A94fB4b1f0937639c;
+    token.mint(bounty, bountyCount);
+  }
+
+  modifier saleIsOn() {
+    require(now >= startDate && now <= endDate && crowdsaleStarted && !crowdsaleFinished && crowdsaleStage > 0 && crowdsaleStage <= 3);
+    _;
+  }
+
+  modifier isUnderHardCap() {
+    require(etherReceived <= hardcap);
+    _;
+  }
+
+  function nextStage(uint _startDate, uint _endDate) public onlyOwner {
+    crowdsaleStarted = true;
+    crowdsaleStage += 1;
+    startDate = _startDate;
+    endDate = _endDate;
+    if (crowdsaleStage == 1) {
+      rate = rateStage1;
+      hardcap = hardcapStage1;
+      CrowdsaleStageStarted(crowdsaleStage, startDate, endDate, rate, hardcap);
+    } else if (crowdsaleStage == 2) {
+      rate = rateStage2;
+      hardcap = hardcapStage2;
+      CrowdsaleStageStarted(crowdsaleStage, startDate, endDate, rate, hardcap);
+    } else if (crowdsaleStage == 3) {
+      rate = rateStage3;
+      hardcap = hardcapStage3;
+      CrowdsaleStageStarted(crowdsaleStage, startDate, endDate, rate, hardcap);
+    } else {
+      finishMinting();
     }
   }
 
-  // @return true if the transaction can buy tokens
-  function validPurchase() internal constant returns (bool) {
-    bool withinPeriod = started;
-    bool nonZeroPurchase = msg.value != 0;
-    return withinPeriod && nonZeroPurchase;
+  function finishMinting() public onlyOwner {
+    crowdsaleFinished = true;
+    token.finishMinting();
+    CrowdsaleFinished(tokensSold, etherReceived);
   }
 
-  function withdrawTokens(uint256 _amount) {
-    if(msg.sender!=wallet) throw;
-    tokenReward.transfer(wallet,_amount);
+  function createTokens() public isUnderHardCap saleIsOn payable {
+    multisig.transfer(msg.value);
+    uint tokens = rate.mul(msg.value);
+    tokensSold += tokens;
+    etherReceived += msg.value;
+    TokenSold(tokens, msg.value, rate, hardcap);
+    token.mint(msg.sender, tokens);
+    if (etherReceived >= hardcap) {
+      HardcapGoalReached(tokensSold, etherReceived, hardcap, crowdsaleStage);
+    }
   }
+
+  function() external payable {
+    createTokens();
+  }
+
+  function getTokensSold() public view returns (uint) {
+    return tokensSold;
+  }
+
+  function getEtherReceived() public view returns (uint) {
+    return etherReceived;
+  }
+
+  function getCurrentHardcap() public view returns (uint) {
+    return hardcap;
+  }
+
+  function getCurrentRate() public view returns (uint) {
+    return rate;
+  }
+
+  function getStartDate() public view returns (uint) {
+    return startDate;
+  }
+
+  function getEndDate() public view returns (uint) {
+    return endDate;
+  }
+
+  function getStage() public view returns (uint) {
+    return crowdsaleStage;
+  }
+
+  function isStarted() public view returns (bool) {
+    return crowdsaleStarted;
+  }
+
+  function isFinished() public view returns (bool) {
+    return crowdsaleFinished;
+  }
+
 }
