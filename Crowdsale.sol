@@ -1,280 +1,150 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x2d3691fe85d6400957a3356e0afdc17ea6d1de09
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x11f05f64b0ddcea285D1bddC1d0f5b927Bfb5b6c
 */
-pragma solidity 0.4.18;
+pragma solidity ^0.4.18;
 
-// File: zeppelin-solidity/contracts/ownership/Ownable.sol
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
+interface token {
+    function transferFrom(address _from, address _to, uint256 _value) public;
 }
 
-// File: zeppelin-solidity/contracts/lifecycle/Pausable.sol
+contract Crowdsale {
+    address public beneficiary;
+    uint public fundingGoal;
+    uint public amountRaised;
+    uint public startTime;
+    uint public deadline;
+    uint public price;
+    token public tokenReward;
+    mapping(address => uint256) public balanceOf;
+    bool fundingGoalReached = false;
+    bool public crowdsaleClosed = false ;
 
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
+    event GoalReached(address recipient, uint totalAmountRaised);
+    event FundTransfer(address backer, uint amount, bool isContribution);
+    event CrowdsaleClose(uint totalAmountRaised, bool fundingGoalReached);
 
-  bool public paused = false;
-
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
-  modifier whenPaused() {
-    require(paused);
-    _;
-  }
-
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused public {
-    paused = true;
-    Pause();
-  }
-
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused public {
-    paused = false;
-    Unpause();
-  }
-}
-
-// File: zeppelin-solidity/contracts/math/SafeMath.sol
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
+    /**
+     * Constrctor function
+     *
+     * Setup the owner
+     */
+    function Crowdsale(
+        address ifSuccessfulSendTo,
+        uint fundingGoalInEthers,
+        uint startTimeInSeconds,
+        uint durationInMinutes,
+        uint szaboCostOfEachToken,
+        address addressOfTokenUsedAsReward
+    ) public {
+        beneficiary = ifSuccessfulSendTo;
+        fundingGoal = fundingGoalInEthers * 1 ether;
+        startTime = startTimeInSeconds;
+        deadline = startTimeInSeconds + durationInMinutes * 1 minutes;
+        price = szaboCostOfEachToken * 1 finney;
+        tokenReward = token(addressOfTokenUsedAsReward);
     }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+    /**
+     * Fallback function
+     *
+     * The function without name is the default function that is called whenever anyone sends funds to a contract
+     */
+    function()
+    payable
+    isOpen
+    afterStart
+    public {
+        uint amount = msg.value;
+        balanceOf[msg.sender] += amount;
+        amountRaised += amount;
+        tokenReward.transferFrom(beneficiary, msg.sender, (amount * price) / 1 ether);
+        checkGoalReached();
+        FundTransfer(msg.sender, amount, true);
+    }
 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+    modifier afterStart() {
+        require(now >= startTime);
+        _;
+    }
 
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
+    modifier afterDeadline() {
+        require(now >= deadline);
+        _;
+    }
 
-// File: zeppelin-solidity/contracts/token/ERC20Basic.sol
+    modifier previousDeadline() {
+        require(now <= deadline);
+        _;
+    }
 
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
+    modifier isOwner() {
+        require (msg.sender == beneficiary);
+        _;
+    }
 
-// File: zeppelin-solidity/contracts/token/ERC20.sol
+    modifier isClosed() {
+        require(crowdsaleClosed);
+        _;
+    }
 
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
+    modifier isOpen() {
+        require(!crowdsaleClosed);
+        _;
+    }
 
-// File: zeppelin-solidity/contracts/token/SafeERC20.sol
+    /**
+     * Check if goal was reached
+     *
+     */
+    function checkGoalReached() internal {
+        if (amountRaised >= fundingGoal && !fundingGoalReached) {
+            fundingGoalReached = true;
+            GoalReached(beneficiary, amountRaised);
+        }
+    }
 
-/**
- * @title SafeERC20
- * @dev Wrappers around ERC20 operations that throw on failure.
- * To use this library you can add a `using SafeERC20 for ERC20;` statement to your contract,
- * which allows you to call the safe operations as `token.safeTransfer(...)`, etc.
- */
-library SafeERC20 {
-  function safeTransfer(ERC20Basic token, address to, uint256 value) internal {
-    assert(token.transfer(to, value));
-  }
+    /**
+     * Close the crowdsale
+     *
+     */
+    function closeCrowdsale()
+    isOwner
+    public {
+        crowdsaleClosed = true;
+        CrowdsaleClose(amountRaised, fundingGoalReached);
+    }
 
-  function safeTransferFrom(ERC20 token, address from, address to, uint256 value) internal {
-    assert(token.transferFrom(from, to, value));
-  }
 
-  function safeApprove(ERC20 token, address spender, uint256 value) internal {
-    assert(token.approve(spender, value));
-  }
-}
+    /**
+     * Withdraw the funds
+     *
+     * Checks to see if goal or time limit has been reached, and if so, and the funding goal was reached,
+     * sends the entire amount to the beneficiary. If goal was not reached, each contributor can withdraw
+     * the amount they contributed.
+     */
+    function safeWithdrawal()
+    afterDeadline
+    isClosed
+    public {
+        if (!fundingGoalReached) {
+            uint amount = balanceOf[msg.sender];
+            balanceOf[msg.sender] = 0;
+            if (amount > 0) {
+                if (msg.sender.send(amount)) {
+                    FundTransfer(msg.sender, amount, false);
+                } else {
+                    balanceOf[msg.sender] = amount;
+                }
+            }
+        }
 
-// File: contracts/Crowdsale.sol
-
-contract Crowdsale is Ownable, Pausable {
-  using SafeMath for uint256;
-  using SafeERC20 for ERC20;
-
-  // token being sold
-  ERC20 public token;
-
-  // address where funds are collected
-  address public wallet;
-
-  // address where tokens come from
-  address public supplier;
-
-  // rate 6/1 (6 token uints for 1 wei)
-  uint256 public purposeWeiRate = 6;
-  uint256 public etherWeiRate = 1;
-
-  // amount of raised wei
-  uint256 public weiRaised = 0;
-
-  // amount of tokens raised (in wei)
-  uint256 public weiTokensRaised = 0;
-
-  /**
-   * event for token purchase logging
-   * @param purchaser who paid for the tokens
-   * @param beneficiary who got the tokens
-   * @param value weis paid for purchase
-   * @param amount amount of tokens purchased
-   */
-  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
-
-  function Crowdsale(address _wallet, address _supplier, address _token, uint256 _purposeWeiRate, uint256 _etherWeiRate) public {
-    require(_token != address(0));
-    require(_supplier != address(0));
-
-    changeWallet(_wallet);
-    supplier = _supplier;
-    token = ERC20(_token);
-    changeRate(_purposeWeiRate, _etherWeiRate);
-  }
-
-  // fallback function can be used to buy tokens
-  function () external payable {
-    buyTokens(msg.sender);
-  }
-
-  // change wallet
-  function changeWallet(address _wallet) public onlyOwner {
-    require(_wallet != address(0));
-
-    wallet = _wallet;
-  }
-
-  // change rate
-  function changeRate(uint256 _purposeWeiRate, uint256 _etherWeiRate) public onlyOwner {
-    require(_purposeWeiRate > 0);
-    require(_etherWeiRate > 0);
-    
-    purposeWeiRate = _purposeWeiRate;
-    etherWeiRate = _etherWeiRate;
-  }
-
-  // low level token purchase function
-  function buyTokens(address beneficiary) public payable whenNotPaused {
-    require(beneficiary != address(0));
-    require(validPurchase());
-
-    uint256 weiAmount = msg.value;
-
-    // calculate token amount to be created
-    uint256 tokens = weiAmount.div(etherWeiRate).mul(purposeWeiRate);
-
-    // update state
-    weiRaised = weiRaised.add(weiAmount);
-    weiTokensRaised = weiTokensRaised.add(tokens);
-
-    // transfer
-    token.safeTransferFrom(supplier, beneficiary, tokens);
-
-    // logs
-    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
-
-    // forward funds to wallet
-    forwardFunds();
-  }
-
-  // send ether to the fund collection wallet
-  // override to create custom fund forwarding mechanisms
-  function forwardFunds() internal {
-    wallet.transfer(msg.value);
-  }
-
-  // @return true if the transaction can buy tokens
-  function validPurchase() internal view returns (bool) {
-    bool nonZeroPurchase = msg.value != 0;
-    return !paused && nonZeroPurchase;
-  }
+        if (fundingGoalReached && beneficiary == msg.sender) {
+            if (beneficiary.send(amountRaised)) {
+                FundTransfer(beneficiary, amountRaised, false);
+            } else {
+                //If we fail to send the funds to beneficiary, unlock funders balance
+                fundingGoalReached = false;
+            }
+        }
+    }
 }
