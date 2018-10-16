@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0xf2bfde1eba142cc0a93f7c8821ebeddaf80e9a5e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0x703f058e239315b39fdeed430cf46260afd59933
 */
 pragma solidity ^0.4.13;
 
@@ -153,8 +153,8 @@ contract StandardToken is ERC20, BasicToken {
  * Created specifically for TokenDone.io
  */
 contract ApprovedTokenDone is StandardToken {
-	string public name = 'YELLOWCHIP';
-	string public symbol = 'YELLOWCHIP';
+	string public name = 'REDCHIP';
+	string public symbol = 'REDCHIP';
 	uint public decimals = 3;
 	uint public initialSupply = 100000000000;
 	string public publishier = 'TokenDone.io';
