@@ -1,268 +1,232 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenCrowdsale at 0x3b1bdd0d0f3b1eaad8e48ceaf7c006c898105d95
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenCrowdsale at 0x627285200c02068e3a1a8ded8541f37b1200701f
 */
-pragma solidity ^0.4.11;
-
-/**
-* @author Jefferson Davis
-* Prether_ICO.sol creates the client's token for crowdsale and allows for subsequent token sales and minting of tokens
-*   Crowdsale contracts edited from original contract code at https://www.ethereum.org/crowdsale#crowdfund-your-idea
-*   Additional crowdsale contracts, functions, libraries from TenXCrowdSale contract and OpenZeppelin
-*       at https://etherscan.io/address/0xd43d09ec1bc5e57c8f3d0c64020d403b04c7f783#code and https://github.com/OpenZeppelin/zeppelin-solidity/tree/master/contracts/token
-*   Token contract edited from original contract code at https://www.ethereum.org/token
-*   ERC20 interface and certain token functions adapted from https://github.com/ConsenSys/Tokens
-**/
-
-contract ERC20 {
-	//Sets events and functions for ERC20 token
-	event Approval(address indexed _owner, address indexed _spender, uint _value);
-	event Transfer(address indexed _from, address indexed _to, uint _value);
-	
-    function allowance(address _owner, address _spender) constant returns (uint remaining);
-	function approve(address _spender, uint _value) returns (bool success);
-    function balanceOf(address _owner) constant returns (uint balance);
-    function transfer(address _to, uint _value) returns (bool success);
-    function transferFrom(address _from, address _to, uint _value) returns (bool success);
+pragma solidity ^0.4.18;
+contract Ownable {
+  address public owner;
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  function Ownable() public {
+    owner = msg.sender;
+  }
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+  function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
 }
-
-
-contract Owned {
-	//Public variable
-    address public owner;
-
-	//Sets contract creator as the owner
-    function Owned() {
-        owner = msg.sender;
-    }
-	
-	//Sets onlyOwner modifier for specified functions
-    modifier onlyOwner {
-        if (msg.sender != owner) throw;
-        _;
-    }
-
-	//Allows for transfer of contract ownership
-    function transferOwnership(address newOwner) onlyOwner {
-        owner = newOwner;
-    }
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+  bool public paused = false;
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    Pause();
+  }
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    Unpause();
+  }
 }
-
-
-contract TokenWithMint is ERC20, Owned {
-	//Public variables
-	string public name; 
-	string public symbol; 
-	uint256 public decimals;  
-    uint256 multiplier; 
-	uint256 public totalSupply; 
-	
-	//Creates arrays for balances
-    mapping (address => uint256) balance;
-    mapping (address => mapping (address => uint256)) allowed;
-
-    //Creates modifier to prevent short address attack
-    modifier onlyPayloadSize(uint size) {
-        if(msg.data.length < size + 4) throw;
-        _;
-    }
-
-	//Constructor
-	function TokenWithMint(string tokenName, string tokenSymbol, uint8 decimalUnits, uint256 decimalMultiplier) {
-		name = tokenName; 
-		symbol = tokenSymbol; 
-		decimals = decimalUnits; 
-        multiplier = decimalMultiplier; 
-		totalSupply = 0;  
-	}
-	
-	//Provides the remaining balance of approved tokens from function approve 
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
-    }
-
-	//Allows for a certain amount of tokens to be spent on behalf of the account owner
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-	//Returns the account balance 
-    function balanceOf(address _owner) constant returns (uint256 remainingBalance) {
-        return balance[_owner];
-    }
-
-    //Allows contract owner to mint new tokens, prevents numerical overflow
-	function mintToken(address target, uint256 mintedAmount) onlyOwner returns (bool success) {
-		if ((totalSupply + mintedAmount) < totalSupply) {
-			throw; 
-		} else {
-            uint256 addTokens = mintedAmount * multiplier; 
-			balance[target] += addTokens;
-			totalSupply += addTokens;
-			Transfer(0, target, addTokens);
-			return true; 
-		}
-	}
-
-	//Sends tokens from sender's account
-    function transfer(address _to, uint256 _value) onlyPayloadSize(2 * 32) returns (bool success) {
-        if (balance[msg.sender] >= _value && balance[_to] + _value > balance[_to]) {
-            balance[msg.sender] -= _value;
-            balance[_to] += _value;
-            Transfer(msg.sender, _to, _value);
-            return true;
-        } else { 
-			return false; 
-		}
-    }
-	
-	//Transfers tokens from an approved account 
-    function transferFrom(address _from, address _to, uint256 _value) onlyPayloadSize(3 * 32) returns (bool success) {
-        if (balance[_from] >= _value && allowed[_from][msg.sender] >= _value && balance[_to] + _value > balance[_to]) {
-            balance[_to] += _value;
-            balance[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
-            return true;
-        } else { 
-			return false; 
-		}
-    }
-}
-
-
 library SafeMath {
-    function add(uint256 a, uint256 b) internal returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }  
-
-    function div(uint256 a, uint256 b) internal returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
+  function mul(uint a, uint b) internal pure returns (uint) {
+    if (a == 0) {
+      return 0;
     }
-
-    function max64(uint64 a, uint64 b) internal constant returns (uint64) {
-        return a >= b ? a : b;
-    }
-
-    function max256(uint256 a, uint256 b) internal constant returns (uint256) {
-        return a >= b ? a : b;
-    }
-
-    function min64(uint64 a, uint64 b) internal constant returns (uint64) {
-        return a < b ? a : b;
-    }
-
-    function min256(uint256 a, uint256 b) internal constant returns (uint256) {
-        return a < b ? a : b;
-    }
-  
-    function mul(uint256 a, uint256 b) internal returns (uint256) {
-        uint256 c = a * b;
-        assert(a == 0 || c / a == b);
-        return c;
-    }
-
-    function sub(uint256 a, uint256 b) internal returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
+    uint c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+  function div(uint a, uint b) internal pure returns (uint) {
+    uint c = a / b;
+    return c;
+  }
+  function sub(uint a, uint b) internal pure returns (uint) {
+    assert(b <= a);
+    return a - b;
+  }
+  function add(uint a, uint b) internal pure returns (uint) {
+    uint c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
-
-
-contract TokenCrowdsale is Owned, TokenWithMint {
-    //Applies SafeMath library to uint256 operations 
-    using SafeMath for uint256;
-
-    //Public Variables
-    address public multiSigWallet;                  
-    bool crowdsaleClosed = true;                    //initializes as true, requires owner to turn on crowdsale
-    string tokenName = "Prether"; 
-    string tokenSymbol = "PTH"; 
-    uint256 public amountRaised; 
-    uint256 public deadline; 
-    uint256 multiplier = 1; 
-    uint256 public price;                           
-    uint8 decimalUnits = 0;   
-    
-
-   	//Initializes the token
-	function TokenCrowdsale() 
-    	TokenWithMint(tokenName, tokenSymbol, decimalUnits, multiplier) {  
-            multiSigWallet = msg.sender;          
+contract ERC20 {
+  string public name;
+  string public symbol;
+  uint8 public decimals;
+  uint public totalSupply;  
+  function ERC20(string _name, string _symbol, uint8 _decimals) public {
+    name = _name;
+    symbol = _symbol;
+    decimals = _decimals;
+  }
+  function balanceOf(address who) public view returns (uint);
+  function transfer(address to, uint value) public returns (bool);
+  function allowance(address owner, address spender) public view returns (uint);
+  function transferFrom(address from, address to, uint value) public returns (bool);
+  function approve(address spender, uint value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint value);
+  event Approval(address indexed owner, address indexed spender, uint value);
+}
+contract Token is Pausable, ERC20 {
+  using SafeMath for uint;
+  mapping(address => uint) balances;
+  mapping (address => mapping (address => uint)) internal allowed;
+  mapping(address => uint) public balanceOfLocked;
+  mapping(address => bool) public addressLocked;
+  uint public unlocktime;
+  bool manualUnlock;
+  address public crowdsaleAddress = 0;
+  function Token() ERC20("Olive", "OLE", 18) public {
+    manualUnlock = false;
+    unlocktime = 1527868800;
+    totalSupply = 10000000000 * 10 ** uint(decimals);
+    balances[msg.sender] = totalSupply;
+  }
+  function allowCrowdsaleAddress(address crowdsale) onlyOwner public {
+    crowdsaleAddress = crowdsale;
+  }
+  function isLocked() view public returns (bool) {
+    return (now < unlocktime && !manualUnlock);
+  }
+  modifier lockCheck(address from, uint value) { 
+    require(addressLocked[from] == false);
+    if (isLocked()) {
+      require(value <= balances[from] - balanceOfLocked[from]);
+    } else {
+      balanceOfLocked[from] = 0; 
     }
-
-    //Fallback function creates tokens and sends to investor when crowdsale is open
-    function () payable {
-        require(!crowdsaleClosed && (now < deadline)); 
-        address recipient = msg.sender; 
-        amountRaised = amountRaised + msg.value; 
-        uint256 tokens = msg.value.mul(getPrice()).mul(multiplier).div(1 ether);
-        totalSupply = totalSupply.add(tokens);
-        balance[recipient] = balance[recipient].add(tokens);
-        require(multiSigWallet.send(msg.value)); 
-        Transfer(0, recipient, tokens);
-    }   
-
-    //Returns the current price of the token for the crowdsale
-    function getPrice() returns (uint256 result) {
-        return price;
+    _;
+  }
+  function lockAddress(address addr) onlyOwner public {
+    addressLocked[addr] = true;
+  }
+  function unlockAddress(address addr) onlyOwner public {
+    addressLocked[addr] = false;
+  }
+  function unlock() onlyOwner public {
+    require(!manualUnlock);
+    manualUnlock = true;
+  }
+  function transfer(address _to, uint _value) lockCheck(msg.sender, _value) whenNotPaused public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+  function transferLockedPart(address _to, uint _value) whenNotPaused public returns (bool) {
+    require(msg.sender == crowdsaleAddress);
+    if (transfer(_to, _value)) {
+      balanceOfLocked[_to] = balanceOfLocked[_to].add(_value);
+      return true;
     }
-
-    //Returns time remaining on crowdsale
-    function getRemainingTime() constant returns (uint256) {
-        return deadline; 
+  }
+  function balanceOf(address _owner) public view returns (uint balance) {
+    return balances[_owner];
+  }
+  function transferFrom(address _from, address _to, uint _value) public lockCheck(_from, _value) whenNotPaused returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+  function approve(address _spender, uint _value) public whenNotPaused returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+  function allowance(address _owner, address _spender) public view returns (uint) {
+    return allowed[_owner][_spender];
+  }
+  function increaseApproval(address _spender, uint _addedValue) public whenNotPaused returns (bool) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+  function decreaseApproval(address _spender, uint _subtractedValue) public whenNotPaused returns (bool) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
-
-    //Returns the current status of the crowdsale
-    function getSaleStatus() constant returns (bool) {
-        bool status = false; 
-        if (crowdsaleClosed == false) {
-            status = true; 
-        }
-        return status; 
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+}
+contract TokenCrowdsale is Ownable {
+  using SafeMath for uint;
+  Token public token;
+  uint public ethRaised;
+  uint public endTime;
+  uint[6] public exchangeLevel;
+  uint[6] public exchangeRate;
+  bool public isFinalized = false;
+  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint value, uint amount);
+  event Finalized();
+  event Withdraw(address to, uint value);
+  function TokenCrowdsale(address _token) public {
+    require(_token != address(0));
+    token = Token(_token);
+    endTime = 1527868800;
+    require(endTime >= now);
+    exchangeLevel = [500 ether, 300 ether, 100 ether, 50 ether, 10 ether, 0.2 ether];
+    exchangeRate = [92000,88000,84000,82400,80800,80000];
+  }
+  function () external payable {
+    buyTokens(msg.sender);
+  }
+  function buyTokens(address beneficiary) public payable {
+    require(beneficiary != address(0));
+    require(!hasEnded());
+    uint ethValue = msg.value;
+    ethRaised += ethValue;
+    uint needTokens;
+    for (uint i = 0; i < exchangeLevel.length; i++) {
+      if (ethValue >= exchangeLevel[i]) {
+        needTokens = ethValue.mul(exchangeRate[i]);
+        break;
+      }
     }
+    require(needTokens != 0);
+    transferToken(beneficiary, needTokens);
+    owner.transfer(msg.value);
+    TokenPurchase(msg.sender, beneficiary, ethValue, needTokens);
+  }
 
-    //Sets the multisig wallet for a crowdsale
-    function setMultiSigWallet(address wallet) onlyOwner returns (bool success) {
-        multiSigWallet = wallet; 
-        return true; 
-    }
+  function transferToken(address to,uint needTokens) internal {
+    require(token.balanceOf(this) >= needTokens);
+    uint lockTokens = needTokens.div(2);
+    token.transfer(to, needTokens - lockTokens);
+    token.transferLockedPart(to, lockTokens);
+  }
 
-    //Sets the token price 
-    function setPrice(uint256 newPriceperEther) onlyOwner returns (uint256) {
-        if (newPriceperEther <= 0) throw;  //checks for valid inputs
-        price = newPriceperEther; 
-        return price; 
-    }
+  function finalize() onlyOwner public {
+    require(!isFinalized);
+    token.transfer(owner,token.balanceOf(this));
+    isFinalized = true;
+    Finalized();
+  }
 
-    //Allows owner to start the crowdsale from the time of execution until a specified deadline
-    function startSale(uint256 price, uint256 hoursToEnd) onlyOwner returns (bool success) {
-        if ((hoursToEnd < 1 )) throw;     //checks for valid inputs 
-        price = setPrice(price); 
-        deadline = now + hoursToEnd * 1 hours; 
-        crowdsaleClosed = false; 
-        return true; 
-    }
-
-    //Allows owner to start an unlimited crowdsale with no deadline or funding goal
-    function startUnlimitedSale(uint256 price) onlyOwner returns (bool success) {
-        price = setPrice(price); 
-        deadline = 9999999999;
-        crowdsaleClosed = false; 
-        return true; 
-    }
-
-    //Allows owner to stop the crowdsale immediately
-    function stopSale() onlyOwner returns (bool success) {
-        deadline = now; 
-        crowdsaleClosed = true;
-        return true; 
-    }
-
+  function hasEnded() public view returns (bool) {
+    return now > endTime;
+  }
 }
