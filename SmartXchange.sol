@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartXchange at 0xf06c60a25e8cf551ff2ff5b8d471f334f5a2b1f2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SmartXchange at 0xa35f63c143301d0d7a85c94ff46e62d3d3f5bd6a
 */
 pragma solidity ^0.4.4;
 
@@ -122,7 +122,7 @@ contract SmartXchange is StandardToken {
         balances[msg.sender] = 28000000;               // Give the creator all initial tokens (100000 for example)
         totalSupply = 28000000;                        // Update total supply (100000 for example)
         name = "SmartXchange";                                   // Set the name for display purposes
-        decimals = 0;                            // Amount of decimals for display purposes
+        decimals = 18;                            // Amount of decimals for display purposes
         symbol = "SDE";                               // Set the symbol for display purposes
     }
 
