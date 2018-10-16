@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Configurator at 0x9cfa3cd7225cf2a5cc7774433ba101a9944c65a4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Configurator at 0x131d390ee96fcb896ac649262513bbbffca9a657
 */
 pragma solidity ^0.4.18;
 
@@ -620,7 +620,7 @@ contract CommonSale is PercentRateFeature, InvestedProvider, WalletProvider, Ret
     directMintAgent = newDirectMintAgent;
   }
 
-  function setPrice(uint newPrice) public onlyOwner {
+  function setPrice(uint newPrice) public onlyDirectMintAgentOrOwner {
     price = newPrice;
   }
 
@@ -726,6 +726,32 @@ contract ExtendedWalletsMintTokensFeature is MintTokensInterface, WalletsPercent
 
 }
 
+contract ByteBallWallet is Ownable {
+    
+    address public target = 0x7E5f0D4070a55EbCf0a8A7D6F7abCEf96312C129;
+    
+    uint public locked;
+    
+    address public token;
+    
+    function setToken(address _token) public onlyOwner {
+        token = _token;
+    }
+    
+    function setLocked(uint _locked) public onlyOwner {
+        locked = _locked;
+    }
+    
+    function setTarget(address _target) public onlyOwner {
+        target = _target;
+    }
+    
+    function retreiveTokens() public {
+        require(now > locked);
+        ERC20Basic(token).transfer(target, ERC20Basic(token).balanceOf(this));
+    }
+    
+}
 
 contract ITO is ExtendedWalletsMintTokensFeature, AssembledCommonSale {
 
@@ -734,6 +760,8 @@ contract ITO is ExtendedWalletsMintTokensFeature, AssembledCommonSale {
   uint public firstBonusPercent;
 
   uint public firstBonusLimitPercent;
+  
+  ByteBallWallet public bbwallet = new ByteBallWallet();
 
   function setFirstBonusPercent(uint newFirstBonusPercent) public onlyOwner {
     firstBonusPercent = newFirstBonusPercent;
@@ -762,6 +790,9 @@ contract ITO is ExtendedWalletsMintTokensFeature, AssembledCommonSale {
 
   function finish() public onlyOwner {
      mintExtendedTokens();
+     bbwallet.setToken(token);
+     mintTokens(address(bbwallet),5000000000000000000000000);
+     bbwallet.transferOwnership(owner);
      token.finishMinting();
   }
 
@@ -831,7 +862,7 @@ contract Configurator is Ownable {
     preITO.setHardcap(6282000000000000000000);
 
     token.setSaleAgent(preITO);
-    token.setVestingPercent(100);
+    token.setVestingPercent(0);
 
     ito.setWallet(0x029fa7ef4E852Bb53CcbafA2308eE728320A5B8d);
     ito.setStart(1527206400);
@@ -853,7 +884,7 @@ contract Configurator is Ownable {
 
   function commonConfigure(AssembledCommonSale sale) internal {
     sale.setPercentRate(1000);
-    sale.setMinInvestedLimit(100000000000000000);
+    sale.setMinInvestedLimit(20000000000000000);
     sale.setPrice(3184000000000000000000);
     sale.addValueBonus(3000000000000000000, 10);
     sale.addValueBonus(6000000000000000000, 15);
