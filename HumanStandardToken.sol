@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0x5fb1bbfbdbbb26e4d51a47b1765cc6272ebb31e4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HumanStandardToken at 0x4fac49d82d8ec3553fe8f0cdbdc0f921c59c37de
 */
 // Abstract contract for the full ERC 20 Token standard
 // https://github.com/ethereum/EIPs/issues/20
 pragma solidity ^0.4.8;
 
-contract Token {
+contract ERC20 {
     /* This is a slight change to the ERC20 base standard.
     function totalSupply() constant returns (uint256 supply);
     is replaced with:
@@ -59,7 +59,7 @@ If you deploy this, you won't have anything useful.)
 Implements ERC 20 Token standard: https://github.com/ethereum/EIPs/issues/20
 .*/
 
-contract StandardToken is Token {
+contract StandardToken is ERC20 {
 
     function transfer(address _to, uint256 _value) returns (bool success) {
         //Default assumes totalSupply can't be over max (2^256 - 1).
@@ -82,6 +82,7 @@ contract StandardToken is Token {
             balances[_from] -= _value;
             allowed[_from][msg.sender] -= _value;
             Transfer(_from, _to, _value);
+            
             return true;
         } else { return false; }
     }
@@ -124,17 +125,12 @@ contract HumanStandardToken is StandardToken {
     string public symbol;                 //An identifier: eg SBX
     string public version = 'H0.1';       //human 0.1 standard. Just an arbitrary versioning scheme.
 
-    function HumanStandardToken(
-        uint256 _initialAmount,
-        string _tokenName,
-        uint8 _decimalUnits,
-        string _tokenSymbol
-        ) {
-        balances[msg.sender] = _initialAmount;               // Give the creator all initial tokens
-        totalSupply = _initialAmount;                        // Update total supply
-        name = _tokenName;                                   // Set the name for display purposes
-        decimals = _decimalUnits;                            // Amount of decimals for display purposes
-        symbol = _tokenSymbol;                               // Set the symbol for display purposes
+    function HumanStandardToken() {
+        balances[msg.sender] = 5000000000*10**18;               // Give the creator all initial tokens
+        totalSupply = 5000000000*10**18;                        // Update total supply
+        name = "WeTube Network";                                // Set the name for display purposes
+        decimals = 18;                               // Amount of decimals for display purposes
+        symbol = "WNE";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
