@@ -1,7 +1,53 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CommitGoodToken at 0x5b55ba42721182ac52c1a231da5d6e66927952b2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CommitGoodToken at 0x1aD8e98a828D8c460e994F279E35fbE4cf213bA6
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.23;
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
+  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    if (a == 0) {
+      return 0;
+    }
+    c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    // uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return a / b;
+  }
+
+  /**
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  */
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  /**
+  * @dev Adds two numbers, throws on overflow.
+  */
+  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
+    c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
 
 /**
  * @title ERC20Basic
@@ -16,15 +62,26 @@ contract ERC20Basic {
 }
 
 /**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+/**
  * @title Basic token
  * @dev Basic version of StandardToken, with no allowances.
  */
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
 
-  mapping(address => uint256) balances;
+  mapping(address => uint256) public balances;
 
-  uint256 totalSupply_;
+  uint256 public totalSupply_;
 
   /**
   * @dev total number of tokens in existence
@@ -42,10 +99,9 @@ contract BasicToken is ERC20Basic {
     require(_to != address(0));
     require(_value <= balances[msg.sender]);
 
-    // SafeMath.sub will throw if there is not enough balance.
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
+    emit Transfer(msg.sender, _to, _value);
     return true;
   }
 
@@ -54,66 +110,8 @@ contract BasicToken is ERC20Basic {
   * @param _owner The address to query the the balance of.
   * @return An uint256 representing the amount owned by the passed address.
   */
-  function balanceOf(address _owner) public view returns (uint256 balance) {
+  function balanceOf(address _owner) public view returns (uint256) {
     return balances[_owner];
-  }
-
-}
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-
-  /**
-  * @dev Multiplies two numbers, throws on overflow.
-  */
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  /**
-  * @dev Integer division of two numbers, truncating the quotient.
-  */
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-  */
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  /**
-  * @dev Adds two numbers, throws on overflow.
-  */
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
   }
 }
 
@@ -127,7 +125,6 @@ library SafeMath {
 contract StandardToken is ERC20, BasicToken {
 
   mapping (address => mapping (address => uint256)) internal allowed;
-
 
   /**
    * @dev Transfer tokens from one address to another
@@ -143,7 +140,7 @@ contract StandardToken is ERC20, BasicToken {
     balances[_from] = balances[_from].sub(_value);
     balances[_to] = balances[_to].add(_value);
     allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-    Transfer(_from, _to, _value);
+    emit Transfer(_from, _to, _value);
     return true;
   }
 
@@ -159,7 +156,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function approve(address _spender, uint256 _value) public returns (bool) {
     allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
+    emit Approval(msg.sender, _spender, _value);
     return true;
   }
 
@@ -172,7 +169,7 @@ contract StandardToken is ERC20, BasicToken {
   function allowance(address _owner, address _spender) public view returns (uint256) {
     return allowed[_owner][_spender];
   }
-
+ 
   /**
    * @dev Increase the amount of tokens that an owner allowed to a spender.
    *
@@ -185,7 +182,7 @@ contract StandardToken is ERC20, BasicToken {
    */
   function increaseApproval(address _spender, uint _addedValue) public returns (bool) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
@@ -206,10 +203,9 @@ contract StandardToken is ERC20, BasicToken {
     } else {
       allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
     }
-    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
-
 }
 
 /**
@@ -220,15 +216,13 @@ contract StandardToken is ERC20, BasicToken {
 contract Ownable {
   address public owner;
 
-
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
 
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() public {
+  constructor() public {
     owner = msg.sender;
   }
 
@@ -246,27 +240,75 @@ contract Ownable {
    */
   function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
+    emit OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
-
 }
 
 /**
  * @title Commit Good token
  * @dev Commit Good ERC20 Token, that inherits from standard token.
  */
-contract CommitGoodToken is Ownable, StandardToken {
-	string public constant SYMBOL = "GOOD";
-	string public constant NAME = "GOOD";
-	uint8 public constant DECIMALS = 18;
+contract CommitGoodToken is StandardToken, Ownable {
+    using SafeMath for uint256;
 
-	uint256 public platformSupply = 100000000 * (10 ** uint256(DECIMALS));
-	uint256 public foundersSupply = 39900000 * (10 ** uint256(DECIMALS));
+    string public symbol = "GOOD";
+    string public name = "GOOD";
+    uint8 public decimals = 18;
 
-	function CommitGoodToken() public {
-		totalSupply_ = totalSupply_.add(platformSupply);
-		totalSupply_ = totalSupply_.add(foundersSupply);
-		balances[msg.sender] = totalSupply_;
-	}
+    uint256 public maxSupply = 200000000 * (10 ** uint256(decimals));
+    mapping (address => bool) public mintAgents;
+    bool public mintingFinished = false;
+
+    event MintAgentChanged(address indexed addr, bool state);
+    event Mint(address indexed to, uint256 amount);
+    event MintFinished();
+
+    modifier onlyMintAgent() {
+        require(mintAgents[msg.sender]);
+        _;
+    }
+
+    modifier canMint() {
+        require(!mintingFinished);
+        _;
+    }
+
+    modifier validAddress(address _addr) {
+        require(_addr != address(0));
+        require(_addr != address(this));
+        _;
+    }
+
+    /**
+     * @dev Owner can allow a contract to mint tokens.
+     */
+    function setMintAgent(address _addr, bool _state) public onlyOwner validAddress(_addr) {
+        mintAgents[_addr] = _state;
+        emit MintAgentChanged(_addr, _state);
+    }
+
+    /**
+     * @dev Function to mint tokens
+     * @param _addr The address that will receive the minted tokens.
+     * @param _amount The amount of tokens to mint.
+     * @return A boolean that indicates if the operation was successful.
+     */
+    function mint(address _addr, uint256 _amount) public onlyMintAgent canMint validAddress(_addr) returns (bool) {
+        totalSupply_ = totalSupply_.add(_amount);
+        balances[_addr] = balances[_addr].add(_amount);
+        emit Mint(_addr, _amount);
+        emit Transfer(address(0), _addr, _amount);
+        return true;
+    }
+
+    /**
+     * @dev Function to stop minting new tokens.
+     * @return True if the operation was successful.
+     */
+    function finishMinting() public onlyMintAgent canMint returns (bool) {
+        mintingFinished = true;
+        emit MintFinished();
+        return true;
+    }
 }
