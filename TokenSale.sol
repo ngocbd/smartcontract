@@ -1,38 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0x8198bd8449fa07757b0080e00fc2ee65ff102d9b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0x4434af2262d1868261cbda45352f611c8116b9f4
 */
-pragma solidity ^0.4.15;
-
-contract Controllable {
-  address public controller;
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender account.
-   */
-  function Controllable() public {
-    controller = msg.sender;
-  }
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyController() {
-    require(msg.sender == controller);
-    _;
-  }
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newController The address to transfer ownership to.
-   */
-  function transferControl(address newController) public onlyController {
-    if (newController != address(0)) {
-      controller = newController;
-    }
-  }
-
-}
+pragma solidity ^0.4.13;
 
 library SafeMath {
   function mul(uint256 a, uint256 b) internal constant returns (uint256) {
@@ -150,28 +119,27 @@ contract TokenSale is Pausable {
   uint256 public allocatedTokens;
 
   bool public finalized;
-
   bool public proofTokensAllocated;
-  address public proofMultiSig = 0x99892Ac6DA1b3851167Cb959fE945926bca89f09;
 
   uint256 public constant BASE_PRICE_IN_WEI = 88000000000000000;
+
   uint256 public constant PUBLIC_TOKENS = 1181031 * (10 ** 18);
   uint256 public constant TOTAL_PRESALE_TOKENS = 112386712924725508802400;
   uint256 public constant TOKENS_ALLOCATED_TO_PROOF = 1181031 * (10 ** 18);
 
-
+  address public constant PROOF_MULTISIG = 0x99892Ac6DA1b3851167Cb959fE945926bca89f09;
 
   uint256 public tokenCap = PUBLIC_TOKENS - TOTAL_PRESALE_TOKENS;
   uint256 public cap = tokenCap / (10 ** 18);
   uint256 public weiCap = cap * BASE_PRICE_IN_WEI;
 
-  uint256 public firstDiscountPrice = (BASE_PRICE_IN_WEI * 85) / 100;
-  uint256 public secondDiscountPrice = (BASE_PRICE_IN_WEI * 90) / 100;
-  uint256 public thirdDiscountPrice = (BASE_PRICE_IN_WEI * 95) / 100;
+  uint256 public firstCheckpointPrice = (BASE_PRICE_IN_WEI * 85) / 100;
+  uint256 public secondCheckpointPrice = (BASE_PRICE_IN_WEI * 90) / 100;
+  uint256 public thirdCheckpointPrice = (BASE_PRICE_IN_WEI * 95) / 100;
 
-  uint256 public firstDiscountCap = (weiCap * 5) / 100;
-  uint256 public secondDiscountCap = (weiCap * 10) / 100;
-  uint256 public thirdDiscountCap = (weiCap * 20) / 100;
+  uint256 public firstCheckpoint = (weiCap * 5) / 100;
+  uint256 public secondCheckpoint = (weiCap * 10) / 100;
+  uint256 public thirdCheckpoint = (weiCap * 20) / 100;
 
   bool public started = false;
 
@@ -182,7 +150,10 @@ contract TokenSale is Pausable {
   event LogInt(string _name, uint256 _value);
   event Finalized();
 
-  function TokenSale(address _tokenAddress, uint256 _startTime, uint256 _endTime) public {
+  function TokenSale(
+    address _tokenAddress,
+    uint256 _startTime,
+    uint256 _endTime) public {
     require(_tokenAddress != 0x0);
     require(_startTime > 0);
     require(_endTime > _startTime);
@@ -228,18 +199,18 @@ contract TokenSale is Pausable {
 
   /**
    * Get the price in wei for current premium
-   * @return price {uint256}
+   * @return price
    */
   function getPriceInWei() constant public returns (uint256) {
 
     uint256 price;
 
-    if (totalWeiRaised < firstDiscountCap) {
-      price = firstDiscountPrice;
-    } else if (totalWeiRaised < secondDiscountCap) {
-      price = secondDiscountPrice;
-    } else if (totalWeiRaised < thirdDiscountCap) {
-      price = thirdDiscountPrice;
+    if (totalWeiRaised < firstCheckpoint) {
+      price = firstCheckpointPrice;
+    } else if (totalWeiRaised < secondCheckpoint) {
+      price = secondCheckpointPrice;
+    } else if (totalWeiRaised < thirdCheckpoint) {
+      price = thirdCheckpointPrice;
     } else {
       price = BASE_PRICE_IN_WEI;
     }
@@ -251,7 +222,7 @@ contract TokenSale is Pausable {
   * Forwards funds to the tokensale wallet
   */
   function forwardFunds() internal {
-    proofMultiSig.transfer(msg.value);
+    PROOF_MULTISIG.transfer(msg.value);
   }
 
 
@@ -269,7 +240,7 @@ contract TokenSale is Pausable {
 
   /**
   * Returns the total Proof token supply
-  * @return totalSupply {uint256} Proof Token Total Supply
+  * @return total supply {uint256}
   */
   function totalSupply() public constant returns (uint256) {
     return proofToken.totalSupply();
@@ -277,8 +248,8 @@ contract TokenSale is Pausable {
 
   /**
   * Returns token holder Proof Token balance
-  * @param _owner {address} Token holder address
-  * @return balance {uint256} Corresponding token holder balance
+  * @param _owner {address}
+  * @return token balance {uint256}
   */
   function balanceOf(address _owner) public constant returns (uint256) {
     return proofToken.balanceOf(_owner);
@@ -286,7 +257,7 @@ contract TokenSale is Pausable {
 
   /**
   * Change the Proof Token controller
-  * @param _newController {address} New Proof Token controller
+  * @param _newController {address}
   */
   function changeController(address _newController) public {
     require(isContract(_newController));
@@ -298,6 +269,7 @@ contract TokenSale is Pausable {
     if (now < endTime) {
       require(msg.sender == owner);
     }
+
     proofToken.enableTransfers(true);
   }
 
@@ -314,15 +286,27 @@ contract TokenSale is Pausable {
     proofToken.enableMasterTransfers(false);
   }
 
-  function forceStart() public onlyOwner {
-    started = true;
+  function isContract(address _addr) constant internal returns(bool) {
+      uint size;
+      if (_addr == 0)
+        return false;
+      assembly {
+          size := extcodesize(_addr)
+      }
+      return size>0;
   }
 
+  /**
+  * Allocates Proof tokens to the given Proof Token wallet
+  */
   function allocateProofTokens() public onlyOwner whenNotFinalized {
-    proofToken.mint(proofMultiSig, TOKENS_ALLOCATED_TO_PROOF);
+    proofToken.mint(PROOF_MULTISIG, TOKENS_ALLOCATED_TO_PROOF);
     proofTokensAllocated = true;
   }
 
+  /**
+  * Finalize the token sale (can only be called by owner)
+  */
   function finalize() public onlyOwner {
     require(paused);
     require(proofTokensAllocated);
@@ -334,20 +318,44 @@ contract TokenSale is Pausable {
     finalized = true;
   }
 
-
-  function isContract(address _addr) constant internal returns(bool) {
-    uint size;
-    if (_addr == 0)
-      return false;
-    assembly {
-        size := extcodesize(_addr)
-    }
-    return size>0;
+  function forceStart() public onlyOwner {
+    started = true;
   }
 
   modifier whenNotFinalized() {
-    require(!finalized);
+    require(!paused);
     _;
+  }
+
+}
+
+contract Controllable {
+  address public controller;
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender account.
+   */
+  function Controllable() public {
+    controller = msg.sender;
+  }
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyController() {
+    require(msg.sender == controller);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newController The address to transfer ownership to.
+   */
+  function transferControl(address newController) public onlyController {
+    if (newController != address(0)) {
+      controller = newController;
+    }
   }
 
 }
