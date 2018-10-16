@@ -1,14 +1,20 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Registry at 0xc711492effeaf8fb2488074c2ad27d7abcfba6c2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Registry at 0xfd98d04b4935ad0e477f3fb41e0f61adc7647530
 */
 pragma solidity ^0.4.18;
 
- contract Ownable {
+
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
   address public owner;
 
 
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
 
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
@@ -38,56 +44,152 @@ pragma solidity ^0.4.18;
 
 }
 
-// @title Register for contract names.
+/*
+ * Manager that stores permitted addresses 
+ */
+contract PermissionManager is Ownable {
+    mapping (address => bool) permittedAddresses;
+
+    function addAddress(address newAddress) public onlyOwner {
+        permittedAddresses[newAddress] = true;
+    }
+
+    function removeAddress(address remAddress) public onlyOwner {
+        permittedAddresses[remAddress] = false;
+    }
+
+    function isPermitted(address pAddress) public view returns(bool) {
+        if (permittedAddresses[pAddress]) {
+            return true;
+        }
+        return false;
+    }
+}
+
 contract Registry is Ownable {
-	struct Record {
-		address contractAddress;
 
-		// note: IPFS hash is stored as Base58 decoded hex value, with the first two bytes removed
-		// (0x1220), see https://ethereum.stackexchange.com/questions/17094/how-to-store-ipfs-hash-using-bytes
-		bytes32 ipfsHash;
-	}
-	
-	//namelist for exporting mapping
-	bytes32[] public namelist;
+  struct ContributorData {
+    bool isActive;
+    uint contributionETH;
+    uint contributionUSD;
+    uint tokensIssued;
+    uint quoteUSD;
+    uint contributionRNTB;
+  }
+  mapping(address => ContributorData) public contributorList;
+  mapping(uint => address) private contributorIndexes;
 
-	// publicly available register
-	mapping (bytes32 => Record) public registry;
+  uint private nextContributorIndex;
 
-	// event for update function
-	event RegistryUpdated(bytes32 _name, address _address, bytes32 _ipfsHash);
+  /* Permission manager contract */
+  PermissionManager public permissionManager;
 
-	// events for getting data into JS
-	event GetRecord(bytes32 _name, address contractAddress, bytes32 ipfsHash);
+  bool public completed;
 
-	// get namelist length for exporting mapping
-	function getNamelistLength() public view returns(uint namelistLength) {
-		return namelist.length;
-	}
-	
-	// get addeess from name
-	function getAddress(bytes32 _name) public view returns(address) {
-		Record memory record = registry[keccak256(_name)];
-		// return event so we can use JS
-		GetRecord(_name, record.contractAddress, record.ipfsHash);
-		return record.contractAddress;
-	}
+  modifier onlyPermitted() {
+    require(permissionManager.isPermitted(msg.sender));
+    _;
+  }
 
-	// get ipfs hash from name
-	function getIPFSHash(bytes32 _name) public view returns(bytes32) {
-		Record memory record = registry[keccak256(_name)];
-		// return event so we can use JS
-		GetRecord(_name, record.contractAddress, record.ipfsHash);
-		return record.ipfsHash;
-	}
+  event ContributionAdded(address _contributor, uint overallEth, uint overallUSD, uint overallToken, uint quote);
+  event ContributionEdited(address _contributor, uint overallEth, uint overallUSD,  uint overallToken, uint quote);
+  function Registry(address pManager) public {
+    permissionManager = PermissionManager(pManager); 
+    completed = false;
+  }
 
-	// update address for name, or create new name->address mapping
-	function updateRegistry(bytes32 _name, address _address, bytes32 _ipfsHash) public onlyOwner {
-		require(_address != address(0x0));
-		if (registry[keccak256(_name)].contractAddress == 0) {
-			namelist.push(_name);
-		}
-		registry[keccak256(_name)] = Record(_address, _ipfsHash);
-		RegistryUpdated(_name, _address, _ipfsHash);
-	}
+  function setPermissionManager(address _permadr) public onlyOwner {
+    require(_permadr != 0x0);
+    permissionManager = PermissionManager(_permadr);
+  }
+
+  function isActiveContributor(address contributor) public view returns(bool) {
+    return contributorList[contributor].isActive;
+  }
+
+  function removeContribution(address contributor) public onlyPermitted {
+    contributorList[contributor].isActive = false;
+  }
+
+  function setCompleted(bool compl) public onlyPermitted {
+    completed = compl;
+  }
+
+  function addContribution(address _contributor, uint _amount, uint _amusd, uint _tokens, uint _quote ) public onlyPermitted {
+    
+    if (contributorList[_contributor].isActive == false) {
+        contributorList[_contributor].isActive = true;
+        contributorList[_contributor].contributionETH = _amount;
+        contributorList[_contributor].contributionUSD = _amusd;
+        contributorList[_contributor].tokensIssued = _tokens;
+        contributorList[_contributor].quoteUSD = _quote;
+
+        contributorIndexes[nextContributorIndex] = _contributor;
+        nextContributorIndex++;
+    } else {
+      contributorList[_contributor].contributionETH += _amount;
+      contributorList[_contributor].contributionUSD += _amusd;
+      contributorList[_contributor].tokensIssued += _tokens;
+      contributorList[_contributor].quoteUSD = _quote;
+    }
+    ContributionAdded(_contributor, contributorList[_contributor].contributionETH, contributorList[_contributor].contributionUSD, contributorList[_contributor].tokensIssued, contributorList[_contributor].quoteUSD);
+  }
+
+  function editContribution(address _contributor, uint _amount, uint _amusd, uint _tokens, uint _quote) public onlyPermitted {
+    if (contributorList[_contributor].isActive == true) {
+        contributorList[_contributor].contributionETH = _amount;
+        contributorList[_contributor].contributionUSD = _amusd;
+        contributorList[_contributor].tokensIssued = _tokens;
+        contributorList[_contributor].quoteUSD = _quote;
+    }
+     ContributionEdited(_contributor, contributorList[_contributor].contributionETH, contributorList[_contributor].contributionUSD, contributorList[_contributor].tokensIssued, contributorList[_contributor].quoteUSD);
+  }
+
+  function addContributor(address _contributor, uint _amount, uint _amusd, uint _tokens, uint _quote) public onlyPermitted {
+    contributorList[_contributor].isActive = true;
+    contributorList[_contributor].contributionETH = _amount;
+    contributorList[_contributor].contributionUSD = _amusd;
+    contributorList[_contributor].tokensIssued = _tokens;
+    contributorList[_contributor].quoteUSD = _quote;
+    contributorIndexes[nextContributorIndex] = _contributor;
+    nextContributorIndex++;
+    ContributionAdded(_contributor, contributorList[_contributor].contributionETH, contributorList[_contributor].contributionUSD, contributorList[_contributor].tokensIssued, contributorList[_contributor].quoteUSD);
+ 
+  }
+
+  function getContributionETH(address _contributor) public view returns (uint) {
+      return contributorList[_contributor].contributionETH;
+  }
+
+  function getContributionUSD(address _contributor) public view returns (uint) {
+      return contributorList[_contributor].contributionUSD;
+  }
+
+  function getContributionRNTB(address _contributor) public view returns (uint) {
+      return contributorList[_contributor].contributionRNTB;
+  }
+
+  function getContributionTokens(address _contributor) public view returns (uint) {
+      return contributorList[_contributor].tokensIssued;
+  }
+
+  function addRNTBContribution(address _contributor, uint _amount) public onlyPermitted {
+    if (contributorList[_contributor].isActive == false) {
+        contributorList[_contributor].isActive = true;
+        contributorList[_contributor].contributionRNTB = _amount;
+        contributorIndexes[nextContributorIndex] = _contributor;
+        nextContributorIndex++;
+    } else {
+      contributorList[_contributor].contributionETH += _amount;
+    }
+  }
+
+  function getContributorByIndex(uint index) public view  returns (address) {
+      return contributorIndexes[index];
+  }
+
+  function getContributorAmount() public view returns(uint) {
+      return nextContributorIndex;
+  }
+
 }
