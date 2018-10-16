@@ -1,6 +1,27 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AllocatedCrowdsale at 0x926b798419490cd887a76be8762eb3986081aa87
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AllocatedCrowdsale at 0x170c9d5638a504a271912a374a27c85a88ed2be9
 */
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
+
+
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
+
+
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
+
+
 /**
  * Safe unsigned safe math.
  *
@@ -34,6 +55,12 @@ library SafeMathLib {
     if (!assertion) throw;
   }
 }
+
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
 
 
 
@@ -101,6 +128,12 @@ contract Haltable is Ownable {
 
 }
 
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
+
 
 /**
  * Interface for defining crowdsale pricing.
@@ -121,18 +154,33 @@ contract PricingStrategy {
   }
 
   /**
+   * @dev Pricing tells if this is a presale purchase or not.
+     @param purchaser Address of the purchaser
+     @return False by default, true if a presale purchaser
+   */
+  function isPresalePurchase(address purchaser) public constant returns (bool) {
+    return false;
+  }
+
+  /**
    * When somebody tries to buy tokens for X eth, calculate how many tokens they get.
    *
    *
    * @param value - What is the value of the transaction send in as wei
    * @param tokensSold - how much tokens have been sold this far
-   * @param weiRaised - how much money has been raised this far
+   * @param weiRaised - how much money has been raised this far in the main token sale - this number excludes presale
    * @param msgSender - who is the investor of this transaction
    * @param decimals - how many decimal units the token has
    * @return Amount of tokens the investor receives
    */
   function calculatePrice(uint value, uint weiRaised, uint tokensSold, address msgSender, uint decimals) public constant returns (uint tokenAmount);
 }
+
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
 
 
 /**
@@ -159,6 +207,12 @@ contract FinalizeAgent {
   function finalizeCrowdsale();
 
 }
+
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
 
 
 
@@ -236,6 +290,9 @@ contract Crowdsale is Haltable {
 
   /* How many wei of funding we have raised */
   uint public weiRaised = 0;
+
+  /* Calculate incoming funds from presale contracts and addresses */
+  uint public presaleWeiRaised = 0;
 
   /* How many distinct addresses have invested */
   uint public investorCount = 0;
@@ -368,7 +425,9 @@ contract Crowdsale is Haltable {
     }
 
     uint weiAmount = msg.value;
-    uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised, tokensSold, msg.sender, token.decimals());
+
+    // Account presale sales separately, so that they do not count against pricing tranches
+    uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised - presaleWeiRaised, tokensSold, msg.sender, token.decimals());
 
     if(tokenAmount == 0) {
       // Dust transaction
@@ -388,6 +447,9 @@ contract Crowdsale is Haltable {
     weiRaised = weiRaised.plus(weiAmount);
     tokensSold = tokensSold.plus(tokenAmount);
 
+    if(pricingStrategy.isPresalePurchase(receiver)) {
+        presaleWeiRaised = presaleWeiRaised.plus(weiAmount);
+    }
 
     // Check that we did not bust the cap
     if(isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold)) {
@@ -401,7 +463,6 @@ contract Crowdsale is Haltable {
 
     // Tell us invest was success
     Invested(receiver, weiAmount, tokenAmount, customerId);
-
   }
 
   /**
@@ -736,7 +797,7 @@ contract AllocatedCrowdsale is Crowdsale {
   /* The party who holds the full token pool and has approve()'ed tokens for this crowdsale */
   address public beneficiary;
 
-  function AllocatedCrowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal, address _beneficiary) Crowdsale(_token, _pricingStrategy, _multisigWallet, _start, _end, _minimumFundingGoal) Crowdsale(_token, _pricingStrategy, _multisigWallet, _start, _end, _minimumFundingGoal) {
+  function AllocatedCrowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal, address _beneficiary) Crowdsale(_token, _pricingStrategy, _multisigWallet, _start, _end, _minimumFundingGoal) {
     beneficiary = _beneficiary;
   }
 
