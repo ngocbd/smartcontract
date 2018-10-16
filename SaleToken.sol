@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SaleToken at 0xfff18893bc6c430741b3c5ad483391a5e21220bb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SaleToken at 0xacc7b96cc84e52a864c0b53c56a29e5ef0b340c9
 */
 pragma solidity ^0.4.13;
 
@@ -9,7 +9,7 @@ pragma solidity ^0.4.13;
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     if (a == 0) {
       return 0;
     }
@@ -18,19 +18,19 @@ library SafeMath {
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
@@ -178,6 +178,7 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
+
 /**
  * @title Ownable
  * @dev The Ownable contract has an owner address, and provides basic authorization control
@@ -194,7 +195,7 @@ contract Ownable {
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() {
+  function Ownable() public {
     owner = msg.sender;
   }
 
@@ -212,7 +213,7 @@ contract Ownable {
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) onlyOwner public {
+  function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));
     OwnershipTransferred(owner, newOwner);
     owner = newOwner;
@@ -292,21 +293,19 @@ contract BurnableToken is StandardToken {
 contract SaleToken is MintableToken, BurnableToken {
     using SafeMath for uint256;
 
-    uint256 public price = 400000000000000;
-    string public constant symbol = "VVC";
-    string public constant name = "VivaCoin";
+    uint256 public price = 300000000000000000;
+    string public constant symbol = "BST";
+    string public constant name = "BlockShow Token";
     uint8 public constant decimals = 18;
     uint256 constant level = 10 ** uint256(decimals);
-    uint256 public totalSupply = 1000000 * level;
+    uint256 public totalSupply = 10000 * level;
 
-    event Payment(uint256 _give, uint256 _get);
-
-    function setPrice(uint256 newPrice) onlyOwner {
+    function setPrice(uint256 newPrice) public onlyOwner {
         price = newPrice;
     }
 
     // Constructor
-    function SaleToken() {
+    function SaleToken() public {
         owner = msg.sender;
         balances[owner] = totalSupply;
     }
@@ -316,11 +315,11 @@ contract SaleToken is MintableToken, BurnableToken {
     *
     * The function without name is the default function that is called whenever anyone sends funds to a contract
     */
-    function() payable {
+    function() public payable {
         buyTo(msg.sender);
     }
 
-    function buyTo(address _to) payable {
+    function buyTo(address _to) public payable {
         uint256 etherGive = msg.value;
         uint256 tokenGet = (etherGive * level).div(price);
 
@@ -331,7 +330,7 @@ contract SaleToken is MintableToken, BurnableToken {
         balances[owner] = balances[owner].sub(tokenGet);
         balances[_to] = balances[_to].add(tokenGet);
 
-        Payment(etherGive, tokenGet);
+        Transfer(owner, _to, tokenGet);
         owner.transfer(etherGive);
     }
 }
