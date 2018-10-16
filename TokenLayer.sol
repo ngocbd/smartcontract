@@ -1,34 +1,34 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenLayer at 0x679732680cc84afc00876b6ab813920dbb74506e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenLayer at 0xc8f0fcc41b3364a770e7ef1bbd22e2fc768c6e87
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
 library SafeMath {
 
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
+        }
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
     }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a / b;
-    return c;
-  }
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a / b;
+        return c;
+    }
 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
 
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
 }
 
 contract ERC721 {
@@ -49,24 +49,24 @@ contract ERC721 {
 }
 
 contract Ownable {
-  address public owner;
+    address public owner;
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-  function Ownable() public {
-    owner = msg.sender;
-  }
+    function Ownable() public {
+        owner = msg.sender;
+    }
 
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
 
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0));
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
 }
 
 contract Manageable is Ownable {
@@ -130,7 +130,7 @@ contract TokenLayer is ERC721, Manageable {
 
     using SafeMath for uint256;
 
-/********************************************** EVENTS **********************************************/
+    /********************************************** EVENTS **********************************************/
     event TokenCreated(uint256 tokenId, bytes32 name, uint256 parentId, address owner);
     event TokenDeleted(uint256 tokenId);
 
@@ -145,9 +145,8 @@ contract TokenLayer is ERC721, Manageable {
     event ParentChanged(uint256 tokenId, uint256 oldParentId, uint256 newParentId);
     event NameChanged(uint256 tokenId, bytes32 oldName, bytes32 newName);
     event MetaDataChanged(uint256 tokenId, bytes32 oldMeta, bytes32 newMeta);
-/****************************************************************************************************/
 
-/******************************************** STORAGE ***********************************************/
+    /******************************************** STORAGE ***********************************************/
     uint256 private constant DEFAULTPARENT = 123456789;
 
     mapping (uint256 => Token)   private tokenIndexToToken;
@@ -171,33 +170,30 @@ contract TokenLayer is ERC721, Manageable {
         uint256 parentId;
         uint256 price;
     }
-/****************************************************************************************************/
 
-/******************************************* MODIFIERS **********************************************/
+    /******************************************* MODIFIERS **********************************************/
     modifier onlySystem() {
         require((msg.sender == gameAddress) || (msg.sender == manager));
         _;
     }
-/****************************************************************************************************/
 
-/****************************************** CONSTRUCTOR *********************************************/
+    /****************************************** CONSTRUCTOR *********************************************/
     function TokenLayer(address _gameAddress, address _parentAddr) public {
         gameAddress = _gameAddress;
         parentAddr = _parentAddr;
     }
-/****************************************************************************************************/
 
-/********************************************** PUBLIC **********************************************/
+    /********************************************** PUBLIC **********************************************/
     function implementsERC721() public pure returns (bool) {
         return true;
     }
 
     function name() public pure returns (string) {
-        return "CryptoCities";
+        return "CryptoJintori";
     }
 
     function symbol() public pure returns (string) {
-        return "ResourceToken";
+        return "CastleToken";
     }
 
     function approve(address _to, uint256 _tokenId, address _from) public onlySystem {
@@ -362,9 +358,8 @@ contract TokenLayer is ERC721, Manageable {
     function exists(uint256 _tokenId) public view returns(bool) {
         return (tokenIndexToToken[_tokenId].exists);
     }
-/****************************************************************************************************/
 
-/********************************************** SETTERS *********************************************/
+    /********************************************** SETTERS *********************************************/
     function setLayerParent(address _parent) public onlyAdmin {
         parentAddr = _parent;
     }
@@ -412,9 +407,8 @@ contract TokenLayer is ERC721, Manageable {
     function setChainFees(uint256[10] _chainFees) public onlyAdmin {
         chainFees = _chainFees;
     }
-/****************************************************************************************************/
 
-/********************************************** GETTERS *********************************************/
+    /********************************************** GETTERS *********************************************/
     function getToken(uint256 _tokenId) public view returns
     (
         bytes32 tokenName, uint256 parentId, uint256 price,
@@ -492,9 +486,8 @@ contract TokenLayer is ERC721, Manageable {
             return(result);
         }
     }
-/****************************************************************************************************/
 
-/******************************************** PRIVATE ***********************************************/
+    /******************************************** PRIVATE ***********************************************/
     function _addressNotNull(address _to) private pure returns (bool) {
         return _to != address(0);
     }
