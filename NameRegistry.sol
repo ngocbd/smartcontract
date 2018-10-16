@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NameRegistry at 0x0f3dce8560a6010de119396af005552b7983b7e7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NameRegistry at 0xd181c1808e3f010f0f0aabc6fe1bce2025db7bb7
 */
 /*
   Copyright 2017 Loopring Project Ltd (Loopring Foundation).
@@ -211,7 +211,7 @@ contract NameRegistry {
         returns (bytes12 result)
     {
         assembly {
-            result := mload(add(str, 12))
+            result := mload(add(str, 32))
         }
     }
 }
