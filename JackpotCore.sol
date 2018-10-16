@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JackpotCore at 0xae29b64aa24dc777cb234d8d0f29893f699800f4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JackpotCore at 0x5de6d95fcf667e79533b64b8652675f3adaf4825
 */
 pragma solidity 0.4.20;
 
