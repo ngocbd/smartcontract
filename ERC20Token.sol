@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x73a8be0a634b2e7a41a33b7898d9822749833920
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x940cf8360f4a8d9c2e994c070d86bfa7e14bb321
 */
 pragma solidity ^0.4.19;
 
@@ -121,9 +121,9 @@ contract ERC20Token is StandardToken {
         ) {
         balances[msg.sender] = 100000000000000000000000;               // Give the creator all initial tokens (100000 for example)
         totalSupply = 100000000000000000000000;                        // Update total supply (100000 for example)
-        name = "NecronomiCoin";                                   // Set the name for display purposes
+        name = "CthulhuCoin";                                   // Set the name for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
-        symbol = "NCRO";                               // Set the symbol for display purposes
+        symbol = "RLYH";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
