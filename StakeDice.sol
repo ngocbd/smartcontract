@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StakeDice at 0x4420974a2d98b8b5ee990fc4b32ca66b1c184100
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StakeDice at 0xe4bfe227dd8d0de90a1061747f6fb6a0b3b83561
 */
 pragma solidity ^0.4.19;
 
@@ -769,6 +769,8 @@ contract usingOraclize {
 
     function oraclize_newRandomDSQuery(uint _delay, uint _nbytes, uint _customGasLimit) internal returns (bytes32){
         if ((_nbytes == 0)||(_nbytes > 32)) throw;
+	// Convert from seconds to ledger timer ticks
+        _delay *= 10; 
         bytes memory nbytes = new bytes(1);
         nbytes[0] = byte(_nbytes);
         bytes memory unonce = new bytes(32);
@@ -780,12 +782,36 @@ contract usingOraclize {
             mstore(sessionKeyHash, 0x20)
             mstore(add(sessionKeyHash, 0x20), sessionKeyHash_bytes32)
         }
-        bytes[3] memory args = [unonce, nbytes, sessionKeyHash];
-        bytes32 queryId = oraclize_query(_delay, "random", args, _customGasLimit);
-        oraclize_randomDS_setCommitment(queryId, sha3(bytes8(_delay), args[1], sha256(args[0]), args[2]));
+        bytes memory delay = new bytes(32);
+        assembly { 
+            mstore(add(delay, 0x20), _delay) 
+        }
+        
+        bytes memory delay_bytes8 = new bytes(8);
+        copyBytes(delay, 24, 8, delay_bytes8, 0);
+
+        bytes[4] memory args = [unonce, nbytes, sessionKeyHash, delay];
+        bytes32 queryId = oraclize_query("random", args, _customGasLimit);
+        
+        bytes memory delay_bytes8_left = new bytes(8);
+        
+        assembly {
+            let x := mload(add(delay_bytes8, 0x20))
+            mstore8(add(delay_bytes8_left, 0x27), div(x, 0x100000000000000000000000000000000000000000000000000000000000000))
+            mstore8(add(delay_bytes8_left, 0x26), div(x, 0x1000000000000000000000000000000000000000000000000000000000000))
+            mstore8(add(delay_bytes8_left, 0x25), div(x, 0x10000000000000000000000000000000000000000000000000000000000))
+            mstore8(add(delay_bytes8_left, 0x24), div(x, 0x100000000000000000000000000000000000000000000000000000000))
+            mstore8(add(delay_bytes8_left, 0x23), div(x, 0x1000000000000000000000000000000000000000000000000000000))
+            mstore8(add(delay_bytes8_left, 0x22), div(x, 0x10000000000000000000000000000000000000000000000000000))
+            mstore8(add(delay_bytes8_left, 0x21), div(x, 0x100000000000000000000000000000000000000000000000000))
+            mstore8(add(delay_bytes8_left, 0x20), div(x, 0x1000000000000000000000000000000000000000000000000))
+
+        }
+        
+        oraclize_randomDS_setCommitment(queryId, sha3(delay_bytes8_left, args[1], sha256(args[0]), args[2]));
         return queryId;
     }
-
+    
     function oraclize_randomDS_setCommitment(bytes32 queryId, bytes32 commitment) internal {
         oraclize_randomDS_args[queryId] = commitment;
     }
@@ -878,7 +904,9 @@ contract usingOraclize {
 
     function matchBytes32Prefix(bytes32 content, bytes prefix, uint n_random_bytes) internal returns (bool){
         bool match_ = true;
-        
+	
+	if (prefix.length != n_random_bytes) throw;
+	        
         for (uint256 i=0; i< n_random_bytes; i++) {
             if (content[i] != prefix[i]) match_ = false;
         }
@@ -1145,6 +1173,11 @@ contract StakeDice is usingOraclize
     
     address[] public allPlayers;
     mapping(address => uint256) public playersToTotalBets;
+    mapping(address => uint256[]) public playersToBetIndices;
+    function playerAmountOfBets(address _player) external view returns (uint256)
+    {
+        return playersToBetIndices[_player].length;
+    }
     
     function totalUniquePlayers() external view returns (uint256)
     {
@@ -1190,7 +1223,7 @@ contract StakeDice is usingOraclize
         // Request a random number from oraclize
         uint N = 4; // number of random bytes we want the datasource to return
         uint delay = 0; // number of seconds to wait before the execution takes place
-        uint callbackGas = 90000; // amount of gas we want Oraclize to set for the callback function
+        uint callbackGas = 85000; // amount of gas we want Oraclize to set for the callback function
         bytes32 queryId = oraclize_newRandomDSQuery(delay, N, callbackGas); // this function internally generates the correct oraclize_query and returns its queryId
         
         // Calculate how much the gambler might win
@@ -1199,6 +1232,7 @@ contract StakeDice is usingOraclize
         // Store the bet
         BetPlaced(_gambler, bets.length);
         oraclizeQueryIdsToBetIndices[queryId] = bets.length;
+        playersToBetIndices[_gambler].push(bets.length);
         bets.push(Bet({gambler: _gambler, winningChance: _winningChance, betAmount: _amount, potentialRevenue: potentialRevenue, roll: 0, status: BetStatus.IN_PROGRESS}));
         
         // Update statistics
