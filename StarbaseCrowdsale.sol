@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StarbaseCrowdsale at 0xc9a37f947422f03162a6a8f3e9583613513324b3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract StarbaseCrowdsale at 0x7e0899a5ccd8ec95a2ce17b4d2cda110ffa0176d
 */
 pragma solidity ^0.4.13;
 
@@ -767,6 +767,19 @@ contract StarbaseCrowdsale is Ownable {
         address company = starbaseToken.company();
         require(company != address(0));
         company.transfer(this.balance);
+    }
+
+    /**
+     * @dev Update start block Number for the crowdsale
+     */
+    function updatePurchaseStartBlock(uint256 _purchaseStartBlock)
+        external
+        onlyFundraiser
+        returns (bool)
+    {
+        require(startDate == 0);
+        purchaseStartBlock = _purchaseStartBlock;
+        return true;
     }
 
     /**
