@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x1f5c51139298b224fb2dfe371cc95177aba7d246
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xbbb85928a6a5acbde41b0b0c5f3b73bb009de3b4
 */
 pragma solidity ^0.4.21;
 
@@ -37,47 +37,23 @@ library SafeMath {
     return c;
   }
 }
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
+ 
 
-contract Ownable {
-  address public owner;
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    emit OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-contract TokenERC20 is Ownable {
+contract TokenERC20   {
 	
     using SafeMath for uint256;
     
-    string public constant name       = "BasicValueQuest";
-    string public constant symbol     = "BVQ";
+    string public constant name       = "Alpha Data System Chain";
+    string public constant symbol     = "ADSChain";
     uint32 public constant decimals   = 18;
     uint256 public totalSupply;
-
+ 
     mapping(address => uint256) balances;
 	mapping(address => mapping (address => uint256)) internal allowed;
-
-	
-
+ 
 	event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
-
+	event Burn(address indexed burner, uint256 value);   
 	
 	function TokenERC20(
         uint256 initialSupply
@@ -139,16 +115,26 @@ contract TokenERC20 is Ownable {
 	}
 	
 	function getBalance(address _a) internal constant returns(uint256) {
-
+ 
             return balances[_a];
-       
+ 
     }
     
     function balanceOf(address _owner) public view returns (uint256 balance) {
         return getBalance( _owner );
     }
 	
-
  
-	
+	function burn(uint256 _value)  public  {
+		_burn(msg.sender, _value);
+	}
+
+	function _burn(address _who, uint256 _value) internal {
+		require(_value <= balances[_who]);
+		balances[_who] = balances[_who].sub(_value);
+		totalSupply = totalSupply.sub(_value);
+		emit Burn(_who, _value);
+		emit Transfer(_who, address(0), _value);
+	}
+ 	
 }
