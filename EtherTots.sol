@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherTots at 0x25ea302afd1e9ca629ebb2ea97146152ee9fab96
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherTots at 0xdb29bf190a4e6db3eab958f9614c4404906a2530
 */
 pragma solidity ^0.4.18; // solhint-disable-line
 
@@ -134,8 +134,8 @@ contract EtherTots is ERC721 {
   }
 
   /// @dev Creates a new Tot with the given name.
-  function createContractTot(string _name, uint256 _price) public onlyCOO {
-    _createTot(_name, ceoAddress, _price);
+  function createContractTot(string _name) public onlyCOO {
+    _createTot(_name, address(this), startingPrice);
   }
 
   /// @notice Returns all the relevant information about a specific tot.
