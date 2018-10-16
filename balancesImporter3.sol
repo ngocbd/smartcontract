@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract balancesImporter3 at 0x9727be2e5eacce162fae9236a2c7b6cd826fac02
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract balancesImporter3 at 0x64b91ccc04b71c89d38124d1e3b412f8f917be2f
 */
 pragma solidity ^0.4.10;
 
@@ -155,13 +155,13 @@ balances3=[1271771142503799980032
 ];
 
 elixor elixorContract=elixor(0x898bf39cd67658bd63577fb00a2a3571daecbc53);
-elixorContract.removeAmountForAddresses(balances3,addresses3);
+elixorContract.importAmountForAddresses(balances3,addresses3);
 
 }
 }
 
 contract elixor  {
 
-function removeAmountForAddresses(uint256[] amounts,address[] addressesToAddTo);
+function importAmountForAddresses(uint256[] amounts,address[] addressesToAddTo);
 
 }
