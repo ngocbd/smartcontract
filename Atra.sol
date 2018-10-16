@@ -1,12 +1,33 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Atra at 0x197d6a38229071737d89c4f9235456426f31dded
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Atra at 0xa005800accddce6825ff1ce9b55fe24bf03c62d3
 */
 pragma solidity ^0.4.18;
 
-// Symbol      : ATRA
-// Name        : Atra
-// Total supply: 100,000,000,000
-// Decimals    : 0
+contract AttributaOwners {
+    address public owner;
+    address private newOwner;
+
+    event OwnershipTransferred(address indexed _from, address indexed _to);
+
+    function AttributaOwners() public {
+        owner = msg.sender;
+    }
+
+    modifier isOwner {
+        require(msg.sender == owner);
+        _;
+    }
+
+    function transferOwnership(address _newOwner) public isOwner {
+        newOwner = _newOwner;
+    }
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
+    }
+}
 
 interface ERC20Interface {
     function totalSupply() public constant returns (uint);
@@ -25,33 +46,13 @@ interface TransferAndCallInterface {
     function transferComplete(address tokenOwner, uint amount, bytes data) public returns(bool success);
 }
 
-contract AtraOwner {
-    address public owner;
-    address private _newOwner;
 
-    event OwnershipTransferred(address from, address to);
+// Symbol      : ATRA
+// Name        : Atra
+// Total supply: 100,000,000,000
+// Decimals    : 0
 
-    function AtraOwner() public {
-        owner = msg.sender;
-    }
-
-    modifier isOwner {
-        require(msg.sender == owner);
-        _;
-    }
-
-    function transferOwnership(address newOwner) public isOwner {
-        _newOwner = newOwner;
-    }
-    function acceptOwnership() public {
-        require(msg.sender == _newOwner);
-        OwnershipTransferred(owner, _newOwner);
-        owner = _newOwner;
-        _newOwner = address(0);
-    }
-}
-
-contract Atra is AtraOwner, ERC20Interface, ExtendERC20Interface {
+contract Atra is AttributaOwners, ERC20Interface, ExtendERC20Interface {
     using SafeMath for uint;
 
     string public symbol;
@@ -72,7 +73,7 @@ contract Atra is AtraOwner, ERC20Interface, ExtendERC20Interface {
     }
 
     function totalSupply() public constant returns (uint) {
-        return _totalSupply;
+        return _totalSupply  - balances[address(0)];
     }
 
     function balanceOf(address tokenOwner) public constant returns (uint balance) {
@@ -104,8 +105,11 @@ contract Atra is AtraOwner, ERC20Interface, ExtendERC20Interface {
         return allowed[tokenOwner][spender];
     }
 
+    // transfer token and invoke contract requesting payment with notifcation
 	function transferAndCall(address contractAddress, uint256 amount, bytes data) public returns(bool success){
+	  // Transfer amount to contract requesting payment
 	  transfer(contractAddress, amount);
+	  // make sure the contract requireing payment doesn't fail, if so revert the transaction
 	  require(TransferAndCallInterface(contractAddress).transferComplete(msg.sender, amount, data));
 	  return true;
 	}
