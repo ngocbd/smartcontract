@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenLib at 0x6d271cbF16be9E9D037DDA5F0dc507777bA27a1c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenLib at 0x5462311485a381621d6b768c28157c2a70cbb55e
 */
 pragma solidity ^0.4.18;
 
@@ -7,7 +7,7 @@ pragma solidity ^0.4.18;
  * @title TokenLib
  * @author Majoolr.io
  *
- * version 1.2.0
+ * version 1.2.1
  * Copyright (c) 2017 Majoolr, LLC
  * The MIT License (MIT)
  * https://github.com/Majoolr/ethereum-libraries/blob/master/LICENSE
@@ -89,6 +89,7 @@ library TokenLib {
   /// @param _value Number of tokens to send
   /// @return True if completed
   function transfer(TokenStorage storage self, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
     bool err;
     uint256 balance;
 
