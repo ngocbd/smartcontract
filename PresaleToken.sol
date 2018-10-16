@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresaleToken at 0xd29ba5f94fb91eefc5e3aaf69f181febed73930e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresaleToken at 0xcd619ad647357868dd5987b0ce4886bf61cfac32
 */
 pragma solidity ^0.4.4;
 
@@ -12,17 +12,17 @@ pragma solidity ^0.4.4;
 contract PresaleToken
 {
 /// Fields:
-    string public constant name = "IMMLA Presale Token";
-    string public constant symbol = "IML";
+    string public constant name = "SquarEx Private Round SQEX Token";
+    string public constant symbol = "SQEX";
     uint public constant decimals = 18;
-    uint public constant PRICE = 5200;  // per 1 Ether
+    uint public constant PRICE = 1700;  // per 1 Ether
 
     //  price
-    // Cap is 2747 ETH
-    // 1 eth = 5200;  presale IMMLA tokens
-    // 1 IML = 0,000192 ETH
-    // ETH price ~220$ - 10.07.2017
-    uint public constant TOKEN_SUPPLY_LIMIT = PRICE * 2747 * (1 ether / 1 wei);
+    // Cap is 2500 ETH
+    // 1 ETH = 1700 Private Round SQEX tokens
+    // 
+    // ETH price ~200$ for 30.07.2017
+    uint public constant TOKEN_SUPPLY_LIMIT = PRICE * 2500 * (1 ether / 1 wei);
 
     enum State{
        Init,
