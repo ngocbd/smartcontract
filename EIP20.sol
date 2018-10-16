@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EIP20 at 0x6465093bfb90264dfd2640845c7b628f77e94b87
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EIP20 at 0xc612cd825dc6d8377e6ffd5ef97731d023fc78b7
 */
 /*
 Implements EIP20 token standard: https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
