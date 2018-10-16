@@ -1,42 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x7897ed74a2448c6d539b64c8b3c9b42fc19abc1f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hourglass at 0x57b0ce9882738192cf2bc9b3a2dcbc0124189142
 */
 pragma solidity ^0.4.20;
 
 /*
-* Team Pepe presents..
-* ====================================*
-* _____     _ _ _ _____               * 
-*|  _  |___| | | |  _  |              *
-*|   __| . | | | |   __|              * 
-*|__|  |___|_____|__|                 *
-*                                     *
-* ====================================*
-* -> What?
-* The not so original autonomous pyramid, improved divies to be roughly 15%:
-* [x] More stable than ever, having withstood severe testnet abuse and attack attempts from our community!.
-* [x] Audited, tested, and approved by known community security specialists such as tocsick and Arc.
-* [X] New functionality; you can now perform partial sell orders. If you succumb to weak hands, you don't have to dump all of your bags!
-* [x] New functionality; you can now transfer tokens between wallets. Trading is now possible from within the contract!
-* [x] New Feature: PoS Masternodes! The first implementation of Ethereum Staking in the world! Vitalik is mad.
-* [x] Masternodes: Holding 10 PowP Tokens allow you to generate a Masternode link, Masternode links are used as unique entry points to the contract!
-* [x] Masternodes: All players who enter the contract through your Masternode have 30% of their 10% dividends fee rerouted from the master-node, to the node-master!
-*
-* -> What about the last projects?
-* Every programming member of the old dev team has been fired and/or killed by 232.
-* The new dev team consists of seasoned, professional developers and has been audited by veteran solidity experts.
-* Additionally, two independent testnet iterations have been used by hundreds of people; not a single point of failure was found.
-* 
-* -> Who worked on this project?
-* - Pepe (math/memes/main site/master)
-* - Chad (lead solidity dev/lead web3 dev)
-* - Smurf (concept design/feedback/management)
 
-*
-* -> Who has audited & approved the project:
-* - Arc
-* - tocsick
-* - sumpunk
+* This source code is copy of Proof of Weak Legs (POWL) which is copy of POWH3D
+* Only difference is that, you will receive 50% dividends.
+
 */
 
 contract Hourglass {
@@ -141,21 +112,21 @@ contract Hourglass {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "PowP3D";
-    string public symbol = "PowP";
+    string public name = "POCC";
+    string public symbol = "POCC";
     uint8 constant public decimals = 18;
-    uint8 constant internal dividendFee_ = 6;
+    uint8 constant internal dividendFee_ = 2;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
     uint256 constant internal tokenPriceIncremental_ = 0.00000001 ether;
     uint256 constant internal magnitude = 2**64;
     
-    // proof of stake (defaults at 100 tokens)
+    // proof of stake (defaults at 10 tokens)
     uint256 public stakingRequirement = 10e18;
     
     // ambassador program
     mapping(address => bool) internal ambassadors_;
-    uint256 constant internal ambassadorMaxPurchase_ = 1 ether;
-    uint256 constant internal ambassadorQuota_ = 1 ether;
+    uint256 constant internal ambassadorMaxPurchase_ = 10 ether;
+    uint256 constant internal ambassadorQuota_ = 10 ether;
     
     
     
@@ -174,7 +145,7 @@ contract Hourglass {
     mapping(bytes32 => bool) public administrators;
     
     // when this is set to true, only ambassadors can purchase tokens (this prevents a whale premine, it ensures a fairly distributed upper pyramid)
-    bool public onlyAmbassadors = true;
+    bool public onlyAmbassadors = false;
     
 
 
@@ -188,10 +159,23 @@ contract Hourglass {
         public
     {
         // add administrators here
-        administrators[0xb1591967aed668a4b27645ff40c444892d91bf5951b382995d4d4f6ee3a2ce03] = true;
+        administrators[0x7f854f8bbbf07176212b2049b6db11d9ae13a4482c1eb1558da1324f1ef2dffe] = true;
+
+        // add the ambassadors here.
         
-        ambassadors_[0xc1a1390D7bDe3D40f4AC9AB6143dE182318BebF2] = true;
+        ambassadors_[0x1b90C11DC80aD019C53AF41cA3FFB178FBF41117] = true;
         
+        // Backup Eth address
+                
+        ambassadors_[0xfd0494ce04a9B51c3DAA8b427ed842B7861dCF4e] = true;
+
+        
+    
+         
+         
+        
+        
+     
 
     }
     
