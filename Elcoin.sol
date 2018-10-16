@@ -1,312 +1,140 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Elcoin at 0x57d90b64a1a57749b0f932f1a3395792e12e7055
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ELcoin at 0x14560736e46e95e431f03dd5709ca47881474560
 */
-contract Ambi {
-    function getNodeAddress(bytes32 _name) constant returns (address);
-    function addNode(bytes32 _name, address _addr) external returns (bool);
-    function hasRelation(bytes32 _from, bytes32 _role, address _to) constant returns (bool);
-}
+pragma solidity ^0.4.4;
 
-contract PotRewards {
-    function transfer(address _from, address _to, uint _amount);
-}
+contract Token {
 
-contract PosRewards {
-    function transfer(address _from, address _to);
-}
+    /// @return total amount of tokens
+    function totalSupply() constant returns (uint256 supply) {}
 
-contract ElcoinInterface {
-    function rewardTo(address _to, uint _amount) returns (bool);
-}
+    /// @param _owner The address from which the balance will be retrieved
+    /// @return The balance
+    function balanceOf(address _owner) constant returns (uint256 balance) {}
 
-contract EtherTreasuryInterface {
-    function withdraw(address _to, uint _value) returns(bool);
-}
+    /// @notice send `_value` token to `_to` from `msg.sender`
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transfer(address _to, uint256 _value) returns (bool success) {}
 
-contract MetaCoinInterface {
-	event Transfer(address indexed _from, address indexed _to, uint256 _value);
-	event Approved(address indexed _owner, address indexed _spender, uint256 _value);
-	event Unapproved(address indexed _owner, address indexed _spender);
+    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+    /// @param _from The address of the sender
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
 
-	function totalSupply() constant returns (uint256 supply){}
-	function balanceOf(address _owner) constant returns (uint256 balance){}
-	function transfer(address _to, uint256 _value) returns (bool success){}
-	function transferFrom(address _from, address _to, uint256 _value) returns (bool success){}
-	function approve(address _spender, uint256 _value) returns (bool success){}
-	function unapprove(address _spender) returns (bool success){}
-	function allowance(address _owner, address _spender) constant returns (uint256 remaining){}
-}
+    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @param _value The amount of wei to be approved for transfer
+    /// @return Whether the approval was successful or not
+    function approve(address _spender, uint256 _value) returns (bool success) {}
 
-contract ElcoinDb {
-    function getBalance(address addr) constant returns(uint balance);
-    function deposit(address addr, uint amount, bytes32 hash, uint time) returns (bool res);
-    function withdraw(address addr, uint amount, bytes32 hash, uint time) returns (bool res);
-}
+    /// @param _owner The address of the account owning tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @return Amount of remaining tokens allowed to spent
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
 
-contract AmbiEnabled {
-    Ambi ambiC;
-    bytes32 public name;
-
-    modifier checkAccess(bytes32 _role) {
-        if(address(ambiC) != 0x0 && ambiC.hasRelation(name, _role, msg.sender)){
-            _
-        }
-    }
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
     
-    function getAddress(bytes32 _name) constant returns (address) {
-        return ambiC.getNodeAddress(_name);
-    }
-
-    function setAmbiAddress(address _ambi, bytes32 _name) returns (bool){
-        if(address(ambiC) != 0x0){
-            return false;
-        }
-        Ambi ambiContract = Ambi(_ambi);
-        if(ambiContract.getNodeAddress(_name)!=address(this)) {
-            bool isNode = ambiContract.addNode(_name, address(this));
-            if (!isNode){
-                return false;
-            }   
-        }
-        name = _name;
-        ambiC = ambiContract;
-        return true;
-    }
-
-    function remove() checkAccess("owner") {
-        suicide(msg.sender);
-    }
 }
 
-contract Elcoin is AmbiEnabled, MetaCoinInterface {
 
-    event Error(uint8 indexed code, address indexed origin, address indexed sender);
 
-    mapping (address => uint) public recoveredIndex;
-    address[] public recovered;
+contract StandardToken is Token {
 
-    uint public totalSupply;
-    uint public absMinFee; // set up in 1/1000000 of Elcoin
-    uint public feePercent; // set up in 1/100 of percent, 10 is 0.1%
-    uint public absMaxFee; // set up in 1/1000000 of Elcoin
-    address public feeAddr;
-
-    function Elcoin() {
-        recovered.length++;
-        feeAddr = tx.origin;
-        _setFeeStructure(0, 0, 1);
+    function transfer(address _to, uint256 _value) returns (bool success) {
+        //Default assumes totalSupply can't be over max (2^256 - 1).
+        //If your token leaves out totalSupply and can issue more tokens as time goes on, you need to check if it doesn't wrap.
+        //Replace the if with this one instead.
+        //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        if (balances[msg.sender] >= _value && _value > 0) {
+            balances[msg.sender] -= _value;
+            balances[_to] += _value;
+            Transfer(msg.sender, _to, _value);
+            return true;
+        } else { return false; }
     }
 
-    function _db() internal constant returns (ElcoinDb) {
-        return ElcoinDb(getAddress("elcoinDb"));
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+        //same as above. Replace this line with the following if you want to protect against wrapping uints.
+        //if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
+            balances[_to] += _value;
+            balances[_from] -= _value;
+            allowed[_from][msg.sender] -= _value;
+            Transfer(_from, _to, _value);
+            return true;
+        } else { return false; }
     }
 
-    function _setFeeStructure(uint _absMinFee, uint _feePercent, uint _absMaxFee) internal returns (bool) {
-        if(_absMinFee < 0 || _feePercent < 0 || _feePercent > 10000 || _absMaxFee < 0 || _absMaxFee < _absMinFee) {
-            Error(1, tx.origin, msg.sender);
-            return false;
-        }
-        absMinFee = _absMinFee;
-        feePercent = _feePercent;
-        absMaxFee = _absMaxFee;
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
+    }
+
+    function approve(address _spender, uint256 _value) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
         return true;
     }
 
-    function _rawTransfer(ElcoinDb _db, address _from, address _to, uint _value) internal {
-        _db.withdraw(_from, _value, 0, 0);
-        uint fee = calculateFee(_value);
-        uint net = _value - fee;
-        _db.deposit(_to, net, 0, 0);
-
-        Transfer(_from, _to, _value);
-        if (fee > 0) {
-            _db.deposit(feeAddr, fee, 0, 0);
-        }
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+      return allowed[_owner][_spender];
     }
 
-    function _transfer(ElcoinDb _db, address _from, address _to, uint _value) internal returns (bool) {
-        if (_value < absMinFee) {
-            return false;
-        }
-        if (_from == _to) {
-            return false;
-        }
-        uint balance = _db.getBalance(_from);
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
+    uint256 public totalSupply;
+}
 
-        if (balance < _value) {
-            return false;
-        }
-        _rawTransfer(_db, _from, _to, _value);
 
+//name this contract whatever you'd like
+contract ELcoin is StandardToken {
+
+    function () {
+        //if ether is sent to this address, send it back.
+        throw;
+    }
+
+    /* Public variables of the token */
+
+    /*
+    NOTE:
+    The following variables are OPTIONAL vanities. One does not have to include them.
+    They allow one to customise the token contract & in no way influences the core functionality.
+    Some wallets/interfaces might not even bother to look at this information.
+    */
+    string public name;                   //fancy name: eg Simon Bucks
+    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
+    string public symbol;                 //An identifier: eg SBX
+    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
+
+//
+// CHANGE THESE VALUES FOR YOUR TOKEN
+//
+
+//make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
+
+    function ELcoin(
+        ) {
+        balances[msg.sender] = 1000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 1000000;                        // Update total supply (100000 for example)
+        name = "ELcoin";                                   // Set the name for display purposes
+        decimals = 2;                            // Amount of decimals for display purposes
+        symbol = "ELcoin    ";                               // Set the symbol for display purposes
+    }
+
+    /* Approves and then calls the receiving contract */
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+
+        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
+        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
+        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
+        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
         return true;
-    }
-
-    function _transferWithReward(ElcoinDb _db, address _from, address _to, uint _value) internal returns (bool) {
-        if (!_transfer(_db, _from, _to, _value)) {
-            Error(2, tx.origin, msg.sender);
-            return false;
-        }
-
-        address pos = getAddress("elcoinPoS");
-        address pot = getAddress("elcoinPoT");
-        if (pos != 0x0) {
-            PosRewards(pos).transfer(_from, _to);
-        }
-        if (pot != 0x0) {
-            PotRewards(pot).transfer(_from, _to, _value);
-        }
-        return true;
-    }
-
-    function _recoverAccount(ElcoinDb _db, address _old, address _new) internal returns (bool) {
-        uint pos =  recovered.length++;
-        recovered[pos] = _old;
-        recoveredIndex[_old] = pos;
-        uint balance = _db.getBalance(_old);
-        var rv = _db.withdraw(_old, balance, 0, 0);
-        if (!rv) {
-            Error(5, tx.origin, msg.sender);
-            return false;
-        }
-        _db.deposit(_new, balance, 0, 0);
-
-        return true;
-    }
-
-    modifier notRecoveredAccount(address _account) {
-        if(recoveredIndex[_account] == 0x0) {
-            _
-        }
-        else {
-            return;
-        }
-    }
-
-    function balanceOf(address _account) constant returns (uint) {
-        return _db().getBalance(_account);
-    }
-
-    function calculateFee(uint _amount) constant returns (uint) {
-        uint fee = (_amount * feePercent) / 10000;
-
-        if (fee < absMinFee) {
-            return absMinFee;
-        }
-
-        if (fee > absMaxFee) {
-            return absMaxFee;
-        }
-
-        return fee;
-    }
-
-    function issueCoin(address _to, uint _value, uint _totalSupply) checkAccess("currencyOwner") returns (bool) {
-        if (totalSupply > 0) {
-            Error(6, tx.origin, msg.sender);
-            return false;
-        }
-
-        bool dep = _db().deposit(_to, _value, 0, 0);
-        totalSupply = _totalSupply;
-        return dep;
-    }
-
-    function batchTransfer(address[] _to, uint[] _value) checkAccess("currencyOwner") returns (bool) {
-        if (_to.length != _value.length) {
-            Error(7, tx.origin, msg.sender);
-            return false;
-        }
-
-        uint totalToSend = 0;
-        for (uint8 i = 0; i < _value.length; i++) {
-            totalToSend += _value[i];
-        }
-
-        ElcoinDb db = _db();
-        if (db.getBalance(msg.sender) < totalToSend) {
-            Error(8, tx.origin, msg.sender);
-            return false;
-        }
-
-        db.withdraw(msg.sender, totalToSend, 0, 0);
-        for (uint8 j = 0; j < _to.length; j++) {
-            db.deposit(_to[j], _value[j], 0, 0);
-            Transfer(msg.sender, _to[j], _value[j]);
-        }
-
-        return true;
-    }
-
-    function transfer(address _to, uint _value) returns (bool) {
-        uint startGas = msg.gas + transferCallGas;
-        if (!_transferWithReward(_db(), msg.sender, _to, _value)) {
-            return false;
-        }
-        uint refund = (startGas - msg.gas + refundGas) * tx.gasprice;
-        return _refund(refund);
-    }
-
-    function transferPool(address _from, address _to, uint _value) checkAccess("pool") returns (bool) {
-        return _transferWithReward(_db(), _from, _to, _value);
-    }
-
-    function rewardTo(address _to, uint _amount) checkAccess("reward") returns (bool) {
-        bool result = _db().deposit(_to, _amount, 0, 0);
-        if (result) {
-            totalSupply += _amount;
-        }
-
-        return result;
-    }
-
-    function recoverAccount(address _old, address _new) checkAccess("recovery") notRecoveredAccount(_old) returns (bool) {
-        return _recoverAccount(_db(), _old, _new);
-    }
-
-    function setFeeAddr(address _feeAddr) checkAccess("currencyOwner") {
-        feeAddr = _feeAddr;
-    }
-
-    function setFee(uint _absMinFee, uint _feePercent, uint _absMaxFee) checkAccess("cron") returns (bool) {
-        return _setFeeStructure(_absMinFee, _feePercent, _absMaxFee);
-    }
-
-    uint public txGasPriceLimit = 21000000000;
-    uint public transferCallGas = 21000;
-    uint public refundGas = 15000;
-    EtherTreasuryInterface treasury;
-
-    function setupTreasury(address _treasury, uint _txGasPriceLimit) checkAccess("currencyOwner") returns (bool) {
-        if (_txGasPriceLimit == 0) {
-            return false;
-        }
-        treasury = EtherTreasuryInterface(_treasury);
-        txGasPriceLimit = _txGasPriceLimit;
-        if (msg.value > 0 && !address(treasury).send(msg.value)) {
-            throw;
-        }
-        return true;
-    }
-
-    function updateRefundGas() checkAccess("currencyOwner") returns (uint) {
-        uint startGas = msg.gas;
-        uint refund = (startGas - msg.gas + refundGas) * tx.gasprice; // just to simulate calculations, dunno if optimizer will remove this.
-        if (!_refund(1)) {
-            return 0;
-        }
-        refundGas = startGas - msg.gas;
-        return refundGas;
-    }
-
-    function setOperationsCallGas(uint _transfer) checkAccess("currencyOwner") returns (bool) {
-        transferCallGas = _transfer;
-        return true;
-    }
-
-    function _refund(uint _value) internal returns (bool) {
-        if (tx.gasprice > txGasPriceLimit) {
-            return false;
-        }
-        return treasury.withdraw(tx.origin, _value);
     }
 }
