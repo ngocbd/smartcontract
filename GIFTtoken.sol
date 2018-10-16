@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GiftToken at 0xb99a5b75fd641521d5a792bba42df98cae61d041
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GiftToken at 0xf69ffea26bec4feb19296a72b6e1727350314609
 */
 pragma solidity ^0.4.15;
 
@@ -331,7 +331,7 @@ contract GiftToken is BurnableToken, Pausable {
     string constant public symbol = "GIFT";
     uint8 constant public decimals = 18;
 
-    uint256 constant public INITIAL_TOTAL_SUPPLY = 2e7 * (uint256(10) ** decimals);
+    uint256 constant public INITIAL_TOTAL_SUPPLY = 1e8 * (uint256(10) ** decimals);
 
     address private addressIco;
 
@@ -384,5 +384,311 @@ contract GiftToken is BurnableToken, Pausable {
     */
     function transferFromIco(address _to, uint256 _value) onlyIco public returns (bool) {
         super.transfer(_to, _value);
+    }
+}
+
+// File: contracts/Whitelist.sol
+
+/**
+ * @title Whitelist contract
+ * @dev Whitelist for wallets, with additional data for every wallet.
+*/
+contract Whitelist is Ownable {
+    struct WalletInfo {
+        string data;
+        bool whitelisted;
+        uint256 createdTimestamp;
+    }
+
+    address private addressApi;
+
+    mapping(address => WalletInfo) public whitelist;
+
+    uint256 public whitelistLength = 0;
+
+    modifier onlyPrivilegeAddresses {
+        require(msg.sender == addressApi || msg.sender == owner);
+        _;
+    }
+
+    /**
+    * @dev Set backend Api address.
+    * @dev Accept request from owner only.
+    * @param _api The address of backend API.
+    */
+    function setApiAddress(address _api) onlyOwner public {
+        require(_api != address(0));
+
+        addressApi = _api;
+    }
+
+    /**
+    * @dev Add wallet to whitelist.
+    * @dev Accept request from privilege adresses only.
+    * @param _wallet The address of wallet to add.
+    * @param _data The checksum of additional wallet data.
+    */  
+    function addWallet(address _wallet, string _data) onlyPrivilegeAddresses public {
+        require(_wallet != address(0));
+        require(!isWhitelisted(_wallet));
+        whitelist[_wallet].data = _data;
+        whitelist[_wallet].whitelisted = true;
+        whitelist[_wallet].createdTimestamp = now;
+        whitelistLength++;
+    }
+
+    /**
+    * @dev Update additional data for whitelisted wallet.
+    * @dev Accept request from privilege adresses only.
+    * @param _wallet The address of whitelisted wallet to update.
+    * @param _data The checksum of new additional wallet data.
+    */      
+    function updateWallet(address _wallet, string _data) onlyPrivilegeAddresses public {
+        require(_wallet != address(0));
+        require(isWhitelisted(_wallet));
+        whitelist[_wallet].data = _data;
+    }
+
+    /**
+    * @dev Remove wallet from whitelist.
+    * @dev Accept request from privilege adresses only.
+    * @param _wallet The address of whitelisted wallet to remove.
+    */  
+    function removeWallet(address _wallet) onlyPrivilegeAddresses public {
+        require(_wallet != address(0));
+        require(isWhitelisted(_wallet));
+        delete whitelist[_wallet];
+        whitelistLength--;
+    }
+
+    /**
+    * @dev Check the specified wallet whether it is in the whitelist.
+    * @param _wallet The address of wallet to check.
+    */ 
+    function isWhitelisted(address _wallet) constant public returns (bool) {
+        return whitelist[_wallet].whitelisted;
+    }
+
+    /**
+    * @dev Get the checksum of additional data for the specified whitelisted wallet.
+    * @param _wallet The address of wallet to get.
+    */ 
+    function walletData(address _wallet) constant public returns (string) {
+        return whitelist[_wallet].data;
+    }
+
+    /**
+    * @dev Get the creation timestamp for the specified whitelisted wallet.
+    * @param _wallet The address of wallet to get.
+    */
+    function walletCreatedTimestamp(address _wallet) constant public returns (uint256) {
+        return whitelist[_wallet].createdTimestamp;
+    }
+}
+
+// File: contracts/Whitelistable.sol
+
+contract Whitelistable {
+    Whitelist public whitelist;
+
+    modifier whenWhitelisted(address _wallet) {
+        require(whitelist.isWhitelisted(_wallet));
+        _;
+    }
+
+    function Whitelistable () public {
+        whitelist = new Whitelist();
+
+        whitelist.transferOwnership(msg.sender);
+    }
+}
+
+// File: contracts/GiftCrowdsale.sol
+
+contract GiftCrowdsale is Pausable, Whitelistable {
+    using SafeMath for uint256;
+
+    uint256 public startTimestamp = 0;
+
+    uint256 public endTimestamp = 0;
+
+    uint256 public exchangeRate = 0;
+
+    uint256 public tokensSold = 0;
+
+    uint256 constant public minimumInvestment = 25e16; // 0.25 ETH
+
+    uint256 public minCap = 0;
+
+    uint256 public endFirstPeriodTimestamp = 0;
+    uint256 public endSecondPeriodTimestamp = 0;
+    uint256 public endThirdPeriodTimestamp = 0;
+
+    GiftToken public token = new GiftToken(this);
+
+    mapping(address => uint256) public investments;
+
+    modifier whenSaleIsOpen () {
+        require(now >= startTimestamp && now < endTimestamp);
+        _;
+    }
+
+    modifier whenSaleHasEnded () {
+        require(now >= endTimestamp);
+        _;
+    }
+
+    /**
+    * @dev Constructor for GiftCrowdsale contract.
+    * @dev Set first owner who can manage whitelist.
+    * @param _startTimestamp uint256 The start time ico.
+    * @param _endTimestamp uint256 The end time ico.
+    * @param _exchangeRate uint256 The price of the Gift token.
+    * @param _minCap The minimum amount of tokens sold required for the ICO to be considered successful.
+    */
+    function GiftCrowdsale (
+        uint256 _startTimestamp,
+        uint256 _endTimestamp,
+        uint256 _exchangeRate,
+        uint256 _minCap
+    ) public
+    {
+        require(_startTimestamp >= now && _endTimestamp > _startTimestamp);
+        require(_exchangeRate > 0);
+
+        startTimestamp = _startTimestamp;
+        endTimestamp = _endTimestamp;
+
+        exchangeRate = _exchangeRate;
+
+        endFirstPeriodTimestamp = _startTimestamp.add(1 days);
+        endSecondPeriodTimestamp = _startTimestamp.add(1 weeks);
+        endThirdPeriodTimestamp = _startTimestamp.add(2 weeks);
+
+        minCap = _minCap;
+    }
+
+    function discount() constant public returns (uint256) {
+        if (now > endThirdPeriodTimestamp)
+            return 0;
+        if (now > endSecondPeriodTimestamp)
+            return 5;
+        if (now > endFirstPeriodTimestamp)
+            return 15;
+        return 25;
+    }
+
+    function bonus(address _wallet) constant public returns (uint256) {
+        uint256 _created = whitelist.walletCreatedTimestamp(_wallet);
+        if (_created > 0 && _created < startTimestamp) {
+            return 10;
+        }
+        return 0;
+    }
+
+    /**
+    * @dev Function for sell tokens.
+    * @dev Sells tokens only for wallets from Whitelist while ICO lasts
+    */
+    function sellTokens () whenSaleIsOpen whenWhitelisted(msg.sender) whenNotPaused public payable {
+        require(msg.value > minimumInvestment);
+        uint256 _bonus = bonus(msg.sender);
+        uint256 _discount = discount();
+        uint256 tokensAmount = (msg.value).mul(exchangeRate).mul(_bonus.add(100)).div((100 - _discount));
+
+        token.transferFromIco(msg.sender, tokensAmount);
+
+        tokensSold = tokensSold.add(tokensAmount);
+
+        addInvestment(msg.sender, msg.value);
+    }
+
+    /**
+    * @dev Fallback function allowing the contract to receive funds
+    */
+    function () public payable {
+        sellTokens();
+    }
+
+    /**
+    * @dev Function for funds withdrawal
+    * @dev transfers funds to specified wallet once ICO is ended
+    * @param _wallet address wallet address, to  which funds  will be transferred
+    */
+    function withdrawal (address _wallet) onlyOwner whenSaleHasEnded external {
+        require(_wallet != address(0));
+        _wallet.transfer(this.balance);
+
+        token.transferOwnership(msg.sender);
+    }
+
+    /**
+    * @dev Function for manual token assignment (token transfer from ICO to requested wallet)
+    * @param _to address The address which you want transfer to
+    * @param _value uint256 the amount of tokens to be transferred
+    */
+    function assignTokens (address _to, uint256 _value) onlyOwner external {
+        token.transferFromIco(_to, _value);
+    }
+
+    /**
+    * @dev Add new investment to the ICO investments storage.
+    * @param _from The address of a ICO investor.
+    * @param _value The investment received from a ICO investor.
+    */
+    function addInvestment(address _from, uint256 _value) internal {
+        investments[_from] = investments[_from].add(_value);
+    }
+
+    /**
+    * @dev Function to return money to one customer, if mincap has not been reached
+    */
+    function refundPayment() whenWhitelisted(msg.sender) whenSaleHasEnded external {
+        require(tokensSold < minCap);
+        require(investments[msg.sender] > 0);
+
+        token.burnFrom(msg.sender, token.balanceOf(msg.sender));
+
+        uint256 investment = investments[msg.sender];
+        investments[msg.sender] = 0;
+        (msg.sender).transfer(investment);
+    }
+
+    /**
+    * @dev Allows the current owner to transfer control of the token contract from ICO to a newOwner.
+    * @param _newOwner The address to transfer ownership to.
+    */
+    function transferTokenOwnership(address _newOwner) onlyOwner public {
+        token.transferOwnership(_newOwner);
+    }
+
+    function updateIcoEnding(uint256 _endTimestamp) onlyOwner public {
+        endTimestamp = _endTimestamp;
+    }
+}
+
+// File: contracts/GiftFactory.sol
+
+contract GiftFactory {
+    GiftCrowdsale public crowdsale;
+
+    function createCrowdsale (
+        uint256 _startTimestamp,
+        uint256 _endTimestamp,
+        uint256 _exchangeRate,
+        uint256 _minCap
+    ) public
+    {
+        crowdsale = new GiftCrowdsale(
+            _startTimestamp,
+            _endTimestamp,
+            _exchangeRate,
+            _minCap
+        );
+
+        Whitelist whitelist = crowdsale.whitelist();
+
+        crowdsale.transferOwnership(msg.sender);
+        whitelist.transferOwnership(msg.sender);
     }
 }
