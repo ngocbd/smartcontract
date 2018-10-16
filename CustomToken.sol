@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xc8655d1d9469e7c457a7e4f8ba2685ee9c9fb464
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xf47b40fd65a4e9d69e602fc4e7efeabe914188a6
 */
 pragma solidity ^0.4.19;
 
@@ -114,8 +114,8 @@ contract LockToken is BaseToken {
 contract CustomToken is BaseToken, BurnToken, ICOToken, LockToken {
     function CustomToken() public {
         totalSupply = 300000000000000000000000000;
-        name = 'Biwanp';
-        symbol = 'BWP';
+        name = 'Biwanpro';
+        symbol = 'BW';
         decimals = 18;
         balanceOf[0xc50a3762ec6e21d43346441561519878ae2200d7] = totalSupply;
         Transfer(address(0), 0xc50a3762ec6e21d43346441561519878ae2200d7, totalSupply);
