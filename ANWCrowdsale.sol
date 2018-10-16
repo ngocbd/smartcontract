@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ANWCrowdsale at 0x52061df3a6b667619727f618ad52aedeca325366
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ANWCrowdsale at 0xb0d406cebdbc2973b3cce2afc43bbd60960d695b
 */
 /**
  * @title ERC20Basic
@@ -233,7 +233,7 @@ contract MintableToken is StandardToken, Ownable {
 
 contract ANWTokenCoin is MintableToken {
     
-    string public constant name = "Animal Walfare Token Contract";
+    string public constant name = "Animal Welfare Token Contract";
     
     string public constant symbol = "ANW";
     
@@ -242,26 +242,41 @@ contract ANWTokenCoin is MintableToken {
 }
 
 
+
+
 contract ANWCrowdsale is Ownable {
     using SafeMath for uint;
     
+    address manager = 0xD87060B9c16a099ac7D76A3Ff275D4c80e732118;
     address public multisig = 0x99FDbd0d52ba6fcd49b4B5c149D37E4e1326BE7d; 
-    ANWTokenCoin public token =  ANWTokenCoin(0x48abb37EE5a6BCf220f046acA6F6F3217ae60eCc);
+    ANWTokenCoin public token = new ANWTokenCoin(); 
     uint public tokenDec = 1000000000000000000;
     uint public tokenPrice = 10000000000000000;
+    bool ifInit = false;
+
+
     
     
     function ANWCrowdsale(){
         owner = msg.sender; 
     }
     
-
+    function initMinting() onlyOwner returns (bool) {
+        require(!ifInit);
+        require(token.mint(manager, tokenDec.mul(10000000)));
+        require(token.mint(address(this), tokenDec.mul(10000000)));
+        //token.finishMinting();
+        token.transferOwnership(manager);
+        transferOwnership(manager);
+        
+        ifInit = true;
+        return true;
+    } 
     
     function tokenBalance() constant returns (uint256) {
         return token.balanceOf(address(this));
     }        
     
-
     
     function transferToken(address _to, uint _value) onlyOwner returns (bool) {
         return token.transfer(_to,  _value);
@@ -283,4 +298,6 @@ contract ANWCrowdsale is Ownable {
         
     }
     
+    
+ 
 }
