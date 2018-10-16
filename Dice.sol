@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dice at 0x35be055a5c56c228eed365e1755f850db4e976bf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dice at 0xf56a188f3f8d02685ab14f8a89be47df5e87af32
 */
 pragma solidity ^0.4.0;
 
@@ -1029,7 +1029,7 @@ contract usingOraclize {
 
 contract Dice is usingOraclize {
 
-    uint constant pwin = 9000; //probability of winning (10000 = 100%)
+    uint constant pwin = 7500; //probability of winning (10000 = 100%)
     uint constant edge = 190; //edge percentage (10000 = 100%)
     uint constant maxWin = 100; //max win (before edge is taken) as percentage of bankroll (10000 = 100%)
     uint constant minBet = 2000 finney;
@@ -1439,7 +1439,7 @@ contract Dice is usingOraclize {
             bytes32 myid =
                 oraclize_query(
                     "nested",
-                    "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random.data.0', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BM0pJkbhPyRTEA1yXuSTPP7Z22egvE0sUcOFoArcK9mc8Yuix1Uetayn/UMka7pDbn2M33lQyqTD2unSED7+KkaLM+XL05K6yXcD1GQEoiUlMp3wICdortbt+1iFQKs7UVI0BBknvvhSRMMx3rQSsZ3ueqxPS+4=},\"n\":1,\"min\":1,\"max\":10000${[identity] \"}\"},\"id\":1${[identity] \"}\"}']",
+                    "[URL] ['json(https://api.random.org/json-rpc/1/invoke).result.random.data.0', '\\n{\"jsonrpc\":\"2.0\",\"method\":\"generateSignedIntegers\",\"params\":{\"apiKey\":${[decrypt] BInT/tttdnvIEIGsSQhIw4GurDVM5N97+W5tMGkfy/wEaYbMtOYUN5NMUgfaVhcKLudwXyllHrZu3qAhI6CkLzFj7Rd5l6oGfidceioI9hOWSSd60t2Uir0QinujPq4NWiX8/VW6wAO7E+5t9c1BQX5vcEjdDbA=},\"n\":1,\"min\":1,\"max\":10000${[identity] \"}\"},\"id\":1${[identity] \"}\"}']",
                     ORACLIZE_GAS_LIMIT + safeGas
                 );
             bets[myid] = Bet(msg.sender, betValue, 0);
