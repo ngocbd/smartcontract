@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QToken at 0xe32885d4ef8bd05980676a8ed97a4636e25ef42d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QToken at 0x5604c71698789d0911327d4d0e4aa830d6f120a0
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'QTest' token contract
+// 'Q' token contract
 //
 // Deployed to : 0x352aAff068CA9bF8aBa1DAEEbD59a4571BF42af8
 // Symbol      : Q
@@ -123,29 +123,31 @@ contract QToken is ERC20Interface, Owned, SafeMath {
         balances[0x352aAff068CA9bF8aBa1DAEEbD59a4571BF42af8] = 1560000000000000000000000000000; // General
         balances[0x9db9be6C5bCbcd80e080Fc30985552e4AF2341dc] = 200000000000000000000000000000; // Company
         balances[0x2bF978100b39a1778C1F9D6BDc7534ae5D9D6E95] = 200000000000000000000000000000; // Committee
-        balances[0x0c81B202ebFAFC255138d4F806303C4C58A6A270] = 4800000000000000000000000000; // Aviv
-        balances[0xe4778eB30FbFf336BFBa58839fff52E23e61B08C] = 4800000000000000000000000000; // Oren
-        balances[0xeaa7856637F90b8E36EA15fE524aE287a9bad514] = 29400000000000000000000000000; // Saar
+        balances[0x0c81B202ebFAFC255138d4F806303C4C58A6A270] = 3000000000000000000000000000; // Aviv
+        balances[0xe4778eB30FbFf336BFBa58839fff52E23e61B08C] = 3000000000000000000000000000; // Oren
+        balances[0xeaa7856637F90b8E36EA15fE524aE287a9bad514] = 33400000000000000000000000000; // Saar
         balances[0x5F5d2e1760c57b61E5Cf6d4F6B172747b57dde16] = 200000000000000000000000000; // Ben
         balances[0x3A6dd223C2887A480072fabC8F57d5E3b96457Ff] = 200000000000000000000000000; // Tamar
         balances[0x1741A6EA181179f916dbDD455405b7Bb36314770] = 200000000000000000000000000; // Steven
-        balances[0x04c5477aDB1B66E91E8E5d7198A76e31Ac3A42fa] = 200000000000000000000000000; // Tomer
-        balances[0x11D4766fF84910D5c1f3727B8983F6B5457AD66A] = 200000000000000000000000000; // Larry
-      
-        // Transfer(address(0), 0x352aAff068CA9bF8aBa1DAEEbD59a4571BF42af8, _totalSupply);
+        balances[0xf625cc891e1749765205a364B84c73b034e7fad2] = 250000000000000000000000000; // Advisors
+        balances[0x11D4766fF84910D5c1f3727B8983F6B5457AD66A] = 50000000000000000000000000; // Larry
+        balances[0x04c5477aDB1B66E91E8E5d7198A76e31Ac3A42fa] = 100000000000000000000000000; // Tomer
 
-        Transfer(address(0), 0x352aAff068CA9bF8aBa1DAEEbD59a4571BF42af8, 1560000000000000000000000000000); // General
-        Transfer(address(0), 0x9db9be6C5bCbcd80e080Fc30985552e4AF2341dc, 200000000000000000000000000000); // Company
-        Transfer(address(0), 0x2bF978100b39a1778C1F9D6BDc7534ae5D9D6E95, 200000000000000000000000000000); // Committee
-        Transfer(address(0), 0x0c81B202ebFAFC255138d4F806303C4C58A6A270, 4800000000000000000000000000); // Aviv
-        Transfer(address(0), 0xe4778eB30FbFf336BFBa58839fff52E23e61B08C, 4800000000000000000000000000); // Oren
-        Transfer(address(0), 0xeaa7856637F90b8E36EA15fE524aE287a9bad514, 29400000000000000000000000000); // Saar
-        Transfer(address(0), 0x5F5d2e1760c57b61E5Cf6d4F6B172747b57dde16, 200000000000000000000000000); // Ben
-        Transfer(address(0), 0x3A6dd223C2887A480072fabC8F57d5E3b96457Ff, 200000000000000000000000000); // Tamar
-        Transfer(address(0), 0x1741A6EA181179f916dbDD455405b7Bb36314770, 200000000000000000000000000); // Steven
-        Transfer(address(0), 0x04c5477aDB1B66E91E8E5d7198A76e31Ac3A42fa, 200000000000000000000000000); // Tomer
-        Transfer(address(0), 0x11D4766fF84910D5c1f3727B8983F6B5457AD66A, 200000000000000000000000000); // Larry
-        
+
+
+        Transfer(address(0), 0x352aAff068CA9bF8aBa1DAEEbD59a4571BF42af8, 1560000000000000000000000000000000); // General
+        Transfer(address(0), 0x9db9be6C5bCbcd80e080Fc30985552e4AF2341dc, 200000000000000000000000000000000); // Company
+        Transfer(address(0), 0x2bF978100b39a1778C1F9D6BDc7534ae5D9D6E95, 200000000000000000000000000000000); // Committee
+        Transfer(address(0), 0x0c81B202ebFAFC255138d4F806303C4C58A6A270, 3000000000000000000000000000000); // Aviv
+        Transfer(address(0), 0xe4778eB30FbFf336BFBa58839fff52E23e61B08C, 3000000000000000000000000000000); // Oren
+        Transfer(address(0), 0xeaa7856637F90b8E36EA15fE524aE287a9bad514, 33400000000000000000000000000000); // Saar
+        Transfer(address(0), 0x5F5d2e1760c57b61E5Cf6d4F6B172747b57dde16, 200000000000000000000000000000); // Ben
+        Transfer(address(0), 0x3A6dd223C2887A480072fabC8F57d5E3b96457Ff, 200000000000000000000000000000); // Tamar
+        Transfer(address(0), 0x1741A6EA181179f916dbDD455405b7Bb36314770, 200000000000000000000000000000); // Steven
+        Transfer(address(0), 0xf625cc891e1749765205a364B84c73b034e7fad2, 250000000000000000000000000); // Advisors
+        Transfer(address(0), 0x11D4766fF84910D5c1f3727B8983F6B5457AD66A, 50000000000000000000000000); // Larry
+        Transfer(address(0), 0x04c5477aDB1B66E91E8E5d7198A76e31Ac3A42fa, 100000000000000000000000000); // Tomer
+
     }
 
 
@@ -184,7 +186,7 @@ contract QToken is ERC20Interface, Owned, SafeMath {
     //
     // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
     // recommends that there are no checks for the approval double-spend attack
-    // as this should be implemented in user interfaces 
+    // as this should be implemented in user interfaces
     // ------------------------------------------------------------------------
     function approve(address spender, uint tokens) public returns (bool success) {
         allowed[msg.sender][spender] = tokens;
@@ -195,7 +197,7 @@ contract QToken is ERC20Interface, Owned, SafeMath {
 
     // ------------------------------------------------------------------------
     // Transfer tokens from the from account to the to account
-    // 
+    //
     // The calling account must already have sufficient tokens approve(...)-d
     // for spending from the from account and
     // - From account must have sufficient balance to transfer
