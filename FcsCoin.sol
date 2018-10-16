@@ -1,21 +1,25 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FcsCoin at 0x5750ebe6654788f44e2a09fe11e8747e9ee86925
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FcsCoin at 0x86935ca5fe1c7dc2d5e79dc28114d85372cda5c1
 */
 pragma solidity ^0.4.2;
 
 contract Token {
 
-    
     function totalSupply() constant returns (uint256 supply) {}
 
+   
     function balanceOf(address _owner) constant returns (uint256 balance) {}
 
+    
     function transfer(address _to, uint256 _value) returns (bool success) {}
 
+    
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
 
+   
     function approve(address _spender, uint256 _value) returns (bool success) {}
 
+    
     function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
@@ -26,6 +30,7 @@ contract Token {
 contract StandardToken is Token {
 
     function transfer(address _to, uint256 _value) returns (bool success) {
+       
         if (balances[msg.sender] >= _value && _value > 0) {
             balances[msg.sender] -= _value;
             balances[_to] += _value;
@@ -35,6 +40,7 @@ contract StandardToken is Token {
     }
 
     function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
+      
         if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
             balances[_to] += _value;
             balances[_from] -= _value;
@@ -65,7 +71,6 @@ contract StandardToken is Token {
 
 contract FcsCoin is StandardToken { 
 
-    
     string public name;                   
     uint8 public decimals;                
     string public symbol;                 
@@ -74,16 +79,18 @@ contract FcsCoin is StandardToken {
     uint256 public totalEthInWei;         
     address public fundsWallet;           
 
-    function FcsCoin() {
-        balances[msg.sender] = 100000000000000;               
-        totalSupply = 100000000000000;                        
+    
+    function CecCoin() {
+        balances[msg.sender] = 1000000000000000;               
+        totalSupply = 1000000000000000;                        
         name = "FcsCoin";                                   
-        decimals = 6;                                               
-        symbol = "FCS";                                             
-        fundsWallet = msg.sender;                                    
+        decimals = 6;                                       
+        symbol = "FCS";                                     
+        fundsWallet = msg.sender;                           
     }
 
     function() payable{
+        
         revert();
     }
 
@@ -92,6 +99,7 @@ contract FcsCoin is StandardToken {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
 
+        
         if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
         return true;
     }
