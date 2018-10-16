@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthFlip at 0x8cd448c5fdbf2c79f640a5326a6f86fbce03d3bb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthFlip at 0xf46dbdd823ff23efe1cd21f71f030c2e48c97fe9
 */
 // <ORACLIZE_API>
 /*
@@ -1136,7 +1136,7 @@ contract EthFlip is usingOraclize {
     maxBet = 500000000000000000;
     houseFee = 29; // 2.9%
     oraclizeGas = 500000;
-    oraclizeGasPrice = 3011000000;
+    oraclizeGasPrice = 3010000000;
     oraclize_setCustomGasPrice(oraclizeGasPrice);
     oraclize_setProof(proofType_Ledger);
     owner = msg.sender;
@@ -1301,7 +1301,12 @@ contract EthFlip is usingOraclize {
   }
   
   function getUnprocessedQueryList() constant public returns (uint[] _unprocessedQueryList) {
-    return unprocessedQueryList;
+    if (unprocessedQueryList.length > 0) {
+      return unprocessedQueryList;
+    } else {
+      uint[] memory empty;
+      return empty;
+    }
   }
   
   function getUnprocessedQueryBytes32(uint _unprocessedQueryHash) constant public returns (bytes32 _unprocessedQueryBytes32) {
