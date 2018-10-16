@@ -1,28 +1,56 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LocusOne at 0x47db0cf6c09be1aaf0490cf0086ab5c7814fa755
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LocusOne at 0x16ff6a8cf19eee38f6cce81d42ed390038547048
 */
 pragma solidity ^0.4.20;
     
 // Simple contract to split stakes coming into Locus | One Puzzle. 
 // 80% of buy in goes to the jackpot, and the remaining 20% goes 
-// to a dev wallet to support future puzzle development.    
-    
+// to a dev wallet to support future puzzle development. 
+   
 contract LocusOne {
 
     	address devAcct;
     	address potAcct;
     	uint fee;
     	uint pot;
+        address public owner;
+        
+        // PAUSE EVENTS - onlyOwner can pause contract to lock new registration
+        // once the bounty has reached its goal.
+        
+        event Pause();
+        event Unpause();
+
+        bool public paused = false;
+        
+        
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+        
+    function LocusOne () public payable {
+        owner = msg.sender;
+    }
+    
+      modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
 
     function() public payable {
-        
-    _split(msg.value); 
+    require (!paused);    
+    _split(msg.value);
     }
 
     function _split(uint _stake) internal {
         // protects users from staking less than the required amount to claim the bounty
-        if (msg.value < 0.1 ether || msg.value > 1000000 ether)
-            revert();
+        require (msg.value >= 0.1 ether);
         // Define the Locus dev account
         devAcct = 0x1daa0BFDEDfB133ec6aEd2F66D64cA88BeC3f0B4;
         // Define the Locus Pot account (what you're all playing for)      
@@ -38,6 +66,17 @@ contract LocusOne {
         potAcct.transfer(pot);
 
     }
+
+
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    emit Pause();
+  }
+
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    emit Unpause();
+  }
 
             // The below are safemath implementations of the four arithmetic operators
     // designed to explicitly prevent over- and under-flows of integer values.
