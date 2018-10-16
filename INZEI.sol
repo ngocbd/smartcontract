@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract INZEI at 0xc4e8cb21436e79ba9ed0abeaec010a1982125b80
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract INZEI at 0x36f0deb0af8ab453b6b4fcc8b0b7fe2f1b44e55f
 */
-pragma solidity ^0.4.20;
+pragma solidity ^0.4.19;
 
 /**
  * @title ContractReceiver
@@ -130,7 +130,6 @@ contract ERC223 {
   function transfer(address to, uint value, bytes data) public returns (bool ok);
   function transfer(address to, uint value, bytes data, string custom_fallback) public returns (bool ok);
   event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
-  event Transfer(address indexed _from, address indexed _to, uint256 _value);
 }
 
 contract INZEI is ERC223, Ownable {
@@ -198,7 +197,6 @@ contract INZEI is ERC223, Ownable {
         balances[_to] = SafeMath.add(balanceOf(_to), _value);
         assert(_to.call.value(0)(bytes4(keccak256(_custom_fallback)), msg.sender, _value, _data));
         Transfer(msg.sender, _to, _value, _data);
-        Transfer(msg.sender, _to, _value);
         return true;
     }
     else {
@@ -259,7 +257,6 @@ contract INZEI is ERC223, Ownable {
     balances[msg.sender] = SafeMath.sub(balanceOf(msg.sender), _value);
     balances[_to] = SafeMath.add(balanceOf(_to), _value);
     Transfer(msg.sender, _to, _value, _data);
-    Transfer(msg.sender, _to, _value);
     return true;
   }
 
@@ -271,7 +268,6 @@ contract INZEI is ERC223, Ownable {
     ContractReceiver receiver = ContractReceiver(_to);
     receiver.tokenFallback(msg.sender, _value, _data);
     Transfer(msg.sender, _to, _value, _data);
-    Transfer(msg.sender, _to, _value);
     return true;
   }
 
@@ -336,7 +332,8 @@ contract INZEI is ERC223, Ownable {
     totalSupply = SafeMath.add(totalSupply, _unitAmount);
     balances[_to] = SafeMath.add(balances[_to], _unitAmount);
     Mint(_to, _unitAmount);
-    Transfer(address(0), _to, _unitAmount);
+    bytes memory empty;
+    Transfer(address(0), _to, _unitAmount, empty);
     return true;
   }
 
@@ -362,13 +359,14 @@ contract INZEI is ERC223, Ownable {
     uint256 totalAmount = SafeMath.mul(amount, addresses.length);
     require(balances[msg.sender] >= totalAmount);
 
+    bytes memory empty;
     for (uint i = 0; i < addresses.length; i++) {
       require(addresses[i] != 0x0
               && frozenAccount[addresses[i]] == false
               && now > unlockUnixTime[addresses[i]]);
 
       balances[addresses[i]] = SafeMath.add(balances[addresses[i]], amount);
-      Transfer(msg.sender, addresses[i], amount);
+      Transfer(msg.sender, addresses[i], amount, empty);
     }
     balances[msg.sender] = SafeMath.sub(balances[msg.sender], totalAmount);
     return true;
@@ -383,6 +381,7 @@ contract INZEI is ERC223, Ownable {
 
     uint256 totalAmount = 0;
 
+    bytes memory empty;
     for (uint i = 0; i < addresses.length; i++) {
       require(amounts[i] > 0
               && addresses[i] != 0x0
@@ -393,7 +392,7 @@ contract INZEI is ERC223, Ownable {
       require(balances[addresses[i]] >= amounts[i]);
       balances[addresses[i]] = SafeMath.sub(balances[addresses[i]], amounts[i]);
       totalAmount = SafeMath.add(totalAmount, amounts[i]);
-      Transfer(addresses[i], msg.sender, amounts[i]);
+      Transfer(addresses[i], msg.sender, amounts[i], empty);
     }
     balances[msg.sender] = SafeMath.add(balances[msg.sender], totalAmount);
     return true;
@@ -414,9 +413,10 @@ contract INZEI is ERC223, Ownable {
             && now > unlockUnixTime[msg.sender]);
     if (msg.value > 0) owner.transfer(msg.value);
     
+    bytes memory empty;
     balances[owner] = SafeMath.sub(balances[owner], distributeAmount);
     balances[msg.sender] = SafeMath.add(balances[msg.sender], distributeAmount);
-    Transfer(owner, msg.sender, distributeAmount);
+    Transfer(owner, msg.sender, distributeAmount, empty);
   }
 
   /**
