@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BnsPresale at 0x95609c7c7cbc0f3ed3f7005379f5ae5f872408e2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BnsPresale at 0x7facf5286883d4068b5adb4c7c4d3ef714fad5a9
 */
 pragma solidity ^0.4.17;
 
@@ -34,17 +34,17 @@ pragma solidity ^0.4.17;
 
 contract BnsPresale {
 
-    string public constant VERSION = "0.2.0-bns";
+    string public constant VERSION = "0.2.0-demo-test-02-max_1_eth";
 
     /* ====== configuration START ====== */
-    uint public constant PRESALE_START  = 4470000; /* approx. WED NOV 01 2017 12:55:47 GMT+0100 (CET) */
-    uint public constant PRESALE_END    = 5033333; /* approx. WED JAN 31 2018 19:39:39 GMT+0100 (CET) */
-    uint public constant WITHDRAWAL_END = 5111111; /* approx. TUE FEB 13 2018 10:08:39 GMT+0100 (CET) */
+    uint public constant PRESALE_START  = 4470680; /* approx. WED NOV 01 2017 16:45:00 GMT+0300 (CET) */
+    uint public constant PRESALE_END    = 4470740; /* approx. WED NOV 01 2017 17:00:00 GMT+0300 (CET) */
+    uint public constant WITHDRAWAL_END = 4470800; /* approx. WED NOV 01 2017 17:15:00 GMT+0100 (CET) */
 
-    address public constant OWNER = 0x54ef8Ffc6EcdA95d286722c0358ad79123c3c8B0;
+    address public constant OWNER = 0xcEAfe38b8d3802789A2A2cc45EA5d08bE8EA3b49;
 
     uint public constant MIN_TOTAL_AMOUNT_TO_RECEIVE_ETH = 0;
-    uint public constant MAX_TOTAL_AMOUNT_TO_RECEIVE_ETH = 3125;
+    uint public constant MAX_TOTAL_AMOUNT_TO_RECEIVE_ETH = 1;
     uint public constant MIN_ACCEPTED_AMOUNT_FINNEY = 1;
 
     /* ====== configuration END ====== */
@@ -135,7 +135,7 @@ contract BnsPresale {
     function sendRefund() private tokenHoldersOnly {
         // load balance to refund plus amount currently sent
         uint amount_to_refund = min(balances[msg.sender], this.balance - msg.value) ;
-
+//
         // change balance
         balances[msg.sender] -= amount_to_refund;
         total_refunded += amount_to_refund;
