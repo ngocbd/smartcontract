@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TopiaCoinSAFTSale at 0x2f2f25ee6a102272a484fa85388f0206ec7b0668
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TopiaCoinSAFTSale at 0xc6dDbdedf43dA59Ea33165452451b8Cdc8d79248
 */
 pragma solidity ^0.4.15;
 
@@ -308,8 +308,8 @@ contract TopiaCoinSAFTSale is Ownable, Finalizable {
 
 	// Calculates the hash for the provided payment information.
 	// TODO: Make this method internal before deploying Smart Contract.
-	function calculateHash(bytes8 _paymentIdentifier, uint256 _amount, uint32 _nonce) constant onlyOwnerOrManager returns (bytes32 hash) {
-		return sha256(_paymentIdentifier, _amount, _nonce);
+	function calculateHash(bytes8 _paymentIdentifier, uint256 _amount, uint32 _nonce) constant returns (bytes32 hash) {
+		return sha3(_paymentIdentifier, _amount, _nonce);
 	}
 
 	function finalization() internal {
