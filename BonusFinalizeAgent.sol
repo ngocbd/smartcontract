@@ -1,23 +1,6 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BonusFinalizeAgent at 0xfad74850752704983df2f2625d2bbfbd02e53b39
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BonusFinalizeAgent at 0x2d91269b2e65e4a5204ff0fb08adb0c460066ac8
 */
-/*
- * ERC20 interface
- * see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 {
-  uint public totalSupply;
-  function balanceOf(address who) constant returns (uint);
-  function allowance(address owner, address spender) constant returns (uint);
-
-  function transfer(address to, uint value) returns (bool ok);
-  function transferFrom(address from, address to, uint value) returns (bool ok);
-  function approve(address spender, uint value) returns (bool ok);
-  event Transfer(address indexed from, address indexed to, uint value);
-  event Approval(address indexed owner, address indexed spender, uint value);
-}
-
-
 /**
  * Safe unsigned safe math.
  *
@@ -124,10 +107,31 @@ contract Haltable is Ownable {
  */
 contract PricingStrategy {
 
+  /** Interface declaration. */
+  function isPricingStrategy() public constant returns (bool) {
+    return true;
+  }
+
+  /** Self check if all references are correctly set.
+   *
+   * Checks that pricing strategy matches crowdsale parameters.
+   */
+  function isSane(address crowdsale) public constant returns (bool) {
+    return true;
+  }
+
   /**
    * When somebody tries to buy tokens for X eth, calculate how many tokens they get.
+   *
+   *
+   * @param value - What is the value of the transaction send in as wei
+   * @param tokensSold - how much tokens have been sold this far
+   * @param weiRaised - how much money has been raised this far
+   * @param msgSender - who is the investor of this transaction
+   * @param decimals - how many decimal units the token has
+   * @return Amount of tokens the investor receives
    */
-  function calculatePrice(uint value, uint tokensSold, uint weiRaised, address msgSender) public constant returns (uint tokenAmount);
+  function calculatePrice(uint value, uint tokensSold, uint weiRaised, address msgSender, uint decimals) public constant returns (uint tokenAmount);
 }
 
 
@@ -158,6 +162,35 @@ contract FinalizeAgent {
 
 
 
+
+/*
+ * ERC20 interface
+ * see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 {
+  uint public totalSupply;
+  function balanceOf(address who) constant returns (uint);
+  function allowance(address owner, address spender) constant returns (uint);
+
+  function transfer(address to, uint value) returns (bool ok);
+  function transferFrom(address from, address to, uint value) returns (bool ok);
+  function approve(address spender, uint value) returns (bool ok);
+  event Transfer(address indexed from, address indexed to, uint value);
+  event Approval(address indexed owner, address indexed spender, uint value);
+}
+
+
+/**
+ * A token that defines fractional units as decimals.
+ */
+contract FractionalERC20 is ERC20 {
+
+  uint public decimals;
+
+}
+
+
+
 /**
  * Abstract base contract for token sales.
  *
@@ -174,7 +207,7 @@ contract Crowdsale is Haltable {
   using SafeMathLib for uint;
 
   /* The token we are selling */
-  ERC20 public token;
+  FractionalERC20 public token;
 
   /* How we are going to price our offering */
   PricingStrategy public pricingStrategy;
@@ -236,13 +269,13 @@ contract Crowdsale is Haltable {
   event Invested(address investor, uint weiAmount, uint tokenAmount);
   event Refund(address investor, uint weiAmount);
 
-  function Crowdsale(address _token, address _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal) {
+  function Crowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal) {
 
     owner = msg.sender;
 
-    token = ERC20(_token);
+    token = FractionalERC20(_token);
 
-    pricingStrategy = PricingStrategy(_pricingStrategy);
+    setPricingStrategy(_pricingStrategy);
 
     multisigWallet = _multisigWallet;
     if(multisigWallet == 0) {
@@ -288,7 +321,7 @@ contract Crowdsale is Haltable {
   function invest(address receiver) inState(State.Funding) stopInEmergency payable public {
 
     uint weiAmount = msg.value;
-    uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised, tokensSold, msg.sender);
+    uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised, tokensSold, msg.sender, token.decimals());
 
     if(tokenAmount == 0) {
       // Dust transaction
@@ -334,11 +367,9 @@ contract Crowdsale is Haltable {
   /**
    * Finalize a succcesful crowdsale.
    *
-   * Anybody can call to trigger the end of the crowdsale.
-   *
-   * Call the contract that provides post-crowdsale actions, like releasing the tokens.
+   * The owner can triggre a call the contract that provides post-crowdsale actions, like releasing the tokens.
    */
-  function finalize() public inState(State.Success) stopInEmergency {
+  function finalize() public inState(State.Success) onlyOwner stopInEmergency {
 
     // Already finalized
     if(finalized) {
@@ -353,11 +384,30 @@ contract Crowdsale is Haltable {
     finalized = true;
   }
 
-  function setFinalizeAgent(FinalizeAgent addr) onlyOwner inState(State.Preparing) {
+  /**
+   * Allow to (re)set finalize agent.
+   *
+   * Design choice: no state restrictions on setting this, so that we can fix fat finger mistakes.
+   */
+  function setFinalizeAgent(FinalizeAgent addr) onlyOwner {
     finalizeAgent = addr;
 
     // Don't allow setting bad agent
     if(!finalizeAgent.isFinalizeAgent()) {
+      throw;
+    }
+  }
+
+  /**
+   * Allow to (re)set pricing strategy.
+   *
+   * Design choice: no state restrictions on the set, so that we can fix fat finger mistakes.
+   */
+  function setPricingStrategy(PricingStrategy _pricingStrategy) onlyOwner {
+    pricingStrategy = _pricingStrategy;
+
+    // Don't allow setting bad agent
+    if(!pricingStrategy.isPricingStrategy()) {
       throw;
     }
   }
@@ -400,6 +450,7 @@ contract Crowdsale is Haltable {
     if(finalized) return State.Finalized;
     else if (address(finalizeAgent) == 0) return State.Preparing;
     else if (!finalizeAgent.isSane()) return State.Preparing;
+    else if (!pricingStrategy.isSane(address(this))) return State.Preparing;
     else if (block.timestamp < startsAt) return State.PreFunding;
     else if (block.timestamp <= endsAt && !isCrowdsaleFull()) return State.Funding;
     else if (isMinimumGoalReached()) return State.Success;
@@ -713,55 +764,6 @@ contract UpgradeableToken is StandardToken {
 
 
 
-/*
-
-TransferableToken defines the generic interface and the implementation
-to limit token transferability for different events.
-
-It is intended to be used as a base class for other token contracts.
-
-Over-writting transferableTokens(address holder, uint64 time) is the way to provide
-the specific logic for limitting token transferability for a holder over time.
-
-TransferableToken has been designed to allow for different limitting factors,
-this can be achieved by recursively calling super.transferableTokens() until the
-base class is hit. For example:
-
-function transferableTokens(address holder, uint64 time) constant public returns (uint256) {
-  return min256(unlockedTokens, super.transferableTokens(holder, time));
-}
-
-A working example is VestedToken.sol:
-https://github.com/OpenZeppelin/zeppelin-solidity/blob/master/contracts/token/VestedToken.sol
-
-*/
-
-contract TransferableToken is ERC20 {
-  // Checks whether it can transfer or otherwise throws.
-  modifier canTransfer(address _sender, uint _value) {
-   if (_value > transferableTokens(_sender, uint64(now))) throw;
-   _;
-  }
-
-  // Checks modifier and allows transfer if tokens are not locked.
-  function transfer(address _to, uint _value) canTransfer(msg.sender, _value) returns (bool success) {
-   return super.transfer(_to, _value);
-  }
-
-  // Checks modifier and allows transfer if tokens are not locked.
-  function transferFrom(address _from, address _to, uint _value) canTransfer(_from, _value) returns (bool success) {
-   return super.transferFrom(_from, _to, _value);
-  }
-
-  // Default transferable tokens function returns all tokens for a holder (no limit).
-  function transferableTokens(address holder, uint64 time) constant public returns (uint256) {
-    return balanceOf(holder);
-  }
-}
-
-
-
-
 /**
  * Define interface for releasing the token transfer after a successful crowdsale.
  */
@@ -793,13 +795,10 @@ contract ReleasableToken is ERC20, Ownable {
 
   /**
    * Set the contract that can call release and make the token transferable.
+   *
+   * Design choice. Allow reset the release agent to fix fat finger mistakes.
    */
   function setReleaseAgent(address addr) onlyOwner inReleaseState(false) public {
-
-    // Already set
-    if(releaseAgent != 0) {
-      throw;
-    }
 
     // We don't do interface check here as we might want to a normal wallet address to act as a release agent
     releaseAgent = addr;
@@ -924,15 +923,14 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
 
   string public symbol;
 
-  /** We don't want to support decimal places as it's not very well handled by different wallets */
-  uint public decimals = 0;
+  uint public decimals;
 
   /**
    * Construct the token.
    *
    * This token must be created through a team multisig wallet, so that it is owned by that wallet.
    */
-  function CrowdsaleToken(string _name, string _symbol, uint _initialSupply) {
+  function CrowdsaleToken(string _name, string _symbol, uint _initialSupply, uint _decimals) {
 
     // Create from team multisig
     owner = msg.sender;
@@ -944,6 +942,8 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
     symbol = _symbol;
 
     totalSupply = _initialSupply;
+
+    decimals = _decimals;
 
     // Create initially all balance on the team multisig
     balances[msg.sender] = totalSupply;
