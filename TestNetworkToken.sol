@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestNetworkToken at 0x131288b47c92409d0778d0aa2fbb8367e3399d33
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TestNetworkToken at 0xfabe292d8019bfa02e5fead2c78ef71a1bf35ce8
 */
 pragma solidity ^0.4.4;
 
@@ -61,7 +61,6 @@ contract TestNetworkToken {
 
         var ethValue = tokenValue / tokenCreationRate;
         Refund(msg.sender, ethValue);
-        Transfer(msg.sender, 0x0, tokenValue);
 
         if (!msg.sender.send(ethValue)) throw;
     }
