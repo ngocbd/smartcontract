@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CinociCoin at 0xae7fd76ac0237d23934b59150f8e5e419d2f4631
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CinociCoin at 0x3d442cb873635ac9993ba86d0bcf6d00f526c6a0
 */
 pragma solidity ^0.4.18;
 
