@@ -1,12 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IcoContract at 0xb3536f8f02e05ac6b6cb8f862a33fdc2331290cf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IcoContract at 0x4e7a37f5c5832a35fea477bafe84b666429a5a36
 */
 pragma solidity ^0.4.18;
-
-/**
- * @author Hieu Phan - https://github.com/phanletrunghieu
- * @author Hanh Pham - https://github.com/HanhPhamPhuoc
- */
 
 /**
  * @title SafeMath
@@ -23,9 +18,7 @@ library SafeMath {
   }
 
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
@@ -674,7 +667,7 @@ contract IcoContract is IcoPhase, Ownable, Pausable, Affiliate, Bonus {
 	uint256 public tokenRemainPreSale;//tokens remain for pre-sale
 	uint256 public tokenRemainPublicSale;//tokens for public-sale
 
-	address public ethFundDeposit = 0x8780eCF6DB001B223aE48372f4045097e1a11aA9;//multi-sig wallet
+	address public ethFundDeposit = 0x133f29F316Aac08ABC0b39b5CdbD0E7f134671dB;//multi-sig wallet
 	address public tokenAddress;
 
 	bool public isFinalized;
