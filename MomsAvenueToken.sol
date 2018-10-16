@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MomsAvenueToken at 0x40ed44885381d0f63d656bd32718f69973980ba3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MomsAvenueToken at 0xfcc2230d5c1c119a205006fb9083f00cd5573cf1
 */
 pragma solidity ^0.4.18;
 
@@ -121,14 +121,14 @@ contract StandardToken {
 
 contract MomsAvenueToken is StandardToken {
 
-    string public constant name = "M.O.M.";
+    string public constant name = "Moms avenue token";
     string public constant symbol = "MOM";
     uint8 public constant decimals = 18;
 
     address public owner;
 
     uint256 public constant totalSupply = 2200000000 * (10 ** uint256(decimals));
-    uint256 public constant lockedAmount = 990000000 * (10 ** uint256(decimals));
+    uint256 public constant lockedAmount = 440000000 * (10 ** uint256(decimals));
 
     uint256 public lockReleaseTime;
 
