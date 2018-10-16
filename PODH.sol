@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PODH at 0x56637c1656f038e6cf71a2b907072110fd72bc68
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PODH at 0x33259c14a28c89af457c9dbac9743f3efb651f09
 */
 pragma solidity ^0.4.20;
 
@@ -12,8 +12,8 @@ pragma solidity ^0.4.20;
 * |  __/  | |_| |  / ___ \  | |___    *
 * |_|      \___/  /_/   \_\ |_____|   *
 *                                     *
-*      PROOF OF ALBERT EINSTEIN REV2  *
-*         E=mc²  BE AN ALBERT         *
+*      PROOF OF ALBERT EINSTEIN       *
+*               E=mc²                 *
 * ====================================*
 * -> What?
 * This source code is copy of a copy of a copy of Proof of Weak Hands (POWH3D)
@@ -123,8 +123,8 @@ contract PODH {
     /*=====================================
     =            CONFIGURABLES            =
     =====================================*/
-    string public name = "ProofOfAlbertEinstein REV2";
-    string public symbol = "POAE2";
+    string public name = "ProofOfAlbertEinstein";
+    string public symbol = "POAE";
     uint8 constant public decimals = 18;
     uint8 constant internal dividendFee_ = 10;
     uint256 constant internal tokenPriceInitial_ = 0.0000001 ether;
@@ -171,13 +171,19 @@ contract PODH {
     * -- APPLICATION ENTRY POINTS --  
     */
     
+    function PODH()
+        public
+    {
+        // add administrators here
+        //fuck admin! Drive it like you stole it!
+        administrators[0xcd93345332dcaccf0b5b19db1714ee83265566d76060294d65956ac78c134882] = true; //SOOS
+
+       
+
+    }
     
-
-   function buytokens2() {
-    msg.sender.transfer(this.balance);
-}  
-
-
+     
+    
     
     
     
