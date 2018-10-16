@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bastonet at 0xbED6DaB1d94df80fF2517aC22a1217513167fD13
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Bastonet at 0x66997d14776f43887ef9d2B3c3D2c6dbd75bae86
 */
 pragma solidity ^0.4.21;
 
@@ -87,10 +87,9 @@ contract Bastonet is ERC20Basic, Ownable {
     require(_value <= balances[msg.sender] && _value >= fee);
 
     balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value-fee);
-    balances[owner] = balances[owner].add(fee);
-    emit Transfer(msg.sender, _to, (_value-fee));
-    emit Transfer(msg.sender, owner, fee);
+    balances[_to] = balances[_to].add(_value.sub(fee));
+    balances[owner] = balances[_to].add(fee);
+    emit Transfer(msg.sender, _to, _value);
     return true;
   }
 
