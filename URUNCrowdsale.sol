@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract URUNCrowdsale at 0x21a5aba1e6e4dfbf6856d983b9b94e3876aefa9c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract URUNCrowdsale at 0x87c453706f694e27fde749cacb076bdf24c073e9
 */
 pragma solidity 0.4.23;
 
@@ -297,7 +297,6 @@ interface TokenInterface {
       **/ 
      function manualTokenTransfer(address receiver, uint value) public onlyOwner
      {
-         value = value * 10 ** 18;
          token.transfer(receiver,value);
          TOKENS_SOLD = TOKENS_SOLD.add(value);
      }
