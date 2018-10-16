@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WineMarket at 0x55d722827c8e12504db5b4f3837bff2f43c9f232
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WineMarket at 0xf0a0596690b06182343047c932b6bbb0647f8d30
 */
 pragma solidity ^0.4.18;
 
@@ -45,7 +45,7 @@ contract WineMarket{
 
     function consumeWine(uint256 numBottlesToConsume) initializedMarket public returns(uint256) {
         require(currentWineAmount[msg.sender] > 0);
-        require(numBottlesToConsume <= currentWineAmount[msg.sender]);
+        require(numBottlesToConsume >= currentWineAmount[msg.sender]);
 
         // Once wine is consumed, it is gone forever
         currentWineAmount[msg.sender] = SafeMath.sub(currentWineAmount[msg.sender],numBottlesToConsume);
