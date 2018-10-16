@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OrganizeFunds at 0xe137da0a88e299d5086f1ebf3c224386d82a0b16
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OrganizeFunds at 0x4933dea7ea497a87d41acc5d8048ac2d8e6cedfb
 */
 pragma solidity ^0.4.18;
 
 /**
  *
- * Version: B
- * @author  <newtwist@protonmail.com>
+ * Version: C
+ * @author  Pratyush Bhatt <MysticMonsoon@protonmail.com>
  *
  * Overview:
  * Divides all incoming funds among various `activity` accounts. The division cannot be changed
@@ -85,7 +85,7 @@ contract OrganizeFunds {
   // set withdrawal gas
   // nonstandard gas is necessary to support push-withdrawals to other contract
   //
-  function setWitdrawGas(uint256 _withdrawGas) public ownerOnly unlockedOnly {
+  function setWitdrawGas(uint256 _withdrawGas) public ownerOnly {
     withdrawGas = _withdrawGas;
     MessageEventI("ok: withdraw gas set", withdrawGas);
   }
