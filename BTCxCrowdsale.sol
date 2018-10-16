@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTCxCrowdsale at 0xea091331357959a265b0075a3c084d7d92e2e176
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BTCxCrowdsale at 0x536d13e82d001c85f3fb9caaee004beaab62694f
 */
 pragma solidity ^0.4.18;
 // This contract has the burn option
@@ -52,7 +52,7 @@ contract BTCxCrowdsale is owned, SafeMath {
     uint public rate; //rate for the crowdsale
     uint public tokenDecimals;
     token public tokenReward; //
-    uint public tokensSold = 0;  
+    uint public tokensSold = 0;  //the amount of UzmanbuCoin sold  
     /* the start date of the crowdsale*/
     uint public start; /* the start date of the crowdsale*/
     mapping(address => uint256) public balanceOf;  //Ether deposited by the investor
@@ -67,7 +67,7 @@ contract BTCxCrowdsale is owned, SafeMath {
      *
      * Setup the owner
      */
-    function BTCxCrowdsale( ) {
+    function Crowdsale( ) {
         beneficiary = 0x781AC8C2D6dc017c4259A1f06123659A4f6dFeD8;
         rate = 2; 
         tokenDecimals=8;
