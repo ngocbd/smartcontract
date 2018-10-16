@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Eurocoin at 0x5150dCbb97c035005Eba4931610331AbDedb3623
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Eurocoin at 0x287123335683BBa3CDc2E92CD0913F5c22Fd2325
 */
 pragma solidity ^0.4.4;
 
@@ -18,7 +18,7 @@ contract Eurocoin {
 
   
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function Eurocoin() {
+    function EurocoinB() {
 
          initialSupply = 100000000;
          name ="Eurocoin";
