@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Eclipse at 0xe8f65d15d08c9175bc42afad1cca6a6d4c7f9b78
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Eclipse at 0xea45765afe339eaf4e8b1fddd7596fc241d1311b
 */
 pragma solidity ^0.4.4;
 
@@ -39,9 +39,10 @@ contract Token {
 
 }
 
+
 contract StandardToken is owned, Token {
 
-    function transfer(address _to, uint256 _value) onlyOwner public returns (bool success) {
+    function transfer(address _to, uint256 _value) onlyOwner  public returns (bool success) {
         //if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
         if (balances[msg.sender] >= _value && _value > 0) {
             balances[msg.sender] -= _value;
@@ -51,7 +52,7 @@ contract StandardToken is owned, Token {
         } else { return false; }
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) onlyOwner public returns (bool success) {
+    function transferFrom(address _from, address _to, uint256 _value)  public returns (bool success) {
         if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
             balances[_to] += _value;
             balances[_from] -= _value;
@@ -72,7 +73,7 @@ contract StandardToken is owned, Token {
     }
 
     function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
+        return allowed[_owner][_spender];
     }
 
     mapping (address => uint256) balances;
@@ -80,7 +81,7 @@ contract StandardToken is owned, Token {
     uint256 public totalSupply;
 }
 
-contract Eclipse is owned, StandardToken {
+contract Eclipse is StandardToken {
 
     /* Public variables of the token */
 
@@ -114,24 +115,20 @@ contract Eclipse is owned, StandardToken {
     }
 
     function changePrice(uint256 _newAmount) onlyOwner public {
-      unitsOneEthCanBuy = _newAmount;
+        unitsOneEthCanBuy = _newAmount;
     }
 
 
     function() public payable {
         totalEthInWei = totalEthInWei + msg.value;
         uint256 amount = msg.value * unitsOneEthCanBuy;
-        if (balances[fundsWallet] < amount) {
-            return;
-        }
-
+        require(balances[fundsWallet] >= amount);
         balances[fundsWallet] = balances[fundsWallet] - amount;
         balances[msg.sender] = balances[msg.sender] + amount;
-
         Transfer(fundsWallet, msg.sender, amount); // Broadcast a message to the blockchain
-
         //Transfer ether to fundsWallet
         fundsWallet.transfer(msg.value);
+
     }
 
     /* Approves and then calls the receiving contract */
@@ -139,7 +136,7 @@ contract Eclipse is owned, StandardToken {
         allowed[msg.sender][_spender] = _value;
         Approval(msg.sender, _spender, _value);
 
-        if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { revert(); }
+        // if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { revert(); }
         return true;
     }
 }
