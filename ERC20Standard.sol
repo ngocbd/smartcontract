@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Standard at 0xfCCfEec6e08024465A031b994778ccd0A847f047
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Standard at 0x384776cb3e453402ecf070b48d79e9874763cb50
 */
 pragma solidity ^0.4.11;
 
@@ -40,14 +40,14 @@ contract ERC20Standard {
 	mapping (address => uint256) balances;
 	mapping (address => mapping (address => uint256)) allowed;
 
-  function ERC20Standard(uint256 _totalSupply, string _symbol, bool _mintable) public {
+  function ERC20Standard(uint256 _totalSupply, string _symbol, string _name, bool _mintable) public {
 		decimals = 18;
 		symbol = _symbol;
+		name = _name;
 		mintable = _mintable;
 		owner = msg.sender;
-
-    totalSupply = _totalSupply * (10 ** decimals);
-    balances[msg.sender] = totalSupply;
+        totalSupply = _totalSupply * (10 ** decimals);
+        balances[msg.sender] = totalSupply;
   }
 	//Fix for short address attack against ERC20
 	modifier onlyPayloadSize(uint size) {
