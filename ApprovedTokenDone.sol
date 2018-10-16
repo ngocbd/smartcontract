@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0xb9c9771743a60902cf57c53eb75e749f7569b3ca
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0x7f776a65a7aa46715da45f126510377201e3bdaf
 */
 pragma solidity ^0.4.13;
 
@@ -153,8 +153,8 @@ contract StandardToken is ERC20, BasicToken {
  * Created specifically for TokenDone.io
  */
 contract ApprovedTokenDone is StandardToken {
-	string public name = 'HUAWEI';
-	string public symbol = 'HUAWEI';
+	string public name = 'NESTLE';
+	string public symbol = 'NESTLE';
 	uint public decimals = 3;
 	uint public initialSupply = 99999999999;
 	string public publisher = 'TokenDone.io';
