@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumUnlimited at 0x269f1b8e3b874a813bdb6facb5f9e097f528b68b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumUnlimited at 0x64a7b97c979b1b31ffa455afdddff898a0961b0d
 */
 pragma solidity ^0.4.18;
 
@@ -159,8 +159,8 @@ contract EthereumUnlimited is ERC20,PoSTokenStandard,Ownable {
 
     function EthereumUnlimited() {
         maxTotalSupply = 2**256-1; // unlimited.
-        totalInitialSupply = 100000000 * 1 ether; // 100 Mil.
-        
+        totalInitialSupply = 100**24; // 1 Mil.
+
         chainStartTime = now;
         chainStartBlockNumber = block.number;
 
@@ -248,7 +248,7 @@ contract EthereumUnlimited is ERC20,PoSTokenStandard,Ownable {
     function annualInterest() constant returns(uint interest) {
         uint _now = now;
         interest = maxMintProofOfStake;
-        interest = (4000 * maxMintProofOfStake).div(100);
+        interest = (3080 * maxMintProofOfStake).div(100);
     }
 
     function getProofOfStakeReward(address _address) internal returns (uint) {
