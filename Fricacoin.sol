@@ -1,10 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fricacoin at 0xf9c135de112772917b4d47c75651114c001489c0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fricacoin at 0x7f7584465ab12b67ecefe8fde6e799c16d1ae273
 */
 pragma solidity ^0.4.16;
  
 /* 
-    Fricacoin
+    GcoinProt
  */
 contract ERC20Basic {
   uint256 public totalSupply;
@@ -174,7 +174,7 @@ contract TheLiquidToken is StandardToken, Ownable {
     // mint can be finished and token become fixed for forever
   event Mint(address indexed to, uint256 amount);
   event MintFinished();
-  bool public mintingFinished = false;
+  bool mintingFinished = false;
   modifier canMint() {
     require(!mintingFinished);
     _;
@@ -191,11 +191,7 @@ contract TheLiquidToken is StandardToken, Ownable {
   Function to stop minting new tokens.
   return True if the operation was successful.
    */
-  function finishMinting() onlyOwner returns (bool) {
-    mintingFinished = true;
-    MintFinished();
-    return true;
-  }
+  function finishMinting() onlyOwner returns (bool) {}
   
   function burn(uint _value)
         public
