@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethraffle at 0x7957eeFc49Db8E7c7a11DEd53f4604aa6afc0b29
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethraffle at 0xD0D977cf5fA3cE79a6e442c2250E8A5F37B69598
 */
 pragma solidity ^0.4.0;
 
@@ -12,7 +12,7 @@ contract Ethraffle {
 
     // Events
     event RaffleResult(
-        uint indexed raffleId,
+        uint raffleId,
         uint winningNumber,
         address winningAddress,
         uint blockTimestamp,
@@ -27,13 +27,13 @@ contract Ethraffle {
     );
 
     event TicketPurchase(
-        uint indexed raffleId,
+        uint raffleId,
         address contestant,
         uint number
     );
 
     event TicketRefund(
-        uint indexed raffleId,
+        uint raffleId,
         address contestant,
         uint number
     );
@@ -97,14 +97,13 @@ contract Ethraffle {
     }
 
     function chooseWinner() private {
-        uint winningNumber = getRandom();
-        address winningAddress = contestants[winningNumber].addr;
+        uint lastWinningNumber = getRandom();
+        address winningAddress = contestants[lastWinningNumber].addr;
         RaffleResult(
-            raffleId, winningNumber, winningAddress, block.timestamp,
+            raffleId, lastWinningNumber, winningAddress, block.timestamp,
             block.number, block.gaslimit, block.difficulty, msg.gas,
             msg.value, msg.sender, block.coinbase, getSha()
         );
-
         resetRaffle();
         winningAddress.transfer(prize);
         rakeAddress.transfer(rake);
