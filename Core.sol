@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Core at 0x14e0982197abaf06acf31a85f9c4dfe4c4bfcc69
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Core at 0x5cea41ac049a682247f6bdc579d9c6205170b3ef
 */
 pragma solidity 0.4.19;
 
@@ -76,9 +76,9 @@ contract Core is Owned {
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
-    string public name = "Self Drive Renta";
+    string public name = "Self Drive Rental";
     string public symbol = "SDRT";
-    uint256 public decimals = 1;
+    uint256 public decimals = 0;
 
     function Core() public {
 
