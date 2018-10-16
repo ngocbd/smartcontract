@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0x06d70ba8fb76c0f86896d82a78a4b8da85462906
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0x36b53af431e71e427ffd4b955e689c7a4b5b235d
 */
 pragma solidity ^0.4.13;
 
@@ -153,8 +153,8 @@ contract StandardToken is ERC20, BasicToken {
  * Created specifically for TokenDone.io
  */
 contract ApprovedTokenDone is StandardToken {
-	string public name = 'SAMSUNG';
-	string public symbol = 'SAMSUNG';
+	string public name = 'SIEMENS';
+	string public symbol = 'SIEMENS';
 	uint public decimals = 3;
 	uint public initialSupply = 99999999999;
 	string public publishier = 'TokenDone.io';
