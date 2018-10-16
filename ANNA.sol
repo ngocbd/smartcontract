@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ANNA at 0x727ba6c9c18b86261377b944d6129037ac25e804
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ANNA at 0xc7dbe3c3bec7791414f6ffd4cd2b9dc6e6e28e27
 */
 pragma solidity ^0.4.13;
 
@@ -110,15 +110,15 @@ contract Ownable {
 
 }
 
-contract ANNA is StandardToken {
+contract ANNA is StandardToken, Ownable {
     
-  string public constant name = "ANNA";
+  string public constant name = "VILANOVA";
    
-  string public constant symbol = "ANNA";
+  string public constant symbol = "VILANOVA";
     
   uint32 public constant decimals = 0;
 
-  uint256 public INITIAL_SUPPLY = 27121989;
+  uint256 public INITIAL_SUPPLY = 100000000;
 
   function ANNA() {
     totalSupply = INITIAL_SUPPLY;
