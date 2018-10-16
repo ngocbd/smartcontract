@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChristmasClub at 0xfd2d4e7c0876575bc879f0edb9b59f32d789856d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ChristmasClub at 0x6cd164064703eae85509e3fc6f4ba026a4f8d22d
 */
 pragma solidity ^0.4.19;
 
@@ -83,11 +83,18 @@ contract ChristmasClub is Ownable {
     using SafeMath for uint256;
     
     uint public withdrawalTime = 1543622400; // December 1st
-    uint public earlyWithdrawalFeePct = 5;
+    uint public earlyWithdrawalFeePct = 10;
+    
+    uint public totalDeposited = 0;
     
     mapping (address => uint) balances;
     
+    function setWithdrawalTime (uint newTime) public onlyOwner {
+        withdrawalTime = newTime;
+    }
+    
     function deposit () public payable {
+        totalDeposited = totalDeposited.add(msg.value);
         balances[msg.sender] = balances[msg.sender].add(msg.value);
     }
     
