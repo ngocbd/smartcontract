@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BXXCrowdsale at 0xb2dac327a95bbdbc51e31db782afd20d6373c30b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BXXCrowdsale at 0x8d8bb69675ea0032563a4516edc6e89ea533c752
 */
 pragma solidity ^0.4.16;
 
@@ -29,7 +29,7 @@ contract BXXCrowdsale {
         startDate = 1518393600;
         endDate = 1523142000;
         price = 5000;
-        tokenReward = Token(0x53562419E435cBAe65d73E7EAe2723A43E6cd887);
+        tokenReward = Token(0x5E017Df6389237197cc8C26719940512A7DF6E04);
     }
 
     function setOwner(address _owner) isCreator public {
