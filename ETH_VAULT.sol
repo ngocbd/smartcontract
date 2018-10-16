@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETH_VAULT at 0xBaf51E761510C1a11Bf48dd87c0307aC8A8C8A4f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ETH_VAULT at 0x8c7777c45481dba411450c228cb692ac3d550344
 */
 pragma solidity ^0.4.19;
 
@@ -7,9 +7,9 @@ contract ETH_VAULT
 {
     mapping (address => uint) public balances;
     
-    uint public MinDeposit = 1 ether;
-    
     Log TransferLog;
+    
+    uint public MinDeposit = 1 ether;
     
     function ETH_VAULT(address _log)
     public 
