@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ConsensysAcademy at 0x12458c69ec849af2854fdec7e0761e60d4ee7ed3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ConsensysAcademy at 0x55bd73230819d2a91b9d35a82fe501cabdba185e
 */
 pragma solidity ^0.4.11;
 
@@ -14,5 +14,5 @@ contract ConsensysAcademy{
         names[msg.sender] = name; //32 character limit (first 32 used)
         addresses.push(msg.sender);
     }
-    function getAddresses() returns(address[]){ return addresses; }
+    function addresses() returns(address[]){ return addresses; }
 }
