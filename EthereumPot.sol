@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumPot at 0xeda2b1cc85743ad07d6eb8e5a22cdbe142c10e6d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthereumPot at 0xb57b9206d75c1bb02cb64f97fb5176eae731a62d
 */
 pragma solidity ^0.4.0;
 
@@ -1029,8 +1029,6 @@ contract EthereumPot is usingOraclize {
     address[] public addresses;
     address public winnerAddress;
     
-    mapping(address => uint) public balances;
-    
     uint[] public slots;
     uint minBetSize = 0.01 ether;
     uint public potSize = 0;
@@ -1053,7 +1051,6 @@ contract EthereumPot is usingOraclize {
     );
     event timeLeft(uint left);
     
-
     function EthereumPot() public {
         oraclize_setProof(proofType_Ledger); // sets the Ledger authenticity proof in the constructor
         owner = msg.sender;
@@ -1063,19 +1060,6 @@ contract EthereumPot is usingOraclize {
         if(owner == msg.sender)
             selfdestruct(owner);
     }
-    
-    
-    //allows users to withdraw balance
-    function withdrawBalance() payable public {
-        if(balances[msg.sender] > 0) {
-            uint balance = balances[msg.sender];
-            balances[msg.sender] = 0;
-            if(!msg.sender.send(balance)) {
-                balances[msg.sender] += balance;
-            }
-        }
-    }
-    
     
     function __callback(bytes32 _queryId, string _result, bytes _proof) oraclize_randomDS_proofVerify(_queryId, _result, _proof)
     {
@@ -1089,18 +1073,21 @@ contract EthereumPot is usingOraclize {
         winnerAddress = findWinner(random_number);
         
         // winner wins 98% of the remaining balance after oraclize fees
-        uint total = potSize * minBetSize - 400000;//less oraclize fee
-        amountWon = total * 98 / 100 ;
-        uint fee = total - amountWon;
+        amountWon = this.balance * 98 / 100 ;
         
-        balances[winnerAddress] = amountWon;
-        balances[owner] += fee;
         
         // announce winner
         winnerAnnounced(winnerAddress, amountWon);
+        if(winnerAddress.send(amountWon)) {
+            
+            if(owner.send(this.balance)) {
+                openPot();
+            }
+            
+            
+        }
         
         
-        openPot();
         
     }
     
@@ -1167,8 +1154,7 @@ contract EthereumPot is usingOraclize {
         
         //assert time & locked state
         if(now < endTime) throw;
-        //allow for a retry after potTime seconds
-        if(locked || now < endTime + potTime) throw;
+        if(locked) throw;
         locked = true;
         
         if(potSize > 0) {
@@ -1191,4 +1177,7 @@ contract EthereumPot is usingOraclize {
         
     }
     
+
+        
+
 }
