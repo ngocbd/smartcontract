@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ARK at 0xe43a6B3EE87bd8a259210087FD2Cc37A0aC518B8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ARK at 0x1caf0d0384ACeC96B9D4C43aFa5400c1E08c22D4
 */
 contract ARK
 {
@@ -186,7 +186,7 @@ contract ARK
 
         
         function buyBOTx(uint i,string buyerbill,string buyerInfo,address buyerwallet,uint amount) returns (bool){
-         if((amount<1)||(i>15000)||((amount>1)&&((selling+amount+999>totBOTS)||(selling<400))))throw;
+         if((amount<1)||(i>10000)||((amount>1)&&((selling+amount+999>totBOTS)||(selling<700))))throw;
         
                 address sellsNow;
                 address holder;
