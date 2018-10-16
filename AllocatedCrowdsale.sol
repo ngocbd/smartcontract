@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AllocatedCrowdsale at 0x44ad644576eeebffcd9ad89728d2a6c415cf8fb5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AllocatedCrowdsale at 0xed6e9ede980636c622124e01558b49b23c8f45be
 */
 /**
  * Safe unsigned safe math.
