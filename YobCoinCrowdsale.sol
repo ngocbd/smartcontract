@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YobCoinCrowdsale at 0x5d38180fd9b336ac141fa14f8ad41703f0fc6574
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract YobCoinCrowdsale at 0xc8986ecd41fb420268f1f4285931379357c4142b
 */
 pragma solidity ^0.4.18;
 
@@ -412,7 +412,7 @@ contract YobCoinCrowdsale is CappedCrowdsale, Ownable {
   function YobCoinCrowdsale()
     //uint256 _startTime, uint256 _endTime, uint256 _rate, address _wallet
     CappedCrowdsale(4000000000000000000000000000)
-    Crowdsale(1509186546, 1513376946, 6666666667000000, msg.sender) {          
+    Crowdsale(1509186546, 1513376946, 2222, msg.sender) {          
   }
 
   // creates the token to be sold.
