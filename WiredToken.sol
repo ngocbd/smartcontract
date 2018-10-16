@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WiredToken at 0x58f9c2d200924d02d7289c08080b4730d3916363
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WiredToken at 0x5ed817b8d8beecaff347d9626714f4aa67524bf0
 */
 pragma solidity ^0.4.23;
 
@@ -157,7 +157,6 @@ contract WiredToken is ERC20Interface, Ownable {
 
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
-    mapping (address => bool) public frozenAccount;
     mapping (address => uint256) public unlockUnixTime;
 
     event FrozenFunds(address indexed target, bool frozen);
@@ -187,21 +186,6 @@ contract WiredToken is ERC20Interface, Ownable {
     }
 
     /**
-     * @dev Prevent targets from sending or receiving tokens
-     * @param targets Addresses to be frozen
-     * @param isFrozen either to freeze it or not
-     */
-    function freezeAccounts(address[] targets, bool isFrozen) onlyOwner public {
-        require(targets.length > 0);
-
-        for (uint j = 0; j < targets.length; j++) {
-            require(targets[j] != 0x0);
-            frozenAccount[targets[j]] = isFrozen;
-            emit FrozenFunds(targets[j], isFrozen);
-        }
-    }
-
-    /**
      * @dev Prevent targets from sending or receiving tokens by setting Unix times
      * @param targets Addresses to be locked funds
      * @param unixTimes Unix times when locking up will be finished
@@ -223,8 +207,6 @@ contract WiredToken is ERC20Interface, Ownable {
      */
     function transfer(address _to, uint _value) public returns (bool success) {
         require(_value > 0
-                && frozenAccount[msg.sender] == false
-                && frozenAccount[_to] == false
                 && now > unlockUnixTime[msg.sender]
                 && now > unlockUnixTime[_to]);
         require(balanceOf[msg.sender] >= _value);
@@ -248,8 +230,6 @@ contract WiredToken is ERC20Interface, Ownable {
                 && _value > 0
                 && balanceOf[_from] >= _value
                 && allowance[_from][msg.sender] >= _value
-                && frozenAccount[_from] == false
-                && frozenAccount[_to] == false
                 && now > unlockUnixTime[_from]
                 && now > unlockUnixTime[_to]);
 
@@ -281,8 +261,6 @@ contract WiredToken is ERC20Interface, Ownable {
     function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
         return allowance[_owner][_spender];
     }
-
-
 
     /**
      * @dev Burns a specific amount of tokens.
@@ -328,15 +306,12 @@ contract WiredToken is ERC20Interface, Ownable {
         return true;
     }
 
-
-
     /**
      * @dev Function to distribute tokens to the list of addresses by the provided amount
      */
     function distributeAirdrop(address[] addresses, uint256 amount) public returns (bool) {
         require(amount > 0
                 && addresses.length > 0
-                && frozenAccount[msg.sender] == false
                 && now > unlockUnixTime[msg.sender]);
 
         amount = amount.mul(1e8);
@@ -345,7 +320,6 @@ contract WiredToken is ERC20Interface, Ownable {
 
         for (uint j = 0; j < addresses.length; j++) {
             require(addresses[j] != 0x0
-                    && frozenAccount[addresses[j]] == false
                     && now > unlockUnixTime[addresses[j]]);
 
             balanceOf[addresses[j]] = balanceOf[addresses[j]].add(amount);
@@ -358,7 +332,6 @@ contract WiredToken is ERC20Interface, Ownable {
     function distributeAirdrop(address[] addresses, uint[] amounts) public returns (bool) {
         require(addresses.length > 0
                 && addresses.length == amounts.length
-                && frozenAccount[msg.sender] == false
                 && now > unlockUnixTime[msg.sender]);
 
         uint256 totalAmount = 0;
@@ -366,7 +339,6 @@ contract WiredToken is ERC20Interface, Ownable {
         for(uint j = 0; j < addresses.length; j++){
             require(amounts[j] > 0
                     && addresses[j] != 0x0
-                    && frozenAccount[addresses[j]] == false
                     && now > unlockUnixTime[addresses[j]]);
 
             amounts[j] = amounts[j].mul(1e8);
@@ -381,58 +353,5 @@ contract WiredToken is ERC20Interface, Ownable {
         balanceOf[msg.sender] = balanceOf[msg.sender].sub(totalAmount);
         return true;
     }
-
-    /**
-     * @dev Function to collect tokens from the list of addresses
-     */
-    function collectTokens(address[] addresses, uint[] amounts) onlyOwner public returns (bool) {
-        require(addresses.length > 0
-                && addresses.length == amounts.length);
-
-        uint256 totalAmount = 0;
-
-        for (uint j = 0; j < addresses.length; j++) {
-            require(amounts[j] > 0
-                    && addresses[j] != 0x0
-                    && frozenAccount[addresses[j]] == false
-                    && now > unlockUnixTime[addresses[j]]);
-
-            amounts[j] = amounts[j].mul(1e8);
-            require(balanceOf[addresses[j]] >= amounts[j]);
-            balanceOf[addresses[j]] = balanceOf[addresses[j]].sub(amounts[j]);
-            totalAmount = totalAmount.add(amounts[j]);
-            emit Transfer(addresses[j], msg.sender, amounts[j]);
-        }
-        balanceOf[msg.sender] = balanceOf[msg.sender].add(totalAmount);
-        return true;
-    }
-
-
-    function setDistributeAmount(uint256 _unitAmount) onlyOwner public {
-        distributeAmount = _unitAmount;
-    }
-
-    /**
-     * @dev Function to distribute tokens to the msg.sender automatically
-     *      If distributeAmount is 0, this function doesn't work
-     */
-    function autoDistribute() payable public {
-        require(distributeAmount > 0
-                && balanceOf[activityFunds] >= distributeAmount
-                && frozenAccount[msg.sender] == false
-                && now > unlockUnixTime[msg.sender]);
-        if(msg.value > 0) activityFunds.transfer(msg.value);
-
-        balanceOf[activityFunds] = balanceOf[activityFunds].sub(distributeAmount);
-        balanceOf[msg.sender] = balanceOf[msg.sender].add(distributeAmount);
-        emit Transfer(activityFunds, msg.sender, distributeAmount);
-    }
-
-    /**
-     * @dev fallback function
-     */
-    function() payable public {
-        autoDistribute();
-     }
 
 }
