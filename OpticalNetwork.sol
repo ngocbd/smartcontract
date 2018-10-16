@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OpticalNetwork at 0x929657fbb0d9a616c3f1402e21b43b463e08e25e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract OpticalNetwork at 0x8e91a9cbadb74ef60c456f1e4ba3e391b143aad9
 */
 pragma solidity ^0.4.21;
 
@@ -193,5 +193,6 @@ contract OpticalNetwork is standardToken, Owned {
         owner=msg.sender;
         balances[_tokenAlloc] = topTotalSupply;
         totalSupply = topTotalSupply;
+        emit Transfer(0x0, _tokenAlloc, topTotalSupply); 
     }
 }
