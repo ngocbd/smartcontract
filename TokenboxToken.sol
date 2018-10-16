@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenboxToken at 0x69cd4e1e2e1cec76eb7f3b1acdddaddcc6d60fc1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenboxToken at 0xd703d5914c76a78d283415ed5c3fbe9bfd44f768
 */
 pragma solidity ^0.4.13;
 
@@ -206,7 +206,7 @@ contract TokenboxToken is Token {
      */
     string constant public name = "Tokenbox";
     //TODO: Fix before production
-    string constant public symbol = "TBX";
+    string constant public symbol = "TBX-test";
     uint8 constant public decimals = 18;
 
     // Address where Foundation tokens are allocated
