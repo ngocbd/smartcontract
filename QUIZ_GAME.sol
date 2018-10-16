@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QUIZ_GAME at 0xB19117892E2B2aAa418E75F61D7D1C05F86B66Bd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract QUIZ_GAME at 0xcaa7b8aa3BC78Dda98af8FeE1390F34e756A5F55
 */
 pragma solidity ^0.4.19;
 
 contract QUIZ_GAME
 {
-    string public Question;
+    string public question;
  
     address questionSender;
   
@@ -18,7 +18,7 @@ contract QUIZ_GAME
         if(responseHash==0x0)
         {
             responseHash = keccak256(_response);
-            Question = _question;
+            question = _question;
             questionSender = msg.sender;
         }
     }
@@ -50,10 +50,7 @@ contract QUIZ_GAME
     {
         require(msg.sender==questionSender);
         responseHash = _responseHash;
-        Question = _question;
+        question = _question;
     }
-    
-    
-    
     
 }
