@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GSI at 0xd8d4E59fabb7D8A1D013D577689cB612A8e5F826
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GSI at 0xAF6D36e6A376CDa44a5Ce9280507e5E24132C143
 */
 contract owned {
     address public owner;
@@ -214,7 +214,10 @@ contract GSI is owned {
 		
 		function commitReading(address recipient) {
 		  if(oracles[msg.sender]!=1) throw;
-		  lastReading[recipient]=requestReading[recipient];		  
+		  lastReading[recipient]=requestReading[recipient];
+		  if(this.balance>10*requiredGas) {
+			owner.send(this.balance);
+		  }
 		  //owner.send(this.balance);
 		}
 		
