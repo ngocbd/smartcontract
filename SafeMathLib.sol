@@ -1,6 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMathLib at 0x4dc39b8c473aadd9f0cb89ce5fd09687f54dca75
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SafeMathLib at 0xdb57a3dd6d4d05423d5ca9c30838a2413ed2458c
 */
+// File: contracts/SafeMathLib.sol
+
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
+
 pragma solidity ^0.4.6;
 
 /**
@@ -32,7 +40,4 @@ library SafeMathLib {
     return c;
   }
 
-  function assert(bool assertion) private {
-    if (!assertion) throw;
-  }
 }
