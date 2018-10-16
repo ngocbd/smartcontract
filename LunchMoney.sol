@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LunchMoney at 0x4b32ca05509ca4ffdbb7d2d82b27bc48ecde62f2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LunchMoney at 0x66fd97a78d8854fec445cd1c80a07896b0b4851f
 */
 pragma solidity ^0.4.12;
 
@@ -250,7 +250,7 @@ contract LunchMoney  is BurnableToken, Ownable {
     string public constant name = "Lunch Money";
     string public constant symbol = "LMY";
     uint public constant decimals = 18;
-    uint256 public constant initialSupply = 94000000 * (10 ** uint256(decimals));
+    uint256 public constant initialSupply = 250000000 * (10 ** uint256(decimals));
 
     // Constructor
     function LunchMoney () {
