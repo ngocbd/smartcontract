@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SolarDaoTokenCrowdsale at 0xadb6e66f41fea754ea91d46c63e5211b889aaecb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SolarDaoTokenCrowdsale at 0x80647a3b0ea039dd077c10128558a948fc0d9276
 */
 pragma solidity ^0.4.13;
 
@@ -553,7 +553,7 @@ contract SolarDaoTokenCrowdsale is Haltable, SafeMath {
   function getState() public constant returns (State) {
     if (finalized)
       return State.Finalized;
-    if (address(token) == 0 || address(multisigWallet) == 0 || now < preInvestStart)
+    if (address(token) == 0 || address(multisigWallet) == 0)
       return State.Preparing;
     if (preInvestStart <= now && now < startsAt && !isMaximumPreFundingGoalReached())
       return State.PreFunding;
