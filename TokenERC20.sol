@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xc48b1ac1417db27c4e2c2ed3dae5a3d2fbb07dc5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xd68f38076056b9db89a9431f0fdf9c6927a871ee
 */
 pragma solidity ^0.4.18;
 
@@ -30,7 +30,6 @@ contract TokenERC20 {
      */
     function TokenERC20() public {
         balanceOf[msg.sender] = 2100000000000000;                // Give the creator all initial tokens
-        totalSupply = 2100000000000000;
         name = "StarBlock";                                   // Set the name for display purposes
         symbol = "STB";                               // Set the symbol for display purposes
         decimals = 8;                            // Amount of decimals for display purposes
