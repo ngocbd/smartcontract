@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NiceGuyTax at 0xfba6ae30dfe97b20ad9ecccd5057ab3e5a1c41fa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NiceGuyTax at 0x9d3899df1d9f030a32dd5571fe3c7ef72d6ae566
 */
 contract NiceGuyTax {
     
@@ -34,7 +34,6 @@ contract NiceGuyTax {
         
         //If your investment is NOT 9 ether, the smartcontract rejects it and you get it back.
         if (msg.value != 9 ether) {
-            msg.sender.send(msg.value);
             throw;
         }
         
