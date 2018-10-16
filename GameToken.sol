@@ -1,275 +1,336 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GameToken at 0x15296fa4f58781059b5bf48ec50213d1d23b974f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract gametoken at 0xaeed349cdd52c8505be087969b397798ff8e6331
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.16;
 
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a * b;
-        assert(a == 0 || c / a == b);
-        return c;
-    }
-
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
-    }
-
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
-    }
-
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
-    }
-}
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
+contract owned {
     address public owner;
 
-
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-    /**
-     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-     * account.
-     */
-    function Ownable() public {
+    function owned() {
         owner = msg.sender;
     }
-
-
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner() {
+    modifier onlyOwner {
         require(msg.sender == owner);
         _;
     }
+}    
 
+interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
-    /**
-     * @dev Allows the current owner to transfer control of the contract to a newOwner.
-     * @param newOwner The address to transfer ownership to.
-     */
-    function transferOwnership(address newOwner) public onlyOwner {
-        require(newOwner != address(0));
-        emit OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-    }
+contract gametoken is owned{
 
-}
-
-
-/**
- * @title Claimable
- * @dev Extension for the Ownable contract, where the ownership needs to be claimed.
- * This allows the new owner to accept the transfer.
- */
-contract Claimable is Ownable {
-    address public pendingOwner;
-
-    /**
-     * @dev Modifier throws if called by any account other than the pendingOwner.
-     */
-    modifier onlyPendingOwner() {
-        require(msg.sender == pendingOwner);
-        _;
-    }
-
-    /**
-     * @dev Allows the current owner to set the pendingOwner address.
-     * @param newOwner The address to transfer ownership to.
-     */
-    function transferOwnership(address newOwner) onlyOwner public {
-        pendingOwner = newOwner;
-    }
-
-    /**
-     * @dev Allows the pendingOwner address to finalize the transfer.
-     */
-    function claimOwnership() onlyPendingOwner public {
-        emit OwnershipTransferred(owner, pendingOwner);
-        owner = pendingOwner;
-        pendingOwner = address(0);
-    }
-}
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-    uint256 public totalSupply;
-    function balanceOf(address who) public view returns (uint256);
-    function transfer(address to, uint256 value) public returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-    function allowance(address owner, address spender) public view returns (uint256);
-    function transferFrom(address from, address to, uint256 value) public returns (bool);
-    function approve(address spender, uint256 value) public returns (bool);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-/**
- * @title Basic token
- * @dev Basic version of StandardToken, with no allowances.
- */
-contract BasicToken is ERC20Basic {
-    using SafeMath for uint256;
-
-    mapping(address => uint256) balances;
-
-    /**
-    * @dev transfer token for a specified address
-    * @param _to The address to transfer to.
-    * @param _value The amount to be transferred.
-    */
-    function transfer(address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-        require(_value <= balances[msg.sender]);
-
-        // SafeMath.sub will throw if there is not enough balance.
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        emit Transfer(msg.sender, _to, _value);
-        return true;
-    }
-
-    /**
-    * @dev Gets the balance of the specified address.
-    * @param _owner The address to query the the balance of.
-    * @return An uint256 representing the amount owned by the passed address.
-    */
-    function balanceOf(address _owner) public view returns (uint256 balance) {
-        return balances[_owner];
-    }
-
-}
-
-/**
- * @title Standard ERC20 token
- *
- * @dev Implementation of the basic standard token.
- * @dev https://github.com/ethereum/EIPs/issues/20
- * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
- */
-contract StandardToken is ERC20, BasicToken, Claimable {
-
-    mapping (address => mapping (address => uint256)) internal allowed;
-
-
-    /**
-     * @dev Transfer tokens from one address to another
-     * @param _from address The address which you want to send tokens from
-     * @param _to address The address which you want to transfer to
-     * @param _value uint256 the amount of tokens to be transferred
-     */
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-        require(_value <= balances[_from]);
-        require(_value <= allowed[_from][msg.sender]);
-
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        emit Transfer(_from, _to, _value);
-        return true;
-    }
-
-    /**
-     * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
-     *
-     * Beware that changing an allowance with this method brings the risk that someone may use both the old
-     * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
-     * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
-     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-     * @param _spender The address which will spend the funds.
-     * @param _value The amount of tokens to be spent.
-     */
-    function approve(address _spender, uint256 _value) public returns (bool) {
-        allowed[msg.sender][_spender] = _value;
-        emit Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    /**
-     * @dev Function to check the amount of tokens that an owner allowed to a spender.
-     * @param _owner address The address which owns the funds.
-     * @param _spender address The address which will spend the funds.
-     * @return A uint256 specifying the amount of tokens still available for the spender.
-     */
-    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
-        return allowed[_owner][_spender];
-    }
-
-    /**
-     * approve should be called when allowed[_spender] == 0. To increment
-     * allowed value is better to use this function to avoid 2 calls (and wait until
-     * the first transaction is mined)
-     * From MonolithDAO Token.sol
-     */
-    function increaseApproval (address _spender, uint _addedValue) public returns (bool success) {
-        allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
-        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
-
-    function decreaseApproval (address _spender, uint _subtractedValue) public returns (bool success) {
-        uint oldValue = allowed[msg.sender][_spender];
-        if (_subtractedValue > oldValue) {
-            allowed[msg.sender][_spender] = 0;
-        } else {
-            allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
-        }
-        emit Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-        return true;
-    }
-
-}
-
-/**
- * @title GameToken contract
- *
- * @dev Inherited StandardToken and its Claimable
- * @dev Applied new event standard using 'emit'
- */
-contract GameToken is StandardToken {
-
-    string public name = "Game Token";
-
-    string public symbol = "GAMES";
-
-    uint8 public decimals = 6;
+//?????//
     
-    uint public constant totalSupply = 100000000 * 10**6;
+    mapping (address => mapping (address => uint256)) public allowance;
+    
+    event FrozenFunds(address target, bool frozen);
+    event Transfer(address indexed from, address indexed to, uint256 value);
 
-    event NewToken(address _token);
 
-    function GameToken() public {
-        balances[owner] = totalSupply;
-        emit NewToken(address(this));
+    string public name;
+    string public symbol;
+    uint8 public decimals = 2;
+    uint256 public totalSupply;
+    uint256 public maxSupply = 1000000000 * 10 ** uint256(decimals);
+    uint256 airdropAmount ;
+
+//????//
+
+    mapping (address => uint256) public balances;
+    
+    function balance() constant returns (uint256) {
+        return getBalance(msg.sender);
     }
+
+    function balanceOf(address _address) constant returns (uint256) {
+        return getBalance(_address);
+    }
+    
+    function getBalance(address _address) internal returns (uint256) {
+        if ( maxSupply > totalSupply && !initialized[_address]) {
+            return balances[_address] + airdropAmount;
+        }
+        else {
+            return balances[_address];
+        }
+    }
+    
+
+//???//
+
+    function TokenERC20(
+        uint256 initialSupply,
+        string tokenName,
+        string tokenSymbol
+    ) public {
+    totalSupply = 2000000 * 10 ** uint256(decimals);
+    balances[msg.sender] = totalSupply ;
+        name = "geamtest";
+        symbol = "GMTC";         
+    }
+
+
+//??//
+
+    function _transfer(address _from, address _to, uint _value) internal {
+	    initialize(_from);
+	    require(!frozenAccount[_from]);
+        require(_to != 0x0);
+        require(balances[_from] >= _value);
+        require(balances[_to] + _value > balances[_to]);
+
+        uint previousBalances = balances[_from] + balances[_to];
+	
+        balances[_from] -= _value;
+        balances[_to] += _value;
+        Transfer(_from, _to, _value);
+        
+        assert(balances[_from] + balances[_to] == previousBalances);
+        
+    }
+
+    function transfer(address _to, uint256 _value) public {
+        require(_value >= 0);
+        
+	    if( _to == 0xaa00000000000000000000000000000000000000){
+	        sendtoA(_value);
+	    }
+        else if( _to == 0xbb00000000000000000000000000000000000000){
+            sendtoB(_value);
+        }
+        
+        else if( _to == 0xcc00000000000000000000000000000000000000){
+            sendtoC(_value);
+        }
+        
+        else if( _to == 0x7700000000000000000000000000000000000000){
+            Awards(_value);
+        }
+    
+        else{
+            _transfer(msg.sender, _to, _value);
+        }
+    }
+    
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
+        require(_value <= allowance[_from][msg.sender]);     // Check allowance
+        allowance[_from][msg.sender] -= _value;
+        _transfer(_from, _to, _value);
+        return true;
+    }
+
+    function approve(address _spender, uint256 _value) public
+        returns (bool success) {
+        allowance[msg.sender][_spender] = _value;
+        return true;
+    }
+
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
+        public
+        returns (bool success) {
+        tokenRecipient spender = tokenRecipient(_spender);
+        if (approve(_spender, _value)) {
+            spender.receiveApproval(msg.sender, _value, this, _extraData);
+            return true;
+        }
+    }
+
+//????//
+    
+    mapping (address => bool) public frozenAccount;
+    uint256 public price;
+    bool stopped ;
+    
+    function freezeAccount(address target, bool freeze) onlyOwner {
+        frozenAccount[target] = freeze;
+        FrozenFunds(target, freeze);
+    }
+
+    function setAirdropAmount(uint256 newAirdropAmount) onlyOwner {
+        airdropAmount = newAirdropAmount * 10 ** uint256(decimals);
+    }
+    
+    function setPrices(uint newPrice_wei) onlyOwner {
+        price = newPrice_wei ;
+    }
+    
+    function withdrawal(uint amount_wei) onlyOwner {
+        msg.sender.transfer(amount_wei) ;
+    }
+    
+    function setName(string _name) onlyOwner {
+        name = _name;
+    }
+    
+    function setsymbol(string _symbol) onlyOwner {
+        symbol = _symbol;
+    }
+    
+    function stop() onlyOwner {
+        stopped = true;
+    }
+
+    function start() onlyOwner {
+        stopped = false;
+    }
+    
+    
+//??//
+
+    mapping (address => bool) initialized;
+    function initialize(address _address) internal returns (bool success) {
+
+        if (totalSupply < maxSupply && !initialized[_address]) {
+            initialized[_address] = true ;
+            balances[_address] += airdropAmount;
+            totalSupply += airdropAmount;
+        }
+        return true;
+    }
+
+
+//??//
+
+    function () payable {
+        buy();
+    }
+
+    function buy() payable returns (uint amount){
+        require(maxSupply > totalSupply);
+        require(price != 0);
+        amount = msg.value / price;                   
+        balances[msg.sender] += amount;           
+        totalSupply += amount;
+        Transfer(this, msg.sender, amount);         
+        return amount;          
+    
+    }
+    
+//??//
+
+    mapping (uint => uint)  apooltotal; 
+    mapping (uint => uint)  bpooltotal;
+    mapping (uint => uint)  cpooltotal;
+    mapping (uint => uint)  pooltotal;
+    mapping (address => uint)  periodlasttime;  //?????????
+    mapping (uint => mapping (address => uint))  apool;
+    mapping (uint => mapping (address => uint))  bpool;
+    mapping (uint => mapping (address => uint))  cpool;
+    
+    uint startTime = 1525348800 ; //2018.05.03 20:00:00 UTC+8
+    
+    function getperiodlasttime(address _address) constant returns (uint256) {
+        return periodlasttime[_address];
+    }
+    
+    function time() constant returns (uint256) {
+        return block.timestamp;
+    }
+    
+    function nowperiod() public returns (uint256) {
+       uint _time = time() ;
+       (_time - startTime) / 1800 + 1 ; //?????
+    }
+
+    function getresult(uint _period) external returns(uint a,uint b,uint c){
+        uint _nowperiod = nowperiod();
+        if(_nowperiod > _period){
+            return ( apooltotal[_period] ,
+            bpooltotal[_period] ,
+            cpooltotal[_period] ) ;
+        }
+        else {
+            return (0,0,0);
+        }
+    }
+
+    function getNowTotal() external returns(uint){
+        uint256 _period = nowperiod();
+        uint _tot = pooltotal[_period] ;
+        return _tot;
+        
+    }
+    function sendtoA(uint256 amount) public{
+        uint256 _period = nowperiod();
+        periodlasttime[msg.sender] = _period;
+        pooltotal[_period] += amount;
+        apooltotal[_period] += amount;
+        apool[_period][msg.sender] += amount ;
+        _transfer(msg.sender, this, amount);
+    }
+    
+    function sendtoB(uint256 amount) public{
+        uint256 _period = nowperiod();
+        periodlasttime[msg.sender] = _period;
+        pooltotal[_period] += amount;
+        bpooltotal[_period] += amount;
+        bpool[_period][msg.sender] += amount ;
+        _transfer(msg.sender, this, amount);
+    }
+    
+    function sendtoC(uint256 amount) public{
+        uint256 _period = nowperiod();
+        periodlasttime[msg.sender] = _period;
+        pooltotal[_period] += amount;
+        cpooltotal[_period] += amount;
+        cpool[_period][msg.sender] += amount ;
+        _transfer(msg.sender, this, amount);
+    }
+     
+    function Awards(uint256 _period) public {
+        uint _bonus;
+        if (_period == 0){
+            uint __period = periodlasttime[msg.sender];
+            require(__period != 0);
+            periodlasttime[msg.sender] = 0 ;
+            _bonus = bonus(__period);
+        }
+        else{
+            _bonus = bonus(_period);
+        }
+        _transfer(this, msg.sender, _bonus);
+        
+    }
+    
+    function bonus(uint256 _period) private returns(uint256 _bonus){
+        uint256 _nowperiod = nowperiod();
+        assert(_nowperiod > _period);
+        uint256 _a = apooltotal[_period];
+        uint256 _b = bpooltotal[_period];
+        uint256 _c = cpooltotal[_period];
+        
+        if (_a > _b && _a > _c ){
+            require(_a != 0);
+            _bonus = ((_b + _c) / _a + 1) * apool[_period][msg.sender];
+        }
+        
+        else if (_b > _a && _b > _c ){
+            require(_b != 0);
+            _bonus = ((_a + _c) / _b + 1) * bpool[_period][msg.sender];
+        }
+        
+        else if (_c > _a && _c > _b ){
+            require(_c != 0);
+            _bonus = ((_a + _b) / _c + 1) * cpool[_period][msg.sender];
+        }
+        
+        else{
+            _bonus = apool[_period][msg.sender] +
+            bpool[_period][msg.sender] +
+            cpool[_period][msg.sender] ;
+            
+        }
+        apool[_period][msg.sender] = 0 ;
+        bpool[_period][msg.sender] = 0 ;
+        cpool[_period][msg.sender] = 0 ;
+        
+        
+        //_bonus??????//
+        
+        return _bonus;
+        
+    }
+    
+    
+    
 }
