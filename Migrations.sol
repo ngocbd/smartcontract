@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Migrations at 0xd4cc83597476784632af2d48cefbe82d69896642
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Migrations at 0x1bb5941698bec9f1fc270565771ae5d791b17ad4
 */
 pragma solidity ^0.4.17;
 
@@ -10,7 +10,7 @@ contract Migrations {
   modifier restricted() {
     if (msg.sender == owner) _;
   }
-//butts
+
   function Migrations() public {
     owner = msg.sender;
   }
