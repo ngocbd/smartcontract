@@ -1,66 +1,33 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreICOProxyBuyer at 0xb341e3b4034236b6a9af137e01986cf846733173
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PreICOProxyBuyer at 0xc7a5b1ef756b92373d320d13f0f775849358c4ef
 */
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
+pragma solidity ^0.4.13;
 
+contract FinalizeAgent {
 
-
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
+  function isFinalizeAgent() public constant returns(bool) {
+    return true;
   }
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+  /** Return true if we can run finalizeCrowdsale() properly.
+   *
+   * This is a safety check function that doesn't allow crowdsale to begin
+   * unless the finalizer has been set up properly.
+   */
+  function isSane() public constant returns (bool);
 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+  /** Called once by crowdsale finalize() if the sale was success. */
+  function finalizeCrowdsale();
 
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
 }
 
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) constant returns (uint256);
+  function transfer(address to, uint256 value) returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
-
-
-/**
- * Safe unsigned safe math.
- *
- * https://blog.aragon.one/library-driven-development-in-solidity-2bebcaf88736#.750gwtwli
- *
- * Originally from https://raw.githubusercontent.com/AragonOne/zeppelin-solidity/master/contracts/SafeMathLib.sol
- *
- * Maintained here until merged to mainline zeppelin-solidity.
- *
- */
 library SafeMathLib {
 
   function times(uint a, uint b) returns (uint) {
@@ -82,16 +49,78 @@ library SafeMathLib {
 
 }
 
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
+contract Ownable {
+  address public owner;
 
 
-/**
- * Interface for defining crowdsale pricing.
- */
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner {
+    require(newOwner != address(0));      
+    owner = newOwner;
+  }
+
+}
+
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) returns (bool);
+  function approve(address spender, uint256 value) returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+contract FractionalERC20 is ERC20 {
+
+  uint public decimals;
+
+}
+
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
 contract PricingStrategy {
 
   /** Interface declaration. */
@@ -130,152 +159,6 @@ contract PricingStrategy {
   function calculatePrice(uint value, uint weiRaised, uint tokensSold, address msgSender, uint decimals) public constant returns (uint tokenAmount);
 }
 
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-/**
- * Finalize agent defines what happens at the end of succeseful crowdsale.
- *
- * - Allocate tokens for founders, bounties and community
- * - Make tokens transferable
- * - etc.
- */
-contract FinalizeAgent {
-
-  function isFinalizeAgent() public constant returns(bool) {
-    return true;
-  }
-
-  /** Return true if we can run finalizeCrowdsale() properly.
-   *
-   * This is a safety check function that doesn't allow crowdsale to begin
-   * unless the finalizer has been set up properly.
-   */
-  function isSane() public constant returns (bool);
-
-  /** Called once by crowdsale finalize() if the sale was success. */
-  function finalizeCrowdsale();
-
-}
-
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-
-
-
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public view returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-}
-
-
-/**
- * A token that defines fractional units as decimals.
- */
-contract FractionalERC20 is ERC20 {
-
-  uint public decimals;
-
-}
-
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-/**
- * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
- *
- * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
- */
-
-
-
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-
-/*
- * Haltable
- *
- * Abstract contract that allows children to implement an
- * emergency stop mechanism. Differs from Pausable by causing a throw when in halt mode.
- *
- *
- * Originally envisioned in FirstBlood ICO contract.
- */
 contract Haltable is Ownable {
   bool public halted;
 
@@ -306,21 +189,311 @@ contract Haltable is Ownable {
 
 }
 
+contract PreICOProxyBuyer is Ownable, Haltable {
+  using SafeMath for uint;
+
+  /** How many investors we have now */
+  uint public investorCount;
+
+  /** How many wei we have raised totla. */
+  uint public weiRaised;
+
+  /** Who are our investors (iterable) */
+  address[] public investors;
+
+  /** How much they have invested */
+  mapping(address => uint) public balances;
+
+  /** How many tokens investors have claimed */
+  mapping(address => uint) public claimed;
+
+  /** When our refund freeze is over (UNIT timestamp) */
+  uint public freezeEndsAt;
+
+  /** What is the minimum buy in */
+  uint public weiMinimumLimit;
+
+  /** What is the maximum buy in */
+  uint public weiMaximumLimit;
+
+  /** How many weis total we are allowed to collect. */
+  uint public weiCap;
+
+  /** How many tokens were bought */
+  uint public tokensBought;
+
+   /** How many investors have claimed their tokens */
+  uint public claimCount;
+
+  uint public totalClaimed;
+
+  /** If timeLock > 0, claiming is possible only after the time has passed **/
+  uint public timeLock;
+
+  /** This is used to signal that we want the refund **/
+  bool public forcedRefund;
+
+  /** Our ICO contract where we will move the funds */
+  Crowdsale public crowdsale;
+
+  /** What is our current state. */
+  enum State{Unknown, Funding, Distributing, Refunding}
+
+  /** Somebody loaded their investment money */
+  event Invested(address investor, uint weiAmount, uint tokenAmount, uint128 customerId);
+
+  /** Refund claimed */
+  event Refunded(address investor, uint value);
+
+  /** We executed our buy */
+  event TokensBoughts(uint count);
+
+  /** We distributed tokens to an investor */
+  event Distributed(address investor, uint count);
+
+  /**
+   * Create presale contract where lock up period is given days
+   */
+  function PreICOProxyBuyer(address _owner, uint _freezeEndsAt, uint _weiMinimumLimit, uint _weiMaximumLimit, uint _weiCap) {
+
+    owner = _owner;
+
+    // Give argument
+    if(_freezeEndsAt == 0) {
+      throw;
+    }
+
+    // Give argument
+    if(_weiMinimumLimit == 0) {
+      throw;
+    }
+
+    if(_weiMaximumLimit == 0) {
+      throw;
+    }
+
+    weiMinimumLimit = _weiMinimumLimit;
+    weiMaximumLimit = _weiMaximumLimit;
+    weiCap = _weiCap;
+    freezeEndsAt = _freezeEndsAt;
+  }
+
+  /**
+   * Get the token we are distributing.
+   */
+  function getToken() public constant returns(FractionalERC20) {
+    if(address(crowdsale) == 0)  {
+      throw;
+    }
+
+    return crowdsale.token();
+  }
+
+  /**
+   * Participate to a presale.
+   */
+  function invest(uint128 customerId) private {
+
+    // Cannot invest anymore through crowdsale when moving has begun
+    if(getState() != State.Funding) throw;
+
+    if(msg.value == 0) throw; // No empty buys
+
+    address investor = msg.sender;
+
+    bool existing = balances[investor] > 0;
+
+    balances[investor] = balances[investor].add(msg.value);
+
+    // Need to satisfy minimum and maximum limits
+    if(balances[investor] < weiMinimumLimit || balances[investor] > weiMaximumLimit) {
+      throw;
+    }
+
+    // This is a new investor
+    if(!existing) {
+      investors.push(investor);
+      investorCount++;
+    }
+
+    weiRaised = weiRaised.add(msg.value);
+    if(weiRaised > weiCap) {
+      throw;
+    }
+
+    // We will use the same event form the Crowdsale for compatibility reasons
+    // despite not having a token amount.
+    Invested(investor, msg.value, 0, customerId);
+  }
+
+  function buyWithCustomerId(uint128 customerId) public stopInEmergency payable {
+    invest(customerId);
+  }
+
+  function buy() public stopInEmergency payable {
+    invest(0x0);
+  }
 
 
+  /**
+   * Load funds to the crowdsale for all investors.
+   *
+   *
+   */
+  function buyForEverybody() stopNonOwnersInEmergency public {
 
+    if(getState() != State.Funding) {
+      // Only allow buy once
+      throw;
+    }
 
+    // Crowdsale not yet set
+    if(address(crowdsale) == 0) throw;
 
+    // Buy tokens on the contract
+    crowdsale.invest.value(weiRaised)(address(this));
 
-/**
- * Crowdsale state machine without buy functionality.
- *
- * Implements basic state machine logic, but leaves out all buy functions,
- * so that subclasses can implement their own buying logic.
- *
- *
- * For the default buy() implementation see Crowdsale.sol.
- */
+    // Record how many tokens we got
+    tokensBought = getToken().balanceOf(address(this));
+
+    if(tokensBought == 0) {
+      // Did not get any tokens
+      throw;
+    }
+
+    TokensBoughts(tokensBought);
+  }
+
+  /**
+   * How may tokens each investor gets.
+   */
+  function getClaimAmount(address investor) public constant returns (uint) {
+
+    // Claims can be only made if we manage to buy tokens
+    if(getState() != State.Distributing) {
+      throw;
+    }
+    return balances[investor].mul(tokensBought) / weiRaised;
+  }
+
+  /**
+   * How many tokens remain unclaimed for an investor.
+   */
+  function getClaimLeft(address investor) public constant returns (uint) {
+    return getClaimAmount(investor).sub(claimed[investor]);
+  }
+
+  /**
+   * Claim all remaining tokens for this investor.
+   */
+  function claimAll() {
+    claim(getClaimLeft(msg.sender));
+  }
+
+  /**
+   * Claim N bought tokens to the investor as the msg sender.
+   *
+   */
+  function claim(uint amount) stopInEmergency {
+    require (now > timeLock);
+
+    address investor = msg.sender;
+
+    if(amount == 0) {
+      throw;
+    }
+
+    if(getClaimLeft(investor) < amount) {
+      // Woops we cannot get more than we have left
+      throw;
+    }
+
+    // We track who many investor have (partially) claimed their tokens
+    if(claimed[investor] == 0) {
+      claimCount++;
+    }
+
+    claimed[investor] = claimed[investor].add(amount);
+    totalClaimed = totalClaimed.add(amount);
+    getToken().transfer(investor, amount);
+
+    Distributed(investor, amount);
+  }
+
+  /**
+   * ICO never happened. Allow refund.
+   */
+  function refund() stopInEmergency {
+
+    // Trying to ask refund too soon
+    if(getState() != State.Refunding) throw;
+
+    address investor = msg.sender;
+    if(balances[investor] == 0) throw;
+    uint amount = balances[investor];
+    delete balances[investor];
+    if(!(investor.call.value(amount)())) throw;
+    Refunded(investor, amount);
+  }
+
+  /**
+   * Set the target crowdsale where we will move presale funds when the crowdsale opens.
+   */
+  function setCrowdsale(Crowdsale _crowdsale) public onlyOwner {
+    crowdsale = _crowdsale;
+
+    // Check interface
+    if(!crowdsale.isCrowdsale()) true;
+  }
+
+  /// @dev Setting timelock (delay) for claiming
+  /// @param _timeLock Time after which claiming is possible
+  function setTimeLock(uint _timeLock) public onlyOwner {
+    timeLock = _timeLock;
+  }
+
+  /// @dev This is used in the first case scenario, this will force the state
+  ///      to refunding. This can be also used when the ICO fails to meet the cap.
+  function forceRefund() public onlyOwner {
+    forcedRefund = true;
+  }
+
+  /// @dev This should be used if the Crowdsale fails, to receive the refuld money.
+  ///      we can't use Crowdsale's refund, since our default function does not
+  ///      accept money in.
+  function loadRefund() public payable {
+    if(getState() != State.Refunding) throw;
+  }
+
+  /**
+   * Resolve the contract umambigious state.
+   */
+  function getState() public returns(State) {
+    if (forcedRefund)
+      return State.Refunding;
+
+    if(tokensBought == 0) {
+      if(now >= freezeEndsAt) {
+         return State.Refunding;
+      } else {
+        return State.Funding;
+      }
+    } else {
+      return State.Distributing;
+    }
+  }
+
+  /** Interface marker. */
+  function isPresale() public constant returns (bool) {
+    return true;
+  }
+
+  /** Explicitly call function from your wallet. */
+  function() payable {
+    throw;
+  }
+}
+
 contract CrowdsaleBase is Haltable {
 
   /* Max investment count when we are still allowed to change the multisig address */
@@ -734,25 +907,6 @@ contract CrowdsaleBase is Haltable {
   function assignTokens(address receiver, uint tokenAmount) internal;
 }
 
-
-
-/**
- * Abstract base contract for token sales with the default buy entry points.
- *
- * Handle
- * - start and end dates
- * - accepting investments
- * - minimum funding goal and refund
- * - various statistics during the crowdfund
- * - different pricing strategies
- * - different investment policies (require server side customer id, allow only whitelisted addresses)
- *
- * Does not Handle
- *
- * - Token allocation (minting vs. transfer)
- * - Cap rules
- *
- */
 contract Crowdsale is CrowdsaleBase {
 
   /* Do we need to have unique contributor id for each customer */
@@ -885,324 +1039,4 @@ contract Crowdsale is CrowdsaleBase {
     InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, signerAddress);
   }
 
-}
-
-
-
-/**
- * Collect funds from presale investors, buy tokens for them in a single transaction and distribute out tokens.
- *
- * - Collect funds from pre-sale investors
- * - Send funds to the crowdsale when it opens
- * - Allow owner to set the crowdsale
- * - Have refund after X days as a safety hatch if the crowdsale doesn't materilize
- * - Allow unlimited investors
- * - Tokens are distributed on PreICOProxyBuyer smart contract first
- * - The original investors can claim their tokens from the smart contract after the token transfer has been released
- * - All functions can be halted by owner if something goes wrong
- *
- */
-contract PreICOProxyBuyer is Ownable, Haltable {
-  using SafeMath for uint;
-
-  /** How many investors we have now */
-  uint public investorCount;
-
-  /** How many wei we have raised totla. */
-  uint public weiRaised;
-
-  /** Who are our investors (iterable) */
-  address[] public investors;
-
-  /** How much they have invested */
-  mapping(address => uint) public balances;
-
-  /** How many tokens investors have claimed */
-  mapping(address => uint) public claimed;
-
-  /** When our refund freeze is over (UNIT timestamp) */
-  uint public freezeEndsAt;
-
-  /** What is the minimum buy in */
-  uint public weiMinimumLimit;
-
-  /** What is the maximum buy in */
-  uint public weiMaximumLimit;
-
-  /** How many weis total we are allowed to collect. */
-  uint public weiCap;
-
-  /** How many tokens were bought */
-  uint public tokensBought;
-
-   /** How many investors have claimed their tokens */
-  uint public claimCount;
-
-  uint public totalClaimed;
-
-  /** If timeLock > 0, claiming is possible only after the time has passed **/
-  uint public timeLock;
-
-  /** This is used to signal that we want the refund **/
-  bool public forcedRefund;
-
-  /** Our ICO contract where we will move the funds */
-  Crowdsale public crowdsale;
-
-  /** What is our current state. */
-  enum State{Unknown, Funding, Distributing, Refunding}
-
-  /** Somebody loaded their investment money */
-  event Invested(address investor, uint weiAmount, uint tokenAmount, uint128 customerId);
-
-  /** Refund claimed */
-  event Refunded(address investor, uint value);
-
-  /** We executed our buy */
-  event TokensBoughts(uint count);
-
-  /** We distributed tokens to an investor */
-  event Distributed(address investor, uint count);
-
-  /**
-   * Create presale contract where lock up period is given days
-   */
-  function PreICOProxyBuyer(address _owner, uint _freezeEndsAt, uint _weiMinimumLimit, uint _weiMaximumLimit, uint _weiCap) {
-
-    owner = _owner;
-
-    // Give argument
-    if(_freezeEndsAt == 0) {
-      throw;
-    }
-
-    // Give argument
-    if(_weiMinimumLimit == 0) {
-      throw;
-    }
-
-    if(_weiMaximumLimit == 0) {
-      throw;
-    }
-
-    weiMinimumLimit = _weiMinimumLimit;
-    weiMaximumLimit = _weiMaximumLimit;
-    weiCap = _weiCap;
-    freezeEndsAt = _freezeEndsAt;
-  }
-
-  /**
-   * Get the token we are distributing.
-   */
-  function getToken() public constant returns(FractionalERC20) {
-    if(address(crowdsale) == 0)  {
-      throw;
-    }
-
-    return crowdsale.token();
-  }
-
-  /**
-   * Participate to a presale.
-   */
-  function invest(uint128 customerId) private {
-
-    // Cannot invest anymore through crowdsale when moving has begun
-    if(getState() != State.Funding) throw;
-
-    if(msg.value == 0) throw; // No empty buys
-
-    address investor = msg.sender;
-
-    bool existing = balances[investor] > 0;
-
-    balances[investor] = balances[investor].add(msg.value);
-
-    // Need to satisfy minimum and maximum limits
-    if(balances[investor] < weiMinimumLimit || balances[investor] > weiMaximumLimit) {
-      throw;
-    }
-
-    // This is a new investor
-    if(!existing) {
-      investors.push(investor);
-      investorCount++;
-    }
-
-    weiRaised = weiRaised.add(msg.value);
-    if(weiRaised > weiCap) {
-      throw;
-    }
-
-    // We will use the same event form the Crowdsale for compatibility reasons
-    // despite not having a token amount.
-    Invested(investor, msg.value, 0, customerId);
-  }
-
-  function buyWithCustomerId(uint128 customerId) public stopInEmergency payable {
-    invest(customerId);
-  }
-
-  function buy() public stopInEmergency payable {
-    invest(0x0);
-  }
-
-
-  /**
-   * Load funds to the crowdsale for all investors.
-   *
-   *
-   */
-  function buyForEverybody() stopNonOwnersInEmergency public {
-
-    if(getState() != State.Funding) {
-      // Only allow buy once
-      throw;
-    }
-
-    // Crowdsale not yet set
-    if(address(crowdsale) == 0) throw;
-
-    // Buy tokens on the contract
-    crowdsale.invest.value(weiRaised)(address(this));
-
-    // Record how many tokens we got
-    tokensBought = getToken().balanceOf(address(this));
-
-    if(tokensBought == 0) {
-      // Did not get any tokens
-      throw;
-    }
-
-    TokensBoughts(tokensBought);
-  }
-
-  /**
-   * How may tokens each investor gets.
-   */
-  function getClaimAmount(address investor) public constant returns (uint) {
-
-    // Claims can be only made if we manage to buy tokens
-    if(getState() != State.Distributing) {
-      throw;
-    }
-    return balances[investor].mul(tokensBought) / weiRaised;
-  }
-
-  /**
-   * How many tokens remain unclaimed for an investor.
-   */
-  function getClaimLeft(address investor) public constant returns (uint) {
-    return getClaimAmount(investor).sub(claimed[investor]);
-  }
-
-  /**
-   * Claim all remaining tokens for this investor.
-   */
-  function claimAll() {
-    claim(getClaimLeft(msg.sender));
-  }
-
-  /**
-   * Claim N bought tokens to the investor as the msg sender.
-   *
-   */
-  function claim(uint amount) stopInEmergency {
-    require (now > timeLock);
-
-    address investor = msg.sender;
-
-    if(amount == 0) {
-      throw;
-    }
-
-    if(getClaimLeft(investor) < amount) {
-      // Woops we cannot get more than we have left
-      throw;
-    }
-
-    // We track who many investor have (partially) claimed their tokens
-    if(claimed[investor] == 0) {
-      claimCount++;
-    }
-
-    claimed[investor] = claimed[investor].add(amount);
-    totalClaimed = totalClaimed.add(amount);
-    getToken().transfer(investor, amount);
-
-    Distributed(investor, amount);
-  }
-
-  /**
-   * ICO never happened. Allow refund.
-   */
-  function refund() stopInEmergency {
-
-    // Trying to ask refund too soon
-    if(getState() != State.Refunding) throw;
-
-    address investor = msg.sender;
-    if(balances[investor] == 0) throw;
-    uint amount = balances[investor];
-    delete balances[investor];
-    if(!(investor.call.value(amount)())) throw;
-    Refunded(investor, amount);
-  }
-
-  /**
-   * Set the target crowdsale where we will move presale funds when the crowdsale opens.
-   */
-  function setCrowdsale(Crowdsale _crowdsale) public onlyOwner {
-    crowdsale = _crowdsale;
-
-    // Check interface
-    if(!crowdsale.isCrowdsale()) true;
-  }
-
-  /// @dev Setting timelock (delay) for claiming
-  /// @param _timeLock Time after which claiming is possible
-  function setTimeLock(uint _timeLock) public onlyOwner {
-    timeLock = _timeLock;
-  }
-
-  /// @dev This is used in the first case scenario, this will force the state
-  ///      to refunding. This can be also used when the ICO fails to meet the cap.
-  function forceRefund() public onlyOwner {
-    forcedRefund = true;
-  }
-
-  /// @dev This should be used if the Crowdsale fails, to receive the refuld money.
-  ///      we can't use Crowdsale's refund, since our default function does not
-  ///      accept money in.
-  function loadRefund() public payable {
-    if(getState() != State.Refunding) throw;
-  }
-
-  /**
-   * Resolve the contract umambigious state.
-   */
-  function getState() public returns(State) {
-    if (forcedRefund)
-      return State.Refunding;
-
-    if(tokensBought == 0) {
-      if(now >= freezeEndsAt) {
-         return State.Refunding;
-      } else {
-        return State.Funding;
-      }
-    } else {
-      return State.Distributing;
-    }
-  }
-
-  /** Interface marker. */
-  function isPresale() public constant returns (bool) {
-    return true;
-  }
-
-  /** Explicitly call function from your wallet. */
-  function() payable {
-    throw;
-  }
 }
