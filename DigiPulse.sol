@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DigiPulse at 0x9AcA6aBFe63A5ae0Dc6258cefB65207eC990Aa4D
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DigiPulse at 0x871aE94d2375f7A0D2fA584d0201c67eD2D35103
 */
 pragma solidity ^0.4.4;
 
@@ -67,7 +67,7 @@ contract DigiPulse {
 
     for (uint8 i = 0; i < 4; i++) {
       // Each tier has same amount of DGT
-      uint256 tier_amount = 3750000 * 1e8;
+      uint256 tier_amount = 3275000 * 1e8;
       // Every next tier has 5% less bonus pool
       uint8 tier_bonus = 115 - (i * 5);
       applicable_for_tier += tier_amount;
