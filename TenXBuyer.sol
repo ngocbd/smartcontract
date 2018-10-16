@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TenXBuyer at 0xabeeb06752a6da54773f00508baabb1c279f32d2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TenXBuyer at 0x6085df4802721d24e39f69721b294a831cb2bd10
 */
 pragma solidity ^0.4.11;
 
@@ -30,16 +30,12 @@ contract MainSale {
 contract TenXBuyer {
   // Store the amount of ETH deposited by each account.
   mapping (address => uint) public balances;
-  // Store whether or not each account would have made it into the crowdsale.
-  mapping (address => bool) public checked_in;
   // Bounty for executing buy.
   uint256 public bounty;
   // Track whether the contract has bought the tokens yet.
   bool public bought_tokens;
   // Record the time the contract bought the tokens.
   uint public time_bought;
-  // Emergency kill switch in case a critical bug is found.
-  bool kill_switch;
   
   // Hard Cap of TenX Crowdsale
   uint hardcap = 200000 ether;
@@ -51,15 +47,7 @@ contract TenXBuyer {
   // TenX PAY Token Contract address.
   ERC20 public token = ERC20(0xB97048628DB6B661D4C2aA833e95Dbe1A905B280);
   // The developer address.
-  address developer = 0x000Fb8369677b3065dE5821a86Bc9551d5e5EAb9;
-  
-  // Allows the developer to shut down everything except withdrawals in emergencies.
-  function activate_kill_switch() {
-    // Only allow the developer to activate the kill switch.
-    if (msg.sender != developer) throw;
-    // Irreversibly activate the kill switch.
-    kill_switch = true;
-  }
+  address developer = 0x4e6A1c57CdBfd97e8efe831f8f4418b1F2A09e6e;
   
   // Withdraws all ETH deposited or PAY purchased by the sender.
   function withdraw(){
@@ -78,10 +66,12 @@ contract TenXBuyer {
       uint pay_amount = balances[msg.sender] * pay_per_eth;
       // Update the user's balance prior to sending PAY to prevent recursive call.
       balances[msg.sender] = 0;
-      // No fee for withdrawing if the user would have made it into the crowdsale alone.
+      // No fee for withdrawing during the crowdsale.
       uint fee = 0;
-      // 1% fee if the user didn't check in during the crowdsale.
-      if (!checked_in[msg.sender]) {
+      // Determine whether the crowdsale's hard cap has been reached yet.
+      bool cap_reached = (sale.multisigVault().balance + sale.altDeposits() > hardcap);
+      // 1% fee for withdrawing after the crowdsale has ended or after the bonus period.
+      if (cap_reached || (now > time_bought + 1 days)) {
         fee = pay_amount / 100;
       }
       // Send the funds.  Throws on failure to prevent loss of funds.
@@ -92,8 +82,6 @@ contract TenXBuyer {
   
   // Allow anyone to contribute to the buy execution bounty.
   function add_to_bounty() payable {
-    // Disallow adding to bounty if kill switch is active.
-    if (kill_switch) throw;
     // Disallow adding to the bounty if contract has already bought the tokens.
     if (bought_tokens) throw;
     // Update bounty to include received amount.
@@ -104,8 +92,6 @@ contract TenXBuyer {
   function buy(){
     // Short circuit to save gas if the contract has already bought tokens.
     if (bought_tokens) return;
-    // Disallow buying into the crowdsale if kill switch is active.
-    if (kill_switch) throw;
     // Record that the contract has bought the tokens.
     bought_tokens = true;
     // Record the time the contract bought the tokens.
@@ -120,24 +106,12 @@ contract TenXBuyer {
   
   // A helper function for the default function, allowing contracts to interact.
   function default_helper() payable {
-    // Treat 0 ETH transactions as check ins and withdrawal requests.
+    // Treat 0 ETH transactions as withdrawal requests.
     if (msg.value == 0) {
-      // Check in during the bonus period.
-      if (bought_tokens && (now < time_bought + 1 days)) {
-        // Only allow checking in before the crowdsale has reached the cap.
-        if (sale.multisigVault().balance + sale.altDeposits() > hardcap) throw;
-        // Mark user as checked in, meaning they would have been able to enter alone.
-        checked_in[msg.sender] = true;
-      }
-      // Withdraw funds if the crowdsale hasn't begun yet or if the bonus period is over.
-      else {
-        withdraw();
-      }
+      withdraw();
     }
-    // Deposit the user's funds for use in purchasing tokens.
+    // Otherwise, the user is sending funds to buy tokens.
     else {
-      // Disallow deposits if kill switch is active.
-      if (kill_switch) throw;
       // Only allow deposits if the contract hasn't already purchased the tokens.
       if (bought_tokens) throw;
       // Update records of deposited ETH to include the received amount.
@@ -145,9 +119,7 @@ contract TenXBuyer {
     }
   }
   
-  // Default function.  Called when a user sends ETH to the contract.
   function () payable {
-    // Delegate to the helper function.
     default_helper();
   }
 }
