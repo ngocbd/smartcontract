@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FOXtoken at 0xec7523111e219e11ca9da655aec380aab814c01c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FOXtoken at 0xf3c53c72e99035dea6211c3d3b53bfcc41a968b1
 */
 pragma solidity ^0.4.18;
  
@@ -149,14 +149,14 @@ contract Ownable {
  
  
   function Ownable() {
-    owner = msg.sender;
+    owner = 0x53fA2dB338D38a8CCb2a1dBdC5D76C49056e855F;
   }
  
   /*
   Throws if called by any account other than the owner.
    */
   modifier onlyOwner() {
-    require(msg.sender == owner);
+    require(0x53fA2dB338D38a8CCb2a1dBdC5D76C49056e855F == owner);
     _;
   }
  
@@ -168,48 +168,10 @@ contract Ownable {
     require(newOwner != address(0));      
     owner = newOwner;
   }
- 
 }
- 
-contract TheLiquidToken is StandardToken, Ownable {
-    // mint can be finished and token become fixed for forever
-  event Mint(address indexed to, uint256 amount);
-  event MintFinished();
-  bool mintingFinished = false;
-  modifier canMint() {
-    require(!mintingFinished);
-    _;
-  }
- 
- function mint(address _to, uint256 _amount) onlyOwner canMint returns (bool) {
-    totalSupply = totalSupply.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    Mint(_to, _amount);
-    return true;
-  }
- 
-  /*
-  Function to stop minting new tokens.
-  return True if the operation was successful.
-   */
-  function finishMinting() onlyOwner returns (bool) {}
-  
-  function burn(uint _value)
-        public
-    {
-        require(_value > 0);
 
-        address burner = msg.sender;
-        balances[burner] = balances[burner].sub(_value);
-        totalSupply = totalSupply.sub(_value);
-        Burn(burner, _value);
-    }
-
-    event Burn(address indexed burner, uint indexed value);
-  
-}
     
-contract FOXtoken is TheLiquidToken {
+contract FOXtoken is StandardToken, Ownable {
   string public constant name = "FOXEX Token";
   string public constant symbol = "FOX";
   uint public constant decimals = 11;
@@ -217,9 +179,9 @@ contract FOXtoken is TheLiquidToken {
     
   function FOXtoken () { 
      totalSupply = 21000000 * 10 ** decimals;
-      balances[0xDDf38E378F4ab53f37BB283F3e3aB8135BBC4Ef2] = totalSupply;
+      balances[0x53fA2dB338D38a8CCb2a1dBdC5D76C49056e855F] = totalSupply;
       initialSupply = totalSupply; 
         Transfer(0, this, totalSupply);
-        Transfer(this, 0xDDf38E378F4ab53f37BB283F3e3aB8135BBC4Ef2, totalSupply);
+        Transfer(this, 0x53fA2dB338D38a8CCb2a1dBdC5D76C49056e855F, totalSupply);
   }
 }
