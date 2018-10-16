@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RinghashRegistry at 0x0d038d2a8942d54Df1b6CE8D802ab1D071D3046c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RinghashRegistry at 0x17064d2A00c19CfE73ABF47eaab4d8533D4f92c5
 */
 /*
   Copyright 2017 Loopring Project Ltd (Loopring Foundation).
@@ -14,7 +14,7 @@
   limitations under the License.
 */
 pragma solidity 0.4.18;
-/// @title Token Register Contract
+/// @title Utility Functions for uint8
 /// @author Kongliang Zhong - <kongliang@loopring.org>,
 /// @author Daniel Wang - <daniel@loopring.org>.
 library MathUint8 {
@@ -44,7 +44,7 @@ library MathUint8 {
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-/// @title Token Register Contract
+/// @title Utility Functions for byte32
 /// @author Kongliang Zhong - <kongliang@loopring.org>,
 /// @author Daniel Wang - <daniel@loopring.org>.
 library MathBytes32 {
@@ -75,6 +75,7 @@ library MathBytes32 {
   limitations under the License.
 */
 /// @title Ring Hash Registry Contract
+/// @dev This contracts help reserve ringhashes for miners.
 /// @author Kongliang Zhong - <kongliang@loopring.org>,
 /// @author Daniel Wang - <daniel@loopring.org>.
 contract RinghashRegistry {
@@ -119,7 +120,7 @@ contract RinghashRegistry {
         address[]     ringminerList,
         bytes32[]     ringhashList
         )
-        public
+        external
     {
         uint size = ringminerList.length;
         require(size > 0);
@@ -135,7 +136,7 @@ contract RinghashRegistry {
         bytes32[]   rList,
         bytes32[]   sList
         )
-        public
+        private
         pure
         returns (bytes32)
     {
@@ -181,11 +182,13 @@ contract RinghashRegistry {
         view
         returns (bool)
     {
+        require(ringminer != 0x0);
         var submission = submissions[ringhash];
+        address miner = submission.ringminer;
         return (
-            submission.ringminer == address(0) || (
+            miner == 0x0 || (
             submission.block + blocksToLive < block.number) || (
-            submission.ringminer == ringminer)
+            miner == ringminer)
         );
     }
     /// @return true if a ring's hash was submitted and still valid;
