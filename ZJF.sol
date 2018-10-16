@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZJF at 0xdb03170241b7a789934b677a64fa49e7783b41d5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ZJF at 0xab358b6c44208ef53f034aa25b24dd23f3892736
 */
 pragma solidity ^0.4.13;
 
@@ -82,8 +82,8 @@ contract StandardToken is Token {
 
 contract ZJF is StandardToken, SafeMath {
 
-    string public constant name = "ZJF";
-    string public constant symbol = "ZJF";
+    string public constant name = "ZJFTest1";
+    string public constant symbol = "ZJFTest1";
     uint256 public constant decimals = 18;
     string public version = "1.0";
 
@@ -96,7 +96,7 @@ contract ZJF is StandardToken, SafeMath {
     // constructor
     function ZJF()
     {
-      ZJFTokenDeposit = 0x3C0B455477A611088364C6B01C5bb79FfE41a7d6;
+      ZJFTokenDeposit = 0xF249A8353572e98545b37Dc16b3A5724053D7337;
 
       balances[ZJFTokenDeposit] = ZJFPrivate;
 
