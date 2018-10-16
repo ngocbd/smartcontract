@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthernautsUpgrade at 0x1ac21b27f5683cc87e7cc853d6d4c052b08f0fe4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EthernautsUpgrade at 0xdab328d4c8d85d2622542e5aff48f9a1e7164218
 */
 pragma solidity ^0.4.19;
 
@@ -29,10 +29,8 @@ contract ERC721 {
     // ERC-165 Compatibility (https://github.com/ethereum/EIPs/issues/165)
     function supportsInterface(bytes4 _interfaceID) external view returns (bool);
 }
-// Copied from: https://etherscan.io/address/0x06012c8cf97bead5deae237070f9587f8e7a266d#code
 
 
-// Copied from: https://etherscan.io/address/0x06012c8cf97bead5deae237070f9587f8e7a266d#code
 
 
 
@@ -83,7 +81,7 @@ library SafeMath {
     /**
     * @dev Compara two numbers, and return the bigger one.
     */
-    function max(uint256 a, uint256 b) internal pure returns (uint256) {
+    function max(int256 a, int256 b) internal pure returns (int256) {
         if (a > b) {
             return a;
         } else {
@@ -94,7 +92,7 @@ library SafeMath {
     /**
     * @dev Compara two numbers, and return the bigger one.
     */
-    function min(uint256 a, uint256 b) internal pure returns (uint256) {
+    function min(int256 a, int256 b) internal pure returns (int256) {
         if (a < b) {
             return a;
         } else {
@@ -102,237 +100,6 @@ library SafeMath {
         }
     }
 
-
-}
-
-/// @title Auction Core
-/// @dev Contains models, variables, and internal methods for the auction.
-/// @notice We omit a fallback function to prevent accidental sends to this contract.
-contract ClockAuctionBase {
-
-    // Represents an auction on an NFT
-    struct Auction {
-        // Current owner of NFT
-        address seller;
-        // Price (in wei) at beginning of auction
-        uint128 startingPrice;
-        // Price (in wei) at end of auction
-        uint128 endingPrice;
-        // Duration (in seconds) of auction
-        uint64 duration;
-        // Time when auction started
-        // NOTE: 0 if this auction has been concluded
-        uint64 startedAt;
-    }
-
-    // Reference to contract tracking NFT ownership
-    ERC721 public nonFungibleContract;
-
-    // Cut owner takes on each auction, measured in basis points (1/100 of a percent).
-    // Values 0-10,000 map to 0%-100%
-    uint256 public ownerCut;
-
-    // Map from token ID to their corresponding auction.
-    mapping (uint256 => Auction) tokenIdToAuction;
-
-    event AuctionCreated(uint256 tokenId, uint256 startingPrice, uint256 endingPrice, uint256 duration);
-    event AuctionSuccessful(uint256 tokenId, uint256 totalPrice, address winner);
-    event AuctionCancelled(uint256 tokenId);
-
-    /// @dev Returns true if the claimant owns the token.
-    /// @param _claimant - Address claiming to own the token.
-    /// @param _tokenId - ID of token whose ownership to verify.
-    function _owns(address _claimant, uint256 _tokenId) internal view returns (bool) {
-        return (nonFungibleContract.ownerOf(_tokenId) == _claimant);
-    }
-
-    /// @dev Transfers an NFT owned by this contract to another address.
-    /// Returns true if the transfer succeeds.
-    /// @param _receiver - Address to transfer NFT to.
-    /// @param _tokenId - ID of token to transfer.
-    function _transfer(address _receiver, uint256 _tokenId) internal {
-        // it will throw if transfer fails
-        nonFungibleContract.transfer(_receiver, _tokenId);
-    }
-
-    /// @dev Adds an auction to the list of open auctions. Also fires the
-    ///  AuctionCreated event.
-    /// @param _tokenId The ID of the token to be put on auction.
-    /// @param _auction Auction to add.
-    function _addAuction(uint256 _tokenId, Auction _auction) internal {
-        // Require that all auctions have a duration of
-        // at least one minute. (Keeps our math from getting hairy!)
-        require(_auction.duration >= 1 minutes);
-
-        tokenIdToAuction[_tokenId] = _auction;
-
-        AuctionCreated(
-            uint256(_tokenId),
-            uint256(_auction.startingPrice),
-            uint256(_auction.endingPrice),
-            uint256(_auction.duration)
-        );
-    }
-
-    /// @dev Cancels an auction unconditionally.
-    function _cancelAuction(uint256 _tokenId, address _seller) internal {
-        _removeAuction(_tokenId);
-        _transfer(_seller, _tokenId);
-        AuctionCancelled(_tokenId);
-    }
-
-    /// @dev Computes the price and transfers winnings.
-    /// Does NOT transfer ownership of token.
-    function _bid(uint256 _tokenId, uint256 _bidAmount)
-    internal
-    returns (uint256)
-    {
-        // Get a reference to the auction struct
-        Auction storage auction = tokenIdToAuction[_tokenId];
-
-        // Explicitly check that this auction is currently live.
-        // (Because of how Ethereum mappings work, we can't just count
-        // on the lookup above failing. An invalid _tokenId will just
-        // return an auction object that is all zeros.)
-        require(_isOnAuction(auction));
-
-        // Check that the bid is greater than or equal to the current price
-        uint256 price = _currentPrice(auction);
-        require(_bidAmount >= price);
-
-        // Grab a reference to the seller before the auction struct
-        // gets deleted.
-        address seller = auction.seller;
-
-        // The bid is good! Remove the auction before sending the fees
-        // to the sender so we can't have a reentrancy attack.
-        _removeAuction(_tokenId);
-
-        // Transfer proceeds to seller (if there are any!)
-        if (price > 0) {
-            // Calculate the auctioneer's cut.
-            // (NOTE: _computeCut() is guaranteed to return a
-            // value <= price, so this subtraction can't go negative.)
-            uint256 auctioneerCut = _computeCut(price);
-            uint256 sellerProceeds = price - auctioneerCut;
-
-            // NOTE: Doing a transfer() in the middle of a complex
-            // method like this is generally discouraged because of
-            // reentrancy attacks and DoS attacks if the seller is
-            // a contract with an invalid fallback function. We explicitly
-            // guard against reentrancy attacks by removing the auction
-            // before calling transfer(), and the only thing the seller
-            // can DoS is the sale of their own asset! (And if it's an
-            // accident, they can call cancelAuction(). )
-            seller.transfer(sellerProceeds);
-        }
-
-        // Calculate any excess funds included with the bid. If the excess
-        // is anything worth worrying about, transfer it back to bidder.
-        // NOTE: We checked above that the bid amount is greater than or
-        // equal to the price so this cannot underflow.
-        uint256 bidExcess = _bidAmount - price;
-
-        // Return the funds. Similar to the previous transfer, this is
-        // not susceptible to a re-entry attack because the auction is
-        // removed before any transfers occur.
-        msg.sender.transfer(bidExcess);
-
-        // Tell the world!
-        AuctionSuccessful(_tokenId, price, msg.sender);
-
-        return price;
-    }
-
-    /// @dev Removes an auction from the list of open auctions.
-    /// @param _tokenId - ID of NFT on auction.
-    function _removeAuction(uint256 _tokenId) internal {
-        delete tokenIdToAuction[_tokenId];
-    }
-
-    /// @dev Returns true if the NFT is on auction.
-    /// @param _auction - Auction to check.
-    function _isOnAuction(Auction storage _auction) internal view returns (bool) {
-        return (_auction.startedAt > 0);
-    }
-
-    /// @dev Returns current price of an NFT on auction. Broken into two
-    ///  functions (this one, that computes the duration from the auction
-    ///  structure, and the other that does the price computation) so we
-    ///  can easily test that the price computation works correctly.
-    function _currentPrice(Auction storage _auction)
-    internal
-    view
-    returns (uint256)
-    {
-        uint256 secondsPassed = 0;
-
-        // A bit of insurance against negative values (or wraparound).
-        // Probably not necessary (since Ethereum guarnatees that the
-        // now variable doesn't ever go backwards).
-        if (now > _auction.startedAt) {
-            secondsPassed = now - _auction.startedAt;
-        }
-
-        return _computeCurrentPrice(
-            _auction.startingPrice,
-            _auction.endingPrice,
-            _auction.duration,
-            secondsPassed
-        );
-    }
-
-    /// @dev Computes the current price of an auction. Factored out
-    ///  from _currentPrice so we can run extensive unit tests.
-    ///  When testing, make this function public and turn on
-    ///  `Current price computation` test suite.
-    function _computeCurrentPrice(
-        uint256 _startingPrice,
-        uint256 _endingPrice,
-        uint256 _duration,
-        uint256 _secondsPassed
-    )
-    internal
-    pure
-    returns (uint256)
-    {
-        // NOTE: We don't use SafeMath (or similar) in this function because
-        //  all of our public functions carefully cap the maximum values for
-        //  time (at 64-bits) and currency (at 128-bits). _duration is
-        //  also known to be non-zero (see the require() statement in
-        //  _addAuction())
-        if (_secondsPassed >= _duration) {
-            // We've reached the end of the dynamic pricing portion
-            // of the auction, just return the end price.
-            return _endingPrice;
-        } else {
-            // Starting price can be higher than ending price (and often is!), so
-            // this delta can be negative.
-            int256 totalPriceChange = int256(_endingPrice) - int256(_startingPrice);
-
-            // This multiplication can't overflow, _secondsPassed will easily fit within
-            // 64-bits, and totalPriceChange will easily fit within 128-bits, their product
-            // will always fit within 256-bits.
-            int256 currentPriceChange = totalPriceChange * int256(_secondsPassed) / int256(_duration);
-
-            // currentPriceChange can be negative, but if so, will have a magnitude
-            // less that _startingPrice. Thus, this result will always end up positive.
-            int256 currentPrice = int256(_startingPrice) + currentPriceChange;
-
-            return uint256(currentPrice);
-        }
-    }
-
-    /// @dev Computes owner's cut of a sale.
-    /// @param _price - Sale price of NFT.
-    function _computeCut(uint256 _price) internal view returns (uint256) {
-        // NOTE: We don't use SafeMath (or similar) in this function because
-        //  all of our entry functions carefully cap the maximum values for
-        //  currency (at 128-bits), and ownerCut <= 10000 (see the require()
-        //  statement in the ClockAuction constructor). The result of this
-        //  function is always guaranteed to be <= _price.
-        return SafeMath.mul(_price, SafeMath.div(ownerCut,10000));
-    }
 
 }
 
@@ -394,7 +161,6 @@ contract EthernautsBase {
     bytes2 public ATTR_GOLDENGOOSE = bytes2(2**7);
 }
 
-/// @title Inspired by https://github.com/axiomzen/cryptokitties-bounty/blob/master/contracts/KittyAccessControl.sol
 /// @notice This contract manages the various addresses and constraints for operations
 //          that can be executed only by specific roles. Namely CEO and CTO. it also includes pausable pattern.
 contract EthernautsAccessControl is EthernautsBase {
@@ -519,6 +285,267 @@ contract EthernautsAccessControl is EthernautsBase {
         paused = false;
     }
 
+}
+
+/// @title The facet of the Ethernauts contract that manages ownership, ERC-721 compliant.
+/// @notice This provides the methods required for basic non-fungible token
+//          transactions, following the draft ERC-721 spec (https://github.com/ethereum/EIPs/issues/721).
+//          It interfaces with EthernautsStorage provinding basic functions as create and list, also holds
+//          reference to logic contracts as Auction, Explore and so on
+/// @author Ethernatus - Fernando Pauer
+/// @dev Ref: https://github.com/ethereum/EIPs/issues/721
+contract EthernautsOwnership is EthernautsAccessControl, ERC721 {
+
+    /// @dev Contract holding only data.
+    EthernautsStorage public ethernautsStorage;
+
+    /*** CONSTANTS ***/
+    /// @notice Name and symbol of the non fungible token, as defined in ERC721.
+    string public constant name = "Ethernauts";
+    string public constant symbol = "ETNT";
+
+    /********* ERC 721 - COMPLIANCE CONSTANTS AND FUNCTIONS ***************/
+    /**********************************************************************/
+
+    bytes4 constant InterfaceSignature_ERC165 = bytes4(keccak256('supportsInterface(bytes4)'));
+
+    /*** EVENTS ***/
+
+    // Events as per ERC-721
+    event Transfer(address indexed from, address indexed to, uint256 tokens);
+    event Approval(address indexed owner, address indexed approved, uint256 tokens);
+
+    /// @dev When a new asset is create it emits build event
+    /// @param owner The address of asset owner
+    /// @param tokenId Asset UniqueID
+    /// @param assetId ID that defines asset look and feel
+    /// @param price asset price
+    event Build(address owner, uint256 tokenId, uint16 assetId, uint256 price);
+
+    function implementsERC721() public pure returns (bool) {
+        return true;
+    }
+
+    /// @notice Introspection interface as per ERC-165 (https://github.com/ethereum/EIPs/issues/165).
+    ///  Returns true for any standardized interfaces implemented by this contract. ERC-165 and ERC-721.
+    /// @param _interfaceID interface signature ID
+    function supportsInterface(bytes4 _interfaceID) external view returns (bool)
+    {
+        return ((_interfaceID == InterfaceSignature_ERC165) || (_interfaceID == InterfaceSignature_ERC721));
+    }
+
+    /// @dev Checks if a given address is the current owner of a particular Asset.
+    /// @param _claimant the address we are validating against.
+    /// @param _tokenId asset UniqueId, only valid when > 0
+    function _owns(address _claimant, uint256 _tokenId) internal view returns (bool) {
+        return ethernautsStorage.ownerOf(_tokenId) == _claimant;
+    }
+
+    /// @dev Checks if a given address currently has transferApproval for a particular Asset.
+    /// @param _claimant the address we are confirming asset is approved for.
+    /// @param _tokenId asset UniqueId, only valid when > 0
+    function _approvedFor(address _claimant, uint256 _tokenId) internal view returns (bool) {
+        return ethernautsStorage.approvedFor(_tokenId) == _claimant;
+    }
+
+    /// @dev Marks an address as being approved for transferFrom(), overwriting any previous
+    ///  approval. Setting _approved to address(0) clears all transfer approval.
+    ///  NOTE: _approve() does NOT send the Approval event. This is intentional because
+    ///  _approve() and transferFrom() are used together for putting Assets on auction, and
+    ///  there is no value in spamming the log with Approval events in that case.
+    function _approve(uint256 _tokenId, address _approved) internal {
+        ethernautsStorage.approve(_tokenId, _approved);
+    }
+
+    /// @notice Returns the number of Assets owned by a specific address.
+    /// @param _owner The owner address to check.
+    /// @dev Required for ERC-721 compliance
+    function balanceOf(address _owner) public view returns (uint256 count) {
+        return ethernautsStorage.balanceOf(_owner);
+    }
+
+    /// @dev Required for ERC-721 compliance.
+    /// @notice Transfers a Asset to another address. If transferring to a smart
+    ///  contract be VERY CAREFUL to ensure that it is aware of ERC-721 (or
+    ///  Ethernauts specifically) or your Asset may be lost forever. Seriously.
+    /// @param _to The address of the recipient, can be a user or contract.
+    /// @param _tokenId The ID of the Asset to transfer.
+    function transfer(
+        address _to,
+        uint256 _tokenId
+    )
+    external
+    whenNotPaused
+    {
+        // Safety check to prevent against an unexpected 0x0 default.
+        require(_to != address(0));
+        // Disallow transfers to this contract to prevent accidental misuse.
+        // The contract should never own any assets
+        // (except very briefly after it is created and before it goes on auction).
+        require(_to != address(this));
+        // Disallow transfers to the storage contract to prevent accidental
+        // misuse. Auction or Upgrade contracts should only take ownership of assets
+        // through the allow + transferFrom flow.
+        require(_to != address(ethernautsStorage));
+
+        // You can only send your own asset.
+        require(_owns(msg.sender, _tokenId));
+
+        // Reassign ownership, clear pending approvals, emit Transfer event.
+        ethernautsStorage.transfer(msg.sender, _to, _tokenId);
+    }
+
+    /// @dev Required for ERC-721 compliance.
+    /// @notice Grant another address the right to transfer a specific Asset via
+    ///  transferFrom(). This is the preferred flow for transfering NFTs to contracts.
+    /// @param _to The address to be granted transfer approval. Pass address(0) to
+    ///  clear all approvals.
+    /// @param _tokenId The ID of the Asset that can be transferred if this call succeeds.
+    function approve(
+        address _to,
+        uint256 _tokenId
+    )
+    external
+    whenNotPaused
+    {
+        // Only an owner can grant transfer approval.
+        require(_owns(msg.sender, _tokenId));
+
+        // Register the approval (replacing any previous approval).
+        _approve(_tokenId, _to);
+
+        // Emit approval event.
+        Approval(msg.sender, _to, _tokenId);
+    }
+
+
+    /// @notice Transfer a Asset owned by another address, for which the calling address
+    ///  has previously been granted transfer approval by the owner.
+    /// @param _from The address that owns the Asset to be transferred.
+    /// @param _to The address that should take ownership of the Asset. Can be any address,
+    ///  including the caller.
+    /// @param _tokenId The ID of the Asset to be transferred.
+    function _transferFrom(
+        address _from,
+        address _to,
+        uint256 _tokenId
+    )
+    internal
+    {
+        // Safety check to prevent against an unexpected 0x0 default.
+        require(_to != address(0));
+        // Disallow transfers to this contract to prevent accidental misuse.
+        // The contract should never own any assets (except for used assets).
+        require(_owns(_from, _tokenId));
+        // Check for approval and valid ownership
+        require(_approvedFor(_to, _tokenId));
+
+        // Reassign ownership (also clears pending approvals and emits Transfer event).
+        ethernautsStorage.transfer(_from, _to, _tokenId);
+    }
+
+    /// @dev Required for ERC-721 compliance.
+    /// @notice Transfer a Asset owned by another address, for which the calling address
+    ///  has previously been granted transfer approval by the owner.
+    /// @param _from The address that owns the Asset to be transfered.
+    /// @param _to The address that should take ownership of the Asset. Can be any address,
+    ///  including the caller.
+    /// @param _tokenId The ID of the Asset to be transferred.
+    function transferFrom(
+        address _from,
+        address _to,
+        uint256 _tokenId
+    )
+    external
+    whenNotPaused
+    {
+        _transferFrom(_from, _to, _tokenId);
+    }
+
+    /// @dev Required for ERC-721 compliance.
+    /// @notice Allow pre-approved user to take ownership of a token
+    /// @param _tokenId The ID of the Token that can be transferred if this call succeeds.
+    function takeOwnership(uint256 _tokenId) public {
+        address _from = ethernautsStorage.ownerOf(_tokenId);
+
+        // Safety check to prevent against an unexpected 0x0 default.
+        require(_from != address(0));
+        _transferFrom(_from, msg.sender, _tokenId);
+    }
+
+    /// @notice Returns the total number of Assets currently in existence.
+    /// @dev Required for ERC-721 compliance.
+    function totalSupply() public view returns (uint256) {
+        return ethernautsStorage.totalSupply();
+    }
+
+    /// @notice Returns owner of a given Asset(Token).
+    /// @param _tokenId Token ID to get owner.
+    /// @dev Required for ERC-721 compliance.
+    function ownerOf(uint256 _tokenId)
+    external
+    view
+    returns (address owner)
+    {
+        owner = ethernautsStorage.ownerOf(_tokenId);
+
+        require(owner != address(0));
+    }
+
+    /// @dev Creates a new Asset with the given fields. ONly available for C Levels
+    /// @param _creatorTokenID The asset who is father of this asset
+    /// @param _price asset price
+    /// @param _assetID asset ID
+    /// @param _category see Asset Struct description
+    /// @param _attributes see Asset Struct description
+    /// @param _stats see Asset Struct description
+    function createNewAsset(
+        uint256 _creatorTokenID,
+        address _owner,
+        uint256 _price,
+        uint16 _assetID,
+        uint8 _category,
+        uint8 _attributes,
+        uint8[STATS_SIZE] _stats
+    )
+    external onlyCLevel
+    returns (uint256)
+    {
+        // owner must be sender
+        require(_owner != address(0));
+
+        uint256 tokenID = ethernautsStorage.createAsset(
+            _creatorTokenID,
+            _owner,
+            _price,
+            _assetID,
+            _category,
+            uint8(AssetState.Available),
+            _attributes,
+            _stats,
+            0,
+            0
+        );
+
+        // emit the build event
+        Build(
+            _owner,
+            tokenID,
+            _assetID,
+            _price
+        );
+
+        return tokenID;
+    }
+
+    /// @notice verify if token is in exploration time
+    /// @param _tokenId The Token ID that can be upgraded
+    function isExploring(uint256 _tokenId) public view returns (bool) {
+        uint256 cooldown;
+        uint64 cooldownEndBlock;
+        (,,,,,cooldownEndBlock, cooldown,) = ethernautsStorage.assets(_tokenId);
+        return (cooldown > now) || (cooldownEndBlock > uint64(block.number));
+    }
 }
 
 
@@ -930,266 +957,6 @@ contract EthernautsStorage is EthernautsAccessControl {
     }
 }
 
-/// @title The facet of the Ethernauts contract that manages ownership, ERC-721 compliant.
-/// @notice This provides the methods required for basic non-fungible token
-//          transactions, following the draft ERC-721 spec (https://github.com/ethereum/EIPs/issues/721).
-//          It interfaces with EthernautsStorage provinding basic functions as create and list, also holds
-//          reference to logic contracts as Auction, Explore and so on
-/// @author Ethernatus - Fernando Pauer
-/// @dev Ref: https://github.com/ethereum/EIPs/issues/721
-contract EthernautsOwnership is EthernautsAccessControl, ERC721 {
-
-    /// @dev Contract holding only data.
-    EthernautsStorage public ethernautsStorage;
-
-    /*** CONSTANTS ***/
-    /// @notice Name and symbol of the non fungible token, as defined in ERC721.
-    string public constant name = "Ethernauts";
-    string public constant symbol = "ETNT";
-
-    /********* ERC 721 - COMPLIANCE CONSTANTS AND FUNCTIONS ***************/
-    /**********************************************************************/
-
-    bytes4 constant InterfaceSignature_ERC165 = bytes4(keccak256('supportsInterface(bytes4)'));
-
-    /*** EVENTS ***/
-
-    // Events as per ERC-721
-    event Transfer(address indexed from, address indexed to, uint256 tokens);
-    event Approval(address indexed owner, address indexed approved, uint256 tokens);
-
-    /// @dev When a new asset is create it emits build event
-    /// @param owner The address of asset owner
-    /// @param tokenId Asset UniqueID
-    /// @param assetId ID that defines asset look and feel
-    /// @param price asset price
-    event Build(address owner, uint256 tokenId, uint16 assetId, uint256 price);
-
-    function implementsERC721() public pure returns (bool) {
-        return true;
-    }
-
-    /// @notice Introspection interface as per ERC-165 (https://github.com/ethereum/EIPs/issues/165).
-    ///  Returns true for any standardized interfaces implemented by this contract. ERC-165 and ERC-721.
-    /// @param _interfaceID interface signature ID
-    function supportsInterface(bytes4 _interfaceID) external view returns (bool)
-    {
-        return ((_interfaceID == InterfaceSignature_ERC165) || (_interfaceID == InterfaceSignature_ERC721));
-    }
-
-    /// @dev Checks if a given address is the current owner of a particular Asset.
-    /// @param _claimant the address we are validating against.
-    /// @param _tokenId asset UniqueId, only valid when > 0
-    function _owns(address _claimant, uint256 _tokenId) internal view returns (bool) {
-        return ethernautsStorage.ownerOf(_tokenId) == _claimant;
-    }
-
-    /// @dev Checks if a given address currently has transferApproval for a particular Asset.
-    /// @param _claimant the address we are confirming asset is approved for.
-    /// @param _tokenId asset UniqueId, only valid when > 0
-    function _approvedFor(address _claimant, uint256 _tokenId) internal view returns (bool) {
-        return ethernautsStorage.approvedFor(_tokenId) == _claimant;
-    }
-
-    /// @dev Marks an address as being approved for transferFrom(), overwriting any previous
-    ///  approval. Setting _approved to address(0) clears all transfer approval.
-    ///  NOTE: _approve() does NOT send the Approval event. This is intentional because
-    ///  _approve() and transferFrom() are used together for putting Assets on auction, and
-    ///  there is no value in spamming the log with Approval events in that case.
-    function _approve(uint256 _tokenId, address _approved) internal {
-        ethernautsStorage.approve(_tokenId, _approved);
-    }
-
-    /// @notice Returns the number of Assets owned by a specific address.
-    /// @param _owner The owner address to check.
-    /// @dev Required for ERC-721 compliance
-    function balanceOf(address _owner) public view returns (uint256 count) {
-        return ethernautsStorage.balanceOf(_owner);
-    }
-
-    /// @dev Required for ERC-721 compliance.
-    /// @notice Transfers a Asset to another address. If transferring to a smart
-    ///  contract be VERY CAREFUL to ensure that it is aware of ERC-721 (or
-    ///  Ethernauts specifically) or your Asset may be lost forever. Seriously.
-    /// @param _to The address of the recipient, can be a user or contract.
-    /// @param _tokenId The ID of the Asset to transfer.
-    function transfer(
-        address _to,
-        uint256 _tokenId
-    )
-    external
-    whenNotPaused
-    {
-        // Safety check to prevent against an unexpected 0x0 default.
-        require(_to != address(0));
-        // Disallow transfers to this contract to prevent accidental misuse.
-        // The contract should never own any assets
-        // (except very briefly after it is created and before it goes on auction).
-        require(_to != address(this));
-        // Disallow transfers to the storage contract to prevent accidental
-        // misuse. Auction or Upgrade contracts should only take ownership of assets
-        // through the allow + transferFrom flow.
-        require(_to != address(ethernautsStorage));
-
-        // You can only send your own asset.
-        require(_owns(msg.sender, _tokenId));
-
-        // Reassign ownership, clear pending approvals, emit Transfer event.
-        ethernautsStorage.transfer(msg.sender, _to, _tokenId);
-    }
-
-    /// @dev Required for ERC-721 compliance.
-    /// @notice Grant another address the right to transfer a specific Asset via
-    ///  transferFrom(). This is the preferred flow for transfering NFTs to contracts.
-    /// @param _to The address to be granted transfer approval. Pass address(0) to
-    ///  clear all approvals.
-    /// @param _tokenId The ID of the Asset that can be transferred if this call succeeds.
-    function approve(
-        address _to,
-        uint256 _tokenId
-    )
-    external
-    whenNotPaused
-    {
-        // Only an owner can grant transfer approval.
-        require(_owns(msg.sender, _tokenId));
-
-        // Register the approval (replacing any previous approval).
-        _approve(_tokenId, _to);
-
-        // Emit approval event.
-        Approval(msg.sender, _to, _tokenId);
-    }
-
-
-    /// @notice Transfer a Asset owned by another address, for which the calling address
-    ///  has previously been granted transfer approval by the owner.
-    /// @param _from The address that owns the Asset to be transferred.
-    /// @param _to The address that should take ownership of the Asset. Can be any address,
-    ///  including the caller.
-    /// @param _tokenId The ID of the Asset to be transferred.
-    function _transferFrom(
-        address _from,
-        address _to,
-        uint256 _tokenId
-    )
-    internal
-    {
-        // Safety check to prevent against an unexpected 0x0 default.
-        require(_to != address(0));
-        // Disallow transfers to this contract to prevent accidental misuse.
-        // The contract should never own any assets (except for used assets).
-        require(_owns(_from, _tokenId));
-        // Check for approval and valid ownership
-        require(_approvedFor(_to, _tokenId));
-
-        // Reassign ownership (also clears pending approvals and emits Transfer event).
-        ethernautsStorage.transfer(_from, _to, _tokenId);
-    }
-
-    /// @dev Required for ERC-721 compliance.
-    /// @notice Transfer a Asset owned by another address, for which the calling address
-    ///  has previously been granted transfer approval by the owner.
-    /// @param _from The address that owns the Asset to be transfered.
-    /// @param _to The address that should take ownership of the Asset. Can be any address,
-    ///  including the caller.
-    /// @param _tokenId The ID of the Asset to be transferred.
-    function transferFrom(
-        address _from,
-        address _to,
-        uint256 _tokenId
-    )
-    external
-    whenNotPaused
-    {
-        _transferFrom(_from, _to, _tokenId);
-    }
-
-    /// @dev Required for ERC-721 compliance.
-    /// @notice Allow pre-approved user to take ownership of a token
-    /// @param _tokenId The ID of the Token that can be transferred if this call succeeds.
-    function takeOwnership(uint256 _tokenId) public {
-        address _from = ethernautsStorage.ownerOf(_tokenId);
-
-        // Safety check to prevent against an unexpected 0x0 default.
-        require(_from != address(0));
-        _transferFrom(_from, msg.sender, _tokenId);
-    }
-
-    /// @notice Returns the total number of Assets currently in existence.
-    /// @dev Required for ERC-721 compliance.
-    function totalSupply() public view returns (uint256) {
-        return ethernautsStorage.totalSupply();
-    }
-
-    /// @notice Returns owner of a given Asset(Token).
-    /// @param _tokenId Token ID to get owner.
-    /// @dev Required for ERC-721 compliance.
-    function ownerOf(uint256 _tokenId)
-    external
-    view
-    returns (address owner)
-    {
-        owner = ethernautsStorage.ownerOf(_tokenId);
-
-        require(owner != address(0));
-    }
-
-    /// @dev Creates a new Asset with the given fields. ONly available for C Levels
-    /// @param _creatorTokenID The asset who is father of this asset
-    /// @param _price asset price
-    /// @param _assetID asset ID
-    /// @param _category see Asset Struct description
-    /// @param _attributes see Asset Struct description
-    /// @param _stats see Asset Struct description
-    function createNewAsset(
-        uint256 _creatorTokenID,
-        uint256 _price,
-        uint16 _assetID,
-        uint8 _category,
-        uint8 _attributes,
-        uint8[STATS_SIZE] _stats
-    )
-    external onlyCLevel
-    returns (uint256)
-    {
-        // owner must be sender
-        require(msg.sender != address(0));
-
-        uint256 tokenID = ethernautsStorage.createAsset(
-            _creatorTokenID,
-            msg.sender,
-            _price,
-            _assetID,
-            _category,
-            uint8(AssetState.Available),
-            _attributes,
-            _stats,
-            0,
-            0
-        );
-
-        // emit the build event
-        Build(
-            msg.sender,
-            tokenID,
-            _assetID,
-            _price
-        );
-
-        return tokenID;
-    }
-
-    /// @notice verify if token is in exploration time
-    /// @param _tokenId The Token ID that can be upgraded
-    function isExploring(uint256 _tokenId) public view returns (bool) {
-        uint256 cooldown;
-        uint64 cooldownEndBlock;
-        (,,,,,cooldownEndBlock, cooldown,) = ethernautsStorage.assets(_tokenId);
-        return (cooldown > now) || (cooldownEndBlock > uint64(block.number));
-    }
-}
-
 
 /// @title The facet of the Ethernauts Logic contract handle all common code for logic/business contracts
 /// @author Ethernatus - Fernando Pauer
@@ -1264,7 +1031,7 @@ contract EthernautsLogic is EthernautsOwnership {
 ///             The user can place a number of Ship Upgrades on the ship to affect the ship’s exploration.
 ///             Combining the Explore and Upgrade actions together limits the amount of gas the user has to pay.
 /// @author Ethernatus - Fernando Pauer
-contract EthernautsUpgrade is EthernautsLogic, ClockAuctionBase {
+contract EthernautsUpgrade is EthernautsLogic {
 
     /// @dev Constructor creates a reference to the NFT ownership contract
     ///  and verifies the owner cut is in the valid range.
@@ -1396,6 +1163,31 @@ contract EthernautsUpgrade is EthernautsLogic, ClockAuctionBase {
         }
 
         Upgrade(_tokenId);
+    }
+
+    function transfer(
+        address _to,
+        uint256 _tokenId
+    )
+    external onlyOracle whenNotPaused
+    {
+        // Safety check to prevent against an unexpected 0x0 default.
+        require(_to != address(0));
+        // Disallow transfers to this contract to prevent accidental misuse.
+        // The contract should never own any assets
+        // (except very briefly after it is created and before it goes on auction).
+        require(_to != address(this));
+        // Disallow transfers to the storage contract to prevent accidental
+        // misuse. Auction or Upgrade contracts should only take ownership of assets
+        // through the allow + transferFrom flow.
+        require(_to != address(ethernautsStorage));
+
+        // Contract needs to own asset.
+        require(_owns(address(this), _tokenId));
+
+        // Reassign ownership, clear pending approvals, emit Transfer event.
+        _approve(_tokenId, _to);
+        ethernautsStorage.transfer(address(this), _to, _tokenId);
     }
 
 }
