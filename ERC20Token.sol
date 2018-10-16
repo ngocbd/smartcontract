@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xe640d8c3d7e101e3d6f44bc5901e04f57ec90433
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xbd6c8be1179dfd7ad11496694bd51dceb2fea083
 */
 pragma solidity ^0.4.4;
 
@@ -121,9 +121,9 @@ contract ERC20Token is StandardToken {
         ) {
         balances[msg.sender] = 2800000000000000;               // Give the creator all initial tokens (100000 for example)
         totalSupply = 2800000000000000;                        // Update total supply (100000 for example)
-        name = "ANDCoin28";                                   // Set the name for display purposes
+        name = "FinLevCoin";                                   // Set the name for display purposes
         decimals = 8;                            // Amount of decimals for display purposes
-        symbol = "ANDC";                               // Set the symbol for display purposes
+        symbol = "FLC";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
