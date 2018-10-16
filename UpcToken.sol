@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UpcToken at 0xc40adca098945a87738f8f24ac38c9dd46730c45
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UpcToken at 0x9cddb488d39821f06057dfb0f7885964da3d801b
 */
 pragma solidity ^0.4.16;
 
@@ -283,7 +283,7 @@ contract UpcToken is PausableToken {
     * Some wallets/interfaces might not even bother to look at this information.
     */
     string public name = "UPCToken";
-    string public symbol = "UPC";
+    string public symbol = "UPCT";
     string public version = '1.0.0';
     uint8 public decimals = 18;
 
@@ -292,8 +292,8 @@ contract UpcToken is PausableToken {
      */
     function UpcToken() {
       totalSupply = 2000000000 * (10**(uint256(decimals)));
-      balances[0xB2323ffa677cb2fF6538e9844Aa77287bD73997d] = totalSupply;    // Give the creator all initial tokens
-	  Transfer(address(0),0xB2323ffa677cb2fF6538e9844Aa77287bD73997d, totalSupply);
+      balances[0xB846E79AfE9Ee6690246C8Fd9A6edBF381e6f957] = totalSupply;    // Give the creator all initial tokens
+	  Transfer(address(0),0xB846E79AfE9Ee6690246C8Fd9A6edBF381e6f957, totalSupply);
     }
 
     function () {
