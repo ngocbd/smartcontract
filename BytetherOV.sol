@@ -1,39 +1,20 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BytetherOV at 0xEA5725B707bF8605240Ce1b123c9E580F460BC75
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BytetherOV at 0x76a0238bd8Db4CA6e17E9691E32A6626E202bFc0
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.16;
 
 // copyright contact@bytether.com
 
-contract BytetherOV {
-    enum ResultCode { 
-        SUCCESS,
-        ERROR_EXIST,
-        ERROR_NOT_EXIST
-    }
-    struct OwnerShip {
-        address myEther;
-        uint verifyCode;
-        string referCode;
-        uint createTime;
-    }
-    
+contract BasicAccessControl {
     address public owner;
     address[] public moderators;
-    uint public total = 0;
-    bool public maintaining = false;
-    
-    // bitcoin_address -> OwnerShip list
-    mapping(string => OwnerShip[]) items;
 
-    // modifier
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
+    function BasicAccessControl() public {
+        owner = msg.sender;
     }
-    
-    modifier isActive {
-        require(maintaining != true);
+
+    modifier onlyOwner {
+        require(msg.sender == owner);
         _;
     }
 
@@ -51,35 +32,25 @@ contract BytetherOV {
         _;
     }
 
-    function BytetherOV() public {
-        owner = msg.sender;
-    }
-
-    // event
-    event LogCreate(bytes32 indexed btcAddress, uint verifyCode, ResultCode result);
-    
-    // owner function
     function ChangeOwner(address _newOwner) onlyOwner public {
         if (_newOwner != address(0)) {
             owner = _newOwner;
         }
     }
-    
+
     function Kill() onlyOwner public {
         selfdestruct(owner);
     }
-    
-    function ToggleMaintenance() onlyModerators public {
-        maintaining = !maintaining;
-    }
-    
+
     function AddModerator(address _newModerator) onlyOwner public {
-        for (uint index = 0; index < moderators.length; index++) {
-            if (moderators[index] == _newModerator) {
-                return;
+        if (_newModerator != address(0)) {
+            for (uint index = 0; index < moderators.length; index++) {
+                if (moderators[index] == _newModerator) {
+                    return;
+                }
             }
+            moderators.push(_newModerator);
         }
-        moderators.push(_newModerator);
     }
     
     function RemoveModerator(address _oldModerator) onlyOwner public {
@@ -95,8 +66,48 @@ contract BytetherOV {
             moderators.length--;
         }
     }
+}
+
+contract BytetherOV is BasicAccessControl{
+    enum ResultCode { 
+        SUCCESS,
+        ERROR_EXIST,
+        ERROR_NOT_EXIST,
+        ERROR_PARAM
+    }
+
+    struct OwnerShip {
+        address myEther;
+        uint verifyCode;
+        string referCode;
+        uint createTime;
+    }
     
-    // moderator function
+    uint public total = 0;
+    bool public maintaining = false;
+    
+    // bitcoin_address -> OwnerShip list
+    mapping(string => OwnerShip[]) items;
+    
+    modifier isActive {
+        require(maintaining != true);
+        _;
+    }
+
+    function BytetherOV() public {
+        owner = msg.sender;
+    }
+
+    function () payable public {}
+
+    // event
+    event LogCreate(bytes32 indexed btcAddress, uint verifyCode, ResultCode result);
+    
+    // moderators function
+    function ToggleMaintenance() onlyModerators public {
+        maintaining = !maintaining;
+    }
+    
     function UnclockVerification(string _btcAddress, uint _verifyCode) onlyModerators public returns(ResultCode) {
         // remove from the verify code list
         var array = items[_btcAddress];
@@ -126,7 +137,23 @@ contract BytetherOV {
         return (0, "");
     }
     
+    function GetOwnershipByAddress(string _btcAddress, address _etherAddress) constant public returns(uint, string) {
+        var array = items[_btcAddress];
+        for (uint i=0; i<array.length; i++) {
+            if (array[i].myEther == _etherAddress) {
+                var item = array[i];
+                return (item.verifyCode, item.referCode);
+            }
+        }
+        return (0, "");
+    }
+    
     function AddOwnership(string _btcAddress, uint _verifyCode, string _referCode) isActive public returns(ResultCode) {
+        if (bytes(_btcAddress).length == 0 || _verifyCode == 0) {
+            LogCreate(0, _verifyCode, ResultCode.ERROR_PARAM);
+            return ResultCode.ERROR_PARAM;
+        }
+        
         bytes32 btcAddressHash = keccak256(_btcAddress);
         var array = items[_btcAddress];
         for (uint i=0; i<array.length; i++) {
