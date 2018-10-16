@@ -1,9 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CashTron at 0xdd92de8a6c0ccc72e3abd3c835139d3e06448aae
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CashTron at 0x59356e9fde5390d4135c977abcbb6a4c7eb6323e
 */
 //--------------------------------------------------------------------------------
-     // CashTron Currency Token "USDC" (Is Not Bank Legal Money)
-     // #USDC/EURC/AUDC/CADC/NZDC/RUBC/CNYC/SGDC/PHPC/IDRC/MYRC/THBC/WNDC/BDTC
+     // CashTron Currency Token "IDRC" (Is Not Bank Legal Money)
+     // USDC/EURC/AUDC/CADC/NZDC/RUBC/CNYC/SGDC/PTPC/#IDRC/MYRC/THBC/WNDC/BDTC
      // CashTron @ 2018 CashTron.io  CashTron.co
      //--------------------------------------------------------------------------------
 
@@ -232,9 +232,9 @@ contract CashTron is BurnableToken {
     using SafeMath for uint256;
 
     string public constant name = "CashTron";
-    string public constant symbol = "USDC";
+    string public constant symbol = "IDRC";
     uint8 public constant decimals = 8;
-    uint256 public constant INITIAL_SUPPLY = 500000000;
+    uint256 public constant INITIAL_SUPPLY = 100000000000;
 
     function CashTron() public {
         totalSupply = INITIAL_SUPPLY.mul(10 ** uint256(decimals));
