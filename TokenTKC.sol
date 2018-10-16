@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTKC at 0xd2da4b7805ca8003a167186d1c9a8180e0d57b96
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTKC at 0x3d6c445ad3d85270853845c4847174859c76035e
 */
 pragma solidity ^0.4.16;
 
@@ -13,7 +13,7 @@ contract TokenTKC {
     string public symbol = "TKC";
     uint256 public decimals = 18;
     
-    uint256 public totalSupply = 100*1000*1000*(10**decimals);
+    uint256 public totalSupply = 1000*1000*1000**decimals;
 
     
     mapping (address => uint256) public balanceOf;
