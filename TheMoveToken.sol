@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheMoveToken at 0xc3909eb09ccda9e9622fbfca8e6583bd1a5dfb4d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TheMoveToken at 0x40c505929f4ebeba65c84cc0f2ca6f48b05919c4
 */
 /**
  * @title ERC20Basic
@@ -49,13 +49,6 @@ library SafeMath {
 }
 
 contract BasicToken is ERC20Basic {
-    // timestamps for PRE-ICO phase
-    uint public preicoStartDate;
-    uint public preicoEndDate;
-    // timestamps for ICO phase
-    uint public icoStartDate;
-    uint public icoEndDate;
-    
     using SafeMath for uint256;
 
     mapping(address => uint256) balances;
@@ -66,7 +59,6 @@ contract BasicToken is ERC20Basic {
     * @param _value The amount to be transferred.
     */
     function transfer(address _to, uint256 _value) public returns (bool) {
-        require(now > icoEndDate);
         balances[_to] = balances[_to].add(_value);
         balances[msg.sender] = balances[msg.sender].sub(_value);
         Transfer(msg.sender, _to, _value);
@@ -173,6 +165,12 @@ contract TheMoveToken is StandardToken, Ownable {
     string public constant symbol = "MOVE";
     uint public constant decimals = 18;
     using SafeMath for uint256;
+    // timestamps for PRE-ICO phase
+    uint public preicoStartDate;
+    uint public preicoEndDate;
+    // timestamps for ICO phase
+    uint public icoStartDate;
+    uint public icoEndDate;
     // address where funds are collected
     address public wallet;
     // how many token units a buyer gets per wei
@@ -204,7 +202,7 @@ contract TheMoveToken is StandardToken, Ownable {
         require(_icostart < _icoend);
 
         totalSupply = 21172000000000000000000000;
-        rate = 600;
+        rate = 3600;
 
         // minimal invest
         minTransactionAmount = 0.1 ether;
@@ -216,9 +214,12 @@ contract TheMoveToken is StandardToken, Ownable {
 
 	   // Store the ico funds in the contract and send the rest to the developer wallet
        uint256 amountInContract = preicoSupply + icoSupply + bonusesSupply;
-
+       uint256 amountDevelopers = totalSupply - amountInContract;
+       
 	   balances[this] = balances[this].add(amountInContract);
+	   Transfer(_wallet, _wallet, amountDevelopers);
        balances[_wallet] = balances[_wallet].add(totalSupply - amountInContract);
+       Transfer(_wallet, this, amountInContract);
     }
 
     function setupPREICOPeriod(uint _start, uint _end) public onlyOwner {
@@ -232,6 +233,10 @@ contract TheMoveToken is StandardToken, Ownable {
         icoStartDate = _start;
         icoEndDate = _end;
     }
+    
+    function setRate(uint256 _rate) public onlyOwner {
+        rate = _rate;
+    }
 
     // fallback function can be used to buy tokens
     function () public inActivePeriod payable {
@@ -243,6 +248,21 @@ contract TheMoveToken is StandardToken, Ownable {
         if (amountToBurn > 0) {
             balances[this] = balances[this].sub(uint256(amountToBurn));
         }
+    }
+    
+    function sendTokens(address _sender, uint256 amount) public inActivePeriod onlyOwner {
+        // calculate token amount to be issued
+        uint256 tokens = amount.mul(rate);
+        tokens += getBonus(tokens);
+
+        if (isPREICO()) {
+            require(tokensSold + tokens < preicoSupply);
+        } else if (isICO()) {
+            require(tokensSold + tokens <= (icoSupply + bonusesSupply));
+        }
+
+        issueTokens(_sender, tokens);
+        tokensSold += tokens;
     }
 
     // Use with extreme caution this will burn the rest of the tokens in the contract
@@ -266,26 +286,8 @@ contract TheMoveToken is StandardToken, Ownable {
 
         raisedForEther = raisedForEther.add(weiAmount);
 
-        // calculate token amount to be issued
+        // calculate token amount to be created
         uint256 tokens = weiAmount.mul(rate);
-        tokens += getBonus(tokens);
-
-        if (isPREICO()) {
-            require(tokensSold + tokens < preicoSupply);
-        } else if (isICO()) {
-            require(tokensSold + tokens <= (icoSupply + bonusesSupply));
-        }
-
-        issueTokens(_sender, tokens);
-        tokensSold += tokens;
-    }
-    
-    // High level token issue function
-    // This will be used by the script which distributes tokens
-    // to those who contributed in BTC or LTC.
-    function sendTokens(address _sender, uint256 amount) public inActivePeriod onlyOwner {
-        // calculate token amount to be issued
-        uint256 tokens = amount.mul(rate);
         tokens += getBonus(tokens);
 
         if (isPREICO()) {
@@ -308,6 +310,10 @@ contract TheMoveToken is StandardToken, Ownable {
 
     function isICO() public view returns (bool) {
         return (icoStartDate < now && now <= icoEndDate);
+    }
+    
+    function setTokensSold(uint256 amount) public onlyOwner {
+        tokensSold = amount;
     }
 
     function getBonus(uint256 _tokens) public returns (uint256) {
@@ -363,7 +369,6 @@ contract TheMoveToken is StandardToken, Ownable {
         } 
     }
 
-    // This function transfers tokens to the contributor's account.
     function issueTokens(address _to, uint256 _value) internal returns (bool) {
         balances[_to] = balances[_to].add(_value);
         balances[this] = balances[this].sub(_value);
