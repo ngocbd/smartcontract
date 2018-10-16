@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract presale at 0xa67d97d75eE175e05BB1FB17529FD772eE8E9030
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract presale at 0xbcea0b07d6f79783aeaf35c6ddcd27dbd42ab621
 */
 pragma solidity ^0.4.10;
 
@@ -194,6 +194,7 @@ contract presale {
     uint256 public numberOfTokens;
     uint256 public numberOfTokensLeft;
     uint256 public pricePerToken;
+    uint256 public tokensFromPresale = 0;
     
     address public owner;
     string public name;
@@ -210,6 +211,8 @@ contract presale {
     mapping (uint256 => uint256) public dates;
     mapping (uint256 => uint256) public percents;
     uint256 public numberOfDates = 8;
+    
+    presale ps = presale(0xa67d97d75eE175e05BB1FB17529FD772eE8E9030);
     
     function presale(address tokenAddress, uint256 noOfTokens, uint256 prPerToken) {
         dates[0] = 1505520000;
@@ -234,8 +237,9 @@ contract presale {
         numberOfTokensLeft = noOfTokens;
         pricePerToken = prPerToken;
         owner = msg.sender;
-        name = "Autonio Presale";
+        name = "Autonio ICO";
         symbol = "NIO";
+        updatePresaleNumbers();
     }
     
     function addAddress (address addr) private {
@@ -261,24 +265,31 @@ contract presale {
     }
     
     function finish() private {
-        if(token.balanceOf(this)>=numberOfTokens){
-            if(finalAddress.send(this.balance)) {
-                for(uint256 i=0;i<numberOfAddress;i++) {
-                    token.transfer(addresses[i], balanceOf[addresses[i]]);
-                }
-                if(numberOfTokensLeft != 0) {
-                    token.transfer(owner, numberOfTokensLeft);
-                }
-            } else {
-                throw;
-            }
+        if(!finalAddress.send(this.balance)) {
+            throw;
+        }
+    }
+    
+    function updatePresaleNumbers() {
+        if(msg.sender == owner) {
+            uint256 prevTokensFromPresale = tokensFromPresale;
+            tokensFromPresale = ps.numberOfTokens() - ps.numberOfTokensLeft();
+            uint256 dif = tokensFromPresale - prevTokensFromPresale;
+            numberOfTokensLeft -= dif;
         } else {
             throw;
         }
     }
     
     function () payable {
+        uint256 prevTokensFromPresale = tokensFromPresale;
+        tokensFromPresale = ps.numberOfTokens() - ps.numberOfTokensLeft();
+        uint256 dif = tokensFromPresale - prevTokensFromPresale;
+        numberOfTokensLeft -= dif;
         uint256 weiSent = msg.value;
+        if(weiSent==0) {
+            throw;
+        }
         uint256 weiLeftOver = 0;
         if(numberOfTokensLeft<=0 || now<dates[0] || now>dates[numberOfDates-1]) {
             throw;
