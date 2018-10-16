@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Paypite at 0xc6e7ce1b2b7bad6fefcf18b43f5a3cc93033f854
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Paypite at 0x0ff161071e627a0e6de138105c73970f86ca7922
 */
 pragma solidity ^0.4.18;
 
@@ -89,7 +89,7 @@ contract Paypite is Ownable, ERC20 {
   uint8 private _decimals = 18;
   uint256 private decimalMultiplier = 10**(uint256(_decimals));
 
-  string private _name = "Paypite";
+  string private _name = "Paypite v2";
   string private _symbol = "PIT";
   uint256 private _totalSupply = 274000000 * decimalMultiplier;
 
@@ -202,17 +202,6 @@ contract Paypite is Ownable, ERC20 {
    */
   function setTradable(bool _newTradableState) onlyOwner public {
     tradable = _newTradableState;
-  }
-
-  function modifyCap(uint256 _newTotalSupply) onlyOwner public {
-    require(_newTotalSupply > 0 && _newTotalSupply != _totalSupply);
-    if (_newTotalSupply > _totalSupply) {
-      balances[multisig] = balances[multisig].add(_newTotalSupply.sub(_totalSupply));
-    } else {
-      require(balances[multisig] > _totalSupply.sub(_newTotalSupply));
-      balances[multisig] = balances[multisig].sub(_totalSupply.sub(_newTotalSupply));
-    }
-    _totalSupply = _newTotalSupply;
   }
 
   /**
