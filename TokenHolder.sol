@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenHolder at 0x57cf28470d31306bc4154f07a15b2fd79c91536f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenHolder at 0x10dabd1629502e1a3bd3ef9a4ddbff2c9ba0d15a
 */
-pragma solidity ^0.4.0;
+pragma solidity ^0.4.18;
 
 /**
  * @title Ownable
@@ -336,9 +336,9 @@ contract PausableToken is Pausable, TokenImpl {
 	}
 }
 
-contract GawooniToken is OwnableImpl, PausableToken, MintableTokenImpl, BurnableTokenImpl {
-	string public constant name = "GAWOONI";
-	string public constant symbol = "GWON";
+contract ZenomeToken is OwnableImpl, PausableToken, MintableTokenImpl, BurnableTokenImpl {
+	string public constant name = "Zenome";
+	string public constant symbol = "sZNA";
 	uint8 public constant decimals = 18;
 
 	function burn(uint256 _value) public whenNotPaused {
@@ -347,10 +347,10 @@ contract GawooniToken is OwnableImpl, PausableToken, MintableTokenImpl, Burnable
 }
 
 contract TokenHolder is OwnableImpl {
-	GawooniToken public token;
+	ZenomeToken public token;
 
 	function TokenHolder(address _token) {
-		token = GawooniToken(_token);
+		token = ZenomeToken(_token);
 	}
 
 	function transfer(address beneficiary, uint256 amount) onlyOwner public {
