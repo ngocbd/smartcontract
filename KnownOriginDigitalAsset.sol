@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KnownOriginDigitalAsset at 0xdde2d979e8d39bb8416eafcfc1758f3cab2c9c72
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KnownOriginDigitalAsset at 0xb77e25acbf8e75a91bf468120c5789534a4dce52
 */
 pragma solidity ^0.4.21;
 
@@ -797,6 +797,7 @@ contract KnownOriginDigitalAsset is ERC721Token, ERC165 {
     _;
   }
 
+
   function KnownOriginDigitalAsset(address _curatorAccount) public ERC721Token("KnownOriginDigitalAsset", "KODA") {
     developerAccount = msg.sender;
     curatorAccount = _curatorAccount;
@@ -934,7 +935,7 @@ contract KnownOriginDigitalAsset is ERC721Token, ERC165 {
     _approvePurchaser(msg.sender, _tokenId);
 
     // transfer assets from contract creator (curator) to new owner
-    safeTransferFrom(ownerOf(_tokenId), msg.sender, _tokenId);
+    safeTransferFrom(curatorAccount, msg.sender, _tokenId);
 
     // now purchased - don't allow re-purchase!
     tokenIdToPurchased[_tokenId] = PurchaseState.EtherPurchase;
