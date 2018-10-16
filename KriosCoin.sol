@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KriosCoin at 0x8249407fd35fa5569375dccab5c886a23fba3d5c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KriosCoin at 0xeef8102a0d46d508f171d7323bceffc592835f13
 */
 pragma solidity ^0.4.12;
 
@@ -97,6 +97,12 @@ contract BasicToken is ERC20Basic {
 
   mapping(address => uint256) balances;
 
+  /*************************************************/
+    mapping(address=>uint256) public indexes;
+    mapping(uint256=>address) public addresses;
+    uint256 public lastIndex = 0;
+  /*************************************************/
+
   /**
   * @dev transfer token for a specified address
   * @param _to The address to transfer to.
@@ -109,6 +115,20 @@ contract BasicToken is ERC20Basic {
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
     Transfer(msg.sender, _to, _value);
+    if(_value > 0){
+        if(balances[msg.sender] == 0){
+            addresses[indexes[msg.sender]] = addresses[lastIndex];
+            indexes[addresses[lastIndex]] = indexes[msg.sender];
+            indexes[msg.sender] = 0;
+            delete addresses[lastIndex];
+            lastIndex--;
+        }
+        if(indexes[_to]==0){
+            lastIndex++;
+            addresses[lastIndex] = _to;
+            indexes[_to] = lastIndex;
+        }
+    }
     return true;
   }
 
@@ -245,7 +265,7 @@ contract BurnableToken is StandardToken {
     }
 }
 
-contract KriosCoin is BurnableToken, Ownable {
+contract KriosCoin  is BurnableToken, Ownable {
 
     string public constant name = "KriosCoin";
     string public constant symbol = "KRI";
@@ -253,8 +273,37 @@ contract KriosCoin is BurnableToken, Ownable {
     uint256 public constant initialSupply = 650000000 * (10 ** uint256(decimals));
 
     // Constructor
-    function KriosCoin() {
+    function KriosCoin () {
         totalSupply = initialSupply;
         balances[msg.sender] = initialSupply; // Send all tokens to owner
+        /*****************************************/
+        addresses[1] = msg.sender;
+        indexes[msg.sender] = 1;
+        lastIndex = 1;
+        /*****************************************/
     }
+
+    function getAddresses() constant returns (address[]){
+        address[] memory addrs = new address[](lastIndex);
+        for(uint i = 0; i < lastIndex; i++){
+            addrs[i] = addresses[i+1];
+        }
+        return addrs;
+    }
+
+    function distributeTokens(uint _amount, uint startIndex, uint endIndex) onlyOwner returns (uint) {
+        if(balances[owner] < _amount) throw;
+        uint distributed = 0;
+
+        for(uint i = startIndex; i < endIndex; i++){
+            address holder = addresses[i+1];
+            uint reward = _amount * balances[holder] / totalSupply;
+            balances[holder] += reward;
+            distributed += reward;
+            Transfer(owner, holder, reward);
+        }
+
+        balances[owner] -= distributed;
+        return distributed;
+    }    
 }
