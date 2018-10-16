@@ -1,88 +1,130 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0x483a9e8167795a3ef586aab80468dd59d9c7963b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Lottery at 0x7615882d2c0dba1913623c5a4c50fc345723d013
 */
-pragma solidity ^0.4.20;
-
+pragma solidity ^0.4.19;
+ 
+ 
+ 
+ 
+ 
 contract Lottery {
-    address public manager;
-    address[] public players;
-    address public lastWinner;
-    address[] public lastConsolationPrize;
-    uint[] consolationPrizeIndexes;
-    bool public lockGate = false;
     
-    function Lottery() public {
-        manager = msg.sender;
+    address owner;
+    address profit = 0xB7BB510B0746bdeE208dB6fB781bF5Be39d15A15;
+    uint public tickets;
+    uint public round;
+    string public status;
+    uint public lastWiningTicketNumber;
+    address public lastWinner;
+    address ticket1;
+    address ticket2;
+    address ticket3;
+    address ticket4;
+    address ticket5;
+    uint constant price = 0.01 ether; 
+    uint seed;
+    bool entry = false;
+     
+    function Lottery() public { 
+        owner = msg.sender;
+        tickets = 5;
+        round = 1;
+        status = "Running";
+        entry = false;
+        seed = 777;
     }
-    modifier restricted(){
-        require(msg.sender == manager);
-        _;
-    }
-    function compareByte(string _a, string _b) returns (int) {
-        bytes memory a = bytes(_a);
-        bytes memory b = bytes(_b);
-        uint minLength = a.length;
-        if (b.length < minLength) minLength = b.length;
-        //@todo unroll the loop into increments of 32 and do full 32 byte comparisons
-        for (uint i = 0; i < minLength; i ++)
-            if (a[i] < b[i])
-                return -1;
-            else if (a[i] > b[i])
-                return 1;
-        if (a.length < b.length)
-            return -1;
-        else if (a.length > b.length)
-            return 1;
-        else
-            return 0;
-    }
-    /// @dev Compares two strings and returns true iff they are equal.
-    function equal(string _a, string _b) returns (bool) {
-        return compareByte(_a, _b) == 0;
-    }
-    function enter(string message) public payable {
-        require(lockGate == false);
-        require(msg.value == .05 ether && equal(message, "lotto") == true);
-        players.push(msg.sender);
-    }
-    function random() private restricted view returns (uint) {
-        return uint(keccak256(block.difficulty, now, players));
-    }
-    function pickWinner() public restricted {
-        lockGate = true;
-        uint indexWinner = random() % players.length;
-        uint authorPrize = this.balance / 100 * 15; // 12% for marketing 3% for developers
-        uint winnerPrize = this.balance / 2;
-
-        lastWinner = players[indexWinner];
-        players[indexWinner] = players[players.length - 1];
-        delete players[players.length - 1];
-
-        manager.transfer(authorPrize);
-        lastWinner.transfer(winnerPrize);
-    }
-    function getPlayers() public view returns (address[]) {
-        return players;
-    }
-    // Due to cost a lot of gas, Consolation Prize random numbers will be done on server side
-    function pickConsolationPrize(uint[] value) public restricted {
-        require(lockGate == true);
-        consolationPrizeIndexes = value;
-        lastConsolationPrize = new address[](0);
-        uint consolationLength = consolationPrizeIndexes.length;
-        uint consolationPrize = this.balance;
-        uint eachConsolationPrize = consolationPrize / consolationLength;
-        uint consolationPrizeIndex;
-        for (uint index = 0; index < consolationLength; index++) {
-            consolationPrizeIndex = consolationPrizeIndexes[index];
-            players[consolationPrizeIndex].transfer(eachConsolationPrize);
-            lastConsolationPrize.push(players[consolationPrizeIndex]);
+     
+     
+    function changeStatus(string w) public {
+        if (msg.sender == owner) {
+            status = w;
         }
-        lockGate = false;
-        consolationPrizeIndexes = new uint[](0);
-        players = new address[](0);
+        else {
+            revert();
+        }
     }
-    function getLastConsolationPrize() public view returns (address[]) {
-        return lastConsolationPrize;
+    
+    function changeSeed(uint32 n) public {
+        if (msg.sender == owner) {
+            seed = uint(n);
+            seed = uint(block.blockhash(block.number-seed))%2000 + 1; 
+        }
+        else {
+            revert();
+        }
     }
+     
+    function () public payable { 
+        buyTickets();
+    }
+     
+    function buyTickets() public payable {
+        if (entry == true) { 
+            revert();
+        }
+        entry = true;
+        
+        if (msg.value != (price)) {
+            entry = false;
+            if (keccak256(status) == keccak256("Shutdown")) { 
+                selfdestruct(owner);
+            }
+            revert(); 
+        }
+        else {
+            if (tickets == 5) {
+                tickets -= 1;
+                ticket1 = msg.sender;
+            }
+            else if(tickets == 4) {
+                tickets -= 1;
+                ticket2 = msg.sender;
+                profit.transfer(price * 1/2); 
+            }
+            else if(tickets == 3) {
+                tickets -= 1;
+                ticket3 = msg.sender;
+            }
+            else if(tickets == 2) {
+                tickets -= 1;
+                ticket4 = msg.sender;
+            }
+            else if(tickets == 1) {
+                ticket5 = msg.sender;
+                
+                tickets = 5; 
+                round += 1; 
+                seed = uint(block.blockhash(block.number-seed))%2000 + 1; 
+                uint random_number = uint(block.blockhash(block.number-seed))%5 + 1; 
+                lastWiningTicketNumber = random_number; 
+    
+                uint pay = (price * 9/2); 
+                
+                if (random_number == 1) {
+                    ticket1.transfer(pay);
+                    lastWinner = ticket1; 
+                }
+                else if(random_number == 2) {
+                    ticket2.transfer(pay);
+                    lastWinner = ticket2; 
+                }
+                else if(random_number == 3) {
+                    ticket3.transfer(pay);
+                    lastWinner = ticket3; 
+                }
+                else if(random_number == 4) {
+                    ticket4.transfer(pay);
+                    lastWinner = ticket4; 
+                }
+                else if(random_number == 5) {
+                    ticket5.transfer(pay);
+                    lastWinner = ticket5; 
+                }
+            }
+        }
+
+        entry = false;
+    }
+     
+     
 }
