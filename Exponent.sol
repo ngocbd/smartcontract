@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exponent at 0x89f58d968175e2f7460dd88f32b4562606e4d54b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Exponent at 0x29c24aad19750753289e414053546f54dff08332
 */
 pragma solidity ^0.4.18;
 
@@ -35,11 +35,4 @@ contract Exponent {
         }
 
     }
-    
-    event ExpResult(uint result, uint precision);
-    
-    function expTx(uint p, uint q, uint precision) public {
-        ExpResult(exp(p,q,precision),precision);
-    }
-    
 }
