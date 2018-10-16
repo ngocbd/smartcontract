@@ -1,115 +1,142 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC223Token at 0xf3aa1d9f7fddbc4aa9bcdcac5afa798867347339
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC223Token at 0xc790ffe14eaff6c2eb98b432ce81ba1d18386f0b
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.20;
+/**
+* @notice TOKEN CONTRACT
+* @dev ERC-223 Token Standar Compliant
+* @author Fares A. Akel C. f.antonio.akel@gmail.com
+*/
+ 
+/**
+ * @title SafeMath by OpenZeppelin
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
 
-contract ERC223 {
-    mapping(address => uint) balances;
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+      uint256 c = a * b;
+      assert(a == 0 || c / a == b);
+      return c;
+    }
+
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+      uint256 c = a / b;
+      return c;
+    }
+
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+      assert(b <= a);
+      return a - b;
+    }
+
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+      uint256 c = a + b;
+      assert(c >= a);
+      return c;
+    }
+}
+
+/**
+ * @title ERC223 Token interface
+ * @dev Code based on Dexaran's one on github as recommended on ERC223 discussion
+ */
+
+contract ERC223Interface {
     
-  uint public totalSupply;
-  function balanceOf(address who) public view returns (uint);
+  function balanceOf(address who) constant public returns (uint256);
   
-  
-  function ERC223() {
-    balances[0x1b6c2e31744dce7577109e05E7C54f6F96191804] = totalSupply;    
-  }
-  
-  function name() public view returns (string _name);
-  function symbol() public view returns (string _symbol);
-  function decimals() public view returns (uint8 _decimals);
-  function totalSupply() public view returns (uint256 _supply);
+  function name() constant public returns (string _name);
+  function symbol() constant public returns (string _symbol);
+  function decimals() constant public returns (uint8 _decimals);
+  function totalSupply() constant public returns (uint256 _supply);
+  function transfer(address to, uint256 value) public returns (bool ok);
+  function transfer(address to, uint256 value, bytes data) public returns (bool ok);
+  function transfer(address to, uint256 value, bytes data, string custom_fallback) public returns (bool ok);
 
-  function transfer(address to, uint value) public returns (bool ok);
-  function transfer(address to, uint value, bytes data) public returns (bool ok);
-  function transfer(address to, uint value, bytes data, string custom_fallback) public returns (bool ok);
-  
-  event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
+  event Transfer(address indexed from, address indexed to, uint256 value, bytes indexed data);
+  event Burned(address indexed _target, uint256 _value);
+  event FrozenStatus(address _target,bool _flag);
 }
 
-contract SafeMath {
-    uint256 constant public MAX_UINT256 =
-    0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
-
-    function safeAdd(uint256 x, uint256 y) pure internal returns (uint256 z) {
-        if (x > MAX_UINT256 - y) revert();
-        return x + y;
-    }
-
-    function safeSub(uint256 x, uint256 y) pure internal returns (uint256 z) {
-        if (x < y) revert();
-        return x - y;
-    }
-
-    function safeMul(uint256 x, uint256 y) pure internal returns (uint256 z) {
-        if (y == 0) return 0;
-        if (x > MAX_UINT256 / y) revert();
-        return x * y;
-    }
+ contract ContractReceiver {
+    function tokenFallback(address _from, uint256 _value, bytes _data) public;
 }
 
-contract ERC223Token is ERC223, SafeMath {
+/**
+ * @title ERC223 Token definition
+ * @dev Code based on Dexaran's one on github as recommended on ERC223 discussion
+ */
+ 
+contract ERC223Token is ERC223Interface {
 
-  mapping(address => uint) balances;
+  using SafeMath for uint256;
+
+  mapping(address => uint256) balances;
+
+  string public name    = "Billionaire Maker";
+  string public symbol  = "BMX";
+  uint8 public decimals = 9;
+  uint256 public totalSupply;
   
-  string public name = "ServerCube Coin";
-  string public symbol = "SCC";
-  uint8 public decimals = 0;
-  uint256 public totalSupply = 80000000;
-  
-  function ERC223Token() { 
-      balances[0xC193DbDeD670C425301FCB0dA5BAaBdeC8A1819d] = totalSupply;
+  function ERC223Token() public
+  {
+    bytes memory empty;
+    totalSupply = 1000000000 * (10 ** uint256(decimals));
+    balances[msg.sender] = totalSupply;
+    emit Transfer(0, this, totalSupply, empty);
+    emit Transfer(this, msg.sender, totalSupply, empty);
   }
+  
   
   // Function to access name of token .
-  function name() public view returns (string _name) {
+  function name() constant public returns (string _name) {
       return name;
   }
   // Function to access symbol of token .
-  function symbol() public view returns (string _symbol) {
+  function symbol() constant public returns (string _symbol) {
       return symbol;
   }
   // Function to access decimals of token .
-  function decimals() public view returns (uint8 _decimals) {
+  function decimals() constant public returns (uint8 _decimals) {
       return decimals;
   }
   // Function to access total supply of tokens .
-  function totalSupply() public view returns (uint256 _totalSupply) {
+  function totalSupply() constant public returns (uint256 _totalSupply) {
       return totalSupply;
-  }
-  
+  }  
   
   // Function that is called when a user or another contract wants to transfer funds .
-  function transfer(address _to, uint _value, bytes _data, string _custom_fallback) public returns (bool success) {
-      
+  function transfer(address _to, uint256 _value, bytes _data, string _custom_fallback) public returns (bool success) {
+
     if(isContract(_to)) {
-        if (balanceOf(msg.sender) < _value) revert();
-        balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
-        balances[_to] = safeAdd(balanceOf(_to), _value);
+        require(balanceOf(msg.sender) >= _value);
+        balances[msg.sender] = balanceOf(msg.sender).sub(_value);
+        balances[_to] = balanceOf(_to).add(_value);
         assert(_to.call.value(0)(bytes4(keccak256(_custom_fallback)), msg.sender, _value, _data));
-        Transfer(msg.sender, _to, _value, _data);
+        emit Transfer(msg.sender, _to, _value, _data);
         return true;
     }
     else {
         return transferToAddress(_to, _value, _data);
     }
-}
-  
+  }
 
   // Function that is called when a user or another contract wants to transfer funds .
-  function transfer(address _to, uint _value, bytes _data) public returns (bool success) {
-      
+  function transfer(address _to, uint256 _value, bytes _data) public returns (bool success) {
+
     if(isContract(_to)) {
         return transferToContract(_to, _value, _data);
     }
     else {
         return transferToAddress(_to, _value, _data);
     }
-}
+  }
   
   // Standard function transfer similar to ERC20 transfer with no _data .
   // Added due to backwards compatibility reasons .
-  function transfer(address _to, uint _value) public returns (bool success) {
-      
+  function transfer(address _to, uint256 _value) public returns (bool success) {
+
     //standard function transfer similar to ERC20 transfer with no _data
     //added due to backwards compatibility reasons
     bytes memory empty;
@@ -119,11 +146,11 @@ contract ERC223Token is ERC223, SafeMath {
     else {
         return transferToAddress(_to, _value, empty);
     }
-}
+  }
 
-  //assemble the given address bytecode. If bytecode exists then the _addr is a contract.
+//assemble the given address bytecode. If bytecode exists then the _addr is a contract.
   function isContract(address _addr) private view returns (bool is_contract) {
-      uint length;
+      uint256 length;
       assembly {
             //retrieve the size of the code on target address, this needs assembly
             length := extcodesize(_addr)
@@ -132,55 +159,28 @@ contract ERC223Token is ERC223, SafeMath {
     }
 
   //function that is called when transaction target is an address
-  function transferToAddress(address _to, uint _value, bytes _data) private returns (bool success) {
-    if (balanceOf(msg.sender) < _value) revert();
-    balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
-    balances[_to] = safeAdd(balanceOf(_to), _value);
-    Transfer(msg.sender, _to, _value, _data);
+  function transferToAddress(address _to, uint256 _value, bytes _data) private returns (bool success) {
+    require(balanceOf(msg.sender) >= _value);
+    balances[msg.sender] = balanceOf(msg.sender).sub(_value);
+    balances[_to] = balanceOf(_to).add(_value);
+    emit Transfer(msg.sender, _to, _value, _data);
     return true;
   }
   
   //function that is called when transaction target is a contract
-  function transferToContract(address _to, uint _value, bytes _data) private returns (bool success) {
-    if (balanceOf(msg.sender) < _value) revert();
-    balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
-    balances[_to] = safeAdd(balanceOf(_to), _value);
+  function transferToContract(address _to, uint256 _value, bytes _data) private returns (bool success) {
+    require(balanceOf(msg.sender) >= _value);
+    balances[msg.sender] = balanceOf(msg.sender).sub(_value);
+    balances[_to] = balanceOf(_to).add(_value);
     ContractReceiver receiver = ContractReceiver(_to);
     receiver.tokenFallback(msg.sender, _value, _data);
-    Transfer(msg.sender, _to, _value, _data);
+    emit Transfer(msg.sender, _to, _value, _data);
     return true;
-}
+  }
 
 
-  function balanceOf(address _owner) public view returns (uint balance) {
+  function balanceOf(address _owner) constant public returns (uint256 balance) {
     return balances[_owner];
   }
-}
 
-contract ContractReceiver {
-     
-    struct TKN {
-        address sender;
-        uint value;
-        bytes data;
-        bytes4 sig;
-    }
-    
-    
-    function tokenFallback(address _from, uint _value, bytes _data) public pure {
-      TKN memory tkn;
-      tkn.sender = _from;
-      tkn.value = _value;
-      tkn.data = _data;
-      uint32 u = uint32(_data[3]) + (uint32(_data[2]) << 8) + (uint32(_data[1]) << 16) + (uint32(_data[0]) << 24);
-      tkn.sig = bytes4(u);
-      
-      /* tkn variable is analogue of msg variable of Ether transaction
-      *  tkn.sender is person who initiated this token transaction   (analogue of msg.sender)
-      *  tkn.value the number of tokens that were sent   (analogue of msg.value)
-      *  tkn.data is data of token transaction   (analogue of msg.data)
-      *  tkn.sig is 4 bytes signature of function
-      *  if data of token transaction is a function execution
-      */
-    }
 }
