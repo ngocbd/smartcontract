@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KRWT at 0x97fee0d5ccfeca578bee7fe9446f1a684e52ff34
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KRWT at 0x040a05e50007873f8d527b2e4e63c41bf723665d
 */
 pragma solidity ^0.4.21;
 
 // ----------------------------------------------------------------------------
 // TOKENMOM Korean Won(KRWT) Smart contract Token V.10
-// ??? ??? Korean Won ??? ???? ??
+//
 // Deployed to : 0x8af2d2e23f0913af81abc6ccaa6200c945a161b4
 // Symbol      : BETA
 // Name        : TOKENMOM Korean Won
@@ -20,8 +20,15 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
 
+  /**
+  * @dev Multiplies two numbers, throws on overflow.
+  */
   function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     if (a == 0) {
       return 0;
@@ -31,6 +38,9 @@ library SafeMath {
     return c;
   }
 
+  /**
+  * @dev Integer division of two numbers, truncating the quotient.
+  */
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     // uint256 c = a / b;
@@ -132,6 +142,11 @@ contract StandardToken is ERC20, BasicToken {
   }
 }
 
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
 contract Ownable {
   address public owner;
 
@@ -398,13 +413,26 @@ contract ERC827Token is ERC827, StandardToken {
 
 }
 
-contract KRWT is StandardToken, MintableToken, BurnableToken, PausableToken {
+contract KRWT is StandardToken, MintableToken, BurnableToken, PausableToken, ERC827Token {
     string constant public name = "Korean Won";
     string constant public symbol = "KRWT";
     uint8 constant public decimals = 8;
-    uint public totalSupply = 100000000000 * 10**uint(decimals);
+    uint public totalSupply_ = 100000000000 * 10**uint(decimals);
 
-    function KRWT () public {
-        balances[msg.sender] = totalSupply;
+    /* This generates a public event on the blockchain that will notify clients */
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    /* This notifies clients about the amount burnt */
+    event Burn(address indexed from, uint256 value);
+    
+    uint256 public constant INITIAL_SUPPLY = 100000000000 * (10 ** uint256(decimals));
+
+    function KWRT () public {
+        balances[msg.sender] = totalSupply_;
+        emit Transfer(address(0),0x8aF2D2E23f0913AF81ABc6CcAA6200c945A161B4, totalSupply_);
+        totalSupply_ = INITIAL_SUPPLY;
+        balances[msg.sender] = INITIAL_SUPPLY;
+        emit Transfer(0x0, msg.sender, INITIAL_SUPPLY);
     }
+
 }
