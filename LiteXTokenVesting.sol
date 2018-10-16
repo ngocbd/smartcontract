@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LiteXTokenVesting at 0x9d2d59b93f7ddc460fcdd9a1ea45d3b3bdd8efd3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LiteXTokenVesting at 0x27be1f13457330d623ed66862be853bee63a94cb
 */
 pragma solidity ^0.4.18;
 
@@ -47,6 +47,12 @@ library SafeMath {
   function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
+    return c;
+  }
+
+
+  function ceil(uint256 a, uint256 m) internal pure returns (uint256) {
+    uint256 c = ((a + m - 1) / m) * m;
     return c;
   }
 }
@@ -164,7 +170,7 @@ contract TokenVesting is Ownable {
   uint256 public start;
   uint256 public duration;
 
-  bool public revocable;
+  bool revocable;
 
   mapping (address => uint256) public released;
   mapping (address => bool) public revoked;
@@ -292,7 +298,7 @@ contract LiteXTokenVesting is TokenVesting {
     if (now >= start.add(duration) || revoked[token]) {
       return totalBalance;
     }
-    return totalBalance.mul(now.sub(start).div(divider).mul(divider)).div(duration);
+    return totalBalance.mul(now.sub(start).div(divider).mul(divider)).div(duration).div(10**18).mul(10**18);
   }
 
 }
