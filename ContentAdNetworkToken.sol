@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ContentAdNetworkToken at 0x5f3789907b35DCe5605b00C0bE0a7eCDBFa8A841
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ContentAdNetworkToken at 0x5e2B35C3a8f80676B5B789876634d49A1332F001
 */
 pragma solidity ^0.4.11;
 
@@ -116,7 +116,7 @@ contract Token {
 
 //Business Service Token
 contract ContentAdNetworkToken is Token, Owner {
-    uint256 public constant INITIAL_SUPPLY = 15 * 10000 * 10000 * 1 ether; // 1e9 * 1e18
+    uint256 public constant INITIAL_SUPPLY = 10 * 10000 * 10000 * 1 ether; // 1e9 * 1e18
     string public constant NAME = "Content and Ad Network"; //??
     string public constant SYMBOL = "CAN"; // ??
     // string public constant STANDARD = "Token 1.0";
