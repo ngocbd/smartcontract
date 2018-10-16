@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DeusETH at 0x3178ABbC96938f3C19cE6E9f4aEd5be03d5e721E
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DeusETH at 0xe46b5f1f3551bd3c6b29c38babc662b03d985c48
 */
 pragma solidity 0.4.19;
-
 
 contract DeusETH {
     using SafeMath for uint256;
@@ -21,7 +20,7 @@ contract DeusETH {
     uint256 public timeWithoutUpdate = 2592000;
 
     //token price
-    uint256 public rate = 1 ether;
+    uint256 public rate = 0.3 ether;
 
     // amount of raised money in wei for FundsKeeper
     uint256 public weiRaised;
@@ -32,6 +31,10 @@ contract DeusETH {
     //address of Episode Manager
     address public episodeManager;
     bool public managerSet = false;
+
+    //address of StockExchange
+    address stock;
+    bool public stockSet = false;
 
     address public owner;
 
@@ -73,10 +76,16 @@ contract DeusETH {
         revert();
     }
 
-    function setEpisodeManager(address _episodeManager) public {
+    function setEpisodeManager(address _episodeManager) public onlyOwner {
         require(!managerSet);
         episodeManager = _episodeManager;
         managerSet = true;
+    }
+
+    function setStock(address _stock) public onlyOwner {
+        require(!stockSet);
+        stock = _stock;
+        stockSet = true;
     }
 
     function totalSupply() public view returns (uint256) {
@@ -88,16 +97,14 @@ contract DeusETH {
     }
 
     // low level token purchase function
-    function buyTokens(uint256 _id, address _holder) public payable {
+    function buyTokens(uint256 _id) public payable {
         require(!started);
         require(!gameOver);
         require(!gameOverByUser);
         require(_id > 0 && _id <= cap);
         require(citizens[_id].isExist == false);
-        require(_holder != address(0));
 
         require(msg.value == rate);
-
         uint256 weiAmount = msg.value;
 
         // update weiRaised
@@ -106,12 +113,11 @@ contract DeusETH {
         totalSupply = totalSupply.add(1);
         livingSupply = livingSupply.add(1);
 
-        createCitizen(_id, _holder);
+        createCitizen(_id, msg.sender);
         timestamp = now;
-        TokenHolder(_id, _holder);
+        TokenHolder(_id, msg.sender);
         TokenState(_id, 1);
         TokenBranch(_id, 1);
-
         forwardFunds();
     }
 
@@ -139,7 +145,7 @@ contract DeusETH {
         require(!gameOver);
         require(!gameOverByUser);
         require(_id > 0 && _id <= cap);
-        require(citizens[_id].holder == msg.sender);
+        require((citizens[_id].holder == msg.sender) || (stock == msg.sender));
         require(_newholder != address(0));
         citizens[_id].holder = _newholder;
         TokenHolder(_id, _newholder);
@@ -158,6 +164,7 @@ contract DeusETH {
     }
 
     function start() public onlyOwner {
+        require(!started);
         started = true;
     }
 
@@ -200,6 +207,22 @@ contract DeusETH {
         return rate;
     }
 
+    function allStates() public view returns (uint256[], address[], uint256[]) {
+        uint256[] memory a = new uint256[](50);
+        address[] memory b = new address[](50);
+        uint256[] memory c = new uint256[](50);
+
+        for (uint i = 0; i < a.length; i++) {
+            a[i] = citizens[i+1].state;
+            b[i] = citizens[i+1].holder;
+            c[i] = citizens[i+1].branch;
+        }
+
+        return (a, b, c);
+    }
+
+    // send ether to the fund collection wallet
+    // override to create custom fund forwarding mechanisms
     function forwardFunds() internal {
         fundsKeeper.transfer(msg.value);
     }
