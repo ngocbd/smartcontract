@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x072266266a1268509829964e22b79f1476578cad
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x9b1356cc6213b5d93a9afb34804ba87bdff37ea6
 */
-pragma solidity ^0.4.18;
+pragma solidity 0.4.19;
 
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
@@ -47,64 +47,57 @@ contract MultiSigWallet {
      *  Modifiers
      */
     modifier onlyWallet() {
-        if (msg.sender != address(this))
-           revert();
+        require(msg.sender == address(this));
         _;
     }
 
     modifier ownerDoesNotExist(address owner) {
-        if (isOwner[owner])
-           revert();
+        require(!isOwner[owner]);
         _;
     }
 
     modifier ownerExists(address owner) {
-        if (!isOwner[owner])
-           revert();
+        require(isOwner[owner]);
         _;
     }
 
     modifier transactionExists(uint transactionId) {
-        if (transactions[transactionId].destination == 0)
-           revert();
+        require(transactions[transactionId].destination != 0);
         _;
     }
 
     modifier confirmed(uint transactionId, address owner) {
-        if (!confirmations[transactionId][owner])
-           revert();
+        require(confirmations[transactionId][owner]);
         _;
     }
 
     modifier notConfirmed(uint transactionId, address owner) {
-        if (confirmations[transactionId][owner])
-           revert();
+        require(!confirmations[transactionId][owner]);
         _;
     }
 
     modifier notExecuted(uint transactionId) {
-        if (transactions[transactionId].executed)
-           revert();
+        require(!transactions[transactionId].executed);
         _;
     }
 
     modifier notNull(address _address) {
-        if (_address == 0)
-           revert();
+        require(_address != 0);
         _;
     }
 
     modifier validRequirement(uint ownerCount, uint _required) {
-        if (   ownerCount > MAX_OWNER_COUNT
-            || _required > ownerCount
-            || _required == 0
-            || ownerCount == 0)
-           revert();
+        require(ownerCount <= MAX_OWNER_COUNT
+            && _required <= ownerCount
+            && _required != 0
+            && ownerCount != 0);
         _;
     }
 
     /// @dev Fallback function allows to deposit ether.
-    function() external payable {
+    function()
+        payable
+    {
         if (msg.value > 0)
             Deposit(msg.sender, msg.value);
     }
@@ -120,8 +113,7 @@ contract MultiSigWallet {
         validRequirement(_owners.length, _required)
     {
         for (uint i=0; i<_owners.length; i++) {
-            if (isOwner[_owners[i]] || _owners[i] == 0)
-               revert();
+            require(!isOwner[_owners[i]] && _owners[i] != 0);
             isOwner[_owners[i]] = true;
         }
         owners = _owners;
@@ -239,13 +231,13 @@ contract MultiSigWallet {
         notExecuted(transactionId)
     {
         if (isConfirmed(transactionId)) {
-            Transaction storage _tx = transactions[transactionId];
-            _tx.executed = true;
-            if (_tx.destination.call.value(_tx.value)(_tx.data)) {
+            Transaction storage txn = transactions[transactionId];
+            txn.executed = true;
+            if (txn.destination.call.value(txn.value)(txn.data))
                 Execution(transactionId);
-            } else {
+            else {
                 ExecutionFailure(transactionId);
-                _tx.executed = false;
+                txn.executed = false;
             }
         }
     }
