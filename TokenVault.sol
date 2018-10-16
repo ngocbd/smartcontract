@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVault at 0xcc70741313254e83fe697a964d4f8971f5ba21b2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenVault at 0x7bc8e26db75dfc68ee5ef70420e2327b23224e6e
 */
 /*
  * ERC20 interface
@@ -317,10 +317,8 @@ contract TokenVault is Ownable {
     }
 
     // Do not lock the vault if the given tokens on this contract
-    // Note that we do not check != so that we can top up little bit extra
-    // due to decimal rounding and having issues with it.
-    // This extras will be lost forever when the vault is locked.
-    if(token.balanceOf(address(this)) < tokensAllocatedTotal) {
+    //
+    if(token.balanceOf(address(this)) != tokensAllocatedTotal) {
       throw;
     }
 
