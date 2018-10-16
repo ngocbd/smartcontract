@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Statuses at 0x5541Ee164B69e7fAb1A2A2E6D3Cc0b9E81012F7C
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Statuses at 0xC0C3E64a5821F6712179eFaf3Be6D2E0208C6B5f
 */
 pragma solidity 0.4.15;
 
@@ -28,7 +28,6 @@ contract Ambi2Enabled {
         return true;
     }
 }
-
 
 contract Ambi2EnabledFull is Ambi2Enabled {
     // Setup and claim atomically.
@@ -62,6 +61,11 @@ contract Statuses is Ambi2EnabledFull {
     DeviceActivationInterface public activation;
     DeviceReputationInterface public reputation;
 
+    event TransactionCancelled(address to, uint value, string reference, address sender);
+    event TransactionCancelledICAP(bytes32 icap, uint value, string reference, address sender);
+    event TransactionSucceeded(address to, uint value, string reference, address sender);
+    event TransactionSucceededICAP(bytes32 icap, uint value, string reference, address sender);
+
     function _isValidStatus(address _sender, string _reference) internal returns(bool) {
         if (!activation.isActivated(_sender)) {
             return false;
@@ -83,10 +87,20 @@ contract Statuses is Ambi2EnabledFull {
     }
 
     function checkStatus(address _to, uint _value, string _reference, address _sender) returns(bool) {
-        return _isValidStatus(_sender, _reference);
+        if (_isValidStatus(_sender, _reference)) {
+            TransactionSucceeded(_to, _value, _reference, _sender);
+            return true;
+        }
+        TransactionCancelled(_to, _value, _reference, _sender);
+        return false;
     }
 
     function checkStatusICAP(bytes32 _icap, uint _value, string _reference, address _sender) returns(bool) {
-        return _isValidStatus(_sender, _reference);
+        if (_isValidStatus(_sender, _reference)) {
+            TransactionSucceededICAP(_icap, _value, _reference, _sender);
+            return true;
+        }
+        TransactionCancelledICAP(_icap, _value, _reference, _sender);
+        return false;
     }
 }
