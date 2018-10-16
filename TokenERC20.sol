@@ -1,24 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x413d5ca4557484a9b1cd6bedf987c34d516f2475
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0xc48b1ac1417db27c4e2c2ed3dae5a3d2fbb07dc5
 */
-pragma solidity ^0.4.16;
-
-contract owned {
-    address public owner;
-
-    function owned() public {
-        owner = msg.sender;
-    }
-
-    modifier onlyOwner {
-        require(msg.sender == owner);
-        _;
-    }
-
-    function transferOwnership(address newOwner) onlyOwner public {
-        owner = newOwner;
-    }
-}
+pragma solidity ^0.4.18;
 
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
@@ -26,7 +9,7 @@ contract TokenERC20 {
     // Public variables of the token
     string public name;
     string public symbol;
-    uint8 public decimals = 5;
+    uint8 public decimals;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
 
@@ -41,19 +24,16 @@ contract TokenERC20 {
     event Burn(address indexed from, uint256 value);
 
     /**
-     * Constrctor function
+     * Constructor function
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    function TokenERC20(
-        uint256 initialSupply,
-        string tokenName,
-        string tokenSymbol
-    ) public {
-        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
-        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = 'Sihat Token';                                   // Set the name for display purposes
-        symbol = 'Care';                               // Set the symbol for display purposes
+    function TokenERC20() public {
+        balanceOf[msg.sender] = 2100000000000000;                // Give the creator all initial tokens
+        totalSupply = 2100000000000000;
+        name = "StarBlock";                                   // Set the name for display purposes
+        symbol = "STB";                               // Set the symbol for display purposes
+        decimals = 8;                            // Amount of decimals for display purposes
     }
 
     /**
