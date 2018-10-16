@@ -1,77 +1,35 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SaleClockAuction at 0x6c4bf0783ba8728b76e15c2af37118218bcc099a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SaleClockAuction at 0xd43e3a7c85fc6bfd8bc56db92dbe9b9675cd245a
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-	address public owner;
-
-
-	/**
-	 * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-	 * account.
-	 */
-	function Ownable() public {
-		owner = msg.sender;
-	}
-
-
-	/**
-	 * @dev Throws if called by any account other than the owner.
-	 */
-	modifier onlyOwner() {
-		require(msg.sender == owner);
-		_;
-	}
-
-
-	/**
-	 * @dev Allows the current owner to transfer control of the contract to a newOwner.
-	 * @param newOwner The address to transfer ownership to.
-	 */
-	function transferOwnership(address newOwner) public onlyOwner {
-		if (newOwner != address(0)) {
-			owner = newOwner;
-		}
-	}
-
-}
-
+// DopeRaider SaleClockAuction Contract
+// by gasmasters.io
+// contact: team@doperaider.com
 
 /// @title Interface for contracts conforming to ERC-721: Non-Fungible Tokens
-/// @author Dieter Shirley <dete@axiomzen.co> (https://github.com/dete)
 contract ERC721 {
-    // Required methods
+    function implementsERC721() public pure returns (bool);
     function totalSupply() public view returns (uint256 total);
     function balanceOf(address _owner) public view returns (uint256 balance);
-    function ownerOf(uint256 _tokenId) external view returns (address owner);
-    function approve(address _to, uint256 _tokenId) external;
-    function transfer(address _to, uint256 _tokenId) external;
-    function transferFrom(address _from, address _to, uint256 _tokenId) external;
-
-    // Events
-    event Transfer(address from, address to, uint256 tokenId);
-    event Approval(address owner, address approved, uint256 tokenId);
+    function ownerOf(uint256 _tokenId) public view returns (address owner);
+    function approve(address _to, uint256 _tokenId) public;
+    function transferFrom(address _from, address _to, uint256 _tokenId) public;
+    function transfer(address _to, uint256 _tokenId) public;
+    event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
+    event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
 
     // Optional
     // function name() public view returns (string name);
     // function symbol() public view returns (string symbol);
-    // function tokensOfOwner(address _owner) external view returns (uint256[] tokenIds);
-    // function tokenMetadata(uint256 _tokenId, string _preferredTransport) public view returns (string infoUrl);
-
-    // ERC-165 Compatibility (https://github.com/ethereum/EIPs/issues/165)
-    function supportsInterface(bytes4 _interfaceID) external view returns (bool);
+    // function tokenOfOwnerByIndex(address _owner, uint256 _index) external view returns (uint256 tokenId);
+    // function tokenMetadata(uint256 _tokenId) public view returns (string infoUrl);
 }
 
+// File: contracts/Auction/ClockAuctionBase.sol
 
 /// @title Auction Core
 /// @dev Contains models, variables, and internal methods for the auction.
-/// @notice We omit a fallback function to prevent accidental sends to this contract.
 contract ClockAuctionBase {
 
     // Represents an auction on an NFT
@@ -102,6 +60,21 @@ contract ClockAuctionBase {
     event AuctionCreated(uint256 tokenId, uint256 startingPrice, uint256 endingPrice, uint256 duration);
     event AuctionSuccessful(uint256 tokenId, uint256 totalPrice, address winner);
     event AuctionCancelled(uint256 tokenId);
+
+    /// @dev DON'T give me your money.
+    function() external {}
+
+    // Modifiers to check that inputs can be safely stored with a certain
+    // number of bits. We use constants and multiple modifiers to save gas.
+    modifier canBeStoredWith64Bits(uint256 _value) {
+        require(_value <= 18446744073709551615);
+        _;
+    }
+
+    modifier canBeStoredWith128Bits(uint256 _value) {
+        require(_value < 340282366920938463463374607431768211455);
+        _;
+    }
 
     /// @dev Returns true if the claimant owns the token.
     /// @param _claimant - Address claiming to own the token.
@@ -169,7 +142,8 @@ contract ClockAuctionBase {
         // return an auction object that is all zeros.)
         require(_isOnAuction(auction));
 
-        // Check that the bid is greater than or equal to the current price
+        // Check that the incoming bid is higher than the current
+        // price
         uint256 price = _currentPrice(auction);
         require(_bidAmount >= price);
 
@@ -183,9 +157,9 @@ contract ClockAuctionBase {
 
         // Transfer proceeds to seller (if there are any!)
         if (price > 0) {
-            // Calculate the auctioneer's cut.
+            //  Calculate the auctioneer's cut.
             // (NOTE: _computeCut() is guaranteed to return a
-            // value <= price, so this subtraction can't go negative.)
+            //  value <= price, so this subtraction can't go negative.)
             uint256 auctioneerCut = _computeCut(price);
             uint256 sellerProceeds = price - auctioneerCut;
 
@@ -199,17 +173,6 @@ contract ClockAuctionBase {
             // accident, they can call cancelAuction(). )
             seller.transfer(sellerProceeds);
         }
-
-        // Calculate any excess funds included with the bid. If the excess
-        // is anything worth worrying about, transfer it back to bidder.
-        // NOTE: We checked above that the bid amount is greater than or
-        // equal to the price so this cannot underflow.
-        uint256 bidExcess = _bidAmount - price;
-
-        // Return the funds. Similar to the previous transfer, this is
-        // not susceptible to a re-entry attack because the auction is
-        // removed before any transfers occur.
-        msg.sender.transfer(bidExcess);
 
         // Tell the world!
         AuctionSuccessful(_tokenId, price, msg.sender);
@@ -306,64 +269,102 @@ contract ClockAuctionBase {
         //  function is always guaranteed to be <= _price.
         return _price * ownerCut / 10000;
     }
+
 }
 
+// File: zeppelin-solidity/contracts/ownership/Ownable.sol
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) public onlyOwner {
+    if (newOwner != address(0)) {
+      owner = newOwner;
+    }
+  }
+
+}
+
+// File: zeppelin-solidity/contracts/lifecycle/Pausable.sol
 
 /**
  * @title Pausable
  * @dev Base contract which allows children to implement an emergency stop mechanism.
  */
 contract Pausable is Ownable {
-	event Pause();
-	event Unpause();
+  event Pause();
+  event Unpause();
 
-	bool public paused = false;
+  bool public paused = false;
 
 
-	/**
-	 * @dev modifier to allow actions only when the contract IS paused
-	 */
-	modifier whenNotPaused() {
-		require(!paused);
-		_;
-	}
+  /**
+   * @dev modifier to allow actions only when the contract IS paused
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
 
-	/**
-	 * @dev modifier to allow actions only when the contract IS NOT paused
-	 */
-	modifier whenPaused {
-		require(paused);
-		_;
-	}
+  /**
+   * @dev modifier to allow actions only when the contract IS NOT paused
+   */
+  modifier whenPaused {
+    require(paused);
+    _;
+  }
 
-	/**
-	 * @dev called by the owner to pause, triggers stopped state
-	 */
-	function pause() public onlyOwner whenNotPaused returns (bool) {
-		paused = true;
-		Pause();
-		return true;
-	}
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() public onlyOwner whenNotPaused returns (bool) {
+    paused = true;
+    Pause();
+    return true;
+  }
 
-	/**
-	 * @dev called by the owner to unpause, returns to normal state
-	 */
-	function unpause() public onlyOwner whenPaused returns (bool) {
-		paused = false;
-		Unpause();
-		return true;
-	}
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() public onlyOwner whenPaused returns (bool) {
+    paused = false;
+    Unpause();
+    return true;
+  }
 }
 
+// File: contracts/Auction/ClockAuction.sol
 
 /// @title Clock auction for non-fungible tokens.
-/// @notice We omit a fallback function to prevent accidental sends to this contract.
 contract ClockAuction is Pausable, ClockAuctionBase {
-
-    /// @dev The ERC-165 interface signature for ERC-721.
-    ///  Ref: https://github.com/ethereum/EIPs/issues/165
-    ///  Ref: https://github.com/ethereum/EIPs/issues/721
-    bytes4 constant InterfaceSignature_ERC721 = bytes4(0x9a20483d);
 
     /// @dev Constructor creates a reference to the NFT ownership contract
     ///  and verifies the owner cut is in the valid range.
@@ -371,14 +372,15 @@ contract ClockAuction is Pausable, ClockAuctionBase {
     ///  the Nonfungible Interface.
     /// @param _cut - percent cut the owner takes on each auction, must be
     ///  between 0-10,000.
+    /*
     function ClockAuction(address _nftAddress, uint256 _cut) public {
         require(_cut <= 10000);
         ownerCut = _cut;
 
         ERC721 candidateContract = ERC721(_nftAddress);
-        require(candidateContract.supportsInterface(InterfaceSignature_ERC721));
+        require(candidateContract.implementsERC721());
         nonFungibleContract = candidateContract;
-    }
+    }*/
 
     /// @dev Remove all Ether from the contract, which is the owner's cuts
     ///  as well as any Ether sent directly to the contract address.
@@ -391,7 +393,6 @@ contract ClockAuction is Pausable, ClockAuctionBase {
             msg.sender == owner ||
             msg.sender == nftAddress
         );
-        // We are using this boolean method to make sure that even if one fails it will still work
         nftAddress.transfer(this.balance);
     }
 
@@ -409,15 +410,12 @@ contract ClockAuction is Pausable, ClockAuctionBase {
         uint256 _duration,
         address _seller
     )
-        external
+        public
         whenNotPaused
+        canBeStoredWith128Bits(_startingPrice)
+        canBeStoredWith128Bits(_endingPrice)
+        canBeStoredWith64Bits(_duration)
     {
-        // Sanity check that no inputs overflow how many bits we've allocated
-        // to store them in the auction struct.
-        require(_startingPrice == uint256(uint128(_startingPrice)));
-        require(_endingPrice == uint256(uint128(_endingPrice)));
-        require(_duration == uint256(uint64(_duration)));
-
         require(_owns(msg.sender, _tokenId));
         _escrow(msg.sender, _tokenId);
         Auction memory auction = Auction(
@@ -434,7 +432,7 @@ contract ClockAuction is Pausable, ClockAuctionBase {
     ///  ownership of the NFT if enough Ether is supplied.
     /// @param _tokenId - ID of token to bid on.
     function bid(uint256 _tokenId)
-        external
+        public
         payable
         whenNotPaused
     {
@@ -449,7 +447,7 @@ contract ClockAuction is Pausable, ClockAuctionBase {
     ///  be called while the contract is paused.
     /// @param _tokenId - ID of token on auction
     function cancelAuction(uint256 _tokenId)
-        external
+        public
     {
         Auction storage auction = tokenIdToAuction[_tokenId];
         require(_isOnAuction(auction));
@@ -465,7 +463,7 @@ contract ClockAuction is Pausable, ClockAuctionBase {
     function cancelAuctionWhenPaused(uint256 _tokenId)
         whenPaused
         onlyOwner
-        external
+        public
     {
         Auction storage auction = tokenIdToAuction[_tokenId];
         require(_isOnAuction(auction));
@@ -475,7 +473,7 @@ contract ClockAuction is Pausable, ClockAuctionBase {
     /// @dev Returns auction info for an NFT on auction.
     /// @param _tokenId - ID of NFT on auction.
     function getAuction(uint256 _tokenId)
-        external
+        public
         view
         returns
     (
@@ -483,7 +481,8 @@ contract ClockAuction is Pausable, ClockAuctionBase {
         uint256 startingPrice,
         uint256 endingPrice,
         uint256 duration,
-        uint256 startedAt
+        uint256 startedAt,
+        uint256 tokenId
     ) {
         Auction storage auction = tokenIdToAuction[_tokenId];
         require(_isOnAuction(auction));
@@ -492,14 +491,15 @@ contract ClockAuction is Pausable, ClockAuctionBase {
             auction.startingPrice,
             auction.endingPrice,
             auction.duration,
-            auction.startedAt
+            auction.startedAt,
+            _tokenId
         );
     }
 
     /// @dev Returns the current price of an auction.
     /// @param _tokenId - ID of the token price we are checking.
     function getCurrentPrice(uint256 _tokenId)
-        external
+        public
         view
         returns (uint256)
     {
@@ -510,22 +510,28 @@ contract ClockAuction is Pausable, ClockAuctionBase {
 
 }
 
+// File: contracts/Auction/SaleClockAuction.sol
 
-/// @title Clock auction modified for sale of Zodiacs
-/// @notice We omit a fallback function to prevent accidental sends to this contract.
+/// @title Clock auction modified for sale of narcos
 contract SaleClockAuction is ClockAuction {
 
     // @dev Sanity check that allows us to ensure that we are pointing to the
     //  right auction in our setSaleAuctionAddress() call.
     bool public isSaleClockAuction = true;
 
-    // Tracks last 5 sale price of gen0 zodiac sales
+    // Tracks last 4 sale price of gen0 narco sales
     uint256 public gen0SaleCount;
-    uint256[5] public lastGen0SalePrices;
+    uint256[4] public lastGen0SalePrices;
 
-    // Delegate constructor
-    function SaleClockAuction(address _nftAddr, uint256 _cut) public
-        ClockAuction(_nftAddr, _cut) {}
+    function configureSaleClockAuction(address _nftAddr, uint256 _cut) public onlyOwner
+    {
+        require(_cut <= 10000);
+        ownerCut = _cut;
+        ERC721 candidateContract = ERC721(_nftAddr);
+        require(candidateContract.implementsERC721());
+        nonFungibleContract = candidateContract;
+    }
+
 
     /// @dev Creates and begins a new auction.
     /// @param _tokenId - ID of token to auction, sender must be owner.
@@ -540,14 +546,11 @@ contract SaleClockAuction is ClockAuction {
         uint256 _duration,
         address _seller
     )
-        external
+        public
+        canBeStoredWith128Bits(_startingPrice)
+        canBeStoredWith128Bits(_endingPrice)
+        canBeStoredWith64Bits(_duration)
     {
-        // Sanity check that no inputs overflow how many bits we've allocated
-        // to store them in the auction struct.
-        require(_startingPrice == uint256(uint128(_startingPrice)));
-        require(_endingPrice == uint256(uint128(_endingPrice)));
-        require(_duration == uint256(uint64(_duration)));
-
         require(msg.sender == address(nonFungibleContract));
         _escrow(_seller, _tokenId);
         Auction memory auction = Auction(
@@ -563,7 +566,7 @@ contract SaleClockAuction is ClockAuction {
     /// @dev Updates lastSalePrice if seller is the nft contract
     /// Otherwise, works the same as default bid method.
     function bid(uint256 _tokenId)
-        external
+        public
         payable
     {
         // _bid verifies token ID size
@@ -574,17 +577,17 @@ contract SaleClockAuction is ClockAuction {
         // If not a gen0 auction, exit
         if (seller == address(nonFungibleContract)) {
             // Track gen0 sale prices
-            lastGen0SalePrices[gen0SaleCount % 5] = price;
+            lastGen0SalePrices[gen0SaleCount % 4] = price;
             gen0SaleCount++;
         }
     }
 
-    function averageGen0SalePrice() external view returns (uint256) {
+    function averageGen0SalePrice() public view returns (uint256) {
         uint256 sum = 0;
-        for (uint256 i = 0; i < 5; i++) {
+        for (uint256 i = 0; i < 4; i++) {
             sum += lastGen0SalePrices[i];
         }
-        return sum / 5;
+        return sum / 4;
     }
 
 }
