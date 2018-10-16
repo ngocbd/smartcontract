@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GlobCoinToken at 0xd157fd4854b56c61ba239ae229b63b5c0791d0d2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GlobCoinToken at 0xdb0f69306ff8f949f258e83f6b87ee5d052d0b23
 */
 pragma solidity ^0.4.11;
+
 
 /**
  * @title SafeMath
@@ -33,6 +34,50 @@ library SafeMath {
   }
 }
 
+
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
 /**
  * @title ERC20Basic
  * @dev Simpler version of ERC20 interface
@@ -45,7 +90,6 @@ contract ERC20Basic {
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
-
 /**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
@@ -57,9 +101,11 @@ contract ERC20 is ERC20Basic {
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
+
+
 /**
  * @title Basic token
- * @dev Basic version of StandardToken, with no allowances. 
+ * @dev Basic version of StandardToken, with no allowances.
  */
 contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
@@ -83,7 +129,7 @@ contract BasicToken is ERC20Basic {
 
   /**
   * @dev Gets the balance of the specified address.
-  * @param _owner The address to query the the balance of. 
+  * @param _owner The address to query the the balance of.
   * @return An uint256 representing the amount owned by the passed address.
   */
   function balanceOf(address _owner) constant returns (uint256 balance) {
@@ -91,6 +137,7 @@ contract BasicToken is ERC20Basic {
   }
 
 }
+
 
 /**
  * @title Standard ERC20 token
@@ -152,21 +199,21 @@ contract StandardToken is ERC20, BasicToken {
   function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
     return allowed[_owner][_spender];
   }
-  
+
   /**
    * approve should be called when allowed[_spender] == 0. To increment
-   * allowed value is better to use this function to avoid 2 calls (and wait until 
+   * allowed value is better to use this function to avoid 2 calls (and wait until
    * the first transaction is mined)
    * From MonolithDAO Token.sol
    */
-  function increaseApproval (address _spender, uint _addedValue) 
+  function increaseApproval (address _spender, uint _addedValue)
     returns (bool success) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
     Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
-  function decreaseApproval (address _spender, uint _subtractedValue) 
+  function decreaseApproval (address _spender, uint _subtractedValue)
     returns (bool success) {
     uint oldValue = allowed[msg.sender][_spender];
     if (_subtractedValue > oldValue) {
@@ -179,49 +226,6 @@ contract StandardToken is ERC20, BasicToken {
   }
 
 }
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner {
-    require(newOwner != address(0));      
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
 
 /**
  * @title Mintable token
@@ -265,6 +269,282 @@ contract MintableToken is StandardToken, Ownable {
     MintFinished();
     return true;
   }
+}
+
+
+/**
+ * @title Crowdsale
+ * @dev Crowdsale is a base contract for managing a token crowdsale.
+ * Crowdsales have a start and end blocks, where investors can make
+ * token purchases and the crowdsale will assign them tokens based
+ * on a token per ETH rate. Funds collected are forwarded to a wallet
+ * as they arrive.
+ */
+contract Crowdsale {
+  using SafeMath for uint256;
+  // The token being sold
+  MintableToken public token;
+
+  // start and end blocks where investments are allowed (both inclusive)
+  uint256 public startBlock;
+  uint256 public endBlock;
+
+  // address where funds are collected
+  address public wallet;
+
+  // amount of raised money in wei
+  uint256 public weiRaised;
+
+  // how many token units a buyer gets per wei
+  uint256 public rate;
+
+
+  /**
+   * event for token purchase logging
+   * @param purchaser who paid for the tokens
+   * @param beneficiary who got the tokens
+   * @param value weis paid for purchase
+   * @param amount amount of tokens purchased
+   */
+  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+
+
+  function Crowdsale(uint256 _startBlock, uint256 _endBlock, address _wallet) {
+    require(_startBlock >= block.number);
+    require(_endBlock >= _startBlock);
+    require(_wallet != 0x0);
+
+    token = createTokenContract();
+    startBlock = _startBlock;
+    endBlock = _endBlock;
+    wallet = _wallet;
+  }
+
+  // creates the token to be sold.
+  // override this method to have crowdsale of a specific mintable token.
+  function createTokenContract() internal returns (MintableToken) {
+    return new MintableToken();
+  }
+
+
+  // fallback function can be used to buy tokens
+  function () payable {
+    buyTokens(msg.sender);
+  }
+
+
+  // low level token purchase function
+  function buyTokens(address beneficiary) public payable {
+    require(beneficiary != 0x0);
+    require(validPurchase());
+
+    uint256 weiAmount = msg.value;
+
+    // calculate token amount to be created
+    uint256 tokens = weiAmount.mul(rate);
+
+    // update state
+    weiRaised = weiRaised.add(weiAmount);
+
+    token.mint(beneficiary, tokens);
+    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+
+    forwardFunds();
+  }
+
+
+  // send ether to the fund collection wallet
+  // override to create custom fund forwarding mechanisms
+  function forwardFunds() internal {
+    wallet.transfer(msg.value);
+  }
+
+  // @return true if the transaction can buy tokens
+  function validPurchase() internal constant returns (bool) {
+    bool withinPeriod = block.number >= startBlock && block.number <= endBlock;
+    bool nonZeroPurchase = msg.value != 0;
+    return withinPeriod && nonZeroPurchase;
+  }
+
+  // @return true if crowdsale event has ended
+  function hasEnded() public constant returns (bool) {
+    return block.number > endBlock;
+  }
+
+
+}
+
+
+/**
+ * @title CappedCrowdsale
+ * @dev Extension of Crowsdale with a max amount of funds raised
+ */
+contract CappedCrowdsale is Crowdsale {
+  using SafeMath for uint256;
+
+  uint256 public cap;
+
+  function CappedCrowdsale(uint256 _cap) {
+    require(_cap > 0);
+    cap = _cap;
+  }
+
+  // overriding Crowdsale#validPurchase to add extra cap logic
+  // @return true if investors can buy at the moment
+  function validPurchase() internal constant returns (bool) {
+    bool withinCap = weiRaised.add(msg.value) <= cap;
+    return super.validPurchase() && withinCap;
+  }
+
+  // overriding Crowdsale#hasEnded to add cap logic
+  // @return true if crowdsale event has ended
+  function hasEnded() public constant returns (bool) {
+    bool capReached = weiRaised >= cap;
+    return super.hasEnded() || capReached;
+  }
+
+}
+
+/**
+ * @title FinalizableCrowdsale
+ * @dev Extension of Crowsdale where an owner can do extra work
+ * after finishing.
+ */
+contract FinalizableCrowdsale is Crowdsale, Ownable {
+  using SafeMath for uint256;
+
+  bool public isFinalized = false;
+
+  event Finalized();
+
+  /**
+   * @dev Must be called after crowdsale ends, to do some extra finalization
+   * work. Calls the contract's finalization function.
+   */
+  function finalize() onlyOwner {
+    require(!isFinalized);
+    require(hasEnded());
+
+    finalization();
+    Finalized();
+
+    isFinalized = true;
+  }
+
+  /**
+   * @dev Can be overriden to add finalization logic. The overriding function
+   * should call super.finalization() to ensure the chain of finalization is
+   * executed entirely.
+   */
+  function finalization() internal {
+  }
+}
+
+
+/**
+ * @title RefundVault
+ * @dev This contract is used for storing funds while a crowdsale
+ * is in progress. Supports refunding the money if crowdsale fails,
+ * and forwarding it if crowdsale is successful.
+ */
+contract RefundVault is Ownable {
+  using SafeMath for uint256;
+
+  enum State { Active, Refunding, Closed }
+
+  mapping (address => uint256) public deposited;
+  address public wallet;
+  State public state;
+
+  event Closed();
+  event RefundsEnabled();
+  event Refunded(address indexed beneficiary, uint256 weiAmount);
+
+  function RefundVault(address _wallet) {
+    require(_wallet != 0x0);
+    wallet = _wallet;
+    state = State.Active;
+  }
+
+  function deposit(address investor) onlyOwner payable {
+    require(state == State.Active);
+    deposited[investor] = deposited[investor].add(msg.value);
+  }
+
+  function close() onlyOwner {
+    require(state == State.Active);
+    state = State.Closed;
+    Closed();
+    wallet.transfer(this.balance);
+  }
+
+  function enableRefunds() onlyOwner {
+    require(state == State.Active);
+    state = State.Refunding;
+    RefundsEnabled();
+  }
+
+  function refund(address investor) {
+    require(state == State.Refunding);
+    uint256 depositedValue = deposited[investor];
+    deposited[investor] = 0;
+    investor.transfer(depositedValue);
+    Refunded(investor, depositedValue);
+  }
+}
+
+
+/**
+ * @title RefundableCrowdsale
+ * @dev Extension of Crowdsale contract that adds a funding goal, and
+ * the possibility of users getting a refund if goal is not met.
+ * Uses a RefundVault as the crowdsale's vault.
+ */
+contract RefundableCrowdsale is FinalizableCrowdsale {
+  using SafeMath for uint256;
+
+  // minimum amount of funds to be raised in weis
+  uint256 public goal;
+
+  // refund vault used to hold funds while crowdsale is running
+  RefundVault public vault;
+
+  function RefundableCrowdsale(uint256 _goal) {
+    require(_goal > 0);
+    vault = new RefundVault(wallet);
+    goal = _goal;
+  }
+
+  // We're overriding the fund forwarding from Crowdsale.
+  // In addition to sending the funds, we want to call
+  // the RefundVault deposit function
+  function forwardFunds() internal {
+    vault.deposit.value(msg.value)(msg.sender);
+  }
+
+  // if crowdsale is unsuccessful, investors can claim refunds here
+  function claimRefund() {
+    require(isFinalized);
+    require(!goalReached());
+
+    vault.refund(msg.sender);
+  }
+
+  // vault finalization task, called when owner calls finalize()
+  function finalization() internal {
+    if (goalReached()) {
+      vault.close();
+    } else {
+      vault.enableRefunds();
+    }
+
+    super.finalization();
+  }
+
+  function goalReached() public constant returns (bool) {
+    return weiRaised >= goal;
+  }
+
 }
 
 contract GlobCoinToken is MintableToken {
