@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethraffle at 0x32293366f73b94a9c2c054e2fbeff2658119ad2e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ethraffle at 0x9ea5b12af209634b92129b7b011ed36cb3299dd3
 */
 pragma solidity ^0.4.0;
 
@@ -68,16 +68,11 @@ contract Ethraffle {
     }
 
     function chooseWinner() private {
-        uint winningTicket = getRandom();
+        uint winningTicket = 1; // TODO: Randomize
         address winningAddress = contestants[winningTicket].addr;
         resetRaffle();
         winningAddress.transfer(prize);
         rakeAddress.transfer(rake);
-    }
-
-    // Choose a random int between 1 and totalTickets
-    function getRandom() private returns (uint) {
-        return (uint(sha3(block.timestamp + block.number + block.gaslimit + block.difficulty + msg.gas + uint(msg.sender) + uint(block.coinbase))) % totalTickets) + 1;
     }
 
     function getRefund() public {
