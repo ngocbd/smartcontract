@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HibayexCoin at 0xd91ce27eaeb590ce5e41d7fe1afc84eb9858f293
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract HibayexCoin at 0x4E570C49B27aaA187a7FEF9ca8B3BdD1e9E36fB2
 */
 pragma solidity 0.4.18;
 /**
@@ -33,14 +33,14 @@ library SafeMath {
 }
 
 
-contract HibayexCoin {
+contract HibayexCoin{
     using SafeMath for uint256;
 
     event Transfer(address indexed _from, address indexed _to, uint _value);
     event Approval(address indexed _owner, address indexed _spender, uint _value);
 
     string public constant name = "HibayexCoin";
-    string public constant symbol = "HBC";
+    string public constant symbol = "HEC";
     uint8 public constant decimals = 8;
 
     /// The ERC20 total fixed supply of tokens.
@@ -55,7 +55,7 @@ contract HibayexCoin {
     /// The initial distributor is responsible for allocating the supply
     /// into the various pools described in the whitepaper. This can be
     /// verified later from the event log.
-    function Telcoin(address _distributor) public {
+    function HECoin(address _distributor) public {
         balances[_distributor] = totalSupply;
         Transfer(0x0, _distributor, totalSupply);
     }
