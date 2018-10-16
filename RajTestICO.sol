@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RajTestICO at 0x06f726f750dd2a140a3f3bbe1fa58b624b361a33
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RajTestICO at 0xf40586c0ae2ecaedfd702e4f4d59f9cdb832d00e
 */
 pragma solidity ^0.4.16;
 
@@ -214,10 +214,10 @@ contract RajTestICO is owned, Killable {
     string public state = "Pre ICO";
 
     /// the UNIX timestamp start date of the crowdsale
-    uint public startsAt = 1521721800;
+    uint public startsAt = 1521709200;
 
     /// the UNIX timestamp end date of the crowdsale
-    uint public endsAt = 1521723600;
+    uint public endsAt = 1521711000;
 
     /// the price of token
     uint256 public TokenPerETH = 1045;
