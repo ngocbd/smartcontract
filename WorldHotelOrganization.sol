@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WorldHotelOrganization at 0x069c4cce56a4e302d4117523452a5ba73ef959e5
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WorldHotelOrganization at 0x9ceC06600AC633819a448fa73e40FF6032151c3d
 */
 pragma solidity ^0.4.10;
 
 /**
  * @title SafeMath
- * @dev Math operations with safety checks that throw on erroRR..
+ * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
   function mul(uint256 a, uint256 b) internal constant returns (uint256) {
@@ -244,14 +244,13 @@ contract BurnableToken is StandardToken {
         Burn(burner, _value);
     }
 }
-//yorum sat?r?
 
 contract WorldHotelOrganization is BurnableToken, Ownable {
 
     string public constant name = "WorldHotelOrganization";
     string public constant symbol = "WHO";
     uint public constant decimals = 8;
-    uint256 public constant initialSupply = 21000000 * (10 ** uint256(decimals));
+    uint256 public constant initialSupply = 25000000 * (10 ** uint256(decimals));
 
     // Constructor
     function WorldHotelOrganization() {
