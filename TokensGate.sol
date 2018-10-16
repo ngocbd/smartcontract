@@ -1,7 +1,48 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokensGate at 0x82364809828443a8ee3237cd0d5090c126a11d1d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokensGate at 0x9f295a8a492f31572f88b853b800c75dc8cb6cc3
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
+
+/*
+Tokensgate Limited
+Version 1.01
+Release date: 2018-05-15
+*/
+
+// File: zeppelin-solidity/contracts/math/SafeMath.sol
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    if (a == 0) {
+      return 0;
+    }
+    uint256 c = a * b;
+    assert(c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
 
 // File: zeppelin-solidity/contracts/ownership/Ownable.sol
 
@@ -45,41 +86,6 @@ contract Ownable {
     owner = newOwner;
   }
 
-}
-
-// File: zeppelin-solidity/contracts/math/SafeMath.sol
-
-/**
- * @title SafeMath
- * @dev Math operations with safety checks that throw on error
- */
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
-    }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
 }
 
 // File: zeppelin-solidity/contracts/token/ERC20Basic.sol
@@ -272,10 +278,6 @@ contract MintableToken is StandardToken, Ownable {
    * @return A boolean that indicates if the operation was successful.
    */
   function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
-    if (totalSupply.add(_amount) > 1000000000000000000000000000) {
-        return false;
-    }
-
     totalSupply = totalSupply.add(_amount);
     balances[_to] = balances[_to].add(_amount);
     Mint(_to, _amount);
@@ -294,44 +296,68 @@ contract MintableToken is StandardToken, Ownable {
   }
 }
 
-// File: contracts/TGCToken.sol
+contract TokensGate is MintableToken {
+  event Burn(address indexed burner, uint256 value);
 
-contract TGCToken is MintableToken {
-  string public constant name = "TokensGate Coin";
+  string public constant name = "TokensGate";
   string public constant symbol = "TGC";
   uint8 public constant decimals = 18;
+  
+  bool public AllowTransferGlobal = false;
+  bool public AllowTransferLocal = false;
+  bool public AllowTransferExternal = false;
+  
+  mapping(address => uint256) public Whitelist;
+  mapping(address => uint256) public LockupList;
+  mapping(address => bool) public WildcardList;
+  mapping(address => bool) public Managers;
     
-  mapping(address => uint256) public whitelistAddresses;
-    
-  event Burn(address indexed burner, uint256 value);
-    
-  function setWhitelist(address _holder, uint256 _utDate) onlyOwner public {
-    require(_holder != address(0));
+  function allowTransfer(address _from, address _to) public view returns (bool) {
+    if (WildcardList[_from])
+      return true;
       
-    whitelistAddresses[_holder] = _utDate;
-  }
+    if (LockupList[_from] > now)
+      return false;
     
-  // overriding StandardToken#approve
-  function approve(address _spender, uint256 _value) public returns (bool) {
-    require(whitelistAddresses[msg.sender] > 0);
-    require(now >= whitelistAddresses[msg.sender]);
-    
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
+    if (!AllowTransferGlobal) {
+        if (AllowTransferLocal && Whitelist[_from] != 0 && Whitelist[_to] != 0 && Whitelist[_from] < now && Whitelist[_to] < now)
+            return true;
+            
+        if (AllowTransferExternal && Whitelist[_from] != 0 && Whitelist[_from] < now)
+            return true;
+        
+        return false;
+    }
+      
     return true;
   }
     
-  // overriding BasicToken#transfer
+  function allowManager() public view returns (bool) {
+    if (msg.sender == owner)
+      return true;
+    
+    if (Managers[msg.sender])
+      return true;
+      
+    return false;
+  }
+    
   function transfer(address _to, uint256 _value) public returns (bool) {
-    require(_to != address(0));
-    require(_value <= balances[msg.sender]);
-    require(whitelistAddresses[msg.sender] > 0);
-    require(now >= whitelistAddresses[msg.sender]);
+    require(allowTransfer(msg.sender, _to));
+      
+    return super.transfer(_to, _value);
+  }
+  
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(allowTransfer(_from, _to));
+      
+    return super.transferFrom(_from, _to, _value);
+  }
+    
+  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+    require(totalSupply.add(_amount) < 1000000000000000000000000000);
 
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
+    return super.mint(_to, _amount);
   }
     
   function burn(address _burner, uint256 _value) onlyOwner public {
@@ -342,184 +368,57 @@ contract TGCToken is MintableToken {
     Burn(_burner, _value);
     Transfer(_burner, address(0), _value);
   }
-}
-
-// File: zeppelin-solidity/contracts/crowdsale/Crowdsale.sol
-
-/**
- * @title Crowdsale
- * @dev Crowdsale is a base contract for managing a token crowdsale.
- * Crowdsales have a start and end timestamps, where investors can make
- * token purchases and the crowdsale will assign them tokens based
- * on a token per ETH rate. Funds collected are forwarded to a wallet
- * as they arrive.
- */
-contract Crowdsale {
-  using SafeMath for uint256;
-
-  // The token being sold
-  MintableToken public token;
-
-  // start and end timestamps where investments are allowed (both inclusive)
-  uint256 public startTime;
-  uint256 public endTime;
-
-  // address where funds are collected
-  address public wallet;
-
-  // how many token units a buyer gets per wei
-  uint256 public rate;
-
-  // amount of raised money in wei
-  uint256 public weiRaised;
-
-  /**
-   * event for token purchase logging
-   * @param purchaser who paid for the tokens
-   * @param beneficiary who got the tokens
-   * @param value weis paid for purchase
-   * @param amount amount of tokens purchased
-   */
-  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
-
-
-  function Crowdsale(uint256 _startTime, uint256 _endTime, uint256 _rate, address _wallet) public {
-    require(_startTime >= now);
-    require(_endTime >= _startTime);
-    require(_rate > 0);
-    require(_wallet != address(0));
-
-    token = createTokenContract();
-    startTime = _startTime;
-    endTime = _endTime;
-    rate = _rate;
-    wallet = _wallet;
+  
+  function setManager(address _manager, bool _status) onlyOwner public {
+    Managers[_manager] = _status;
   }
-
-  // creates the token to be sold.
-  // override this method to have crowdsale of a specific mintable token.
-  function createTokenContract() internal returns (MintableToken) {
-    return new MintableToken();
+  
+  function setAllowTransferGlobal(bool _status) public {
+    require(allowManager());
+      
+    AllowTransferGlobal = _status;
   }
-
-
-  // fallback function can be used to buy tokens
-  function () external payable {
-    buyTokens(msg.sender);
-  }
-
-  // low level token purchase function
-  function buyTokens(address beneficiary) public payable {
-    require(beneficiary != address(0));
-    require(validPurchase());
-
-    uint256 weiAmount = msg.value;
-
-    // calculate token amount to be created
-    uint256 tokens = weiAmount.mul(rate);
-
-    // update state
-    weiRaised = weiRaised.add(weiAmount);
-
-    token.mint(beneficiary, tokens);
-    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
-
-    forwardFunds();
-  }
-
-  // send ether to the fund collection wallet
-  // override to create custom fund forwarding mechanisms
-  function forwardFunds() internal {
-    wallet.transfer(msg.value);
-  }
-
-  // @return true if the transaction can buy tokens
-  function validPurchase() internal view returns (bool) {
-    bool withinPeriod = now >= startTime && now <= endTime;
-    bool nonZeroPurchase = msg.value != 0;
-    return withinPeriod && nonZeroPurchase;
-  }
-
-  // @return true if crowdsale event has ended
-  function hasEnded() public view returns (bool) {
-    return now > endTime;
-  }
-
-
-}
-
-// File: contracts/TokensGate.sol
-
-contract TokensGate is Crowdsale {
-
-    mapping(address => bool) public icoAddresses;
-
-    function TokensGate (
-        uint256 _startTime,
-        uint256 _endTime,
-        uint256 _rate,
-        address _wallet
-    ) public 
-        Crowdsale(_startTime, _endTime, _rate, _wallet)
-    {
-
-    }
-
-    function createTokenContract() internal returns (MintableToken) {
-        return new TGCToken();
-    }
-
-    function () external payable {
-        
-    }
-
-    function addIcoAddress(address _icoAddress) public {
-        require(msg.sender == wallet);
-
-        icoAddresses[_icoAddress] = true;
-    }
+  
+  function setAllowTransferLocal(bool _status) public {
+    require(allowManager());
     
-    function setWhitelist(address holder, uint256 utDate) public {
-        require(msg.sender == wallet);
-        
-        TGCToken tgcToken = TGCToken(token);
-        tgcToken.setWhitelist(holder, utDate);
-    }
+    AllowTransferLocal = _status;
+  }
+  
+  function setAllowTransferExternal(bool _status) public {
+    require(allowManager());
     
-    function burnTokens(address tokenOwner, uint256 t) payable public {
-        require(msg.sender == wallet);
-        
-        TGCToken tgcToken = TGCToken(token);
-        tgcToken.burn(tokenOwner, t);
-    }
+    AllowTransferExternal = _status;
+  }
     
-    function buyTokens(address beneficiary) public payable {
-        require(beneficiary == address(0));
-    }
+  function setWhitelist(address _address, uint256 _date) public {
+    require(allowManager());
+    
+    Whitelist[_address] = _date;
+  }
+  
+  function setLockupList(address _address, uint256 _date) public {
+    require(allowManager());
+    
+    LockupList[_address] = _date;
+  }
+  
+  function setWildcardList(address _address, bool _status) public {
+    require(allowManager());
+      
+    WildcardList[_address] = _status;
+  }
+  
+  function transferTokens(address walletToTransfer, address tokenAddress, uint256 tokenAmount) onlyOwner payable public {
+    ERC20 erc20 = ERC20(tokenAddress);
+    erc20.transfer(walletToTransfer, tokenAmount);
+  }
+  
+  function transferEth(address walletToTransfer, uint256 weiAmount) onlyOwner payable public {
+    require(walletToTransfer != address(0));
+    require(address(this).balance >= weiAmount);
+    require(address(this) != walletToTransfer);
 
-    function mintTokens(address walletToMint, uint256 t) payable public {
-        require(walletToMint != address(0));
-        require(icoAddresses[walletToMint]);
-
-        token.mint(walletToMint, t);
-    }
-    
-    function changeOwner(address newOwner) payable public {
-        require(msg.sender == wallet);
-        
-        wallet = newOwner;
-    }
-    
-    function tokenOwnership(address newOwner) payable public {
-        require(msg.sender == wallet);
-        
-        token.transferOwnership(newOwner);
-    }
-    
-    function setEndTime(uint256 newEndTime) payable public {
-        require(msg.sender == wallet);
-        
-        endTime = newEndTime;
-    }
-
+    require(walletToTransfer.call.value(weiAmount)());
+  }
 }
