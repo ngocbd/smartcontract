@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTransferDelegateImpl at 0x17233e07c67d086464fd408148c3abb56245fa64
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenTransferDelegateImpl at 0xd22f97bcec8e029e109412763b889fc16c4bca8b
 */
 /*
   Copyright 2017 Loopring Project Ltd (Loopring Foundation).
@@ -311,7 +311,6 @@ contract TokenTransferDelegate {
         external;
     function batchTransferToken(
         address lrcTokenAddress,
-        address miner,
         address minerFeeRecipient,
         uint8 walletSplitPercentage,
         bytes32[] batch
@@ -352,7 +351,7 @@ contract TokenTransferDelegateImpl is TokenTransferDelegate, Claimable {
         bool    authorized;
     }
     mapping(address => AddressInfo) public addressInfos;
-    address private latestAddress;
+    address public latestAddress;
     modifier onlyAuthorized()
     {
         require(addressInfos[msg.sender].authorized);
@@ -391,6 +390,7 @@ contract TokenTransferDelegateImpl is TokenTransferDelegate, Claimable {
             address prev = latestAddress;
             if (prev == 0x0) {
                 addrInfo.index = 1;
+                addrInfo.authorized = true;
             } else {
                 addrInfo.previous = prev;
                 addrInfo.index = addressInfos[prev].index + 1;
@@ -428,9 +428,7 @@ contract TokenTransferDelegateImpl is TokenTransferDelegate, Claimable {
             if (addrInfo.index == 0) {
                 break;
             }
-            if (addrInfo.authorized) {
-                addresses[count++] = addr;
-            }
+            addresses[count++] = addr;
             addr = addrInfo.previous;
         }
     }
@@ -452,8 +450,7 @@ contract TokenTransferDelegateImpl is TokenTransferDelegate, Claimable {
     }
     function batchTransferToken(
         address lrcTokenAddress,
-        address miner,
-        address feeRecipient,
+        address minerFeeRecipient,
         uint8 walletSplitPercentage,
         bytes32[] batch
         )
@@ -483,10 +480,10 @@ contract TokenTransferDelegateImpl is TokenTransferDelegate, Claimable {
             }
             // Miner pays LRx fee to order owner
             uint lrcReward = uint(batch[i + 4]);
-            if (lrcReward != 0 && miner != owner) {
+            if (lrcReward != 0 && minerFeeRecipient != owner) {
                 require(
                     lrc.transferFrom(
-                        miner,
+                        minerFeeRecipient,
                         owner,
                         lrcReward
                     )
@@ -497,7 +494,7 @@ contract TokenTransferDelegateImpl is TokenTransferDelegate, Claimable {
                 token,
                 uint(batch[i + 3]),
                 owner,
-                feeRecipient,
+                minerFeeRecipient,
                 address(batch[i + 6]),
                 walletSplitPercentage
             );
@@ -506,7 +503,7 @@ contract TokenTransferDelegateImpl is TokenTransferDelegate, Claimable {
                 lrc,
                 uint(batch[i + 5]),
                 owner,
-                feeRecipient,
+                minerFeeRecipient,
                 address(batch[i + 6]),
                 walletSplitPercentage
             );
@@ -526,7 +523,7 @@ contract TokenTransferDelegateImpl is TokenTransferDelegate, Claimable {
         ERC20   token,
         uint    fee,
         address owner,
-        address feeRecipient,
+        address minerFeeRecipient,
         address walletFeeRecipient,
         uint    walletSplitPercentage
         )
@@ -546,11 +543,11 @@ contract TokenTransferDelegateImpl is TokenTransferDelegate, Claimable {
                 )
             );
         }
-        if (minerFee > 0 && feeRecipient != 0x0 && feeRecipient != owner) {
+        if (minerFee > 0 && minerFeeRecipient != 0x0 && minerFeeRecipient != owner) {
             require(
                 token.transferFrom(
                     owner,
-                    feeRecipient,
+                    minerFeeRecipient,
                     minerFee
                 )
             );
