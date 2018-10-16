@@ -1,24 +1,28 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Faucet at 0x793ae8c1b1a160bfc07bfb0d04f85eab1a71f4f2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Faucet at 0x5041bfba3deb602d794f6cf6c3db50d572912c40
 */
+pragma solidity ^0.4.10;
+
+contract Token{
+	function transfer(address to, uint value) returns (bool ok);
+}
+
 contract Faucet {
-    uint256 sendAmount;
-    mapping (address => uint) lastSent;
-    uint blockLimit;
-    function Faucet(){
-        
-	sendAmount = 10000000000000000;
-        blockLimit = 5760;
-    }
-	
-	function getWei() returns (bool){
-	    if(lastSent[msg.sender]<(block.number-blockLimit)&&address(this).balance>sendAmount){
-	        msg.sender.send(sendAmount);
-	        lastSent[msg.sender] = block.number;
-	        return true;
-	    } else {
-	        return false;
-	    }
+
+	address public tokenAddress;
+	Token token;
+
+	function Faucet(address _tokenAddress) {
+		tokenAddress = _tokenAddress;
+		token = Token(tokenAddress);
 	}
-	
+  
+	function getToken() {
+		if(!token.transfer(msg.sender, 1)) throw;
+	}
+
+	function () {
+		getToken();
+	}
+
 }
