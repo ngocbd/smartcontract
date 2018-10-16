@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TEFoods827Token at 0x940d73c91db9f82440702f6cc8323a8c60583777
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TEFoods827Token at 0xe5f166c0d8872b68790061317bb6cca04582c912
 */
 pragma solidity ^0.4.19;
 
@@ -75,11 +75,11 @@ contract TEFoodsToken is Ownable, ERC20Interface {
 
   using SafeMath for uint;
 
-  string public constant name = "TEFOOD FARM TO FORK FOOD TRACEABILITY SYSTEM LICENSE TOKEN";
-  string public constant symbol = "TFOOD";
+  string public constant name = "TE-FOOD";
+  string public constant symbol = "TFD";
   uint8 public constant decimals = 18;
   uint constant _totalSupply = 1000000000 * 1 ether;
-  uint public transferrableTime = 1521712800;
+  uint public transferrableTime = 9999999999;
   uint _vestedSupply;
   uint _circulatingSupply;
   mapping (address => uint) balances;
@@ -107,6 +107,7 @@ contract TEFoodsToken is Ownable, ERC20Interface {
     balances[addr] = balances[addr].add(amount);
     _circulatingSupply = _circulatingSupply.add(amount);
     assert (_vestedSupply.add(_circulatingSupply).add(balances[0x00]) == _totalSupply);
+    Transfer(0x00, addr, amount);
     return true;
   }
 
@@ -130,15 +131,14 @@ contract TEFoodsToken is Ownable, ERC20Interface {
       balances[v[i].addr] = balances[v[i].addr].add(v[i].balance);
       _circulatingSupply = _circulatingSupply.add(v[i].balance);
       _vestedSupply = _vestedSupply.sub(v[i].balance);
-      v[i].balance = 0;
       VestedTokensReleased(v[i].addr, v[i].balance);
+      Transfer(0x00, v[i].addr, v[i].balance);
+      v[i].balance = 0;
     }
   }
 
   function enableTransfers () public onlyOwner returns (bool) {
-    if (now.add(86400) < transferrableTime) {
-      transferrableTime = now.add(86400);
-    }
+    transferrableTime = now.add(86400);
     owner = 0x00;
     return true;
   }
@@ -178,6 +178,7 @@ contract TEFoodsToken is Ownable, ERC20Interface {
   }
 
   function approve(address spender, uint tokens) public returns (bool success) {
+    require (now >= transferrableTime);
     require (spender != address(this));
     allowed[msg.sender][spender] = tokens;
     Approval(msg.sender, spender, tokens);
