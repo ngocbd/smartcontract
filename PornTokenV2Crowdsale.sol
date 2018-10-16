@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PornTokenV2Crowdsale at 0xb33e35c8e3b46a747a5fd5ea78d901aabe3f4f96
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PornTokenV2Crowdsale at 0x742b41ebc3cf0c5576ad29960a92c7b25b3052e8
 */
 pragma solidity ^0.4.16;
 
@@ -18,8 +18,6 @@ contract PornTokenV2Crowdsale {
     uint private currentBalance;
     uint public deadline;
     uint public price;
-    uint public initialTokenAmount;
-    uint public currentTokenAmount;
     token public tokenReward;
     mapping(address => uint256) public balanceOf;
     bool fundingGoalReached = false;
@@ -43,8 +41,6 @@ contract PornTokenV2Crowdsale {
         deadline = now + durationInMinutes * 1 minutes;
         /* 0.00001337 x 1 ether in wei */
         price = 13370000000000;
-        initialTokenAmount = 747943160;
-        currentTokenAmount = 747943160;
         tokenReward = token(addressOfTokenUsedAsReward);
     }
 
@@ -56,49 +52,15 @@ contract PornTokenV2Crowdsale {
     function () payable {
         require(!crowdsaleClosed);
         uint amount = msg.value;
-        if (amount > 0) {
-            balanceOf[msg.sender] += amount;
-            amountRaised += amount;
-            currentBalance += amount;
-            uint tokenAmount = (amount / price) * 1 ether;
-            currentTokenAmount -= tokenAmount;
-            tokenReward.transfer(msg.sender, tokenAmount);
-        }
-    }
-
-    /**
-     * Bank tokens
-     *
-     * Deposit token sale proceeds to PornToken Account
-     */
-    function bank() public {
         if (beneficiary == msg.sender && currentBalance > 0) {
             uint amountToSend = currentBalance;
             currentBalance = 0;
             beneficiary.send(amountToSend);
-        }
-    }
-    
-    /**
-     * Withdraw unusold tokens
-     *
-     * Deposit unsold tokens to PornToken Account
-     */
-    function returnUnsold() public {
-        if (beneficiary == msg.sender) {
-            tokenReward.transfer(beneficiary, currentTokenAmount);
-        }
-    }
-    
-    /**
-     * Withdraw unusold tokens
-     *
-     * Deposit unsold tokens to PornToken Account 100k Safe
-     */
-    function returnUnsoldSafe() public {
-        if (beneficiary == msg.sender) {
-            uint tokenAmount = 100000;
-            tokenReward.transfer(beneficiary, tokenAmount);
+        } else if (amount > 0) {
+            balanceOf[msg.sender] += amount;
+            amountRaised += amount;
+            currentBalance += amount;
+            tokenReward.transfer(msg.sender, (amount / price) * 1 ether);
         }
     }
 
@@ -118,4 +80,10 @@ contract PornTokenV2Crowdsale {
     }
 
 
+    /**
+     * Not Used
+     */
+    function safeWithdrawal() afterDeadline {
+        /* no implementation needed */
+    }
 }
