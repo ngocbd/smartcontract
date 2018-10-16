@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RDFDM at 0x38e2cfa5627b2fef3d0556638b13ea6bf6a5e34d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RDFDM at 0x8BF1E43e3Ca6f5c25C380803154aE687D682Ad32
 */
 pragma solidity ^0.4.18;
 
@@ -8,7 +8,7 @@ pragma solidity ^0.4.18;
  * @author  <chicocripto@protonmail.com>
  *
  * RDFDM - Riverdimes Fiat Donation Manager
- * Version B
+ * Version C
  *
  * Overview:
  * four basic round-up operations are supported:
@@ -164,8 +164,8 @@ contract RDFDM {
 
   function modifyCharity(uint _charity, string _name, uint8 _currency) public managerOnly {
     require(_charity < charityCount);
-    charities[charityCount].name = _name;
-    charities[charityCount].currency = _currency;
+    charities[_charity].name = _name;
+    charities[_charity].currency = _currency;
     CharityModifiedEvent(_charity, _name, _currency);
   }
 
@@ -175,8 +175,8 @@ contract RDFDM {
 
   function fiatCollected(uint _charity, uint _fiat, string _ref) public managerOnly {
     require(_charity < charityCount);
-    charities[charityCount].fiatBalanceIn += _fiat;
-    charities[charityCount].fiatCollected += _fiat;
+    charities[_charity].fiatBalanceIn += _fiat;
+    charities[_charity].fiatCollected += _fiat;
     FiatCollectedEvent(_charity, _fiat, _ref);
   }
 
@@ -184,16 +184,16 @@ contract RDFDM {
     require(token != 0);
     require(_charity < charityCount);
     //keep track of fiat to eth conversion price
-    charities[charityCount].fiatToEthPriceAccFiat += _fiat;
-    charities[charityCount].fiatToEthPriceAccEth += msg.value;
-    charities[charityCount].fiatBalanceIn -= _fiat;
+    charities[_charity].fiatToEthPriceAccFiat += _fiat;
+    charities[_charity].fiatToEthPriceAccEth += msg.value;
+    charities[_charity].fiatBalanceIn -= _fiat;
     uint _tokenCut = (msg.value * 4) / 100;
     uint _operatorCut = (msg.value * 16) / 100;
     uint _charityCredit = (msg.value - _operatorCut) - _tokenCut;
     operatorFeeAcct.transfer(_operatorCut);
     token.transfer(_tokenCut);
-    charities[charityCount].ethBalance += _charityCredit;
-    charities[charityCount].ethCredited += _charityCredit;
+    charities[_charity].ethBalance += _charityCredit;
+    charities[_charity].ethCredited += _charityCredit;
     FiatToEthEvent(_charity, _fiat, msg.value);
   }
 
@@ -201,10 +201,10 @@ contract RDFDM {
     require(_charity < charityCount);
     require(charities[_charity].ethBalance >= _eth);
     //keep track of fiat to eth conversion price
-    charities[charityCount].ethToFiatPriceAccFiat += _fiat;
-    charities[charityCount].ethToFiatPriceAccEth += _eth;
-    charities[charityCount].ethBalance -= _eth;
-    charities[charityCount].fiatBalanceOut += _fiat;
+    charities[_charity].ethToFiatPriceAccFiat += _fiat;
+    charities[_charity].ethToFiatPriceAccEth += _eth;
+    charities[_charity].ethBalance -= _eth;
+    charities[_charity].fiatBalanceOut += _fiat;
     //withdraw funds to the caller
     msg.sender.transfer(_eth);
     EthToFiatEvent(_charity, _eth, _fiat);
@@ -214,7 +214,7 @@ contract RDFDM {
     require(_charity < charityCount);
     require(charities[_charity].fiatBalanceOut >= _fiat);
     charities[_charity].fiatBalanceOut -= _fiat;
-    charities[charityCount].fiatDelivered += _fiat;
+    charities[_charity].fiatDelivered += _fiat;
     FiatDeliveredEvent(_charity, _fiat, _ref);
   }
 
@@ -227,9 +227,9 @@ contract RDFDM {
     uint _charityCredit = (msg.value - _operatorCut) - _tokenCut;
     operatorFeeAcct.transfer(_operatorCut);
     token.transfer(_tokenCut);
-    charities[charityCount].ethDonated += _charityCredit;
-    charities[charityCount].ethBalance += _charityCredit;
-    charities[charityCount].ethCredited += _charityCredit;
+    charities[_charity].ethDonated += _charityCredit;
+    charities[_charity].ethBalance += _charityCredit;
+    charities[_charity].ethCredited += _charityCredit;
     EthDonationEvent(_charity, msg.value);
   }
 
@@ -238,18 +238,18 @@ contract RDFDM {
   function fiatCollectedToEth(uint _charity, uint _fiat, string _ref) public managerOnly payable {
     require(token != 0);
     require(_charity < charityCount);
-    charities[charityCount].fiatCollected += _fiat;
-    //charities[charityCount].fiatBalanceIn does not change, since we immediately convert to eth
+    charities[_charity].fiatCollected += _fiat;
+    //charities[_charity].fiatBalanceIn does not change, since we immediately convert to eth
     //keep track of fiat to eth conversion price
-    charities[charityCount].fiatToEthPriceAccFiat += _fiat;
-    charities[charityCount].fiatToEthPriceAccEth += msg.value;
+    charities[_charity].fiatToEthPriceAccFiat += _fiat;
+    charities[_charity].fiatToEthPriceAccEth += msg.value;
     uint _tokenCut = (msg.value * 4) / 100;
     uint _operatorCut = (msg.value * 16) / 100;
     uint _charityCredit = (msg.value - _operatorCut) - _tokenCut;
     operatorFeeAcct.transfer(_operatorCut);
     token.transfer(_tokenCut);
-    charities[charityCount].ethBalance += _charityCredit;
-    charities[charityCount].ethCredited += _charityCredit;
+    charities[_charity].ethBalance += _charityCredit;
+    charities[_charity].ethCredited += _charityCredit;
     FiatCollectedEvent(_charity, _fiat, _ref);
     FiatToEthEvent(_charity, _fiat, msg.value);
   }
@@ -258,19 +258,19 @@ contract RDFDM {
     require(_charity < charityCount);
     require(charities[_charity].ethBalance >= _eth);
     //keep track of fiat to eth conversion price
-    charities[charityCount].ethToFiatPriceAccFiat += _fiat;
-    charities[charityCount].ethToFiatPriceAccEth += _eth;
-    charities[charityCount].ethBalance -= _eth;
-    //charities[charityCount].fiatBalanceOut does not change, since we immediately deliver
+    charities[_charity].ethToFiatPriceAccFiat += _fiat;
+    charities[_charity].ethToFiatPriceAccEth += _eth;
+    charities[_charity].ethBalance -= _eth;
+    //charities[_charity].fiatBalanceOut does not change, since we immediately deliver
     //withdraw funds to the caller
     msg.sender.transfer(_eth);
     EthToFiatEvent(_charity, _eth, _fiat);
-    charities[charityCount].fiatDelivered += _fiat;
+    charities[_charity].fiatDelivered += _fiat;
     FiatDeliveredEvent(_charity, _fiat, _ref);
   }
 
 
-  //note: contant fcn does not need safe math
+  //note: constant fcn does not need safe math
   function quickAuditEthCredited(uint _charity) public constant returns (uint _fiatCollected,
                                                               uint _fiatToEthNotProcessed,
                                                               uint _fiatToEthProcessed,
@@ -282,24 +282,24 @@ contract RDFDM {
                                                               uint _totalEthCreditedFinney,
                                                                int _quickDiscrepancy) {
     require(_charity < charityCount);
-    _fiatCollected = charities[charityCount].fiatCollected;                                                //eg. $450 = 45000
-    _fiatToEthNotProcessed = charities[charityCount].fiatBalanceIn;                                        //eg.            0
-    _fiatToEthProcessed = _fiatCollected - _fiatToEthNotProcessed;                                         //eg.        45000
-    if (charities[charityCount].fiatToEthPriceAccEth == 0) {
+    _fiatCollected = charities[_charity].fiatCollected;                                                   //eg. $450 = 45000
+    _fiatToEthNotProcessed = charities[_charity].fiatBalanceIn;                                           //eg.            0
+    _fiatToEthProcessed = _fiatCollected - _fiatToEthNotProcessed;                                        //eg.        45000
+    if (charities[_charity].fiatToEthPriceAccEth == 0) {
       _fiatToEthPricePerEth = 0;
       _fiatToEthCreditedFinney = 0;
     } else {
-      _fiatToEthPricePerEth = (charities[charityCount].fiatToEthPriceAccFiat * (1 ether)) /                //eg. 45000 * 10^18 = 45 * 10^21
-                               charities[charityCount].fiatToEthPriceAccEth;                               //eg 1.5 ETH        = 15 * 10^17
+      _fiatToEthPricePerEth = (charities[_charity].fiatToEthPriceAccFiat * (1 ether)) /                    //eg. 45000 * 10^18 = 45 * 10^21
+                               charities[_charity].fiatToEthPriceAccEth;                                   //eg 1.5 ETH        = 15 * 10^17
                                                                                                            //               --------------------
                                                                                                            //                     3 * 10^4 (30000 cents per ether)
       _fiatToEthCreditedFinney = _fiatToEthProcessed * (1 ether / 1 finney) / _fiatToEthPricePerEth;       //eg. 45000 * 1000 / 30000 = 1500 (finney)
       _fiatToEthAfterFeesFinney = _fiatToEthCreditedFinney * 8 / 10;                                       //eg. 1500 * 8 / 10 = 1200 (finney)
     }
-    _ethDonatedFinney = charities[charityCount].ethDonated / (1 finney);                                   //eg. 1 ETH = 1 * 10^18 / 10^15 = 1000 (finney)
+    _ethDonatedFinney = charities[_charity].ethDonated / (1 finney);                                       //eg. 1 ETH = 1 * 10^18 / 10^15 = 1000 (finney)
     _ethDonatedAfterFeesFinney = _ethDonatedFinney * 98 / 100;                                             //eg. 1000 * 98/100 = 980 (finney)
     _totalEthCreditedFinney = _fiatToEthAfterFeesFinney + _ethDonatedAfterFeesFinney;                      //eg 1200 + 980 = 2180 (finney)
-    uint256 tecf = charities[charityCount].ethCredited * (1 ether / 1 finney);
+    uint256 tecf = charities[_charity].ethCredited * (1 ether / 1 finney);
     _quickDiscrepancy = int256(_totalEthCreditedFinney) - int256(tecf);
   }
 
@@ -316,22 +316,22 @@ contract RDFDM {
                                                               uint _fiatDelivered,
                                                                int _quickDiscrepancy) {
     require(_charity < charityCount);
-    _totalEthCreditedFinney = charities[charityCount].ethCredited * (1 ether / 1 finney);
-    _ethNotProcessedFinney = charities[charityCount].ethBalance / (1 finney);                              //eg. 1 ETH = 1 * 10^18 / 10^15 = 1000 (finney)
+    _totalEthCreditedFinney = charities[_charity].ethCredited * (1 ether / 1 finney);
+    _ethNotProcessedFinney = charities[_charity].ethBalance / (1 finney);                                  //eg. 1 ETH = 1 * 10^18 / 10^15 = 1000 (finney)
     _processedEthCreditedFinney = _totalEthCreditedFinney - _ethNotProcessedFinney;                        //eg 1180 finney
-    if (charities[charityCount].ethToFiatPriceAccEth == 0) {
+    if (charities[_charity].ethToFiatPriceAccEth == 0) {
       _ethToFiatPricePerEth = 0;
       _ethToFiatCreditedFiat = 0;
     } else {
-      _ethToFiatPricePerEth = (charities[charityCount].ethToFiatPriceAccFiat * (1 ether)) /                //eg. 29400 * 10^18 = 2940000 * 10^16
-                               charities[charityCount].ethToFiatPriceAccEth;                               //eg 0.980 ETH      =      98 * 10^16
+      _ethToFiatPricePerEth = (charities[_charity].ethToFiatPriceAccFiat * (1 ether)) /                    //eg. 29400 * 10^18 = 2940000 * 10^16
+                               charities[_charity].ethToFiatPriceAccEth;                                   //eg 0.980 ETH      =      98 * 10^16
                                                                                                            //               --------------------
                                                                                                            //                      30000 (30000 cents per ether)
       _ethToFiatCreditedFiat = _processedEthCreditedFinney * _ethToFiatPricePerEth / (1 ether / 1 finney); //eg. 1180 * 30000 / 1000 = 35400
     }
     _ethToFiatNotProcessed = charities[_charity].fiatBalanceOut;
     _ethToFiatProcessed = _ethToFiatCreditedFiat - _ethToFiatNotProcessed;
-    _fiatDelivered = charities[charityCount].fiatDelivered;
+    _fiatDelivered = charities[_charity].fiatDelivered;
     _quickDiscrepancy = int256(_ethToFiatProcessed) - int256(_fiatDelivered);
   }
 
