@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WOCoinToken at 0x73b30b3ae5b3e0d3125b6622770496dcd597e1ce
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WOCoinToken at 0x171b9183de70fa4021eb27a19f4e7d988403ba21
 */
 pragma solidity 0.4.11;
 
@@ -23,14 +23,14 @@ contract WOCoinToken is Token {
     mapping (address => mapping (address => uint256)) allowed;
     uint256 public totalSupply;
 
-    string constant public name = "WOCoin Token";
+    string constant public name = "WOC Global Foundation Limited";
     string constant public symbol = "WOC";
     uint8 constant public decimals = 18;
 
     function WOCoinToken()
         public
     {
-        totalSupply = 98000000 * 10**18;
+        totalSupply = 980000000 * 10**18;
         balances[msg.sender] = totalSupply;
     }
 
