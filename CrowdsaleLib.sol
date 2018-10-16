@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleLib at 0x56367a4cd348c8c61dc8a66e6a5f88e32fd6aa32
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleLib at 0x7494bdd21ea41ba8271098bedb9b75454b0b3260
 */
 pragma solidity ^0.4.18;
 
@@ -7,7 +7,7 @@ pragma solidity ^0.4.18;
  * @title CrowdsaleLib
  * @author Majoolr.io
  *
- * version 2.1.0
+ * version 2.1.1
  * Copyright (c) 2017 Majoolr, LLC
  * The MIT License (MIT)
  * https://github.com/Majoolr/ethereum-libraries/blob/master/LICENSE
@@ -106,7 +106,7 @@ library CrowdsaleLib {
   	require(self.owner == 0);
     require(_saleData.length > 0);
     require((_saleData.length%3) == 0); // ensure saleData is 3-item sets
-    require(_saleData[0] > (now + 3 days));
+    require(_saleData[0] > (now + 2 hours));
     require(_endTime > _saleData[0]);
     require(_capAmountInCents > 0);
     require(_owner > 0);
@@ -329,83 +329,7 @@ library CrowdsaleLib {
   /// @param self Stored Crowdsale from crowdsale contract
   /// @return Number of tokens sold
   function getTokensSold(CrowdsaleStorage storage self) public view returns (uint256) {
-    return self.startingTokenBalance - self.token.balanceOf(this);
-  }
-}
-
-library BasicMathLib {
-  /// @dev Multiplies two numbers and checks for overflow before returning.
-  /// Does not throw.
-  /// @param a First number
-  /// @param b Second number
-  /// @return err False normally, or true if there is overflow
-  /// @return res The product of a and b, or 0 if there is overflow
-  function times(uint256 a, uint256 b) public view returns (bool err,uint256 res) {
-    assembly{
-      res := mul(a,b)
-      switch or(iszero(b), eq(div(res,b), a))
-      case 0 {
-        err := 1
-        res := 0
-      }
-    }
-  }
-
-  /// @dev Divides two numbers but checks for 0 in the divisor first.
-  /// Does not throw.
-  /// @param a First number
-  /// @param b Second number
-  /// @return err False normally, or true if `b` is 0
-  /// @return res The quotient of a and b, or 0 if `b` is 0
-  function dividedBy(uint256 a, uint256 b) public view returns (bool err,uint256 i) {
-    uint256 res;
-    assembly{
-      switch iszero(b)
-      case 0 {
-        res := div(a,b)
-        let loc := mload(0x40)
-        mstore(add(loc,0x20),res)
-        i := mload(add(loc,0x20))
-      }
-      default {
-        err := 1
-        i := 0
-      }
-    }
-  }
-
-  /// @dev Adds two numbers and checks for overflow before returning.
-  /// Does not throw.
-  /// @param a First number
-  /// @param b Second number
-  /// @return err False normally, or true if there is overflow
-  /// @return res The sum of a and b, or 0 if there is overflow
-  function plus(uint256 a, uint256 b) public view returns (bool err, uint256 res) {
-    assembly{
-      res := add(a,b)
-      switch and(eq(sub(res,b), a), or(gt(res,b),eq(res,b)))
-      case 0 {
-        err := 1
-        res := 0
-      }
-    }
-  }
-
-  /// @dev Subtracts two numbers and checks for underflow before returning.
-  /// Does not throw but rather logs an Err event if there is underflow.
-  /// @param a First number
-  /// @param b Second number
-  /// @return err False normally, or true if there is underflow
-  /// @return res The difference between a and b, or 0 if there is underflow
-  function minus(uint256 a, uint256 b) public view returns (bool err,uint256 res) {
-    assembly{
-      res := sub(a,b)
-      switch eq(and(eq(add(res,b), a), or(lt(res,a), eq(res,a))), 1)
-      case 0 {
-        err := 1
-        res := 0
-      }
-    }
+    return self.startingTokenBalance - self.withdrawTokensMap[self.owner];
   }
 }
 
@@ -632,6 +556,82 @@ library TokenLib {
       Burn(msg.sender, _amount);
       Transfer(msg.sender, 0x0, _amount);
       return true;
+  }
+}
+
+library BasicMathLib {
+  /// @dev Multiplies two numbers and checks for overflow before returning.
+  /// Does not throw.
+  /// @param a First number
+  /// @param b Second number
+  /// @return err False normally, or true if there is overflow
+  /// @return res The product of a and b, or 0 if there is overflow
+  function times(uint256 a, uint256 b) public view returns (bool err,uint256 res) {
+    assembly{
+      res := mul(a,b)
+      switch or(iszero(b), eq(div(res,b), a))
+      case 0 {
+        err := 1
+        res := 0
+      }
+    }
+  }
+
+  /// @dev Divides two numbers but checks for 0 in the divisor first.
+  /// Does not throw.
+  /// @param a First number
+  /// @param b Second number
+  /// @return err False normally, or true if `b` is 0
+  /// @return res The quotient of a and b, or 0 if `b` is 0
+  function dividedBy(uint256 a, uint256 b) public view returns (bool err,uint256 i) {
+    uint256 res;
+    assembly{
+      switch iszero(b)
+      case 0 {
+        res := div(a,b)
+        let loc := mload(0x40)
+        mstore(add(loc,0x20),res)
+        i := mload(add(loc,0x20))
+      }
+      default {
+        err := 1
+        i := 0
+      }
+    }
+  }
+
+  /// @dev Adds two numbers and checks for overflow before returning.
+  /// Does not throw.
+  /// @param a First number
+  /// @param b Second number
+  /// @return err False normally, or true if there is overflow
+  /// @return res The sum of a and b, or 0 if there is overflow
+  function plus(uint256 a, uint256 b) public view returns (bool err, uint256 res) {
+    assembly{
+      res := add(a,b)
+      switch and(eq(sub(res,b), a), or(gt(res,b),eq(res,b)))
+      case 0 {
+        err := 1
+        res := 0
+      }
+    }
+  }
+
+  /// @dev Subtracts two numbers and checks for underflow before returning.
+  /// Does not throw but rather logs an Err event if there is underflow.
+  /// @param a First number
+  /// @param b Second number
+  /// @return err False normally, or true if there is underflow
+  /// @return res The difference between a and b, or 0 if there is underflow
+  function minus(uint256 a, uint256 b) public view returns (bool err,uint256 res) {
+    assembly{
+      res := sub(a,b)
+      switch eq(and(eq(add(res,b), a), or(lt(res,a), eq(res,a))), 1)
+      case 0 {
+        err := 1
+        res := 0
+      }
+    }
   }
 }
 
