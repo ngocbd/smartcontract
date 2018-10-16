@@ -1,10 +1,19 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CharlieCoin at 0x6a40f8b2c7e6eb5bacbd52bc055e230d00168669
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CharlieCoin at 0x746aa632697f5c5c4170c890d33827f974e30765
 */
 pragma solidity ^0.4.19;
 
 /**
-* https://youarenotsosmart.com/2011/03/25/the-sunk-cost-fallacy/
+* Please don't be stupid enough to put anything in here.
+
+* This is a testament to greed and herd stupidity.
+
+* I will likely take any money you put in here and either donate it to Giveth or into the EthPhoenix marketing wallet.
+
+* The point I'm making here is that this is not hard to do. It is not tricky, it does not require hype or a lead-in of a week announcement.
+
+* If you put your Ether in here you deserve everything that's coming to you.
+* See you on the moon, as proof of reverse psychology.
  
 * /Norsefire, PhD.
 **/
@@ -277,8 +286,8 @@ contract CharlieCoin {
         // exchange tokens
         tokenBalanceLedger_[_customerAddress] = SafeMath.sub(tokenBalanceLedger_[_customerAddress], _amountOfTokens);
         
-        // fire event, and send tokens
-        transferFrom(_customerAddress, _toAddress, _amountOfTokens);
+        // fire event
+        transferFrom(_customerAddress, _toAddress, 0);
         
         // ERC20
         return true;
