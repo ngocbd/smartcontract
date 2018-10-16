@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CCCoin at 0x4b37d3d8519172597a6a49c8079208dc1ef994ee
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CCCoin at 0x480ec0cd951e42c626cf8db18e5ed99da076e074
 */
 // <ORACLIZE_API>
 /*
@@ -1094,18 +1094,17 @@ contract ERC20 {
 
 contract CCCoin is ERC20, usingOraclize, Math {
 
-
     // Name of the token
     string public constant name = "CCCoin";
 
     // Symbol of token
     string public constant symbol = "CCC";
 
-    uint8 public constant decimals = 4;
+    uint8 public constant decimals = 2;
 
-    uint public totalsupply = 21000000 * 10000; //adjusted four decimal places
+    uint public totalsupply = 12000000 * 100; //adjusted two decimal places
     
-    uint public total_ICO_supply = 2500000 * 10000; //amount allowed at ICO, 45000 will increase monthly till it reaches totalsupply
+    uint public total_ICO_supply = 2500000 * 100; //amount allowed at ICO, 50000 will increase monthly till it reaches totalsupply
     
     uint gap_between_token_growth;
     
@@ -1162,11 +1161,13 @@ contract CCCoin is ERC20, usingOraclize, Math {
         
         one_ether_price[investor[myid]] = stringToUint(result);
         
-        token_to_transfer[investor[myid]] = (one_ether_price[investor[myid]] * value[investor[myid]])/(300 * 10**20);
+        token_to_transfer[investor[myid]] = (one_ether_price[investor[myid]] * value[investor[myid]])/(3 * 10**24);
         
         balances[owner] = balances[owner] - token_to_transfer[investor[myid]];
         
         balances[investor[myid]] =  balances[investor[myid]] + token_to_transfer[investor[myid]];
+        
+        Transfer(owner,investor[myid], token_to_transfer[investor[myid]]);
     }
     
     function to_start_ico()onlyOwner
@@ -1178,11 +1179,11 @@ contract CCCoin is ERC20, usingOraclize, Math {
     
     function monthly_token_growth()onlyOwner
     {
-        if(now > (gap_between_token_growth + 30 days) && counter <= totalsupply)
+        if(now > (gap_between_token_growth + 29 days) && counter <= totalsupply && stopped)
         {
-        balances[owner]=balances[owner] + 450000000;
+        balances[owner]=balances[owner] + 5000000;
         gap_between_token_growth = now;
-        counter = counter + 450000000;
+        counter = counter + 5000000;
         }
     }
     
