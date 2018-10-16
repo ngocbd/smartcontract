@@ -1,162 +1,106 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EPAY at 0x07d8302a5115653408f97d2f59c65be88ec1a352
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EPAY at 0xa7326b8a5bef0878c9642d5316917fbff8a0fae9
 */
-pragma solidity ^0.4.13;
+pragma solidity ^0.4.8;
+contract Token{
+    // token???????public??????getter????????totalSupply().
+    uint256 public totalSupply;
 
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public constant returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
+    /// ????_owner??token??? 
+    function balanceOf(address _owner) constant returns (uint256 balance);
+
+    //??????????_to??????_value?token
+    function transfer(address _to, uint256 _value) returns (bool success);
+
+    //???_from????_to????_value?token??approve??????
+    function transferFrom(address _from, address _to, uint256 _value) returns   
+    (bool success);
+
+    //??????????_spender????????????_value?token
+    function approve(address _spender, uint256 _value) returns (bool success);
+
+    //????_spender?????_owner???token???
+    function allowance(address _owner, address _spender) constant returns 
+    (uint256 remaining);
+
+    //????????????? 
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+
+    //???approve(address _spender, uint256 _value)????????????
+    event Approval(address indexed _owner, address indexed _spender, uint256 
+    _value);
 }
 
+contract StandardToken is Token {
+    function transfer(address _to, uint256 _value) returns (bool success) {
+        //??totalSupply ??????? (2^256 - 1).
+        //??????????????token??????????????????
+        //require(balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]);
+        require(balances[msg.sender] >= _value);
+        balances[msg.sender] -= _value;//???????????token??_value
+        balances[_to] += _value;//???????token??_value
+        Transfer(msg.sender, _to, _value);//????????
+        return true;
+    }
 
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) public constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) public returns (bool);
-  function approve(address spender, uint256 value) public returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
+
+    function transferFrom(address _from, address _to, uint256 _value) returns 
+    (bool success) {
+        //require(balances[_from] >= _value && allowed[_from][msg.sender] >= 
+        // _value && balances[_to] + _value > balances[_to]);
+        require(balances[_from] >= _value && allowed[_from][msg.sender] >= _value);
+        balances[_to] += _value;//??????token??_value
+        balances[_from] -= _value; //????_from??token??_value
+        allowed[_from][msg.sender] -= _value;//??????????_from????????_value
+        Transfer(_from, _to, _value);//????????
+        return true;
+    }
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
+    }
+
+
+    function approve(address _spender, uint256 _value) returns (bool success)   
+    {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+        return allowed[_owner][_spender];//??_spender?_owner????token?
+    }
+    mapping (address => uint256) balances;
+    mapping (address => mapping (address => uint256)) allowed;
 }
 
+contract EPAY is StandardToken { 
 
+    /* Public variables of the token */
+    string public name;                   //??: eg Simon Bucks
+    uint8 public decimals;               //????????How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
+    string public symbol;               //token??: eg SBX
+    string public version = 'H0.1';    //??
 
+    function EPAY(uint256 _initialAmount, string _tokenName, uint8 _decimalUnits, string _tokenSymbol) {
+        balances[msg.sender] = _initialAmount; // ??token?????????
+        totalSupply = _initialAmount;         // ??????
+        name = _tokenName;                   // token??
+        decimals = _decimalUnits;           // ????
+        symbol = _tokenSymbol;             // token??
+    }
 
-contract Ownable {
-  address public owner;
+    /* Approves and then calls the receiving contract */
+    
+    function approveAndCall(address _spender, uint256 _value, bytes _extraData) returns (bool success) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        //call the receiveApproval function on the contract you want to be notified. This crafts the function signature manually so one doesn't have to include a contract in here just for this.
+        //receiveApproval(address _from, uint256 _value, address _tokenContract, bytes _extraData)
+        //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
+        require(_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData));
+        return true;
+    }
 
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner public {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-
-
-library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
-
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
-}
-
-contract EPAY is ERC20,Ownable{
-	using SafeMath for uint256;
-
-	string public constant name="EPAY";
-	string public symbol="EPAY";
-	string public constant version = "1.0";
-	uint256 public constant decimals = 18;
-
-	uint256 public constant MAX_SUPPLY=50000000*10**decimals;
-
-	
-    mapping(address => uint256) balances;
-	mapping (address => mapping (address => uint256)) allowed;
-	event GetETH(address indexed _from, uint256 _value);
-
-	//owner???????
-	function EPAY(){
-		balances[msg.sender] = MAX_SUPPLY;
-		Transfer(0x0, msg.sender, MAX_SUPPLY);
-	}
-
-	//???????????
-	function () payable external
-	{
-		GetETH(msg.sender,msg.value);
-	}
-
-	function etherProceeds() external
-		onlyOwner
-	{
-		if(!msg.sender.send(this.balance)) revert();
-	}
-
-  	function transfer(address _to, uint256 _value) public  returns (bool)
- 	{
-		require(_to != address(0));
-		// SafeMath.sub will throw if there is not enough balance.
-		balances[msg.sender] = balances[msg.sender].sub(_value);
-		balances[_to] = balances[_to].add(_value);
-		Transfer(msg.sender, _to, _value);
-		return true;
-  	}
-
-  	function balanceOf(address _owner) public constant returns (uint256 balance) 
-  	{
-		return balances[_owner];
-  	}
-
-  	function transferFrom(address _from, address _to, uint256 _value) public returns (bool) 
-  	{
-		require(_to != address(0));
-		uint256 _allowance = allowed[_from][msg.sender];
-
-		balances[_from] = balances[_from].sub(_value);
-		balances[_to] = balances[_to].add(_value);
-		allowed[_from][msg.sender] = _allowance.sub(_value);
-		Transfer(_from, _to, _value);
-		return true;
-  	}
-
-  	function approve(address _spender, uint256 _value) public returns (bool) 
-  	{
-		allowed[msg.sender][_spender] = _value;
-		Approval(msg.sender, _spender, _value);
-		return true;
-  	}
-
-  	function allowance(address _owner, address _spender) public constant returns (uint256 remaining) 
-  	{
-		return allowed[_owner][_spender];
-  	}
-
-	  
 }
