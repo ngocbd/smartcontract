@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresaleToken at 0x173fc908b21b861facf54c65c10002b1e2f9c323
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresaleToken at 0xD8d80210106e2A431c9c43AC133EC22A008a2F07
 */
 pragma solidity ^0.4.4;
 
@@ -12,16 +12,17 @@ pragma solidity ^0.4.4;
 contract PresaleToken
 {
 /// Fields:
-    string public constant name = "WealthMan Private Presale Token";
-    string public constant symbol = "AWM";
+    string public constant name = "IMMLA Presale Token v.2";
+    string public constant symbol = "IML";
     uint public constant decimals = 18;
-    uint public constant PRICE = 2250;  // per 1 Ether
+    uint public constant PRICE = 5200;  // per 1 Ether
 
     //  price
-    // Cap is 2000 ETH
-    // 1 eth = 2250 presale WealthMan tokens
-    // ETH price ~300$ - 20.08.2017
-    uint public constant TOKEN_SUPPLY_LIMIT = PRICE * 2000 * (1 ether / 1 wei);
+    // Cap is 600 ETH
+    // 1 eth = 5200 presale IMMLA tokens
+    // 
+    // ETH price 320$ - 15.10.2017
+    uint public constant TOKEN_SUPPLY_LIMIT = PRICE * 600 * (1 ether / 1 wei);
 
     enum State{
        Init,
@@ -46,12 +47,6 @@ contract PresaleToken
 
     mapping (address => uint256) private balance;
 
-    struct Purchase {
-        address buyer;
-        uint amount;
-    }
-    Purchase[] purchases;
-    
 /// Modifiers:
     modifier onlyTokenManager()     { if(msg.sender != tokenManager) throw; _; }
     modifier onlyCrowdsaleManager() { if(msg.sender != crowdsaleManager) throw; _; }
@@ -73,20 +68,17 @@ contract PresaleToken
         tokenManager = _tokenManager;
         escrow = _escrow;
     }
-    
+
     function buyTokens(address _buyer) public payable onlyInState(State.Running)
     {
         if(msg.value == 0) throw;
         uint newTokens = msg.value * PRICE;
 
-        if (totalSupply + newTokens < totalSupply) throw;
         if (totalSupply + newTokens > TOKEN_SUPPLY_LIMIT) throw;
 
         balance[_buyer] += newTokens;
         totalSupply += newTokens;
-        
-        purchases[purchases.length++] = Purchase({buyer: _buyer, amount: newTokens});
-        
+
         LogBuy(_buyer, newTokens);
     }
 
@@ -189,19 +181,8 @@ contract PresaleToken
     {
         return totalSupply;
     }
-    
-    function getNumberOfPurchases()constant returns(uint) {
-        return purchases.length;
-    }
-    
-    function getPurchaseAddress(uint index)constant returns(address) {
-        return purchases[index].buyer;
-    }
-    
-    function getPurchaseAmount(uint index)constant returns(uint) {
-        return purchases[index].amount;
-    }
-    
+
+
     // Default fallback function
     function() payable 
     {
