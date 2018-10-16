@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonToken at 0xb67b88a25708a35ae7c2d736d398d268ce4f7f83
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtheremonToken at 0x95daaab98046846bf4b2853e23cba236fa394a31
 */
 pragma solidity ^0.4.16;
 
@@ -155,13 +155,13 @@ contract TokenERC20 {
 contract PaymentInterface {
     function createCastle(address _trainer, uint _tokens, string _name, uint64 _a1, uint64 _a2, uint64 _a3, uint64 _s1, uint64 _s2, uint64 _s3) public returns(uint);
     function catchMonster(address _trainer, uint _tokens, uint32 _classId, string _name) public returns(uint);
-    function payService(address _trainer, uint _tokens, uint32 _type, string _text, uint64 _param1, uint64 _param2, uint64 _param3) public returns(uint);
+    function payService(address _trainer, uint _tokens, uint32 _type, string _text, uint64 _param1, uint64 _param2, uint64 _param3, uint64 _param4, uint64 _param5, uint64 _param6) public returns(uint);
 }
 
 contract EtheremonToken is BasicAccessControl, TokenERC20 {
     // metadata
-    string public constant name = "Etheremon";
-    string public constant symbol = "EMON";
+    string public constant name = "EtheremonToken";
+    string public constant symbol = "EMONT";
     uint256 public constant decimals = 8;
     string public version = "1.0";
     
@@ -226,7 +226,7 @@ contract EtheremonToken is BasicAccessControl, TokenERC20 {
     
     function _transfer(address _from, address _to, uint _value) internal {
         require (_to != 0x0);
-        require (balanceOf[_from] > _value);
+        require (balanceOf[_from] >= _value);
         require (balanceOf[_to] + _value > balanceOf[_to]);
         require(!frozenAccount[_from]);
         require(!frozenAccount[_to]);
@@ -272,11 +272,11 @@ contract EtheremonToken is BasicAccessControl, TokenERC20 {
         _transfer(msg.sender, inGameRewardAddress, deductedTokens);
     }
     
-    function payService(uint _tokens, uint32 _type, string _text, uint64 _param1, uint64 _param2, uint64 _param3) isActive requirePaymentContract external {
+    function payService(uint _tokens, uint32 _type, string _text, uint64 _param1, uint64 _param2, uint64 _param3, uint64 _param4, uint64 _param5, uint64 _param6) isActive requirePaymentContract external {
         if (_tokens > balanceOf[msg.sender])
             revert();
         PaymentInterface payment = PaymentInterface(paymentContract);
-        uint deductedTokens = payment.payService(msg.sender, _tokens, _type, _text, _param1, _param2, _param3);
+        uint deductedTokens = payment.payService(msg.sender, _tokens, _type, _text, _param1, _param2, _param3, _param4, _param5, _param6);
         if (deductedTokens == 0 || deductedTokens > _tokens)
             revert();
         _transfer(msg.sender, inGameRewardAddress, deductedTokens);
