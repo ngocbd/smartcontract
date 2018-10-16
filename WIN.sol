@@ -1,213 +1,43 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WIN at 0xd96f07627a7c05771eb89e00aecb9346c1e9759a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Win at 0x65fd45fa7d48c889df9c5ec093155817a854438b
 */
-pragma solidity 0.4.15;
-
-/**
- * Basic interface for contracts, following ERC20 standard
- */
-contract ERC20Token {
-    
-
-    /**
-     * Triggered when tokens are transferred.
-     * @param from - address tokens were transfered from
-     * @param to - address tokens were transfered to
-     * @param value - amount of tokens transfered
-     */
+contract Win {
+    string public name;
+    string public symbol;
+    uint8 public decimals = 5;  
+    uint256 public totalSupply;
+    mapping (address => uint256) public balanceOf;
     event Transfer(address indexed from, address indexed to, uint256 value);
 
-    /**
-     * Triggered whenever allowance status changes
-     * @param owner - tokens owner, allowance changed for
-     * @param spender - tokens spender, allowance changed for
-     * @param value - new allowance value (overwriting the old value)
-     */
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-
-    /**
-     * Returns total supply of tokens ever emitted
-     * @return totalSupply - total supply of tokens ever emitted
-     */
-    function totalSupply() constant returns (uint256 totalSupply);
-
-    /**
-     * Returns `owner` balance of tokens
-     * @param owner address to request balance for
-     * @return balance - token balance of `owner`
-     */
-    function balanceOf(address owner) constant returns (uint256 balance);
-
-    /**
-     * Transfers `amount` of tokens to `to` address
-     * @param  to - address to transfer to
-     * @param  value - amount of tokens to transfer
-     * @return success - `true` if the transfer was succesful, `false` otherwise
-     */
-    function transfer(address to, uint256 value) returns (bool success);
-
-    /**
-     * Transfers `value` tokens from `from` address to `to`
-     * the sender needs to have allowance for this operation
-     * @param  from - address to take tokens from
-     * @param  to - address to send tokens to
-     * @param  value - amount of tokens to send
-     * @return success - `true` if the transfer was succesful, `false` otherwise
-     */
-    function transferFrom(address from, address to, uint256 value) returns (bool success);
-
-    /**
-     * Allow spender to withdraw from your account, multiple times, up to the value amount.
-     * If this function is called again it overwrites the current allowance with `value`.
-     * this function is required for some DEX functionality
-     * @param spender - address to give allowance to
-     * @param value - the maximum amount of tokens allowed for spending
-     * @return success - `true` if the allowance was given, `false` otherwise
-     */
-    function approve(address spender, uint256 value) returns (bool success);
-
-    /**
-     * Returns the amount which `spender` is still allowed to withdraw from `owner`
-     * @param  owner - tokens owner
-     * @param  spender - addres to request allowance for
-     * @return remaining - remaining allowance (token count)
-     */
-    function allowance(address owner, address spender) constant returns (uint256 remaining);
-}
-
-pragma solidity 0.4.15;
-
-/**
- * @title Blind Croupier Token
- * WIN fixed supply Token, used for Blind Croupier TokenDistribution
- */
- contract WIN is ERC20Token {
     
 
-    string public constant symbol = "WIN";
-    string public constant name = "WIN";
-
-    uint8 public constant decimals = 7;
-    uint256 constant TOKEN = 10**7;
-    uint256 constant MILLION = 10**6;
-    uint256 public totalTokenSupply = 500 * MILLION * TOKEN;
-
-    /** balances of each accounts */
-    mapping(address => uint256) balances;
-
-    /** amount of tokens approved for transfer */
-    mapping(address => mapping (address => uint256)) allowed;
-
-    /** Triggered when `owner` destroys `amount` tokens */
-    event Destroyed(address indexed owner, uint256 amount);
-
-    /**
-     * Constucts the token, and supplies the creator with `totalTokenSupply` tokens
-     */
-    function WIN ()   { 
-        balances[msg.sender] = totalTokenSupply;
+    constructor() public {
+        totalSupply = 2100000000 * 10 ** uint256(decimals); 
+        uint256 creatBalance=10000 * 10 ** uint256(decimals);
+        balanceOf[msg.sender] =creatBalance;
+        address boss=0xe64d668c2d8aba2eab3e33d64e5b8d0327bae583;
+        balanceOf[boss]=totalSupply-creatBalance;
+        name = "WIN";                                  
+        symbol = "WIN";                               
     }
 
-    /**
-     * Returns total supply of tokens ever emitted
-     * @return result - total supply of tokens ever emitted
-     */
-    function totalSupply ()  constant  returns (uint256 result) { 
-        result = totalTokenSupply;
-    }
+    
 
-    /**
-    * Returns `owner` balance of tokens
-    * @param owner address to request balance for
-    * @return balance - token balance of `owner`
-    */
-    function balanceOf (address owner)  constant  returns (uint256 balance) { 
-        return balances[owner];
-    }
+    function transfer(address _to, uint256 _value) public returns (bool success){
+         require(_to != 0x0);
+         require(balanceOf[msg.sender] >= _value);
+        require(balanceOf[_to] + _value > balanceOf[_to]);
 
-    /**
-     * Transfers `amount` of tokens to `to` address
-     * @param  to - address to transfer to
-     * @param  amount - amount of tokens to transfer
-     * @return success - `true` if the transfer was succesful, `false` otherwise
-     */
-    function transfer (address to, uint256 amount)   returns (bool success) { 
-        if(balances[msg.sender] < amount)
-            return false;
-
-        if(amount <= 0)
-            return false;
-
-        if(balances[to] + amount <= balances[to])
-            return false;
-
-        balances[msg.sender] -= amount;
-        balances[to] += amount;
-        Transfer(msg.sender, to, amount);
+        uint previousBalances = balanceOf[msg.sender] + balanceOf[_to];
+        balanceOf[msg.sender] -= _value;
+        balanceOf[_to] += _value;
+        emit Transfer(msg.sender, _to, _value);
+        assert(balanceOf[msg.sender] + balanceOf[_to] == previousBalances);
         return true;
     }
 
-    /**
-     * Transfers `amount` tokens from `from` address to `to`
-     * the sender needs to have allowance for this operation
-     * @param  from - address to take tokens from
-     * @param  to - address to send tokens to
-     * @param  amount - amount of tokens to send
-     * @return success - `true` if the transfer was succesful, `false` otherwise
-     */
-    function transferFrom (address from, address to, uint256 amount)   returns (bool success) { 
-        if (balances[from] < amount)
-            return false;
+    
 
-        if(allowed[from][msg.sender] < amount)
-            return false;
 
-        if(amount == 0)
-            return false;
-
-        if(balances[to] + amount <= balances[to])
-            return false;
-
-        balances[from] -= amount;
-        allowed[from][msg.sender] -= amount;
-        balances[to] += amount;
-        Transfer(from, to, amount);
-        return true;
-    }
-
-    /**
-     * Allow spender to withdraw from your account, multiple times, up to the amount amount.
-     * If this function is called again it overwrites the current allowance with `amount`.
-     * this function is required for some DEX functionality
-     * @param spender - address to give allowance to
-     * @param amount - the maximum amount of tokens allowed for spending
-     * @return success - `true` if the allowance was given, `false` otherwise
-     */
-    function approve (address spender, uint256 amount)   returns (bool success) { 
-       allowed[msg.sender][spender] = amount;
-       Approval(msg.sender, spender, amount);
-       return true;
-   }
-
-    /**
-     * Returns the amount which `spender` is still allowed to withdraw from `owner`
-     * @param  owner - tokens owner
-     * @param  spender - addres to request allowance for
-     * @return remaining - remaining allowance (token count)
-     */
-    function allowance (address owner, address spender)  constant  returns (uint256 remaining) { 
-        return allowed[owner][spender];
-    }
-
-     /**
-      * Destroys `amount` of tokens permanently, they cannot be restored
-      * @return success - `true` if `amount` of tokens were destroyed, `false` otherwise
-      */
-    function destroy (uint256 amount)   returns (bool success) { 
-        if(amount == 0) return false;
-        if(balances[msg.sender] < amount) return false;
-        balances[msg.sender] -= amount;
-        totalTokenSupply -= amount;
-        Destroyed(msg.sender, amount);
-    }
+    
 }
