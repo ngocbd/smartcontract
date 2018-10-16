@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract dEthereumlotteryNet at 0xecae6888e3ea6a2a8dbf95500a1f74dd27c3b54e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract dEthereumlotteryNet at 0x1D9E61248F88DC60889BB269FCf2244827f3A682
 */
 contract dEthereumlotteryNet {
 	/*
 		dEthereumlotteryNet
 		Coded by: iFA
 		http://d.ethereumlottery.net
-		ver: 2.1.1
+		ver: 2.1.0
 	*/
 	
 	/*
@@ -80,7 +80,7 @@ contract dEthereumlotteryNet {
 		}
 		Rate = getRate(Value);
 		Bet = getRealBet(Rate);
-		while (Value < Bet) {
+		if (Value < Bet) {
 		    Rate++;
 		    Bet = getRealBet(Rate);
 		}
@@ -201,10 +201,16 @@ contract dEthereumlotteryNet {
 	function PrepareRoll(uint seed) OnlyEnabled {
 		if (msg.value < minimumRollPrice) { throw; }
 		if (jackpot_ == 0) { throw; }
-		uint _rate;
-		uint _realBet;
-		(_rate, _realBet) = ChanceOfWinning(msg.value);
-		if (_realBet > msg.value) { throw; }
+		uint _rate = getRate(msg.value);
+		uint _realBet = getRealBet(_rate);
+		if (msg.value < _realBet) {
+		    _rate++;
+		    _realBet = getRealBet(_rate);
+		}
+		if (_rate < BestRollRate) { 
+		    _rate = BestRollRate;
+		    _realBet = getRealBet(_rate);
+        }
 		if (msg.value-_realBet > 0) {
 			if ( ! msg.sender.send( msg.value-_realBet )) { throw; }
 		}
@@ -300,10 +306,10 @@ contract dEthereumlotteryNet {
 		Internal functions
 	*/	
 	function getRate(uint value) internal returns(uint){
-		return jackpot_ * 1 ether / value * 100 / investorFee * extraRate / 100 / 1 ether;
+		return jackpot_ * 1000000 / value * 100 / investorFee * extraRate / 100 / 1000000;
 	}
 	function getRealBet(uint rate) internal returns (uint) {
-		return jackpot_ * 1 ether / ( rate * 1 ether * investorFee / extraRate);
+		return jackpot_ * 1000000 / ( rate * 1000000 * investorFee / extraRate);
 	}
 	function getInvestorByAddress(address Address) internal returns (uint id) {
 		for ( id=1 ; id < investors.length ; id++ ) {
