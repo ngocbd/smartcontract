@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract tickets at 0xf5f4a0b0a2153028d518a3f887e0028688351029
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract tickets at 0xd64dce6f3f3e27b7afc5eda41ebab00556eaf946
 */
 pragma solidity ^0.4.15;
 
@@ -10,7 +10,7 @@ contract tickets {
     mapping(uint256 => address) public ticketsOwned;
     mapping(address => uint256) public noOfTicketsOwned;
     mapping(address => bool) public banned;
-    uint256 public noOfSeats;
+    uint256 noOfSeats;
     
     mapping(address => uint256[]) public reservations;
     mapping(address => uint256) public noOfreservations;
@@ -178,31 +178,6 @@ contract tickets {
             }
         }
         return 100000000000000000;
-    }
-    
-    function returnTickets(uint256 ticketID) {
-        if(ticketsOwned[ticketID] == msg.sender) {
-            for(uint256 i=0;i<noOfTicketsOwned[msg.sender];i++) {
-                if(ticketsOwners[msg.sender][i] == ticketID) {
-                    ticketsOwners[msg.sender][i] = 100000000000000000;
-                }
-            }
-            ticketsOwned[ticketID] = 0x0;
-            noOfTicketsOwned[msg.sender]--;
-            msg.sender.send(ticketPrices[ticketID]);
-        } else {
-            revert();
-        }
-    }
-    
-    function changePrice (uint256[] seats, uint256 nOfSeats) {
-        if(nOfSeats == noOfSeats) {
-            for(uint256 i = 0;i<noOfSeats;i++) {
-                ticketPrices[i] = seats[i];
-            }
-        } else {
-            revert();
-        }
     }
     
     function setHash(bytes32 hash) {
