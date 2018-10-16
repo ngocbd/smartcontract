@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x0e1b60780fec3591495de55f080bcce3cac5f5e3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0x1d38b2f0329568ad8730b1970905e4978c16b7ff
 */
 pragma solidity ^0.4.19;
 
@@ -45,13 +45,35 @@ contract BaseToken {
     }
 }
 
-contract CustomToken is BaseToken {
+contract BurnToken is BaseToken {
+    event Burn(address indexed from, uint256 value);
+
+    function burn(uint256 _value) public returns (bool success) {
+        require(balanceOf[msg.sender] >= _value);
+        balanceOf[msg.sender] -= _value;
+        totalSupply -= _value;
+        Burn(msg.sender, _value);
+        return true;
+    }
+
+    function burnFrom(address _from, uint256 _value) public returns (bool success) {
+        require(balanceOf[_from] >= _value);
+        require(_value <= allowance[_from][msg.sender]);
+        balanceOf[_from] -= _value;
+        allowance[_from][msg.sender] -= _value;
+        totalSupply -= _value;
+        Burn(_from, _value);
+        return true;
+    }
+}
+
+contract CustomToken is BaseToken, BurnToken {
     function CustomToken() public {
-        totalSupply = 680000000000000000000000000;
-        name = 'GoldBeans';
-        symbol = 'GB';
+        totalSupply = 683900000000000000000000000;
+        name = 'LifeBank';
+        symbol = 'LBB';
         decimals = 18;
-        balanceOf[0x22C64f07036C56fCE15372610816AE22a8731296] = totalSupply;
-        Transfer(address(0), 0x22C64f07036C56fCE15372610816AE22a8731296, totalSupply);
+        balanceOf[0x0040b2f16328dde1ad8639d46c2e3ad8671c76d9] = totalSupply;
+        Transfer(address(0), 0x0040b2f16328dde1ad8639d46c2e3ad8671c76d9, totalSupply);
     }
 }
