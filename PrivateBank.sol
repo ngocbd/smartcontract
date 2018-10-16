@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PrivateBank at 0xbabfe0ae175b847543724c386700065137d30e3b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PrivateBank at 0x463f235748bc7862DEaA04d85b4B16AC8faFEF39
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
 contract PrivateBank
 {
@@ -9,7 +9,6 @@ contract PrivateBank
     
     function GetBal() 
     public
-    constant
     returns(uint) 
     {
         return balances[msg.sender];
@@ -39,6 +38,7 @@ contract PrivateBank
     {
         if(_am<=balances[msg.sender])
         {
+            
             if(msg.sender.call.value(_am)())
             {
                 balances[msg.sender]-=_am;
@@ -47,15 +47,8 @@ contract PrivateBank
         }
     }
     
-    function() public payable{}
+    function() public payable{}    
     
-    function bal()
-    public
-    constant
-    returns(uint)
-    {
-         return this.balance;
-    }
 }
 
 contract Log 
@@ -71,7 +64,7 @@ contract Log
     
     Message[] public History;
     
-    Message public LastMsg;
+    Message LastMsg;
     
     function AddMessage(address _adr,uint _val,string _data)
     public
