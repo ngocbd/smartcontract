@@ -1,9 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x9Ea7BA960A2668Df52eE0389C4617D48853b7006
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0x36ce21c241def87c61145abc0ce9dc172921e1ab
 */
-/// This code was taken from: https://github.com/ConsenSys. Please do not change or refactor.
+/**
+ * Originally from https://github.com/ConsenSys/MultiSigWallet
+ */
 
-pragma solidity ^0.4.15;
+
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
 /// @author Stefan George - <stefan.george@consensys.net>
@@ -37,49 +39,49 @@ contract MultiSigWallet {
 
     modifier onlyWallet() {
         if (msg.sender != address(this))
-            revert();
+            throw;
         _;
     }
 
     modifier ownerDoesNotExist(address owner) {
         if (isOwner[owner])
-            revert();
+            throw;
         _;
     }
 
     modifier ownerExists(address owner) {
         if (!isOwner[owner])
-            revert();
+            throw;
         _;
     }
 
     modifier transactionExists(uint transactionId) {
         if (transactions[transactionId].destination == 0)
-            revert();
+            throw;
         _;
     }
 
     modifier confirmed(uint transactionId, address owner) {
         if (!confirmations[transactionId][owner])
-            revert();
+            throw;
         _;
     }
 
     modifier notConfirmed(uint transactionId, address owner) {
         if (confirmations[transactionId][owner])
-            revert();
+            throw;
         _;
     }
 
     modifier notExecuted(uint transactionId) {
         if (transactions[transactionId].executed)
-            revert();
+            throw;
         _;
     }
 
     modifier notNull(address _address) {
         if (_address == 0)
-            revert();
+            throw;
         _;
     }
 
@@ -88,7 +90,7 @@ contract MultiSigWallet {
             || _required > ownerCount
             || _required == 0
             || ownerCount == 0)
-            revert();
+            throw;
         _;
     }
 
@@ -112,7 +114,7 @@ contract MultiSigWallet {
     {
         for (uint i=0; i<_owners.length; i++) {
             if (isOwner[_owners[i]] || _owners[i] == 0)
-                revert();
+                throw;
             isOwner[_owners[i]] = true;
         }
         owners = _owners;
@@ -228,13 +230,13 @@ contract MultiSigWallet {
         notExecuted(transactionId)
     {
         if (isConfirmed(transactionId)) {
-            Transaction storage txn = transactions[transactionId];
-            txn.executed = true;
-            if (txn.destination.call.value(txn.value)(txn.data))
+            Transaction tx = transactions[transactionId];
+            tx.executed = true;
+            if (tx.destination.call.value(tx.value)(tx.data))
                 Execution(transactionId);
             else {
                 ExecutionFailure(transactionId);
-                txn.executed = false;
+                tx.executed = false;
             }
         }
     }
