@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xce0cd513a069e8ec9cb625fcdf6d5f29aa912dbc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x010be8a86d416dbcf1e18a5ad59910f12a360ec7
 */
 pragma solidity ^0.4;
 
@@ -17,10 +17,10 @@ contract ERC20 {
 
 
 contract Token is ERC20 {
-
+    // Balances for trading
     mapping(address => uint256) public balances;
 
-    
+
     mapping(address => uint256) public investBalances;
 
     mapping(address => mapping (address => uint)) allowed;
@@ -29,16 +29,15 @@ contract Token is ERC20 {
     uint256 public totalSupply;
 
     // Information about token
-    string public constant name = "MMS";
+    string public constant name = "3D METAMORPHOSIS";
     string public constant symbol = "MMS";
     address public owner;
     address public owner2;
-    address public owner3;
-    uint public decimals = 18;
+    uint8 public decimals = 6;
 
     // If function has this modifier, only owner can execute this function
     modifier onlyOwner() {
-        require(msg.sender == owner || msg.sender == owner2 || msg.sender == owner3);
+        require(msg.sender == owner || msg.sender == owner2);
         _;
     }
 
@@ -46,9 +45,8 @@ contract Token is ERC20 {
 
 
     function Token() public {
-        totalSupply = 10000000000000000000000000;
-        owner = 0x1FC11ac635e89c228765f3e6aEe0970D9aFf2BF5;
-        owner2 = 0x4AB9AA258369438bC146b26af02F6E3568009D92;
+        owner = msg.sender;
+        totalSupply = 1000000000000;
         balances[owner] = totalSupply;
     }
 
@@ -118,7 +116,7 @@ contract Token is ERC20 {
     }  
 
 
-    function changeOwner3(address _owner3) public onlyOwner {
-        owner3 = _owner3;
+    function addOwner2(address _owner2) public onlyOwner {
+        owner2 = _owner2;
     }
 }
