@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KillYourselfCoin at 0xc584a60e2cbedfe6a068371e6e34f05844b3111f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KillYourselfCoin at 0xb690226d649701d7a7ef40161904cd814faf4f41
 */
 pragma solidity ^0.4.4;
 
@@ -101,15 +101,15 @@ contract KillYourselfCoin is StandardToken {
     address public owner;               // Address of contract creator
     uint256 public availableSupply;     // Tokens available for sale
     uint256 public reservedTokens;      // Tokens reserved not for sale
-    bool public purchasingAllowed = false;
+    bool public purchasingAllowed = true;
 
     // This is a constructor function
     // which means the following function name has to match the contract name declared above
     function KillYourselfCoin() {
         owner = msg.sender;                               // Set the contract owner
         decimals = 18;                                    // Amount of decimals for display. 18 is ETH recommended
-        totalSupply = 1500000000000000000000000;          // Total token supply
-        availableSupply = 1393800000000000000000000;      // Tokens available for sale
+        totalSupply = 150000000000000000000000;           // Total token supply (1/10th for testing)
+        availableSupply = 139380000000000000000000;       // Tokens available for sale (1/10th for testing)
         reservedTokens = totalSupply - availableSupply;   // Calculate reserved tokens
         balances[owner] = totalSupply;                    // Give the creator all initial tokens
 
