@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DividendProfit at 0xa0f9fb2170dc2d181ef8aaf3571dc441813e0154
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DividendProfit at 0x78d4f849aab2b0a5a66f76b9b1ff47da5a9ae492
 */
 // TESTING CONTRACT
+// send the profits to this smartcontract for it to be destributed in Dividend
 
 contract DividendProfit {
 
@@ -17,13 +18,13 @@ modifier execute {
 
 function DividendProfit() {
     deployer = msg.sender;
-    dividendAddr = deployer;
+    dividendAddr = 0x12905fA36a703D6eF75cB2198f9165192b0c5aE5;
 }
 
 
 function() {
-    if (this.balance > 69 finney) {
-        dividendAddr.send(this.balance - 20 finney);
+    if (this.balance > 100 finney) {
+        dividendAddr.send(this.balance);
     }
 }
 
