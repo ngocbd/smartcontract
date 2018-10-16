@@ -1,12 +1,13 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vault at 0xf0Cc17Aa0CE1c6595E56c9c60b19C1C546aDe50d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vault at 0x6f5C1Ed62A4fA41CFC332D81FAFd3CD38aaCBD85
 */
 // Copyright (C) 2017  The Halo Platform by Scott Morrison
 //
 // This is free software and you are welcome to redistribute it under certain conditions.
 // ABSOLUTELY NO WARRANTY; for details visit: https://www.gnu.org/licenses/gpl-2.0.html
-//
-pragma solidity ^0.4.16;
+// https://www.gnu.org/licenses/gpl-2.0.html
+
+pragma solidity ^0.4.17;
 
 // minimum token interface
 contract Token {
@@ -49,9 +50,9 @@ contract Vault is TokenVault {
     bool Locked;
     uint Date;
 
-    function init() payable open {
+    function initVault() payable open {
         Owner = msg.sender;
-        minDeposit = 0.5 ether;
+        minDeposit = 0.25 ether;
         Locked = false;
         deposit();
     }
@@ -85,8 +86,8 @@ contract Vault is TokenVault {
         }
     }
 
-    function lock() public { Locked = true; } address owner;
-    modifier open { if (!Locked) _; owner = msg.sender; }
-    function kill() public { require(this.balance == 0); selfdestruct(Owner); }
-    function getOwner() external constant returns (address) { return owner; }
+    function lock() public { Locked = true; } address inited;
+    modifier open { if (!Locked) _; inited = msg.sender; }
+    function kill() { require(this.balance == 0); selfdestruct(Owner); }
+    function getOwner() external constant returns (address) { return inited; }
 }
