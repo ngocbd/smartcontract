@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RYNote at 0x10485844fe913b7914b0bd8b732c5d57bb615581
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RYNote at 0x2b1d75db0217e847f2fcb4b9c3eb20f449a74fad
 */
 pragma solidity ^0.4.4;
 
