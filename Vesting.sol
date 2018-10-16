@@ -1,227 +1,144 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vesting at 0xe23611dbae1556c041e6ad04c98e9f18ee98b50c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Vesting at 0xb6021534da2709bd5215ed007e4925393922315b
 */
-pragma solidity ^0.4.13;
+pragma solidity 0.4.15;
 
-contract DBC {
+library SafeMath {
 
-    // MODIFIERS
-
-    modifier pre_cond(bool condition) {
-        require(condition);
-        _;
-    }
-
-    modifier post_cond(bool condition) {
-        _;
-        assert(condition);
-    }
-
-    modifier invariant(bool condition) {
-        require(condition);
-        _;
-        assert(condition);
-    }
-}
-
-contract ERC20Interface {
-
-    // EVENTS
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-
-    // CONSTANT METHODS
-
-    function totalSupply() constant returns (uint256 totalSupply) {}
-    function balanceOf(address _owner) constant returns (uint256 balance) {}
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
-
-    // NON-CONSTANT METHODS
-
-    function transfer(address _to, uint256 _value) returns (bool success) {}
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {}
-    function approve(address _spender, uint256 _value) returns (bool success) {}
-}
-
-contract ERC20 is ERC20Interface {
-
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        if (balances[msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-            balances[msg.sender] -= _value;
-            balances[_to] += _value;
-            Transfer(msg.sender, _to, _value);
-            return true;
-        } else { throw; }
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && balances[_to] + _value > balances[_to]) {
-            balances[_to] += _value;
-            balances[_from] -= _value;
-            allowed[_from][msg.sender] -= _value;
-            Transfer(_from, _to, _value);
-            return true;
-        } else { throw; }
-    }
-
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
-    }
-
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        // See: https://github.com/ethereum/EIPs/issues/20#issuecomment-263555598
-        if (_value > 0) {
-            require(allowed[msg.sender][_spender] == 0);
+    function mul(uint256 a, uint256 b) internal returns (uint256) {
+        if (a == 0) {
+          return 0;
         }
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
+        uint256 c = a * b;
+        assert(c / a == b);
+        return c;
     }
 
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-        return allowed[_owner][_spender];
+    function div(uint256 a, uint256 b) internal returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
     }
 
-    mapping (address => uint256) balances;
+    function sub(uint256 a, uint256 b) internal returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
 
-    mapping (address => mapping (address => uint256)) allowed;
-
-    uint256 public totalSupply;
+    function add(uint256 a, uint256 b) internal returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
 
 }
 
 contract Owned {
+    address public contractOwner;
+    address public pendingContractOwner;
 
-    // FIELDS
-
-    address public owner;
-
-    // PRE, POST, INVARIANT CONDITIONS
-
-    function isOwner() internal returns (bool) { return msg.sender == owner; }
-
-    // NON-CONSTANT METHODS
-
-    function Owned() { owner = msg.sender; }
-
-}
-
-contract Vesting is DBC, Owned {
-    using safeMath for uint;
-
-    // FIELDS
-
-    // Constructor fields
-    ERC20 public MELON_CONTRACT; // Melon as ERC20 contract
-    // Methods fields
-    uint public totalVestedAmount; // Quantity of vested Melon in total
-    uint public vestingStartTime; // Timestamp when vesting is set
-    uint public vestingPeriod; // Total vesting period
-    address public beneficiary; // Address of the beneficiary
-    bool public revoked; // Whether vesting is revoked
-    uint public withdrawnByBeneficiary; // To keep track of Melon withdrawn only by the beneficiary (Set only in the case of revoke)
-
-    // CONSTANT METHODS
-
-    function isBeneficiary() constant returns (bool) { return msg.sender == beneficiary; }
-    function isVestingStarted() constant returns (bool) { return totalVestedAmount != 0; }
-    function isVestingRevoked() constant returns (bool) { return revoked; }
-    function withdrawnMelon() constant returns (uint) {
-        return revoked ? withdrawnByBeneficiary : totalVestedAmount.sub(MELON_CONTRACT.balanceOf(this));
+    function Owned() {
+        contractOwner = msg.sender;
     }
 
-    /// @notice Calculates the quantity of Melon asset that's currently withdrawable
-    /// @return withdrawable Quantity of withdrawable Melon asset
-    function calculateWithdrawable() constant returns (uint withdrawable) {
-        uint timePassed = now.sub(vestingStartTime);
-
-        if (timePassed < vestingPeriod) {
-            uint vested = totalVestedAmount.mul(timePassed).div(vestingPeriod);
-            withdrawable = vested.sub(withdrawnMelon());
-        } else {
-            withdrawable = totalVestedAmount.sub(withdrawnMelon());
+    modifier onlyContractOwner() {
+        if (contractOwner == msg.sender) {
+            _;
         }
     }
 
-    // NON-CONSTANT METHODS
-
-    /// @param ofMelonAsset Address of Melon asset
-    function Vesting(address ofMelonAsset) {
-        MELON_CONTRACT = ERC20(ofMelonAsset);
+    function changeContractOwnership(address _to) onlyContractOwner() returns(bool) {
+        pendingContractOwner = _to;
+        return true;
     }
 
-    /// @param ofBeneficiary Address of beneficiary
-    /// @param ofMelonQuantity Address of Melon asset
-    /// @param ofVestingPeriod Address of Melon asset
-    function setVesting(address ofBeneficiary, uint ofMelonQuantity, uint ofVestingPeriod)
-        pre_cond(!isVestingStarted())
-    {
-        assert(MELON_CONTRACT.transferFrom(msg.sender, this, ofMelonQuantity));
-        vestingStartTime = now;
-        totalVestedAmount = ofMelonQuantity;
-        vestingPeriod = ofVestingPeriod;
-        beneficiary = ofBeneficiary;
+    function claimContractOwnership() returns(bool) {
+        if (pendingContractOwner != msg.sender) {
+            return false;
+        }
+        contractOwner = pendingContractOwner;
+        delete pendingContractOwner;
+        return true;
     }
-
-    /// @notice Withdraw
-    function withdraw()
-        pre_cond(isBeneficiary())
-        pre_cond(isVestingStarted())
-    {
-        uint withdrawable = revoked ? MELON_CONTRACT.balanceOf(this) : calculateWithdrawable();
-        assert(MELON_CONTRACT.transfer(beneficiary, withdrawable));
-    }
-
-    /// @notice Stops vesting and transfers the totalVestedAmount minus the withdrawable amount at the current time to the contract creator
-    function revokeAndReclaim()
-        pre_cond(isOwner())
-        pre_cond(!isVestingRevoked())
-    {
-        uint reclaimable = totalVestedAmount.sub(calculateWithdrawable());
-        withdrawnByBeneficiary = withdrawnMelon();
-        revoked = true;
-        assert(MELON_CONTRACT.transfer(owner, reclaimable));
-    }
-
 }
 
-library safeMath {
-  function mul(uint a, uint b) internal returns (uint) {
-    uint c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
+contract ERC20Interface {
+    function balanceOf(address _address) returns(uint);
+    function transfer(address _receiver, uint _amount) returns(bool);
+    function transferFrom(address _from, address _to, uint _amount) returns(bool);
+}
 
-  function div(uint a, uint b) internal returns (uint) {
-    uint c = a / b;
-    return c;
-  }
+contract Vesting is Owned {
+    struct Vestings {
+        address receiver;
+        ERC20Interface ERC20;
+        uint amount;
+        uint parts;
+        uint paymentInterval;
+        uint schedule;
+        uint sendings;
+    }
 
-  function sub(uint a, uint b) internal returns (uint) {
-    assert(b <= a);
-    return a - b;
-  }
+    mapping (address => uint) public vestingBalance;
+    mapping (address => mapping (address => uint)) public receiverVestings;
 
-  function add(uint a, uint b) internal returns (uint) {
-    uint c = a + b;
-    assert(c >= a);
-    return c;
-  }
+    Vestings[] public vestings;
 
-  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a >= b ? a : b;
-  }
+    event VestingCreated(address sender, address receiver, address ERC20, uint amount, uint id, uint parts, uint paymentInterval, uint schedule);
+    event VestingSent(address receiver, address ERC20, uint amount, uint id, uint sendings);
+    event ReceiverChanged(uint id, address from, address to);
 
-  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a < b ? a : b;
-  }
+    function createVesting(address _receiver, ERC20Interface _ERC20, uint _amount, uint _parts, uint _paymentInterval, uint _schedule) returns(bool) {
+        require(_receiver != 0x0);
+        require(_parts > 0 && _amount > 0 && _parts <= 10000);
+        require(SafeMath.add(_schedule, SafeMath.mul(_paymentInterval, _parts)) <= ((365 * 5 days) + now));
 
-  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a >= b ? a : b;
-  }
+        vestings.push(Vestings(_receiver, _ERC20, _amount, _parts, _paymentInterval, _schedule, 0));
+        require(_ERC20.transferFrom(msg.sender, address(this), SafeMath.mul(_amount, _parts)));
+        vestingBalance[_ERC20] = SafeMath.add(vestingBalance[_ERC20], (_amount * _parts));
+        receiverVestings[_receiver][_ERC20] = SafeMath.add(receiverVestings[_receiver][_ERC20], (_amount * _parts));
+        VestingCreated(msg.sender, _receiver, _ERC20, _amount, (vestings.length - 1), _parts, _paymentInterval, _schedule);
+        return true;
+    }
 
-  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a < b ? a : b;
-  }
+    function sendVesting(uint _id) returns(bool) {
+        require(now >= (vestings[_id].schedule + vestings[_id].paymentInterval * (vestings[_id].sendings + 1)));
+
+        require(vestings[_id].ERC20.transfer(vestings[_id].receiver, vestings[_id].amount));
+        VestingSent(vestings[_id].receiver, vestings[_id].ERC20, vestings[_id].amount, _id, vestings[_id].sendings);
+        vestings[_id].sendings++;
+        vestingBalance[vestings[_id].ERC20] -= vestings[_id].amount;
+        receiverVestings[vestings[_id].receiver][vestings[_id].ERC20] -= vestings[_id].amount;
+        if (vestings[_id].sendings == vestings[_id].parts) {
+            delete vestings[_id];
+        }
+        return true;
+    }
+
+    function changeReceiver(uint _id, address _newReceiver) returns(bool) {
+        require(_newReceiver != 0x0);
+        require(msg.sender == vestings[_id].receiver);
+
+        vestings[_id].receiver = _newReceiver;
+        ReceiverChanged(_id, msg.sender, _newReceiver);
+        return true;
+    }
+
+    function withdrawExtraTokens(ERC20Interface _ERC20) onlyContractOwner() returns(bool) {
+        require(_ERC20.transfer(contractOwner, getExtraTokens(_ERC20)));
+        return true;
+    }
+
+    function getVesting(uint _id) constant returns(address, address, uint, uint, uint, uint, uint) {
+        return (vestings[_id].receiver, vestings[_id].ERC20, vestings[_id].amount, vestings[_id].parts, vestings[_id].paymentInterval, vestings[_id].schedule, vestings[_id].sendings);
+    }
+
+    function getExtraTokens(ERC20Interface _ERC20) constant returns(uint) {
+        return (_ERC20.balanceOf(this) - vestingBalance[_ERC20]);
+    }
+
+    function getReceiverVesting(address _receiver, address _ERC20) constant returns(uint) {
+        return receiverVestings[_receiver][_ERC20];
+    }
 }
