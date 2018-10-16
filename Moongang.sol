@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Moongang at 0x45aaf948ca47329f0059facb78806f1c63a3d197
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Moongang at 0x5783af06b94192a3f5f6610ecef477d033b70c74
 */
 // Author : shift
 
@@ -103,6 +103,7 @@ contract Moongang {
   //The reduction of the allocation in % | example : 40 -> 40% reduction
   uint256 public percent_reduction;
   bool public owner_supplied_eth;
+  bool public allow_contributions;
 
   //Internal functions
   function Moongang(uint256 max, uint256 min, uint256 cap) {
@@ -113,6 +114,7 @@ contract Moongang {
     max_amount = SafeMath.div(SafeMath.mul(max, 100), 99);
     min_amount = min;
     individual_cap = cap;
+    allow_contributions = true;
   }
 
   //Functions for the owner
@@ -180,6 +182,10 @@ contract Moongang {
     In case, for some reasons, the project refunds the money
     */
     allow_refunds = _boolean;
+  }
+
+  function set_allow_contributions(bool _boolean) onlyOwner {
+      allow_contributions = _boolean;
   }
 
   function set_percent_reduction(uint256 _reduction) onlyOwner payable {
@@ -281,7 +287,7 @@ contract Moongang {
 
   // Default function.  Called when a user sends ETH to the contract.
   function () payable underMaxAmount {
-    require(!bought_tokens);
+    require(!bought_tokens && allow_contributions);
     //1% fee is taken on the ETH
     uint256 fee = SafeMath.div(msg.value, FEE);
     fees = SafeMath.add(fees, fee);
