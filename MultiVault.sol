@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiVault at 0x6b80bbebc52d0b1fa4c349bf45a68aa89cbee75e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiVault at 0x68f56a196cb406bf8677bccb6e891f4e46560273
 */
 /**
  * Safe unsigned safe math.
