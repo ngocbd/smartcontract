@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiTransfer at 0x6caf427fefa748d2c03cd7b9296d77c35095c7b7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiTransfer at 0x0b10372ffe11a4fe9fc8efbf460b6fa25eb224d9
 */
 pragma solidity ^0.4.18;
 contract ERC20 {
