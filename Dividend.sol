@@ -1,81 +1,97 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dividend at 0xe3ac32bbf9e3661c3aff4ee2f80706abaf7c7ea6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Dividend at 0x3323075b8d3c471631a004ccc5dad0eeabc5b4d1
 */
-pragma solidity ^0.4.18;
+// Contract dividend.
 
-contract Dividend {
-    struct Record {
-        uint balance;
-        uint shares;
-        uint index;
+contract Dividend{
+    uint256 constant div = 1000; // 10 % 
+    uint256 public price = (0.01 ether);
+    uint256 public baseprice = price;
+    uint256 public previousprice = 0;
+    address public dev;
+    address public divholder;
+    address public current_start_divholder = divholder;
+    
+    
+    uint256 increase = 2000; // 20% 
+    uint256 min = 1500; //15% (min increase in price, scales weird way)
+    uint256 minprofit = 1000;
+    
+    uint256 public divpaid = 0;
+    
+    
+    function Dividend(){
+        dev = msg.sender;
     }
+    
+    event t(uint256 t);
+    function NewPrice() public  returns (uint256){
 
-    mapping (address => Record) public records;
-    address[] public investors;
-    address public funder;
-    uint public startTime;
-    uint public totalShares;
-    uint public lastInvestmentTime;
-
-    event Invested(uint indexed timestamp, address indexed from, uint amount, uint shares);
-    event Withdrawn(uint indexed timestamp, address indexed from, uint amount);
-
-    function Dividend() public payable {
-        records[msg.sender] = Record(msg.value,
-            totalShares = allocateShares(msg.value, 0),
-            investors.push(funder = msg.sender));
-        Invested(startTime = lastInvestmentTime = now, msg.sender, msg.value, totalShares);
+        uint ret = price * (increase + 10000) / 10000;
+        
+        return ret;
     }
+    
+    function Withdraw(){
+        
+        _withdraw(true);
+    }
+    
+    function _withdraw(bool devpay) internal {
 
-    function () public payable {
-        if (msg.value > 0) {
-            invest();
-        } else {
-            withdraw();
+        if (divholder != current_start_divholder){
+            // pay divholder.
+            uint256 bal = address(this).balance;
+            uint256 pay = (bal * div) / 10000;
+            divholder.transfer(pay);
+            divpaid = divpaid + pay;
+        }
+ 
+        // subbal in balance.
+        if (devpay){
+            dev.transfer(address(this).balance);
         }
     }
-
-    function investorCount() public view returns (uint) {
-      return investors.length;
-    }
-
-    function invest() public payable returns (uint) {
-        uint value = msg.value;
-        uint shares = allocateShares(value, (now - startTime) / 1 hours);
-        if (shares > 0) {
-            for (uint i = investors.length; i > 0; i--) {
-                Record storage rec = records[investors[i - 1]];
-                rec.balance += value * rec.shares / totalShares;
-            }
-            address investor = msg.sender;
-            rec = records[investor];
-            if (rec.index > 0) {
-                rec.shares += shares;
-            } else {
-                rec.shares = shares;
-                rec.index = investors.push(investor);
-            }
-            totalShares += shares;
-            Invested(lastInvestmentTime = now, investor, value, shares);
+    
+    function Buy() payable{
+        var val = msg.value; 
+        require(val >= price);
+        //excess
+        if (val > price){
+            msg.sender.transfer(val-price);
         }
-        return shares;
-    }
-
-    function withdraw() public returns (uint) {
-        Record storage rec = records[msg.sender];
-        uint balance = rec.balance;
-        if (balance > 0) {
-            rec.balance = 0;
-            msg.sender.transfer(balance);
-            Withdrawn(now, msg.sender, balance);
+        
+        _withdraw(false);
+        
+        if ((current_start_divholder != divholder) && divpaid < ((previousprice * (10000 + minprofit))/10000)){
+            uint256 nmake =  ((previousprice * (10000 + minprofit))/10000) - divpaid;
+            t(nmake / (1 finney));
+            divholder.transfer(nmake);
+            
         }
-        if (now - lastInvestmentTime > 4 weeks) {
-            selfdestruct(funder);
-        }
-        return balance;
+        
+        //dev.transfer(address(this).balance);
+        
+        // previous is paid in Withdraw
+        // if NOT enough made in above lines we give the previous owner the eth 
+        // he has right on.
+        // rest transferred to dev.
+        dev.transfer(address(this).balance);
+        
+        divpaid = 0;
+        previousprice = price;
+        price = NewPrice();
+        divholder = msg.sender;
     }
-
-    function allocateShares(uint weis, uint bonus) public pure returns (uint) {
-        return weis * (1000 + bonus) / 1 ether;
+    
+    
+    // send donations pl0x
+    function() payable {
+        
     }
+    
+    
+    
+    
+    
 }
