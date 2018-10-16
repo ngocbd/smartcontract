@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract F2UPhone at 0xaecd36312b8f633810a6a06b722f3d15d26973c6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract F2UPhone at 0x1a0da9ddec1fea406f470b76ded30abe17abbc87
 */
 contract F2UPhone {
     /* Public variables of the token */
@@ -17,7 +17,7 @@ contract F2UPhone {
     /* Initializes contract with initial supply tokens to the creator of the contract */
     function F2UPhone() {
 
-         initialSupply = 90000000;
+         initialSupply = 90000000000000;
          name ="F2UPhone";
         decimals = 6;
          symbol = "F2U";
