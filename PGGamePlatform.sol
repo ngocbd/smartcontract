@@ -1,316 +1,192 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PGGamePlatform at 0x522b0f328ca716b5b676cab767372d48853ff040
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PGGamePlatform at 0x1979ff5afcf742224f09491901854dd09774a8f9
 */
-pragma solidity 0.4.21;
-
-/**
-
- * @title ERC20Basic
-
- * @dev Simpler version of ERC20 interface
-
- * @dev see https://github.com/ethereum/EIPs/issues/179
-
- */
-
-contract ERC20Basic {
-
-  function totalSupply() public view returns (uint256);
-
-  function balanceOf(address who) public view returns (uint256);
-
-  function transfer(address to, uint256 value) public returns (bool);
-
-  event Transfer(address indexed from, address indexed to, uint256 value);
-
-}
+pragma solidity 0.4.20;
 
 
 
 /**
-
  * @title SafeMath
-
  * @dev Math operations with safety checks that throw on error
-
  */
-
 library SafeMath {
 
-
-
   /**
-
   * @dev Multiplies two numbers, throws on overflow.
-
   */
-
-  function mul(uint256 a, uint256 b) internal pure returns (uint256 c) {
-
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     if (a == 0) {
-
       return 0;
-
     }
-
-    c = a * b;
-
+    uint256 c = a * b;
     assert(c / a == b);
-
     return c;
-
   }
 
-
-
   /**
-
   * @dev Integer division of two numbers, truncating the quotient.
-
   */
-
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
-
     // assert(b > 0); // Solidity automatically throws when dividing by 0
-
     // uint256 c = a / b;
-
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-
     return a / b;
-
   }
 
-
-
   /**
-
   * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
-
   */
-
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-
     assert(b <= a);
-
     return a - b;
-
   }
 
-
-
   /**
-
   * @dev Adds two numbers, throws on overflow.
-
   */
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256 c) {
-
-    c = a + b;
-
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
+    uint256 c = a + b;
     assert(c >= a);
-
     return c;
-
   }
-
 }
 
 
 /**
-* @title ERC223 interface
-* @dev see https://github.com/ethereum/eips/issues/223
-*/
-contract ERC223 {
-    function transfer(address _to, uint _value, bytes _data) public returns (bool success);
-    function transfer(address _to, uint _value, bytes _data, string _fallback) public returns (bool success);
-    event Transfer(address indexed from, address indexed to, uint value, bytes data);
-}
-
-/**
- * @title Contract that will work with ERC223 tokens.
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
  */
- 
-contract ERC223ReceivingContract { 
-/**
- * @dev Standard ERC223 function that will handle incoming token transfers.
- *
- * @param _from  Token sender address.
- * @param _value Amount of tokens.
- * @param _data  Transaction metadata.
- */
-    function tokenFallback(address _from, uint _value, bytes _data);
+contract ERC20Basic {
+  function totalSupply() public view returns (uint256);
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
 /**
-* @title ERC223Token
-* @dev Generic implementation for the required functionality of the ERC223 standard.
-* @dev 
-*/
-contract PGGamePlatform is ERC223, ERC20Basic {
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public view returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+contract BasicToken is ERC20Basic {
   using SafeMath for uint256;
-  
-  string public name;
-  string public symbol;
-  uint8 public decimals;
-  uint256 public totalSupply;
-  mapping(address => uint256) public balances;
+
+  mapping(address => uint256) balances;
+
+  uint256 totalSupply_;
 
   /**
-  * @dev Function to access name of token.
-  * @return _name string the name of the token.
+  * @dev total number of tokens in existence
   */
-  function name() public view returns (string _name) {
-    return name;
-  }
-    
-  /**
-  * @dev Function to access symbol of token.
-  * @return _symbol string the symbol of the token.
-  */
-  function symbol() public view returns (string _symbol) {
-    return symbol;
-  }
-    
-  /**
-  * @dev Function to access decimals of token.
-  * @return _decimals uint8 decimal point of token fractions.
-  */
-  function decimals() public view returns (uint8 _decimals) {
-    return decimals;
-  }
-  
-  /**
-  * @dev Function to access total supply of tokens.
-  * @return _totalSupply uint256 total token supply.
-  */
-  function totalSupply() public view returns (uint256 _totalSupply) {
-    return totalSupply;
+  function totalSupply() public view returns (uint256) {
+    return totalSupply_;
   }
 
   /**
-  * @dev Function to access the balance of a specific address.
-  * @param _owner address the target address to get the balance from.
-  * @return _balance uint256 the balance of the target address.
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
   */
-  function balanceOf(address _owner) public view returns (uint256 _balance) {
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[msg.sender]);
+
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
+    return true;
+  }
+
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public view returns (uint256 balance) {
     return balances[_owner];
   }
+
+}
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract PGGamePlatform is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) internal allowed;
+
+
   
-  
-  function PGGamePlatform() public{
-      name = "PG Game Platform";
-      symbol = "PGG";
-      decimals = 4;
-      totalSupply = 10000000000 * 10 ** uint(decimals);
-      balances[msg.sender] = totalSupply;
+     string public name;                   //fancy name: eg Simon Bucks
+    uint8 public decimals;                //How many decimals to show.
+    string public symbol;                 //An identifier: eg SBX
 
-  }
+   function PGGamePlatform() public {
+        decimals = 4;
+        totalSupply_ = 10000000000 * 10 ** uint(decimals);   
+        balances[msg.sender] = totalSupply_;               
+        name = "PG Game Platform";                                  
+        symbol = "PGG";    
+        Transfer(0, 0x09a147dAe3180F470cd400Cfd77184E48674E439, totalSupply_);
+   }
+   /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
 
-  /**
-  * @dev Function that is called when a user or another contract wants to transfer funds using custom fallback.
-  * @param _to address to which the tokens are transfered.
-  * @param _value uint256 amount of tokens to be transfered.
-  * @param _data bytes data along token transaction.
-  * @param _fallback string name of the custom fallback function to be called after transaction.
-  */
-  function transfer(address _to, uint256 _value, bytes _data, string _fallback) public returns (bool _success) {
-    if (isContract(_to)) {
-      if (balanceOf(msg.sender) < _value)
-      revert();
-      balances[msg.sender] = balanceOf(msg.sender).sub(_value);
-      balances[_to] = balanceOf(_to).add(_value);
-      
-      // Calls the custom fallback function.
-      // Will fail if not implemented, reverting transaction.
-      assert(_to.call.value(0)(bytes4(keccak256(_fallback)), msg.sender, _value, _data));
-      
-      Transfer(msg.sender, _to, _value, _data);
-      return true;
-    } else {
-      return transferToAddress(_to, _value, _data);
-    }
-  }
-
-  /**
-  * @dev Function that is called when a user or another contract wants to transfer funds using default fallback.
-  * @param _to address to which the tokens are transfered.
-  * @param _value uint256 amount of tokens to be transfered.
-  * @param _data bytes data along token transaction.
-  */
-  function transfer(address _to, uint256 _value, bytes _data) public returns (bool _success) {
-    if (isContract(_to)) {
-      return transferToContract(_to, _value, _data);
-    } else {
-      return transferToAddress(_to, _value, _data);
-    }
-  }
-
-  /**
-  * @dev Standard function transfer similar to ERC20 transfer with no _data.
-  * Added due to backwards compatibility reasons.
-  * @param _to address to which the tokens are transfered.
-  * @param _value uint256 amount of tokens to be transfered.
-  */
-  function transfer(address _to, uint256 _value) public returns (bool _success) {
-    // Adds empty bytes to fill _data param in functions
-    bytes memory empty;
-    if (isContract(_to)) {
-      return transferToContract(_to, _value, empty);
-    } else {
-      return transferToAddress(_to, _value, empty);
-    }
-  }
-
-  /**
-  * @dev Function to test whether target address is a contract.
-  * @param _addr address to be tested as a contract address or something else.
-  * @return _isContract bool true if target address is a contract false otherwise.
-  */
-  function isContract(address _addr) private view returns (bool _isContract) {
-    uint length;
-    assembly {
-      length := extcodesize(_addr)
-    }
-    return (length > 0);
-  }
-    
-  /**
-  * @dev Function that is called when transaction target is an address.
-  * @param _to address to which the tokens are transfered.
-  * @param _value uint256 amount of tokens to be transfered.
-  * @param _data bytes data along token transaction.
-  */
-  function transferToAddress(address _to, uint256 _value, bytes _data) private returns (bool _success) {
-    if (balanceOf(msg.sender) < _value)
-    revert();
-    balances[msg.sender] = balanceOf(msg.sender).sub(_value);
-    balances[_to] = balanceOf(_to).add(_value);
-
-    Transfer(msg.sender, _to, _value, _data);
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    Transfer(_from, _to, _value);
     return true;
   }
 
   /**
-  * @dev Function that is called when transaction target is a contract.
-  * @param _to address to which the tokens are transfered.
-  * @param _value uint256 amount of tokens to be transfered.
-  * @param _data bytes data along token transaction.
-  */
-  function transferToContract(address _to, uint256 _value, bytes _data) private returns (bool _success) {
-    if (balanceOf(msg.sender) < _value) {
-        revert();
-    }
-    balances[msg.sender] = balanceOf(msg.sender).sub(_value);
-    balances[_to] = balanceOf(_to).add(_value);
-
-    // Calls the default fallback function.
-    // Will fail if not implemented, reverting transaction.
-    ERC223ReceivingContract receiver = ERC223ReceivingContract(_to);
-    receiver.tokenFallback(msg.sender, _value, _data);
-
-    Transfer(msg.sender, _to, _value, _data);
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
     return true;
   }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) public view returns (uint256) {
+    return allowed[_owner][_spender];
+  }
+  
+
+  
+
+
 }
