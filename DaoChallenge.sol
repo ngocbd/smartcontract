@@ -1,71 +1,292 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DaoChallenge at 0x08d698358b31ca6926e329879db9525504802abf
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DaoChallenge at 0x131a76478D2eef5cEAA28e93030eB8a8894aD811
 */
-contract DaoChallenge
+contract AbstractDaoChallenge {
+	function isMember (DaoAccount account, address allegedOwnerAddress) returns (bool);
+}
+
+contract DaoAccount
 {
+	/**************************
+			    Constants
+	***************************/
+
+	/**************************
+					Events
+	***************************/
+
+	// No events
+
+	/**************************
+	     Public variables
+	***************************/
+
+
+	/**************************
+	     Private variables
+	***************************/
+
+	uint256 tokenBalance; // number of tokens in this account
+  address owner;        // owner of the otkens
+	address daoChallenge; // the DaoChallenge this account belongs to
+	uint256 tokenPrice;
+
+  // Owner of the challenge with backdoor access.
+  // Remove for a real DAO contract:
+  address challengeOwner;
+
+	/**************************
+			     Modifiers
+	***************************/
+
 	modifier noEther() {if (msg.value > 0) throw; _}
 
 	modifier onlyOwner() {if (owner != msg.sender) throw; _}
 
-	event notifySellToken(uint256 n, address buyer);
-	event notifyRefundToken(uint256 n, address tokenHolder);
-	event notifyTranferToken(uint256 n, address sender, address recipient);
-	event notifyTerminate(uint256 finalBalance);
+	modifier onlyDaoChallenge() {if (daoChallenge != msg.sender) throw; _}
 
-	/* This creates an array with all balances */
-  mapping (address => uint256) public tokenBalanceOf;
+	modifier onlyChallengeOwner() {if (challengeOwner != msg.sender) throw; _}
 
-	uint256 constant tokenPrice = 1000000000000000; // 1 finney
+	/**************************
+	 Constructor and fallback
+	**************************/
 
-	// Owner of the challenge; a real DAO doesn't an owner.
-	address owner;
+  function DaoAccount (address _owner, uint256 _tokenPrice, address _challengeOwner) noEther {
+    owner = _owner;
+		tokenPrice = _tokenPrice;
+    daoChallenge = msg.sender;
+		tokenBalance = 0;
 
-	function DaoChallenge () {
-		owner = msg.sender; // Owner of the challenge. Don't use this in a real DAO.
+    // Remove for a real DAO contract:
+    challengeOwner = _challengeOwner;
 	}
 
 	function () {
-		address sender = msg.sender;
+		throw;
+	}
+
+	/**************************
+	     Private functions
+	***************************/
+
+	/**************************
+			 Public functions
+	***************************/
+
+	function getOwnerAddress() constant returns (address ownerAddress) {
+		return owner;
+	}
+
+	function getTokenBalance() constant returns (uint256 tokens) {
+		return tokenBalance;
+	}
+
+	function buyTokens() onlyDaoChallenge returns (uint256 tokens) {
 		uint256 amount = msg.value;
 
+		// No free tokens:
+		if (amount == 0) throw;
+
 		// No fractional tokens:
-		if (amount % tokenPrice != 0) {
-			throw;
-		}
-		tokenBalanceOf[sender] += amount / tokenPrice;
-		notifySellToken(amount, sender);
+		if (amount % tokenPrice != 0) throw;
+
+		tokens = amount / tokenPrice;
+
+		tokenBalance += tokens;
+
+		return tokens;
 	}
 
-	// This uses call.value()() rather than send(), but only sends to msg.sender
-	function withdrawEtherOrThrow(uint256 amount) {
-		bool result = msg.sender.call.value(amount)();
-		if (!result) {
-			throw;
-		}
+	function withdraw(uint256 tokens) noEther onlyDaoChallenge {
+		if (tokens == 0 || tokenBalance == 0 || tokenBalance < tokens) throw;
+		tokenBalance -= tokens;
+		if(!owner.call.value(tokens * tokenPrice)()) throw;
 	}
 
-	function refund() noEther {
-		address sender = msg.sender;
-		uint256 tokenBalance = tokenBalanceOf[sender];
-		if (tokenBalance == 0) { throw; }
-		tokenBalanceOf[sender] = 0;
-		withdrawEtherOrThrow(tokenBalance * tokenPrice);
-		notifyRefundToken(tokenBalance, sender);
+	function transfer(uint256 tokens, DaoAccount recipient) noEther onlyDaoChallenge {
+		if (tokens == 0 || tokenBalance == 0 || tokenBalance < tokens) throw;
+		tokenBalance -= tokens;
+		recipient.receiveTokens.value(tokens * tokenPrice)(tokens);
 	}
 
-	function transfer(address recipient, uint256 tokens) noEther {
-		address sender = msg.sender;
+	function receiveTokens(uint256 tokens) {
+		// Check that the sender is a DaoAccount and belongs to our DaoChallenge
+		DaoAccount sender = DaoAccount(msg.sender);
+		if (!AbstractDaoChallenge(daoChallenge).isMember(sender, sender.getOwnerAddress())) throw;
 
-		if (tokenBalanceOf[sender] < tokens) throw;
-		if (tokenBalanceOf[recipient] + tokens < tokenBalanceOf[recipient]) throw; // Check for overflows
-		tokenBalanceOf[sender] -= tokens;
-		tokenBalanceOf[recipient] += tokens;
-		notifyTranferToken(tokens, sender, recipient);
+		uint256 amount = msg.value;
+
+		// No zero transfer:
+		if (amount == 0) throw;
+
+		if (amount / tokenPrice != tokens) throw;
+
+		tokenBalance += tokens;
 	}
 
 	// The owner of the challenge can terminate it. Don't use this in a real DAO.
-	function terminate() noEther onlyOwner {
+	function terminate() noEther onlyChallengeOwner {
+		suicide(challengeOwner);
+	}
+}
+contract DaoChallenge
+{
+	/**************************
+					Constants
+	***************************/
+
+
+	/**************************
+					Events
+	***************************/
+
+	event notifyTerminate(uint256 finalBalance);
+	event notifyTokenIssued(uint256 n, uint256 price, uint deadline);
+
+	event notifyNewAccount(address owner, address account);
+	event notifyBuyToken(address owner, uint256 tokens, uint256 price);
+	event notifyWithdraw(address owner, uint256 tokens);
+	event notifyTransfer(address owner, address recipient, uint256 tokens);
+
+	/**************************
+	     Public variables
+	***************************/
+
+	// For the current token issue:
+	uint public tokenIssueDeadline = now;
+	uint256 public tokensIssued = 0;
+	uint256 public tokensToIssue = 0;
+	uint256 public tokenPrice = 1000000000000000; // 1 finney
+
+	mapping (address => DaoAccount) public daoAccounts;
+
+	/**************************
+			 Private variables
+	***************************/
+
+	// Owner of the challenge; a real DAO doesn't an owner.
+	address challengeOwner;
+
+	/**************************
+					 Modifiers
+	***************************/
+
+	modifier noEther() {if (msg.value > 0) throw; _}
+
+	modifier onlyChallengeOwner() {if (challengeOwner != msg.sender) throw; _}
+
+	/**************************
+	 Constructor and fallback
+	**************************/
+
+	function DaoChallenge () {
+		challengeOwner = msg.sender; // Owner of the challenge. Don't use this in a real DAO.
+	}
+
+	function () noEther {
+	}
+
+	/**************************
+	     Private functions
+	***************************/
+
+	function accountFor (address accountOwner, bool createNew) private returns (DaoAccount) {
+		DaoAccount account = daoAccounts[accountOwner];
+
+		if(account == DaoAccount(0x00) && createNew) {
+			account = new DaoAccount(accountOwner, tokenPrice, challengeOwner);
+			daoAccounts[accountOwner] = account;
+			notifyNewAccount(accountOwner, address(account));
+		}
+
+		return account;
+	}
+
+	/**************************
+	     Public functions
+	***************************/
+
+	function createAccount () {
+		accountFor(msg.sender, true);
+	}
+
+	// Check if a given account belongs to this DaoChallenge.
+	function isMember (DaoAccount account, address allegedOwnerAddress) returns (bool) {
+		if (account == DaoAccount(0x00)) return false;
+		if (allegedOwnerAddress == 0x00) return false;
+		if (daoAccounts[allegedOwnerAddress] == DaoAccount(0x00)) return false;
+		// allegedOwnerAddress is passed in for performance reasons, but not trusted
+		if (daoAccounts[allegedOwnerAddress] != account) return false;
+		return true;
+	}
+
+	function getTokenBalance () constant noEther returns (uint256 tokens) {
+		DaoAccount account = accountFor(msg.sender, false);
+		if (account == DaoAccount(0x00)) return 0;
+		return account.getTokenBalance();
+	}
+
+	// n: max number of tokens to be issued
+	// price: in szabo, e.g. 1 finney = 1,000 szabo = 0.001 ether
+	// deadline: unix timestamp in seconds
+	function issueTokens (uint256 n, uint256 price, uint deadline) noEther onlyChallengeOwner {
+		// Only allow one issuing at a time:
+		if (now < tokenIssueDeadline) throw;
+
+		// Deadline can't be in the past:
+		if (deadline < now) throw;
+
+		// Issue at least 1 token
+		if (n == 0) throw;
+
+		tokenPrice = price * 1000000000000;
+		tokenIssueDeadline = deadline;
+		tokensToIssue = n;
+		tokensIssued = 0;
+
+		notifyTokenIssued(n, price, deadline);
+	}
+
+	function buyTokens () returns (uint256 tokens) {
+		tokens = msg.value / tokenPrice;
+
+		if (now > tokenIssueDeadline) throw;
+		if (tokensIssued >= tokensToIssue) throw;
+
+		// This hopefully prevents issuing too many tokens
+		// if there's a race condition:
+		tokensIssued += tokens;
+		if (tokensIssued > tokensToIssue) throw;
+
+	  DaoAccount account = accountFor(msg.sender, true);
+		if (account.buyTokens.value(msg.value)() != tokens) throw;
+
+		notifyBuyToken(msg.sender, tokens, msg.value);
+		return tokens;
+ 	}
+
+	function withdraw(uint256 tokens) noEther {
+		DaoAccount account = accountFor(msg.sender, false);
+		if (account == DaoAccount(0x00)) throw;
+
+		account.withdraw(tokens);
+		notifyWithdraw(msg.sender, tokens);
+	}
+
+	function transfer(uint256 tokens, address recipient) noEther {
+		DaoAccount account = accountFor(msg.sender, false);
+		if (account == DaoAccount(0x00)) throw;
+
+		DaoAccount recipientAcc = accountFor(recipient, false);
+		if (recipientAcc == DaoAccount(0x00)) throw;
+
+		account.transfer(tokens, recipientAcc);
+		notifyTransfer(msg.sender, recipient, tokens);
+	}
+
+	// The owner of the challenge can terminate it. Don't use this in a real DAO.
+	function terminate() noEther onlyChallengeOwner {
 		notifyTerminate(this.balance);
-		suicide(owner);
+		suicide(challengeOwner);
 	}
 }
