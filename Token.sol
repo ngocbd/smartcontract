@@ -1,44 +1,42 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xa362e5bc203aea01c398b74aa6e36d144e96712f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xdb2Ae021F1EEa3c9ad25cd49aDDe23bB788D3D9D
 */
-pragma solidity ^0.4.8;
-
+pragma solidity ^0.4.13;
 contract Token {
-    uint256 public totalSupply;
-    string public name = "Arcblock Token";              
-    uint8 public decimals = 18;        
-    string public symbol = "ABT";
-    mapping (address => uint256) balances;
-    address owner;
     
-    function Token() {
-        owner = msg.sender;
-        totalSupply = 1000000000 * 10**uint256(decimals);
-        balances[msg.sender] = totalSupply;
-    }
+	/* Public variables of the token */
+	string public name;
+	string public symbol;
+	uint8 public decimals;
+	uint256 public totalSupply;
     
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-    
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
-    }
-    
-    function changeToken(string cName, string cSymbol) onlyOwner public {
-        name = cName;
-        symbol = cSymbol;
-    }
-    
-    function addSupply(uint256 aSupply) onlyOwner public {
-        balances[owner] += aSupply;
-    }
-    
-    function transfer(address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-        require(_value <= balances[msg.sender]);
-        balances[_to] += _value;
-        return true;
-    }
+	/* This creates an array with all balances */
+	mapping (address => uint256) public balanceOf;
+
+	/* This generates a public event on the blockchain that will notify clients */
+	event Transfer(address indexed from, address indexed to, uint256 value);
+
+	function Token() {
+	    totalSupply = 100*(10**8)*(10**18);
+		balanceOf[msg.sender] = 100*(10**8)*(10**18);              // Give the creator all initial tokens
+		name = "Token of ENT";                                   // Set the name for display purposes
+		symbol = "TOE";                               // Set the symbol for display purposes
+		decimals = 18;                            // Amount of decimals for display purposes
+	}
+
+	function transfer(address _to, uint256 _value) {
+	/* Check if sender has balance and for overflows */
+	if (balanceOf[msg.sender] < _value || balanceOf[_to] + _value < balanceOf[_to])
+		revert();
+	/* Add and subtract new balances */
+	balanceOf[msg.sender] -= _value;
+	balanceOf[_to] += _value;
+	/* Notifiy anyone listening that this transfer took place */
+	Transfer(msg.sender, _to, _value);
+	}
+
+	/* This unnamed function is called whenever someone tries to send ether to it */
+	function () {
+	revert();     // Prevents accidental sending of ether
+	}
 }
