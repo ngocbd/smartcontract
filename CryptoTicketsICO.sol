@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoTicketsICO at 0xc35dce7925cb3a33406abda3158a336f0a59cc0a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoTicketsICO at 0xa759794d39bd92f4e9a264f1092f2859f10d8a1c
 */
+pragma solidity ^0.4.13;
+
 library SafeMath {
     function mul(uint a, uint b) internal returns (uint) {
         uint c = a * b;
@@ -39,71 +41,6 @@ library SafeMath {
     }
 }
 
-contract tokenPCT {
-    /* Public variables of the token */
-        string public name;
-        string public symbol;
-        uint8 public decimals;
-        uint256 public totalSupply = 0;
-
-
-        function tokenPCT (string _name, string _symbol, uint8 _decimals){
-            name = _name;
-            symbol = _symbol;
-            decimals = _decimals;
-
-        }
-    /* This creates an array with all balances */
-        mapping (address => uint256) public balanceOf;
-
-}
-
-contract Presale is tokenPCT {
-
-        using SafeMath for uint;
-        string name = 'Presale CryptoTickets Token';
-        string symbol = 'PCT';
-        uint8 decimals = 18;
-        address manager;
-        address public ico;
-
-        function Presale (address _manager) tokenPCT (name, symbol, decimals){
-             manager = _manager;
-
-        }
-
-        event Transfer(address _from, address _to, uint256 amount);
-        event Burn(address _from, uint256 amount);
-
-        modifier onlyManager{
-             require(msg.sender == manager);
-            _;
-        }
-
-        modifier onlyIco{
-             require(msg.sender == ico);
-            _;
-        }
-        function mintTokens(address _investor, uint256 _mintedAmount) public onlyManager {
-             balanceOf[_investor] = balanceOf[_investor].add(_mintedAmount);
-             totalSupply = totalSupply.add(_mintedAmount);
-             Transfer(this, _investor, _mintedAmount);
-
-        }
-
-        function burnTokens(address _owner) public onlyIco{
-             uint  tokens = balanceOf[_owner];
-             require(balanceOf[_owner] != 0);
-             balanceOf[_owner] = 0;
-             totalSupply = totalSupply.sub(tokens);
-             Burn(_owner, tokens);
-        }
-
-        function setIco(address _ico) onlyManager{
-            ico = _ico;
-        }
-}
-
 contract ERC20 {
     uint public totalSupply = 0;
 
@@ -120,187 +57,6 @@ contract ERC20 {
     event Approval(address indexed _owner, address indexed _spender, uint _value);
 
 } // Functions of ERC20 standard
-
-
-
-contract CryptoTicketsICO {
-    using SafeMath for uint;
-
-    uint public constant Tokens_For_Sale = 525000000*1e18; // Tokens for Sale without bonuses(HardCap)
-
-    // Style: Caps should not be used for vars, only for consts!
-    uint public Rate_Eth = 298; // Rate USD per ETH
-    uint public Token_Price = 25 * Rate_Eth; // TKT per ETH
-    uint public SoldNoBonuses = 0; //Sold tokens without bonuses
-
-
-    event LogStartICO();
-    event LogPauseICO();
-    event LogFinishICO(address bountyFund, address advisorsFund, address itdFund, address storageFund);
-    event LogBuyForInvestor(address investor, uint tktValue, string txHash);
-    event LogReplaceToken(address investor, uint tktValue);
-
-    TKT public tkt = new TKT(this);
-    Presale public presale;
-
-    address public Company;
-    address public BountyFund;
-    address public AdvisorsFund;
-    address public ItdFund;
-    address public StorageFund;
-
-    address public Manager; // Manager controls contract
-    address public Controller_Address1; // First address that is used to buy tokens for other cryptos
-    address public Controller_Address2; // Second address that is used to buy tokens for other cryptos
-    address public Controller_Address3; // Third address that is used to buy tokens for other cryptos
-    modifier managerOnly { require(msg.sender == Manager); _; }
-    modifier controllersOnly { require((msg.sender == Controller_Address1) || (msg.sender == Controller_Address2) || (msg.sender == Controller_Address3)); _; }
-
-    uint startTime = 0;
-    uint bountyPart = 2; // 2% of TotalSupply for BountyFund
-    uint advisorsPart = 35; //3,5% of TotalSupply for AdvisorsFund
-    uint itdPart = 15; //15% of TotalSupply for ItdFund
-    uint storagePart = 3; //3% of TotalSupply for StorageFund
-    uint icoAndPOfPart = 765; // 76,5% of TotalSupply for PublicICO and PrivateOffer
-    enum StatusICO { Created, Started, Paused, Finished }
-    StatusICO statusICO = StatusICO.Created;
-
-
-    function CryptoTicketsICO(address _presale, address _Company, address _BountyFund, address _AdvisorsFund, address _ItdFund, address _StorageFund, address _Manager, address _Controller_Address1, address _Controller_Address2, address _Controller_Address3){
-       presale = Presale(_presale);
-       Company = _Company;
-       BountyFund = _BountyFund;
-       AdvisorsFund = _AdvisorsFund;
-       ItdFund = _ItdFund;
-       StorageFund = _StorageFund;
-       Manager = _Manager;
-       Controller_Address1 = _Controller_Address1;
-       Controller_Address2 = _Controller_Address2;
-       Controller_Address3 = _Controller_Address3;
-    }
-
-// function for changing rate of ETH and price of token
-
-
-    function setRate(uint _RateEth) external managerOnly {
-       Rate_Eth = _RateEth;
-       Token_Price = 25*Rate_Eth;
-    }
-
-
-//ICO status functions
-
-    function startIco() external managerOnly {
-       require(statusICO == StatusICO.Created || statusICO == StatusICO.Paused);
-       if(statusICO == StatusICO.Created)
-       {
-         startTime = now;
-       }
-       LogStartICO();
-       statusICO = StatusICO.Started;
-    }
-
-    function pauseIco() external managerOnly {
-       require(statusICO == StatusICO.Started);
-       statusICO = StatusICO.Paused;
-       LogPauseICO();
-    }
-
-
-    function finishIco() external managerOnly { // Funds for minting of tokens
-
-       require(statusICO == StatusICO.Started);
-
-       uint alreadyMinted = tkt.totalSupply(); //=PublicICO+PrivateOffer
-       uint totalAmount = alreadyMinted * 1000 / icoAndPOfPart;
-
-
-       tkt.mint(BountyFund, bountyPart * totalAmount / 100); // 2% for Bounty
-       tkt.mint(AdvisorsFund, advisorsPart * totalAmount / 1000); // 3.5% for Advisors
-       tkt.mint(ItdFund, itdPart * totalAmount / 100); // 15% for Ticketscloud ltd
-       tkt.mint(StorageFund, storagePart * totalAmount / 100); // 3% for Storage
-
-       tkt.defrost();
-
-       statusICO = StatusICO.Finished;
-       LogFinishICO(BountyFund, AdvisorsFund, ItdFund, StorageFund);
-    }
-
-// function that buys tokens when investor sends ETH to address of ICO
-    function() external payable {
-
-       buy(msg.sender, msg.value * Token_Price);
-    }
-
-// function for buying tokens to investors who paid in other cryptos
-
-    function buyForInvestor(address _investor, uint _tktValue, string _txHash) external controllersOnly {
-       buy(_investor, _tktValue);
-       LogBuyForInvestor(_investor, _tktValue, _txHash);
-    }
-
-//function for buying tokens for presale investors
-
-    function replaceToken(address _investor) managerOnly{
-         require(statusICO != StatusICO.Finished);
-         uint pctTokens = presale.balanceOf(_investor);
-         require(pctTokens > 0);
-         presale.burnTokens(_investor);
-         tkt.mint(_investor, pctTokens);
-
-         LogReplaceToken(_investor, pctTokens);
-    }
-// internal function for buying tokens
-
-    function buy(address _investor, uint _tktValue) internal {
-       require(statusICO == StatusICO.Started);
-       require(_tktValue > 0);
-
-
-       uint bonus = getBonus(_tktValue);
-
-       uint _total = _tktValue.add(bonus);
-
-       require(SoldNoBonuses + _tktValue <= Tokens_For_Sale);
-       tkt.mint(_investor, _total);
-
-       SoldNoBonuses = SoldNoBonuses.add(_tktValue);
-    }
-
-// function that calculates bonus
-    function getBonus(uint _value) public constant returns (uint) {
-       uint bonus = 0;
-       uint time = now;
-       if(time >= startTime && time <= startTime + 48 hours)
-       {
-
-            bonus = _value * 20/100;
-        }
-
-       if(time > startTime + 48 hours && time <= startTime + 96 hours)
-       {
-            bonus = _value * 10/100;
-       }
-
-       if(time > startTime + 96 hours && time <= startTime + 168 hours)
-       {
-
-            bonus = _value * 5/100;
-        }
-
-       return bonus;
-    }
-
-//function to withdraw ETH from smart contract
-
-    // SUGGESTION:
-    // even if you lose you manager keys -> you still will be able to get ETH
-    function withdrawEther(uint256 _value) external managerOnly {
-       require(statusICO == StatusICO.Finished);
-       Company.transfer(_value);
-    }
-
-}
 
 contract TKT  is ERC20 {
     using SafeMath for uint;
@@ -382,4 +138,154 @@ contract TKT  is ERC20 {
     function allowance(address _owner, address _spender) constant returns (uint256) {
         return allowed[_owner][_spender];
     }
+}
+
+contract CryptoTicketsICO {
+    using SafeMath for uint;
+
+    uint public constant Tokens_For_Sale = 525000000*1e18; // Tokens for Sale without bonuses(HardCap)
+
+    // Style: Caps should not be used for vars, only for consts!
+    uint public Rate_Eth = 298; // Rate USD per ETH
+    uint public Token_Price = 25 * Rate_Eth; // tkt per ETH
+    uint public SoldNoBonuses = 0; //Sold tokens without bonuses
+
+    mapping(address => bool) swapped;
+
+    event LogStartICO();
+    event LogPauseICO();
+    event LogFinishICO(address bountyFund, address advisorsFund, address itdFund, address storageFund);
+    event LogBuyForInvestor(address investor, uint tokenValue, string txHash);
+    event LogSwapToken(address investor, uint tokenValue);
+
+    TKT public token = new TKT(this);
+    TKT public tkt;
+
+    address public Company;
+    address public BountyFund;
+    address public AdvisorsFund;
+    address public ItdFund;
+    address public StorageFund;
+
+    address public Manager; // Manager controls contract
+    address public SwapManager;
+    address public Controller_Address1; // First address that is used to buy tokens for other cryptos
+    address public Controller_Address2; // Second address that is used to buy tokens for other cryptos
+    address public Controller_Address3; // Third address that is used to buy tokens for other cryptos
+    modifier managerOnly { require(msg.sender == Manager); _; }
+    modifier controllersOnly { require((msg.sender == Controller_Address1) || (msg.sender == Controller_Address2) || (msg.sender == Controller_Address3)); _; }
+    modifier swapManagerOnly { require(msg.sender == SwapManager); _; }
+
+    uint bountyPart = 2; // 2% of TotalSupply for BountyFund
+    uint advisorsPart = 35; //3,5% of TotalSupply for AdvisorsFund
+    uint itdPart = 15; //15% of TotalSupply for ItdFund
+    uint storagePart = 3; //3% of TotalSupply for StorageFund
+    uint icoAndPOfPart = 765; // 76,5% of TotalSupply for PublicICO and PrivateOffer
+    enum StatusICO { Created, Started, Paused, Finished }
+    StatusICO statusICO = StatusICO.Created;
+
+
+    function CryptoTicketsICO(address _tkt, address _Company, address _BountyFund, address _AdvisorsFund, address _ItdFund, address _StorageFund, address _Manager, address _Controller_Address1, address _Controller_Address2, address _Controller_Address3, address _SwapManager){
+       tkt = TKT(_tkt);
+       Company = _Company;
+       BountyFund = _BountyFund;
+       AdvisorsFund = _AdvisorsFund;
+       ItdFund = _ItdFund;
+       StorageFund = _StorageFund;
+       Manager = _Manager;
+       Controller_Address1 = _Controller_Address1;
+       Controller_Address2 = _Controller_Address2;
+       Controller_Address3 = _Controller_Address3;
+       SwapManager = _SwapManager;
+    }
+
+// function for changing rate of ETH and price of token
+
+
+    function setRate(uint _RateEth) external managerOnly {
+       Rate_Eth = _RateEth;
+       Token_Price = 25*Rate_Eth;
+    }
+
+
+//ICO status functions
+
+    function startIco() external managerOnly {
+       require(statusICO == StatusICO.Created || statusICO == StatusICO.Paused);
+       LogStartICO();
+       statusICO = StatusICO.Started;
+    }
+
+    function pauseIco() external managerOnly {
+       require(statusICO == StatusICO.Started);
+       statusICO = StatusICO.Paused;
+       LogPauseICO();
+    }
+
+
+    function finishIco() external managerOnly { // Funds for minting of tokens
+
+       require(statusICO == StatusICO.Started);
+
+       uint alreadyMinted = token.totalSupply(); //=PublicICO+PrivateOffer
+       uint totalAmount = alreadyMinted * 1000 / icoAndPOfPart;
+
+
+       token.mint(BountyFund, bountyPart * totalAmount / 100); // 2% for Bounty
+       token.mint(AdvisorsFund, advisorsPart * totalAmount / 1000); // 3.5% for Advisors
+       token.mint(ItdFund, itdPart * totalAmount / 100); // 15% for Ticketscloud ltd
+       token.mint(StorageFund, storagePart * totalAmount / 100); // 3% for Storage
+
+       token.defrost();
+
+       statusICO = StatusICO.Finished;
+       LogFinishICO(BountyFund, AdvisorsFund, ItdFund, StorageFund);
+    }
+
+// function that buys tokens when investor sends ETH to address of ICO
+    function() external payable {
+
+       buy(msg.sender, msg.value * Token_Price);
+    }
+
+// function for buying tokens to investors who paid in other cryptos
+
+    function buyForInvestor(address _investor, uint _tokenValue, string _txHash) external controllersOnly {
+       buy(_investor, _tokenValue);
+       LogBuyForInvestor(_investor, _tokenValue, _txHash);
+    }
+
+//function for buying tokens for investors
+
+    function swapToken(address _investor) swapManagerOnly{
+         require(statusICO != StatusICO.Finished);
+         require(swapped[_investor] == false);
+         uint tktTokens = tkt.balanceOf(_investor);
+         require(tktTokens > 0);
+         swapped[_investor] = true;
+         token.mint(_investor, tktTokens);
+
+         LogSwapToken(_investor, tktTokens);
+    }
+// internal function for buying tokens
+
+    function buy(address _investor, uint _tokenValue) internal {
+       require(statusICO == StatusICO.Started);
+       require(_tokenValue > 0);
+       require(SoldNoBonuses + _tokenValue <= Tokens_For_Sale);
+       token.mint(_investor, _tokenValue);
+
+       SoldNoBonuses = SoldNoBonuses.add(_tokenValue);
+    }
+
+
+
+
+//function to withdraw ETH from smart contract
+
+    function withdrawEther(uint256 _value) external managerOnly {
+       require(statusICO == StatusICO.Finished);
+       Company.transfer(_value);
+    }
+
 }
