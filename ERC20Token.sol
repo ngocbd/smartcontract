@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x1a49aa037a96c98cc4aa29719965500bb923f62d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0xC1987FbB2A109D3eae6A648ce03b66f3B3B30795
 */
 pragma solidity ^0.4.4;
 
@@ -110,9 +110,6 @@ contract ERC20Token is StandardToken {
     uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
     string public symbol;                 //An identifier: eg SBX
     string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
-    uint256 public unitsOneEthCanBuy;     // How many units of your coin can be bought by 1 ETH?
-    uint256 public totalEthInWei;         // WEI is the smallest unit of ETH (the equivalent of cent in USD or satoshi in BTC). We'll store the total ETH raised via our ICO here.  
-    address public fundsWallet;           // Where should the raised ETH go?
 
 //
 // CHANGE THESE VALUES FOR YOUR TOKEN
@@ -122,13 +119,11 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 10000000000000000000000;               // Give the creator all initial tokens (100000 for example)
-        totalSupply = 10000000000000000000000;                        // Update total supply (100000 for example)
-        name = "Tenteniy";                                   // Set the name for display purposes
+        balances[msg.sender] = 1000000000000000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 1000000000000000000000000000;                        // Update total supply (100000 for example)
+        name = "Dany";                                   // Set the name for display purposes
         decimals = 18;                            // Amount of decimals for display purposes
-        symbol = "TNY";                               // Set the symbol for display purposes
-        unitsOneEthCanBuy = 100;                                      // Set the price of your token for the ICO (CHANGE THIS)
-        fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
+        symbol = "DAN";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
