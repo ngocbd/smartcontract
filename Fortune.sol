@@ -1,24 +1,41 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fortune at 0xcf547d5909b3c39e98bb54107f3320f60df01609
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Fortune at 0xbce652a5065fca396ddedca3494eefb4b781c165
 */
+/*
+ * DO NOT EDIT! DO NOT EDIT! DO NOT EDIT!
+ *
+ * This is an automatically generated file. It will be overwritten.
+ *
+ * For the original source see
+ *    '/Users/swaldman/Dropbox/BaseFolders/development-why/gitproj/eth-fortune/src/main/solidity/Fortune.sol'
+ */
+
 pragma solidity ^0.4.10;
+
+
+
+
 
 contract Fortune {
   string[] private fortunes;
 
-  function Fortune( string initialFortune ) {
+  function Fortune( string initialFortune ) public {
     addFortune( initialFortune );
   }
 
-  function addFortune( string fortune ) {
+  function addFortune( string fortune ) public {
     fortunes.push( fortune );
+
+    FortuneAdded( msg.sender, fortune );
   }
 
-  function drawFortune() constant returns ( string fortune ) {
+  function drawFortune() public constant returns ( string fortune ) {
     fortune = fortunes[ shittyRandom() % fortunes.length ];
   }
 
   function shittyRandom() private constant returns ( uint number ) {
     number = uint( block.blockhash( block.number - 1 ) );  	   
   }
+
+  event FortuneAdded( address author, string fortune );	
 }
