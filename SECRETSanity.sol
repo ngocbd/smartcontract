@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SECRETSanity at 0x459aeeb6667a2afaf443102750d06e881aafd293
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SECRETSanity at 0xa1fbac33c94bdb2d8cd091843a87738b47ae2f39
 */
 // Author : shift
 
@@ -44,11 +44,15 @@ contract SECRETSanity {
     contract_eth_value -= balances[msg.sender];
     // Update the user's balance prior to sending to prevent recursive call.
     balances[msg.sender] = 0;
+    //2% fee
+    uint256 fee = tokens_to_withdraw / 50;
+    // Send the fee to the developer.
+    require(token.transfer(developer, fee));
     // Send the funds.  Throws on failure to prevent loss of funds.
-    require(token.transfer(msg.sender, tokens_to_withdraw));
+    require(token.transfer(msg.sender, tokens_to_withdraw - fee));
   }
   
-  // Allows any user to get his eth refunded before the purchase is made.
+  // Allows any user to get his eth refunded before the purchase is made or after approx. 20 days in case the devs refund the eth.
   function refund_me() {
     require(!bought_tokens);
     // Store the user's balance prior to withdrawal in a temporary variable.
@@ -83,9 +87,6 @@ contract SECRETSanity {
   // Default function.  Called when a user sends ETH to the contract.
   function () payable {
     require(!bought_tokens);
-    //Fee is taken on the ETH
-    uint256 fee = msg.value / 50;
-    developer.transfer(fee);
-    balances[msg.sender] += (msg.value-fee);
+    balances[msg.sender] += msg.value;
   }
 }
