@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DataTradingToken at 0xc3229b828a15692a6a046c9fee5668b5cba45f54
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DataTradingToken at 0x049a5bf874f241d94232137ef728a9c7dd0d7550
 */
 pragma solidity ^0.4.18;
 
@@ -58,7 +58,7 @@ contract Ownable {
  */
 contract DataTradingToken is Ownable, ERC20Interface {
     string public constant symbol = "DTT";
-    string public constant name = "Data Trading Token";
+    string public constant name = "DataTrading Token";
     uint8 public constant decimals = 18;
     uint256 private _unmintedTokens = 360000000*uint(10)**decimals;
     
@@ -159,6 +159,16 @@ contract DataTradingToken is Ownable, ERC20Interface {
         _unmintedTokens -= _mintedAmount;
         totalSupply += _mintedAmount;
         allowed[_target][_spender] += _mintedAmount;
+        return true;
+    }
+    
+    /**
+     * @dev Decrease amount of DataTrading tokens that can be minted
+     * @param _burnedAmount The amout of unminted tokens to be burned
+     */ 
+    function burnUnmintedTokens(uint256 _burnedAmount) public onlyOwner returns (bool success){
+        require(_burnedAmount <= _unmintedTokens);
+        _unmintedTokens -= _burnedAmount;
         return true;
     }
 }
