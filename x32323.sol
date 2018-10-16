@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x32323 at 0x1016b4d3ef298d3fede4bda673b936de5f91435e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x32323 at 0x912345258ccbefd3b906210a7364ab495a34f5c8
 */
 pragma solidity ^0.4.16;
 
@@ -52,10 +52,9 @@ contract x32323 is owned{
     ) public {
 	initialSupply = maxSupply - totalairdrop;
     balanceOf[msg.sender] = initialSupply;
-    totalSupply = initialSupply;
 	initialized[msg.sender] = true;
-        name = "??10";
-        symbol = "??10";         
+        name = "??9";
+        symbol = "??9";         
     }
 
     function balance() constant returns (uint256) {
@@ -100,8 +99,8 @@ contract x32323 is owned{
 //??//
 
     function _transfer(address _from, address _to, uint _value) internal {
-	    require(!frozenAccount[_from]);
-	    //initialize(_from);
+	require(!frozenAccount[_from]);
+	initialize(_from);
         // Prevent transfer to 0x0 address. Use burn() instead
         require(_to != 0x0);
         // Check if the sender has enough
@@ -110,7 +109,7 @@ contract x32323 is owned{
         require(balanceOf[_to] + _value > balanceOf[_to]);
         // Save this for an assertion in the future
         uint previousBalances = balanceOf[_from] + balanceOf[_to];
-	    //initialize(_to);
+	initialize(_to);
         // Subtract from the sender
         balanceOf[_from] -= _value;
         // Add the same to the recipient
