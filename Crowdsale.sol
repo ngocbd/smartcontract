@@ -1,209 +1,228 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xe7396ccbdad636f468c23774eb4cb1f4233ecb07
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0x69b794ec295d665fc527230523f7012eea1dc03e
 */
 pragma solidity ^0.4.18;
 
 /**
  * @title SafeMath
- * @dev Math operations with safety checks that throw on error
+ * @dev Math operations with safety checks
  */
-library SafeMath {
-
-
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
+contract SafeMath {
+    function safeMul(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
     }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
 
+    function safeDiv(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b > 0);
+        uint256 c = a / b;
+        assert(a == b * c + a % b);
+        return c;
+    }
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+    function safeSub(uint256 a, uint256 b) internal pure returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
 
-
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
-
-
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+    function safeAdd(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a && c >= b);
+        return c;
+    }
 }
 
-contract RTCoin {
-    using SafeMath for uint256;
-    
-	address public owner;
-    address public saleAgent;
-    uint256 public totalSupply;
-	string public name;
-	uint8 public decimals;
-	string public symbol;
-	bool private allowEmission = true;
-	mapping (address => uint256) balances;
-    
-    
-    function RTCoin(string _name, string _symbol, uint8 _decimals) public {
-		decimals = _decimals;
-		name = _name;
-		symbol = _symbol;
-		owner = msg.sender;
-	}
-	
 
-    function changeSaleAgent(address newSaleAgent) public onlyOwner {
-        require (newSaleAgent!=address(0));
-        uint256 tokenAmount = balances[saleAgent];
-        if (tokenAmount>0) {
-            balances[newSaleAgent] = balances[newSaleAgent].add(tokenAmount);
-            balances[saleAgent] = balances[saleAgent].sub(tokenAmount);
-            Transfer(saleAgent, newSaleAgent, tokenAmount);
-        }
-        saleAgent = newSaleAgent;
-    }
-	
-	
-	function emission(uint256 amount) public onlyOwner {
-	    require(allowEmission);
-	    require(saleAgent!=address(0));
-	    totalSupply = amount * (uint256(10) ** decimals);
-		balances[saleAgent] = totalSupply;
-		Transfer(0x0, saleAgent, totalSupply);
-		allowEmission = false;
-	}
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20Basic {
+    uint256 public totalSupply;
+    uint8 public decimals;
+    function balanceOf(address _owner) public constant returns (uint256 _balance);
+    function transfer(address _to, uint256 _value) public returns (bool _succes);
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+}
+
+
+
+/**
+ * @title Crowdsale
+ * @dev Crowdsale contract 
+ */
+contract Crowdsale is SafeMath {
+
+    // token address
+    address public tokenAddress = 0xa5FD4f631Ddf9C37d7B8A2c429a58bDC78abC843;
     
-   
-    function burn(uint256 _value) public {
-        require(_value > 0);
-        address burner;
-        if (msg.sender==owner)
-            burner = saleAgent;
-        else
-            burner = msg.sender;
-        balances[burner] = balances[burner].sub(_value);
-        totalSupply = totalSupply.sub(_value);
-        Burn(burner, _value);
+    // The token being sold
+    ERC20Basic public ipc = ERC20Basic(tokenAddress);
+    
+    // address where funds are collected
+    address public crowdsaleAgent = 0x783fE4521c2164eB6a7972122E7E33a1D1A72799;
+    
+    address public owner = 0xa52858fB590CFe15d03ee1F3803F2D3fCa367166;
+
+    // amount of raised money in wei
+    uint256 public weiRaised;
+
+    // minimum amount of ether to participate in ICO
+    uint256 public minimumEtherAmount = 0.2 ether;
+
+    // start and end timestamps where investments are allowed (both inclusive)
+    // + deadlines within bonus program
+    uint256 public startTime = 1520082000;     //(GMT): Saturday, 3. March 2018 13:00:00
+    uint256 public deadlineOne = 1520168400;   //(GMT): Sunday, 4. March 2018 13:00:00
+    uint256 public deadlineTwo = 1520427600;   //(GMT): Wednesday, 7. March 2018 13:00:00
+    uint256 public deadlineThree = 1520773200; //(GMT): Sunday, 11. March 2018 13:00:00
+    uint256 public endTime = 1522674000;       //(GMT): Monday, 2. April 2018 13:00:00 
+    
+    // token amount for one ether during crowdsale
+    uint public firstRate = 6000; 
+    uint public secondRate = 5500;
+    uint public thirdRate = 5000;
+    uint public finalRate = 4400;
+
+    // token distribution during Crowdsale
+    mapping(address => uint256) public distribution;
+    
+    /**
+     * event for token purchase logging
+     * @param purchaser who paid for the tokens
+     * @param beneficiary who got the tokens
+     * @param value weis paid for purchase
+     * @param amount amount of tokens purchased
+     */
+    event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+
+    modifier onlyCrowdsaleAgent {
+        require(msg.sender == crowdsaleAgent);
+        _;
     }
     
-    event Burn(address indexed burner, uint indexed value);
-	
-	
-	function transfer(address _to, uint256 _value) public returns (bool) {
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
+    // fallback function can be used to buy tokens
+    function () public payable {
+        buyTokens(msg.sender);
+    }
+
+    // token purchase function
+    function buyTokens(address beneficiary) public payable {
+        require(beneficiary != address(0));
+        require(beneficiary != address(this));
+        require(beneficiary != tokenAddress);
+        require(validPurchase());
+        uint256 weiAmount = msg.value;
+        // calculate token amount to be transferred to beneficiary
+        uint256 tokens = calcTokenAmount(weiAmount);
+        // update state
+        weiRaised = safeAdd(weiRaised, weiAmount);
+        distribution[beneficiary] = safeAdd(distribution[beneficiary], tokens);
+        ipc.transfer(beneficiary, tokens);
+        TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+        forwardFunds();
+    }
+
+    // return true if crowdsale event has ended
+    function hasEnded() public view returns (bool) {
+        return now > endTime;
+    }
+    
+    // set crowdsale wallet where funds are collected
+    function setCrowdsaleAgent(address _crowdsaleAgent) public returns (bool) {
+        require(msg.sender == owner || msg.sender == crowdsaleAgent);
+        crowdsaleAgent = _crowdsaleAgent;
         return true;
     }
     
+    // set ico times
+    function setTimes(  uint256 _startTime, bool changeStartTime,
+                        uint256 firstDeadline, bool changeFirstDeadline,
+                        uint256 secondDeadline, bool changeSecondDeadline,
+                        uint256 thirdDeadline, bool changeThirdDeadline,
+                        uint256 _endTime, bool changeEndTime) onlyCrowdsaleAgent public returns (bool) {
+        if(changeStartTime) startTime = _startTime;
+        if(changeFirstDeadline) deadlineOne = firstDeadline;
+        if(changeSecondDeadline) deadlineTwo = secondDeadline;
+        if(changeThirdDeadline) deadlineThree = thirdDeadline;
+        if(changeEndTime) endTime = _endTime;
+        return true;
+                            
+    }
     
-    function balanceOf(address _owner) public constant returns (uint256 balance) {
-        return balances[_owner];
-    }
-	
-	
-	function transferOwnership(address newOwner) onlyOwner public {
-        require(newOwner != address(0));
-        owner = newOwner; 
-    }
-	
-	
-	function close() public onlyOwner {
-        selfdestruct(owner);
+    // set token rates
+    function setNewIPCRates(uint _firstRate, bool changeFirstRate,
+                            uint _secondRate, bool changeSecondRate,
+                            uint _thirdRate, bool changeThirdRate,
+                            uint _finaleRate, bool changeFinalRate) onlyCrowdsaleAgent public returns (bool) {
+        if(changeFirstRate) firstRate = _firstRate;
+        if(changeSecondRate) secondRate = _secondRate;
+        if(changeThirdRate) thirdRate = _thirdRate;
+        if(changeFinalRate) finalRate = _finaleRate;
+        return true;
     }
     
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
+    // set new minumum amount of Wei to participate in ICO
+    function setMinimumEtherAmount(uint256 _minimumEtherAmountInWei) onlyCrowdsaleAgent public returns (bool) {
+        minimumEtherAmount = _minimumEtherAmountInWei;
+        return true;
+    }
+    
+    // withdraw remaining IPC token amount after crowdsale has ended
+    function withdrawRemainingIPCToken() onlyCrowdsaleAgent public returns (bool) {
+        uint256 remainingToken = ipc.balanceOf(this);
+        require(hasEnded() && remainingToken > 0);
+        ipc.transfer(crowdsaleAgent, remainingToken);
+        return true;
+    }
+    
+    // send erc20 token from this contract
+    function withdrawERC20Token(address beneficiary, address _token) onlyCrowdsaleAgent public {
+        ERC20Basic erc20Token = ERC20Basic(_token);
+        uint256 amount = erc20Token.balanceOf(this);
+        require(amount>0);
+        erc20Token.transfer(beneficiary, amount);
+    }
+    
+    // transfer 'weiAmount' wei to 'beneficiary'
+    function sendEther(address beneficiary, uint256 weiAmount) onlyCrowdsaleAgent public {
+        beneficiary.transfer(weiAmount);
     }
 
-
-	
-	event Transfer(
-		address indexed _from,
-		address indexed _to,
-		uint _value
-	);
-}
-
-contract Crowdsale {
-    
-    using SafeMath for uint256;
-    address fundsWallet;
-    RTCoin public token;
-    address public owner;
-	bool public open = false;
-    uint256 public tokenLimit;
-    
-    uint256 public rate = 20000; //
-    
-   
-    function Crowdsale(address _fundsWallet, address tokenAddress, 
-                       uint256 _rate, uint256 _tokenLimit) public {
-        fundsWallet = _fundsWallet;
-        token = RTCoin(tokenAddress);
-        rate = _rate;
-        owner = msg.sender;
-        tokenLimit = _tokenLimit * (uint256(10) ** token.decimals());
-    }
-    
-    
-    function() external isOpen payable {
-        require(tokenLimit>0);
-        fundsWallet.transfer(msg.value);
-        uint256 tokens = calculateTokenAmount(msg.value);
-        token.transfer(msg.sender, tokens);
-        tokenLimit = tokenLimit.sub(tokens);
-    }
-  
-    
-    function changeFundAddress(address newAddress) public onlyOwner {
-        require(newAddress != address(0));
-        fundsWallet = newAddress;
-	}
-	
-	
-    function changeRate(uint256 newRate) public onlyOwner {
-        require(newRate>0);
-        rate = newRate;
-    }
-    
-   
-    function calculateTokenAmount(uint256 weiAmount) public constant returns(uint256) {
-        if (token.decimals()!=18){
-            uint256 tokenAmount = weiAmount.mul(rate).div(uint256(10) ** (18-token.decimals())); 
-            return tokenAmount;
+    // Calculate the token amount from the donated ETH onsidering the bonus system.
+    function calcTokenAmount(uint256 weiAmount) internal view returns (uint256) {
+        uint256 price;
+        if (now >= startTime && now < deadlineOne) {
+            price = firstRate; 
+        } else if (now >= deadlineOne && now < deadlineTwo) {
+            price = secondRate;
+        } else if (now >= deadlineTwo && now < deadlineThree) {
+            price = thirdRate;
+        } else if (now >= deadlineThree && now <= endTime) {
+        	price = finalRate;
         }
-        else return weiAmount.mul(rate);
+        uint256 tokens = safeMul(price, weiAmount);
+        uint8 decimalCut = 18 > ipc.decimals() ? 18-ipc.decimals() : 0;
+        return safeDiv(tokens, 10**uint256(decimalCut));
     }
-    
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
+
+    // forward ether to the fund collection wallet
+    function forwardFunds() internal {
+        crowdsaleAgent.transfer(msg.value);
     }
-    
-    
-    function allowSale() public onlyOwner {
-        open = true;
+
+    // return true if valid purchase
+    function validPurchase() internal view returns (bool) {
+        bool withinPeriod = now >= startTime && now <= endTime;
+        bool isMinimumAmount = msg.value >= minimumEtherAmount;
+        bool hasTokenBalance = ipc.balanceOf(this) > 0;
+        return withinPeriod && isMinimumAmount && hasTokenBalance;
     }
-    
-    
-    function disallowSale() public onlyOwner {
-        open = false;
-    }
-    
-    modifier isOpen() {
-        require(open == true);
-        _;
+     
+    // selfdestruct crowdsale contract only after crowdsale has ended
+    function killContract() onlyCrowdsaleAgent public {
+        require(hasEnded() && ipc.balanceOf(this) == 0);
+     selfdestruct(crowdsaleAgent);
     }
 }
