@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherZaarFactory at 0xa2d4b157dfe6f00817fdc071bf7926e0710024a1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EtherZaarFactory at 0xbe4eecbc7afb5ddba40dd3b327d5bf5c33b62a7e
 */
 pragma solidity ^0.4.18;
 
@@ -80,6 +80,7 @@ contract ERC20 is ERC20Interface {
         return allowed[_owner][_spender];
     }   
 }
+
 contract EtherZaarFactory {
 
     function EtherZaarFactory() public {
