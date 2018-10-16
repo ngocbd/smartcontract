@@ -1,130 +1,63 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedTokenCappedCrowdsale at 0x36e168966f61b674a3073e1d9e159a56880c7059
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MintedTokenCappedCrowdsale at 0x4f40cbd1fde9214b3bcbdc0359d132e6458f5e20
 */
 /**
- *  Streamr Network AG crowd contribution
- *  By contributing ETH to this smart contract you agree to the following terms and conditions:
- *  https://s3.amazonaws.com/streamr-public/Governance+Terms+-+Crowdcontribution.pdf
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
-
 
 
 /**
- * Math operations with safety checks
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
-contract SafeMath {
-  function safeMul(uint a, uint b) internal returns (uint) {
+
+
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
+
+
+/**
+ * Safe unsigned safe math.
+ *
+ * https://blog.aragon.one/library-driven-development-in-solidity-2bebcaf88736#.750gwtwli
+ *
+ * Originally from https://raw.githubusercontent.com/AragonOne/zeppelin-solidity/master/contracts/SafeMathLib.sol
+ *
+ * Maintained here until merged to mainline zeppelin-solidity.
+ *
+ */
+library SafeMathLib {
+
+  function times(uint a, uint b) returns (uint) {
     uint c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
 
-  function safeDiv(uint a, uint b) internal returns (uint) {
-    assert(b > 0);
-    uint c = a / b;
-    assert(a == b * c + a % b);
-    return c;
-  }
-
-  function safeSub(uint a, uint b) internal returns (uint) {
+  function minus(uint a, uint b) returns (uint) {
     assert(b <= a);
     return a - b;
   }
 
-  function safeAdd(uint a, uint b) internal returns (uint) {
+  function plus(uint a, uint b) returns (uint) {
     uint c = a + b;
-    assert(c>=a && c>=b);
+    assert(c>=a);
     return c;
   }
 
-  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a >= b ? a : b;
-  }
-
-  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a < b ? a : b;
-  }
-
-  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a >= b ? a : b;
-  }
-
-  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a < b ? a : b;
-  }
-
-  function assert(bool assertion) internal {
-    if (!assertion) {
-      throw;
-    }
-  }
 }
 
-
-
-
-/*
- * Ownable
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
  *
- * Base contract with an owner.
- * Provides onlyOwner modifier, which prevents function from running if it is called by anyone other than the owner.
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
-contract Ownable {
-  address public owner;
-
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-  modifier onlyOwner() {
-    if (msg.sender != owner) {
-      throw;
-    }
-    _;
-  }
-
-  function transferOwnership(address newOwner) onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
-    }
-  }
-
-}
-
-
-/*
- * Haltable
- *
- * Abstract contract that allows children to implement an
- * emergency stop mechanism. Differs from Pausable by causing a throw when in halt mode.
- *
- *
- * Originally envisioned in FirstBlood ICO contract.
- */
-contract Haltable is Ownable {
-  bool public halted;
-
-  modifier stopInEmergency {
-    if (halted) throw;
-    _;
-  }
-
-  modifier onlyInEmergency {
-    if (!halted) throw;
-    _;
-  }
-
-  // called by the owner on emergency, triggers stopped state
-  function halt() external onlyOwner {
-    halted = true;
-  }
-
-  // called by the owner on end of emergency, returns to normal state
-  function unhalt() external onlyOwner onlyInEmergency {
-    halted = false;
-  }
-
-}
 
 
 /**
@@ -146,18 +79,33 @@ contract PricingStrategy {
   }
 
   /**
+   * @dev Pricing tells if this is a presale purchase or not.
+     @param purchaser Address of the purchaser
+     @return False by default, true if a presale purchaser
+   */
+  function isPresalePurchase(address purchaser) public constant returns (bool) {
+    return false;
+  }
+
+  /**
    * When somebody tries to buy tokens for X eth, calculate how many tokens they get.
    *
    *
    * @param value - What is the value of the transaction send in as wei
    * @param tokensSold - how much tokens have been sold this far
-   * @param weiRaised - how much money has been raised this far
+   * @param weiRaised - how much money has been raised this far in the main token sale - this number excludes presale
    * @param msgSender - who is the investor of this transaction
    * @param decimals - how many decimal units the token has
    * @return Amount of tokens the investor receives
    */
   function calculatePrice(uint value, uint weiRaised, uint tokensSold, address msgSender, uint decimals) public constant returns (uint tokenAmount);
 }
+
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
 
 
 /**
@@ -185,23 +133,40 @@ contract FinalizeAgent {
 
 }
 
-
-
-
-/*
- * ERC20 interface
- * see https://github.com/ethereum/EIPs/issues/20
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
-contract ERC20 {
-  uint public totalSupply;
-  function balanceOf(address who) constant returns (uint);
-  function allowance(address owner, address spender) constant returns (uint);
 
-  function transfer(address to, uint value) returns (bool ok);
-  function transferFrom(address from, address to, uint value) returns (bool ok);
-  function approve(address spender, uint value) returns (bool ok);
-  event Transfer(address indexed from, address indexed to, uint value);
-  event Approval(address indexed owner, address indexed spender, uint value);
+
+
+
+
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) constant returns (uint256);
+  function transfer(address to, uint256 value) returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) returns (bool);
+  function approve(address spender, uint256 value) returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 
@@ -214,25 +179,121 @@ contract FractionalERC20 is ERC20 {
 
 }
 
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
+
 
 /**
- * Abstract base contract for token sales.
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
  *
- * Handle
- * - start and end dates
- * - accepting investments
- * - minimum funding goal and refund
- * - various statistics during the crowdfund
- * - different pricing strategies
- * - different investment policies (require server side customer id, allow only whitelisted addresses)
- *
- * Changes:
- * - Whitelisting also for the State.Funding phase, with individual limits
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
  */
-contract Crowdsale is Haltable, SafeMath {
+
+
+
+
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner {
+    require(newOwner != address(0));      
+    owner = newOwner;
+  }
+
+}
+
+
+/*
+ * Haltable
+ *
+ * Abstract contract that allows children to implement an
+ * emergency stop mechanism. Differs from Pausable by causing a throw when in halt mode.
+ *
+ *
+ * Originally envisioned in FirstBlood ICO contract.
+ */
+contract Haltable is Ownable {
+  bool public halted;
+
+  modifier stopInEmergency {
+    if (halted) throw;
+    _;
+  }
+
+  modifier stopNonOwnersInEmergency {
+    if (halted && msg.sender != owner) throw;
+    _;
+  }
+
+  modifier onlyInEmergency {
+    if (!halted) throw;
+    _;
+  }
+
+  // called by the owner on emergency, triggers stopped state
+  function halt() external onlyOwner {
+    halted = true;
+  }
+
+  // called by the owner on end of emergency, returns to normal state
+  function unhalt() external onlyOwner onlyInEmergency {
+    halted = false;
+  }
+
+}
+
+
+
+
+
+
+
+/**
+ * Crowdsale state machine without buy functionality.
+ *
+ * Implements basic state machine logic, but leaves out all buy functions,
+ * so that subclasses can implement their own buying logic.
+ *
+ *
+ * For the default buy() implementation see Crowdsale.sol.
+ */
+contract CrowdsaleBase is Haltable {
 
   /* Max investment count when we are still allowed to change the multisig address */
   uint public MAX_INVESTMENTS_BEFORE_MULTISIG_CHANGE = 5;
+
+  using SafeMathLib for uint;
 
   /* The token we are selling */
   FractionalERC20 public token;
@@ -249,11 +310,8 @@ contract Crowdsale is Haltable, SafeMath {
   /* if the funding goal is not reached, investors may withdraw their funds */
   uint public minimumFundingGoal;
 
-  /* the UNIX timestamp start date of the crowdsale; CHANGE: small-cap limits apply */
+  /* the UNIX timestamp start date of the crowdsale */
   uint public startsAt;
-
-  /* CHANGE: Seconds after start of the crowdsale when the large-cap limit applies (added on top of small-cap limit) */
-  uint public largeCapDelay = 24 * 60 * 60;
 
   /* the UNIX timestamp end date of the crowdsale */
   uint public endsAt;
@@ -263,6 +321,9 @@ contract Crowdsale is Haltable, SafeMath {
 
   /* How many wei of funding we have raised */
   uint public weiRaised = 0;
+
+  /* Calculate incoming funds from presale contracts and addresses */
+  uint public presaleWeiRaised = 0;
 
   /* How many distinct addresses have invested */
   uint public investorCount = 0;
@@ -276,35 +337,14 @@ contract Crowdsale is Haltable, SafeMath {
   /* Has this crowdsale been finalized */
   bool public finalized;
 
-  /* Do we need to have unique contributor id for each customer */
-  bool public requireCustomerId = false;
-
-  /**
-    * Do we verify that contributor has been cleared on the server side (accredited investors only).
-    * This method was first used in FirstBlood crowdsale to ensure all contributors have accepted terms on sale (on the web).
-    */
-  bool public requiredSignedAddress = false;
-
-  /* Server side address that signed allowed contributors (Ethereum addresses) that can participate the crowdsale */
-  address public signerAddress;
-
   /** How much ETH each address has invested to this crowdsale */
   mapping (address => uint256) public investedAmountOf;
 
   /** How much tokens this crowdsale has credited for each investor address */
   mapping (address => uint256) public tokenAmountOf;
 
-  /** Addresses that are allowed to invest, and their individual limit (in wei) */
-  mapping (address => uint256) public smallCapLimitOf;
-
-  /** Addresses that are allowed to invest after a largeCapDelay, and their individual large-cap limit (in wei, possibly in addition to smallCapLimitOf their account) */
-  mapping (address => uint256) public largeCapLimitOf;
-
   /** Addresses that are allowed to invest even before ICO offical opens. For testing, for ICO partners, etc. */
   mapping (address => bool) public earlyParticipantWhitelist;
-
-  /** Addresses that are allowed to add participants to the LimitOf whitelists */
-  mapping (address => bool) public isWhitelistAgent;
 
   /** This is for manul testing for the interaction from owner wallet. You can set it to any value and inspect this in blockchain explorer to see that crowdsale interaction works. */
   uint public ownerTestValue;
@@ -328,19 +368,17 @@ contract Crowdsale is Haltable, SafeMath {
   event Refund(address investor, uint weiAmount);
 
   // The rules were changed what kind of investments we accept
-  event InvestmentPolicyChanged(bool requireCustomerId, bool requiredSignedAddress, address signerAddress);
+  event InvestmentPolicyChanged(bool newRequireCustomerId, bool newRequiredSignedAddress, address newSignerAddress);
 
-  // Whitelist status and/or wei limit changed
-  event WhitelistedEarlyParticipant(address addr, bool status);
-  event WhitelistedSmallCap(address addr, uint256 limit);
-  event WhitelistedLargeCap(address addr, uint256 limit);
+  // Address early participation whitelist status changed
+  event Whitelisted(address addr, bool status);
 
-  // Crowdsale start/end time has been changed
-  event EndsAtChanged(uint endsAt);
-  event StartsAtChanged(uint startsAt);
-  event LargeCapStartTimeChanged(uint startsAt);
+  // Crowdsale end time has been changed
+  event EndsAtChanged(uint newEndsAt);
 
-  function Crowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal) {
+  State public testState;
+
+  function CrowdsaleBase(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal) {
 
     owner = msg.sender;
 
@@ -370,19 +408,15 @@ contract Crowdsale is Haltable, SafeMath {
         throw;
     }
 
-    // owner and multisig are able to whitelist participants by default
-    isWhitelistAgent[owner] = true;
-    isWhitelistAgent[multisigWallet] = true;
-
     // Minimum funding goal can be zero
     minimumFundingGoal = _minimumFundingGoal;
   }
 
   /**
-   * Receiving money is ok, because that's what this contract is for. Sending money to Crowdsale is equivalent to buy().
+   * Don't expect to just send in money and get tokens.
    */
   function() payable {
-    invest(msg.sender);
+    throw;
   }
 
   /**
@@ -392,160 +426,63 @@ contract Crowdsale is Haltable, SafeMath {
    * We must have not pressed the emergency brake.
    *
    * @param receiver The Ethereum address who receives the tokens
-   * @param customerId (optional) UUID v4 to track the successful payments on the server side
+   * @param customerId (optional) UUID v4 to track the successful payments on the server side'
    *
+   * @return tokenAmount How mony tokens were bought
    */
-  function investInternal(address receiver, uint128 customerId) stopInEmergency private {
+  function investInternal(address receiver, uint128 customerId) stopInEmergency internal returns(uint tokensBought) {
 
     // Determine if it's a good time to accept investment from this participant
-    State state = getState();
-    if (state == State.Funding) {
-      // Retail participants can only come in when the crowdsale is running
-    } else if (state == State.PreFunding) {
+    if(getState() == State.PreFunding) {
       // Are we whitelisted for early deposit
-      if (!earlyParticipantWhitelist[receiver]) {
+      if(!earlyParticipantWhitelist[receiver]) {
         throw;
       }
+    } else if(getState() == State.Funding) {
+      // Retail participants can only come in when the crowdsale is running
+      // pass
     } else {
       // Unwanted state
       throw;
     }
 
     uint weiAmount = msg.value;
-    uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised, tokensSold, msg.sender, token.decimals());
 
-    if (tokenAmount == 0) {
-      // Dust transaction
-      throw;
-    }
+    // Account presale sales separately, so that they do not count against pricing tranches
+    uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised - presaleWeiRaised, tokensSold, msg.sender, token.decimals());
 
-    if (investedAmountOf[receiver] == 0) {
+    // Dust transaction
+    require(tokenAmount != 0);
+
+    if(investedAmountOf[receiver] == 0) {
        // A new investor
        investorCount++;
     }
 
     // Update investor
-    investedAmountOf[receiver] = safeAdd(investedAmountOf[receiver], weiAmount);
-    tokenAmountOf[receiver] = safeAdd(tokenAmountOf[receiver], tokenAmount);
-
-    // Check individual token limit (also acts as crowdsale whitelist)
-    uint256 personalWeiLimit = smallCapLimitOf[receiver];
-    if (block.timestamp > startsAt + largeCapDelay) {
-      personalWeiLimit = safeAdd(personalWeiLimit, largeCapLimitOf[receiver]);
-    }
-    if (investedAmountOf[receiver] > personalWeiLimit) {
-      throw;
-    }
+    investedAmountOf[receiver] = investedAmountOf[receiver].plus(weiAmount);
+    tokenAmountOf[receiver] = tokenAmountOf[receiver].plus(tokenAmount);
 
     // Update totals
-    weiRaised = safeAdd(weiRaised, weiAmount);
-    tokensSold = safeAdd(tokensSold, tokenAmount);
+    weiRaised = weiRaised.plus(weiAmount);
+    tokensSold = tokensSold.plus(tokenAmount);
+
+    if(pricingStrategy.isPresalePurchase(receiver)) {
+        presaleWeiRaised = presaleWeiRaised.plus(weiAmount);
+    }
 
     // Check that we did not bust the cap
-    if (isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold)) {
-      throw;
-    }
+    require(!isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold));
 
     assignTokens(receiver, tokenAmount);
 
-    // Pocket the money
-    if (!multisigWallet.send(weiAmount)) throw;
+    // Pocket the money, or fail the crowdsale if we for some reason cannot send the money to our multisig
+    if(!multisigWallet.send(weiAmount)) throw;
 
     // Tell us invest was success
     Invested(receiver, weiAmount, tokenAmount, customerId);
-  }
 
-  /**
-   * Preallocate tokens for the early investors.
-   *
-   * Preallocated tokens have been sold before the actual crowdsale opens.
-   * This function mints the tokens and moves the crowdsale needle.
-   *
-   * Investor count is not handled; it is assumed this goes for multiple investors
-   * and the token distribution happens outside the smart contract flow.
-   *
-   * No money is exchanged, as the crowdsale team already have received the payment.
-   *
-   * @param tokenAmount Tokens (in "atomic units") allocated to the contributor
-   * @param weiAmount Contribution in wei
-   *
-   */
-  function preallocate(address receiver, uint tokenAmount, uint weiAmount) public onlyOwner {
-    if (getState() != State.PreFunding) { throw; }
-
-    // Free pre-allocations don't count as "sold tokens"
-    if (weiAmount == 0) {
-      tokenAmountOf[receiver] = safeAdd(tokenAmountOf[receiver], tokenAmount);
-      assignTokens(receiver, tokenAmount);
-    } else {
-
-      // new investor
-      if (investedAmountOf[receiver] == 0) {
-        investorCount++;
-      }
-
-      weiRaised = safeAdd(weiRaised, weiAmount);
-      tokensSold = safeAdd(tokensSold, tokenAmount);
-      investedAmountOf[receiver] = safeAdd(investedAmountOf[receiver], weiAmount);
-      tokenAmountOf[receiver] = safeAdd(tokenAmountOf[receiver], tokenAmount);
-
-      assignTokens(receiver, tokenAmount);
-
-      Invested(receiver, weiAmount, tokenAmount, 0);
-    }
-  }
-
-  /**
-   * Allow anonymous contributions to this crowdsale.
-   */
-  function investWithSignedAddress(address addr, uint128 customerId, uint8 v, bytes32 r, bytes32 s) public payable {
-     bytes32 hash = sha256(addr);
-     if (ecrecover(hash, v, r, s) != signerAddress) throw;
-     if(customerId == 0) throw;  // UUIDv4 sanity check
-     investInternal(addr, customerId);
-  }
-
-  /**
-   * Track who is the customer making the payment so we can send thank you email.
-   */
-  function investWithCustomerId(address addr, uint128 customerId) public payable {
-    if(requiredSignedAddress) throw; // Crowdsale allows only server-side signed participants
-    if(customerId == 0) throw;  // UUIDv4 sanity check
-    investInternal(addr, customerId);
-  }
-
-  /**
-   * Allow anonymous contributions to this crowdsale.
-   */
-  function invest(address addr) public payable {
-    if(requireCustomerId) throw; // Crowdsale needs to track partipants for thank you email
-    if(requiredSignedAddress) throw; // Crowdsale allows only server-side signed participants
-    investInternal(addr, 0);
-  }
-
-  /**
-   * Invest to tokens, recognize the payer and clear his address.
-   *
-   */
-  function buyWithSignedAddress(uint128 customerId, uint8 v, bytes32 r, bytes32 s) public payable {
-    investWithSignedAddress(msg.sender, customerId, v, r, s);
-  }
-
-  /**
-   * Invest to tokens, recognize the payer.
-   *
-   */
-  function buyWithCustomerId(uint128 customerId) public payable {
-    investWithCustomerId(msg.sender, customerId);
-  }
-
-  /**
-   * The basic entry point to participate the crowdsale process.
-   *
-   * Pay for funding, get invested tokens back in the sender address.
-   */
-  function buy() public payable {
-    invest(msg.sender);
+    return tokenAmount;
   }
 
   /**
@@ -583,131 +520,6 @@ contract Crowdsale is Haltable, SafeMath {
   }
 
   /**
-   * Set policy do we need to have server-side customer ids for the investments.
-   *
-   */
-  function setRequireCustomerId(bool value) onlyOwner {
-    requireCustomerId = value;
-    InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, signerAddress);
-  }
-
-  /**
-   * Set policy if all investors must be cleared on the server side first.
-   *
-   * This is e.g. for the accredited investor clearing.
-   *
-   */
-  function setRequireSignedAddress(bool value, address _signerAddress) onlyOwner {
-    requiredSignedAddress = value;
-    signerAddress = _signerAddress;
-    InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, signerAddress);
-  }
-
-  /**
-   * Allow addresses to do early participation.
-   */
-  function setEarlyParticipantWhitelist(address addr, bool status) onlyOwner {
-    earlyParticipantWhitelist[addr] = status;
-    WhitelistedEarlyParticipant(addr, status);
-  }
-
-  /**
-   * Change to original: require all participants to be whitelisted, with individual token limits
-   */
-  function setSmallCapWhitelistParticipant(address addr, uint256 weiLimit) {
-    if (isWhitelistAgent[msg.sender]) {
-      smallCapLimitOf[addr] = weiLimit;
-      WhitelistedSmallCap(addr, weiLimit);
-    }
-  }
-  function setSmallCapWhitelistParticipants(address[] addrs, uint256 weiLimit) {
-    if (isWhitelistAgent[msg.sender]) {
-      for (uint i = 0; i < addrs.length; i++) {
-        var addr = addrs[i];
-        smallCapLimitOf[addr] = weiLimit;
-        WhitelistedSmallCap(addr, weiLimit);
-      }
-    }
-  }
-  function setSmallCapWhitelistParticipants(address[] addrs, uint256[] weiLimits) {
-    if (addrs.length != weiLimits.length) {
-      throw;
-    }
-    if (isWhitelistAgent[msg.sender]) {
-      for (uint i = 0; i < addrs.length; i++) {
-        var addr = addrs[i];
-        var weiLimit = weiLimits[i];
-        smallCapLimitOf[addr] = weiLimit;
-        WhitelistedSmallCap(addr, weiLimit);
-      }
-    }
-  }
-
-  function setLargeCapWhitelistParticipant(address addr, uint256 weiLimit) {
-    if (isWhitelistAgent[msg.sender]) {
-      largeCapLimitOf[addr] = weiLimit;
-      WhitelistedLargeCap(addr, weiLimit);
-    }
-  }
-  function setLargeCapWhitelistParticipants(address[] addrs, uint256 weiLimit) {
-    if (isWhitelistAgent[msg.sender]) {
-      for (uint i = 0; i < addrs.length; i++) {
-        var addr = addrs[i];
-        largeCapLimitOf[addr] = weiLimit;
-        WhitelistedLargeCap(addr, weiLimit);
-      }
-    }
-  }
-  function setLargeCapWhitelistParticipants(address[] addrs, uint256[] weiLimits) {
-    if (addrs.length != weiLimits.length) {
-      throw;
-    }
-    if (isWhitelistAgent[msg.sender]) {
-      for (uint i = 0; i < addrs.length; i++) {
-        var addr = addrs[i];
-        var weiLimit = weiLimits[i];
-        largeCapLimitOf[addr] = weiLimit;
-        WhitelistedLargeCap(addr, weiLimit);
-      }
-    }
-  }
-
-  function setWhitelistAgent(address addr, bool status) onlyOwner {
-    isWhitelistAgent[addr] = status;
-  }
-
-  /**
-   * Allow crowdsale owner to postpone the start of the crowdsale
-   */
-  function setStartsAt(uint time) onlyOwner {
-
-    // Don't put into past
-    if (time < now) { throw; }
-
-    // Change endsAt first...
-    if (time > endsAt) { throw; }
-
-    // If crowdsale has already started, the start can't be postponed anymore
-    if (startsAt < now) { throw; }
-
-    startsAt = time;
-    StartsAtChanged(endsAt);
-  }
-
-  function setLargeCapDelay(uint secs) onlyOwner {
-    if (secs < 0) { throw; }
-
-    // Change endsAt first...
-    if (startsAt + secs > endsAt) { throw; }
-
-    // If large-cap sale has already started, the start can't be postponed anymore
-    if (startsAt + largeCapDelay < now) { throw; }
-
-    largeCapDelay = secs;
-    LargeCapStartTimeChanged(startsAt + largeCapDelay);
-  }
-
-  /**
    * Allow crowdsale owner to close early or extend the crowdsale.
    *
    * This is useful e.g. for a manual soft cap implementation:
@@ -719,8 +531,12 @@ contract Crowdsale is Haltable, SafeMath {
    */
   function setEndsAt(uint time) onlyOwner {
 
-    if (now > time) {
+    if(now > time) {
       throw; // Don't change past
+    }
+
+    if(startsAt > time) {
+      throw; // Prevent human mistakes
     }
 
     endsAt = time;
@@ -765,7 +581,7 @@ contract Crowdsale is Haltable, SafeMath {
    */
   function loadRefund() public payable inState(State.Failure) {
     if(msg.value == 0) throw;
-    loadedRefund = safeAdd(loadedRefund, msg.value);
+    loadedRefund = loadedRefund.plus(msg.value);
   }
 
   /**
@@ -778,7 +594,7 @@ contract Crowdsale is Haltable, SafeMath {
     uint256 weiValue = investedAmountOf[msg.sender];
     if (weiValue == 0) throw;
     investedAmountOf[msg.sender] = 0;
-    weiRefunded = safeAdd(weiRefunded, weiValue);
+    weiRefunded = weiRefunded.plus(weiValue);
     Refund(msg.sender, weiValue);
     if (!msg.sender.send(weiValue)) throw;
   }
@@ -826,6 +642,17 @@ contract Crowdsale is Haltable, SafeMath {
     ownerTestValue = val;
   }
 
+  /**
+   * Allow addresses to do early participation.
+   *
+   * TODO: Fix spelling error in the name
+   */
+  function setEarlyParicipantWhitelist(address addr, bool status) onlyOwner {
+    earlyParticipantWhitelist[addr] = status;
+    Whitelisted(addr, status);
+  }
+
+
   /** Interface marker. */
   function isCrowdsale() public constant returns (bool) {
     return true;
@@ -871,8 +698,173 @@ contract Crowdsale is Haltable, SafeMath {
   /**
    * Create new tokens or transfer issued tokens to the investor depending on the cap model.
    */
-  function assignTokens(address receiver, uint tokenAmount) private;
+  function assignTokens(address receiver, uint tokenAmount) internal;
 }
+
+
+
+/**
+ * Abstract base contract for token sales with the default buy entry points.
+ *
+ * Handle
+ * - start and end dates
+ * - accepting investments
+ * - minimum funding goal and refund
+ * - various statistics during the crowdfund
+ * - different pricing strategies
+ * - different investment policies (require server side customer id, allow only whitelisted addresses)
+ *
+ * Does not Handle
+ *
+ * - Token allocation (minting vs. transfer)
+ * - Cap rules
+ *
+ */
+contract Crowdsale is CrowdsaleBase {
+
+  /* Do we need to have unique contributor id for each customer */
+  bool public requireCustomerId;
+
+  /**
+    * Do we verify that contributor has been cleared on the server side (accredited investors only).
+    * This method was first used in FirstBlood crowdsale to ensure all contributors have accepted terms on sale (on the web).
+    */
+  bool public requiredSignedAddress;
+
+  /* Server side address that signed allowed contributors (Ethereum addresses) that can participate the crowdsale */
+  address public signerAddress;
+
+  function Crowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal) CrowdsaleBase(_token, _pricingStrategy, _multisigWallet, _start, _end, _minimumFundingGoal) {
+  }
+
+  /**
+   * Preallocate tokens for the early investors.
+   *
+   * Preallocated tokens have been sold before the actual crowdsale opens.
+   * This function mints the tokens and moves the crowdsale needle.
+   *
+   * Investor count is not handled; it is assumed this goes for multiple investors
+   * and the token distribution happens outside the smart contract flow.
+   *
+   * No money is exchanged, as the crowdsale team already have received the payment.
+   *
+   * @param fullTokens tokens as full tokens - decimal places added internally
+   * @param weiPrice Price of a single full token in wei
+   *
+   */
+  function preallocate(address receiver, uint fullTokens, uint weiPrice) public onlyOwner {
+
+    uint tokenAmount = fullTokens * 10**token.decimals();
+    uint weiAmount = weiPrice * fullTokens; // This can be also 0, we give out tokens for free
+
+    weiRaised = weiRaised.plus(weiAmount);
+    tokensSold = tokensSold.plus(tokenAmount);
+
+    investedAmountOf[receiver] = investedAmountOf[receiver].plus(weiAmount);
+    tokenAmountOf[receiver] = tokenAmountOf[receiver].plus(tokenAmount);
+
+    assignTokens(receiver, tokenAmount);
+
+    // Tell us invest was success
+    Invested(receiver, weiAmount, tokenAmount, 0);
+  }
+
+  /**
+   * Allow anonymous contributions to this crowdsale.
+   */
+  function investWithSignedAddress(address addr, uint128 customerId, uint8 v, bytes32 r, bytes32 s) public payable {
+     bytes32 hash = sha256(addr);
+     if (ecrecover(hash, v, r, s) != signerAddress) throw;
+     if(customerId == 0) throw;  // UUIDv4 sanity check
+     investInternal(addr, customerId);
+  }
+
+  /**
+   * Track who is the customer making the payment so we can send thank you email.
+   */
+  function investWithCustomerId(address addr, uint128 customerId) public payable {
+    if(requiredSignedAddress) throw; // Crowdsale allows only server-side signed participants
+    if(customerId == 0) throw;  // UUIDv4 sanity check
+    investInternal(addr, customerId);
+  }
+
+  /**
+   * Allow anonymous contributions to this crowdsale.
+   */
+  function invest(address addr) public payable {
+    if(requireCustomerId) throw; // Crowdsale needs to track participants for thank you email
+    if(requiredSignedAddress) throw; // Crowdsale allows only server-side signed participants
+    investInternal(addr, 0);
+  }
+
+  /**
+   * Invest to tokens, recognize the payer and clear his address.
+   *
+   */
+  function buyWithSignedAddress(uint128 customerId, uint8 v, bytes32 r, bytes32 s) public payable {
+    investWithSignedAddress(msg.sender, customerId, v, r, s);
+  }
+
+  /**
+   * Invest to tokens, recognize the payer.
+   *
+   */
+  function buyWithCustomerId(uint128 customerId) public payable {
+    investWithCustomerId(msg.sender, customerId);
+  }
+
+  /**
+   * The basic entry point to participate the crowdsale process.
+   *
+   * Pay for funding, get invested tokens back in the sender address.
+   */
+  function buy() public payable {
+    invest(msg.sender);
+  }
+
+  /**
+   * Buy tokens as generic fallback
+   */
+  function() payable {
+    invest(msg.sender);
+  }
+
+  /**
+   * Set policy do we need to have server-side customer ids for the investments.
+   *
+   */
+  function setRequireCustomerId(bool value) onlyOwner {
+    requireCustomerId = value;
+    InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, signerAddress);
+  }
+
+  /**
+   * Set policy if all investors must be cleared on the server side first.
+   *
+   * This is e.g. for the accredited investor clearing.
+   *
+   */
+  function setRequireSignedAddress(bool value, address _signerAddress) onlyOwner {
+    requiredSignedAddress = value;
+    signerAddress = _signerAddress;
+    InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, signerAddress);
+  }
+
+}
+
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
+
+
+
+/**
+ * This smart contract code is Copyright 2017 TokenMarket Ltd. For more information see https://tokenmarket.net
+ *
+ * Licensed under the Apache License, version 2.0: https://github.com/TokenMarketNet/ico/blob/master/LICENSE.txt
+ */
 
 
 
@@ -883,66 +875,149 @@ contract Crowdsale is Haltable, SafeMath {
 
 
 /**
- * Standard ERC20 token with Short Hand Attack and approve() race condition mitigation.
- *
- * Based on code by FirstBlood:
- * https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
  */
-contract StandardToken is ERC20, SafeMath {
-
-  /* Token supply got increased and a new owner received these tokens */
-  event Minted(address receiver, uint amount);
-
-  /* Actual balances of token holders */
-  mapping(address => uint) balances;
-
-  /* approve() allowances */
-  mapping (address => mapping (address => uint)) allowed;
-
-  /* Interface declaration */
-  function isToken() public constant returns (bool weAre) {
-    return true;
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
   }
 
-  function transfer(address _to, uint _value) returns (bool success) {
-    balances[msg.sender] = safeSub(balances[msg.sender], _value);
-    balances[_to] = safeAdd(balances[_to], _value);
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
+}
+
+
+
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances. 
+ */
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
+
+  mapping(address => uint256) balances;
+
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  function transfer(address _to, uint256 _value) returns (bool) {
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
     Transfer(msg.sender, _to, _value);
     return true;
   }
 
-  function transferFrom(address _from, address _to, uint _value) returns (bool success) {
-    uint _allowance = allowed[_from][msg.sender];
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of. 
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) constant returns (uint256 balance) {
+    return balances[_owner];
+  }
 
-    balances[_to] = safeAdd(balances[_to], _value);
-    balances[_from] = safeSub(balances[_from], _value);
-    allowed[_from][msg.sender] = safeSub(_allowance, _value);
+}
+
+
+
+
+/**
+ * @title Standard ERC20 token
+ *
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ */
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) allowed;
+
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amout of tokens to be transfered
+   */
+  function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
+    var _allowance = allowed[_from][msg.sender];
+
+    // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
+    // require (_value <= _allowance);
+
+    balances[_to] = balances[_to].add(_value);
+    balances[_from] = balances[_from].sub(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
     Transfer(_from, _to, _value);
     return true;
   }
 
-  function balanceOf(address _owner) constant returns (uint balance) {
-    return balances[_owner];
-  }
-
-  function approve(address _spender, uint _value) returns (bool success) {
+  /**
+   * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) returns (bool) {
 
     // To change the approve amount you first have to reduce the addresses`
     //  allowance to zero by calling `approve(_spender, 0)` if it is not
     //  already 0 to mitigate the race condition described here:
     //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) throw;
+    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
 
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
     return true;
   }
 
-  function allowance(address _owner, address _spender) constant returns (uint remaining) {
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifing the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
     return allowed[_owner][_spender];
   }
 
 }
+
+
+
+/**
+ * Standard EIP-20 token with an interface marker.
+ *
+ * @notice Interface marker is used by crowdsale contracts to validate that addresses point a good token contract.
+ *
+ */
+contract StandardTokenExt is StandardToken {
+
+  /* Interface declaration */
+  function isToken() public constant returns (bool weAre) {
+    return true;
+  }
+}
+
 
 
 
@@ -953,7 +1028,9 @@ contract StandardToken is ERC20, SafeMath {
  * Only mint agents, contracts whitelisted by owner, can mint new tokens.
  *
  */
-contract MintableToken is StandardToken, Ownable {
+contract MintableToken is StandardTokenExt, Ownable {
+
+  using SafeMathLib for uint;
 
   bool public mintingFinished = false;
 
@@ -961,6 +1038,7 @@ contract MintableToken is StandardToken, Ownable {
   mapping (address => bool) public mintAgents;
 
   event MintingAgentChanged(address addr, bool state);
+  event Minted(address receiver, uint amount);
 
   /**
    * Create new tokens and allocate them to an address..
@@ -968,8 +1046,8 @@ contract MintableToken is StandardToken, Ownable {
    * Only callably by a crowdsale contract (mint agent).
    */
   function mint(address receiver, uint amount) onlyMintAgent canMint public {
-    totalSupply = safeAdd(totalSupply, amount);
-    balances[receiver] = safeAdd(balances[receiver], amount);
+    totalSupply = totalSupply.plus(amount);
+    balances[receiver] = balances[receiver].plus(amount);
 
     // This will make the mint transaction apper in EtherScan.io
     // We can remove this after there is a standardized minting event
@@ -1030,7 +1108,7 @@ contract MintedTokenCappedCrowdsale is Crowdsale {
   /**
    * Dynamically create tokens and assign them to the investor.
    */
-  function assignTokens(address receiver, uint tokenAmount) private {
+  function assignTokens(address receiver, uint tokenAmount) internal {
     MintableToken mintableToken = MintableToken(token);
     mintableToken.mint(receiver, tokenAmount);
   }
