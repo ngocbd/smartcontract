@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BirthdayGift at 0xfbe2538331f9f8fd522f7f5cdad931c39c82b30e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BirthdayGift at 0xdca091bafaf1608268f283f13e78751d78f754dc
 */
 contract BirthdayGift {
     
@@ -11,8 +11,6 @@ contract BirthdayGift {
     
     function BirthdayGift () public {
     }
-    
-    function () payable public {}
     
     function DaysTillUnlock () public constant returns (uint256 _days) {
         if (now > unlockTime) {
