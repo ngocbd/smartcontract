@@ -1,296 +1,226 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TIPToken at 0x153e140548c6bfca761b6a4a45730bd1401c74d2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TipToken at 0x32234c089b455cbd02cb0cf1b0f5fe82a7792898
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.18;
+
+// ----------------------------------------------------------------------------
+// 'TIP' token contract
+//
+// Deployed to : 0x85Ead4ad0533f3f8c6826Dcf1e8bA81F88aA22A5
+// Symbol      : TIP
+// Name        : Tip Token
+// Total supply: 100000000000
+// Decimals    : 0
+//
+// Enjoy.
+//
+// (c) by Moritz Neto with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
+// ----------------------------------------------------------------------------
 
 
-library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a * b;
-        assert(a == 0 || c / a == b);
-        return c;
+// ----------------------------------------------------------------------------
+// Safe maths
+// ----------------------------------------------------------------------------
+contract SafeMath {
+    function safeAdd(uint a, uint b) public pure returns (uint c) {
+        c = a + b;
+        require(c >= a);
     }
-
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        // assert(b > 0); // Solidity automatically throws when dividing by 0
-        uint256 c = a / b;
-        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-        return c;
+    function safeSub(uint a, uint b) public pure returns (uint c) {
+        require(b <= a);
+        c = a - b;
     }
-
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
+    function safeMul(uint a, uint b) public pure returns (uint c) {
+        c = a * b;
+        require(a == 0 || c / a == b);
     }
-
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c >= a);
-        return c;
+    function safeDiv(uint a, uint b) public pure returns (uint c) {
+        require(b > 0);
+        c = a / b;
     }
 }
 
 
+// ----------------------------------------------------------------------------
+// ERC Token Standard #20 Interface
+// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+// ----------------------------------------------------------------------------
+contract ERC20Interface {
+    function totalSupply() public constant returns (uint);
+    function balanceOf(address tokenOwner) public constant returns (uint balance);
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+    function transfer(address to, uint tokens) public returns (bool success);
+    function approve(address spender, uint tokens) public returns (bool success);
+    function transferFrom(address from, address to, uint tokens) public returns (bool success);
 
-contract Ownable {
+    event Transfer(address indexed from, address indexed to, uint tokens);
+    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
+}
+
+
+// ----------------------------------------------------------------------------
+// Contract function to receive approval and execute function in one call
+//
+// Borrowed from MiniMeToken
+// ----------------------------------------------------------------------------
+contract ApproveAndCallFallBack {
+    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
+}
+
+
+// ----------------------------------------------------------------------------
+// Owned contract
+// ----------------------------------------------------------------------------
+contract Owned {
     address public owner;
+    address public newOwner;
 
+    event OwnershipTransferred(address indexed _from, address indexed _to);
 
-    function Ownable() public {
+    function Owned() public {
         owner = msg.sender;
     }
 
-
-    modifier onlyOwner() {
+    modifier onlyOwner {
         require(msg.sender == owner);
         _;
     }
 
-
-    function transferOwnership(address newOwner) public onlyOwner {
-        require(newOwner != address(0));
+    function transferOwnership(address _newOwner) public onlyOwner {
+        newOwner = _newOwner;
+    }
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        OwnershipTransferred(owner, newOwner);
         owner = newOwner;
+        newOwner = address(0);
     }
-
 }
 
 
+// ----------------------------------------------------------------------------
+// ERC20 Token, with the addition of symbol, name and decimals and assisted
+// token transfers
+// ----------------------------------------------------------------------------
+contract TipToken is ERC20Interface, Owned, SafeMath {
+    string public symbol;
+    string public  name;
+    uint8 public decimals;
+    uint public _totalSupply;
 
-contract ERC20Basic {
-    uint256 public totalSupply;
-    function balanceOf(address who) public view returns (uint256);
-    function transfer(address to, uint256 value) public returns (bool);
-    event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-
-contract ERC20 is ERC20Basic {
-    function allowance(address owner, address spender) public view returns (uint256);
-    function transferFrom(address from, address to, uint256 value) public returns (bool);
-    function approve(address spender, uint256 value) public returns (bool);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
+    mapping(address => uint) balances;
+    mapping(address => mapping(address => uint)) allowed;
 
 
-contract TIPbotRegulation {
-    uint256 public stakeStartTime;
-    uint256 public stakeMinAge;
-    uint256 public stakeMaxAge;
-    function mint() public returns (bool);
-    function coinAge() public payable returns (uint256);
-    function annualInterest() public view returns (uint256);
-    event Mint(address indexed _address, uint _reward);
-}
-
-
-contract TIPToken is ERC20,TIPbotRegulation,Ownable {
-    using SafeMath for uint256;
-
-    string public name = "TIPbot";
-    string public symbol = "TIP";
-    uint public decimals = 18;
-
-    uint public chainStartTime; //chain start time
-    uint public chainStartBlockNumber; //chain start block number
-    uint public stakeStartTime; //stake start time
-    uint public stakeMinAge = 3 days; // minimum age for coin age: 3D
-    uint public stakeMaxAge = 90 days; // stake age of full weight: 90D
-    uint public maxMintProofOfStake = 10**17; // default 10% annual interest
-
-    uint public totalSupply;
-    uint public maxTotalSupply;
-    uint public totalInitialSupply;
-
-    struct transferInStruct{
-    uint256 amount;
-    uint64 time;
+    // ------------------------------------------------------------------------
+    // Constructor
+    // ------------------------------------------------------------------------
+    function TipToken() public {
+        symbol = "TIP";
+        name = "Tip Token";
+        decimals = 0;
+        _totalSupply = 100000000000;
+        balances[0x85Ead4ad0533f3f8c6826Dcf1e8bA81F88aA22A5] = _totalSupply;
+        Transfer(address(0), 0x85Ead4ad0533f3f8c6826Dcf1e8bA81F88aA22A5, _totalSupply);
     }
 
-    mapping(address => uint256) balances;
-    mapping(address => mapping (address => uint256)) allowed;
-    mapping(address => transferInStruct[]) transferIns;
 
-    event Burn(address indexed burner, uint256 value);
-
-    /**
-     * @dev Fix for the ERC20 short address attack.
-     */
-    modifier onlyPayloadSize(uint size) {
-        require(msg.data.length >= size + 4);
-        _;
+    // ------------------------------------------------------------------------
+    // Total supply
+    // ------------------------------------------------------------------------
+    function totalSupply() public constant returns (uint) {
+        return _totalSupply  - balances[address(0)];
     }
 
-    modifier canTIPMint() {
-        require(totalSupply < maxTotalSupply);
-        _;
+
+    // ------------------------------------------------------------------------
+    // Get the token balance for account tokenOwner
+    // ------------------------------------------------------------------------
+    function balanceOf(address tokenOwner) public constant returns (uint balance) {
+        return balances[tokenOwner];
     }
 
-    function TIPToken() public {
-        maxTotalSupply = 10000000000000000000000000000000; // 10 Trillion.
-        totalInitialSupply = 100000000000000000000000000000; // 100 Billion.
 
-        chainStartTime = now;
-        chainStartBlockNumber = block.number;
-
-        balances[msg.sender] = totalInitialSupply;
-        totalSupply = totalInitialSupply;
-    }
-
-    function transfer(address _to, uint256 _value) public onlyPayloadSize(2 * 32) returns (bool) {
-        if(msg.sender == _to) return mint();
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        Transfer(msg.sender, _to, _value);
-        if(transferIns[msg.sender].length > 0) delete transferIns[msg.sender];
-        uint64 _now = uint64(now);
-        transferIns[msg.sender].push(transferInStruct(uint256(balances[msg.sender]),_now));
-        transferIns[_to].push(transferInStruct(uint256(_value),_now));
+    // ------------------------------------------------------------------------
+    // Transfer the balance from token owner's account to to account
+    // - Owner's account must have sufficient balance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transfer(address to, uint tokens) public returns (bool success) {
+        balances[msg.sender] = safeSub(balances[msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
+        Transfer(msg.sender, to, tokens);
         return true;
     }
 
-    function balanceOf(address _owner) public view returns (uint256 balance) {
-        return balances[_owner];
-    }
 
-    function transferFrom(address _from, address _to, uint256 _value) public onlyPayloadSize(3 * 32) returns (bool) {
-        require(_to != address(0));
-
-        var _allowance = allowed[_from][msg.sender];
-
-        // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
-        // require (_value <= _allowance);
-
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        allowed[_from][msg.sender] = _allowance.sub(_value);
-        Transfer(_from, _to, _value);
-        if(transferIns[_from].length > 0) delete transferIns[_from];
-        uint64 _now = uint64(now);
-        transferIns[_from].push(transferInStruct(uint256(balances[_from]),_now));
-        transferIns[_to].push(transferInStruct(uint256(_value),_now));
+    // ------------------------------------------------------------------------
+    // Token owner can approve for spender to transferFrom(...) tokens
+    // from the token owner's account
+    //
+    // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20-token-standard.md
+    // recommends that there are no checks for the approval double-spend attack
+    // as this should be implemented in user interfaces 
+    // ------------------------------------------------------------------------
+    function approve(address spender, uint tokens) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        Approval(msg.sender, spender, tokens);
         return true;
     }
 
-    function approve(address _spender, uint256 _value) public returns (bool) {
-        require((_value == 0) || (allowed[msg.sender][_spender] == 0));
 
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
+    // ------------------------------------------------------------------------
+    // Transfer tokens from the from account to the to account
+    // 
+    // The calling account must already have sufficient tokens approve(...)-d
+    // for spending from the from account and
+    // - From account must have sufficient balance to transfer
+    // - Spender must have sufficient allowance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transferFrom(address from, address to, uint tokens) public returns (bool success) {
+        balances[from] = safeSub(balances[from], tokens);
+        allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
+        Transfer(from, to, tokens);
         return true;
     }
 
-    function allowance(address _owner, address _spender) public view returns (uint256 remaining) {
-        return allowed[_owner][_spender];
+
+    // ------------------------------------------------------------------------
+    // Returns the amount of tokens approved by the owner that can be
+    // transferred to the spender's account
+    // ------------------------------------------------------------------------
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
+        return allowed[tokenOwner][spender];
     }
 
-    function mint() public canTIPMint returns (bool) {
-        if(balances[msg.sender] <= 0) return false;
-        if(transferIns[msg.sender].length <= 0) return false;
 
-        uint reward = getProofOfStakeReward(msg.sender);
-        if(reward <= 0) return false;
-
-        totalSupply = totalSupply.add(reward);
-        balances[msg.sender] = balances[msg.sender].add(reward);
-        delete transferIns[msg.sender];
-        transferIns[msg.sender].push(transferInStruct(uint256(balances[msg.sender]),uint64(now)));
-
-        Mint(msg.sender, reward);
+    // ------------------------------------------------------------------------
+    // Token owner can approve for spender to transferFrom(...) tokens
+    // from the token owner's account. The spender contract function
+    // receiveApproval(...) is then executed
+    // ------------------------------------------------------------------------
+    function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        Approval(msg.sender, spender, tokens);
+        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
         return true;
     }
 
-    function getBlockNumber() public view returns (uint blockNumber) {
-        blockNumber = block.number.sub(chainStartBlockNumber);
+
+    // ------------------------------------------------------------------------
+    // Don't accept ETH
+    // ------------------------------------------------------------------------
+    function () public payable {
+        revert();
     }
 
-    function coinAge() public payable returns (uint myCoinAge) {
-        myCoinAge = getCoinAge(msg.sender,now);
-    }
 
-    function annualInterest() public view returns(uint interest) {
-        uint _now = now;
-        interest = maxMintProofOfStake;
-        if((_now.sub(stakeStartTime)).div(1 years) == 0) {
-            interest = (770 * maxMintProofOfStake).div(100);
-        } else if((_now.sub(stakeStartTime)).div(1 years) == 1){
-            interest = (435 * maxMintProofOfStake).div(100);
-        }
-    }
-
-    function getProofOfStakeReward(address _address) internal view returns (uint) {
-        require( (now >= stakeStartTime) && (stakeStartTime > 0) );
-
-        uint _now = now;
-        uint _coinAge = getCoinAge(_address, _now);
-        if(_coinAge <= 0) return 0;
-
-        uint interest = maxMintProofOfStake;
-        // Due to the high interest rate for the first two years, compounding should be taken into account.
-        // Effective annual interest rate = (1 + (nominal rate / number of compounding periods)) ^ (number of compounding periods) - 1
-        if((_now.sub(stakeStartTime)).div(1 years) == 0) {
-            // 1st year effective annual interest rate is 100% when we select the stakeMaxAge (90 days) as the compounding period.
-            interest = (770 * maxMintProofOfStake).div(100);
-        } else if((_now.sub(stakeStartTime)).div(1 years) == 1){
-            // 2nd year effective annual interest rate is 50%
-            interest = (435 * maxMintProofOfStake).div(100);
-        }
-
-        return (_coinAge * interest).div(365 * (10**decimals));
-    }
-
-    function getCoinAge(address _address, uint _now) internal view returns (uint _coinAge) {
-        if(transferIns[_address].length <= 0) return 0;
-
-        for (uint i = 0; i < transferIns[_address].length; i++){
-            if( _now < uint(transferIns[_address][i].time).add(stakeMinAge) ) continue;
-
-            uint nCoinSeconds = _now.sub(uint(transferIns[_address][i].time));
-            if( nCoinSeconds > stakeMaxAge ) nCoinSeconds = stakeMaxAge;
-
-            _coinAge = _coinAge.add(uint(transferIns[_address][i].amount) * nCoinSeconds.div(1 days));
-        }
-    }
-
-    function ownerSetStakeStartTime(uint timestamp) public onlyOwner {
-        require((stakeStartTime <= 0) && (timestamp >= chainStartTime));
-        stakeStartTime = timestamp;
-    }
-
-    function ownerBurnToken(uint _value) public onlyOwner {
-        require(_value > 0);
-
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-        delete transferIns[msg.sender];
-        transferIns[msg.sender].push(transferInStruct(uint256(balances[msg.sender]),uint64(now)));
-
-        totalSupply = totalSupply.sub(_value);
-        totalInitialSupply = totalInitialSupply.sub(_value);
-        maxTotalSupply = maxTotalSupply.sub(_value*10);
-
-        Burn(msg.sender, _value);
-    }
-
-   
-    function batchTransfer(address[] _recipients, uint[] _values) public onlyOwner returns (bool) {
-        require( _recipients.length > 0 && _recipients.length == _values.length);
-
-        uint total = 0;
-        for(uint i = 0; i < _values.length; i++){
-            total = total.add(_values[i]);
-        }
-        require(total <= balances[msg.sender]);
-
-        uint64 _now = uint64(now);
-        for(uint j = 0; j < _recipients.length; j++){
-            balances[_recipients[j]] = balances[_recipients[j]].add(_values[j]);
-            transferIns[_recipients[j]].push(transferInStruct(uint256(_values[j]),_now));
-            Transfer(msg.sender, _recipients[j], _values[j]);
-        }
-
-        balances[msg.sender] = balances[msg.sender].sub(total);
-        if(transferIns[msg.sender].length > 0) delete transferIns[msg.sender];
-        if(balances[msg.sender] > 0) transferIns[msg.sender].push(transferInStruct(uint256(balances[msg.sender]),_now));
-
-        return true;
+    // ------------------------------------------------------------------------
+    // Owner can transfer out any accidentally sent ERC20 tokens
+    // ------------------------------------------------------------------------
+    function transferAnyERC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
+        return ERC20Interface(tokenAddress).transfer(owner, tokens);
     }
 }
