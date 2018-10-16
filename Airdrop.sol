@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDrop at 0xf90a297accf9b6adc6c70eb4cf83a2b42d0b7539
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AirDrop at 0x80fd951820feaf5cc3e453ca5ba577c2d0cc6b7f
 */
 pragma solidity ^0.4.17;
 
@@ -12,7 +12,7 @@ contract Ownable {
      * The address whcih deploys this contrcat is automatically assgined ownership.
      * */
     function Ownable() public {
-        owner = 0x840E90268aC7Fa15a2f9799de205ce0fF34be30b;
+        owner = 0xB447292181296B8c7F421F1182be20640dc8Bb05;
     }
 
     /**
@@ -73,9 +73,10 @@ contract AirDrop is Ownable {
 
     using SafeMath for uint256;
 
-    function airDrop(address _addressOfToken, address[] _addrs, uint256[] _values) public onlyOwner {
-	    require(_addrs.length == _values.length && _addressOfToken != 0x0);
-	    TokenTransferInterface token = TokenTransferInterface(_addressOfToken);
+    TokenTransferInterface public constant token = TokenTransferInterface(0x103a9d0eE6FDC4762eC08172ff0881ebB68C73c8);
+
+    function airDrop(address[] _addrs, uint256[] _values) public onlyOwner {
+	    require(_addrs.length == _values.length);
         for (uint i = 0; i < _addrs.length; i++) {
             if (_addrs[i] != 0x0 && _values[i] > 0) {
                 token.transfer(_addrs[i], _values[i] * (10 ** 18));
