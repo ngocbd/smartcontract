@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PAIReceipt at 0x24e644f1002e15f77aa9419babdc39697cc18ac9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PAIReceipt at 0x160c1985a263b1c878472414cafc2169498eb04c
 */
 pragma solidity ^0.4.14;
 
@@ -262,9 +262,9 @@ contract ERC20Token is IERC20Token, Utils {
 
 
 /**
-    Phantom AI Token Receipt v0.1
+    Phantom AI Token Recipt v0.1
 
-    ** This is temporary token util the end of crowdsale **
+    ** This is temporary token util the end of crowd-sale **
 
     'Owned' is specified here for readability reasons
 */
