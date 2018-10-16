@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WavesEthereumSwap at 0xd23f2533B726C9Cb1Fb9ed109b82e5A8F01c881e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract WavesEthereumSwap at 0xE01B770235Bc5db653604e5519F048dF54490B5f
 */
 pragma solidity ^0.4.8;
 
@@ -11,10 +11,10 @@ pragma solidity ^0.4.8;
 
 // Contract configuration
 contract TokenConfig {
-    string public constant symbol = "WBTC";
-    string public constant name = "Waves Bitcoin Token";
-    uint8 public constant decimals = 8;  // 8 decimal places, the same as tokens on Wave
-    uint256 _totalSupply = 2100000000000000;
+    string public constant symbol = "WCT";
+    string public constant name = "Waves Community Token";
+    uint8 public constant decimals = 2;  // 2 decimal places, the same as tokens on Wave
+    uint256 _totalSupply = 1000000000;
 }
 
 // ERC Token Standard #20 Interface
@@ -47,7 +47,7 @@ contract ERC20Interface {
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
-contract WavesBitcoinToken is ERC20Interface, TokenConfig {
+contract WavesCommunityToken is ERC20Interface, TokenConfig {
     // Owner of this contract
     address public owner;
 
@@ -66,7 +66,7 @@ contract WavesBitcoinToken is ERC20Interface, TokenConfig {
     }
 
     // Constructor
-    function WavesBitcoinToken() {
+    function WavesCommunityToken() {
         owner = msg.sender;
         balances[owner] = _totalSupply;
     }
@@ -132,7 +132,7 @@ contract WavesBitcoinToken is ERC20Interface, TokenConfig {
     }
 }
 
-contract WavesEthereumSwap is WavesBitcoinToken {
+contract WavesEthereumSwap is WavesCommunityToken {
     event WavesTransfer(address indexed _from, string wavesAddress, uint256 amount);
 
     function moveToWaves(string wavesAddress, uint256 amount) {
