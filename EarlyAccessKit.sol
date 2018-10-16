@@ -1,13 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EarlyAccessKit at 0x842b40d6A16bD261FD8C333CFbE19AE2f9b91737
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EarlyAccessKit at 0xedfc3276291c7ed0ebfffcb8e22381b4e4e36d32
 */
 pragma solidity ^0.4.18;
-
-contract LootboxInterface {
-  event LootboxPurchased(address indexed owner, uint16 displayValue);
-  
-  function buy(address _buyer) external;
-}
 
 contract ExternalInterface {
   function giveItem(address _recipient, uint256 _traits) external;
@@ -26,21 +20,27 @@ contract ExternalInterface {
 }
 
 
+contract LootboxInterface {
+  event LootboxPurchased(address indexed owner, uint16 displayValue);
+  
+  function buy(address _buyer) external;
+}
+
 contract EarlyAccessKit is LootboxInterface {
   uint16 constant _displayValue = 1;
   uint16 kitsSold = 0;
-  address constant coreContract = 0xF7CEAF2ee0a1E237e624e0e5C8b7cC0D28f01088;
 
   function getEarlyAccessKitsRemaining() external view returns (uint16 kitsRemaining) {
       kitsRemaining = kitsSold;
   }
 
   function buy(address _buyer) external {
-    require(msg.sender == coreContract);
     require(kitsSold < 500);
     kitsSold++;
     LootboxPurchased(_buyer, _displayValue);
     ExternalInterface store = ExternalInterface(msg.sender);
     store.giveItem(_buyer, 16401); 
+    // 1 1 1
+    //0000000001 0000000001 0001  
   }
 }
