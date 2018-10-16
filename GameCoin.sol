@@ -1,229 +1,355 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GameCoin at 0x3719dac5e8aeeb886a0b49f5cbafe2dfa73a16a3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GameCoin at 0x2c6537795def9ee3a4ff5a99dab508fe1c8d2d25
 */
-pragma solidity ^0.4.17;
- /*
- * Contract that is working with ERC223 tokens
- */
-  /* New ERC23 contract interface */
- 
-contract ERC223 {
-  uint public totalSupply;
-  function balanceOf(address who) constant returns (uint);
-  
-  function name() constant returns (string _name);
-  function symbol() constant returns (string _symbol);
-  function decimals() constant returns (uint8 _decimals);
-  function totalSupply() constant returns (uint256 _supply);
+pragma solidity ^0.4.18;
 
-  function transfer(address to, uint value) returns (bool ok);
-  function transfer(address to, uint value, bytes data) returns (bool ok);
-  function transfer(address to, uint value, bytes data, string custom_fallback) returns (bool ok);
-  event Transfer(address indexed from, address indexed to, uint value, bytes indexed data);
+contract OldContract{
+  function balanceOf(address _owner) view returns (uint balance) {}
 }
 
- contract ContractReceiver {
-     
-    struct TKN {
-        address sender;
-        uint value;
-        bytes data;
-        bytes4 sig;
-    }
-    
-    
-    function tokenFallback(address _from, uint _value, bytes _data){
-      TKN memory tkn;
-      tkn.sender = _from;
-      tkn.value = _value;
-      tkn.data = _data;
-      uint32 u = uint32(_data[3]) + (uint32(_data[2]) << 8) + (uint32(_data[1]) << 16) + (uint32(_data[0]) << 24);
-      tkn.sig = bytes4(u);
-      
-      /* tkn variable is analogue of msg variable of Ether transaction
-      *  tkn.sender is person who initiated this token transaction   (analogue of msg.sender)
-      *  tkn.value the number of tokens that were sent   (analogue of msg.value)
-      *  tkn.data is data of token transaction   (analogue of msg.data)
-      *  tkn.sig is 4 bytes signature of function
-      *  if data of token transaction is a function execution
-      */
-    }
+library SafeMath {
+  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a * b;
+    assert(a == 0 || c / a == b);
+    return c;
+  }
+
+  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
+    uint256 c = a / b;
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+    return c;
+  }
+
+  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+    assert(b <= a);
+    return a - b;
+  }
+
+  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+    uint256 c = a + b;
+    assert(c >= a);
+    return c;
+  }
 }
 
-contract SafeMath {
-    uint256 constant public MAX_UINT256 =
-    0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
-
-    function safeAdd(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        if (x > MAX_UINT256 - y) throw;
-        return x + y;
-    }
-
-    function safeSub(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        if (x < y) throw;
-        return x - y;
-    }
-
-    function safeMul(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        if (y == 0) return 0;
-        if (x > MAX_UINT256 / y) throw;
-        return x * y;
-    }
-}
- 
-
-contract TokenStorage{
-    
-  function name() constant returns (string _name) {}
-  
-  function symbol() constant returns (string _symbol) {}
-  
-  function decimals() constant returns (uint8 _decimals) {}
-  
-  function totalSupply() constant returns (uint48 _totalSupply)  {}
-  
-  
-  
-  function transfer(address _to, uint48 _value, bytes _data, string _custom_fallback) returns (bool success) {}
+contract Ownable {
+  address public owner;
 
 
-  function transfer(address _to, uint48 _value, bytes _data) returns (bool success) {}
-  function transfer(address _to, uint48 _value) returns (bool success) {}
-
-  function isContract(address _addr) private returns (bool is_contract) {}
-
-  
-  function transferToAddress(address _to, uint48 _value, bytes _data) private returns (bool success)  {}
-  
-  
-  function transferToContract(address _to, uint48 _value, bytes _data) private returns (bool success)  {}
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
 
-  function balanceOf(address _owner) constant returns (uint48 balance) {}
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
 }
 
-contract GameCoin is ERC223, SafeMath {
-  TokenStorage _s;
-  mapping(address => uint) balances;
-  
-  string public name;
-  string public symbol;
-  uint8 public decimals;
+contract ERC20Basic {
   uint256 public totalSupply;
+  function balanceOf(address who) public constant returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+contract BasicToken is ERC20Basic {
+  using SafeMath for uint256;
+
+  mapping(address => uint256) balances;
+  mapping(address => bool) transfered;
+  OldContract _oldContract;
   
+  /**
+  * @dev transfer token for a specified address
+  * @param _to The address to transfer to.
+  * @param _value The amount to be transferred.
+  */
+  
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
     
-  // Function to access name of token .
-  function name() constant returns (string _name) {
-      return name;
-  }
-  // Function to access symbol of token .
-  function symbol() constant returns (string _symbol) {
-      return symbol;
-  }
-  // Function to access decimals of token .
-  function decimals() constant returns (uint8 _decimals) {
-      return decimals;
-  }
-  // Function to access total supply of tokens .
-  function totalSupply() constant returns (uint256 _totalSupply) {
-      return totalSupply;
-  }
-  
-  
-  function GameCoin() {
-        _s = TokenStorage(0x9ff62629aec4436d03a84665acfb2a3195ca784b);
-        name = "GameCoin";
-        symbol = "GMC";
-        decimals = 2;
-        totalSupply = 25907002099;
-        
-  }
-  
-  
+    if(balances[msg.sender] == 0 && transfered[msg.sender] == false){
+    	 uint256 oldFromBalance;
+  		 
+  		 oldFromBalance = CheckOldBalance(msg.sender);
+  		 
+  		 if (oldFromBalance > 0)
+       {
+       	  ImportBalance(msg.sender); 
+       }
+    }
+    
+    if(balances[_to] == 0 && transfered[_to] == false){
+    	 uint256 oldBalance;
+  		 
+  		 oldBalance = CheckOldBalance(_to);
+  		 
+  		 if (oldBalance > 0)
+       {
+       	  ImportBalance(_to); 
+       }
+    }
+    
+    require(_value <= balances[msg.sender]);
 
-  // Function that is called when a user or another contract wants to transfer funds .
-  function transfer(address _to, uint _value, bytes _data, string _custom_fallback) returns (bool success) {
-      
-    if(isContract(_to)) {
-        if (balanceOf(msg.sender) < _value) throw;
-        balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
-        balances[_to] = safeAdd(balanceOf(_to), _value);
-        ContractReceiver receiver = ContractReceiver(_to);
-        receiver.call.value(0)(bytes4(sha3(_custom_fallback)), msg.sender, _value, _data);
-        Transfer(msg.sender, _to, _value, _data);
-        return true;
-    }
-    else {
-        return transferToAddress(_to, _value, _data);
-    }
-}
-  
-
-  // Function that is called when a user or another contract wants to transfer funds .
-  function transfer(address _to, uint _value, bytes _data) returns (bool success) {
-      
-    if(isContract(_to)) {
-        return transferToContract(_to, _value, _data);
-    }
-    else {
-        return transferToAddress(_to, _value, _data);
-    }
-}
-  
-  // Standard function transfer similar to ERC20 transfer with no _data .
-  // Added due to backwards compatibility reasons .
-  function transfer(address _to, uint _value) returns (bool success) {
-      
-    //standard function transfer similar to ERC20 transfer with no _data
-    //added due to backwards compatibility reasons
-    bytes memory empty;
-    if(isContract(_to)) {
-        return transferToContract(_to, _value, empty);
-    }
-    else {
-        return transferToAddress(_to, _value, empty);
-    }
-}
-
-//assemble the given address bytecode. If bytecode exists then the _addr is a contract.
-  function isContract(address _addr) private returns (bool is_contract) {
-      uint length;
-      assembly {
-            //retrieve the size of the code on target address, this needs assembly
-            length := extcodesize(_addr)
-      }
-      return (length>0);
-    }
-
-  //function that is called when transaction target is an address
-  function transferToAddress(address _to, uint _value, bytes _data) private returns (bool success) {
-    if (balanceOf(msg.sender) < _value) throw;
-    balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
-    balances[_to] = safeAdd(balanceOf(_to), _value);
-    Transfer(msg.sender, _to, _value, _data);
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[msg.sender] = balances[msg.sender].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    Transfer(msg.sender, _to, _value);
     return true;
   }
-  
-  //function that is called when transaction target is a contract
-  function transferToContract(address _to, uint _value, bytes _data) private returns (bool success) {
-    if (balanceOf(msg.sender) < _value) throw;
-    balances[msg.sender] = safeSub(balanceOf(msg.sender), _value);
-    balances[_to] = safeAdd(balanceOf(_to), _value);
-    ContractReceiver receiver = ContractReceiver(_to);
-    receiver.tokenFallback(msg.sender, _value, _data);
-    Transfer(msg.sender, _to, _value, _data);
-    return true;
-}
-
-
-  function balanceOf(address _owner) constant returns (uint balance) {
-    if(balances[_owner] == 0){
-      return uint(_s.balanceOf(_owner));
+  /**
+  * @dev Gets the balance of the specified address.
+  * @param _owner The address to query the the balance of.
+  * @return An uint256 representing the amount owned by the passed address.
+  */
+  function balanceOf(address _owner) public constant returns (uint256 balance) {
+  	if(balances[_owner] == 0 && transfered[_owner] == false){
+  		 uint256 oldBalance;
+  		 
+  		 oldBalance = CheckOldBalance(_owner);
+  		 
+       if (oldBalance > 0)
+       {
+       	  return oldBalance;
+       }
+       else
+       {
+       		return balances[_owner];
+       }
     }
     else
     {
-    return uint(balances[_owner]);
+      return balances[_owner];
+    }
+  }
+
+  
+  function ImportBalance(address _owner) internal {
+  	uint256 oldBalance;
+  	
+  	oldBalance = CheckOldBalance(_owner);
+    if(balances[_owner] == 0  && (oldBalance > 0) && transfered[_owner] == false){
+    	balances[_owner] = oldBalance;
+      transfered[_owner] = true;
     }
   }
   
+  function CheckOldBalance(address _owner) internal view returns (uint256 balance) {
+  	if(balances[_owner] == 0 && transfered[_owner]==false){
+  		
+  		uint256 oldBalance;
+  		
+  		_oldContract = OldContract(0x3719dAc5E8aeEb886A0B49f5cbafe2DfA73A16A3);
+  		
+  		oldBalance = _oldContract.balanceOf(_owner);
+  		
+  		if (oldBalance > 0)
+  		{
+        return oldBalance;
+      }
+      else
+      {
+      	return balances[_owner];
+      }
+    }
+    else
+    {
+    return balances[_owner];
+    }
+
+  }
+
+
+}
+
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) public constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) public returns (bool);
+  function approve(address spender, uint256 value) public returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+contract StandardToken is ERC20, BasicToken {
+
+  mapping (address => mapping (address => uint256)) internal allowed;
+  
+
+  /**
+   * @dev Transfer tokens from one address to another
+   * @param _from address The address which you want to send tokens from
+   * @param _to address The address which you want to transfer to
+   * @param _value uint256 the amount of tokens to be transferred
+   */
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(_to != address(0));
+    
+    if(balances[_from] == 0 && transfered[_from] == false){
+       uint256 oldFromBalance;
+
+       oldFromBalance = CheckOldBalance(_from);
+
+  		 if (oldFromBalance > 0)
+       {
+       	  ImportBalance(_from); 
+       }
+    }
+    
+    if(balances[_to] == 0 && transfered[_to] == false){
+    	 uint256 oldBalance;
+  		 
+  		 oldBalance = CheckOldBalance(_to);
+  		 
+  		 if (oldBalance > 0)
+       {
+       	  ImportBalance(_to); 
+       }
+    }
+    
+    require(_value <= balances[_from]);
+    require(_value <= allowed[_from][msg.sender]);
+
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
+    allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+    Transfer(_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+   *
+   * Beware that changing an allowance with this method brings the risk that someone may use both the old
+   * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+   * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+   * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+   * @param _spender The address which will spend the funds.
+   * @param _value The amount of tokens to be spent.
+   */
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    allowed[msg.sender][_spender] = _value;
+    Approval(msg.sender, _spender, _value);
+    return true;
+  }
+
+  /**
+   * @dev Function to check the amount of tokens that an owner allowed to a spender.
+   * @param _owner address The address which owns the funds.
+   * @param _spender address The address which will spend the funds.
+   * @return A uint256 specifying the amount of tokens still available for the spender.
+   */
+  function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+    return allowed[_owner][_spender];
+  }
+
+  /**
+   * approve should be called when allowed[_spender] == 0. To increment
+   * allowed value is better to use this function to avoid 2 calls (and wait until
+   * the first transaction is mined)
+   * From MonolithDAO Token.sol
+   */
+  function increaseApproval (address _spender, uint _addedValue) public returns (bool success) {
+    allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+  function decreaseApproval (address _spender, uint _subtractedValue) public returns (bool success) {
+    uint oldValue = allowed[msg.sender][_spender];
+    if (_subtractedValue > oldValue) {
+      allowed[msg.sender][_spender] = 0;
+    } else {
+      allowed[msg.sender][_spender] = oldValue.sub(_subtractedValue);
+    }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
+  }
+
+}
+
+contract BurnableToken is StandardToken, Ownable{
+    
+    mapping(address => uint256) public exchangequeue;
+    
+    event PutForExchange(address indexed from, uint256 value);
+
+    function putForExchange(uint256 _value) public {
+    
+    require(_value > 0);
+    address sender = msg.sender;
+      
+    if(balances[sender] == 0 && transfered[sender] == false){
+    	 uint256 oldFromBalance;
+  		 
+  		 oldFromBalance = CheckOldBalance(sender);
+  		 
+  		 if (oldFromBalance > 0)
+       {
+       	  ImportBalance(sender); 
+       }
+    }
+    
+	   require(_value <= balances[sender]);
+
+    // SafeMath.sub will throw if there is not enough balance.
+    balances[sender] = balances[sender].sub(_value);
+    exchangequeue[sender] = exchangequeue[sender].add(_value);
+    totalSupply = totalSupply.sub(_value);
+    PutForExchange(sender, _value);
+  }
+  
+    function confirmExchange(address _address,uint256 _value) public onlyOwner {
+    
+    require(_value > 0);
+    require(_value <= exchangequeue[_address]); 
+        
+   
+    exchangequeue[_address] = exchangequeue[_address].sub(_value);
+    
+  }
+  
+
+}
+
+contract GameCoin is Ownable, BurnableToken {
+
+  string public constant name = "GameCoin";
+  string public constant symbol = "GMC";
+  uint8 public constant decimals = 2;
+
+  uint256 public constant INITIAL_SUPPLY = 25907002099;
+  
+  /**
+   * @dev Constructor that gives msg.sender all of existing tokens.
+   */
+  function GameCoin() {
+    totalSupply = INITIAL_SUPPLY;
+    
+  }
+
 }
