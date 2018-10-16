@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Aeromart at 0x405a83311b0c8730e6f9d59bc3357f3645078392
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Aeromart at 0x432c7180c29a93d1703be41b6171755b72d86321
 */
 pragma solidity ^0.4.18;
 
@@ -10,52 +10,108 @@ contract Owned {
         owner = msg.sender;
     }
     
-   modifier onlyOwner {
-       require(msg.sender == owner);
-       _;
-   }
+	modifier onlyOwner {
+		require(msg.sender == owner);
+		_;
+	}
 }
 
 contract Aeromart is Owned {
     
     struct Note {
+        bytes32 productID;
         bytes20 serialNumber;
         string text;
     }
     
-    uint nextNoteID;
+    uint public notesLength;
     mapping (uint256 => Note) public notes;
-    
+   
     event noteInfo(
-       bytes20 serialNumber,
-       string text
+        bytes32 productID,
+        bytes20 serialNumber,
+        string text
     );
     
-    function addNote(bytes20 _serialNumber, string _text) onlyOwner public returns (uint) {
-        var note = notes[nextNoteID];
+    function addNote(bytes32 _productID, bytes20 _serialNumber, string _text) onlyOwner public returns (uint) {
+        Note storage note = notes[notesLength];
         
+        note.productID = _productID;
         note.serialNumber = _serialNumber;
         note.text = _text;
         
-        noteInfo(_serialNumber, _text);
+        emit noteInfo(_productID, _serialNumber, _text);
         
-        nextNoteID++;
-        return nextNoteID;
+        notesLength++;
+        return notesLength;
     }
     
-    function setNote(uint256 _id, bytes20 _serialNumber, string _text) onlyOwner public {
-        var note = notes[_id];
+    function setNote(uint256 _id, bytes32 _productID, bytes20 _serialNumber, string _text) onlyOwner public {
+        Note storage note = notes[_id];
         
+        note.productID = _productID;
         note.serialNumber = _serialNumber;
         note.text = _text;
         
-        // notesAccts.push(_id) -1;
-        noteInfo(_serialNumber, _text);
+        emit noteInfo(_productID, _serialNumber, _text);
     }
     
-    function getNote(uint256 _id) view public returns (bytes20, string) {
-        return (notes[_id].serialNumber, notes[_id].text);
+    function getNote(uint256 _id) view public returns (bytes32, bytes20, string) {
+        return (notes[_id].productID, notes[_id].serialNumber, notes[_id].text);
     }
     
+    // comments section
+    
+    struct Comment {
+        bytes3 rating; 
+        string text;
+    }
+    
+    uint public commentsLength;
+    mapping (address => Comment) public comments;
+    address[] public commentsAccounts;
+    
+    event commentInfo(
+        bytes3 rating,
+        string text
+    );
+    
+    /*
+    function addComment(bytes3 _rating, string _text) public returns (uint) {
+        Comment storage comment = comments[msg.sender];
+        
+        comment.rating = _rating;
+        comment.text = _text;
+        
+        emit commentInfo(_rating, _text);
+        
+        commentsLength++;
+        return commentsLength;
+        // commentsAccounts.push(msg.sender) -1;
+    }
+    */
+    
+    function setComment(bytes3 _rating, string _text) public {
+        Comment storage comment = comments[msg.sender];
+        
+        comment.rating = _rating;
+        comment.text = _text;
+        
+        emit commentInfo(_rating, _text);
+        
+        commentsAccounts.push(msg.sender) -1;
+    }
+    
+    function getComment(address _address) view public returns (bytes3, string) {
+        return (comments[_address].rating, comments[_address].text);
+    }
+    
+    function getCommentAccounts() view public returns (address[]) {
+        return commentsAccounts;
+    }
+    
+    function getCommentAccountsLength() view public returns (uint) {
+        return commentsAccounts.length;
+    }
     
 }
