@@ -1,36 +1,27 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract dEthereumlotteryNet at 0xE34f4BD4b05E0A40295DaF48C2562C377338ea05
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract dEthereumlotteryNet at 0xecae6888e3ea6a2a8dbf95500a1f74dd27c3b54e
 */
-contract RandomInterface {
-	function getRandom() returns (bytes32 hash) {}
-}
-contract WinnerDBInterface {
-	function Winners(uint id) constant returns(uint date, address addr, uint value, uint rate, uint bet)  {}
-	function newWinner(uint date, address addr, uint value, uint rate, uint bet) external returns (bool) {}
-}
 contract dEthereumlotteryNet {
 	/*
 		dEthereumlotteryNet
 		Coded by: iFA
 		http://d.ethereumlottery.net
-		ver: 2.2.1
+		ver: 2.1.1
 	*/
 	
 	/*
 		Vars
 	*/
 	address private owner;
-	address private winnersDB;
-	address private randomAddr;
 	uint private constant fee = 5;
-	uint private constant investorFee = 70;
+	uint private constant investorFee = 50;
 	uint private constant prepareBlockDelay = 4;
 	uint private constant rollLossBlockDelay = 30;
 	uint private constant investUnit = 1 ether;
 	uint private constant extraRate = 130;
 	uint private constant minimumRollPrice = 10 finney;
 	uint private constant investMinDuration = 1 days;
-	uint private constant BestRollRate = 100;
+	uint private constant BestRollRate = 26;
 	
     bool public ContractEnabled = true;
 	uint public Jackpot;
@@ -50,7 +41,6 @@ contract dEthereumlotteryNet {
 		uint value;
 		uint game;
 		uint id;
-		uint sumInvest;
 	}
 	
 	mapping(address => rolls_s[]) private players;
@@ -71,15 +61,9 @@ contract dEthereumlotteryNet {
 	/*
 		Deploy
 	*/
-	function dEthereumlotteryNet(address _winnersDB, address _oldcontract, address _randomAddr) {
+	function dEthereumlotteryNet() {
 		owner = msg.sender;
-		investors.length++;
-		winnersDB = _winnersDB;
-		randomAddr = _randomAddr;
-		if (_oldcontract != 0x0) {
-			RollCount = dEthereumlotteryNet( _oldcontract ).RollCount();
-			JackpotHits = dEthereumlotteryNet( _oldcontract ).JackpotHits();
-		}
+		investors.length = 1;
 	}
 	
 	/* 
@@ -120,9 +104,6 @@ contract dEthereumlotteryNet {
 		Balance = investors[InvestorID].balance;
 		Live = investors[InvestorID].live;
 	}
-	function Winners(uint id) constant returns(uint date, address addr, uint value, uint rate, uint bet)  {
-		return WinnerDBInterface(winnersDB).Winners(id);
-	}
 	
 	/*
 		External functions
@@ -132,7 +113,7 @@ contract dEthereumlotteryNet {
 		PrepareRoll(0);
 	}
 	/* For Investors */
-	function Invest() external OnlyEnabled noContract {
+	function Invest() OnlyEnabled external {
 		uint value_ = msg.value;
 		if (value_ < investUnit) { throw; }
 		if (value_ % investUnit > 0) { 
@@ -182,7 +163,7 @@ contract dEthereumlotteryNet {
 		delete investors[InvestorID];
 	}
 	/* For Players */
-	function DoRoll() external noEther noContract {
+	function DoRoll() external noEther {
 		uint value_;
 		bool found;
 		for ( uint a=0 ; a < players[msg.sender].length ; a++ ) {
@@ -197,7 +178,7 @@ contract dEthereumlotteryNet {
 					found = true;
 					continue;
 			    }
-				if ( ! ContractEnabled || players[msg.sender][a].sumInvest != jackpot_ || players[msg.sender][a].game != JackpotHits) {
+				if ( ! ContractEnabled || jackpot_ == 0 || players[msg.sender][a].game != JackpotHits) {
 					value_ += players[msg.sender][a].value;
 					playersPot -= players[msg.sender][a].value;
 					DoRollEvent(msg.sender, players[msg.sender][a].value, players[msg.sender][a].id, true, false, false, false, 0, 0, 0);
@@ -277,7 +258,6 @@ contract dEthereumlotteryNet {
 		}
 		uint _rate = getRate(players[msg.sender][id].value);
 		uint bigNumber = uint64(hash_);
-		if (bigNumber == 0 || _rate == 0) { return; }
 		if (bigNumber % _rate == 0 ) {
 			win = Jackpot;
 			for ( a=1 ; a < investors.length ; a++ ) {
@@ -287,7 +267,6 @@ contract dEthereumlotteryNet {
 			extraJackpot_ = 0;
 			jackpot_ = 0;
 			Jackpot = 0;
-			WinnerDBInterface( winnersDB ).newWinner(now, msg.sender, win, _rate, players[msg.sender][id].value);
 			DoRollEvent(msg.sender, win, players[msg.sender][id].id, false, false, false, true, bigNumber, _rate, bigNumber % _rate);
 		} else {
 			DoRollEvent(msg.sender, players[msg.sender][id].value, players[msg.sender][id].id, false, false, true, false, bigNumber, _rate, bigNumber % _rate);
@@ -308,12 +287,11 @@ contract dEthereumlotteryNet {
 	function prepareRoll(uint rollID, uint bet, uint seed) private {
 		RollCount++;
 		players[msg.sender][rollID].blockNumber = block.number + prepareBlockDelay;
-		players[msg.sender][rollID].extraHash = sha3(RollCount, now, seed, RandomInterface(randomAddr).getRandom(), address(seed).balance);
+		players[msg.sender][rollID].extraHash = sha3(RollCount, now, seed);
 		players[msg.sender][rollID].valid = true;
 		players[msg.sender][rollID].value = bet;
 		players[msg.sender][rollID].game = JackpotHits;
 		players[msg.sender][rollID].id = RollCount;
-		players[msg.sender][rollID].sumInvest = jackpot_;	
 		playersPot += bet;
 		PrepareRollEvent(msg.sender, players[msg.sender][rollID].blockNumber, players[msg.sender][rollID].value, players[msg.sender][rollID].id);
 	}
@@ -346,7 +324,6 @@ contract dEthereumlotteryNet {
 	/*
 		Modifiers
 	*/
-	modifier noContract() {if (tx.origin != msg.sender) { throw; } _ }
 	modifier noEther() { if (msg.value > 0) { throw; } _ }
 	modifier OnlyOwner() { if (owner != msg.sender) { throw; } _ }
 	modifier OnlyEnabled() { if ( ! ContractEnabled) { throw; } _ }
