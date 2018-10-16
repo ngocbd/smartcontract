@@ -1,6 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MOVIECREDITS at 0xf1ccea7231bbd57f608b3f001aff210583d12243
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MOVIECREDITS at 0xd3F5056D9a112cA81B0e6f9f47F3285AA44c6AAA
 */
+/**
+*MOVIECREDITS: "P2P PAYMENT SYSTEM FOR THE MOVIE INDUSTRY.."
+ * CONTRACT CREATOR: MOVIECREDITS/TEAM &  CRYPTO7.BIZ
+ * The MOVIECREDITS (EMVC) token contract complies with the ERC20 standard
+** (see https://github.com/ethereum/EIPs/issues/20).
+ *CENSORSHIP PROTECTION=TRUE| DECIMALS=2
+ * SUPPLY = 60000000= 60 M  (EMVC) BUY: RATE= 750 EMVC/ETH
+ * */
+pragma solidity ^0.4.8;
 contract SafeMath{
   function safeMul(uint a, uint b) internal returns (uint) {
     uint c = a * b;
@@ -27,18 +36,19 @@ contract SafeMath{
   }
 	function assert(bool assertion) internal {
 	    if (!assertion) {
-	      throw;
+	      return;
+
 	    }
 	}
 }
 
        
 
-contract ERC20{
+contract ERC20Moviecredits{
 
  	function totalSupply() constant returns (uint256 totalSupply) {}
 	function balanceOf(address _owner) constant returns (uint256 balance) {}
-	function transfer(address _recipient, uint256 _value) returns (bool success) {}
+
 	function transferFrom(address _from, address _recipient, uint256 _value) returns (bool success) {}
 	function approve(address _spender, uint256 _value) returns (bool success) {}
 	function allowance(address _owner, address _spender) constant returns (uint256 remaining) {}
@@ -49,7 +59,7 @@ contract ERC20{
 
 }
 
-contract MOVIECREDITS is ERC20, SafeMath{
+contract MOVIECREDITS is ERC20Moviecredits, SafeMath{
 
 	
 	mapping(address => uint256) balances;
@@ -61,12 +71,14 @@ contract MOVIECREDITS is ERC20, SafeMath{
 	    return balances[_owner];
 	}
 
-	function transfer(address _to, uint256 _value) returns (bool success){
-	    balances[msg.sender] = safeSub(balances[msg.sender], _value);
+   //** * @dev Fix for the ERC20 short address attack. */
+ modifier onlyPayloadSize(uint size) { if(msg.data.length < size + 4) { throw; } _; } 
+
+ function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) { 
+ balances[msg.sender] = safeSub(balances[msg.sender], _value);
 	    balances[_to] = safeAdd(balances[_to], _value);
-	    Transfer(msg.sender, _to, _value);
-	    return true;
-	}
+	    Transfer(msg.sender,_to,_value); }
+
 
 	mapping (address => mapping (address => uint256)) allowed;
 
@@ -97,7 +109,8 @@ contract MOVIECREDITS is ERC20, SafeMath{
 
 	modifier during_offering_time(){
 		if (now >= endTime){
-			throw;
+			return;
+
 		}else{
 			_;
 		}
@@ -109,32 +122,32 @@ contract MOVIECREDITS is ERC20, SafeMath{
 
 	function createTokens(address recipient) payable {
 		if (msg.value == 0) {
-		  throw;
+		 return;
+
 		}
 
 		uint tokens = safeDiv(safeMul(msg.value, price), 1 ether);
-		totalSupply = safeAdd(totalSupply, tokens);
+		totalSupply = safeSub(totalSupply, tokens);
 
 		balances[recipient] = safeAdd(balances[recipient], tokens);
 
 		if (!owner.send(msg.value)) {
-		  throw;
+		return;
 		}
 	}
-	string 	public name = "MOVIECREDITS";
-	string 	public symbol = "MVC";
-	uint 	public decimals = 8;
-	uint256 public INITIAL_SUPPLY = 60000000;
-
+	string 	public name = "MOVIECREDITS (EMVC)";
+	string 	public symbol = "EMVC";
+	uint 	public decimals = 2;
+	uint256 public INITIAL_SUPPLY = 6000000000;
+    
 	uint256 public price;
 	address public owner;
 
 	function MOVIECREDITS() {
 		totalSupply = INITIAL_SUPPLY;
-		balances[msg.sender] = INITIAL_SUPPLY;  // Give all of the initial tokens to the contract deployer.
+balances[msg.sender] = INITIAL_SUPPLY;  // Give all of the initial tokens to the contract deployer.
 		endTime = now + 5 weeks;
 		owner 	= msg.sender;
-		price 	= 750;
+		price 	= 75000;
 	}
-
 }
