@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SchmeckleToken at 0xc9df5f2efe3fa64911058d9a792fe0323cc6a6e6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SchmeckleToken at 0x739d60e1192592d84de81f07521762662ea31032
 */
 pragma solidity ^0.4.4;
 
@@ -117,7 +117,7 @@ contract SchmeckleToken is StandardToken {
 
 //make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
 
-    function SchmeckleToken(
+    function SchmecklelToken(
         ) {
         balances[msg.sender] = 101000;               // Give the creator all initial tokens (100000 for example)
         totalSupply = 101000;                        // Update total supply (100000 for example)
