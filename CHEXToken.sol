@@ -1,102 +1,122 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CHEXToken at 0x23166b7900d968f2A2100829b0A19540aa2f7cf1
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CHEXToken at 0xed31b389d20884e9ab89f14a36a01d1a971b608c
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.12;
 /**
  * Overflow aware uint math functions.
  */
-contract SafeMath {
-  function mul(uint256 a, uint256 b) internal returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
+library SafeMath {
+    function mul(uint256 a, uint256 b) internal returns (uint256) {
+        uint256 c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
+    }
 
-  function div(uint256 a, uint256 b) internal returns (uint256) {
-    uint256 c = a / b;
-    return c;
-  }
+    function div(uint256 a, uint256 b) internal returns (uint256) {
+        uint256 c = a / b;
+        return c;
+    }
 
-  function pct(uint numerator, uint denominator, uint precision) internal returns(uint quotient) {
-    uint _numerator = numerator * 10 ** (precision+1);
-    uint _quotient = ((_numerator / denominator) + 5) / 10;
-    return (_quotient);
-  }
+    function sub(uint256 a, uint256 b) internal returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
 
-  function sub(uint256 a, uint256 b) internal returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+    function add(uint256 a, uint256 b) internal returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
 
-  function add(uint256 a, uint256 b) internal returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+    function max64(uint64 a, uint64 b) internal constant returns (uint64) {
+        return a >= b ? a : b;
+    }
 
-  function max64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a >= b ? a : b;
-  }
+    function min64(uint64 a, uint64 b) internal constant returns (uint64) {
+        return a < b ? a : b;
+    }
 
-  function min64(uint64 a, uint64 b) internal constant returns (uint64) {
-    return a < b ? a : b;
-  }
+    function max256(uint256 a, uint256 b) internal constant returns (uint256) {
+        return a >= b ? a : b;
+    }
 
-  function max256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a >= b ? a : b;
-  }
-
-  function min256(uint256 a, uint256 b) internal constant returns (uint256) {
-    return a < b ? a : b;
-  }
+    function min256(uint256 a, uint256 b) internal constant returns (uint256) {
+        return a < b ? a : b;
+    }
 
 }
 
 /**
- * ERC 20 token
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
  */
-contract Token is SafeMath {
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        if (balances[msg.sender] >= _value && _value > 0) {
-            balances[msg.sender] = sub(balances[msg.sender], _value);
-            balances[_to] = add(balances[_to], _value);
-            Transfer(msg.sender, _to, _value);
-            return true;
-        } else { return false; }
-    }
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) constant returns (uint256);
+  function transfer(address to, uint256 value) returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
-            balances[_to] = add(balances[_to], _value);
-            balances[_from] = sub(balances[_from], _value);
-            allowed[_from][msg.sender] = sub(allowed[_from][msg.sender], _value);
-            Transfer(_from, _to, _value);
-            return true;
-        } else { return false; }
-    }
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) returns (bool);
+  function approve(address spender, uint256 value) returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
 
-    function balanceOf(address _owner) constant returns (uint256 balance) {
-        return balances[_owner];
-    }
-
-    function approve(address _spender, uint256 _value) returns (bool success) {
-        allowed[msg.sender][_spender] = _value;
-        Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
-      return allowed[_owner][_spender];
-    }
-
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+/**
+ * @title Token
+ * @dev Adds token security measures
+ */
+contract Token is ERC20 { using SafeMath for uint;
 
     mapping (address => uint256) balances;
 
     mapping (address => mapping (address => uint256)) allowed;
 
-    uint256 public totalSupply;
+    /**
+    * @dev Fix for the ERC20 short address attack.
+    */
+    modifier onlyPayloadSize(uint size) {
+        if(msg.data.length < size + 4) revert();
+        _;
+    }
+
+    function transfer(address _to, uint256 _value) onlyPayloadSize(2 * 32) returns (bool success) {
+        if (balances[msg.sender] >= _value && _value > 0) {
+            balances[msg.sender] = balances[msg.sender].sub(_value);
+            balances[_to] = balances[_to].add(_value);
+            Transfer(msg.sender, _to, _value);
+            return true;
+        } else { return false; }
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) onlyPayloadSize(3 * 32) returns (bool success) {
+        if (balances[_from] >= _value && allowed[_from][msg.sender] >= _value && _value > 0) {
+            balances[_to] = balances[_to].add(_value);
+            balances[_from] = balances[_from].sub(_value);
+            allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+            Transfer(_from, _to, _value);
+            return true;
+        } else { return false; }
+    }
+
+    function approve(address _spender, uint256 _value) returns (bool success) {
+        // To change the approve amount you first have to reduce the addresses`
+        //  allowance to zero by calling `approve(_spender, 0)` if it is not
+        //  already 0 to mitigate the race condition described here:
+        //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+        if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) revert();
+
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
 
     // A vulernability of the approve method in the ERC20 standard was identified by
     // Mikhail Vladimirov and Dmitry Khovratovich here:
@@ -112,9 +132,21 @@ contract Token is SafeMath {
         }
             return approve(_spender, _newValue);
     }
+
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+      return allowed[_owner][_spender];
+    }
+
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
+    }
 }
 
-contract CHEXToken is Token {
+/**
+ *  @title CHEXToken
+ *  @dev ERC20 compliant (see https://github.com/ethereum/EIPs/issues/20)
+ */
+contract CHEXToken is Token { using SafeMath for uint;
 
     string public constant name = "CHEX Token";
     string public constant symbol = "CHX";
@@ -123,39 +155,30 @@ contract CHEXToken is Token {
     uint public endBlock; //crowdsale end block
 
     address public founder;
-    address public owner;
     
-    uint public totalSupply = 2000000000 * 10**decimals; // 2b tokens, each divided to up to 10^decimals units.
-    uint public etherCap = 2500000 * 10**decimals;
-    
-    uint public totalTokens = 0;
-    uint public presaleSupply = 0;
-    uint public presaleEtherRaised = 0;
+    uint public tokenCap = 2000000000 * 10**decimals; // 2b tokens, each divided to up to 10^decimals units.
+    uint public crowdsaleSupply = 0;
 
-    event Buy(address indexed recipient, uint eth, uint chx);
-    event Deliver(address indexed recipient, uint chx, string _for);
+    event Issuance(address indexed recipient, uint chx, uint eth);
 
-    uint public presaleAllocation = totalSupply / 2; //50% of token supply allocated for crowdsale
-    uint public ecosystemAllocation = totalSupply / 4; //25% of token supply allocated post-crowdsale for the ecosystem fund
-    uint public reservedAllocation = totalSupply / 4; //25% of token supply allocated post-crowdsale for internal
-    bool public ecosystemAllocated = false;
+    uint public crowdsaleAllocation = tokenCap; //100% of token supply allocated for crowdsale
 
-    uint public transferLockup = 40320; //No transfers until 1 week after sale is over
+    uint public etherRaised = 0;
 
-    uint public constant MIN_ETHER = 1 finney;
+    uint public constant MIN_ETHER = 1 finney; //minimum ether required to buy tokens
+    uint public constant HALVING_DELAY = 460800; //~80 days after sale begins, drop discount to 25%
 
     enum TokenSaleState {
         Initial,    //contract initialized, bonus token
-        Presale,    //limited time crowdsale
+        Crowdsale,  //limited time crowdsale
         Live,       //default price
         Frozen      //prevent sale of tokens
     }
 
     TokenSaleState public _saleState = TokenSaleState.Initial;
 
-    function CHEXToken(address founderInput, address ownerInput, uint startBlockInput, uint endBlockInput) {
+    function CHEXToken(address founderInput, uint startBlockInput, uint endBlockInput) {
         founder = founderInput;
-        owner = ownerInput;
         startBlock = startBlockInput;
         endBlock = endBlockInput;
         
@@ -163,12 +186,46 @@ contract CHEXToken is Token {
     }
 
     function price() constant returns(uint) {
-        if (_saleState == TokenSaleState.Initial) return 6001;
-        if (_saleState == TokenSaleState.Presale) {
-            uint percentRemaining = pct((endBlock - block.number), (endBlock - startBlock), 3);
-            return 3000 + 3 * percentRemaining;
+        if (_saleState == TokenSaleState.Initial) return 42007;
+        if (_saleState == TokenSaleState.Crowdsale) {
+            uint discount = 1000;
+            if (block.number > startBlock + HALVING_DELAY) discount = 500;
+            return 21000 + 21 * discount;
         }
-        return 3000;
+        return 21000;
+    }
+
+    function() payable {
+        buy(msg.sender);
+    }
+
+    function tokenFallback() payable {
+        buy(msg.sender);
+    }
+
+    function buy(address recipient) payable {
+        if (recipient == 0x0) revert();
+        if (msg.value < MIN_ETHER) revert();
+        if (_saleState == TokenSaleState.Frozen) revert();
+        
+        updateTokenSaleState();
+
+        uint tokens = msg.value.mul(price());
+        uint nextTotal = totalSupply.add(tokens);
+        uint nextCrowdsaleTotal = crowdsaleSupply.add(tokens);
+
+        if (nextTotal >= tokenCap) revert();
+        if (nextCrowdsaleTotal >= crowdsaleAllocation) revert();
+        
+        balances[recipient] = balances[recipient].add(tokens);
+
+        totalSupply = nextTotal;
+        crowdsaleSupply = nextCrowdsaleTotal;
+    
+        etherRaised = etherRaised.add(msg.value);
+        
+        Transfer(0, recipient, tokens);
+        Issuance(recipient, tokens, msg.value);
     }
 
     function updateTokenSaleState () {
@@ -177,89 +234,20 @@ contract CHEXToken is Token {
         if (_saleState == TokenSaleState.Live && block.number > endBlock) return;
         
         if (_saleState == TokenSaleState.Initial && block.number >= startBlock) {
-            _saleState = TokenSaleState.Presale;
+            _saleState = TokenSaleState.Crowdsale;
         }
         
-        if (_saleState == TokenSaleState.Presale && block.number > endBlock) {
+        if (_saleState == TokenSaleState.Crowdsale && block.number > endBlock) {
             _saleState = TokenSaleState.Live;
         }
     }
 
-    function() payable {
-        buy(msg.sender);
-    }
-
-    function buy(address recipient) payable {
-        if (recipient == 0x0) throw;
-        if (msg.value < MIN_ETHER) throw;
-        if (_saleState == TokenSaleState.Frozen) throw;
-        if ((_saleState == TokenSaleState.Initial || _saleState == TokenSaleState.Presale) && presaleSupply >= presaleAllocation) throw;
-        if ((_saleState == TokenSaleState.Initial || _saleState == TokenSaleState.Presale) && presaleEtherRaised >= etherCap) throw;
-
-        updateTokenSaleState();
-        uint tokens = mul(msg.value, price());
-
-        if (tokens <= 0) throw;
-        
-        balances[recipient] = add(balances[recipient], tokens);
-        totalTokens = add(totalTokens, tokens);
-
-        if (_saleState == TokenSaleState.Initial || _saleState == TokenSaleState.Presale) {
-            presaleEtherRaised = add(presaleEtherRaised, msg.value);
-            presaleSupply = add(presaleSupply, tokens);
-        }
-
-        founder.transfer(msg.value);
-        
-        Transfer(0, recipient, tokens);
-        Buy(recipient, msg.value, tokens);
-    }
-
-    function transfer(address _to, uint256 _value) returns (bool success) {
-        if (block.number <= endBlock + transferLockup && msg.sender != founder && msg.sender != owner) throw;
-        return super.transfer(_to, _value);
-    }
-
-    function transferFrom(address _from, address _to, uint256 _value) returns (bool success) {
-        if (block.number <= endBlock + transferLockup && msg.sender != founder && msg.sender != owner) throw;
-        return super.transferFrom(_from, _to, _value);
-    }
-
+    /*
+    * FOR AUTHORIZED USE ONLY
+    */
     modifier onlyInternal {
-        require(msg.sender == owner || msg.sender == founder);
+        require(msg.sender == founder);
         _;
-    }
-
-    function deliver(address recipient, uint tokens, string _for) onlyInternal {
-        if (tokens <= 0) throw;
-        if (totalTokens >= totalSupply) throw;
-        if (_saleState == TokenSaleState.Frozen) throw;
-        if ((_saleState == TokenSaleState.Initial || _saleState == TokenSaleState.Presale) && presaleSupply >= presaleAllocation) throw;
-
-        updateTokenSaleState();
-
-        balances[recipient] = add(balances[recipient], tokens);
-        totalTokens = add(totalTokens, tokens);
-
-        if (_saleState == TokenSaleState.Initial || _saleState == TokenSaleState.Presale) {
-            presaleSupply = add(presaleSupply, tokens);
-        }
-
-        Transfer(0, recipient, tokens);    
-        Deliver(recipient, tokens, _for);
-    }
-
-    function allocateEcosystemTokens() onlyInternal {
-        if (block.number <= endBlock) throw;
-        if (ecosystemAllocated) throw;
-
-        balances[owner] = add(balances[owner], ecosystemAllocation);
-        totalTokens = add(totalTokens, ecosystemAllocation);
-
-        balances[founder] = add(balances[founder], reservedAllocation);
-        totalTokens = add(totalTokens, reservedAllocation);
-
-        ecosystemAllocated = true;
     }
 
     function freeze() onlyInternal {
@@ -267,19 +255,22 @@ contract CHEXToken is Token {
     }
 
     function unfreeze() onlyInternal {
-        _saleState = TokenSaleState.Presale;
+        _saleState = TokenSaleState.Initial;
         updateTokenSaleState();
     }
 
-    function startSalePhase (uint start, uint length) onlyInternal {
-        if (_saleState == TokenSaleState.Presale) throw;
-        if (length == 0) throw;
-        if (start == 0) start = block.number;
+    function withdrawFunds() onlyInternal {
+		if (this.balance == 0) revert();
 
-        startBlock = start;
-        endBlock = startBlock + length;
+		founder.transfer(this.balance);
+	}
 
-        updateTokenSaleState();
-    }
+    function changeFounder(address _newAddress) onlyInternal {
+        if (msg.sender != founder) revert();
+        if (_newAddress == 0x0) revert();
+        
+
+		founder = _newAddress;
+	}
 
 }
