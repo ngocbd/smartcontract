@@ -1,398 +1,400 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xc47F25a40E12F7f07fabCC996148D1e1326903d2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Crowdsale at 0xa971afdca01bd1ca1499346e730a3d1dc06a3a9d
 */
 pragma solidity ^0.4.11;
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-contract ERC20 {
-
-  uint256 public totalSupply;
-
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
-  function allowance(address owner, address spender) constant returns (uint256);
-  
-  event Transfer(address indexed from, address indexed to, uint256 value);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
-
-}
 
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
+    function mul(uint256 a, uint256 b) internal returns (uint256) {
+        uint256 c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
+    }
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+    function div(uint256 a, uint256 b) internal returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
+    }
 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+    function sub(uint256 a, uint256 b) internal returns (uint256) {
+        assert(b <= a);
+        return a - b;
+    }
 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+    function add(uint256 a, uint256 b) internal returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
+    }
 }
-
-
 
 /**
  * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
+ * @dev The Ownable contract has an owner address, and provides basic authorization control 
+ * functions, this simplifies the implementation of "user permissions". 
  */
 contract Ownable {
-  address public owner;
+    address public owner;
 
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
+    /** 
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
+     */
+    function Ownable() {
+        owner = msg.sender;
     }
-  }
 
+    /**
+    * @dev Throws if called by any account other than the owner. 
+    */
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    /**
+    * @dev Allows the current owner to transfer control of the contract to a newOwner.
+    * @param newOwner The address to transfer ownership to. 
+    */
+    function transferOwnership(address newOwner) onlyOwner {
+        if (newOwner != address(0)) {
+            owner = newOwner;
+        }
+    }
 }
 
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20Basic {
+    uint256 public totalSupply;
+    function balanceOf(address who) constant returns (uint256);
+    function transfer(address to, uint256 value);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
 /**
- * Standard ERC20 token
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+    function allowance(address owner, address spender) constant returns (uint256);
+    function transferFrom(address from, address to, uint256 value);
+    function approve(address spender, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+/**
+ * @title Basic token
+ * @dev Basic version of StandardToken, with no allowances. 
+ */
+contract BasicToken is ERC20Basic, Ownable {
+    using SafeMath for uint256;
+
+    mapping(address => uint256) balances;
+
+    /**
+    * @dev transfer token for a specified address
+    * @param _to The address to transfer to.
+    * @param _value The amount to be transferred.
+    */
+    function transfer(address _to, uint256 _value) {
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        Transfer(msg.sender, _to, _value);
+    }
+
+    /**
+    * @dev Gets the balance of the specified address.
+    * @param _owner The address to query the the balance of. 
+    * @return An uint256 representing the amount owned by the passed address.
+    */
+    function balanceOf(address _owner) constant returns (uint256 balance) {
+        return balances[_owner];
+    }
+}
+
+/**
+ * @title Standard ERC20 token
  *
- * https://github.com/ethereum/EIPs/issues/20
- * Based on code by FirstBlood:
- * https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
+ * @dev Implementation of the basic standard token.
+ * @dev https://github.com/ethereum/EIPs/issues/20
+ * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
+contract StandardToken is ERC20, BasicToken {
+    mapping (address => mapping (address => uint256)) allowed;
 
-/// @title Proof Presale Token (PROOFP)
+    /**
+    * @dev Transfer tokens from one address to another
+    * @param _from address The address which you want to send tokens from
+    * @param _to address The address which you want to transfer to
+    * @param _value uint256 the amout of tokens to be transfered
+    */
+    function transferFrom(address _from, address _to, uint256 _value) {
+        var _allowance = allowed[_from][msg.sender];
 
-contract ProofPresaleToken is ERC20, Ownable {
+        // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
+        // if (_value > _allowance) throw;
 
-  using SafeMath for uint256;
+        balances[_to] = balances[_to].add(_value);
+        balances[_from] = balances[_from].sub(_value);
+        allowed[_from][msg.sender] = _allowance.sub(_value);
+        Transfer(_from, _to, _value);
+    }
 
-  mapping(address => uint) balances;
-  mapping (address => mapping (address => uint)) allowed;
+    /**
+    * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
+    * @param _spender The address which will spend the funds.
+    * @param _value The amount of tokens to be spent.
+    */
+    function approve(address _spender, uint256 _value) {
 
-  string public name = "Proof Presale Token";
-  string public symbol = "PROOFP";
-  uint8 public decimals = 18;
-  bool public mintingFinished = false;
+        // To change the approve amount you first have to reduce the addresses`
+        //  allowance to zero by calling `approve(_spender, 0)` if it is not
+        //  already 0 to mitigate the race condition described here:
+        //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+        require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+    }
 
-  event Mint(address indexed to, uint256 amount);
-  event MintFinished();
-
-  function ProofPresaleToken() {}
-
-
-  // TODO : need to replace throw by 0.4.11 solidity compiler syntax
-  function() payable {
-    revert();
-  }
-
-  function transfer(address _to, uint _value) returns (bool success) {
-
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-
-    Transfer(msg.sender, _to, _value);
-    return true;
-  }
-
-  function transferFrom(address _from, address _to, uint _value) returns (bool success) {
-    var _allowance = allowed[_from][msg.sender];
-
-    balances[_to] = balances[_to].add(_value);
-    balances[_from] = balances[_from].sub(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
-
-    Transfer(_from, _to, _value);
-    return true;
-  }
-
-  function balanceOf(address _owner) constant returns (uint balance) {
-    return balances[_owner];
-  }
-
-  function approve(address _spender, uint _value) returns (bool success) {
-    allowed[msg.sender][_spender] = _value;
-    Approval(msg.sender, _spender, _value);
-    return true;
-  }
-
-  function allowance(address _owner, address _spender) constant returns (uint remaining) {
-    return allowed[_owner][_spender];
-  }
-    
-    
-  modifier canMint() {
-    require(!mintingFinished);
-    _;
-  }
-
-  /**
-   * Function to mint tokens
-   * @param _to The address that will recieve the minted tokens.
-   * @param _amount The amount of tokens to mint.
-   * @return A boolean that indicates if the operation was successful.
-   */
-
-  function mint(address _to, uint256 _amount) onlyOwner canMint returns (bool) {
-    totalSupply = totalSupply.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    Mint(_to, _amount);
-    return true;
-  }
-
-  /**
-   * @dev Function to stop minting new tokens.
-   * @return True if the operation was successful.
-   */
-  function finishMinting() onlyOwner returns (bool) {
-    mintingFinished = true;
-    MintFinished();
-    return true;
-  }
-
-  
-  
+    /**
+    * @dev Function to check the amount of tokens that an owner allowed to a spender.
+    * @param _owner address The address which owns the funds.
+    * @param _spender address The address which will spend the funds.
+    * @return A uint256 specifing the amount of tokens still avaible for the spender.
+    */
+    function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
+        return allowed[_owner][_spender];
+    }
 }
 
-
 /**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
+ * @title TKRPToken
+ * @dev Very simple ERC20 Token example, where all tokens are pre-assigned to the creator. 
+ * Note they can later distribute these tokens as they wish using `transfer` and other
+ * `StandardToken` functions.
  */
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
+contract TKRPToken is StandardToken {
+    event Destroy(address indexed _from);
 
-  bool public paused = false;
+    string public name = "TKRPToken";
+    string public symbol = "TKRP";
+    uint256 public decimals = 18;
+    uint256 public initialSupply = 500000;
 
+    /**
+    * @dev Contructor that gives the sender all tokens
+    */
+    function TKRPToken() {
+        totalSupply = initialSupply;
+        balances[msg.sender] = initialSupply;
+    }
 
-  /**
-   * @dev modifier to allow actions only when the contract IS paused
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
+    /**
+    * @dev Destroys tokens from an address, this process is irrecoverable.
+    * @param _from The address to destroy the tokens from.
+    */
+    function destroyFrom(address _from) onlyOwner returns (bool) {
+        uint256 balance = balanceOf(_from);
+        require(balance > 0);
 
-  /**
-   * @dev modifier to allow actions only when the contract IS NOT paused
-   */
-  modifier whenPaused {
-    require(paused);
-    _;
-  }
+        balances[_from] = 0;
+        totalSupply = totalSupply.sub(balance);
 
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused returns (bool) {
-    paused = true;
-    Pause();
-    return true;
-  }
-
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused returns (bool) {
-    paused = false;
-    Unpause();
-    return true;
-  }
+        Destroy(_from);
+    }
 }
 
+/**
+ * @title TKRToken
+ * @dev Very simple ERC20 Token example, where all tokens are pre-assigned to the creator. 
+ * Note they can later distribute these tokens as they wish using `transfer` and other
+ * `StandardToken` functions.
+ */
+contract TKRToken is StandardToken {
+    event Destroy(address indexed _from, address indexed _to, uint256 _value);
+
+    string public name = "TKRToken";
+    string public symbol = "TKR";
+    uint256 public decimals = 18;
+    uint256 public initialSupply = 65500000 * 10 ** 18;
+
+    /**
+    * @dev Contructor that gives the sender all tokens
+    */
+    function TKRToken() {
+        totalSupply = initialSupply;
+        balances[msg.sender] = initialSupply;
+    }
+
+    /**
+    * @dev Destroys tokens, this process is irrecoverable.
+    * @param _value The amount to destroy.
+    */
+    function destroy(uint256 _value) onlyOwner returns (bool) {
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        Destroy(msg.sender, 0x0, _value);
+    }
+}
 
 /**
- * @title Crowdsale 
- * @dev Crowdsale is a base contract for managing a token crowdsale.
- * Crowdsales have a start and end block, where investors can make
- * token purchases and the crowdsale will assign them tokens based
- * on a token per ETH rate. Funds collected are forwarded to a wallet 
- * as they arrive.
+ * @title Crowdsale
+ * @dev Smart contract which collects ETH and in return transfers the TKRToken to the contributors
+ * Log events are emitted for each transaction 
  */
- 
-contract Crowdsale is Pausable {
-  using SafeMath for uint256;
+contract Crowdsale is Ownable {
+    using SafeMath for uint256;
 
-  // The token being sold
-  ProofPresaleToken public token;
+    /* 
+    * Stores the contribution in wei
+    * Stores the amount received in TKR
+    */
+    struct Contributor {
+        uint256 contributed;
+        uint256 received;
+    }
 
-  // address where funds are collected
-  address public wallet;
+    /* Backers are keyed by their address containing a Contributor struct */
+    mapping(address => Contributor) public contributors;
 
-  // amount of raised money in wei
-  uint256 public weiRaised;
+    /* Events to emit when a contribution has successfully processed */
+    event TokensSent(address indexed to, uint256 value);
+    event ContributionReceived(address indexed to, uint256 value);
+    event MigratedTokens(address indexed _address, uint256 value);
 
-  // cap above which the crowdsale is ended
-  uint256 public cap;
+    /* Constants */
+    uint256 public constant TOKEN_CAP = 58500000 * 10 ** 18;
+    uint256 public constant MINIMUM_CONTRIBUTION = 10 finney;
+    uint256 public constant TOKENS_PER_ETHER = 5000 * 10 ** 18;
+    uint256 public constant CROWDSALE_DURATION = 30 days;
 
-  uint256 public minInvestment;
+    /* Public Variables */
+    TKRToken public token;
+    TKRPToken public preToken;
+    address public crowdsaleOwner;
+    uint256 public etherReceived;
+    uint256 public tokensSent;
+    uint256 public crowdsaleStartTime;
+    uint256 public crowdsaleEndTime;
 
-  uint256 public rate;
+    /* Modifier to check whether the crowdsale is running */
+    modifier crowdsaleRunning() {
+        require(now < crowdsaleEndTime && crowdsaleStartTime != 0);
+        _;
+    }
 
-  bool public isFinalized;
+    /**
+    * @dev Fallback function which invokes the processContribution function
+    * @param _tokenAddress TKR Token address
+    * @param _to crowdsale owner address
+    */
+    function Crowdsale(address _tokenAddress, address _preTokenAddress, address _to) {
+        token = TKRToken(_tokenAddress);
+        preToken = TKRPToken(_preTokenAddress);
+        crowdsaleOwner = _to;
+    }
 
-  string public contactInformation;
+    /**
+    * @dev Fallback function which invokes the processContribution function
+    */
+    function() crowdsaleRunning payable {
+        processContribution(msg.sender);
+    }
 
-  uint256 public tokenDecimals;
+    /**
+    * @dev Starts the crowdsale
+    */
+    function start() onlyOwner {
+        require(crowdsaleStartTime == 0);
 
-  bool private rentrancy_lock = false;
+        crowdsaleStartTime = now;            
+        crowdsaleEndTime = now + CROWDSALE_DURATION;    
+    }
 
-  
+    /**
+    * @dev A backup fail-safe drain if required
+    */
+    function drain() onlyOwner {
+        assert(crowdsaleOwner.send(this.balance));
+    }
 
-  /**
-   * event for token purchase logging
-   * @param purchaser who paid for the tokens
-   * @param beneficiary who got the tokens
-   * @param value weis paid for purchase
-   * @param amount amount of tokens purchased
-   */ 
-  event TokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+    /**
+    * @dev Finalizes the crowdsale and sends funds
+    */
+    function finalize() onlyOwner {
+        require((crowdsaleStartTime != 0 && now > crowdsaleEndTime) || tokensSent == TOKEN_CAP);
 
-  /**
-   * event for signaling finished crowdsale
-   */
-  event Finalized();
+        uint256 remainingBalance = token.balanceOf(this);
+        if (remainingBalance > 0) token.destroy(remainingBalance);
 
+        assert(crowdsaleOwner.send(this.balance));
+    }
 
+    /**
+    * @dev Migrates TKRP tokens to TKR token at a rate of 1:1 during the Crowdsale.
+    */
+    function migrate() crowdsaleRunning {
+        uint256 preTokenBalance = preToken.balanceOf(msg.sender);
+        require(preTokenBalance != 0);
+        uint256 tokenBalance = preTokenBalance * 10 ** 18;
 
+        preToken.destroyFrom(msg.sender);
+        token.transfer(msg.sender, tokenBalance);
+        MigratedTokens(msg.sender, tokenBalance);
+    }
 
-  function Crowdsale() {
+    /**
+    * @dev Processes the contribution given, sends the tokens and emits events
+    * @param sender The address of the contributor
+    */
+    function processContribution(address sender) internal {
+        require(msg.value >= MINIMUM_CONTRIBUTION);
 
-    token = createTokenContract();
-    wallet = 0xaCF472DBcfA46cF9E9842e2734bE2b138fB13C41;
-    rate = 20;
-    tokenDecimals = 18;
-    minInvestment = (10**18)/400;  //minimum investment in wei  (=10 ether)
-    cap = 295257 * (10**18);  //cap in tokens base units (=295257 tokens)
-  }
+        // // /* Calculate total (+bonus) amount to send, throw if it exceeds cap*/
+        uint256 contributionInTokens = bonus(msg.value.mul(TOKENS_PER_ETHER).div(1 ether));
+        require(contributionInTokens.add(tokensSent) <= TOKEN_CAP);
 
-  // creates the token to be sold. 
-  function createTokenContract() internal returns (ProofPresaleToken) {
-    return new ProofPresaleToken();
-  }
+        /* Send the tokens */
+        token.transfer(sender, contributionInTokens);
 
+        /* Create a contributor struct and store the contributed/received values */
+        Contributor storage contributor = contributors[sender];
+        contributor.received = contributor.received.add(contributionInTokens);
+        contributor.contributed = contributor.contributed.add(msg.value);
 
-  // fallback function to buy tokens
-  function () payable {
-    buyTokens(msg.sender);
-  }
+        // /* Update the total amount of tokens sent and ether received */
+        etherReceived = etherReceived.add(msg.value);
+        tokensSent = tokensSent.add(contributionInTokens);
 
-  // low level token purchase function
-  function buyTokens(address beneficiary) payable whenNotPaused {
-    require(beneficiary != 0x0);
-    require(validPurchase());
+        // /* Emit log events */
+        TokensSent(sender, contributionInTokens);
+        ContributionReceived(sender, msg.value);
+    }
 
+    /**
+    * @dev Calculates the bonus amount based on the contribution date
+    * @param amount The contribution amount given
+    */
+    function bonus(uint256 amount) internal constant returns (uint256) {
+        /* This adds a bonus 20% such as 100 + 100/5 = 120 */
+        if (now < crowdsaleStartTime.add(2 days)) return amount.add(amount.div(5));
 
-    uint256 weiAmount = msg.value;
-    // compute amount of tokens created
-    uint256 tokens = weiAmount.mul(rate);
+        /* This adds a bonus 10% such as 100 + 100/10 = 110 */
+        if (now < crowdsaleStartTime.add(14 days)) return amount.add(amount.div(10));
 
-    // update weiRaised
-    weiRaised = weiRaised.add(weiAmount);
+        /* This adds a bonus 5% such as 100 + 100/20 = 105 */
+        if (now < crowdsaleStartTime.add(21 days)) return amount.add(amount.div(20));
 
-    token.mint(beneficiary, tokens);
-    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
-    forwardFunds();
-  }
-
-  // send ether to the fund collection wallet
-  // override to create custom fund forwarding mechanisms
-  function forwardFunds() internal {
-    wallet.transfer(msg.value);
-  }
-
-  // return true if the transaction can buy tokens
-  function validPurchase() internal constant returns (bool) {
-
-    uint256 weiAmount = weiRaised.add(msg.value);
-    bool notSmallAmount = msg.value >= minInvestment;
-    bool withinCap = weiAmount.mul(rate) <= cap;
-
-    return (notSmallAmount && withinCap);
-  }
-
-  function finalize() onlyOwner {
-    require(!isFinalized);
-    require(hasEnded());
-
-    token.finishMinting();
-    Finalized();
-
-    isFinalized = true;
-  }
-
-  function setContactInformation(string info) onlyOwner {
-      contactInformation = info;
-  }
-
-
-  // @return true if crowdsale event has ended
-  function hasEnded() public constant returns (bool) {
-    bool capReached = (weiRaised.mul(rate) >= cap);
-    return capReached;
-  }
-    
-  /**
-   * 
-   * @author Remco Bloemen <remco@2?.com>
-   * @dev Prevents a contract from calling itself, directly or indirectly.
-   * @notice If you mark a function `nonReentrant`, you should also
-   * mark it `external`. Calling one nonReentrant function from
-   * another is not supported. Instead, you can implement a
-   * `private` function doing the actual work, and a `external`
-   * wrapper marked as `nonReentrant`.
-   */
-  
-  // TODO need to set nonReentrant modifier where necessary
-
-  modifier nonReentrant() {
-    require(!rentrancy_lock);
-    rentrancy_lock = true;
-    _;
-    rentrancy_lock = false;
-  }
-
-
+        /* No bonus is given */
+        return amount;
+    }
 }
