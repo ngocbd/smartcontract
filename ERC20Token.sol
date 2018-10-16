@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x00a0cbe98e4d110b0fa82646152d77babf2951d0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x4094a00de30572d4ebfc744717dbe7e65d8b0ac9
 */
 pragma solidity ^0.4.4;
 
@@ -69,14 +69,6 @@ contract StandardToken is Token {
             return true;
         } else { return false; }
     }
-    
-    function distributeToken(address[] addresses, uint256 _value) {
-     for (uint i = 0; i < addresses.length; i++) {
-         balances[msg.sender] -= _value;
-         balances[addresses[i]] += _value;
-         Transfer(msg.sender, addresses[i], _value);
-     }
-}
 
     function balanceOf(address _owner) constant returns (uint256 balance) {
         return balances[_owner];
@@ -91,7 +83,7 @@ contract StandardToken is Token {
     function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
       return allowed[_owner][_spender];
     }
-    
+
     mapping (address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
     uint256 public totalSupply;
@@ -127,11 +119,11 @@ contract ERC20Token is StandardToken {
 
     function ERC20Token(
         ) {
-        totalSupply = 12 * 10 ** 24;
-        balances[msg.sender] = totalSupply;               // Give the creator all initial tokens (100000 for example)
-        name = "EETHER";                                   // Set the name for display purposes
-        decimals = 18;                            // Amount of decimals for display purposes
-        symbol = "EETHER";                               // Set the symbol for display purposes
+        balances[msg.sender] = 1000000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 1000000000000000;                        // Update total supply (100000 for example)
+        name = "Kem Credit";                                   // Set the name for display purposes
+        decimals = 8;                            // Amount of decimals for display purposes
+        symbol = "KMC";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
@@ -144,6 +136,5 @@ contract ERC20Token is StandardToken {
         //it is assumed that when does this that the call *should* succeed, otherwise one would use vanilla approve instead.
         if(!_spender.call(bytes4(bytes32(sha3("receiveApproval(address,uint256,address,bytes)"))), msg.sender, _value, this, _extraData)) { throw; }
         return true;
-        
     }
 }
