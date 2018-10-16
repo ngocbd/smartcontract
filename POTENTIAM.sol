@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POTENTIAM at 0x53926a4b6331128d77c6d73f4a7e5466af63baa6
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract POTENTIAM at 0x76645F7C6F98caD248474e9a38D4A38c4173F2a4
 */
 pragma solidity ^0.4.18;
 
@@ -333,7 +333,7 @@ contract POTENTIAM is StandardToken, Destructible {
     function POTENTIAM()  public {
        totalSupply = 100000000 * (10**decimals);  // 
        owner = msg.sender;
-       companyReserve =   0xd311cB7D961B46428d766df0eaE7FE83Fc8B7B5c;
+       companyReserve =   0xd311cB7D961B46428d766df0eaE7FE83Fc8B7B5c;//TODO change address
        balances[msg.sender] += 75000000 * (10 **decimals);
        balances[companyReserve]  += 25000000 * (10**decimals);
        firstWeekPreICOBonusEstimate = now + 7 days;
@@ -356,16 +356,16 @@ contract POTENTIAM is StandardToken, Destructible {
         require(now<=forthWeekMainICOBonusEstimate);
         require(tokenSales < (60000000 * (10 **decimals)));
         uint256 bonus = 0;
-        if(now<=firstWeekPreICOBonusEstimate && totalWeiRaised < 5000 ether){
+        if(now<=firstWeekPreICOBonusEstimate && totalWeiRaised < 5000 wei){
             bonus = firstWeekPreICOBonusRate;
-        }else if(now <=secondWeekPreICOBonusEstimate && totalWeiRaised < 6000 ether){
+        }else if(now <=secondWeekPreICOBonusEstimate && totalWeiRaised < 6000 wei){
             bonus = secondWeekPreICOBonusRate;
-        }else if(now<=firstWeekMainICOBonusEstimate && totalWeiRaised < 9000 ether){
+        }else if(now<=firstWeekMainICOBonusEstimate && totalWeiRaised < 9000){
             bonus = firstWeekMainICOBonusRate;
-        }else if(now<=secondWeekMainICOBonusEstimate && totalWeiRaised < 12000 ether){
+        }else if(now<=secondWeekMainICOBonusEstimate && totalWeiRaised < 12000){
             bonus = secondWeekMainICOBonusRate;
         }
-        else if(now<=thirdWeekMainICOBonusEstimate && totalWeiRaised <14000 ether){
+        else if(now<=thirdWeekMainICOBonusEstimate && totalWeiRaised <14000){
             bonus = thirdWeekMainICOBonusRate;
         }
         uint256 tokens = (msg.value * (10 ** decimals)) / priceOfToken;
@@ -383,7 +383,6 @@ contract POTENTIAM is StandardToken, Destructible {
         else{
             tokenSales += tokens;
             etherRaised += msg.value;
-            totalWeiRaised +=msg.value;
         }
     }//end of fallback
     /**
