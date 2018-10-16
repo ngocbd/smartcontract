@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TravelCoin at 0x21576319f5c0d28925830a5536ebb83dc5d490c9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TravelCoin at 0x039cbc5d80f78aa4708aef80d3cd99dd37953512
 */
-pragma solidity ^0.4.8;
-
+pragma solidity ^0.4.11;
 
  // ERC Token Standard #20 Interface
  // https://github.com/ethereum/EIPs/issues/20
@@ -42,7 +41,7 @@ pragma solidity ^0.4.8;
      string public constant symbol = "TLC";
      string public constant name = "TravelCoin";
      uint8 public constant decimals = 8;
-     uint256 _totalSupply = 21000000000;
+     uint256 _totalSupply = 2100000000000000000;
      
      // Owner of this contract
      address public owner;
