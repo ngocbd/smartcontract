@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xad14e61e0c450f525429861b1e482eedf914a541
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CustomToken at 0xe02e0dd34a6b3b48ff2bbc273a8cdf1a2160a3f2
 */
 pragma solidity ^0.4.19;
 
@@ -67,26 +67,31 @@ contract BurnToken is BaseToken {
     }
 }
 
-contract AirdropToken is BaseToken {
-    uint256 public airAmount;
-    uint256 public airBegintime;
-    uint256 public airEndtime;
-    address public airSender;
-    uint32 public airLimitCount;
+contract ICOToken is BaseToken {
+    // 1 ether = icoRatio token
+    uint256 public icoRatio;
+    uint256 public icoBegintime;
+    uint256 public icoEndtime;
+    address public icoSender;
+    address public icoHolder;
 
-    mapping (address => uint32) public airCountOf;
+    event ICO(address indexed from, uint256 indexed value, uint256 tokenValue);
+    event Withdraw(address indexed from, address indexed holder, uint256 value);
 
-    event Airdrop(address indexed from, uint32 indexed count, uint256 tokenValue);
-
-    function airdrop() public payable {
-        require(now >= airBegintime && now <= airEndtime);
-        require(msg.value == 0);
-        if (airLimitCount > 0 && airCountOf[msg.sender] >= airLimitCount) {
+    function ico() public payable {
+        require(now >= icoBegintime && now <= icoEndtime);
+        uint256 tokenValue = (msg.value * icoRatio * 10 ** uint256(decimals)) / (1 ether / 1 wei);
+        if (tokenValue == 0 || balanceOf[icoSender] < tokenValue) {
             revert();
         }
-        _transfer(airSender, msg.sender, airAmount);
-        airCountOf[msg.sender] += 1;
-        Airdrop(msg.sender, airCountOf[msg.sender], airAmount);
+        _transfer(icoSender, msg.sender, tokenValue);
+        ICO(msg.sender, msg.value, tokenValue);
+    }
+
+    function withdraw() public {
+        uint256 balance = this.balance;
+        icoHolder.transfer(balance);
+        Withdraw(msg.sender, icoHolder, balance);
     }
 }
 
@@ -106,27 +111,28 @@ contract LockToken is BaseToken {
     }
 }
 
-contract CustomToken is BaseToken, BurnToken, AirdropToken, LockToken {
+contract CustomToken is BaseToken, BurnToken, ICOToken, LockToken {
     function CustomToken() public {
-        totalSupply = 100000000000000000000000000;
-        name = 'EthLinkerToken';
-        symbol = 'ELT';
+        totalSupply = 100000000000000000000000000000;
+        name = 'ArtpolloToken';
+        symbol = 'APT';
         decimals = 18;
-        balanceOf[0x0926a20aca505b82f7cb7864e1246894eac27ea0] = totalSupply;
-        Transfer(address(0), 0x0926a20aca505b82f7cb7864e1246894eac27ea0, totalSupply);
+        balanceOf[0x8665e102b2c4d22da6a391537c3dfbcc6799e90a] = totalSupply;
+        Transfer(address(0), 0x8665e102b2c4d22da6a391537c3dfbcc6799e90a, totalSupply);
 
-        airAmount = 66000000000000000000;
-        airBegintime = 1523095200;
-        airEndtime = 1617789600;
-        airSender = 0x8888888888888888888888888888888888888888;
-        airLimitCount = 1;
+        icoRatio = 200000;
+        icoBegintime = 1523066400;
+        icoEndtime = 1538924400;
+        icoSender = 0xaa0a590d0a151bc9444b52c299ea8e8ede3e9cd3;
+        icoHolder = 0xaa0a590d0a151bc9444b52c299ea8e8ede3e9cd3;
 
-        lockedAddresses[0xf60340e79829061f1ab918ee92c064dbe06ff168] = LockMeta({amount: 10000000000000000000000000, endtime: 1554652800});
-        lockedAddresses[0x0b03316fe4949c15b3677d67293d3ed359889aac] = LockMeta({amount: 10000000000000000000000000, endtime: 1586275200});
-        lockedAddresses[0x139a911a9086522d84ac54f992a9243e8fedeb95] = LockMeta({amount: 10000000000000000000000000, endtime: 1617811200});
+        lockedAddresses[0x3c1441b6e64af12083ca86012d66bc79e5e51de6] = LockMeta({amount: 10000000000000000000000000000, endtime: 1617811200});
+        lockedAddresses[0xe0f1345bf1c581e610b847c135f96bd152102d2f] = LockMeta({amount: 10000000000000000000000000000, endtime: 1617811200});
+        lockedAddresses[0xac06238c9a64b2d455ee101fd0c415662e43ba2c] = LockMeta({amount: 10000000000000000000000000000, endtime: 1617811200});
+        lockedAddresses[0xe6bd6f2de6a830d3fafdc79a2b9932692e9be53e] = LockMeta({amount: 10000000000000000000000000000, endtime: 1617811200});
     }
 
     function() public payable {
-        airdrop();
+        ico();
     }
 }
