@@ -1,39 +1,173 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CAToken at 0x08e1b742aa2b585eaa6021fbe380f3b6fef5d914
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CAToken at 0x111111f7e9b1fe072ade438f77e1ce861c7ee4e3
 */
 pragma solidity ^0.4.11;
 
+//
+// SafeMath
+//
+// Ownable
+// Destructible
+// Pausable
+//
+// ERC20Basic
+// ERC20 : ERC20Basic
+// BasicToken : ERC20Basic
+// StandardToken : ERC20, BasicToken
+// MintableToken : StandardToken, Ownable
+// PausableToken : StandardToken, Pausable
+//
+// CAToken : MintableToken, PausableToken
+//
+// Crowdsale
+// PausableCrowdsale
+// BonusCrowdsale
+// TokensCappedCrowdsale
+// FinalizableCrowdsale
+//
+// CATCrowdsale
+//
+
+// Date.now()/1000+3600,  Date.now()/1000+3600*2, 4700, "0x00A617f5bE726F92B29985bB4c1850630d907db4", "0x00A617f5bE726F92B29985bB4c1850630d907db4", "0x00A617f5bE726F92B29985bB4c1850630d907db4", "0x00A617f5bE726F92B29985bB4c1850630d907db4"
+// 1508896220, 1509899832, 4700, "0x00A617f5bE726F92B29985bB4c1850630d907db4", "0x00A617f5bE726F92B29985bB4c1850630d907db4", "0x00A617f5bE726F92B29985bB4c1850630d907db4", "0x00A617f5bE726F92B29985bB4c1850630d907db4"
+// 1507909923, 1508514723, 4700, "0x0b8e27013dfA822bF1cc01b6Ae394B76DA230a03", "0x5F85A0e9DD5Bd2F11a54b208427b286e9B0B519F", "0x7F781d08FD165DBEE1D573Bdb79c43045442eac4", "0x98bf67b6a03DA7AcF2Ee7348FdB3F9c96425a130"
+// 1509120669, 1519120669, 3000, "0x06E58BD5DeEC639d9a79c9cD3A653655EdBef820", "0x06E58BD5DeEC639d9a79c9cD3A653655EdBef820", "0x06E58BD5DeEC639d9a79c9cD3A653655EdBef820"
 
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
  */
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
 
-  function div(uint256 a, uint256 b) internal constant returns (uint256) {
+  function div(uint256 a, uint256 b) internal pure returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
 
-  function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
 
-  function add(uint256 a, uint256 b) internal constant returns (uint256) {
+  function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
   }
 }
 
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+  address public owner;
+
+
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() public {
+    owner = msg.sender;
+  }
+
+
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner public {
+    require(newOwner != address(0));
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+
+}
+
+/**
+ * @title Destructible
+ * @dev Base contract that can be destroyed by owner. All funds in contract will be sent to the owner.
+ */
+contract Destructible is Ownable {
+
+  function Destructible() public payable { }
+
+  /**
+   * @dev Transfers the current balance to the owner and terminates the contract.
+   */
+  function destroy() onlyOwner public {
+    selfdestruct(owner);
+  }
+
+  function destroyAndSend(address _recipient) onlyOwner public {
+    selfdestruct(_recipient);
+  }
+}
+
+/**
+ * @title Pausable
+ * @dev Base contract which allows children to implement an emergency stop mechanism.
+ */
+contract Pausable is Ownable {
+  event Pause();
+  event Unpause();
+
+  bool public paused = false;
+
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is not paused.
+   */
+  modifier whenNotPaused() {
+    require(!paused);
+    _;
+  }
+
+  /**
+   * @dev Modifier to make a function callable only when the contract is paused.
+   */
+  modifier whenPaused() {
+    require(paused);
+    _;
+  }
+
+  /**
+   * @dev called by the owner to pause, triggers stopped state
+   */
+  function pause() onlyOwner whenNotPaused public {
+    paused = true;
+    Pause();
+  }
+
+  /**
+   * @dev called by the owner to unpause, returns to normal state
+   */
+  function unpause() onlyOwner whenPaused public {
+    paused = false;
+    Unpause();
+  }
+}
 
 /**
  * @title ERC20Basic
@@ -158,14 +292,14 @@ contract StandardToken is ERC20, BasicToken {
    * the first transaction is mined)
    * From MonolithDAO Token.sol
    */
-  function increaseApproval (address _spender, uint _addedValue)
+  function increaseApproval (address _spender, uint _addedValue) public
     returns (bool success) {
     allowed[msg.sender][_spender] = allowed[msg.sender][_spender].add(_addedValue);
     Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
     return true;
   }
 
-  function decreaseApproval (address _spender, uint _subtractedValue)
+  function decreaseApproval (address _spender, uint _subtractedValue) public
     returns (bool success) {
     uint oldValue = allowed[msg.sender][_spender];
     if (_subtractedValue > oldValue) {
@@ -178,49 +312,6 @@ contract StandardToken is ERC20, BasicToken {
   }
 
 }
-
-/**
- * @title Ownable
- * @dev The Ownable contract has an owner address, and provides basic authorization control
- * functions, this simplifies the implementation of "user permissions".
- */
-contract Ownable {
-  address public owner;
-
-
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) onlyOwner public {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
 
 /**
  * @title Mintable token
@@ -266,52 +357,6 @@ contract MintableToken is StandardToken, Ownable {
   }
 }
 
-
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
-
-  bool public paused = false;
-
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
-
-  /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
-  modifier whenPaused() {
-    require(paused);
-    _;
-  }
-
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused public {
-    paused = true;
-    Pause();
-  }
-
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused public {
-    paused = false;
-    Unpause();
-  }
-}
-
-
 /**
  * @title Pausable token
  *
@@ -341,9 +386,8 @@ contract PausableToken is StandardToken, Pausable {
   }
 }
 
-
 /**
-* @dev Main Bitcalve CAT token ERC20 contract
+* @dev Bitcalve CAT token ERC20 contract
 * Based on references from OpenZeppelin: https://github.com/OpenZeppelin/zeppelin-solidity
 * 
 */
@@ -352,7 +396,14 @@ contract CAToken is MintableToken, PausableToken {
     // Metadata
     string public constant symbol = "CAT";
     string public constant name = "Consumer Activity Token";
-    uint256 public constant decimals = 18;
-    string public constant version = "1.0";
+    uint8 public constant decimals = 18;
+    string public constant version = "2.0";
+
+    /**
+    * @dev Override MintableToken.finishMinting() to add canMint modifier
+    */
+    function finishMinting() onlyOwner canMint public returns(bool) {
+        return super.finishMinting();
+    }
 
 }
