@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TilcoinStorage at 0x0b5828d786f397c73554c5b091aa9ea108fffc51
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TilcoinStorage at 0x6a56a140d2beb76aee8015a6f524db1966394de1
 */
 /*! mytilcoinstorage.sol | (c) 2018 Develop by BelovITLab LLC (smartcontract.ru), author @stupidlovejoy | License: MIT */
 
@@ -76,7 +76,7 @@ contract TilcoinStorage is Manageable {
     event SetSegment(bytes32 indexed picture, uint32 indexed row, uint32 indexed col, bytes32 hash, string image);
     event SegmentOwner(bytes32 indexed picture, uint32 indexed row, uint32 indexed col, string email, string login);
 
-    function TilcoinStorage() public {
+    function MytilcoinStorage() public {
         addManager(msg.sender);
         addManager(0x209eba96c917871f78671a3ed3503ecc4144495c);
     }
