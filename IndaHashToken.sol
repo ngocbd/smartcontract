@@ -1,11 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IndaHashToken at 0xdcd85b583f159901ea7e50f6fea38ae09808c7c4
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract IndaHashToken at 0x5136c98a80811c3f46bdda8b5c4555cfd9f812f0
 */
 pragma solidity ^0.4.16;
 
 // ----------------------------------------------------------------------------
 //
-// IDH indaHash token smart contract
+// IDH indaHash token public sale contract
 //
 // For details, please visit: https://indahash.com/ico
 //
