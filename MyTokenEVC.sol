@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyTokenEVC at 0x20d2f8fdd0951f2f5249c86b3cdc2be7656f2c01
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MyTokenEVC at 0x3fe53debe8720a61a3e40f85da8611e810fe1fa0
 */
 pragma solidity ^0.4.18;
 
@@ -25,9 +25,9 @@ contract MyTokenEVC is owned {
     string public symbol;
     uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
-    uint256 public _totalSupply;
+    uint256 public totalSupply;
     // This creates an array with all balances
-    mapping (address => uint256) public _balanceOf;
+    mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
     // This generates a public event on the blockchain that will notify clients
     event Transfer(address indexed from, address indexed to, uint256 value);
@@ -39,30 +39,30 @@ contract MyTokenEVC is owned {
      * Initializes contract with initial supply tokens to the creator of the contract
      */
     function MyTokenEVC() public {
-        _totalSupply = 0 * 10 ** uint256(decimals);  // Update total supply with the decimal amount
-        _balanceOf[msg.sender] = _totalSupply;                // Give the creator all initial tokens
-        name = "MyTokenEVC 2";                                   // Set the name for display purposes
-        symbol = "MEVC2";                               // Set the symbol for display purposes
+        totalSupply = 0 * 10 ** uint256(decimals);  // Update total supply with the decimal amount
+        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
+        name = "MyTokenEVC 1";                                   // Set the name for display purposes
+        symbol = "MEVC1";                               // Set the symbol for display purposes
     }
     
-    function name() public constant returns (string) {
+    function name() public constant returns (string _name) {
         return name;
     }
     
-    function symbol() public constant returns (string) {
+    function symbol() public constant returns (string _symbol) {
         return symbol;
     }
     
-    function decimals() public constant returns (uint8) {
+    function decimals() public constant returns (uint8 _decimals) {
         return decimals;
     }
     
-    function totalSupply() public constant returns (uint256) {
-        return _totalSupply;
+    function totalSupply() public constant returns (uint256 _totalSupply) {
+        return totalSupply;
     }
     
-    function balanceOf(address tokenHolder) public constant returns (uint256) {
-        return _balanceOf[tokenHolder];
+    function balanceOf(address _owner) public constant returns (uint256 _balance) {
+        return balanceOf[_owner];
     }
     
     mapping (address => bool) public frozenAccount;
@@ -83,20 +83,20 @@ contract MyTokenEVC is owned {
         // Prevent transfer to 0x0 address. Use burn() instead
         require(_to != 0x0);
         // Check if the sender has enough
-        require(_balanceOf[_from] >= _value);
+        require(balanceOf[_from] >= _value);
         // Check for overflows
-        require(_balanceOf[_to] + _value > _balanceOf[_to]);
+        require(balanceOf[_to] + _value > balanceOf[_to]);
         //Check if FrozenFunds
         require(!frozenAccount[msg.sender]);
         // Save this for an assertion in the future
-        uint previousBalances = _balanceOf[_from] + _balanceOf[_to];
+        uint previousBalances = balanceOf[_from] + balanceOf[_to];
         // Subtract from the sender
-        _balanceOf[_from] -= _value;
+        balanceOf[_from] -= _value;
         // Add the same to the recipient
-        _balanceOf[_to] += _value;
+        balanceOf[_to] += _value;
         Transfer(_from, _to, _value);
         // Asserts are used to use static analysis to find bugs in your code. They should never fail
-        assert(_balanceOf[_from] + _balanceOf[_to] == previousBalances);
+        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
     /**
      * Transfer tokens
@@ -163,9 +163,9 @@ contract MyTokenEVC is owned {
      * @param _value the amount of money to burn
      */
     function burn(uint256 _value) onlyOwner public returns (bool success) {
-        require(_balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-        _balanceOf[msg.sender] -= _value;            // Subtract from the sender
-        _totalSupply -= _value;                      // Updates totalSupply
+        require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
+        balanceOf[msg.sender] -= _value;            // Subtract from the sender
+        totalSupply -= _value;                      // Updates totalSupply
         Burn(msg.sender, _value);
         return true;
     }
@@ -178,19 +178,19 @@ contract MyTokenEVC is owned {
      * @param _value the amount of money to burn
      */
     function burnFrom(address _from, uint256 _value) onlyOwner public returns (bool success) {
-        require(_balanceOf[_from] >= _value);                // Check if the targeted balance is enough
+        require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
     ///    require(_value <= allowance[_from][msg.sender]);    // Check allowance
-        _balanceOf[_from] -= _value;                         // Subtract from the targeted balance
+        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
         allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
-        _totalSupply -= _value;                              // Update totalSupply
+        totalSupply -= _value;                              // Update totalSupply
         Burn(_from, _value);
         return true;
     }
     /// @notice Create `mintedAmount` tokens and send it to `owner`
     /// @param mintedAmount the amount of tokens it will receive
     function mintToken(uint256 mintedAmount) onlyOwner public {
-        _balanceOf[owner] += mintedAmount;
-        _totalSupply += mintedAmount;
-        Transfer(0, owner, mintedAmount);
+        balanceOf[this] += mintedAmount;
+        totalSupply += mintedAmount;
+        Transfer(0, this, mintedAmount);
     }
 }
