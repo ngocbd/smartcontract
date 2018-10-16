@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KitFutureToken at 0x9fc07eacd9fabe1ac4cf3b4cf06b84b18eabdc4f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KitFutureToken at 0xc45a2201e259d87d5936e41d800033c9571928f1
 */
 pragma solidity ^0.4.23;
 
@@ -51,11 +51,7 @@ contract KitFutureToken {
     using SafeMath for uint256;
     event Transfer(address indexed from, address indexed to, uint256 value);
     
-    string public constant name = "Karma Future Token";
-    string public constant symbol = "KIT-FUTURE";
-    uint8 public constant decimals = 18;
-    
-    function KitFutureToken() public {
+    function Ownable() public {
         owner = msg.sender;
     }
     
