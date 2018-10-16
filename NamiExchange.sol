@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NamiExchange at 0xfec6896d1918232b70b1981d7f5503bc0b89522e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NamiExchange at 0xa37b82a6d803882a45b8951998ef10c74ce37940
 */
 pragma solidity ^0.4.18;
 /**
@@ -920,24 +920,18 @@ contract NamiExchange {
         }
     }
     
-    function tokenFallbackBuyer(address _from, uint _value, address _buyer) onlyNami public returns (bool success) {
+    function sellNac(uint _value, address _buyer, uint _price) public returns (bool success) {
+        require(_price == bid[_buyer].price && _buyer != msg.sender);
         NamiCrowdSale namiToken = NamiCrowdSale(NamiAddr);
         uint ethOfBuyer = bid[_buyer].eth;
         uint maxToken = ethOfBuyer.mul(bid[_buyer].price);
-        uint previousBalances = namiToken.balanceOf(_buyer);
-        require(_value > 0 && ethOfBuyer != 0 && _buyer != 0x0);
+        require(namiToken.allowance(msg.sender, this) >= _value && _value > 0 && ethOfBuyer != 0 && _buyer != 0x0);
         if (_value > maxToken) {
-            if (_from.send(ethOfBuyer)) {
-                uint previousBalances_2 = namiToken.balanceOf(_from);
-                // transfer token
-                namiToken.transfer(_buyer, maxToken);
-                namiToken.transfer(_from, _value - maxToken);
+            if (msg.sender.send(ethOfBuyer) && namiToken.transferFrom(msg.sender,_buyer,maxToken)) {
                 // update order
                 bid[_buyer].eth = 0;
                 UpdateBid(_buyer, bid[_buyer].price, bid[_buyer].eth);
-                BuyHistory(_buyer, _from, bid[_buyer].price, maxToken, now);
-                assert(previousBalances < namiToken.balanceOf(_buyer));
-                assert(previousBalances_2 < namiToken.balanceOf(_from));
+                BuyHistory(_buyer, msg.sender, bid[_buyer].price, maxToken, now);
                 return true;
             } else {
                 // revert anything
@@ -945,14 +939,11 @@ contract NamiExchange {
             }
         } else {
             uint eth = _value.div(bid[_buyer].price);
-            if (_from.send(eth)) {
-                // transfer token
-                namiToken.transfer(_buyer, _value);
+            if (msg.sender.send(eth) && namiToken.transferFrom(msg.sender,_buyer,_value)) {
                 // update order
                 bid[_buyer].eth = (bid[_buyer].eth).sub(eth);
                 UpdateBid(_buyer, bid[_buyer].price, bid[_buyer].eth);
-                BuyHistory(_buyer, _from, bid[_buyer].price, _value, now);
-                assert(previousBalances < namiToken.balanceOf(_buyer));
+                BuyHistory(_buyer, msg.sender, bid[_buyer].price, _value, now);
                 return true;
             } else {
                 // revert anything
@@ -999,8 +990,9 @@ contract NamiExchange {
         assert(previousBalances < namiToken.balanceOf(msg.sender));
     }
     
-    function buyNac(address _seller) payable public returns (bool success) {
+    function buyNac(address _seller, uint _price) payable public returns (bool success) {
         require(msg.value > 0 && ask[_seller].volume > 0 && ask[_seller].price > 0);
+        require(_price == ask[_seller].price && _seller != msg.sender);
         NamiCrowdSale namiToken = NamiCrowdSale(NamiAddr);
         uint maxEth = (ask[_seller].volume).div(ask[_seller].price);
         uint previousBalances = namiToken.balanceOf(msg.sender);
