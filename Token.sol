@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0x7c9600a77c8628499427f3ad3419f5d5a96205fc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Token at 0xb85726c7481fa69d91dadca1aafd871c968a7d8e
 */
 // Unattributed material copyright New Alchemy Limited, 2017. All rights reserved.
 pragma solidity >=0.4.10;
@@ -97,7 +97,7 @@ contract EventDefinitions {
 contract Token is Finalizable, TokenReceivable, SafeMath, EventDefinitions, Pausable {
 	string constant public name = "Chickens";
 	uint8 constant public decimals = 8;
-	string constant public symbol = "?";
+	string constant public symbol = "\u1F414";
 	Controller public controller;
 	string public motd;
 	event Motd(string message);
@@ -334,6 +334,7 @@ contract Ledger is Owned, SafeMath, Finalizable, TokenReceivable {
 	}
 
 	function approve(address _owner, address _spender, uint _value) onlyController returns (bool success) {
+		// require user to set to zero before resetting to nonzero
 		if ((_value != 0) && (allowance[_owner][_spender] != 0)) {
 			return false;
 		}
