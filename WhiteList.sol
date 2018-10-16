@@ -1,9 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Whitelist at 0x73fe1d0c5909a83beaf278cfbfe008c25650c327
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Whitelist at 0xBeA81Fde2822b74674fAc9fc743193358C6Bb792
 */
-pragma solidity 0.4.19;
-
-// File: zeppelin-solidity/contracts/ownership/Ownable.sol
+pragma solidity 0.4.21;
 
 /**
  * @title Ownable
@@ -11,64 +9,114 @@ pragma solidity 0.4.19;
  * functions, this simplifies the implementation of "user permissions".
  */
 contract Ownable {
-  address public owner;
+    address public owner;
 
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-
-  /**
-   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
-   * account.
-   */
-  function Ownable() public {
-    owner = msg.sender;
-  }
-
-
-  /**
-   * @dev Throws if called by any account other than the owner.
-   */
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-
-  /**
-   * @dev Allows the current owner to transfer control of the contract to a newOwner.
-   * @param newOwner The address to transfer ownership to.
-   */
-  function transferOwnership(address newOwner) public onlyOwner {
-    require(newOwner != address(0));
-    OwnershipTransferred(owner, newOwner);
-    owner = newOwner;
-  }
-
-}
-
-// File: contracts/Whitelist.sol
-
-contract Whitelist is Ownable {
-    mapping(address => bool) public allowedAddresses;
-
-    event WhitelistUpdated(uint256 timestamp, string operation, address indexed member);
-
-    function addToWhitelist(address[] _addresses) public onlyOwner {
-        for (uint256 i = 0; i < _addresses.length; i++) {
-            allowedAddresses[_addresses[i]] = true;
-            WhitelistUpdated(now, "Added", _addresses[i]);
-        }
+    /**
+     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+     * account.
+     */
+    function Ownable() public {
+        owner = msg.sender;
+    }
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
     }
 
-    function removeFromWhitelist(address[] _addresses) public onlyOwner {
-        for (uint256 i = 0; i < _addresses.length; i++) {
-            allowedAddresses[_addresses[i]] = false;
-            WhitelistUpdated(now, "Removed", _addresses[i]);
-        }
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address newOwner) public onlyOwner {
+        require(newOwner != address(0));
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
+}
+
+/**
+ * @title Authorizable
+ * @dev The Authorizable contract has authorized addresses, and provides basic authorization control
+ * functions, this simplifies the implementation of "multiple user permissions".
+ */
+contract Authorizable is Ownable {
+    
+    mapping(address => bool) public authorized;
+    event AuthorizationSet(address indexed addressAuthorized, bool indexed authorization);
+
+    /**
+     * @dev The Authorizable constructor sets the first `authorized` of the contract to the sender
+     * account.
+     */
+    function Authorizable() public {
+        authorize(msg.sender);
+    }
+
+    /**
+     * @dev Throws if called by any account other than the authorized.
+     */
+    modifier onlyAuthorized() {
+        require(authorized[msg.sender]);
+        _;
+    }
+
+    /**
+     * @dev Allows 
+     * @param _address The address to change authorization.
+     */
+    function authorize(address _address) public onlyOwner {
+        require(!authorized[_address]);
+        emit AuthorizationSet(_address, true);
+        authorized[_address] = true;
+    }
+    /**
+     * @dev Disallows
+     * @param _address The address to change authorization.
+     */
+    function deauthorize(address _address) public onlyOwner {
+        require(authorized[_address]);
+        emit AuthorizationSet(_address, false);
+        authorized[_address] = false;
+    }
+}
+
+/**
+ * @title Whitelist interface
+ */
+contract Whitelist is Authorizable {
+    mapping(address => bool) whitelisted;
+    event AddToWhitelist(address _beneficiary);
+    event RemoveFromWhitelist(address _beneficiary);
+   
+    function Whitelist() public {
+        addToWhitelist(msg.sender);
+    }
+    
+    
+    modifier onlyWhitelisted() {
+        require(isWhitelisted(msg.sender));
+        _;
     }
 
     function isWhitelisted(address _address) public view returns (bool) {
-        return allowedAddresses[_address];
+        return whitelisted[_address];
+    }
+
+ 
+    function addToWhitelist(address _beneficiary) public onlyAuthorized {
+        require(!whitelisted[_beneficiary]);
+        emit AddToWhitelist(_beneficiary);
+        whitelisted[_beneficiary] = true;
+    }
+    
+    function removeFromWhitelist(address _beneficiary) public onlyAuthorized {
+        require(whitelisted[_beneficiary]);
+        emit RemoveFromWhitelist(_beneficiary);
+        whitelisted[_beneficiary] = false;
     }
 }
