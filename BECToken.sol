@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BecToken at 0xc5d105e63711398af9bbff092d4b6769c82f793d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BecToken at 0x7d517345f11C69a93a28Be80fceE0d6234273651
 */
 pragma solidity ^0.4.16;
 
@@ -293,10 +293,5 @@ contract BecToken is PausableToken {
     function BecToken() {
       totalSupply = 7000000000 * (10**(uint256(decimals)));
       balances[msg.sender] = totalSupply;    // Give the creator all initial tokens
-    }
-
-    function () {
-        //if ether is sent to this address, send it back.
-        revert();
     }
 }
