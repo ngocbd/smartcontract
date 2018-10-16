@@ -1,9 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EPXCrowdsale at 0xC29021A71f3A6C3fD9F361035D748B5f7912F55E
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EPXCrowdsale at 0x5A8658dE344972fC8b6b6a01Cd87a64bc7420A38
 */
 pragma solidity ^0.4.18;
 // -------------------------------------------------
 // ethPoker.io EPX token - Presale & ICO token sale contract
+// Private Pre-sale preloaded sale contract
+// 150ETH capped contract (only 1.5M tokens @ best 10,000 EPX:1ETH)
+// 150ETH matches 1:1 ethPoker.io directors injection of 150ETH
 // contact admin@ethpoker.io for queries
 // Revision 20b
 // Refunds integrated, full test suite 20r passed
@@ -137,11 +140,11 @@ contract EPXCrowdsale is owned, safeMath {
       tokenReward                             = StandardToken(0x35BAA72038F127f9f8C8f9B491049f64f377914d);
 
       // funding targets
-      fundingMinCapInWei                      = 30000000000000000000;                       // ETH 300 + 000000000000000000 18 dec wei
+      fundingMinCapInWei                      = 10000000000000000000;
 
       // update values
       amountRaisedInWei                       = 0;
-      initialTokenSupply                      = 200000000000;                               // 20,000,000 + 4 dec resolution
+      initialTokenSupply                      = 15000000000;
       tokensRemaining                         = initialTokenSupply;
       fundingStartBlock                       = _fundingStartBlock;
       fundingEndBlock                         = _fundingEndBlock;
@@ -160,11 +163,11 @@ contract EPXCrowdsale is owned, safeMath {
 
   function checkPrice() internal view returns (uint256 currentPriceValue) {
     if (block.number >= fundingStartBlock+177534) { // 30-day price change/final 30day change
-      return (7600); //30days-end   =7600EPX:1ETH
+      return (8500); //30days-end   =8,500EPX:1ETH
     } else if (block.number >= fundingStartBlock+124274) { //3 week mark/over 21days
-      return (8200); //3w-30days    =8200EPX:1ETH
+      return (9250); //3w-30days    =9,250EPX:1ETH
     } else if (block.number >= fundingStartBlock) { // start [0 hrs]
-      return (8800); //0-3weeks     =8800EPX:1ETH
+      return (10000); //0-3weeks     =10,000EPX:1ETH
     }
   }
 
