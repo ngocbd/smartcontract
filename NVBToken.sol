@@ -1,82 +1,461 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NVBToken at 0x50dcb99ff4d2b537abe68d30d68eb46e218b2776
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract NVBToken at 0x291e2077ce361815a65126297956310dd1c740f4
 */
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.16;
 
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
+/*
+ * Abstract Token Smart Contract.  Copyright © 2017 by ABDK Consulting.
+ * Author: Mikhail Vladimirov <mikhail.vladimirov@gmail.com>
+ */
+pragma solidity ^0.4.20;
 
-contract NVBToken {
-    // Public variables of the token
-    string public name = "Native Video Box";
-    string public symbol = "NVB";
-    uint8 public decimals = 18;
-    // 18 decimals is the strongly suggested default
-    uint256 public totalSupply;
-    uint256 public NVBSupply = 10000000000;
-    uint256 public buyPrice = 2000000000;
-    address public creator;
-    // This creates an array with all balances
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
+/*
+ * EIP-20 Standard Token Smart Contract Interface.
+ * Copyright © 2016–2018 by ABDK Consulting.
+ * Author: Mikhail Vladimirov <mikhail.vladimirov@gmail.com>
+ */
+pragma solidity ^0.4.20;
 
-    // This generates a public event on the blockchain that will notify clients
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event FundTransfer(address backer, uint amount, bool isContribution);
-    
-    
-    /**
-     * Constrctor function
-     *
-     * Initializes contract with initial supply tokens to the creator of the contract
-     */
-    function NVBToken() public {
-        totalSupply = NVBSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
-        balanceOf[msg.sender] = totalSupply;    // Give NVB Mint the total created tokens
-        creator = msg.sender;
+/**
+ * ERC-20 standard token interface, as defined
+ * <a href="https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md">here</a>.
+ */
+contract Token {
+  /**
+   * Get total number of tokens in circulation.
+   *
+   * @return total number of tokens in circulation
+   */
+  function totalSupply () public view returns (uint256 supply);
+
+  /**
+   * Get number of tokens currently belonging to given owner.
+   *
+   * @param _owner address to get number of tokens currently belonging to the
+   *        owner of
+   * @return number of tokens currently belonging to the owner of given address
+   */
+  function balanceOf (address _owner) public view returns (uint256 balance);
+
+  /**
+   * Transfer given number of tokens from message sender to given recipient.
+   *
+   * @param _to address to transfer tokens to the owner of
+   * @param _value number of tokens to transfer to the owner of given address
+   * @return true if tokens were transferred successfully, false otherwise
+   */
+  function transfer (address _to, uint256 _value)
+  public returns (bool success);
+
+  /**
+   * Transfer given number of tokens from given owner to given recipient.
+   *
+   * @param _from address to transfer tokens from the owner of
+   * @param _to address to transfer tokens to the owner of
+   * @param _value number of tokens to transfer from given owner to given
+   *        recipient
+   * @return true if tokens were transferred successfully, false otherwise
+   */
+  function transferFrom (address _from, address _to, uint256 _value)
+  public returns (bool success);
+
+  /**
+   * Allow given spender to transfer given number of tokens from message sender.
+   *
+   * @param _spender address to allow the owner of to transfer tokens from
+   *        message sender
+   * @param _value number of tokens to allow to transfer
+   * @return true if token transfer was successfully approved, false otherwise
+   */
+  function approve (address _spender, uint256 _value)
+  public returns (bool success);
+
+  /**
+   * Tell how many tokens given spender is currently allowed to transfer from
+   * given owner.
+   *
+   * @param _owner address to get number of tokens allowed to be transferred
+   *        from the owner of
+   * @param _spender address to get number of tokens allowed to be transferred
+   *        by the owner of
+   * @return number of tokens given spender is currently allowed to transfer
+   *         from given owner
+   */
+  function allowance (address _owner, address _spender)
+  public view returns (uint256 remaining);
+
+  /**
+   * Logged when tokens were transferred from one owner to another.
+   *
+   * @param _from address of the owner, tokens were transferred from
+   * @param _to address of the owner, tokens were transferred to
+   * @param _value number of tokens transferred
+   */
+  event Transfer (address indexed _from, address indexed _to, uint256 _value);
+
+  /**
+   * Logged when owner approved his tokens to be transferred by some spender.
+   *
+   * @param _owner owner who approved his tokens to be transferred
+   * @param _spender spender who were allowed to transfer the tokens belonging
+   *        to the owner
+   * @param _value number of tokens belonging to the owner, approved to be
+   *        transferred by the spender
+   */
+  event Approval (
+    address indexed _owner, address indexed _spender, uint256 _value);
+}
+/*
+ * Safe Math Smart Contract.  Copyright © 2016–2017 by ABDK Consulting.
+ * Author: Mikhail Vladimirov <mikhail.vladimirov@gmail.com>
+ */
+pragma solidity ^0.4.20;
+
+/**
+ * Provides methods to safely add, subtract and multiply uint256 numbers.
+ */
+contract SafeMath {
+  uint256 constant private MAX_UINT256 =
+    0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+
+  /**
+   * Add two uint256 values, throw in case of overflow.
+   *
+   * @param x first value to add
+   * @param y second value to add
+   * @return x + y
+   */
+  function safeAdd (uint256 x, uint256 y)
+  pure internal
+  returns (uint256 z) {
+    assert (x <= MAX_UINT256 - y);
+    return x + y;
+  }
+
+  /**
+   * Subtract one uint256 value from another, throw in case of underflow.
+   *
+   * @param x value to subtract from
+   * @param y value to subtract
+   * @return x - y
+   */
+  function safeSub (uint256 x, uint256 y)
+  pure internal
+  returns (uint256 z) {
+    assert (x >= y);
+    return x - y;
+  }
+
+  /**
+   * Multiply two uint256 values, throw in case of overflow.
+   *
+   * @param x first value to multiply
+   * @param y second value to multiply
+   * @return x * y
+   */
+  function safeMul (uint256 x, uint256 y)
+  pure internal
+  returns (uint256 z) {
+    if (y == 0) return 0; // Prevent division by zero at the next line
+    assert (x <= MAX_UINT256 / y);
+    return x * y;
+  }
+}
+
+
+/**
+ * Abstract Token Smart Contract that could be used as a base contract for
+ * ERC-20 token contracts.
+ */
+contract AbstractToken is Token, SafeMath {
+  /**
+   * Create new Abstract Token contract.
+   */
+  function AbstractToken () public {
+    // Do nothing
+  }
+
+  /**
+   * Get number of tokens currently belonging to given owner.
+   *
+   * @param _owner address to get number of tokens currently belonging to the
+   *        owner of
+   * @return number of tokens currently belonging to the owner of given address
+   */
+  function balanceOf (address _owner) public view returns (uint256 balance) {
+    return accounts [_owner];
+  }
+
+  /**
+   * Transfer given number of tokens from message sender to given recipient.
+   *
+   * @param _to address to transfer tokens to the owner of
+   * @param _value number of tokens to transfer to the owner of given address
+   * @return true if tokens were transferred successfully, false otherwise
+   */
+  function transfer (address _to, uint256 _value)
+  public returns (bool success) {
+    uint256 fromBalance = accounts [msg.sender];
+    if (fromBalance < _value) return false;
+    if (_value > 0 && msg.sender != _to) {
+      accounts [msg.sender] = safeSub (fromBalance, _value);
+      accounts [_to] = safeAdd (accounts [_to], _value);
     }
-    /**
-     * Internal transfer, only can be called by this contract
-     */
-    function _transfer(address _from, address _to, uint _value) internal {
-        // Prevent transfer to 0x0 address. Use burn() instead
-        require(_to != 0x0);
-        // Check if the sender has enough
-        require(balanceOf[_from] >= _value);
-        // Check for overflows
-        require(balanceOf[_to] + _value >= balanceOf[_to]);
-        // Subtract from the sender
-        balanceOf[_from] -= _value;
-        // Add the same to the recipient
-        balanceOf[_to] += _value;
-        Transfer(_from, _to, _value);
-      
-    }
+    Transfer (msg.sender, _to, _value);
+    return true;
+  }
 
-    /**
-     * Transfer tokens
-     *
-     * Send `_value` tokens to `_to` from your account
-     *
-     * @param _to The address of the recipient
-     * @param _value the amount to send
-     */
-    function transfer(address _to, uint256 _value) public {
-        _transfer(msg.sender, _to, _value);
-    }
+  /**
+   * Transfer given number of tokens from given owner to given recipient.
+   *
+   * @param _from address to transfer tokens from the owner of
+   * @param _to address to transfer tokens to the owner of
+   * @param _value number of tokens to transfer from given owner to given
+   *        recipient
+   * @return true if tokens were transferred successfully, false otherwise
+   */
+  function transferFrom (address _from, address _to, uint256 _value)
+  public returns (bool success) {
+    uint256 spenderAllowance = allowances [_from][msg.sender];
+    if (spenderAllowance < _value) return false;
+    uint256 fromBalance = accounts [_from];
+    if (fromBalance < _value) return false;
 
-    
-    
-    /// @notice Buy tokens from contract by sending ether
-    function () payable internal {
-        uint amount = msg.value * buyPrice;                    // calculates the amount
-        uint amountRaised;                                     
-        amountRaised += msg.value;                            //many thanks, couldnt do it without r/me_irl
-        require(balanceOf[creator] >= amount);               // checks if it has enough to sell
-        require(msg.value < 10**17);                        // so any person who wants to put more then 0.1 ETH has time to think about what they are doing
-        balanceOf[msg.sender] += amount;                  // adds the amount to buyer's balance
-        balanceOf[creator] -= amount;                        // sends ETH to NVB Mint
-        Transfer(creator, msg.sender, amount);               // execute an event reflecting the change
-        creator.transfer(amountRaised);
-    }
+    allowances [_from][msg.sender] =
+      safeSub (spenderAllowance, _value);
 
- }
+    if (_value > 0 && _from != _to) {
+      accounts [_from] = safeSub (fromBalance, _value);
+      accounts [_to] = safeAdd (accounts [_to], _value);
+    }
+    Transfer (_from, _to, _value);
+    return true;
+  }
+
+  /**
+   * Allow given spender to transfer given number of tokens from message sender.
+   *
+   * @param _spender address to allow the owner of to transfer tokens from
+   *        message sender
+   * @param _value number of tokens to allow to transfer
+   * @return true if token transfer was successfully approved, false otherwise
+   */
+  function approve (address _spender, uint256 _value)
+  public returns (bool success) {
+    allowances [msg.sender][_spender] = _value;
+    Approval (msg.sender, _spender, _value);
+
+    return true;
+  }
+
+  /**
+   * Tell how many tokens given spender is currently allowed to transfer from
+   * given owner.
+   *
+   * @param _owner address to get number of tokens allowed to be transferred
+   *        from the owner of
+   * @param _spender address to get number of tokens allowed to be transferred
+   *        by the owner of
+   * @return number of tokens given spender is currently allowed to transfer
+   *         from given owner
+   */
+  function allowance (address _owner, address _spender)
+  public view returns (uint256 remaining) {
+    return allowances [_owner][_spender];
+  }
+
+  /**
+   * Mapping from addresses of token holders to the numbers of tokens belonging
+   * to these token holders.
+   */
+  mapping (address => uint256) internal accounts;
+
+  /**
+   * Mapping from addresses of token holders to the mapping of addresses of
+   * spenders to the allowances set by these token holders to these spenders.
+   */
+  mapping (address => mapping (address => uint256)) internal allowances;
+}
+
+
+/**
+ * Native Video Box token smart contract.
+ */
+contract NVBToken is AbstractToken {
+  /**
+   * Address of the owner of this smart contract.
+   */
+  address private owner;
+
+  /**
+   * Total number of tokens in circulation.
+   */
+  uint256 tokenCount;
+
+  /**
+   * True if tokens transfers are currently frozen, false otherwise.
+   */
+  bool frozen = false;
+
+  /**
+   * Create new Native Video Box token smart contract, with given number of tokens issued
+   * and given to msg.sender, and make msg.sender the owner of this smart
+   * contract.
+   *
+   * @param _tokenCount number of tokens to issue and give to msg.sender
+   */
+  function NVBToken (uint256 _tokenCount) public {
+    owner = msg.sender;
+    tokenCount = _tokenCount;
+    accounts [msg.sender] = _tokenCount;
+  }
+
+  /**
+   * Get total number of tokens in circulation.
+   *
+   * @return total number of tokens in circulation
+   */
+  function totalSupply () public view returns (uint256 supply) {
+    return tokenCount;
+  }
+
+  /**
+   * Get name of this token.
+   *
+   * @return name of this token
+   */
+  function name () public pure returns (string result) {
+    return "NVB";
+  }
+
+  /**
+   * Get symbol of this token.
+   *
+   * @return symbol of this token
+   */
+  function symbol () public pure returns (string result) {
+    return "NVB";
+  }
+
+  /**
+   * Get number of decimals for this token.
+   *
+   * @return number of decimals for this token
+   */
+  function decimals () public pure returns (uint8 result) {
+    return 10;
+  }
+
+  /**
+   * Transfer given number of tokens from message sender to given recipient.
+   *
+   * @param _to address to transfer tokens to the owner of
+   * @param _value number of tokens to transfer to the owner of given address
+   * @return true if tokens were transferred successfully, false otherwise
+   */
+  function transfer (address _to, uint256 _value)
+    public returns (bool success) {
+    if (frozen) return false;
+    else return AbstractToken.transfer (_to, _value);
+  }
+
+  /**
+   * Transfer given number of tokens from given owner to given recipient.
+   *
+   * @param _from address to transfer tokens from the owner of
+   * @param _to address to transfer tokens to the owner of
+   * @param _value number of tokens to transfer from given owner to given
+   *        recipient
+   * @return true if tokens were transferred successfully, false otherwise
+   */
+  function transferFrom (address _from, address _to, uint256 _value)
+    public returns (bool success) {
+    if (frozen) return false;
+    else return AbstractToken.transferFrom (_from, _to, _value);
+  }
+
+  /**
+   * Change how many tokens given spender is allowed to transfer from message
+   * spender.  In order to prevent double spending of allowance, this method
+   * receives assumed current allowance value as an argument.  If actual
+   * allowance differs from an assumed one, this method just returns false.
+   *
+   * @param _spender address to allow the owner of to transfer tokens from
+   *        message sender
+   * @param _currentValue assumed number of tokens currently allowed to be
+   *        transferred
+   * @param _newValue number of tokens to allow to transfer
+   * @return true if token transfer was successfully approved, false otherwise
+   */
+  function approve (address _spender, uint256 _currentValue, uint256 _newValue)
+    public returns (bool success) {
+    if (allowance (msg.sender, _spender) == _currentValue)
+      return approve (_spender, _newValue);
+    else return false;
+  }
+
+  /**
+   * Burn given number of tokens belonging to message sender.
+   *
+   * @param _value number of tokens to burn
+   * @return true on success, false on error
+   */
+  function burnTokens (uint256 _value) public returns (bool success) {
+    if (_value > accounts [msg.sender]) return false;
+    else if (_value > 0) {
+      accounts [msg.sender] = safeSub (accounts [msg.sender], _value);
+      tokenCount = safeSub (tokenCount, _value);
+
+      Transfer (msg.sender, address (0), _value);
+      return true;
+    } else return true;
+  }
+
+  /**
+   * Set new owner for the smart contract.
+   * May only be called by smart contract owner.
+   *
+   * @param _newOwner address of new owner of the smart contract
+   */
+  function setOwner (address _newOwner) public {
+    require (msg.sender == owner);
+
+    owner = _newOwner;
+  }
+
+  /**
+   * Freeze token transfers.
+   * May only be called by smart contract owner.
+   */
+  function freezeTransfers () public {
+    require (msg.sender == owner);
+
+    if (!frozen) {
+      frozen = true;
+      Freeze ();
+    }
+  }
+
+  /**
+   * Unfreeze token transfers.
+   * May only be called by smart contract owner.
+   */
+  function unfreezeTransfers () public {
+    require (msg.sender == owner);
+
+    if (frozen) {
+      frozen = false;
+      Unfreeze ();
+    }
+  }
+
+  /**
+   * Logged when token transfers were frozen.
+   */
+  event Freeze ();
+
+  /**
+   * Logged when token transfers were unfrozen.
+   */
+  event Unfreeze ();
+}
