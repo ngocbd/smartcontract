@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EnergisToken at 0x2169cce281717d204fa0ecf846a6171e96234d72
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EnergisToken at 0x14121eee7995ffdf47ed23cffd0b5da49cbd6eb3
 */
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.23;
 
 // File: zeppelin-solidity/contracts/ownership/Ownable.sol
 
@@ -332,7 +332,7 @@ contract StandardToken is ERC20, BasicToken {
 /**
  * @title EnergisToken
  * 
- * Symbol      : ERG
+ * Symbol      : NRG
  * Name        : Energis Token
  * Total supply: 240,000,000.000000000000000000
  * Decimals    : 18
@@ -342,7 +342,7 @@ contract StandardToken is ERC20, BasicToken {
 contract EnergisToken is StandardToken, Claimable, BurnableToken {
   using SafeMath for uint256;
 
-  string public constant name = "Energis Token"; // solium-disable-line uppercase
+  string public constant name = "Energis"; // solium-disable-line uppercase
   string public constant symbol = "NRG"; // solium-disable-line uppercase
   uint8 public constant decimals = 18; // solium-disable-line uppercase
 
@@ -355,14 +355,6 @@ contract EnergisToken is StandardToken, Claimable, BurnableToken {
     totalSupply_ = INITIAL_SUPPLY;
     balances[msg.sender] = INITIAL_SUPPLY;
     emit Transfer(0x0, msg.sender, INITIAL_SUPPLY);
-  }
-
-  /**
-  * @dev Reject all ETH sent to token contract
-  */
-  function () public payable {
-    // Revert will return unused gass throw will not
-    revert();
   }
 
   /**
