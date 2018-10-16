@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AlphaCarToken at 0x9294290053c4114c5641cf2f273c3102d049d2dd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AlphaCarToken at 0x0583c197b1f22eab7a4e2f7fd47dcd83997a8783
 */
 pragma solidity ^0.4.18;
 
@@ -34,7 +34,7 @@ library SafeMath {
   }
 
   /**
-  * @dev Substracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
+  * @dev Subtracts two numbers, throws on overflow (i.e. if subtrahend is greater than minuend).
   */
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
@@ -135,6 +135,7 @@ contract BurnableToken is BasicToken {
     balances[burner] = balances[burner].sub(_value);
     totalSupply_ = totalSupply_.sub(_value);
     Burn(burner, _value);
+    Transfer(burner, address(0), _value);
   }
 }
 
@@ -377,7 +378,7 @@ contract AlphaCarToken is PausableToken, BurnableToken {
   
   string public symbol = "ACAR";
 
-  string public name = "Alpha Car Token";
+  string public name = "AlphaCar Token";
   
   uint8 public decimals = 18;
 
@@ -390,7 +391,7 @@ contract AlphaCarToken is PausableToken, BurnableToken {
   }
 
   function () payable public {
-    throw;
+    revert();
   }
 
 }
