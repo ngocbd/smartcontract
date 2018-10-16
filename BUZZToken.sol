@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BUZZToken at 0xa4e0f0bc5fe93cf8951c7dd2c276e1fc07a32bea
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BUZZToken at 0x45321004790a4dae7ba19217a10574d55739efc7
 */
 pragma solidity ^0.4.15;
 
@@ -195,11 +195,11 @@ contract Ownable {
  */
 contract BUZZToken is StandardToken, Ownable {
 
-  string public constant name = "BUZZ Token";
-  string public constant symbol = "BUZZ";
+  string public constant name = "REDEEM Token";
+  string public constant symbol = "DEEM";
   uint256 public constant decimals = 18;
 
-  uint256 public constant INITIAL_SUPPLY = 225000000 * 10**18;
+  uint256 public constant INITIAL_SUPPLY = 100000000 * 10**18;
 
   /**
    * @dev Contructor that gives msg.sender all of existing tokens.
