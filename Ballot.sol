@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ballot at 0x5a4964bb5fdd3ce646bb6aa020704f7d4db79302
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Ballot at 0xcfbe7a6cf90d022265ffc7e26b564bb455077c9b
 */
 pragma solidity ^0.4.0;
 contract Ballot {
