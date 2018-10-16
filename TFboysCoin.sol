@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TFboysCoin at 0x230297151c19f7126ff13ed379aebdca691e29ff
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TFBOYSCoin at 0xc63c6e1f230e04754ca8c5e139254715be341b1d
 */
 pragma solidity ^0.4.8;
 
@@ -91,7 +91,7 @@ contract StandardToken is Token {
 
 
 //name this contract whatever you'd like
-contract TFboysCoin is StandardToken {
+contract TFBOYSCoin is StandardToken {
 
     function () public {
         //if ether is sent to this address, send it back.
@@ -117,11 +117,11 @@ contract TFboysCoin is StandardToken {
 
 //make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
 
-    function ERC20Token(
+    function TFBOYSCoin(
         ) public {
         balances[msg.sender] = 59993157000000000000000000;  // Give the creator all initial tokens (100000 for example)
         totalSupply = 59993157000000000000000000;           // Update total supply (100000 for example)
-        name = "TFboys Coin";                               // Set the name for display purposes
+        name = "TFBOYS Coin";                               // Set the name for display purposes
         decimals = 18;                                      // Amount of decimals for display purposes
         symbol = "TFBC";                                    // Set the symbol for display purposes
     }
