@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MIPCoin at 0x44068efc900351065f4bb896426f3dca7efa73bb
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MIPCoin at 0x1b8778f620c88efd77e6221a53a5f1b6a771c87d
 */
 contract MIPCoin {
     /* Public variables of the token */
@@ -19,8 +19,8 @@ contract MIPCoin {
     function MIPCoin() {
 
          initialSupply = 28000000;
-         name ="proofcoin";
-        decimals = 2;
+         name ="MIPCoin";
+        decimals = 0;
          symbol = "MIPC";
         
         balanceOf[msg.sender] = initialSupply;              // Give the creator all initial tokens
