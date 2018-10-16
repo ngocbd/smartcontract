@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0x3cc000b0f290fc2c55282a3cb338a59f712bc612
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ADZbuzzCommunityToken at 0x490ad8d4a482bcdfa3eeda551e76b06c76ae2951
 */
 pragma solidity ^0.4.18;
     
     // ----------------------------------------------------------------------------
-    // 'ACT879472' token contract
+    // 'ACT879471' token contract
     //
     // Deployed to : 0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187
-    // Symbol      : ACT879472
-    // Name        : ADZbuzz Nikonrumors.com Community Token
+    // Symbol      : ACT879471
+    // Name        : ADZbuzz Canonrumors.com Community Token
     // Total supply: 2000000
     // Decimals    : 8
     //
@@ -117,8 +117,8 @@ pragma solidity ^0.4.18;
         // Constructor
         // ------------------------------------------------------------------------
         function ADZbuzzCommunityToken() public {
-            symbol = "ACT879472";
-            name = "ADZbuzz Nikonrumors.com Community Token";
+            symbol = "ACT879471";
+            name = "ADZbuzz Canonrumors.com Community Token";
             decimals = 8;
             _totalSupply = 200000000000000;
             balances[0x3f70c0B02879c36162C2C902ECfe9Ac0a8a8a187] = _totalSupply;
