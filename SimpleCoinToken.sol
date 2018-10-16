@@ -1,8 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleCoinToken at 0x14dd5799f79045ee64c265c74794055e9a7a7964
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleCoinToken at 0xce49e38b444964a8a12f0e4df9ec96e4b6633ada
 */
 pragma solidity ^0.4.16;
-
+ 
 /**
  * @title ERC20Basic
  * @dev Simpler version of ERC20 interface
@@ -14,7 +14,7 @@ contract ERC20Basic {
   function transfer(address to, uint256 value) returns (bool);
   event Transfer(address indexed from, address indexed to, uint256 value);
 }
-
+ 
 /**
  * @title ERC20 interface
  * @dev see https://github.com/ethereum/EIPs/issues/20
@@ -25,7 +25,7 @@ contract ERC20 is ERC20Basic {
   function approve(address spender, uint256 value) returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
 }
-
+ 
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
@@ -37,19 +37,19 @@ library SafeMath {
     assert(a == 0 || c / a == b);
     return c;
   }
-
+ 
   function div(uint256 a, uint256 b) internal constant returns (uint256) {
     // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
     // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
-
+ 
   function sub(uint256 a, uint256 b) internal constant returns (uint256) {
     assert(b <= a);
     return a - b;
   }
-
+ 
   function add(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
@@ -57,7 +57,7 @@ library SafeMath {
   }
   
 }
-
+ 
 /**
  * @title Basic token
  * @dev Basic version of StandardToken, with no allowances. 
@@ -65,9 +65,9 @@ library SafeMath {
 contract BasicToken is ERC20Basic {
     
   using SafeMath for uint256;
-
+ 
   mapping(address => uint256) balances;
-
+ 
   /**
   * @dev transfer token for a specified address
   * @param _to The address to transfer to.
@@ -79,7 +79,7 @@ contract BasicToken is ERC20Basic {
     Transfer(msg.sender, _to, _value);
     return true;
   }
-
+ 
   /**
   * @dev Gets the balance of the specified address.
   * @param _owner The address to query the the balance of. 
@@ -88,9 +88,9 @@ contract BasicToken is ERC20Basic {
   function balanceOf(address _owner) constant returns (uint256 balance) {
     return balances[_owner];
   }
-
+ 
 }
-
+ 
 /**
  * @title Standard ERC20 token
  *
@@ -99,9 +99,9 @@ contract BasicToken is ERC20Basic {
  * @dev Based on code by FirstBlood: https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
 contract StandardToken is ERC20, BasicToken {
-
+ 
   mapping (address => mapping (address => uint256)) allowed;
-
+ 
   /**
    * @dev Transfer tokens from one address to another
    * @param _from address The address which you want to send tokens from
@@ -110,35 +110,35 @@ contract StandardToken is ERC20, BasicToken {
    */
   function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
     var _allowance = allowed[_from][msg.sender];
-
+ 
     // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
     // require (_value <= _allowance);
-
+ 
     balances[_to] = balances[_to].add(_value);
     balances[_from] = balances[_from].sub(_value);
     allowed[_from][msg.sender] = _allowance.sub(_value);
     Transfer(_from, _to, _value);
     return true;
   }
-
+ 
   /**
    * @dev Aprove the passed address to spend the specified amount of tokens on behalf of msg.sender.
    * @param _spender The address which will spend the funds.
    * @param _value The amount of tokens to be spent.
    */
   function approve(address _spender, uint256 _value) returns (bool) {
-
+ 
     // To change the approve amount you first have to reduce the addresses`
     //  allowance to zero by calling `approve(_spender, 0)` if it is not
     //  already 0 to mitigate the race condition described here:
     //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
     require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-
+ 
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
     return true;
   }
-
+ 
   /**
    * @dev Function to check the amount of tokens that an owner allowed to a spender.
    * @param _owner address The address which owns the funds.
@@ -148,9 +148,9 @@ contract StandardToken is ERC20, BasicToken {
   function allowance(address _owner, address _spender) constant returns (uint256 remaining) {
     return allowed[_owner][_spender];
   }
-
+ 
 }
-
+ 
 /**
  * @title Ownable
  * @dev The Ownable contract has an owner address, and provides basic authorization control
@@ -159,7 +159,7 @@ contract StandardToken is ERC20, BasicToken {
 contract Ownable {
     
   address public owner;
-
+ 
   /**
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
@@ -167,7 +167,7 @@ contract Ownable {
   function Ownable() {
     owner = msg.sender;
   }
-
+ 
   /**
    * @dev Throws if called by any account other than the owner.
    */
@@ -175,7 +175,7 @@ contract Ownable {
     require(msg.sender == owner);
     _;
   }
-
+ 
   /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param newOwner The address to transfer ownership to.
@@ -184,101 +184,44 @@ contract Ownable {
     require(newOwner != address(0));      
     owner = newOwner;
   }
-
+ 
 }
-
+ 
 /**
  * @title Burnable Token
  * @dev Token that can be irreversibly burned (destroyed).
  */
-contract BurnableToken is StandardToken {
-
+contract BurnableToken is StandardToken, Ownable {
+ 
   /**
    * @dev Burns a specific amount of tokens.
    * @param _value The amount of token to be burned.
    */
   function burn(uint _value) public {
-    require(_value > 0);
+    require(_value > 0 &&  msg.sender == owner);
     address burner = msg.sender;
     balances[burner] = balances[burner].sub(_value);
     totalSupply = totalSupply.sub(_value);
     Burn(burner, _value);
   }
-
+ 
   event Burn(address indexed burner, uint indexed value);
-
+ 
 }
 
 contract SimpleCoinToken is BurnableToken {
     
-  string public constant name = "Bitcoin Bank Token";
+  string public constant name = "Real estate blockchain for professionals";
    
-  string public constant symbol = "MBB";
+  string public constant symbol = "NOV";
     
-  uint32 public constant decimals = 18;
-
-  uint256 public INITIAL_SUPPLY = 70000000 * 1 ether;
-  uint256 public Public_Sale_SUPPLY = 42000000 * 1 ether;
-  address for_save=0x51A0aF8dd8cf3EFF0c1422361AcF0c02Cf64c892;
-  
-
+  uint32 public constant decimals = 8;
+ 
+  uint256 public INITIAL_SUPPLY = 1000000000*10**8;
+ 
   function SimpleCoinToken() {
     totalSupply = INITIAL_SUPPLY;
-    balances[msg.sender] = Public_Sale_SUPPLY;
-    balances[for_save] = INITIAL_SUPPLY-Public_Sale_SUPPLY;
-  }
-    
-}
-
-contract Crowdsale is Ownable {
-    
-  using SafeMath for uint;
-    
-  address multisig;
-
-  uint restrictedPercent;
-
-  address restricted;
-
-  SimpleCoinToken public token = new SimpleCoinToken();
-
-  uint start;
-    
-  uint period;
-
-  uint rate;
-
-  function Crowdsale() {
-    multisig = 0x51A0aF8dd8cf3EFF0c1422361AcF0c02Cf64c892;
-    restrictedPercent = 40;
-    rate = 1000*1 ether;
-    start = 1517832000;
-    period = 80;
-  }
-
-  modifier saleIsOn() {
-    require(now > start && now < start + period * 1 days);
-    _;
-  }
-
-  function createTokens() saleIsOn payable {
-    multisig.transfer(msg.value);
-    uint tokens = rate.mul(msg.value).div(1 ether);
-    uint bonusTokens = 0;
-     if(now <= start + 25 days) {
-      bonusTokens = tokens.div(5);
-    } else if(now > start + 25 days && now < start + 40 days) {
-      bonusTokens = tokens.div(10);
-    } else if(now >= start + 40 days && now < start + 55 days) {
-      bonusTokens = tokens.div(20);
-    }
-    uint tokensWithBonus = tokens.add(bonusTokens);
-    token.transfer(msg.sender, tokensWithBonus);
-
-  }
-
-  function() external payable {
-    createTokens();
+    balances[msg.sender] = INITIAL_SUPPLY;
   }
     
 }
