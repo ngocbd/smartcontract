@@ -1,156 +1,275 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x1D4ebe6a9BAf86E4E101EF5fB3af44c96F321caa
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x6aD817b9020AdCb10B4a08E713Bae0980385c674
 */
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.20;
+//**???**???**//180419~
+/*?? ??? 1wei??? ????? ?????
+ex :
+? ?? ?? 111
+???18??? ??? ?? ?? 111 000 000 000 000 000 000(wei???)
+1?? ??
+?? ?? 110999999999999999999
+??Value * 10 ** uint256(??????)? ?? ???? 1?? ??? 110 000 000 000 000 000 000
+*/
+//?? ??? ?? 18 / ???? payable , transfer?? ???? ??? ??
+//???? ???? ??? 1ETH=1000000000000000000Wei ?? ??? ??18?? ??? ??? ???18? ??? payable, transfer ?? ?? ???
+//** public? ??? ??,??? ?? ????? ????**//
+contract TokenERC20
+{
+  //?? ??
+  string public name;
+  //?? ??(??)
+  string public symbol;
+  //?? ?? ??? ??
+  uint8 public decimals;
+  //wei ??? ??? ?? ?? ??
+  uint256 _decimals;
+  //??*2=??
+  uint256 public tokenReward;
+  //? ?? ?? ??
+  uint256 public totalSupply;
+  //?? admin
+  address public owner;
+  //?? ?? (text? ???? ???) ex :  private ,  public , test , demo
+  string public status;
+  //?? ?? ?? ????? (????) // http://www.4webhelp.net/us/timestamp.php ?? ????
+  uint256 public start_token_time;
+  //?? ?? ?? ????? (????)
+  uint256 public stop_token_time;
+  ///////GMB ??? 3??? ?? ??? ??? ???? ??? ???!!
+  uint256 public transferLock;
 
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) external; }
+  //owner?? ???? ??
+  modifier isOwner
+  {
+    assert(owner == msg.sender);
+    _;
+  }
 
-contract TokenERC20 {
-    // Public variables of the token
-    string public name;
-    string public symbol;
-    uint8 public decimals = 18;
-    // 18 decimals is the strongly suggested default, avoid changing it
-    uint256 public totalSupply;
+  //???? ???? ?? ???(MIST UI? ????)
+  mapping (address => uint256) public balanceOf;
 
-    // This creates an array with all balances
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
+  //??? ??? ???
+  event Transfer(address indexed from, address indexed to, uint256 value);
+  event token_Burn(address indexed from, uint256 value);
+  event token_Add(address indexed from, uint256 value);
+  event Deposit(address _sender, uint amount ,string status);
+  event change_Owner(string newOwner);
+  event change_Status(string newStatus);
+  event change_Name(string newName);
+  event change_Symbol(string newSymbol);
+  event change_TokenReward(uint256 newTokenReward);
+  event change_Time_Stamp(uint256 change_start_time_stamp,uint256 change_stop_time_stamp);
 
-    // This generates a public event on the blockchain that will notify clients
-    event Transfer(address indexed from, address indexed to, uint256 value);
+  //?? ??? ??
+  function TokenERC20() public
+  {
+    //?? ?? ???
+    name = "GMB";
+    //?? ??(??) ???
+    symbol = "MAS";
+    //??? ?? ???
+    decimals = 18;
+    //wei ??? ??? ?? ?? ??
+    _decimals = 10 ** uint256(decimals);
+    //ETH , ?? ????
+    tokenReward = 0;
+    //?? ?? ?? ???
+    totalSupply =  _decimals * 10000000000; //1???
+    //?? ?? ???
+    status = "Private";
+    //????? ??? (????) 2018.1.1 00:00:00 (Gmt+9)
+    start_token_time = 1514732400;
+    //????? ??? (????)  2018.12.31 23:59:59 (Gmt+9)
+    stop_token_time = 1546268399;
+    //?? ??? ?? ?? ???
+    owner = msg.sender;
+    //??? ????? ??????? ??
+    balanceOf[msg.sender] = totalSupply;
+    ///////GMB ??? ?3??? ?? ??? ??? ???? ??? ???!!
+    transferLock = 1; //0??? transfer ??
+  }
+  //*?? ??? ?? ??*//
+  function() payable public
+  {
+    //??? ??
+    uint256 cal;
+    //?? ?? ?? ????? (????)
+    require(start_token_time < block.timestamp);
+    //?? ?? ?? ????? (????)
+    require(stop_token_time > block.timestamp);
+    //ETH????,ETH??? ???? ??
+    emit Deposit(msg.sender, msg.value, status);
+    //??=??*2
+    cal = (msg.value)*tokenReward;
+    //?? ???? ???? ???? ???? ???? ??? ??
+    require(balanceOf[owner] >= cal);
+    //????? ??
+    require(balanceOf[msg.sender] + cal >= balanceOf[msg.sender]);
+    //?????? ??
+    balanceOf[owner] -= cal;
+    //?? ????? ?? ??
+    balanceOf[msg.sender] += cal;
+    //??? ??? ??
+    emit Transfer(owner, msg.sender, cal);
+  }
+  //*?? ??*// ex : 1?? ??? 1 000 000 000 000 000 000(Mist UI ??? ?????? ??, Mist UI ?? ??? ?????? 1)
+  function transfer(address _to, uint256 _value) public
+  {
+    ///////GMB ??? ?3??? ?? ??? ??? ???? ??? ???!!
+    require(transferLock == 0); //0??? transfer ??
+    //?? ???? ???? ???? ???? ???? ??? ??
+    require(balanceOf[msg.sender] >= _value);
+    //????? ??
+    require((balanceOf[_to] + _value) >= balanceOf[_to]);
+    //?????? ??
+    balanceOf[msg.sender] -= _value;
+    //?? ????? ?? ??
+    balanceOf[_to] += _value;
+    //??? ??? ??
+    emit Transfer(msg.sender, _to, _value);
+  }
+  //*?? ?? geth?? ??? ????? __decimals? ???*// ex : 1?? ??? 1
+  function admin_transfer(address _to, uint256 _value) public isOwner
+  {
+    //tokenValue = _value;
+    //?? ???? ???? ???? ???? ???? ??? ??
+    require(balanceOf[msg.sender] >= _value*_decimals);
+    //????? ??
+    require(balanceOf[_to] + (_value *_decimals)>= balanceOf[_to]);
+    //?????? ??
+    balanceOf[msg.sender] -= _value*_decimals;
+    //?? ????? ?? ??
+    balanceOf[_to] += _value*_decimals;
+    //??? ??? ??
+    emit Transfer(msg.sender, _to, _value*_decimals);
+  }
+  //*???? ???? ?? ??* ???// ex : 1?? ??? 1
+  function admin_from_To_transfer(address _from, address _to, uint256 _value) public isOwner
+  {
+    //tokenValue = _value;
+    //?? ???? ???? ???? ???? ???? ??? ??
+    require(balanceOf[_from] >= _value*_decimals);
+    //????? ??
+    require(balanceOf[_to] + (_value *_decimals)>= balanceOf[_to]);
+    //?????? ??
+    balanceOf[_from] -= _value*_decimals;
+    //?? ????? ?? ??
+    balanceOf[_to] += _value*_decimals;
+    //??? ??? ??
+    emit Transfer(_from, _to, _value*_decimals);
+  }
+  //*? ?? ?? ??*// ex : 1?? ??? 1
+  function admin_token_burn(uint256 _value) public isOwner returns (bool success)
+  {
+    //???? ????? ????? ???? ??? ??
+    require(balanceOf[msg.sender] >= _value*_decimals);
+    //?? ???? ??
+    balanceOf[msg.sender] -= _value*_decimals;
+    //? ?? ???? ??
+    totalSupply -= _value*_decimals;
+    //??? ??? ??
+    emit token_Burn(msg.sender, _value*_decimals);
+    return true;
+  }
+  //*? ?? ?? ??*// ex : 1?? ??? 1
+  function admin_token_add(uint256 _value) public  isOwner returns (bool success)
+  {
+    require(balanceOf[msg.sender] >= _value*_decimals);
+    //?? ???? ??
+    balanceOf[msg.sender] += _value*_decimals;
+    //? ?? ???? ??
+    totalSupply += _value*_decimals;
+    //??? ??? ??
+    emit token_Add(msg.sender, _value*_decimals);
+    return true;
+  }
+  //*?? ??*//  ***???? ??? ??? ?????? ??? ??(???? ?? ????? ???)***
+  function change_name(string _tokenName) public isOwner returns (bool success)
+  {
+    //name ?????
+    name = _tokenName;
+    //??? ??? ??
+    emit change_Name(name);
+    return true;
+  }
+  //*?? ??*//  ***???? ??? ??? ?????? ??? ??(???? ?? ????? ???)***
+  function change_symbol(string _symbol) public isOwner returns (bool success)
+  {
+    //symbol ?????
+    symbol = _symbol;
+    //??? ??? ??
+    emit change_Symbol(symbol);
+    return true;
+  }
+  //*status??*//
+  function change_status(string _status) public isOwner returns (bool success)
+  {
+    //status ?????
+    status = _status;
+    //??? ??? ??
+    emit change_Status(status);
+    return true;
+  }
+  //*?? ??*//
+  function change_tokenReward(uint256 _tokenReward) public isOwner returns (bool success)
+  {
+    //tokenReward ?????
+    tokenReward = _tokenReward;
+    //??? ??? ??
+    emit change_TokenReward(tokenReward);
+    return true;
+  }
+  //*ETH??*//
+  function ETH_withdraw(uint256 amount) public isOwner returns(bool)
+  {
+    //????? ?????? ??? wei??? ?? //1ETH ??? 1 000 000 000 000 000 000 ?? ???
+    owner.transfer(amount);
+    //????? ?? ???? ???? ??? ????? emit ???? ???? ??
+    return true;
+  }
+  //*time_stamp??*//
+  function change_time_stamp(uint256 _start_token_time,uint256 _stop_token_time) public isOwner returns (bool success)
+  {
+    //start_token_time? ?????
+    start_token_time = _start_token_time;
+    //stop_token_time? ?????
+    stop_token_time = _stop_token_time;
 
-    // This notifies clients about the amount burnt
-    event Burn(address indexed from, uint256 value);
-
-    /**
-     * Constructor function
-     *
-     * Initializes contract with initial supply tokens to the creator of the contract
-     */
-    function TokenERC20(
-        uint256 initialSupply,
-        string tokenName,
-        string tokenSymbol
-    ) public {
-        totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
-        balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = tokenName;                                   // Set the name for display purposes
-        symbol = tokenSymbol;                               // Set the symbol for display purposes
-    }
-
-    /**
-     * Internal transfer, only can be called by this contract
-     */
-    function _transfer(address _from, address _to, uint _value) internal {
-        // Prevent transfer to 0x0 address. Use burn() instead
-        require(_to != 0x0);
-        // Check if the sender has enough
-        require(balanceOf[_from] >= _value);
-        // Check for overflows
-        require(balanceOf[_to] + _value >= balanceOf[_to]);
-        // Save this for an assertion in the future
-        uint previousBalances = balanceOf[_from] + balanceOf[_to];
-        // Subtract from the sender
-        balanceOf[_from] -= _value;
-        // Add the same to the recipient
-        balanceOf[_to] += _value;
-        emit Transfer(_from, _to, _value);
-        // Asserts are used to use static analysis to find bugs in your code. They should never fail
-        assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
-    }
-
-    /**
-     * Transfer tokens
-     *
-     * Send `_value` tokens to `_to` from your account
-     *
-     * @param _to The address of the recipient
-     * @param _value the amount to send
-     */
-    function transfer(address _to, uint256 _value) public {
-        _transfer(msg.sender, _to, _value);
-    }
-
-    /**
-     * Transfer tokens from other address
-     *
-     * Send `_value` tokens to `_to` on behalf of `_from`
-     *
-     * @param _from The address of the sender
-     * @param _to The address of the recipient
-     * @param _value the amount to send
-     */
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
-        require(_value <= allowance[_from][msg.sender]);     // Check allowance
-        allowance[_from][msg.sender] -= _value;
-        _transfer(_from, _to, _value);
-        return true;
-    }
-
-    /**
-     * Set allowance for other address
-     *
-     * Allows `_spender` to spend no more than `_value` tokens on your behalf
-     *
-     * @param _spender The address authorized to spend
-     * @param _value the max amount they can spend
-     */
-    function approve(address _spender, uint256 _value) public
-        returns (bool success) {
-        allowance[msg.sender][_spender] = _value;
-        return true;
-    }
-
-    /**
-     * Set allowance for other address and notify
-     *
-     * Allows `_spender` to spend no more than `_value` tokens on your behalf, and then ping the contract about it
-     *
-     * @param _spender The address authorized to spend
-     * @param _value the max amount they can spend
-     * @param _extraData some extra information to send to the approved contract
-     */
-    function approveAndCall(address _spender, uint256 _value, bytes _extraData)
-        public
-        returns (bool success) {
-        tokenRecipient spender = tokenRecipient(_spender);
-        if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, this, _extraData);
-            return true;
-        }
-    }
-
-    /**
-     * Destroy tokens
-     *
-     * Remove `_value` tokens from the system irreversibly
-     *
-     * @param _value the amount of money to burn
-     */
-    function burn(uint256 _value) public returns (bool success) {
-        require(balanceOf[msg.sender] >= _value);   // Check if the sender has enough
-        balanceOf[msg.sender] -= _value;            // Subtract from the sender
-        totalSupply -= _value;                      // Updates totalSupply
-        emit Burn(msg.sender, _value);
-        return true;
-    }
-
-    /**
-     * Destroy tokens from other account
-     *
-     * Remove `_value` tokens from the system irreversibly on behalf of `_from`.
-     *
-     * @param _from the address of the sender
-     * @param _value the amount of money to burn
-     */
-    function burnFrom(address _from, uint256 _value) public returns (bool success) {
-        require(balanceOf[_from] >= _value);                // Check if the targeted balance is enough
-        require(_value <= allowance[_from][msg.sender]);    // Check allowance
-        balanceOf[_from] -= _value;                         // Subtract from the targeted balance
-        allowance[_from][msg.sender] -= _value;             // Subtract from the sender's allowance
-        totalSupply -= _value;                              // Update totalSupply
-        emit Burn(_from, _value);
-        return true;
-    }
+    //??? ??? ??
+    emit change_Time_Stamp(start_token_time,stop_token_time);
+    return true;
+  }
+  //*owner??*//
+  function change_owner(address to_owner) public isOwner returns (bool success)
+  {
+    //owner? ?????
+    owner = to_owner;
+    //??? ??? ??
+    emit change_Owner("Owner_change");
+    return true;
+  }
+  //*transferLock??*// 0??? lock ??
+  function setTransferLock(uint256 transferLock_status) public isOwner returns (bool success)
+  {
+    //transferLock ?????
+    transferLock = transferLock_status;
+    //transferLock? ?? ???? ???? ??? ????? emit ???? ???? ??
+    return true;
+  }
+  //*time_stamp??,status ??*//
+  function change_time_stamp_status(uint256 _start_token_time,uint256 _stop_token_time,string _status) public isOwner returns (bool success)
+  {
+    //start_token_time? ?????
+    start_token_time = _start_token_time;
+    //stop_token_time? ?????
+    stop_token_time = _stop_token_time;
+    //status ?????
+    status = _status;
+    //??? ??? ??
+    emit change_Time_Stamp(start_token_time,stop_token_time);
+    //??? ??? ??
+    emit change_Status(status);
+    return true;
+  }
 }
