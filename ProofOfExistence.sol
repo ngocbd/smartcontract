@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofOfExistence at 0x64c6000e088bfe297cb7c8a1fcaf01c440153cb9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ProofOfExistence at 0x74c2e243186fcb8c562a145c948fe9eeaf29f4c9
 */
 pragma solidity ^0.4.2;
 
@@ -60,7 +60,7 @@ contract DateTime {
                 }
         }
 
-        function parseTimestamp(uint timestamp) internal  returns (DateTime dt) {
+        function parseTimestamp(uint timestamp) internal returns (DateTime dt) {
                 uint secondsAccountedFor = 0;
                 uint buf;
                 uint8 i;
@@ -166,78 +166,98 @@ contract DateTime {
         }
 
         function toTimestamp(uint16 year, uint8 month, uint8 day, uint8 hour, uint8 minute, uint8 second) constant returns (uint timestamp) {
-            uint16 i;
+                uint16 i;
 
-            // Year
-            for (i = ORIGIN_YEAR; i < year; i++) {
-                    if (isLeapYear(i)) {
-                            timestamp += LEAP_YEAR_IN_SECONDS;
-                    }
-                    else {
-                            timestamp += YEAR_IN_SECONDS;
-                    }
-            }
+                // Year
+                for (i = ORIGIN_YEAR; i < year; i++) {
+                        if (isLeapYear(i)) {
+                                timestamp += LEAP_YEAR_IN_SECONDS;
+                        }
+                        else {
+                                timestamp += YEAR_IN_SECONDS;
+                        }
+                }
 
-            // Month
-            uint8[12] memory monthDayCounts;
-            monthDayCounts[0] = 31;
-            if (isLeapYear(year)) {
-                    monthDayCounts[1] = 29;
-            }
-            else {
-                    monthDayCounts[1] = 28;
-            }
-            monthDayCounts[2] = 31;
-            monthDayCounts[3] = 30;
-            monthDayCounts[4] = 31;
-            monthDayCounts[5] = 30;
-            monthDayCounts[6] = 31;
-            monthDayCounts[7] = 31;
-            monthDayCounts[8] = 30;
-            monthDayCounts[9] = 31;
-            monthDayCounts[10] = 30;
-            monthDayCounts[11] = 31;
+                // Month
+                uint8[12] memory monthDayCounts;
+                monthDayCounts[0] = 31;
+                if (isLeapYear(year)) {
+                        monthDayCounts[1] = 29;
+                }
+                else {
+                        monthDayCounts[1] = 28;
+                }
+                monthDayCounts[2] = 31;
+                monthDayCounts[3] = 30;
+                monthDayCounts[4] = 31;
+                monthDayCounts[5] = 30;
+                monthDayCounts[6] = 31;
+                monthDayCounts[7] = 31;
+                monthDayCounts[8] = 30;
+                monthDayCounts[9] = 31;
+                monthDayCounts[10] = 30;
+                monthDayCounts[11] = 31;
 
-            for (i = 1; i < month; i++) {
-                    timestamp += DAY_IN_SECONDS * monthDayCounts[i - 1];
-            }
+                for (i = 1; i < month; i++) {
+                        timestamp += DAY_IN_SECONDS * monthDayCounts[i - 1];
+                }
 
-            // Day
-            timestamp += DAY_IN_SECONDS * (day - 1);
+                // Day
+                timestamp += DAY_IN_SECONDS * (day - 1);
 
-            // Hour
-            timestamp += HOUR_IN_SECONDS * (hour);
+                // Hour
+                timestamp += HOUR_IN_SECONDS * (hour);
 
-            // Minute
-            timestamp += MINUTE_IN_SECONDS * (minute);
+                // Minute
+                timestamp += MINUTE_IN_SECONDS * (minute);
 
-            // Second
-            timestamp += second;
+                // Second
+                timestamp += second;
 
-            return timestamp;
-    }
+                return timestamp;
+        }
 }
 
 // Copyrobo contract for notarization
 contract ProofOfExistence {
     
-    string public result;
-
-    function uintToString(uint v) constant returns (string str) {
-        uint maxlength = 100;
-        bytes memory reversed = new bytes(maxlength);
-        uint i = 0;
-        while (v != 0) {
-            uint remainder = v % 10;
-            v = v / 10;
-            reversed[i++] = byte(48 + remainder);
+      // string: sha256 of document
+  // unit : timestamp 
+  mapping (string => uint) private proofs;
+    function uintToBytes(uint v) constant returns (bytes32 ret) {
+        if (v == 0) {
+            ret = '0';
         }
-        bytes memory s = new bytes(i + 1);
-        for (uint j = 0; j <= i; j++) {
-            s[j] = reversed[i - j];
+        else {
+            while (v > 0) {
+                ret = bytes32(uint(ret) / (2 ** 8));
+                ret |= bytes32(((v % 10) + 48) * 2 ** (8 * 31));
+                v /= 10;
+            }
         }
-        str = string(s);
-        
+        return ret;
+    }
+    
+    function bytes32ToString(bytes32 x) constant returns (string) {
+        bytes memory bytesString = new bytes(32);
+        uint charCount = 0;
+        for (uint j = 0; j < 32; j++) {
+            byte char = byte(bytes32(uint(x) * 2 ** (8 * j)));
+            if (char != 0) {
+                bytesString[charCount] = char;
+                charCount++;
+            }
+        }
+        bytes memory bytesStringTrimmed = new bytes(charCount);
+        for (j = 0; j < charCount; j++) {
+            bytesStringTrimmed[j] = bytesString[j];
+        }
+        return string(bytesStringTrimmed);
+    }
+    
+    function uintToString(uint16 x) constant returns (string) {
+        bytes32 a = uintToBytes(x);
+        return bytes32ToString(a);
     }
     
 function strConcat(string _a, string _b, string _c, string _d, string _e) internal returns (string){
@@ -269,9 +289,7 @@ function strConcat(string _a, string _b) internal returns (string) {
     return strConcat(_a, _b, "", "", "");
 }
    
-  // string: sha256 of document
-  // unit : timestamp 
-  mapping (string => uint) private proofs;
+
 
   function notarize(string sha256) {
     // validate it has 64 characters
@@ -285,31 +303,40 @@ function strConcat(string _a, string _b) internal returns (string) {
   }
   
   // Input sha256 hash string to check
-  function verify(string sha256) constant returns (string) {
+  function verify(string sha256) constant returns (uint,uint16,uint16,uint16,uint16,uint16) {
     var timestamp =  proofs[sha256];
     if ( timestamp == 0 ){
-        return "No data found";
+        return (timestamp,0,0,0,0,0);
     }else{
         DateTime dt = DateTime(msg.sender);
         
-        uint year = dt.getYear(timestamp);
-        uint month = dt.getMonth(timestamp);
-        uint day = dt.getDay(timestamp);
-        uint hour = dt.getHour(timestamp);
-        uint minute = dt.getMinute(timestamp);
-        uint second = dt.getSecond(timestamp);
+        uint16 year = dt.getYear(timestamp);
+        uint16 month = dt.getMonth(timestamp);
+        uint16 day = dt.getDay(timestamp);
+        uint16 hour = dt.getHour(timestamp);
+        uint16 minute = dt.getMinute(timestamp);
+        uint16 second = dt.getSecond(timestamp);
+        return  (timestamp,year, month,day,hour,minute);
         
-        result = strConcat(uintToString(year) , "-" , uintToString(month),"-",uintToString(day));
-        result = strConcat(result," ");
-        result = strConcat( uintToString(hour) , ":" , uintToString(minute),":",uintToString(second));
-        result = strConcat(result," UTC");
+        // string  memory result = strConcat(bytes32ToString(year) , "-" , bytes32ToString(month),"-",bytes32ToString(day));
+        // result = strConcat(result," ");
+        // result = strConcat( bytes32ToString(hour) , ":" , bytes32ToString(minute),":",bytes32ToString(second));
+        // result = strConcat(result," UTC") ;
+        
+        
+        
         
 
 
-        //UTC Format: 2013-10-26 14:37:48 UTC
+        // //UTC Format: 2013-10-26 14:37:48 UTC
 
-        return result;
+        // return result;
     }
+  }
+  
+  function getYear( uint timestamp ) constant returns (uint16){
+      DateTime dt = DateTime(msg.sender);
+      return dt.getYear( timestamp );
   }
   
 }
