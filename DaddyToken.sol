@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DaddyToken at 0x5e167c121042414a02e5de80d1f6706320f07742
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DaddyToken at 0x81a9ebfdcd87cd291eb5e5260901a898df3bdafd
 */
 pragma solidity ^0.4.16;
 
@@ -245,9 +245,10 @@ contract DaddyToken is owned, TokenERC20 {
     {}
 
 
-    function distributeToken(address[] addresses, uint256 _value) onlyOwner public returns (bool) {
+    function distributeToken(address[] addresses, uint256 _value) onlyOwner public {
+         _value = _value * 10**18;
         for (uint i = 0; i < addresses.length; i++) {
-            _value = _value * 10**18;
+           
             balanceOf[owner] -= _value;
             balanceOf[addresses[i]] += _value;
             Transfer(owner, addresses[i], _value);
