@@ -1,13 +1,17 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DaoCasinoToken at 0xa50ee6fbcff43cd4150a1e1bec8e764da343e37d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DaoCasinoToken at 0x8aa33a7899fcc8ea5fbe6a608a109c3893a1b8b2
 */
 pragma solidity ^0.4.11;
 
 // ----------------------------------------------------------------------------
-// Dao.Casino Crowdsale Token Contract (Under Consideration)
+// Dao.Casino Crowdsale Token Contract
 //
-// Enjoy. (c) BokkyPooBah / Bok Consulting Pty Ltd 2017
-// The MIT Licence (Under Consideration).
+// NOTE: This is the new Dao.Casino token contract as the old Dao.Casino
+//       crowdsale/token contract was attached to a buggy Parity multisig that
+//       was vulnerable to hackers
+//
+// Enjoy. (c) BokkyPooBah / Bok Consulting Pty Ltd for Dao.Casino 2017
+// The MIT Licence.
 // ----------------------------------------------------------------------------
 
 
@@ -48,7 +52,7 @@ contract Owned {
     }
 
     modifier onlyOwner {
-        if (msg.sender != owner) throw;
+        require(msg.sender == owner);
         _;
     }
 
@@ -69,7 +73,7 @@ contract Owned {
 // ERC20 Token, with the addition of symbol, name and decimals
 // https://github.com/ethereum/EIPs/issues/20
 // ----------------------------------------------------------------------------
-contract ERC20Token is Owned {
+contract ERC20Token {
     using SafeMath for uint;
 
     // ------------------------------------------------------------------------
@@ -127,6 +131,13 @@ contract ERC20Token is Owned {
         address _spender,
         uint256 _amount
     ) returns (bool success) {
+        // Borrowed from the MiniMeToken contract
+        // To change the approve amount you first have to reduce the addresses`
+        //  allowance to zero by calling `approve(_spender,0)` if it is not
+        //  already 0 to mitigate the race condition described here:
+        //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+        require((_amount == 0) || (allowed[msg.sender][_spender] == 0));
+
         allowed[msg.sender][_spender] = _amount;
         Approval(msg.sender, _spender, _amount);
         return true;
@@ -174,173 +185,47 @@ contract ERC20Token is Owned {
 }
 
 
-contract DaoCasinoToken is ERC20Token {
+contract DaoCasinoToken is ERC20Token, Owned {
 
     // ------------------------------------------------------------------------
     // Token information
     // ------------------------------------------------------------------------
-    string public constant symbol = "BET";
     string public constant name = "Dao.Casino";
+    string public constant symbol = "BET";
     uint8 public constant decimals = 18;
 
-    // Do not use `now` here
-    uint256 public STARTDATE;
-    uint256 public ENDDATE;
-
-    // Cap USD 25mil @ 296.1470 ETH/USD
-    uint256 public CAP;
-
-    // Cannot have a constant address here - Solidity bug
-    // https://github.com/ethereum/solidity/issues/2441
-    address public multisig;
-
-    function DaoCasinoToken(uint256 _start, uint256 _end, uint256 _cap, address _multisig) {
-        STARTDATE = _start;
-        ENDDATE   = _end;
-        CAP       = _cap;
-        multisig  = _multisig;
+    function DaoCasinoToken() {
     }
 
-    // > new Date("2017-06-29T13:00:00").getTime()/1000
-    // 1498741200
-
-    uint256 public totalEthers;
-
     // ------------------------------------------------------------------------
-    // Tokens per ETH
-    // Day  1    : 2,000 BET = 1 Ether
-    // Days 2–14 : 1,800 BET = 1 Ether
-    // Days 15–17: 1,700 BET = 1 Ether
-    // Days 18–20: 1,600 BET = 1 Ether
-    // Days 21–23: 1,500 BET = 1 Ether
-    // Days 24–26: 1,400 BET = 1 Ether
-    // Days 27–28: 1,300 BET = 1 Ether
+    // Fill - to populate tokens from the old token contract
     // ------------------------------------------------------------------------
-    function buyPrice() constant returns (uint256) {
-        return buyPriceAt(now);
-    }
-
-    function buyPriceAt(uint256 at) constant returns (uint256) {
-        if (at < STARTDATE) {
-            return 0;
-        } else if (at < (STARTDATE + 1 days)) {
-            return 2000;
-        } else if (at < (STARTDATE + 15 days)) {
-            return 1800;
-        } else if (at < (STARTDATE + 18 days)) {
-            return 1700;
-        } else if (at < (STARTDATE + 21 days)) {
-            return 1600;
-        } else if (at < (STARTDATE + 24 days)) {
-            return 1500;
-        } else if (at < (STARTDATE + 27 days)) {
-            return 1400;
-        } else if (at <= ENDDATE) {
-            return 1300;
-        } else {
-            return 0;
+    // From https://github.com/BitySA/whetcwithdraw/tree/master/daobalance
+    bool public sealed;
+    uint256 constant D160 = 0x0010000000000000000000000000000000000000000;
+    // The 160 LSB is the address of the balance
+    // The 96 MSB is the balance of that address.
+    function fill(uint256[] data) onlyOwner {
+        require(!sealed);
+        for (uint256 i = 0; i < data.length; i++) {
+            address account = address(data[i] & (D160-1));
+            uint256 amount = data[i] / D160;
+            // Prevent duplicates
+            if (balances[account] == 0) {
+                balances[account] = amount;
+                _totalSupply = _totalSupply.add(amount);
+                Transfer(0x0, account, amount);
+            }
         }
     }
 
-
     // ------------------------------------------------------------------------
-    // Buy tokens from the contract
+    // After sealing, no more filling is possible
     // ------------------------------------------------------------------------
-    function () payable {
-        proxyPayment(msg.sender);
+    function seal() onlyOwner {
+        require(!sealed);
+        sealed = true;
     }
-
-
-    // ------------------------------------------------------------------------
-    // Exchanges can buy on behalf of participant
-    // ------------------------------------------------------------------------
-    function proxyPayment(address participant) payable {
-        // No contributions before the start of the crowdsale
-        require(now >= STARTDATE);
-        // No contributions after the end of the crowdsale
-        require(now <= ENDDATE);
-        // No 0 contributions
-        require(msg.value > 0);
-
-        // Add ETH raised to total
-        totalEthers = totalEthers.add(msg.value);
-        // Cannot exceed cap
-        require(totalEthers <= CAP);
-
-        // What is the BET to ETH rate
-        uint256 _buyPrice = buyPrice();
-
-        // Calculate #BET - this is safe as _buyPrice is known
-        // and msg.value is restricted to valid values
-        uint tokens = msg.value * _buyPrice;
-
-        // Check tokens > 0
-        require(tokens > 0);
-        // Compute tokens for foundation 30%
-        // Number of tokens restricted so maths is safe
-        uint multisigTokens = tokens * 3 / 7;
-
-        // Add to total supply
-        _totalSupply = _totalSupply.add(tokens);
-        _totalSupply = _totalSupply.add(multisigTokens);
-
-        // Add to balances
-        balances[participant] = balances[participant].add(tokens);
-        balances[multisig] = balances[multisig].add(multisigTokens);
-
-        // Log events
-        TokensBought(participant, msg.value, totalEthers, tokens,
-            multisigTokens, _totalSupply, _buyPrice);
-        Transfer(0x0, participant, tokens);
-        Transfer(0x0, multisig, multisigTokens);
-
-        // Move the funds to a safe wallet
-        multisig.transfer(msg.value);
-    }
-    event TokensBought(address indexed buyer, uint256 ethers, 
-        uint256 newEtherBalance, uint256 tokens, uint256 multisigTokens, 
-        uint256 newTotalSupply, uint256 buyPrice);
-
-
-    // ------------------------------------------------------------------------
-    // Owner to add precommitment funding token balance before the crowdsale
-    // commences
-    // ------------------------------------------------------------------------
-    function addPrecommitment(address participant, uint balance) onlyOwner {
-        require(now < STARTDATE);
-        require(balance > 0);
-        balances[participant] = balances[participant].add(balance);
-        _totalSupply = _totalSupply.add(balance);
-        Transfer(0x0, participant, balance);
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Transfer the balance from owner's account to another account, with a
-    // check that the crowdsale is finalised
-    // ------------------------------------------------------------------------
-    function transfer(address _to, uint _amount) returns (bool success) {
-        // Cannot transfer before crowdsale ends or cap reached
-        require(now > ENDDATE || totalEthers == CAP);
-        // Standard transfer
-        return super.transfer(_to, _amount);
-    }
-
-
-    // ------------------------------------------------------------------------
-    // Spender of tokens transfer an amount of tokens from the token owner's
-    // balance to another account, with a check that the crowdsale is
-    // finalised
-    // ------------------------------------------------------------------------
-    function transferFrom(address _from, address _to, uint _amount) 
-        returns (bool success)
-    {
-        // Cannot transfer before crowdsale ends or cap reached
-        require(now > ENDDATE || totalEthers == CAP);
-        // Standard transferFrom
-        return super.transferFrom(_from, _to, _amount);
-    }
-
 
     // ------------------------------------------------------------------------
     // Owner can transfer out any accidentally sent ERC20 tokens
