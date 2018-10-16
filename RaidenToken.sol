@@ -1,12 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RaidenToken at 0xf319b117daaef65aaa86e52184dff52be3f9b47c
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RaidenToken at 0x255aa6df07540cb5d3d297f0d0d4d84cb52bc8e6
 */
 pragma solidity ^0.4.17;
-
- /*
- * Contract that is working with ERC223 tokens
- * https://github.com/ethereum/EIPs/issues/223
- */
 
 /// @title ERC223ReceivingContract - Standard contract implementation for compatibility with ERC223 tokens.
 contract ERC223ReceivingContract {
@@ -18,7 +13,6 @@ contract ERC223ReceivingContract {
     function tokenFallback(address _from, uint256 _value, bytes _data) public;
 }
 
-/// @title Base Token contract - Functions to be implemented by token contracts.
 contract Token {
     /*
      * Implements ERC 20 standard.
@@ -211,8 +205,8 @@ contract RaidenToken is StandardToken {
     /*
      *  Token metadata
      */
-    string constant public name = "Czepluch Token";
-    string constant public symbol = "CTN";
+    string constant public name = "Raiden Token";
+    string constant public symbol = "RDN";
     uint8 constant public decimals = 18;
     uint constant multiplier = 10 ** uint(decimals);
 
@@ -293,12 +287,12 @@ contract DutchAuction {
      * token_multiplier set from token's number of decimals (i.e. 10 ** decimals)
      */
 
-    // Wait 7 days after the end of the auction, before ayone can claim tokens
-    uint constant public token_claim_waiting_period = 5 minutes;
+    // Wait 7 days after the end of the auction, before anyone can claim tokens
+    uint constant public token_claim_waiting_period = 7 days;
 
     // Bid value over which the address has to be whitelisted
-    // At deployment moment, equivalent with $15,000
-    uint constant public bid_threshold = 9 ether;
+    // At deployment moment, less than 1k$
+    uint constant public bid_threshold = 2.5 ether;
 
     /*
      * Storage
@@ -307,6 +301,7 @@ contract DutchAuction {
     RaidenToken public token;
     address public owner_address;
     address public wallet_address;
+    address public whitelister_address;
 
     // Price decay function parameters to be changed depending on the desired outcome
 
@@ -370,6 +365,11 @@ contract DutchAuction {
         _;
     }
 
+    modifier isWhitelister() {
+        require(msg.sender == whitelister_address);
+        _;
+    }
+
     /*
      * Events
      */
@@ -402,13 +402,16 @@ contract DutchAuction {
     /// @param _price_exponent Auction price divisor exponent.
     function DutchAuction(
         address _wallet_address,
+        address _whitelister_address,
         uint _price_start,
         uint _price_constant,
         uint32 _price_exponent)
         public
     {
         require(_wallet_address != 0x0);
+        require(_whitelister_address != 0x0);
         wallet_address = _wallet_address;
+        whitelister_address = _whitelister_address;
 
         owner_address = msg.sender;
         stage = Stages.AuctionDeployed;
@@ -462,7 +465,7 @@ contract DutchAuction {
     /// @notice Adds account addresses to whitelist.
     /// @dev Adds account addresses to whitelist.
     /// @param _bidder_addresses Array of addresses.
-    function addToWhitelist(address[] _bidder_addresses) public isOwner {
+    function addToWhitelist(address[] _bidder_addresses) public isWhitelister {
         for (uint32 i = 0; i < _bidder_addresses.length; i++) {
             whitelist[_bidder_addresses[i]] = true;
         }
@@ -471,7 +474,7 @@ contract DutchAuction {
     /// @notice Removes account addresses from whitelist.
     /// @dev Removes account addresses from whitelist.
     /// @param _bidder_addresses Array of addresses.
-    function removeFromWhitelist(address[] _bidder_addresses) public isOwner {
+    function removeFromWhitelist(address[] _bidder_addresses) public isWhitelister {
         for (uint32 i = 0; i < _bidder_addresses.length; i++) {
             whitelist[_bidder_addresses[i]] = false;
         }
