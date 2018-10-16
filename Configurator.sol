@@ -1,7 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Configurator at 0xf94bad7842a1bb51ed147e5c2f8993253e406ec9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Configurator at 0x9cfa3cd7225cf2a5cc7774433ba101a9944c65a4
 */
 pragma solidity ^0.4.18;
+
 
 /**
  * @title Ownable
@@ -45,24 +46,6 @@ contract Ownable {
 
 }
 
-contract ReceivingContractCallback {
-
-  function tokenFallback(address _from, uint _value) public;
-
-}
-
-
-contract RetrieveTokensFeature is Ownable {
-
-  function retrieveTokens(address to, address anotherToken) public onlyOwner {
-    ERC20 alienToken = ERC20(anotherToken);
-    alienToken.transfer(to, alienToken.balanceOf(this));
-  }
-
-}
-
-
-
 /**
  * @title SafeMath
  * @dev Math operations with safety checks that throw on error
@@ -95,7 +78,6 @@ library SafeMath {
     return c;
   }
 }
-
 
 /**
  * @title ERC20Basic
@@ -156,7 +138,6 @@ contract BasicToken is ERC20Basic {
   }
 
 }
-
 
 /**
  * @title Standard ERC20 token
@@ -253,83 +234,58 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-contract MintableToken is StandardToken, Ownable {
+contract AddressesFilterFeature is Ownable {
 
-  event Mint(address indexed to, uint256 amount);
+  mapping(address => bool) public allowedAddresses;
 
-  event MintFinished();
-
-  bool public mintingFinished = false;
-
-  address public saleAgent;
-
-  address public unlockedAddress;
-
-  function setUnlockedAddress(address newUnlockedAddress) public onlyOwner {
-    unlockedAddress = newUnlockedAddress;
+  function addAllowedAddress(address allowedAddress) public onlyOwner {
+    allowedAddresses[allowedAddress] = true;
   }
 
-  modifier notLocked() {
-    require(msg.sender == owner || msg.sender == saleAgent || msg.sender == unlockedAddress || mintingFinished);
-    _;
-  }
-
-  function setSaleAgent(address newSaleAgnet) public {
-    require(msg.sender == saleAgent || msg.sender == owner);
-    saleAgent = newSaleAgnet;
-  }
-
-  function mint(address _to, uint256 _amount) public returns (bool) {
-    require((msg.sender == saleAgent || msg.sender == owner) && !mintingFinished);
-    
-    totalSupply = totalSupply.add(_amount);
-    balances[_to] = balances[_to].add(_amount);
-    Mint(_to, _amount);
-    return true;
-  }
-
-  /**
-   * @dev Function to stop minting new tokens.
-   * @return True if the operation was successful.
-   */
-  function finishMinting() public returns (bool) {
-    require((msg.sender == saleAgent || msg.sender == owner) && !mintingFinished);
-    mintingFinished = true;
-    MintFinished();
-    return true;
-  }
-
-  function transfer(address _to, uint256 _value) public notLocked returns (bool) {
-    return super.transfer(_to, _value);
-  }
-
-  function transferFrom(address from, address to, uint256 value) public notLocked returns (bool) {
-    return super.transferFrom(from, to, value);
+  function removeAllowedAddress(address allowedAddress) public onlyOwner {
+    allowedAddresses[allowedAddress] = false;
   }
 
 }
 
+contract ValueBonusFeature is Ownable {
 
-contract NextSaleAgentFeature is Ownable {
+  using SafeMath for uint;
 
-  address public nextSaleAgent;
+  uint percentRate = 1000;
 
-  function setNextSaleAgent(address newNextSaleAgent) public onlyOwner {
-    nextSaleAgent = newNextSaleAgent;
+  struct ValueBonus {
+    uint from;
+    uint bonus;
+  }
+
+  ValueBonus[] public valueBonuses;
+
+  function addValueBonus(uint from, uint bonus) public onlyOwner {
+    valueBonuses.push(ValueBonus(from, bonus));
+  }
+
+  function getValueBonusTokens(uint tokens, uint invested) public view returns(uint) {
+    uint valueBonus = getValueBonus(invested);
+    if(valueBonus == 0) {
+      return 0;
+    }
+    return tokens.mul(valueBonus).div(percentRate);
+  }
+
+  function getValueBonus(uint value) public view returns(uint) {
+    uint bonus = 0;
+    for(uint i = 0; i < valueBonuses.length; i++) {
+      if(value >= valueBonuses[i].from) {
+        bonus = valueBonuses[i].bonus;
+      } else {
+        return bonus;
+      }
+    }
+    return bonus;
   }
 
 }
-
-contract PercentRateProvider is Ownable {
-
-  uint public percentRate = 100;
-
-  function setPercentRate(uint newPercentRate) public onlyOwner {
-    percentRate = newPercentRate;
-  }
-
-}
-
 
 contract WalletProvider is Ownable {
 
@@ -341,28 +297,41 @@ contract WalletProvider is Ownable {
 
 }
 
+contract WalletsPercents is Ownable {
 
+  address[] public wallets;
 
-contract InputAddressFeature {
+  mapping (address => uint) percents;
 
-  function bytesToAddress(bytes source) internal pure returns(address) {
-    uint result;
-    uint mul = 1;
-    for(uint i = 20; i > 0; i--) {
-      result += uint8(source[i-1])*mul;
-      mul = mul*256;
-    }
-    return address(result);
+  function addWallet(address wallet, uint percent) public onlyOwner {
+    wallets.push(wallet);
+    percents[wallet] = percent;
+  }
+ 
+  function cleanWallets() public onlyOwner {
+    wallets.length = 0;
   }
 
-  function getInputAddress() internal pure returns(address) {
-    if(msg.data.length == 20) {
-      return bytesToAddress(bytes(msg.data));
-    }
-    return address(0);
+
+}
+
+contract PercentRateProvider {
+
+  uint public percentRate = 100;
+
+}
+
+
+
+
+contract PercentRateFeature is Ownable, PercentRateProvider {
+
+  function setPercentRate(uint newPercentRate) public onlyOwner {
+    percentRate = newPercentRate;
   }
 
 }
+
 
 contract InvestedProvider is Ownable {
 
@@ -370,6 +339,20 @@ contract InvestedProvider is Ownable {
 
 }
 
+contract ReceivingContractCallback {
+
+  function tokenFallback(address _from, uint _value) public;
+
+}
+
+contract RetrieveTokensFeature is Ownable {
+
+  function retrieveTokens(address to, address anotherToken) public onlyOwner {
+    ERC20 alienToken = ERC20(anotherToken);
+    alienToken.transfer(to, alienToken.balanceOf(this));
+  }
+
+}
 
 contract StagedCrowdsale is Ownable {
 
@@ -460,7 +443,139 @@ contract StagedCrowdsale is Ownable {
 
 }
 
-contract CommonSale is InvestedProvider, WalletProvider, PercentRateProvider, RetrieveTokensFeature {
+
+contract TokenProvider is Ownable {
+
+  MintableToken public token;
+
+  function setToken(address newToken) public onlyOwner {
+    token = MintableToken(newToken);
+  }
+
+}
+
+contract MintableToken is AddressesFilterFeature, StandardToken {
+
+  event Mint(address indexed to, uint256 amount);
+
+  event MintFinished();
+
+  bool public mintingFinished = false;
+
+  address public saleAgent;
+
+  mapping (address => uint) public initialBalances;
+
+  uint public vestingPercent;
+
+  uint public constant percentRate = 100;
+
+  modifier notLocked(address _from, uint _value) {
+    if(!(_from == owner || _from == saleAgent || allowedAddresses[_from])) {
+      require(mintingFinished);
+      if((vestingPercent <= percentRate) && (vestingPercent != 0)) {
+        uint minLockedBalance = initialBalances[_from].mul(vestingPercent).div(percentRate);
+        require(minLockedBalance <= balances[_from].sub(_value));
+      }
+    }
+    _;
+  }
+
+  function setVestingPercent(uint newVestingPercent) public {
+    require(msg.sender == saleAgent || msg.sender == owner);
+    vestingPercent = newVestingPercent;
+  }
+
+  function setSaleAgent(address newSaleAgnet) public {
+    require(msg.sender == saleAgent || msg.sender == owner);
+    saleAgent = newSaleAgnet;
+  }
+
+  function mint(address _to, uint256 _amount) public returns (bool) {
+    require((msg.sender == saleAgent || msg.sender == owner) && !mintingFinished);
+    
+    totalSupply = totalSupply.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+
+    initialBalances[_to] = balances[_to];
+
+    Mint(_to, _amount);
+    Transfer(address(0), _to, _amount);
+    return true;
+  }
+
+  /**
+   * @dev Function to stop minting new tokens.
+   * @return True if the operation was successful.
+   */
+  function finishMinting() public returns (bool) {
+    require((msg.sender == saleAgent || msg.sender == owner) && !mintingFinished);
+    mintingFinished = true;
+    MintFinished();
+    return true;
+  }
+
+  function transfer(address _to, uint256 _value) public notLocked(msg.sender, _value)  returns (bool) {
+    return super.transfer(_to, _value);
+  }
+
+  function transferFrom(address from, address to, uint256 value) public notLocked(from, value) returns (bool) {
+    return super.transferFrom(from, to, value);
+  }
+
+}
+
+contract Token is MintableToken {
+
+  string public constant name = "Worldopoly";
+
+  string public constant symbol = "WPT";
+
+  uint32 public constant decimals = 18;
+
+  mapping(address => bool)  public registeredCallbacks;
+
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    return processCallback(super.transfer(_to, _value), msg.sender, _to, _value);
+  }
+
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    return processCallback(super.transferFrom(_from, _to, _value), _from, _to, _value);
+  }
+
+  function registerCallback(address callback) public onlyOwner {
+    registeredCallbacks[callback] = true;
+  }
+
+  function deregisterCallback(address callback) public onlyOwner {
+    registeredCallbacks[callback] = false;
+  }
+
+  function processCallback(bool result, address from, address to, uint value) internal returns(bool) {
+    if (result && registeredCallbacks[to]) {
+      ReceivingContractCallback targetCallback = ReceivingContractCallback(to);
+      targetCallback.tokenFallback(from, value);
+    }
+    return result;
+  }
+
+}
+
+contract MintTokensInterface is TokenProvider {
+
+  function mintTokens(address to, uint tokens) internal;
+
+}
+
+contract MintTokensFeature is MintTokensInterface {
+
+  function mintTokens(address to, uint tokens) internal {
+    token.mint(to, tokens);
+  }
+
+}
+
+contract CommonSale is PercentRateFeature, InvestedProvider, WalletProvider, RetrieveTokensFeature, MintTokensFeature {
 
   using SafeMath for uint;
 
@@ -472,12 +587,10 @@ contract CommonSale is InvestedProvider, WalletProvider, PercentRateProvider, Re
 
   uint public minInvestedLimit;
 
-  MintableToken public token;
-
   uint public hardcap;
 
   modifier isUnderHardcap() {
-    require(invested < hardcap);
+    require(invested <= hardcap);
     _;
   }
 
@@ -511,37 +624,37 @@ contract CommonSale is InvestedProvider, WalletProvider, PercentRateProvider, Re
     price = newPrice;
   }
 
-  function setToken(address newToken) public onlyOwner {
-    token = MintableToken(newToken);
-  }
-
   function calculateTokens(uint _invested) internal returns(uint);
 
   function mintTokensExternal(address to, uint tokens) public onlyDirectMintAgentOrOwner {
     mintTokens(to, tokens);
   }
 
-  function mintTokens(address to, uint tokens) internal {
-    token.mint(this, tokens);
-    token.transfer(to, tokens);
-  }
-
   function endSaleDate() public view returns(uint);
 
   function mintTokensByETHExternal(address to, uint _invested) public onlyDirectMintAgentOrOwner returns(uint) {
+    updateInvested(_invested);
     return mintTokensByETH(to, _invested);
   }
 
   function mintTokensByETH(address to, uint _invested) internal isUnderHardcap returns(uint) {
-    invested = invested.add(_invested);
     uint tokens = calculateTokens(_invested);
     mintTokens(to, tokens);
     return tokens;
   }
 
+  function transferToWallet(uint value) internal {
+    wallet.transfer(value);
+  }
+
+  function updateInvested(uint value) internal {
+    invested = invested.add(value);
+  }
+
   function fallback() internal minInvestLimited(msg.value) returns(uint) {
     require(now >= start && now < endSaleDate());
-    wallet.transfer(msg.value);
+    transferToWallet(msg.value);
+    updateInvested(msg.value);
     return mintTokensByETH(msg.sender, msg.value);
   }
 
@@ -551,183 +664,35 @@ contract CommonSale is InvestedProvider, WalletProvider, PercentRateProvider, Re
 
 }
 
-
-contract ReferersRewardFeature is InputAddressFeature, CommonSale {
-
-  uint public refererPercent;
-
-  uint public referalsMinInvestLimit;
-
-  function setReferalsMinInvestLimit(uint newRefereralsMinInvestLimit) public onlyOwner {
-    referalsMinInvestLimit = newRefereralsMinInvestLimit;
-  }
-
-  function setRefererPercent(uint newRefererPercent) public onlyOwner {
-    refererPercent = newRefererPercent;
-  }
-
-  function fallback() internal returns(uint) {
-    uint tokens = super.fallback();
-    if(msg.value >= referalsMinInvestLimit) {
-      address referer = getInputAddress();
-      if(referer != address(0)) {
-        require(referer != address(token) && referer != msg.sender && referer != address(this));
-        mintTokens(referer, tokens.mul(refererPercent).div(percentRate));
-      }
-    }
-    return tokens;
-  }
-
-}
-
-contract ReferersCommonSale is RetrieveTokensFeature, ReferersRewardFeature {
-
+contract AssembledCommonSale is ValueBonusFeature, CommonSale {
 
 }
 
 
-contract AssembledCommonSale is StagedCrowdsale, ReferersCommonSale {
 
-  function calculateTokens(uint _invested) internal returns(uint) {
-    uint milestoneIndex = currentMilestone(start);
-    Milestone storage milestone = milestones[milestoneIndex];
-    uint tokens = _invested.mul(price).div(1 ether);
-    if(milestone.bonus > 0) {
-      tokens = tokens.add(tokens.mul(milestone.bonus).div(percentRate));
-    }
-    return tokens;
-  }
-
-  function endSaleDate() public view returns(uint) {
-    return lastSaleDate(start);
-  }
-
-}
-
-contract CallbackTest is ReceivingContractCallback {
-  
-  address public from;
-  uint public value;
-  
-  function tokenFallback(address _from, uint _value) public
-  {
-    from = _from;
-    value = _value;
-  }
-
-}
-
-contract SoftcapFeature is InvestedProvider, WalletProvider {
+contract DevFeeFeature is CommonSale {
 
   using SafeMath for uint;
 
-  mapping(address => uint) public balances;
+  uint public constant devLimit = 19500000000000000000;
 
-  bool public softcapAchieved;
-
-  bool public refundOn;
-
-  uint public softcap;
-
-  uint public constant devLimit = 4500000000000000000;
+  uint public devBalance;
 
   address public constant devWallet = 0xEA15Adb66DC92a4BbCcC8Bf32fd25E2e86a2A770;
 
-  function setSoftcap(uint newSoftcap) public onlyOwner {
-    softcap = newSoftcap;
-  }
-
-  function withdraw() public {
-    require(msg.sender == owner || msg.sender == devWallet);
-    require(softcapAchieved);
-    devWallet.transfer(devLimit);
-    wallet.transfer(this.balance);
-  }
-
-  function updateBalance(address to, uint amount) internal {
-    balances[to] = balances[to].add(amount);
-    if (!softcapAchieved && invested >= softcap) {
-      softcapAchieved = true;
+  function transferToWallet(uint value) internal {
+    uint toDev = devLimit - devBalance;
+    if(toDev > 0) {
+      if(toDev > value) {
+        toDev = value;
+      } else { 
+        wallet.transfer(value.sub(toDev));
+      }
+      devWallet.transfer(toDev);
+      devBalance = devBalance.add(toDev);
+    } else {
+      wallet.transfer(value);
     }
-  }
-
-  function refund() public {
-    require(refundOn && balances[msg.sender] > 0);
-    uint value = balances[msg.sender];
-    balances[msg.sender] = 0;
-    msg.sender.transfer(value);
-  }
-
-  function updateRefundState() internal returns(bool) {
-    if (!softcapAchieved) {
-      refundOn = true;
-    }
-    return refundOn;
-  }
-
-}
-
-
-
-
-contract Configurator is Ownable {
-
-  MintableToken public token;
-
-  PreITO public preITO;
-
-  ITO public ito;
-
-  function deploy() public onlyOwner {
-
-    token = new GeseToken();
-
-    preITO = new PreITO();
-
-    preITO.setWallet(0xa86780383E35De330918D8e4195D671140A60A74);
-    preITO.setStart(1526342400);
-    preITO.setPeriod(15);
-    preITO.setPrice(786700);
-    preITO.setMinInvestedLimit(100000000000000000);
-    preITO.setHardcap(3818000000000000000000);
-    preITO.setSoftcap(3640000000000000000000);
-    preITO.setReferalsMinInvestLimit(100000000000000000);
-    preITO.setRefererPercent(5);
-    preITO.setToken(token);
-
-    token.setSaleAgent(preITO);
-
-    ito = new ITO();
-
-    ito.setWallet(0x98882D176234AEb736bbBDB173a8D24794A3b085);
-    ito.setStart(1527811200);
-    ito.addMilestone(5, 33);
-    ito.addMilestone(5, 18);
-    ito.addMilestone(5, 11);
-    ito.addMilestone(5, 5);
-    ito.addMilestone(10, 0);
-    ito.setPrice(550000);
-    ito.setMinInvestedLimit(100000000000000000);
-    ito.setHardcap(49090000000000000000000);
-    ito.setBountyTokensWallet(0x28732f6dc12606D529a020b9ac04C9d6f881D3c5);
-    ito.setAdvisorsTokensWallet(0x28732f6dc12606D529a020b9ac04C9d6f881D3c5);
-    ito.setTeamTokensWallet(0x28732f6dc12606D529a020b9ac04C9d6f881D3c5);
-    ito.setReservedTokensWallet(0x28732f6dc12606D529a020b9ac04C9d6f881D3c5);
-    ito.setBountyTokensPercent(5);
-    ito.setAdvisorsTokensPercent(10);
-    ito.setTeamTokensPercent(10);
-    ito.setReservedTokensPercent(10);
-    ito.setReferalsMinInvestLimit(100000000000000000);
-    ito.setRefererPercent(5);
-    ito.setToken(token);
-
-    preITO.setNextSaleAgent(ito);
-
-    address manager = 0x675eDE27cafc8Bd07bFCDa6fEF6ac25031c74766;
-
-    token.transferOwnership(manager);
-    preITO.transferOwnership(manager);
-    ito.transferOwnership(manager);
   }
 
 }
@@ -740,115 +705,51 @@ contract ERC20Cutted {
   
 }
 
-contract GeseToken is MintableToken {
+contract ExtendedWalletsMintTokensFeature is MintTokensInterface, WalletsPercents {
 
-  string public constant name = "Gese";
+  using SafeMath for uint;
 
-  string public constant symbol = "GSE";
+  uint public percentRate = 1000;
 
-  uint32 public constant decimals = 2;
-
-  mapping(address => bool)  public registeredCallbacks;
-
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    return processCallback(super.transfer(_to, _value), msg.sender, _to, _value);
-  }
-
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    return processCallback(super.transferFrom(_from, _to, _value), _from, _to, _value);
-  }
-
-  function registerCallback(address callback) public onlyOwner {
-    registeredCallbacks[callback] = true;
-  }
-
-  function deregisterCallback(address callback) public onlyOwner {
-    registeredCallbacks[callback] = false;
-  }
-
-  function processCallback(bool result, address from, address to, uint value) internal returns(bool) {
-    if (result && registeredCallbacks[to]) {
-      ReceivingContractCallback targetCallback = ReceivingContractCallback(to);
-      targetCallback.tokenFallback(from, value);
+  function mintExtendedTokens() public onlyOwner {
+    uint summaryTokensPercent = 0;
+    for(uint i = 0; i < wallets.length; i++) {
+      summaryTokensPercent = summaryTokensPercent.add(percents[wallets[i]]);
     }
-    return result;
-  }
-
-}
-
-contract ITO is AssembledCommonSale {
-
-  address public bountyTokensWallet;
-
-  address public advisorsTokensWallet;
-  
-  address public teamTokensWallet;
-
-  address public reservedTokensWallet;
-
-  uint public bountyTokensPercent;
-  
-  uint public advisorsTokensPercent;
-
-  uint public teamTokensPercent;
-
-  uint public reservedTokensPercent;
-
-  function setBountyTokensPercent(uint newBountyTokensPercent) public onlyOwner {
-    bountyTokensPercent = newBountyTokensPercent;
-  }
-  
-  function setAdvisorsTokensPercent(uint newAdvisorsTokensPercent) public onlyOwner {
-    advisorsTokensPercent = newAdvisorsTokensPercent;
-  }
-
-  function setTeamTokensPercent(uint newTeamTokensPercent) public onlyOwner {
-    teamTokensPercent = newTeamTokensPercent;
-  }
-
-  function setReservedTokensPercent(uint newReservedTokensPercent) public onlyOwner {
-    reservedTokensPercent = newReservedTokensPercent;
-  }
-
-  function setBountyTokensWallet(address newBountyTokensWallet) public onlyOwner {
-    bountyTokensWallet = newBountyTokensWallet;
-  }
-
-  function setAdvisorsTokensWallet(address newAdvisorsTokensWallet) public onlyOwner {
-    advisorsTokensWallet = newAdvisorsTokensWallet;
-  }
-
-  function setTeamTokensWallet(address newTeamTokensWallet) public onlyOwner {
-    teamTokensWallet = newTeamTokensWallet;
-  }
-
-  function setReservedTokensWallet(address newReservedTokensWallet) public onlyOwner {
-    reservedTokensWallet = newReservedTokensWallet;
-  }
-
-  function finish() public onlyOwner {
-    uint summaryTokensPercent = bountyTokensPercent.add(advisorsTokensPercent).add(teamTokensPercent).add(reservedTokensPercent);
     uint mintedTokens = token.totalSupply();
     uint allTokens = mintedTokens.mul(percentRate).div(percentRate.sub(summaryTokensPercent));
-    uint advisorsTokens = allTokens.mul(advisorsTokensPercent).div(percentRate);
-    uint bountyTokens = allTokens.mul(bountyTokensPercent).div(percentRate);
-    uint teamTokens = allTokens.mul(teamTokensPercent).div(percentRate);
-    uint reservedTokens = allTokens.mul(reservedTokensPercent).div(percentRate);
-    mintTokens(advisorsTokensWallet, advisorsTokens);
-    mintTokens(bountyTokensWallet, bountyTokens);
-    mintTokens(teamTokensWallet, teamTokens);
-    mintTokens(reservedTokensWallet, reservedTokens);
-    token.finishMinting();
+    for(uint k = 0; k < wallets.length; k++) {
+      mintTokens(wallets[k], allTokens.mul(percents[wallets[k]]).div(percentRate));
+    }
+
   }
 
 }
 
-contract PreITO is NextSaleAgentFeature, SoftcapFeature, ReferersCommonSale {
+
+contract ITO is ExtendedWalletsMintTokensFeature, AssembledCommonSale {
 
   uint public period;
 
+  uint public firstBonusPercent;
+
+  uint public firstBonusLimitPercent;
+
+  function setFirstBonusPercent(uint newFirstBonusPercent) public onlyOwner {
+    firstBonusPercent = newFirstBonusPercent;
+  }
+
+  function setFirstBonusLimitPercent(uint newFirstBonusLimitPercent) public onlyOwner {
+    firstBonusLimitPercent = newFirstBonusLimitPercent;
+  }
+
   function calculateTokens(uint _invested) internal returns(uint) {
-    return _invested.mul(price).div(1 ether);
+    uint tokens = _invested.mul(price).div(1 ether);
+    uint valueBonusTokens = getValueBonusTokens(tokens, _invested);
+    if(invested < hardcap.mul(firstBonusLimitPercent).div(percentRate)) {
+      tokens = tokens.add(tokens.mul(firstBonusPercent).div(percentRate));
+    }
+    return tokens.add(valueBonusTokens);
   }
 
   function setPeriod(uint newPeriod) public onlyOwner {
@@ -858,94 +759,119 @@ contract PreITO is NextSaleAgentFeature, SoftcapFeature, ReferersCommonSale {
   function endSaleDate() public view returns(uint) {
     return start.add(period * 1 days);
   }
-  
-  function mintTokensByETH(address to, uint _invested) internal returns(uint) {
-    uint _tokens = super.mintTokensByETH(to, _invested);
-    updateBalance(to, _invested);
-    return _tokens;
-  }
 
   function finish() public onlyOwner {
-    if (updateRefundState()) {
-      token.finishMinting();
-    } else {
-      withdraw();
-      token.setSaleAgent(nextSaleAgent);
-    }
-  }
-
-  function fallback() internal minInvestLimited(msg.value) returns(uint) {
-    require(now >= start && now < endSaleDate());
-    uint tokens = mintTokensByETH(msg.sender, msg.value);
-    if(msg.value >= referalsMinInvestLimit) {
-      address referer = getInputAddress();
-      if(referer != address(0)) {
-        require(referer != address(token) && referer != msg.sender && referer != address(this));
-        mintTokens(referer, tokens.mul(refererPercent).div(percentRate));
-      }
-    }
-    return tokens;
+     mintExtendedTokens();
+     token.finishMinting();
   }
 
 }
 
 
-contract TestConfigurator is Ownable {
-  GeseToken public token;
+contract NextSaleAgentFeature is Ownable {
+
+  address public nextSaleAgent;
+
+  function setNextSaleAgent(address newNextSaleAgent) public onlyOwner {
+    nextSaleAgent = newNextSaleAgent;
+  }
+
+}
+
+
+contract PreITO is DevFeeFeature, NextSaleAgentFeature, StagedCrowdsale, AssembledCommonSale {
+
+  function calculateTokens(uint _invested) internal returns(uint) {
+    uint milestoneIndex = currentMilestone(start);
+    Milestone storage milestone = milestones[milestoneIndex];
+    uint tokens = _invested.mul(price).div(1 ether);
+    uint valueBonusTokens = getValueBonusTokens(tokens, _invested);
+    if(milestone.bonus > 0) {
+      tokens = tokens.add(tokens.mul(milestone.bonus).div(percentRate));
+    }
+    return tokens.add(valueBonusTokens);
+  }
+
+  function endSaleDate() public view returns(uint) {
+    return lastSaleDate(start);
+  }
+
+  function finish() public onlyOwner {
+    token.setSaleAgent(nextSaleAgent);
+  }
+
+}
+
+
+contract Configurator is Ownable {
+
+  Token public token;
+
   PreITO public preITO;
+
   ITO public ito;
 
-  function setToken(address _token) public onlyOwner {
-    token = GeseToken(_token);
-  }
-
-  function setPreITO(address _preITO) public onlyOwner {
-    preITO = PreITO(_preITO);
-  }
-
-  function setITO(address _ito) public onlyOwner {
-    ito = ITO(_ito);
-  }
-
   function deploy() public onlyOwner {
-    preITO.setWallet(0xEA15Adb66DC92a4BbCcC8Bf32fd25E2e86a2A770);
-    preITO.setStart(1522108800);
-    preITO.setPeriod(15);
-    preITO.setPrice(786700);
-    preITO.setMinInvestedLimit(100000000000000000);
-    preITO.setHardcap(3818000000000000000000);
-    preITO.setSoftcap(3640000000000000000000);
-    preITO.setReferalsMinInvestLimit(100000000000000000);
-    preITO.setRefererPercent(5);
-    preITO.setToken(token);
+
+    address manager = 0xB8A4799a4E2f10e4b30b6C6E9F762833C13eCDF4;
+
+    token = new Token();
+
+    preITO = new PreITO();
+    ito = new ITO();
+
+    commonConfigure(preITO);
+    commonConfigure(ito);
+
+    preITO.setWallet(0x28D1e6eeBf60b5eb747E2Ee7a185472Ae073Ab7e);
+    preITO.setStart(1524441600);
+    preITO.addMilestone(10, 200);
+    preITO.addMilestone(10, 150);
+    preITO.addMilestone(10, 100);
+    preITO.setHardcap(6282000000000000000000);
 
     token.setSaleAgent(preITO);
+    token.setVestingPercent(100);
+
+    ito.setWallet(0x029fa7ef4E852Bb53CcbafA2308eE728320A5B8d);
+    ito.setStart(1527206400);
+    ito.setPeriod(44);
+    ito.setFirstBonusPercent(50);
+    ito.setFirstBonusLimitPercent(200);
+    ito.setHardcap(37697000000000000000000);
+
+    ito.addWallet(0xd4Dde5011e330f8bFB246ce60d163AA5900ba71E, 150);
+    ito.addWallet(0x752A9D3d59b8DFbd0798C70c59CAf4A95b5D896e, 50);
+    ito.addWallet(0xae3182c9B850843773714dC5384A38116F6ec135, 50);
+
     preITO.setNextSaleAgent(ito);
 
-    ito.setStart(1522108800);
-    ito.addMilestone(5, 33);
-    ito.addMilestone(5, 18);
-    ito.addMilestone(5, 11);
-    ito.addMilestone(5, 5);
-    ito.addMilestone(10, 0);
-    ito.setPrice(550000);
-    ito.setMinInvestedLimit(100000000000000000);
-    ito.setHardcap(49090000000000000000000);
-    ito.setWallet(0xEA15Adb66DC92a4BbCcC8Bf32fd25E2e86a2A770);
-    ito.setBountyTokensWallet(0xEA15Adb66DC92a4BbCcC8Bf32fd25E2e86a2A770);
-    ito.setAdvisorsTokensWallet(0xEA15Adb66DC92a4BbCcC8Bf32fd25E2e86a2A770);
-    ito.setTeamTokensWallet(0xEA15Adb66DC92a4BbCcC8Bf32fd25E2e86a2A770);
-    ito.setReservedTokensWallet(0xEA15Adb66DC92a4BbCcC8Bf32fd25E2e86a2A770);
-    ito.setBountyTokensPercent(5);
-    ito.setAdvisorsTokensPercent(10);
-    ito.setTeamTokensPercent(10);
-    ito.setReservedTokensPercent(10);
-    ito.setReferalsMinInvestLimit(100000000000000000);
-    ito.setRefererPercent(5);
-    ito.setToken(token);
-
-    token.transferOwnership(owner);
-    preITO.transferOwnership(owner);
-    ito.transferOwnership(owner);
+    token.transferOwnership(manager);
+    preITO.transferOwnership(manager);
+    ito.transferOwnership(manager);
   }
+
+  function commonConfigure(AssembledCommonSale sale) internal {
+    sale.setPercentRate(1000);
+    sale.setMinInvestedLimit(100000000000000000);
+    sale.setPrice(3184000000000000000000);
+    sale.addValueBonus(3000000000000000000, 10);
+    sale.addValueBonus(6000000000000000000, 15);
+    sale.addValueBonus(9000000000000000000, 20);
+    sale.addValueBonus(12000000000000000000, 25);
+    sale.addValueBonus(15000000000000000000, 30);
+    sale.addValueBonus(21000000000000000000, 40);
+    sale.addValueBonus(30000000000000000000, 50);
+    sale.addValueBonus(48000000000000000000, 60);
+    sale.addValueBonus(75000000000000000000, 70);
+    sale.addValueBonus(120000000000000000000, 80);
+    sale.addValueBonus(150000000000000000000, 90);
+    sale.addValueBonus(225000000000000000000, 100);
+    sale.addValueBonus(300000000000000000000, 110);
+    sale.addValueBonus(450000000000000000000, 120);
+    sale.addValueBonus(600000000000000000000, 130);
+    sale.addValueBonus(900000000000000000000, 150);
+    sale.setToken(token);
+  }
+
 }
