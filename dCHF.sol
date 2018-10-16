@@ -1,12 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract dCHF at 0xf412af62269a0b3b10ea727df81231cdc5bb6364
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract dCHF at 0x1d28be41db5eaedba0f1070b04117e25e8487670
 */
 pragma solidity ^0.4.18;
 
 // ----------------------------------------------------------------------------
-// 'dCHF' token contract
+// 'dCHF test' token contract
 //
-// Deployed to : 0x0000F70bC78af03f14132c68b59153E4788bAb20  on march 20th 2018 somewhere after Block 52911611
+// Deployed to : 0x0000F70bC78af03f14132c68b59153E4788bAb20  on march 20th 2018 somewhere after Block 5291580
 // Symbol      : dCH
 // Name        : private digitale Schweizer Franken - private digital Swiss Franc 
 // Total supply: 15000,00
