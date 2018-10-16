@@ -1,32 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Matching_Finneys at 0xdb9b3f9c12e710517ac572378c6199bc3624b1ed
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Matching_Finneys at 0x6140d98c1bf9206488fc3428e2dc5496b0a23d84
 */
-//                       , ; ,   .-'"""'-.   , ; ,
-//                       \\|/  .'         '.  \|//
-//                        \-;-/   ()   ()   \-;-/
-//                        // ;               ; \\
-//                       //__; :.         .; ;__\\
-//                      `-----\'.'-.....-'.'/-----'
-//                             '.'.-.-,_.'.'
-//                               '(  (..-'
-//                                 '-'
-//   WHYSOS3RIOUS   PRESENTS :                          
-//                                                                
-//   MATCHING ETHERS                              
-//   a Strategy and Luck DaapGame          
-//   www.matching-ethers.com                 
-//
-//
-// *** coded by WhySoS3rious, 2016.                                       ***//
-// *** please do not copy without authorization                       ***//
-// *** contact : reddit    /u/WhySoS3rious                                ***//
-
-//VERSION : 1.0
-
-// GAME MODE : MATCHING FINNEYS
-// STAKE : 0.1 ETH
-
- contract Matching_Finneys
+contract Matching_Finneys
 {
     enum State{Active, Deactivated}
     State public state;
@@ -188,8 +163,7 @@
 	delete contrarians;
 	state=State.Deactivated;
 	index_player_in_round=0;
-        uint balanceLeft = balanceBeforeRefund-totalRefund;
-	if (balanceLeft >0) owner.send(balanceLeft);
+	owner.send(balanceBeforeRefund-totalRefund);
     }
     //Function Pause contract after next round (for new contract or to change settings) 
     bool terminate_after_round=false;
@@ -225,17 +199,18 @@
         if (msg.value>0) throw;
 	_
     }
+    //desactiver l'envoi d'argent sur ces fonctions
     //JSON GLOBAL STATS
-    function gameStats() noEthSent constant returns (uint number_of_player_in_round, uint total_number_of_player, uint number_of_round_ended, bool pending_round_to_resolve, uint block_end_last_round, uint block_last_player, State state, bool pause_contract_after_round)
+    function gameStats() noEthSent constant returns (uint _index_player_in_round, uint _index_player, uint _index_round_ended, bool _pendingRound, uint _blockEndRound, uint _blockLastPlayer, State _state, bool _terminate_after_round)
     {
-         number_of_player_in_round = index_player_in_round;
-	 total_number_of_player = index_player;
-	 number_of_round_ended = index_round_ended;
-	 pending_round_to_resolve = pendingRound;
-	 block_end_last_round = blockEndRound;
-	 block_last_player = blockLastPlayer;
-	 state = state;
-	 pause_contract_after_round = terminate_after_round;
+         _index_player_in_round = index_player_in_round;
+	 _index_player = index_player;
+	 _index_round_ended = index_round_ended;
+	 _pendingRound = pendingRound;
+	 _blockEndRound = blockEndRound;
+	 _blockLastPlayer = blockLastPlayer;
+	 _state = state;
+	 _terminate_after_round = terminate_after_round;
      }
      //JSON CURRENT SETTINGS
      function gameSettings() noEthSent constant returns (uint _gamble_value, uint _information_cost, uint _round_min_size, uint _round_max_size) {
@@ -255,6 +230,7 @@
         _address=contrarians[_index].player;
 	_flipped = contrarians[_index].flipped;
     }
+    //return contrarians
     //JSON LAST ROUND RESULT
     function getLastRoundResults_by_index(uint _index) noEthSent constant returns (address _address_matcher, address _address_contrarian, bool _flipped_matcher, bool _flipped_contrarian, uint _payout_matcher, uint _payout_contrarian) {
         _address_matcher=results[_index].player_matcher;
@@ -273,7 +249,7 @@
      function getNickname(address _address) noEthSent constant returns(string _name) {
              _name = nicknames[_address];
      }
-     //JSON HISTORY
+
      function historyPayout(address _address) noEthSent constant returns(uint _payout) {
              _payout = payout_history[_address]; 
      }
