@@ -1,8 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AssetToken at 0xe11395543c92f2632a826b1fcced33170a133689
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AssetToken at 0xbacc0a58ecd510597cac918344137c7fb49eb9ad
 */
-pragma solidity 0.4.11;
- 
+pragma solidity ^0.4.11;
+/*
+Original Code from Toshendra Sharma Course at UDEMY
+Personalization and modifications by Fares Akel - f.antonio.akel@gmail.com
+*/
 contract admined {
 	address public admin;
 
@@ -11,7 +14,7 @@ contract admined {
 	}
 
 	modifier onlyAdmin(){
-		if(msg.sender != admin) throw;
+		if(msg.sender != admin) revert();
 		_;
 	}
 
@@ -41,8 +44,8 @@ contract Token {
 	}
 
 	function transfer(address _to, uint256 _value){
-		if(balanceOf[msg.sender] < _value) throw;
-		if(balanceOf[_to] + _value < balanceOf[_to]) throw;
+		if(balanceOf[msg.sender] < _value) revert();
+		if(balanceOf[_to] + _value < balanceOf[_to]) revert();
 		//if(admin)
 
 		balanceOf[msg.sender] -= _value;
@@ -73,9 +76,9 @@ contract AssetToken is admined, Token{
 	}
 
 	function transfer(address _to, uint256 _value){
-		if(balanceOf[msg.sender] <= 0) throw;
-		if(balanceOf[msg.sender] < _value) throw;
-		if(balanceOf[_to] + _value < balanceOf[_to]) throw;
+		if(balanceOf[msg.sender] <= 0) revert();
+		if(balanceOf[msg.sender] < _value) revert();
+		if(balanceOf[_to] + _value < balanceOf[_to]) revert();
 		//if(admin)
 		balanceOf[msg.sender] -= _value;
 		balanceOf[_to] += _value;
