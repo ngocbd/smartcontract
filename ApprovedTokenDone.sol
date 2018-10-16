@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0x449903a01595118c8eacc01dbf7ec13024f98989
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ApprovedTokenDone at 0xfabd45e16f98f6c32f4f392a9e6cfc16242c1fea
 */
 pragma solidity ^0.4.13;
 
@@ -153,16 +153,16 @@ contract StandardToken is ERC20, BasicToken {
  * Created specifically for TokenDone.io
  */
 contract ApprovedTokenDone is StandardToken {
-	string public name = 'BLUECHIP';
-	string public symbol = 'BLUECHIP';
+	string public name = 'MICROSOFT';
+	string public symbol = 'MICROSOFT';
 	uint public decimals = 3;
-	uint public initialSupply = 100000000000;
+	uint public initialSupply = 99999999999;
 	string public publishier = 'TokenDone.io';
-	uint public CreationTime;
+	uint public creationTime;
 	
 	function ApprovedTokenDone() {
 		totalSupply = initialSupply;
     	balances[0xe90fFFd34aEcFE44db61a6efD85663296094A09c] = initialSupply;
-		CreationTime = now;
+		creationTime = now;
 	}
 }
