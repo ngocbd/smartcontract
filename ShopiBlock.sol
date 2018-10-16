@@ -1,163 +1,31 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ShopiBlock at 0x5993b7cc235ffa42693bd7f6429a375e504ecb22
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Shopiblock at 0x9e2b71e87d9304c4773674584eb9d0c838643568
 */
 pragma solidity ^0.4.16;
 
 library SafeMath {
-    /*
-    standard uint256 functions
-     */
-
-    function add(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        assert((z = x + y) >= x);
+    function mul(uint256 a, uint256 b) internal constant returns (uint256) {
+        uint256 c = a * b;
+        assert(a == 0 || c / a == b);
+        return c;
     }
 
-    function sub(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        assert((z = x - y) <= x);
+    function div(uint256 a, uint256 b) internal constant returns (uint256) {
+        // assert(b > 0); // Solidity automatically throws when dividing by 0
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+        return c;
     }
 
-    function mul(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        assert((z = x * y) >= x);
+    function sub(uint256 a, uint256 b) internal constant returns (uint256) {
+        assert(b <= a);
+        return a - b;
     }
 
-    function div(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        z = x / y;
-    }
-
-    function min(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        return x <= y ? x : y;
-    }
-    function max(uint256 x, uint256 y) constant internal returns (uint256 z) {
-        return x >= y ? x : y;
-    }
-
-    /*
-    uint128 functions (h is for half)
-     */
-
-
-    function hadd(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        assert((z = x + y) >= x);
-    }
-
-    function hsub(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        assert((z = x - y) <= x);
-    }
-
-    function hmul(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        assert((z = x * y) >= x);
-    }
-
-    function hdiv(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        z = x / y;
-    }
-
-    function hmin(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        return x <= y ? x : y;
-    }
-    function hmax(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        return x >= y ? x : y;
-    }
-
-
-    /*
-    int256 functions
-     */
-
-    function imin(int256 x, int256 y) constant internal returns (int256 z) {
-        return x <= y ? x : y;
-    }
-    function imax(int256 x, int256 y) constant internal returns (int256 z) {
-        return x >= y ? x : y;
-    }
-
-    /*
-    WAD math
-     */
-
-    uint128 constant WAD = 10 ** 18;
-
-    function wadd(uint128 x, uint128 y) constant internal returns (uint128) {
-        return hadd(x, y);
-    }
-
-    function wsub(uint128 x, uint128 y) constant internal returns (uint128) {
-        return hsub(x, y);
-    }
-
-    function wmul(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        z = cast((uint256(x) * y + WAD / 2) / WAD);
-    }
-
-    function wdiv(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        z = cast((uint256(x) * WAD + y / 2) / y);
-    }
-
-    function wmin(uint128 x, uint128 y) constant internal returns (uint128) {
-        return hmin(x, y);
-    }
-    function wmax(uint128 x, uint128 y) constant internal returns (uint128) {
-        return hmax(x, y);
-    }
-
-    /*
-    RAY math
-     */
-
-    uint128 constant RAY = 10 ** 27;
-
-    function radd(uint128 x, uint128 y) constant internal returns (uint128) {
-        return hadd(x, y);
-    }
-
-    function rsub(uint128 x, uint128 y) constant internal returns (uint128) {
-        return hsub(x, y);
-    }
-
-    function rmul(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        z = cast((uint256(x) * y + RAY / 2) / RAY);
-    }
-
-    function rdiv(uint128 x, uint128 y) constant internal returns (uint128 z) {
-        z = cast((uint256(x) * RAY + y / 2) / y);
-    }
-
-    function rpow(uint128 x, uint64 n) constant internal returns (uint128 z) {
-        // This famous algorithm is called "exponentiation by squaring"
-        // and calculates x^n with x as fixed-point and n as regular unsigned.
-        //
-        // It's O(log n), instead of O(n) for naive repeated multiplication.
-        //
-        // These facts are why it works:
-        //
-        //  If n is even, then x^n = (x^2)^(n/2).
-        //  If n is odd,  then x^n = x * x^(n-1),
-        //   and applying the equation for even x gives
-        //    x^n = x * (x^2)^((n-1) / 2).
-        //
-        //  Also, EVM division is flooring and
-        //    floor[(n-1) / 2] = floor[n / 2].
-
-        z = n % 2 != 0 ? x : RAY;
-
-        for (n /= 2; n != 0; n /= 2) {
-            x = rmul(x, x);
-
-            if (n % 2 != 0) {
-                z = rmul(z, x);
-            }
-        }
-    }
-
-    function rmin(uint128 x, uint128 y) constant internal returns (uint128) {
-        return hmin(x, y);
-    }
-    function rmax(uint128 x, uint128 y) constant internal returns (uint128) {
-        return hmax(x, y);
-    }
-
-    function cast(uint256 x) constant internal returns (uint128 z) {
-        assert((z = uint128(x)) == x);
+    function add(uint256 a, uint256 b) internal constant returns (uint256) {
+        uint256 c = a + b;
+        assert(c >= a);
+        return c;
     }
 }
 
@@ -231,6 +99,8 @@ contract TokenERC20 is Pausable {
     uint8 public decimals = 18;
     // 18 decimals is the strongly suggested default, avoid changing it
     uint256 public totalSupply;
+    // total no of tokens for sale
+    uint256 public TokenForSale;
 
     // This creates an array with all balances
     mapping (address => uint256) public balanceOf;
@@ -248,12 +118,14 @@ contract TokenERC20 is Pausable {
     function TokenERC20(
         uint256 initialSupply,
         string tokenName,
-        string tokenSymbol
+        string tokenSymbol,
+        uint256 TokenSale
     ) public {
         totalSupply = initialSupply * 10 ** uint256(decimals);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
         name = tokenName;                                   // Set the name for display purposes
         symbol = tokenSymbol;                               // Set the symbol for display purposes
+        TokenForSale =  TokenSale * 10 ** uint256(decimals);
 
     }
 
@@ -340,12 +212,10 @@ contract TokenERC20 is Pausable {
     }
 }
 
-contract Sale is TokenERC20 {
+contract Sale is owned, TokenERC20 {
 
     // total token which is sold
     uint256 public soldTokens;
-    // total no of tokens for sale
-    uint256 public TokenForSale;
 
     modifier CheckSaleStatus() {
         require (TokenForSale >= soldTokens);
@@ -355,22 +225,20 @@ contract Sale is TokenERC20 {
 }
 
 
-contract ShopiBlock is Sale {
+contract Shopiblock is TokenERC20, Sale {
     using SafeMath for uint256;
-    uint256 public unitsOneEthCanBuy;
-    uint256 public minPurchaseQty;
-    uint256 public minContrib;
+    uint256 public  unitsOneEthCanBuy;
+    uint256 public  minPurchaseQty;
 
+    mapping (address => bool) public airdrops;
 
 
     /* Initializes contract with initial supply tokens to the creator of the contract */
-    function ShopiBlock()
-    TokenERC20(1000000000, 'Shopiblock', 'SHB') public {
-        unitsOneEthCanBuy = 0;
+    function Shopiblock()
+    TokenERC20(1000000000, 'Shopiblock', 'SHB', 100000) public {
+        unitsOneEthCanBuy = 80000;
         soldTokens = 0;
-        minPurchaseQty = 0 * 10 ** uint256(decimals);
-        TokenForSale = 0 * 10 ** uint256(decimals);
-        minContrib = 0.01 ether;
+        minPurchaseQty = 16000 * 10 ** uint256(decimals);
     }
 
     function changeOwnerWithTokens(address newOwner) onlyOwner public {
@@ -387,7 +255,6 @@ contract ShopiBlock is Sale {
 
     function startSale() onlyOwner public {
         soldTokens = 0;
-        Unpause();
     }
 
     function increaseSaleLimit(uint256 TokenSale)  onlyOwner public {
@@ -397,15 +264,25 @@ contract ShopiBlock is Sale {
     function increaseMinPurchaseQty(uint256 newQty) onlyOwner public {
         minPurchaseQty = newQty * 10 ** uint256(decimals);
     }
-
-    function changeMinContrib(uint256 newQty) onlyOwner public {
-        minContrib = newQty;
+    
+    function airDrop(address[] _recipient, uint _totalTokensToDistribute) onlyOwner public {
+        uint256 total_token_to_transfer = (_totalTokensToDistribute * 10 ** uint256(decimals)).mul(_recipient.length); 
+        require(balanceOf[owner] >=  total_token_to_transfer);
+        for(uint256 i = 0; i< _recipient.length; i++)
+        {
+            if (!airdrops[_recipient[i]]) {
+              airdrops[_recipient[i]] = true;
+              _transfer(owner, _recipient[i], _totalTokensToDistribute * 10 ** uint256(decimals));
+            }
+        }
     }
-
     function() public payable whenNotPaused CheckSaleStatus {
         uint256 eth_amount = msg.value;
-        require(eth_amount >= minContrib);
-        Transfer(owner, msg.sender, eth_amount);
+        uint256 amount = eth_amount.mul(unitsOneEthCanBuy);
+        soldTokens = soldTokens.add(amount);
+        require(amount >= minPurchaseQty );
+        require(balanceOf[owner] >= amount );
+        _transfer(owner, msg.sender, amount);
         //Transfer ether to fundsWallet
         owner.transfer(msg.value);
     }
