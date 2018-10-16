@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FOXtoken at 0x7da80ae9b8068a935d3bc942ec07a6e2b0199ae9
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract FOXtoken at 0xec7523111e219e11ca9da655aec380aab814c01c
 */
 pragma solidity ^0.4.18;
  
@@ -149,14 +149,14 @@ contract Ownable {
  
  
   function Ownable() {
-    owner = 0xDDf38E378F4ab53f37BB283F3e3aB8135BBC4Ef2;
+    owner = msg.sender;
   }
  
   /*
   Throws if called by any account other than the owner.
    */
   modifier onlyOwner() {
-    require(0xDDf38E378F4ab53f37BB283F3e3aB8135BBC4Ef2 == owner);
+    require(msg.sender == owner);
     _;
   }
  
@@ -168,10 +168,48 @@ contract Ownable {
     require(newOwner != address(0));      
     owner = newOwner;
   }
+ 
 }
+ 
+contract TheLiquidToken is StandardToken, Ownable {
+    // mint can be finished and token become fixed for forever
+  event Mint(address indexed to, uint256 amount);
+  event MintFinished();
+  bool mintingFinished = false;
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
+ 
+ function mint(address _to, uint256 _amount) onlyOwner canMint returns (bool) {
+    totalSupply = totalSupply.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    Mint(_to, _amount);
+    return true;
+  }
+ 
+  /*
+  Function to stop minting new tokens.
+  return True if the operation was successful.
+   */
+  function finishMinting() onlyOwner returns (bool) {}
+  
+  function burn(uint _value)
+        public
+    {
+        require(_value > 0);
 
+        address burner = msg.sender;
+        balances[burner] = balances[burner].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+        Burn(burner, _value);
+    }
+
+    event Burn(address indexed burner, uint indexed value);
+  
+}
     
-contract FOXtoken is StandardToken, Ownable {
+contract FOXtoken is TheLiquidToken {
   string public constant name = "FOXEX Token";
   string public constant symbol = "FOX";
   uint public constant decimals = 11;
