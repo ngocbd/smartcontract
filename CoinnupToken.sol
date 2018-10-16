@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoinnupToken at 0xca503175c6fd8dc36bd23737adf15916c7821cd3
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CoinnupToken at 0xe6938b7e5b03e0e29cb7781f76d258404714863b
 */
 pragma solidity ^0.4.23;
 
@@ -281,7 +281,7 @@ contract CoinnupToken is StandardToken, Ownable {
   );
 
   uint256 public maxSupply = 298500000000000000000000000;
-  uint256 public allowedToBeSold = 104475000000000000000000000;
+  uint256 public allowedToBeSold = 118056750000000000000000000;
   address public founder = address( 0x3abb86C7C1a533Eb0464E9BD870FD1b501C7A8A8 );
   uint256 public rate = 2800;
   uint256 public bonus = 30;
@@ -345,8 +345,8 @@ contract CoinnupToken is StandardToken, Ownable {
     uint256 amount_without_bonus = _getTokenAmount(_value, 0);
     uint8 _currentRound = _getCurrentRound(now);
 
-    require(rounds[_currentRound].allocatedCoins >= amount + rounds[_currentRound].soldCoins);
-    require(totalSupply_ + amount <= maxSupply); // if we have enough tokens to be minted
+    require(rounds[_currentRound].allocatedCoins >= amount.add(rounds[_currentRound].soldCoins));
+    require(totalSupply_.add(amount) <= maxSupply); // if we have enough tokens to be minted
 
     require(
       rounds[_currentRound].minPurchase <= amount_without_bonus &&
@@ -372,25 +372,32 @@ contract CoinnupToken is StandardToken, Ownable {
   }
 
   /// @dev system can mint tokens for users if they sent funds to BTC, LTC, etc wallets we allow
-  function mintForInvestor(address _to, uint256 _tokens) public onlyOwner onlyWhileOpen {
+  function mintForInvestor(address _to, uint256 _tokens, uint256 _tokens_bonus) public onlyOwner onlyWhileOpen {
     uint8 _round = _getCurrentRound(now);
+    uint256 _tokens_with_bonuses = _tokens.add(_tokens_bonus);
 
     require(_round >= 0 && _round <= 5);
     require(_to != address(0)); // handling incorrect values from system in addresses
     require(_tokens >= 0); // handling incorrect values from system in tokens calculation
-    require(rounds[_currentRound].allocatedCoins >= _tokens + rounds[_currentRound].soldCoins);
-    require(maxSupply >= _tokens.add(totalSupply_));
-    uint8 _currentRound = _getCurrentRound(now);
+    require(rounds[_round].allocatedCoins >= _tokens_with_bonuses.add(rounds[_round].soldCoins));
+    require(maxSupply >= _tokens_with_bonuses.add(totalSupply_));
+    require(_tokens > _tokens_bonus);
+    
+    require(
+      rounds[_round].minPurchase <= _tokens && // Min Max purchases without bonuses
+      rounds[_round].maxPurchase >= _tokens
+    );
 
     // minting tokens for investors
-    mint(_to, _tokens); // _tokens in wei
-    rounds[_currentRound].soldCoins = rounds[_currentRound].soldCoins.add(_tokens);
-    tokensBought[_to] = tokensBought[_to].add(_tokens); // tokens in wei
+    mint(_to, _tokens_with_bonuses); // _tokens in wei
+    rounds[_round].soldCoins = rounds[_round].soldCoins.add(_tokens_with_bonuses); 
+    tokensBought[_to] = tokensBought[_to].add(_tokens_with_bonuses); // tokens in wei
 
-    uint256 _soldInETH = _tokens.div( rate );
-    _sold = _sold.add(_tokens); // in wei
+    uint256 _soldInETH = _tokens.div( rate ); // Calc without bonuses
+    
+    _sold = _sold.add(_soldInETH); // in wei
     _soldOutside = _soldOutside.add(_soldInETH); // eth
-    _soldOutsidePMZ = _soldOutsidePMZ.add(_tokens); // in PMZ
+    _soldOutsidePMZ = _soldOutsidePMZ.add(_tokens_with_bonuses); // in PMZ
   }
 
   /**
