@@ -1,7 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RoT at 0xac5ce3f18806e27fe616734abb2506766fd7e0ec
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RoT at 0x0ece93150cd501a5181d0ad03f87b177b1db4e0a
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.8;
 
 contract Ownable {
   // replace with proper zeppelin smart contract
@@ -155,7 +155,6 @@ contract ESOPTypes {
       assembly { emp := serializedEmployee }
   }
 }
-
 
 contract CodeUpdateable is Ownable {
     // allows to stop operations and migrate data to different contract
@@ -319,7 +318,6 @@ contract EmployeesList is ESOPTypes, Ownable, Destructable {
     return serializeEmployee(employee);
   }
 }
-
 
 contract ERC20OptionsConverter is BaseOptionsConverter, TimeSource, Math {
   // see base class for explanations
@@ -942,7 +940,27 @@ contract ESOP is ESOPTypes, CodeUpdateable, TimeSource {
 }
 
 
+contract Migrations is Destructable {
+  address public owner;
+  uint public last_completed_migration;
 
+  modifier restricted() {
+    if (msg.sender == owner) _;
+  }
+
+  function Migrations() {
+    owner = msg.sender;
+  }
+
+  function setCompleted(uint completed) restricted {
+    last_completed_migration = completed;
+  }
+
+  function upgrade(address new_address) restricted {
+    Migrations upgraded = Migrations(new_address);
+    upgraded.setCompleted(last_completed_migration);
+  }
+}
 
 contract OptionsCalculator is Ownable, Destructable, Math, ESOPTypes {
   // cliff duration in seconds
