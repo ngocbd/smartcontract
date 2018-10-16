@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KStarCoinSale at 0xf9b317973590419c63c8484dc271084e54c16590
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract KStarCoinSale at 0xa806a8c3086f04464e424ca8ba152ff5ee84fef7
 */
 pragma solidity ^0.4.18;
 
@@ -146,7 +146,7 @@ contract KStarCoinSale is MultiOwnable {
     }
     
     // Update variables related to crowdfunding
-    function updateICOVars(eICOLevel _level, uint _rate, uint _minWei) onlyOwner public returns (bool) {
+    function updateICOVars(eICOLevel _level, uint256 _rate, uint256 _minWei) onlyOwner public returns (bool) {
         require(checkValidLevel(_level));
         require(_rate != 0);
         require(_minWei >= 1 szabo);
