@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleToken at 0xd1f87ccf24dd28dc54a66ad8a3ecf1326ef603da
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleToken at 0xa199f67444e0af1150aecc025242d385ebc37247
 */
 pragma solidity ^0.4.11;
 
@@ -188,11 +188,11 @@ contract StandardToken is ERC20, BasicToken {
  */
 contract SimpleToken is StandardToken {
 
-  string public constant name = "SOLA COIN";
-  string public constant symbol = "SLC";
+  string public constant name = "DCOIN";
+  string public constant symbol = "DCJ";
   uint8 public constant decimals = 18;
 
-  uint256 public constant INITIAL_SUPPLY = 1000000000 * 1000000000000000000;
+  uint256 public constant INITIAL_SUPPLY = 2000000000 * 1000000000000000000;
 
   /**
    * @dev Contructor that gives msg.sender all of existing tokens.
