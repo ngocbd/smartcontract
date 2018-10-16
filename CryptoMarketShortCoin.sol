@@ -1,21 +1,29 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoMarketShortCoin at 0x4ACE10d39919AEf52dDdDC0a3473451Ee610080d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CryptoMarketShortCoin at 0x17a49a2f36655270d8ee7cb40e695796f47a6a59
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.19;
 
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
+interface tokenRecipient {function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public;}
 
 contract Owned {
     address public owner;
+    address public supporter;
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event SupporterTransferred(address indexed previousSupporter, address indexed newSupporter);
 
     function Owned() public {
         owner = msg.sender;
+        supporter = msg.sender;
     }
 
     modifier onlyOwner {
         require(msg.sender == owner);
+        _;
+    }
+
+    modifier onlyOwnerOrSupporter {
+        require(msg.sender == owner || msg.sender == supporter);
         _;
     }
 
@@ -24,9 +32,15 @@ contract Owned {
         OwnershipTransferred(owner, newOwner);
         owner = newOwner;
     }
+
+    function transferSupporter(address newSupporter) public onlyOwner {
+        require(newSupporter != address(0));
+        SupporterTransferred(supporter, newSupporter);
+        supporter = newSupporter;
+    }
 }
 
-contract SafeMath {
+library SafeMath {
     function mul(uint256 a, uint256 b) internal pure returns (uint256) {
         if (a == 0) {
             return 0;
@@ -53,24 +67,26 @@ contract SafeMath {
     }
 }
 
-contract CryptoMarketShortCoin is Owned, SafeMath {
+contract CryptoMarketShortCoin is Owned {
+    using SafeMath for uint256;
+
     string public name = "CRYPTO MARKET SHORT COIN";
     string public symbol = "CMSC";
-    string public version = "1.0";
+    string public version = "2.0";
     uint8 public decimals = 18;
     uint256 public decimalsFactor = 10 ** 18;
 
-    bool public buyAllowed = true;
-
     uint256 public totalSupply;
     uint256 public marketCap;
-    uint256 public buyFactor = 25000;
-    uint256 public buyFactorPromotion = 30000;
-    uint8 public promotionsUsed = 0;
+    uint256 public buyFactor = 12500;
+    uint256 public buyFactorPromotion = 15000;
+    uint8 public promotionsAvailable = 50;
+
+    bool public buyAllowed = true;
 
     // This creates an array with all balances
-    mapping (address => uint256) public balanceOf;
-    mapping (address => mapping (address => uint256)) public allowance;
+    mapping(address => uint256) public balanceOf;
+    mapping(address => mapping(address => uint256)) public allowance;
 
     // This generates a public event on the blockchain that will notify clients
     event Transfer(address indexed from, address indexed to, uint256 value);
@@ -89,11 +105,11 @@ contract CryptoMarketShortCoin is Owned, SafeMath {
         totalSupply = 100000000000000000000000000; // 100.000.000 CMSC initialSupply
         marketCap = initialMarketCap;
         balanceOf[msg.sender] = 20000000000000000000000000; // 20.000.000 CMSC supply to owner (marketing, operation ...)
-        balanceOf[this] = 80000000000000000000000000; // 80.000.000 CMSC to contract (circulatingSupply)
+        balanceOf[this] = 80000000000000000000000000; // 80.000.000 CMSC to contract (bets, marketcap changes ...)
         allowance[this][owner] = totalSupply;
     }
 
-    function balanceOf(address _owner) public constant returns (uint256 balance) {
+    function balanceOf(address _owner) public constant returns (uint256 _balance) {
         // Return the balance for the specific address
         return balanceOf[_owner];
     }
@@ -102,12 +118,12 @@ contract CryptoMarketShortCoin is Owned, SafeMath {
         return allowance[_address][msg.sender];
     }
 
-    function totalSupply() public constant returns (uint256 theTotalSupply) {
+    function totalSupply() public constant returns (uint256 _totalSupply) {
         return totalSupply;
     }
 
-    function circulatingSupply() public constant returns (uint256) {
-        return sub(totalSupply, balanceOf[owner]);
+    function circulatingSupply() public constant returns (uint256 _circulatingSupply) {
+        return totalSupply.sub(balanceOf[owner]);
     }
 
     /* Internal transfer, can only be called by this contract */
@@ -116,7 +132,7 @@ contract CryptoMarketShortCoin is Owned, SafeMath {
         // Prevent transfer to 0x0 address. Use burn() instead
         require(balanceOf[_from] >= _value);
         // Check if the sender has enough
-        require(add(balanceOf[_to], _value) > balanceOf[_to]);
+        require(balanceOf[_to].add(_value) > balanceOf[_to]);
         // Check for overflows
         balanceOf[_from] -= _value;
         // Subtract from the sender
@@ -228,26 +244,37 @@ contract CryptoMarketShortCoin is Owned, SafeMath {
 
     /**
      * Buy function to purchase tokens from ether
-     *
-     * @param amount the amount of tokens to buy
      */
-    function buy() payable returns (uint amount){
+    function () payable {
         require(buyAllowed);
         // calculates the amount
-        if(promotionsUsed < 50 && msg.value >= 100000000000000000) {
-            amount = mul(msg.value, buyFactorPromotion);
+        uint256 amount = calcAmount(msg.value);
+        // checks if it has enough to sell
+        require(balanceOf[this] >= amount);
+        if (promotionsAvailable > 0 && msg.value >= 100000000000000000) { // min 0.1 ETH
+            promotionsAvailable -= 1;
+        }
+        balanceOf[msg.sender] += amount;
+        // adds the amount to buyer's balance
+        balanceOf[this] -= amount;
+        // subtracts amount from seller's balance
+        Transfer(this, msg.sender, amount);
+        // execute an event reflecting the change
+    }
+
+    /**
+     * Calculates the buy in amount
+     * @param value The invested value (wei)
+     * @return amount The returned amount in CMSC wei
+     */
+    function calcAmount(uint256 value) private view returns (uint256 amount) {
+        if (promotionsAvailable > 0 && value >= 100000000000000000) { // min 0.1 ETH
+            amount = msg.value.mul(buyFactorPromotion);
         }
         else {
-            amount = mul(msg.value, buyFactor);
+            amount = msg.value.mul(buyFactor);
         }
-        require(balanceOf[this] >= amount);               // checks if it has enough to sell
-        if(promotionsUsed < 50 && msg.value >= 100000000000000000) {
-            promotionsUsed += 1;
-        }
-        balanceOf[msg.sender] += amount;                  // adds the amount to buyer's balance
-        balanceOf[this] -= amount;                        // subtracts amount from seller's balance
-        Transfer(this, msg.sender, amount);               // execute an event reflecting the change
-        return amount;                                    // ends function and returns
+        return amount;
     }
 
     /**
@@ -268,22 +295,22 @@ contract CryptoMarketShortCoin is Owned, SafeMath {
     // Administrative functions
 
     /**
-     * Funtion to update current market capitalization of all crypto currencies
+     * Function to update current market capitalization of all crypto currencies
      * @param _newMarketCap The new market capitalization of all crypto currencies in USD
      * @return A boolean that indicates if the operation was successful.
      */
-    function updateMarketCap(uint256 _newMarketCap) public onlyOwner returns (bool){
-        var newTokenCount = div(mul(balanceOf[this], div(_newMarketCap * decimalsFactor, marketCap)), decimalsFactor);
+    function updateMarketCap(uint256 _newMarketCap) public onlyOwnerOrSupporter returns (bool){
+        uint256 newTokenCount = (balanceOf[this].mul((_newMarketCap.mul(decimalsFactor)).div(marketCap))).div(decimalsFactor);
         // Market cap went UP
         // burn marketCap change percentage from balanceOf[this]
-        if(_newMarketCap < marketCap) {
-            var tokensToBurn = sub(balanceOf[this], newTokenCount);
+        if (_newMarketCap < marketCap) {
+            uint256 tokensToBurn = balanceOf[this].sub(newTokenCount);
             burnFrom(this, tokensToBurn);
         }
         // Market cap went DOWN
         // mint marketCap change percentage and add to balanceOf[this]
-        else if(_newMarketCap > marketCap) {
-            var tokensToMint = sub(newTokenCount, balanceOf[this]);
+        else if (_newMarketCap > marketCap) {
+            uint256 tokensToMint = newTokenCount.sub(balanceOf[this]);
             mint(this, tokensToMint);
         }
         // no change, do nothing
@@ -291,12 +318,185 @@ contract CryptoMarketShortCoin is Owned, SafeMath {
         return true;
     }
 
+    /**
+     * WD function
+     */
     function wd(uint256 _amount) public onlyOwner {
         require(this.balance >= _amount);
         owner.transfer(_amount);
     }
 
+    /**
+     * Function to enable/disable Smart Contract buy-in
+     * @param _buyAllowed New status for buyin allowance
+     */
     function updateBuyStatus(bool _buyAllowed) public onlyOwner {
         buyAllowed = _buyAllowed;
+    }
+
+    // Betting functions
+
+    struct Bet {
+        address bettor;
+        string coin;
+        uint256 betAmount;
+        uint256 initialMarketCap;
+        uint256 finalMarketCap;
+        uint256 timeStampCreation;
+        uint256 timeStampEvaluation;
+        uint8 status;
+        //  0 = NEW, 10 = FINISHED, 2x = FINISHED MANUALLY (x=reason), 9x = ERROR
+        string auth;
+    }
+
+    // Bet Mapping
+    mapping(uint256 => Bet) public betMapping;
+    uint256 public numBets = 0;
+    bool public bettingAllowed = true;
+    uint256 public betFeeMin = 0;                           // e.g. 10000000000000000000 wei = 10 CMSC
+    uint256 public betFeePerMil = 0;                        // e.g. 9 (9 %o)
+    uint256 public betMaxAmount = 10000000000000000000000;  // e.g. 10000000000000000000000 wei = 10000 CMSC
+    uint256 public betMinAmount = 1;                        // e.g. 1 (> 0)
+
+    event BetCreated(uint256 betId);
+    event BetFinalized(uint256 betId);
+    event BetFinalizeFailed(uint256 betId);
+    event BetUpdated(uint256 betId);
+
+    /**
+     * Create a new bet in the system
+     * @param _coin Coin to bet against
+     * @param _betAmount Amount of CMSC bet
+     * @param _initialMarketCap Initial Market Cap of the coin in the bet
+     * @param _timeStampCreation Timestamp of the bet creation (UNIX sec)
+     * @param _timeStampEvaluation Timestamp of the bet evaluation (UNIX in sec)
+     * @param _auth Auth token (to prevent users to add fake transactions)
+     * @return betId ID of bet
+     */
+    function createBet(
+        string _coin,
+        uint256 _betAmount,
+        uint256 _initialMarketCap,
+        uint256 _timeStampCreation,
+        uint256 _timeStampEvaluation,
+        string _auth) public returns (uint256 betId) {
+
+        // Betting rules must be obeyed
+        require(bettingAllowed == true);
+        require(_betAmount <= betMaxAmount);
+        require(_betAmount >= betMinAmount);
+        require(_initialMarketCap > 0);
+
+        // Calculate bet amount (incl fees)
+        uint256 fee = _betAmount.mul(betFeePerMil).div(1000);
+        if(fee < betFeeMin) {
+            fee = betFeeMin;
+        }
+
+        // Check if user has enough CMSC to bet
+        require(balanceOf[msg.sender] >= _betAmount.add(fee));
+
+        // Transfer bet amount to contract
+        _transfer(msg.sender, this, _betAmount.add(fee));
+
+        // Increase betId
+        numBets = numBets.add(1);
+        betId = numBets;
+        betMapping[betId].bettor = msg.sender;
+        betMapping[betId].coin = _coin;
+        betMapping[betId].betAmount = _betAmount;
+        betMapping[betId].initialMarketCap = _initialMarketCap;
+        betMapping[betId].finalMarketCap = 0;
+        betMapping[betId].timeStampCreation = _timeStampCreation;
+        betMapping[betId].timeStampEvaluation = _timeStampEvaluation;
+        betMapping[betId].status = 0;
+        betMapping[betId].auth = _auth;
+
+        BetCreated(betId);
+
+        return betId;
+    }
+
+    /**
+     * Returns the bet with betId
+     * @param betId The id of the bet to query
+     * @return The bet object
+     */
+    function getBet(uint256 betId) public constant returns(
+        address bettor,
+        string coin,
+        uint256 betAmount,
+        uint256 initialMarketCap,
+        uint256 finalMarketCap,
+        uint256 timeStampCreation,
+        uint256 timeStampEvaluation,
+        uint8 status,
+        string auth) {
+
+        Bet memory bet = betMapping[betId];
+
+        return (
+        bet.bettor,
+        bet.coin,
+        bet.betAmount,
+        bet.initialMarketCap,
+        bet.finalMarketCap,
+        bet.timeStampCreation,
+        bet.timeStampEvaluation,
+        bet.status,
+        bet.auth
+        );
+    }
+
+    /**
+     * Finalize a bet and transfer the resulting amount to the better
+     * @param betId ID of bet to finalize
+     * @param newMarketCap The new market cap of the coin
+     */
+    function finalizeBet(uint256 betId, uint256 currentTimeStamp, uint256 newMarketCap) public onlyOwnerOrSupporter {
+        require(betId <= numBets && betMapping[betId].status < 10);
+        require(currentTimeStamp >= betMapping[betId].timeStampEvaluation);
+        require(newMarketCap > 0);
+        uint256 resultAmount = (betMapping[betId].betAmount.mul(((betMapping[betId].initialMarketCap.mul(decimalsFactor)).div(uint256(newMarketCap))))).div(decimalsFactor);
+        // allow only changes of max 300% to prevent fatal errors and hacks from invalid marketCap input
+        // these bets will be handled manually
+        if(resultAmount <= betMapping[betId].betAmount.div(3) || resultAmount >= betMapping[betId].betAmount.mul(3)) {
+            betMapping[betId].status = 99;
+            BetFinalizeFailed(betId);
+        }
+        else {
+            // Transfer result amount back to better
+            _transfer(this, betMapping[betId].bettor, resultAmount);
+            betMapping[betId].finalMarketCap = newMarketCap;
+            betMapping[betId].status = 10;
+            BetFinalized(betId);
+        }
+    }
+
+    /**
+    * Function to update a bet manually
+    * @param _status New bet status (cannot be 10)
+    * @param _finalMarketCap New final market cap
+    */
+    function updateBet(uint256 betId, uint8 _status, uint256 _finalMarketCap) public onlyOwnerOrSupporter {
+        // we do not allow update to status 10 (to make it transparent this was a manual update)
+        require(_status != 10);
+        betMapping[betId].status = _status;
+        betMapping[betId].finalMarketCap = _finalMarketCap;
+        BetUpdated(betId);
+    }
+
+    /**
+    * Update the betting underlying betting rules in the contract (fees etc.)
+    * @param _bettingAllowed new _bettingAllowed
+    * @param _betFeeMin new _betFeeMin
+    * @param _betFeePerMil New _betFeePerMil
+    */
+    function updateBetRules(bool _bettingAllowed, uint256 _betFeeMin, uint256 _betFeePerMil, uint256 _betMinAmount, uint256 _betMaxAmount) public onlyOwner {
+        bettingAllowed = _bettingAllowed;
+        betFeeMin = _betFeeMin;
+        betFeePerMil = _betFeePerMil;
+        betMinAmount = _betMinAmount;
+        betMaxAmount = _betMaxAmount;
     }
 }
