@@ -1,19 +1,15 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TopToken at 0xb91c462fde994f04dcd28da92e3ae23bd3484d51
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TopToken at 0x0e6bb94b7f25b96f13e0baf5bc04b8ba39b897a8
 */
-pragma solidity ^0.4.18;
+pragma solidity 0.4.20;
 
 contract TopTokenBase {
     uint256                                            _supply;
     mapping (address => uint256)                       _balances;
-    mapping (address => mapping (address => uint256))  _approvals;
     
-    event Transfer( address indexed from, address indexed to, uint value);
-    event Approval( address indexed owner, address indexed spender, uint value);
+    event Transfer( address indexed from, address indexed to, uint256 value);
 
-    function TopTokenBase() public {
-        
-    }
+    function TopTokenBase() public {    }
     
     function totalSupply() public view returns (uint256) {
         return _supply;
@@ -21,12 +17,9 @@ contract TopTokenBase {
     function balanceOf(address src) public view returns (uint256) {
         return _balances[src];
     }
-    function allowance(address src, address guy) public view returns (uint256) {
-        return _approvals[src][guy];
-    }
     
-    function transfer(address dst, uint wad) public returns (bool) {
-        assert(_balances[msg.sender] >= wad);
+    function transfer(address dst, uint256 wad) public returns (bool) {
+        require(_balances[msg.sender] >= wad);
         
         _balances[msg.sender] = sub(_balances[msg.sender], wad);
         _balances[dst] = add(_balances[dst], wad);
@@ -36,23 +29,16 @@ contract TopTokenBase {
         return true;
     }
     
-    function transferFrom(address src, address dst, uint wad) public returns (bool) {
-        assert(_balances[src] >= wad);
-        
-        _balances[src] = sub(_balances[src], wad);
-        _balances[dst] = add(_balances[dst], wad);
-        
-        Transfer(src, dst, wad);
-        
-        return true;
+    function add(uint256 x, uint256 y) internal pure returns (uint256) {
+        uint256 z = x + y;
+        require(z >= x && z>=y);
+        return z;
     }
 
-    function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        assert((z = x + y) >= x);
-    }
-
-    function sub(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        assert((z = x - y) <= x);
+    function sub(uint256 x, uint256 y) internal pure returns (uint256) {
+        uint256 z = x - y;
+        require(x >= y && z <= x);
+        return z;
     }
 }
 
@@ -60,38 +46,62 @@ contract TopToken is TopTokenBase {
     string  public  symbol = "TOP";
     string  public name = "Top.One Coin";
     uint256  public  decimals = 18; 
-    uint public releaseTime = 1548518400;
+    uint256 public freezedValue = 640000000*(10**18);
+    uint256 public eachUnfreezeValue = 160000000*(10**18);
+    uint256 public releaseTime = 1525017600; 
+    uint256 public latestReleaseTime = 1525017600; // Apr/30/2018
     address public owner;
+
+    struct FreezeStruct {
+        uint256 unfreezeTime;
+        bool freezed;
+    }
+
+    FreezeStruct[] public unfreezeTimeMap;
 
     function TopToken() public {
         _supply = 20*(10**8)*(10**18);
+        _balances[0x01] = freezedValue;
+        _balances[msg.sender] = sub(_supply,freezedValue);
         owner = msg.sender;
-        _balances[msg.sender] = _supply;
+
+        unfreezeTimeMap.push(FreezeStruct({unfreezeTime:1554048000, freezed: true})); // Apr/01/2019
+        unfreezeTimeMap.push(FreezeStruct({unfreezeTime:1585670400, freezed: true})); // Apr/01/2020
+        unfreezeTimeMap.push(FreezeStruct({unfreezeTime:1617206400, freezed: true})); // Apr/01/2021
+        unfreezeTimeMap.push(FreezeStruct({unfreezeTime:1648742400, freezed: true})); // Apr/01/2022
     }
 
-    function transfer(address dst, uint wad) public returns (bool) {
-        require (now >= releaseTime);
+    function transfer(address dst, uint256 wad) public returns (bool) {
+        require (now >= releaseTime || now >= latestReleaseTime);
+
         return super.transfer(dst, wad);
     }
 
-    function transferFrom( address src, address dst, uint wad ) public returns (bool) {
-        return super.transferFrom(src, dst, wad);
-    }
-
-    function distribute(address dst, uint wad) public returns (bool) {
+    function distribute(address dst, uint256 wad) public returns (bool) {
         require(msg.sender == owner);
+
         return super.transfer(dst, wad);
     }
 
-    function burn(uint128 wad) public {
-        require(msg.sender==owner);
-        _balances[msg.sender] = sub(_balances[msg.sender], wad);
-        _supply = sub(_supply, wad);
-    }
-
-    function setRelease(uint _release) public {
+    function setRelease(uint256 _release) public {
         require(msg.sender == owner);
+        require(_release <= latestReleaseTime);
+
         releaseTime = _release;
     }
 
+    function unfreeze(uint256 i) public {
+        require(msg.sender == owner);
+        require(i>=0 && i<unfreezeTimeMap.length);
+        require(now >= unfreezeTimeMap[i].unfreezeTime && unfreezeTimeMap[i].freezed);
+        require(_balances[0x01] >= eachUnfreezeValue);
+
+        _balances[0x01] = sub(_balances[0x01], eachUnfreezeValue);
+        _balances[owner] = add(_balances[owner], eachUnfreezeValue);
+
+        freezedValue = sub(freezedValue, eachUnfreezeValue);
+        unfreezeTimeMap[i].freezed = false;
+
+        Transfer(0x01, owner, eachUnfreezeValue);
+    }
 }
