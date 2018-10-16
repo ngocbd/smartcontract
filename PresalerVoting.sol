@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalerVoting at 0x775677bbbb575bca9f052e2f7e01294cafd5422b
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract PresalerVoting at 0x283a97af867165169aece0b2e963b9f0fc7e5b8c
 */
 pragma solidity ^0.4.11;
 
@@ -32,13 +32,13 @@ pragma solidity ^0.4.11;
 /// @notice report bugs to: bugs@ethernian.com
 /// @title Presaler Voting Contract
 
-interface TokenStorage {
+contract TokenStorage {
     function balances(address account) public returns(uint balance);
 }
 
 contract PresalerVoting {
 
-    string public constant VERSION = "0.0.3";
+    string public constant VERSION = "0.0.9";
 
     /* ====== configuration START ====== */
 
@@ -49,55 +49,85 @@ contract PresalerVoting {
 
     TokenStorage PRESALE_CONTRACT = TokenStorage(0x4Fd997Ed7c10DbD04e95d3730cd77D79513076F2);
 
-    string[5] private stateNames = ["BEFORE_START",  "VOTING_RUNNING", "CLOSED" ];
+    string[3] private stateNames = ["BEFORE_START",  "VOTING_RUNNING", "CLOSED" ];
     enum State { BEFORE_START,  VOTING_RUNNING, CLOSED }
 
     mapping (address => uint) public rawVotes;
 
-    uint private constant MAX_AMOUNT_EQU_0_PERCENT   = 1 finney;
+    uint private constant MAX_AMOUNT_EQU_0_PERCENT   = 10 finney;
     uint private constant MIN_AMOUNT_EQU_100_PERCENT = 1 ether ;
+    uint public constant TOTAL_BONUS_SUPPLY_ETH = 12000;
 
-    address owner;
 
-    //constructor
+
+    address public owner;
+    address[] public voters;
+    uint16 public stakeVoted_Eth;
+    uint16 public stakeRemainingToVote_Eth;
+    uint16 public stakeWaived_Eth;
+    uint16 public stakeConfirmed_Eth;
+
+    //constructors
     function PresalerVoting () {
         owner = msg.sender;
     }
 
     //accept (and send back) voting payments here
     function ()
-    onlyPresaler
     onlyState(State.VOTING_RUNNING)
     payable {
+        uint bonusVoted;
+        uint bonus = PRESALE_CONTRACT.balances(msg.sender);
+        assert (bonus > 0); // only presaler allowed in.
         if (msg.value > 1 ether || !msg.sender.send(msg.value)) throw;
-        //special treatment for 0-ether payments
+        if (rawVotes[msg.sender] == 0) {
+            voters.push(msg.sender);
+            stakeVoted_Eth += uint16(bonus / 1 ether);
+        } else {
+            //clear statistik related to old voting state for this sender
+            bonusVoted           = votedPerCent(msg.sender) * bonus / 100;
+            stakeWaived_Eth     -= uint16((bonus - bonusVoted) / 1 ether);
+            stakeConfirmed_Eth  -= uint16(bonusVoted / 1 ether);
+        }
+        //special treatment for 0-ether payment
         rawVotes[msg.sender] = msg.value > 0 ? msg.value : 1 wei;
+
+        bonusVoted           = votedPerCent(msg.sender) * bonus / 100;
+        stakeWaived_Eth     += uint16((bonus - bonusVoted) / 1 ether);
+        stakeConfirmed_Eth  += uint16(bonusVoted / 1 ether);
+
+        stakeRemainingToVote_Eth = uint16(TOTAL_BONUS_SUPPLY_ETH - stakeVoted_Eth);
+
     }
+
+    function votersLen() external returns (uint) { return voters.length; }
 
     /// @notice start voting at `startBlockNr` for `durationHrs`.
     /// Restricted for owner only.
     /// @param startBlockNr block number to start voting; starts immediatly if less than current block number.
     /// @param durationHrs voting duration (from now!); at least 1 hour.
-    function startVoting(uint startBlockNr, uint durationHrs) onlyOwner {
+    function startVoting(uint startBlockNr, uint durationHrs)
+    onlyOwner
+    onlyState(State.BEFORE_START) {
         VOTING_START_BLOCKNR = max(block.number, startBlockNr);
         VOTING_END_TIME = now + max(durationHrs,1) * 1 hours;
     }
 
-    function setOwner(address newOwner) onlyOwner {owner = newOwner;}
+    function setOwner(address newOwner) onlyOwner { owner = newOwner; }
 
     /// @notice returns current voting result for given address in percent.
     /// @param voter balance holder address.
-    function votedPerCent(address voter) constant external returns (uint) {
+    function votedPerCent(address voter) constant public returns (uint) {
         var rawVote = rawVotes[voter];
-        if (rawVote<=MAX_AMOUNT_EQU_0_PERCENT) return 0;
-        else if (rawVote>=MIN_AMOUNT_EQU_100_PERCENT) return 100;
+        if (rawVote < MAX_AMOUNT_EQU_0_PERCENT) return 0;
+        else if (rawVote >= MIN_AMOUNT_EQU_100_PERCENT) return 100;
         else return rawVote * 100 / 1 ether;
     }
 
     /// @notice return voting remaining time (hours, minutes).
-    function votingEndsInHHMM() constant returns (uint16, uint16) {
+    function votingEndsInHHMM() constant returns (uint8, uint8) {
         var tsec = VOTING_END_TIME - now;
-        return VOTING_END_TIME==0 ? (0,0) : (uint16(tsec / 1 hours), uint16(tsec % 1 hours / 1 minutes));
+        return VOTING_END_TIME==0 ? (0,0) : (uint8(tsec / 1 hours), uint8(tsec % 1 hours / 1 minutes));
     }
 
     function currentState() internal constant returns (State) {
@@ -116,11 +146,6 @@ contract PresalerVoting {
     }
 
     function max(uint a, uint b) internal constant returns (uint maxValue) { return a>b ? a : b; }
-
-    modifier onlyPresaler() {
-        if (PRESALE_CONTRACT.balances(msg.sender) == 0) throw;
-        _;
-    }
 
     modifier onlyState(State state) {
         if (currentState()!=state) throw;
