@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RecoveryWithTenant at 0x4bd4afa9b213b5184c995aaef4982ce564121d20
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract RecoveryWithTenant at 0x8c0109c76e892a5481b156285faee6f0ab0ff1a0
 */
 contract Destination {
     function recover(address _from, address _to) returns(bool);
@@ -108,6 +108,8 @@ contract RecoveryWithTenant {
         bool result = Destination(callDestination).recover(_oldAddr, _newAddr);
         if (result) {
             users[userPos].addr = _newAddr;
+            delete userIndex[_oldAddr];
+            userIndex[_newAddr] = userPos;
             Recovery(_nonce, _oldAddr, _newAddr);
             return true;
         }
