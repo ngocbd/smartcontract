@@ -1,9 +1,37 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MilitaryPay at 0x9F46d4fAF6158c90B48B8D731faF1BE0e8eEa78E
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MilitaryPay at 0xDAb5dFa0966C3435dA991B39D205C3bA1c64fe31
 */
 pragma solidity ^0.4.13;
 
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) constant returns (uint256);
+  function transfer(address to, uint256 value) returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
+
+/**
+ * @title ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/20
+ */
+contract ERC20 is ERC20Basic {
+  function allowance(address owner, address spender) constant returns (uint256);
+  function transferFrom(address from, address to, uint256 value) returns (bool);
+  function approve(address spender, uint256 value) returns (bool);
+  event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+/**
+ * @title SafeMath
+ * @dev Math operations with safety checks that throw on error
+ */
 library SafeMath {
+    
   function mul(uint256 a, uint256 b) internal constant returns (uint256) {
     uint256 c = a * b;
     assert(a == 0 || c / a == b);
@@ -27,30 +55,7 @@ library SafeMath {
     assert(c >= a);
     return c;
   }
-}
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) constant returns (uint256);
-  function transfer(address to, uint256 value) returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
-}
-
-/**
- * @title ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/20
- */
-
-contract ERC20 is ERC20Basic {
-  function allowance(address owner, address spender) constant returns (uint256);
-  function transferFrom(address from, address to, uint256 value) returns (bool);
-  function approve(address spender, uint256 value) returns (bool);
-  event Approval(address indexed owner, address indexed spender, uint256 value);
+  
 }
 
 /**
@@ -58,6 +63,7 @@ contract ERC20 is ERC20Basic {
  * @dev Basic version of StandardToken, with no allowances. 
  */
 contract BasicToken is ERC20Basic {
+    
   using SafeMath for uint256;
 
   mapping(address => uint256) balances;
@@ -82,7 +88,7 @@ contract BasicToken is ERC20Basic {
   function balanceOf(address _owner) constant returns (uint256 balance) {
     return balances[_owner];
   }
-
+  
 }
 
 /**
@@ -95,7 +101,6 @@ contract BasicToken is ERC20Basic {
 contract StandardToken is ERC20, BasicToken {
 
   mapping (address => mapping (address => uint256)) allowed;
-
 
   /**
    * @dev Transfer tokens from one address to another
@@ -146,184 +151,180 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-contract MilitaryPay is StandardToken {
-	using SafeMath for uint256;
+/**
+ * @title Ownable
+ * @dev The Ownable contract has an owner address, and provides basic authorization control
+ * functions, this simplifies the implementation of "user permissions".
+ */
+contract Ownable {
+    
+  address public owner;
 
-    // EVENTS
-    event CreatedMTP(address indexed _creator, uint256 _amountOfMTP);
+  /**
+   * @dev The Ownable constructor sets the original `owner` of the contract to the sender
+   * account.
+   */
+  function Ownable() {
+    owner = msg.sender;
+  }
 
+  /**
+   * @dev Throws if called by any account other than the owner.
+   */
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+
+  /**
+   * @dev Allows the current owner to transfer control of the contract to a newOwner.
+   * @param newOwner The address to transfer ownership to.
+   */
+  function transferOwnership(address newOwner) onlyOwner {
+    require(newOwner != address(0));      
+    owner = newOwner;
+  }
+
+}
+
+/**
+ * @title Mintable token
+ * @dev Simple ERC20 Token example, with mintable token creation
+ * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
+ * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
+ */
+
+contract MintableToken is StandardToken, Ownable {
+    
+  event Mint(address indexed to, uint256 amount);
+  
+  event MintFinished();
+
+  bool public mintingFinished = false;
+
+  modifier canMint() {
+    require(!mintingFinished);
+    _;
+  }
+
+  /**
+   * @dev Function to mint tokens
+   * @param _to The address that will recieve the minted tokens.
+   * @param _amount The amount of tokens to mint.
+   * @return A boolean that indicates if the operation was successful.
+   */
+  function mint(address _to, uint256 _amount) onlyOwner canMint returns (bool) {
+    totalSupply = totalSupply.add(_amount);
+    balances[_to] = balances[_to].add(_amount);
+    Mint(_to, _amount);
+    return true;
+  }
+
+  /**
+   * @dev Function to stop minting new tokens.
+   * @return True if the operation was successful.
+   */
+  function finishMinting() onlyOwner returns (bool) {
+    mintingFinished = true;
+    MintFinished();
+    return true;
+  }
+  
+}
+
+contract MilitaryPay is MintableToken {
+    
+    string public constant name = "MilitaryPay";
+    
+    string public constant symbol = "MTP";
+    
+    uint32 public constant decimals = 1;
+    
+    function MilitaryPay (){
+        totalSupply = 888888888888888;
+    }
+    
+}
+
+
+contract MilitaryMTP is Ownable {
+    
+    using SafeMath for uint;
+    
+    address multisig;
+
+    uint restrictedPercent;
+
+    address restricted;
+
+    MilitaryPay public token = new MilitaryPay();
+
+    uint start;
+    
+    uint period;
+
+    uint hardcap;
+
+    uint public rate;
+    
+
+    function MilitaryMTP() {
+        // 
+    	multisig = 0x144EFeF99F7F126987c2b5cCD717CF6eDad1E67d;
+    	
+    	// 
+    	restricted = 0x144EFeF99F7F126987c2b5cCD717CF6eDad1E67d;
+    	
+    	// 
+    	restrictedPercent = 0;
+    	
+    	// 
+    	rate = 100000000*(1000000000000000000);
+    	
+    	// 
+    	start = 1506399914; //09/26/2017 
+    	period = 64;
+    	
+    	// 
+        hardcap = 9500000*(1000000000000000000);
+    }
+    
+    // 
+    modifier saleIsOn() {
+    	require(now > start && now < start + period * 1 days);
+    	_;
+    }
 	
-	// TOKEN DATA
-	string public constant name = "MilitaryPay";
-	string public constant symbol = "MTP";
-	uint256 public constant decimals = 18;
-	string public version = "1.0";
+	// 
+    modifier isUnderHardCap() {
+        require(token.totalSupply() <= hardcap);
+        _;
+    }
+    
+    // 
+    function setRate(uint _rate) onlyOwner {
+        rate = _rate;
+    }
+    
+    // 
+    function finishMinting() onlyOwner {
+	uint issuedTokenSupply = token.totalSupply();
+	uint restrictedTokens = issuedTokenSupply.mul(restrictedPercent).div(100 - restrictedPercent);
+	token.mint(restricted, restrictedTokens);
+        token.finishMinting();
+    }
 
-	// MTP TOKEN PURCHASE LIMITS
-	uint256 public maxPresaleSupply; 														// MAX TOTAL DURING PRESALE (0.8% of MAXTOTALSUPPLY)
+    // 
+    function createTokens() isUnderHardCap saleIsOn payable {
+        
+        multisig.transfer(msg.value);
+        uint tokens = rate.mul(msg.value).div(1 ether);
+        
+        token.mint(msg.sender, tokens);
+    }
 
-	// PURCHASE DATES
-	uint256 public constant preSaleStartTime = 1503130673; 									// GMT: Saturday, August 19, 2017 8:00:00 AM
-	uint256 public constant preSaleEndTime = 1505894400; 									// GMT: Wednesday, September 20, 2017 8:00:00 AM
-	uint256 public saleStartTime = 1509696000; 												// GMT: Friday, November 3, 2017 8:00:00 AM
-	uint256 public saleEndTime = 1514707200; 												// GMT: Sunday, December 31, 2017 8:00:00 AM
-
-
-	// PURCHASE BONUSES
-	uint256 public lowEtherBonusLimit = 5 * 1 ether; 										// 5+ Ether
-	uint256 public lowEtherBonusValue = 110;												// 10% Discount
-	uint256 public midEtherBonusLimit = 24 * 1 ether; 										// 24+ Ether
-	uint256 public midEtherBonusValue = 115;												// 15% Discount
-	uint256 public highEtherBonusLimit = 50 * 1 ether; 										// 50+ Ether
-	uint256 public highEtherBonusValue = 120; 												// 20% Discount
-	uint256 public highTimeBonusLimit = 0; 													// 1-12 Days
-	uint256 public highTimeBonusValue = 120; 												// 20% Discount
-	uint256 public midTimeBonusLimit = 1036800; 											// 12-24 Days
-	uint256 public midTimeBonusValue = 115; 												// 15% Discount
-	uint256 public lowTimeBonusLimit = 2073600;												// 24+ Days
-	uint256 public lowTimeBonusValue = 110;													// 10% Discount
-
-	// PRICING INFO
-	uint256 public constant MTP_PER_ETH_PRE_SALE = 4000;  								// 4000 MTP = 1 ETH
-	uint256 public constant MTP_PER_ETH_SALE = 2000;  									// 2000 MTP = 1 ETH
-	
-	// ADDRESSES
-	address public constant ownerAddress = 0x144EFeF99F7F126987c2b5cCD717CF6eDad1E67d; 		// The owners address
-
-	// STATE INFO	
-	bool public allowInvestment = true;														// Flag to change if transfering is allowed
-	uint256 public totalWEIInvested = 0; 													// Total WEI invested
-	uint256 public totalMTPAllocated = 0;												// Total MTP allocated
-	mapping (address => uint256) public WEIContributed; 									// Total WEI Per Account
-
-
-	// INITIALIZATIONS FUNCTION
-	function MTPToken() {
-		require(msg.sender == ownerAddress);
-
-		totalSupply = 99631*1000000*1000000000000000000; 										// MAX TOTAL MTP 
-		uint256 totalMTPReserved = totalSupply.mul(99).div(100);							//  reserved for MTP
-		maxPresaleSupply = totalSupply*8/1000 + totalMTPReserved; 						// MAX TOTAL DURING PRESALE (0.8% of MAXTOTALSUPPLY)
-
-		balances[msg.sender] = totalMTPReserved;
-		totalMTPAllocated = totalMTPReserved;				
-	}
-
-
-	// FALL BACK FUNCTION TO ALLOW ETHER DONATIONS
-	function() payable {
-
-		require(allowInvestment);
-
-		// Smallest investment is 0.00001 ether
-		uint256 amountOfWei = msg.value;
-		require(amountOfWei >= 10000000000000);
-
-		uint256 amountOfMTP = 0;
-		uint256 absLowTimeBonusLimit = 0;
-		uint256 absMidTimeBonusLimit = 0;
-		uint256 absHighTimeBonusLimit = 0;
-		uint256 totalMTPAvailable = 0;
-
-		// Investment periods
-		if (block.timestamp > preSaleStartTime && block.timestamp < preSaleEndTime) {
-			// Pre-sale ICO
-			amountOfMTP = amountOfWei.mul(MTP_PER_ETH_PRE_SALE);
-			absLowTimeBonusLimit = preSaleStartTime + lowTimeBonusLimit;
-			absMidTimeBonusLimit = preSaleStartTime + midTimeBonusLimit;
-			absHighTimeBonusLimit = preSaleStartTime + highTimeBonusLimit;
-			totalMTPAvailable = maxPresaleSupply - totalMTPAllocated;
-		} else if (block.timestamp > saleStartTime && block.timestamp < saleEndTime) {
-			// ICO
-			amountOfMTP = amountOfWei.mul(MTP_PER_ETH_SALE);
-			absLowTimeBonusLimit = saleStartTime + lowTimeBonusLimit;
-			absMidTimeBonusLimit = saleStartTime + midTimeBonusLimit;
-			absHighTimeBonusLimit = saleStartTime + highTimeBonusLimit;
-			totalMTPAvailable = totalSupply - totalMTPAllocated;
-		} else {
-			// Invalid investment period
-			revert();
-		}
-
-		// Check that MTP calculated greater than zero
-		assert(amountOfMTP > 0);
-
-		// Apply Bonuses
-		if (amountOfWei >= highEtherBonusLimit) {
-			amountOfMTP = amountOfMTP.mul(highEtherBonusValue).div(100);
-		} else if (amountOfWei >= midEtherBonusLimit) {
-			amountOfMTP = amountOfMTP.mul(midEtherBonusValue).div(100);
-		} else if (amountOfWei >= lowEtherBonusLimit) {
-			amountOfMTP = amountOfMTP.mul(lowEtherBonusValue).div(100);
-		}
-		if (block.timestamp >= absLowTimeBonusLimit) {
-			amountOfMTP = amountOfMTP.mul(lowTimeBonusValue).div(100);
-		} else if (block.timestamp >= absMidTimeBonusLimit) {
-			amountOfMTP = amountOfMTP.mul(midTimeBonusValue).div(100);
-		} else if (block.timestamp >= absHighTimeBonusLimit) {
-			amountOfMTP = amountOfMTP.mul(highTimeBonusValue).div(100);
-		}
-
-		// Max sure it doesn't exceed remaining supply
-		assert(amountOfMTP <= totalMTPAvailable);
-
-		// Update total MTP balance
-		totalMTPAllocated = totalMTPAllocated + amountOfMTP;
-
-		// Update user MTP balance
-		uint256 balanceSafe = balances[msg.sender].add(amountOfMTP);
-		balances[msg.sender] = balanceSafe;
-
-		// Update total WEI Invested
-		totalWEIInvested = totalWEIInvested.add(amountOfWei);
-
-		// Update total WEI Invested by account
-		uint256 contributedSafe = WEIContributed[msg.sender].add(amountOfWei);
-		WEIContributed[msg.sender] = contributedSafe;
-
-		// CHECK VALUES
-		assert(totalMTPAllocated <= totalSupply);
-		assert(totalMTPAllocated > 0);
-		assert(balanceSafe > 0);
-		assert(totalWEIInvested > 0);
-		assert(contributedSafe > 0);
-
-		// CREATE EVENT FOR SENDER
-		CreatedMTP(msg.sender, amountOfMTP);
-	}
-	
-	
-	// CHANGE PARAMETERS METHODS
-	function transferEther(address addressToSendTo, uint256 value) {
-		require(msg.sender == ownerAddress);
-		addressToSendTo.transfer(value);
-	}	
-	function changeAllowInvestment(bool _allowInvestment) {
-		require(msg.sender == ownerAddress);
-		allowInvestment = _allowInvestment;
-	}
-	function changeSaleTimes(uint256 _saleStartTime, uint256 _saleEndTime) {
-		require(msg.sender == ownerAddress);
-		saleStartTime = _saleStartTime;
-		saleEndTime	= _saleEndTime;
-	}
-	function changeEtherBonuses(uint256 _lowEtherBonusLimit, uint256 _lowEtherBonusValue, uint256 _midEtherBonusLimit, uint256 _midEtherBonusValue, uint256 _highEtherBonusLimit, uint256 _highEtherBonusValue) {
-		require(msg.sender == ownerAddress);
-		lowEtherBonusLimit = _lowEtherBonusLimit;
-		lowEtherBonusValue = _lowEtherBonusValue;
-		midEtherBonusLimit = _midEtherBonusLimit;
-		midEtherBonusValue = _midEtherBonusValue;
-		highEtherBonusLimit = _highEtherBonusLimit;
-		highEtherBonusValue = _highEtherBonusValue;
-	}
-	function changeTimeBonuses(uint256 _highTimeBonusLimit, uint256 _highTimeBonusValue, uint256 _midTimeBonusLimit, uint256 _midTimeBonusValue, uint256 _lowTimeBonusLimit, uint256 _lowTimeBonusValue) {
-		require(msg.sender == ownerAddress);
-		highTimeBonusLimit = _highTimeBonusLimit;
-		highTimeBonusValue = _highTimeBonusValue;
-		midTimeBonusLimit = _midTimeBonusLimit;
-		midTimeBonusValue = _midTimeBonusValue;
-		lowTimeBonusLimit = _lowTimeBonusLimit;
-		lowTimeBonusValue = _lowTimeBonusValue;
-	}
-
+    function() external payable {
+        createTokens();
+    }
+    
 }
