@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x944b41a5fcdda07b7b530f2e56bbd8431ffe19c0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract ERC20Token at 0x4853f3f995b2922179af67329ee4c3e507e53bb3
 */
 pragma solidity ^0.4.4;
 
@@ -98,20 +98,32 @@ contract ERC20Token is StandardToken {
         throw;
     }
 
-    
-    string public name;              
-    uint8 public decimals;               
-    string public symbol;                 
-    string public version = 'H1.0';
+    /* Public variables of the token */
 
+    /*
+    NOTE:
+    The following variables are OPTIONAL vanities. One does not have to include them.
+    They allow one to customise the token contract & in no way influences the core functionality.
+    Some wallets/interfaces might not even bother to look at this information.
+    */
+    string public name;                   //fancy name: eg Simon Bucks
+    uint8 public decimals;                //How many decimals to show. ie. There could 1000 base units with 3 decimals. Meaning 0.980 SBX = 980 base units. It's like comparing 1 wei to 1 ether.
+    string public symbol;                 //An identifier: eg SBX
+    string public version = 'H1.0';       //human 0.1 standard. Just an arbitrary versioning scheme.
+
+//
+// CHANGE THESE VALUES FOR YOUR TOKEN
+//
+
+//make sure this function name matches the contract name above. So if you're token is called TutorialToken, make sure the //contract name above is also TutorialToken instead of ERC20Token
 
     function ERC20Token(
         ) {
-        balances[msg.sender] = 326000000000000000000000000;                
-        totalSupply = 326000000000000000000000000;                       
-        name = "tezzrtt Coin";                                    
-        decimals = 18;                            
-        symbol = "TRTS";                              
+        balances[msg.sender] = 10000000000000;               // Give the creator all initial tokens (100000 for example)
+        totalSupply = 10000000000000;                        // Update total supply (100000 for example)
+        name = "TECHROD";                                   // Set the name for display purposes
+        decimals = 2;                            // Amount of decimals for display purposes
+        symbol = "TKD";                               // Set the symbol for display purposes
     }
 
     /* Approves and then calls the receiving contract */
