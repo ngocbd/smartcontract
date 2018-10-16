@@ -1,6 +1,8 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleToken at 0xfe022ed8253d921f42c980205f5a7e644fbddaa8
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract CrowdsaleToken at 0xf13f1023cfd796ff7909e770a8ddb12d33cadc08
 */
+pragma solidity ^0.4.6;
+
 /*
  * ERC20 interface
  * see https://github.com/ethereum/EIPs/issues/20
@@ -16,8 +18,6 @@ contract ERC20 {
   event Transfer(address indexed from, address indexed to, uint value);
   event Approval(address indexed owner, address indexed spender, uint value);
 }
-
-
 
 /**
  * Math operations with safety checks
@@ -134,10 +134,6 @@ contract StandardToken is ERC20, SafeMath {
 
 }
 
-
-
-
-
 /**
  * Upgrade agent interface inspired by Lunyr.
  *
@@ -156,7 +152,6 @@ contract UpgradeAgent {
   function upgradeFrom(address _from, uint256 _value) public;
 
 }
-
 
 /**
  * A token upgrade mechanism where users can opt-in amount of tokens to the next smart contract revision.
@@ -283,9 +278,6 @@ contract UpgradeableToken is StandardToken {
 
 }
 
-
-
-
 /*
  * Ownable
  *
@@ -313,9 +305,6 @@ contract Ownable {
   }
 
 }
-
-
-
 
 /**
  * Define interface for releasing the token transfer after a successful crowdsale.
@@ -401,46 +390,6 @@ contract ReleasableToken is ERC20, Ownable {
 
 }
 
-
-
-
-
-/**
- * Safe unsigned safe math.
- *
- * https://blog.aragon.one/library-driven-development-in-solidity-2bebcaf88736#.750gwtwli
- *
- * Originally from https://raw.githubusercontent.com/AragonOne/zeppelin-solidity/master/contracts/SafeMathLib.sol
- *
- * Maintained here until merged to mainline zeppelin-solidity.
- *
- */
-library SafeMathLib {
-
-  function times(uint a, uint b) returns (uint) {
-    uint c = a * b;
-    assert(a == 0 || c / a == b);
-    return c;
-  }
-
-  function minus(uint a, uint b) returns (uint) {
-    assert(b <= a);
-    return a - b;
-  }
-
-  function plus(uint a, uint b) returns (uint) {
-    uint c = a + b;
-    assert(c>=a);
-    return c;
-  }
-
-  function assert(bool assertion) private {
-    if (!assertion) throw;
-  }
-}
-
-
-
 /**
  * A token that can increase its supply by another contract.
  *
@@ -450,7 +399,6 @@ library SafeMathLib {
  */
 contract MintableToken is StandardToken, Ownable {
 
-  using SafeMathLib for uint;
 
   bool public mintingFinished = false;
 
@@ -465,10 +413,10 @@ contract MintableToken is StandardToken, Ownable {
    * Only callably by a crowdsale contract (mint agent).
    */
   function mint(address receiver, uint amount) onlyMintAgent canMint public {
-    totalSupply = totalSupply.plus(amount);
-    balances[receiver] = balances[receiver].plus(amount);
+    totalSupply = safeAdd(totalSupply, amount);
+    balances[receiver] = safeAdd(balances[receiver], amount);
 
-    // This will make the mint transaction apper in EtherScan.io
+    // This will make the mint transaction appear in EtherScan.io
     // We can remove this after there is a standardized minting event
     Transfer(0, receiver, amount);
   }
@@ -496,6 +444,44 @@ contract MintableToken is StandardToken, Ownable {
   }
 }
 
+/**
+ * A token that can be revoked before then end of the crowdsale.
+ */
+contract WWAMBountyToken is StandardToken, Ownable {
+
+  /** List of agents that are allowed to revoke tokens */
+  mapping (address => bool) public bountyAgents;
+  
+  event BountyAgentChanged(address addr, bool state  );
+  
+  /*
+  * Function to revoke tokens in case the terms and conditions of the bounty campaign are violated by an user after tokens were assigned
+  */
+  function revokeTokens(address receiver, uint tokenAmount) onlyBountyAgent {
+      if (balances[receiver] >= tokenAmount) {
+	    totalSupply = safeSub(totalSupply, tokenAmount);
+	    balances[receiver] = safeSub(balances[receiver], tokenAmount);
+      }
+  }
+  
+   /**
+   * Owner can allow a crowdsale contract to revoke tokens.
+   */
+  function setBountyAgent(address addr, bool state) onlyOwner public {
+    bountyAgents[addr] = state;
+    BountyAgentChanged(addr, state);
+  }
+  
+  modifier onlyBountyAgent() {
+    // Only crowdsale contracts are allowed to revoke tokens
+    if(!bountyAgents[msg.sender]) {
+        throw;
+    }
+    _;
+  }
+  
+}
+
 
 
 /**
@@ -509,9 +495,8 @@ contract MintableToken is StandardToken, Ownable {
  * - The token can be capped (supply set in the constructor) or uncapped (crowdsale contract can mint new tokens)
  *
  */
-contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
+contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken, WWAMBountyToken {
 
-  /** Name and symbol were updated. */
   event UpdatedTokenInformation(string newName, string newSymbol);
 
   string public name;
@@ -524,14 +509,8 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
    * Construct the token.
    *
    * This token must be created through a team multisig wallet, so that it is owned by that wallet.
-   *
-   * @param _name Token name
-   * @param _symbol Token symbol - should be all caps
-   * @param _initialSupply How many tokens we start with
-   * @param _decimals Number of decimal places
-   * @param _mintable Are new tokens created over the crowdsale or do we distribute only the initial supply? Note that when the token becomes transferable the minting always ends.
    */
-  function CrowdsaleToken(string _name, string _symbol, uint _initialSupply, uint _decimals, bool _mintable)
+  function CrowdsaleToken(string _name, string _symbol, uint _initialSupply, uint _decimals)
     UpgradeableToken(msg.sender) {
 
     // Create any address, can be transferred
@@ -548,18 +527,6 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
 
     // Create initially all balance on the team multisig
     balances[owner] = totalSupply;
-
-    if(totalSupply > 0) {
-      Minted(owner, totalSupply);
-    }
-
-    // No more new supply allowed after the token creation
-    if(!_mintable) {
-      mintingFinished = true;
-      if(totalSupply == 0) {
-        throw; // Cannot create a token without supply and no minting
-      }
-    }
   }
 
   /**
@@ -574,17 +541,11 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
    * Allow upgrade agent functionality kick in only if the crowdsale was success.
    */
   function canUpgrade() public constant returns(bool) {
-    return released && super.canUpgrade();
+    return released;
   }
 
   /**
-   * Owner can update token information here.
-   *
-   * It is often useful to conceal the actual token association, until
-   * the token operations, like central issuance or reissuance have been completed.
-   *
-   * This function allows the token owner to rename the token after the operations
-   * have been completed and then point the audience to use the token contract.
+   * Owner can update token information here
    */
   function setTokenInformation(string _name, string _symbol) onlyOwner {
     name = _name;
