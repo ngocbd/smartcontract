@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hubcoin at 0xff761ce7d92f882c244142f5779475701ea3c393
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hubcoin at 0x6e40178330c43081c5a8815ed40e9e36b0089495
 */
 pragma solidity ^0.4.13;
 
@@ -258,7 +258,7 @@ contract Hubcoin is StandardToken, Pausable {
   uint256 public constant INITIAL_SUPPLY = 326804 * 10**uint256(decimals); // 326804 HUB specified in Grains
   uint256 public constant total_freeze_term = 86400*365;   //Freeze duration
   uint256 public constant launch_date = 1501545600;
-  uint256 public constant owner_freeze_start = 1506696606;
+  uint256 public constant owner_freeze_start = 1506782212;
   uint256 public constant owner_freeze_term = 3600*24;
 
   mapping (address => uint256) public frozenAccount;
