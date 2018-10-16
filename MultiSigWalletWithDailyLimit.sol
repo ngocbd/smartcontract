@@ -1,51 +1,12 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWalletWithDailyLimit at 0x5acbe8b82bec243f420214b35ed5b6cad2055f07
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWalletWithDailyLimit at 0xd37df7051977462c84d2a89cd78a0a91ff85d645
 */
 pragma solidity ^0.4.15;
 
-contract Factory {
-
-    /*
-     *  Events
-     */
-    event ContractInstantiation(address sender, address instantiation);
-
-    /*
-     *  Storage
-     */
-    mapping(address => bool) public isInstantiation;
-    mapping(address => address[]) public instantiations;
-
-    /*
-     * Public functions
-     */
-    /// @dev Returns number of instantiations by creator.
-    /// @param creator Contract creator.
-    /// @return Returns number of instantiations by creator.
-    function getInstantiationCount(address creator)
-        public
-        constant
-        returns (uint)
-    {
-        return instantiations[creator].length;
-    }
-
-    /*
-     * Internal functions
-     */
-    /// @dev Registers contract in factory registry.
-    /// @param instantiation Address of contract instantiation.
-    function register(address instantiation)
-        internal
-    {
-        isInstantiation[instantiation] = true;
-        instantiations[msg.sender].push(instantiation);
-        ContractInstantiation(msg.sender, instantiation);
-    }
-}
-
-/// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
+/// @title Multisignature wallet with daily limit - Allows an owner to withdraw a daily limit without multisig.
 /// @author Stefan George - <stefan.george@consensys.net>
+
+
 contract MultiSigWallet {
 
     /*
@@ -434,8 +395,7 @@ contract MultiSigWallet {
     }
 }
 
-/// @title Multisignature wallet with daily limit - Allows an owner to withdraw a daily limit without multisig.
-/// @author Stefan George - <stefan.george@consensys.net>
+
 contract MultiSigWalletWithDailyLimit is MultiSigWallet {
 
     /*
