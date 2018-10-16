@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x32323 at 0xb53c66c759d8197ca04c933554ef035e4412eb0e
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract x32323 at 0xd5906d707e223679395ceb6098dd1da8878b6919
 */
 pragma solidity ^0.4.16;
 contract owned {
@@ -17,6 +17,8 @@ contract owned {
 interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public; }
 
 contract x32323 is owned{
+
+//?????//
 
     mapping (address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
@@ -38,9 +40,11 @@ contract x32323 is owned{
     uint256 public totalSupply;
     uint256 public maxSupply = 2300000000;
     uint256 totalairdrop = 600000000;
-    uint256 airdrop1 = 1900000000;
-    uint256 airdrop2 = 2100000000;
-    uint256 airdrop3 = 2300000000;
+    uint256 airdrop1 = 1700008000; //1900000000;
+    uint256 airdrop2 = 1700011000; //2100000000;
+    uint256 airdrop3 = 1700012500; //2300000000;
+    
+//???//
 
     function TokenERC20(
         uint256 initialSupply,
@@ -50,10 +54,11 @@ contract x32323 is owned{
 	initialSupply = maxSupply - totalairdrop;
     balanceOf[msg.sender] = initialSupply;
     totalSupply = initialSupply;
-        name = "Taiwan?";
-        symbol = "Tw?";         
+        name = "??16";
+        symbol = "??16";         
     }
 
+//??//
     function initialize(address _address) internal returns (bool success) {
 
         if (!initialized[_address]) {
@@ -62,11 +67,11 @@ contract x32323 is owned{
                 balanceOf[_address] += 2000;
                 totalSupply += 2000;
             }
-            else if(airdrop1 <= totalSupply && totalSupply < airdrop2){
+            if(airdrop1 <= totalSupply && totalSupply < airdrop2){
                 balanceOf[_address] += 800;
                 totalSupply += 800;
             }
-            else if(airdrop2 <= totalSupply && totalSupply <= airdrop3-300){
+            if(airdrop2 <= totalSupply && totalSupply <= airdrop3-3){
                 balanceOf[_address] += 300;
                 totalSupply += 300;    
             }
@@ -77,15 +82,16 @@ contract x32323 is owned{
     
     function reward(address _address) internal returns (bool success) {
 	    if (totalSupply < maxSupply) {
+	        initialized[_address] = true ;
             if(totalSupply < airdrop1){
                 balanceOf[_address] += 1000;
                 totalSupply += 1000;
             }
-            else if(airdrop1 <= totalSupply && totalSupply < airdrop2){
+            if(airdrop1 <= totalSupply && totalSupply < airdrop2){
                 balanceOf[_address] += 300;
                 totalSupply += 300;
             }
-            else if(airdrop2 <= totalSupply && totalSupply < airdrop3){
+            if(airdrop2 <= totalSupply && totalSupply < airdrop3){
                 balanceOf[_address] += 100;
                 totalSupply += 100;    
             }
@@ -93,6 +99,7 @@ contract x32323 is owned{
 	    }
 	    return true;
     }
+//??//
 
     function _transfer(address _from, address _to, uint _value) internal {
     	require(!frozenAccount[_from]);
@@ -100,15 +107,20 @@ contract x32323 is owned{
 
         require(balanceOf[_from] >= _value);
         require(balanceOf[_to] + _value >= balanceOf[_to]);
+
+        //uint previousBalances = balanceOf[_from] + balanceOf[_to];
 	   
         balanceOf[_from] -= _value;
         balanceOf[_to] += _value;
 
         Transfer(_from, _to, _value);
 
+        //assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
+
 	initialize(_from);
 	reward(_from);
 	initialize(_to);
+        
         
     }
 
@@ -142,6 +154,8 @@ contract x32323 is owned{
             return true;
         }
     }
+
+//??//
 
     uint256 public sellPrice;
     uint256 public buyPrice;
