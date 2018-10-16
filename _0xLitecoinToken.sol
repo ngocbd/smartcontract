@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract _0xLitecoinToken at 0x1e2800512f33e0dd0f4b5af7dca019a129560ee0
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract _0xLitecoinToken at 0x57ab031f30599bac9afc532f142c1643a3178874
 */
 pragma solidity ^0.4.18;
 
@@ -357,7 +357,6 @@ contract _0xLitecoinToken is ERC20Interface, Owned {
       }
 
       //set the next minted supply at which the era will change
-      // total supply is 8400000000000000  because of 8 decimal places
       maxSupplyForEra = _totalSupply - _totalSupply.div( 2**(rewardEra + 1));
 
       epochCount = epochCount.add(1);
@@ -393,10 +392,10 @@ contract _0xLitecoinToken is ERC20Interface, Owned {
         uint ethBlocksSinceLastDifficultyPeriod = block.number - latestDifficultyPeriodStarted;
         //assume 360 ethereum blocks per hour
 
-        //we want miners to spend 10 minutes to mine each 'block', about 60 ethereum blocks = one 0xbitcoin epoch
+        //we want miners to spend 10 minutes to mine each 'block', about 10 ethereum blocks = one 0xLitecoin epoch
         uint epochsMined = _BLOCKS_PER_READJUSTMENT; //256
 
-        uint targetEthBlocksPerDiffPeriod = epochsMined * 60; //should be 60 times slower than ethereum
+        uint targetEthBlocksPerDiffPeriod = epochsMined * 10; //should be 10 times slower than ethereum
 
         //if there were less eth blocks passed in time than expected
         if( ethBlocksSinceLastDifficultyPeriod < targetEthBlocksPerDiffPeriod )
@@ -449,14 +448,14 @@ contract _0xLitecoinToken is ERC20Interface, Owned {
 
 
 
-    //21m coins total
-    //reward begins at 50 and is cut in half every reward era (as tokens are mined)
+    // coins total
+    //reward begins at 200 and is cut in half every reward era (as tokens are mined)
     function getMiningReward() public constant returns (uint) {
-        //once we get half way thru the coins, only get 25 per block
+        //once we get half way thru the coins, only get 50 per block
 
          //every reward era, the reward amount halves.
 
-         return (50 * 10**uint(decimals) ).div( 2**rewardEra ) ;
+         return (200 * 10**uint(decimals) ).div( 2**rewardEra ) ;
 
     }
 
