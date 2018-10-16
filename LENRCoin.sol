@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LENRCoin at 0x2ccdcfe7cc79174417480463ed429e7e48fd8341
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract LENRCoin at 0x99c7361f4f86a5a179ea35fed9ebf02e95fec0ed
 */
 pragma solidity ^0.4.17;
 
