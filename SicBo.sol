@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SicBo at 0x3ad57f64f9191edd78054d93f178532ab3fe933a
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SicBo at 0x758cd607345629be5599c4259782db336613fb39
 */
 pragma solidity ^0.4.16;
 
@@ -125,7 +125,7 @@ contract SicBo is Owned {
             
             uint bet_amount = uint(local_.Bets[ii]) * 10000000000000000;
             
-            if(ii>=23)
+            if(ii >= 23)
                 if (dice1 == ii - 22 || dice2 == ii - 22 || dice3 == ii - 22) {
                     uint8 count = 1;
                     if (dice1 == ii - 22) count++;
@@ -134,7 +134,7 @@ contract SicBo is Owned {
                     amount += count * bet_amount;
                 }
 
-            if(ii<=22)
+            if(ii <= 8)
                 if (dice1 == dice2 && dice2 == dice3 && dice1 == dice3) {
                     if (ii == 8) {
                         amount += 31 * bet_amount;
@@ -154,53 +154,56 @@ contract SicBo is Owned {
                     if (ii == 1 && total >= 11) {
                         amount += 2 * bet_amount;
                     }
-        
-                    if(ii>=9){
-                        if (ii == 9 && total == 4) {
-                            amount += 61 * bet_amount;
-                        }
-                        if (ii == 10 && total == 5) {
-                            amount += 31 * bet_amount;
-                        }
-                        if (ii == 11 && total == 6) {
-                            amount += 18 * bet_amount;
-                        }
-                        if (ii == 12 && total == 7) {
-                            amount += 13 * bet_amount;
-                        }
-                        if (ii == 13 && total == 8) {
-                            amount += 9 * bet_amount;
-                        }
-                        if (ii == 14 && total == 9) {
-                            amount += 8 * bet_amount;
-                        }
-                        if (ii == 15 && total == 10) {
-                            amount += 7 * bet_amount;
-                        }
-                        if (ii == 16 && total == 11) {
-                            amount += 7 * bet_amount;
-                        }
-                        if (ii == 17 && total == 12) {
-                            amount += 8 * bet_amount;
-                        }
-                        if (ii == 18 && total == 13) {
-                            amount += 9 * bet_amount;
-                        }
-                        if (ii == 19 && total == 14) {
-                            amount += 13 * bet_amount;
-                        }
-                        if (ii == 20 && total == 15) {
-                            amount += 18 * bet_amount;
-                        }
-                        if (ii == 21 && total == 16) {
-                            amount += 31 * bet_amount;
-                        }
-                        if (ii == 22 && total == 17) {
-                            amount += 61 * bet_amount;
-                        }
-                    }
                 }
+                
+            if(ii >= 9 && ii <= 22){
+                if (ii == 9 && total == 4) {
+                    amount += 61 * bet_amount;
+                }
+                if (ii == 10 && total == 5) {
+                    amount += 31 * bet_amount;
+                }
+                if (ii == 11 && total == 6) {
+                    amount += 18 * bet_amount;
+                }
+                if (ii == 12 && total == 7) {
+                    amount += 13 * bet_amount;
+                }
+                if (ii == 13 && total == 8) {
+                    amount += 9 * bet_amount;
+                }
+                if (ii == 14 && total == 9) {
+                    amount += 8 * bet_amount;
+                }
+                if (ii == 15 && total == 10) {
+                    amount += 7 * bet_amount;
+                }
+                if (ii == 16 && total == 11) {
+                    amount += 7 * bet_amount;
+                }
+                if (ii == 17 && total == 12) {
+                    amount += 8 * bet_amount;
+                }
+                if (ii == 18 && total == 13) {
+                    amount += 9 * bet_amount;
+                }
+                if (ii == 19 && total == 14) {
+                    amount += 13 * bet_amount;
+                }
+                if (ii == 20 && total == 15) {
+                    amount += 18 * bet_amount;
+                }
+                if (ii == 21 && total == 16) {
+                    amount += 31 * bet_amount;
+                }
+                if (ii == 22 && total == 17) {
+                    amount += 61 * bet_amount;
+                }
+            }
         }
+        
+        Result(secretKey_D_hash, secretKey_D, TicketPool[secretKey_D_hash].Buyer, dice1, dice2, dice3, amount, block.timestamp);
+        TicketPool[secretKey_D_hash].isPlay = true;
         
         if(amount != 0){
             TicketPool[secretKey_D_hash].Result = amount;
@@ -215,8 +218,6 @@ contract SicBo is Owned {
             TicketPool[secretKey_D_hash].isPay = true;
         }
         
-        Result(secretKey_D_hash, secretKey_D, TicketPool[secretKey_D_hash].Buyer, dice1, dice2, dice3, amount, block.timestamp);
-        TicketPool[secretKey_D_hash].isPlay = true;
     }
     
     function () public payable {
