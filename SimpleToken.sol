@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleToken at 0x0181f5dbad13aaf27459d3f4adbae7d5545e7c3d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract SimpleToken at 0xdd91f935b89f9ceaa56f549db5747d37c4f8bc6f
 */
 pragma solidity ^0.4.18;
 
@@ -224,11 +224,11 @@ contract StandardToken is ERC20, BasicToken {
  */
 contract SimpleToken is StandardToken {
 
-    string public constant name = "mplus"; // solium-disable-line uppercase
-    string public constant symbol = "MPS"; // solium-disable-line uppercase
+    string public constant name = "nine stars coin"; // solium-disable-line uppercase
+    string public constant symbol = "NSC"; // solium-disable-line uppercase
     uint8 public constant decimals = 18; // solium-disable-line uppercase
 
-    uint256 public constant INITIAL_SUPPLY = 13000000000 * (10 ** uint256(decimals));
+    uint256 public constant INITIAL_SUPPLY = 3000000000 * (10 ** uint256(decimals));
 
     /**
     * @dev Constructor that gives msg.sender all of existing tokens.
