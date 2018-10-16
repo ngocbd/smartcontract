@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UlordToken at 0x6e77c68404cb4b86b1cf7ae4ade8d260b4f9d5ce
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract UlordToken at 0xc89b83255efb6f167d2a1cc03a571c0a54e267c9
 */
 pragma solidity ^0.4.16;
 
@@ -8,7 +8,7 @@ interface tokenRecipient { function receiveApproval(address _from, uint256 _valu
 contract UlordToken {
     
     string public name = "Ulord Token";
-    string public symbol = "UC";
+    string public symbol = "UT";
     uint8  public decimals = 18;
     
     uint256 public totalSupply;
