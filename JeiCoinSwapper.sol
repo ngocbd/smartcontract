@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JeiCoinSwapper at 0x3cca26f2246d7fa442c005e8d3344e1875949187
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract JeiCoinSwapper at 0xc196afbb7357c445313088af86e6275c31b7f083
 */
 pragma solidity ^0.4.23;
 
@@ -181,28 +181,4 @@ contract JeiCoinSwapper {
         if (z > x ) z = 0;
     }
 
-    // Admin functions
-
-    function lock() onlyOwner public {
-        locked = true;
-    }
-
-    function unLock() onlyOwner public {
-        locked = false;
-    }
-
-    function changeOwner(address _owner) onlyOwner public {
-        Owner = _owner;
-    }
-
-    function changeRoot(address _root) onlyRoot public {
-        rootAddress = _root;
-    }
-
-    // To send ERC20 tokens sent accidentally
-    function sendToken(address _token,address _to , uint _value) onlyOwner returns(bool) {
-        ERC20Basic Token = ERC20Basic(_token);
-        require(Token.transfer(_to, _value));
-        return true;
-    }
 }
