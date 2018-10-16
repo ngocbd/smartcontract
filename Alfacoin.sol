@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AlfaCoin at 0xaadd1ce74c5ad4ce726d424ef69f7ce1f207f5dd
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract AlfaCoin at 0x1369be5da1860f164d7ff05c565b846ede9b1323
 */
 pragma solidity ^0.4.4;
 
@@ -92,11 +92,7 @@ contract AlfaCoin is StandardToken { // CHANGE THIS. Update the contract name.
     /* Public variables of the token */
 
     /*
-    NOTE:*************************A L F A C O I N  *****************************
-    ********A L F A C O I N************A L F A C O I N****
-********A L F A C O I N**************A L F A C O I N***********A L F A C O I N***********A L F A C O I N***
-    ********A L F A C O I N **************A L F A C O I N ***********A L F A C O I N*************A L F A C O I N*
-*************A L F A C O I N**************A L F A C O I N   
+    NOTE    
    */
     string public name;                   // Token 
     uint8 public decimals;                // How many decimals to show. To be standard complicant keep it 18
@@ -108,13 +104,13 @@ contract AlfaCoin is StandardToken { // CHANGE THIS. Update the contract name.
 
     // This is a constructor function 
     // which means the following function name has to match the contract name declared above
-    function InfinitiEstate() {
+    function AlfaCoin () {
         balances[msg.sender] = 500000000;               // Give the creator all initial tokens. This is set to 1000 for example. If you want your initial tokens to be X and your decimal is 5, set this value to X * 100000. (CHANGE THIS)
-        totalSupply = 500000000;                        // Update total supply (1000 for example) (A L F A C O I N)
-        name = "AlfaCoin";                                   // Set the name for display purposes (A L F A C O I N)
-        decimals = 0;                                               // Amount of decimals for display purposes (A L F A C O I N)
-        symbol = "ALFA";                                             // Set the symbol for display purposes (A L F A C O I N)
-                                              // Set the price of your token for the ICO (A L F A C O I N)
+        totalSupply = 500000000;                        // Update total supply (1000 for example) (AlfaCoin)
+        name = "AlfaCoin";                                   // Set the name for display purposes (AlfaCoin)
+        decimals = 0;                                               // Amount of decimals for display purposes (AlfaCoin)
+        symbol = "alfa";                                             // Set the symbol for display purposes (AlfaCoin)
+                                              // Set the price of your token for the ICO (AlfaCoin)
         fundsWallet = msg.sender;                                    // The owner of the contract gets ETH
     }
                                 
