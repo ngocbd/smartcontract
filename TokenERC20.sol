@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x6e45155b50ffdb802872830613b745b156922b20
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenERC20 at 0x224220cd7c122a2c2ba47334143aaeab56632191
 */
 pragma solidity ^0.4.16;
 
@@ -31,8 +31,8 @@ contract TokenERC20 {
     function TokenERC20() public {
         totalSupply = 50000000 * 10 ** uint256(decimals);  // Update total supply with the decimal amount
         balanceOf[msg.sender] = totalSupply;                // Give the creator all initial tokens
-        name = "RBC";                                   // Set the name for display purposes
-        symbol = "RBC(radr)";                               // Set the symbol for display purposes
+        name = "RBC(radr)";                                   // Set the name for display purposes
+        symbol = "RBC";                               // Set the symbol for display purposes
     }
 
     /**
