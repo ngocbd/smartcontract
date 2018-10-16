@@ -1,26 +1,10 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Utils at 0xaec7fa67e32f9ac53ce0684f508510324c018dcc
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Utils at 0x7999163f9ab5c4c26194694a07b839c31f266ab2
 */
-pragma solidity ^0.4.18;
+pragma solidity ^0.4.11;
 
-
-contract makerDAO {
-    function read() view public returns(bytes32);
-}
-
-
-/// @title Kyber constants contract
 contract Utils {
-    function toUint(bytes32 x) view public returns(uint) {
-        return uint(x);
-    }
-    
-    function test1() view public returns(uint){
-        bytes32 y = bytes32(0x123456);
-        return toUint(y);
-    }
-    
-    function testDAO() view public returns(uint) {
-        return toUint(makerDAO(0x729D19f657BD0614b4985Cf1D82531c67569197B).read());
+    function currentTime() public view returns (uint256){
+        return uint256(now);
     }
 }
