@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MoonInc at 0xedfb84a94051f49b9c65cee01a98d1fd802f3e6d
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MoonInc at 0x21adea9cae9315b037dc6403af64f3d54fce3223
 */
 pragma solidity 0.4.20;
 
@@ -62,7 +62,6 @@ library SafeMath {
   }
   
 }
-
 
 contract ProductionUnitToken {
 
@@ -604,7 +603,6 @@ contract ProductionUnitToken {
 
 }
 
-
 contract MoonInc {
 
     string public constant name  = "Cookie | Moon, Inc.";
@@ -785,10 +783,11 @@ contract MoonInc {
     }
 
     function updatePlayersCookie(address player) internal {
-        roughSupply += balanceOfTotalUnclaimedCookie();
-        cookieBalance[player] += balanceOfUnclaimedCookie(player);
+        uint256 cookieGain = balanceOfUnclaimedCookie(player);
         lastTotalCookieSaveTime = block.timestamp;
         lastCookieSaveTime[player] = block.timestamp;
+        roughSupply += cookieGain;
+        cookieBalance[player] += cookieGain;
     }
 
     // Sell all cookies, the eth earned is calculated by the proportion of cookies owned.
