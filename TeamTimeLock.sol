@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeamTimeLock at 0x368d6ddba4569147c55fa3a5c07cd387eeb6f697
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TeamTimeLock at 0xd103af791780a16ff05ea889860898ed38daed41
 */
 pragma solidity ^0.4.19;
 
@@ -29,7 +29,7 @@ contract TeamTimeLock {
 
   function TeamTimeLock() public {
 
-    owner = 0xd0b4b0165320f9Eeaf683174A5A3Ac93309c37d7;  //Radostina
+    owner = 0x554BCa036a9D200a933769132AE8e7eCFAeb5c51;  //Elena
     startTime = now;
     tokenAddress = exToken(0x08d32b0da63e2C3bcF8019c9c5d849d7a9d791e6);
   }
