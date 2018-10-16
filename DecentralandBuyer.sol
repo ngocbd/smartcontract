@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DecentralandBuyer at 0xeabafcdc7a7ad024b3bfa76c5d9d768dd1c87a46
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DecentralandBuyer at 0x4Dc868D79611C2bdcA51dEE62873EB3A31423B47
 */
 pragma solidity ^0.4.13;
 
@@ -36,13 +36,13 @@ contract DecentralandBuyer {
   // SHA3 hash of kill switch password.
   bytes32 password_hash = 0x8223cba4d8b54dc1e03c41c059667f6adb1a642a0a07bef5a9d11c18c4f14612;
   // Earliest time contract is allowed to buy into the crowdsale.
-  uint256 earliest_buy_block = 4170600;
+  uint256 earliest_buy_block = 4170700;
   // The developer address.
   address developer = 0x000Fb8369677b3065dE5821a86Bc9551d5e5EAb9;
   // The crowdsale address.
-  address public sale = 0xd9c7a2ccc6fb89dc0528a98143fc7AE8dDEebc39;
+  address public sale = 0xA66d83716c7CFE425B44D0f7ef92dE263468fb3d;
   // The token address.
-  ERC20 public token = ERC20(0x4E878B358009CBe3DAf553fAfD0A17ddE226223d);
+  ERC20 public token = ERC20(0x0F5D2fB29fb7d3CFeE444a200298f468908cC942);
   
   // Allows the developer or anyone with the password to claim the bounty and shut down everything except withdrawals in emergencies.
   function activate_kill_switch(string password) {
