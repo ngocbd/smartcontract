@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EloPlayToken at 0xdfbfd64726b1b178ef8204ae4992f641f31c8248
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EloPlayToken at 0x13792a2a22333f8564945b1ee1f5b46a20c23a5d
 */
 pragma solidity ^0.4.11;
 
@@ -272,16 +272,6 @@ contract EloPlayToken is ERC20Token, Owned {
         uint256 new_total_supply, uint256 buy_price);
 
     /**
-     * Event fires when tokens are bought
-     *
-     * @param backer                    buyer
-     * @param amount                    total Ethers invested (in wei)
-     * @param isContribution            always true in our case
-     */
-    event FundTransfer(address backer, uint amount, bool isContribution);
-
-
-    /**
      * EloPlayToken contract constructor
      *
      * @param _start_ts         crowdsale start timestamp (unix)
@@ -463,7 +453,6 @@ contract EloPlayToken is ERC20Token, Owned {
         // Log events
         TokensBought(_participant, msg.value, totalEthers, tokens, additional_tokens,
             totalSupply, _buyPrice);
-        FundTransfer(_participant, msg.value, true);
         Transfer(0x0, _participant, tokens);
         Transfer(0x0, TARGET_TOKENS_ADDRESS, additional_tokens);
 
