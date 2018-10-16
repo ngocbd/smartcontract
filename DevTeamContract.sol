@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DevTeamContract at 0x2ed2746993f66b95625fcd3b0aac73b1e064ae33
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract DevTeamContract at 0x6bcc2993649dc9e4b5163db6aa41090edc4d941a
 */
 contract Transferable {
   function transfer(address to, uint256 value) public returns (bool);
