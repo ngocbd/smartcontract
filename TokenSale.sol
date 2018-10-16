@@ -1,7 +1,19 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0x7ad96a52a5ff08609c0b85ddb64c28dee20e93af
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract TokenSale at 0xf04436b2edaa1b777045e1eefc6dba8bd2aebab8
 */
 pragma solidity ^0.4.18;
+
+/**
+ * @title ERC20Basic
+ * @dev Simpler version of ERC20 interface
+ * @dev see https://github.com/ethereum/EIPs/issues/179
+ */
+contract ERC20Basic {
+  uint256 public totalSupply;
+  function balanceOf(address who) public view returns (uint256);
+  function transfer(address to, uint256 value) public returns (bool);
+  event Transfer(address indexed from, address indexed to, uint256 value);
+}
 
 /**
  * @title SafeMath
@@ -34,18 +46,6 @@ library SafeMath {
     assert(c >= a);
     return c;
   }
-}
-
-/**
- * @title ERC20Basic
- * @dev Simpler version of ERC20 interface
- * @dev see https://github.com/ethereum/EIPs/issues/179
- */
-contract ERC20Basic {
-  uint256 public totalSupply;
-  function balanceOf(address who) public view returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  event Transfer(address indexed from, address indexed to, uint256 value);
 }
 
 /**
@@ -176,28 +176,144 @@ contract StandardToken is ERC20, BasicToken {
 
 }
 
-/**
- * @title SimpleToken
- * @dev Very simple ERC20 Token example, where all tokens are pre-assigned to the creator.
- * Note they can later distribute these tokens as they wish using `transfer` and other
- * `StandardToken` functions.
- */
-contract OpportyToken is StandardToken {
+//
+// CPYToken is a standard ERC20 token with additional functionality:
+// - tokenSaleContract receives the whole balance for distribution
+// - Tokens are only transferable by the tokenSaleContract until finalization
+// - Token holders can burn their tokens after finalization
+//
+contract Token is StandardToken {
 
-  string public constant name = "OpportyToken";
-  string public constant symbol = "OPP";
-  uint8 public constant decimals = 18;
+    string  public constant name   = "COPYTRACK Token";
+    string  public constant symbol = "CPY";
 
-  uint256 public constant INITIAL_SUPPLY = 1000000000 * (10 ** uint256(decimals));
+    uint8 public constant   decimals = 18;
 
-  /**
-   * @dev Contructor that gives msg.sender all of existing tokens.
-   */
-  function OpportyToken() public {
-    totalSupply = INITIAL_SUPPLY;
-    balances[msg.sender] = INITIAL_SUPPLY;
-  }
+    uint256 constant EXA       = 10 ** 18;
+    uint256 public totalSupply = 100 * 10 ** 6 * EXA;
 
+    bool public finalized = false;
+
+    address public tokenSaleContract;
+
+    //
+    // EVENTS
+    //
+    event Finalized();
+
+    event Burnt(address indexed _from, uint256 _amount);
+
+
+    // Initialize the token with the tokenSaleContract and transfer the whole balance to it
+    function Token(address _tokenSaleContract)
+        public
+    {
+        // Make sure address is set
+        require(_tokenSaleContract != 0);
+
+        balances[_tokenSaleContract] = totalSupply;
+
+        tokenSaleContract = _tokenSaleContract;
+    }
+
+
+    // Implementation of the standard transfer method that takes the finalize flag into account
+    function transfer(address _to, uint256 _value)
+        public
+        returns (bool success)
+    {
+        checkTransferAllowed(msg.sender);
+
+        return super.transfer(_to, _value);
+    }
+
+
+    // Implementation of the standard transferFrom method that takes into account the finalize flag
+    function transferFrom(address _from, address _to, uint256 _value)
+        public
+        returns (bool success)
+    {
+        checkTransferAllowed(msg.sender);
+
+        return super.transferFrom(_from, _to, _value);
+    }
+
+
+    function checkTransferAllowed(address _sender)
+        private
+        view
+    {
+        if (finalized) {
+            // Every token holder should be allowed to transfer tokens once token was finalized
+            return;
+        }
+
+        // Only allow tokenSaleContract to transfer tokens before finalization
+        require(_sender == tokenSaleContract);
+    }
+
+
+    // Finalize method marks the point where token transfers are finally allowed for everybody
+    function finalize()
+        external
+        returns (bool success)
+    {
+        require(!finalized);
+        require(msg.sender == tokenSaleContract);
+
+        finalized = true;
+
+        Finalized();
+
+        return true;
+    }
+
+
+    // Implement a burn function to permit msg.sender to reduce its balance which also reduces totalSupply
+    function burn(uint256 _value)
+        public
+        returns (bool success)
+    {
+        require(finalized);
+        require(_value <= balances[msg.sender]);
+
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        totalSupply = totalSupply.sub(_value);
+
+        Burnt(msg.sender, _value);
+
+        return true;
+    }
+}
+
+contract TokenSaleConfig  {
+    uint public constant EXA = 10 ** 18;
+
+    uint256 public constant PUBLIC_START_TIME         = 1515542400; //Wed, 10 Jan 2018 00:00:00 +0000
+    uint256 public constant END_TIME                  = 1518220800; //Sat, 10 Feb 2018 00:00:00 +0000
+    uint256 public constant CONTRIBUTION_MIN          = 0.1 ether;
+    uint256 public constant CONTRIBUTION_MAX          = 2500.0 ether;
+
+    uint256 public constant COMPANY_ALLOCATION        = 40 * 10 ** 6 * EXA; //40 million;
+
+    Tranche[4] public tranches;
+
+    struct Tranche {
+        // How long this tranche will be active
+        uint untilToken;
+
+        // How many tokens per ether you will get while this tranche is active
+        uint tokensPerEther;
+    }
+
+    function TokenSaleConfig()
+        public
+    {
+        tranches[0] = Tranche({untilToken : 5000000 * EXA, tokensPerEther : 1554});
+        tranches[1] = Tranche({untilToken : 10000000 * EXA, tokensPerEther : 1178});
+        tranches[2] = Tranche({untilToken : 20000000 * EXA, tokensPerEther : 1000});
+        tranches[3] = Tranche({untilToken : 60000000, tokensPerEther : 740});
+    }
 }
 
 /**
@@ -242,353 +358,365 @@ contract Ownable {
 
 }
 
-/**
- * @title Pausable
- * @dev Base contract which allows children to implement an emergency stop mechanism.
- */
-contract Pausable is Ownable {
-  event Pause();
-  event Unpause();
+contract TokenSale is TokenSaleConfig, Ownable {
+    using SafeMath for uint;
 
-  bool public paused = false;
+    Token  public  tokenContract;
+
+    // We keep track of whether the sale has been finalized, at which point
+    // no additional contributions will be permitted.
+    bool public finalized = false;
+
+    // lookup for max wei amount per user allowed
+    mapping (address => uint256) public contributors;
+
+    // the total amount of wei raised
+    uint256 public totalWeiRaised = 0;
+
+    // the total amount of token raised
+    uint256 public totalTokenSold = 0;
+
+    // address where funds are collected
+    address public fundingWalletAddress;
+
+    // address which manages the whitelist (KYC)
+    mapping (address => bool) public whitelistOperators;
+
+    // lookup addresses for whitelist
+    mapping (address => bool) public whitelist;
 
 
-  /**
-   * @dev Modifier to make a function callable only when the contract is not paused.
-   */
-  modifier whenNotPaused() {
-    require(!paused);
-    _;
-  }
+    // early bird investments
+    address[] public earlyBirds;
 
-  /**
-   * @dev Modifier to make a function callable only when the contract is paused.
-   */
-  modifier whenPaused() {
-    require(paused);
-    _;
-  }
+    mapping (address => uint256) public earlyBirdInvestments;
 
-  /**
-   * @dev called by the owner to pause, triggers stopped state
-   */
-  function pause() onlyOwner whenNotPaused public {
-    paused = true;
-    Pause();
-  }
 
-  /**
-   * @dev called by the owner to unpause, returns to normal state
-   */
-  function unpause() onlyOwner whenPaused public {
-    paused = false;
-    Unpause();
-  }
-}
+    //
+    // MODIFIERS
+    //
 
-contract HoldSaleContract is Ownable {
-  using SafeMath for uint256;
-  // Addresses and contracts
-  OpportyToken public OppToken;
-
-  struct Holder {
-    bool isActive;
-    uint tokens;
-    uint holdPeriodTimestamp;
-    bool withdrawed;
-  }
-
-  mapping(address => Holder) public holderList;
-  mapping(uint => address) private holderIndexes;
-
-  mapping (uint => address) private assetOwners;
-  mapping (address => uint) private assetOwnersIndex;
-  uint private assetOwnersIndexes;
-
-  uint private holderIndex;
-  uint private holderWithdrawIndex;
-
-  uint private tokenAddHold;
-  uint private tokenWithdrawHold;
-
-  event TokensTransfered(address contributor , uint amount);
-  event Hold(address sender, address contributor, uint amount, uint holdPeriod);
-
-  modifier onlyAssetsOwners() {
-    require(assetOwnersIndex[msg.sender] > 0);
-    _;
-  }
-
-  /* constructor */
-  function HoldSaleContract(address _OppToken) public {
-    OppToken = OpportyToken(_OppToken);
-    addAssetsOwner(msg.sender);
-  }
-
-  function addHolder(address holder, uint tokens, uint timest) onlyAssetsOwners external {
-    if (holderList[holder].isActive == false) {
-      holderList[holder].isActive = true;
-      holderList[holder].tokens = tokens;
-      holderList[holder].holdPeriodTimestamp = timest;
-      holderIndexes[holderIndex] = holder;
-      holderIndex++;
-    } else {
-      holderList[holder].tokens += tokens;
-      holderList[holder].holdPeriodTimestamp = timest;
+    // Throws if purchase would exceed the min max contribution.
+    // @param _contribute address
+    // @param _weiAmount the amount intended to spend
+    modifier withinContributionLimits(address _contributorAddress, uint256 _weiAmount) {
+        uint256 totalContributionAmount = contributors[_contributorAddress].add(_weiAmount);
+        require(_weiAmount >= CONTRIBUTION_MIN);
+        require(totalContributionAmount <= CONTRIBUTION_MAX);
+        _;
     }
-    tokenAddHold += tokens;
-    Hold(msg.sender, holder, tokens, timest);
-  }
 
-  function getBalance() public constant returns (uint) {
-    return OppToken.balanceOf(this);
-  }
+    // Throws if called by any account not on the whitelist.
+    // @param _address Address which should execute the function
+    modifier onlyWhitelisted(address _address) {
+        require(whitelist[_address] == true);
+        _;
+    }
 
-  function unlockTokens() external {
-    address contributor = msg.sender;
+    // Throws if called by any account not on the whitelistOperators list
+    modifier onlyWhitelistOperator()
+    {
+        require(whitelistOperators[msg.sender] == true);
+        _;
+    }
 
-    if (holderList[contributor].isActive && !holderList[contributor].withdrawed) {
-      if (now >= holderList[contributor].holdPeriodTimestamp) {
-        if ( OppToken.transfer( msg.sender, holderList[contributor].tokens ) ) {
-          TokensTransfered(contributor,  holderList[contributor].tokens);
-          tokenWithdrawHold += holderList[contributor].tokens;
-          holderList[contributor].withdrawed = true;
-          holderWithdrawIndex++;
+    //Throws if sale is finalized or token sale end time has been reached
+    modifier onlyDuringSale() {
+        require(finalized == false);
+        require(currentTime() <= END_TIME);
+        _;
+    }
+
+    //Throws if sale is finalized
+    modifier onlyAfterFinalized() {
+        require(finalized);
+        _;
+    }
+
+
+
+    //
+    // EVENTS
+    //
+    event LogWhitelistUpdated(address indexed _account);
+
+    event LogTokensPurchased(address indexed _account, uint256 _cost, uint256 _tokens, uint256 _totalTokenSold);
+
+    event UnsoldTokensBurnt(uint256 _amount);
+
+    event Finalized();
+
+    // Initialize a new TokenSale contract
+    // @param _fundingWalletAddress Address which all ether will be forwarded to
+    function TokenSale(address _fundingWalletAddress)
+        public
+    {
+        //make sure _fundingWalletAddress is set
+        require(_fundingWalletAddress != 0);
+
+        fundingWalletAddress = _fundingWalletAddress;
+    }
+
+    // Connect a token to the tokenSale
+    // @param _fundingWalletAddress Address which all ether will be forwarded to
+    function connectToken(Token _tokenContract)
+        external
+        onlyOwner
+    {
+        require(totalTokenSold == 0);
+        require(tokenContract == address(0));
+
+        //make sure token is untouched
+        require(_tokenContract.balanceOf(address(this)) == _tokenContract.totalSupply());
+
+        tokenContract = _tokenContract;
+
+        // sent tokens to company vault
+        tokenContract.transfer(fundingWalletAddress, COMPANY_ALLOCATION);
+        processEarlyBirds();
+    }
+
+    function()
+        external
+        payable
+    {
+        uint256 cost = buyTokens(msg.sender, msg.value);
+
+        // forward contribution to the fundingWalletAddress
+        fundingWalletAddress.transfer(cost);
+    }
+
+    // execution of the actual token purchase
+    function buyTokens(address contributorAddress, uint256 weiAmount)
+        onlyDuringSale
+        onlyWhitelisted(contributorAddress)
+        withinContributionLimits(contributorAddress, weiAmount)
+        private
+    returns (uint256 costs)
+    {
+        assert(tokenContract != address(0));
+
+        uint256 tokensLeft = getTokensLeft();
+
+        // make sure we still have tokens left for sale
+        require(tokensLeft > 0);
+
+        uint256 tokenAmount = calculateTokenAmount(weiAmount);
+        uint256 cost = weiAmount;
+        uint256 refund = 0;
+
+        // we sell till we dont have anything left
+        if (tokenAmount > tokensLeft) {
+            tokenAmount = tokensLeft;
+
+            // calculate actual cost for partial amount of tokens.
+            cost = tokenAmount / getCurrentTokensPerEther();
+
+            // calculate refund for contributor.
+            refund = weiAmount.sub(cost);
         }
-      } else {
-        revert();
-      }
-    } else {
-      revert();
-    }
-  }
 
-  function addAssetsOwner(address _owner) public onlyOwner {
-    assetOwnersIndexes++;
-    assetOwners[assetOwnersIndexes] = _owner;
-    assetOwnersIndex[_owner] = assetOwnersIndexes;
-  }
-  function removeAssetsOwner(address _owner) public onlyOwner {
-    uint index = assetOwnersIndex[_owner];
-    delete assetOwnersIndex[_owner];
-    delete assetOwners[index];
-    assetOwnersIndexes--;
-  }
-  function getAssetsOwners(uint _index) onlyOwner public constant returns (address) {
-    return assetOwners[_index];
-  }
+        // transfer the tokens to the contributor address
+        tokenContract.transfer(contributorAddress, tokenAmount);
 
-  function getOverTokens() public onlyOwner {
-    require(getBalance() > (tokenAddHold - tokenWithdrawHold));
-    uint balance = getBalance() - (tokenAddHold - tokenWithdrawHold);
-    if(balance > 0) {
-      if(OppToken.transfer(msg.sender, balance)) {
-        TokensTransfered(msg.sender,  balance);
-      }
-    }
-  }
+        // keep track of the amount bought by the contributor
+        contributors[contributorAddress] = contributors[contributorAddress].add(cost);
 
-  function getTokenAddHold() onlyOwner public constant returns (uint) {
-    return tokenAddHold;
-  }
-  function getTokenWithdrawHold() onlyOwner public constant returns (uint) {
-    return tokenWithdrawHold;
-  }
-  function getHolderIndex() onlyOwner public constant returns (uint) {
-    return holderIndex;
-  }
-  function getHolderWithdrawIndex() onlyOwner public constant returns (uint) {
-    return holderWithdrawIndex;
-  }
-}
 
-contract TokenSale is Pausable {
-  using SafeMath for uint256;
+        //if we got a refund process it now
+        if (refund > 0) {
+            // transfer back everything that exceeded the amount of tokens left
+            contributorAddress.transfer(refund);
+        }
 
-  OpportyToken public token;
+        // increase stats
+        totalWeiRaised += cost;
+        totalTokenSold += tokenAmount;
 
-  HoldSaleContract public holdContract;
+        LogTokensPurchased(contributorAddress, cost, tokenAmount, totalTokenSold);
 
-  enum SaleState  { NEW, SALE, ENDED }
-  SaleState public state;
+        // If all tokens available for sale have been sold out, finalize the sale automatically.
+        if (tokensLeft.sub(tokenAmount) == 0) {
+            finalizeInternal();
+        }
 
-  uint public endDate;
-  uint public unholdDate;
-  uint public minimalContribution;
 
-  // address where funds are collected
-  address private wallet;
-
-  // total ETH collected
-  uint private ethRaised;
-
-  uint private price;
-  uint8 private bonus;
-
-  uint private tokenRaised;
-  bool public tokensTransferredToHold;
-
-  /* Events */
-  event SaleStarted(uint blockNumber);
-  event SaleEnded(uint blockNumber);
-  event FundTransfered(address contrib, uint amount);
-  event WithdrawedEthToWallet(uint amount);
-  event ManualChangeEndDate(uint beforeDate, uint afterDate);
-  event ManualChangeUnholdDate(uint beforeDate, uint afterDate);
-  event TokensTransferedToHold(address hold, uint amount);
-  event AddedToHolder(address sender, uint tokenAmount, uint holdTimestamp);
-  event ChangeMinAmount(uint oldMinAmount, uint minAmount);
-
-  mapping (uint => address) private assetOwners;
-  mapping (address => uint) private assetOwnersIndex;
-  uint private assetOwnersIndexes;
-
-  modifier onlyAssetsOwners() {
-    require(assetOwnersIndex[msg.sender] > 0);
-    _;
-  }
-
-  /* constructor */
-  function TokenSale(address tokenAddress, address walletAddress, uint end, uint endHoldDate, address holdCont) public {
-    token = OpportyToken(tokenAddress);
-    state = SaleState.NEW;
-
-    endDate     = end;
-    unholdDate  = endHoldDate;
-    price       = 0.0002 * 1 ether;
-    wallet      = walletAddress;
-    minimalContribution = 0.1 * 1 ether;
-    bonus = 0;
-
-    holdContract = HoldSaleContract(holdCont);
-    addAssetsOwner(msg.sender);
-  }
-
-  function() whenNotPaused public payable {
-    require(state == SaleState.SALE);
-    require(msg.value >= minimalContribution);
-
-    if (now > endDate) {
-      state = SaleState.ENDED;
-      SaleEnded(block.number);
-      msg.sender.transfer(msg.value);
-      return ;
+        //return the actual cost of the sale
+        return cost;
     }
 
-    ethRaised += msg.value;
-
-    uint tokenAmount  = msg.value.div(price);
-    tokenAmount += tokenAmount.mul(bonus).div(100);
-    tokenAmount *= 1 ether;
-
-    tokenRaised += tokenAmount;
-
-    holdContract.addHolder(msg.sender, tokenAmount, unholdDate);
-    AddedToHolder(msg.sender, tokenAmount, unholdDate);
-    FundTransfered(msg.sender, msg.value);
-
-    // forward the funds to the wallet
-    forwardFunds();
-  }
-
-  /**
-     * send ether to the fund collection wallet
-     * override to create custom fund forwarding mechanisms
-     */
-  function forwardFunds() internal {
-    wallet.transfer(msg.value);
-  }
-
-  function getBalanceContract() view internal returns (uint) {
-    return token.balanceOf(this);
-  }
-
-  function startSale() public onlyOwner {
-    require(state == SaleState.NEW);
-    state = SaleState.SALE;
-    SaleStarted(block.number);
-  }
-  function endSale() public onlyOwner {
-    require(state == SaleState.SALE);
-    state = SaleState.ENDED;
-    SaleEnded(block.number);
-  }
-
-  function sendTokensToHold() public onlyOwner {
-    require(state == SaleState.ENDED);
-
-    require(getBalanceContract() >= tokenRaised);
-
-    if (token.transfer(holdContract, tokenRaised )) {
-      tokensTransferredToHold = true;
-      TokensTransferedToHold(holdContract, tokenRaised );
+    // ask the connected token how many tokens we have left 
+    function getTokensLeft()
+        public
+        view
+    returns (uint256 tokensLeft)
+    {
+        return tokenContract.balanceOf(this);
     }
-  }
-  function getTokensBack() public onlyOwner {
-    require(state == SaleState.ENDED);
-    require(tokensTransferredToHold == true);
-    uint balance;
-    balance = getBalanceContract() ;
-    token.transfer(msg.sender, balance);
-  }
-  function withdrawEth() public {
-    require(this.balance != 0);
-    require(state == SaleState.ENDED);
-    require(msg.sender == wallet);
-    require(tokensTransferredToHold == true);
-    uint bal = this.balance;
-    wallet.transfer(bal);
-    WithdrawedEthToWallet(bal);
-  }
 
-  function setUnholdDate(uint date) public onlyOwner {
-    require(state == SaleState.NEW || state == SaleState.SALE);
-    uint oldEndDate = unholdDate;
-    unholdDate = date;
-    ManualChangeUnholdDate(oldEndDate, date);
-  }
-  function setEndDate(uint date) public onlyOwner {
-    require(state == SaleState.NEW || state == SaleState.SALE);
-    require(date > now);
-    uint oldEndDate = endDate;
-    endDate = date;
-    ManualChangeEndDate(oldEndDate, date);
-  }
-  function setMinimalContribution(uint minimumAmount) public onlyOwner {
-    uint oldMinAmount = minimalContribution;
-    minimalContribution = minimumAmount;
-    ChangeMinAmount(oldMinAmount, minimalContribution);
-  }
-  function setBonus(uint8 newBonus) public onlyOwner {
-    require(newBonus >= 0);
-    bonus = newBonus;
-  }
+    // calculate the current tokens per ether
+    function getCurrentTokensPerEther()
+        public
+        view
+    returns (uint256 tokensPerEther)
+    {
+        uint i;
+        uint defaultTokensPerEther = tranches[tranches.length - 1].tokensPerEther;
 
-  function addAssetsOwner(address _owner) public onlyOwner {
-    assetOwnersIndexes++;
-    assetOwners[assetOwnersIndexes] = _owner;
-    assetOwnersIndex[_owner] = assetOwnersIndexes;
-  }
-  function removeAssetsOwner(address _owner) public onlyOwner {
-    uint index = assetOwnersIndex[_owner];
-    delete assetOwnersIndex[_owner];
-    delete assetOwners[index];
-    assetOwnersIndexes--;
-  }
-  function getAssetsOwners(uint _index) onlyOwner public constant returns (address) {
-    return assetOwners[_index];
-  }
+        if (currentTime() >= PUBLIC_START_TIME) {
+            return defaultTokensPerEther;
+        }
 
-  function getTokenBalance() onlyAssetsOwners public constant returns (uint) {
-    return token.balanceOf(this);
-  }
-  function getEthRaised() onlyAssetsOwners public constant returns (uint) {
-    return ethRaised;
-  }
-  function getBonus() onlyAssetsOwners public constant returns (uint) {
-    return bonus;
-  }
-  function getTokenRaised() onlyAssetsOwners public constant returns (uint) {
-    return tokenRaised;
-  }
+        for (i = 0; i < tranches.length; i++) {
+            if (totalTokenSold >= tranches[i].untilToken) {
+                continue;
+            }
+
+            //sell until the contract has nor more tokens
+            return tranches[i].tokensPerEther;
+        }
+
+        return defaultTokensPerEther;
+    }
+
+    // calculate the token amount for a give weiAmount
+    function calculateTokenAmount(uint256 weiAmount)
+        public
+        view
+    returns (uint256 tokens)
+    {
+        return weiAmount * getCurrentTokensPerEther();
+    }
+
+    //
+    // WHITELIST
+    //
+
+    // add a new whitelistOperator
+    function addWhitelistOperator(address _address)
+        public
+        onlyOwner
+    {
+        whitelistOperators[_address] = true;
+    }
+
+    // remove a whitelistOperator
+    function removeWhitelistOperator(address _address)
+        public
+        onlyOwner
+    {
+        require(whitelistOperators[_address]);
+
+        delete whitelistOperators[_address];
+    }
+
+
+    // Allows whitelistOperators to add an account to the whitelist.
+    // Only those accounts will be allowed to contribute during the sale.
+    function addToWhitelist(address _address)
+        public
+        onlyWhitelistOperator
+    {
+        require(_address != address(0));
+
+        whitelist[_address] = true;
+        LogWhitelistUpdated(_address);
+    }
+
+    // Allows whitelistOperators to remove an account from the whitelist.
+    function removeFromWhitelist(address _address)
+        public
+        onlyWhitelistOperator
+    {
+        require(_address != address(0));
+
+        delete whitelist[_address];
+    }
+
+    //returns the current time, needed for tests
+    function currentTime()
+        public
+        view
+        returns (uint256 _currentTime)
+    {
+        return now;
+    }
+
+
+    // Allows the owner to finalize the sale.
+    function finalize()
+        external
+        onlyOwner
+        returns (bool)
+    {
+        //allow only after the defined end_time
+        require(currentTime() > END_TIME);
+
+        return finalizeInternal();
+    }
+
+
+    // The internal one will be called if tokens are sold out or
+    // the end time for the sale is reached, in addition to being called
+    // from the public version of finalize().
+    function finalizeInternal() private returns (bool) {
+        require(!finalized);
+
+        finalized = true;
+
+        Finalized();
+
+        //also finalize the token contract
+        tokenContract.finalize();
+
+        return true;
+    }
+
+    // register an early bird investment
+    function addEarlyBird(address _address, uint256 weiAmount)
+        onlyOwner
+        withinContributionLimits(_address, weiAmount)
+        external
+    {
+        // only allowed as long as we dont have a connected token
+        require(tokenContract == address(0));
+
+        earlyBirds.push(_address);
+        earlyBirdInvestments[_address] = weiAmount;
+
+        // auto whitelist early bird;
+        whitelist[_address] = true;
+    }
+
+    // transfer the tokens bought by the early birds before contract creation
+    function processEarlyBirds()
+        private
+    {
+        for (uint256 i = 0; i < earlyBirds.length; i++)
+        {
+            address earlyBirdAddress = earlyBirds[i];
+            uint256 weiAmount = earlyBirdInvestments[earlyBirdAddress];
+
+            buyTokens(earlyBirdAddress, weiAmount);
+        }
+    }
+
+
+    // allows everyone to burn all unsold tokens in the sale contract after finalized.
+    function burnUnsoldTokens()
+        external
+        onlyAfterFinalized
+        returns (bool)
+    {
+        uint256 leftTokens = getTokensLeft();
+
+        require(leftTokens > 0);
+
+        // let'em burn
+        require(tokenContract.burn(leftTokens));
+
+        UnsoldTokensBurnt(leftTokens);
+
+        return true;
+    }
 }
