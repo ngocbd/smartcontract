@@ -1,7 +1,9 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BdpPriceStorage at 0x2abe025a3514dbb4c5dac0fcf3a8f595d72bf352
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract BdpPriceStorage at 0x6604c5f48cd5ee85b56daa678e7531db869c5ea6
 */
 pragma solidity ^0.4.19;
+
+// File: contracts/BdpBaseData.sol
 
 contract BdpBaseData {
 
@@ -13,11 +15,14 @@ contract BdpBaseData {
 
 	bool public paused = false;
 
-	bool public setupComplete = false;
+	bool public setupCompleted = false;
 
 	bytes8 public version;
 
 }
+
+// File: contracts/libraries/BdpContracts.sol
+
 library BdpContracts {
 
 	function getBdpEntryPoint(address[16] _contracts) pure internal returns (address) {
@@ -50,6 +55,8 @@ library BdpContracts {
 
 }
 
+// File: contracts/BdpBase.sol
+
 contract BdpBase is BdpBaseData {
 
 	modifier onlyOwner() {
@@ -62,15 +69,15 @@ contract BdpBase is BdpBaseData {
 		_;
 	}
 
-	modifier whenContractActive() {
-		require(!paused && setupComplete);
+	modifier whileContractIsActive() {
+		require(!paused && setupCompleted);
 		_;
 	}
 
 	modifier storageAccessControl() {
 		require(
-			(! setupComplete && (msg.sender == ownerAddress || msg.sender == managerAddress))
-			|| (setupComplete && !paused && (msg.sender == BdpContracts.getBdpEntryPoint(contracts)))
+			(! setupCompleted && (msg.sender == ownerAddress || msg.sender == managerAddress))
+			|| (setupCompleted && !paused && (msg.sender == BdpContracts.getBdpEntryPoint(contracts)))
 		);
 		_;
 	}
@@ -97,8 +104,8 @@ contract BdpBase is BdpBaseData {
 		paused = false;
 	}
 
-	function setSetupComplete() external onlyOwner {
-		setupComplete = true;
+	function setSetupCompleted() external onlyOwner {
+		setupCompleted = true;
 	}
 
 	function kill() public onlyOwner {
@@ -106,6 +113,8 @@ contract BdpBase is BdpBaseData {
 	}
 
 }
+
+// File: contracts/storage/BdpPriceStorage.sol
 
 contract BdpPriceStorage is BdpBase {
 
