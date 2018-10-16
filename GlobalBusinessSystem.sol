@@ -1,8 +1,7 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GlobalBusinessSystem at 0x1568b42d7108dc447e8f78885913b15b8c5f62ed
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract GlobalBusinessSystem at 0xdaaD1c757471186c79FA044D39CD9BbB26b84E35
 */
 pragma solidity ^0.4.13;
-
 
 /**
  * @title ERC20Basic
@@ -204,10 +203,16 @@ contract MintableToken is StandardToken, Ownable {
   bool public mintingFinished = false;
   
   uint256 totalBonus = 0;
+  
+  uint256 maxBonus = 2000000;
 
   modifier canMint() {
     require(!mintingFinished);
     _;
+  }
+  
+  function addBonus(uint256 _bonus) onlyOwner {
+      totalBonus += _bonus;
   }
 
   /**
@@ -235,7 +240,7 @@ contract MintableToken is StandardToken, Ownable {
   
 }
 
-contract GlobalBusinessSystemToken is MintableToken {
+contract SimpleTokenCoin is MintableToken {
     
     string public constant name = "Global Business System";
     
@@ -249,11 +254,13 @@ contract GlobalBusinessSystem is Ownable {
     
     using SafeMath for uint;
 
-    GlobalBusinessSystemToken public token = new GlobalBusinessSystemToken();
+    SimpleTokenCoin public token = new SimpleTokenCoin();
     
     uint start;
     uint period;
     uint period1;
+    uint period2;
+    uint period3;
     address multisig;
     uint hardcap;
     uint rate;
@@ -262,11 +269,11 @@ contract GlobalBusinessSystem is Ownable {
     uint maxValue;
     address restricted;
 
-    function GlobalBusinessSystem() {
+    function GlobalBusinessSystem(){
         multisig = 0x1a74Fa96a1BaC3C2AF3F31058F02b0471BFe71f4;
 	    hardcap = 1000;
 	    rate = 10000000000000000000000;
-	    start = 1503658800;
+	    start = 1503448000;
 	    period = 30;
 	    period1 = 7;
 	    //minValue = 0.01;
@@ -274,7 +281,7 @@ contract GlobalBusinessSystem is Ownable {
     }
     
     modifier saleIsOn(){
-        require(now < start + (period * 1 days));
+        require(now < start + period * 1 days);
         _;
     }
     
@@ -288,12 +295,13 @@ contract GlobalBusinessSystem is Ownable {
         _;
     }
     
-    function createTokens() saleIsOn isUnderHardCap payable {
+    function createTokens() isUnderHardCap saleIsOn payable {
         multisig.transfer(msg.value);
         uint tokens = rate.mul(msg.value).div(1 ether);
         uint bonusTokens = 0;
         if(now < start + (period1 * 1 days)) {
           bonusTokens = tokens.div(5); //20%
+          token.addBonus(bonusTokens);
         }
         tokens += bonusTokens;
         token.mint(msg.sender, tokens);
