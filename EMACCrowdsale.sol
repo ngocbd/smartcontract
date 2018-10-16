@@ -1,5 +1,5 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EMACCrowdsale at 0xae8E6f11220dC4a826A11777eeF147d62892D5f2
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract EMACCrowdsale at 0x5e851c761fc6b8da67459a74f7e2849032473d1f
 */
 pragma solidity ^0.4.18;
 
@@ -384,6 +384,9 @@ contract EMACCrowdsale is Ownable {
 
   // address where funds are collected
   address public wallet;
+  
+  // Team, advisors etc. wallet
+  address public teamWallet;
 
   // how many token units a buyer gets per wei
   uint256 public rate;
@@ -391,8 +394,11 @@ contract EMACCrowdsale is Ownable {
   // amount of raised money in wei
   uint256 public weiRaised;
   
-  // 363m
-  uint256 public constant INIT_TOKENS = 363 * (10 ** 6) * (10 ** 18);
+  // 454m
+  uint256 public constant INIT_TOKENS = 454 * (10 ** 6) * (10 ** 18);
+  
+  // 20% of tokens are going for the team, advisors etc.
+  uint256 public TEAM_TOKENS = INIT_TOKENS.mul(20).div(100);
   
   // 32000 eth
   uint256 public constant HARD_CAP = 32000 * (10**18);
@@ -406,7 +412,7 @@ contract EMACCrowdsale is Ownable {
   uint256 public constant MAIN_SALE_BONUS_PERCENTAGE_PHASE2 = 110;
   uint256 public constant MAIN_SALE_BONUS_PERCENTAGE_PHASE3 = 105;
   uint256 public constant MAIN_SALE_BONUS_PERCENTAGE_PHASE4 = 100;
-
+  
   /**
    * event for token purchase logging
    * @param purchaser who paid for the tokens
@@ -416,17 +422,26 @@ contract EMACCrowdsale is Ownable {
    */
   event EMACTokenPurchase(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
 
-  function EMACCrowdsale(uint256 _startTime, uint256 _endTime, uint256 _rate, address _wallet) public {
+  function EMACCrowdsale(uint256 _startTime, uint256 _endTime, uint256 _rate, address _wallet, address _teamWallet) public {
     require(_startTime >= now);
     require(_endTime >= _startTime);
     require(_rate > 0);
     require(_wallet != address(0));
+    require(_teamWallet != address(0));
 
     startTime = _startTime;
     endTime = _endTime;
     rate = _rate;
     wallet = _wallet;
     token = new EMACToken(INIT_TOKENS);
+    teamWallet = _teamWallet;
+    
+    token.mint(_teamWallet, TEAM_TOKENS);
+    depositTokens();
+  }
+  
+  function depositTokens() public payable {
+    EMACTokenPurchase(msg.sender, teamWallet, msg.value, TEAM_TOKENS);
   }
 
   // fallback function can be used to buy tokens
