@@ -1,25 +1,11 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0xF1072e1D02Ce862c31a5947C6d6ef5fBe848b8b7
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract MultiSigWallet at 0xfbd2d8aea3e183e2786ece61665ccaf7574e548b
 */
-pragma solidity ^0.4.11;
+/**
+ * Originally from https://github.com/ConsenSys/MultiSigWallet
+ */
 
-/*
-  Copyright 2017, Stefan George (Consensys)
 
-  This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-*/
 
 /// @title Multisignature wallet - Allows multiple parties to agree on transactions before execution.
 /// @author Stefan George - <stefan.george@consensys.net>
@@ -27,15 +13,15 @@ contract MultiSigWallet {
 
     uint constant public MAX_OWNER_COUNT = 50;
 
-    event Confirmation(address indexed _sender, uint indexed _transactionId);
-    event Revocation(address indexed _sender, uint indexed _transactionId);
-    event Submission(uint indexed _transactionId);
-    event Execution(uint indexed _transactionId);
-    event ExecutionFailure(uint indexed _transactionId);
-    event Deposit(address indexed _sender, uint _value);
-    event OwnerAddition(address indexed _owner);
-    event OwnerRemoval(address indexed _owner);
-    event RequirementChange(uint _required);
+    event Confirmation(address indexed sender, uint indexed transactionId);
+    event Revocation(address indexed sender, uint indexed transactionId);
+    event Submission(uint indexed transactionId);
+    event Execution(uint indexed transactionId);
+    event ExecutionFailure(uint indexed transactionId);
+    event Deposit(address indexed sender, uint value);
+    event OwnerAddition(address indexed owner);
+    event OwnerRemoval(address indexed owner);
+    event RequirementChange(uint required);
 
     mapping (uint => Transaction) public transactions;
     mapping (uint => mapping (address => bool)) public confirmations;
@@ -312,7 +298,7 @@ contract MultiSigWallet {
                 count += 1;
     }
 
-    /// @dev Returns total number of transactions after filters are applied.
+    /// @dev Returns total number of transactions after filers are applied.
     /// @param pending Include pending transactions.
     /// @param executed Include executed transactions.
     /// @return Total number of transactions after filters are applied.
