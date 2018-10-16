@@ -1,14 +1,14 @@
 /* 
- source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hexagon at 0xcae348eeb5d0b9fd59a8fd179d8b3e8a7b871b5f
+ source code generate by Bui Dinh Ngoc aka ngocbd<buidinhngoc.aiti@gmail.com> for smartcontract Hexagon at 0xB5335e24d0aB29C190AB8C2B459238Da1153cEBA
 */
 pragma solidity ^0.4.18;
 
 contract Hexagon {
   /* Main information */
   string public constant name = "Hexagon";
-  string public constant symbol = "HEX";
+  string public constant symbol = "HXG";
   uint8 public constant decimals = 4;
-  uint8 public constant burnPerTransaction = 1;
+  uint8 public constant burnPerTransaction = 2;
   uint256 public constant initialSupply = 420000000000000;
   uint256 public currentSupply = initialSupply;
 
@@ -29,6 +29,11 @@ contract Hexagon {
     _transfer(msg.sender, _to, _value);
 
     return true;
+  }
+
+  /* Return current supply */
+  function totalSupply() public constant returns (uint) {
+    return currentSupply;
   }
 
   /* Burn tokens */
@@ -85,6 +90,8 @@ contract Hexagon {
     balanceOf[_to] += _value;
     /* Apply transaction fee */
     balanceOf[0x0] += burnPerTransaction;
+    /* Update current supply */
+    currentSupply -= burnPerTransaction;
     /* Notify network */
     Burn(_from, burnPerTransaction);
     /* Notify network */
